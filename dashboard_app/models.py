@@ -810,6 +810,20 @@ class SoftwareSource(models.Model):
         help_text=_(u"Date and time of the commit (optional)"),
         verbose_name=_(u"Commit Timestamp")
     )
+    default_params = models.CharField(
+        max_length=1024,
+        blank=True,
+        null=True,
+        help_text="Default parameters for lava-test-shell.",
+        verbose_name=_(u"Default parameters")
+    )
+    test_params = models.CharField(
+        max_length=1024,
+        blank=True,
+        null=True,
+        help_text="Runtime test parameters for lava-test-shell.",
+        verbose_name=_(u"Test parameters")
+    )
 
     def __unicode__(self):
         return _(u"{project_name} from branch {branch_url} at revision {branch_revision}").format(

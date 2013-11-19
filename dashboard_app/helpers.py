@@ -787,6 +787,38 @@ class BundleFormatImporter_1_6(BundleFormatImporter_1_5):
                                  c_test_run["testdef_metadata"])
 
 
+class BundleFormatImporter_1_7(BundleFormatImporter_1_6):
+    """
+    IFormatImporter subclass capable of loading "Dashboard Bundle Format 1.7"
+    """
+
+    def _import_sources(self, c_test_run, s_test_run):
+        """
+        Import TestRun.sources
+        """
+        from dashboard_app.models import SoftwareSource
+
+        for c_source in self._get_sw_context(c_test_run).get("sources", []):
+            s_source, source_created = SoftwareSource.objects.get_or_create(
+                project_name=c_source["project_name"],  # required by schema
+                branch_url=c_source["branch_url"],  # required by schema
+                branch_vcs=c_source["branch_vcs"],  # required by schema
+                # required by schema, may be either int or string so upconvert to string
+                branch_revision=str(c_source["branch_revision"]),
+                # optional
+                commit_timestamp=(
+                    datetime_extension.from_json(
+                        c_source["commit_timestamp"])
+                    if "commit_timestamp" in c_source
+                    else None),
+                default_params=c_source["default_params"],
+                test_params=c_source["test_params"]
+            )
+            if source_created:
+                s_source.save()
+            s_test_run.sources.add(s_source)
+
+
 class BundleDeserializer(object):
     """
     Helper class for de-serializing JSON bundle content into database models
@@ -801,6 +833,7 @@ class BundleDeserializer(object):
         "Dashboard Bundle Format 1.4": BundleFormatImporter_1_4,
         "Dashboard Bundle Format 1.5": BundleFormatImporter_1_5,
         "Dashboard Bundle Format 1.6": BundleFormatImporter_1_6,
+        "Dashboard Bundle Format 1.7": BundleFormatImporter_1_7,
     }
 
     def deserialize(self, s_bundle, prefer_evolution):
