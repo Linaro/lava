@@ -42,7 +42,7 @@ health_unknown.short_description = "set health_status to unknown"
 
 class DeviceAdmin(admin.ModelAdmin):
     actions = [online_action, offline_action, health_unknown, retire_action]
-    list_filter = ['device_type', 'status']
+    list_filter = ['device_type', 'status', 'worker_hostname']
     raw_id_fields = ['current_job', 'last_health_report_job']
 
 
