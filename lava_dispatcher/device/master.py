@@ -39,7 +39,6 @@ from lava_dispatcher.device.target import (
 )
 from lava_dispatcher.downloader import (
     download_image,
-    download_with_retry,
 )
 from lava_dispatcher.errors import (
     NetworkError,
@@ -336,8 +335,8 @@ class MasterImageTarget(Target):
                 port = self.proc.match.groups()[match_id]
 
                 url = "http://%s:%s/fs.tgz" % (self.master_ip, port)
-                tf = download_with_retry(
-                    self.context, self.scratch_dir, url, False)
+                tf = download_image(url,
+                                    self.context, self.scratch_dir, decompress=False)
 
                 tfdir = os.path.join(self.scratch_dir, str(time.time()))
                 try:

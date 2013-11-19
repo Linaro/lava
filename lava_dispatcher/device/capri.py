@@ -41,7 +41,7 @@ from lava_dispatcher.utils import (
     rmtree,
 )
 from lava_dispatcher.downloader import (
-    download_with_retry,
+    download_image,
 )
 from lava_dispatcher import deployment_data
 
@@ -137,8 +137,8 @@ class CapriTarget(FastbootTarget, MasterImageTarget):
             url = "http://%s:%s/fs.tgz" % (ip, port)
 
             logging.info("Fetching url: %s" % url)
-            tf = download_with_retry(self.context, self.scratch_dir,
-                                     url, False)
+            tf = download_image(url, self.context, self.scratch_dir,
+                                decompress=False)
 
             tfdir = os.path.join(self.scratch_dir, str(time.time()))
 

@@ -43,7 +43,6 @@ from lava_dispatcher.errors import (
 )
 from lava_dispatcher.downloader import (
     download_image,
-    download_with_retry,
 )
 from lava_dispatcher import deployment_data
 
@@ -248,8 +247,8 @@ class BootloaderTarget(MasterImageTarget):
 
                 url = url_base + '/fs.tgz'
                 logging.info("Fetching url: %s" % url)
-                tf = download_with_retry(self.context, self.scratch_dir,
-                                         url, False)
+                tf = download_image(url, self.context, self.scratch_dir,
+                                    decompress=False)
 
                 tfdir = os.path.join(self.scratch_dir, str(time.time()))
 
