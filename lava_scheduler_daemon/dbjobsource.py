@@ -104,7 +104,7 @@ class DatabaseJobSource(object):
         """
         job_list = []
 
-        for device in Device.objects.all():
+        for device in Device.objects.filter(heartbeat=True):
             if device.status != Device.IDLE:
                 continue
             if not device.device_type.health_check_job:
@@ -131,7 +131,7 @@ class DatabaseJobSource(object):
 
         If we are unable to grab the DEVICE then we return None.
         """
-        if device.status == Device.RUNNING:
+        if device.status == Device.RUNNING or device.heartbeat is False:
             return None
         DeviceStateTransition.objects.create(
             created_by=None, device=device, old_state=device.status,
@@ -192,9 +192,10 @@ class DatabaseJobSource(object):
                 target_group=job.target_group)
 
             for m_job in multinode_jobs:
-                devices = Device.objects.all().filter(
+                devices = Device.objects.filter(
                     device_type=m_job.requested_device_type,
-                    status=Device.IDLE)
+                    status=Device.IDLE,
+                    heartbeat=True)
                 if len(devices) > 0:
                     f_job = self._fix_device(devices[0], m_job)
                     if f_job:
@@ -214,14 +215,16 @@ class DatabaseJobSource(object):
                     job_list.append(job)
                 elif job.requested_device:
                     self.logger.debug("Checking Requested Device")
-                    devices = Device.objects.all().filter(
+                    devices = Device.objects.filter(
                         hostname=job.requested_device.hostname,
-                        status=Device.IDLE)
+                        status=Device.IDLE,
+                        heartbeat=True)
                 elif job.requested_device_type:
                     self.logger.debug("Checking Requested Device Type")
-                    devices = Device.objects.all().filter(
+                    devices = Device.objects.filter(
                         device_type=job.requested_device_type,
-                        status=Device.IDLE)
+                        status=Device.IDLE,
+                        heartbeat=True)
                 else:
                     continue
                 if devices:
@@ -235,33 +238,39 @@ class DatabaseJobSource(object):
 
     def _device_heartbeat(self):
         """LAST_HEARTBEAT and WORKER_HOSTNAME fields gets updated for each
-        configured device.
+        configured device, which is not RETIRED.
         """
         devices = Device.objects.all()
         configured_boards = [
             x.hostname for x in dispatcher_config.get_devices()]
         for device in devices:
-            if device.hostname in configured_boards:
+            if device.hostname in configured_boards and \
+                    device.status != Device.RETIRED:
                 device.worker_hostname = socket.getfqdn()
                 device.last_heartbeat = datetime.datetime.utcnow()
                 device.save()
                 transaction.commit()
-                self.logger.debug("Heartbeat updated for %s ..." %
-                                  device.hostname)
+                self.logger.info("Heartbeat timestamp updated for %s ..." %
+                                 device.hostname)
 
-            # Update device status based on heartbeat timestamp
+    def _update_device_heartbeat(self):
+        """Update device HEARTBEAT based on LAST_HEARTBEAT timestamp."""
+        devices = Device.objects.all()
+        for device in devices:
             device.too_long_since_last_heartbeat()
             transaction.commit()
+            self.logger.info(
+                "Device heartbeat updated for %s ..." % device.hostname)
 
     def getJobList_impl(self):
-        # FIXME the heartbeat is BROKEN so let's disable it for now.
-        # self._device_heartbeat()
+        self._device_heartbeat()
 
         job_list = TestJob.objects.all().filter(
             status=TestJob.SUBMITTED).order_by('-health_check', '-priority',
                                                'submit_time')
 
         if utils.is_master():
+            self._update_device_heartbeat()
             self.logger.debug("Boards assigned to jobs ...")
             job_list = self._assign_jobs(job_list)
 

@@ -199,15 +199,12 @@ class DeviceTable(DataTablesTable):
         return Device.objects.select_related("device_type")
 
     hostname = TemplateColumn('''
-    {% if record.status == record.UNREACHABLE %}
-    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
-          alt="{{ record.last_heartbeat }}" />
-    {% elif record.status == record.RETIRED or record.status == record.OFFLINE        or record.status == record.OFFLINING %}
-    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
-          alt="NA" />
-    {% else %}
+    {% if record.heartbeat %}
     <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
-          alt="{{ record.last_heartbeat }}" />
+          alt="{{ record.heartbeat }}" />
+    {% else %}
+    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
+          alt="{{ record.heartbeat }}" />
     {% endif %}&nbsp;&nbsp;
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
         ''')
