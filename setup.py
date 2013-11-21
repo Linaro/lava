@@ -97,6 +97,7 @@ setup(
                 'etc/logrotate.d/lava-server-uwsgi-log']),
         ('/usr/share/lava-server',
             ['instance.template']),
+    ],
     scripts=[
         'lava_server/lava-daemon'
     ],
