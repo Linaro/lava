@@ -187,8 +187,6 @@ class Settings(object):
         'HOST': '',
         'PORT': $(LAVA_DB_PORT)
 
-        TODO: support HOST
-
         """
         pathname = self._get_pathname("instance")
         config = ConfigFile.load(pathname)
@@ -196,7 +194,7 @@ class Settings(object):
         dbname = config.LAVA_DB_NAME if hasattr(config, 'LAVA_DB_NAME') else ''
         dbuser = config.LAVA_DB_USER if hasattr(config, 'LAVA_DB_USER') else ''
         dbpass = config.LAVA_DB_PASSWORD if hasattr(config, 'LAVA_DB_PASSWORD') else ''
-        dbhost = config.LAVA_DB_HOST if hasattr(config, 'LAVA_DB_HOST') else ''
+        dbhost = config.LAVA_DB_SERVER if hasattr(config, 'LAVA_DB_SERVER') else '127.0.0.1'
         dbport = config.LAVA_DB_PORT if hasattr(config, 'LAVA_DB_PORT') else ''
         return {
             'ENGINE': pgengine,
