@@ -55,6 +55,7 @@ setup(
         'django >= 1.3',
         'django-openid-auth >= 0.2',
         'django-restricted-resource >= 0.2.7',
+        'django-staticfiles >= 0.3.4',
         "django-tables2 >= 0.9.4",
         'docutils >= 0.6',
         'lava-tool >= 0.2',
