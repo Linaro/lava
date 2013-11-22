@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import commands
 import json
 import logging
 import pexpect
@@ -36,6 +37,8 @@ from lava_dispatcher.errors import (
     GeneralError,
     ADBConnectError,
 )
+
+from lava_dispatcher.utils import kill_process_with_option
 
 import lava_dispatcher.actions.lmp.init_boards as lmp_init_boards
 
@@ -270,6 +273,17 @@ class LavaTestJob(object):
                     if cmd.get('command') == 'boot_linaro_android_image':
                         logging.warning(('[ACTION-E] %s failed to create the'
                                          ' adb connection') % (cmd['command']))
+
+                        ## Sometimes the adb problem is caused by the adb
+                        ## command, and as workround we need to kill the adb
+                        ## process to make it work
+                        logging.warning(
+                            'Now will try to kill the adb process')
+                        rc = commands.getstatusoutput('adb devices')[0]
+                        if rc != 0:
+                            kill_process_with_option(process="adb",
+                                                     key_option="fork-server")
+
                         ## clear the session on the serial and wait a while
                         ## and not put the following 3 sentences into the
                         ## boot_linaro_android_image method just for

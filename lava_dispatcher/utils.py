@@ -37,6 +37,20 @@ import pexpect
 from lava_dispatcher.errors import CriticalError
 
 
+def kill_process_with_option(process=None, key_option=None):
+    if not process:
+        return
+    lines = os.popen('ps -ef')
+    for line in lines:
+        fields = line.split()
+        if len(fields) < 8:
+            continue
+        #if (process in fields):
+        if fields[7] and (process == fields[7]):
+            if (not key_option) or (key_option in fields):
+                logging_system('sudo kill -9 %s' % fields[1])
+
+
 def link_or_copy_file(src, dest):
     try:
         dirname = os.path.dirname(dest)
