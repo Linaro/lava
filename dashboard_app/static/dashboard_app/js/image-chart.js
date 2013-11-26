@@ -13,6 +13,10 @@ $(document).ready(function () {
             // Add filter links used.
             $("#chart_container_" + chart_id).append(
                 '<div class="filter-links-container" id="filter_links_container_' + chart_id + '"></div>');
+            // Add data table link.
+            $("#filter_links_container_" + chart_id).append(
+                '<span class="table-link-container"' +
+                    'id="table_link_container_' + chart_id + '"></span>');
             // Add dates/build numbers container.
             $("#chart_container_" + chart_id).append(
                 '<div class="dates-container" id="dates_container_' +
@@ -36,6 +40,8 @@ $(document).ready(function () {
             update_dates(chart_id, chart_data);
             // Add filter links.
             update_filter_links(chart_id, chart_data);
+            // Add data tables.
+            update_data_tables(chart_id, chart_data);
             // Generate chart.
             update_plot(chart_id, chart_data, null);
             // Add source for saving charts as images and csv export.
@@ -184,11 +190,188 @@ $(document).ready(function () {
         add_settings_events(chart_id, chart_data);
     }
 
+    update_data_tables = function(chart_id, chart_data) {
+
+        // Add link.
+        $("#table_link_container_" + chart_id).append(
+            '<a id="data_table_link_' +
+                chart_id + '" href="javascript:void(0)">View data table</a>');
+
+        $("#data_table_link_" + chart_id).click(function(){
+            $('#data_table_dialog_' + chart_id).dialog("open");
+        });
+
+        // Add dialog.
+        $("#main_container").append('<div id="data_table_dialog_' + chart_id +
+                                    '"></div>');
+
+        // Init dialog.
+        $('#data_table_dialog_' + chart_id).dialog({
+            autoOpen: false,
+            title: 'View data table',
+            draggable: false,
+            height: 280,
+            width: 950,
+            modal: true,
+            resizable: false,
+            open: function (event, ui) {
+                $('#data_table_dialog_' + chart_id).css('overflow', 'hidden');
+                $("#scroller").scrollLeft($("#scroller")[0].scrollWidth);
+            }
+        });
+
+        // Add skeleton data to dialog.
+        $("#data_table_dialog_" + chart_id).append(
+            '<table id="outer-table"><tr><td>' +
+                '<table id="test-run-names" class="inner-table"><thead>' +
+                '<tr><th>Build Number</th></tr>' +
+                '</thead>' +
+                '<tbody></tbody></table></td>' +
+                '<td><div id="scroller">' +
+                '<table id="results-table" class="inner-table"><thead>' +
+                '</thead><tbody></tbody></table>' +
+                '</div></td></tr></table>');
+
+        // Add data.
+        add_table_data(chart_id, chart_data);
+    }
+
+    add_table_data = function(chart_id, chart_data) {
+
+        // Create row headlines.
+        table_rows = "<tr><td>Date</td></tr>";
+
+        // Array with row names.
+        rows = [];
+        // Array with column strings
+        columns = [];
+        // Inner table data.
+        table = {};
+
+        // Create inner table with row names.
+        for (iter in chart_data.test_data) {
+
+            test_data = chart_data.test_data[iter];
+            if ($.inArray(test_data["test_filter_id"], rows) == -1) {
+                // Add unique rows and create row headlines HTML.
+
+                rows.push(test_data["test_filter_id"]);
+
+                test_name = test_data["alias"];
+                if (test_name.length > 10) {
+                    test_name = test_name.substring(0,10) + "...";
+                }
+                table_rows += "<tr><td tooltip='" + test_data["alias"] +
+                    "'>" + test_name + "</td></tr>";
+            }
+        }
+        $("#test-run-names tbody").html(table_rows);
+
+        // Create column headlines.
+        result_table_head = "<tr>";
+
+        // Organize data in the 'table' multi array.
+        for (iter in chart_data.test_data) {
+            test_data = chart_data.test_data[iter];
+
+            number = test_data["number"].split(' ')[0];
+            if (!(number in table)) {
+                table[number] = {};
+            }
+
+            if (!(test_data["test_filter_id"] in table[number])) {
+                table[number][test_data["test_filter_id"]] = [];
+            }
+
+            table[number][test_data["test_filter_id"]].push({
+                "passes": test_data["passes"],
+                "total": test_data["total"],
+                "link": test_data["link"]
+            });
+        }
+
+        data_table = '<table id="results_table_' + chart_id +
+            '" class="inner-table">';
+
+        table_head = '<thead><tr>';
+        table_body = '<tbody><tr>';
+
+        // Add table header, list of build numbers/dates.
+        for (number in table) {
+            max_same_date_size = 0;
+            for (cnt in rows) {
+
+                filter_id = rows[cnt];
+                if (table[number][filter_id].length > max_same_date_size) {
+                    max_same_date_size = table[number][filter_id].length;
+                }
+            }
+            table[number]["max_size"] = max_same_date_size;
+            table[number]["date"] = test_data["date"];
+            for (var i = 0; i < max_same_date_size; i++) {
+                table_head += '<th>' + number + '</th>';
+                table_body += '<td>' + number + '</td>';
+            }
+        }
+
+        table_head += '</tr></thead>';
+        table_body += '</tr><tr>';
+
+        for (iter in rows) {
+            filter_id = rows[iter];
+
+            for (number in table) {
+                // Add "missing" cells.
+                for (var i = 0; i < table[number]["max_size"]-table[number][filter_id].length; i++) {
+                    cls = "missing";
+                    table_body += '<td class="' + cls + '">&mdash;</td>';
+                }
+
+                // Add regular cells.
+                for (cnt in table[number][filter_id]) {
+
+                    // Calculate td class.
+                    cell = table[number][filter_id][cnt];
+                    if (cell["passes"] < cell["total"]) {
+                        cls = "fail";
+                    } else {
+                        cls = "pass";
+                    }
+
+                    table_body += '<td class="' + cls + '">';
+
+                    table_body += '<a target="_blank" href="' + cell["link"] +
+                        '">' + cell["passes"] + '/' + cell["total"] + '</a>';
+                    table_body += "</td>";
+                }
+            }
+            table_body += '</tr><tr>';
+        }
+
+        table_body += '</tr></tbody>';
+        $("#results-table tbody").html(table_head + table_body);
+
+        update_tooltips();
+    }
+
+    update_tooltips = function() {
+        // Update tooltips on the remaining td's for the test names.
+        $("td", "#test-run-names").each(function () {
+            if ($(this).attr('tooltip')) {
+                $(this).tooltip({
+                    bodyHandler: function() {
+                        return $(this).attr('tooltip');
+                    }
+                });
+            }
+        });
+    }
+
     set_dates = function(chart_id, chart_data) {
         // Populate date dropdowns.
         dates = [];
         for (iter in chart_data.test_data) {
-	    item = chart_data.test_data[iter]["number"].split('.')[0];
+            item = chart_data.test_data[iter]["number"].split('.')[0];
             if (dates.indexOf(item) == -1) {
                 dates.push(item);
             }
