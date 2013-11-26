@@ -55,15 +55,21 @@ class cmd_boot_linaro_android_image(BaseAction):
     parameters_schema['properties']['wait_for_home_screen_activity'] = {
         'type': 'string', 'optional': True
     }
+    parameters_schema['properties']['test_image_prompt'] = {
+        'type': 'string', 'optional': True
+    }
 
     def run(self, options=[], boot_cmds=None, adb_check=False,
-            wait_for_home_screen=True, wait_for_home_screen_activity=None):
+            wait_for_home_screen=True, wait_for_home_screen_activity=None,
+            test_image_prompt=None):
         client = self.client
         if boot_cmds is not None:
             client.config.boot_cmds = boot_cmds
         if wait_for_home_screen_activity is not None:
             client.config.android_wait_for_home_screen_activity = \
                 wait_for_home_screen_activity
+        if test_image_prompt is not None:
+            client.config.test_image_prompts.append(test_image_prompt)
         client.target_device.boot_options = options
         client.config.android_wait_for_home_screen = wait_for_home_screen
         try:
@@ -83,11 +89,16 @@ class cmd_boot_linaro_image(BaseAction):
     """
 
     parameters_schema = _boot_schema
+    parameters_schema['properties']['test_image_prompt'] = {
+        'type': 'string', 'optional': True
+    }
 
-    def run(self, options=[], boot_cmds=None):
+    def run(self, options=[], boot_cmds=None, test_image_prompt=None):
         client = self.client
         if boot_cmds is not None:
             client.config.boot_cmds = boot_cmds
+        if test_image_prompt is not None:
+            client.config.test_image_prompts.append(test_image_prompt)
         client.target_device.boot_options = options
         status = 'pass'
         try:
