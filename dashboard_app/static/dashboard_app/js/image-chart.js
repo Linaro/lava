@@ -175,6 +175,17 @@ $(document).ready(function () {
         $("#dates_container_" + chart_id).append(
             '<span><select id="end_date_' + chart_id + '"></select></span>');
 
+        // Add percentages if chart type is pass/fail.
+        if (chart_data["chart_type"] == "pass/fail") {
+            $("#dates_container_" + chart_id).append(
+                '<span>&nbsp;&nbsp;&nbsp;&nbsp;<label for="is_percentage_' +
+                    chart_id +
+                    '">Toggle percentage:</label>&nbsp;&nbsp;</span>');
+            $("#dates_container_" + chart_id).append(
+                '<span><input type="checkbox" id="is_percentage_' + chart_id +
+                    '" /></span>');
+        }
+
         $("#dates_container_" + chart_id).append(
             '<span>&nbsp;&nbsp;&nbsp;&nbsp;<label for="is_legend_visible_' +
                 chart_id + '">Toggle legend:</label>&nbsp;&nbsp;</span>');
@@ -407,7 +418,13 @@ $(document).ready(function () {
             update_plot(chart_id, chart_data, null);
         });
 
-        $("#is_legend_visible_"+chart_id).change(function() {
+        if (chart_data["chart_type"] == "pass/fail") {
+            $("#is_legend_visible_"+chart_id).change(function() {
+                update_plot(chart_id, chart_data, null);
+            });
+        }
+
+        $("#is_percentage_"+chart_id).change(function() {
             update_plot(chart_id, chart_data, null);
             update_settings(chart_id, chart_data["report_name"]);
         });
@@ -536,8 +553,14 @@ $(document).ready(function () {
                 iter = plot_data[test_filter_id]["data"].length;
 
                 if (chart_data["chart_type"] == "pass/fail") {
-                    value = row["passes"];
-                    tooltip = "Pass: " + value + ", Total: " + row["total"];
+                    if ($("#is_percentage_" + chart_id).attr("checked") == true) {
+                        value = parseFloat(row["passes"]/row["total"]).toFixed(4) * 100;
+                        tooltip = "Pass rate: " + value;
+                    } else {
+                        value = row["passes"];
+                        tooltip = "Pass: " + value + ", Total: " +
+                            row["total"];
+                    }
 
                 } else {
                     value = row["measurement"];
@@ -704,6 +727,11 @@ $(document).ready(function () {
             },
             canvas: true,
         };
+
+        if ($("#is_percentage_" + chart_id).attr("checked") == true) {
+            options["yaxis"]["max"] = 105;
+            options["yaxis"]["min"] = 0;
+        }
 
         $.plot($("#outer_container_" + chart_id + " #inner_container_" + chart_id), data, options);
 
