@@ -1,6 +1,6 @@
 json_schema_validator python-json-schema-validator
-lava_tool lava-tool
-lava_utils_interface lava-utils-interface
+lava_tool lava-tool; PEP386
+lava_utils_interface lava-utils-interface; PEP386
 pexpect python-pexpect
 configglue python-configglue
-linaro_dashboard_bundle linaro-dashboard-bundle
+linaro-dashboard-bundle linaro-dashboard-bundle; PEP386

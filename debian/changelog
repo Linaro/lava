@@ -1,3 +1,10 @@
+lava-dispatcher (0.33.2-5) unstable; urgency=medium
+
+  * Update python overrides to pick up versioned
+    dependency information from upstream setup.py. 
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 27 Nov 2013 15:52:18 +0000
+
 lava-dispatcher (0.33.2-4) unstable; urgency=low
 
   * Drop doc package, rst files moved to lava-server upstream
