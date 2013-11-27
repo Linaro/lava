@@ -196,8 +196,8 @@ init_filter_dialog = function() {
         autoOpen: false,
         title: 'Select Filter',
         draggable: false,
-        height: 280,
-        width: 420,
+        height: 550,
+        width: 820,
         modal: true,
         resizable: false
     });
