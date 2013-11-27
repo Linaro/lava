@@ -476,6 +476,11 @@ $(document).ready(function () {
             $("#filter_links_container_" + chart_id).css("width", "80%");
         }
 
+        y_label = "Pass/Fail";
+        if (chart_data["chart_type"] != "pass/fail") {
+            y_label = chart_data.test_data[0].units;
+        }
+
         var options = {
 	    series: {
 	        lines: { show: true },
@@ -510,7 +515,10 @@ $(document).ready(function () {
 	    yaxis: {
 	        tickDecimals: 0,
                 labelWidth: 25,
-	    },
+                axisLabel: y_label,
+                axisLabelUseCanvas: true,
+                axisLabelFontFamily: "Verdana",
+            },
             canvas: true,
         };
 
