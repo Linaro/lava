@@ -389,7 +389,7 @@ def get_bundle(results_dir, testdef_objs, err_log):
     meminfo = read_content(os.path.join(results_dir, 'hwcontext/meminfo.txt'), ignore_missing=True)
     hwctx = _get_hw_context(cpuinfo, meminfo)
 
-    build = read_content(os.path.join(results_dir, 'swcontext/build.txt'))
+    build = read_content(os.path.join(results_dir, 'swcontext/build.txt'), ignore_missing=True)
     pkginfo = read_content(os.path.join(results_dir, 'swcontext/pkgs.txt'), ignore_missing=True)
 
     for test_run_name, test_run_path in _directory_names_and_paths(results_dir):
