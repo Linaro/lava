@@ -1,36 +1,32 @@
-.. LAVA Dispatcher documentation master file, created by sphinx-quickstart on
-   Fri Sep 23 10:15:12 2011.  You can adapt this file completely to your
-   liking, but it should at least contain the root `toctree` directive.
+LAVA Manual
+##################
 
-LAVA Dispatcher Documentation
-*****************************
-
-LAVA Dispatcher is used to dispatch test jobs from server(master node) to the target
-boards in validation farm, and publish the test result back to dashboard. It is
-scheduled by validation scheduler, and it could also run as standalone.
-
-You can see an up-to-date list of supported target devices by looking at the
-`device types`_ in Launchpad.
-
-.. _device types: http://bazaar.launchpad.net/~linaro-validation/lava-dispatcher/trunk/files/head:/lava_dispatcher/default-config/lava-dispatcher/device-types
-
-Installation
-============
-
-The best way to install this is by doing a full deployment of LAVA. This is
-documented on our `main project page`_ or the Documentation link on any
-LAVA instance. However, you can also setup the dispatcher for 
-`stand-alone development and testing`_.
-
-.. _main project page: /static/docs/
-.. _stand-alone development and testing: standalonesetup.html
-
-Indices and tables
-==================
+[ `Home <../../>`_ ] [ `Dashboard <../../dashboard/>`_ ] [ `Scheduler <../../scheduler/>`_ ] [ `API <../../api/help/>`_ ]
 
 .. toctree::
    :maxdepth: 2
 
+   overview.rst
+   deployment-tool.rst
+   single-deployment.rst
+   distributed-deployment.rst
+   writing-tests.rst
+   writing-multinode.rst
+   test-repositories.rst
+   filters-reports.rst
+   healthchecks.rst
+   multinode-usecases.rst
+   development.rst
+   faq.rst
+
+
+Other Topics
+************
+
+.. toctree::
+    :maxdepth: 2
+
+   extending.rst
    standalonesetup.rst
    configuration.rst
    jobfile.rst
@@ -48,18 +44,4 @@ Indices and tables
    ipmi-pxe-deploy.rst
    components.rst
    process.rst
-
-* :ref:`search`
-
-Source code, bugs and patches
-=============================
-
-You can get the source code with git using ``git clone
-http://git.linaro.org/git-ro/lava/lava-dispatcher.git``.
-Patches can be submitted to
-http://lists.linaro.org/mailman/listinfo/linaro-validation mailing list.
-
-Please report all bugs at https://bugs.launchpad.net/lava-dispatcher/+filebug.
-
-Most of the team is usually available in ``#linaro-lava`` on ``irc.freenode.net``.
-Feel free to drop by to chat and ask questions.
+   linaro-dashboard-bundle/index.rst
