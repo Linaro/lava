@@ -1,7 +1,7 @@
 .. _deploy_bootloader:
 
 Deploying a Bootloader Device
-===============================
+=============================
 
 Adding a Bootloader device allows the LAVA user to directly control the 
 bootloader on the target, and provide the desired boot sequence. This page 
@@ -9,14 +9,14 @@ outlines the steps required to add a new Bootloader device to your LAVA
 deployment and make it able to accept job requests.
 
 Overview
-------------------------
+--------
 
 The Bootloader device extends master image type devices to allow backwards 
 compatiblity. In the example below, an Arndale target will be used as an 
 example to show how you can tftp boot a target.
 
 Installing a tftp server on each dispatcher
---------------------------
+-------------------------------------------
 
 Any tftp server will work, if configured correctly. Use this as a guideline.
 
@@ -29,7 +29,7 @@ Install openbsd-inetd package on the dispatcher(s)::
     # apt-get install openbsd-inetd
 
 Configuring the tftp server on each dispatcher
---------------------------
+----------------------------------------------
 
 Configure each TFTP server to serve from the dispatcher's download directory::
 
@@ -46,12 +46,12 @@ Reload the TFTP server::
     # start tftpd-hpa
 
 Configure the dispatcher for tftp booting
-------------------------
+-----------------------------------------
 
-Deployment schema::
+Deployment schema:
 
 This schema describes the options for deploy_linaro_kernel. It is important 
-to notice that only manditory property is "kernel."
+to notice that only manditory property is "kernel."::
 
     parameters_schema = {
         'type': 'object',
@@ -115,10 +115,10 @@ Required configuration parameters::
     # hard_reset_command - This command will power cycle the device.
     # power_off_cmd - This command will turn off power to the device.
 
-Job example::
+Job example:
 
 Below shows how to netboot an Arndale device, by supplying a kernel, ramdisk, 
-and dtb to the LAVA server.
+and dtb to the LAVA server::
 
     # /tmp/boot-cmds-tftp-kernel.json
 
@@ -160,9 +160,7 @@ commands as ``root``:
     lava-dispatch /tmp/boot-cmds-tftp-kernel.json.json
 
 Submitting a Bootloader Job
---------------------
+---------------------------
 
-The scheduler documentation includes instructions for `submitting a job`_ to
+The scheduler documentation includes instructions for :ref:`job_submission` to
 LAVA. You can use the job file shown above as the basis for your new job.
-
-.. _submitting a job: http://lava-scheduler.readthedocs.org/en/latest/usage.html#submitting-jobs

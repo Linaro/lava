@@ -42,7 +42,7 @@ Typically this is the first command that runs in any LAVA test job::
     ]
  }
 
-Example functional test: **kvm-single-node**::
+Example functional test: **kvm-single-node**:
 
 http://staging.git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/single-node-job/neil.williams/kvm-single-node.json
 
@@ -99,7 +99,7 @@ Available parameters
     ]
  }
  
-Example functional test: **model-express-group-multinode**::
+Example functional test: **model-express-group-multinode**:
 
 http://staging.git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/neil.williams/fastmodel-vexpress-group.json
 
@@ -120,11 +120,11 @@ device tree blob::
         "rootfs": "http://community.validation.linaro.org/images/qemu/beagle-nano.img.gz"
     }
 
-Example functional test: **bootloader-lava-test-shell-multinode**::
+Example functional test: **bootloader-lava-test-shell-multinode**:
 
 http://staging.git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/bootloader/bootloader-lava-test-shell-multinode.json
 
-**qemu-kernel-boot**::
+**qemu-kernel-boot**:
 
 http://staging.git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/single-node-job/qemu/qemu-kernel-boot.json
 
@@ -165,7 +165,7 @@ the ``deploy_linaro_image`` action::
 .. note:: It is not necessary to use ``boot_linaro_image`` if the next
    action in the test is ``lava_test_shell``.
 
-Example functional test: **kvm-kernel-boot**::
+Example functional test: **kvm-kernel-boot**:
 
 http://staging.git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/single-node-job/qemu/kvm-kernel-boot.json
 
@@ -200,7 +200,7 @@ Interactive boot commands
     ]
  }
 
-Example functional test: **bootloader-lava-test-shell-multinode**::
+Example functional test: **bootloader-lava-test-shell-multinode**:
 
 http://staging.git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/bootloader/bootloader-lava-test-shell-multinode.json
 
@@ -243,7 +243,7 @@ tests defined in a YAML file::
     ]
  }
 
-Example functional test: **kvm-group-multinode**::
+Example functional test: **kvm-group-multinode**:
 
 http://staging.git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/neil.williams/kvm-only-group.json
 
@@ -270,7 +270,7 @@ To run multiple tests without a reboot in between each test run, extra ``testdef
     ]
  }
 
-Example functional test: **model-express-group-multinode**::
+Example functional test: **model-express-group-multinode**:
 
 http://staging.git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/neil.williams/fastmodel-vexpress-group.json
 
@@ -306,7 +306,7 @@ actions::
     ]
  }
 
-Example functional test: **bootloader-lava-test-shell-multinode**::
+Example functional test: **bootloader-lava-test-shell-multinode**:
 
 http://staging.git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/bootloader/bootloader-lava-test-shell-multinode.json
 
@@ -322,7 +322,7 @@ Available parameters
   use this action. The parameter accepts any string, the string must
   exactly match one of the roles specified in the :term:`device group`.
 
-Example functional test: **kvm-group-multinode**::
+Example functional test: **kvm-group-multinode**:
 
 http://staging.git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/neil.williams/kvm-only-group.json
 
@@ -346,12 +346,12 @@ To run multiple tests without a reboot in between each test run, extra ``testdef
             }
         },
 
-Example functional test: **model-express-group-multinode**::
+Example functional test: **model-express-group-multinode**:
 
 http://staging.git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/neil.williams/fastmodel-vexpress-group.json
 
 To run multiple tests with a reboot in between each test run, add extra ``lava_test_shell``
-actions::
+actions:
 
 * :term:`stream`: the bundle stream to which the results will be submitted.
   The user submitting the test must be able to upload to the specified
@@ -385,7 +385,7 @@ LAVA job to test Android::
     ]
  }
 
-Example functional test: **master-lava-android-test-multinode**::
+Example functional test: **master-lava-android-test-multinode**:
 
 http://staging.git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/master/master-lava-android-test-multinode.json
 
@@ -423,7 +423,7 @@ Available parameters
   use this action. The parameter accepts any string, the string must
   exactly match one of the roles specified in the :term:`device group`.
 
-Example functional test: **master-lava-android-test-multinode**::
+Example functional test: **master-lava-android-test-multinode**:
 
 http://staging.git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/master/master-lava-android-test-multinode.json
 
@@ -485,11 +485,11 @@ that was deployed using the ``deploy_linaro_android_image`` action::
     ]
  }
 
-Example functional test: **master-job-defined-boot-cmds-android**::
+Example functional test: **master-job-defined-boot-cmds-android**:
 
 http://staging.git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/single-node-job/master/master-job-defined-boot-cmds-android.json
 
-Example functional test: **master-job-defined-boot-cmds-android**::
+Example functional test: **master-job-defined-boot-cmds-android**:
 
 http://staging.git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/single-node-job/master/master-job-defined-boot-cmds-android.json
 
@@ -510,7 +510,7 @@ lava-android-test test::
     }
  }
 
-Example functional test: **master-lava-android-test-multinode**::
+Example functional test: **master-lava-android-test-multinode**:
 
 http://staging.git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/master/master-lava-android-test-multinode.json
 
@@ -529,7 +529,7 @@ lava-android-test test::
     }
  }
 
-Example functional test: **master-lava-android-test-multinode**::
+Example functional test: **master-lava-android-test-multinode**:
 
 http://staging.git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/master/master-lava-android-test-multinode.json
 
@@ -548,7 +548,7 @@ Available parameters
   use this action. The parameter accepts any string, the string must
   exactly match one of the roles specified in the :term:`device group`.
 
-Example functional test: **master-lava-android-test-multinode**::
+Example functional test: **master-lava-android-test-multinode**:
 
 http://staging.git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/master/master-lava-android-test-multinode.json
 
@@ -585,6 +585,6 @@ lava-test-shell test(s)::
     }
  }
 
-Example functional test: **master-boot-options-boot-cmds-lava-test-shell-android**::
+Example functional test: **master-boot-options-boot-cmds-lava-test-shell-android**:
 
 http://staging.git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/single-node-job/master/master-boot-options-lava-test-shell-android.json:

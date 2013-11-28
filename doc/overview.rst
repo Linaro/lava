@@ -298,6 +298,8 @@ Here's a minimal job that could be executed ::
 
 .. note:: Replace *username* with your username.
 
+.. _job_submission:
+
 Job Submission
 --------------
 

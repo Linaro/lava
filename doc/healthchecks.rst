@@ -26,6 +26,8 @@ The required entry is a JSON test file with the following changes::
 * The health_check boolean set to ```true```
 * An optional list of email addresses to be notified if the health check fails.
 
+::
+
  {
     "job_name": "lab-health-beaglebone-black",
     "health_check": true,

@@ -1,15 +1,17 @@
 Boot Management
 ###############
 
-LAVA offers many facilities to control the boot process of a :ref:`DUT`. This enables users to configure the boot process to support custom software images.
+LAVA offers many facilities to control the boot process of a :term:`DUT`. This enables users to configure the boot process to support custom software images.
 
 Boot Commands Stanzas
 *********************
 
 Boot command stanzas are *predefined* :ref:`boot_commands` which are included in the :ref:`device_configuration` or in the :ref:`device_type_configuration`.
 
-Defining Boot Commands
-======================
+.. _boot_commands:
+
+Boot Commands
+=============
 
 The following example demonstrates how to define a boot command stanza.
 

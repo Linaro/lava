@@ -77,10 +77,12 @@ Changes to submission JSON
 
 1. ``device`` or ``device_type`` move into a **device_group** list
 2. Each device type has a ``count`` assigned
+
   1. If a ``device`` is specified directly, count needs to be one.
   2. If ``device_type`` is used and count is larger than one, enough
      devices will be allocated to match the count and all such devices will
      have the same role and use the same commands and the same actions.
+
 3. Add tags, if required, to each role.
 4. If specific actions should only be used for particular roles, add a
    role field to the parameters of the action.

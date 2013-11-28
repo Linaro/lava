@@ -24,7 +24,7 @@ Other Topics
 ************
 
 .. toctree::
-    :maxdepth: 2
+   :maxdepth: 2
 
    extending.rst
    standalonesetup.rst
@@ -42,6 +42,5 @@ Other Topics
    kvm-deploy.rst
    nexus-deploy.rst
    ipmi-pxe-deploy.rst
-   components.rst
    process.rst
    linaro-dashboard-bundle/index.rst

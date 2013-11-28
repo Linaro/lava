@@ -16,6 +16,7 @@ At a high-level LAVA includes:
      from.
 * `command line interface <https://lava-scheduler.readthedocs.org/en/latest/usage.html#submitting-jobs>`_
   that includes:
+
    * support for submitting, re-submitting, and cancelling test jobs.
    * support for adding/retrieving test result bundles.
 * An extensible server that allows for new custom extensions to be added.

@@ -172,6 +172,6 @@ dispatcher configuration above.
 Writing device information for a new board
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:link:`deploy_bootloader`
+:ref:`deploy_bootloader`
 
 

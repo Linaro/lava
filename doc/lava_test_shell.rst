@@ -241,7 +241,7 @@ Always set default values for all variables in the test definition file to
 allow for missing values in the JSON file. In the example above, ``$VARIABLE_NAME_2``
 is not defined in the JSON snippet, so the default would be used.
 
-**NOTE:**The code which implements this parameter function will put variable
+**NOTE:** The code which implements this parameter function will put variable
 name and value into shell script like below::
 
     VARIABLE_NAME_1='value_1'

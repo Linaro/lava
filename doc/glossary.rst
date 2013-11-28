@@ -82,3 +82,38 @@ Glossary of terms
 
   rootfstype
      Filesystem type for the root filesystem, e.g. ext2, ext3, ext4.
+
+  MultiNode
+     A single test job which runs across multiple devices. See
+     :ref:`multinode_api` and :ref:`multinode_use_cases`.
+
+  physical access
+    The user or group with physical access to the device, for example
+    to fix a broken SD card or check for possible problems with physical
+    connections. The user or group with physical access is recommended
+    to be one of the superusers.
+
+  retired
+    A device is retired when it can no longer be used by LAVA. A retired
+    device allows historical data to be retained in the database, including
+    log files, result bundles and state transitions. Devices can also be
+    retired when the device is moved from one instance to another.
+
+  device owner
+    A device owner has permission to change the status of a particular
+    device and update the free text description of a device. Note that
+    superusers of the LAVA instance are always able to submit jobs to
+    and administer any devices on that instance. See also :ref:`device_owner_help`
+    and :ref:`owner_actions`.
+
+  hostname
+    The unique name of this device in this LAVA instance, used to link all
+    jobs, results and device information to a specific device configuration.
+
+  restricted device
+    A restricted device can only accept job submissions from the device
+    owner. If the device owner is a group, all users in that group can
+    submit jobs to the device.
+
+  DUT
+    Device Under Test - a quick way to refer to the device in LAVA.

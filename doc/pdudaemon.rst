@@ -23,9 +23,12 @@ Example config file for lavapdu server::
    "dbpass": "pdudaemon",
    "dbname": "lavapdu"
  }
+ 
 Hostname is the interface IP address that PDU Daemon will attempt to bind to.
 
 Example invocation of pduclient::
+
  # ./pduclient --daemon pdu_daemon_hostname --hostname pdu_hostname --command pdu_command --port pdu_port_number
  $ ./pduclient --daemon services --hostname pdu12 --command reboot --port 01
+
 this will ask the PDU Daemon running on "services" to reboot port 1 on the pdu with hostname pdu12.

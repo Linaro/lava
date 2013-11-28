@@ -150,7 +150,7 @@ terminal of a target:
   client_type = highbank
   connection_command = ipmitool -I lanplus -U admin -P admin -H %(ecmeip)s sol activate
 
-.. _sol_closed_bmc
+.. _sol_closed_bmc:
 
 Serial over LAN input issues
 ............................

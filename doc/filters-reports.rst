@@ -69,10 +69,10 @@ the report chart.
 
 Graph type can have three different options:
  * pass/fail displays number of passed test cases in each test run on the
- report
+   report
  * percentage displays percentage of passed test cases in each test run
  * measurement graph type will display the first test case measurement from
-each test run
+   each test run
 
 
 Image Report table
