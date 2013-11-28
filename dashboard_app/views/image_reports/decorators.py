@@ -16,3 +16,17 @@ def ownership_required(view_func):
         else:
             raise PermissionDenied
     return wrapper
+
+
+def public_filters_or_login_required(view_func):
+    @wraps(view_func, assigned=available_attrs(view_func))
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated():
+            report_name = kwargs.get('name', None)
+            image_report = ImageReport.objects.get(name=report_name)
+            for image_chart in image_report.imagereportchart_set.all():
+                for chart_filter in image_chart.imagechartfilter_set.all():
+                    if not chart_filter.filter.public:
+                        raise PermissionDenied
+        return view_func(request, *args, **kwargs)
+    return wrapper

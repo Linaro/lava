@@ -36,7 +36,10 @@ from lava_server.bread_crumbs import (
 )
 
 from dashboard_app.views import index
-from dashboard_app.views.image_reports.decorators import ownership_required
+from dashboard_app.views.image_reports.decorators import (
+    ownership_required,
+    public_filters_or_login_required,
+)
 
 from dashboard_app.views.image_reports.forms import (
     ImageReportEditorForm,
@@ -66,15 +69,18 @@ from dashboard_app.views.filters.tables import AllFiltersSimpleTable
 
 
 @BreadCrumb("Image reports", parent=index)
-@login_required
 def image_report_list(request):
 
     image_reports = ImageReport.objects.all()
 
     public_image_table = PublicImageReportTable("public-image-reports", None,
                                                 params=(request.user,))
-    user_image_table = UserImageReportTable("user-image-reports", None,
-                                            params=(request.user,))
+
+    if request.user.is_authenticated():
+        user_image_table = UserImageReportTable("user-image-reports", None,
+                                                params=(request.user,))
+    else:
+        user_image_table = None
 
     return render_to_response(
         'dashboard_app/image_report_list.html', {
@@ -87,7 +93,7 @@ def image_report_list(request):
 
 
 @BreadCrumb("Image report {name}", parent=image_report_list, needs=['name'])
-@login_required
+@public_filters_or_login_required
 def image_report_display(request, name):
 
     image_report = ImageReport.objects.get(name=name)
@@ -287,7 +293,7 @@ def image_chart_settings_update(request, name, id):
         return HttpResponse(data, mimetype='application/json')
 
 
-@login_required
+@public_filters_or_login_required
 def image_chart_export(request, name, id):
     # Create and serve the CSV file.
 
