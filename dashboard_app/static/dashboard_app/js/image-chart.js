@@ -238,15 +238,16 @@ $(document).ready(function () {
 
     apply_settings = function(chart_id, chart_data) {
 
-        if (chart_data.user.start_date) {
-            $("#start_date_" + chart_id).val(chart_data.user.start_date);
-        }
+        if (chart_data.user) { // Is authenticated.
+            if (chart_data.user.start_date) {
+                $("#start_date_" + chart_id).val(chart_data.user.start_date);
+            }
+            if (chart_data.user.is_legend_visible == false) {
+                $("#is_legend_visible_" + chart_id).attr("checked", false);
+            }
 
-        if (chart_data.user.is_legend_visible == false) {
-            $("#is_legend_visible_" + chart_id).attr("checked", false);
+            set_subscription_link(chart_id, chart_data.user.has_subscription);
         }
-
-        set_subscription_link(chart_id, chart_data.user.has_subscription);
     }
 
     update_settings = function(chart_id, report_name) {

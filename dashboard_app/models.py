@@ -1992,7 +1992,8 @@ class ImageReportChart(models.Model):
         """
 
         chart_data = self.get_basic_chart_data()
-        chart_data["user"] = self.get_user_chart_data(user)
+        if user.is_authenticated():
+            chart_data["user"] = self.get_user_chart_data(user)
 
         chart_data["filters"] = {}
         for image_chart_filter in self.imagechartfilter_set.all():

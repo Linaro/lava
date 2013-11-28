@@ -60,5 +60,11 @@ class PublicImageReportTable(UserImageReportTable):
         del self.base_columns['remove']
 
     def get_queryset(self, user):
-        return ImageReport.objects.filter(
-            is_published=True).exclude(user=user)
+        # All public reports for authenticated users.
+        # Only reports containing all public filters for non-authenticated.
+        public_reports = ImageReport.objects.filter(is_published=True)
+        if user.is_authenticated():
+            return public_reports.exclude(user=user)
+        else:
+            return public_reports.exclude(
+                imagereportchart__imagechartfilter__filter__public=False)
