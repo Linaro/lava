@@ -132,7 +132,7 @@ from lava_dispatcher import utils
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.device.target import Target
 from lava_dispatcher.downloader import download_image
-from lava_dispatcher.errors import GeneralError
+from lava_dispatcher.errors import GeneralError, CriticalError
 
 LAVA_TEST_DIR = '%s/../lava_test_shell' % os.path.dirname(__file__)
 LAVA_MULTI_NODE_TEST_DIR = '%s/../lava_test_shell/multi_node' % os.path.dirname(__file__)
@@ -351,9 +351,13 @@ class TestDefinitionLoader(object):
                 info['test_params'] = ''
 
             test = testdef_repo.get('testdef', 'lavatest.yaml')
-            with open(os.path.join(repo, test), 'r') as f:
-                logging.debug('loading test definition ...')
-                testdef = yaml.safe_load(f)
+            try:
+                with open(os.path.join(repo, test), 'r') as f:
+                    logging.debug('loading test definition ...')
+                    testdef = yaml.safe_load(f)
+            except IOError as e:
+                msg = "Unable to load test definition '%s/%s': %s" % (os.path.basename(repo), test, e)
+                raise CriticalError(msg)
 
             if 'test-case-deps' in testdef:
                 self._get_dependent_test_cases(testdef)
