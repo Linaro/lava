@@ -108,19 +108,21 @@ class RestrictedIDLinkColumn(IDLinkColumn):
             return record.pk
 
 
-def all_jobs_with_device_sort():
+def all_jobs_with_custom_sort():
     jobs = TestJob.objects.select_related("actual_device", "requested_device",
                                           "requested_device_type", "submitter", "user", "group")\
         .extra(select={'device_sort': 'coalesce(actual_device_id, '
-                                      'requested_device_id, requested_device_type_id)'}).all()
+                                      'requested_device_id, requested_device_type_id)',
+                       'duration_sort': 'end_time - start_time'}).all()
     return jobs.order_by('submit_time')
 
 
-def my_jobs_with_device_sort(user):
+def my_jobs_with_custom_sort(user):
     jobs = TestJob.objects.select_related("actual_device", "requested_device",
                                           "requested_device_type", "group")\
         .extra(select={'device_sort': 'coalesce(actual_device_id, '
-                                      'requested_device_id, requested_device_type_id)'}).all()\
+                                      'requested_device_id, requested_device_type_id)',
+                       'duration_sort': 'end_time - start_time'}).all()\
         .filter(submitter=user)
     return jobs.order_by('submit_time')
 
@@ -150,7 +152,7 @@ class JobTable(DataTablesTable):
     submitter = Column()
     submit_time = DateColumn()
     end_time = DateColumn()
-    duration = Column()
+    duration = Column(accessor='duration_sort')
 
     datatable_opts = {
         'aaSorting': [[6, 'desc']],
@@ -160,7 +162,7 @@ class JobTable(DataTablesTable):
 
 class IndexJobTable(JobTable):
     def get_queryset(self):
-        return all_jobs_with_device_sort()\
+        return all_jobs_with_custom_sort()\
             .filter(status__in=[TestJob.SUBMITTED, TestJob.RUNNING])
 
     class Meta:
@@ -624,7 +626,7 @@ def health_job_list(request, pk):
 class AllJobsTable(JobTable):
 
     def get_queryset(self):
-        return all_jobs_with_device_sort()
+        return all_jobs_with_custom_sort()
 
     datatable_opts = JobTable.datatable_opts.copy()
 
@@ -657,7 +659,7 @@ class MyJobsTable(DataTablesTable):
     description = Column(attrs=Attrs(width="30%"))
     submit_time = DateColumn()
     end_time = DateColumn()
-    duration = Column()
+    duration = Column(accessor='duration_sort')
 
     datatable_opts = {
         'aaSorting': [[5, 'desc']],
@@ -668,7 +670,7 @@ class MyJobsTable(DataTablesTable):
     searchable_columns = ['description']
 
     def get_queryset(self, user):
-        return my_jobs_with_device_sort(user)
+        return my_jobs_with_custom_sort(user)
 
 
 def myjobs_json(request):
