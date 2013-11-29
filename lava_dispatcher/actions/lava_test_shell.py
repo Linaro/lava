@@ -473,7 +473,7 @@ class URLTestDefinition(object):
         fout.write('######\n')
         # inject the parameters that was set in json
         fout.write('###test parameters from json###\n')
-        if 'test_params' in self._sw_sources[0] and self._sw_sources[0]['test_params'] != '':
+        if self._sw_sources and 'test_params' in self._sw_sources[0] and self._sw_sources[0]['test_params'] != '':
             _test_params_temp = eval(self._sw_sources[0]['test_params'])
             for param_name, param_value in _test_params_temp.items():
                 fout.write('%s=\'%s\'\n' % (param_name, param_value))
