@@ -12,17 +12,16 @@ Build-Depends: debhelper (>= 8.0.0),
 X-Python-Version: 2.7
 Standards-Version: 3.9.4
 Homepage: http://www.linaro.org/engineering/validation
-Vcs-Git: git://git.linaro.org/people/neilwilliams/lava-server-debian.git
-Vcs-Browser: https://git.linaro.org/gitweb?p=people/neilwilliams/lava-server-debian.git;a=summary
+Vcs-Git: https://alioth.debian.org/anonscm/git/pkg-linaro-lava/lava-server.git
+Vcs-Browser: https://alioth.debian.org/plugins/scmgit/cgi-bin/gitweb.cgi?p=pkg-linaro-lava/lava-server.git;a=summary
 
 Package: lava-server
 Architecture: all
 Provides: lava-scheduler, lava-dashboard
 Conflicts: lava-scheduler, lava-dashboard
 Replaces: lava-scheduler, lava-dashboard
-Depends: adduser, dbconfig-common, ucf,
- libapache2-mod-uwsgi, libjs-jquery-cookie, libapache2-mod-wsgi,
- python-daemon, 
+Depends: apache2, adduser, libapache2-mod-uwsgi, libjs-jquery-cookie,
+ libapache2-mod-wsgi, python-daemon,
  ${python:Depends}, ${misc:Depends}
 Recommends: lava-coordinator
 Description: Linaro Automated Validation Architecture server
@@ -34,10 +33,11 @@ Description: Linaro Automated Validation Architecture server
 Package: lava
 Architecture: all
 Section: metapackages
-Depends: lava-server, lava-dispatcher, dbconfig-common,
- postgresql, postgresql-9.1, lava-coordinator,
+Depends: lava-server, lava-dispatcher, lava-coordinator,
+ postgresql, postgresql-9.1,
  lava-tool, linaro-image-tools,
  ${misc:Depends}
+Conficts: python-django (<< 1.5)
 Recommends: lava-server-doc
 Description: Linaro Automated Validation Architecture metapackage
  Metapackage to bring in all LAVA components on a single
@@ -69,4 +69,3 @@ Description: documentation for lava-server
  .
  The manual includes use cases and examples to
  help users write tests for LAVA.
-

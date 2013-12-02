@@ -2,7 +2,7 @@ django python-django; PEP386
 django_openid_auth python-django-auth-openid; PEP386
 django_restricted_resource python-django-restricted-resource; PEP386
 django_tables2 python-django-tables2; PEP386
-django_staticfiles python-django; PEP386
+django_staticfiles python-django-staticfiles; PEP386
 django-debian lava-server
 lava_tool lava-tool; PEP386
 lava_utils_interface lava-utils-interface; PEP386
