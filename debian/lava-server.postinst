@@ -17,38 +17,28 @@ set -e
 # for details, see http://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
-LAVA_DB_INC=/etc/lava-server/db.inc
-ucf -p $LAVA_DB_INC
-if [ -f $LAVA_DB_INC ]; then
-  rm $LAVA_DB_INC
-fi
-
-# Source debconf library.
-. /usr/share/debconf/confmodule
-# dbconfig doesn't have perl bindings, so we have to use shell.
-. /usr/share/dbconfig-common/dpkg/postinst.pgsql
-dbc_generate_include=sh:$LAVA_DB_INC
-# minimal permissions
-dbc_generate_include_owner="root:root"
-dbc_generate_include_perms="600"
-dbc_go lava-server $@
-
 if [ -f /etc/lava-server/instance.conf ]; then
     . /etc/lava-server/instance.conf
 else
     . /usr/share/lava-server/instance.template
 fi
-if [ ! -f $LAVA_DB_INC ]; then
-   exit
+
+if [ "$LAVA_DB_NAME" = '$LAVA_DB_NAME' ]
+then
+  LAVA_DB_NAME="lavaserver"
 fi
-. $LAVA_DB_INC
-
-# get the config version somehow
-LAVA_DB_NAME="$dbc_dbname"
-LAVA_DB_USER="$dbc_dbuser"
-LAVA_DB_PORT="$dbc_dbport"
-LAVA_DB_PASSWORD="$dbc_dbpass"
-
+if [ "$LAVA_DB_USER" = '$LAVA_DB_USER' ]
+then
+  LAVA_DB_USER="lavaserver"
+fi
+if [ "$LAVA_DB_PORT" = '$LAVA_DB_PORT' ]
+then
+  LAVA_DB_PORT=""
+fi
+if [ "$LAVA_DB_PASSWORD" = '$LAVA_DB_PASSWORD' ]
+then
+  LAVA_DB_PASSWORD=`env LANG=C LC_ALL=C tr -dc "[:alnum:]" < /dev/urandom | dd bs=1 count=12 2>/dev/null`
+fi
 LAVA_SYS_USER="$LAVA_DB_NAME"
 LAVA_SYS_HOME=/var/lib/lava-server/home/
 
@@ -72,6 +62,7 @@ LAVA_DEV_MODE="$LAVA_DEV_MODE"
 # PostgreSQL configuration
 LAVA_DB_NAME="$LAVA_DB_NAME"
 LAVA_DB_USER="$LAVA_DB_USER"
+LAVA_DB_SERVER="localhost"
 LAVA_DB_PORT="$LAVA_DB_PORT"
 LAVA_DB_PASSWORD="$LAVA_DB_PASSWORD"
 # Scheduler configuration
@@ -82,6 +73,48 @@ INSTANCE_CONF
 }
 
 write_config >/etc/lava-server/instance.conf
+
+die() {
+    echo "$1"
+    exit 1
+}
+
+install_database()
+{
+    # Create database user, if it doesn't exist
+    if ! sudo -u postgres psql -c "SELECT usename FROM pg_user WHERE usename='$LAVA_DB_USER'" | grep "$LAVA_DB_USER"; then
+        sudo -u postgres createuser \
+            --no-createdb \
+            --encrypted \
+            --login \
+            --no-superuser \
+            --no-createrole \
+            --no-password \
+            --port "$LAVA_DB_PORT" \
+            "$LAVA_DB_USER" \
+            ||  "Failed to create database user"
+    fi
+
+    # Set a password for our new user
+    sudo -u postgres psql \
+        --port "$LAVA_DB_PORT" \
+        --quiet \
+        --command="ALTER USER \"$LAVA_DB_USER\" WITH PASSWORD '$LAVA_DB_PASSWORD'" \
+        || die "Failed to set database password"
+
+    # Create a database for our new user, if it doesn't exist
+    if ! sudo -u postgres psql -c "SELECT datname FROM pg_database WHERE datname='$LAVA_DB_NAME'" | grep "$LAVA_DB_NAME"; then
+        sudo -u postgres createdb \
+            --port "$LAVA_DB_PORT" \
+            --locale=C.UTF-8 \
+            --encoding=UTF-8 \
+            --owner="$LAVA_DB_USER" \
+            --template=template0 \
+            --no-password \
+            "$LAVA_DB_NAME" \
+            || die "Failed to create a database"
+    fi
+}
 
 case "$1" in
     configure)
@@ -99,6 +132,7 @@ case "$1" in
      # Allow lava user to write the secret key
      touch /etc/lava-server/secret_key.conf
      chown $LAVA_SYS_USER:$LAVA_SYS_USER /etc/lava-server/secret_key.conf
+     install_database
      # superuser - password must be changed
      su $LAVA_SYS_USER -c "lava-server manage createsuperuser --noinput --username=$LAVA_SYS_USER --email=$LAVA_SYS_USER@lava.invalid" || true
      # syncdb
