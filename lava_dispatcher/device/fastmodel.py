@@ -47,7 +47,6 @@ from lava_dispatcher.utils import (
     extract_targz,
     DrainConsoleOutput,
     finalize_process,
-    string_to_list,
 )
 from lava_dispatcher import deployment_data
 
@@ -365,10 +364,7 @@ class FastModelTarget(Target):
 
         if self._uefi:
             self._enter_bootloader(self.proc)
-            if self._is_job_defined_boot_cmds(self.config.boot_cmds):
-                boot_cmds = self.config.boot_cmds
-            else:
-                boot_cmds = string_to_list(self.config.boot_cmds.encode('ascii'))
+            boot_cmds = self._load_boot_cmds()
             self._customize_bootloader(self.proc, boot_cmds)
 
         self._auto_login(self.proc)

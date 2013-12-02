@@ -63,7 +63,7 @@ class BootloaderTarget(MasterImageTarget):
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
                              bootloader, firmware, rootfstype, bootloadertype,
                              target_type):
-        # Set deployment data
+        # Get deployment data
         self.deployment_data = deployment_data.get(target_type)
         if bootloadertype == "u_boot":
             # We assume we will be controlling u-boot
@@ -168,23 +168,10 @@ class BootloaderTarget(MasterImageTarget):
                                                                  rootfstype,
                                                                  bootloadertype)
 
-    def _inject_boot_cmds(self):
-        if self._is_job_defined_boot_cmds(self.config.boot_cmds):
-            logging.info('Overriding boot_cmds from job file')
-            self._boot_cmds = string_to_list(
-                self._lava_cmds.encode('ascii')) + self.config.boot_cmds
-        else:
-            if self.config.boot_cmds_tftp is None:
-                raise CriticalError("No TFTP boot commands defined")
-            else:
-                logging.info('Loading boot_cmds from device configuration')
-                self._boot_cmds = self._lava_cmds + self.config.boot_cmds_tftp
-                self._boot_cmds = string_to_list(
-                    self._boot_cmds.encode('ascii'))
-
     def _run_boot(self):
         self._enter_bootloader(self.proc)
-        self._inject_boot_cmds()
+        self._boot_cmds = self._load_boot_cmds(default='boot_cmds_tftp',
+                                               extend=self._lava_cmds)
         # Sometimes a command must be run to clear u-boot console buffer
         if self.config.pre_boot_cmd:
             self.proc.sendline(self.config.pre_boot_cmd,
@@ -205,7 +192,7 @@ class BootloaderTarget(MasterImageTarget):
                     self._soft_reboot()
                     self._run_boot()
             except:
-                raise OperationFailed("_run_boot failed")
+                raise OperationFailed("_run_boot failed:")
             # When the kernel does DHCP which is the case for NFS
             # the nameserver data does get populated by the DHCP
             # daemon. Thus, LAVA will populate the name server data.
