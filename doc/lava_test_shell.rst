@@ -241,14 +241,22 @@ Always set default values for all variables in the test definition file to
 allow for missing values in the JSON file. In the example above, ``$VARIABLE_NAME_2``
 is not defined in the JSON snippet, so the default would be used.
 
+**NOTE:** The format of default parameters in yaml file is below, please note that
+there is **not** a hyphen at the start of the line and **not** quotes around either
+the variable name or the variable value ::
+
+    VARIABLE_NAME_1: value_1
+
 **NOTE:** The code which implements this parameter function will put variable
-name and value into shell script like below::
+name and value at the head of test shell script like below::
 
     VARIABLE_NAME_1='value_1'
 
-So please make sure you didn't put any special character into value or
-variable name. Because we use two single quote marks around value strings,
-if you put any variable into value strings, that will not be expanded.
+So please make sure you didn't put any special character(like single quote) into value or
+variable name. But Spaces and double quotes can be included in value.
+Because we use two single quote marks around value strings, if you put any variable into
+value strings, that will **not** be expanded.
+
 
 Examples:
 
