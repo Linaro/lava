@@ -393,7 +393,7 @@ def get_restricted_job(user, pk):
     """
     job = TestJob.get_by_job_number(pk)
 
-    if not job.is_accessible_by(user):
+    if not job.is_accessible_by(user) and not user.is_superuser:
         raise PermissionDenied()
     return job
 
