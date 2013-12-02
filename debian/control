@@ -12,8 +12,8 @@ Build-Depends: debhelper (>= 8.0.0),
 X-Python-Version: 2.7
 Standards-Version: 3.9.4
 Homepage: http://www.linaro.org/engineering/validation
-Vcs-Git: git://git.linaro.org/people/neilwilliams/lava-dispatcher.git
-Vcs-Browser: https://git.linaro.org/gitweb?p=people/neilwilliams/lava-dispatcher.git;a=summary
+Vcs-Git: https://alioth.debian.org/anonscm/git/pkg-linaro-lava/lava-dispatcher.git
+Vcs-Browser: https://alioth.debian.org/plugins/scmgit/cgi-bin/gitweb.cgi?p=pkg-linaro-lava/lava-dispatcher.git;a=summary
 
 Package: lava-dispatcher
 Architecture: all
