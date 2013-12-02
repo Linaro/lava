@@ -1,35 +1,62 @@
 lava-server for Debian
-----------------------
+######################
 
- The default install setups a LAVA server at http://lava-server:80/
- via your apache config. This may need to added to your local DNS or
- /etc/hosts file before your web browser can load the server pages.
+ The default install provides an Apache2 config suitable for
+ a LAVA server at http://localhost/ once enabled.
 
-# The following notes will be improved and removed/migrated later
+ Current versions of LAVA depend on django 1.4 and do not
+ operate with django 1.5. Until this is fixed upstream, a
+ snapshot version of python-django *must* be used.
 
-lava-server for Debian
-======================
-
-To install all of LAVA on a single machine, use:
+ To install all of LAVA on a single machine, use:
 
  $ sudo apt-get install postgresql postgresql-9.1
- $ sudo ## add linaro repository
- $ sudo apt-get update
+ $ wget http://snapshot.debian.org/archive/debian/20130224T223605Z/pool/main/p/python-django/python-django_1.4.5-1_all.deb
+ $ sudo dpkg -i python-django_1.4.5-1_all.deb
  $ sudo apt-get install lava
  $ sudo a2dissite 000-default
  $ sudo a2ensite lava-server.conf
  $ sudo service apache2 restart
 
-See also http://wiki.debian.org/LAVA
-
 Superuser
-========
+=========
 
- $ sudo su lavaserver
- $ lava-server manage createsuperuser --username default --email=$DEBEMAIL
+ A default lavaserver superuser is setup during package installation with
+ a random password. The default superuser is not the same as the lavaserver
+ system user nor the postgres user (despite the name).
 
-You can always delete this user later, but at least it gets
-you a default [sic] admin user with a password you know.
+ $ sudo lava-server manage createsuperuser --username default --email=$DEBEMAIL
+
+ This will prompt for name, email address and password.
+
+ You can always delete this user later, but at least it gets
+ you a default [sic] admin user with a password you know.
+
+ To change the password of the dummy superuser, login as this new superuser
+ at http://localhost/admin and select Users in the administrator interface.
+ Selecting lavaserver brings up the details of the installation superuser
+ and below the password field is a link to change the password without
+ needing to know the random password.
+
+ To delete the dummy superuser, login as this new superuser at 
+ http://localhost/admin and select Users in the administrator interface.
+ Select lavaserver and click the Delete link at the bottom of the page.
+
+Initial data
+============
+
+ $ sudo lava-server manage loaddata /usr/share/lava-server/starterkvm.json
+
+Instance name
+=============
+
+ The packaging currently configures LAVA to use the instance name of
+ default.
+
+Further information
+===================
+
+See also http://wiki.debian.org/LAVA
 
 LAVA Components
 ^^^^^^^^^^^^^^^
@@ -37,124 +64,18 @@ LAVA Components
 =============== =========================================
 lava            meta-package for single instance setup
 lava-server     apache and WSGI settings and HTML content
-lava-scheduler  scheduling daemon
 lava-dispatcher dispatches jobs to devices
 =============== =========================================
 
-lava-server recommends lava-scheduler & lava-dispatcher
-	checks for each and disables/enables in config
-	provides WSGI and apache conf files
+ Packages use a "default" instance but allow for other instances,
+ although there are limitations:
 
-Packages use a "default" instance but allow for other instances, possibly.
-(at least, don't prevent other instances.)
-	Limitations: /usr/share/lava-server/templates
-		(was "$LAVA_PREFIX/$LAVA_INSTANCE/code/current/server_code/templates/")
-		per instance run sockets for uwsgi
-		/var/log/lava-uwsgi.log
+ 1. Only one instance can be running at any one time.
+ 2. Instance templates share a common folder: /usr/share/lava-server/templates
 
-Need to prevent taking over the default apache site unless desired.
-    sudo a2ensite $LAVA_INSTANCE.conf
-#    sudo a2dissite 000-default || true
-    sudo service apache2 restart
+WSGI debugging help
+===================
 
-https://code.google.com/p/modwsgi/wiki/DebuggingTechniques
+ https://code.google.com/p/modwsgi/wiki/DebuggingTechniques
 
-If you get a 502 bad gateway, the uwsgi is probably not setup.
-
-Layout:
-$LAVA_PREFIX/$LAVA_INSTANCE/etc/lava-server/settings.conf
-
-	/etc/lava-server/default/settings.conf
-
-Media: tracked in db, so needs to be /var/lib/, not cache or log/
-
-lava-deployment-tool changes:
-	wizard_config_app done automatically by what is installed.
-	install_database & wizard_database: dbconfig-common
-    # Create database configuration file
-    /etc/lava-server/default_database.conf
-	lava sys user -> lava (debconf default)
-	Need a perl script to process /etc/lava/default/instance.conf (_save_config)
-	install /etc/lava-server/settings.conf
-
-Superuser
-^^^^^^^^^
-
-A default lavaserver superuser is setup during package installation with
-a random password. The default superuser is not the same as the lavaserver
-system user nor the postgres user (despite the name).
-
-To use the admin interface, create a new superuser:
-
- $ sudo su lavaserver -c "lava-server manage createsuperuser"
-
-This will prompt for name, email address and password.
-
-To change the password of the dummy superuser, login as this new superuser
-at http://localhost/admin and select Users in the administrator interface.
-Selecting lavaserver brings up the details of the installation superuser
-and below the password field is a link to change the password without
-needing to know the random password.
-
-To delete the dummy superuser, login as this new superuser at 
-http://localhost/admin and select Users in the administrator interface.
-Select lavaserver and click the Delete link at the bottom of the page.
-
-= Release cycles =
-
-Consideration needs to be given to how the packages should be made
-available as this will impact how uploaded packages are supported
-during the times when a distribution has a release freeze which does
-not coincide with the Linaro release cycles.
-
-Note: this is not about how the packages are built (all packages are
-expected to be architecture-independent and therefore built locally
-using clean chroots), rather about locations of the binary packages
-built by developers and the impact of the differences between the
-release cycles of those managing those locations and the needs of the
-LAVA team itself.
-
-== Use PPAs, Debian developer repositories or Linaro repositories ==
-
-Ubuntu / Launchpad have had PPAs available for some time. Debian is
-planning the same support. Linaro repositories using repo.linaro.org
-would require the same management as either Launchpad PPAs or Debian
-developer repositories. In terms of release cycles in this document,
-the term PPA covers all three, regardless of the location or the
-software used to serve the files.
-
-https://lists.debian.org/debian-devel/2013/05/msg00131.html
-
-PPAs generally suffer from ''version slide'' where multiple PPAs are
-necessary for each suite and support for missing suites is problematic
-whilst every available PPA has to be individually managed. One
-advantage of PPAs is direct upload which allows direct control over how
-long a particular suite is supported. Managing one PPA for every
-supported suite could be problematic but does allow the current Linaro
-upstream release.to be pushed to an otherwise frozen suite.
-
-Ubuntu PPAs and Debian developer repositories do not provide support
-for Fedora. None of the PPAs provide support for distribution
-derivatives and adding alternative listings only increases the
-management requirements.
-
-== Uploading directly to the distributions ==
-
-Direct inclusion into the distribution (Fedora, Debian etc.) solves the
-problems of installability on multiple suites and in derivatives (Debian
-packages can migrate into the appropriate Ubuntu suite automatically).
-One disadvantage is how the distribution release cycle differs from the
-Linaro support cycle. Whilst backports become available after a stable
-release, fixing issues during a distribution release freeze requires
-backporting changes to the upstream version of the packages already in
-the frozen suite. Migrating to a new upstream during a distribution
-release freeze is always difficult and permission is often denied.
-
-Once Debian developer repositories become available, it will be possible
-to combine the two approaches and only make a Debian developer repository
-or Linaro repository for the frozen suite when a sufficiently important
-new upstream release needs to be made available for the frozen suite.
-Release critical bugs filed against the distribution packages would still
-need a backported fix rather than a new upstream.
-
- -- Neil Williams <codehelp@debian.org>  Thu, 23 May 2013 08:52:04 +0100
+ If you get a 502 bad gateway, the uwsgi is probably not setup.

@@ -1,8 +1,1 @@
-#etc/settings.conf ./etc/lava-server/
-#etc/uwsgi.ini ./etc/lava-server/
-#etc/debug.wsgi ./etc/lava-server/
-#etc/lava-server.wsgi ./etc/lava-server/
-#etc/uwsgi.reload ./etc/lava-server/
-#etc/lava-server.conf ./etc/apache2/sites-available/
-#etc/logrotate.d/ ./etc/
-#instance.template ./usr/share/lava-server/
+starterkvm.json ./usr/share/lava-server/
