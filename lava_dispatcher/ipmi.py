@@ -80,7 +80,6 @@ class IpmiPxeBoot(object):
         self.ipmitool = IPMITool(context, host)
 
     def power_on_boot_master(self):
-        self.ipmitool.set_to_boot_from_pxe()
         if self.ipmitool.get_power_status() == 'on':
             self.ipmitool.power_off()
         self.ipmitool.power_on()
@@ -94,3 +93,7 @@ class IpmiPxeBoot(object):
     def power_off(self):
         if self.ipmitool.get_power_status() == 'on':
             self.ipmitool.power_off()
+
+    def power_on(self):
+        if self.ipmitool.get_power_status() == 'off':
+            self.ipmitool.power_on()

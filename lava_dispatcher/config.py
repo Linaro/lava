@@ -79,6 +79,7 @@ class DeviceSchema(schema.Schema):
     power_off_cmd = schema.StringOption()  # for sdmux
     reset_port_command = schema.StringOption()
     root_part = schema.IntOption()
+    sata_block_device = schema.StringOption(default="sda")
     sdcard_part_android = schema.IntOption()
     sdcard_part_android_org = schema.IntOption()
     soft_boot_cmd = schema.StringOption(default="reboot")
