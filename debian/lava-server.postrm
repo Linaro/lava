@@ -18,17 +18,8 @@ set -e
 # for details, see http://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
-if [ -f /usr/share/debconf/confmodule ]; then
-	. /usr/share/debconf/confmodule
-fi
-if [ -f /usr/share/dbconfig-common/dpkg/postrm.pgsql  ]; then
-	. /usr/share/dbconfig-common/dpkg/postrm.pgsql
-	dbc_go lava-server $@
-fi
-
 case "$1" in
     purge)
-      rm -f /etc/lava-server/db.inc
       rm -f /etc/lava-server/instance.conf
       rm -f /etc/lava-server/secret_key.conf
       rm -rf /var/lib/lava-server/home/

@@ -1,3 +1,9 @@
+lava-server (0.21.1-6) unstable; urgency=medium
+
+  * Remove dbconfig-common and configure localhost postgres manually
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 02 Dec 2013 13:34:50 +0000
+
 lava-server (0.21.1-5) unstable; urgency=medium
 
   * Updated for dashboard format 1.7
