@@ -93,9 +93,11 @@ $(document).ready(function () {
             "plotclick",
             function (event, pos, item) {
                 if (item) {
+                    // Make datapoint unique value
+                    datapoint = item.datapoint.join("_");
                     url = window.location.protocol + "//" +
                         window.location.host +
-                        item.series.meta[item.datapoint[0]]["link"];
+                        item.series.meta[datapoint]["link"];
                     window.open(url, "_blank");
                 }
             });
@@ -105,9 +107,11 @@ $(document).ready(function () {
             function (event, pos, item) {
                 $("#tooltip").remove();
                 if (item) {
-                    tooltip = item.series.meta[item.datapoint[0]]["tooltip"];
+                    // Make datapoint unique value
+                    datapoint = item.datapoint.join("_");
+                    tooltip = item.series.meta[datapoint]["tooltip"];
                     showTooltip(item.pageX, item.pageY, tooltip,
-                                item.series.meta[item.datapoint[0]]["pass"]);
+                                item.series.meta[datapoint]["pass"]);
                 }
             });
     }
@@ -564,7 +568,7 @@ $(document).ready(function () {
                 if (chart_data["chart_type"] == "pass/fail") {
                     if ($("#is_percentage_" + chart_id).attr("checked") == true) {
                         value = parseFloat(row["passes"]/row["total"]).toFixed(4) * 100;
-                        tooltip = "Pass rate: " + value;
+                        tooltip = "Pass rate: " + value + "%";
                     } else {
                         value = row["passes"];
                         tooltip = "Pass: " + value + ", Total: " +
@@ -584,12 +588,18 @@ $(document).ready(function () {
                 if (chart_data.has_build_numbers) {
                     insert_data_item([build_number, value],
                                      plot_data[test_filter_id]["data"]);
-                    plot_data[test_filter_id]["meta"][build_number] = meta_item;
+                    meta_key = build_number + "_" +  value;
+                    plot_data[test_filter_id]["meta"][meta_key] = meta_item;
                     build_numbers.push(build_number);
 
                 } else {
-                    plot_data[test_filter_id]["data"].push([iter, value]);
-                    plot_data[test_filter_id]["meta"][iter] = meta_item;
+                    date = row["date"].split(".")[0].split(" ").join("T");
+                    key = Date.parse(date);
+                    data_item = [key, value];
+                    plot_data[test_filter_id]["data"].push(data_item);
+                    // Make meta keys are made unique by concatination.
+                    plot_data[test_filter_id]["meta"][data_item.join("_")] =
+                        meta_item;
                 }
 
                 if (iter > max_iter) {
@@ -696,6 +706,27 @@ $(document).ready(function () {
             y_label = chart_data.test_data[0].units;
         }
 
+
+        if (chart_data.has_build_numbers) {
+            xaxis = {
+                tickDecimals: 0,
+                tickFormatter: function (val, axis) {
+                    if (chart_data.has_build_numbers) {
+                        return val;
+                    } else {
+                        return build_numbers[val];
+                    }
+                },
+            };
+
+        } else {
+            xaxis = {
+                mode: "time",
+                timeformat: "%d/%m/%Y<br/>%H:%m",
+            };
+        }
+
+
         var options = {
 	    series: {
 	        lines: { show: true },
@@ -717,16 +748,7 @@ $(document).ready(function () {
 		    return label + label_hidden;
 	        },
 	    },
-	    xaxis: {
-	        tickDecimals: 0,
-	        tickFormatter: function (val, axis) {
-                    if (chart_data.has_build_numbers) {
-                        return val;
-                    } else {
-		        return build_numbers[val];
-                    }
-	        },
-	    },
+            xaxis: xaxis,
 	    yaxis: {
 	        tickDecimals: 0,
                 labelWidth: 25,
