@@ -301,6 +301,15 @@ $(document).ready(function () {
             });
         }
 
+        // Fill table with remaining empty filters.
+        for (number in table) {
+            for (cnt in rows) {
+                if (!(rows[cnt] in table[number])) {
+                    table[number][rows[cnt]] = [];
+                }
+            }
+        }
+
         data_table = '<table id="results_table_' + chart_id +
             '" class="inner-table">';
 
