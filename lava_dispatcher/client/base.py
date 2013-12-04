@@ -555,7 +555,7 @@ class LavaClient(object):
             if self.config.android_disable_suspend:
                 try:
                     self._disable_suspend()
-                except (OperationFailed, pexpect.TIMEOUT) as e:
+                except (OperationFailed, pexpect.TIMEOUT, CriticalError) as e:
                     msg = "Failed to disable suspend: %s" % e
                     logging.info(msg)
                     attempts += 1
