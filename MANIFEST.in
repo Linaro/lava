@@ -25,7 +25,7 @@ include etc/debug.wsgi
 include etc/lava-default.conf
 include etc/lava-server.init
 include etc/lava-server.conf
-include etc/lava-server-uwsgi-log
+include etc/logrotate.d/*
 include etc/lava-server.wsgi
 include etc/settings.conf
 include etc/uwsgi.ini
