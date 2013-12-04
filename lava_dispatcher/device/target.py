@@ -215,10 +215,9 @@ class Target(object):
         boot_cmds_job_file = self._is_job_defined_boot_cmds(self.config.boot_cmds)
 
         # Check if a user has entered boot_options
-        options = boot_options.as_dict(self, defaults={'boot_cmds': boot_cmds})
-        if 'boot_cmds' in options:
-            if options['boot_cmds'].value != boot_cmds:
-                boot_cmds_boot_options = True
+        options, option = boot_options.as_dict(self, defaults={'boot_cmds': boot_cmds})
+        if 'boot_cmds' in options and option:
+            boot_cmds_boot_options = True
 
         # Interactive boot_cmds from the job file are a list.
         # We check for them first, if they are present, we use
