@@ -67,6 +67,7 @@ setup(
         'versiontools >= 1.8',
         'markdown >= 2.0.3',
         'longerusername',
+        'psycopg2',
 
         # optional dependency; for authentication with Attlassian Crowd SSO
         # 'django-crowd-rest-backend >= 0.3,
