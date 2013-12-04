@@ -39,6 +39,15 @@ from lava_dispatcher.utils import read_content, write_content
 
 
 def _get_cpus(cpuinfo):
+    """
+    Parse cpuinfo for data about the device
+    Where Processor is not found, use model name.
+    Where Hardware is not found, use vendor_id
+    The cpu_type will be used as the device CPU type.
+    The board_type will be used as the device description.
+    :param cpuinfo: output of /proc/cpuinfo
+    :return: a list of device data fields
+    """
     devices = []
     cpu_type = '?'
     cpu_cores = 0
@@ -54,9 +63,13 @@ def _get_cpus(cpuinfo):
 
         if key == 'Processor':
             cpu_type = val
+        elif key == "model name":
+            cpu_type = val
         elif key == 'processor':
             cpu_cores += 1
         elif key == 'Hardware':
+            board_type = val
+        elif key == "vendor_id":
             board_type = val
         elif key == 'Revision':
             board_rev = val
