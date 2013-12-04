@@ -167,8 +167,8 @@ class MasterImageTarget(Target):
                 logging.exception("Deployment failed")
                 raise CriticalError("Deployment failed")
 
-    def _rewrite_partition_number(self, matchobj):
-        """ Returns the partition number after rewriting it to
+    def _rewrite_uboot_partition_number(self, matchobj):
+        """ Returns the uboot partition number after rewriting it to
         n + testboot_offset.
         """
         boot_device = str(self.config.boot_device)
@@ -176,19 +176,35 @@ class MasterImageTarget(Target):
         partition = int(matchobj.group('partition')) + testboot_offset
         return ' ' + boot_device + ':' + str(partition) + ' '
 
+    def _rewrite_rootfs_partition_number(self, matchobj):
+        """ Returns the rootfs partition number after rewriting it to
+        n + testboot_offset.
+        """
+        testboot_offset = self.config.testboot_offset
+        rootfs = list(matchobj.group(0))
+        rootfs = re.sub('^.*(\d+)$',
+                        lambda(match): str(int(match.group(1)) + testboot_offset),
+                        rootfs)
+        return rootfs
+
     def _rewrite_boot_cmds(self, boot_cmds):
         """
         Returns boot_cmds list after rewriting things such as:
 
         * partition number from n to n + testboot_offset
         * root=LABEL=testrootfs instead of root=UUID=ab34-...
+        * root=/dev/mmcblk0p5 instead of root=/dev/mmcblk0p3...
         """
         boot_cmds = re.sub(
             r"root=UUID=\S+", "root=LABEL=testrootfs", boot_cmds, re.MULTILINE)
 
+        pattern = 'root=/\S+'
+        boot_cmds = re.sub(pattern, self._rewrite_rootfs_partition_number,
+                           boot_cmds, re.MULTILINE)
+
         pattern = "\s+\d+:(?P<partition>\d+)\s+"
         boot_cmds = re.sub(
-            pattern, self._rewrite_partition_number, boot_cmds, re.MULTILINE)
+            pattern, self._rewrite_uboot_partition_number, boot_cmds, re.MULTILINE)
 
         return boot_cmds.split('\n')
 
