@@ -249,6 +249,10 @@
         {% endfor %}
         {% endblock %}
       </ul>
+        {% if context_help %}
+          <span style="float: right"><a
+                  href="/static/docs/{{ context_help|join:'-'|slugify }}.html"><b>Help</b></a></span>
+        {% endif %}
     </div>
     <!-- !breadcrumbs -->
     {% endblock breadcrumb_container %}

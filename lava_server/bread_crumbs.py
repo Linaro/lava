@@ -181,3 +181,20 @@ class BreadCrumbTrail(object):
             view = view._bread_crumb.parent
         lst.reverse()
         return cls(lst, kwargs or {})
+
+    @classmethod
+    def show_help(cls, view, **kwargs):
+        """
+        Create a context-sensitive help string from this crumb.
+
+        The URL is constructed with a call to Dajngo's reverse() function. It
+        is supplemented with the same variables that were listed in needs array
+        in the bread crumb constructor. The arguments are passed in order, from
+        the kwargs dictionary.
+        """
+        lst = []
+        while view is not None:
+            lst.append(view._bread_crumb)
+            view = view._bread_crumb.parent
+        lst.reverse()
+        return cls(lst, kwargs or {})
