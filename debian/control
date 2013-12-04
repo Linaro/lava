@@ -18,10 +18,10 @@ Vcs-Browser: https://alioth.debian.org/plugins/scmgit/cgi-bin/gitweb.cgi?p=pkg-l
 Package: lava-server
 Architecture: all
 Provides: lava-scheduler, lava-dashboard
-Conflicts: lava-scheduler, lava-dashboard
+Conflicts: lava-scheduler, lava-dashboard, python-django (>= 1.5)
 Replaces: lava-scheduler, lava-dashboard
 Depends: apache2, adduser, libapache2-mod-uwsgi, libjs-jquery-cookie,
- libapache2-mod-wsgi, python-daemon,
+ libapache2-mod-wsgi, python-daemon, python-dateutil,
  ${python:Depends}, ${misc:Depends}
 Recommends: lava-coordinator
 Description: Linaro Automated Validation Architecture server
@@ -37,7 +37,7 @@ Depends: lava-server, lava-dispatcher, lava-coordinator,
  postgresql, postgresql-9.1,
  lava-tool, linaro-image-tools,
  ${misc:Depends}
-Conflicts: python-django (<< 1.5)
+Conflicts: python-django (>= 1.5)
 Recommends: lava-server-doc
 Description: Linaro Automated Validation Architecture metapackage
  Metapackage to bring in all LAVA components on a single
