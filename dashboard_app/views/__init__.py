@@ -20,8 +20,11 @@
 Views for the Dashboard application
 """
 
-import re
+import csv
 import json
+import os
+import re
+import tempfile
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
@@ -295,6 +298,55 @@ def bundle_detail(request, pathname, content_sha1):
         })
 
 
+def bundle_export(request, pathname, content_sha1):
+    # Create and serve the CSV file.
+
+    bundle = get_restricted_object(
+        Bundle,
+        lambda bundle: bundle.bundle_stream,
+        request.user,
+        content_sha1=content_sha1)
+
+    file_name = bundle.content_filename.replace(" ", "_")
+    tmp_dir = tempfile.mkdtemp()
+    file_path = os.path.join(tmp_dir, "%s.csv" % file_name)
+
+    for test_run in bundle.test_runs.all():
+        test_run_keys = test_run.__dict__.keys()
+        break
+
+    test_run_keys.sort()
+    # Remove non-relevant columns for CSV file.
+    removed_fields = ["_state", "id", "bundle_id"]
+    for field in removed_fields:
+        if field in test_run_keys:
+            test_run_keys.remove(field)
+
+    # Add results columns from denormalization object.
+    test_run_keys.extend(["count_pass", "count_fail",
+                          "count_skip", "count_unknown"])
+
+    with open(file_path, 'w+') as csv_file:
+        out = csv.DictWriter(csv_file, quoting=csv.QUOTE_ALL,
+                             extrasaction='ignore',
+                             fieldnames=test_run_keys)
+        out.writeheader()
+
+        for test_run in bundle.test_runs.all():
+            # Add results columns from denormalization object.
+            test_run_denorm = test_run.denormalization
+            test_run_dict = test_run.__dict__.copy()
+            test_run_dict.update(test_run_denorm.__dict__)
+            out.writerow(test_run_dict)
+
+    with open(file_path, 'r') as csv_file:
+        response = HttpResponse(mimetype='text/csv')
+        response['Content-Disposition'] = "attachment; filename=%s.csv" % \
+                                          file_name
+        response.write(csv_file.read())
+        return response
+
+
 def bundle_json(request, pathname, content_sha1):
     bundle_stream = get_restricted_object(
         BundleStream,
@@ -516,6 +568,53 @@ def test_run_detail(request, pathname, content_sha1, analyzer_assigned_uuid):
                 params=(test_run,))
 
         }, RequestContext(request))
+
+
+def test_run_export(request, pathname, content_sha1, analyzer_assigned_uuid):
+    # Create and serve the CSV data file.
+
+    test_run = get_restricted_object(
+        TestRun,
+        lambda test_run: test_run.bundle.bundle_stream,
+        request.user,
+        analyzer_assigned_uuid=analyzer_assigned_uuid
+    )
+
+    file_name = test_run.test.test_id
+    tmp_dir = tempfile.mkdtemp()
+    file_path = os.path.join(tmp_dir, "%s.csv" % file_name)
+
+    test_results = test_run.get_results()
+
+    for test_result in test_results:
+        test_result_keys = test_result.__dict__.keys()
+        break
+
+    test_result_keys.sort()
+    # Remove non-relevant columns for CSV file.
+    removed_fields = ["_state", "_order", "id", "test_run_id", "test_case_id"]
+    for field in removed_fields:
+        if field in test_result_keys:
+            test_result_keys.remove(field)
+
+    with open(file_path, 'w+') as csv_file:
+        out = csv.DictWriter(csv_file, quoting=csv.QUOTE_ALL,
+                             extrasaction='ignore',
+                             fieldnames=test_result_keys)
+        out.writeheader()
+        for test_result in test_results:
+            test_result_dict = test_result.__dict__.copy()
+            # Update result field to show human readable value.
+            test_result_dict["result"] = TestResult.RESULT_MAP[
+                test_result_dict["result"]]
+            out.writerow(test_result_dict)
+
+    with open(file_path, 'r') as csv_file:
+        response = HttpResponse(mimetype='text/csv')
+        response['Content-Disposition'] = "attachment; filename=%s.csv" % \
+                                          file_name
+        response.write(csv_file.read())
+        return response
 
 
 @BreadCrumb(
