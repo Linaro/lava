@@ -72,7 +72,7 @@ setup(
         # 'django-crowd-rest-backend >= 0.3,
 
         # dashboard
-        'linaro-dashboard-bundle >= 1.10',
+        'linaro-dashboard-bundle >= 1.10.2',
         'linaro-django-pagination >= 2.0.2',
         'pygments >= 1.2',
 
