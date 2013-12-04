@@ -261,6 +261,28 @@ class Device(models.Model):
             self.heartbeat = True
         self.save()
 
+    def initiate_health_check_job(self):
+        if self.status in [self.RETIRED]:
+            return None
+
+        job_json = self.device_type.health_check_job
+        if not job_json:
+            # This should never happen, it's a logic error.
+            self.put_into_maintenance_mode(
+                None, "no job_json in initiate_health_check_job")
+            raise JSONDataError("no job_json found for %r", device)
+        else:
+            user = User.objects.get(username='lava-health')
+            job_data = simplejson.loads(job_json)
+            job_data['target'] = self.hostname
+            job_json = simplejson.dumps(job_data)
+            try:
+                return TestJob.from_json_and_user(job_json, user, True)
+            except (JSONDataError, ValueError) as e:
+                self.put_into_maintenance_mode(
+                    None, "Job submission failed for health job: %s" % e)
+                raise JSONDataError("Health check job submission failed.")
+
 
 class JobFailureTag(models.Model):
     """

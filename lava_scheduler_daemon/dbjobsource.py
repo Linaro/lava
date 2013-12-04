@@ -119,7 +119,7 @@ class DatabaseJobSource(object):
                 run_health_check = device.last_health_report_job.end_time < \
                     datetime.datetime.now() - datetime.timedelta(days=1)
             if run_health_check:
-                job_list.append(self._getHealthCheckJobForBoard(device))
+                job_list.append(device.initiate_health_check_job())
         return job_list
 
     def _fix_device(self, device, job):
@@ -300,29 +300,6 @@ class DatabaseJobSource(object):
             params['server'] = urlparse.urlunsplit(parsed)
         json_data['health_check'] = job.health_check
         return json_data
-
-    def _getHealthCheckJobForBoard(self, device):
-        job_json = device.device_type.health_check_job
-        if not job_json:
-            # This should never happen, it's a logic error.
-            self.logger.error(
-                "no job_json in getHealthCheckJobForBoard for %r", device)
-            device.put_into_maintenance_mode(
-                None, "no job_json in getHealthCheckJobForBoard")
-            return None
-        else:
-            user = User.objects.get(username='lava-health')
-            job_data = simplejson.loads(job_json)
-            job_data['target'] = device.hostname
-            job_json = simplejson.dumps(job_data)
-            try:
-                return TestJob.from_json_and_user(job_json, user, True)
-            except (JSONDataError, ValueError) as e:
-                self.logger.exception(
-                    "TestJob.from_json_and_user failed in _getHealthCheckJobForBoard")
-                device.put_into_maintenance_mode(
-                    None, "TestJob.from_json_and_user failed for health job: %s" % e)
-                return None
 
     def _getJobFromQueue(self, device):
         jobs_for_device = TestJob.objects.all().filter(

@@ -614,6 +614,8 @@ def health_job_list(request, pk):
             'health_job_table': HealthJobTable(
                 'health_jobs', reverse(health_jobs_json, kwargs=dict(pk=pk)),
                 params=(device,)),
+            'show_forcehealthcheck': device.can_admin(request.user) and
+            device.status not in [Device.RETIRED],
             'show_maintenance': device.can_admin(request.user) and
             device.status in [Device.IDLE, Device.RUNNING, Device.RESERVED],
             'show_online': device.can_admin(request.user) and
@@ -1139,6 +1141,8 @@ def device_detail(request, pk):
             'recent_job_table': RecentJobsTable(
                 'jobs', reverse(recent_jobs_json, kwargs=dict(pk=device.pk)),
                 params=(device,)),
+            'show_forcehealthcheck': device.can_admin(request.user) and
+            device.status not in [Device.RETIRED],
             'show_maintenance': device.can_admin(request.user) and
             device.status in [Device.IDLE, Device.RUNNING, Device.RESERVED],
             'show_online': device.can_admin(request.user) and
@@ -1178,6 +1182,17 @@ def device_looping_mode(request, pk):
     if device.can_admin(request.user):
         device.put_into_looping_mode(request.user)
         return redirect(device)
+    else:
+        return HttpResponseForbidden(
+            "you cannot administer this device", content_type="text/plain")
+
+
+@post_only
+def device_force_health_check(request, pk):
+    device = Device.objects.get(pk=pk)
+    if device.can_admin(request.user):
+        job = device.initiate_health_check_job()
+        return redirect(job)
     else:
         return HttpResponseForbidden(
             "you cannot administer this device", content_type="text/plain")

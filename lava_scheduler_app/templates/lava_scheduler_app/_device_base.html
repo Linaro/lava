@@ -45,6 +45,14 @@
   {% endif %}
 </form>
 {% endif %}
+&nbsp;&nbsp;&nbsp;&nbsp;
+{% if show_forcehealthcheck %}
+<form style="display:inline; float:right" method="POST"
+      action="{% url lava.scheduler.device.forcehealthcheck device.pk %}">
+  {% csrf_token %}
+  <button id="forcehealthcheck-button">Force Health Check</button>
+</form>
+{% endif %}
 {% if show_online %}
 <form style="display:inline; float:right" method="POST"
       action="{% url lava.scheduler.device.online device.pk %}">
@@ -136,7 +144,9 @@ $(document).ready(
             title: "Reason for offlining"
         }
     );
-
+{% endif %}
+{% if show_forcehealthcheck %}
+    $("#forcehealthcheck-button").button();
 {% endif %}
 {% if show_online %}
     $("#online-button").button();
