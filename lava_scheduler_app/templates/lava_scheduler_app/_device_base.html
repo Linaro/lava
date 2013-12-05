@@ -56,6 +56,8 @@
       id="online-dialog" style="display: none">
   {% csrf_token %}
   <input name="reason" style="width: 100%"/>
+  <input type="checkbox" name="skiphealthcheck" value="True"/> Skip
+      Health Check
 </form>
 <form style="display:inline " method="POST"
       action="{% url lava.scheduler.device.looping device.pk %}">

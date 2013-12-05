@@ -21,6 +21,14 @@ def online_action(modeladmin, request, queryset):
 online_action.short_description = "take online"
 
 
+def online_action_without_health_check(modeladmin, request, queryset):
+    for device in queryset.filter(status__in=[Device.OFFLINE, Device.OFFLINING]):
+        if device.can_admin(request.user):
+            device.put_into_online_mode(request.user, "admin action", True)
+online_action_without_health_check.short_description = \
+    "take online without health check"
+
+
 def retire_action(modeladmin, request, queryset):
     for device in queryset:
         if device.can_admin(request.user):
@@ -41,7 +49,8 @@ health_unknown.short_description = "set health_status to unknown"
 
 
 class DeviceAdmin(admin.ModelAdmin):
-    actions = [online_action, offline_action, health_unknown, retire_action]
+    actions = [online_action, online_action_without_health_check,
+               offline_action, health_unknown, retire_action]
     list_filter = ['device_type', 'status', 'worker_hostname']
     raw_id_fields = ['current_job', 'last_health_report_job']
 

@@ -212,7 +212,7 @@ class Device(models.Model):
             self.health_status = Device.HEALTH_UNKNOWN
         self.save()
 
-    def put_into_online_mode(self, user, reason):
+    def put_into_online_mode(self, user, reason, skiphealthcheck=False):
         if self.status == Device.OFFLINING:
             new_status = self.RUNNING
         else:
@@ -221,7 +221,8 @@ class Device(models.Model):
             created_by=user, device=self, old_state=self.status,
             new_state=new_status, message=reason, job=None).save()
         self.status = new_status
-        self.health_status = Device.HEALTH_UNKNOWN
+        if not skiphealthcheck:
+            self.health_status = Device.HEALTH_UNKNOWN
         self.save()
 
     def put_into_looping_mode(self, user):
