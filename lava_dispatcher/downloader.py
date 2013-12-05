@@ -138,50 +138,43 @@ def _url_mapping(url, context):
 
 
 def download_image(url, context, imgdir=None,
-                   delete_on_exit=True, decompress=True):
+                   delete_on_exit=True, decompress=True, timeout=300):
     """downloads a image that's been compressed as .bz2 or .gz and
     optionally decompresses it on the file to the cache directory
+    will retry if the download fails, default five minute timeout
     """
-    logging.info("Downloading image: %s" % url)
-    if not imgdir:
-        imgdir = mkdtemp(dir=context.config.lava_image_tmpdir)
-        if delete_on_exit:
-            atexit.register(rmtree, imgdir)
-
-    url = _url_mapping(url, context)
-
-    url = urlparse.urlparse(url)
-    if url.scheme == 'scp':
-        reader = _scp_stream
-    elif url.scheme == 'http' or url.scheme == 'https':
-        reader = _http_stream
-    elif url.scheme == 'file':
-        reader = _file_stream
-    else:
-        raise Exception("Unsupported url protocol scheme: %s" % url.scheme)
-
-    cookies = context.config.lava_cookies
-    with reader(url, context.config.lava_proxy, cookies) as r:
-        with _decompressor_stream(url, imgdir, decompress) as (writer, fname):
-            bsize = 32768
-            buff = r.read(bsize)
-            while buff:
-                writer(buff)
-                buff = r.read(bsize)
-    return fname
-
-
-def download_with_retry(context, imgdir, url, decompress=True, timeout=300):
-    """
-    download test result with a retry mechanism and 5 minute default timeout
-    """
-    logging.info("About to download %s to the host" % url)
+    logging.debug("About to download %s to the host" % url)
     now = time.time()
     tries = 0
-
     while True:
         try:
-            return download_image(url, context, imgdir, decompress)
+            logging.info("Downloading image: %s" % url)
+            if not imgdir:
+                imgdir = mkdtemp(dir=context.config.lava_image_tmpdir)
+                if delete_on_exit:
+                    atexit.register(rmtree, imgdir)
+
+            url = _url_mapping(url, context)
+
+            url = urlparse.urlparse(url)
+            if url.scheme == 'scp':
+                reader = _scp_stream
+            elif url.scheme == 'http' or url.scheme == 'https':
+                reader = _http_stream
+            elif url.scheme == 'file':
+                reader = _file_stream
+            else:
+                raise Exception("Unsupported url protocol scheme: %s" % url.scheme)
+
+            cookies = context.config.lava_cookies
+            with reader(url, context.config.lava_proxy, cookies) as r:
+                with _decompressor_stream(url, imgdir, decompress) as (writer, fname):
+                    bsize = 32768
+                    buff = r.read(bsize)
+                    while buff:
+                        writer(buff)
+                        buff = r.read(bsize)
+            return fname
         except:
             logging.warn("unable to download: %r" % traceback.format_exc())
             tries += 1
@@ -191,3 +184,11 @@ def download_with_retry(context, imgdir, url, decompress=True, timeout=300):
             else:
                 logging.info('Sleep one minute and retry (%d)' % tries)
                 time.sleep(60)
+
+
+def download_with_retry(context, imgdir, url, decompress=True, timeout=300, delete_on_exit=True):
+    """
+    download test result with a retry mechanism and 5 minute default timeout
+    Deprecated function, download_image now has retry support and is called by this function.
+    """
+    return download_image(url, context, imgdir, delete_on_exit, decompress, timeout)

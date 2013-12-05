@@ -24,6 +24,7 @@ import shutil
 import re
 import logging
 
+from lava_dispatcher.device import boot_options
 from lava_dispatcher.client.base import (
     wait_for_prompt
 )
@@ -198,6 +199,60 @@ class Target(object):
             for command in self.config.login_commands:
                 connection.sendline(command)
 
+    def _load_boot_cmds(self, default=None, boot_cmds_dynamic=None,
+                        extend=None):
+        # Set flags
+        boot_cmds_job_file = False
+        boot_cmds_boot_options = False
+
+        # Set the default boot commands
+        if default is None:
+            boot_cmds = self.deployment_data['boot_cmds']
+        else:
+            boot_cmds = default
+
+        # Check for job defined boot commands
+        boot_cmds_job_file = self._is_job_defined_boot_cmds(self.config.boot_cmds)
+
+        # Check if a user has entered boot_options
+        options = boot_options.as_dict(self, defaults={'boot_cmds': boot_cmds})
+        if 'boot_cmds' in options:
+            if options['boot_cmds'].value != boot_cmds:
+                boot_cmds_boot_options = True
+
+        # Interactive boot_cmds from the job file are a list.
+        # We check for them first, if they are present, we use
+        # them and ignore the other cases.
+        if boot_cmds_job_file:
+            logging.info('Overriding boot_cmds from job file')
+            boot_cmds = self.config.boot_cmds
+        # If there were no interactive boot_cmds, next we check
+        # for boot_option overrides. If one exists, we use them
+        # and ignore all other cases.
+        elif boot_cmds_boot_options:
+            logging.info('Overriding boot_cmds from boot_options')
+            boot_cmds = options['boot_cmds'].value
+            logging.info('boot_option=%s' % boot_cmds)
+            boot_cmds = self.config.cp.get('__main__', boot_cmds)
+            boot_cmds = utils.string_to_list(boot_cmds.encode('ascii'))
+        # No interactive or boot_option overrides are present,
+        # we prefer to get the boot_cmds for the image if they are
+        # present.
+        elif boot_cmds_dynamic is not None:
+            logging.info('Loading boot_cmds from image')
+            boot_cmds = boot_cmds_dynamic
+        # This is the catch all case. Where we get the default boot_cmds
+        # from the deployment data.
+        else:
+            logging.info('Loading boot_cmds from device configuration')
+            boot_cmds = self.config.cp.get('__main__', boot_cmds)
+            boot_cmds = utils.string_to_list(boot_cmds.encode('ascii'))
+
+        if extend is not None:
+            boot_cmds = utils.string_to_list(extend.encode('ascii')) + boot_cmds
+
+        return boot_cmds
+
     def _enter_bootloader(self, connection):
         if connection.expect(self.config.interrupt_boot_prompt) != 0:
             raise Exception("Failed to enter bootloader")
@@ -235,8 +290,10 @@ class Target(object):
                     raise Exception("Badly formatted command in \
                                       boot_cmds %s" % e)
                 if action == "sendline":
-                    connection.send(command, delay)
-                    connection.sendline('', delay)
+                    connection.send(command, delay,
+                                    send_char=self.config.send_char)
+                    connection.sendline('', delay,
+                                        send_char=self.config.send_char)
                 elif action == "expect":
                     command = re.escape(command)
                     connection.expect(command, timeout=300)
@@ -244,7 +301,8 @@ class Target(object):
                 self._wait_for_prompt(connection,
                                       self.config.bootloader_prompt,
                                       timeout=300)
-                connection.sendline(line, delay)
+                connection.sendline(line, delay,
+                                    send_char=self.config.send_char)
 
     def _target_extract(self, runner, tar_file, dest, timeout=-1):
         tmpdir = self.context.config.lava_image_tmpdir
@@ -319,10 +377,21 @@ class Target(object):
     def tester_rc_cmd(self):
         return self._get_from_config_or_deployment_data('tester_rc_cmd')
 
+    @property
+    def lava_test_dir(self):
+        return self._get_from_config_or_deployment_data('lava_test_dir')
+
     def _get_from_config_or_deployment_data(self, key):
         value = getattr(self.config, key.lower())
         if value is None:
-            return self.deployment_data.get(key.upper())
+            keys = [key, key.upper(), key.lower()]
+            for test_key in keys:
+                value = self.deployment_data.get(test_key)
+                if value is not None:
+                    return value
+
+            # At this point we didn't find anything.
+            raise KeyError("Unable to find value for key %s" % key)
         else:
             return value
 

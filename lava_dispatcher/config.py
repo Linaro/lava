@@ -32,7 +32,6 @@ class DeviceSchema(schema.Schema):
     boot_cmds = schema.StringOption(fatal=True)  # Can do better here
     boot_cmds_android = schema.StringOption(fatal=True)  # And here
     boot_cmds_oe = schema.StringOption(fatal=True)  # And here?
-    boot_cmds_tftp = schema.StringOption()
     pre_boot_cmd = schema.StringOption()
     read_boot_cmds_from_image = schema.BoolOption(default=True)
     boot_options = schema.ListOption()
@@ -41,16 +40,19 @@ class DeviceSchema(schema.Schema):
     boot_part_android_org = schema.IntOption()
     boot_retries = schema.IntOption(default=3)
     bootloader_prompt = schema.StringOption()
+    send_char = schema.BoolOption(default=True)
     test_image_prompts = schema.ListOption(default=["\(initramfs\)",
                                                     "linaro-test",
                                                     "root@master",
                                                     "root@linaro-nano:~#",
                                                     "root@linaro-developer:~#",
+                                                    "root@linaro-server:~#",
                                                     "root@genericarmv7a:~#"])
     busybox_http_port = schema.IntOption(default=80)
     cache_part_android_org = schema.IntOption()
     client_type = schema.StringOption()
     connection_command = schema.StringOption(fatal=True)
+    connection_command_pattern = schema.StringOption(default="Connected\.\r")
     data_part_android = schema.IntOption()
     data_part_android_org = schema.IntOption()
     default_network_interface = schema.StringOption()
@@ -77,6 +79,7 @@ class DeviceSchema(schema.Schema):
     power_off_cmd = schema.StringOption()  # for sdmux
     reset_port_command = schema.StringOption()
     root_part = schema.IntOption()
+    sata_block_device = schema.StringOption(default="sda")
     sdcard_part_android = schema.IntOption()
     sdcard_part_android_org = schema.IntOption()
     soft_boot_cmd = schema.StringOption(default="reboot")
@@ -91,6 +94,7 @@ class DeviceSchema(schema.Schema):
     tester_ps1_includes_rc = schema.StringOption(null=True)
 
     tester_rc_cmd = schema.StringOption(null=True)
+    lava_test_dir = schema.StringOption(null=True)
     val = schema.StringOption()
     sdcard_mountpoint_path = schema.StringOption(default="/storage/sdcard0")
     possible_partitions_files = schema.ListOption(default=["init.partitions.rc",

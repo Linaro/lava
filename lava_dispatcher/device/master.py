@@ -28,7 +28,6 @@ import hashlib
 
 import pexpect
 
-from lava_dispatcher.device import boot_options
 from lava_dispatcher import tarballcache
 
 from lava_dispatcher.client.base import (
@@ -39,7 +38,6 @@ from lava_dispatcher.device.target import (
 )
 from lava_dispatcher.downloader import (
     download_image,
-    download_with_retry,
 )
 from lava_dispatcher.errors import (
     NetworkError,
@@ -49,7 +47,6 @@ from lava_dispatcher.errors import (
 from lava_dispatcher.utils import (
     connect_to_serial,
     mk_targz,
-    string_to_list,
     rmtree,
     mkdtemp,
     extract_targz,
@@ -336,8 +333,8 @@ class MasterImageTarget(Target):
                 port = self.proc.match.groups()[match_id]
 
                 url = "http://%s:%s/fs.tgz" % (self.master_ip, port)
-                tf = download_with_retry(
-                    self.context, self.scratch_dir, url, False)
+                tf = download_image(url,
+                                    self.context, self.scratch_dir, decompress=False)
 
                 tfdir = os.path.join(self.scratch_dir, str(time.time()))
                 try:
@@ -470,44 +467,11 @@ class MasterImageTarget(Target):
             self.proc.empty_buffer()
 
     def _boot_linaro_image(self):
-        boot_cmds_job_file = False
-        boot_cmds_boot_options = False
-        boot_cmds = self.deployment_data['boot_cmds']
-        options = boot_options.as_dict(self, defaults={'boot_cmds': boot_cmds})
 
-        boot_cmds_job_file = self._is_job_defined_boot_cmds(self.config.boot_cmds)
-
-        if 'boot_cmds' in options:
-            if options['boot_cmds'].value != 'boot_cmds':
-                boot_cmds_boot_options = True
-
-        # Interactive boot_cmds from the job file are a list.
-        # We check for them first, if they are present, we use
-        # them and ignore the other cases.
-        if boot_cmds_job_file:
-            logging.info('Overriding boot_cmds from job file')
-            boot_cmds = self.config.boot_cmds
-        # If there were no interactive boot_cmds, next we check
-        # for boot_option overrides. If one exists, we use them
-        # and ignore all other cases.
-        elif boot_cmds_boot_options:
-            logging.info('Overriding boot_cmds from boot_options')
-            boot_cmds = options['boot_cmds'].value
-            logging.info('boot_option=%s' % boot_cmds)
-            boot_cmds = self.config.cp.get('__main__', boot_cmds)
-            boot_cmds = string_to_list(boot_cmds.encode('ascii'))
-        # No interactive or boot_option overrides are present,
-        # we prefer to get the boot_cmds for the image if they are
-        # present.
-        elif self.__boot_cmds_dynamic__ is not None:
-            logging.info('Loading boot_cmds from image')
-            boot_cmds = self.__boot_cmds_dynamic__
-        # This is the catch all case. Where we get the default boot_cmds
-        # from the deployment data.
+        if self.__boot_cmds_dynamic__ is not None:
+            boot_cmds = self._load_boot_cmds(boot_cmds_dynamic=self.__boot_cmds_dynamic__)
         else:
-            logging.info('Loading boot_cmds from device configuration')
-            boot_cmds = self.config.cp.get('__main__', boot_cmds)
-            boot_cmds = string_to_list(boot_cmds.encode('ascii'))
+            boot_cmds = self._load_boot_cmds()
 
         logging.info('boot_cmds: %s', boot_cmds)
 

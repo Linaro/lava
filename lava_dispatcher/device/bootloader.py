@@ -43,7 +43,6 @@ from lava_dispatcher.errors import (
 )
 from lava_dispatcher.downloader import (
     download_image,
-    download_with_retry,
 )
 from lava_dispatcher import deployment_data
 
@@ -64,7 +63,7 @@ class BootloaderTarget(MasterImageTarget):
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
                              bootloader, firmware, rootfstype, bootloadertype,
                              target_type):
-        # Set deployment data
+        # Get deployment data
         self.deployment_data = deployment_data.get(target_type)
         if bootloadertype == "u_boot":
             # We assume we will be controlling u-boot
@@ -169,26 +168,14 @@ class BootloaderTarget(MasterImageTarget):
                                                                  rootfstype,
                                                                  bootloadertype)
 
-    def _inject_boot_cmds(self):
-        if self._is_job_defined_boot_cmds(self.config.boot_cmds):
-            logging.info('Overriding boot_cmds from job file')
-            self._boot_cmds = string_to_list(
-                self._lava_cmds.encode('ascii')) + self.config.boot_cmds
-        else:
-            if self.config.boot_cmds_tftp is None:
-                raise CriticalError("No TFTP boot commands defined")
-            else:
-                logging.info('Loading boot_cmds from device configuration')
-                self._boot_cmds = self._lava_cmds + self.config.boot_cmds_tftp
-                self._boot_cmds = string_to_list(
-                    self._boot_cmds.encode('ascii'))
-
     def _run_boot(self):
         self._enter_bootloader(self.proc)
-        self._inject_boot_cmds()
+        self._boot_cmds = self._load_boot_cmds(default='boot_cmds_tftp',
+                                               extend=self._lava_cmds)
         # Sometimes a command must be run to clear u-boot console buffer
         if self.config.pre_boot_cmd:
-            self.proc.sendline(self.config.pre_boot_cmd)
+            self.proc.sendline(self.config.pre_boot_cmd,
+                               send_char=self.config.send_char)
         self._customize_bootloader(self.proc, self._boot_cmds)
         self.proc.expect(self.config.image_boot_msg, timeout=300)
         self._auto_login(self.proc)
@@ -205,18 +192,21 @@ class BootloaderTarget(MasterImageTarget):
                     self._soft_reboot()
                     self._run_boot()
             except:
-                raise OperationFailed("_run_boot failed")
+                raise OperationFailed("_run_boot failed:")
             # When the kernel does DHCP which is the case for NFS
             # the nameserver data does get populated by the DHCP
             # daemon. Thus, LAVA will populate the name server data.
             if self._lava_nfsrootfs:
-                self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf')
+                self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
+                                   send_char=self.config.send_char)
             self.proc.sendline('export PS1="%s"'
-                               % self.tester_ps1)
+                               % self.tester_ps1,
+                               send_char=self.config.send_char)
             self._booted = True
         elif (self._uboot_boot or self._ipxe_boot) and self._booted:
             self.proc.sendline('export PS1="%s"'
-                               % self.tester_ps1)
+                               % self.tester_ps1,
+                               send_char=self.config.send_char)
         else:
             super(BootloaderTarget, self)._boot_linaro_image()
 
@@ -232,7 +222,7 @@ class BootloaderTarget(MasterImageTarget):
                 incrc = self.tester_ps1_includes_rc
                 runner = NetworkCommandRunner(self, pat, incrc)
 
-                targetdir = '/%s' % directory
+                targetdir = os.path.join('/', directory)
                 runner.run('mkdir -p %s' % targetdir)
                 parent_dir, target_name = os.path.split(targetdir)
                 runner.run('/bin/tar -cmzf /tmp/fs.tgz -C %s %s'
@@ -244,8 +234,8 @@ class BootloaderTarget(MasterImageTarget):
 
                 url = url_base + '/fs.tgz'
                 logging.info("Fetching url: %s" % url)
-                tf = download_with_retry(self.context, self.scratch_dir,
-                                         url, False)
+                tf = download_image(url, self.context, self.scratch_dir,
+                                    decompress=False)
 
                 tfdir = os.path.join(self.scratch_dir, str(time.time()))
 

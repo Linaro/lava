@@ -132,11 +132,11 @@ from lava_dispatcher import utils
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.device.target import Target
 from lava_dispatcher.downloader import download_image
-from lava_dispatcher.errors import GeneralError
+from lava_dispatcher.errors import GeneralError, CriticalError
 
-LAVA_TEST_DIR = '%s/../../lava_test_shell' % os.path.dirname(__file__)
-LAVA_MULTI_NODE_TEST_DIR = '%s/../../lava_test_shell/multi_node' % os.path.dirname(__file__)
-LAVA_LMP_TEST_DIR = '%s/../../lava_test_shell/lmp' % os.path.dirname(__file__)
+LAVA_TEST_DIR = '%s/../lava_test_shell' % os.path.dirname(__file__)
+LAVA_MULTI_NODE_TEST_DIR = '%s/../lava_test_shell/multi_node' % os.path.dirname(__file__)
+LAVA_LMP_TEST_DIR = '%s/../lava_test_shell/lmp' % os.path.dirname(__file__)
 
 LAVA_GROUP_FILE = 'lava-group'
 LAVA_ROLE_FILE = 'lava-role'
@@ -344,18 +344,30 @@ class TestDefinitionLoader(object):
                             testdef_repo)
         else:
             if 'parameters' in testdef_repo:
-                metadata = {}
                 # get the parameters for test.
-                metadata['test_params'] = str(testdef_repo['parameters'])
-                self.context.test_data.add_metadata(metadata)
+                logging.debug('Get test parameters : %s' % testdef_repo['parameters'])
+                info['test_params'] = str(testdef_repo['parameters'])
+            else:
+                info['test_params'] = ''
 
             test = testdef_repo.get('testdef', 'lavatest.yaml')
-            with open(os.path.join(repo, test), 'r') as f:
-                logging.debug('loading test definition ...')
-                testdef = yaml.safe_load(f)
+            try:
+                with open(os.path.join(repo, test), 'r') as f:
+                    logging.debug('loading test definition ...')
+                    testdef = yaml.safe_load(f)
+            except IOError as e:
+                msg = "Unable to load test definition '%s/%s': %s" % (os.path.basename(repo), test, e)
+                raise CriticalError(msg)
 
             if 'test-case-deps' in testdef:
                 self._get_dependent_test_cases(testdef)
+
+            # for test paramters
+            if 'params' in testdef:
+                logging.debug('Get default parameters : %s' % testdef['params'])
+                info['default_params'] = str(testdef['params'])
+            else:
+                info['default_params'] = ''
 
             idx = len(self.testdefs)
             self._append_testdef(
@@ -459,16 +471,16 @@ class URLTestDefinition(object):
     def _inject_testdef_parameters(self, fout):
         # inject default parameters that was defined in yaml first
         fout.write('###default parameters from yaml###\n')
-        if self.testdef.get('params'):
-            for default_parameter in self.testdef.get('params', []):
-                fout.write('%s\n' % default_parameter)
+        if 'params' in self.testdef:
+            for def_param_name, def_param_value in self.testdef['params'].items():
+                fout.write('%s=\'%s\'\n' % (def_param_name, def_param_value))
         fout.write('######\n')
         # inject the parameters that was set in json
         fout.write('###test parameters from json###\n')
-        if 'test_params' in self.context.test_data.metadata:
-            _test_params_temp = eval(self.context.test_data.metadata['test_params'])
+        if self._sw_sources and 'test_params' in self._sw_sources[0] and self._sw_sources[0]['test_params'] != '':
+            _test_params_temp = eval(self._sw_sources[0]['test_params'])
             for param_name, param_value in _test_params_temp.items():
-                fout.write('%s=%s\n' % (param_name, param_value))
+                fout.write('%s=\'%s\'\n' % (param_name, param_value))
         fout.write('######\n')
 
     def _create_target_install(self, hostdir, targetdir):
@@ -551,13 +563,6 @@ class RepoTestDefinition(URLTestDefinition):
         testdef_metadata.update(_get_testdef_info(testdef))
         testdef_metadata.update({'version': info['branch_revision']})
 
-        # for test paramters
-        metadata = {}
-
-        if testdef.get('params'):
-            metadata['default_params'] = ','.join(testdef.get('params'))
-            context.test_data.add_metadata(metadata)
-
         URLTestDefinition.__init__(self, context, idx, testdef,
                                    testdef_metadata)
         self.repo = repo
@@ -621,7 +626,10 @@ class cmd_lava_test_shell(BaseAction):
                 runner._connection.sendline(
                     "export http_proxy=%s" % self.context.config.lava_proxy, delay)
             runner._connection.sendline(
-                "%s/bin/lava-test-runner" % target.deployment_data['lava_test_dir'], delay)
+                "%s/bin/lava-test-runner %s" % (
+                    target.lava_test_dir,
+                    target.lava_test_dir),
+                delay)
             start = time.time()
             if timeout == -1:
                 timeout = runner._connection.timeout
@@ -728,7 +736,8 @@ class cmd_lava_test_shell(BaseAction):
                     elif foutname == LAVA_SELF_FILE:
                         fout.write("LAVA_HOSTNAME='%s'\n" % self.context.test_data.metadata['target.hostname'])
                     else:
-                        fout.write("LAVA_TEST_BIN='%s/bin'\n" % target.deployment_data['lava_test_dir'])
+                        fout.write("LAVA_TEST_BIN='%s/bin'\n" %
+                                   target.lava_test_dir)
                         fout.write("LAVA_MULTI_NODE_CACHE='%s'\n" % LAVA_MULTI_NODE_CACHE_FILE)
                         logging_level = self.context.test_data.metadata.get(
                             'logging_level', None)
@@ -749,7 +758,8 @@ class cmd_lava_test_shell(BaseAction):
                 with open('%s/bin/%s' % (mntdir, foutname), 'w') as fout:
                     fout.write("#!%s\n\n" % shell)
                     # Target-specific scripts (add ENV to the generic ones)
-                    fout.write("LAVA_TEST_BIN='%s/bin'\n" % target.deployment_data['lava_test_dir'])
+                    fout.write("LAVA_TEST_BIN='%s/bin'\n" %
+                               target.lava_test_dir)
                     fout.write("LAVA_LMP_CACHE='%s'\n" % LAVA_LMP_CACHE_FILE)
                     if self.context.test_data.metadata['logging_level'] == 'DEBUG':
                         fout.write("LAVA_LMP_DEBUG='yes'\n")
@@ -762,12 +772,10 @@ class cmd_lava_test_shell(BaseAction):
         utils.ensure_directory_empty('%s/results' % mntdir)
 
     def _configure_target(self, target, testdef_urls, testdef_repos):
-        ldir = target.deployment_data['lava_test_dir']
-
         results_part = target.deployment_data['lava_test_results_part_attr']
         results_part = getattr(target.config, results_part)
 
-        with target.file_system(results_part, 'lava') as d:
+        with target.file_system(results_part, target.lava_test_dir) as d:
             self._mk_runner_dirs(d)
             self._copy_runner(d, target)
             if 'target_group' in self.context.test_data.metadata:
@@ -791,7 +799,8 @@ class cmd_lava_test_shell(BaseAction):
                 # mounts under /, so we have hdir for where it is on the
                 # host and tdir for how the target will see the path
                 hdir = '%s/tests/%s' % (d, testdef.test_run_id)
-                tdir = '%s/tests/%s' % (ldir, testdef.test_run_id)
+                tdir = '%s/tests/%s' % (target.lava_test_dir,
+                                        testdef.test_run_id)
                 testdef.copy_test(hdir, tdir)
                 tdirs.append(tdir)
 
@@ -809,7 +818,7 @@ class cmd_lava_test_shell(BaseAction):
         rdir = self.context.host_result_dir
         parse_err_msg = None
 
-        with target.file_system(results_part, 'lava') as d:
+        with target.file_system(results_part, target.lava_test_dir) as d:
             err_log = os.path.join(d, 'parse_err.log')
             results_dir = os.path.join(d, 'results')
             bundle = lava_test_shell.get_bundle(results_dir, testdef_objs, err_log)

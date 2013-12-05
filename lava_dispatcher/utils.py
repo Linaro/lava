@@ -37,6 +37,20 @@ import pexpect
 from lava_dispatcher.errors import CriticalError
 
 
+def kill_process_with_option(process=None, key_option=None):
+    if not process:
+        return
+    lines = os.popen('ps -ef')
+    for line in lines:
+        fields = line.split()
+        if len(fields) < 8:
+            continue
+        #if (process in fields):
+        if fields[7] and (process == fields[7]):
+            if (not key_option) or (key_option in fields):
+                logging_system('sudo kill -9 %s' % fields[1])
+
+
 def link_or_copy_file(src, dest):
     try:
         dirname = os.path.dirname(dest)
@@ -183,28 +197,32 @@ class logging_spawn(pexpect.spawn):
         # serial can be slow, races do funny things, so increase delay
         self.delaybeforesend = 0.05
 
-    def sendline(self, s='', delay=0):
+    def sendline(self, s='', delay=0, send_char=True):
         """
         Replaced sendline so that it can support the delay argument which allows a delay
         between sending each character to get around slow serial problems (iPXE).
         pexpect sendline does exactly the same thing: calls send for the string then os.linesep.
         :param s: string to send
         :param delay: delay in milliseconds between sending each character
+        :param send_char: send one character or entire string
         """
-        self.send(s, delay)
+        self.send(s, delay, send_char)
         self.send(os.linesep, delay)
 
     def sendcontrol(self, char):
         logging.debug("sending control character: %s", char)
         return super(logging_spawn, self).sendcontrol(char)
 
-    def send(self, string, delay=0):
+    def send(self, string, delay=0, send_char=True):
         logging.debug("send (delay_ms=%s): %s " % (delay, string))
         sent = 0
         delay = float(delay) / 1000
-        for char in string:
-            sent += super(logging_spawn, self).send(char)
-            time.sleep(delay)
+        if send_char:
+            for char in string:
+                sent += super(logging_spawn, self).send(char)
+                time.sleep(delay)
+        else:
+            sent = super(logging_spawn, self).send(string)
         return sent
 
     def expect(self, *args, **kw):
@@ -246,7 +264,7 @@ def connect_to_serial(context):
 
     expectations = {
         port_stuck_message: 'reset-port',
-        'Connected\.\r': 'all-good',
+        context.device_config.connection_command_pattern: 'all-good',
         conn_closed_message: 'retry',
         pexpect.TIMEOUT: 'all-good',
     }

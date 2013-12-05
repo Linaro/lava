@@ -35,7 +35,6 @@ from lava_dispatcher.errors import (
 )
 from lava_dispatcher.downloader import (
     download_image,
-    download_with_retry,
 )
 from lava_dispatcher.utils import (
     mk_targz,
@@ -55,15 +54,11 @@ class IpmiPxeTarget(Target):
     def __init__(self, context, config):
         super(IpmiPxeTarget, self).__init__(context, config)
         self.proc = self.context.spawn(self.config.connection_command, timeout=1200)
-        self.device_version = None
         if self.config.ecmeip is None:
             msg = "The ecmeip address is not set for this target"
             logging.error(msg)
             raise CriticalError(msg)
         self.bootcontrol = IpmiPxeBoot(context, self.config.ecmeip)
-
-    def get_device_version(self):
-        return self.device_version
 
     def power_on(self):
         self.bootcontrol.power_on_boot_image()
@@ -71,19 +66,21 @@ class IpmiPxeTarget(Target):
         return self.proc
 
     def power_off(self, proc):
-        pass
+        self.bootcontrol.power_off()
 
     def deploy_linaro(self, hwpack, rfs, rootfstype, bootloadertype):
         image_file = generate_image(self, hwpack, rfs, self.scratch_dir,
                                     bootloadertype, rootfstype,
                                     extra_boot_args='1', image_size='1G')
         self._customize_linux(image_file)
-        self._deploy_image(image_file, '/dev/sda')
+        self._deploy_image(image_file, '/dev/%s'
+                           % self.config.sata_block_device)
 
     def deploy_linaro_prebuilt(self, image, rootfstype, bootloadertype):
         image_file = download_image(image, self.context, self.scratch_dir)
         self._customize_linux(image_file)
-        self._deploy_image(image_file, '/dev/sda')
+        self._deploy_image(image_file, '/dev/%s'
+                           % self.config.sata_block_device)
 
     def _deploy_image(self, image_file, device):
         with self._as_master() as runner:
@@ -106,9 +103,9 @@ class IpmiPxeTarget(Target):
 
             decompression_cmd = None
             if image_file_base.endswith('.gz'):
-                decompression_cmd = '/bin/gzip -dc'
+                decompression_cmd = 'gzip -dc'
             elif image_file_base.endswith('.bz2'):
-                decompression_cmd = '/bin/bzip2 -dc'
+                decompression_cmd = 'bzip2 -dc'
 
             runner.run('mkdir %s' % build_dir)
             runner.run('mount -t tmpfs -o size=100%% tmpfs %s' % build_dir)
@@ -125,10 +122,13 @@ class IpmiPxeTarget(Target):
             self.resize_rootfs_partition(runner)
 
     def get_partition(self, runner, partition):
+        device = self.config.sata_block_device
         if partition == self.config.boot_part:
-            partition = '/dev/disk/by-label/boot'
+            partno = str(self.config.boot_part)
+            partition = '/dev/%s%s' % (device, partno)
         elif partition == self.config.root_part:
-            partition = '/dev/disk/by-label/rootfs'
+            partno = str(self.config.root_part)
+            partition = '/dev/%s%s' % (device, partno)
         else:
             raise RuntimeError(
                 'unknown master image partition(%d)' % partition)
@@ -138,7 +138,7 @@ class IpmiPxeTarget(Target):
         partno = self.config.root_part
         start = None
 
-        runner.run('parted -s /dev/sda print',
+        runner.run('parted -s /dev/%s print' % self.config.sata_block_device,
                    response='\s+%s\s+([0-9.]+.B)\s+\S+\s+\S+\s+primary\s+(\S+)' % partno,
                    wait_prompt=False)
         if runner.match_id != 0:
@@ -149,9 +149,12 @@ class IpmiPxeTarget(Target):
             parttype = runner.match.group(2)
 
             if parttype == 'ext2' or parttype == 'ext3' or parttype == 'ext4':
-                runner.run('parted -s /dev/sda rm %s' % partno)
-                runner.run('parted -s /dev/sda mkpart primary %s 100%%' % start)
-                runner.run('resize2fs -f /dev/sda%s' % partno)
+                runner.run('parted -s /dev/%s rm %s'
+                           % (self.config.sata_block_device, partno))
+                runner.run('parted -s /dev/%s mkpart primary %s 100%%'
+                           % (self.config.sata_block_device, start))
+                runner.run('resize2fs -f /dev/%s%s'
+                           % (self.config.sata_block_device, partno))
             elif parttype == 'brtfs':
                 logging.warning("resize of btrfs partition not supported")
             else:
@@ -169,7 +172,7 @@ class IpmiPxeTarget(Target):
             partition = self.get_partition(runner, partition)
             runner.run('mount %s /mnt' % partition)
             try:
-                targetdir = '/mnt/%s' % directory
+                targetdir = '/mnt%s' % directory
                 runner.run('mkdir -p %s' % targetdir)
 
                 parent_dir, target_name = os.path.split(targetdir)
@@ -182,7 +185,7 @@ class IpmiPxeTarget(Target):
 
                 url = url_base + '/fs.tgz'
                 logging.info("Fetching url: %s" % url)
-                tf = download_with_retry(self.context, self.scratch_dir, url, False)
+                tf = download_image(url, self.context, self.scratch_dir, decompress=False)
 
                 tfdir = os.path.join(self.scratch_dir, str(time.time()))
 
@@ -208,27 +211,16 @@ class IpmiPxeTarget(Target):
     @contextlib.contextmanager
     def _as_master(self):
         self.bootcontrol.power_on_boot_master()
-        self.proc.expect("\(initramfs\)")
+        self._enter_bootloader(self.proc)
+        boot_cmds = self._load_boot_cmds(default='boot_cmds_master')
+        self._customize_bootloader(self.proc, boot_cmds)
+        self.proc.expect(self.config.image_boot_msg, timeout=300)
+        self._wait_for_prompt(self.proc, self.config.test_image_prompts,
+                              self.config.boot_linaro_timeout)
         self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
         self.proc.expect(self.MASTER_PS1_PATTERN, timeout=180, lava_no_logging=1)
         runner = MasterCommandRunner(self)
-
-        runner.run(". /scripts/functions")
-        runner.run("DEVICE=%s configure_networking" %
-                   self.config.default_network_interface)
-
-        # we call dhclient even though configure_networking above already
-        # picked up a IP address. configure_networking brings the interface up,
-        # but does not configure DNS properly. dhclient needs the interface to
-        # be up, and will set DNS correctly. In the end we are querying DHCP
-        # twice, but with a properly configured DHCP server (i.e. one that will
-        # give the same address for a given MAC address), this should not be a
-        # problem.
-        runner.run("mkdir -p /var/run")
-        runner.run("mkdir -p /var/lib/dhcp")
-        runner.run("dhclient -v -1")
-
-        self.device_version = runner.get_device_version()
+        logging.info("System is in master image now")
 
         try:
             yield runner
