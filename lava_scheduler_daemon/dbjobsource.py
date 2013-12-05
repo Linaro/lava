@@ -250,8 +250,8 @@ class DatabaseJobSource(object):
                 device.last_heartbeat = datetime.datetime.utcnow()
                 device.save()
                 transaction.commit()
-                self.logger.info("Heartbeat timestamp updated for %s ..." %
-                                 device.hostname)
+                self.logger.debug("Heartbeat timestamp updated for %s ..." %
+                                  device.hostname)
 
     def _update_device_heartbeat(self):
         """Update device HEARTBEAT based on LAST_HEARTBEAT timestamp."""
@@ -259,7 +259,7 @@ class DatabaseJobSource(object):
         for device in devices:
             device.too_long_since_last_heartbeat()
             transaction.commit()
-            self.logger.info(
+            self.logger.debug(
                 "Device heartbeat updated for %s ..." % device.hostname)
 
     def getJobList_impl(self):
