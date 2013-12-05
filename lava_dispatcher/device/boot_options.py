@@ -56,8 +56,12 @@ def as_dict(target, defaults={}):
     default for boot_cmds is boot_cmds. However, we really need to look at
     the deployment_data's boot_cmds for the default so that booting
     something like android will work.
+
+    option - this is always false, unless a user specified boot_option
+    has been set.
     """
     options = {}
+    user_option = False
     for opt in target.config.boot_options:
         if opt in target.config.cp.sections():
             defval = defaults.get(opt, None)
@@ -74,9 +78,10 @@ def as_dict(target, defaults={}):
         elif not options[keyval[0]].valid(keyval[1]):
             logging.warn("Invalid boot option value: %s", opt)
         else:
+            user_option = True
             options[keyval[0]].value = keyval[1]
 
-    return options
+    return (options, user_option)
 
 
 def as_string(target, join_pattern, defaults={}):
@@ -84,7 +89,7 @@ def as_string(target, join_pattern, defaults={}):
     pulls the options into a string via the join_pattern. The join pattern
     can be something like "%s=%s"
     """
-    options = as_dict(target, defaults)
+    options, user_option = as_dict(target, defaults)
 
     cmd = ''
     for option in options.values():
