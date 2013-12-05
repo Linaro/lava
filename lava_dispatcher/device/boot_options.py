@@ -61,7 +61,7 @@ def as_dict(target, defaults={}):
     has been set.
     """
     options = {}
-    option = False
+    user_option = False
     for opt in target.config.boot_options:
         if opt in target.config.cp.sections():
             defval = defaults.get(opt, None)
@@ -78,10 +78,10 @@ def as_dict(target, defaults={}):
         elif not options[keyval[0]].valid(keyval[1]):
             logging.warn("Invalid boot option value: %s", opt)
         else:
-            option = True
+            user_option = True
             options[keyval[0]].value = keyval[1]
 
-    return (options, option)
+    return (options, user_option)
 
 
 def as_string(target, join_pattern, defaults={}):
@@ -89,7 +89,7 @@ def as_string(target, join_pattern, defaults={}):
     pulls the options into a string via the join_pattern. The join pattern
     can be something like "%s=%s"
     """
-    options = as_dict(target, defaults)
+    options, user_option = as_dict(target, defaults)
 
     cmd = ''
     for option in options.values():

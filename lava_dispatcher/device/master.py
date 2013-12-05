@@ -181,11 +181,8 @@ class MasterImageTarget(Target):
         n + testboot_offset.
         """
         testboot_offset = self.config.testboot_offset
-        rootfs = list(matchobj.group(0))
-        rootfs = re.sub('^.*(\d+)$',
-                        lambda(match): str(int(match.group(1)) + testboot_offset),
-                        rootfs)
-        return rootfs
+        prefix_len = len(matchobj.group(0)) - len(matchobj.group(1))
+        return matchobj.group(0)[:prefix_len] + str(int(matchobj.group(1)) + testboot_offset)
 
     def _rewrite_boot_cmds(self, boot_cmds):
         """
@@ -198,7 +195,7 @@ class MasterImageTarget(Target):
         boot_cmds = re.sub(
             r"root=UUID=\S+", "root=LABEL=testrootfs", boot_cmds, re.MULTILINE)
 
-        pattern = 'root=/\S+'
+        pattern = 'root=/\S+(?:\D|^)(\d+)'
         boot_cmds = re.sub(pattern, self._rewrite_rootfs_partition_number,
                            boot_cmds, re.MULTILINE)
 
