@@ -811,8 +811,8 @@ class BundleFormatImporter_1_7(BundleFormatImporter_1_6):
                         c_source["commit_timestamp"])
                     if "commit_timestamp" in c_source
                     else None),
-                default_params=c_source["default_params"],
-                test_params=c_source["test_params"]
+                default_params=c_source.get("default_params", []),
+                test_params=c_source.get("test_params", [])
             )
             if source_created:
                 s_source.save()
