@@ -33,7 +33,6 @@ from lava_scheduler_app.models import (
 from lava_scheduler_app import utils
 from lava_scheduler_daemon.jobsource import IJobSource
 
-
 try:
     from psycopg2 import InterfaceError, OperationalError
 except ImportError:
@@ -133,9 +132,10 @@ class DatabaseJobSource(object):
         """
         if device.status == Device.RUNNING or device.heartbeat is False:
             return None
+        msg = "Job: %s" % job.id
         DeviceStateTransition.objects.create(
             created_by=None, device=device, old_state=device.status,
-            new_state=Device.RESERVED, message=None, job=job).save()
+            new_state=Device.RESERVED, message=msg, job=job).save()
         device.status = Device.RESERVED
         device.current_job = job
         try:
@@ -192,10 +192,21 @@ class DatabaseJobSource(object):
                 target_group=job.target_group)
 
             for m_job in multinode_jobs:
-                devices = Device.objects.filter(
+                devices = []
+                self.logger.debug("Checking devices of requested type %s owned by %s" %
+                                  (job.requested_device_type, job.submitter.username))
+                device_list = Device.objects.all().filter(
                     device_type=m_job.requested_device_type,
-                    status=Device.IDLE,
-                    heartbeat=True)
+                    status=Device.IDLE, heartbeat=True, is_public=False)
+                for d in device_list:
+                    if d.can_submit(job.submitter):
+                        devices.append(d)
+                if len(devices) == 0:
+                    self.logger.debug("Checking public devices of requested type %s" %
+                                      job.requested_device_type)
+                    devices = Device.objects.all().filter(
+                        device_type=job.requested_device_type,
+                        status=Device.IDLE, heartbeat=True, is_public=True)
                 if len(devices) > 0:
                     f_job = self._fix_device(devices[0], m_job)
                     if f_job:
@@ -204,8 +215,14 @@ class DatabaseJobSource(object):
         return job_list
 
     def _assign_jobs(self, jobs):
+        """
+        uses job.submitter to check owned devices first before public devices
+
+        :param jobs: JSON string of the job request
+        :return: a list of jobs with devices to reserve
+        """
         job_list = self._get_health_check_jobs()
-        devices = None
+        devices = []
 
         for job in jobs:
             if job.is_multinode and not job.actual_device:
@@ -214,20 +231,34 @@ class DatabaseJobSource(object):
                 if job.actual_device:
                     job_list.append(job)
                 elif job.requested_device:
-                    self.logger.debug("Checking Requested Device")
-                    devices = Device.objects.filter(
+                    self.logger.debug("Checking if requested device %s is owned by %s" %
+                                      (job.requested_device.hostname, job.submitter.username))
+                    # looks wrong but we still get a list here
+                    device_list = Device.objects.all().filter(
                         hostname=job.requested_device.hostname,
                         status=Device.IDLE,
                         heartbeat=True)
+                    for d in device_list:
+                        if d.can_submit(job.submitter):
+                            devices.append(d)
                 elif job.requested_device_type:
-                    self.logger.debug("Checking Requested Device Type")
-                    devices = Device.objects.filter(
+                    self.logger.debug("Checking devices of requested type %s owned by %s" %
+                                      (job.requested_device_type, job.submitter.username))
+                    device_list = Device.objects.all().filter(
                         device_type=job.requested_device_type,
-                        status=Device.IDLE,
-                        heartbeat=True)
+                        status=Device.IDLE, heartbeat=True, is_public=False)
+                    for d in device_list:
+                        if d.can_submit(job.submitter):
+                            devices.append(d)
+                    if len(devices) == 0:
+                        self.logger.debug("Checking public devices of requested type %s" %
+                                          job.requested_device_type)
+                        devices = Device.objects.all().filter(
+                            device_type=job.requested_device_type,
+                            status=Device.IDLE, heartbeat=True, is_public=True)
                 else:
                     continue
-                if devices:
+                if len(devices) > 0:
                     for d in devices:
                         if job:
                             job = self._fix_device(d, job)
@@ -331,9 +362,10 @@ class DatabaseJobSource(object):
         job.status = TestJob.RUNNING
         # need to set the device RUNNING if device was RESERVED
         if job.actual_device.status == Device.RESERVED:
+            msg = "Job: %s" % job.id
             DeviceStateTransition.objects.create(
                 created_by=None, device=job.actual_device, old_state=job.actual_device.status,
-                new_state=Device.RUNNING, message=None, job=job).save()
+                new_state=Device.RUNNING, message=msg, job=job).save()
             job.actual_device.status = Device.RUNNING
             job.actual_device.current_job = job
             job.actual_device.save()
@@ -384,9 +416,10 @@ class DatabaseJobSource(object):
             self.logger.error(
                 "Unexpected job state in jobCompleted: %s" % job.status)
             job.status = TestJob.COMPLETE
+        msg = "Job: %s" % job.id
         DeviceStateTransition.objects.create(
             created_by=None, device=device, old_state=old_device_status,
-            new_state=device.status, message=None, job=job).save()
+            new_state=device.status, message=msg, job=job).save()
 
         if job.health_check:
             device.last_health_report_job = job

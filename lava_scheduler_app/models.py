@@ -6,8 +6,11 @@ import urlparse
 import datetime
 
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import User, Group
 from django.contrib.sites.models import Site
+from django.utils.safestring import mark_safe
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.mail import send_mail
 from django.core.validators import validate_email
@@ -75,7 +78,40 @@ class DeviceType(models.Model):
         return ("lava.scheduler.device_type.detail", [self.pk])
 
 
-class Device(models.Model):
+class DefaultDeviceOwner(models.Model):
+    """
+    Used to override the django User model to allow one individual
+    user to be specified as the default device owner.
+    """
+    user = models.OneToOneField(User)
+    default_owner = models.BooleanField(
+        verbose_name="Default owner of unrestricted devices",
+        unique=True,
+        default=False
+    )
+
+
+class DefaultOwnerInline(admin.StackedInline):
+    """
+    Exposes the default owner override class
+    in the Django admin interface
+    """
+    model = DefaultDeviceOwner
+    can_delete = False
+
+
+class UserAdmin(UserAdmin):
+    """
+    Defines the override class for DefaultOwnerInline
+    """
+    inlines = (DefaultOwnerInline, )
+
+#  Setup the override in the django admin interface at startup.
+admin.site.unregister(User)
+admin.site.register(User, UserAdmin)
+
+
+class Device(RestrictedResource):
     """
     A device that we can run tests on.
     """
@@ -122,6 +158,30 @@ class Device(models.Model):
         blank=True,
     )
 
+    physical_owner = models.ForeignKey(
+        User, related_name='physical-owner',
+        null=True,
+        blank=True,
+        default=None,
+        verbose_name=_(u"User with physical access")
+    )
+
+    physical_group = models.ForeignKey(
+        Group, related_name='physical-group',
+        null=True,
+        blank=True,
+        default=None,
+        verbose_name=_(u"Group with physical access")
+    )
+
+    description = models.TextField(
+        verbose_name=_(u"Device Description"),
+        max_length=200,
+        null=True,
+        blank=True,
+        default=None
+    )
+
     current_job = models.ForeignKey(
         "TestJob", blank=True, unique=True, null=True, related_name='+',
         on_delete=models.SET_NULL)
@@ -165,6 +225,22 @@ class Device(models.Model):
         verbose_name=_(u"Heartbeat"),
         default=False)
 
+    def clean(self):
+        """
+        Complies with the RestrictedResource constraints
+        by specifying the default device owner as the user
+        upon save if none was set.
+        """
+        default_user = DefaultDeviceOwner.objects.filter(default_owner=True)
+        if len(default_user) == 0:
+            default_user = User.objects.filter(is_superuser=True).order_by('id')[0]
+        if self.user is None and self.group is None:
+            self.user = default_user
+            self.is_public = True
+        if self.user is not None and self.group is not None:
+            raise ValidationError(
+                'Cannot be owned by a user and a group at the same time')
+
     def __unicode__(self):
         return self.hostname
 
@@ -175,6 +251,9 @@ class Device(models.Model):
     @models.permalink
     def get_device_health_url(self):
         return ("lava.scheduler.labhealth.detail", [self.pk])
+
+    def get_description(self):
+        return mark_safe(self.description)
 
     def recent_jobs(self):
         return TestJob.objects.select_related(
@@ -191,7 +270,19 @@ class Device(models.Model):
         )
 
     def can_admin(self, user):
-        return user.has_perm('lava_scheduler_app.change_device')
+        if self.is_owned_by(user):
+            return True
+        if user.has_perm('lava_scheduler_app.change_device'):
+            return True
+
+    def can_submit(self, user):
+        if self.status == Device.RETIRED:
+            return False
+        if self.is_public:
+            return True
+        if user.username == "lava-health":
+            return True
+        return self.is_owned_by(user)
 
     def put_into_maintenance_mode(self, user, reason, notify=None):
         if self.status in [self.RESERVED, self.OFFLINING]:
@@ -541,23 +632,35 @@ class TestJob(RestrictedResource):
             all_devices[dt[0]] = dt[1]
 
         if 'target' in job_data:
+            device_type = None
             try:
                 target = Device.objects.filter(
                     ~models.Q(status=Device.RETIRED))\
                     .get(hostname=job_data['target'])
-                device_type = None
             except Exception as e:
                 raise DevicesUnavailableException(
                     "Requested device %s is unavailable." % job_data['target'])
+            if not target.can_submit(user):
+                raise DevicesUnavailableException("%s is not allowed to submit to "
+                                                  "the restricted device '%s'."
+                                                  % (user.username, target))
         elif 'device_type' in job_data:
             target = None
-            if all_devices.get(job_data['device_type'], 0) > 0:
-                device_type = DeviceType.objects.get(
-                    name=job_data['device_type'])
-            else:
+            try:
+                device_type = DeviceType.objects.get(name=job_data['device_type'])
+            except Exception as e:
                 raise DevicesUnavailableException(
-                    "Device type '%s' is unavailable." %
-                    (job_data['device_type']))
+                    "Device type '%s' is unavailable. %s" %
+                    (job_data['device_type'], e))
+            device_list = Device.objects.filter(device_type=device_type)
+            allow = []
+            for device in device_list:
+                if device.can_submit(user):
+                    allow.append(device)
+            if len(allow) == 0:
+                raise DevicesUnavailableException("No devices of type %s are currently "
+                                                  "available to user %s"
+                                                  % (device_type, user))
         elif 'device_group' in job_data:
             target = None
             device_type = None
@@ -648,6 +751,25 @@ class TestJob(RestrictedResource):
                 raise JSONDataError("tag %r does not exist" % tag_name)
 
         if 'device_group' in job_data:
+            device_count = {}
+            for clients in job_data["device_group"]:
+                role = str(clients["role"])
+                device_type = str(clients['device_type'])
+                count = int(clients["count"])
+                if device_type not in device_count:
+                    device_count[device_type] = 0
+                device_count[device_type] += count
+
+            device_list = Device.objects.filter(device_type=device_type)
+            allow = []
+            for device in device_list:
+                if device.can_submit(user):
+                    allow.append(device)
+            if len(allow) < device_count[device_type]:
+                raise DevicesUnavailableException("Not enough devices of type %s are currently "
+                                                  "available to user %s"
+                                                  % (device_type, user))
+
             target_group = str(uuid.uuid4())
             node_json = utils.split_multi_job(job_data, target_group)
             job_list = []
@@ -700,8 +822,18 @@ class TestJob(RestrictedResource):
         """ used to check for things like if the user can cancel or annotate
         a job failure
         """
-        return (user.is_superuser or user == self.submitter or
+        owner = False
+        if self.actual_device is not None:
+            device = Device.objects.get(hostname=self.actual_device)
+            owner = device.can_admin(user)
+        return (user.is_superuser or user == self.submitter or owner or
                 user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
+
+    def can_change_priority(self, user):
+        """
+        Permission and state required to change job priority
+        """
+        return self._can_admin(user) and self.status == TestJob.SUBMITTED
 
     def can_annotate(self, user):
         """
@@ -802,9 +934,9 @@ class TestJob(RestrictedResource):
 
     @property
     def display_definition(self):
-        """If ORIGINAL_DEFINTION is stored in the database return it, for jobs
-        which does not have ORIGINAL_DEFINTION ie., jobs that were submitted
-        before this attribute was introduced, return the DEFINTION.
+        """If ORIGINAL_DEFINITION is stored in the database return it, for jobs
+        which do not have ORIGINAL_DEFINITION ie., jobs that were submitted
+        before this attribute was introduced, return the DEFINITION.
         """
         if self.original_definition and not self.is_multinode:
             return self.original_definition
