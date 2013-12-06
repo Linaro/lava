@@ -22,7 +22,8 @@
   .no-details details.open summary:before { content: '▼ '; }
   .no-details details summary { display: block; }
 </style>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.details.min.js"></script> 
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.details.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script> 
 {% endblock %}
 
 
@@ -162,6 +163,15 @@ $(document).ready(
             title: "Reason for onlining"
         }
     );
+{% endif %}
+{% if can_admin %}
+    $('.edit_transition').editable('{% url lava.scheduler.edit_transition %}',
+    {
+        indicator  : 'Saving ...',
+        tooltip    : 'Click to edit ...',
+        submit     : 'OK',
+        submitdata : {"csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()}
+    });
 {% endif %}
   }
 );

@@ -616,6 +616,7 @@ def health_job_list(request, pk):
                 params=(device,)),
             'show_forcehealthcheck': device.can_admin(request.user) and
             device.status not in [Device.RETIRED],
+            'can_admin': device.can_admin(request.user),
             'show_maintenance': device.can_admin(request.user) and
             device.status in [Device.IDLE, Device.RUNNING, Device.RESERVED],
             'show_online': device.can_admin(request.user) and
@@ -1093,22 +1094,12 @@ class DeviceTransitionTable(DataTablesTable):
         return mark_safe(
             '%s &rarr; %s' % (t.get_old_state_display(), t.get_new_state_display(),))
 
-    def render_message(self, value):
-        """
-        render methods are only called if the value for a cell is determined to be not an empty value.
-        When a value is in Column.empty_values, a default value is rendered instead
-        (both Column.render and Table.render_FOO are skipped).
-        http://django-tables2.readthedocs.org/en/latest/
-
-        :param value: the value for the cell retrieved from the table data
-        :return: the non-empty string to return for display
-        """
-        return value
-
     created_on = Column('when', attrs=Attrs(width="40%"))
     transition = Column('transition', sortable=False, accessor='old_state')
     created_by = Column('by')
-    message = Column('reason')
+    message = TemplateColumn('''
+    <div class="edit_transition" id="{{ record.id }}" style="width: 100%">{{ record.message }}</div>
+        ''')
 
     datatable_opts = {
         'aaSorting': [[0, 'desc']],
@@ -1118,6 +1109,21 @@ class DeviceTransitionTable(DataTablesTable):
 def transition_json(request, pk):
     device = get_object_or_404(Device, pk=pk)
     return DeviceTransitionTable.json(request, params=(device,))
+
+
+@post_only
+def edit_transition(request):
+    """Edit device state transition, based on user permission."""
+    id = request.POST.get("id")
+    value = request.POST.get("value")
+
+    transition_obj = get_object_or_404(DeviceStateTransition, pk=id)
+    if transition_obj.device.can_admin(request.user):
+        transition_obj.update_message(value)
+        return HttpResponse(transition_obj.message)
+    else:
+        return HttpResponseForbidden("Permission denied.",
+                                     content_type="text/plain")
 
 
 @BreadCrumb("Device {pk}", parent=index, needs=['pk'])
@@ -1143,6 +1149,7 @@ def device_detail(request, pk):
                 params=(device,)),
             'show_forcehealthcheck': device.can_admin(request.user) and
             device.status not in [Device.RETIRED],
+            'can_admin': device.can_admin(request.user),
             'show_maintenance': device.can_admin(request.user) and
             device.status in [Device.IDLE, Device.RUNNING, Device.RESERVED],
             'show_online': device.can_admin(request.user) and

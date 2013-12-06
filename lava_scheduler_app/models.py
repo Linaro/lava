@@ -820,3 +820,7 @@ class DeviceStateTransition(models.Model):
     old_state = models.IntegerField(choices=Device.STATUS_CHOICES)
     new_state = models.IntegerField(choices=Device.STATUS_CHOICES)
     message = models.TextField(null=True, blank=True)
+
+    def update_message(self, message):
+        self.message = message
+        self.save()
