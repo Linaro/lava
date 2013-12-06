@@ -1,3 +1,5 @@
+.. _writing_tests:
+
 Writing a LAVA test definition
 ##############################
 
@@ -430,3 +432,100 @@ This syntax will result in the test results::
 
 The simplest way to use this with real data is to use a custom script
 which runs ``lava-test-case`` with the relevant arguments.
+
+Best practices for writing a LAVA job
+#####################################
+
+A LAVA job can consist of several LAVA test definitions and multiple
+deployments but this flexibility needs to be balanced against the
+complexity of the job and the ways to analyse the results.
+
+Use different test definitions for different test areas
+*******************************************************
+
+Follow the standard UNIX model of *Make each program do one thing well*
+by making a set of test definitions, each of which tests one area of
+functionality and tests that one area thoroughly.
+
+Use different jobs for different test environments
+**************************************************
+
+Whilst it is supported to reboot from one distribution and boot into a
+different one, the usefulness of this is limited because if the first
+environment fails, the subsequent tests might not run at all.
+
+Use a limited number of test definitions per job
+************************************************
+
+Whilst LAVA tries to ensure that all tests are run, endlessly adding
+test repositories to a single LAVA job only increases the risk that
+one test will fail in a way that prevents the results from all tests
+being collected.
+
+Overly long sets of test definitions also increase the complexity of
+the log files and the result bundles, making it hard to identify why
+a particular job failed.
+
+LAVA supports filters and image reports to combine result bundles into
+a single analysis.
+
+LAVA also support retrieving individual result bundles using ``lava-tool``
+so that the bundles can be aggregated outside LAVA for whatever tests
+and export the script writer chooses to use.
+
+Splitting a large job into smaller chunks also means that the device can
+run other jobs for other users in between the smaller jobs.
+
+Minimise the number of reboots within a single test
+***************************************************
+
+In many cases, if a test definition needs to be isolated from another
+test case by a reboot (to prevent data pollution etc.) it is likely that
+the tests can be split into different LAVA jobs.
+
+To run two test definitions without a reboot, simply combine the JSON
+to not use two ``lava_test_shell`` commands::
+
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
+                        "testdef": "ubuntu/smoke-tests-basic.yaml"
+                    }
+                ],
+                "timeout": 900
+            }
+        },
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "http://staging.git.linaro.org/git-ro/people/neil.williams/temp-functional-tests.git",
+                        "testdef": "singlenode/singlenode01.yaml"
+                    }
+                ],
+                "timeout": 900
+            }
+        }
+
+Becomes::
+
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
+                        "testdef": "ubuntu/smoke-tests-basic.yaml"
+                    },
+                    {
+                        "git-repo": "http://staging.git.linaro.org/git-ro/people/neil.williams/temp-functional-tests.git",
+                        "testdef": "singlenode/singlenode01.yaml"
+                    }
+                ],
+                "timeout": 900
+            }
+        },

@@ -10,7 +10,7 @@ Glossary of terms
     run at regular intervals to ensure that the physical device is capable
     of performing the minimum range of tasks. If the health check fails on
     a particular device of the specified device type, LAVA will automatically
-    put that device :term:`Offline`.
+    put that device :term:`Offline`. See :ref:`health_checks`.
 
   device type
     The common type of a number of devices in LAVA. The device type may
