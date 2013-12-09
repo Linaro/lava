@@ -852,5 +852,44 @@ class cmd_lava_test_shell(BaseAction):
         with os.fdopen(fd, 'w') as f:
             DocumentIO.dump(f, bundle)
 
+        self._print_test_results(bundle)
+
         if parse_err_msg:
             raise GeneralError(parse_err_msg)
+
+    def _print_test_results(self, bundle):
+        _print = self.context.log
+        for test_run in bundle.get('test_runs', []):
+
+            test_cases = test_run.get('test_results', [])
+            if len(test_cases) > 0:
+
+                test_id = test_run['test_id']
+
+                _print('')
+                _print("=" * len(test_id))
+                _print(test_id)
+                _print("=" * len(test_id))
+                _print('')
+
+                has_measurements = \
+                    any(map(lambda t: 'measurement' in t, test_cases))
+
+                if has_measurements:
+                    _print('%-40s %6s %20s' % ('Test case', 'Result',
+                                            'Measurement'))
+                    _print('%s %s %s' % ('-' * 40, '-' * 6, '-' * 20))
+                else:
+                    _print('%-40s %6s' % ('Test case', 'Result'))
+                    _print('%s %s' % ('-' * 40, '-' * 6))
+
+                for test_case in test_cases:
+                    line = '%-40s %6s' % (test_case['test_case_id'],
+                                          test_case['result'].upper())
+                    if 'measurement' in test_case:
+                        line += ' %20.5f' % test_case['measurement']
+                    if 'units' in test_case:
+                        line += ' %s' % test_case['units']
+                    _print(line)
+
+                _print('')
