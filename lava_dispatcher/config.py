@@ -143,6 +143,7 @@ class DeviceSchema(schema.Schema):
 
     simulator_version_command = schema.StringOption()
     simulator_command = schema.StringOption()
+    simulator_command_flag = schema.StringOption(default=" -C ")
     simulator_axf_files = schema.ListOption()
     simulator_kernel_files = schema.ListOption(default=None)
     simulator_kernel = schema.StringOption(default=None)

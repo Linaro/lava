@@ -326,7 +326,9 @@ class FastModelTarget(Target):
 
         self._fix_perms()
 
-        options = boot_options.as_string(self, join_pattern=' -C %s=%s')
+        cli_pattern = self.config.simulator_command_flag + '%s=%s'
+
+        options = boot_options.as_string(self, join_pattern=cli_pattern)
 
         if self.config.simulator_boot_wrapper and self._uefi is None:
             options = '%s %s' % (self.config.simulator_boot_wrapper, options)
