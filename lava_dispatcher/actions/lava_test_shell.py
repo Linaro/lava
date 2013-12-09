@@ -651,14 +651,26 @@ class cmd_lava_test_shell(BaseAction):
             '<LAVA_LMP> <LAVA_(\S+) ([^>]+)>',
         ]
 
-        idx = runner._connection.expect(patterns, timeout=timeout)
-        if idx == 0:
+        # these are names for the indexes in the array above
+        EXIT = 0
+        EOF = 1
+        TIMEOUT = 2
+        SIGNAL = 3
+        MULTINODE = 4
+        LMP = 5
+
+        event = runner._connection.expect(patterns, timeout=timeout)
+
+        if event == EXIT:
             logging.info('lava_test_shell seems to have completed')
-        elif idx == 1:
+
+        elif event == EOF:
             logging.warn('lava_test_shell connection dropped')
-        elif idx == 2:
+
+        elif event == TIMEOUT:
             logging.warn('lava_test_shell has timed out')
-        elif idx == 3:
+
+        elif event == SIGNAL:
             name, params = runner._connection.match.groups()
             logging.debug("Received signal <%s>" % name)
             params = params.split()
@@ -668,7 +680,8 @@ class cmd_lava_test_shell(BaseAction):
                 logging.exception("on_signal failed")
             runner._connection.sendline('echo LAVA_ACK')
             return True
-        elif idx == 4:
+
+        elif event == MULTINODE:
             name, params = runner._connection.match.groups()
             logging.debug("Received Multi_Node API <LAVA_%s>" % name)
             params = params.split()
@@ -678,7 +691,8 @@ class cmd_lava_test_shell(BaseAction):
             except:
                 logging.exception("on_signal(Multi_Node) failed")
             return ret
-        elif idx == 5:
+
+        elif event == LMP:
             name, params = runner._connection.match.groups()
             logging.debug("Received LMP <LAVA_%s>" % name)
             params = params.split()
