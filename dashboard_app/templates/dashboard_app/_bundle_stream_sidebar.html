@@ -6,6 +6,10 @@
   <dt>{% trans "Name:" %}</dt>
   <dd>{{ bundle_stream.name|default:"<i>not set</i>" }}</dd>
 </dl>
+
+<h3>{% trans "Export" %}</h3>
+<p>Export test run data <a href="{% url dashboard_app.views.bundle_list_export bundle_stream.pathname %}">as CSV</a></p>
+
 <h3>{% trans "Ownership" %}</h3>
 {% if bundle_stream.user %}
 <p>{% trans "This stream is owned by" %} <q>{{ bundle_stream.user }}</q></p>

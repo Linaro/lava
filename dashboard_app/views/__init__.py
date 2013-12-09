@@ -27,6 +27,7 @@ import re
 import tempfile
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core import serializers
 from django.core.exceptions import PermissionDenied
@@ -267,6 +268,57 @@ def bundle_list(request, pathname):
         RequestContext(request))
 
 
+def bundle_list_export(request, pathname):
+    # Create and serve the CSV file.
+
+    bundle_stream = get_restricted_object(
+        BundleStream,
+        lambda bundle_stream: bundle_stream,
+        request.user,
+        pathname=pathname
+    )
+
+    file_name = bundle_stream.name.replace(" ", "_")
+    tmp_dir = tempfile.mkdtemp()
+    file_path = os.path.join(tmp_dir, "%s.csv" % file_name)
+
+    for bundle in bundle_stream.bundles.all():
+        bundle_keys = bundle.__dict__.keys()
+        break
+
+    bundle_keys.sort()
+    # Remove non-relevant columns for CSV file.
+    removed_fields = ["_gz_content", "_raw_content", "_state", "id",
+                      "bundle_stream_id"]
+    for field in removed_fields:
+        if field in bundle_keys:
+            bundle_keys.remove(field)
+
+    # Add results columns from denormalization object.
+    bundle_keys.extend(["pass", "fail", "total"])
+
+    with open(file_path, 'w+') as csv_file:
+        out = csv.DictWriter(csv_file, quoting=csv.QUOTE_ALL,
+                             extrasaction='ignore',
+                             fieldnames=bundle_keys)
+        out.writeheader()
+
+        for bundle in bundle_stream.bundles.all():
+            # Add results columns from summary results.
+            bundle_dict = bundle.__dict__.copy()
+            bundle_dict.update(bundle.get_summary_results())
+            bundle_dict["uploaded_by_id"] = User.objects.get(
+                pk=bundle.uploaded_by_id).username
+            out.writerow(bundle_dict)
+
+    with open(file_path, 'r') as csv_file:
+        response = HttpResponse(mimetype='text/csv')
+        response['Content-Disposition'] = "attachment; filename=%s.csv" % \
+                                          file_name
+        response.write(csv_file.read())
+        return response
+
+
 @BreadCrumb(
     "Bundle {content_sha1}",
     parent=bundle_list,
@@ -317,14 +369,15 @@ def bundle_export(request, pathname, content_sha1):
 
     test_run_keys.sort()
     # Remove non-relevant columns for CSV file.
-    removed_fields = ["_state", "id", "bundle_id"]
+    removed_fields = ["_state", "id", "bundle_id",
+                      "sw_image_desc", "test_id"]
     for field in removed_fields:
         if field in test_run_keys:
             test_run_keys.remove(field)
 
     # Add results columns from denormalization object.
-    test_run_keys.extend(["count_pass", "count_fail",
-                          "count_skip", "count_unknown"])
+    test_run_keys[:0] = ["device", "test", "count_pass", "count_fail",
+                         "count_skip", "count_unknown"]
 
     with open(file_path, 'w+') as csv_file:
         out = csv.DictWriter(csv_file, quoting=csv.QUOTE_ALL,
@@ -337,6 +390,8 @@ def bundle_export(request, pathname, content_sha1):
             test_run_denorm = test_run.denormalization
             test_run_dict = test_run.__dict__.copy()
             test_run_dict.update(test_run_denorm.__dict__)
+            test_run_dict["test"] =  test_run.test.test_id
+            test_run_dict["device"] = test_run.show_device()
             out.writerow(test_run_dict)
 
     with open(file_path, 'r') as csv_file:
