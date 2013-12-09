@@ -15,6 +15,8 @@ $(window).ready(
         });
 
         $("#submit").attr("disabled", "disabled");
+
+        validate_input($("#json-input").val());
     });
 
 validate_input = function(json_input) {

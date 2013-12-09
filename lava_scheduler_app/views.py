@@ -954,6 +954,7 @@ def job_definition(request, pk):
         {
             'job': job,
             'job_file_present': bool(log_file),
+            'show_resubmit': job.can_resubmit(request.user),
         },
         RequestContext(request))
 
@@ -1114,6 +1115,8 @@ def job_cancel(request, pk):
 @post_only
 def job_resubmit(request, pk):
 
+    is_resubmit = request.POST.get("is_resubmit", False)
+
     response_data = {
         'is_authorized': False,
         'bread_crumb_trail': BreadCrumbTrail.leading_to(job_list),
@@ -1123,27 +1126,51 @@ def job_resubmit(request, pk):
     if job.can_resubmit(request.user):
         response_data["is_authorized"] = True
 
-        if job.is_multinode:
-            definition = job.multinode_definition
-        else:
-            definition = job.display_definition
+        if is_resubmit:
+            try:
+                job = TestJob.from_json_and_user(
+                    request.POST.get("json-input"), request.user)
 
-        try:
-            job = TestJob.from_json_and_user(definition, request.user)
-
-            if isinstance(job, type(list())):
-                response_data["job_list"] = job
+                if isinstance(job, type(list())):
+                    response_data["job_list"] = job
+                else:
+                    response_data["job_id"] = job.id
                 return render_to_response(
                     "lava_scheduler_app/job_submit.html",
                     response_data, RequestContext(request))
+
+            except (JSONDataError, ValueError, DevicesUnavailableException) \
+                    as e:
+                response_data["error"] = str(e)
+                response_data["json_input"] = request.POST.get("json-input")
+                return render_to_response(
+                    "lava_scheduler_app/job_submit.html",
+                    response_data, RequestContext(request))
+        else:
+            if request.is_ajax():
+                try:
+                    validate_job_json(request.POST.get("json-input"))
+                    return HttpResponse(simplejson.dumps("success"))
+                except Exception as e:
+                    return HttpResponse(simplejson.dumps(str(e)),
+                                        mimetype="application/json")
+            if job.is_multinode:
+                definition = job.multinode_definition
             else:
-                return redirect(job)
-        except (JSONDataError, ValueError, DevicesUnavailableException) as e:
-            response_data["error"] = str(e)
-            response_data["json_input"] = definition
-            return render_to_response(
-                "lava_scheduler_app/job_submit.html",
-                response_data, RequestContext(request))
+                definition = job.display_definition
+
+            try:
+                response_data["json_input"] = definition
+                return render_to_response(
+                    "lava_scheduler_app/job_submit.html",
+                    response_data, RequestContext(request))
+            except (JSONDataError, ValueError, DevicesUnavailableException) \
+                    as e:
+                response_data["error"] = str(e)
+                response_data["json_input"] = definition
+                return render_to_response(
+                    "lava_scheduler_app/job_submit.html",
+                    response_data, RequestContext(request))
 
     else:
         return HttpResponseForbidden(
