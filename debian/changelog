@@ -1,3 +1,9 @@
+lava-dispatcher (0.33.3-2) unstable; urgency=medium
+
+  * Recommend qemu-system-x86 to support KVM devices
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 13 Dec 2013 13:15:03 +0000
+
 lava-dispatcher (0.33.3-1) unstable; urgency=medium
 
   * New upstream version
