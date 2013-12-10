@@ -1,1 +1,3 @@
 debian/starterkvm.json ./usr/share/lava-server/
+debian/starterkvm.conf ./usr/share/lava-server/
+debian/kvm.conf ./usr/share/lava-server/
