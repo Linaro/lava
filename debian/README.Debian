@@ -45,7 +45,23 @@ Superuser
 Initial data
 ============
 
+The three stages for a new device are:
+
+0: Create a configuration file for this type of device on the dispatcher
+1: Create a configuration for the this instance of the new type on the dispatcher
+2: Populate the database so that the scheduler can submit jobs.
+
+The current packaging for LAVA does not support separate dispatchers and
+schedulers, so all three steps need to happen on the same machine. If you
+want to use the initial data so that this install gets a KVM device, use:
+
+ $ sudo apt-get install qemu-system-x86
+ $ sudo cp /usr/share/lava-server/starterkvm.conf /etc/lava-dispatcher/devices/
+ $ sudo cp /usr/share/lava-server/kvm.conf /etc/lava-dispatcher/device-types/
  $ sudo lava-server manage loaddata /usr/share/lava-server/starterkvm.json
+
+The example starterkvm.conf only supports NAT networking, so will not be
+visible over TCP/IP to other devices when running tests.
 
 Instance name
 =============
