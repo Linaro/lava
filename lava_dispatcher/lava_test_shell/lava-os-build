@@ -1,3 +1,29 @@
 #!/bin/sh
 
+if [ -f /etc/issue ]
+then
+    cat /etc/issue | sed -e 's/\\n.\\l//' | tr -s '\n' '\n'
+    exit 0
+fi
+
+if [ -x /usr/bin/lsb_release ]
+then
+    /usr/bin/lsb_release -d
+    exit 0
+fi
+
+if [ -f /etc/debian_version ]
+then
+    cat /etc/debian_version
+    exit 0
+fi
+
+BUSYBOX=`find /bin -type l -print0|xargs -r0 file|grep busybox`
+
+if [ -n "${BUSYBOX}" ]
+then
+    echo "busybox system"
+    exit 0
+fi
+
 echo 'Unsupported distro: cannot determine build version'
