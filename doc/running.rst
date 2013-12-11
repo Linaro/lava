@@ -7,6 +7,7 @@ are accepted via the xmlrpc API on the web application.
 
 Adding Devices
 **************
+
 Before jobs can be submitted or processed, devices must exist to run
 them on.  To do this, login as an admin user in LAVA Server.
 

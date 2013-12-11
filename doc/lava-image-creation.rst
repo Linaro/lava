@@ -1,3 +1,5 @@
+.. _deploy_boards:
+
 Deploying a board in LAVA
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 

@@ -1,3 +1,5 @@
+.. _hooks_external_measurement:
+
 Hooks, Signals and External Measurement
 =======================================
 

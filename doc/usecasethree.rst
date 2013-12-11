@@ -1,3 +1,5 @@
+.. index:: network information
+
 .. _use_case_three:
 
 Use Case Three - Retrieve information about multiple network interfaces

@@ -13,6 +13,8 @@ devices, environments and purposes by using the same YAML files in
 multiple JSON files. It also allows tests to be built from a range of
 components by aggregating YAML files inside a single JSON file.
 
+.. _json_contents:
+
 Contents of the JSON file
 *************************
 
@@ -67,11 +69,17 @@ you use the ``file://`` protocol for support files. Note that a local
 YAML file will still need to download any custom scripts and required
 packages from a remote location.
 
+.. _initial_json_actions:
+
 Initial actions in the JSON
 ===========================
 
 The simplest tests involve using a pre-built image, a test definition
 and submission of the results to the server.
+
+Actions defined in the JSON will be executed in the order specified
+in the JSON file, so a deployment is typically followed by a
+test shell and then submission of results.
 
 #. **deploy_linaro_image** : Download a complete image (usually but not
    necessarily compressed) containing the kernel, kernel modules and
@@ -90,6 +98,8 @@ and submission of the results to the server.
 
 See :ref:`available_actions`
 
+.. _basic_json:
+
 Basic JSON file
 ===============
 
@@ -106,7 +116,9 @@ Make sure the :term:`device type` matches exactly with one of the suitable
 device types listed on the server to which you want to submit this job.
 
 Change the :term:`stream` to one to which you are allowed to upload results,
-on your chosen server.
+on your chosen server. If you use ``localhost``, note that this will
+be replaced by the fully qualified domain name of the server to which
+the job is submitted.
 
 ::
 
@@ -147,6 +159,12 @@ on your chosen server.
 
 .. note:: Always check your JSON syntax. A useful site for this is
           http://jsonlint.com.
+
+For more on the contents of the JSON file and how to construct JSON
+for devices known to LAVA or devices new to LAVA, see the
+:ref:`test_developer`.
+
+.. _yaml_contents:
 
 Contents of the YAML file
 *************************
@@ -227,6 +245,8 @@ and these are specified in the run steps::
   run:
       steps:
 
+.. _writing_test_commands:
+
 Writing commands to run on the device
 ######################################
 
@@ -291,6 +311,8 @@ Take care when using ``cd`` inside custom scripts - always store the
 initial return value or the value of ``pwd`` before the call and change
 back to that directory at the end of the script.
 
+.. _interpreters_scripts:
+
 Script interpreters
 ===================
 
@@ -310,6 +332,8 @@ If your YAML file does not reside in a repository, the YAML *run steps*
 will need to ensure that a network interface is raised, install a
 tool like ``wget`` and then use that to obtain the script, setting
 permissions if appropriate.
+
+.. _test_case_commands:
 
 Using commands as test cases
 ****************************
@@ -335,6 +359,11 @@ Use subshells instead of backticks to execute a command as an argument
 to another command::
 
   - lava-test-case pointless-example --shell ls $(pwd)
+
+For more on the contents of the YAML file and how to construct YAML
+for your own tests, see the :ref:`test_developer`.
+
+.. _parsing_output:
 
 Parsing command outputs
 ***********************
@@ -363,6 +392,8 @@ The result of the above test would be a result bundle::
   test2 -> fail
   test3 -> pass
   test4 -> pass
+
+.. _recording_test_results:
 
 Recording test case results
 ***************************
@@ -405,6 +436,8 @@ This syntax will result in the test results::
   test2 -> fail
   test5 -> pass
   test6 -> fail
+
+.. _recording_test_measurements:
  
 Recording test case measurements and units
 ******************************************
@@ -432,6 +465,8 @@ This syntax will result in the test results::
 
 The simplest way to use this with real data is to use a custom script
 which runs ``lava-test-case`` with the relevant arguments.
+
+.. _best_practices:
 
 Best practices for writing a LAVA job
 #####################################

@@ -1,3 +1,5 @@
+.. _lava_test_shell:
+
 LAVA Test Shell
 ***************
 

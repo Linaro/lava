@@ -1,3 +1,5 @@
+.. index:: iterating using role
+
 .. _use_case_four:
 
 Use Case Four - Iterating through devices using roles

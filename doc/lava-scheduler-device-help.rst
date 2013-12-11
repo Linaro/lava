@@ -48,6 +48,8 @@ See also :ref:`device_capabilities`
     used by the :term:`device owner` to give more information about the device. See
     :ref:`edit_device_description`.
 
+.. index:: status
+
 .. _device_status:
 
 Device status information
@@ -89,6 +91,8 @@ of devices and making submissions available only to the device owner
 or group of users of which the device owner is a member. Device owners
 can also update the free text description of a device.
 
+.. index:: maintenance
+
 .. _maintenance_mode:
 
 Put into maintenance mode
@@ -99,6 +103,8 @@ will wait in the submission queue until the device is online (*Idle*)
 before starting. If the device was running a test job when the owner
 or administrator put the device into maintenance mode, the device will
 be in *Offlining* state until that job completes.
+
+.. index:: looping
 
 .. _looping_mode:
 
@@ -132,6 +138,8 @@ this individual device. Suggested content includes more information about
 the specific device, the reasons for restricting submissions, information
 about the device owner and the purposes for which the device is used etc.
 Text can include links to external sites for more information.
+
+.. index:: restricted
 
 .. _restrict_device:
 

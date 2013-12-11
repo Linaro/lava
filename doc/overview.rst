@@ -1,8 +1,11 @@
 LAVA Overview
 *************
 
+.. index:: LAVA
+
 What is LAVA?
 =============
+
 LAVA is the Linaro Automation and Validation Architecture. LAVA is a
 collection of participating components, the overall idea and evolving
 architecture that allows us to make testing, quality control and
@@ -27,6 +30,8 @@ and a few servers.
 .. note:: This overview document explains LAVA using
           http://validation.linaro.org/ which is the official
           production instance of LAVA hosted by Linaro.
+
+.. _index:: login
 
 Logging In
 ==========
@@ -75,6 +80,10 @@ authenticate the user and redirects to http://validation.linaro.org/
     :width: 640
     :height: 480
 
+.. _index:: token
+
+.. _authentication_tokens:
+
 Authentication Tokens
 =====================
 
@@ -116,8 +125,12 @@ If a token is compromised it can be removed by clicking on "delete
 this token" link. Anyone using that token will no longer be able to
 authenticate as You in the system.
 
-lava-tool
-=========
+.. index:: lava-tool
+
+.. _lava_tool:
+
+lava-tool overview
+==================
 
 lava-tool is the command-line tool for interacting with the various
 services offered by LAVA via XML-RPC APIs.
@@ -161,8 +174,12 @@ the token.
           created newly, set a password for the same, else enter the
           password for the keyring already created.
 
-Bundle Stream
-=============
+.. index:: bundle-stream
+
+.. _bundle_stream:
+
+Bundle Stream Overview
+======================
 
 What is a Bundle Stream?
 ------------------------
@@ -196,6 +213,9 @@ lava-tool as follows,
           username. Alternatively an existing stream like
           anonymous/test could be used for initial testing purposes.
 
+.. index:: submit
+
+.. _submit_first_job:
 
 Submitting your first job
 =========================
@@ -235,6 +255,8 @@ Here's a minimal job that could be executed ::
     }
 
 .. note:: Replace *username* with your username.
+
+.. _job_submission:
 
 Job Submission
 --------------
@@ -297,8 +319,6 @@ Here's a minimal job that could be executed ::
     }
 
 .. note:: Replace *username* with your username.
-
-.. _job_submission:
 
 Job Submission
 --------------
@@ -427,7 +447,3 @@ explained above ::
           repositories. The official upstream Linaro git repository
           for test definitions is
           https://git.linaro.org/gitweb?p=qa/test-definitions.git
-
-
-:ref:`glossary`
-===============

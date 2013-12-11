@@ -3,15 +3,26 @@
 PDU Daemon
 **********
 
-APC PDUs (Power Distribution Unit) only support one control session at a time. In a :ref:`_distributed_deployment` LAVA installation with multiple :ref:`_remote_worker` there is a possibility that more than one dispatcher may attempt to access a PDU simultaneously. In this case the power control request will only succeed from the dispatcher which was first.
-Multinode jobs are more likely to trigger this issue as they cause many jobs to be started at the same time.
+APC PDUs (Power Distribution Unit) only support one control session at a time. 
+In a :term:`distributed deployment` LAVA installation with multiple
+:term:`remote worker` machines there is a possibility that more than one
+dispatcher may attempt to access a PDU simultaneously. In this case the
+power control request will only succeed from the dispatcher which was
+first.
 
-To solve this problem we use a project called PDUDaemon. Instead of the dispatchers accessing the PDUs directly, they make requests to a queueing daemon which executes them sequentially.
+Multinode jobs are more likely to trigger this issue as they cause many jobs
+to be started at the same time.
 
-The project source is available here: http://staging.git.linaro.org/people/matthew.hart/lavapdu.git
-DEB packages will be available shortly.
+To solve this problem we use a project called 
+`lavapdu <https://git.linaro.org/people/matthew.hart/lavapdu.git>`_.
+Instead of each dispatcher accessing the PDUs directly, dispatchers make
+requests to a queueing daemon which executes them sequentially.
 
-A Postgres server is required with a database created, and postgres credentials to read/write to the database.
+The project source is available here: http://git.linaro.org/people/matthew.hart/lavapdu.git
+Packages for Debian and Ubuntu will be available shortly.
+
+A Postgres server is required with a database created, and postgres
+credentials to read/write to the database.
 
 Example config file for lavapdu server::
 

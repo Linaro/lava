@@ -1,3 +1,5 @@
+.. index:: capabilities
+
 .. _device_capabilities:
 
 Device Capabilities Support
@@ -18,6 +20,10 @@ displays the email address of the owner or the name of the group.
 New device owners can only be created by the lab administrators. Equally,
 assigning or transferring ownership of any device can only be done by the
 lab administrators.
+
+.. index:: owner
+
+.. _device_owners:
 
 Device owner abilities
 **********************
@@ -41,4 +47,8 @@ Device owner abilities
   device. Priority can **only** be changed once an owned device has been
   reserved for the job and before the job starts running or an error
   will be returned.
-
+* annotate individual job failures
+* skip health check this time only when putting a device online. This
+  omission is recorded in the state transition log for the device.
+* force a health check without needing to take the device offline and
+  then back online.

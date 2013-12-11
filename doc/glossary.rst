@@ -61,7 +61,7 @@ Glossary of terms
     imagined as a folder within which all related result bundles will be
     stored. A bundle stream could be private or anonymous. The shorthand
     ``stream`` is used in job definition to instruct where the results
-    from the job should be submitted.
+    from the job should be submitted. See also :ref:`bundle_stream`
 
   result bundle
     A set of results submitted after a testing session. It contains
@@ -117,3 +117,24 @@ Glossary of terms
 
   DUT
     Device Under Test - a quick way to refer to the device in LAVA.
+
+  remote worker
+    A dispatcher with devices attached which does not have a web frontend
+    but which uses a connection to a remote lava-server to retrieve the
+    list of jobs for supported boards.
+
+  distributed deployment
+    A method of installing LAVA such that the load of running tests on
+    devices is spread across multiple machines (dispatchers) which each act
+    as a :term:`remote worker` with a single machine providing the web
+    frontend, master scheduler and database connection
+
+  job definition
+    The original JSON submitted to create a job in LAVA is retained in
+    the database and can be viewed directly from the job log. Although
+    the JSON is the same, the YAML may well have changed since the job
+    was submitted, so some care is required when modifying job definitions
+    from old jobs to make a new submission. If the job was a :term:`MultiNode`
+    job, the MultiNode definition will be the unchanged JSON from the
+    original submission; the job definition will be the parsed JSON for
+    this particular device within the MultiNode job.

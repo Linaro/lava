@@ -1,3 +1,7 @@
+.. index:: filter
+
+.. filter:
+
 Filters
 =======
 
@@ -41,6 +45,9 @@ You can choose your own level of subscription:
  * whenever a test that matches the criteria of filter is executed
  * only when a test that matches the criteria of filter fails
 
+.. index:: image reports
+
+.. _image_reports:
 
 Image Reports
 =============

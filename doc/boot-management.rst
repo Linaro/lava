@@ -1,12 +1,17 @@
+.. _boot_management:
+
 Boot Management
 ###############
 
-LAVA offers many facilities to control the boot process of a :term:`DUT`. This enables users to configure the boot process to support custom software images.
+LAVA offers many facilities to control the boot process of a :term:`DUT`. 
+This enables users to configure the boot process to support custom software 
+images.
 
 Boot Commands Stanzas
 *********************
 
-Boot command stanzas are *predefined* :ref:`boot_commands` which are included in the :ref:`device_configuration` or in the :ref:`device_type_configuration`.
+Boot command stanzas are *predefined* :ref:`boot_commands` which are
+included in the :ref:`device_configuration` or in the :ref:`device_type_configuration`.
 
 .. _boot_commands:
 
@@ -29,12 +34,15 @@ In the above example "boot_cmds" is the name of the stanza.
 Boot Options
 ************
 
-Boot options are *predefined* :ref:`boot_commands` which are included in the :ref:`device_configuration` or in the :ref:`device_type_configuration`.
+Boot options are *predefined* :ref:`boot_commands` which are included
+in the :ref:`device_configuration` or in the :ref:`device_type_configuration`.
 
 Configuration
 =============
 
-The following example demonstrates how to enable, define, and set the default :ref:`boot_options` in either the :ref:`device_configuration` or in the :ref:`device_type_configuration`.
+The following example demonstrates how to enable, define, and set the 
+default :ref:`boot_options` in either the :ref:`device_configuration` or
+in the :ref:`device_type_configuration`.
 
 Example::
  
@@ -45,5 +53,3 @@ Example::
  default = boot_cmds
 
 The "boot_cmds" stanza defines
-
-
