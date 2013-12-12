@@ -22,12 +22,21 @@
 import commands
 import contextlib
 import logging
+import os
 import pexpect
 import sys
 import time
 import traceback
 
-import lava_dispatcher.utils as utils
+from lava_dispatcher.device.target import (
+    get_target,
+)
+
+from lava_dispatcher.utils import (
+    mkdtemp,
+    mk_targz,
+    wait_for_prompt,
+)
 
 from lava_dispatcher.errors import (
     NetworkError,
@@ -35,32 +44,6 @@ from lava_dispatcher.errors import (
     CriticalError,
     ADBConnectError,
 )
-
-
-def wait_for_prompt(connection, prompt_pattern, timeout):
-    # One of the challenges we face is that kernel log messages can appear
-    # half way through a shell prompt.  So, if things are taking a while,
-    # we send a newline along to maybe provoke a new prompt.  We wait for
-    # half the timeout period and then wait for one tenth of the timeout
-    # 6 times (so we wait for 1.1 times the timeout period overall).
-    prompt_wait_count = 0
-    if timeout == -1:
-        timeout = connection.timeout
-    partial_timeout = timeout / 2.0
-    while True:
-        try:
-            connection.expect(prompt_pattern, timeout=partial_timeout)
-        except pexpect.TIMEOUT:
-            if prompt_wait_count < 6:
-                logging.warning('Sending newline in case of corruption.')
-                prompt_wait_count += 1
-                partial_timeout = timeout / 10
-                connection.sendline('')
-                continue
-            else:
-                raise
-        else:
-            break
 
 
 class CommandRunner(object):
@@ -381,7 +364,37 @@ class LavaClient(object):
         self.proc = None
         # used for apt-get in lava-test.py
         self.aptget_cmd = "apt-get"
-        self.target_device = None
+        self.target_device = get_target(context, config)
+
+    def deploy_linaro_android(self, boot, system, data, rootfstype,
+                              bootloadertype):
+        self.target_device.deploy_android(boot, system, data, rootfstype,
+                                          bootloadertype)
+
+    def deploy_linaro(self, hwpack, rootfs, image, rootfstype, bootloadertype):
+        if image is None:
+            if hwpack is None or rootfs is None:
+                raise CriticalError(
+                    "must specify both hwpack and rootfs \
+                     when not specifying image")
+        elif hwpack is not None or rootfs is not None:
+            raise CriticalError(
+                "cannot specify hwpack or rootfs when specifying image")
+
+        if image is None:
+            self.target_device.deploy_linaro(hwpack, rootfs,
+                                             rootfstype, bootloadertype)
+        else:
+            self.target_device.deploy_linaro_prebuilt(image, rootfstype,
+                                                      bootloadertype)
+
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs,
+                             nfsrootfs, bootloader, firmware, rootfstype,
+                             bootloadertype, target_type):
+        self.target_device.deploy_linaro_kernel(kernel, ramdisk, dtb, rootfs,
+                                                nfsrootfs, bootloader,
+                                                firmware, rootfstype,
+                                                bootloadertype, target_type)
 
     @contextlib.contextmanager
     def tester_session(self):
@@ -415,11 +428,7 @@ class LavaClient(object):
             session.disconnect()
 
     def reliable_session(self):
-        """
-        Return a session rooted in the rootfs to be tested where networking is
-        guaranteed to work.
-        """
-        raise NotImplementedError(self.reliable_session)
+        return self.tester_session()
 
     def _in_test_shell(self):
         """
@@ -450,10 +459,21 @@ class LavaClient(object):
         raise NotImplementedError(self.boot_master_image)
 
     def _boot_linaro_image(self):
-        pass
+        if self.proc:
+            logging.warning('device already powered on, powering off first')
+            self._power_off_device()
+        self.proc = self.target_device.power_on()
 
     def _boot_linaro_android_image(self):
-        pass
+        """Booting android or ubuntu style images don't differ much"""
+
+        logging.info('ensuring ADB port is ready')
+        adb_port = self.target_device.config.android_adb_port
+        while self.context.run_command("sh -c 'netstat -an | grep %s.*TIME_WAIT'" % adb_port) == 0:
+            logging.info("waiting for TIME_WAIT %s socket to finish" % adb_port)
+            time.sleep(3)
+
+        self._boot_linaro_image()
 
     def boot_linaro_image(self):
         """
@@ -496,17 +516,36 @@ class LavaClient(object):
     def get_www_scratch_dir(self):
         """ returns a temporary directory available for downloads that gets
         deleted when the process exits """
-        return utils.mkdtemp(self.context.config.lava_image_tmpdir)
+        return mkdtemp(self.context.config.lava_image_tmpdir)
 
     def get_test_data_attachments(self):
-        """returns attachments to go in the "lava_results" test run"""
-        return []
+        '''returns attachments to go in the "lava_results" test run'''
+        return self.target_device.get_test_data_attachments()
 
     def retrieve_results(self, result_disk):
-        raise NotImplementedError(self.retrieve_results)
+        self._power_off_device()
+
+        td = self.target_device
+        tar = os.path.join(td.scratch_dir, 'lava_results.tgz')
+        result_dir = self.context.config.lava_result_dir
+        with td.file_system(td.config.root_part, result_dir) as mnt:
+            mk_targz(tar, mnt)
+        return tar
 
     def finish(self):
-        pass
+        self._power_off_device()
+
+    def _power_off_device(self):
+        """
+        Powers the associated device off by calling its power_off() method.
+
+        Can be called multiple times, but only the first will be effective, all
+        the others will be no-ops (unless the device is powered on again by
+        calling one of the _boot* methods).
+        """
+        if self.proc:
+            self.target_device.power_off(self.proc)
+            self.proc = None
 
     # Android stuff
 

@@ -26,7 +26,7 @@ import sys
 import tempfile
 
 from lava_dispatcher.config import get_device_config
-from lava_dispatcher.client.targetdevice import TargetBasedClient
+from lava_dispatcher.client.base import LavaClient
 from lava_dispatcher.test_data import LavaTestData
 from lava_dispatcher.utils import (
     logging_spawn,
@@ -96,7 +96,7 @@ class LavaContext(object):
         self.output = Outputter(output_dir)
         self.logfile_read = self.output.logfile_read
         self.device_config = get_device_config(target)
-        self._client = TargetBasedClient(self, self.device_config)
+        self._client = LavaClient(self, self.device_config)
         self.test_data = LavaTestData()
         self.oob_file = oob_file
         self._host_result_dir = None

@@ -25,7 +25,7 @@ import re
 import logging
 
 from lava_dispatcher.device import boot_options
-from lava_dispatcher.client.base import (
+from lava_dispatcher.utils import (
     wait_for_prompt
 )
 from lava_dispatcher.client.lmc_utils import (
