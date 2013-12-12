@@ -187,6 +187,14 @@ class DeviceSchema(schema.Schema):
 
     ecmeip = schema.StringOption()
 
+    # for dummy devices
+    dummy_driver = schema.StringOption(default=None)
+    dummy_schroot_chroot = schema.StringOption(default="default")
+    dummy_ssh_host = schema.StringOption(default=None)
+    dummy_ssh_port = schema.IntOption(default=22)
+    dummy_ssh_username = schema.StringOption(default='root')
+    dummy_ssh_identity_file = schema.StringOption(default=None)
+
 
 class OptionDescriptor(object):
     def __init__(self, name):
