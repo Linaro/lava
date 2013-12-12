@@ -1,4 +1,4 @@
-lava-server (0.21.2-2) UNRELEASED; urgency=medium
+lava-server (0.21.2-2) unstable; urgency=medium
 
   * Package instructions for using the initial data and sample
     configuration files
