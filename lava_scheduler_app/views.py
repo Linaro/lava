@@ -294,6 +294,45 @@ def index(request):
         RequestContext(request))
 
 
+def type_report_data(start_day, end_day, dt, health_check):
+    now = datetime.datetime.now()
+    start_date = now + datetime.timedelta(start_day)
+    end_date = now + datetime.timedelta(end_day)
+
+    res = TestJob.objects.filter(actual_device__in=Device.objects.filter(device_type=dt),
+                                 health_check=health_check,
+                                 start_time__range=(start_date, end_date),
+                                 status__in=(TestJob.COMPLETE, TestJob.INCOMPLETE,
+                                             TestJob.CANCELED, TestJob.CANCELING),).values('status')
+    url = reverse('lava.scheduler.failure_report')
+    params = 'start=%s&end=%s&device_type=%s&health_check=%d' % (start_day, end_day, dt, health_check)
+    return {
+        'pass': res.filter(status=TestJob.COMPLETE).count(),
+        'fail': res.exclude(status=TestJob.COMPLETE).count(),
+        'date': start_date.strftime('%m-%d'),
+        'failure_url': '%s?%s' % (url, params),
+    }
+
+
+def device_report_data(start_day, end_day, device, health_check):
+    now = datetime.datetime.now()
+    start_date = now + datetime.timedelta(start_day)
+    end_date = now + datetime.timedelta(end_day)
+
+    res = TestJob.objects.filter(actual_device=device, health_check=health_check,
+                                 start_time__range=(start_date, end_date),
+                                 status__in=(TestJob.COMPLETE, TestJob.INCOMPLETE,
+                                             TestJob.CANCELED, TestJob.CANCELING),).values('status')
+    url = reverse('lava.scheduler.failure_report')
+    params = 'start=%s&end=%s&device=%s&health_check=%d' % (start_day, end_day, device, health_check)
+    return {
+        'pass': res.filter(status=TestJob.COMPLETE).count(),
+        'fail': res.exclude(status=TestJob.COMPLETE).count(),
+        'date': start_date.strftime('%m-%d'),
+        'failure_url': '%s?%s' % (url, params),
+    }
+
+
 def job_report(start_day, end_day, health_check):
     now = datetime.datetime.now()
     start_date = now + datetime.timedelta(start_day)
@@ -400,12 +439,14 @@ def failure_report(request):
     return render_to_response(
         "lava_scheduler_app/failure_report.html",
         {
+            'device_type': request.GET.get('device_type', None),
+            'device': request.GET.get('device', None),
             'failed_job_table': FailedJobTable(
                 'failure_report',
                 reverse(failed_jobs_json),
                 params=(request,)
             ),
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(reports),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(failure_report),
         },
         RequestContext(request))
 
@@ -694,6 +735,39 @@ def device_type_detail(request, pk):
                                                                       kwargs=dict(pk=pk)), params=(dt,)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_detail, pk=pk),
             'context_help': BreadCrumbTrail.leading_to(device_type_detail, pk='help'),
+        },
+        RequestContext(request))
+
+
+@BreadCrumb("{pk} device type report", parent=device_type_detail, needs=['pk'])
+def device_type_reports(request, pk):
+    device_type = get_object_or_404(DeviceType, pk=pk)
+    health_day_report = []
+    health_week_report = []
+    job_day_report = []
+    job_week_report = []
+    for day in reversed(range(7)):
+        health_day_report.append(type_report_data(day * -1 - 1, day * -1, device_type, True))
+        job_day_report.append(type_report_data(day * -1 - 1, day * -1, device_type, False))
+    for week in reversed(range(10)):
+        health_week_report.append(type_report_data(week * -7 - 7, week * -7, device_type, True))
+        job_week_report.append(type_report_data(week * -7 - 7, week * -7, device_type, False))
+
+    long_running = TestJob.objects.filter(
+        actual_device__in=Device.objects.filter(device_type=device_type),
+        status__in=[TestJob.RUNNING,
+                    TestJob.CANCELING]).order_by('start_time')[:5]
+
+    return render_to_response(
+        "lava_scheduler_app/devicetype_reports.html",
+        {
+            'device_type': device_type,
+            'health_week_report': health_week_report,
+            'health_day_report': health_day_report,
+            'job_week_report': job_week_report,
+            'job_day_report': job_day_report,
+            'long_running': long_running,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_reports, pk=pk),
         },
         RequestContext(request))
 
@@ -1393,6 +1467,39 @@ def device_detail(request, pk):
         RequestContext(request))
 
 
+@BreadCrumb("{pk} device report", parent=device_detail, needs=['pk'])
+def device_reports(request, pk):
+    device = get_object_or_404(Device, pk=pk)
+    health_day_report = []
+    health_week_report = []
+    job_day_report = []
+    job_week_report = []
+    for day in reversed(range(7)):
+        health_day_report.append(device_report_data(day * -1 - 1, day * -1, device, True))
+        job_day_report.append(device_report_data(day * -1 - 1, day * -1, device, False))
+    for week in reversed(range(10)):
+        health_week_report.append(device_report_data(week * -7 - 7, week * -7, device, True))
+        job_week_report.append(device_report_data(week * -7 - 7, week * -7, device, False))
+
+    long_running = TestJob.objects.filter(
+        actual_device=device,
+        status__in=[TestJob.RUNNING,
+                    TestJob.CANCELING]).order_by('start_time')[:5]
+
+    return render_to_response(
+        "lava_scheduler_app/device_reports.html",
+        {
+            'device': device,
+            'health_week_report': health_week_report,
+            'health_day_report': health_day_report,
+            'job_week_report': job_week_report,
+            'job_day_report': job_day_report,
+            'long_running': long_running,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(device_reports, pk=pk),
+        },
+        RequestContext(request))
+
+
 @post_only
 def device_maintenance_mode(request, pk):
     device = Device.objects.get(pk=pk)
@@ -1421,7 +1528,7 @@ def device_online(request, pk):
 def device_looping_mode(request, pk):
     device = Device.objects.get(pk=pk)
     if device.can_admin(request.user):
-        device.put_into_looping_mode(request.user)
+        device.put_into_looping_mode(request.user, request.POST.get('reason'))
         return redirect(device)
     else:
         return HttpResponseForbidden(
@@ -1454,7 +1561,11 @@ def device_edit_description(request, pk):
 def device_restrict_device(request, pk):
     device = Device.objects.get(pk=pk)
     if device.can_admin(request.user):
+        message = "Restriction added: %s" % request.POST.get('reason')
         device.is_public = False
+        DeviceStateTransition.objects.create(
+            created_by=request.user, device=device, old_state=device.status,
+            new_state=device.status, message=message, job=None).save()
         device.save()
         return redirect(device)
     else:
@@ -1466,7 +1577,11 @@ def device_restrict_device(request, pk):
 def device_derestrict_device(request, pk):
     device = Device.objects.get(pk=pk)
     if device.can_admin(request.user):
+        message = "Restriction removed: %s" % request.POST.get('reason')
         device.is_public = True
+        DeviceStateTransition.objects.create(
+            created_by=request.user, device=device, old_state=device.status,
+            new_state=device.status, message=message, job=None).save()
         device.save()
         return redirect(device)
     else:

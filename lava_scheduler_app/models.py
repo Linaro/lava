@@ -312,13 +312,13 @@ class Device(RestrictedResource):
             self.health_status = Device.HEALTH_UNKNOWN
         self.save()
 
-    def put_into_looping_mode(self, user):
+    def put_into_looping_mode(self, user, reason):
         if self.status not in [Device.OFFLINE, Device.OFFLINING]:
             return
         new_status = self.IDLE
         DeviceStateTransition.objects.create(
             created_by=user, device=self, old_state=self.status,
-            new_state=new_status, message="Looping mode", job=None).save()
+            new_state=new_status, message=reason, job=None).save()
         self.status = new_status
         self.health_status = Device.HEALTH_LOOPING
         self.save()
@@ -381,7 +381,7 @@ class Device(RestrictedResource):
             # This should never happen, it's a logic error.
             self.put_into_maintenance_mode(
                 None, "no job_json in initiate_health_check_job")
-            raise JSONDataError("no job_json found for %r", device)
+            raise JSONDataError("no job_json found for %r", self.hostname)
         else:
             user = User.objects.get(username='lava-health')
             job_data = simplejson.loads(job_json)

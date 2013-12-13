@@ -100,7 +100,7 @@
 </td>
 <td style="vertical-align:text-top;text-align:right;">
 {% if show_maintenance %}
-<form style="display:inline" method="POST"
+<form method="POST"
       action="{% url lava.scheduler.device.maintenance device.pk %}">
   {% csrf_token %}
   <button id="maintenance-button">Put into maintenance mode</button>

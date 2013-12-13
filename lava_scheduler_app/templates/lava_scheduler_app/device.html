@@ -7,5 +7,10 @@
 {% endblock %}
 
 {% block content_columns %}
+
+<h3>Reports</h3>
+<a href="{% url lava.scheduler.device_report device %}">Health check and job failure report</a>
+
+<h3>Recent jobs on {{ device }}</h3>
 {% render_table recent_job_table %}
 {% endblock %}
