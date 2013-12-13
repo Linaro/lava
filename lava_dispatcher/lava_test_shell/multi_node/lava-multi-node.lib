@@ -146,7 +146,7 @@ broadcast="$_IPV4_STREAM_BC
 _IPV6_STREAM_IP=`echo $_RAW_STREAM_V6 | awk ' gsub("/[0-9]+",""){ print $3}'`
 _IPV6_STREAM="ipv6="$_IPV6_STREAM_IP
 
-_MAC_STREAM="mac="`echo $_RAW_STREAM_MAC | awk '{ print $5 }'`
+_MAC_STREAM="mac="$_RAW_STREAM_MAC
 
 _HOSTNAME_STREAM="hostname="`hostname`
 
