@@ -20,6 +20,9 @@ recursive-include lava_scheduler_app/static *.js *.css *.gif *.png
 include entry_points.ini
 include instance.template
 include doc/*
+include doc/examples/*
+include doc/images/*
+include doc/_static/*
 include man/*
 include etc/debug.wsgi
 include etc/lava-default.conf
