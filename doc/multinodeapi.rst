@@ -197,6 +197,18 @@ stage of the test, before the IP details of the group need to be used, call
 ``lava-network collect`` to receive the same information about the rest of
 the group.
 
+The information broadcast about each interface is:
+
+* hostname - ``hostname -f`` if supported, or just ``hostname``
+* netmask
+* broadcast
+* MAC address
+* nameserver entries in ``/etc/resolv.conf`` using the
+  pattern ``dns_N``, starting at one.
+* ipv4 address
+* ipv6 address (if any)
+* default-gateway
+
 All usage of lava-network needs to use a broadcast (which wraps a call to
 ``lava-send``) and a collect (which wraps a call to ``lava-wait-all``). As a
 wrapper around ``lava-wait-all``, collect will block until the rest of the group
@@ -226,6 +238,9 @@ broadcast)::
 
  lava-network query panda17 dns_2
  8.8.8.8
+
+ lava-network query panda06 mac
+ 52:54:30:10:34:56
 
 ``lava-network hosts`` can be used to output the list of all boards in the group
 which have returned a fully qualified domain name in a format suitable for
