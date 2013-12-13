@@ -397,6 +397,25 @@ class LavaClient(object):
                                                 bootloadertype, target_type)
 
     @contextlib.contextmanager
+    def runner(self):
+        """
+        Powers on the target and yields a CommandRunner object.
+
+        The yielded CommandRunner is ready to receive commands on the
+        just-booted system.
+        """
+
+        self.boot_linaro_image()
+
+        ps1_pattern = self.target_device.tester_ps1_pattern
+        ps1_includes_rc = self.target_device.tester_ps1_includes_rc
+        proc = self.proc
+
+        runner = CommandRunner(proc, ps1_pattern, ps1_includes_rc)
+
+        yield runner
+
+    @contextlib.contextmanager
     def tester_session(self):
         """A session that can be used to run commands booted into the test
         image."""

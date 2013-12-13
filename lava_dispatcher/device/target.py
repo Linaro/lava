@@ -123,26 +123,6 @@ class Target(object):
         """
         raise NotImplementedError('extract_tarball')
 
-    @contextlib.contextmanager
-    def runner(self):
-        """ Powers on the target, returning a CommandRunner object and will
-        power off the target when the context is exited
-        """
-        proc = runner = None
-        try:
-            proc = self.power_on()
-            runner = self._get_runner(proc)
-            yield runner
-        finally:
-            if proc and runner:
-                pass
-
-    def _get_runner(self, proc):
-        from lava_dispatcher.client.base import CommandRunner
-        pat = self.tester_ps1_pattern
-        incrc = self.tester_ps1_includes_rc
-        return CommandRunner(proc, pat, incrc)
-
     def get_test_data_attachments(self):
         return []
 

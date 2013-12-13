@@ -620,8 +620,7 @@ class cmd_lava_test_shell(BaseAction):
         signal_director = SignalDirector(self.client, testdef_objs,
                                          self.context)
 
-        with target.runner() as runner:
-            runner.wait_for_prompt(timeout)
+        with self.client.runner() as runner:
             if self.context.config.lava_proxy:
                 runner._connection.sendline(
                     "export http_proxy=%s" % self.context.config.lava_proxy, delay)

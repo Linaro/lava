@@ -104,7 +104,6 @@ class CapriTarget(FastbootTarget, MasterImageTarget):
             self.proc.sendline('')
             self.proc.sendline('')
             self.proc.sendline('export PS1="%s"' % self.tester_ps1)
-            self._runner = self._get_runner(self.proc)
 
         return self.proc
 

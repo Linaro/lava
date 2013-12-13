@@ -73,7 +73,6 @@ class K3V2Target(FastbootTarget):
         self._booted = True
         self.proc.sendline("")  # required to put the adb shell in a reasonable state
         self.proc.sendline("export PS1='%s'" % self.tester_ps1)
-        self._runner = self._get_runner(self.proc)
 
         return self.proc
 
