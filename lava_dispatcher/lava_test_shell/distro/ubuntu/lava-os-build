@@ -8,7 +8,8 @@ fi
 
 if [ -f /etc/lsb-release ]
 then
-    echo $(. /etc/lsb-release; echo "${DISTRIB_DESCRIPTION}")
+    . /etc/lsb-release
+    echo $DISTRIB_DESCRIPTION
     exit 0
 fi
 
