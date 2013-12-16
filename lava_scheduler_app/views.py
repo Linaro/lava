@@ -354,7 +354,7 @@ class FailedJobTable(JobTable):
 
     def get_queryset(self, request):
         failures = [TestJob.INCOMPLETE, TestJob.CANCELED, TestJob.CANCELING]
-        jobs = TestJob.objects.filter(status__in=failures)
+        jobs = all_jobs_with_custom_sort().filter(status__in=failures)
 
         health = request.GET.get('health_check', None)
         if health:
@@ -548,7 +548,7 @@ def populate_capabilities(dt):
     job = TestJob.objects.filter(id=health_job.id)[0]
     if not job:
         return capability
-    bundle = Bundle.objects.filter(testjob=job)[0]
+    bundle = job._results_bundle
     if not bundle:
         return capability
     bundle_json = bundle.get_sanitized_bundle().get_human_readable_json()
@@ -563,7 +563,28 @@ def populate_capabilities(dt):
     for device in devices:
         # multiple core cpus have multiple device.cpu entries, each with attributes.
         if device['device_type'] == 'device.cpu':
-            hardware_cpu_models.append(device['attributes']['cpu_type'])
+            if device['attributes']['cpu_type'] == '?':
+                model = device['attributes']['model name']
+            else:
+                model = device['attributes']['cpu_type']
+            if 'cpu_part' in device['attributes']:
+                cpu_part = int(device['attributes']['cpu_part'], 16)
+            elif 'CPU part' in device['attributes']:
+                cpu_part = int(device['attributes']['CPU part'], 16)
+            else:
+                cpu_part = None
+            if model.startswith("ARMv7") and cpu_part:
+                if hex(cpu_part) == hex(0xc05):
+                    model = "%s - %s" % (model, "Cortex A5")
+                if hex(cpu_part) == hex(0xc07):
+                    model = "%s - %s" % (model, "Cortex A7")
+                if hex(cpu_part) == hex(0xc08):
+                    model = "%s - %s" % (model, "Cortex A8")
+                if hex(cpu_part) == hex(0xc09):
+                    model = "%s - %s" % (model, "Cortex A9")
+                if hex(cpu_part) == hex(0xc15):
+                    model = "%s - %s" % (model, "Cortex A15")
+            hardware_cpu_models.append(model)
             if 'Features' in device['attributes']:
                 hardware_flags.append(device['attributes']['Features'])
             elif 'flags' in device['attributes']:
@@ -911,7 +932,8 @@ def job_detail(request, pk):
         'show_resubmit': job.can_resubmit(request.user),
         'bread_crumb_trail': BreadCrumbTrail.leading_to(job_detail, pk=pk),
         'show_reload_page': job.status <= TestJob.RUNNING,
-        'change_priority': job.can_change_priority(request.user)
+        'change_priority': job.can_change_priority(request.user),
+        'context_help': BreadCrumbTrail.leading_to(job_detail, pk='detail'),
     }
 
     log_file = job.output_file()

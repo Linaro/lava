@@ -1,10 +1,12 @@
 from django.contrib import admin
 from lava_scheduler_app.models import (
     Device, DeviceStateTransition, DeviceType, TestJob, Tag, JobFailureTag,
+    UserAdmin, User
 )
 
-# XXX These actions should really go to another screen that asks for a reason.
-# Sounds tedious to implement though.
+#  Setup the override in the django admin interface at startup.
+admin.site.unregister(User)
+admin.site.register(User, UserAdmin)
 
 
 def offline_action(modeladmin, request, queryset):

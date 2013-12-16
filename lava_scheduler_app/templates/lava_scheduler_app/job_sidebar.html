@@ -129,6 +129,22 @@
     </li>
     {% endif %}
 
+    <li><b>Device reports</b>
+    <ul>
+    {% if job.actual_device %}
+    <li><a href="{% url lava.scheduler.device_report job.actual_device %}">{{ job.actual_device }}</a></li>
+    {% endif %}
+    {% if job.requested_device %}
+    <li><a href="{% url lava.scheduler.device_type_report job.requested_device.device_type %}">
+        {{ job.requested_device.device_type }}</a></li>
+    {% endif %}
+
+    {% if job.requested_device_type %}
+    <li><a href="{% url lava.scheduler.device_type_report job.requested_device_type %}">
+        {{ job.requested_device_type }}</a></li>
+    {% endif %}
+    </ul></li>
+
 </ul>
 {% if show_cancel or show_failure or change_priority or show_resubmit %}
 <h2>Job Actions</h2>

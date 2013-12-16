@@ -10,7 +10,7 @@
 
 <form action="{% url lava.scheduler.job.annotate_failure job.pk %}" method="post">
 {% csrf_token %}
-{{ form }}
+{{ form.as_p }}
 <input type="submit" value="Submit" />
 </form>
 {% endblock %}

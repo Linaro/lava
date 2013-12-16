@@ -106,10 +106,6 @@ class UserAdmin(UserAdmin):
     """
     inlines = (DefaultOwnerInline, )
 
-#  Setup the override in the django admin interface at startup.
-admin.site.unregister(User)
-admin.site.register(User, UserAdmin)
-
 
 class Device(RestrictedResource):
     """
