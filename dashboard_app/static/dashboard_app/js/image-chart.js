@@ -207,15 +207,6 @@ $(document).ready(function () {
 
     update_data_tables = function(chart_id, chart_data) {
 
-        // Add link.
-        $("#table_link_container_" + chart_id).append(
-            '<a id="data_table_link_' +
-                chart_id + '" href="javascript:void(0)">View data table</a>');
-
-        $("#data_table_link_" + chart_id).click(function(){
-            $('#data_table_dialog_' + chart_id).dialog("open");
-        });
-
         // Add dialog.
         $("#main_container").append('<div id="data_table_dialog_' + chart_id +
                                     '"></div>');
@@ -238,17 +229,28 @@ $(document).ready(function () {
         // Add skeleton data to dialog.
         $("#data_table_dialog_" + chart_id).append(
             '<table id="outer-table"><tr><td>' +
-                '<table id="test-run-names" class="inner-table"><thead>' +
+                '<table id="test-run-names_' + chart_id +
+                '" class="inner-table"><thead>' +
                 '<tr><th>Build Number</th></tr>' +
                 '</thead>' +
                 '<tbody></tbody></table></td>' +
                 '<td><div id="scroller">' +
-                '<table id="results-table" class="inner-table"><thead>' +
+                '<table id="results-table_' + chart_id +
+                '" class="inner-table"><thead>' +
                 '</thead><tbody></tbody></table>' +
                 '</div></td></tr></table>');
 
         // Add data.
         add_table_data(chart_id, chart_data);
+
+        // Add link.
+        $("#table_link_container_" + chart_id).append(
+            '<a id="data_table_link_' +
+                chart_id + '" href="javascript:void(0)">View data table</a>');
+
+        $("#data_table_link_" + chart_id).click(function(){
+            $('#data_table_dialog_' + chart_id).dialog("open");
+        });
     }
 
     add_table_data = function(chart_id, chart_data) {
@@ -280,7 +282,7 @@ $(document).ready(function () {
                     "'>" + test_name + "</td></tr>";
             }
         }
-        $("#test-run-names tbody").html(table_rows);
+        $("#test-run-names_" + chart_id + " tbody").html(table_rows);
 
         // Create column headlines.
         result_table_head = "<tr>";
@@ -373,18 +375,19 @@ $(document).ready(function () {
         }
 
         table_body += '</tr></tbody>';
-        $("#results-table tbody").html(table_head + table_body);
+        $("#results-table_" + chart_id + " tbody").html(table_head +
+                                                       table_body);
 
-        update_tooltips();
+        update_tooltips(chart_id);
     }
 
-    update_tooltips = function() {
+    update_tooltips = function(chart_id) {
         // Update tooltips on the remaining td's for the test names.
-        $("td", "#test-run-names").each(function () {
+        $("td", "#test-run-names_" + chart_id).each(function () {
             if ($(this).attr('tooltip')) {
                 $(this).tooltip({
                     bodyHandler: function() {
-                        return $(this).attr('tooltip');
+                        return $(this).attr('tooltip');
                     }
                 });
             }
