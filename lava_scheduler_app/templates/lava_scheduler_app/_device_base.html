@@ -129,6 +129,8 @@
   {% csrf_token %}
   A reason must be specified:
   <input id="online-reason" name="reason" style="width: 100%"/>
+  <input type="checkbox" name="skiphealthcheck" value="True"/> Skip
+      Health Check
 </form><br/>
 <form method="POST"
       action="{% url lava.scheduler.device.looping device.pk %}">
