@@ -2064,7 +2064,7 @@ class ImageReportChart(models.Model):
             })
 
         filter_data['tests'] = tests
-        matches = evaluate_filter(user, filter_data, descending=False)[:50]
+        matches = evaluate_filter(user, filter_data)[:50]
 
         for match in matches:
             for test_run in match.test_runs:
@@ -2117,7 +2117,7 @@ class ImageReportChart(models.Model):
             })
 
         filter_data['tests'] = tests
-        matches = evaluate_filter(user, filter_data, descending=False)[:50]
+        matches = evaluate_filter(user, filter_data)[:50]
 
         for match in matches:
             for test_result in match.specific_results:
