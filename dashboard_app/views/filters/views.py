@@ -239,7 +239,8 @@ def filter_add_cases_for_test_json(request):
 def get_tests_json(request):
 
     tests = Test.objects.filter(
-        test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id']).distinct()
+        test_runs__bundle__bundle_stream__testrunfilter__id=
+        request.GET['id']).distinct('test_id').order_by('test_id')
 
     data = serializers.serialize('json', tests)
     return HttpResponse(data, mimetype='application/json')
@@ -248,7 +249,9 @@ def get_tests_json(request):
 def get_test_cases_json(request):
 
     test_cases = TestCase.objects.filter(
-        test__test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id']).exclude(units__exact='').distinct()
+        test__test_runs__bundle__bundle_stream__testrunfilter__id=
+        request.GET['id'], test__id=request.GET['test_id']).exclude(
+        units__exact='').distinct('test_case_id').order_by('test_case_id')
 
     data = serializers.serialize('json', test_cases)
     return HttpResponse(data, mimetype='application/json')
