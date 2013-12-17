@@ -5,10 +5,9 @@ import shutil
 import urlparse
 import copy
 import socket
-
+import signal
 from dashboard_app.models import Bundle
 
-from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
 from django.db import connection
 from django.db import IntegrityError, transaction
@@ -74,7 +73,9 @@ class DatabaseJobSource(object):
                             message.startswith(
                             'terminating connection due to administrator command') or \
                             message.startswith(
-                            'could not connect to server: Connection refused'):
+                            'could not connect to server: Connection refused') or \
+                            message.startswith(
+                            'canceling statement due to statement timeout'):
                         self.logger.warning(
                             'Forcing reconnection on next db access attempt')
                         if connection.connection:
@@ -293,12 +294,32 @@ class DatabaseJobSource(object):
             self.logger.debug(
                 "Device heartbeat updated for %s ..." % device.hostname)
 
+    def _kill_canceling(self, job):
+        pidrecord = os.path.join(job.output_dir, "jobpid")
+        if os.path.exists(pidrecord):
+            with open(pidrecord, 'r') as f:
+                pgid = int(f.read())
+                self.logger.info("Signalling SIGTERM to process group: %d" % pgid)
+                try:
+                    os.killpg(pgid, signal.SIGTERM)
+                except OSError as e:
+                    self.logger.debug("Unable to kill process group %d: %s" % (pgid, e))
+                    os.unlink(pidrecord)
+
     def getJobList_impl(self):
         self._device_heartbeat()
 
         job_list = TestJob.objects.all().filter(
             status=TestJob.SUBMITTED).order_by('-health_check', '-priority',
                                                'submit_time')
+
+        cancel_list = TestJob.objects.all().filter(status=TestJob.CANCELING)
+        if len(cancel_list) > 0:
+            self.logger.info("Found jobs in cancelling status %s" % cancel_list)
+            for job in cancel_list:
+                self.logger.info("Looking for pid of dispatch job in %s" % job.output_dir)
+                self._kill_canceling(job)
+                job.cancel()
 
         if utils.is_master():
             self._update_device_heartbeat()
