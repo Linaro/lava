@@ -1269,21 +1269,12 @@ class DeviceTransitionTable(DataTablesTable):
 
     def get_queryset(self, device):
         qs = device.transitions.select_related('created_by')
-        qs = qs.extra(select={'prev': """
-        select t.created_on
-          from lava_scheduler_app_devicestatetransition as t
-         where t.device_id=%s and t.created_on < lava_scheduler_app_devicestatetransition.created_on
-         order by t.created_on desc
-         limit 1 """},
-                      select_params=[device.pk])
         return qs
 
     def render_created_on(self, record):
         t = record
         base = "<a href='/scheduler/transition/%s'>%s</a>" \
                % (record.id, filters.date(t.created_on, "Y-m-d H:i"))
-        if t.prev:
-            base += ' (after %s)' % (filters.timesince(t.prev, t.created_on))
         return mark_safe(base)
 
     def render_transition(self, record):
