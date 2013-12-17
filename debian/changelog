@@ -1,3 +1,9 @@
+lava-dispatcher (0.33.3-3) unstable; urgency=medium
+
+  * Depend on kpartx and package an almost usable lava-dispatcher.conf
+
+ -- Neil Williams <codehelp@debian.org>  Tue, 17 Dec 2013 12:22:55 +0000
+
 lava-dispatcher (0.33.3-2) unstable; urgency=medium
 
   * Recommend qemu-system-x86 to support KVM devices
