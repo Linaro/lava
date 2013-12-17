@@ -2,7 +2,5 @@ lava-dispatcher for Debian
 --------------------------
 
 Note that /etc/lava-dispatcher/device-defaults.conf needs editing
-to usable paths. FIXME: set paths in /var/lib/lava-server once
-the packages are consolidated.
-
- -- Neil Williams <codehelp@debian.org>  Fri, 24 May 2013 13:11:45 +0100
+to set the IP address of this dispatcher for master image support.
+FIXME: this gets overridden by the lava-server config anyway.
