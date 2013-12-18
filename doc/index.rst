@@ -25,7 +25,7 @@ LAVA Test Developer Guide
 #########################
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
    developing-tests.rst
    dispatcher-actions.rst

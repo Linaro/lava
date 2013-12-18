@@ -46,7 +46,7 @@ idle in the database. ::
 
   status == 1 IDLE status == 2 RUNNING
 
-It is possible to set a device status transition but this might not
+It is possible to set a :term:`device status transition` but this might not
 clear the state of the actual device:::
 
   >>> from lava_scheduler_app.models import DevicesStateTransition

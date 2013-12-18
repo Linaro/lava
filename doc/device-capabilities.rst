@@ -21,6 +21,9 @@ New device owners can only be created by the lab administrators. Equally,
 assigning or transferring ownership of any device can only be done by the
 lab administrators.
 
+LAVA also identifies certain :ref:`device_type_information` from the
+:term:`health check` jobs run on the device.
+
 .. index:: owner
 
 .. _device_owners:
@@ -28,8 +31,8 @@ lab administrators.
 Device owner abilities
 **********************
 
-* add free text comments to a device status transition
-* initiate a device state transition on an owned device
+* add free text comments to a :term:`device status transition`
+* initiate a :term:`device state transition` on an owned device
 * cancel any "current" job running on the device.
 * restrict submissions to the device to just the owner for a period of
   time - (when unrestricted, devices remain in the general usage pool.)
@@ -43,7 +46,7 @@ Device owner abilities
   hardware support on this device or particular hardware constraints.
   Could also include details of why the device is currently restricted,
   beyond the short message sometimes added to the transition status change.
-* Change the Priority for any submitted job which reserves an "owned"
+* Change the :term:`priority` for any submitted job which reserves an "owned"
   device. Priority can **only** be changed once an owned device has been
   reserved for the job and before the job starts running or an error
   will be returned.

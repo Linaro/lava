@@ -13,15 +13,15 @@ Source Code
 
 The test definition itself could be an unchanged singlenode test definition, e.g.
 
- https://git.linaro.org/gitweb?p=qa/test-definitions.git;a=blob_plain;f=ubuntu/smoke-tests-basic.yaml;hb=refs/heads/master
+ https://git.linaro.org/qa/test-definitions.git/blob/HEAD:/ubuntu/smoke-tests-basic.yaml
 
 Alternatively, it could use the MultiNode API to synchronise the devices, e.g.
 
-  https://git.linaro.org/gitweb?p=people/neilwilliams/multinode-yaml.git;a=blob_plain;f=multinode01.yaml;hb=refs/heads/master
+  https://git.linaro.org/people/neil.williams/multinode-yaml.git/blob_plain/HEAD:/multinode01.yaml
 
-  https://git.linaro.org/gitweb?p=people/neilwilliams/multinode-yaml.git;a=blob_plain;f=multinode02.yaml;hb=refs/heads/master
+  https://git.linaro.org/people/neil.williams/multinode-yaml.git/blob_plain/HEAD:/multinode02.yaml
 
-  https://git.linaro.org/gitweb?p=people/neilwilliams/multinode-yaml.git;a=blob_plain;f=multinode03.yaml;hb=refs/heads/master
+  https://git.linaro.org/people/neil.williams/multinode-yaml.git/blob_plain/HEAD:/multinode03.yaml
 
 Requirements
 ============
@@ -220,7 +220,7 @@ message ID ''sending'' (with or without the associated key value pairs).
 Summary
 =======
 
-http://git.linaro.org/gitweb?p=people/neilwilliams/multinode-yaml.git;a=blob_plain;f=json/panda-only-group.json;hb=refs/heads/master
+http://git.linaro.org/people/neil.williams/multinode-yaml.git/blob_plain/HEAD:/json/panda-only-group.json
 
 http://multinode.validation.linaro.org/dashboard/image-reports/panda-multinode
 

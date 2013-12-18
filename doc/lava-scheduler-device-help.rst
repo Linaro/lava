@@ -3,6 +3,8 @@
 Detailed device information in LAVA Scheduler
 #############################################
 
+.. _static_device_information:
+
 Static device information
 *************************
 
@@ -24,7 +26,7 @@ Static device information
     The dispatcher which has a configuration file for a device matching
     the hostname. Note that this is the result of checking the network
     communication between the dispatcher and the server, not the serial
-    connection between the dispatcher and the board. 
+    connection between the dispatcher and the board.
 
 .. _device_owner_help:
 
@@ -52,8 +54,8 @@ See also :ref:`device_capabilities`
 
 .. _device_status:
 
-Device status information
-*************************
+Device status
+*************
 
   **Status**
     Describes the current device status which can be one of:
@@ -72,13 +74,18 @@ Device status information
         physical access for more information.
       * *Reserved* - the device is part of a :term:`MultiNode` job but one
         or more other devices in the same job is not currently available.
+        (Reserved is also used for single node jobs but the device quickly
+        moves into Running.)
       * *Unreachable* - the network communication between this server and
         the dispatcher has been temporarily broken. The current state of the
         device or any currently running job may differ from that shown on the
         server.
 
-  **Health Check**
-    Status of the most recent :term:`health check` run.
+  **Health Status**
+    Status of the most recent :term:`health check` run. If the health
+    status is ``Unknown``, a health check will be run as soon as the
+    device is put online or has finished any current job but before
+    starting any other submitted job.
 
 .. _owner_actions:
 
@@ -128,6 +135,8 @@ starting any jobs waiting in the submission queue. Device owners and
 administrators are able to put devices which are *Offline* back online.
 Only administrators can change the status of *Retired* devices.
 
+.. index:: device description
+
 .. _edit_device_description:
 
 Edit device description
@@ -138,6 +147,11 @@ this individual device. Suggested content includes more information about
 the specific device, the reasons for restricting submissions, information
 about the device owner and the purposes for which the device is used etc.
 Text can include links to external sites for more information.
+
+It can be particularly useful to expand on the :ref:`device_capabilities`
+by adding details which cannot be easily identified at runtime, e.g.
+big.LITTLE details or particular hardware features available on this
+specific device.
 
 .. index:: restricted
 
