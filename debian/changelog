@@ -1,6 +1,8 @@
 lava-dispatcher (0.33.3-3) unstable; urgency=medium
 
   * Depend on kpartx and package an almost usable lava-dispatcher.conf
+  * Add parted for calculation of offsets for loop back mount
+    operations.
 
  -- Neil Williams <codehelp@debian.org>  Tue, 17 Dec 2013 12:22:55 +0000
 
