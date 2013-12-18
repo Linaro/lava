@@ -111,7 +111,9 @@ pollTimer = setTimeout(poll, 1000);
 {% endif %}
 </script>
 [ <a id="bottom" href="#top">Go to start of log file</a> ]
+{% if job_file_present %}
 [ <a href="{% url lava.scheduler.job.log_file job.pk %}">Complete log</a> ]
+{% endif %}
 [ <a href="{% url lava.scheduler.job.definition job.pk %}">Definition</a> ]
 {% if job.is_multinode %}
 [ <a href="{% url lava.scheduler.job.multinode_definition job.pk %}"> Multinode Definition</a> ]
