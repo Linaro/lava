@@ -876,7 +876,7 @@ class cmd_lava_test_shell(BaseAction):
 
                 if has_measurements:
                     _print('%-40s %6s %20s' % ('Test case', 'Result',
-                                            'Measurement'))
+                                               'Measurement'))
                     _print('%s %s %s' % ('-' * 40, '-' * 6, '-' * 20))
                 else:
                     _print('%-40s %6s' % ('Test case', 'Result'))
