@@ -478,9 +478,6 @@ class LavaClient(object):
         raise NotImplementedError(self.boot_master_image)
 
     def _boot_linaro_image(self):
-        if self.proc:
-            logging.warning('device already powered on, powering off first')
-            self._power_off_device()
         self.proc = self.target_device.power_on()
 
     def _boot_linaro_android_image(self):
@@ -542,7 +539,7 @@ class LavaClient(object):
         return self.target_device.get_test_data_attachments()
 
     def retrieve_results(self, result_disk):
-        self._power_off_device()
+        self.target_device.power_off(self.proc)
 
         td = self.target_device
         tar = os.path.join(td.scratch_dir, 'lava_results.tgz')
@@ -552,19 +549,7 @@ class LavaClient(object):
         return tar
 
     def finish(self):
-        self._power_off_device()
-
-    def _power_off_device(self):
-        """
-        Powers the associated device off by calling its power_off() method.
-
-        Can be called multiple times, but only the first will be effective, all
-        the others will be no-ops (unless the device is powered on again by
-        calling one of the _boot* methods).
-        """
-        if self.proc:
-            self.target_device.power_off(self.proc)
-            self.proc = None
+        self.target_device.power_off(self.proc)
 
     # Android stuff
 

@@ -47,6 +47,7 @@ class QEMUTarget(Target):
 
     def __init__(self, context, config):
         super(QEMUTarget, self).__init__(context, config)
+        self.proc = None
         self._qemu_options = None
         self._sd_image = None
 
@@ -108,14 +109,18 @@ class QEMUTarget(Target):
             extract_targz(tb, '%s/%s' % (mntdir, directory))
 
     def power_on(self):
+        if self.proc is not None:
+            logging.warning('device already powered on, powering off first')
+            self.power_off(None)
         qemu_cmd = '%s %s' % (self.config.qemu_binary, self._qemu_options)
         logging.info('launching qemu with command %r' % qemu_cmd)
-        proc = self.context.spawn(qemu_cmd, timeout=1200)
-        self._auto_login(proc)
-        return proc
+        self.proc = self.context.spawn(qemu_cmd, timeout=1200)
+        self._auto_login(self.proc)
+        return self.proc
 
     def power_off(self, proc):
-        finalize_process(proc)
+        finalize_process(self.proc)
+        self.proc = None
 
     def get_device_version(self):
         try:

@@ -59,12 +59,15 @@ class K3V2Target(FastbootTarget):
         if self.__boot_image__ is None:
             raise CriticalError('Deploy action must be run first')
 
+        if self.proc is not None:
+            logging.warning('device already powered on, powering off first')
+            self.power_off(None)
+
         # The k3v2 does not implement booting kernel from ram.
         # So instead we must flash the boot image, and reboot.
         self.fastboot.enter()
         self.fastboot('reboot')
-        if self.proc is None:
-            self.proc = connect_to_serial(self.context)
+        self.proc = connect_to_serial(self.context)
         self._auto_login(self.proc)
         self.proc.expect(self.context.device_config.master_str, timeout=300)
 

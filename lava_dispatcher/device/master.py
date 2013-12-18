@@ -50,6 +50,7 @@ from lava_dispatcher.utils import (
     rmtree,
     mkdtemp,
     extract_targz,
+    finalize_process,
 )
 from lava_dispatcher.client.lmc_utils import (
     generate_image,
@@ -91,6 +92,7 @@ class MasterImageTarget(Target):
     def power_off(self, proc):
         if self.config.power_off_cmd:
             self.context.run_command(self.config.power_off_cmd)
+        finalize_process(self.proc)
 
     def deploy_linaro(self, hwpack, rfs, rootfstype, bootloadertype):
         self.boot_master_image()

@@ -51,6 +51,10 @@ class Nexus10Target(FastbootTarget):
         if self.__boot_image__ is None:
             raise CriticalError('Deploy action must be run first')
 
+        if self.proc is not None:
+            logging.warning('device already powered on, powering off first')
+            self.power_off(None)
+
         self.fastboot.enter()
         self.fastboot('reboot')
 
