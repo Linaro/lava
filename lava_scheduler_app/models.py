@@ -350,6 +350,11 @@ class Device(RestrictedResource):
             self.heartbeat = False
         else:
             self.heartbeat = True
+
+        if self.status == Device.RETIRED and self.worker_hostname is not None:
+            self.worker_hostname = None
+            self.heartbeat = False
+
         self.save()
 
     def initiate_health_check_job(self):

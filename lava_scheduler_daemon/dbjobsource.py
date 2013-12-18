@@ -276,7 +276,7 @@ class DatabaseJobSource(object):
             x.hostname for x in dispatcher_config.get_devices()]
         for device in devices:
             if device.hostname in configured_boards and \
-                    device.status != Device.RETIRED:
+                    device.status is not Device.RETIRED:
                 device.worker_hostname = socket.getfqdn()
                 device.last_heartbeat = datetime.datetime.utcnow()
                 device.save()
