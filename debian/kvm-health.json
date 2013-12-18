@@ -1,0 +1,33 @@
+{
+    "actions": [
+        {
+            "command": "deploy_linaro_image",
+            "parameters": {
+                "image": "file:///tmp/kvm-debian-wheezy.img"
+            }
+        },
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
+                        "testdef": "ubuntu/smoke-tests-basic.yaml"
+                    }
+                ],
+                "timeout": 900
+            }
+        },
+        {
+            "command": "submit_results",
+            "parameters": {
+                "server": "http://localhost/RPC2/",
+                "stream": "/anonymous/lava-health/"
+            }
+        }
+    ],
+    "health-check": true,
+    "job_name": "kvm-healthcheck",
+    "logging_level": "DEBUG",
+    "timeout": 900
+}
