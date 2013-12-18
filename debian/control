@@ -10,7 +10,7 @@ Build-Depends: debhelper (>= 8.0.0),
  python-sphinx (>= 1.0.7+dfsg) | python3-sphinx,
  python-mocker, python-setuptools, python-versiontools
 X-Python-Version: 2.7
-Standards-Version: 3.9.4
+Standards-Version: 3.9.5
 Homepage: http://www.linaro.org/engineering/validation
 Vcs-Git: https://alioth.debian.org/anonscm/git/pkg-linaro-lava/lava-server.git
 Vcs-Browser: https://alioth.debian.org/plugins/scmgit/cgi-bin/gitweb.cgi?p=pkg-linaro-lava/lava-server.git;a=summary
