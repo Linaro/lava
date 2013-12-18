@@ -390,7 +390,7 @@ def bundle_export(request, pathname, content_sha1):
             test_run_denorm = test_run.denormalization
             test_run_dict = test_run.__dict__.copy()
             test_run_dict.update(test_run_denorm.__dict__)
-            test_run_dict["test"] =  test_run.test.test_id
+            test_run_dict["test"] = test_run.test.test_id
             test_run_dict["device"] = test_run.show_device()
             out.writerow(test_run_dict)
 
