@@ -1086,11 +1086,15 @@ class TestJob(RestrictedResource):
         return self._can_admin(user) and self.status in states
 
     def cancel(self, user=None):
+        if not user:
+            user = self.submitter
         # if SUBMITTED with actual_device - clear the actual_device back to idle.
         if self.status == TestJob.SUBMITTED and self.actual_device is not None:
             self.actual_device.cancel_reserved_status(self.submitter, "job-cancel")
+            self._send_cancellation_mail(user)
         if self.status == TestJob.RUNNING:
             self.status = TestJob.CANCELING
+            self._send_cancellation_mail(user)
         else:
             self.status = TestJob.CANCELED
         if user:
@@ -1109,6 +1113,33 @@ class TestJob(RestrictedResource):
         return render_to_string(
             'lava_scheduler_app/job_summary_mail.txt',
             {'job': self, 'url_prefix': url_prefix})
+
+    def _generate_cancellation_mail(self, user):
+        domain = '???'
+        try:
+            site = Site.objects.get_current()
+        except (Site.DoesNotExist, ImproperlyConfigured):
+            pass
+        else:
+            domain = site.domain
+        url_prefix = 'http://%s' % domain
+        return render_to_string(
+            'lava_scheduler_app/job_cancelled_mail.txt',
+            {'job': self, 'url_prefix': url_prefix, 'user': user})
+
+    def _send_cancellation_mail(self, user):
+        if user == self.submitter:
+            return
+        recipient = get_object_or_404(User.objects.select_related(), id=self.submitter.id)
+        mail = self._generate_cancellation_mail(user)
+        description = self.description.splitlines()[0]
+        if len(description) > 200:
+            description = description[197:] + '...'
+        logger = logging.getLogger(self.__class__.__name__ + '.' + str(self.pk))
+        logger.info("sending mail to %s", recipient.email)
+        send_mail(
+            "LAVA job notification: " + description, mail,
+            settings.SERVER_EMAIL, [recipient.email])
 
     def _get_notification_recipients(self):
         job_data = simplejson.loads(self.definition)
