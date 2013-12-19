@@ -221,7 +221,7 @@ class RestrictedDeviceColumn(Column):
 
 class DeviceTable(DataTablesTable):
 
-    def get_queryset(self):
+    def get_queryset(self, user=None):
         return Device.objects.select_related("device_type")
 
     def render_device_type(self, record):
@@ -469,6 +469,34 @@ def active_device_list(request):
         {
             'active_devices_table': ActiveDeviceTable('devices', reverse(index_devices_json)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(active_device_list),
+        },
+        RequestContext(request))
+
+
+class MyDeviceTable(DeviceTable):
+
+    def get_queryset(self, user):
+        return Device.objects.owned_by_principal(user)
+
+    datatable_opts = {
+        'aaSorting': [[2, 'asc']],
+        "iDisplayLength": 50
+    }
+
+
+def mydevices_json(request):
+    return MyDeviceTable.json(request)
+
+
+@BreadCrumb("My Devices", parent=index)
+def mydevice_list(request):
+    return render_to_response(
+        "lava_scheduler_app/mydevices.html",
+        {
+            'my_device_table': MyDeviceTable('devices', reverse(mydevices_json),
+                                             params=(request.user,)),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(mydevice_list)
+
         },
         RequestContext(request))
 

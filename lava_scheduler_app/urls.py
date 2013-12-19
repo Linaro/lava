@@ -156,4 +156,10 @@ urlpatterns = patterns(
     url(r'^scheduler/reports/device_type/(?P<pk>[-_a-zA-Z0-9]+)',
         'device_type_reports',
         name='lava.scheduler.device_type_report'),
+    url(r'^mydevices$',
+        'mydevice_list',
+        name='lava.scheduler.mydevice_list'),
+    url(r'^mydevices_json$',
+        'mydevices_json',
+        name='lava.scheduler.mydevices_json'),
 )

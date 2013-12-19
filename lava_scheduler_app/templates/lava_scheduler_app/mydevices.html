@@ -3,11 +3,11 @@
 {% load django_tables2 %}
 
 {% block content %}
-<h2>Jobs submitted by {{ user.username }}</h2>
+<h2>Devices owned by {{ user.username }}</h2>
 
-{% render_table myjobs_table %}
+{% render_table my_device_table %}
 
+<p><a href="{% url lava.scheduler.myjobs %}">My jobs</a></p>
 <p><a href="{% url dashboard_app.views.mybundlestreams %}">My bundle streams</a></p>
-<p><a href="{% url lava.scheduler.mydevice_list %}">My devices</a></p>
 
 {% endblock %}
