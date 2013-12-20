@@ -27,11 +27,12 @@ import subprocess
 import time
 import lava_dispatcher.actions.lmp.sdmux as sdmux
 
+from lava_dispatcher.device.target import (
+    Target
+)
 from lava_dispatcher.errors import (
     CriticalError,
-)
-from lava_dispatcher.device.master import (
-    MasterImageTarget
+    OperationFailed,
 )
 from lava_dispatcher.client.lmc_utils import (
     generate_android_image,
@@ -44,6 +45,7 @@ from lava_dispatcher.downloader import (
 from lava_dispatcher.utils import (
     ensure_directory,
     extract_targz,
+    connect_to_serial,
 )
 from lava_dispatcher import deployment_data
 
@@ -62,7 +64,7 @@ def _flush_files(mntdir):
                 os.close(int(f))
 
 
-class SDMuxTarget(MasterImageTarget):
+class SDMuxTarget(Target):
     """
     This adds support for the "sd mux" device. An SD-MUX device is a piece of
     hardware that allows the host and target to both connect to the same SD
@@ -79,8 +81,16 @@ class SDMuxTarget(MasterImageTarget):
         if not config.sdmux_id:
             raise CriticalError('Device config requires "sdmux_id"')
 
+        if not config.power_off_cmd:
+            raise CriticalError('Device config requires "power_off"')
+
+        if not config.hard_reset_command:
+            raise CriticalError('Device config requires "hard_reset_command"')
+
         if config.pre_connect_command:
             self.context.run_command(config.pre_connect_command)
+
+        self.proc = connect_to_serial(self.context)
 
     def deploy_linaro(self, hwpack, rootfs, bootloadertype, rootfstype):
         img = generate_image(self, hwpack, rootfs, self.scratch_dir,
@@ -127,6 +137,16 @@ class SDMuxTarget(MasterImageTarget):
             raise CriticalError("Failed to dd image to device (Error code %d)" % dd_proc.returncode)
 
         sdmux.host_disconnect(self.config.sdmux_id)
+
+    def _run_boot(self):
+        self._enter_bootloader(self.proc)
+        boot_cmds = self._load_boot_cmds()
+        self._customize_bootloader(self.proc, boot_cmds)
+        self._auto_login(self.proc)
+        self._wait_for_prompt(self.proc, self.config.test_image_prompts,
+                              self.config.boot_linaro_timeout)
+        self.proc.sendline('export PS1="%s"' % self.tester_ps1,
+                           send_char=self.config.send_char)
 
     def mux_device(self):
         """
@@ -175,6 +195,11 @@ class SDMuxTarget(MasterImageTarget):
         This works in cojunction with the "mux_device" function to safely
         access a partition/directory on the sdmux filesystem
         """
+        self.proc.sendline('sync')
+        self.proc.expect(self.tester_ps1_pattern)
+        logging.info('powering off')
+        self.context.run_command(self.config.power_off_cmd)
+
         sdmux.dut_disconnect(self.config.sdmux_id)
         sdmux.host_usda(self.config.sdmux_id)
 
@@ -220,18 +245,20 @@ class SDMuxTarget(MasterImageTarget):
             extract_targz(tb, '%s/%s' % (mntdir, directory))
 
     def power_off(self, proc):
-        super(SDMuxTarget, self).power_off(proc)
+        logging.info('powering off')
         self.context.run_command(self.config.power_off_cmd)
         sdmux.dut_disconnect(self.config.sdmux_id)
 
     def power_on(self):
         sdmux.host_disconnect(self.config.sdmux_id)
         sdmux.dut_usda(self.config.sdmux_id)
-
         logging.info('powering on')
-        self.context.run_command(self.config.power_on_cmd)
-        self._boot_linaro_image()
-        self._auto_login(self.proc)
+
+        try:
+            self.context.run_command(self.config.hard_reset_command)
+            self._run_boot()
+        except:
+            raise OperationFailed("_run_boot failed")
 
         return self.proc
 
