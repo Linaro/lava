@@ -131,7 +131,9 @@ class DatabaseJobSource(object):
 
         If we are unable to grab the DEVICE then we return None.
         """
-        if device.status == Device.RUNNING or device.heartbeat is False:
+        # prevent the device getting two different jobs at the same time
+        if job.actual_device or device.status == Device.RUNNING \
+                or device.heartbeat is False or device.current_job:
             return None
         msg = "Job: %s" % job.id
         DeviceStateTransition.objects.create(
@@ -219,6 +221,12 @@ class DatabaseJobSource(object):
         """
         uses job.submitter to check owned devices first before public devices
 
+        CAUTION: devices is a list but only one device can be allowed to
+        be assigned to any one job and only one job can run on any one device.
+
+        _fix_device rejects assignments if the job has an actual_device or
+        if the device has already transitioned to Reserved or Running.
+
         :param jobs: JSON string of the job request
         :return: a list of jobs with devices to reserve
         """
@@ -234,7 +242,7 @@ class DatabaseJobSource(object):
                 elif job.requested_device:
                     self.logger.debug("Checking if requested device %s is owned by %s" %
                                       (job.requested_device.hostname, job.submitter.username))
-                    # looks wrong but we still get a list here
+                    # important: the result of any filter is always a list
                     device_list = Device.objects.all().filter(
                         hostname=job.requested_device.hostname,
                         status=Device.IDLE,
@@ -252,6 +260,7 @@ class DatabaseJobSource(object):
                         if d.can_submit(job.submitter):
                             devices.append(d)
                     if len(devices) == 0:
+                        # only check public devices if no restricted devices are available.
                         self.logger.debug("Checking public devices of requested type %s" %
                                           job.requested_device_type)
                         devices = Device.objects.all().filter(
