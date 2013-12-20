@@ -357,9 +357,28 @@ class Device(RestrictedResource):
 
         self.save()
 
+    def get_existing_health_check_job(self):
+        """Get the existing health check job.
+        """
+        scheduled_job = TestJob.objects.filter(
+            (models.Q(actual_device=self) |
+             models.Q(requested_device=self)),
+            status__in=[TestJob.SUBMITTED, TestJob.RUNNING],
+            health_check=True
+        )
+
+        if scheduled_job:
+            return scheduled_job[0]
+        else:
+            return None
+
     def initiate_health_check_job(self):
         if self.status in [self.RETIRED]:
             return None
+
+        existing_health_check_job = self.get_existing_health_check_job()
+        if existing_health_check_job:
+            return existing_health_check_job
 
         job_json = self.device_type.health_check_job
         if not job_json:
