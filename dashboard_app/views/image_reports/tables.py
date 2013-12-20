@@ -51,20 +51,41 @@ class UserImageReportTable(DataTablesTable):
         return ImageReport.objects.filter(user=user)
 
 
-class PublicImageReportTable(UserImageReportTable):
+class OtherImageReportTable(UserImageReportTable):
 
     def __init__(self, *args, **kw):
-        super(PublicImageReportTable, self).__init__(*args, **kw)
+        super(OtherImageReportTable, self).__init__(*args, **kw)
         del self.base_columns['is_published']
         del self.base_columns['view']
         del self.base_columns['remove']
 
     def get_queryset(self, user):
-        # All public reports for authenticated users.
+        # All public reports for authenticated users which are not part
+        # of any group.
         # Only reports containing all public filters for non-authenticated.
-        public_reports = ImageReport.objects.filter(is_published=True)
+        other_reports = ImageReport.objects.filter(is_published=True,
+                                                   image_report_group=None)
         if user.is_authenticated():
-            return public_reports.exclude(user=user)
+            return other_reports
         else:
-            return public_reports.exclude(
+            return other_reports.exclude(
+                imagereportchart__imagechartfilter__filter__public=False)
+
+
+class GroupImageReportTable(OtherImageReportTable):
+
+    def __init__(self, image_report_group, *args, **kw):
+        self.image_report_group = image_report_group
+        super(GroupImageReportTable, self).__init__(*args, **kw)
+
+    def get_queryset(self, user, image_report_group):
+        # Specific group reports for authenticated users.
+        # Only reports containing all public filters for non-authenticated.
+        group_reports = ImageReport.objects.filter(
+            is_published=True,
+            image_report_group=image_report_group)
+        if user.is_authenticated():
+            return group_reports
+        else:
+            return group_reports.exclude(
                 imagereportchart__imagechartfilter__filter__public=False)

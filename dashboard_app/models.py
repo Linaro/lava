@@ -1906,9 +1906,23 @@ class PMQABundleStream(models.Model):
     bundle_stream = models.ForeignKey(BundleStream, related_name='+')
 
 
+class ImageReportGroup(models.Model):
+
+    name = models.SlugField(max_length=1024, unique=True)
+
+    def __unicode__(self):
+        return self.name
+
+
 class ImageReport(models.Model):
 
     name = models.SlugField(max_length=1024, unique=True)
+
+    image_report_group = models.ForeignKey(
+        ImageReportGroup,
+        default=None,
+        null=True,
+        on_delete=models.CASCADE)
 
     user = models.ForeignKey(
         User,
@@ -1928,6 +1942,7 @@ class ImageReport(models.Model):
     def get_absolute_url(self):
         return ("dashboard_app.views.image_reports.views.image_report_display",
                 (), dict(name=self.name))
+
 
 # Chart types
 CHART_TYPES = ((r'pass/fail', 'Pass/Fail'),

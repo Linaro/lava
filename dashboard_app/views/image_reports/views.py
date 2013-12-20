@@ -50,6 +50,7 @@ from dashboard_app.views.image_reports.forms import (
 
 from dashboard_app.models import (
     ImageReport,
+    ImageReportGroup,
     ImageReportChart,
     ImageChartFilter,
     ImageChartTest,
@@ -62,7 +63,8 @@ from dashboard_app.models import (
 
 from dashboard_app.views.image_reports.tables import (
     UserImageReportTable,
-    PublicImageReportTable,
+    OtherImageReportTable,
+    GroupImageReportTable,
 )
 
 from dashboard_app.views.filters.tables import AllFiltersSimpleTable
@@ -73,8 +75,16 @@ def image_report_list(request):
 
     image_reports = ImageReport.objects.all()
 
-    public_image_table = PublicImageReportTable("public-image-reports", None,
-                                                params=(request.user,))
+    reports_group = ImageReportGroup.objects.all()
+    group_tables = {}
+    for group in reports_group:
+        if group.imagereport_set.count():
+            group_tables[group.name] = GroupImageReportTable(
+                "group-table-%s" % group.name, "group-table-%s" % group.name,
+                params=(request.user, group))
+
+    other_image_table = OtherImageReportTable("other-image-reports", None,
+                                              params=(request.user,))
 
     if request.user.is_authenticated():
         user_image_table = UserImageReportTable("user-image-reports", None,
@@ -85,7 +95,8 @@ def image_report_list(request):
     return render_to_response(
         'dashboard_app/image_report_list.html', {
             'user_image_table': user_image_table,
-            'public_image_table': public_image_table,
+            'other_image_table': other_image_table,
+            'group_tables': group_tables,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 image_report_list),
         }, RequestContext(request)
@@ -268,6 +279,28 @@ def image_chart_delete(request, name, id):
     return HttpResponseRedirect(
         reverse('image_report_detail',
                 kwargs={"name": image_chart.image_report.name}))
+
+
+@login_required
+def image_report_group_list(request):
+
+    term = request.GET['term']
+    groups = [str(group.name) for group in ImageReportGroup.objects.filter(
+        name__istartswith=term)]
+    return HttpResponse(simplejson.dumps(groups), mimetype='application/json')
+
+
+@login_required
+def image_report_add_group(request, name):
+
+    if request.method != 'POST':
+        raise PermissionDenied
+
+    image_report = ImageReport.objects.get(name=name)
+    image_report.image_report_group = ImageReportGroup.objects.get_or_create(
+        name=request.POST.get("value"))[0]
+    image_report.save()
+    return HttpResponse(request.POST.get("value"), mimetype='application/json')
 
 
 @login_required
