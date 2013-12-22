@@ -21,7 +21,8 @@ Information displayed includes data retrieved from ``/proc/cpuinfo`` - all
 fields are case sensitive and omitted if not present:
 
 #. **Processor** : ``Processor`` or ``vendor_id``
-#. **Model** : ``model name``
+#. **Model** : ``model name``. For ARM Cortex A series processors, the CPU part
+   is expanded and appended to the model name.
 #. **Flags** : ``flags`` or ``Features``
 #. **Emulated** : Set to True if the Model is ``QEMU``
 #. **Cores** : count of the number of ``processor`` fields.

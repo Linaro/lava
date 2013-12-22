@@ -623,7 +623,7 @@ def populate_capabilities(dt):
                     model = "%s - %s" % (model, "Cortex A8")
                 if hex(cpu_part) == hex(0xc09):
                     model = "%s - %s" % (model, "Cortex A9")
-                if hex(cpu_part) == hex(0xc15):
+                if hex(cpu_part) == hex(0xc0f):
                     model = "%s - %s" % (model, "Cortex A15")
             hardware_cpu_models.append(model)
             if 'Features' in device['attributes']:
