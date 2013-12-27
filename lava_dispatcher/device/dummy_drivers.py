@@ -143,7 +143,7 @@ class ssh(BaseDriver):
     def connect(self):
         proc = self.context.spawn('ssh -F %s %s' % (self.ssh_config,
                                                     self.__host__))
-        time.sleep(1)
+        time.sleep(5)
         return proc
 
     @property
