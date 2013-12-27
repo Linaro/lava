@@ -24,6 +24,8 @@ import socket
 import urlparse
 import simplejson
 import models
+import subprocess
+import datetime
 
 
 def rewrite_hostname(result_url):
@@ -132,3 +134,22 @@ def is_master():
                                           worker_config_path[1:])
 
     return not os.path.exists(worker_config_path)
+
+
+def get_uptime():
+    """Return the system uptime string.
+    """
+    with open('/proc/uptime', 'r') as f:
+        uptime_seconds = float(f.readline().split()[0])
+        uptime = str(datetime.timedelta(seconds=uptime_seconds))
+        return uptime
+
+
+def get_lshw_out():
+    """Return the output of lshw command in html format.
+    """
+    lshw_cmd = "lshw -html"
+    proc = subprocess.Popen(lshw_cmd, shell=True, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    lshw_out, lshw_err = proc.communicate()
+    return simplejson.dumps(lshw_out)

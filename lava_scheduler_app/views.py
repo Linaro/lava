@@ -56,6 +56,7 @@ from lava_scheduler_app.models import (
     DevicesUnavailableException,
     User,
     Group,
+    Worker,
 )
 from dashboard_app.models import (
     Bundle,
@@ -237,7 +238,7 @@ class DeviceTable(DataTablesTable):
     {% endif %}&nbsp;&nbsp;
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
         ''')
-    worker_hostname = Column()
+    worker_host = Column()
     device_type = Column()
     status = ExpandedStatusColumn("status")
     owner = RestrictedDeviceColumn()
@@ -253,6 +254,53 @@ class DeviceTable(DataTablesTable):
 
 def index_devices_json(request):
     return DeviceTable.json(request)
+
+
+class WorkerTable(DataTablesTable):
+
+    def get_queryset(self):
+        return Worker.objects.all()
+
+    hostname = TemplateColumn('''
+    {% if record.heartbeat %}
+    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
+          alt="{{ record.heartbeat }}" />
+    {% else %}
+    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
+          alt="{{ record.heartbeat }}" />
+    {% endif %}&nbsp;&nbsp;
+    <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
+        ''')
+    uptime = Column()
+    arch = Column()
+    platform = Column()
+
+    searchable_columns = ['hostname']
+
+    datatable_opts = {
+        'aaSorting': [[0, 'asc']],
+        "iDisplayLength": 50
+    }
+
+
+class WorkerDeviceTable(DeviceTable):
+
+    def get_queryset(self, worker):
+        return Device.objects.filter(worker_host=worker)
+
+    datatable_opts = {
+        'aaSorting': [[2, 'asc']],
+        "iDisplayLength": 50
+    }
+
+
+def worker_device_json(request, pk):
+    worker = get_object_or_404(Worker, pk=pk)
+    return WorkerDeviceTable.json(request, params=(worker,))
+
+
+def index_worker_json(request):
+    return WorkerTable.json(request)
 
 
 def health_jobs_in_hr(hr=-24):
@@ -286,6 +334,7 @@ def index(request):
                 health_jobs_in_hr().count()),
             'device_type_table': DeviceTypeTable('devicetype', reverse(device_type_json)),
             'devices_table': DeviceTable('devices', reverse(index_devices_json)),
+            'worker_table': WorkerTable('worker', reverse(index_worker_json)),
             'active_jobs_table': IndexJobTable(
                 'active_jobs', reverse(index_active_jobs_json)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
@@ -1615,3 +1664,37 @@ def device_derestrict_device(request, pk):
     else:
         return HttpResponseForbidden(
             "you cannot derestrict submissions to this device", content_type="text/plain")
+
+
+@BreadCrumb("Worker", parent=index, needs=['pk'])
+def worker_detail(request, pk):
+    worker = get_object_or_404(Worker, pk=pk)
+    return render_to_response(
+        "lava_scheduler_app/worker.html",
+        {
+            'worker': worker,
+            'worker_device_table': WorkerDeviceTable(
+                'worker', reverse(worker_device_json,
+                                  kwargs=dict(pk=worker.pk)),
+                params=(worker,)),
+            'can_admin': worker.can_admin(request.user),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(worker_detail,
+                                                            pk=pk),
+        },
+        RequestContext(request))
+
+
+@post_only
+def edit_worker_desc(request):
+    """Edit worker description, based on user permission."""
+
+    pk = request.POST.get("id")
+    value = request.POST.get("value")
+    worker_obj = get_object_or_404(Worker, pk=pk)
+
+    if worker_obj.can_admin(request.user):
+        worker_obj.update_description(value)
+        return HttpResponse(worker_obj.get_description())
+    else:
+        return HttpResponseForbidden("Permission denied.",
+                                     content_type="text/plain")

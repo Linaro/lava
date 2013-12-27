@@ -107,6 +107,110 @@ class UserAdmin(UserAdmin):
     inlines = (DefaultOwnerInline, )
 
 
+class Worker(models.Model):
+    """
+    A worker node to which devices are attached.
+    """
+
+    hostname = models.CharField(
+        verbose_name=_(u"Hostname"),
+        max_length=200,
+        primary_key=True,
+        default=None
+    )
+
+    description = models.TextField(
+        verbose_name=_(u"Worker Description"),
+        max_length=200,
+        null=True,
+        blank=True,
+        default=None
+    )
+
+    uptime = models.CharField(
+        verbose_name=_(u"Host Uptime"),
+        max_length=200,
+        null=True,
+        blank=True,
+        default=None,
+    )
+
+    arch = models.CharField(
+        verbose_name=_(u"Architecture"),
+        max_length=200,
+        null=True,
+        blank=True,
+        default=None,
+    )
+
+    platform = models.CharField(
+        verbose_name=_(u"Platform"),
+        max_length=200,
+        null=True,
+        blank=True,
+        default=None,
+    )
+
+    hardware_info = models.TextField(
+        verbose_name=_(u"Complete Hardware Information"),
+        editable=True,
+        blank=True
+    )
+
+    last_heartbeat = models.DateTimeField(
+        verbose_name=_(u"Last Heartbeat"),
+        auto_now=False,
+        auto_now_add=False,
+        null=True,
+        blank=True,
+        editable=False
+    )
+
+    heartbeat = models.BooleanField(
+        verbose_name=_(u"Heartbeat"),
+        default=False
+    )
+
+    def __unicode__(self):
+        return self.hostname
+
+    def can_admin(self, user):
+        if user.has_perm('lava_scheduler_app.change_worker'):
+            return True
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("lava.scheduler.worker.detail", [self.pk])
+
+    def get_description(self):
+        return mark_safe(self.description)
+
+    def get_hardware_info(self):
+        return mark_safe(self.hardware_info)
+
+    def too_long_since_last_heartbeat(self):
+        """Calculates if the last_heartbeat is more than 180 seconds.
+
+        If there is a delay update heartbeat value to False else True.
+        """
+        if self.last_heartbeat is None:
+            self.last_heartbeat = datetime.datetime.utcnow()
+        difference = datetime.datetime.utcnow() - self.last_heartbeat
+
+        if difference.total_seconds() > 180:
+            self.heartbeat = False
+        else:
+            self.heartbeat = True
+        self.save()
+
+    def attached_devices(self):
+        return Device.objects.filter(worker_host=self)
+
+    def update_description(self, description):
+        self.description = description
+        self.save()
+
+
 class Device(RestrictedResource):
     """
     A device that we can run tests on.
@@ -200,9 +304,9 @@ class Device(RestrictedResource):
         "TestJob", blank=True, unique=True, null=True, related_name='+',
         on_delete=models.SET_NULL)
 
-    worker_hostname = models.CharField(
-        verbose_name=_(u"Worker Hostname"),
-        max_length=200,
+    worker_host = models.ForeignKey(
+        Worker,
+        verbose_name=_(u"Worker Host"),
         null=True,
         blank=True,
         default=None
@@ -347,8 +451,8 @@ class Device(RestrictedResource):
         else:
             self.heartbeat = True
 
-        if self.status == Device.RETIRED and self.worker_hostname is not None:
-            self.worker_hostname = None
+        if self.status == Device.RETIRED and self.worker_host is not None:
+            self.worker_host = None
             self.heartbeat = False
 
         self.save()

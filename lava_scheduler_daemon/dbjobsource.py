@@ -6,6 +6,8 @@ import urlparse
 import copy
 import socket
 import signal
+import platform
+
 from dashboard_app.models import Bundle
 
 from django.core.files.base import ContentFile
@@ -28,7 +30,8 @@ from lava_scheduler_app.models import (
     Device,
     DeviceStateTransition,
     JSONDataError,
-    TestJob)
+    TestJob,
+    Worker)
 from lava_scheduler_app import utils
 from lava_scheduler_daemon.jobsource import IJobSource
 
@@ -280,6 +283,34 @@ class DatabaseJobSource(object):
 
         return job_list
 
+    def _worker_host(self, worker_name):
+        worker = None
+        worker_info = {}
+        worker_info['hostname'] = worker_name
+        worker_info['uptime'] = utils.get_uptime()
+
+        try:
+            worker = Worker.objects.get(hostname=worker_name)
+            if worker:
+                worker.uptime = worker_info['uptime']
+                worker.last_heartbeat = datetime.datetime.utcnow()
+                worker.save()
+                transaction.commit()
+                self.logger.debug("Heartbeat timestamp updated for %s ..." %
+                                  worker.hostname)
+        except:
+            # Fill information
+            worker_info['hardware_info'] = utils.get_lshw_out()
+            worker_info['description'] = None
+            worker_info['arch'] = platform.machine()
+            worker_info['platform'] = platform.platform()
+            worker_info['last_heartbeat'] = datetime.datetime.utcnow()
+            worker = Worker.objects.create(**worker_info)
+            worker.save()
+            transaction.commit()
+            self.logger.debug("Worker Host %s added ..." % worker.hostname)
+        return worker
+
     def _device_heartbeat(self):
         """LAST_HEARTBEAT and WORKER_HOSTNAME fields gets updated for each
         configured device, which is not RETIRED.
@@ -290,21 +321,27 @@ class DatabaseJobSource(object):
         for device in devices:
             if device.hostname in configured_boards and \
                     device.status is not Device.RETIRED:
-                device.worker_hostname = socket.getfqdn()
+                device.worker_host = self._worker_host(socket.getfqdn())
                 device.last_heartbeat = datetime.datetime.utcnow()
                 device.save()
                 transaction.commit()
                 self.logger.debug("Heartbeat timestamp updated for %s ..." %
                                   device.hostname)
 
-    def _update_device_heartbeat(self):
-        """Update device HEARTBEAT based on LAST_HEARTBEAT timestamp."""
+    def _update_heartbeat(self):
+        """Update HEARTBEAT based on LAST_HEARTBEAT timestamp."""
         devices = Device.objects.all()
         for device in devices:
             device.too_long_since_last_heartbeat()
             transaction.commit()
             self.logger.debug(
                 "Device heartbeat updated for %s ..." % device.hostname)
+        workers = Worker.objects.all()
+        for worker in workers:
+            worker.too_long_since_last_heartbeat()
+            transaction.commit()
+            self.logger.debug(
+                "Worker heartbeat updated for %s ..." % worker.hostname)
 
     def _kill_canceling(self, job):
         """
@@ -356,7 +393,7 @@ class DatabaseJobSource(object):
                 job.cancel()
 
         if utils.is_master():
-            self._update_device_heartbeat()
+            self._update_heartbeat()
             self.logger.debug("Boards assigned to jobs ...")
             job_list = self._assign_jobs(job_list)
 

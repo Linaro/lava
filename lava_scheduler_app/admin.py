@@ -1,7 +1,7 @@
 from django.contrib import admin
 from lava_scheduler_app.models import (
     Device, DeviceStateTransition, DeviceType, TestJob, Tag, JobFailureTag,
-    UserAdmin, User
+    UserAdmin, User, Worker
 )
 
 #  Setup the override in the django admin interface at startup.
@@ -53,7 +53,7 @@ health_unknown.short_description = "set health_status to unknown"
 class DeviceAdmin(admin.ModelAdmin):
     actions = [online_action, online_action_without_health_check,
                offline_action, health_unknown, retire_action]
-    list_filter = ['device_type', 'status', 'worker_hostname']
+    list_filter = ['device_type', 'status', 'worker_host']
     raw_id_fields = ['current_job', 'last_health_report_job']
 
 
@@ -72,3 +72,4 @@ admin.site.register(DeviceType)
 admin.site.register(TestJob, TestJobAdmin)
 admin.site.register(Tag)
 admin.site.register(JobFailureTag)
+admin.site.register(Worker)
