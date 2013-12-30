@@ -1,5 +1,6 @@
 {% extends "dashboard_app/_content.html" %}
 {% load i18n %}
+{% load keep_spacing %}
 
 {% block extrahead %}
 {{ block.super }}
@@ -24,7 +25,7 @@
     {% endif %}
   </div>
   <div class="form-field">
-    Description&#58;&nbsp;{{ image_report.description }}
+    Description&#58;&nbsp;{{ image_report.description|keep_spacing|linebreaks }}
   </div>
   <div class="form-field">
     <a href="{{ image_report.get_absolute_url }}/+edit">Edit</a> this image report.
