@@ -816,4 +816,10 @@ $(document).ready(function () {
         add_chart(chart_id, chart_data[chart_id]);
     }
 
+    $(window).resize(function () {
+        for (chart_id in chart_data) {
+            update_plot(chart_id, chart_data[chart_id]);
+        }
+    });
+
 });
