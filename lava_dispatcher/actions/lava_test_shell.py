@@ -120,6 +120,7 @@ import tarfile
 import tempfile
 import time
 from uuid import uuid4
+import sys
 
 import yaml
 
@@ -558,8 +559,9 @@ class URLTestDefinition(object):
     @property
     def fixupdict(self):
         if self.__fixupdict__ is None:
-            if 'parse' in testdef and 'fixupdict' in self.testdef['parse']:
-                self.__fixupdict__ = self.testdef['parse']['fixupdict']
+            testdef = self.testdef
+            if 'parse' in testdef and 'fixupdict' in testdef['parse']:
+                self.__fixupdict__ = testdef['parse']['fixupdict']
             else:
                 self.__fixupdict__ = self.default_fixupdict
 
@@ -966,23 +968,32 @@ class cmd_lava_test_shell(BaseAction):
                     any(map(lambda t: 'measurement' in t, test_cases))
 
                 if has_measurements:
-                    _print('%-40s %6s %20s' % ('Test case', 'Result',
+                    _print('%-40s %8s %20s' % ('Test case', 'Result',
                                                'Measurement'))
-                    _print('%s %s %s' % ('-' * 40, '-' * 6, '-' * 20))
+                    _print('%s %s %s' % ('-' * 40, '-' * 8, '-' * 20))
                 else:
-                    _print('%-40s %6s' % ('Test case', 'Result'))
-                    _print('%s %s' % ('-' * 40, '-' * 6))
+                    _print('%-40s %8s' % ('Test case', 'Result'))
+                    _print('%s %s' % ('-' * 40, '-' * 8))
 
                 for test_case in test_cases:
-                    line = '%-40s %6s' % (test_case['test_case_id'],
+                    line = '%-40s %8s' % (test_case['test_case_id'],
                                           test_case['result'].upper())
                     if 'measurement' in test_case:
                         line += ' %20.5f' % test_case['measurement']
                     if 'units' in test_case:
                         line += ' %s' % test_case['units']
-                    _print(line)
+                    self._print_with_color(line, test_case['result'].upper())
 
                 _print('')
+
+    def _print_with_color(self, line, result):
+        if sys.stdout.isatty() and result in ['PASS', 'FAIL']:
+            colors = {
+                'PASS': 2,
+                'FAIL': 1,
+            }
+            line = "\033[38;5;%sm" % colors[result] + line + "\033[m"
+        self.context.log(line)
 
     def _handle_testrun(self, params):
         test_id = params[0]
