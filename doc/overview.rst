@@ -454,3 +454,5 @@ explained above ::
           repositories. The official upstream Linaro git repository
           for test definitions is
           https://git.linaro.org/gitweb?p=qa/test-definitions.git
+
+.. include:: tables.rst

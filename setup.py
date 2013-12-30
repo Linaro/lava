@@ -68,6 +68,7 @@ setup(
         'markdown >= 2.0.3',
         'longerusername',
         'psycopg2',
+        'markupsafe',
 
         # optional dependency; for authentication with Attlassian Crowd SSO
         # 'django-crowd-rest-backend >= 0.3,

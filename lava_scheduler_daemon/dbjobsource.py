@@ -27,7 +27,6 @@ import lava_dispatcher.config as dispatcher_config
 
 from lava_scheduler_app.models import (
     Device,
-    JSONDataError,
     TestJob)
 from lava_scheduler_app import utils
 from lava_scheduler_daemon.jobsource import IJobSource

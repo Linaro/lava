@@ -386,7 +386,7 @@ class Device(RestrictedResource):
         ).filter(
             actual_device=self
         ).order_by(
-            '-start_time'
+            '-submit_time'
         )
 
     def can_admin(self, user):

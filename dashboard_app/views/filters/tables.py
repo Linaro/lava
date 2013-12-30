@@ -23,11 +23,9 @@ from django.conf import settings
 from django.template import defaultfilters
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
-
-from django_tables2 import Column, TemplateColumn
-
+import django_tables2 as tables
 from lava.utils.data_tables.tables import DataTablesTable
-
+from lava.utils.lavatable import LavaTable
 from dashboard_app.filters import evaluate_filter
 from dashboard_app.models import (
     TestRunFilter,
@@ -35,32 +33,32 @@ from dashboard_app.models import (
 )
 
 
-class UserFiltersTable(DataTablesTable):
+class UserFiltersTable(LavaTable):
 
-    name = TemplateColumn('''
+    name = tables.TemplateColumn('''
     <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
     ''')
 
-    bundle_streams = TemplateColumn('''
+    bundle_streams = tables.TemplateColumn('''
     {% for r in record.bundle_streams.all %}
         {{r.pathname}} <br />
     {% endfor %}
     ''')
 
-    build_number_attribute = Column()
+    build_number_attribute = tables.Column()
 
     def render_build_number_attribute(self, value):
         if not value:
             return ''
         return value
 
-    attributes = TemplateColumn('''
+    attributes = tables.TemplateColumn('''
     {% for a in record.attributes.all %}
     {{ a }}  <br />
     {% endfor %}
     ''')
 
-    test = TemplateColumn('''
+    test = tables.TemplateColumn('''
       <table style="border-collapse: collapse">
         <tbody>
           {% for trftest in record.tests.all %}
@@ -80,8 +78,10 @@ class UserFiltersTable(DataTablesTable):
         </tbody>
       </table>
     ''')
+    test.orderable = False
 
-    subscription = Column()
+    subscription = tables.Column()
+    subscription.orderable = False
 
     def render_subscription(self, record):
         try:
@@ -92,37 +92,52 @@ class UserFiltersTable(DataTablesTable):
         else:
             return sub.get_level_display()
 
-    public = Column()
+    public = tables.Column()
 
-    def get_queryset(self, user):
-        return TestRunFilter.objects.filter(owner=user)
+    class Meta(LavaTable.Meta):
+        exclude = (
+            'subscription'
+        )
+        searches = {
+            'name': 'contains',
+        }
+        queries = {
+            'stream_query': 'bundle_streams',
+        }
 
 
 class PublicFiltersTable(UserFiltersTable):
 
-    name = TemplateColumn('''
+    name = tables.TemplateColumn('''
     <a href="{{ record.get_absolute_url }}">~{{ record.owner.username }}/{{ record.name }}</a>
     ''')
 
     def __init__(self, *args, **kw):
         super(PublicFiltersTable, self).__init__(*args, **kw)
-        del self.base_columns['public']
 
-    def get_queryset(self):
-        return TestRunFilter.objects.filter(public=True)
+    class Meta(LavaTable.Meta):
+        exclude = (
+            'public'
+        )
+        searches = {
+            'name': 'contains',
+        }
+        queries = {
+            'stream_query': 'bundle_streams',
+        }
 
 
-class AllFiltersSimpleTable(DataTablesTable):
+class AllFiltersSimpleTable(LavaTable):
 
-    name = TemplateColumn('''
+    name = tables.TemplateColumn('''
     <a href="#" onclick="filters_callback('{{ record.id }}', '{{ record.name }}');">~{{ record.owner.username }}/{{ record.name }}</a>
     ''')
 
-    def get_queryset(self):
-        return TestRunFilter.objects.all()
+    class Meta(LavaTable.Meta):
+        pass
 
 
-class TestRunColumn(Column):
+class TestRunColumn(tables.Column):
     def render(self, record):
         # This column is only rendered if we don't really expect
         # record.test_runs to be very long...
@@ -134,7 +149,7 @@ class TestRunColumn(Column):
         return mark_safe('&nbsp;'.join(links))
 
 
-class SpecificCaseColumn(Column):
+class SpecificCaseColumn(tables.Column):
 
     def __init__(self, test_case, verbose_name=None):
         if verbose_name is None:
@@ -155,7 +170,7 @@ class SpecificCaseColumn(Column):
         return mark_safe(', '.join(r))
 
 
-class BundleColumn(Column):
+class BundleColumn(tables.Column):
     def render(self, record):
         return mark_safe('<a href="' + record.bundle.get_absolute_url() + '">' + escape(record.bundle.content_filename) + '</a>')
 
@@ -207,7 +222,7 @@ class FilterTable(DataTablesTable):
         else:
             strvalue = value
         return mark_safe('<span data-machinetag="%s">%s</span>' % (escape(str(value)), strvalue))
-    tag = Column()
+    tag = tables.Column()
 
     def render_bundle_stream(self, record):
         bundle_streams = set(tr.bundle.bundle_stream for tr in record.test_runs)
@@ -216,7 +231,7 @@ class FilterTable(DataTablesTable):
             links.append('<a href="%s">%s</a>' % (
                 bs.get_absolute_url(), escape(bs.pathname)))
         return mark_safe('<br />'.join(links))
-    bundle_stream = Column(mark_safe("Bundle Stream(s)"))
+    bundle_stream = tables.Column(mark_safe("Bundle Stream(s)"))
 
     def render_bundle(self, record):
         bundles = set(tr.bundle for tr in record.test_runs)
@@ -225,10 +240,10 @@ class FilterTable(DataTablesTable):
             links.append('<a href="%s">%s</a>' % (
                 b.get_absolute_url(), escape(b.content_filename)))
         return mark_safe('<br />'.join(links))
-    bundle = Column(mark_safe("Bundle(s)"))
+    bundle = tables.Column(mark_safe("Bundle(s)"))
 
-    passes = Column(accessor='pass_count')
-    total = Column(accessor='result_count')
+    passes = tables.Column(accessor='pass_count')
+    total = tables.Column(accessor='result_count')
 
     def get_queryset(self, user, filter_data):
         return evaluate_filter(user, filter_data)
@@ -248,8 +263,8 @@ class FilterPreviewTable(FilterTable):
 
 
 class TestResultDifferenceTable(DataTablesTable):
-    test_case_id = Column(verbose_name=mark_safe('test_case_id'))
-    first_result = TemplateColumn('''
+    test_case_id = tables.Column(verbose_name=mark_safe('test_case_id'))
+    first_result = tables.TemplateColumn('''
     {% if record.first_result %}
     <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ record.first_result }}.png"
           alt="{{ record.first_result }}" width="16" height="16" border="0"/>{{ record.first_result }}
@@ -257,7 +272,7 @@ class TestResultDifferenceTable(DataTablesTable):
     <i>missing</i>
     {% endif %}
         ''')
-    second_result = TemplateColumn('''
+    second_result = tables.TemplateColumn('''
     {% if record.second_result %}
     <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ record.second_result }}.png"
           alt="{{ record.second_result }}" width="16" height="16" border="0"/>{{ record.second_result }}

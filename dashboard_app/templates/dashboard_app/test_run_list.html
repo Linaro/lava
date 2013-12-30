@@ -6,60 +6,31 @@
 
 
 {% block content %}
-<div id="master-toolbar-splice" >
+<div>
   <span
     class="length"
     style="float:left; display:inline-block; width:30%; text-align:left;"></span>
   <span class="view-as">
-    <input name="radio" type="radio" id="as_bundles"/>
     <label for="as_bundles">
-      <a
+      [&nbsp;<a
         id="as_bundles_link"
         href="{% url dashboard_app.views.bundle_list bundle_stream.pathname %}"
-        >{% trans "Bundles" %}</a>
+        >{% trans "Bundles" %}</a>&nbsp;]
     </label>
-    <input name="radio" checked type="radio" id="as_test_runs"/>
     <label for="as_test_runs">
-      <a
+      [&nbsp;<a
         id="as_test_runs_link"
         href="{% url dashboard_app.views.test_run_list bundle_stream.pathname %}"
-        >{% trans "Test Runs" %}</a>
+        >{% trans "Test Runs" %}</a>&nbsp;]
     </label>
   </span>
   <span
     class="search"
     style="float:right; display:inline-block; width: 30%; text-align:right"></span>
 </div>
-<script type="text/javascript" charset="utf-8"> 
-  $(document).ready(function() {
-    oTable = $('#test_runs').dataTable({
-      bJQueryUI: true,
-      sPaginationType: "full_numbers",
-      aaSorting: [[1, "desc"]],
-      iDisplayLength: 25,
-      aLengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-      sDom: 'lfr<"#master-toolbar">t<"F"ip>'
-    });
-    // Try hard to make our radio boxes behave as links
-    $("#master-toolbar-splice span.view-as").buttonset();
-    $("#master-toolbar-splice span.view-as input").change(function(event) {
-      var link = $("#" + event.target.id + "_link");
-      location.href=link.attr("href");
-    });
-    // Insane splicing below
-    $("div.dataTables_length").children().appendTo("#master-toolbar-splice span.length");
-    $("div.dataTables_filter").children().appendTo("#master-toolbar-splice span.search");
-    $("#master-toolbar-splice").children().appendTo($("#master-toolbar"));
-    $("div.dataTables_length").remove();
-    $("div.dataTables_filter").remove();
-    $("#master-toolbar-splice").remove();
-    $("#master-toolbar").addClass("ui-widget-header ui-corner-tl ui-corner-tr").css(
-      "padding", "5pt").css("text-align", "center");
-  });
-</script> 
+
 {% render_table test_run_table %}
 {% endblock %}
-
 
 {% block sidebar %}
 {% include "dashboard_app/_bundle_stream_sidebar.html" %}

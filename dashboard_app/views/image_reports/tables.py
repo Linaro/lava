@@ -16,76 +16,78 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Launch Control.  If not, see <http://www.gnu.org/licenses/>.
 
-from django_tables2 import Column, TemplateColumn
-
-from lava.utils.data_tables.tables import DataTablesTable
-
-from dashboard_app.models import ImageReport
+import django_tables2 as tables
+from lava.utils.lavatable import LavaTable
+from dashboard_app.models import ImageReport, ImageReportChart
 
 
-class UserImageReportTable(DataTablesTable):
+class UserImageReportTable(LavaTable):
 
-    name = TemplateColumn('''
+    def __init__(self, *args, **kwargs):
+        super(UserImageReportTable, self).__init__(*args, **kwargs)
+        self.length = 10
+
+    name = tables.TemplateColumn('''
     <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
     ''')
 
-    is_published = Column()
+    is_published = tables.Column()
 
-    description = TemplateColumn('''
+    description = tables.TemplateColumn('''
     {{ record.description|truncatewords:10 }}
     ''')
 
-    user = TemplateColumn('''
+    user = tables.TemplateColumn('''
     {{ record.user.username }}
     ''')
 
-    view = TemplateColumn('''
+    view = tables.TemplateColumn('''
     <a href="{{ record.get_absolute_url }}/+detail">view</a>
     ''')
+    view.orderable = False
 
-    remove = TemplateColumn('''
+    remove = tables.TemplateColumn('''
     <a href="{{ record.get_absolute_url }}/+delete">remove</a>
     ''')
+    remove.orderable = False
 
-    def get_queryset(self, user):
-        return ImageReport.objects.filter(user=user)
+    class Meta(LavaTable.Meta):
+        model = ImageReportChart
+        fields = (
+            'name', 'is_published', 'description',
+            'user', 'view', 'remove'
+        )
+        sequence = fields
+        searches = {
+            'name': 'contains',
+            'description': 'contains',
+        }
 
 
 class OtherImageReportTable(UserImageReportTable):
 
-    def __init__(self, *args, **kw):
-        super(OtherImageReportTable, self).__init__(*args, **kw)
-        del self.base_columns['is_published']
-        del self.base_columns['view']
-        del self.base_columns['remove']
+    def __init__(self, *args, **kwargs):
+        super(OtherImageReportTable, self).__init__(*args, **kwargs)
+        self.length = 10
 
-    def get_queryset(self, user):
-        # All public reports for authenticated users which are not part
-        # of any group.
-        # Only reports containing all public filters for non-authenticated.
-        other_reports = ImageReport.objects.filter(is_published=True,
-                                                   image_report_group=None)
-        if user.is_authenticated():
-            return other_reports
-        else:
-            return other_reports.exclude(
-                imagereportchart__imagechartfilter__filter__public=False)
+    class Meta(UserImageReportTable.Meta):
+        fields = (
+            'name', 'description', 'user',
+        )
+        sequence = fields
+        exclude = (
+            'is_published', 'view', 'remove'
+        )
 
 
-class GroupImageReportTable(OtherImageReportTable):
+class GroupImageReportTable(UserImageReportTable):
 
-    def __init__(self, image_report_group, *args, **kw):
-        self.image_report_group = image_report_group
-        super(GroupImageReportTable, self).__init__(*args, **kw)
+    def __init__(self, *args, **kwargs):
+        super(GroupImageReportTable, self).__init__(*args, **kwargs)
+        self.length = 10
 
-    def get_queryset(self, user, image_report_group):
-        # Specific group reports for authenticated users.
-        # Only reports containing all public filters for non-authenticated.
-        group_reports = ImageReport.objects.filter(
-            is_published=True,
-            image_report_group=image_report_group)
-        if user.is_authenticated():
-            return group_reports
-        else:
-            return group_reports.exclude(
-                imagereportchart__imagechartfilter__filter__public=False)
+    class Meta(UserImageReportTable.Meta):
+        fields = (
+            'name', 'description', 'user',
+        )
+        sequence = fields

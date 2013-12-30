@@ -29,17 +29,21 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
-
+from django.db.models import Q
 from lava_server.bread_crumbs import (
     BreadCrumb,
     BreadCrumbTrail,
 )
-
 from dashboard_app.filters import (
     evaluate_filter,
 )
+from django_tables2 import (
+    RequestConfig,
+)
+
 from dashboard_app.models import (
     Bundle,
+    BundleStream,
     NamedAttribute,
     Test,
     TestCase,
@@ -61,23 +65,74 @@ from dashboard_app.views.filters.tables import (
     TestResultDifferenceTable,
     UserFiltersTable,
 )
+from lava.utils.lavatable import LavaView
+
+
+class FilterView(LavaView):
+
+    def __init__(self, request, **kwargs):
+        super(FilterView, self).__init__(request, **kwargs)
+
+    def stream_query(self, term):
+        streams = BundleStream.objects.filter(pathname__contains=term)
+        return Q(bundle_streams__in=streams)
+
+
+class AllFiltersView(FilterView):
+
+    def get_queryset(self):
+        return TestRunFilter.objects.all()
+
+
+class UserFiltersView(FilterView):
+
+    def get_queryset(self):
+        return TestRunFilter.objects.filter(owner=self.request.user)
+
+
+class PublicFiltersView(FilterView):
+
+    def get_queryset(self):
+        return TestRunFilter.objects.filter(public=True)
 
 
 @BreadCrumb("Filters and Subscriptions", parent=index)
 def filters_list(request):
-    public_filters_table = PublicFiltersTable("public-filters", None)
+    public_view = PublicFiltersView(None, model=TestRunFilter, table_class=PublicFiltersTable)
+    prefix = "public_"
+    public_filters_table = PublicFiltersTable(
+        public_view.get_table_data(prefix),
+        prefix=prefix
+    )
+    config = RequestConfig(request)
+    config.configure(public_filters_table)
+
+    search_data = public_filters_table.prepare_search_data(public_view)
+    discrete_data = public_filters_table.prepare_discrete_data(public_view)
+    terms_data = public_filters_table.prepare_terms_data(public_view)
+    times_data = public_filters_table.prepare_times_data(public_view)
+
+    user_filters_table = None
     if request.user.is_authenticated():
-        public_filters_table.user = request.user
-        user_filters_table = UserFiltersTable("user-filters", None, params=(request.user,))
-        user_filters_table.user = request.user
-    else:
-        user_filters_table = None
-        del public_filters_table.base_columns['subscription']
+        user_view = UserFiltersView(request, model=TestRunFilter, table_class=UserFiltersTable)
+        prefix = "user_"
+        user_filters_table = UserFiltersTable(
+            user_view.get_table_data(prefix),
+            prefix=prefix
+        )
+        config.configure(user_filters_table)
+        search_data.update(user_filters_table.prepare_search_data(user_view))
+        discrete_data.update(user_filters_table.prepare_discrete_data(user_view))
+        terms_data.update(user_filters_table.prepare_terms_data(user_view))
 
     return render_to_response(
         'dashboard_app/filters_list.html', {
             'user_filters_table': user_filters_table,
             'public_filters_table': public_filters_table,
+            "terms_data": terms_data,
+            "search_data": search_data,
+            "times_data": times_data,
+            "discrete_data": discrete_data,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 filters_list),
         }, RequestContext(request)
@@ -85,8 +140,8 @@ def filters_list(request):
 
 
 def filter_json(request, username, name):
-    filter = TestRunFilter.objects.get(owner__username=username, name=name)
-    return FilterTable.json(request, params=(request.user, filter.as_data()))
+    jfilter = TestRunFilter.objects.get(owner__username=username, name=name)
+    return FilterTable.json(request, params=(request.user, jfilter.as_data()))
 
 
 def filter_preview_json(request):
