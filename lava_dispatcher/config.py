@@ -249,6 +249,7 @@ default_config_path = os.path.join(os.path.dirname(__file__),
                                    'default-config/lava-dispatcher')
 
 custom_config_path = None
+custom_config_file = None
 
 
 def search_path():
@@ -304,7 +305,7 @@ def _get_config(name, cp):
         path = os.path.join(directory, '%s.conf' % name)
         if os.path.exists(path):
             config_files.append(path)
-    if not config_files:
+    if not config_files and not custom_config_file:
         raise Exception("no config files named %r found" % (name + ".conf"))
     config_files.reverse()
     for path in config_files:
@@ -354,13 +355,17 @@ def get_device_config(name):
     # devices/$device in that order.
     initial_config = ConfigParser()
     _get_config("devices/%s" % name, initial_config)
+    if custom_config_file:
+        _read_into(custom_config_file, initial_config)
+
+    device_type = initial_config.get('__main__', 'device_type')
 
     real_device_config = parser.SchemaConfigParser(DeviceSchema())
     _get_config("device-defaults", real_device_config)
-    _get_config(
-        "device-types/%s" % initial_config.get('__main__', 'device_type'),
-        real_device_config)
+    _get_config("device-types/%s" % device_type, real_device_config)
     _get_config("devices/%s" % name, real_device_config)
+    if custom_config_file:
+        _read_into(custom_config_file, real_device_config)
     real_device_config.set("__main__", "hostname", name)
     _hack_boot_options(real_device_config)
     valid, report = real_device_config.is_valid(report=True)

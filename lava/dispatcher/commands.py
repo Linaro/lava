@@ -18,6 +18,11 @@ class SetUserConfigDirAction(argparse.Action):
         lava_dispatcher.config.custom_config_path = value
 
 
+class SetCustomConfigFile(argparse.Action):
+    def __call__(self, parser, namespace, value, option_string=None):
+        lava_dispatcher.config.custom_config_file = value
+
+
 class DispatcherCommand(Command):
     @classmethod
     def register_arguments(cls, parser):
@@ -27,6 +32,11 @@ class DispatcherCommand(Command):
             default=None,
             action=SetUserConfigDirAction,
             help="Configuration directory override (currently %(default)s")
+        parser.add_argument(
+            "--config",
+            default=None,
+            action=SetCustomConfigFile,
+            help="Custom config file")
 
 
 class devices(DispatcherCommand):
