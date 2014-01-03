@@ -171,7 +171,7 @@ class BootloaderTarget(MasterImageTarget):
 
     def deploy_linaro_prebuilt(self, image, rootfstype, bootloadertype):
         self._uboot_boot = False
-        if self._is_ipxe:
+        if self._is_ipxe():
             if image is not None:
                 self._ipxe_boot = True
                 # We are not booted yet
