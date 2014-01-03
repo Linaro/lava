@@ -980,6 +980,10 @@ class cmd_lava_test_shell(BaseAction):
                     _print('%s %s' % ('-' * 40, '-' * 8))
 
                 for test_case in test_cases:
+                    if 'test_case_id' not in test_case or \
+                       'result' not in test_case:
+                        continue
+
                     line = '%-40s %8s' % (test_case['test_case_id'],
                                           test_case['result'].upper())
                     if 'measurement' in test_case:
@@ -1020,9 +1024,14 @@ class cmd_lava_test_shell(BaseAction):
     def _handle_testcase(self, params):
         data = {}
         for param in params:
-            key, value = param.split('=')
-            key = key.lower()
-            data[key] = value
+            parts = param.split('=')
+            if len(parts) == 2:
+                key, value = parts
+                key = key.lower()
+                data[key] = value
+            else:
+                logging.warn(
+                    "Ignoring malformed parameter for signal: \"%s\". " % param)
 
         test_result = parse_testcase_result(data)
         self._current_test_run['test_results'].append(test_result)
