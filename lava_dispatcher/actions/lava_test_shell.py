@@ -772,8 +772,12 @@ class cmd_lava_test_shell(BaseAction):
             return ret
 
         elif event == TEST_CASE_RESULT:
-            self._handle_parsed_testcase(runner._connection.match.groupdict())
-            return True
+            match = runner._connection.match
+            if match is pexpect.TIMEOUT:
+                logging.warn('lava_test_shell has timed out')
+            else:
+                self._handle_parsed_testcase(match.groupdict())
+                return True
 
         return False
 
