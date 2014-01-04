@@ -912,7 +912,7 @@ class cmd_lava_test_shell(BaseAction):
         filesystem_access_failure = True
 
         try:
-            with target.file_system(results_part, target.lava_test_dir) as d:
+            with target.file_system(results_part, 'lava') as d:
                 filesystem_access_ok = False
                 err_log = os.path.join(d, 'parse_err.log')
                 results_dir = os.path.join(d, 'results')
