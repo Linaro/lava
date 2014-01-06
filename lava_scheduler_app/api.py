@@ -1,4 +1,5 @@
 import xmlrpclib
+from django.core.exceptions import PermissionDenied
 from simplejson import JSONDecodeError
 from django.db.models import Count
 from linaro_django_xmlrpc.models import ExposedAPI
@@ -57,7 +58,10 @@ class SchedulerAPI(ExposedAPI):
     def cancel_job(self, job_id):
         if not self.user:
             raise xmlrpclib.Fault(401, "Authentication required.")
-        job = get_restricted_job(self.user, job_id)
+        try:
+            job = get_restricted_job(self.user, job_id)
+        except PermissionDenied:
+            raise xmlrpclib.Fault(403, "Permission denied")
         if not job.can_cancel(self.user):
             raise xmlrpclib.Fault(403, "Permission denied.")
         if job.is_multinode:

@@ -333,8 +333,10 @@ class Device(RestrictedResource):
         """
         default_user = DefaultDeviceOwner.objects.filter(default_owner=True)
         if len(default_user) == 0:
-            default_user = User.objects.filter(is_superuser=True).order_by('id')[0]
-        if self.user is None and self.group is None:
+            superusers = User.objects.filter(is_superuser=True).order_by('id')
+            if len(superusers) > 0:
+                default_user = superusers[0]
+        if self.user is None and self.group is None and len(default_user) > 0:
             self.user = default_user
             self.is_public = True
         if self.user is not None and self.group is not None:
