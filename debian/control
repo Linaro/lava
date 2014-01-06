@@ -5,7 +5,7 @@ Maintainer: Debian LAVA team <pkg-linaro-lava-devel@lists.alioth.debian.org>
 Uploaders: Antonio Terceiro <terceiro@debian.org>,
  Neil Williams <codehelp@debian.org>,
  Fathi Boudra <fabo@debian.org>, Jordi Mallach <jordi@debian.org>
-Build-Depends: debhelper (>= 8.0.0),
+Build-Depends: adduser, debhelper (>= 8.0.0),
  python | python-all | python-dev | python-all-dev,
  python-sphinx (>= 1.0.7+dfsg) | python3-sphinx,
  python-setuptools, python-versiontools
@@ -17,7 +17,8 @@ Vcs-Browser: https://alioth.debian.org/plugins/scmgit/cgi-bin/gitweb.cgi?p=pkg-l
 
 Package: lava-dispatcher
 Architecture: all
-Depends: python-serial (>= 2.6), parted, kpartx,
+Depends: python-serial (>= 2.6), parted, kpartx, ser2net,
+ sshfs, 
  ${python:Depends}, ${misc:Depends}
 Recommends: tftpd-hpa, openbsd-inetd, qemu-system-x86
 Description: Linaro Automated Validation Architecture dispatcher
