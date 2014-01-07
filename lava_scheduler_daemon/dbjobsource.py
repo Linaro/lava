@@ -382,6 +382,10 @@ class DatabaseJobSource(object):
                 device.status = Device.IDLE
             elif device.status == Device.OFFLINING:
                 device.status = Device.OFFLINE
+            elif device.status == Device.RESERVED:
+                if device.current_job in [TestJob.RUNNING]:
+                    device.status = Device.RUNNING
+                    save_device = True
             else:
                 continue
             job = device.current_job
