@@ -360,6 +360,53 @@ class DatabaseJobSource(object):
                     self.logger.info("Unable to kill process group %d: %s" % (pgid, e))
                     os.unlink(pidrecord)
 
+    def _cleanup_device_status(self):
+        """Pick up each device in the database and ensure their status is
+        properly recorded, based on the job that has run on the device
+        previously.
+
+        NOTE: This is required in situations where the SchedulerMonitor has
+        lost connection via twisted and the devices remain in deadlocked state.
+
+        This should run only on the master scheduler.
+        """
+        devices = Device.objects.all()
+        for device in devices:
+            self.logger.info('ensuring proper device state on %s', device)
+            old_device_status = device.status
+            if device.status == Device.RUNNING:
+                device.status = Device.IDLE
+            elif device.status == Device.OFFLINING:
+                device.status = Device.OFFLINE
+            else:
+                continue
+            job = device.current_job
+            save_device = False
+            if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE,
+                              TestJob.CANCELED]:
+                device.device_version = _get_device_version(job.results_bundle)
+                device.current_job = None
+                msg = "Job: %s" % job.id
+                DeviceStateTransition.objects.create(
+                    created_by=None, device=device,
+                    old_state=old_device_status, new_state=device.status,
+                    message=msg, job=job).save()
+                save_device = True
+
+            if job.health_check:
+                device.last_health_report_job = job
+                if device.health_status != Device.HEALTH_LOOPING:
+                    if job.status == TestJob.INCOMPLETE:
+                        device.health_status = Device.HEALTH_FAIL
+                        device.put_into_maintenance_mode(None, "Health Check Job Failed")
+                    elif job.status == TestJob.COMPLETE:
+                        device.health_status = Device.HEALTH_PASS
+                save_device = True
+
+            if save_device:
+                device.save()
+                transaction.commit()
+
     def getJobList_impl(self):
         self._device_heartbeat()
 
@@ -393,6 +440,7 @@ class DatabaseJobSource(object):
                 job.cancel()
 
         if utils.is_master():
+            self._cleanup_device_status()
             self._update_heartbeat()
             self.logger.debug("Boards assigned to jobs ...")
             job_list = self._assign_jobs(job_list)
