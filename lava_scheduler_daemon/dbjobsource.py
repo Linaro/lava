@@ -376,6 +376,7 @@ class DatabaseJobSource(object):
         """
         devices = Device.objects.all()
         for device in devices:
+            save_device = False
             self.logger.debug('ensuring proper device state on %s', device)
             old_device_status = device.status
             if device.status == Device.RUNNING:
@@ -389,7 +390,6 @@ class DatabaseJobSource(object):
             else:
                 continue
             job = device.current_job
-            save_device = False
             if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE,
                               TestJob.CANCELED]:
                 device.device_version = _get_device_version(job.results_bundle)
