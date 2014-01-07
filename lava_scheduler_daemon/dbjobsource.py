@@ -390,27 +390,29 @@ class DatabaseJobSource(object):
             else:
                 continue
             job = device.current_job
-            if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE,
-                              TestJob.CANCELED]:
-                device.device_version = _get_device_version(job.results_bundle)
-                device.current_job = None
-                msg = "Job: %s" % job.id
-                DeviceStateTransition.objects.create(
-                    created_by=None, device=device,
-                    old_state=old_device_status, new_state=device.status,
-                    message=msg, job=job).save()
-                save_device = True
+            if job:
+                if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE,
+                                  TestJob.CANCELED]:
+                    device.device_version = _get_device_version(
+                        job.results_bundle)
+                    device.current_job = None
+                    msg = "Job: %s" % job.id
+                    DeviceStateTransition.objects.create(
+                        created_by=None, device=device,
+                        old_state=old_device_status, new_state=device.status,
+                        message=msg, job=job).save()
+                    save_device = True
 
-            if job.health_check and job.status not in [TestJob.RUNNING,
-                                                       TestJob.CANCELING]:
-                device.last_health_report_job = job
-                if device.health_status != Device.HEALTH_LOOPING:
-                    if job.status == TestJob.INCOMPLETE:
-                        device.health_status = Device.HEALTH_FAIL
-                        device.put_into_maintenance_mode(None, "Health Check Job Failed")
-                    elif job.status == TestJob.COMPLETE:
-                        device.health_status = Device.HEALTH_PASS
-                save_device = True
+                if job.health_check and job.status not in [TestJob.RUNNING,
+                                                           TestJob.CANCELING]:
+                    device.last_health_report_job = job
+                    if device.health_status != Device.HEALTH_LOOPING:
+                        if job.status == TestJob.INCOMPLETE:
+                            device.health_status = Device.HEALTH_FAIL
+                            device.put_into_maintenance_mode(None, "Health Check Job Failed")
+                        elif job.status == TestJob.COMPLETE:
+                            device.health_status = Device.HEALTH_PASS
+                        save_device = True
 
             if save_device:
                 device.save()
