@@ -827,7 +827,7 @@ $(document).ready(function () {
         return $helper;
     };
 
-    validate_build_number_selection = function() {
+    validate_build_number_selection = function(chart_id) {
 
         start_number = $("#start_date_" + chart_id).val();
         if (isNumeric(start_number)) {
