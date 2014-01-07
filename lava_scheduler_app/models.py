@@ -332,7 +332,7 @@ class Device(RestrictedResource):
         upon save if none was set.
         """
         default_user = DefaultDeviceOwner.objects.filter(default_owner=True)
-        if len(default_user) == 0:
+        if not default_user or len(default_user) == 0:
             superusers = User.objects.filter(is_superuser=True).order_by('id')
             if len(superusers) > 0:
                 default_user = superusers[0]
