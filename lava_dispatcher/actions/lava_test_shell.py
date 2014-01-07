@@ -126,6 +126,7 @@ import yaml
 
 from linaro_dashboard_bundle.io import DocumentIO
 
+from lava_dispatcher.bundle import PrettyPrinter
 import lava_dispatcher.lava_test_shell as lava_test_shell
 from lava_dispatcher.lava_test_shell import parse_testcase_result
 from lava_dispatcher.signals import SignalDirector
@@ -948,60 +949,11 @@ class cmd_lava_test_shell(BaseAction):
         with os.fdopen(fd, 'w') as f:
             DocumentIO.dump(f, bundle)
 
-        self._print_test_results(bundle)
+        printer = PrettyPrinter(self.context)
+        printer.print_results(bundle)
 
         if parse_err_msg:
             raise GeneralError(parse_err_msg)
-
-    def _print_test_results(self, bundle):
-        _print = self.context.log
-        for test_run in bundle.get('test_runs', []):
-
-            test_cases = test_run.get('test_results', [])
-            if len(test_cases) > 0:
-
-                test_id = test_run['test_id']
-
-                _print('')
-                _print("=" * len(test_id))
-                _print(test_id)
-                _print("=" * len(test_id))
-                _print('')
-
-                has_measurements = \
-                    any(map(lambda t: 'measurement' in t, test_cases))
-
-                if has_measurements:
-                    _print('%-40s %8s %20s' % ('Test case', 'Result',
-                                               'Measurement'))
-                    _print('%s %s %s' % ('-' * 40, '-' * 8, '-' * 20))
-                else:
-                    _print('%-40s %8s' % ('Test case', 'Result'))
-                    _print('%s %s' % ('-' * 40, '-' * 8))
-
-                for test_case in test_cases:
-                    if 'test_case_id' not in test_case or \
-                       'result' not in test_case:
-                        continue
-
-                    line = '%-40s %8s' % (test_case['test_case_id'],
-                                          test_case['result'].upper())
-                    if 'measurement' in test_case:
-                        line += ' %20.5f' % test_case['measurement']
-                    if 'units' in test_case:
-                        line += ' %s' % test_case['units']
-                    self._print_with_color(line, test_case['result'].upper())
-
-                _print('')
-
-    def _print_with_color(self, line, result):
-        if sys.stdout.isatty() and result in ['PASS', 'FAIL']:
-            colors = {
-                'PASS': 2,
-                'FAIL': 1,
-            }
-            line = "\033[38;5;%sm" % colors[result] + line + "\033[m"
-        self.context.log(line)
 
     def _handle_testrun(self, params):
         test_id = params[0]
