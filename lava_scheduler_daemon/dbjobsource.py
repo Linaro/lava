@@ -202,24 +202,24 @@ class DatabaseJobSource(object):
             multinode_jobs = TestJob.objects.all().filter(
                 target_group=job.target_group)
 
-            for m_job in multinode_jobs:
+            for multinode_job in multinode_jobs:
                 devices = []
                 self.logger.debug("Checking devices of requested type %s owned by %s" %
-                                  (job.requested_device_type, job.submitter.username))
+                                  (multinode_job.requested_device_type, multinode_job.submitter.username))
                 device_list = Device.objects.all().filter(
-                    device_type=m_job.requested_device_type,
+                    device_type=multinode_job.requested_device_type,
                     status=Device.IDLE, heartbeat=True, is_public=False)
                 for d in device_list:
-                    if d.can_submit(job.submitter):
+                    if d.can_submit(multinode_job.submitter):
                         devices.append(d)
                 if len(devices) == 0:
                     self.logger.debug("Checking public devices of requested type %s" %
-                                      job.requested_device_type)
+                                      multinode_job.requested_device_type)
                     devices = Device.objects.all().filter(
-                        device_type=job.requested_device_type,
+                        device_type=multinode_job.requested_device_type,
                         status=Device.IDLE, heartbeat=True, is_public=True)
                 if len(devices) > 0:
-                    f_job = self._fix_device(devices[0], m_job)
+                    f_job = self._fix_device(devices[0], multinode_job)
                     if f_job:
                         job_list.append(f_job)
 

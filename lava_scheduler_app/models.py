@@ -876,25 +876,29 @@ class TestJob(RestrictedResource):
             except Tag.DoesNotExist:
                 raise JSONDataError("tag %r does not exist" % tag_name)
 
+        # MultiNode processing - tally allowed devices with the
+        # device_types requested per role.
+        allowed_devices = {}
         if 'device_group' in job_data:
             device_count = {}
+            target = None  # prevent multinode jobs reserving devices which are currently running.
             for clients in job_data["device_group"]:
-                role = str(clients["role"])
                 device_type = str(clients['device_type'])
+                if device_type not in allowed_devices:
+                    allowed_devices[device_type] = []
                 count = int(clients["count"])
                 if device_type not in device_count:
                     device_count[device_type] = 0
                 device_count[device_type] += count
 
-            device_list = Device.objects.filter(device_type=device_type)
-            allow = []
-            for device in device_list:
-                if device.can_submit(user):
-                    allow.append(device)
-            if len(allow) < device_count[device_type]:
-                raise DevicesUnavailableException("Not enough devices of type %s are currently "
-                                                  "available to user %s"
-                                                  % (device_type, user))
+                device_list = Device.objects.filter(device_type=device_type)
+                for device in device_list:
+                    if device.can_submit(user):
+                        allowed_devices[device_type].append(device)
+                if len(allowed_devices[device_type]) < device_count[device_type]:
+                    raise DevicesUnavailableException("Not enough devices of type %s are currently "
+                                                      "available to user %s"
+                                                      % (device_type, user))
 
             target_group = str(uuid.uuid4())
             node_json = utils.split_multi_job(job_data, target_group)
@@ -917,7 +921,8 @@ class TestJob(RestrictedResource):
 
                     job = TestJob(
                         sub_id=sub_id, submitter=submitter,
-                        requested_device=target, description=job_name,
+                        requested_device=target,
+                        description=job_name,
                         requested_device_type=device_type,
                         definition=simplejson.dumps(node_json[role][c]),
                         original_definition=simplejson.dumps(json_data,
