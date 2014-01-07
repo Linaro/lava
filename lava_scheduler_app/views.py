@@ -247,7 +247,7 @@ class DeviceTable(DataTablesTable):
     searchable_columns = ['hostname']
 
     datatable_opts = {
-        'aaSorting': [[2, 'asc']],
+        'aaSorting': [[0, 'asc']],
         "iDisplayLength": 50
     }
 
