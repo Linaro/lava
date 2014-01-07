@@ -1,6 +1,11 @@
 #!/bin/sh
 #
-#This file is for LMP test
+# Copyright (C) 2013 Linaro Limited
+#
+# Author: Dave Pigott <dave.pigott@linaro.org>
+#         Fu Wei      <fu.wei@linaro.org>
+#
+# This file is for lava lmp test
 #
 
 MESSAGE_PREFIX="<LAVA_LMP>"
@@ -51,6 +56,7 @@ _lava_lmp_process_message () {
         result=$(echo $1 | grep "..*=..*")
         if [ "${result}x" != "x" ] ; then
             echo $1 >> $LAVA_LMP_CACHE
+            _lava_lmp_debug "$FUNCNAME save $1 to $LAVA_LMP_CACHE"
         elif [ "${1}x" = "nackx" ] ; then
             echo "Error:no-response $1, Exit from $LAVA_LMP_API!"
             exit $LAVA_LMP_EXIT_ERROR
@@ -109,8 +115,8 @@ lava_lmp_wait_for_message () {
     while read line; do
         result=$(echo $line | grep "${MESSAGE_REPLY}")
         if [ "${result}x" != "x" ] ; then
-            line=${line##*${MESSAGE_REPLY}}
-            _lava_lmp_process_message ${line%%>*}
+            line=$(echo ${line}|sed -e "s/^${MESSAGE_REPLY}//"|sed -e 's/>$//')
+            _lava_lmp_process_message ${line}
             if [ -n "$MESSAGE_NEED_ACK" ] ; then
                 echo ${MESSAGE_REPLY_ACK}
             fi
@@ -134,7 +140,8 @@ lava_lmp_check_cache () {
 
 lava_lmp_check_command () {
     for command in $LAVA_LMP_COMMAND_SET ; do
-        if [ "${1}" = "$command" ] ; then
+        result=$(echo ${1} | grep "${command}")
+        if [ "${result}x" != "x" ] ; then
             return 0
         fi
     done

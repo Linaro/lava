@@ -10,9 +10,9 @@
 # Operates the Lava Lmp ETH-SATA module. This allows you to passthrough ro
 # disconnect.
 #
-# Usage: ``lava-lmp-eth {passthru, disconnect} [module_name]``
+# Usage: ``lava-lmp-eth {passthru, disconnect, id_on, id_off} [module_name]``
 LAVA_LMP_API="LAVA_ETH"
-LAVA_LMP_COMMAND_SET="passthru disconnect"
+LAVA_LMP_COMMAND_SET="passthru disconnect id_"
 #MESSAGE_TIMEOUT=5
 #MESSAGE_NEED_ACK=yes
 

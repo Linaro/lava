@@ -1,6 +1,7 @@
 # Copyright (C) 2013 Linaro Limited
 #
 # Author: Dave Pigott <dave.pigott@linaro.org>
+#         Fu Wei <fu.wei@linaro.org>
 #
 # This file is part of LAVA Dispatcher.
 #
@@ -18,12 +19,19 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.actions.lmp.board import lmp_send_command
+from lava_dispatcher.actions.lmp.board import lmp_send_command, lmp_set_identify
 
 
 def disconnect(serial):
-    lmp_send_command(serial, "sata", "sata", "disconnect")
+    lmp_send_command(serial, "sata", "sata", "disconnect", need_check_mode=True)
 
 
 def passthru(serial):
-    lmp_send_command(serial, "sata", "sata", "passthru")
+    lmp_send_command(serial, "sata", "sata", "passthru", need_check_mode=True)
+
+
+def set_identify(serial, identify):
+    if identify == "_on":
+        lmp_set_identify(serial, "sata", True)
+    elif identify == "off":
+        lmp_set_identify(serial, "sata", False)

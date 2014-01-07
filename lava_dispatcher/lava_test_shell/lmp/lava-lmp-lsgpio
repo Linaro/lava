@@ -10,9 +10,9 @@
 # Operates the Lava Lmp lsgpio module. This allows you to change 
 # the direction of the gpio set(a,b).
 #
-# Usage: ``lava-lmp-lsgpio {a_in, a_out, b_in, b_out} [module_name]``
+# Usage: ``lava-lmp-lsgpio {a_in a_out b_in b_out a_set_?? a_get b_set_?? b_get, id_on, id_off} [module_name]``
 LAVA_LMP_API="LAVA_LSGPIO"
-LAVA_LMP_COMMAND_SET="a_in a_out b_in b_out"
+LAVA_LMP_COMMAND_SET="a_in a_out b_in b_out a_set_ a_get b_set_ b_get id_"
 #MESSAGE_TIMEOUT=5
 #MESSAGE_NEED_ACK=yes
 

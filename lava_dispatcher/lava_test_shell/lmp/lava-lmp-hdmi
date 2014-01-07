@@ -11,10 +11,10 @@
 # or fake edid. Fake edid takes an additional parameter of the edid schema to be
 # written to the lmp hdmi module.
 #
-# Usage: ``lava-lmp-hdmi {passthru, disconnect} [module_name]``
+# Usage: ``lava-lmp-hdmi {passthru, disconnect, id_on, id_off} [module_name]``
 #        ``lava-lmp-hdmi fakeedid <edid_file> [module_name]``
 LAVA_LMP_API="LAVA_HDMI"
-LAVA_LMP_COMMAND_SET="passthru disconnect"
+LAVA_LMP_COMMAND_SET="passthru disconnect id_"
 #MESSAGE_TIMEOUT=5
 #MESSAGE_NEED_ACK=yes
 
