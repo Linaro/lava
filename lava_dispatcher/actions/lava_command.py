@@ -63,15 +63,10 @@ class cmd_lava_command_run(BaseAction):
             for command in commands:
                 logging.info("Executing lava_command_run: %s" % command)
                 try:
-                    rc = session.run(command, timeout=timeout, log_in_host=self._logfile)
-                except:
-                    logging.exception("session.run failed")
-                    self.client.proc.sendcontrol('c')
-                    logging.exception("Killed the command")
-                if rc is None:
-                    raise OperationFailed("Getting return value failed")
-                else:
-                    logging.info("Command \"%s\" return Code: %d", command, rc)
+                    session.run(command, timeout=timeout,
+                                log_in_host=self._logfile)
+                except OperationFailed as e:
+                    logging.error(e)
 
         self._write_results_bundle()
 
