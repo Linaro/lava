@@ -397,7 +397,8 @@ class DatabaseJobSource(object):
                     message=msg, job=job).save()
                 save_device = True
 
-            if job.health_check:
+            if job.health_check and job.status not in [TestJob.RUNNING,
+                                                       TestJob.CANCELING]:
                 device.last_health_report_job = job
                 if device.health_status != Device.HEALTH_LOOPING:
                     if job.status == TestJob.INCOMPLETE:
