@@ -328,17 +328,32 @@ class Device(RestrictedResource):
     def clean(self):
         """
         Complies with the RestrictedResource constraints
-        by specifying the default device owner as the user
+        by specifying the default device owner as the superuser
         upon save if none was set.
+        Devices become public if no User or Group is specified
+        First superuser by id is the default user if default user is None
+        Devices move to that superuser if default user is None.
         """
-        default_user = DefaultDeviceOwner.objects.filter(default_owner=True)
-        if not default_user or len(default_user) == 0:
-            superusers = User.objects.filter(is_superuser=True).order_by('id')
+
+        default_user_list = DefaultDeviceOwner.objects.all()[:1]
+        if not default_user_list or len(default_user_list) == 0:
+            superusers = User.objects.filter(is_superuser=True).order_by('id')[:1]
             if len(superusers) > 0:
-                default_user = superusers[0]
-        if self.user is None and self.group is None and len(default_user) > 0:
-            self.user = default_user
+                first_super_user = superusers[0]
+                if self.group is None:
+                    self.user = User.objects.filter(username=first_super_user.username)[0]
+                default_owner = DefaultDeviceOwner()
+                default_owner.user = User.objects.filter(username=first_super_user.username)[0]
+                default_owner.save()
+                first_super_user.defaultdeviceowner.user = first_super_user
+                first_super_user.save()
             self.is_public = True
+            return
+        default_user = default_user_list[0]
+        if self.user is None and self.group is None:
+            self.is_public = True
+            if default_user:
+                self.user = User.objects.filter(id=default_user.user_id)[0]
         if self.user is not None and self.group is not None:
             raise ValidationError(
                 'Cannot be owned by a user and a group at the same time')
