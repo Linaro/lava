@@ -372,7 +372,7 @@ class DatabaseJobSource(object):
         """
         devices = Device.objects.all()
         for device in devices:
-            self.logger.info('ensuring proper device state on %s', device)
+            self.logger.debug('ensuring proper device state on %s', device)
             old_device_status = device.status
             if device.status == Device.RUNNING:
                 device.status = Device.IDLE
