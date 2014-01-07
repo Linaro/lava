@@ -25,6 +25,7 @@ import os
 
 from uuid import uuid4
 from lava_dispatcher.actions import BaseAction
+from lava_dispatcher.bundle import PrettyPrinter
 from lava_dispatcher.errors import OperationFailed
 from linaro_dashboard_bundle.io import DocumentIO
 from lava_dispatcher.test_data import create_attachment
@@ -68,7 +69,11 @@ class cmd_lava_command_run(BaseAction):
                 except OperationFailed as e:
                     logging.error(e)
 
-        self._write_results_bundle()
+        bundle = self._get_bundle()
+        self._write_results_bundle(bundle)
+
+        printer = PrettyPrinter(self.context)
+        printer.print_results(bundle)
 
     def _read_fixupdict(self):
         fdict = {}
@@ -127,9 +132,9 @@ class cmd_lava_command_run(BaseAction):
             'format': 'Dashboard Bundle Format 1.6'
         }
 
-    def _write_results_bundle(self):
+    def _write_results_bundle(self, bundle):
         rdir = self.context.host_result_dir
         (fd, name) = tempfile.mkstemp(
             prefix='lava-command', suffix='.bundle', dir=rdir)
         with os.fdopen(fd, 'w') as f:
-            DocumentIO.dump(f, self._get_bundle())
+            DocumentIO.dump(f, bundle)
