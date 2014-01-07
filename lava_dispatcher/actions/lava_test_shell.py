@@ -865,7 +865,7 @@ class cmd_lava_test_shell(BaseAction):
         results_part = target.deployment_data['lava_test_results_part_attr']
         results_part = getattr(target.config, results_part)
 
-        with target.file_system(results_part, 'lava') as d:
+        with target.file_system(results_part, '/lava') as d:
             self._mk_runner_dirs(d)
             self._copy_runner(d, target)
             if 'target_group' in self.context.test_data.metadata:
@@ -912,7 +912,7 @@ class cmd_lava_test_shell(BaseAction):
         filesystem_access_failure = True
 
         try:
-            with target.file_system(results_part, 'lava') as d:
+            with target.file_system(results_part, '/lava') as d:
                 filesystem_access_ok = False
                 err_log = os.path.join(d, 'parse_err.log')
                 results_dir = os.path.join(d, 'results')
