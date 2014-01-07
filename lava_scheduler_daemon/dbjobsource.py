@@ -119,8 +119,10 @@ class DatabaseJobSource(object):
             elif not device.last_health_report_job:
                 run_health_check = True
             else:
-                run_health_check = device.last_health_report_job.end_time < \
-                    datetime.datetime.now() - datetime.timedelta(days=1)
+                if device.last_health_report_job.end_time:
+                    run_health_check = \
+                        device.last_health_report_job.end_time < \
+                        datetime.datetime.now() - datetime.timedelta(days=1)
             if run_health_check:
                 job = device.initiate_health_check_job()
                 job.save()
