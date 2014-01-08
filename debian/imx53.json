@@ -1,0 +1,26 @@
+[
+    {
+        "pk": "imx53-01",
+        "model": "lava_scheduler_app.device",
+        "fields": {
+            "current_job": null,
+            "status": 1,
+            "worker_hostname": "",
+            "tags": [],
+            "last_health_report_job": null,
+            "health_status": 1,
+            "device_version": "",
+            "device_type": "mx53loco",
+            "heartbeat": true,
+            "last_heartbeat": null
+        }
+    },
+    {
+        "pk": "mx53loco",
+        "model": "lava_scheduler_app.devicetype",
+        "fields": {
+            "health_check_job": "",
+            "display": true
+        }
+    }
+]
