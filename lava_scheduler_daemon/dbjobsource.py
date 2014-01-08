@@ -542,6 +542,8 @@ class DatabaseJobSource(object):
             device.status = Device.OFFLINE
         elif device.status == Device.RESERVED:
             device.status = Device.IDLE
+        elif device.status == Device.IDLE:
+            pass  # Do nothing, since _cleanup_device_status made this change.
         else:
             self.logger.error(
                 "Unexpected device state in jobCompleted: %s" % device.status)
