@@ -498,32 +498,6 @@ class DatabaseJobSource(object):
         json_data['health_check'] = job.health_check
         return json_data
 
-    def _getJobFromQueue(self, device):
-        jobs_for_device = TestJob.objects.all().filter(
-            Q(requested_device=device)
-            | Q(requested_device_type=device.device_type),
-            status=TestJob.SUBMITTED)
-        jobs_for_device = jobs_for_device.extra(
-            select={
-                'is_targeted': 'requested_device_id is not NULL',
-            },
-            where=[
-                # In human language, this is saying "where the number of
-                # tags that are on the job but not on the device is 0"
-                '''(select count(*) from lava_scheduler_app_testjob_tags
-                     where testjob_id = lava_scheduler_app_testjob.id
-                       and tag_id not in (select tag_id
-                                            from lava_scheduler_app_device_tags
-                                           where device_id = '%s')) = 0'''
-                % device.hostname,
-            ],
-            order_by=['-is_targeted', '-priority', 'submit_time'])
-        jobs = jobs_for_device[:1]
-        if jobs:
-            return jobs[0]
-        else:
-            return None
-
     def getJobDetails_impl(self, job):
         job.status = TestJob.RUNNING
         # need to set the device RUNNING if device was RESERVED
