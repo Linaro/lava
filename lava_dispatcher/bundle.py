@@ -22,6 +22,7 @@
 
 import sys
 
+
 class PrettyPrinter(object):
 
     def __init__(self, context):
@@ -76,5 +77,3 @@ class PrettyPrinter(object):
             }
             line = "\033[38;5;%sm" % colors[result] + line + "\033[m"
         self.context.log(line)
-
-
