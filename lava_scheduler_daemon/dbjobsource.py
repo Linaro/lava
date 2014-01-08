@@ -132,6 +132,48 @@ class DatabaseJobSource(object):
                 job_list.append(job)
         return job_list
 
+    def _release_device(self, multinode_jobs):
+        """Release reserved DEVICEs from the given multinode JOB, only if
+        the devices were in RESERVED state for more than 5 minutes.
+
+        Multinode jobs which does not have all devices allocated, should
+        release reserved devices held for more than 5 minutes, in order to
+        avoid deadlock.
+        """
+        release_device = False
+
+        # Determine if any one of the devices in given multinode job is held
+        # RESERVED for more than 5 minutes.
+        for job in multinode_jobs:
+            device = None
+            if job.actual_device:
+                device = job.actual_device
+            if device and device.status == Device.RESERVED:
+                last_transition = DeviceStateTransition.objects.filter(
+                    device=job.actual_device).latest('created_on')
+                release_device = last_transition.created_on < \
+                    datetime.datetime.now() - datetime.timedelta(minutes=5)
+                if release_device:
+                    break
+
+        if release_device:
+            for job in multinode_jobs:
+                if job.actual_device:
+                    self.logger.info("Releasing device %s from job %s",
+                                     device.hostname, job.id)
+                    msg = "Job: %s, Release device from scheduling" % \
+                        job.id
+                    DeviceStateTransition.objects.create(
+                        created_by=None, device=device,
+                        old_state=device.status, new_state=Device.IDLE,
+                        message=msg, job=None).save()
+                    device.status = Device.IDLE
+                    device.current_job = None
+                    job.actual_device = None
+                    device.save()
+                    job.save()
+                    transaction.commit()
+
     def _fix_device(self, device, job):
         """Associate an available/idle DEVICE to the given JOB.
 
@@ -199,6 +241,7 @@ class DatabaseJobSource(object):
 
                 if len(multinode_jobs) != jobs_with_device:
                     self.logger.debug("Removing jobs from final list")
+                    self._release_device(multinode_jobs)
                     for m_job in multinode_jobs:
                         if m_job in final_job_list:
                             final_job_list.remove(m_job)
@@ -470,9 +513,10 @@ class DatabaseJobSource(object):
             self._update_heartbeat()
             self.logger.debug("Boards assigned to jobs ...")
             job_list = self._assign_jobs(job_list)
-
+            job_list = self._delay_multinode_scheduling(
+                [job for job in job_list])
         self.logger.debug("Job list returned ...")
-        return self._delay_multinode_scheduling([job for job in job_list])
+        return job_list
 
     def getJobList(self):
         return self.deferForDB(self.getJobList_impl)
