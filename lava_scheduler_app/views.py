@@ -653,11 +653,11 @@ def populate_capabilities(dt):
     }
     hardware_flags = []
     hardware_cpu_models = []
-    health_job = None
+    use_health_job = dt.health_check_job != ""
     try:
         health_job = TestJob.objects.filter(
             actual_device__in=Device.objects.filter(device_type=dt),
-            health_check=True,
+            health_check=use_health_job,
             status=TestJob.COMPLETE).order_by('submit_time').reverse()[0]
     except IndexError:
         return capability
