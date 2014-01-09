@@ -384,8 +384,16 @@ class DatabaseJobSource(object):
             elif device.status == Device.OFFLINING:
                 device.status = Device.OFFLINE
             elif device.status == Device.RESERVED:
-                if device.current_job in [TestJob.RUNNING]:
+                self.logger.debug("checking reserved device %s" % device.current_job)
+                if device.current_job and device.current_job.status in [TestJob.RUNNING]:
                     device.status = Device.RUNNING
+                    save_device = True
+                elif device.current_job and device.current_job.status in [TestJob.COMPLETE]:
+                    device.status = Device.IDLE
+                    save_device = True
+                elif device.current_job is None:
+                    self.logger.error("How did we get a reserved device with no job?")
+                    device.status = Device.IDLE
                     save_device = True
             else:
                 continue
