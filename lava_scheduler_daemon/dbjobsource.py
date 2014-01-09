@@ -273,9 +273,9 @@ class DatabaseJobSource(object):
                         # only check public devices if no restricted devices are available.
                         self.logger.debug("Checking public devices of requested type %s" %
                                           job.requested_device_type)
-                        devices = Device.objects.all().filter(
+                        devices = list(Device.objects.all().filter(
                             device_type=job.requested_device_type,
-                            status=Device.IDLE, heartbeat=True, is_public=True)
+                            status=Device.IDLE, heartbeat=True, is_public=True))
                 else:
                     continue
                 if len(devices) > 0:
