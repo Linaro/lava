@@ -181,21 +181,28 @@ class DatabaseJobSource(object):
         target_group are assigned devices.
         """
         final_job_list = copy.deepcopy(job_list)
+        self.logger.debug("Calculating multinode scheduling of %d jobs"
+                          % len(final_job_list))
         for job in job_list:
             if job.is_multinode:
                 multinode_jobs = TestJob.objects.all().filter(
                     target_group=job.target_group)
-
+                self.logger.debug("Checking target group %s" %
+                                  job.target_group)
                 jobs_with_device = 0
                 for multinode_job in multinode_jobs:
                     if multinode_job.actual_device:
+                        self.logger.debug("actual_device %s" % multinode_job.actual_device)
                         jobs_with_device += 1
+                self.logger.debug("group of size %d has %d jobs with devices"
+                                  % (len(multinode_jobs), jobs_with_device))
 
                 if len(multinode_jobs) != jobs_with_device:
+                    self.logger.debug("Removing jobs from final list")
                     for m_job in multinode_jobs:
                         if m_job in final_job_list:
                             final_job_list.remove(m_job)
-
+        self.logger.debug("Final list length: %d" % len(final_job_list))
         return final_job_list
 
     def _process_multinode_jobs(self, job):
