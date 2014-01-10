@@ -43,16 +43,17 @@ class JobQueue(Service):
             self._cbCheckJobs).addErrback(catchall_errback(self.logger))
 
     def _cbCheckJobs(self, job_list):
-        configured_boards = [
-            x.hostname for x in dispatcher_config.get_devices()]
+        my_devices = [x.hostname for x in dispatcher_config.get_devices()]
 
-        for job in job_list:
-            if job.actual_device and job.actual_device.hostname in configured_boards:
-                new_job = JobRunner(self.source, job, self.dispatcher,
-                                    self.reactor, self.daemon_options)
-                self.logger.info("Starting Job: %d " % job.id)
+        my_jobs = filter(lambda job: job.actual_device.hostname in my_devices,
+                         job_list)
 
-                new_job.start()
+        for job in my_jobs:
+            new_job = JobRunner(self.source, job, self.dispatcher,
+                                self.reactor, self.daemon_options)
+            self.logger.info("Starting Job: %d " % job.id)
+
+            new_job.start()
 
     def startService(self):
         self.logger.info("\n\nLAVA Scheduler starting\n\n")
