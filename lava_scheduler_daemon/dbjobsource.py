@@ -160,11 +160,11 @@ class DatabaseJobSource(object):
             for job in multinode_jobs:
                 if job.actual_device:
                     self.logger.info("Releasing device %s from job %s",
-                                     device.hostname, job.id)
+                                     job.actual_device, job.id)
                     msg = "Job: %s, Release device from scheduling" % \
                         job.id
                     DeviceStateTransition.objects.create(
-                        created_by=None, device=device,
+                        created_by=None, device=job.actual_device,
                         old_state=device.status, new_state=Device.IDLE,
                         message=msg, job=None).save()
                     device.status = Device.IDLE
