@@ -241,7 +241,8 @@ class DatabaseJobSource(object):
 
                 if len(multinode_jobs) != jobs_with_device:
                     self.logger.debug("Removing jobs from final list")
-                    self._release_device(multinode_jobs)
+                    if utils.is_master():
+                        self._release_device(multinode_jobs)
                     for m_job in multinode_jobs:
                         if m_job in final_job_list:
                             final_job_list.remove(m_job)
@@ -513,10 +514,8 @@ class DatabaseJobSource(object):
             self._update_heartbeat()
             self.logger.debug("Boards assigned to jobs ...")
             job_list = self._assign_jobs(job_list)
-            job_list = self._delay_multinode_scheduling(
-                [job for job in job_list])
         self.logger.debug("Job list returned ...")
-        return job_list
+        return self._delay_multinode_scheduling([job for job in job_list])
 
     def getJobList(self):
         return self.deferForDB(self.getJobList_impl)
