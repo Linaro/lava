@@ -158,7 +158,10 @@ class DatabaseJobSource(object):
 
         if release_device:
             for job in multinode_jobs:
+                device = None
                 if job.actual_device:
+                    device = job.actual_device
+                if device and device.status == Device.RESERVED:
                     self.logger.info("Releasing device %s from job %s",
                                      job.actual_device, job.id)
                     msg = "Job: %s, Release device from scheduling" % \
