@@ -306,7 +306,13 @@ def bundle_list_export(request, pathname):
         for bundle in bundle_stream.bundles.all():
             # Add results columns from summary results.
             bundle_dict = bundle.__dict__.copy()
-            bundle_dict.update(bundle.get_summary_results())
+            summary_results = bundle.get_summary_results()
+            if summary_results:
+                bundle_dict.update(summary_results)
+            else:
+                bundle_dict["pass"] = 0
+                bundle_dict["fail"] = 0
+                bundle_dict["total"] = 0
             bundle_dict["uploaded_by_id"] = User.objects.get(
                 pk=bundle.uploaded_by_id).username
             out.writerow(bundle_dict)
