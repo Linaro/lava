@@ -708,13 +708,11 @@ class DatabaseJobSource(object):
 
 
 def _get_device_version(bundle):
-    self.logger.info("_get_device_version enter__")
     if bundle is None:
         return None
     try:
         lava_test_run = bundle.test_runs.filter(test__test_id='lava')[0]
         version_attribute = lava_test_run.attributes.filter(name='target.device_version')[0]
-        self.logger.info("_get_device_version exit__")
         return version_attribute.value
     except IndexError:
         return 'unknown'
