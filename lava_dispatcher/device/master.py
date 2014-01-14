@@ -74,6 +74,22 @@ class MasterImageTarget(Target):
         self.master_ip = None
         self.device_version = None
 
+        self.testboot_dir = self.config.master_testboot_dir
+        self.testboot_label = self.config.master_testboot_label
+        self.testboot_path = '%s%s' % (self.testboot_dir, self.testboot_label)
+
+        self.testrootfs_dir = self.config.master_testrootfs_dir
+        self.testrootfs_label = self.config.master_testrootfs_label
+        self.testrootfs_path = '%s%s' % (self.testrootfs_dir, self.testrootfs_label)
+
+        self.sdcard_dir = self.config.master_sdcard_dir
+        self.sdcard_label = self.config.master_sdcard_label
+        self.sdcard_path = '%s%s' % (self.sdcard_dir, self.sdcard_label)
+
+        self.userdata_dir = self.config.master_userdata_dir
+        self.userdata_label = self.config.master_userdata_label
+        self.userdata_path = '%s%s' % (self.userdata_dir, self.userdata_label)
+
         if config.pre_connect_command:
             self.context.run_command(config.pre_connect_command)
 
@@ -117,9 +133,9 @@ class MasterImageTarget(Target):
             self._format_testpartition(master, rootfstype)
             self._deploy_android_tarballs(master, boot, system, data)
 
-            if master.has_partition_with_label('userdata') and \
-                    master.has_partition_with_label('sdcard'):
-                _purge_linaro_android_sdcard(master)
+            if master.has_partition_with_label(self.userdata_label) and \
+                    master.has_partition_with_label(self.sdcard_label):
+                self._purge_linaro_android_sdcard(master)
 
     def _deploy_android_tarballs(self, master, boot, system, data):
         tmpdir = self.context.config.lava_image_tmpdir
@@ -133,9 +149,9 @@ class MasterImageTarget(Target):
         system_url = '/'.join(u.strip('/') for u in [url, system])
         data_url = '/'.join(u.strip('/') for u in [url, data])
 
-        _deploy_linaro_android_boot(master, boot_url, self)
-        _deploy_linaro_android_system(master, system_url)
-        _deploy_linaro_android_data(master, data_url)
+        self._deploy_linaro_android_boot(master, boot_url, self)
+        self._deploy_linaro_android_system(master, system_url)
+        self._deploy_linaro_android_data(master, data_url)
 
     def deploy_linaro_prebuilt(self, image, rootfstype, bootloadertype):
         self.boot_master_image()
@@ -162,8 +178,8 @@ class MasterImageTarget(Target):
         with self._as_master() as master:
             self._format_testpartition(master, rootfstype)
             try:
-                _deploy_linaro_rootfs(master, root_url)
-                _deploy_linaro_bootfs(master, boot_url)
+                self._deploy_linaro_rootfs(master, root_url)
+                self._deploy_linaro_bootfs(master, boot_url)
             except:
                 logging.exception("Deployment failed")
                 raise CriticalError("Deployment failed")
@@ -193,8 +209,9 @@ class MasterImageTarget(Target):
         * root=LABEL=testrootfs instead of root=UUID=ab34-...
         * root=/dev/mmcblk0p5 instead of root=/dev/mmcblk0p3...
         """
+
         boot_cmds = re.sub(
-            r"root=UUID=\S+", "root=LABEL=testrootfs", boot_cmds, re.MULTILINE)
+            r"root=UUID=\S+", "root=LABEL=%s" % self.testrootfs_label, boot_cmds, re.MULTILINE)
 
         pattern = 'root=/\S+(?:\D|^)(\d+)'
         boot_cmds = re.sub(pattern, self._rewrite_rootfs_partition_number,
@@ -245,11 +262,12 @@ class MasterImageTarget(Target):
 
     def _format_testpartition(self, runner, fstype):
         logging.info("Format testboot and testrootfs partitions")
-        runner.run('umount /dev/disk/by-label/testrootfs', failok=True)
-        runner.run('nice mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs'
-                   % fstype, timeout=1800)
-        runner.run('umount /dev/disk/by-label/testboot', failok=True)
-        runner.run('nice mkfs.vfat /dev/disk/by-label/testboot -n testboot')
+
+        runner.run('umount %s' % self.testrootfs_path, failok=True)
+        runner.run('nice mkfs -t %s -q %s -L %s'
+                   % (fstype, self.testrootfs_path, self.testrootfs_label), timeout=1800)
+        runner.run('umount %s' % self.testboot_path, failok=True)
+        runner.run('nice mkfs.vfat %s -n %s' % (self.testboot_path, self.testboot_label))
 
     def _generate_tarballs(self, image_file):
         self._customize_linux(image_file)
@@ -303,14 +321,13 @@ class MasterImageTarget(Target):
 
     def get_partition(self, runner, partition):
         if partition == self.config.boot_part:
-            partition = '/dev/disk/by-label/testboot'
+            partition = self.testboot_path
         elif partition == self.config.root_part:
-            partition = '/dev/disk/by-label/testrootfs'
+            partition = self.testrootfs_path
         elif partition == self.config.sdcard_part_android_org:
-            partition = '/dev/disk/by-label/sdcard'
+            partition = self.sdcard_path
         elif partition == self.config.data_part_android_org:
-            lbl = _android_data_label(runner)
-            partition = '/dev/disk/by-label/%s' % lbl
+            lbl, partition = self._android_data_label(runner)
         else:
             raise RuntimeError(
                 'unknown master image partition(%d)' % partition)
@@ -502,6 +519,122 @@ class MasterImageTarget(Target):
         self._customize_bootloader(self.proc, boot_cmds)
         self._auto_login(self.proc)
 
+    def _android_data_label(self, session):
+        data_label = self.userdata_label
+        data_path = self.userdata_path
+        if not session.has_partition_with_label(data_label):
+            #consider the compatiblity, here use the existed sdcard partition
+            data_label = self.sdcard_label
+            data_path = self.sdcard_path
+        return data_label, data_path
+
+    def _deploy_linaro_android_data(self, session, datatbz2):
+        data_label, data_path = self._android_data_label(session)
+        session.run('umount %s' % data_path, failok=True)
+        session.run('nice mkfs.ext4 -q %s -L %s' %
+                    (data_path, data_label))
+        session.run('udevadm trigger')
+        session.run('mkdir -p /mnt/lava/data')
+        session.run('mount %s /mnt/lava/data' % data_path)
+        _test_filesystem_writeable(session, '/mnt/lava/data')
+        session._client.target_extract(session, datatbz2, '/mnt/lava', timeout=600)
+        session.run('umount /mnt/lava/data')
+
+    def _deploy_linaro_bootfs(self, session, bootfs):
+        logging.info("Deploying linaro bootfs")
+        session.run('udevadm trigger')
+        session.run('mkdir -p /mnt/boot')
+        session.run('mount %s /mnt/boot' % self.testboot_path)
+        _test_filesystem_writeable(session, '/mnt/boot')
+        session._client.target_extract(session, bootfs, '/mnt/boot')
+        session.run('umount /mnt/boot')
+
+    def _deploy_linaro_android_boot(self, session, boottbz2, target):
+        logging.info("Deploying test boot filesystem")
+        session.run('mkdir -p /mnt/lava/boot')
+        session.run('mount %s /mnt/lava/boot' % self.testboot_path)
+        _test_filesystem_writeable(session, '/mnt/lava/boot')
+        session._client.target_extract(session, boottbz2, '/mnt/lava')
+        _recreate_uInitrd(session, target)
+        session.run('umount /mnt/lava/boot')
+
+    def _deploy_linaro_rootfs(self, session, rootfs):
+        logging.info("Deploying linaro image")
+        session.run('udevadm trigger')
+        session.run('mkdir -p /mnt/root')
+        session.run('mount %s /mnt/root' % self.testrootfs_path)
+        _test_filesystem_writeable(session, '/mnt/root')
+        # The timeout has to be this long for vexpress. For a full desktop it
+        # takes 214 minutes, plus about 25 minutes for the mkfs ext3, add
+        # another hour to err on the side of caution.
+        session._client.target_extract(session, rootfs, '/mnt/root', timeout=18000)
+
+        #DO NOT REMOVE - diverting flash-kernel and linking it to /bin/true
+        #prevents a serious problem where packages getting installed that
+        #call flash-kernel can update the kernel on the master image
+        if session.run('chroot /mnt/root which dpkg-divert', failok=True) == 0:
+            session.run(
+                'chroot /mnt/root dpkg-divert --local /usr/sbin/flash-kernel')
+            session.run(
+                'chroot /mnt/root ln -sf /bin/true /usr/sbin/flash-kernel')
+
+        session.run('umount /mnt/root')
+
+    def _deploy_linaro_android_system(self, session, systemtbz2):
+        logging.info("Deploying the system filesystem")
+        target = session._client
+
+        session.run('mkdir -p /mnt/lava/system')
+        session.run('mount %s /mnt/lava/system' % self.testrootfs_path)
+        _test_filesystem_writeable(session, '/mnt/lava/system')
+        # Timeout has to be this long because of older vexpress motherboards
+        # being somewhat slower
+        session._client.target_extract(
+            session, systemtbz2, '/mnt/lava', timeout=3600)
+
+        if session.has_partition_with_label(self.userdata_label) and \
+           session.has_partition_with_label(self.sdcard_label) and \
+           session.is_file_exist('/mnt/lava/system/etc/vold.fstab'):
+            # If there is no userdata partition on the sdcard(like iMX and Origen),
+            # then the sdcard partition will be used as the userdata partition as
+            # before, and so cannot be used here as the sdcard on android
+            original = 'dev_mount sdcard %s %s ' % (
+                target.config.sdcard_mountpoint_path,
+                target.config.sdcard_part_android_org)
+            replacement = 'dev_mount sdcard %s %s ' % (
+                target.config.sdcard_mountpoint_path,
+                target.config.sdcard_part_android)
+            sed_cmd = "s@{original}@{replacement}@".format(original=original,
+                                                           replacement=replacement)
+            session.run(
+                'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd,
+                failok=True)
+            session.run("cat /mnt/lava/system/etc/vold.fstab", failok=True)
+
+        script_path = '%s/%s' % ('/mnt/lava', '/system/bin/disablesuspend.sh')
+        if not session.is_file_exist(script_path):
+            session.run("sh -c 'export http_proxy=%s'" %
+                        target.context.config.lava_proxy)
+            session.run('wget --no-check-certificate %s -O %s' %
+                        (target.config.git_url_disablesuspend_sh, script_path))
+            session.run('chmod +x %s' % script_path)
+            session.run('chown :2000 %s' % script_path)
+
+        session.run(
+            ('sed -i "s/^PS1=.*$/PS1=\'%s\'/" '
+             '/mnt/lava/system/etc/mkshrc') % target.tester_ps1,
+            failok=True)
+
+        session.run('umount /mnt/lava/system')
+
+    def _purge_linaro_android_sdcard(self, session):
+        logging.info("Reformatting Linaro Android sdcard filesystem")
+        session.run('nice mkfs.vfat %s -n %s' % (self.sdcard_path, self.sdcard_label))
+        session.run('udevadm trigger')
+        session.run('mkdir /tmp/sdcard; mount %s /tmp/sdcard' % self.sdcard_path)
+        _test_filesystem_writeable(session, '/tmp/sdcard')
+        session.run('umount /tmp/sdcard; rm -r /tmp/sdcard')
+
 target_class = MasterImageTarget
 
 
@@ -558,49 +691,6 @@ def _extract_partition(image, partno, tarfile):
     """
     with image_partition_mounted(image, partno) as mntdir:
         mk_targz(tarfile, mntdir, asroot=True)
-
-
-def _deploy_linaro_rootfs(session, rootfs):
-    logging.info("Deploying linaro image")
-    session.run('udevadm trigger')
-    session.run('mkdir -p /mnt/root')
-    session.run('mount /dev/disk/by-label/testrootfs /mnt/root')
-    _test_filesystem_writeable(session, '/mnt/root')
-    # The timeout has to be this long for vexpress. For a full desktop it
-    # takes 214 minutes, plus about 25 minutes for the mkfs ext3, add
-    # another hour to err on the side of caution.
-    session._client.target_extract(session, rootfs, '/mnt/root', timeout=18000)
-
-    #DO NOT REMOVE - diverting flash-kernel and linking it to /bin/true
-    #prevents a serious problem where packages getting installed that
-    #call flash-kernel can update the kernel on the master image
-    if session.run('chroot /mnt/root which dpkg-divert', failok=True) == 0:
-        session.run(
-            'chroot /mnt/root dpkg-divert --local /usr/sbin/flash-kernel')
-        session.run(
-            'chroot /mnt/root ln -sf /bin/true /usr/sbin/flash-kernel')
-
-    session.run('umount /mnt/root')
-
-
-def _deploy_linaro_bootfs(session, bootfs):
-    logging.info("Deploying linaro bootfs")
-    session.run('udevadm trigger')
-    session.run('mkdir -p /mnt/boot')
-    session.run('mount /dev/disk/by-label/testboot /mnt/boot')
-    _test_filesystem_writeable(session, '/mnt/boot')
-    session._client.target_extract(session, bootfs, '/mnt/boot')
-    session.run('umount /mnt/boot')
-
-
-def _deploy_linaro_android_boot(session, boottbz2, target):
-    logging.info("Deploying test boot filesystem")
-    session.run('mkdir -p /mnt/lava/boot')
-    session.run('mount /dev/disk/by-label/testboot /mnt/lava/boot')
-    _test_filesystem_writeable(session, '/mnt/lava/boot')
-    session._client.target_extract(session, boottbz2, '/mnt/lava')
-    _recreate_uInitrd(session, target)
-    session.run('umount /mnt/lava/boot')
 
 
 def _update_uInitrd_partitions(session, rc_filename):
@@ -663,84 +753,6 @@ def _recreate_uInitrd(session, target):
     session.run('cd -')
     session.run('mv ~/tmp/uInitrd /mnt/lava/boot/uInitrd')
     session.run('rm -rf ~/tmp')
-
-
-def _deploy_linaro_android_system(session, systemtbz2):
-    logging.info("Deploying the system filesystem")
-    target = session._client
-
-    session.run('mkdir -p /mnt/lava/system')
-    session.run('mount /dev/disk/by-label/testrootfs /mnt/lava/system')
-    _test_filesystem_writeable(session, '/mnt/lava/system')
-    # Timeout has to be this long because of older vexpress motherboards
-    # being somewhat slower
-    session._client.target_extract(
-        session, systemtbz2, '/mnt/lava', timeout=3600)
-
-    if session.has_partition_with_label('userdata') and \
-       session.has_partition_with_label('sdcard') and \
-       session.is_file_exist('/mnt/lava/system/etc/vold.fstab'):
-        # If there is no userdata partition on the sdcard(like iMX and Origen),
-        # then the sdcard partition will be used as the userdata partition as
-        # before, and so cannot be used here as the sdcard on android
-        original = 'dev_mount sdcard %s %s ' % (
-            target.config.sdcard_mountpoint_path,
-            target.config.sdcard_part_android_org)
-        replacement = 'dev_mount sdcard %s %s ' % (
-            target.config.sdcard_mountpoint_path,
-            target.config.sdcard_part_android)
-        sed_cmd = "s@{original}@{replacement}@".format(original=original,
-                                                       replacement=replacement)
-        session.run(
-            'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd,
-            failok=True)
-        session.run("cat /mnt/lava/system/etc/vold.fstab", failok=True)
-
-    script_path = '%s/%s' % ('/mnt/lava', '/system/bin/disablesuspend.sh')
-    if not session.is_file_exist(script_path):
-        session.run("sh -c 'export http_proxy=%s'" %
-                    target.context.config.lava_proxy)
-        session.run('wget --no-check-certificate %s -O %s' %
-                    (target.config.git_url_disablesuspend_sh, script_path))
-        session.run('chmod +x %s' % script_path)
-        session.run('chown :2000 %s' % script_path)
-
-    session.run(
-        ('sed -i "s/^PS1=.*$/PS1=\'%s\'/" '
-         '/mnt/lava/system/etc/mkshrc') % target.tester_ps1,
-        failok=True)
-
-    session.run('umount /mnt/lava/system')
-
-
-def _purge_linaro_android_sdcard(session):
-    logging.info("Reformatting Linaro Android sdcard filesystem")
-    session.run('nice mkfs.vfat /dev/disk/by-label/sdcard -n sdcard')
-    session.run('udevadm trigger')
-    session.run('mkdir /tmp/sdcard; mount /dev/disk/by-label/sdcard /tmp/sdcard')
-    _test_filesystem_writeable(session, '/tmp/sdcard')
-    session.run('umount /tmp/sdcard; rm -r /tmp/sdcard')
-
-
-def _android_data_label(session):
-    data_label = 'userdata'
-    if not session.has_partition_with_label(data_label):
-        #consider the compatiblity, here use the existed sdcard partition
-        data_label = 'sdcard'
-    return data_label
-
-
-def _deploy_linaro_android_data(session, datatbz2):
-    data_label = _android_data_label(session)
-    session.run('umount /dev/disk/by-label/%s' % data_label, failok=True)
-    session.run('nice mkfs.ext4 -q /dev/disk/by-label/%s -L %s' %
-                (data_label, data_label))
-    session.run('udevadm trigger')
-    session.run('mkdir -p /mnt/lava/data')
-    session.run('mount /dev/disk/by-label/%s /mnt/lava/data' % data_label)
-    _test_filesystem_writeable(session, '/mnt/lava/data')
-    session._client.target_extract(session, datatbz2, '/mnt/lava', timeout=600)
-    session.run('umount /mnt/lava/data')
 
 
 def _test_filesystem_writeable(runner, mountpoint):
