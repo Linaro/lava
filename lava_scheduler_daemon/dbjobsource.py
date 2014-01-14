@@ -51,19 +51,19 @@ class DatabaseJobSource(object):
 
     def __init__(self):
         self.logger = logging.getLogger(__name__ + '.DatabaseJobSource')
-        self.logger.info("__init enter__")
+        self.logger.debug("__init enter__")
 
     deferToThread = staticmethod(deferToThread)
 
     def deferForDB(self, func, *args, **kw):
-        self.logger.info("__deferForDB enter__")
+        self.logger.debug("__deferForDB enter__")
         def wrapper(*args, **kw):
             # If there is no db connection yet on this thread, create a
             # connection and immediately commit, because rolling back the
             # first transaction on a connection loses the effect of
             # settings.TIME_ZONE when using postgres (see
             # https://code.djangoproject.com/ticket/17062).
-            self.logger.info("__wrapper enter__")
+            self.logger.debug("__wrapper enter__")
             transaction.enter_transaction_management()
             transaction.managed()
             try:
@@ -99,8 +99,8 @@ class DatabaseJobSource(object):
                 # why your south migration appears to have got stuck...
                 transaction.rollback()
                 transaction.leave_transaction_management()
-        self.logger.info("__wrapper exit__")
-        self.logger.info("__deferForDB exit__")
+        self.logger.debug("__wrapper exit__")
+        self.logger.debug("__deferForDB exit__")
         return self.deferToThread(wrapper, *args, **kw)
 
     def _get_health_check_jobs(self):
@@ -110,7 +110,7 @@ class DatabaseJobSource(object):
         Returns JOB_LIST which is a list of health check jobs. If no health
         check jobs are available returns an empty list.
         """
-        self.logger.info("__get_health_check_jobs enter__")
+        self.logger.debug("__get_health_check_jobs enter__")
         job_list = []
 
         for device in Device.objects.filter(heartbeat=True):
@@ -136,7 +136,7 @@ class DatabaseJobSource(object):
                 job.save()
                 transaction.commit()
                 job_list.append(job)
-        self.logger.info("__get_health_check_jobs exit__")
+        self.logger.debug("__get_health_check_jobs exit__")
         return job_list
 
     def _release_device(self, multinode_jobs):
@@ -147,7 +147,7 @@ class DatabaseJobSource(object):
         release reserved devices held for more than 5 minutes, in order to
         avoid deadlock.
         """
-        self.logger.info("__release_device enter__")
+        self.logger.debug("__release_device enter__")
         release_device = False
 
         # Determine if any one of the devices in given multinode job is held
@@ -184,7 +184,7 @@ class DatabaseJobSource(object):
                     device.save()
                     job.save()
                     transaction.commit()
-        self.logger.info("__release_device exit__")
+        self.logger.debug("__release_device exit__")
 
     def _fix_device(self, device, job):
         """Associate an available/idle DEVICE to the given JOB.
@@ -196,7 +196,7 @@ class DatabaseJobSource(object):
         If we are unable to grab the DEVICE then we return None.
         """
         # prevent the device getting two different jobs at the same time
-        self.logger.info("__fix_device enter__")
+        self.logger.debug("__fix_device enter__")
         if job.actual_device or device.status == Device.RUNNING \
                 or device.heartbeat is False or device.current_job:
             return None
@@ -229,14 +229,14 @@ class DatabaseJobSource(object):
                                               indent=4 * ' ')
             job.save()
             transaction.commit()
-        self.logger.info("__fix_device exit__")
+        self.logger.debug("__fix_device exit__")
         return job
 
     def _delay_multinode_scheduling(self, job_list):
         """Remove scheduling multinode jobs until all the jobs in the
         target_group are assigned devices.
         """
-        self.logger.info("__delay_multinode_scheduling enter__")
+        self.logger.debug("__delay_multinode_scheduling enter__")
         final_job_list = copy.deepcopy(job_list)
         self.logger.debug("Calculating multinode scheduling of %d jobs"
                           % len(final_job_list))
@@ -262,11 +262,11 @@ class DatabaseJobSource(object):
                         if m_job in final_job_list:
                             final_job_list.remove(m_job)
         self.logger.debug("Final list length: %d" % len(final_job_list))
-        self.logger.info("__delay_multinode_scheduling exit__")
+        self.logger.debug("__delay_multinode_scheduling exit__")
         return final_job_list
 
     def _process_multinode_jobs(self, job):
-        self.logger.info("__process_multinode_jobs enter__")
+        self.logger.debug("__process_multinode_jobs enter__")
         job_list = []
         if job.is_multinode:
             multinode_jobs = TestJob.objects.all().filter(
@@ -293,7 +293,7 @@ class DatabaseJobSource(object):
                     if f_job:
                         job_list.append(f_job)
 
-        self.logger.info("__process_multinode_jobs exit__")
+        self.logger.debug("__process_multinode_jobs exit__")
         return job_list
 
     def _assign_jobs(self, jobs):
@@ -309,7 +309,7 @@ class DatabaseJobSource(object):
         :param jobs: JSON string of the job request
         :return: a list of jobs with devices to reserve
         """
-        self.logger.info("__assign_jobs enter__")
+        self.logger.debug("__assign_jobs enter__")
         job_list = self._get_health_check_jobs()
         devices = []
 
@@ -355,11 +355,11 @@ class DatabaseJobSource(object):
                         if job:
                             job_list.append(job)
 
-        self.logger.info("__assign_jobs exit__")
+        self.logger.debug("__assign_jobs exit__")
         return job_list
 
     def _worker_host(self, worker_name):
-        self.logger.info("__worker_host enter__")
+        self.logger.debug("__worker_host enter__")
         worker = None
         worker_info = {}
         worker_info['hostname'] = worker_name
@@ -385,14 +385,14 @@ class DatabaseJobSource(object):
             worker.save()
             transaction.commit()
             self.logger.debug("Worker Host %s added ..." % worker.hostname)
-        self.logger.info("__worker_host exit__")
+        self.logger.debug("__worker_host exit__")
         return worker
 
     def _device_heartbeat(self):
         """LAST_HEARTBEAT and WORKER_HOSTNAME fields gets updated for each
         configured device, which is not RETIRED.
         """
-        self.logger.info("__device_heartbeat enter__")
+        self.logger.debug("__device_heartbeat enter__")
         devices = Device.objects.all()
         configured_boards = [
             x.hostname for x in dispatcher_config.get_devices()]
@@ -405,11 +405,11 @@ class DatabaseJobSource(object):
                 transaction.commit()
                 self.logger.debug("Heartbeat timestamp updated for %s ..." %
                                   device.hostname)
-        self.logger.info("__device_heartbeat exit__")
+        self.logger.debug("__device_heartbeat exit__")
 
     def _update_heartbeat(self):
         """Update HEARTBEAT based on LAST_HEARTBEAT timestamp."""
-        self.logger.info("__update_heartbeat enter__")
+        self.logger.debug("__update_heartbeat enter__")
         devices = Device.objects.all()
         for device in devices:
             device.too_long_since_last_heartbeat()
@@ -422,7 +422,7 @@ class DatabaseJobSource(object):
             transaction.commit()
             self.logger.debug(
                 "Worker heartbeat updated for %s ..." % worker.hostname)
-        self.logger.info("__device_heartbeat exit__")
+        self.logger.debug("__device_heartbeat exit__")
 
     def _kill_canceling(self, job):
         """
@@ -430,7 +430,7 @@ class DatabaseJobSource(object):
 
         :param job: the TestJob stuck in Canceling
         """
-        self.logger.info("__kill_canceling enter__")
+        self.logger.debug("__kill_canceling enter__")
         pidrecord = os.path.join(job.output_dir, "jobpid")
         if os.path.exists(pidrecord):
             with open(pidrecord, 'r') as f:
@@ -441,7 +441,7 @@ class DatabaseJobSource(object):
                 except OSError as e:
                     self.logger.info("Unable to kill process group %d: %s" % (pgid, e))
                     os.unlink(pidrecord)
-        self.logger.info("__kill_canceling exit__")
+        self.logger.debug("__kill_canceling exit__")
 
     def _cleanup_device_status(self):
         """Pick up each device in the database and ensure their status is
@@ -453,7 +453,7 @@ class DatabaseJobSource(object):
 
         This should run only on the master scheduler.
         """
-        self.logger.info("__cleanup_device_status enter__")
+        self.logger.debug("__cleanup_device_status enter__")
         devices = Device.objects.all()
         for device in devices:
             save_device = False
@@ -505,10 +505,10 @@ class DatabaseJobSource(object):
             if save_device:
                 device.save()
                 transaction.commit()
-        self.logger.info("__cleanup_device_status enter__")
+        self.logger.debug("__cleanup_device_status enter__")
 
     def getJobList_impl(self):
-        self.logger.info("__getJobList_impl enter__")
+        self.logger.debug("__getJobList_impl enter__")
         self._device_heartbeat()
 
         job_list = TestJob.objects.all().filter(
@@ -546,16 +546,16 @@ class DatabaseJobSource(object):
             self.logger.debug("Boards assigned to jobs ...")
             job_list = self._assign_jobs(job_list)
         self.logger.debug("Job list returned ...")
-        self.logger.info("__getJobList_impl exit__")
+        self.logger.debug("__getJobList_impl exit__")
         return self._delay_multinode_scheduling([job for job in job_list])
 
     def getJobList(self):
-        self.logger.info("__getJobList enter__")
-        self.logger.info("__getJobList exit__")
+        self.logger.debug("__getJobList enter__")
+        self.logger.debug("__getJobList exit__")
         return self.deferForDB(self.getJobList_impl)
 
     def _get_json_data(self, job):
-        self.logger.info("__get_json_data enter__")
+        self.logger.debug("__get_json_data enter__")
         json_data = simplejson.loads(job.definition)
         if job.actual_device:
             json_data['target'] = job.actual_device.hostname
@@ -574,11 +574,11 @@ class DatabaseJobSource(object):
             parsed[1] = netloc
             params['server'] = urlparse.urlunsplit(parsed)
         json_data['health_check'] = job.health_check
-        self.logger.info("__get_json_data exit__")
+        self.logger.debug("__get_json_data exit__")
         return json_data
 
     def getJobDetails_impl(self, job):
-        self.logger.info("__getJobDetails_impl enter__")
+        self.logger.debug("__getJobDetails_impl enter__")
         job.status = TestJob.RUNNING
         # need to set the device RUNNING if device was RESERVED
         if job.actual_device.status == Device.RESERVED:
@@ -595,28 +595,28 @@ class DatabaseJobSource(object):
         job.save()
         json_data = self._get_json_data(job)
         transaction.commit()
-        self.logger.info("__getJobDetails_impl exit__")
+        self.logger.debug("__getJobDetails_impl exit__")
         return json_data
 
     def getJobDetails(self, job):
-        self.logger.info("__getJobDetails enter__")
-        self.logger.info("__getJobDetails exit__")
+        self.logger.debug("__getJobDetails enter__")
+        self.logger.debug("__getJobDetails exit__")
         return self.deferForDB(self.getJobDetails_impl, job)
 
     def getOutputDirForJobOnBoard_impl(self, board_name):
-        self.logger.info("__getOutputDirForJobOnBoard_impl enter__")
+        self.logger.debug("__getOutputDirForJobOnBoard_impl enter__")
         device = Device.objects.get(hostname=board_name)
         job = device.current_job
-        self.logger.info("__getOutputDirForJobOnBoard_impl exit__")
+        self.logger.debug("__getOutputDirForJobOnBoard_impl exit__")
         return job.output_dir
 
     def getOutputDirForJobOnBoard(self, board_name):
-        self.logger.info("__getOutputDirForJobOnBoard enter__")
-        self.logger.info("__getOutputDirForJobOnBoard exit__")
+        self.logger.debug("__getOutputDirForJobOnBoard enter__")
+        self.logger.debug("__getOutputDirForJobOnBoard exit__")
         return self.deferForDB(self.getOutputDirForJobOnBoard_impl, board_name)
 
     def jobCompleted_impl(self, board_name, exit_code, kill_reason):
-        self.logger.info("__jobCompleted_impl enter__")
+        self.logger.debug("__jobCompleted_impl enter__")
         self.logger.debug('marking job as complete on %s', board_name)
         device = Device.objects.get(hostname=board_name)
         old_device_status = device.status
@@ -686,24 +686,24 @@ class DatabaseJobSource(object):
             # method fail.
             self.logger.exception(
                 'sending job summary mails for job %r failed', job.pk)
-        self.logger.info("__jobCompleted_impl exit__")
+        self.logger.debug("__jobCompleted_impl exit__")
         transaction.commit()
 
     def jobCompleted(self, board_name, exit_code, kill_reason):
-        self.logger.info("__jobCompleted enter__")
-        self.logger.info("__jobCompleted exit__")
+        self.logger.debug("__jobCompleted enter__")
+        self.logger.debug("__jobCompleted exit__")
         return self.deferForDB(self.jobCompleted_impl, board_name, exit_code, kill_reason)
 
     def jobCheckForCancellation_impl(self, board_name):
-        self.logger.info("__jobCheckForCancellation_impl enter__")
+        self.logger.debug("__jobCheckForCancellation_impl enter__")
         device = Device.objects.get(hostname=board_name)
         job = device.current_job
-        self.logger.info("__jobCheckForCancellation_impl exit__")
+        self.logger.debug("__jobCheckForCancellation_impl exit__")
         return job.status != TestJob.RUNNING
 
     def jobCheckForCancellation(self, board_name):
-        self.logger.info("_jobCheckForCancellation enter__")
-        self.logger.info("_jobCheckForCancellation exit__")
+        self.logger.debug("_jobCheckForCancellation enter__")
+        self.logger.debug("_jobCheckForCancellation exit__")
         return self.deferForDB(self.jobCheckForCancellation_impl, board_name)
 
 
