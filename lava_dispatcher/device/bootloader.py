@@ -52,13 +52,31 @@ class BootloaderTarget(MasterImageTarget):
     def __init__(self, context, config):
         super(BootloaderTarget, self).__init__(context, config)
         self._booted = False
-        self._boot_cmds = None
+        self._default_boot_cmds = 'boot_cmds_tftp'
         self._lava_cmds = None
         self._lava_nfsrootfs = None
         self._uboot_boot = False
         self._ipxe_boot = False
         # This is the offset into the path, used to reference bootfiles
         self._offset = self.scratch_dir.index('images')
+
+    def _is_uboot(self):
+        if self._uboot_boot:
+            return True
+        else:
+            return False
+
+    def _is_ipxe(self):
+        if self._ipxe_boot:
+            return True
+        else:
+            return False
+
+    def _is_bootloader(self):
+        if self._is_uboot() or self._is_ipxe():
+            return True
+        else:
+            return False
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
                              bootloader, firmware, rootfstype, bootloadertype,
@@ -106,6 +124,7 @@ class BootloaderTarget(MasterImageTarget):
                     extract_rootfs(nfsrootfs, self._lava_nfsrootfs)
                     self._lava_cmds += "setenv lava_nfsrootfs " + \
                                        self._lava_nfsrootfs + ","
+                    self._default_boot_cmds = 'boot_cmds_nfs'
                 if bootloader is not None:
                     # We have been passed a bootloader
                     bootloader = download_image(bootloader, self.context,
@@ -152,7 +171,7 @@ class BootloaderTarget(MasterImageTarget):
 
     def deploy_linaro_prebuilt(self, image, rootfstype, bootloadertype):
         self._uboot_boot = False
-        if self._ipxe_boot:
+        if self._is_ipxe():
             if image is not None:
                 self._ipxe_boot = True
                 # We are not booted yet
@@ -170,20 +189,20 @@ class BootloaderTarget(MasterImageTarget):
 
     def _run_boot(self):
         self._enter_bootloader(self.proc)
-        self._boot_cmds = self._load_boot_cmds(default='boot_cmds_tftp',
-                                               extend=self._lava_cmds)
+        boot_cmds = self._load_boot_cmds(default=self._default_boot_cmds,
+                                         extend=self._lava_cmds)
         # Sometimes a command must be run to clear u-boot console buffer
         if self.config.pre_boot_cmd:
             self.proc.sendline(self.config.pre_boot_cmd,
                                send_char=self.config.send_char)
-        self._customize_bootloader(self.proc, self._boot_cmds)
+        self._customize_bootloader(self.proc, boot_cmds)
         self.proc.expect(self.config.image_boot_msg, timeout=300)
         self._auto_login(self.proc)
         self._wait_for_prompt(self.proc, self.config.test_image_prompts,
                               self.config.boot_linaro_timeout)
 
     def _boot_linaro_image(self):
-        if (self._uboot_boot or self._ipxe_boot) and not self._booted:
+        if self._is_bootloader() and not self._booted:
             try:
                 if self.config.hard_reset_command:
                     self._hard_reboot()
@@ -203,7 +222,7 @@ class BootloaderTarget(MasterImageTarget):
                                % self.tester_ps1,
                                send_char=self.config.send_char)
             self._booted = True
-        elif (self._uboot_boot or self._ipxe_boot) and self._booted:
+        elif self._is_bootloader() and self._booted:
             self.proc.sendline('export PS1="%s"'
                                % self.tester_ps1,
                                send_char=self.config.send_char)
@@ -212,11 +231,13 @@ class BootloaderTarget(MasterImageTarget):
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
-        if self._uboot_boot and self._lava_nfsrootfs:
+        if self._is_bootloader() and not self._booted:
+            self.power_on()
+        if self._is_uboot() and self._lava_nfsrootfs:
             path = '%s/%s' % (self._lava_nfsrootfs, directory)
             ensure_directory(path)
             yield path
-        elif self._uboot_boot or self._ipxe_boot:
+        elif self._is_bootloader():
             try:
                 pat = self.tester_ps1_pattern
                 incrc = self.tester_ps1_includes_rc

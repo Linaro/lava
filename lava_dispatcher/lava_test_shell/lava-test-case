@@ -60,20 +60,30 @@ fi
 result_dir="$LAVA_RESULT_DIR/results/$TEST_CASE_ID"
 mkdir -p "$result_dir"
 
+# signal the test case results
+TCDATA=""
+
 if [ -z "${RESULT+x}" ]; then
     echo "--result must be specified"
     exit 1
 else
     echo $RESULT > $result_dir/result
+    TCDATA="$TCDATA RESULT=$RESULT"
 fi
 
 if [ -n "${UNITS+x}" ]; then
     echo $UNITS > $result_dir/units
+    TCDATA="$TCDATA UNITS=$UNITS"
 fi
 
 if [ -n "${MEASUREMENT+x}" ]; then
     echo $MEASUREMENT > $result_dir/measurement
+    TCDATA="$TCDATA MEASUREMENT=$MEASUREMENT"
 fi
+
+# signal the test case results
+echo "<LAVA_SIGNAL_TESTCASE TEST_CASE_ID=$TEST_CASE_ID$TCDATA>"
+read
 
 # lava-test-case testname --shell false should report a fail as test result
 # but not fail itself; hence don't honor 'rc' if we reach this, but exit 0

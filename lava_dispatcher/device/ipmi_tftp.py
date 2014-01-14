@@ -39,6 +39,7 @@ from lava_dispatcher.downloader import (
 from lava_dispatcher.utils import (
     mk_targz,
     rmtree,
+    finalize_process,
 )
 from lava_dispatcher.client.lmc_utils import (
     generate_image,
@@ -67,6 +68,7 @@ class IpmiPxeTarget(Target):
 
     def power_off(self, proc):
         self.bootcontrol.power_off()
+        finalize_process(self.proc)
 
     def deploy_linaro(self, hwpack, rfs, rootfstype, bootloadertype):
         image_file = generate_image(self, hwpack, rfs, self.scratch_dir,

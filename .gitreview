@@ -1,4 +1,4 @@
 [gerrit]
-host=staging.git.linaro.org
+host=git.linaro.org
 port=29418
 project=lava/lava-dispatcher

@@ -39,6 +39,15 @@ from lava_dispatcher.utils import read_content, write_content
 
 
 def _get_cpus(cpuinfo):
+    """
+    Parse cpuinfo for data about the device
+    Where Processor is not found, use model name.
+    Where Hardware is not found, use vendor_id
+    The cpu_type will be used as the device CPU type.
+    The board_type will be used as the device description.
+    :param cpuinfo: output of /proc/cpuinfo
+    :return: a list of device data fields
+    """
     devices = []
     cpu_type = '?'
     cpu_cores = 0
@@ -54,9 +63,13 @@ def _get_cpus(cpuinfo):
 
         if key == 'Processor':
             cpu_type = val
+        elif key == "model name":
+            cpu_type = val
         elif key == 'processor':
             cpu_cores += 1
         elif key == 'Hardware':
+            board_type = val
+        elif key == "vendor_id":
             board_type = val
         elif key == 'Revision':
             board_rev = val
@@ -176,26 +189,55 @@ def _result_to_dir(test_result, res_dir):
 def _result_from_dir(res_dir, test_case_id=None):
     if not test_case_id:
         test_case_id = os.path.basename(res_dir)
-    result = {
+    data = {
         'test_case_id': test_case_id
     }
 
     for fname in 'result', 'measurement', 'units', 'message', 'timestamp', 'duration':
         fpath = os.path.join(res_dir, fname)
         if os.path.isfile(fpath):
-            result[fname] = read_content(fpath).strip()
+            data[fname] = read_content(fpath).strip()
 
-    if 'measurement' in result:
-        try:
-            result['measurement'] = decimal.Decimal(result['measurement'])
-        except decimal.InvalidOperation:
-            logging.warning("Invalid measurement for %s: %s" % (res_dir, result['measurement']))
-            del result['measurement']
+    result = parse_testcase_result(data)
 
     result['attachments'] = _attachments_from_dir(os.path.join(res_dir, 'attachments'))
     result['attributes'] = _attributes_from_dir(os.path.join(res_dir, 'attributes'))
 
     return result
+
+
+def parse_testcase_result(data, fixupdict={}):
+    res = {}
+    for key in data:
+        res[key] = data[key]
+
+        if key == 'measurement':
+            try:
+                res[key] = decimal.Decimal(res[key])
+            except decimal.InvalidOperation:
+                logging.warning("Invalid measurement %s" % (
+                    res['measurement']))
+                del res['measurement']
+
+        elif key == 'result':
+            if res['result'] in fixupdict:
+                res['result'] = fixupdict[res['result']]
+            if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
+                logging.error('Bad test result: %s' % res['result'])
+
+    if 'test_case_id' not in res:
+        logging.warning(
+            """Test case results without test_case_id (probably a sign of an """
+            """incorrect parsing pattern being used): %s""" % res)
+
+    if 'result' not in res:
+        logging.warning(
+            """Test case results without result (probably a sign of an """
+            """incorrect parsing pattern being used): %s""" % res)
+        logging.warning('Setting result to "unknown"')
+        res['result'] = 'unknown'
+
+    return res
 
 
 def _merge_results(dest, src):
@@ -217,20 +259,19 @@ def _merge_results(dest, src):
 
 def _get_test_results(test_run_dir, testdef, stdout, err_log):
     results_from_log_file = []
-    fixupdict = {}
+    fixupdict = {'PASS': 'pass', 'FAIL': 'fail', 'SKIP': 'skip',
+                 'UNKNOWN': 'unknown'}
     pattern = None
     pattern_used = None
 
     if 'parse' in testdef:
         if 'fixupdict' in testdef['parse']:
-            fixupdict = testdef['parse']['fixupdict']
+            fixupdict.update(testdef['parse']['fixupdict'])
         if 'pattern' in testdef['parse']:
             pattern_used = testdef['parse']['pattern']
     else:
         defpat = "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))"
         pattern_used = defpat
-        fixupdict = {'PASS': 'pass', 'FAIL': 'fail', 'SKIP': 'skip',
-                     'UNKNOWN': 'unknown'}
         logging.warning("""Using a default pattern to parse the test result. This may lead to empty test result in certain cases.""")
 
     try:
@@ -246,7 +287,7 @@ def _get_test_results(test_run_dir, testdef, stdout, err_log):
     for lineno, line in enumerate(stdout.split('\n'), 1):
         match = pattern.match(line.strip())
         if match:
-            res = match.groupdict()
+            res = parse_testcase_result(match.groupdict(), fixupdict)
             # Both of 'test_case_id' and 'result' must be included
             if 'test_case_id' not in res or 'result' not in res:
                 errmsg = "Pattern '{0:s}' for test run '{1:s}' is missing test_case_id or result. "
@@ -254,21 +295,8 @@ def _get_test_results(test_run_dir, testdef, stdout, err_log):
                 write_content(err_log, errmsg)
                 return results_from_log_file
 
-            if 'result' in res:
-                if res['result'] in fixupdict:
-                    res['result'] = fixupdict[res['result']]
-                if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
-                    logging.error('bad test result line: %s' % line.strip())
-                    continue
             res['log_lineno'] = lineno
             res['log_filename'] = 'stdout.log'
-            if 'measurement' in res:
-                try:
-                    res['measurement'] = decimal.Decimal(res['measurement'])
-                except decimal.InvalidOperation:
-                    logging.warning("Invalid measurement %s" % (
-                        res['measurement']))
-                    del res['measurement']
             results_from_log_file.append(res)
 
     results_from_directories = []

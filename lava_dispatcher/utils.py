@@ -302,6 +302,32 @@ def connect_to_serial(context):
     raise CriticalError('could execute connection_command successfully')
 
 
+def wait_for_prompt(connection, prompt_pattern, timeout):
+    # One of the challenges we face is that kernel log messages can appear
+    # half way through a shell prompt.  So, if things are taking a while,
+    # we send a newline along to maybe provoke a new prompt.  We wait for
+    # half the timeout period and then wait for one tenth of the timeout
+    # 6 times (so we wait for 1.1 times the timeout period overall).
+    prompt_wait_count = 0
+    if timeout == -1:
+        timeout = connection.timeout
+    partial_timeout = timeout / 2.0
+    while True:
+        try:
+            connection.expect(prompt_pattern, timeout=partial_timeout)
+        except pexpect.TIMEOUT:
+            if prompt_wait_count < 6:
+                logging.warning('Sending newline in case of corruption.')
+                prompt_wait_count += 1
+                partial_timeout = timeout / 10
+                connection.sendline('')
+                continue
+            else:
+                raise
+        else:
+            break
+
+
 # XXX Duplication: we should reuse lava-test TestArtifacts
 def generate_bundle_file_name(test_name):
     return ("{test_id}.{time.tm_year:04}-{time.tm_mon:02}-{time.tm_mday:02}T"

@@ -51,6 +51,10 @@ class Nexus10Target(FastbootTarget):
         if self.__boot_image__ is None:
             raise CriticalError('Deploy action must be run first')
 
+        if self.proc is not None:
+            logging.warning('device already powered on, powering off first')
+            self.power_off(None)
+
         self.fastboot.enter()
         self.fastboot('reboot')
 
@@ -61,7 +65,6 @@ class Nexus10Target(FastbootTarget):
         self._auto_login(proc)
         proc.sendline("")  # required to put the adb shell in a reasonable state
         proc.sendline("export PS1='%s'" % self.tester_ps1)
-        self._runner = self._get_runner(proc)
 
         return proc
 

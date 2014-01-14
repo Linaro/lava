@@ -30,7 +30,8 @@ from lava_dispatcher.downloader import (
     download_image
 )
 from lava_dispatcher.utils import (
-    mkdtemp
+    mkdtemp,
+    finalize_process,
 )
 from lava_dispatcher.errors import (
     CriticalError
@@ -106,6 +107,7 @@ class FastbootTarget(Target):
                 "is highly recommended!"
             )
 
+        self.proc = None
         self._booted = False
         self._working_dir = None
         self.fastboot = FastBoot(self)
@@ -130,22 +132,27 @@ class FastbootTarget(Target):
         if self.__boot_image__ is None:
             raise CriticalError('Deploy action must be run first')
 
+        if self.proc is not None:
+            logging.warning('device already powered on, powering off first')
+            self.power_off(None)
+
         self.fastboot.enter()
         self.fastboot.boot(self.__boot_image__)
         self._adb('wait-for-device')
 
         self._booted = True
-        proc = self._adb('shell', spawn=True)
+        self.proc = self._adb('shell', spawn=True)
         self._auto_login(proc)
-        proc.sendline("")  # required to put the adb shell in a reasonable state
-        proc.sendline("export PS1='%s'" % self.tester_ps1)
-        self._runner = self._get_runner(proc)
+        self.proc.sendline("")  # required to put the adb shell in a reasonable state
+        self.proc.sendline("export PS1='%s'" % self.tester_ps1)
 
-        return proc
+        return self.proc
 
     def power_off(self, proc):
         if self.config.power_off_cmd:
             self.context.run_command(self.config.power_off_cmd)
+        finalize_process(self.proc)
+        self.proc = None
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):

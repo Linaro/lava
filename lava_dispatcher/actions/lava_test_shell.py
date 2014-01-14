@@ -120,12 +120,15 @@ import tarfile
 import tempfile
 import time
 from uuid import uuid4
+import sys
 
 import yaml
 
 from linaro_dashboard_bundle.io import DocumentIO
 
+from lava_dispatcher.bundle import PrettyPrinter
 import lava_dispatcher.lava_test_shell as lava_test_shell
+from lava_dispatcher.lava_test_shell import parse_testcase_result
 from lava_dispatcher.signals import SignalDirector
 from lava_dispatcher import utils
 
@@ -415,10 +418,13 @@ class URLTestDefinition(object):
         self.testdef = testdef
         self.testdef_metadata = testdef_metadata
         self.idx = idx
-        self.test_run_id = '%s_%s' % (idx, self.testdef['metadata']['name'])
+        self.test_id = self.testdef['metadata']['name']
+        self.dirname = '%s_%s' % (idx, self.test_id)
         self.uuid = str(uuid4())
         self._sw_sources = []
         self.handler = None
+        self.__pattern__ = None
+        self.__fixupdict__ = None
 
     def load_signal_handler(self):
         hook_data = self.testdef.get('handler')
@@ -533,7 +539,7 @@ class URLTestDefinition(object):
         with open('%s/run.sh' % hostdir, 'w') as f:
             self._inject_testdef_parameters(f)
             f.write('set -e\n')
-            f.write('export TESTRUN_ID=%s\n' % self.test_run_id)
+            f.write('export TESTRUN_ID=%s\n' % self.test_id)
             f.write('cd %s\n' % targetdir)
             f.write('UUID=`cat uuid`\n')
             f.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')
@@ -546,6 +552,43 @@ class URLTestDefinition(object):
             f.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n')
             f.write('#wait for an ack from the dispatcher\n')
             f.write('read\n')
+
+    default_pattern = "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))"
+    default_fixupdict = {'PASS': 'pass', 'FAIL': 'fail', 'SKIP': 'skip',
+                         'UNKNOWN': 'unknown'}
+
+    @property
+    def fixupdict(self):
+        if self.__fixupdict__ is None:
+            testdef = self.testdef
+            if 'parse' in testdef and 'fixupdict' in testdef['parse']:
+                self.__fixupdict__ = testdef['parse']['fixupdict']
+            else:
+                self.__fixupdict__ = self.default_fixupdict
+
+        return self.__fixupdict__
+
+    @property
+    def pattern(self):
+        if self.__pattern__ is None:
+            input_pattern = None
+            if 'parse' in self.testdef and \
+               'pattern' in self.testdef['parse']:
+                input_pattern = self.testdef['parse']['pattern']
+            else:
+                logging.warning(
+                    """Using a default pattern to parse the test result. """
+                    """This may lead to empty test results in certain cases.""")
+                input_pattern = self.default_pattern
+
+            try:
+                self.__pattern__ = re.compile(input_pattern, re.M)
+            except re.error as e:
+                logging.warning("Error parsing regular expression %r: %s" %
+                                input_pattern, e.message)
+                self.__pattern__ = re.compile(default_pattern, re.M)
+
+        return self.__pattern__
 
 
 class RepoTestDefinition(URLTestDefinition):
@@ -609,6 +652,17 @@ class cmd_lava_test_shell(BaseAction):
         'additionalProperties': False,
     }
 
+    def __init__(self, context):
+        super(cmd_lava_test_shell, self).__init__(context)
+        self._current_test_run = None
+        self._current_testdef = None
+        self._testdefs_by_name = None
+        self._test_runs = []
+        self._backup_bundle = {
+            'test_runs': self._test_runs,
+            'format': 'Dashboard Bundle Format 1.7',
+        }
+
     def run(self, testdef_urls=None, testdef_repos=None, timeout=-1):
         target = self.client.target_device
 
@@ -617,11 +671,14 @@ class cmd_lava_test_shell(BaseAction):
         testdef_objs = self._configure_target(target, testdef_urls,
                                               testdef_repos)
 
+        self._testdefs_by_name = {}
+        for testdef in testdef_objs:
+            self._testdefs_by_name[testdef.test_id] = testdef
+
         signal_director = SignalDirector(self.client, testdef_objs,
                                          self.context)
 
-        with target.runner() as runner:
-            runner.wait_for_prompt(timeout)
+        with self.client.runner() as runner:
             if self.context.config.lava_proxy:
                 runner._connection.sendline(
                     "export http_proxy=%s" % self.context.config.lava_proxy, delay)
@@ -642,6 +699,12 @@ class cmd_lava_test_shell(BaseAction):
         self._bundle_results(target, signal_director, testdef_objs)
 
     def _keep_running(self, runner, timeout, signal_director):
+        if self._current_testdef:
+            test_case_result = self._current_testdef.pattern
+        else:
+            # no-op (the existing timeout would match first)
+            test_case_result = pexpect.TIMEOUT
+
         patterns = [
             '<LAVA_TEST_RUNNER>: exiting',
             pexpect.EOF,
@@ -649,26 +712,45 @@ class cmd_lava_test_shell(BaseAction):
             '<LAVA_SIGNAL_(\S+) ([^>]+)>',
             '<LAVA_MULTI_NODE> <LAVA_(\S+) ([^>]+)>',
             '<LAVA_LMP> <LAVA_(\S+) ([^>]+)>',
+            test_case_result,
         ]
 
-        idx = runner._connection.expect(patterns, timeout=timeout)
-        if idx == 0:
+        # these are names for the indexes in the array above
+        EXIT = 0
+        EOF = 1
+        TIMEOUT = 2
+        SIGNAL = 3
+        MULTINODE = 4
+        LMP = 5
+        TEST_CASE_RESULT = 6
+
+        event = runner._connection.expect(patterns, timeout=timeout)
+
+        if event == EXIT:
             logging.info('lava_test_shell seems to have completed')
-        elif idx == 1:
+
+        elif event == EOF:
             logging.warn('lava_test_shell connection dropped')
-        elif idx == 2:
+
+        elif event == TIMEOUT:
             logging.warn('lava_test_shell has timed out')
-        elif idx == 3:
+
+        elif event == SIGNAL:
             name, params = runner._connection.match.groups()
             logging.debug("Received signal <%s>" % name)
             params = params.split()
+            if name == 'STARTRUN':
+                self._handle_testrun(params)
+            if name == 'TESTCASE':
+                self._handle_testcase(params)
             try:
                 signal_director.signal(name, params)
             except:
                 logging.exception("on_signal failed")
             runner._connection.sendline('echo LAVA_ACK')
             return True
-        elif idx == 4:
+
+        elif event == MULTINODE:
             name, params = runner._connection.match.groups()
             logging.debug("Received Multi_Node API <LAVA_%s>" % name)
             params = params.split()
@@ -678,7 +760,8 @@ class cmd_lava_test_shell(BaseAction):
             except:
                 logging.exception("on_signal(Multi_Node) failed")
             return ret
-        elif idx == 5:
+
+        elif event == LMP:
             name, params = runner._connection.match.groups()
             logging.debug("Received LMP <LAVA_%s>" % name)
             params = params.split()
@@ -688,6 +771,14 @@ class cmd_lava_test_shell(BaseAction):
             except:
                 logging.exception("on_signal(LMP) failed")
             return ret
+
+        elif event == TEST_CASE_RESULT:
+            match = runner._connection.match
+            if match is pexpect.TIMEOUT:
+                logging.warn('lava_test_shell has timed out')
+            else:
+                self._handle_parsed_testcase(match.groupdict())
+                return True
 
         return False
 
@@ -775,7 +866,7 @@ class cmd_lava_test_shell(BaseAction):
         results_part = target.deployment_data['lava_test_results_part_attr']
         results_part = getattr(target.config, results_part)
 
-        with target.file_system(results_part, target.lava_test_dir) as d:
+        with target.file_system(results_part, '/lava') as d:
             self._mk_runner_dirs(d)
             self._copy_runner(d, target)
             if 'target_group' in self.context.test_data.metadata:
@@ -798,9 +889,9 @@ class cmd_lava_test_shell(BaseAction):
                 # android mount the partition under /system, while ubuntu
                 # mounts under /, so we have hdir for where it is on the
                 # host and tdir for how the target will see the path
-                hdir = '%s/tests/%s' % (d, testdef.test_run_id)
+                hdir = '%s/tests/%s' % (d, testdef.dirname)
                 tdir = '%s/tests/%s' % (target.lava_test_dir,
-                                        testdef.test_run_id)
+                                        testdef.dirname)
                 testdef.copy_test(hdir, tdir)
                 tdirs.append(tdir)
 
@@ -818,18 +909,38 @@ class cmd_lava_test_shell(BaseAction):
         rdir = self.context.host_result_dir
         parse_err_msg = None
 
-        with target.file_system(results_part, target.lava_test_dir) as d:
-            err_log = os.path.join(d, 'parse_err.log')
-            results_dir = os.path.join(d, 'results')
-            bundle = lava_test_shell.get_bundle(results_dir, testdef_objs, err_log)
-            parse_err_msg = read_content(err_log, ignore_missing=True)
-            if os.path.isfile(err_log):
-                os.unlink(err_log)
-            # lava/results must be empty, but we keep a copy named
-            # lava/results-XXXXXXXXXX for post-mortem analysis
-            timestamp = datetime.now().strftime("%s")
-            os.rename(results_dir, results_dir + '-' + timestamp)
-            os.mkdir(results_dir)
+        bundle = None
+        filesystem_access_failure = True
+
+        try:
+            with target.file_system(results_part, '/lava') as d:
+                filesystem_access_ok = False
+                err_log = os.path.join(d, 'parse_err.log')
+                results_dir = os.path.join(d, 'results')
+                bundle = lava_test_shell.get_bundle(results_dir, testdef_objs, err_log)
+                parse_err_msg = read_content(err_log, ignore_missing=True)
+                if os.path.isfile(err_log):
+                    os.unlink(err_log)
+                # lava/results must be empty, but we keep a copy named
+                # lava/results-XXXXXXXXXX for post-mortem analysis
+                timestamp = datetime.now().strftime("%s")
+                os.rename(results_dir, results_dir + '-' + timestamp)
+                os.mkdir(results_dir)
+        except Exception as e:
+            if filesystem_access_failure:
+                # a failure when accessing the filesystem means the device
+                # probably crashed. We use the backup bundle then.
+                bundle = self._backup_bundle
+                logging.warning(
+                    """Error extracting test results from device: %s""" % e)
+                logging.warning(
+                    """This may mean that the device under test crashed. """
+                    """We will use test results parsed from the serial """
+                    """output as a backup, but note that some test """
+                    """artifacts (such as attachments and """
+                    """hardware/software contexts) will not be available""")
+            else:
+                raise e
 
         signal_director.postprocess_bundle(bundle)
 
@@ -838,5 +949,46 @@ class cmd_lava_test_shell(BaseAction):
         with os.fdopen(fd, 'w') as f:
             DocumentIO.dump(f, bundle)
 
+        printer = PrettyPrinter(self.context)
+        printer.print_results(bundle)
+
         if parse_err_msg:
             raise GeneralError(parse_err_msg)
+
+    def _handle_testrun(self, params):
+        test_id = params[0]
+        testdef = self._testdefs_by_name[test_id]
+
+        now = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+        test_run = {
+            'test_id': testdef.test_id,
+            'analyzer_assigned_date': now,
+            'analyzer_assigned_uuid': testdef.uuid,
+            'time_check_performed': False,
+            'testdef_metadata': testdef.testdef_metadata,
+            'test_results': []
+        }
+
+        self._current_testdef = testdef
+        self._test_runs.append(test_run)
+        self._current_test_run = test_run
+
+    def _handle_testcase(self, params):
+        data = {}
+        for param in params:
+            parts = param.split('=')
+            if len(parts) == 2:
+                key, value = parts
+                key = key.lower()
+                data[key] = value
+            else:
+                logging.warn(
+                    "Ignoring malformed parameter for signal: \"%s\". " % param)
+
+        test_result = parse_testcase_result(data)
+        self._current_test_run['test_results'].append(test_result)
+
+    def _handle_parsed_testcase(self, data):
+        test_result = parse_testcase_result(data,
+                                            self._current_testdef.fixupdict)
+        self._current_test_run['test_results'].append(test_result)

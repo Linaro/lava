@@ -135,18 +135,18 @@ lava_multi_node_get_network_info () {
 _NETWORK_INTERFACE=$1
 _RAW_STREAM_V4=`ifconfig $_NETWORK_INTERFACE |grep "inet "`
 _RAW_STREAM_V6=`ifconfig $_NETWORK_INTERFACE |grep "inet6 "`
-_RAW_STREAM_MAC=`ifconfig $_NETWORK_INTERFACE |grep "ether "`
+_RAW_STREAM_MAC=`ifconfig $_NETWORK_INTERFACE |grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'`
 
-_IPV4_STREAM_IP=`echo $_RAW_STREAM_V4 | cut -f2 -d" "`
-_IPV4_STREAM_NM=`echo $_RAW_STREAM_V4 | cut -f4 -d" "`
-_IPV4_STREAM_BC=`echo $_RAW_STREAM_V4 | cut -f6 -d" "`
+_IPV4_STREAM_IP=`echo $_RAW_STREAM_V4 | awk '/dr:/{gsub(/.*:/,"",$2);print$2}'`
+_IPV4_STREAM_NM=`echo $_RAW_STREAM_V4 | awk '/dr:/{gsub(/.*:/,"",$4);print$4}'`
+_IPV4_STREAM_BC=`echo $_RAW_STREAM_V4 | awk '/dr:/{gsub(/.*:/,"",$3);print$3}'`
 _IPV4_STREAM="ipv4="$_IPV4_STREAM_IP" netmask="$_IPV4_STREAM_NM" \
 broadcast="$_IPV4_STREAM_BC
 
-_IPV6_STREAM_IP=`echo $_RAW_STREAM_V6 | cut -f2 -d" "`
+_IPV6_STREAM_IP=`echo $_RAW_STREAM_V6 | awk ' gsub("/[0-9]+",""){ print $3}'`
 _IPV6_STREAM="ipv6="$_IPV6_STREAM_IP
 
-_MAC_STREAM="mac="`echo $_RAW_STREAM_MAC | cut -f2 -d" "`
+_MAC_STREAM="mac="$_RAW_STREAM_MAC
 
 _HOSTNAME_STREAM="hostname="`hostname`
 
@@ -211,34 +211,33 @@ done
 
 lava_multi_node_make_aliased_hosts () {
 r=1
-i=0
 SEEN_ROLES="."
-for DEVICE in `lava-group | cut -f1`; do
+for DEVICE in `lava-group| awk '{ if ($1 == "^[a-z]\t"); print $1 }'`; do
 	# dump disallowed characters out of the device name, it's used as a variable.
-	DEV_NAME=`printf "%s" $DEVICE | sed -e 's/[^a-z0-9]//g'`
+	DEV_NAME=`printf $DEVICE | sed -e 's/[^a-z0-9]//g'`
 	# dump disallowed characters out of the role, it's used as a variable.
-	ROLE_NAME=`lava-group | grep ${DEVICE} | cut -f2 |  sed -e 's/[^a-z0-9]//g'`
+	ROLE_NAME=`lava-group | grep ${DEVICE} | cut -f3 |  sed -e 's/[^a-z0-9]//g'`
 	ROLE_SUFFIX=$ROLE_NAME`printf "%02d" $r`
-	while [ -n "`printf "%s" "${SEEN_ROLES}" | grep ${ROLE_SUFFIX}`" ]; do
+	while [ -n "`printf "${SEEN_ROLES}" | grep ${ROLE_SUFFIX}`" ]; do
 		r=`expr $r + 1`
 		ROLE_SUFFIX=$ROLE_NAME`printf "%02d" $r`
 	done
 	SEEN_ROLES="${SEEN_ROLES} ${ROLE_SUFFIX}"
-	for DEVROLE in `lava-group | grep $DEVICE | cut -f2`; do
-		eval $DEV_NAME`printf "%02d" $i`="${ROLE_SUFFIX}"
-		role_name="$DEV_NAME"`printf "%02d" $i`
+	for DEVROLE in `lava-group | grep ${DEVICE} | cut -f3`; do
+		eval $DEVROLE`printf "%02d" $r`="${ROLE_SUFFIX}"
+		ROLE_NAME="$DEVROLE"`printf "%02d" $r`
 	done
 	line=`grep $DEVICE ${LAVA_MULTI_NODE_NETWORK_CACHE} | grep ":ipv4" `
-	_IP_STREAM=`printf "%s" $line | cut -d'=' -f2`
-	_TARGET_STREAM=`printf "%s" $line | cut -d':' -f1`
+	_IP_STREAM=`printf $line | cut -d'=' -f2`
+	_TARGET_STREAM=`printf $line | cut -d':' -f1`
 	_HOSTNAME_STREAM=`grep "$_TARGET_STREAM:hostname=" ${LAVA_MULTI_NODE_NETWORK_CACHE} | cut -d'=' -f2`
-	role_name="$DEV_NAME"`printf "%02d" $i`
-	ALIAS=`eval printf "%s" \\$${role_name}`
-	if [ -n "$_HOSTNAME_STREAM" ]; then
-		printf "$_IP_STREAM\t$_HOSTNAME_STREAM\t$ALIAS\n"
-	else
-		printf "$_IP_STREAM\t$_TARGET_STREAM\t$ALIAS\n"
+	ALIAS=`eval printf "%s" \\$${ROLE_NAME}`
+	if [ -n "$_IP_STREAM" ]; then
+		if [ -n "$_HOSTNAME_STREAM" ]; then
+			printf "$_IP_STREAM\t$_HOSTNAME_STREAM\t$ALIAS\n" >> $1
+		else
+			printf "$_IP_STREAM\t$_TARGET_STREAM\t$ALIAS\n" >> $1
+		fi
 	fi
-	i=`expr $i + 1`
 done
 }

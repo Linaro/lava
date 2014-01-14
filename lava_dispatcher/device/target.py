@@ -25,7 +25,7 @@ import re
 import logging
 
 from lava_dispatcher.device import boot_options
-from lava_dispatcher.client.base import (
+from lava_dispatcher.utils import (
     wait_for_prompt
 )
 from lava_dispatcher.client.lmc_utils import (
@@ -122,26 +122,6 @@ class Target(object):
         when thinking about an implementation like master.py
         """
         raise NotImplementedError('extract_tarball')
-
-    @contextlib.contextmanager
-    def runner(self):
-        """ Powers on the target, returning a CommandRunner object and will
-        power off the target when the context is exited
-        """
-        proc = runner = None
-        try:
-            proc = self.power_on()
-            runner = self._get_runner(proc)
-            yield runner
-        finally:
-            if proc and runner:
-                pass
-
-    def _get_runner(self, proc):
-        from lava_dispatcher.client.base import CommandRunner
-        pat = self.tester_ps1_pattern
-        incrc = self.tester_ps1_includes_rc
-        return CommandRunner(proc, pat, incrc)
 
     def get_test_data_attachments(self):
         return []
