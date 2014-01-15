@@ -524,21 +524,22 @@ class DatabaseJobSource(object):
         if len(cancel_list) > 0:
             self.logger.debug("Number of jobs in cancelling status %d" % len(cancel_list))
             for job in cancel_list:
-                self.logger.debug("Looking for pid of dispatch job %s in %s" % (job.id, job.output_dir))
-                self._kill_canceling(job)
-                if job.actual_device:
-                    device = Device.objects.get(hostname=job.actual_device)
+                 # Check that a job can only be cancelled by the worker which the device resides.
+                 if job.actual_device and job.actual_device.worker_host.hostname == socket.getfqdn():
+                    self.logger.debug("Looking for pid of dispatch job %s in %s" % (job.id, job.output_dir))
+                    self._kill_canceling(job)
+                    device = Device.objects.get(hostname=job.actual_device.hostname)
                     if device.status == Device.RUNNING:
                         self.logger.info("Transitioning %s to Idle" % device.hostname)
                         device.current_job = None
                         device.status = Device.IDLE
                         device.save()
-                        msg = "Cancelled job: %s" % job.id
+                        msg = "Worker %s cancelled job: %s" % (job.actual_device.worker_host.hostname, job.id)
                         DeviceStateTransition.objects.create(
                             created_by=None, device=device, old_state=Device.RUNNING,
                             new_state=Device.IDLE, message=msg, job=job).save()
-                self.logger.debug('marking job %s as cancelled on %s' % (job.id, job.actual_device))
-                job.cancel()
+                        self.logger.debug('Marking job %s as cancelled on %s' % (job.id, job.actual_device))
+                        job.cancel()
 
         if utils.is_master():
             self._cleanup_device_status()
