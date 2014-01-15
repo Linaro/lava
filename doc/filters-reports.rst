@@ -1,3 +1,7 @@
+.. index:: filter
+
+.. filter:
+
 Filters
 =======
 
@@ -41,6 +45,9 @@ You can choose your own level of subscription:
  * whenever a test that matches the criteria of filter is executed
  * only when a test that matches the criteria of filter fails
 
+.. index:: image reports
+
+.. _image_reports:
 
 Image Reports
 =============
@@ -69,10 +76,10 @@ the report chart.
 
 Graph type can have three different options:
  * pass/fail displays number of passed test cases in each test run on the
- report
+   report
  * percentage displays percentage of passed test cases in each test run
  * measurement graph type will display the first test case measurement from
-each test run
+   each test run
 
 
 Image Report table

@@ -1,5 +1,5 @@
-What do you want from LAVA (a) FAQs
-===================================
+What do you want from LAVA - FAQs
+=================================
 
 Jobs
 ----

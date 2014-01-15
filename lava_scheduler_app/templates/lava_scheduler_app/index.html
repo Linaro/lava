@@ -12,6 +12,8 @@
 
 <p><a href="{% url lava.scheduler.alldevices %}">All Devices</a></p>
 
+<p><a href="{% url lava.scheduler.active_devices %}">All Active Devices</a></p>
+
 <p><a href="{% url lava.scheduler.labhealth %}">All Devices Health</a></p>
 
 <h2>Active Jobs</h2>
@@ -19,5 +21,9 @@
 {% render_table active_jobs_table %}
 
 <a href="{% url lava.scheduler.job.list %}">All jobs</a>
+
+<h2>Workers</h2>
+
+{% render_table worker_table %}
 
 {% endblock %}

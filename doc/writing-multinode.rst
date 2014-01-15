@@ -156,7 +156,7 @@ the IP address using ``lava-send``::
 The contents of ``get_ip.sh`` is operating system specific.
 
 On the receiving device, the YAML includes a call to ``lava-wait``
-or ``lava-wait-all` with the same messageID::
+or ``lava-wait-all`` with the same messageID::
 
  run:
     steps:

@@ -1,0 +1,38 @@
+# Legacy compatibility value for lava-deployment-tool
+LAVA_CONFIG_VERSION='6'
+
+# Installation prefix
+LAVA_PREFIX='/var/lib/lava-server/'
+
+# Instance name
+LAVA_INSTANCE='default'
+
+# The lava-server branch used by upgrade
+# Not implemented in packaging.
+LAVA_MANIFEST_BRANCH=''
+LAVA_BUILDOUT_CFG=''
+
+# System configuration (Unix-level)
+# Could be the same as LAVA_DB_NAME
+LAVA_SYS_USER='lava'
+
+# default to yes as we have a dedicated user which lava "owns"
+LAVA_INSTANCE_OWNS_USER='yes'
+
+# Apache configuration
+LAVA_APACHE_VHOST='lava-server'
+# defaults to no
+LAVA_DEV_MODE='no'
+
+# retrieve from however your distro configures a database connection.
+# PostgreSQL configuration
+LAVA_DB_NAME='$LAVA_DB_NAME'
+LAVA_DB_USER='$LAVA_DB_USER'
+LAVA_DB_PORT='$LAVA_DB_PORT'
+LAVA_DB_PASSWORD='$LAVA_DB_PASSWORD'
+
+# Scheduler configuration
+# Scheduler is part of lava-server, so is enabled.
+LAVA_SCHEDULER_ENABLED='yes'
+LAVA_SERVER_IP='$LAVA_SERVER_IP'
+LAVA_PROXY='$LAVA_PROXY'

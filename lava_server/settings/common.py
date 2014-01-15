@@ -119,7 +119,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'django_openid_auth',
     'django_tables2',
-    'staticfiles',
+    'django.contrib.staticfiles',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
@@ -144,7 +144,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     "django.core.context_processors.i18n",
     "django.core.context_processors.media",
     "django.core.context_processors.request",
-    "staticfiles.context_processors.static_url",
+    "django.core.context_processors.static",
     "lava_server.context_processors.lava",
     "lava_server.context_processors.openid_available",
 ]

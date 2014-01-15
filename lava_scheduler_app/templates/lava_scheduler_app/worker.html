@@ -1,0 +1,99 @@
+{% extends "lava_scheduler_app/_content.html" %}
+
+{% load django_tables2 %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+  details, summary { display: block; padding: 0.2em; }
+  summary { cursor: pointer; }
+  summary:hover, summary:focus { background: #ddd; }
+  .no-details details > * { display: none; }
+  .no-details details.open > * { display: block; }
+  .no-details details summary:before { width: 20px; content: '► '; }
+  .no-details details.open summary:before { content: '▼ '; }
+  .no-details details summary { display: block; }
+</style>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.details.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script>
+{% endblock %}
+
+{% block content %}
+<h2>Worker: {{ worker }}</h2>
+
+<table border=0 width="100%">
+<colgroup>
+<col width="40%">
+<col width="40%">
+<col width="20%">
+</colgroup>
+<tr>
+<td style="vertical-align:text-top;text-align:left;">
+    <dt>Uptime:</dt>
+    <dd>{{ worker.uptime }}</dd>
+
+    <dt>Architecture:</dt>
+    <dd>{{ worker.arch }}</dd>
+
+    <dt>Platform:</dt>
+    <dd>{{ worker.platform }}</dd>
+
+</td>
+
+<td style="vertical-align:text-top;text-align:left;">
+  {% if can_admin %}
+  <form method="POST"
+        action="{% url lava.scheduler.edit_worker_desc %}">
+    <dd>Description:
+      {% csrf_token %}
+      <div class="edit_desc" id="{{ worker.pk }}">{{ worker.get_description }}
+      </div>
+    </dd>
+  </form>
+  {% else %}
+  <dd>Description:
+    <div name="description">{{ worker.get_description }}
+    </div>
+  </dd>
+  {% endif %}
+</td>
+
+</table>
+
+<br>
+<div id="hwinfo-text">
+    <img src="{{ STATIC_URL }}lava_scheduler_app/images/server-information-icon.png" alt="Click to View">&nbsp;
+    <a href=""><b>Hardware Information</b></a>
+</div>
+
+<div id="hwinfo-content" width="40%" style="display:none;">
+</div>
+
+
+<div id="devices-attached">
+<h2>Devices Attached</h2>
+{% block content_columns %}
+{% render_table worker_device_table %}
+{% endblock %}
+</div>
+
+<script>
+$(document).ready(
+  function() {
+    $("#hwinfo-text").click(function (e) {
+        e.preventDefault();
+        $("#hwinfo-content").toggle();
+        $("#hwinfo-content").html({{ worker.get_hardware_info }} +
+                                  "<a href=#hwinfo-text>Go to Top</a>");
+    });
+    $('.edit_desc').editable('{% url lava.scheduler.edit_worker_desc %}',
+    {
+        indicator  : 'Saving ...',
+        tooltip    : 'Click to edit ...',
+        submit     : 'OK',
+        submitdata : {"csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()}
+    });
+});
+</script>
+
+{% endblock %}

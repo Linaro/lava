@@ -1,0 +1,83 @@
+{
+  "job_name": "lava_android_test",
+  "target": "panda01",
+  "timeout": 18000,
+  "actions": [
+    {
+      "command": "deploy_linaro_android_image",
+      "parameters":
+        {
+          "boot": "http://snapshots.linaro.org/android/~linaro-android/panda-ics-gcc46-kwg-upstream-open/540/target/product/pandaboard/boot.tar.bz2",
+          "system": "http://snapshots.linaro.org/android/~linaro-android/panda-ics-gcc46-kwg-upstream-open/540/target/product/pandaboard/system.tar.bz2",
+          "data": "http://snapshots.linaro.org/android/~linaro-android/panda-ics-gcc46-kwg-upstream-open/540/target/product/pandaboard/userdata.tar.bz2"
+        },
+      "metadata":
+        {
+          "rootfs.type": "android",
+          "rootfs.build": "12"
+        }
+    },
+    {
+      "command": "boot_linaro_android_image"
+    },
+    {
+      "command": "lava_android_test_install",
+      "parameters":
+        {
+            "tests": ["monkey", "0xbench", "busybox"]
+        }
+    },
+    {
+      "command": "lava_android_test_run",
+      "parameters":
+        {
+          "test_name": "busybox"
+        }
+    },
+    {
+      "command": "lava_android_test_run",
+      "parameters":
+        {
+          "test_name": "0xbench"
+        }
+    },
+    {
+      "command": "lava_android_test_run_custom",
+      "parameters":
+        {
+          "command_file": "http://bazaar.launchpad.net/~linaro-validation/lava-android-test/trunk/download/head:/busybox_test.sh-20110927085925-2fxzf7wrrtq4gci0-3/busybox_test.sh",
+          "parser": "^\\s*(?P<test_case_id>\\w+)=(?P<result>\\w+)\\s*$"
+        }
+    },
+    {
+      "command": "lava_android_test_run_custom",
+      "parameters":
+        {
+          "commands": ["tjunittest"],
+          "parser": "^\\s*(?P<test_case_id>.+)\\s+\\.\\.\\.\\s+(?P<result>\\w+)\\.\\s+(?P<measurement>[\\d\\.]+)\\s+(?P<units>\\w+)\\s*$"
+        }
+    },
+    {
+      "command": "lava_android_test_run",
+      "parameters":
+        {
+          "test_name": "monkey"
+        }
+    },
+    {
+      "command": "lava_android_test_run_monkeyrunner",
+      "parameters":
+        {
+          "url": "git://android.git.linaro.org/test/linaro/android/system.git"
+        }
+    },
+    {
+      "command": "submit_results_on_host",
+      "parameters":
+        {
+          "server": "http://validation.linaro.org/lava-server/RPC2/",
+          "stream": "/anonymous/lava-android-leb-panda/"
+        }
+    }
+  ]
+}

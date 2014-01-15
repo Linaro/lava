@@ -1,0 +1,10 @@
+{
+  "job_name": "foo",
+  "target": "panda01",
+  "timeout": 18000,
+  "actions": [
+    {
+      "command": "foo"
+    }
+  ]
+}

@@ -425,12 +425,29 @@ $(document).ready(function () {
 
     add_settings_events = function(chart_id, chart_data) {
 
+        $("#start_date_"+chart_id).focus(function() {
+            $(this).data('lastSelected', $(this).find('option:selected'));
+        });
+        $("#end_date_"+chart_id).focus(function() {
+            $(this).data('lastSelected', $(this).find('option:selected'));
+        });
+
         $("#start_date_"+chart_id).change(function() {
+            if (!validate_build_number_selection(chart_id)) {
+                $(this).data('lastSelected').attr("selected", "selected");
+                build_number_validation_alert();
+                return false;
+            }
             update_plot(chart_id, chart_data, null);
             update_settings(chart_id, chart_data["report_name"]);
         });
 
         $("#end_date_"+chart_id).change(function() {
+            if (!validate_build_number_selection(chart_id)) {
+                $(this).data("lastSelected").attr("selected", "selected");
+                build_number_validation_alert();
+                return false;
+            }
             update_plot(chart_id, chart_data, null);
         });
 
@@ -810,10 +827,37 @@ $(document).ready(function () {
         return $helper;
     };
 
+    validate_build_number_selection = function(chart_id) {
+
+        start_number = $("#start_date_" + chart_id).val();
+        if (isNumeric(start_number)) {
+	    start_number = parseInt(start_number);
+        }
+        end_number = $("#end_date_" + chart_id).val();
+        if (isNumeric(end_number)) {
+	    end_number = parseInt(end_number);
+        }
+
+        if (start_number >= end_number) {
+	    return false;
+        } else {
+            return true;
+        }
+    }
+
+    build_number_validation_alert = function() {
+        alert("End build number must be greater then the start build number.");
+    }
 
     // Add charts.
     for (chart_id in chart_data) {
         add_chart(chart_id, chart_data[chart_id]);
     }
+
+    $(window).resize(function () {
+        for (chart_id in chart_data) {
+            update_plot(chart_id, chart_data[chart_id]);
+        }
+    });
 
 });

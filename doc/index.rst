@@ -1,5 +1,5 @@
 LAVA Manual
-##################
+###########
 
 [ `Home <../../>`_ ] [ `Dashboard <../../dashboard/>`_ ] [ `Scheduler <../../scheduler/>`_ ] [ `API <../../api/help/>`_ ]
 
@@ -17,15 +17,55 @@ LAVA Manual
    healthchecks.rst
    multinode-usecases.rst
    development.rst
+   process.rst
    faq.rst
+   glossary.rst
 
-
-Other Topics
-************
+LAVA Test Developer Guide
+#########################
 
 .. toctree::
-    :maxdepth: 2
+   :maxdepth: 3
+
+   developing-tests.rst
+   dispatcher-actions.rst
+   lava_test_shell.rst
+   multinode.rst
+   boot-management.rst
+   tftp-deploy.rst
+   external_measurement.rst
+   data-export.rst
+
+LAVA Administrator Guide
+########################
+
+.. toctree::
+   :maxdepth: 2
+
+   configuration.rst
+   running.rst
+   sdmux.rst
+   proxy.rst
+   lava-image-creation.rst
+   qemu-deploy.rst
+   pdudaemon.rst
+   kvm-deploy.rst
+   nexus-deploy.rst
+   ipmi-pxe-deploy.rst
+   dummy-deploy.rst
+
+Other Topics
+############
+
+.. toctree::
+   :maxdepth: 2
 
    extending.rst
-   lava-dispatcher/index.rst
+   usage.rst
+   arm_energy_probe.rst
+   device-capabilities.rst
+   lava-scheduler.rst
+   lava-scheduler-device-help.rst
+   lava-scheduler-device-type-help.rst
+   lava-scheduler-submit-job.rst
    linaro-dashboard-bundle/index.rst

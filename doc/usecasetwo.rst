@@ -1,3 +1,5 @@
+.. index:: multiple devices
+
 .. _use_case_two:
 
 Use Case Two - Setting up the same job on multiple devices

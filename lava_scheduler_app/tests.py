@@ -2,7 +2,8 @@ import cStringIO
 import datetime
 import json
 import xmlrpclib
-
+import logging
+import sys
 from dashboard_app.models import BundleStream
 
 from django.contrib.auth.models import Group, Permission, User
@@ -20,6 +21,12 @@ from lava_scheduler_app.models import (
     Tag,
     TestJob)
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
+
+
+logger = logging.getLogger()
+logger.level = logging.INFO  # change to DEBUG to see *all* output
+stream_handler = logging.StreamHandler(sys.stdout)
+logger.addHandler(stream_handler)
 
 
 # Based on http://www.technobabble.dk/2008/apr/02/xml-rpc-dispatching-through-django-test-client/
@@ -64,7 +71,10 @@ class ModelFactory(object):
     def ensure_device_type(self, name=None):
         if name is None:
             name = self.getUniqueString('name')
-        return DeviceType.objects.get_or_create(name=name)[0]
+        logging.debug("asking for a device_type with name %s" % name)
+        device_type = DeviceType.objects.get_or_create(name=name)[0]
+        self.make_device(device_type)
+        return device_type
 
     def make_device_type(self, name=None, health_check_job=None):
         if name is None:
@@ -72,6 +82,7 @@ class ModelFactory(object):
         device_type = DeviceType.objects.create(
             name=name, health_check_job=health_check_job)
         device_type.save()
+        logging.debug("asking for a device of type %s" % device_type.name)
         return device_type
 
     def ensure_tag(self, name):
@@ -82,7 +93,8 @@ class ModelFactory(object):
             device_type = self.ensure_device_type()
         if hostname is None:
             hostname = self.getUniqueString()
-        device = Device(device_type=device_type, hostname=hostname, **kw)
+        device = Device(device_type=device_type, is_public=True, hostname=hostname, **kw)
+        logging.debug("making a device of type %s %s %s" % (device_type, device.is_public, device.hostname))
         device.save()
         return device
 
@@ -93,7 +105,9 @@ class ModelFactory(object):
             if DeviceType.objects.all():
                 data['device_type'] = DeviceType.objects.all()[0].name
             else:
-                data['device_type'] = self.ensure_device_type().name
+                device_type = self.ensure_device_type()
+                self.make_device(device_type)
+                data['device_type'] = device_type.name
         return data
 
     def make_job_json(self, **kw):
@@ -229,7 +243,7 @@ class TestTestJob(TestCaseWithFactory):
                 {
                     'command': 'submit_results',
                     'parameters': {
-                        'server': '...',
+                        'server': 'http://localhost/RPC2',
                         'stream': stream_name,
                     }
                 }

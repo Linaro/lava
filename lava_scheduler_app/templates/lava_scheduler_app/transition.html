@@ -1,0 +1,62 @@
+{% extends "lava_scheduler_app/_content.html" %}
+
+{% load django_tables2 %}
+
+{% block content %}
+<h2>Device status transition</h2>
+
+<table border=0 width="100%">
+<colgroup>
+<col width="20%">
+<col width="20%">
+</colgroup>
+<tr>
+<td style="vertical-align:text-top;text-align:left;">
+
+<dt>Transition Id:</dt>
+<dd><a href="{{ transition.id }}">{{ transition.id }}</a></dd>
+
+<dt>When:</dt>
+<dd>{{ transition.created_on }}</dd>
+
+<dt>Device:</dt>
+    <dd><a href="{{ transition.device.get_absolute_url }}">{{ transition.device }}</a></dd>
+
+<dt>Device type:</dt>
+    <dd><a href="{{ transition.device.device_type.get_absolute_url }}">{{ transition.device.device_type }}</a></dd>
+
+<dt>Job:</dt>
+{% if transition.job %}
+    <dd><a href="{{ transition.job.get_absolute_url }}">{{ transition.job }}</a></dd>
+{% else %}
+    <dd>None</dd>
+{% endif %}
+
+</td>
+<td style="vertical-align:text-top;text-align:left;">
+
+<dt>Created by:</dt>
+<dd>{{ transition.created_by }}</dd>
+
+<dt>Transitioned from:</dt>
+<dd>{{ old_state }}</dd>
+
+<dt>Transitioned to:</dt>
+<dd>{{ new_state }}</dd>
+
+<dt>Message:</dt>
+{% if transition.message %}
+   <dd>{{ transition.message }}</dd>
+{% else %}
+   <dd>None</dd>
+{% endif %}
+</td>
+</tr>
+</table>
+<br/>
+
+<h2>Status transitions for {{ device }}</h2>
+
+{% render_table transition_table %}
+
+{% endblock %}

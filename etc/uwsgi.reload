@@ -1,0 +1,1 @@
+Touching this file will gracefully restart uWSGI worker for the default LAVA instance

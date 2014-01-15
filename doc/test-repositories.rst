@@ -84,6 +84,8 @@ This allows a collection of LAVA test definitions to re-use other YAML
 custom scripts without duplication. The tests inside the other repository
 will **not** be executed.
 
+.. index:: test definition dependencies
+
 Adding test definition dependencies
 ***********************************
 

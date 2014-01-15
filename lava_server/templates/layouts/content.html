@@ -92,6 +92,9 @@
       {% if user.is_authenticated %}
       <ul class="lava-panel-menu">
         <li><a href="{% url lava.me %}">My profile</a></li>
+        <li><a href="{% url lava.scheduler.myjobs %}">My jobs</a></li>
+        <li><a href="{% url dashboard_app.views.mybundlestreams %}">My bundle streams</a></li>
+        <li><a href="{% url lava.scheduler.mydevice_list %}">My devices</a></li>
         {% if user.is_staff %}
         <li><a href="{% url admin:index %}">Administration</a></li>
         {% endif %}
@@ -249,6 +252,10 @@
         {% endfor %}
         {% endblock %}
       </ul>
+        {% if context_help %}
+          <span style="float: right"><a
+                  href="/static/docs/{{ context_help|join:'-'|slugify }}.html"><b>Help</b></a></span>
+        {% endif %}
     </div>
     <!-- !breadcrumbs -->
     {% endblock breadcrumb_container %}

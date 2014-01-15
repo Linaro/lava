@@ -30,5 +30,6 @@ eventually</p>
 <h3>Personal reports</h3>
 <p><a href="{% url lava.scheduler.myjobs %}">All jobs submitted by {{ user.username }}</a></p>
 <p><a href="{% url dashboard_app.views.mybundlestreams %}">All bundle streams owned by {{ user.username }}</a></p>
+<p><a href="{% url lava.scheduler.mydevice_list %}">All devices owned by {{ user.username }}</a></p>
 
 {% endblock %}

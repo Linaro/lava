@@ -1,3 +1,5 @@
+.. index:: client-server test
+
 .. _use_case_one:
 
 Use Case One - Setting up a simple client:server test definition.

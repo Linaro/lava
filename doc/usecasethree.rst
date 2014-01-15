@@ -1,3 +1,5 @@
+.. index:: network information
+
 .. _use_case_three:
 
 Use Case Three - Retrieve information about multiple network interfaces
@@ -10,7 +12,7 @@ Requirements
  * At least one device in the group has multiple network interfaces.
  * Some interfaces on some devices may be impossible to raise.
  * All devices are connected such that it is possible for each device to
- communicate with the other devices in the same group.
+   communicate with the other devices in the same group.
  * Discover which interface and therefore which IP address to use for each device within the group.
  * Data to be collected for IPv4 and IPv6, where possible.
 

@@ -18,6 +18,24 @@ No log file yet.
 <pre>{{ job_errors }}</pre>
 </div>
 {% endif %}
+
+{% for tag in job.failure_tags.all %}
+{% if forloop.first %}
+{% if forloop.revcounter > 1 %}
+<h3>Job failure tags</h3>
+{% else %}
+<h3>Job failure tag</h3>
+{% endif %}
+{% endif %}
+<dt><b>{{ tag.name }}</b></dt>
+<dd>{{ tag.description }}</dd>
+{% endfor %}
+
+{% if job.failure_comment %}
+<h3>Job failure comment</h3>
+<h4>{{ job.failure_comment }}</h4>
+{% endif %}
+
 <h3 id="top">Dispatcher Log messages (file size = {{ job_file_size|filesizeformat }}) &nbsp;  &nbsp;
     <a href="{% url lava.scheduler.job.log_file.plain job.pk %}">Download as text file</a>
 </h3>
@@ -111,7 +129,9 @@ pollTimer = setTimeout(poll, 1000);
 {% endif %}
 </script>
 [ <a id="bottom" href="#top">Go to start of log file</a> ]
+{% if job_file_present %}
 [ <a href="{% url lava.scheduler.job.log_file job.pk %}">Complete log</a> ]
+{% endif %}
 [ <a href="{% url lava.scheduler.job.definition job.pk %}">Definition</a> ]
 {% if job.is_multinode %}
 [ <a href="{% url lava.scheduler.job.multinode_definition job.pk %}"> Multinode Definition</a> ]

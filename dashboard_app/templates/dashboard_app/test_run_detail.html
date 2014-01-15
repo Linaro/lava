@@ -35,7 +35,7 @@
    {% if attribute.name == "target" %}
     {% for group_job in job_list %}
       {% if group_job.actual_device|stringformat:"s" == attribute.value|stringformat:"s" %}
-      <a href="{{ bundle.testjob.get_absolute_url }}">{{ group_job.sub_id }}</a> on
+      <a href="{{ group_job.get_absolute_url }}">{{ group_job.sub_id }}</a> on
       <a href="{{ group_job.actual_device.get_absolute_url }}">{{ group_job.actual_device|stringformat:"s" }}</a><br/>
       {% endif %}
     {% endfor %}

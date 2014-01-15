@@ -7,10 +7,59 @@
 
 {{running_jobs_num}} jobs running / {{queued_jobs_num}} jobs queued
 
+{% if capabilities_date %}
+<h3>Device capabilities as at {{ capabilities_date }}</h3>
+<table border=0 width="100%">
+<colgroup>
+<col width="20%">
+<col width="20%">
+</colgroup>
+<tr>
+<td style="vertical-align:text-top;text-align:left;">
+
+    {% if processor %}
+<dt>Processor:</dt>
+<dd>{{ processor }}</dd>
+{% endif %}
+
+{% if models %}
+<dt>Model:</dt>
+<dd>{{ models }}</dd>
+{% endif %}
+
+{% if flags %}
+<dt>Flags:</dt>
+<dd>{{ flags }}</dd>
+{% endif %}
+
+</td>
+<td style="vertical-align:text-top;text-align:left;">
+
+{% if emulated %}
+<dt>Emulated:</dt>
+<dd>{{ emulated }}</dd>
+{% endif %}
+
+{% if cores %}
+<dt>Cores:</dt>
+<dd>{{ cores }}</dd>
+{% endif %}
+
+</td>
+</tr>
+</table>
+{% endif %}
+
 <h3>Health Job Summary</h3>
 {% render_table health_job_summary_table %}
 
+<h3>Reports</h3>
+<a href="{% url lava.scheduler.device_type_report device_type %}">Health check and job failure report</a>
+
 <h3>Devices Overview</h3>
 {% render_table devices_table_no_dt %}
+
+<h3>Jobs for devices of type {{ device_type }}</h3>
+{% render_table device_type_jobs_table %}
 
 {% endblock %}

@@ -20,29 +20,59 @@ http://validation.linaro.org/scheduler/reports/failures?start=-1&end=0&health_ch
 Health checks are defined in the admin interface for each device type
 and run as the lava-health user.
 
-The required entry is a JSON test file with the following changes::
+The required entry is a JSON test file with the following change:
 
-* A job name describing the test as a health check
 * The health_check boolean set to ```true```
-* An optional list of email addresses to be notified if the health check fails.
+
+In addition, it is recommended to use:
+
+* A job name describing the test as a health check.
+* A list of email addresses to be notified if the health check fails.
+* A minimal ``lava_test_shell`` definition.
+* A dedicated result bundle stream.
+* A logging level of DEBUG - the one place where you do want to know
+  why a job failed is when that job has taken a device offline.
+
+::
 
  {
+    "timeout": 900,
     "job_name": "lab-health-beaglebone-black",
+    "logging_level": "DEBUG",
     "health_check": true,
-    "notify_on_incomplete": [
-        "lava-notification@lists.linaro.org"
+    "actions": [
+        {
+            "command": "deploy_linaro_image",
+            "parameters": {
+                "image": "http://linaro-gateway/beaglebone/beaglebone_20130625-379.img.gz"
+            },
+            "metadata": {
+                "ubuntu.distribution": "quantal",
+                "ubuntu.build": "299",
+                "rootfs.type": "nano",
+                "ubuntu.name": "beaglebone-black"
+            }
+        },
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
+                        "testdef": "ubuntu/smoke-tests-basic.yaml"
+                    }
+                ],
+                "timeout": 900
+            }
+        },
+        {
+            "command": "submit_results",
+            "parameters": {
+                "server": "http://localhost/RPC2/",
+                "stream": "/anonymous/lab-health/"
+            }
+        }
     ]
- }
-
-Each health check also needs to submit results to a dedicated result
-bundle stream for health checks::
-
- {
-    "command": "submit_results",
-    "parameters": {
-        "server": "http://localhost/RPC2/",
-        "stream": "/anonymous/lab-health/"
-    }
  }
 
 Tasks within health checks
@@ -55,6 +85,49 @@ this will mean that each health check takes longer.
 Wherever a particular device type has common issues, a specific test for
 that behaviour should be added to the health check for that device type.
 
-Health Checks are not generally suitable for functional tests of a LAVA
-instance as the consequence of a health check failing is that devices of
-the specified type will be automatically taken offline.
+.. _health_check_tests:
+
+Using lava_test_shell inside health checks
+==========================================
+
+It is a mistake to think that lava_test_shell should not be run in
+health checks. The consequence of a health check failing is that
+devices of the specified type will be automatically taken offline but
+this applies to a job failure, not a fail result from a single
+lava-test-case.
+
+It is advisable to use a minimal set of sanity check test cases in all
+health checks, without making the health check unnecessarily long::
+
+    {
+        "command": "lava_test_shell",
+        "parameters": {
+            "testdef_repos": [
+                {
+                    "git-repo": "git://git.linaro.org/qa/test-definitions.git",
+                    "testdef": "ubuntu/smoke-tests-basic.yaml"
+                }
+            ],
+            "timeout": 900
+        }
+    }
+
+These tests run simple Ubuntu test commands to do with networking and
+basic functionality - it is common for ``linux-linaro-ubuntu-lsusb``
+and/or ``linux-linaro-ubuntu-lsb_release`` to fail as individual test
+cases but these failed test cases will **not** cause the health check
+to fail or cause devices to go offline.
+
+Using ``lava_test_shell`` in all health checks has several benefits:
+
+#. health checks should use the same mechanisms as regular tests,
+   including ``lava_test_shell``
+#. devices are tested to ensure that test repositories can be
+   downloaded to the device.
+#. device capabilities can be retrieved from the health check
+   result bundles and displayed on the device type status page.
+#. tests inside ``lava_test_shell`` can provide a lot more information
+   than simply booting an image and each device type can have custom
+   tests to pick up common hardware issues
+
+See also :ref:`writing_tests`.

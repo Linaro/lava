@@ -6,8 +6,11 @@ import urlparse
 import datetime
 
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import User, Group
 from django.contrib.sites.models import Site
+from django.utils.safestring import mark_safe
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.mail import send_mail
 from django.core.validators import validate_email
@@ -52,41 +55,6 @@ def validate_job_json(data):
         raise ValidationError(e)
 
 
-def check_device_availability(requested_devices):
-    """Checks whether the number of devices requested is available for a multinode job.
-
-    See utils.requested_device_count() for details of REQUESTED_DEVICES
-    dictionary format.
-
-    Returns True for singlenode or if the requested number of devices are available
-    for the multinode job, else raises DevicesUnavailableException.
-    """
-    device_types = DeviceType.objects.values_list('name').filter(
-        models.Q(device__status=Device.IDLE) |
-        models.Q(device__status=Device.RUNNING) |
-        models.Q(device__status=Device.RESERVED) |
-        models.Q(device__status=Device.OFFLINE) |
-        models.Q(device__status=Device.OFFLINING))\
-        .annotate(
-            num_count=models.Count('name'))\
-        .order_by('name')
-
-    if requested_devices:
-        all_devices = {}
-        for dt in device_types:
-            # dt[0] -> device type name
-            # dt[1] -> device type count
-            all_devices[dt[0]] = dt[1]
-
-        for board, count in requested_devices.iteritems():
-            if all_devices.get(board, None) and count <= all_devices[board]:
-                continue
-            else:
-                raise DevicesUnavailableException(
-                    "Requested %d %s device(s) - only %d available." % (count, board, all_devices.get(board, 0)))
-    return True
-
-
 class DeviceType(models.Model):
     """
     A class of device, for example a pandaboard or a snowball.
@@ -110,7 +78,140 @@ class DeviceType(models.Model):
         return ("lava.scheduler.device_type.detail", [self.pk])
 
 
-class Device(models.Model):
+class DefaultDeviceOwner(models.Model):
+    """
+    Used to override the django User model to allow one individual
+    user to be specified as the default device owner.
+    """
+    user = models.OneToOneField(User)
+    default_owner = models.BooleanField(
+        verbose_name="Default owner of unrestricted devices",
+        unique=True,
+        default=False
+    )
+
+
+class DefaultOwnerInline(admin.StackedInline):
+    """
+    Exposes the default owner override class
+    in the Django admin interface
+    """
+    model = DefaultDeviceOwner
+    can_delete = False
+
+
+class UserAdmin(UserAdmin):
+    """
+    Defines the override class for DefaultOwnerInline
+    """
+    inlines = (DefaultOwnerInline, )
+
+
+class Worker(models.Model):
+    """
+    A worker node to which devices are attached.
+    """
+
+    hostname = models.CharField(
+        verbose_name=_(u"Hostname"),
+        max_length=200,
+        primary_key=True,
+        default=None
+    )
+
+    description = models.TextField(
+        verbose_name=_(u"Worker Description"),
+        max_length=200,
+        null=True,
+        blank=True,
+        default=None
+    )
+
+    uptime = models.CharField(
+        verbose_name=_(u"Host Uptime"),
+        max_length=200,
+        null=True,
+        blank=True,
+        default=None,
+    )
+
+    arch = models.CharField(
+        verbose_name=_(u"Architecture"),
+        max_length=200,
+        null=True,
+        blank=True,
+        default=None,
+    )
+
+    platform = models.CharField(
+        verbose_name=_(u"Platform"),
+        max_length=200,
+        null=True,
+        blank=True,
+        default=None,
+    )
+
+    hardware_info = models.TextField(
+        verbose_name=_(u"Complete Hardware Information"),
+        editable=True,
+        blank=True
+    )
+
+    last_heartbeat = models.DateTimeField(
+        verbose_name=_(u"Last Heartbeat"),
+        auto_now=False,
+        auto_now_add=False,
+        null=True,
+        blank=True,
+        editable=False
+    )
+
+    heartbeat = models.BooleanField(
+        verbose_name=_(u"Heartbeat"),
+        default=False
+    )
+
+    def __unicode__(self):
+        return self.hostname
+
+    def can_admin(self, user):
+        if user.has_perm('lava_scheduler_app.change_worker'):
+            return True
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("lava.scheduler.worker.detail", [self.pk])
+
+    def get_description(self):
+        return mark_safe(self.description)
+
+    def get_hardware_info(self):
+        return mark_safe(self.hardware_info)
+
+    def too_long_since_last_heartbeat(self):
+        """Calculates if the last_heartbeat is more than 180 seconds.
+
+        If there is a delay update heartbeat value to False else True.
+        """
+        if self.last_heartbeat is None:
+            self.last_heartbeat = datetime.datetime.utcnow()
+        difference = datetime.datetime.utcnow() - self.last_heartbeat
+
+        if difference.total_seconds() > 180:
+            self.heartbeat = False
+        else:
+            self.heartbeat = True
+        self.save()
+
+    def attached_devices(self):
+        return Device.objects.filter(worker_host=self)
+
+    def update_description(self, description):
+        self.description = description
+        self.save()
+
+
+class Device(RestrictedResource):
     """
     A device that we can run tests on.
     """
@@ -121,7 +222,6 @@ class Device(models.Model):
     OFFLINING = 3
     RETIRED = 4
     RESERVED = 5
-    UNREACHABLE = 6
 
     STATUS_CHOICES = (
         (OFFLINE, 'Offline'),
@@ -129,8 +229,7 @@ class Device(models.Model):
         (RUNNING, 'Running'),
         (OFFLINING, 'Going offline'),
         (RETIRED, 'Retired'),
-        (RESERVED, 'Reserved'),
-        (UNREACHABLE, 'Unreachable')
+        (RESERVED, 'Reserved')
     )
 
     # A device health shows a device is ready to test or not
@@ -159,6 +258,30 @@ class Device(models.Model):
         blank=True,
     )
 
+    physical_owner = models.ForeignKey(
+        User, related_name='physical-owner',
+        null=True,
+        blank=True,
+        default=None,
+        verbose_name=_(u"User with physical access")
+    )
+
+    physical_group = models.ForeignKey(
+        Group, related_name='physical-group',
+        null=True,
+        blank=True,
+        default=None,
+        verbose_name=_(u"Group with physical access")
+    )
+
+    description = models.TextField(
+        verbose_name=_(u"Device Description"),
+        max_length=200,
+        null=True,
+        blank=True,
+        default=None
+    )
+
     current_job = models.ForeignKey(
         "TestJob", blank=True, unique=True, null=True, related_name='+',
         on_delete=models.SET_NULL)
@@ -181,22 +304,59 @@ class Device(models.Model):
         "TestJob", blank=True, unique=True, null=True, related_name='+',
         on_delete=models.SET_NULL)
 
-    worker_hostname = models.CharField(
-        verbose_name=_(u"Worker Hostname"),
-        max_length=200,
+    worker_host = models.ForeignKey(
+        Worker,
+        verbose_name=_(u"Worker Host"),
         null=True,
         blank=True,
         default=None
     )
 
     last_heartbeat = models.DateTimeField(
-        verbose_name=_(u"Heartbeat"),
+        verbose_name=_(u"Last Heartbeat"),
         auto_now=False,
         auto_now_add=False,
         null=True,
         blank=True,
         editable=False
     )
+
+    heartbeat = models.BooleanField(
+        verbose_name=_(u"Heartbeat"),
+        default=False)
+
+    def clean(self):
+        """
+        Complies with the RestrictedResource constraints
+        by specifying the default device owner as the superuser
+        upon save if none was set.
+        Devices become public if no User or Group is specified
+        First superuser by id is the default user if default user is None
+        Devices move to that superuser if default user is None.
+        """
+
+        default_user_list = DefaultDeviceOwner.objects.all()[:1]
+        if not default_user_list or len(default_user_list) == 0:
+            superusers = User.objects.filter(is_superuser=True).order_by('id')[:1]
+            if len(superusers) > 0:
+                first_super_user = superusers[0]
+                if self.group is None:
+                    self.user = User.objects.filter(username=first_super_user.username)[0]
+                default_owner = DefaultDeviceOwner()
+                default_owner.user = User.objects.filter(username=first_super_user.username)[0]
+                default_owner.save()
+                first_super_user.defaultdeviceowner.user = first_super_user
+                first_super_user.save()
+            self.is_public = True
+            return
+        default_user = default_user_list[0]
+        if self.user is None and self.group is None:
+            self.is_public = True
+            if default_user:
+                self.user = User.objects.filter(id=default_user.user_id)[0]
+        if self.user is not None and self.group is not None:
+            raise ValidationError(
+                'Cannot be owned by a user and a group at the same time')
 
     def __unicode__(self):
         return self.hostname
@@ -208,6 +368,9 @@ class Device(models.Model):
     @models.permalink
     def get_device_health_url(self):
         return ("lava.scheduler.labhealth.detail", [self.pk])
+
+    def get_description(self):
+        return mark_safe(self.description)
 
     def recent_jobs(self):
         return TestJob.objects.select_related(
@@ -224,7 +387,19 @@ class Device(models.Model):
         )
 
     def can_admin(self, user):
-        return user.has_perm('lava_scheduler_app.change_device')
+        if self.is_owned_by(user):
+            return True
+        if user.has_perm('lava_scheduler_app.change_device'):
+            return True
+
+    def can_submit(self, user):
+        if self.status == Device.RETIRED:
+            return False
+        if self.is_public:
+            return True
+        if user.username == "lava-health":
+            return True
+        return self.is_owned_by(user)
 
     def put_into_maintenance_mode(self, user, reason, notify=None):
         if self.status in [self.RESERVED, self.OFFLINING]:
@@ -245,7 +420,7 @@ class Device(models.Model):
             self.health_status = Device.HEALTH_UNKNOWN
         self.save()
 
-    def put_into_online_mode(self, user, reason):
+    def put_into_online_mode(self, user, reason, skiphealthcheck=False):
         if self.status == Device.OFFLINING:
             new_status = self.RUNNING
         else:
@@ -254,16 +429,17 @@ class Device(models.Model):
             created_by=user, device=self, old_state=self.status,
             new_state=new_status, message=reason, job=None).save()
         self.status = new_status
-        self.health_status = Device.HEALTH_UNKNOWN
+        if not skiphealthcheck:
+            self.health_status = Device.HEALTH_UNKNOWN
         self.save()
 
-    def put_into_looping_mode(self, user):
+    def put_into_looping_mode(self, user, reason):
         if self.status not in [Device.OFFLINE, Device.OFFLINING]:
             return
         new_status = self.IDLE
         DeviceStateTransition.objects.create(
             created_by=user, device=self, old_state=self.status,
-            new_state=new_status, message="Looping mode", job=None).save()
+            new_state=new_status, message=reason, job=None).save()
         self.status = new_status
         self.health_status = Device.HEALTH_LOOPING
         self.save()
@@ -281,34 +457,63 @@ class Device(models.Model):
     def too_long_since_last_heartbeat(self):
         """Calculates if the last_heartbeat is more than 180 seconds.
 
-        If there is a delay return True else False.
+        If there is a delay update heartbeat value to False else True.
         """
         if self.last_heartbeat is None:
             self.last_heartbeat = datetime.datetime.utcnow()
         difference = datetime.datetime.utcnow() - self.last_heartbeat
 
         if difference.total_seconds() > 180:
-            if self.status != Device.UNREACHABLE:
-                new_status = Device.UNREACHABLE
-                DeviceStateTransition.objects.create(device=self,
-                                                     old_state=self.status,
-                                                     new_state=new_status,
-                                                     message="Heartbeat",
-                                                     job=None).save()
-                self.status = new_status
-                self.save()
-            return True
+            self.heartbeat = False
         else:
-            if self.status == Device.UNREACHABLE:
-                new_status = Device.IDLE
-                DeviceStateTransition.objects.create(device=self,
-                                                     old_state=self.status,
-                                                     new_state=new_status,
-                                                     message="Heartbeat",
-                                                     job=None).save()
-                self.status = new_status
-                self.save()
-            return False
+            self.heartbeat = True
+
+        if self.status == Device.RETIRED and self.worker_host is not None:
+            self.worker_host = None
+            self.heartbeat = False
+
+        self.save()
+
+    def get_existing_health_check_job(self):
+        """Get the existing health check job.
+        """
+        scheduled_job = TestJob.objects.filter(
+            (models.Q(actual_device=self) |
+             models.Q(requested_device=self)),
+            status__in=[TestJob.SUBMITTED, TestJob.RUNNING],
+            health_check=True
+        )
+
+        if scheduled_job:
+            return scheduled_job[0]
+        else:
+            return None
+
+    def initiate_health_check_job(self):
+        if self.status in [self.RETIRED]:
+            return None
+
+        existing_health_check_job = self.get_existing_health_check_job()
+        if existing_health_check_job:
+            return existing_health_check_job
+
+        job_json = self.device_type.health_check_job
+        if not job_json:
+            # This should never happen, it's a logic error.
+            self.put_into_maintenance_mode(
+                None, "no job_json in initiate_health_check_job")
+            raise JSONDataError("no job_json found for %r", self.hostname)
+        else:
+            user = User.objects.get(username='lava-health')
+            job_data = simplejson.loads(job_json)
+            job_data['target'] = self.hostname
+            job_json = simplejson.dumps(job_data)
+            try:
+                return TestJob.from_json_and_user(job_json, user, True)
+            except (JSONDataError, ValueError) as e:
+                self.put_into_maintenance_mode(
+                    None, "Job submission failed for health job: %s" % e)
+                raise JSONDataError("Health check job submission failed.")
 
 
 class JobFailureTag(models.Model):
@@ -538,8 +743,6 @@ class TestJob(RestrictedResource):
 
     @classmethod
     def from_json_and_user(cls, json_data, user, health_check=False):
-        requested_devices = utils.requested_device_count(json_data)
-        check_device_availability(requested_devices)
         job_data = simplejson.loads(json_data)
         validate_job_data(job_data)
 
@@ -553,19 +756,74 @@ class TestJob(RestrictedResource):
             raise JSONDataError("Reserved parameters found in job data %s" %
                                 str([x for x in reserved_params_found]))
 
+        # Get all device types that are available for scheduling.
+        device_types = DeviceType.objects.values_list('name').filter(
+            models.Q(device__status=Device.IDLE) |
+            models.Q(device__status=Device.RUNNING) |
+            models.Q(device__status=Device.RESERVED) |
+            models.Q(device__status=Device.OFFLINE) |
+            models.Q(device__status=Device.OFFLINING))\
+            .annotate(num_count=models.Count('name')).order_by('name')
+
+        # Count each of the device types available.
+        all_devices = {}
+        for dt in device_types:
+            # dt[0] -> device type name
+            # dt[1] -> device type count
+            all_devices[dt[0]] = dt[1]
+
         if 'target' in job_data:
-            target = Device.objects.get(hostname=job_data['target'])
             device_type = None
+            try:
+                target = Device.objects.filter(
+                    ~models.Q(status=Device.RETIRED))\
+                    .get(hostname=job_data['target'])
+            except Exception as e:
+                raise DevicesUnavailableException(
+                    "Requested device %s is unavailable." % job_data['target'])
+            if not target.can_submit(user):
+                raise DevicesUnavailableException("%s is not allowed to submit to "
+                                                  "the restricted device '%s'."
+                                                  % (user.username, target))
         elif 'device_type' in job_data:
             target = None
             try:
                 device_type = DeviceType.objects.get(name=job_data['device_type'])
             except Exception as e:
-                raise DevicesUnavailableException("Device type '%s' is not available. %s"
-                                                  % (job_data['device_type'], e))
+                raise DevicesUnavailableException(
+                    "Device type '%s' is unavailable. %s" %
+                    (job_data['device_type'], e))
+            device_list = Device.objects.filter(device_type=device_type)
+            allow = []
+            for device in device_list:
+                if device.can_submit(user):
+                    allow.append(device)
+            if len(allow) == 0:
+                raise DevicesUnavailableException("No devices of type %s are currently "
+                                                  "available to user %s"
+                                                  % (device_type, user))
         elif 'device_group' in job_data:
             target = None
             device_type = None
+            requested_devices = {}
+
+            # Check if the requested devices are available for job run.
+            for device_group in job_data['device_group']:
+                device_type = device_group['device_type']
+                count = device_group['count']
+                if device_type in requested_devices:
+                    requested_devices[device_type] += count
+                else:
+                    requested_devices[device_type] = count
+
+            for board, count in requested_devices.iteritems():
+                if all_devices.get(board, None) and \
+                        count <= all_devices[board]:
+                    continue
+                else:
+                    raise DevicesUnavailableException(
+                        "Requested %d %s device(s) - only %d available." %
+                        (count, board, all_devices.get(board, 0)))
         else:
             raise JSONDataError(
                 "No 'target' or 'device_type' or 'device_group' are found "
@@ -633,7 +891,30 @@ class TestJob(RestrictedResource):
             except Tag.DoesNotExist:
                 raise JSONDataError("tag %r does not exist" % tag_name)
 
+        # MultiNode processing - tally allowed devices with the
+        # device_types requested per role.
+        allowed_devices = {}
         if 'device_group' in job_data:
+            device_count = {}
+            target = None  # prevent multinode jobs reserving devices which are currently running.
+            for clients in job_data["device_group"]:
+                device_type = str(clients['device_type'])
+                if device_type not in allowed_devices:
+                    allowed_devices[device_type] = []
+                count = int(clients["count"])
+                if device_type not in device_count:
+                    device_count[device_type] = 0
+                device_count[device_type] += count
+
+                device_list = Device.objects.filter(device_type=device_type)
+                for device in device_list:
+                    if device.can_submit(user):
+                        allowed_devices[device_type].append(device)
+                if len(allowed_devices[device_type]) < device_count[device_type]:
+                    raise DevicesUnavailableException("Not enough devices of type %s are currently "
+                                                      "available to user %s"
+                                                      % (device_type, user))
+
             target_group = str(uuid.uuid4())
             node_json = utils.split_multi_job(job_data, target_group)
             job_list = []
@@ -655,7 +936,8 @@ class TestJob(RestrictedResource):
 
                     job = TestJob(
                         sub_id=sub_id, submitter=submitter,
-                        requested_device=target, description=job_name,
+                        requested_device=target,
+                        description=job_name,
                         requested_device_type=device_type,
                         definition=simplejson.dumps(node_json[role][c]),
                         original_definition=simplejson.dumps(json_data,
@@ -686,8 +968,18 @@ class TestJob(RestrictedResource):
         """ used to check for things like if the user can cancel or annotate
         a job failure
         """
-        return (user.is_superuser or user == self.submitter or
+        owner = False
+        if self.actual_device is not None:
+            device = Device.objects.get(hostname=self.actual_device)
+            owner = device.can_admin(user)
+        return (user.is_superuser or user == self.submitter or owner or
                 user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
+
+    def can_change_priority(self, user):
+        """
+        Permission and state required to change job priority
+        """
+        return self._can_admin(user) and self.status == TestJob.SUBMITTED
 
     def can_annotate(self, user):
         """
@@ -788,9 +1080,9 @@ class TestJob(RestrictedResource):
 
     @property
     def display_definition(self):
-        """If ORIGINAL_DEFINTION is stored in the database return it, for jobs
-        which does not have ORIGINAL_DEFINTION ie., jobs that were submitted
-        before this attribute was introduced, return the DEFINTION.
+        """If ORIGINAL_DEFINITION is stored in the database return it, for jobs
+        which do not have ORIGINAL_DEFINITION ie., jobs that were submitted
+        before this attribute was introduced, return the DEFINITION.
         """
         if self.original_definition and not self.is_multinode:
             return self.original_definition
@@ -806,3 +1098,7 @@ class DeviceStateTransition(models.Model):
     old_state = models.IntegerField(choices=Device.STATUS_CHOICES)
     new_state = models.IntegerField(choices=Device.STATUS_CHOICES)
     message = models.TextField(null=True, blank=True)
+
+    def update_message(self, message):
+        self.message = message
+        self.save()

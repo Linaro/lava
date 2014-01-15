@@ -53,10 +53,9 @@ setup(
     ],
     install_requires=[
         'django >= 1.3',
-        'django-debian >= 0.10',
         'django-openid-auth >= 0.2',
         'django-restricted-resource >= 0.2.7',
-        'django-staticfiles == 0.3.4',
+        'django-staticfiles >= 0.3.4',
         "django-tables2 >= 0.9.4",
         'docutils >= 0.6',
         'lava-tool >= 0.2',
@@ -68,22 +67,41 @@ setup(
         'versiontools >= 1.8',
         'markdown >= 2.0.3',
         'longerusername',
+        'psycopg2',
 
         # optional dependency; for authentication with Attlassian Crowd SSO
         # 'django-crowd-rest-backend >= 0.3,
 
         # dashboard
-        'linaro-dashboard-bundle >= 1.10',
+        'linaro-dashboard-bundle >= 1.10.2',
         'linaro-django-pagination >= 2.0.2',
         'pygments >= 1.2',
 
         # scheduler
-        "lava-dispatcher >= 0.33.2",
+        "lava-dispatcher >= 0.33.3",
         "simplejson",
         "twisted",
     ],
     setup_requires=[
         'versiontools >= 1.8',
+    ],
+    data_files=[
+        ('/etc/lava-server',
+            ['etc/settings.conf',
+                'etc/uwsgi.ini',
+                'etc/debug.wsgi',
+                'etc/lava-server.wsgi',
+                'etc/uwsgi.reload']),
+        ('/etc/apache2/sites-available',
+            ['etc/lava-server.conf']),
+        ('/etc/logrotate.d',
+            ['etc/logrotate.d/lava-scheduler-log',
+                'etc/logrotate.d/lava-server-uwsgi-log']),
+        ('/usr/share/lava-server',
+            ['instance.template']),
+    ],
+    scripts=[
+        'lava_server/lava-daemon'
     ],
     tests_require=[
         'django-testscenarios >= 0.7.1',

@@ -102,7 +102,7 @@ class manage(Command):
 
     def invoke(self):
         if self.args.production:
-            settings_module = "lava_server.settings.debian"
+            settings_module = "lava_server.settings.distro"
         else:
             settings_module = "lava_server.settings.development"
         if self.args.instance:
@@ -111,9 +111,9 @@ class manage(Command):
             os.environ["DJANGO_DEBIAN_SETTINGS_TEMPLATE"] = ddst
         os.environ["DJANGO_SETTINGS_MODULE"] = settings_module
         settings = __import__(settings_module, fromlist=[''])
-        # XXX execute_manager is deprecated in Django 1.4.
-        from django.core.management import execute_manager
-        execute_manager(settings, ['lava-server'] + self.args.command)
+        # Remove deprecated execute_manager (Django 1.4)
+        from django.core.management import execute_from_command_line
+        execute_from_command_line(['lava-server'] + self.args.command)
 
 
 def find_sources():

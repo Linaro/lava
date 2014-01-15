@@ -10,7 +10,7 @@ Glossary of terms
     run at regular intervals to ensure that the physical device is capable
     of performing the minimum range of tasks. If the health check fails on
     a particular device of the specified device type, LAVA will automatically
-    put that device :term:`Offline`.
+    put that device :term:`Offline`. See :ref:`health_checks`.
 
   device type
     The common type of a number of devices in LAVA. The device type may
@@ -61,7 +61,7 @@ Glossary of terms
     imagined as a folder within which all related result bundles will be
     stored. A bundle stream could be private or anonymous. The shorthand
     ``stream`` is used in job definition to instruct where the results
-    from the job should be submitted.
+    from the job should be submitted. See also :ref:`bundle_stream`
 
   result bundle
     A set of results submitted after a testing session. It contains
@@ -82,3 +82,59 @@ Glossary of terms
 
   rootfstype
      Filesystem type for the root filesystem, e.g. ext2, ext3, ext4.
+
+  MultiNode
+     A single test job which runs across multiple devices. See
+     :ref:`multinode_api` and :ref:`multinode_use_cases`.
+
+  physical access
+    The user or group with physical access to the device, for example
+    to fix a broken SD card or check for possible problems with physical
+    connections. The user or group with physical access is recommended
+    to be one of the superusers.
+
+  retired
+    A device is retired when it can no longer be used by LAVA. A retired
+    device allows historical data to be retained in the database, including
+    log files, result bundles and state transitions. Devices can also be
+    retired when the device is moved from one instance to another.
+
+  device owner
+    A device owner has permission to change the status of a particular
+    device and update the free text description of a device. Note that
+    superusers of the LAVA instance are always able to submit jobs to
+    and administer any devices on that instance. See also :ref:`device_owner_help`
+    and :ref:`owner_actions`.
+
+  hostname
+    The unique name of this device in this LAVA instance, used to link all
+    jobs, results and device information to a specific device configuration.
+
+  restricted device
+    A restricted device can only accept job submissions from the device
+    owner. If the device owner is a group, all users in that group can
+    submit jobs to the device.
+
+  DUT
+    Device Under Test - a quick way to refer to the device in LAVA.
+
+  remote worker
+    A dispatcher with devices attached which does not have a web frontend
+    but which uses a connection to a remote lava-server to retrieve the
+    list of jobs for supported boards.
+
+  distributed deployment
+    A method of installing LAVA such that the load of running tests on
+    devices is spread across multiple machines (dispatchers) which each act
+    as a :term:`remote worker` with a single machine providing the web
+    frontend, master scheduler and database connection
+
+  job definition
+    The original JSON submitted to create a job in LAVA is retained in
+    the database and can be viewed directly from the job log. Although
+    the JSON is the same, the YAML may well have changed since the job
+    was submitted, so some care is required when modifying job definitions
+    from old jobs to make a new submission. If the job was a :term:`MultiNode`
+    job, the MultiNode definition will be the unchanged JSON from the
+    original submission; the job definition will be the parsed JSON for
+    this particular device within the MultiNode job.

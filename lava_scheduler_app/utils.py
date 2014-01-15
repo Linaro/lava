@@ -24,6 +24,8 @@ import socket
 import urlparse
 import simplejson
 import models
+import subprocess
+import datetime
 
 
 def rewrite_hostname(result_url):
@@ -123,31 +125,6 @@ def split_multi_job(json_jobdata, target_group):
     return node_json
 
 
-def requested_device_count(json_data):
-    """Utility function check the requested number of devices for each
-    device_type in a multinode job.
-
-    JSON_DATA is the job definition string.
-
-    Returns requested_device which is a dictionary of the following format:
-
-    {'kvm': 1, 'qemu': 3, 'panda': 1}
-
-    If the job is not a multinode job, then return an empty dictionary.
-    """
-    job_data = simplejson.loads(json_data)
-    requested_devices = {}
-    if 'device_group' in job_data:
-        for device_group in job_data['device_group']:
-            device_type = device_group['device_type']
-            count = device_group['count']
-            if device_type in requested_devices:
-                requested_devices[device_type] += count
-            else:
-                requested_devices[device_type] = count
-    return requested_devices
-
-
 def is_master():
     """Checks if the current machine is the master.
     """
@@ -157,3 +134,22 @@ def is_master():
                                           worker_config_path[1:])
 
     return not os.path.exists(worker_config_path)
+
+
+def get_uptime():
+    """Return the system uptime string.
+    """
+    with open('/proc/uptime', 'r') as f:
+        uptime_seconds = float(f.readline().split()[0])
+        uptime = str(datetime.timedelta(seconds=uptime_seconds))
+        return uptime
+
+
+def get_lshw_out():
+    """Return the output of lshw command in html format.
+    """
+    lshw_cmd = "lshw -html"
+    proc = subprocess.Popen(lshw_cmd, shell=True, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    lshw_out, lshw_err = proc.communicate()
+    return simplejson.dumps(lshw_out)

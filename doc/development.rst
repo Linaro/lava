@@ -39,7 +39,7 @@ The major LAVA components are depicted below::
   submitted. It works by polling the database, reserving devices to run
   those jobs, and triggering the dispatcher to actually run the tests.
 * The *dispatcher* is responsible for actually running the job. It will
-  manage the serial connection to the :ref:`DUT`, image downloads and
+  manage the serial connection to the :term:`DUT`, image downloads and
   collecting results etc. When doing local tests or developing new
   testing features, the dispatcher can usually be run standalone without
   any of the other components.
@@ -161,8 +161,10 @@ Make your changes
 * Follow PEP8 style for Python code.
 * Make one commit per logical change.
 * Write good commit messages. Useful reads on that topic:
+
  * `A note about git commit messages`_
  * `5 useful tips for a better commit message`_
+
 
 .. _`A note about git commit messages`: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
 
@@ -322,7 +324,7 @@ Requirements for a device in LAVA
 
 What do I need to create atest image for LAVA?
 What do I need to create a master image for LAVA?
-  8GB SD Card
+* 8GB SD Card
 
 Writing LAVA extensions
 ***********************

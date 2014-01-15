@@ -1,5 +1,6 @@
 {% extends "dashboard_app/_content.html" %}
 {% load i18n %}
+{% load keep_spacing %}
 
 {% block extrahead %}
 {{ block.super }}
@@ -22,6 +23,8 @@
 {% block content %}
 
 <h1>Image Report {{ image_report.name }}</h1>
+
+{{ image_report.description|keep_spacing|linebreaks }}
 
 <div id="main_container">
 </div>

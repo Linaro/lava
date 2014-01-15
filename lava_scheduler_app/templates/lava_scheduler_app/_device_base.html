@@ -4,68 +4,33 @@
 
 {% block extrahead %}
 {{ block.super }}
-<style type="text/css">
-.column {
-    position: relative;
-    float: left;
-    padding-right: 2em;
-    padding-bottom: 1em;
-}
-</style>
 <style>
   details, summary { display: block; padding: 0.2em; }
   summary { cursor: pointer; }
   summary:hover, summary:focus { background: #ddd; }
   .no-details details > * { display: none; }
   .no-details details.open > * { display: block; }
-  .no-details details summary:before { float: left; width: 20px; content: '► '; }
+  .no-details details summary:before { width: 20px; content: '► '; }
   .no-details details.open summary:before { content: '▼ '; }
   .no-details details summary { display: block; }
 </style>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.details.min.js"></script> 
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.details.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script> 
 {% endblock %}
 
 
 {% block content %}
 {% block device_heading %}{% endblock %}
 
-{% if show_maintenance %}
-<form style="display:inline; float:right" method="POST"
-      action="{% url lava.scheduler.device.maintenance device.pk %}">
-  {% csrf_token %}
-  <button id="maintenance-button">Put into maintenance mode</button>
-</form>
-<form method="POST"
-      action="{% url lava.scheduler.device.maintenance device.pk %}"
-      id="maintenance-dialog" style="display: none">
-  {% csrf_token %}
-  <input name="reason" style="width: 100%"/>
-  {% if device.current_job %}
-  <input type="checkbox" name="notify" value="{{user.email}}">Notify {{ user.email }} when job {{ device.current_job.id }} is complete.
-  {% endif %}
-</form>
-{% endif %}
-{% if show_online %}
-<form style="display:inline; float:right" method="POST"
-      action="{% url lava.scheduler.device.online device.pk %}">
-  {% csrf_token %}
-  <button id="online-button">Put online</button>
-</form>
-<form method="POST"
-      action="{% url lava.scheduler.device.online device.pk %}"
-      id="online-dialog" style="display: none">
-  {% csrf_token %}
-  <input name="reason" style="width: 100%"/>
-</form>
-<form style="display:inline " method="POST"
-      action="{% url lava.scheduler.device.looping device.pk %}">
-  {% csrf_token %}
-  <button id="looping-button">Put into looping mode</button>
-</form>
-{% endif %}
-
-<div id="columns">
-  <div class="column">
+<table border=0 width="100%">
+<colgroup>
+<col width="15%">
+<col width="20%">
+<col width="20%">
+<col width="20%">
+</colgroup>
+<tr>
+<td style="vertical-align:text-top;text-align:left;">
     <dt>Hostname:</dt>
     <dd>{{ device.hostname }}</dd>
 
@@ -83,9 +48,39 @@
     {% endfor %}
 
     <dt>Worker Hostname</dt>
-    <dd>{{ device.worker_hostname }}</dd>
-  </div>
-  <div class="column">
+    <dd>{{ device.worker_host }}</dd>
+</td>
+<td style="vertical-align:text-top;text-align:left;">
+    <dt>Device Owner:
+        <abbr title="If specified, submissions to {{ device.hostname }} are restricted to this user or group.">(?)</abbr>
+    </dt>
+    <dd>
+        {% if device.user %}
+        <a href="mailto:{{ device.user.email }}">{{ device.user.email }}</a>
+        {% elif device.group %}
+        All users in the <b>{{ device.group }}</b> group.
+        {% else %}
+        Unrestricted
+        {% endif %}
+    </dd>
+    <dt>User or group with physical access:
+        <abbr title="If known, this is the user or group with physical access to {{ device.hostname }}.">(?)</abbr>
+    </dt>
+    <dd>
+        {% if device.physical_owner %}
+        <a href="mailto:{{ device.physical_owner.email }}">{{ device.physical_owner.email }}</a>
+        {% elif device.physical_group %}
+        <b>{{ device.physical_group }}</b> group.
+        {% else %}
+        Unknown
+        {% endif %}
+    </dd>
+    <dt>Description:
+        <abbr title="Device owners can edit this field">(?)</abbr>
+    </dt>
+    <dd>{{ device.get_description|truncatewords_html:200|wordwrap:80|linebreaksbr }}</dd>
+</td>
+<td style="vertical-align:text-top;text-align:left;">
     <dt>Status:</dt>
     <dd>
       {{ device.get_status_display }}
@@ -102,10 +97,115 @@
     <dd><a href="{{ device.current_job.get_absolute_url }}"
       >Job {{ device.current_job }}</a></dd>
     {% endif %}
-  </div>
-  <div style="clear: both"></div>
-</div>
+</td>
+<td style="vertical-align:text-top;text-align:right;">
+{% if show_maintenance %}
+<form method="POST"
+      action="{% url lava.scheduler.device.maintenance device.pk %}">
+  {% csrf_token %}
+  <button id="maintenance-button">Put into maintenance mode</button>
+</form>
+<form method="POST"
+      action="{% url lava.scheduler.device.maintenance device.pk %}"
+      id="maintenance-dialog" style="display: none">
+  {% csrf_token %}
+  A reason must be specified:
+  <input id="maintenance-reason" name="reason" style="width: 100%"/>
+  {% if device.current_job %}
+  <input type="checkbox" name="notify" value="{{user.email}}">Notify {{ user.email }} when job {{ device.current_job.id }} is complete.
+  {% endif %}
+</form><br/>
+{% endif %}
 
+{% if show_online %}
+<form method="POST"
+      action="{% url lava.scheduler.device.online device.pk %}">
+  {% csrf_token %}
+  <button id="online-button">Put online</button>
+</form>
+<form method="POST"
+      action="{% url lava.scheduler.device.online device.pk %}"
+      id="online-dialog" style="display: none">
+  {% csrf_token %}
+  A reason must be specified:
+  <input id="online-reason" name="reason" style="width: 100%"/>
+  <input type="checkbox" name="skiphealthcheck" value="True"/> Skip
+      Health Check
+</form><br/>
+<form method="POST"
+      action="{% url lava.scheduler.device.looping device.pk %}">
+  {% csrf_token %}
+  <button id="looping-button">Put into looping mode</button>
+</form>
+<form method="POST"
+      action="{% url lava.scheduler.device.online device.pk %}"
+      id="looping-dialog" style="display: none">
+  {% csrf_token %}
+  A reason must be specified:
+  <input id="looping-reason" name="reason" style="width: 100%"/>
+</form>
+<br/>
+{% endif %}
+
+{% if show_forcehealthcheck %}
+<form style="..." method="POST"
+      action="{% url lava.scheduler.device.forcehealthcheck device.pk %}">
+  {% csrf_token %}
+  <button id="forcehealthcheck-button">Force Health Check</button>
+</form><br/>
+{% endif %}
+
+</td>
+<td style="vertical-align:text-top;text-align:left;">
+{% if edit_description %}
+<form method="POST"
+      action="{% url lava.scheduler.device.edit_description device.pk %}">
+  {% csrf_token %}
+  <button id="description-button">Edit the device description</button>
+</form>
+<form method="POST"
+      action="{% url lava.scheduler.device.edit_description device.pk %}"
+      id="description-dialog" style="...">
+  {% csrf_token %}
+    An empty description will clear the existing content.
+    <input id="device-description" name="desc">{{ device.get_description }}</input>
+</form><br/>
+{% endif %}
+
+{% if show_restrict %}
+<form method="POST"
+      action="{% url lava.scheduler.device.restrict_device device.pk %}">
+  {% csrf_token %}
+  <button id="restrict-button">Restrict submissions to {{ device.hostname }}</button>
+</form>
+<form method="POST"
+      action="{% url lava.scheduler.device.restrict_device device.pk %}"
+      id="restrict-dialog" style="...">
+  {% csrf_token %}
+  A reason must be specified:
+    <input id="restriction-reason" name="reason" style="width: 100%"/>
+</form><br/>
+{% endif %}
+
+{% if show_pool %}
+<form method="POST"
+      action="{% url lava.scheduler.device.derestrict_device device.pk %}">
+  {% csrf_token %}
+  <button id="derestrict-button">Return {{ device.hostname }} to the pool</button>
+</form>
+<form method="POST"
+      action="{% url lava.scheduler.device.derestrict_device device.pk %}"
+      id="derestrict-dialog" style="...">
+  {% csrf_token %}
+  A reason must be specified:
+    <input id="destriction-reason" name="reason" style="width: 100%"/>
+</form><br/>
+{% endif %}
+
+</td>
+</tr>
+</table>
+<br/>
 {% block content_columns %}
 {% endblock %}
 
@@ -120,6 +220,22 @@ $(document).ready(
     $('html').addClass($.fn.details.support ? 'details' : 'no-details');
     $('details').details();
     $('script').css('visibility', 'hidden');
+{% if edit_description %}
+    $("#description-button").button();
+    $("#description-button").click(function (e) {
+        e.preventDefault();
+        $("#description-dialog").dialog('open');
+    });
+    $("#description-dialog").dialog(
+        {
+            autoOpen: false,
+            buttons: {'OK': function () {$("#description-dialog").submit()}},
+            modal: true,
+            title: "Device description"
+        }
+    );
+
+{% endif %}
 {% if show_maintenance %}
     $("#maintenance-button").button();
     $("#maintenance-button").click(function (e) {
@@ -129,12 +245,16 @@ $(document).ready(
     $("#maintenance-dialog").dialog(
         {
             autoOpen: false,
-            buttons: {'OK': function () {$("#maintenance-dialog").submit()}},
+            buttons: {'OK': function () {
+                if (document.getElementById("maintenance-reason").value!=""){
+                    $("#maintenance-dialog").submit()}}},
             modal: true,
             title: "Reason for offlining"
         }
     );
-
+{% endif %}
+{% if show_forcehealthcheck %}
+    $("#forcehealthcheck-button").button();
 {% endif %}
 {% if show_online %}
     $("#online-button").button();
@@ -145,15 +265,74 @@ $(document).ready(
     $("#online-dialog").dialog(
         {
             autoOpen: false,
-            buttons: {'OK': function () {$("#online-dialog").submit()}},
+            buttons: {'OK': function () {
+                if (document.getElementById("online-reason").value!=""){
+                    $("#online-dialog").submit()}}},
             modal: true,
             title: "Reason for onlining"
         }
     );
+    $("#looping-button").button();
+    $("#looping-button").click(function (e) {
+        e.preventDefault();
+        $("#looping-dialog").dialog('open');
+    });
+    $("#looping-dialog").dialog(
+        {
+            autoOpen: false,
+            buttons: {'OK': function () {
+                if (document.getElementById("loopingreason").value!=""){
+                    $("#looping-dialog").submit()}}},
+            modal: true,
+            title: "Reason for running looping health checks"
+        }
+    );
+{% endif %}
+{% if show_restrict %}
+    $("#restrict-button").button();
+    $("#restrict-button").click(function (e) {
+        e.preventDefault();
+        $("#restrict-dialog").dialog('open');
+    });
+    $("#restrict-dialog").dialog(
+        {
+            autoOpen: false,
+            buttons: {'OK': function () {
+                if (document.getElementById("restriction-reason").value!=""){
+                    $("#restrict-dialog").submit()}}},
+            modal: true,
+            title: "Reason for restricting submissions"
+        }
+    );
+{% endif %}
+{% if show_pool %}
+    $("#derestrict-button").button();
+    $("#derestrict-button").click(function (e) {
+        e.preventDefault();
+        $("#derestrict-dialog").dialog('open');
+    });
+    $("#derestrict-dialog").dialog(
+        {
+            autoOpen: false,
+            buttons: {'OK': function () {
+                if (document.getElementById("derestriction-reason").value!=""){
+                    $("#derestrict-dialog").submit()}}},
+            modal: true,
+            title: "Reason for derestricting submissions"
+        }
+    );
+{% endif %}
+{% if can_admin %}
+    $('.edit_transition').editable('{% url lava.scheduler.edit_transition %}',
+    {
+        indicator  : 'Saving ...',
+        tooltip    : 'Click to edit ...',
+        submit     : 'OK',
+        submitdata : {"csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()}
+    });
 {% endif %}
   }
 );
 </script>
 
 {% endblock %}
-
