@@ -142,7 +142,7 @@ class FastbootTarget(Target):
 
         self._booted = True
         self.proc = self._adb('shell', spawn=True)
-        self._auto_login(proc)
+        self._auto_login(self.proc)
         self.proc.sendline("")  # required to put the adb shell in a reasonable state
         self.proc.sendline("export PS1='%s'" % self.tester_ps1)
 
