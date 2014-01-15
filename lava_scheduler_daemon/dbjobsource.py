@@ -57,6 +57,7 @@ class DatabaseJobSource(object):
 
     def deferForDB(self, func, *args, **kw):
         self.logger.debug("__deferForDB enter__")
+
         def wrapper(*args, **kw):
             # If there is no db connection yet on this thread, create a
             # connection and immediately commit, because rolling back the
@@ -524,8 +525,8 @@ class DatabaseJobSource(object):
         if len(cancel_list) > 0:
             self.logger.debug("Number of jobs in cancelling status %d" % len(cancel_list))
             for job in cancel_list:
-                 # Check that a job can only be cancelled by the worker which the device resides.
-                 if job.actual_device and job.actual_device.worker_host.hostname == socket.getfqdn():
+                # Check that a job can only be cancelled by the worker which the device resides.
+                if job.actual_device and job.actual_device.worker_host.hostname == socket.getfqdn():
                     self.logger.debug("Looking for pid of dispatch job %s in %s" % (job.id, job.output_dir))
                     self._kill_canceling(job)
                     device = Device.objects.get(hostname=job.actual_device.hostname)
@@ -540,6 +541,7 @@ class DatabaseJobSource(object):
                             new_state=Device.IDLE, message=msg, job=job).save()
                         self.logger.debug('Marking job %s as cancelled on %s' % (job.id, job.actual_device))
                         job.cancel()
+                        transaction.commit()
 
         if utils.is_master():
             self._cleanup_device_status()
