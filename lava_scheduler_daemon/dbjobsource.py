@@ -539,9 +539,9 @@ class DatabaseJobSource(object):
                         DeviceStateTransition.objects.create(
                             created_by=None, device=device, old_state=Device.RUNNING,
                             new_state=Device.IDLE, message=msg, job=job).save()
-                        self.logger.debug('Marking job %s as cancelled on %s' % (job.id, job.actual_device))
-                        job.cancel()
-                        transaction.commit()
+                    self.logger.debug('Marking job %s as cancelled on %s' % (job.id, job.actual_device))
+                    job.cancel()
+                    transaction.commit()
 
         if utils.is_master():
             self._cleanup_device_status()
