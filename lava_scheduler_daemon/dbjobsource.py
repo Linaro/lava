@@ -287,8 +287,10 @@ class DatabaseJobSource(object):
         # Call TestJob.cancel to reset the TestJob status
         if len(cancel_list) > 0:
             self.logger.debug("Number of jobs in cancelling status %d" % len(cancel_list))
+            configured_boards = [
+                x.hostname for x in dispatcher_config.get_devices()]
             for job in cancel_list:
-                if job.actual_device:
+                if job.actual_device and job.actual_device.hostname in configured_boards:
                     self.logger.debug("Looking for pid of dispatch job %s in %s" % (job.id, job.output_dir))
                     self._kill_canceling(job)
                     device = Device.objects.get(hostname=job.actual_device.hostname)
