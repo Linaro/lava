@@ -55,6 +55,7 @@ class JobQueue(Service):
                 new_job.start()
 
     def startService(self):
+        self.logger.info("\n\nLAVA Scheduler starting\n\n")
         self._check_job_call.start(20)
 
     def stopService(self):
