@@ -46,7 +46,7 @@ from lava_dispatcher.downloader import (
 from lava_dispatcher import deployment_data
 
 
-class CapriTarget(FastbootTarget, MasterImageTarget):
+class CapriTarget(MasterImageTarget, FastbootTarget):
 
     def __init__(self, context, config):
         super(CapriTarget, self).__init__(context, config)
