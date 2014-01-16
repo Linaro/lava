@@ -81,7 +81,6 @@ class Job(object):
         self._time_limit_call = None
         self._killing = False
         self._kill_reason = ''
-        self._pidrecord = None
 
     def _checkCancel(self):
         if self._killing:
@@ -132,15 +131,10 @@ class Job(object):
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
         self._protocol = DispatcherProcessProtocol(d, self)
-        ret = self.reactor.spawnProcess(
+        self.reactor.spawnProcess(
             self._protocol, self.dispatcher, args=[
                 self.dispatcher, self._json_file, '--output-dir', output_dir],
             childFDs={0: 0, 1: 'r', 2: 'r'}, env=None)
-        if ret:
-            os.mkdir(output_dir)
-            self._pidrecord = os.path.join(output_dir, "jobpid")
-            with open(self._pidrecord, 'w') as f:
-                f.write("%s\n" % os.getpgid(ret.pid))
         self._checkCancel_call.start(10)
         timeout = max(
             json_data['timeout'], self.daemon_options['MIN_JOB_TIMEOUT'])
@@ -153,8 +147,6 @@ class Job(object):
         self.logger.info("job finished on %s", self.job_data['target'])
         if self._json_file is not None:
             os.unlink(self._json_file)
-        if self._pidrecord is not None and os.path.exists(self._pidrecord):
-            os.unlink(self._pidrecord)
         self.logger.info("reporting job completed")
         if self._time_limit_call is not None:
             self._time_limit_call.cancel()
