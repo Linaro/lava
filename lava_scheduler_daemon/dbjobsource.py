@@ -32,7 +32,8 @@ from lava_scheduler_app.models import (
     TestJob)
 from lava_scheduler_app import utils
 from lava_scheduler_daemon.jobsource import IJobSource
-
+import signal
+import platform
 
 try:
     from psycopg2 import InterfaceError, OperationalError
@@ -261,6 +262,23 @@ class DatabaseJobSource(object):
 
         return job_list
 
+    def _kill_canceling(self, job):
+        """
+        Kills any remaining lava-dispatch processes via the pgid in the jobpid file
+
+        :param job: the TestJob stuck in Canceling
+        """
+        pidrecord = os.path.join(job.output_dir, "jobpid")
+        if os.path.exists(pidrecord):
+            with open(pidrecord, 'r') as f:
+                pgid = int(f.read())
+                self.logger.info("Signalling SIGTERM to process group: %d" % pgid)
+                try:
+                    os.killpg(pgid, signal.SIGTERM)
+                except OSError as e:
+                    self.logger.info("Unable to kill process group %d: %s" % (pgid, e))
+                    os.unlink(pidrecord)
+
     def _device_heartbeat(self):
         """LAST_HEARTBEAT and WORKER_HOSTNAME fields gets updated for each
         configured device.
@@ -288,6 +306,33 @@ class DatabaseJobSource(object):
         job_list = TestJob.objects.all().filter(
             status=TestJob.SUBMITTED).order_by('-health_check', '-priority',
                                                'submit_time')
+
+        cancel_list = TestJob.objects.all().filter(status=TestJob.CANCELING)
+        # Pick up TestJob objects in Canceling and ensure that the cancel completes.
+        # call _kill_canceling to terminate any lava-dispatch calls
+        # Explicitly set a DeviceStatusTransition as jobs which are stuck in Canceling
+        #  may already have lost connection to the SchedulerMonitor via twisted.
+        # Call TestJob.cancel to reset the TestJob status
+        if len(cancel_list) > 0:
+            self.logger.debug("Number of jobs in cancelling status %d" % len(cancel_list))
+            for job in cancel_list:
+                if job.actual_device:
+                    self.logger.debug("Looking for pid of dispatch job %s in %s" % (job.id, job.output_dir))
+                    self._kill_canceling(job)
+                    device = Device.objects.get(hostname=job.actual_device.hostname)
+                    if device.status == Device.RUNNING:
+                        self.logger.debug("Transitioning %s to Idle" % device.hostname)
+                        device.current_job = None
+                        old_status = device.status
+                        device.status = Device.IDLE
+                        device.save()
+                        msg = "Cancelled job: %s from list" % job.id
+                        DeviceStateTransition.objects.create(
+                            created_by=None, device=device, old_state=old_status,
+                            new_state=device.status, message=msg, job=job).save()
+                    self.logger.debug('Marking job %s as cancelled on %s' % (job.id, job.actual_device))
+                    job.cancel()
+                    transaction.commit()
 
         if utils.is_master():
             self.logger.debug("Boards assigned to jobs ...")
