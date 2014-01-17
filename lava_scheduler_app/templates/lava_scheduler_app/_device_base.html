@@ -198,7 +198,7 @@
       id="derestrict-dialog" style="...">
   {% csrf_token %}
   A reason must be specified:
-    <input id="destriction-reason" name="reason" style="width: 100%"/>
+    <input id="derestriction-reason" name="reason" style="width: 100%"/>
 </form><br/>
 {% endif %}
 
@@ -281,7 +281,7 @@ $(document).ready(
         {
             autoOpen: false,
             buttons: {'OK': function () {
-                if (document.getElementById("loopingreason").value!=""){
+                if (document.getElementById("looping-reason").value!=""){
                     $("#looping-dialog").submit()}}},
             modal: true,
             title: "Reason for running looping health checks"
