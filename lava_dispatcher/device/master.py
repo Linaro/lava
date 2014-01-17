@@ -86,7 +86,6 @@ class MasterImageTarget(Target):
 
     def power_on(self):
         self._boot_linaro_image()
-        self._auto_login(self.proc)
         return self.proc
 
     def power_off(self, proc):
@@ -501,6 +500,7 @@ class MasterImageTarget(Target):
             self._hard_reboot()
             self._enter_bootloader(self.proc)
         self._customize_bootloader(self.proc, boot_cmds)
+        self._auto_login(self.proc)
 
 target_class = MasterImageTarget
 
