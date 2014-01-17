@@ -115,7 +115,7 @@ class PublicFiltersTable(UserFiltersTable):
 class AllFiltersSimpleTable(DataTablesTable):
 
     name = TemplateColumn('''
-    <a href="#" onclick="filters_callback('{{ record.id }}', '{{ record.name }}');">{{ record.name }}</a>
+    <a href="#" onclick="filters_callback('{{ record.id }}', '{{ record.name }}');">~{{ record.owner.username }}/{{ record.name }}</a>
     ''')
 
     def get_queryset(self):
