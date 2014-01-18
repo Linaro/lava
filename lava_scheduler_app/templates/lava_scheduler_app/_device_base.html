@@ -13,6 +13,7 @@
   .no-details details summary:before { width: 20px; content: '► '; }
   .no-details details.open summary:before { content: '▼ '; }
   .no-details details summary { display: block; }
+  .ui-button { width: 250px }
 </style>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.details.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script> 
@@ -168,7 +169,7 @@
       id="description-dialog" style="...">
   {% csrf_token %}
     An empty description will clear the existing content.
-    <input id="device-description" name="desc">{{ device.get_description }}</input>
+    <input id="device-description" name="desc" value="{{ device.get_description }}"/>
 </form><br/>
 {% endif %}
 
@@ -198,7 +199,7 @@
       id="derestrict-dialog" style="...">
   {% csrf_token %}
   A reason must be specified:
-    <input id="destriction-reason" name="reason" style="width: 100%"/>
+    <input id="derestriction-reason" name="reason" style="width: 100%"/>
 </form><br/>
 {% endif %}
 
@@ -281,7 +282,7 @@ $(document).ready(
         {
             autoOpen: false,
             buttons: {'OK': function () {
-                if (document.getElementById("loopingreason").value!=""){
+                if (document.getElementById("looping-reason").value!=""){
                     $("#looping-dialog").submit()}}},
             modal: true,
             title: "Reason for running looping health checks"

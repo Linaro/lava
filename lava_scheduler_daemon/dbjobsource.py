@@ -32,7 +32,8 @@ from lava_scheduler_app.models import (
     TestJob)
 from lava_scheduler_app import utils
 from lava_scheduler_daemon.jobsource import IJobSource
-
+import signal
+import platform
 
 try:
     from psycopg2 import InterfaceError, OperationalError
@@ -131,11 +132,13 @@ class DatabaseJobSource(object):
 
         If we are unable to grab the DEVICE then we return None.
         """
-        if device.status == Device.RUNNING:
+        # prevent the device getting two different jobs at the same time
+        if job.actual_device or device.status == Device.RUNNING or device.current_job:
             return None
+        msg = "Reserving device for job: %s" % job.id
         DeviceStateTransition.objects.create(
             created_by=None, device=device, old_state=device.status,
-            new_state=Device.RESERVED, message=None, job=job).save()
+            new_state=Device.RESERVED, message=msg, job=job).save()
         device.status = Device.RESERVED
         device.current_job = job
         try:
@@ -190,13 +193,24 @@ class DatabaseJobSource(object):
         if job.is_multinode:
             multinode_jobs = TestJob.objects.all().filter(
                 target_group=job.target_group)
-
-            for m_job in multinode_jobs:
-                devices = Device.objects.all().filter(
-                    device_type=m_job.requested_device_type,
-                    status=Device.IDLE)
+            for multinode_job in multinode_jobs:
+                devices = []
+                self.logger.debug("Checking devices of requested type %s owned by %s" %
+                                  (multinode_job.requested_device_type, multinode_job.submitter.username))
+                device_list = Device.objects.all().filter(
+                    device_type=multinode_job.requested_device_type,
+                    status=Device.IDLE, is_public=False)
+                for d in device_list:
+                    if d.can_submit(multinode_job.submitter):
+                        devices.append(d)
+                if len(devices) == 0:
+                    self.logger.debug("Checking public devices of requested type %s" %
+                                      multinode_job.requested_device_type)
+                    devices = Device.objects.all().filter(
+                        device_type=multinode_job.requested_device_type,
+                        status=Device.IDLE, is_public=True)
                 if len(devices) > 0:
-                    f_job = self._fix_device(devices[0], m_job)
+                    f_job = self._fix_device(devices[0], multinode_job)
                     if f_job:
                         job_list.append(f_job)
 
@@ -204,7 +218,7 @@ class DatabaseJobSource(object):
 
     def _assign_jobs(self, jobs):
         job_list = self._get_health_check_jobs()
-        devices = None
+        devices = []
 
         for job in jobs:
             if job.is_multinode and not job.actual_device:
@@ -213,18 +227,34 @@ class DatabaseJobSource(object):
                 if job.actual_device:
                     job_list.append(job)
                 elif job.requested_device:
-                    self.logger.debug("Checking Requested Device")
-                    devices = Device.objects.all().filter(
+                    self.logger.debug("Checking if requested device %s is owned by %s" %
+                                     (job.requested_device.hostname, job.submitter.username))
+                    device_list = Device.objects.all().filter(
                         hostname=job.requested_device.hostname,
                         status=Device.IDLE)
+                    for d in device_list:
+                        if d.can_submit(job.submitter):
+                            devices.append(d)
                 elif job.requested_device_type:
+                    self.logger.debug("Checking devices of requested type %s owned by %s" %
+                                      (job.requested_device_type, job.submitter.username))
                     self.logger.debug("Checking Requested Device Type")
-                    devices = Device.objects.all().filter(
+                    device_list = Device.objects.all().filter(
                         device_type=job.requested_device_type,
-                        status=Device.IDLE)
+                        status=Device.IDLE, is_public=False)
+                    for d in device_list:
+                        if d.can_submit(job.submitter):
+                            devices.append(d)
+                    if len(devices) == 0:
+                        # only check public devices if no restricted devices are available.
+                        self.logger.debug("Checking public devices of requested type %s" %
+                                          job.requested_device_type)
+                        devices = list(Device.objects.all().filter(
+                            device_type=job.requested_device_type,
+                            status=Device.IDLE, is_public=True))
                 else:
                     continue
-                if devices:
+                if len(devices) > 0:
                     for d in devices:
                         if job:
                             job = self._fix_device(d, job)
@@ -232,6 +262,23 @@ class DatabaseJobSource(object):
                             job_list.append(job)
 
         return job_list
+
+    def _kill_canceling(self, job):
+        """
+        Kills any remaining lava-dispatch processes via the pgid in the jobpid file
+
+        :param job: the TestJob stuck in Canceling
+        """
+        pidrecord = os.path.join(job.output_dir, "jobpid")
+        if os.path.exists(pidrecord):
+            with open(pidrecord, 'r') as f:
+                pgid = int(f.read())
+                self.logger.info("Signalling SIGTERM to process group: %d" % pgid)
+                try:
+                    os.killpg(pgid, signal.SIGTERM)
+                except OSError as e:
+                    self.logger.info("Unable to kill process group %d: %s" % (pgid, e))
+                    os.unlink(pidrecord)
 
     def _device_heartbeat(self):
         """LAST_HEARTBEAT and WORKER_HOSTNAME fields gets updated for each
@@ -260,6 +307,35 @@ class DatabaseJobSource(object):
         job_list = TestJob.objects.all().filter(
             status=TestJob.SUBMITTED).order_by('-health_check', '-priority',
                                                'submit_time')
+
+        cancel_list = TestJob.objects.all().filter(status=TestJob.CANCELING)
+        # Pick up TestJob objects in Canceling and ensure that the cancel completes.
+        # call _kill_canceling to terminate any lava-dispatch calls
+        # Explicitly set a DeviceStatusTransition as jobs which are stuck in Canceling
+        #  may already have lost connection to the SchedulerMonitor via twisted.
+        # Call TestJob.cancel to reset the TestJob status
+        if len(cancel_list) > 0:
+            self.logger.debug("Number of jobs in cancelling status %d" % len(cancel_list))
+            configured_boards = [
+                x.hostname for x in dispatcher_config.get_devices()]
+            for job in cancel_list:
+                if job.actual_device and job.actual_device.hostname in configured_boards:
+                    self.logger.debug("Looking for pid of dispatch job %s in %s" % (job.id, job.output_dir))
+                    self._kill_canceling(job)
+                    device = Device.objects.get(hostname=job.actual_device.hostname)
+                    if device.status == Device.RUNNING:
+                        self.logger.debug("Transitioning %s to Idle" % device.hostname)
+                        device.current_job = None
+                        old_status = device.status
+                        device.status = Device.IDLE
+                        device.save()
+                        msg = "Cancelled job: %s from list" % job.id
+                        DeviceStateTransition.objects.create(
+                            created_by=None, device=device, old_state=old_status,
+                            new_state=device.status, message=msg, job=job).save()
+                    self.logger.debug('Marking job %s as cancelled on %s' % (job.id, job.actual_device))
+                    job.cancel()
+                    transaction.commit()
 
         if utils.is_master():
             self.logger.debug("Boards assigned to jobs ...")
@@ -345,9 +421,10 @@ class DatabaseJobSource(object):
         job.status = TestJob.RUNNING
         # need to set the device RUNNING if device was RESERVED
         if job.actual_device.status == Device.RESERVED:
+            msg = "Running job: %s" % job.id
             DeviceStateTransition.objects.create(
                 created_by=None, device=job.actual_device, old_state=job.actual_device.status,
-                new_state=Device.RUNNING, message=None, job=job).save()
+                new_state=Device.RUNNING, message=msg, job=job).save()
             job.actual_device.status = Device.RUNNING
             job.actual_device.current_job = job
             job.actual_device.save()
@@ -398,9 +475,10 @@ class DatabaseJobSource(object):
             self.logger.error(
                 "Unexpected job state in jobCompleted: %s" % job.status)
             job.status = TestJob.COMPLETE
+        msg = "Job: %s completed" % job.id
         DeviceStateTransition.objects.create(
             created_by=None, device=device, old_state=old_device_status,
-            new_state=device.status, message=None, job=job).save()
+            new_state=device.status, message=msg, job=job).save()
 
         if job.health_check:
             device.last_health_report_job = job
