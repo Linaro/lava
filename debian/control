@@ -17,10 +17,9 @@ Vcs-Browser: https://alioth.debian.org/plugins/scmgit/cgi-bin/gitweb.cgi?p=pkg-l
 
 Package: lava-dispatcher
 Architecture: all
-Depends: python-serial (>= 2.6), parted, kpartx, ser2net,
- sshfs, 
+Depends: python-serial (>= 2.6), parted, kpartx, ser2net, sshfs,
  ${python:Depends}, ${misc:Depends}
-Recommends: tftpd-hpa, openbsd-inetd, qemu-system-x86
+Recommends: ntp, git, tftpd-hpa, openbsd-inetd, qemu-system-x86, unzip
 Description: Linaro Automated Validation Architecture dispatcher
  This package provides lava-dispatcher to dispatch
  LAVA jobs to configured devices.
