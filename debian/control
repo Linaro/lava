@@ -22,8 +22,9 @@ Conflicts: lava-scheduler, lava-dashboard, python-django (>= 1.5)
 Replaces: lava-scheduler, lava-dashboard
 Depends: apache2, adduser, libapache2-mod-uwsgi, libjs-jquery-cookie,
  libapache2-mod-wsgi, python-daemon, python-dateutil,
+ postgresql, postgresql-client, postgresql-common,
  ${python:Depends}, ${misc:Depends}
-Recommends: lava-coordinator
+Recommends: ntp, lava-coordinator, lava-server-doc
 Description: Linaro Automated Validation Architecture server
  This package replaces lava-deployment-tool to provide the
  Apache and WSGI configuration and LAVA support files to run
@@ -34,11 +35,9 @@ Package: lava
 Architecture: all
 Section: metapackages
 Depends: lava-server, lava-dispatcher, lava-coordinator,
- postgresql, postgresql-9.1,
- lava-tool, linaro-image-tools,
+ postgresql, lava-tool, linaro-image-tools,
  ${misc:Depends}
 Conflicts: python-django (>= 1.5)
-Recommends: lava-server-doc
 Description: Linaro Automated Validation Architecture metapackage
  Metapackage to bring in all LAVA components on a single
  machine.
@@ -57,15 +56,13 @@ Description: Linaro Automated Validation Architecture metapackage
 # .
 # This metapackage is not yet fully supported.
 
-# TODO: fix paths in lava-dispatcher-doc
 Package: lava-server-doc
 Architecture: all
 Section: doc
 Depends: ${sphinxdoc:Depends}, ${misc:Depends}
-Recommends: lava-dispatcher-doc
 Description: documentation for lava-server
  This package contains an offline copy of the LAVA
- Manual.
+ Manual available within LAVA server.
  .
  The manual includes use cases and examples to
  help users write tests for LAVA.
