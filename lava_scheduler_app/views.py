@@ -941,7 +941,7 @@ def health_job_list(request, pk):
                 'health_jobs', reverse(health_jobs_json, kwargs=dict(pk=pk)),
                 params=(device,)),
             'show_forcehealthcheck': device.can_admin(request.user) and
-            device.status not in [Device.RETIRED],
+            device.status not in [Device.RETIRED] and device.device_type.health_check_job != "",
             'can_admin': device.can_admin(request.user),
             'show_maintenance': device.can_admin(request.user) and
             device.status in [Device.IDLE, Device.RUNNING, Device.RESERVED],
@@ -1527,7 +1527,7 @@ def device_detail(request, pk):
                 'jobs', reverse(recent_jobs_json, kwargs=dict(pk=device.pk)),
                 params=(device,)),
             'show_forcehealthcheck': device.can_admin(request.user) and
-            device.status not in [Device.RETIRED],
+            device.status not in [Device.RETIRED] and device.device_type.health_check_job != "",
             'can_admin': device.can_admin(request.user),
             'show_maintenance': device.can_admin(request.user) and
             device.status in [Device.IDLE, Device.RUNNING, Device.RESERVED],
