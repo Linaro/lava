@@ -138,3 +138,63 @@ Glossary of terms
     job, the MultiNode definition will be the unchanged JSON from the
     original submission; the job definition will be the parsed JSON for
     this particular device within the MultiNode job.
+
+  LAVA-LMP USB
+    This module is designed to test USB and OTG.
+    It is useful for
+
+    * USB Host hot-plug and functionality confirm
+    * USB Host voltage monitoring
+    * USB Device hot-plug
+    * USB OTG mode sensing by SENSE pin
+    * USB OTG role switching
+
+  LAVA-LMP LSGPIO
+    This module is designed to test GPIO, audio hot-plug and SPI bus.
+    It is useful for
+
+    * Boot source selection
+    * Switch actuation simulation
+    * LED state confirmation
+    * Scanned keypress simulation
+
+    It provides 2 x 8 level-converted buses configurable as either
+    3-state outputs suitable for controlling pulled-up or pulled-down
+    wired boot control signals, or level-converted inputs suitable for
+    checking the state of signals. The two 8-bit buses can be independently
+    selected to be input, output or tristate.
+    It also provides a single 4-pin 3.5mm jack connect / disconnect action.
+    This is also compatible with 3-ring 3.5mm jack plugs. All four rings
+    are disconnected, including the 0V one. No connection is made to any of
+    the jack plug signals except the relay switching.
+    So there is no practical limit on the level of analogue or digital signals present
+    or additional load introduced.
+
+  LAVA-LMP ETH+SATA
+    This module is designed to test 10/100 Ethernet and SATA.
+    It is useful for
+
+    * 10/100 Ethernet physical connect and disconnect testing
+    * SATA logical interface physical connect and disconnect testing
+
+  LAVA-LMP HDMI
+    This module is designed to test full-size HDMI.
+    It is useful for
+
+    * HDMI hot-plug test
+    * EDID : monitor emulation and activity recording
+    * Confirming 5V supply from video source
+    * Testing with a programmable hpd delay
+
+  LAVA-LMP SD MUX
+    This module is designed to do SD-related testing.
+    It is useful for
+
+    * bootloader testing
+    * SD card hot-plug testing
+
+    This module allows the host and Cortex-M0 chip to control which of
+    two Micro SD cards, A and B, are seen by the DUT at boot time
+    or optionally the host at any time. That should include having
+    one SD card in use by the DUT and the other in use by the host
+    at the same time.
