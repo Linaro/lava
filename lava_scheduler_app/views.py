@@ -728,7 +728,7 @@ def index_nodt_devices_json(request, pk):
 
 def device_type_jobs_json(request, pk):
     dt = get_object_or_404(DeviceType, pk=pk)
-    return JobTable.json(request, params=(dt,))
+    return DeviceTypeJobTable.json(request, params=(dt,))
 
 
 @BreadCrumb("Device Type {pk}", parent=index, needs=['pk'])
