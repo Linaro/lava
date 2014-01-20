@@ -137,9 +137,8 @@
     {% if job.requested_device %}
     <li><a href="{% url lava.scheduler.device_type_report job.requested_device.device_type %}">
         {{ job.requested_device.device_type }}</a></li>
-    {% endif %}
 
-    {% if job.requested_device_type %}
+    {% elif job.requested_device_type %}
     <li><a href="{% url lava.scheduler.device_type_report job.requested_device_type %}">
         {{ job.requested_device_type }}</a></li>
     {% endif %}
