@@ -28,7 +28,7 @@ class Migration(SchemaMigration):
 
         # Adding field 'Device.is_public'
         db.add_column('lava_scheduler_app_device', 'is_public',
-                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      self.gf('django.db.models.fields.BooleanField')(default=True),
                       keep_default=False)
 
         # Adding field 'Device.physical_owner'
