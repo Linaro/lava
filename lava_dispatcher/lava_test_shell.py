@@ -224,6 +224,7 @@ def parse_testcase_result(data, fixupdict={}):
                 res['result'] = fixupdict[res['result']]
             if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
                 logging.error('Bad test result: %s' % res['result'])
+                res['result'] = 'unknown'
 
     if 'test_case_id' not in res:
         logging.warning(
