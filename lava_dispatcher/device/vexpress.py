@@ -146,10 +146,10 @@ class VexpressTarget(MasterImageTarget):
 
         usb_device = self.config.vexpress_usb_mass_storage_device
 
-        self.context.run_command('mount %s %s' % (usb_device, mount_point))
+        self.context.run_command_with_retries('mount %s %s' % (usb_device, mount_point))
 
     def _umount_usbmsd(self, mount_point):
-        self.context.run_command('umount %s' % mount_point)
+        self.context.run_command_with_retries('umount %s' % mount_point)
 
     def _leave_mcc(self):
         self.proc.sendline("reboot")
@@ -161,12 +161,12 @@ class VexpressTarget(MasterImageTarget):
         # Ubuntu ones have it at ./*.bin
         #
         # --no-anchored matches the name inside any directory in the tarball.
-        self.context.run_command('tar --no-anchored -xaf %s -C %s %s' % (tarball, tmpdir,
-                                                                         uefi_on_image))
+        self.context.run_command_with_retries('tar --no-anchored -xaf %s -C %s %s' % (tarball, tmpdir,
+                                                                                      uefi_on_image))
 
         uefi_on_image = os.path.join(tmpdir, uefi_on_image)
         test_uefi = os.path.join(tmpdir, 'uefi.bin')
-        self.context.run_command('mv %s %s' % (uefi_on_image, test_uefi))
+        self.context.run_command_with_retries('mv %s %s' % (uefi_on_image, test_uefi))
 
         self.test_uefi = test_uefi
 
@@ -178,18 +178,18 @@ class VexpressTarget(MasterImageTarget):
 
         if os.path.exists(uefi_backup):
             # restore the uefi backup
-            self.context.run_command('cp %s %s' % (uefi_backup, uefi))
+            self.context.run_command_with_retries('cp %s %s' % (uefi_backup, uefi))
         else:
             # no existing backup yet means that this is the first time ever;
             # the uefi in there is the good one, and we backup it up.
-            self.context.run_command('cp %s %s' % (uefi, uefi_backup))
+            self.context.run_command_with_retries('cp %s %s' % (uefi, uefi_backup))
 
     def _install_test_uefi(self, mount_point):
         uefi_path = self.config.vexpress_uefi_path
         uefi = os.path.join(mount_point, uefi_path)
         # FIXME what if self.test_uefi is not set, or points to an unexisting
         # file?
-        self.context.run_command('cp %s %s' % (self.test_uefi, uefi))
+        self.context.run_command_with_retries('cp %s %s' % (self.test_uefi, uefi))
 
 
 target_class = VexpressTarget

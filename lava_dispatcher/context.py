@@ -25,12 +25,18 @@ import subprocess
 import sys
 import tempfile
 
+from time import sleep
+from subprocess import CalledProcessError
+
 from lava_dispatcher.config import get_device_config
 from lava_dispatcher.client.base import LavaClient
 from lava_dispatcher.test_data import LavaTestData
 from lava_dispatcher.utils import (
     logging_spawn,
     rmtree,
+)
+from lava_dispatcher.errors import (
+    CriticalError,
 )
 
 
@@ -146,6 +152,27 @@ class LavaContext(object):
         else:
             rc = subprocess.check_call(command, **output_args)
         return rc
+
+    def run_command_with_retries(self, command):
+        retries = 0
+        successful = False
+        error = None
+        num_retries = self.config.host_command_retries
+
+        while (retries < num_retries) and (not successful):
+            try:
+                self.run_command(command, failok=False)
+            except CalledProcessError as e:
+                error = e
+                retries += 1
+                sleep(1)
+                continue
+            successful = True
+
+        if not successful:
+            msg = "Failed to execute command '%s' on host (%s)" % (command, error)
+            logging.critical(msg)
+            raise CriticalError(msg)
 
     def run_command_get_output(self, command):
         """run command 'command' then return the command output"""
