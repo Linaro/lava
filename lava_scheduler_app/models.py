@@ -884,10 +884,10 @@ class TestJob(RestrictedResource):
             if parsed_server.hostname is None:
                 raise ValueError("invalid server: %s" % server)
 
-        tags = []
+        taglist = []
         for tag_name in job_data.get('device_tags', []):
             try:
-                tags.append(Tag.objects.get(name=tag_name))
+                taglist.append(Tag.objects.get(name=tag_name))
             except Tag.DoesNotExist:
                 raise JSONDataError("tag %r does not exist" % tag_name)
 
@@ -949,6 +949,8 @@ class TestJob(RestrictedResource):
                         target_group=target_group)
                     job.save()
                     job_list.append(sub_id)
+                    for tag in Tag.objects.filter(name__in=taglist):
+                        job.tags.add(tag)
                     child_id += 1
             return job_list
 
@@ -962,6 +964,8 @@ class TestJob(RestrictedResource):
                 health_check=health_check, user=user, group=group,
                 is_public=is_public, priority=priority)
             job.save()
+            for tag in Tag.objects.filter(name__in=taglist):
+                job.tags.add(tag)
             return job
 
     def _can_admin(self, user):
