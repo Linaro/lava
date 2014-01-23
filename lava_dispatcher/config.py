@@ -47,6 +47,7 @@ class DeviceSchema(schema.Schema):
     boot_part = schema.IntOption(fatal=True)
     boot_part_android_org = schema.IntOption()
     boot_retries = schema.IntOption(default=3)
+    host_command_retries = schema.IntOption(default=5)
     bootloader_prompt = schema.StringOption()
     send_char = schema.BoolOption(default=True)
     test_image_prompts = schema.ListOption(default=["\(initramfs\)",
