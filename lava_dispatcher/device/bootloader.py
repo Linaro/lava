@@ -60,6 +60,10 @@ class BootloaderTarget(MasterImageTarget):
         # This is the offset into the path, used to reference bootfiles
         self._offset = self.scratch_dir.index('images')
 
+    def _get_http_url(self, path):
+        prefix = 'http://' + self.context.config.lava_server_ip + '/'
+        return prefix + path
+
     def _is_uboot(self):
         if self._uboot_boot:
             return True
@@ -147,17 +151,27 @@ class BootloaderTarget(MasterImageTarget):
                 self._ipxe_boot = True
                 # We are not booted yet
                 self._booted = False
-                self._lava_cmds = "set kernel_url %s ; " % kernel + ","
+                kernel = download_image(kernel, self.context,
+                                        self.scratch_dir, decompress=False)
+                kernel_url = self._get_http_url(kernel[self._offset::])
+                self._lava_cmds = "set kernel_url %s ; " % kernel_url + ","
                 # We are booting a kernel with ipxe, need an initrd too
                 if ramdisk is not None:
                     # We have been passed a ramdisk
-                    self._lava_cmds += "set initrd_url %s ; " % ramdisk + ","
+                    ramdisk = download_image(ramdisk, self.context,
+                                             self.scratch_dir,
+                                             decompress=False)
+                    ramdisk_url = self._get_http_url(ramdisk[self._offset::])
+                    self._lava_cmds += "set initrd_url %s ; " % ramdisk_url + ","
                 else:
                     raise CriticalError("kernel but no ramdisk")
             elif rootfs is not None:
                 # We are booting an image, can be iso or whole disk
                 # no image argument passed yet - code for a rainy day
-                self._lava_cmds = "sanboot %s ; " % rootfs
+                rootfs = download_image(rootfs, self.context,
+                                        self.scratch_dir, decompress=False)
+                rootfs_url = self._get_http_url(rootfs[self._offset::])
+                self._lava_cmds = "sanboot %s ; " % rootfs_url
             else:
                 raise CriticalError("No kernel images to boot")
         else:
