@@ -310,34 +310,7 @@ class DatabaseJobSource(object):
             status=TestJob.SUBMITTED).order_by('-health_check', '-priority',
                                                'submit_time')
 
-        cancel_list = TestJob.objects.all().filter(status=TestJob.CANCELING)
-        # Pick up TestJob objects in Canceling and ensure that the cancel completes.
-        # call _kill_canceling to terminate any lava-dispatch calls
-        # Explicitly set a DeviceStatusTransition as jobs which are stuck in Canceling
-        #  may already have lost connection to the SchedulerMonitor via twisted.
-        # Call TestJob.cancel to reset the TestJob status
-        if len(cancel_list) > 0:
-            self.logger.debug("Number of jobs in cancelling status %d" % len(cancel_list))
-            configured_boards = [
-                x.hostname for x in dispatcher_config.get_devices()]
-            for job in cancel_list:
-                if job.actual_device and job.actual_device.hostname in configured_boards:
-                    self.logger.debug("Looking for pid of dispatch job %s in %s" % (job.id, job.output_dir))
-                    self._kill_canceling(job)
-                    device = Device.objects.get(hostname=job.actual_device.hostname)
-                    if device.status == Device.RUNNING:
-                        self.logger.debug("Transitioning %s to Idle" % device.hostname)
-                        device.current_job = None
-                        old_status = device.status
-                        device.status = Device.IDLE
-                        device.save()
-                        msg = "Cancelled job: %s from list" % job.id
-                        DeviceStateTransition.objects.create(
-                            created_by=None, device=device, old_state=old_status,
-                            new_state=device.status, message=msg, job=job).save()
-                    self.logger.debug('Marking job %s as cancelled on %s' % (job.id, job.actual_device))
-                    job.cancel()
-                    transaction.commit()
+        self._handle_cancelling_jobs()
 
         if utils.is_master():
             self.logger.debug("Boards assigned to jobs ...")
@@ -529,6 +502,36 @@ class DatabaseJobSource(object):
 
     def jobCheckForCancellation(self, board_name):
         return self.deferForDB(self.jobCheckForCancellation_impl, board_name)
+
+    def _handle_cancelling_jobs(self):
+        cancel_list = TestJob.objects.all().filter(status=TestJob.CANCELING)
+        # Pick up TestJob objects in Canceling and ensure that the cancel completes.
+        # call _kill_canceling to terminate any lava-dispatch calls
+        # Explicitly set a DeviceStatusTransition as jobs which are stuck in Canceling
+        #  may already have lost connection to the SchedulerMonitor via twisted.
+        # Call TestJob.cancel to reset the TestJob status
+        if len(cancel_list) > 0:
+            self.logger.debug("Number of jobs in cancelling status %d" % len(cancel_list))
+            configured_boards = [
+                x.hostname for x in dispatcher_config.get_devices()]
+            for job in cancel_list:
+                if job.actual_device and job.actual_device.hostname in configured_boards:
+                    self.logger.debug("Looking for pid of dispatch job %s in %s" % (job.id, job.output_dir))
+                    self._kill_canceling(job)
+                    device = Device.objects.get(hostname=job.actual_device.hostname)
+                    if device.status == Device.RUNNING:
+                        self.logger.debug("Transitioning %s to Idle" % device.hostname)
+                        device.current_job = None
+                        old_status = device.status
+                        device.status = Device.IDLE
+                        device.save()
+                        msg = "Cancelled job: %s from list" % job.id
+                        DeviceStateTransition.objects.create(
+                            created_by=None, device=device, old_state=old_status,
+                            new_state=device.status, message=msg, job=job).save()
+                    self.logger.debug('Marking job %s as cancelled on %s' % (job.id, job.actual_device))
+                    job.cancel()
+                    transaction.commit()
 
 
 def _get_device_version(bundle):
