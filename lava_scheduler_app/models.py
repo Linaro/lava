@@ -404,6 +404,13 @@ class Device(RestrictedResource):
             return True
         return self.is_owned_by(user)
 
+    def state_transition_to(self, new_status, user=None, message=None, job=None):
+        DeviceStateTransition.objects.create(
+            created_by=user, device=self, old_state=self.status,
+            new_state=new_status, message=message, job=job).save()
+        self.status = new_status
+        self.save()
+
     def put_into_maintenance_mode(self, user, reason, notify=None):
         if self.status in [self.RESERVED, self.OFFLINING]:
             new_status = self.OFFLINING
@@ -415,47 +422,34 @@ class Device(RestrictedResource):
             new_status = self.OFFLINING
         else:
             new_status = self.OFFLINE
-        DeviceStateTransition.objects.create(
-            created_by=user, device=self, old_state=self.status,
-            new_state=new_status, message=reason, job=None).save()
-        self.status = new_status
         if self.health_status == Device.HEALTH_LOOPING:
             self.health_status = Device.HEALTH_UNKNOWN
-        self.save()
+        self.state_transision_to(new_status, user=user, message=reason)
 
     def put_into_online_mode(self, user, reason, skiphealthcheck=False):
         if self.status == Device.OFFLINING:
             new_status = self.RUNNING
         else:
             new_status = self.IDLE
-        DeviceStateTransition.objects.create(
-            created_by=user, device=self, old_state=self.status,
-            new_state=new_status, message=reason, job=None).save()
-        self.status = new_status
+
         if not skiphealthcheck:
             self.health_status = Device.HEALTH_UNKNOWN
-        self.save()
+
+        self.state_transition_to(new_status, user=user, message=reason)
 
     def put_into_looping_mode(self, user, reason):
         if self.status not in [Device.OFFLINE, Device.OFFLINING]:
             return
-        new_status = self.IDLE
-        DeviceStateTransition.objects.create(
-            created_by=user, device=self, old_state=self.status,
-            new_state=new_status, message=reason, job=None).save()
-        self.status = new_status
+
         self.health_status = Device.HEALTH_LOOPING
-        self.save()
+
+        self.state_transition_to(self.IDLE, user=user, message=reason)
 
     def cancel_reserved_status(self, user, reason):
         if self.status != Device.RESERVED:
             return
-        new_status = self.IDLE
-        DeviceStateTransition.objects.create(
-            created_by=user, device=self, old_state=self.status,
-            new_state=new_status, message=reason, job=None).save()
-        self.status = new_status
-        self.save()
+
+        self.state_transition_to(self.IDLE, user=user, message=reason)
 
     def too_long_since_last_heartbeat(self):
         """Calculates if the last_heartbeat is more than 180 seconds.
@@ -753,6 +747,14 @@ class TestJob(RestrictedResource):
 
     @classmethod
     def from_json_and_user(cls, json_data, user, health_check=False):
+        """
+        Contructs one or more TestJob objects from a JSON data and a submitting
+        user. Handles multinode jobs and creates one job for each target
+        device.
+
+        For single node jobs, returns the job object created. For multinode
+        jobs, returns an array of test objects.
+        """
         job_data = simplejson.loads(json_data)
         validate_job_data(job_data)
 
@@ -958,7 +960,7 @@ class TestJob(RestrictedResource):
                         is_public=is_public, priority=priority,
                         target_group=target_group)
                     job.save()
-                    job_list.append(sub_id)
+                    job_list.append(job)
                     for tag in Tag.objects.filter(name__in=taglist):
                         job.tags.add(tag)
                     child_id += 1
@@ -1100,6 +1102,15 @@ class TestJob(RestrictedResource):
             return self.original_definition
         else:
             return self.definition
+
+    @property
+    def is_ready_to_start(self):
+        def ready(job):
+            return job.status == TestJob.SUBMITTED and job.actual_device is not None
+        if self.is_multinode:
+            return all(map(ready, self.sub_jobs_list))
+        else:
+            return ready(self)
 
 
 class DeviceStateTransition(models.Model):

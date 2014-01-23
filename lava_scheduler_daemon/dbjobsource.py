@@ -27,7 +27,6 @@ import lava_dispatcher.config as dispatcher_config
 
 from lava_scheduler_app.models import (
     Device,
-    DeviceStateTransition,
     JSONDataError,
     TestJob)
 from lava_scheduler_app import utils
@@ -43,6 +42,15 @@ except ImportError:
 
     class OperationalError(Exception):
         pass
+
+
+def find_device_for_job(job, device_list):
+    for dev in device_list:
+        if job.requested_device == dev.hostname or \
+           job.requested_device_type == dev.device_type:
+            if dev.can_submit(job.submitter):
+                return dev
+    return None
 
 
 class DatabaseJobSource(object):
@@ -96,18 +104,16 @@ class DatabaseJobSource(object):
                 transaction.leave_transaction_management()
         return self.deferToThread(wrapper, *args, **kw)
 
-    def _get_health_check_jobs(self):
-        """Gets the list of devices and checks which are the devices that
-        require health check.
-
-        Returns JOB_LIST which is a list of health check jobs. If no health
-        check jobs are available returns an empty list.
+    def _submit_health_check_jobs(self):
         """
-        job_list = []
+        Checks which devices need a health check job and submits the needed
+        health checks.
+        """
 
         for device in Device.objects.all():
             if device.status != Device.IDLE:
                 continue
+            run_health_check = False
             if not device.device_type.health_check_job:
                 run_health_check = False
             elif device.health_status == Device.HEALTH_UNKNOWN:
@@ -119,151 +125,70 @@ class DatabaseJobSource(object):
             else:
                 run_health_check = device.last_health_report_job.end_time < \
                     datetime.datetime.now() - datetime.timedelta(days=1)
+
             if run_health_check:
-                if not device.get_existing_health_check_job():
-                    job = device.initiate_health_check_job()
-                    job_list.append(job)
-        return job_list
+                device.initiate_health_check_job()
 
-    def _fix_device(self, device, job):
-        """Associate an available/idle DEVICE to the given JOB.
-
-        If the MultiNode job is waiting as Submitted, the device
-        could be running a different job.
-        Returns the job with actual_device set to DEVICE.
-
-        If we are unable to grab the DEVICE then we return None.
+    def _get_job_queue(self):
         """
-        # prevent the device getting two different jobs at the same time
-        if job.actual_device or device.status == Device.RUNNING or device.current_job:
-            return None
-        msg = "Reserving device for job: %s" % job.id
-        DeviceStateTransition.objects.create(
-            created_by=None, device=device, old_state=device.status,
-            new_state=Device.RESERVED, message=msg, job=job).save()
-        device.status = Device.RESERVED
-        device.current_job = job
-        try:
-            # The unique constraint on current_job may cause this to
-            # fail in the case of concurrent requests for different
-            # boards grabbing the same job.  If there are concurrent
-            # requests for the *same* board they may both return the
-            # same job -- this is an application level bug though.
-            device.save()
-        except IntegrityError:
-            self.logger.info(
-                "job %s has been assigned to another board -- rolling back",
-                job.id)
-            transaction.rollback()
-            return None
-        else:
-            job.actual_device = device
-            job.log_file.save(
-                'job-%s.log' % job.id, ContentFile(''), save=False)
-            job.submit_token = AuthToken.objects.create(user=job.submitter)
-            job.definition = simplejson.dumps(self._get_json_data(job),
-                                              sort_keys=True,
-                                              indent=4 * ' ')
-            job.save()
-            transaction.commit()
-        return job
+        Order of precedence:
 
-    def _delay_multinode_scheduling(self, job_list):
-        """Remove scheduling multinode jobs until all the jobs in the
-        target_group are assigned devices.
+        * health checks
+        * multinode jobs, sorted by group name then by submit time (but not
+          priority). This is important to avoid deadlocks. Once a multinode job
+          got into the queue in a given position, no other multinode job can
+          get in the queue before it.
+          This ordering ensures that all sub-jobs of a multinode job will be
+          contiguously placed in the queue.
+        * all the rest of the jobs, sorted by priority and submission time
         """
-        final_job_list = copy.deepcopy(job_list)
-        for job in job_list:
-            if job.is_multinode:
-                multinode_jobs = TestJob.objects.all().filter(
-                    target_group=job.target_group)
 
-                jobs_with_device = 0
-                for multinode_job in multinode_jobs:
-                    if multinode_job.actual_device:
-                        jobs_with_device += 1
+        jobs = TestJob.objects.filter(status=TestJob.SUBMITTED)
+        jobs = jobs.filter(actual_device=None)
+        jobs = jobs.order_by('-health_check', '-priority', 'submit_time')
 
-                if len(multinode_jobs) != jobs_with_device:
-                    for m_job in multinode_jobs:
-                        if m_job in final_job_list:
-                            final_job_list.remove(m_job)
+        jobs = list(jobs)  # force evaluation of the DB query
 
-        return final_job_list
+        health_check = filter(lambda job: job.health_check, jobs)
 
-    def _process_multinode_jobs(self, job):
-        job_list = []
-        if job.is_multinode:
-            multinode_jobs = TestJob.objects.all().filter(
-                target_group=job.target_group)
-            for multinode_job in multinode_jobs:
-                devices = []
-                self.logger.debug("Checking devices of requested type %s owned by %s" %
-                                  (multinode_job.requested_device_type, multinode_job.submitter.username))
-                device_list = Device.objects.all().filter(
-                    device_type=multinode_job.requested_device_type,
-                    status=Device.IDLE, is_public=False)
-                for d in device_list:
-                    if d.can_submit(multinode_job.submitter):
-                        devices.append(d)
-                if len(devices) == 0:
-                    self.logger.debug("Checking public devices of requested type %s" %
-                                      multinode_job.requested_device_type)
-                    devices = Device.objects.all().filter(
-                        device_type=multinode_job.requested_device_type,
-                        status=Device.IDLE, is_public=True)
-                if len(devices) > 0:
-                    f_job = self._fix_device(devices[0], multinode_job)
-                    if f_job:
-                        job_list.append(f_job)
+        multinode = filter(lambda job: job.is_multinode, jobs)
+        by_multinode_group = lambda job: job.target_group
+        by_submit_time = lambda job: job.submit_time
+        multinode = sorted(multinode, key=by_multinode_group)
+        multinode = sorted(multinode, key=by_submit_time)
 
-        return job_list
+        def regular_job(job):
+            return not job.health_check and not job.is_multinode
+        others = filter(regular_job, jobs)
 
-    def _assign_jobs(self, jobs):
-        job_list = self._get_health_check_jobs()
-        devices = []
+        return health_check + multinode + others
 
+    def _get_available_devices(self):
+        """
+        A list of idle devices, with private devices first.
+
+        This order is used so that a job submitted by John Doe will prefer
+        using John Doe's private devices over using public devices that could
+        be available for other users who don't have their own.
+        """
+        devices = Device.objects.filter(status=Device.IDLE)
+        devices = devices.order_by('is_public')
+
+        return devices
+
+    def _assign_jobs(self):
+        jobs = self._get_job_queue()
+        devices = list(self._get_available_devices())
         for job in jobs:
-            if job.is_multinode and not job.actual_device:
-                job_list = job_list + self._process_multinode_jobs(job)
-            else:
-                if job.actual_device:
-                    job_list.append(job)
-                elif job.requested_device:
-                    self.logger.debug("Checking if requested device %s is owned by %s" %
-                                     (job.requested_device.hostname, job.submitter.username))
-                    device_list = Device.objects.all().filter(
-                        hostname=job.requested_device.hostname,
-                        status=Device.IDLE)
-                    for d in device_list:
-                        if d.can_submit(job.submitter):
-                            devices.append(d)
-                elif job.requested_device_type:
-                    self.logger.debug("Checking devices of requested type %s owned by %s" %
-                                      (job.requested_device_type, job.submitter.username))
-                    self.logger.debug("Checking Requested Device Type")
-                    device_list = Device.objects.all().filter(
-                        device_type=job.requested_device_type,
-                        status=Device.IDLE, is_public=False)
-                    for d in device_list:
-                        if d.can_submit(job.submitter):
-                            devices.append(d)
-                    if len(devices) == 0:
-                        # only check public devices if no restricted devices are available.
-                        self.logger.debug("Checking public devices of requested type %s" %
-                                          job.requested_device_type)
-                        devices = list(Device.objects.all().filter(
-                            device_type=job.requested_device_type,
-                            status=Device.IDLE, is_public=True))
-                else:
-                    continue
-                if len(devices) > 0:
-                    for d in devices:
-                        if job:
-                            job = self._fix_device(d, job)
-                        if job:
-                            job_list.append(job)
-
-        return job_list
+            device = find_device_for_job(job, devices)
+            if device:
+                job.actual_device = device
+                job.submit_token = AuthToken.objects.create(user=job.submitter)
+                device.current_job = job
+                device.state_transition_to(Device.RESERVED)
+                job.save()
+                device.save()
+                devices.remove(device)
 
     def _kill_canceling(self, job):
         """
@@ -282,42 +207,37 @@ class DatabaseJobSource(object):
                     self.logger.info("Unable to kill process group %d: %s" % (pgid, e))
                     os.unlink(pidrecord)
 
-    def _device_heartbeat(self):
-        """LAST_HEARTBEAT and WORKER_HOSTNAME fields gets updated for each
-        configured device.
-        """
-        devices = Device.objects.all()
-        configured_boards = [
-            x.hostname for x in dispatcher_config.get_devices()]
-        for device in devices:
-            if device.hostname in configured_boards:
-                device.worker_hostname = socket.getfqdn()
-                device.last_heartbeat = datetime.datetime.utcnow()
-                device.save()
-                transaction.commit()
-                self.logger.debug("Heartbeat updated for %s ..." %
-                                  device.hostname)
-
-            # Update device status based on heartbeat timestamp
-            device.too_long_since_last_heartbeat()
-            transaction.commit()
-
     def getJobList_impl(self):
-        # FIXME the heartbeat is BROKEN so let's disable it for now.
-        # self._device_heartbeat()
-
-        job_list = TestJob.objects.all().filter(
-            status=TestJob.SUBMITTED).order_by('-health_check', '-priority',
-                                               'submit_time')
-
+        """
+        This method is called in a loop by the scheduler daemon service.
+        It's goal is to return a list of jobs that are ready to be started.
+        """
         self._handle_cancelling_jobs()
 
         if utils.is_master():
-            self.logger.debug("Boards assigned to jobs ...")
-            job_list = self._assign_jobs(job_list)
+            self._submit_health_check_jobs()
+            self._assign_jobs()
 
-        self.logger.debug("Job list returned ...")
-        return self._delay_multinode_scheduling([job for job in job_list])
+        submitted_jobs = TestJob.objects.filter(status=TestJob.SUBMITTED)
+        ready_jobs = filter(lambda job: job.is_ready_to_start, submitted_jobs)
+        self._handle_ready_jobs(ready_jobs)
+        transaction.commit()
+        return ready_jobs
+
+    def _handle_ready_jobs(self, jobs):
+        for job in jobs:
+            job.status = TestJob.RUNNING
+
+            # need to set the device RUNNING if device was RESERVED
+            device = job.actual_device
+            if device.status == Device.RESERVED:
+                msg = "Job: %s" % job.id
+                device.state_transition_to(Device.RUNNING, message=msg, job=job)
+            device.save()
+            job.start_time = datetime.datetime.utcnow()
+            shutil.rmtree(job.output_dir, ignore_errors=True)
+            job.log_file.save('job-%s.log' % job.id, ContentFile(''), save=False)
+            job.save()
 
     def getJobList(self):
         return self.deferForDB(self.getJobList_impl)
@@ -343,73 +263,8 @@ class DatabaseJobSource(object):
         json_data['health_check'] = job.health_check
         return json_data
 
-    def _getHealthCheckJobForBoard(self, device):
-        job_json = device.device_type.health_check_job
-        if not job_json:
-            # This should never happen, it's a logic error.
-            self.logger.error(
-                "no job_json in getHealthCheckJobForBoard for %r", device)
-            device.put_into_maintenance_mode(
-                None, "no job_json in getHealthCheckJobForBoard")
-            return None
-        else:
-            user = User.objects.get(username='lava-health')
-            job_data = simplejson.loads(job_json)
-            job_data['target'] = device.hostname
-            job_json = simplejson.dumps(job_data)
-            try:
-                return TestJob.from_json_and_user(job_json, user, True)
-            except (JSONDataError, ValueError) as e:
-                self.logger.exception(
-                    "TestJob.from_json_and_user failed in _getHealthCheckJobForBoard")
-                device.put_into_maintenance_mode(
-                    None, "TestJob.from_json_and_user failed for health job: %s" % e)
-                return None
-
-    def _getJobFromQueue(self, device):
-        jobs_for_device = TestJob.objects.all().filter(
-            Q(requested_device=device)
-            | Q(requested_device_type=device.device_type),
-            status=TestJob.SUBMITTED)
-        jobs_for_device = jobs_for_device.extra(
-            select={
-                'is_targeted': 'requested_device_id is not NULL',
-            },
-            where=[
-                # In human language, this is saying "where the number of
-                # tags that are on the job but not on the device is 0"
-                '''(select count(*) from lava_scheduler_app_testjob_tags
-                     where testjob_id = lava_scheduler_app_testjob.id
-                       and tag_id not in (select tag_id
-                                            from lava_scheduler_app_device_tags
-                                           where device_id = '%s')) = 0'''
-                % device.hostname,
-            ],
-            order_by=['-is_targeted', '-priority', 'submit_time'])
-        jobs = jobs_for_device[:1]
-        if jobs:
-            return jobs[0]
-        else:
-            return None
-
     def getJobDetails_impl(self, job):
-        job.status = TestJob.RUNNING
-        # need to set the device RUNNING if device was RESERVED
-        if job.actual_device.status == Device.RESERVED:
-            msg = "Running job: %s" % job.id
-            DeviceStateTransition.objects.create(
-                created_by=None, device=job.actual_device, old_state=job.actual_device.status,
-                new_state=Device.RUNNING, message=msg, job=job).save()
-            job.actual_device.status = Device.RUNNING
-            job.actual_device.current_job = job
-            job.actual_device.save()
-        job.start_time = datetime.datetime.utcnow()
-        shutil.rmtree(job.output_dir, ignore_errors=True)
-        job.log_file.save('job-%s.log' % job.id, ContentFile(''), save=False)
-        job.save()
-        json_data = self._get_json_data(job)
-        transaction.commit()
-        return json_data
+        return self._get_json_data(job)
 
     def getJobDetails(self, job):
         return self.deferForDB(self.getJobDetails_impl, job)
@@ -426,16 +281,18 @@ class DatabaseJobSource(object):
         self.logger.debug('marking job as complete on %s', board_name)
         device = Device.objects.get(hostname=board_name)
         old_device_status = device.status
-        if device.status == Device.RUNNING:
-            device.status = Device.IDLE
-        elif device.status == Device.OFFLINING:
-            device.status = Device.OFFLINE
-        elif device.status == Device.RESERVED:
-            device.status = Device.IDLE
+        new_device_status = None
+
+        if old_device_status == Device.RUNNING:
+            new_device_status = Device.IDLE
+        elif old_device_status == Device.OFFLINING:
+            new_device_status = Device.OFFLINE
+        elif old_device_status == Device.RESERVED:
+            new_device_status = Device.IDLE
         else:
             self.logger.error(
                 "Unexpected device state in jobCompleted: %s" % device.status)
-            device.status = Device.IDLE
+            new_device_status = Device.IDLE
         job = device.current_job
         device.device_version = _get_device_version(job.results_bundle)
         device.current_job = None
@@ -451,9 +308,8 @@ class DatabaseJobSource(object):
                 "Unexpected job state in jobCompleted: %s" % job.status)
             job.status = TestJob.COMPLETE
         msg = "Job: %s completed" % job.id
-        DeviceStateTransition.objects.create(
-            created_by=None, device=device, old_state=old_device_status,
-            new_state=device.status, message=msg, job=job).save()
+
+        device.state_transition_to(new_device_status, message=msg, job=job)
 
         if job.health_check:
             device.last_health_report_job = job
@@ -522,13 +378,9 @@ class DatabaseJobSource(object):
                     if device.status == Device.RUNNING:
                         self.logger.debug("Transitioning %s to Idle" % device.hostname)
                         device.current_job = None
-                        old_status = device.status
-                        device.status = Device.IDLE
-                        device.save()
                         msg = "Cancelled job: %s from list" % job.id
-                        DeviceStateTransition.objects.create(
-                            created_by=None, device=device, old_state=old_status,
-                            new_state=device.status, message=msg, job=job).save()
+                        device.state_transition_to(Device.IDLE, message=msg,
+                                                   job=job)
                     self.logger.debug('Marking job %s as cancelled on %s' % (job.id, job.actual_device))
                     job.cancel()
                     transaction.commit()
