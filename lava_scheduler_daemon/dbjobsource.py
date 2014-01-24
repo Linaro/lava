@@ -120,7 +120,11 @@ class DatabaseJobSource(object):
                 run_health_check = device.last_health_report_job.end_time < \
                     datetime.datetime.now() - datetime.timedelta(days=1)
             if run_health_check:
-                job_list.append(self._getHealthCheckJobForBoard(device))
+                job = device.initiate_health_check_job()
+                if job:
+                    job.save()
+                    transaction.commit()
+                    job_list.append(job)
         return job_list
 
     def _fix_device(self, device, job):
