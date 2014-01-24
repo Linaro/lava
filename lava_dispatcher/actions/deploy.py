@@ -245,6 +245,7 @@ class cmd_dummy_deploy(BaseAction):
         'type': 'object',
         'properties': {
             'target_type': {'type': 'string', 'enum': ['ubuntu', 'oe', 'android', 'fedora']},
+            'role': {'type': 'string', 'optional': True},
         },
         'additionalProperties': False,
     }
