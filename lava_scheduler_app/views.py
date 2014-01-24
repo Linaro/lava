@@ -228,15 +228,7 @@ class DeviceTable(DataTablesTable):
     def render_device_type(self, record):
             return pklink(record.device_type)
 
-    hostname = TemplateColumn('''
-    {% if record.heartbeat %}
-    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
-          alt="{{ record.heartbeat }}" />
-    {% else %}
-    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
-          alt="{{ record.heartbeat }}" />
-    {% endif %}&nbsp;&nbsp;
-    <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
+    hostname = TemplateColumn('''<a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
         ''')
     worker_host = Column()
     device_type = Column()
