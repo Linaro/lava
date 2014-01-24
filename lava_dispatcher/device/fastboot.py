@@ -32,6 +32,7 @@ from lava_dispatcher.downloader import (
 from lava_dispatcher.utils import (
     mkdtemp,
     finalize_process,
+    connect_to_serial,
 )
 from lava_dispatcher.errors import (
     CriticalError
@@ -138,11 +139,12 @@ class FastbootTarget(Target):
 
         self.fastboot.enter()
         self.fastboot.boot(self.__boot_image__)
-        self._adb('wait-for-device')
 
         self._booted = True
-        self.proc = self._adb('shell', spawn=True)
+        self.proc = connect_to_serial(self.context)
         self._auto_login(self.proc)
+        self._wait_for_prompt(self.proc, self.config.test_image_prompts,
+                              self.config.boot_linaro_timeout)
         self.proc.sendline("")  # required to put the adb shell in a reasonable state
         self.proc.sendline("export PS1='%s'" % self.tester_ps1)
 
