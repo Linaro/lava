@@ -431,8 +431,8 @@ def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
             else:
 
                 image_chart_test_cases = TestCase.objects.filter(
-                    imagecharttestcase__image_chart_filter=
-                    chart_filter).order_by('id')
+                    imagecharttestcase__image_chart_filter=chart_filter
+                ).order_by('id')
 
                 test_cases = form.cleaned_data['image_chart_test_cases']
 

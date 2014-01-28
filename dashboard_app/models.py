@@ -1828,8 +1828,7 @@ def send_image_report_notifications(sender, bundle):
                 if chart_user.image_chart.chart_type == "pass/fail":
                     runs = TestRun.objects.filter(
                         bundle=bundle,
-                        imagecharttest__image_chart_filter__image_chart=
-                        chart_user.image_chart)
+                        imagecharttest__image_chart_filter__image_chart=chart_user.image_chart)
                     for run in runs:
                         denorm = runs.denormalization
                         if denorm.count_pass < target_goal:
@@ -1838,8 +1837,7 @@ def send_image_report_notifications(sender, bundle):
                 else:
                     results = TestResult.objects.filter(
                         test_run__bundle=bundle,
-                        imagecharttestcase__image_chart_filter__image_chart=
-                        chart_user.image_chart)
+                        imagecharttestcase__image_chart_filter__image_chart=chart_user.image_chart)
                     for result in results:
                         if result.measurement < \
                                 chart_user.image_chart.target_goal:
