@@ -9,6 +9,7 @@ function _resize() {
     scroller.width(scroller.width() + space);
     if (atRight) scroller.scrollLeft(table.attr('scrollWidth'));
 }
+
 function _fixRowHeights () {
     var index = 0;
     var nameRows = $("#test-run-names > tbody > tr");
@@ -136,33 +137,32 @@ function update_table(column_data, table_data, test_run_names) {
     result_table_body += "</tr>";
 
     for (cnt in test_run_names) {
-	test = test_run_names[cnt];
-	if ($("#test_select").val().indexOf(test) >= 0) {
-	    result_table_body += "<tr>";
-	    row = table_data[test];
+        test = test_run_names[cnt];
+        if ($("#test_select").val().indexOf(test) >= 0) {
+            result_table_body += "<tr>";
+            row = table_data[test];
 
-	    for (iter in row) {
+            for (iter in row) {
+                if (test_build_number(column_data, iter)) {
+                    result_table_body += '<td class="' + row[iter]["cls"] + '" data-uuid="' + row[iter]["uuid"] + '">';
+                    if (row[iter]["uuid"]) {
+                        result_table_body += '<a href="' + row[iter]["link"] + '">' + row[iter]["passes"] + '/' + row[iter]["total"] + '</a>';
+                        result_table_body += '&nbsp;&nbsp;<a href="#" class="add-bug-link"><img src="'+image_url+'icon-bug-link.png" width="16" height="16">[' + row[iter]["bug_links"].length + ']</a>';
+                        result_table_body += '<span class="bug-links" style="display: none">';
+                        for (bug_link in row[iter]["bug_links"]) {
+                            bug = row[iter]["bug_links"];
+                            result_table_body += '<li class="bug-link">' + bug[bug_link] + '</li>';
+                        }
+                        result_table_body += '</span>';
 
-		if (test_build_number(column_data, iter)) {
-		    result_table_body += '<td class="' + row[iter]["cls"] + '" data-uuid="' + row[iter]["uuid"] + '">';
-		    if (row[iter]["uuid"]) {
-			result_table_body += '<a href="' + row[iter]["link"] + '">' + row[iter]["passes"] + '/' + row[iter]["total"] + '</a>';
-			result_table_body += '<span class="bug-links">';
-			for (bug_id in row[iter]["bug_ids"]) {
-			    bug = row[iter]["bug_ids"];
-			    result_table_body += '<a class="bug-link" href="https://bugs.launchpad.net/bugs/' + bug[bug_id] + '" data-bug-id="' + bug[bug_id] + '">[' + bug[bug_id] + ']</a>';
-			}
-			result_table_body += '<a href="#" class="add-bug-link">[+]</a>';
-			result_table_body += '</span>';
-
-		    } else {
-			result_table_body += "&mdash;";
-		    }
-		    result_table_body += "</td>";
-		}
-	    }
-	    result_table_body += "</tr>";
-	}
+                    } else {
+                        result_table_body += "&mdash;";
+                    }
+                    result_table_body += "</td>";
+                }
+            }
+            result_table_body += "</tr>";
+        }
     }
 
     $("#results-table tbody").html(result_table_body);
@@ -396,6 +396,11 @@ function isNumeric(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
+function isValidUrl(url)
+{
+    return url.match(/^https?:\/\/[a-z0-9-\.]+\.[a-z]{2,4}\/?([^\s<>\#%"\,\{\}\\|\\\^\[\]`]+)?$/);
+}
+
 function format_date(date_string) {
     date = $.datepicker.parseDate("yy-mm-dd", date_string);
     date_string = $.datepicker.formatDate("M d, yy", date);
@@ -407,17 +412,11 @@ function add_bug_links() {
     function _submit() {
         $(this).submit();
     }
+
     var add_bug_dialog = $('#add-bug-dialog').dialog(
         {
             autoOpen: false,
             buttons: {'Cancel': function () {$(this).dialog('close');}, 'OK': _submit },
-            modal: true,
-            title: "Link bug to XXX"
-        });
-    var go_to_bug_dialog = $("#go-to-bug-dialog").dialog(
-        {
-            autoOpen: false,
-            buttons: {'Cancel': function () {$(this).dialog('close');}, 'Remove link': _submit},
             modal: true,
             title: "Link bug to XXX"
         });
@@ -437,21 +436,34 @@ function add_bug_links() {
         var start = td;
         while ((td = td.prev()) && td.size()) {
             td.find(".bug-link").each(
-                function (index, link) {
-                    var bug_id = $(link).data('bug-id');
-                    if (bugs.indexOf(bug_id) < 0) bugs.push(bug_id);
+                function () {
+                    var bug_link = $(this).text();
+                    if (bugs.indexOf(bug_link) < 0) bugs.push(bug_link);
                 });
         }
         var already_linked = [];
         start.find(".bug-link").each(
-            function (index, link) {
-                var bug_id = $(link).data('bug-id');
-                if (bugs.indexOf(bug_id) >= 0) {
-                    bugs.splice(bugs.indexOf(bug_id), 1);
-                    already_linked.push(bug_id);
+            function () {
+                var bug_link = $(this).text();
+                if (bugs.indexOf(bug_link) >= 0) {
+                    bugs.splice(bugs.indexOf(bug_link), 1);
+                    already_linked.push(bug_link);
                 }
             });
         return {bugs:bugs, already_linked:already_linked};
+    }
+
+    function get_linked_bugs (element) {
+        var start = $(element).closest('td');
+        var bugs = [];
+
+        start.find(".bug-link").each(
+            function () {
+                var bug_link = $(this).text();
+                bugs.push(bug_link);
+            }
+        )
+        return bugs;
     }
 
     $('a.add-bug-link').click(
@@ -460,27 +472,70 @@ function add_bug_links() {
 
             var previous = find_previous_bugs($(this));
             var prev_div = add_bug_dialog.find('div.prev');
+            var linked_div = add_bug_dialog.find('div.linked');
             var names = get_testrun_and_buildnumber($(this));
+            var uuid = $(this).closest('td').data('uuid');
+
+            current_bug = get_linked_bugs($(this));
+            add_bug_dialog.find('input[name=bug_link]').val('');
+
+            if(current_bug.length) {
+                var html = '<b>Bug(s) linked to ' + names.testrun + ':</b><table width="95%" border="0">';
+                linked_div.show();
+                for (bug in current_bug) {
+                    html += '<tr>';
+                    html += '<td><a id="linked-bug" href="#">' + current_bug[bug] + '</a></td>';
+                    html += '<td width="16"><a id="unlink-bug" href="#" data-bug-link="' + current_bug[bug] + '"><img src="'+image_url+'icon-bug-delete.png" width="16" height="16" title="Unlink this bug"></a></td></tr>';
+                }
+                html += '</table><hr>';
+                linked_div.html(html);
+                $('a#linked-bug').click(
+                    function (e) {
+                        e.preventDefault();
+                        window.open($(this).text());
+                    }
+                );
+                $('a#unlink-bug').click(
+                    function (e) {
+                        var bug = $(this).data('bug-link');
+
+                        e.preventDefault();
+                        if(confirm("Unlink '" + bug + "'")) {
+                            // unlink bug right now, so clear current_bug which is used for checking if the bug is duplicated when adding a bug
+                            current_bug = [];
+                            $('#add-bug-dialog').attr('action', del_bug_url);
+                            add_bug_dialog.find('input[name=bug_link]').val(bug);
+                            add_bug_dialog.find('input[name=uuid]').val(uuid);
+                            add_bug_dialog.submit();
+                        }
+                    }
+                );
+            } else {
+                linked_div.hide();
+            }
 
             if (previous.bugs.length) {
                 var html = '';
                 prev_div.show();
-                html = '<p>Use a bug previously linked to ' + names.testrun + ':</p><ul>';
+                html = '<b>Use a bug previously linked to ' + names.testrun + ':</b><table width="95%">';
                 for (var i = 0; i < previous.already_linked.length; i++) {
-                    html += '<li><span style="text-decoration: line-through">' + previous.already_linked[i] + '</span> (already linked)</li>';
+                    html += '<tr><td style="text-decoration: line-through">' + previous.already_linked[i] + '</td><td><img src="'+image_url+'icon-bug-link.png" width="16" height="16" title="This bug already linked"></td></tr>';
                 }
                 for (var i = 0; i < previous.bugs.length; i++) {
-                    html += '<li><a href="#" data-bug-id="' + previous.bugs[i] + '">' +
-                        previous.bugs[i] + '</a></li>';
+                    html += '<tr><td>' + previous.bugs[i] + '</td><td width="16"><a href="#" data-bug-link="' + previous.bugs[i] + '"><img src="'+image_url+'icon-bug-add.png" width="16" height="16" title="Link this bug"></a></td></tr>';
                 }
-                html += '</ul>';
-                html += "<p>Or enter another bug number:</p>";
+				html += '</table><hr>';
+                html += "<b>Or enter another bug link:</b>";
                 prev_div.html(html);
                 prev_div.find('a').click(
                     function (e) {
+                        var bug = $(this).data('bug-link');
+
                         e.preventDefault();
-                        add_bug_dialog.find('input[name=bug]').val($(this).data('bug-id'));
-                        add_bug_dialog.submit();
+                        if (confirm("Link '" + bug + "' to the '" + names.testrun + "' run of build" + names.buildnumber)) {
+                            add_bug_dialog.find('input[name=bug_link]').val(bug);
+                            add_bug_dialog.submit();
+                        }
                     });
             } else {
                 prev_div.hide();
@@ -488,23 +543,9 @@ function add_bug_links() {
 
             var title = "Link a bug to the '" + names.testrun +
                 "' run of build " + names.buildnumber;
-            add_bug_dialog.find('input[name=uuid]').val($(this).closest('td').data('uuid'));
+            add_bug_dialog.find('input[name=uuid]').val(uuid);
             add_bug_dialog.dialog('option', 'title', title);
             add_bug_dialog.dialog('open');
-        });
-
-    $("a.bug-link").click(
-        function (e) {
-            e.preventDefault();
-            var names = get_testrun_and_buildnumber($(this));
-            var title = "Bug linked to the '" + names.testrun +
-                "' run of build " + names.buildnumber;
-            go_to_bug_dialog.find('input[name=uuid]').val($(this).closest('td').data('uuid'));
-            go_to_bug_dialog.find('input[name=bug]').val($(this).data('bug-id'));
-            go_to_bug_dialog.find('a').attr('href', $(this).attr('href'));
-            go_to_bug_dialog.find('a').text('View bug ' + $(this).data('bug-id'));
-            go_to_bug_dialog.dialog('option', 'title', title);
-            go_to_bug_dialog.dialog('open');
         });
 }
 
@@ -522,9 +563,11 @@ $(window).ready(
 	if (!$("#toggle_graph").attr("checked")) {
 	    $("#outer-container").toggle();
 	}
+
     });
 // Because what resize does depends on the final sizes of elements,
 // run it again after everything is loaded (things end up wrong in
 // chromium if you don't do this).
 $(window).load(_resize);
 $(window).load(_fixRowHeights);
+

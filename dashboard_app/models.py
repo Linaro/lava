@@ -1566,14 +1566,18 @@ class ImageSet(models.Model):
         return self.name
 
 
-class LaunchpadBug(models.Model):
+class BugLink(models.Model):
 
-    bug_id = models.PositiveIntegerField(unique=True)
+    bug_link = models.CharField(
+        verbose_name=_(u"Bug Link"),
+        max_length=1024,
+        blank=True,
+        help_text=_help_max_length(1024))
 
-    test_runs = models.ManyToManyField(TestRun, related_name='launchpad_bugs')
+    test_runs = models.ManyToManyField(TestRun, related_name='bug_links')
 
     def __unicode__(self):
-        return unicode(self.bug_id)
+        return unicode(self.bug_link)
 
 
 @receiver(post_delete)
@@ -2097,8 +2101,8 @@ class ImageReportChart(models.Model):
             for test_run in match.test_runs:
 
                 denorm = test_run.denormalization
-                bug_ids = sorted(
-                    [b.bug_id for b in test_run.launchpad_bugs.all()])
+                bug_links = sorted(
+                    [b.bug_link for b in test_run.bug_links.all()])
 
                 alias = ImageChartTest.objects.get(
                     image_chart_filter=image_chart_filter,
@@ -2120,6 +2124,7 @@ class ImageReportChart(models.Model):
                     "pass": denorm.count_fail == 0,
                     "passes": denorm.count_pass,
                     "total": denorm.count_pass + denorm.count_fail,
+                    "bug_links": bug_links,
                 }
 
                 chart_data["test_data"].append(chart_item)

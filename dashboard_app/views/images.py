@@ -29,7 +29,7 @@ from lava_server.bread_crumbs import (
 
 from dashboard_app.filters import evaluate_filter
 from dashboard_app.models import (
-    LaunchpadBug,
+    BugLink,
     Image,
     ImageSet,
     TestRun,
@@ -74,7 +74,7 @@ def image_report_detail(request, name):
 
     image = Image.objects.get(name=name)
     filter_data = image.filter.as_data()
-    matches = evaluate_filter(request.user, filter_data, prefetch_related=['launchpad_bugs', 'test_results'])[:50]
+    matches = evaluate_filter(request.user, filter_data, prefetch_related=['bug_links', 'test_results'])[:50]
 
     build_number_to_cols = {}
 
@@ -88,7 +88,7 @@ def image_report_detail(request, name):
                 cls = 'present pass'
             else:
                     cls = 'present fail'
-            bug_ids = sorted([b.bug_id for b in test_run.launchpad_bugs.all()])
+            bug_links = sorted([b.bug_link for b in test_run.bug_links.all()])
 
             measurements = [{'measurement': str(item.measurement)}
                             for item in test_run.test_results.all()]
@@ -100,7 +100,7 @@ def image_report_detail(request, name):
                 passes=denorm.count_pass,
                 total=denorm.count_pass + denorm.count_fail,
                 link=test_run.get_permalink(),
-                bug_ids=bug_ids,
+                bug_links=bug_links,
                 measurements=measurements,
             )
             if (match.tag, test_run.bundle.uploaded_on) not in build_number_to_cols:
@@ -147,9 +147,9 @@ def image_report_detail(request, name):
 @require_POST
 def link_bug_to_testrun(request):
     testrun = get_object_or_404(TestRun, analyzer_assigned_uuid=request.POST['uuid'])
-    bug_id = request.POST['bug']
-    lpbug = LaunchpadBug.objects.get_or_create(bug_id=int(bug_id))[0]
-    testrun.launchpad_bugs.add(lpbug)
+    bug_link = request.POST['bug_link']
+    bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
+    testrun.bug_links.add(bug)
     testrun.save()
     return HttpResponseRedirect(request.POST['back'])
 
@@ -157,8 +157,8 @@ def link_bug_to_testrun(request):
 @require_POST
 def unlink_bug_and_testrun(request):
     testrun = get_object_or_404(TestRun, analyzer_assigned_uuid=request.POST['uuid'])
-    bug_id = request.POST['bug']
-    lpbug = LaunchpadBug.objects.get_or_create(bug_id=int(bug_id))[0]
-    testrun.launchpad_bugs.remove(lpbug)
+    bug_link = request.POST['bug_link']
+    bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
+    testrun.bug_links.remove(bug)
     testrun.save()
     return HttpResponseRedirect(request.POST['back'])

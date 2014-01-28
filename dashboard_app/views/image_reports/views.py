@@ -178,10 +178,13 @@ def image_report_display(request, name):
     for chart in image_report.imagereportchart_set.all():
         chart_data[chart.id] = chart.get_chart_data(request.user)
 
+    bug_links_chart_id = request.GET.get('bug_links_chart_id', '')
+
     return render_to_response(
         'dashboard_app/image_report_display.html', {
             'image_report': image_report,
             'chart_data': simplejson.dumps(chart_data),
+            'bug_links_chart_id': bug_links_chart_id,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 image_report_detail, name=name),
         }, RequestContext(request)
