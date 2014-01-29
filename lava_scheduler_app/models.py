@@ -359,7 +359,10 @@ class Device(RestrictedResource):
                 'Cannot be owned by a user and a group at the same time')
 
     def __unicode__(self):
-        return self.hostname
+        r = self.hostname
+        r += " (%s, health %s)" % (self.get_status_display(),
+                                   self.get_health_status_display())
+        return r
 
     @models.permalink
     def get_absolute_url(self):
@@ -732,9 +735,16 @@ class TestJob(RestrictedResource):
             return None
 
     def __unicode__(self):
-        r = "%s test job" % self.get_status_display()
-        if self.requested_device:
-            r += " for %s" % (self.requested_device.hostname,)
+        job_type = self.health_check and 'health check' or 'test'
+        r = "%s %s job" % (self.get_status_display(), job_type)
+        if self.actual_device:
+            r += " on %s" % (self.actual_device.hostname)
+        else:
+            if self.requested_device:
+                r += " for %s" % (self.requested_device.hostname)
+            if self.requested_device_type:
+                r += " for %s" % (self.requested_device_type.name)
+        r += " (%d)" % (self.id)
         return r
 
     @models.permalink
