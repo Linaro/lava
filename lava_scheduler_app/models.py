@@ -984,8 +984,7 @@ class TestJob(RestrictedResource):
         """
         owner = False
         if self.actual_device is not None:
-            device = Device.objects.get(hostname=self.actual_device)
-            owner = device.can_admin(user)
+            owner = self.actual_device.can_admin(user)
         return (user.is_superuser or user == self.submitter or owner or
                 user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
 
