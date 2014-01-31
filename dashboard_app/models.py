@@ -1828,8 +1828,7 @@ def send_image_report_notifications(sender, bundle):
                 if chart_user.image_chart.chart_type == "pass/fail":
                     runs = TestRun.objects.filter(
                         bundle=bundle,
-                        imagecharttest__image_chart_filter__image_chart=
-                        chart_user.image_chart)
+                        imagecharttest__image_chart_filter__image_chart=chart_user.image_chart)
                     for run in runs:
                         denorm = runs.denormalization
                         if denorm.count_pass < target_goal:
@@ -1838,8 +1837,7 @@ def send_image_report_notifications(sender, bundle):
                 else:
                     results = TestResult.objects.filter(
                         test_run__bundle=bundle,
-                        imagecharttestcase__image_chart_filter__image_chart=
-                        chart_user.image_chart)
+                        imagecharttestcase__image_chart_filter__image_chart=chart_user.image_chart)
                     for result in results:
                         if result.measurement < \
                                 chart_user.image_chart.target_goal:
@@ -2122,9 +2120,14 @@ class ImageReportChart(models.Model):
         for match in matches:
             for test_result in match.specific_results:
 
-                alias = ImageChartTestCase.objects.get(
-                    image_chart_filter=image_chart_filter,
-                    test_case=test_result.test_case).name
+                try:
+                    alias = ImageChartTestCase.objects.get(
+                        image_chart_filter=image_chart_filter,
+                        test_case=test_result.test_case).name
+                except ImageChartTestCase.DoesNotExist:
+                    # Set alias to None.
+                    alias = None
+
                 if not alias:
                     alias = "%s: %s: %s" % (
                         image_chart_filter.filter.name,

@@ -228,15 +228,7 @@ class DeviceTable(DataTablesTable):
     def render_device_type(self, record):
             return pklink(record.device_type)
 
-    hostname = TemplateColumn('''
-    {% if record.heartbeat %}
-    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
-          alt="{{ record.heartbeat }}" />
-    {% else %}
-    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
-          alt="{{ record.heartbeat }}" />
-    {% endif %}&nbsp;&nbsp;
-    <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
+    hostname = TemplateColumn('''<a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
         ''')
     worker_host = Column()
     device_type = Column()
@@ -728,7 +720,7 @@ def index_nodt_devices_json(request, pk):
 
 def device_type_jobs_json(request, pk):
     dt = get_object_or_404(DeviceType, pk=pk)
-    return JobTable.json(request, params=(dt,))
+    return DeviceTypeJobTable.json(request, params=(dt,))
 
 
 @BreadCrumb("Device Type {pk}", parent=index, needs=['pk'])
@@ -941,7 +933,7 @@ def health_job_list(request, pk):
                 'health_jobs', reverse(health_jobs_json, kwargs=dict(pk=pk)),
                 params=(device,)),
             'show_forcehealthcheck': device.can_admin(request.user) and
-            device.status not in [Device.RETIRED],
+            device.status not in [Device.RETIRED] and device.device_type.health_check_job != "",
             'can_admin': device.can_admin(request.user),
             'show_maintenance': device.can_admin(request.user) and
             device.status in [Device.IDLE, Device.RUNNING, Device.RESERVED],
@@ -1527,7 +1519,7 @@ def device_detail(request, pk):
                 'jobs', reverse(recent_jobs_json, kwargs=dict(pk=device.pk)),
                 params=(device,)),
             'show_forcehealthcheck': device.can_admin(request.user) and
-            device.status not in [Device.RETIRED],
+            device.status not in [Device.RETIRED] and device.device_type.health_check_job != "",
             'can_admin': device.can_admin(request.user),
             'show_maintenance': device.can_admin(request.user) and
             device.status in [Device.IDLE, Device.RUNNING, Device.RESERVED],

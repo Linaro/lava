@@ -359,7 +359,10 @@ class Device(RestrictedResource):
                 'Cannot be owned by a user and a group at the same time')
 
     def __unicode__(self):
-        return self.hostname
+        r = self.hostname
+        r += " (%s, health %s)" % (self.get_status_display(),
+                                   self.get_health_status_display())
+        return r
 
     @models.permalink
     def get_absolute_url(self):
@@ -732,9 +735,16 @@ class TestJob(RestrictedResource):
             return None
 
     def __unicode__(self):
-        r = "%s test job" % self.get_status_display()
-        if self.requested_device:
-            r += " for %s" % (self.requested_device.hostname,)
+        job_type = self.health_check and 'health check' or 'test'
+        r = "%s %s job" % (self.get_status_display(), job_type)
+        if self.actual_device:
+            r += " on %s" % (self.actual_device.hostname)
+        else:
+            if self.requested_device:
+                r += " for %s" % (self.requested_device.hostname)
+            if self.requested_device_type:
+                r += " for %s" % (self.requested_device_type.name)
+        r += " (%d)" % (self.id)
         return r
 
     @models.permalink
@@ -884,10 +894,10 @@ class TestJob(RestrictedResource):
             if parsed_server.hostname is None:
                 raise ValueError("invalid server: %s" % server)
 
-        tags = []
+        taglist = []
         for tag_name in job_data.get('device_tags', []):
             try:
-                tags.append(Tag.objects.get(name=tag_name))
+                taglist.append(Tag.objects.get(name=tag_name))
             except Tag.DoesNotExist:
                 raise JSONDataError("tag %r does not exist" % tag_name)
 
@@ -949,6 +959,8 @@ class TestJob(RestrictedResource):
                         target_group=target_group)
                     job.save()
                     job_list.append(sub_id)
+                    for tag in Tag.objects.filter(name__in=taglist):
+                        job.tags.add(tag)
                     child_id += 1
             return job_list
 
@@ -962,6 +974,8 @@ class TestJob(RestrictedResource):
                 health_check=health_check, user=user, group=group,
                 is_public=is_public, priority=priority)
             job.save()
+            for tag in Tag.objects.filter(name__in=taglist):
+                job.tags.add(tag)
             return job
 
     def _can_admin(self, user):
@@ -970,8 +984,7 @@ class TestJob(RestrictedResource):
         """
         owner = False
         if self.actual_device is not None:
-            device = Device.objects.get(hostname=self.actual_device)
-            owner = device.can_admin(user)
+            owner = self.actual_device.can_admin(user)
         return (user.is_superuser or user == self.submitter or owner or
                 user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
 

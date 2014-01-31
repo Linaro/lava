@@ -184,19 +184,26 @@ Bundle Stream Overview
 What is a Bundle Stream?
 ------------------------
 
-Bundle Stream is a way of organizing related results bundle. A bundle
-stream could be imagined as a folder within which all related result
-bundle will be stored. A bundle stream could be private or
-anonymous. Bundle Stream is used in job definition to instruct where
-the results from the job should be submitted.
+LAVA runs tests which produce results with multiple tests being run for
+each submitted job. The collection of results from any one submitted
+job is termed a Result Bundle. Each bundle can contain multiple sets
+of test results, as well as other information about the system where the
+testing was performed.
 
-A Result Bundle is a set of results submitted after a testing
-session. It contains multiple test runs, as well as other information
-about the system where the testing was performed.
+Within a single result bundle are the results of each test definition
+execution, termed a Test Run. Each Test Run is typically a single YAML
+file and is listed in the bundle via the description of the test
+definition. The individual id and result of a single test within a test
+run is called the Test Case, typically a single line in the YAML file.
+If the job ran across multiple devices, the bundle can include test
+runs from each device from that job.
 
-Test Run is the result from a single test definition execution. The
-individual id and result of a single test within a test run is called
-the Test Case.
+Result Bundles are uploaded to the server at the end of the test run
+into a Bundle Stream which is a way of organising related results
+bundles. A bundle stream could be imagined as a folder within which all
+related result bundle will be stored. A bundle stream could be private
+or anonymous. The name of the stream is specified in the job definition to
+determine where the result bundle from the job should be submitted.
 
 How to setup a Bundle Stream?
 -----------------------------

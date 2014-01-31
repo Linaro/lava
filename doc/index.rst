@@ -35,6 +35,7 @@ LAVA Test Developer Guide
    tftp-deploy.rst
    external_measurement.rst
    data-export.rst
+   lmp_test_guide.rst
 
 LAVA Administrator Guide
 ########################

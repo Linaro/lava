@@ -24,6 +24,7 @@ import csv
 import json
 import os
 import re
+import shutil
 import tempfile
 
 from django.contrib.auth.decorators import login_required
@@ -268,6 +269,17 @@ def bundle_list(request, pathname):
         RequestContext(request))
 
 
+def _remove_dir(path):
+    """ Removes directory @path. Doesn't raise exceptions. """
+    try:
+        # Delete directory.
+        shutil.rmtree(path)
+    except OSError as exception:
+        # Silent exception whatever happens. If it's unexisting dir, we don't
+        # care.
+        pass
+
+
 def bundle_list_export(request, pathname):
     # Create and serve the CSV file.
 
@@ -278,7 +290,7 @@ def bundle_list_export(request, pathname):
         pathname=pathname
     )
 
-    file_name = bundle_stream.name.replace(" ", "_")
+    file_name = bundle_stream.slug
     tmp_dir = tempfile.mkdtemp()
     file_path = os.path.join(tmp_dir, "%s.csv" % file_name)
 
@@ -306,17 +318,24 @@ def bundle_list_export(request, pathname):
         for bundle in bundle_stream.bundles.all():
             # Add results columns from summary results.
             bundle_dict = bundle.__dict__.copy()
-            bundle_dict.update(bundle.get_summary_results())
+            summary_results = bundle.get_summary_results()
+            if summary_results:
+                bundle_dict.update(summary_results)
+            else:
+                bundle_dict["pass"] = 0
+                bundle_dict["fail"] = 0
+                bundle_dict["total"] = 0
             bundle_dict["uploaded_by_id"] = User.objects.get(
                 pk=bundle.uploaded_by_id).username
             out.writerow(bundle_dict)
 
+    response = HttpResponse(mimetype='text/csv')
+    response['Content-Disposition'] = "attachment; filename=%s.csv" % file_name
     with open(file_path, 'r') as csv_file:
-        response = HttpResponse(mimetype='text/csv')
-        response['Content-Disposition'] = "attachment; filename=%s.csv" % \
-                                          file_name
         response.write(csv_file.read())
-        return response
+
+    _remove_dir(tmp_dir)
+    return response
 
 
 @BreadCrumb(
@@ -359,7 +378,7 @@ def bundle_export(request, pathname, content_sha1):
         request.user,
         content_sha1=content_sha1)
 
-    file_name = bundle.content_filename.replace(" ", "_")
+    file_name = bundle.content_sha1
     tmp_dir = tempfile.mkdtemp()
     file_path = os.path.join(tmp_dir, "%s.csv" % file_name)
 
@@ -394,12 +413,13 @@ def bundle_export(request, pathname, content_sha1):
             test_run_dict["device"] = test_run.show_device()
             out.writerow(test_run_dict)
 
+    response = HttpResponse(mimetype='text/csv')
+    response['Content-Disposition'] = "attachment; filename=%s.csv" % file_name
     with open(file_path, 'r') as csv_file:
-        response = HttpResponse(mimetype='text/csv')
-        response['Content-Disposition'] = "attachment; filename=%s.csv" % \
-                                          file_name
         response.write(csv_file.read())
-        return response
+
+    _remove_dir(tmp_dir)
+    return response
 
 
 def bundle_json(request, pathname, content_sha1):
@@ -664,12 +684,13 @@ def test_run_export(request, pathname, content_sha1, analyzer_assigned_uuid):
                 test_result_dict["result"]]
             out.writerow(test_result_dict)
 
+    response = HttpResponse(mimetype='text/csv')
+    response['Content-Disposition'] = "attachment; filename=%s.csv" % file_name
     with open(file_path, 'r') as csv_file:
-        response = HttpResponse(mimetype='text/csv')
-        response['Content-Disposition'] = "attachment; filename=%s.csv" % \
-                                          file_name
         response.write(csv_file.read())
-        return response
+
+    _remove_dir(tmp_dir)
+    return response
 
 
 @BreadCrumb(
