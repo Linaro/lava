@@ -2120,9 +2120,14 @@ class ImageReportChart(models.Model):
         for match in matches:
             for test_result in match.specific_results:
 
-                alias = ImageChartTestCase.objects.get(
-                    image_chart_filter=image_chart_filter,
-                    test_case=test_result.test_case).name
+                try:
+                    alias = ImageChartTestCase.objects.get(
+                        image_chart_filter=image_chart_filter,
+                        test_case=test_result.test_case).name
+                except ImageChartTestCase.DoesNotExist:
+                    # Set alias to None.
+                    alias = None
+
                 if not alias:
                     alias = "%s: %s: %s" % (
                         image_chart_filter.filter.name,
