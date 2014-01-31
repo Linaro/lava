@@ -133,17 +133,26 @@ _lava_multi_node_debug "$FUNCNAME waiting over"
 lava_multi_node_get_network_info () {
 
 _NETWORK_INTERFACE=$1
-_RAW_STREAM_V4=`ifconfig $_NETWORK_INTERFACE |grep "inet "`
+_RAW_STREAM_V4=`ifconfig $_NETWORK_INTERFACE |grep -o -E '([[:xdigit:]]{1,3}\.){3}[[:xdigit:]]{1,3}'`
 _RAW_STREAM_V6=`ifconfig $_NETWORK_INTERFACE |grep "inet6 "`
 _RAW_STREAM_MAC=`ifconfig $_NETWORK_INTERFACE |grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'`
 
-_IPV4_STREAM_IP=`echo $_RAW_STREAM_V4 | awk '/dr:/{gsub(/.*:/,"",$2);print$2}'`
-_IPV4_STREAM_NM=`echo $_RAW_STREAM_V4 | awk '/dr:/{gsub(/.*:/,"",$4);print$4}'`
-_IPV4_STREAM_BC=`echo $_RAW_STREAM_V4 | awk '/dr:/{gsub(/.*:/,"",$3);print$3}'`
+_IPV4_STREAM_IP=`echo $_RAW_STREAM_V4 | awk '{print$1}'`
+
+_IFCONFIG_CHECK=`ifconfig $_NETWORK_INTERFACE | grep HWaddr`
+
+if [ "${_IFCONFIG_CHECK}x" != "x" ] ; then
+	_IPV4_STREAM_NM=`echo $_RAW_STREAM_V4 | awk '{print$3}'`
+	_IPV4_STREAM_BC=`echo $_RAW_STREAM_V4 | awk '{print$2}'`
+else
+	_IPV4_STREAM_NM=`echo $_RAW_STREAM_V4 | awk '{print$2}'`
+	_IPV4_STREAM_BC=`echo $_RAW_STREAM_V4 | awk '{print$3}'`
+fi
+
 _IPV4_STREAM="ipv4="$_IPV4_STREAM_IP" netmask="$_IPV4_STREAM_NM" \
 broadcast="$_IPV4_STREAM_BC
 
-_IPV6_STREAM_IP=`echo $_RAW_STREAM_V6 | awk ' gsub("/[0-9]+",""){ print $3}'`
+_IPV6_STREAM_IP=`echo $_RAW_STREAM_V6 | grep -o -E '\s[[:xdigit:]]{0,4}:(:[[:xdigit:]]{0,4}){0,4}' | sed 's/ //'`
 _IPV6_STREAM="ipv6="$_IPV6_STREAM_IP
 
 _MAC_STREAM="mac="$_RAW_STREAM_MAC
