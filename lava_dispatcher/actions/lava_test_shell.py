@@ -733,6 +733,7 @@ class cmd_lava_test_shell(BaseAction):
             logging.warn('lava_test_shell connection dropped')
 
         elif event == TIMEOUT:
+            runner.connection.sendcontrol('c')
             logging.warn('lava_test_shell has timed out')
 
         elif event == SIGNAL:
@@ -775,6 +776,7 @@ class cmd_lava_test_shell(BaseAction):
         elif event == TEST_CASE_RESULT:
             match = runner._connection.match
             if match is pexpect.TIMEOUT:
+                runner.connection.sendcontrol('c')
                 logging.warn('lava_test_shell has timed out')
             else:
                 self._handle_parsed_testcase(match.groupdict())
