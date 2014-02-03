@@ -80,7 +80,7 @@ def image_report_list(request):
     for group in reports_group:
         if group.imagereport_set.count():
             group_tables[group.name] = GroupImageReportTable(
-                "group-table-%s" % group.name, "group-table-%s" % group.name,
+                "group-table-%s" % group.id, "group-table-%s" % group.id,
                 params=(request.user, group))
 
     other_image_table = OtherImageReportTable("other-image-reports", None,
