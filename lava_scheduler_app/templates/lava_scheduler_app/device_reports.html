@@ -2,7 +2,7 @@
 
 {% block content %}
 
-<h2>Health Job Summary for {{ device }}</h2>
+<h2>Health Job Summary for {{ device.hostname }}</h2>
 <div style="display:inline-block; padding-left:20px;">
 
 <h3>By Day</h3>
@@ -69,7 +69,7 @@ var wdates= [];
 </script>
 </div>
 
-<h2>Test Job Summary for {{ device }}</h2>
+<h2>Test Job Summary for {{ device.hostname }}</h2>
 <div style="display:inline-block; padding-left:20px;">
 
 <h3>By Day</h3>

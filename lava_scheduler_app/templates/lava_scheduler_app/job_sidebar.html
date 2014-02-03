@@ -51,7 +51,7 @@
     {% if job.actual_device %}
     <dt>On device:</dt>
     <dd>
-      <a href="{{ job.actual_device.get_absolute_url }}">{{ job.actual_device }}</a>
+      <a href="{{ job.actual_device.get_absolute_url }}">{{ job.actual_device.hostname }}</a>
     </dd>
     <dt>Device Owner:
         <abbr title="If specified, submissions to {{ device.hostname }} are restricted to this user or group.">(?)</abbr>
@@ -66,7 +66,7 @@
         {% endif %}
     </dd>
     <dt>User(s) with physical access:
-        <abbr title="If known, this is the user or group of users with physical access to {{ job.actual_device }}.">(?)</abbr>
+        <abbr title="If known, this is the user or group of users with physical access to {{ job.actual_device.hostname }}.">(?)</abbr>
     </dt>
     <dd>
         {% if job.actual_device.physical_owner %}
@@ -93,9 +93,9 @@
       <a href="{% url lava.scheduler.job.detail subjob.sub_id %}">
         {{ subjob.sub_id }}</a>
     </dd>
-    {% if subjob.actual_device %}
+    {% if subjob.actual_device.hostname %}
     <dd>on:
-      <a href="{{ subjob.actual_device.get_absolute_url }}">{{ subjob.actual_device }}</a>
+      <a href="{{ subjob.actual_device.get_absolute_url }}">{{ subjob.actual_device.hostname }}</a>
     </dd>
     <dd>as: {{ subjob.multinode_role }}</dd>
     {% else %}
@@ -132,7 +132,7 @@
     <li><b>Device reports</b>
     <ul>
     {% if job.actual_device %}
-    <li><a href="{% url lava.scheduler.device_report job.actual_device %}">{{ job.actual_device }}</a></li>
+    <li><a href="{% url lava.scheduler.device_report job.actual_device.hostname %}">{{ job.actual_device.hostname }}</a></li>
     {% endif %}
     {% if job.requested_device %}
     <li><a href="{% url lava.scheduler.device_type_report job.requested_device.device_type %}">
