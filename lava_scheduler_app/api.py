@@ -9,6 +9,7 @@ from lava_scheduler_app.models import (
     JSONDataError,
     DevicesUnavailableException,
     TestJob,
+    Worker,
 )
 from lava_scheduler_app.views import (
     SumIf,
@@ -303,3 +304,34 @@ class SchedulerAPI(ExposedAPI):
         }
 
         return job_status
+
+    def worker_heartbeat(self, heartbeat_data):
+        """
+        Name
+        ----
+        `worker_heartbeat` (`heartbeat_data`)
+
+        Description
+        -----------
+        Pushes the heartbeat of dispatcher worker node.
+
+        Arguments
+        ---------
+        `heartbeat_data`: string
+            Heartbeat data extracted from dispatcher worker node.
+
+        Return value
+        ------------
+        This function returns an XML-RPC boolean output, provided the user is
+        authenticated with an username and token.
+        """
+        worker = Worker()
+        if not self.user:
+            raise xmlrpclib.Fault(
+                401, "Authentication with user and token required for this "
+                "API.")
+        if not worker.can_update(self.user):
+            raise xmlrpclib.Fault(403, "Permission denied.")
+
+        worker.update_heartbeat(heartbeat_data)
+        return True

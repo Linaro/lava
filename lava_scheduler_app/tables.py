@@ -430,10 +430,6 @@ class DeviceHealthTable(LavaTable):
         return Device.objects.select_related(
             "hostname", "last_health_report_job")
 
-    def render_hostname(self, record):
-        return mark_safe('<a href="%s">%s</a>' % (
-            record.get_device_health_url(), escape(record.pk)))
-
     def render_last_health_report_job(self, record):
         report = record.last_health_report_job
         if report is None:
@@ -441,7 +437,35 @@ class DeviceHealthTable(LavaTable):
         else:
             return pklink(report)
 
-    hostname = tables.Column("hostname")
+    hostname = tables.TemplateColumn('''
+    {% if record.too_long_since_last_heartbeat or record.status == record.RETIRED %}
+    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
+          alt="{{ offline }}" />
+    {% else %}
+    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
+          alt="{{ online }}" />
+    {% endif %}&nbsp;&nbsp;
+    {% if record.is_master %}
+    <b><a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a></b>
+    {% else %}
+    <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
+    {% endif %}
+        ''')
+    worker_host = tables.TemplateColumn('''
+    {% if record.too_long_since_last_heartbeat %}
+    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
+          alt="{{ offline }}" />
+    {% else %}
+    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
+          alt="{{ online }}" />
+    {% endif %}&nbsp;&nbsp;
+    {% if record.is_master %}
+    <b><a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a></b>
+    {% else %}
+    <a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a>
+    {% endif %}
+        ''')
+
     health_status = tables.Column()
     last_report_time = DateColumn(
         verbose_name="last report time",
@@ -449,6 +473,10 @@ class DeviceHealthTable(LavaTable):
     last_health_report_job = tables.Column("last report job")
 
     class Meta(LavaTable.Meta):
+        sequence = [
+            'hostname', 'worker_host', 'health_status', 'last_report_time',
+            'last_health_report_job'
+        ]
         searches = {
             'hostname': 'contains',
         }
@@ -491,9 +519,34 @@ class DeviceTable(LavaTable):
     def render_device_type(self, record):
         return pklink(record.device_type)
 
-    hostname = tables.TemplateColumn('''<a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
+    hostname = tables.TemplateColumn('''
+    {% if record.too_long_since_last_heartbeat or record.status == record.RETIRED %}
+    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
+          alt="{{ offline }}" />
+    {% else %}
+    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
+          alt="{{ online }}" />
+    {% endif %}&nbsp;&nbsp;
+    {% if record.is_master %}
+    <b><a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a></b>
+    {% else %}
+    <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
+    {% endif %}
         ''')
-    worker_host = tables.Column()
+    worker_host = tables.TemplateColumn('''
+    {% if record.too_long_since_last_heartbeat %}
+    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
+          alt="{{ offline }}" />
+    {% else %}
+    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
+          alt="{{ online }}" />
+    {% endif %}&nbsp;&nbsp;
+    {% if record.is_master %}
+    <b><a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a></b>
+    {% else %}
+    <a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a>
+    {% endif %}
+        ''')
     device_type = tables.Column()
     status = ExpandedStatusColumn("status")
     owner = RestrictedDeviceColumn()
@@ -505,7 +558,7 @@ class DeviceTable(LavaTable):
         exclude = [
             'user', 'group', 'is_public', 'device_version',
             'physical_owner', 'physical_group', 'description',
-            'current_job', 'last_health_report_job', 'heartbeat', 'last_heartbeat'
+            'current_job', 'last_health_report_job'
         ]
         sequence = [
             'hostname', 'worker_host', 'device_type', 'status',
@@ -535,7 +588,7 @@ class NoDTDeviceTable(DeviceTable):
             'device_type',
             'user', 'group', 'is_public', 'device_version',
             'physical_owner', 'physical_group', 'description',
-            'current_job', 'last_health_report_job', 'heartbeat', 'last_heartbeat'
+            'current_job', 'last_health_report_job'
         ]
         searches = {
             'hostname': 'contains',
@@ -553,14 +606,18 @@ class WorkerTable(tables.Table):
         self.length = 10
 
     hostname = tables.TemplateColumn('''
-    {% if record.heartbeat %}
-    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
-          alt="{{ record.heartbeat }}" />
-    {% else %}
+    {% if record.too_long_since_last_heartbeat %}
     <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
-          alt="{{ record.heartbeat }}" />
+          alt="{{ offline }}" />
+    {% else %}
+    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
+          alt="{{ online }}" />
     {% endif %}&nbsp;&nbsp;
+    {% if record.is_master %}
+    <b><a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a></b>
+    {% else %}
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
+    {% endif %}
         ''')
     uptime = tables.Column()
     arch = tables.Column()
@@ -569,8 +626,27 @@ class WorkerTable(tables.Table):
     class Meta(LavaTable.Meta):
         model = Worker
         exclude = [
-            'description', 'hardware_info', 'last_heartbeat', 'heartbeat'
+            'is_master', 'rpc2_url', 'description', 'hardware_info',
+            'last_heartbeat'
         ]
+
+
+class NoWorkerDeviceTable(DeviceTable):
+
+    class Meta(LavaTable.Meta):
+        exclude = [
+            'worker_host',
+            'user', 'group', 'is_public', 'device_version',
+            'physical_owner', 'physical_group', 'description',
+            'current_job', 'last_health_report_job'
+        ]
+        searches = {
+            'hostname': 'contains',
+        }
+        queries = {
+            'device_status_query': 'status',
+            'health_status_query': 'health_status',
+        }
 
 
 class HealthJobSummaryTable(tables.Table):

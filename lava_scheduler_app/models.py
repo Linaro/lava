@@ -119,6 +119,30 @@ class Worker(models.Model):
         default=None
     )
 
+    rpc2_url = models.CharField(
+        verbose_name=_(u"Master RPC2 URL"),
+        max_length=200,
+        null=True,
+        blank=True,
+        editable=True,
+        default=None
+    )
+
+    ip_address = models.CharField(
+        verbose_name=_(u"IP Address"),
+        max_length=20,
+        null=True,
+        blank=True,
+        editable=True,
+        default=None
+    )
+
+    is_master = models.BooleanField(
+        verbose_name=_(u"Is Master?"),
+        default=False,
+        editable=False
+    )
+
     description = models.TextField(
         verbose_name=_(u"Worker Description"),
         max_length=200,
@@ -166,17 +190,20 @@ class Worker(models.Model):
         editable=False
     )
 
-    heartbeat = models.BooleanField(
-        verbose_name=_(u"Heartbeat"),
-        default=False
-    )
-
     def __unicode__(self):
         return self.hostname
 
     def can_admin(self, user):
         if user.has_perm('lava_scheduler_app.change_worker'):
             return True
+
+    def can_update(self, user):
+        if user.has_perm('lava_scheduler_app.change_worker'):
+            return True
+        elif user.username == "lava-health":
+            return True
+        else:
+            return False
 
     @models.permalink
     def get_absolute_url(self):
@@ -191,17 +218,16 @@ class Worker(models.Model):
     def too_long_since_last_heartbeat(self):
         """Calculates if the last_heartbeat is more than 180 seconds.
 
-        If there is a delay update heartbeat value to False else True.
+        If there is a delay return True else False.
         """
         if self.last_heartbeat is None:
-            self.last_heartbeat = datetime.datetime.utcnow()
-        difference = datetime.datetime.utcnow() - self.last_heartbeat
+            return False
 
+        difference = datetime.datetime.utcnow() - self.last_heartbeat
         if difference.total_seconds() > 180:
-            self.heartbeat = False
+            return True
         else:
-            self.heartbeat = True
-        self.save()
+            return False
 
     def attached_devices(self):
         return Device.objects.filter(worker_host=self)
@@ -209,6 +235,50 @@ class Worker(models.Model):
     def update_description(self, description):
         self.description = description
         self.save()
+
+    @classmethod
+    def update_heartbeat(cls, heartbeat_data):
+        heartbeat_data = simplejson.loads(heartbeat_data)
+        hostname = heartbeat_data.get('hostname', None)
+        devices = heartbeat_data.get('devices', None)
+
+        worker, created = Worker.objects.get_or_create(hostname=hostname)
+        worker.uptime = heartbeat_data.get('uptime', None)
+        worker.arch = heartbeat_data.get('arch', None)
+        worker.hardware_info = heartbeat_data.get('hardware_info', "")
+        worker.platform = heartbeat_data.get('platform', None)
+        worker.ip_address = heartbeat_data.get('ipaddr', None)
+        worker.last_heartbeat = datetime.datetime.utcnow()
+
+        if worker:
+            worker.save()
+            for d in devices:
+                device = Device.objects.get(hostname=d)
+                device.worker_host = worker
+                device.save()
+            return True
+        else:
+            return False
+
+    def on_master(self):
+        return self.is_master
+
+    @classmethod
+    def get_master(cls):
+        """Returns the master node.
+        """
+        try:
+            worker = Worker.objects.get(is_master=True)
+            return worker
+        except:
+            raise ValueError("Unable to find master node")
+
+    @classmethod
+    def get_rpc2_url(cls):
+        """Returns the RPC2 URL of master node.
+        """
+        master = Worker.get_master()
+        return master.rpc2_url
 
 
 class Device(RestrictedResource):
@@ -311,19 +381,6 @@ class Device(RestrictedResource):
         blank=True,
         default=None
     )
-
-    last_heartbeat = models.DateTimeField(
-        verbose_name=_(u"Last Heartbeat"),
-        auto_now=False,
-        auto_now_add=False,
-        null=True,
-        blank=True,
-        editable=False
-    )
-
-    heartbeat = models.BooleanField(
-        verbose_name=_(u"Heartbeat"),
-        default=False)
 
     def clean(self):
         """
@@ -452,24 +509,12 @@ class Device(RestrictedResource):
         self.state_transition_to(self.IDLE, user=user, message=reason)
 
     def too_long_since_last_heartbeat(self):
-        """Calculates if the last_heartbeat is more than 180 seconds.
-
-        If there is a delay update heartbeat value to False else True.
+        """This is same as worker heartbeat.
         """
-        if self.last_heartbeat is None:
-            self.last_heartbeat = datetime.datetime.utcnow()
-        difference = datetime.datetime.utcnow() - self.last_heartbeat
-
-        if difference.total_seconds() > 180:
-            self.heartbeat = False
+        if self.worker_host:
+            return self.worker_host.too_long_since_last_heartbeat()
         else:
-            self.heartbeat = True
-
-        if self.status == Device.RETIRED and self.worker_host is not None:
-            self.worker_host = None
-            self.heartbeat = False
-
-        self.save()
+            return True
 
     def get_existing_health_check_job(self):
         """Get the existing health check job.

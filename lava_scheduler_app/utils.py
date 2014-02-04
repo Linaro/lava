@@ -27,6 +27,8 @@ import models
 import subprocess
 import datetime
 
+from lava_server.settings.config_file import ConfigFile
+
 
 def rewrite_hostname(result_url):
     """If URL has hostname value as localhost/127.0.0.*, change it to the
@@ -153,3 +155,15 @@ def get_lshw_out():
                             stderr=subprocess.PIPE)
     lshw_out, lshw_err = proc.communicate()
     return simplejson.dumps(lshw_out)
+
+
+def get_fqdn():
+    """Returns the fully qualified domain name.
+    """
+    return socket.getfqdn()
+
+
+def get_ip_address():
+    """Returns the IP address.
+    """
+    return socket.gethostbyname_ex(socket.getfqdn())[2][0]

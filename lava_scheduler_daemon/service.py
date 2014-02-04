@@ -17,12 +17,14 @@
 # along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import xmlrpclib
 
 from twisted.application.service import Service
 from twisted.internet import defer
 from twisted.internet.task import LoopingCall
 
 from lava_scheduler_daemon.job import JobRunner, catchall_errback
+from lava_scheduler_daemon.worker import WorkerData
 
 
 class JobQueue(Service):
@@ -42,6 +44,16 @@ class JobQueue(Service):
             self._startJobs).addErrback(catchall_errback(self.logger))
 
     def _startJobs(self, jobs):
+        # Update Worker Heartbeat
+        #
+        # NOTE: This will recide here till we finalize scheduler refactoring
+        #       and a separte module for worker specific daemon gets created.
+        worker = WorkerData()
+        try:
+            worker.put_heartbeat_data()
+        except (xmlrpclib.Fault, xmlrpclib.ProtocolError) as err:
+            worker.logger.error("Heartbeat update failed!")
+
         for job in jobs:
             new_job = JobRunner(self.source, job, self.dispatcher,
                                 self.reactor, self.daemon_options)

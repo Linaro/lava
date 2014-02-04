@@ -79,6 +79,7 @@ from lava_scheduler_app.tables import (
     HealthJobSummaryTable,
     DeviceTransitionTable,
     OverviewJobsTable,
+    NoWorkerDeviceTable,
 )
 
 # The only functions which need to go in this file are those directly
@@ -1437,11 +1438,11 @@ def device_derestrict_device(request, pk):
             "you cannot derestrict submissions to this device", content_type="text/plain")
 
 
-@BreadCrumb("Worker", parent=index, needs=['pk'])
+@BreadCrumb("Worker: {pk}", parent=index, needs=['pk'])
 def worker_detail(request, pk):
     worker = get_object_or_404(Worker, pk=pk)
     data = DeviceTableView(request)
-    ptable = DeviceTable(data.get_table_data().filter(worker_host=worker).order_by('hostname'))
+    ptable = NoWorkerDeviceTable(data.get_table_data().filter(worker_host=worker).order_by('hostname'))
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
     return render_to_response(
         "lava_scheduler_app/worker.html",
