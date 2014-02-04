@@ -7,11 +7,11 @@
 
 {% block content %}
 
-<h2>Results</h2>
+<h2>Test run results</h2>
 
 {% render_table test_table %}
 
-<h3>Attachments</h3>
+<h3>Test job attachments</h3>
 
 {% include "dashboard_app/_attachments.html" with attachments=test_run.attachments %}
 
@@ -20,42 +20,6 @@
 
 {% block sidebar %}
 {% if bundle.testjob %}
-<h3>Job details</h3>
-<dl>
-  {% if bundle.testjob.sub_id %}
-  <dt>Parent job id (<abbr title="MultiNode result bundles are aggregated into the job with the ID which ends in .0 Other jobs in the group are listed in the parent job log file.">?</abbr>)</dt>
-  <dd><a href="{{ bundle.testjob.get_absolute_url }}">{{ bundle.testjob.sub_id }}</a></dd>
-  <dt>Test job for this test run:</dt>
-  <dd>
-  {% for attribute in test_run.attributes.all %}
-  {% if attribute.name == "group_size" %}
-  {% endif %}
-  {% endfor %}
-  {% for attribute in test_run.attributes.all %}
-   {% if attribute.name == "target" %}
-    {% for group_job in job_list %}
-      {% if group_job.actual_device|stringformat:"s" == attribute.value|stringformat:"s" %}
-      <a href="{{ group_job.get_absolute_url }}">{{ group_job.sub_id }}</a> on
-      <a href="{{ group_job.actual_device.get_absolute_url }}">{{ group_job.actual_device|stringformat:"s" }}</a><br/>
-      {% endif %}
-    {% endfor %}
-   {% endif %}
-  {% endfor %}
-      </dd>
-  {% else %}
-  <dt>Job id</dt>
-  <dd><a href="{{ bundle.testjob.get_absolute_url }}">{{ bundle.testjob.id }}</a></dd>
-    {% endif %}
-  <dt>Start time</dt>
-  <dd>{{ bundle.testjob.start_time }}</dd>
-  <dt>End time</dt>
-  <dd>{{ bundle.testjob.end_time }}</dd>
-</dl>
-{% endif %}
-
-<h3>Export</h3>
-<p>Export test results data <a href="{% url dashboard_app.views.test_run_export test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}">as CSV</a></p>
-
 <h3>Test run details</h3>
 <dl>
   <dt>{% trans "Test Name" %} (<abbr title="This is the identifier of the test that was invoked. A test is a collection of test cases. Test is also the smallest piece of code that can be invoked by lava-test.">?</abbr>):</dt>
@@ -80,7 +44,41 @@
     {% endfor %}
   </ul>
   </dd>
+  {% if bundle.testjob.sub_id %}
+  <dt>Parent job id (<abbr title="MultiNode result bundles are aggregated into the job with the ID which ends in .0 Other jobs in the group are listed in the parent job log file.">?</abbr>)</dt>
+  <dd><a href="{{ bundle.testjob.get_absolute_url }}">{{ bundle.testjob.sub_id }}</a></dd>
+  <dt>Test job for this test run:</dt>
+  <dd>
+  {% for attribute in test_run.attributes.all %}
+  {% if attribute.name == "group_size" %}
+  {% endif %}
+  {% endfor %}
+  {% for attribute in test_run.attributes.all %}
+   {% if attribute.name == "target" %}
+    {% for group_job in job_list %}
+      {% if group_job.actual_device|stringformat:"s" == attribute.value|stringformat:"s" %}
+      <a href="{{ group_job.get_absolute_url }}">{{ group_job.sub_id }}</a> on
+      <a href="{{ group_job.actual_device.get_absolute_url }}">{{ group_job.actual_device|stringformat:"s" }}</a><br/>
+      {% endif %}
+    {% endfor %}
+   {% endif %}
+  {% endfor %}
+      </dd>
+  {% else %}
+  <dt>Test job details</dt>
+  <dd><a href="{{ bundle.testjob.get_absolute_url }}">{{ bundle.testjob.id }}</a></dd>
+  <dt>Test job complete log</dt>
+  <dd><a href="{{ bundle.testjob.get_absolute_url }}/log_file">{{ bundle.testjob.id }}/log_file</a></dd>
+    {% endif %}
+  <dt>Test job start time</dt>
+  <dd>{{ bundle.testjob.start_time }}</dd>
+  <dt>Test job end time</dt>
+  <dd>{{ bundle.testjob.end_time }}</dd>
 </dl>
+{% endif %}
+
+<h3>Export</h3>
+<p>Export test results data <a href="{% url dashboard_app.views.test_run_export test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}">as CSV</a></p>
 
 <h3>Software context</h3>
 <dl>

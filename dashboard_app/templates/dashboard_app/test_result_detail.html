@@ -15,7 +15,13 @@ dd pre { margin: 0;}
 {% endblock %}
 
 {% block content %}
-<h2>Result: {{ test_result.test_case|default:"<i>unknown test case</i>" }}</h2>
+<h2>Test Result: {{ test_result.test_case|default:"<i>unknown test case</i>" }}</h2>
+<p>Each test result is part of a test run and multiple test runs can be part of the same test job.
+In the <i>"You are here"</i> breadcrumb list above, click the Run link to go up to the test run detail page to see
+full details of the test job which generated this test result.</p>
+<p>If the test result output was captured as an attachment of the test run, the attachment name and line number will be
+shown as links. The same output can also be viewed in the attachments of the test run itself.</p>
+</p>
 <dl>
   <dt>{% trans "Outcome" %}</dt>
   <dd>
@@ -31,7 +37,7 @@ dd pre { margin: 0;}
     <i>{% trans "no measurement taken" %}</i>
   {% endif %}
   </dd>
-  <dt>{% trans "Log file location" %}</dt>
+  <dt>{% trans "Test Result output file and location" %}</dt>
   <dd>
     {% if test_result.filename %}
         {% if test_result.related_attachment_available and test_result.related_attachment.is_viewable %}
@@ -42,7 +48,7 @@ dd pre { margin: 0;}
             {{ test_result.filename }} line {{ test_result.lineno }}
         {% endif %}
     {% else %}
-        <i>{% trans "information not provided" %}</i>
+        <i>{% trans "no output captured for this test result" %}</i>
     {% endif %}
   </dd>
   <dt>{% trans "Message from the log file" %}</dt>
@@ -50,7 +56,7 @@ dd pre { margin: 0;}
   {% if test_result.message %}
     <pre>{{ test_result.message }}</pre>
   {% else %}
-    <i>{% trans "information not provided" %}</i>
+    <i>{% trans "no message was captured for this test result" %}</i>
   {% endif %}
   </dd>
   <dt>{% trans "Test started on" %}</dt>
@@ -59,7 +65,7 @@ dd pre { margin: 0;}
     {{ test_result.timestamp|naturalday }}
     {{ test_result.timestamp|time }}
   {% else %}
-    <i>{% trans "information not provided" %}</i>
+    <i>{% trans "test result did not output a start time" %}</i>
   {% endif %}
   </dd>
   <dt>{% trans "Test duration" %}</dt>
@@ -68,7 +74,7 @@ dd pre { margin: 0;}
     {# TODO need a filter for displaying this sensibly. Currently there are some rounding errors #}
     {{ test_result.duration }}
   {% else %}
-    <i>{% trans "information not provided" %}</i>
+    <i>{% trans "test result did not output a duration" %}</i>
   {% endif %}
   </dd>
 </dl>
