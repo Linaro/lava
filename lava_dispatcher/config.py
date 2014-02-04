@@ -55,7 +55,8 @@ class DeviceSchema(schema.Schema):
                                                     "root@linaro-nano:~#",
                                                     "root@linaro-developer:~#",
                                                     "root@linaro-server:~#",
-                                                    "root@genericarmv7a:~#"])
+                                                    "root@genericarmv7a:~#",
+                                                    "root@genericarmv8:~#"])
     busybox_http_port = schema.IntOption(default=80)
     cache_part_android_org = schema.IntOption()
     client_type = schema.StringOption()
