@@ -571,7 +571,6 @@ class URLTestDefinition(object):
     @property
     def pattern(self):
         if self.__pattern__ is None:
-            input_pattern = None
             if 'parse' in self.testdef and \
                'pattern' in self.testdef['parse']:
                 input_pattern = self.testdef['parse']['pattern']
@@ -585,7 +584,7 @@ class URLTestDefinition(object):
                 self.__pattern__ = re.compile(input_pattern, re.M)
             except re.error as e:
                 logging.warning("Error parsing regular expression %r: %s" %
-                                input_pattern, e.message)
+                                (input_pattern, e.message))
                 self.__pattern__ = re.compile(default_pattern, re.M)
 
         return self.__pattern__
@@ -911,12 +910,10 @@ class cmd_lava_test_shell(BaseAction):
         rdir = self.context.host_result_dir
         parse_err_msg = None
 
-        bundle = None
         filesystem_access_failure = True
 
         try:
             with target.file_system(results_part, '/lava') as d:
-                filesystem_access_ok = False
                 err_log = os.path.join(d, 'parse_err.log')
                 results_dir = os.path.join(d, 'results')
                 bundle = lava_test_shell.get_bundle(results_dir, testdef_objs, err_log)
