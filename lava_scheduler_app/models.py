@@ -897,7 +897,10 @@ class TestJob(RestrictedResource):
                 raise ValueError("invalid server: %s" % server)
 
         taglist = []
-        for tag_name in job_data.get('device_tags', []):
+        tags = job_data.get('device_tags', [])
+        if type(tags) != list:
+            raise JSONDataError("device_tags needs to be a list - received %s" % type(tags))
+        for tag_name in tags:
             try:
                 taglist.append(Tag.objects.get(name=tag_name))
             except Tag.DoesNotExist:
