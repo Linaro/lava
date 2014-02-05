@@ -58,6 +58,7 @@ class BootloaderTarget(MasterImageTarget):
         self._uboot_boot = False
         self._ipxe_boot = False
         # This is the offset into the path, used to reference bootfiles
+        # NOTE: this asserts that the scratch_dir has the 'images' string in it
         self._offset = self.scratch_dir.index('images')
 
     def _get_http_url(self, path):
