@@ -424,7 +424,7 @@ class Device(RestrictedResource):
             new_status = self.OFFLINE
         if self.health_status == Device.HEALTH_LOOPING:
             self.health_status = Device.HEALTH_UNKNOWN
-        self.state_transision_to(new_status, user=user, message=reason)
+        self.state_transition_to(new_status, user=user, message=reason)
 
     def put_into_online_mode(self, user, reason, skiphealthcheck=False):
         if self.status == Device.OFFLINING:
