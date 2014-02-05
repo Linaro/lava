@@ -66,9 +66,9 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(403, "Permission denied.")
         if job.is_multinode:
             for multinode_job in job.sub_jobs_list:
-                multinode_job.cancel()
+                multinode_job.cancel(self.user)
         else:
-            job.cancel()
+            job.cancel(self.user)
         return True
 
     def job_output(self, job_id):

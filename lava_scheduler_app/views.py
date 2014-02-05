@@ -828,9 +828,15 @@ def job_detail(request, pk):
     log_file = job.output_file()
 
     if log_file:
-        job_errors = getDispatcherErrors(job.output_file())
-        job_log_messages = getDispatcherLogMessages(job.output_file())
+        if not job.failure_comment:
+            job_errors = getDispatcherErrors(job.output_file())
+            if len(job_errors) > 0:
+                msg = "".join(job_errors).strip()
+                if msg != "ErrorMessage: None":
+                    job.failure_comment = msg
+                    job.save()
 
+        job_log_messages = getDispatcherLogMessages(job.output_file())
         levels = defaultdict(int)
         for kl in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
             levels[kl] = 0
@@ -842,8 +848,6 @@ def job_detail(request, pk):
             job_file_size = f.tell()
         data.update({
             'job_file_present': True,
-            'job_errors': job_errors,
-            'job_has_error': len(job_errors) > 0,
             'job_log_messages': job_log_messages,
             'levels': levels,
             'job_file_size': job_file_size,
@@ -1020,9 +1024,9 @@ def job_cancel(request, pk):
             multinode_jobs = TestJob.objects.all().filter(
                 target_group=job.target_group)
             for multinode_job in multinode_jobs:
-                multinode_job.cancel()
+                multinode_job.cancel(request.user)
         else:
-            job.cancel()
+            job.cancel(request.user)
         return redirect(job)
     else:
         return HttpResponseForbidden(

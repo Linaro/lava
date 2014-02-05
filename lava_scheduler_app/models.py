@@ -1015,7 +1015,7 @@ class TestJob(RestrictedResource):
         states = [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]
         return self._can_admin(user) and self.status in states
 
-    def cancel(self):
+    def cancel(self, user=None):
         # if SUBMITTED with actual_device - clear the actual_device back to idle.
         if self.status == TestJob.SUBMITTED and self.actual_device is not None:
             self.actual_device.cancel_reserved_status(self.submitter, "job-cancel")
@@ -1023,6 +1023,8 @@ class TestJob(RestrictedResource):
             self.status = TestJob.CANCELING
         else:
             self.status = TestJob.CANCELED
+        if user:
+            self.failure_comment = "Canceled by %s" % user.username
         self.save()
 
     def _generate_summary_mail(self):
