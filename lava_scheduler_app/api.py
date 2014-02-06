@@ -248,6 +248,7 @@ class SchedulerAPI(ExposedAPI):
 
         try:
             job = get_restricted_job(self.user, job_id)
+            job.status = job.get_status_display()
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
