@@ -209,6 +209,8 @@ class RestrictedDeviceColumn(Column):
 
     def render(self, record):
         label = None
+        if record.status == Device.RETIRED:
+            return "Retired, no submissions possible."
         if record.user:
             label = record.user.email
         if record.group:
@@ -588,7 +590,8 @@ class DeviceTypeTable(DataTablesTable):
                                                         (Device.OFFLINE, Device.OFFLINING)),
                       busy=SumIf('device', condition='status in (%s,%s)' %
                                                      (Device.RUNNING, Device.RESERVED)),
-                      restricted=SumIf('device', condition='is_public is False'),
+                      restricted=SumIf('device', condition='is_public is False and status not in (%s)' %
+                                                           Device.RETIRED),
                       ).order_by('name')
 
     def render_display(self, record):
