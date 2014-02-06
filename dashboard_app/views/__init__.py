@@ -588,12 +588,13 @@ class TestTable(DataTablesTable):
     {{ record.comments|default_if_none:"Not specified"|truncatewords:7 }}
     ''')
 
-    def get_queryset(self, test_run):
-        return test_run.get_results().annotate(Count("attachments"))
+    def get_queryset(self, test_run, result):
+        return test_run.get_results(result).annotate(Count("attachments"))
 
     datatable_opts = {
         'sPaginationType': "full_numbers",
         'iDisplayLength': 25,
+        'sDom': 'lfr<"#master-toolbar">t<"F"ip>'
     }
 
     searchable_columns = ['test_case__test_case_id']
@@ -605,7 +606,10 @@ def test_run_detail_test_json(request, pathname, content_sha1, analyzer_assigned
         request.user,
         analyzer_assigned_uuid=analyzer_assigned_uuid
     )
-    return TestTable.json(request, params=(test_run,))
+    result = request.GET.get('result_sel', None)
+    if result is not None:
+        result = int(result)
+    return TestTable.json(request, params=(test_run, result,))
 
 
 @BreadCrumb(
@@ -619,6 +623,10 @@ def test_run_detail(request, pathname, content_sha1, analyzer_assigned_uuid):
         request.user,
         analyzer_assigned_uuid=analyzer_assigned_uuid
     )
+    result = request.GET.get('result_sel', None)
+    if result is not None:
+        result = int(result)
+    search_str = request.GET.get('search_str')
     try:
         target_group = test_run.bundle.testjob.target_group
         job_list = TestJob.objects.filter(target_group=target_group)
@@ -631,6 +639,9 @@ def test_run_detail(request, pathname, content_sha1, analyzer_assigned_uuid):
                 pathname=pathname,
                 content_sha1=content_sha1,
                 analyzer_assigned_uuid=analyzer_assigned_uuid),
+            "result": result,
+            "search_str": search_str,
+            "result_map": TestResult.RESULT_MAP,
             "test_run": test_run,
             "bundle": test_run.bundle,
             "job_list": job_list,
@@ -640,7 +651,7 @@ def test_run_detail(request, pathname, content_sha1, analyzer_assigned_uuid):
                     pathname=pathname,
                     content_sha1=content_sha1,
                     analyzer_assigned_uuid=analyzer_assigned_uuid)),
-                params=(test_run,))
+                params=(test_run, result,))
 
         }, RequestContext(request))
 
