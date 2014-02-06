@@ -252,6 +252,9 @@ class JobRunner(object):
         if self.job is None:
             self.logger.debug("no job found for processing")
             return
+        self.source.jobStarted(self.job).addCallback(self._prepareJob)
+
+    def _prepareJob(self, status):
         self.source.getJobDetails(self.job).addCallbacks(
             self._startJob, self._ebStartJob)
 

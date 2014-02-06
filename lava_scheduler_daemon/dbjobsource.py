@@ -45,20 +45,31 @@ except ImportError:
 
 
 def find_device_for_job(job, device_list):
-    for dev in device_list:
-        if job.requested_device == dev.hostname or \
-           job.requested_device_type == dev.device_type:
-            if dev.can_submit(job.submitter):
-                return dev
+    for device in device_list:
+        if device == job.requested_device:
+            if device.can_submit(job.submitter):
+                return device
+    for device in device_list:
+        if device.device_type == job.requested_device_type:
+            if device.can_submit(job.submitter):
+                return device
     return None
+
+
+def get_configured_devices():
+    return [dev.hostname for dev in dispatcher_config.get_devices()]
 
 
 class DatabaseJobSource(object):
 
     implements(IJobSource)
 
-    def __init__(self):
+    def __init__(self, my_devices=None):
         self.logger = logging.getLogger(__name__ + '.DatabaseJobSource')
+        if my_devices is None:
+            self.my_devices = get_configured_devices
+        else:
+            self.my_devices = my_devices
 
     deferToThread = staticmethod(deferToThread)
 
@@ -218,26 +229,14 @@ class DatabaseJobSource(object):
             self._submit_health_check_jobs()
             self._assign_jobs()
 
-        submitted_jobs = TestJob.objects.filter(status=TestJob.SUBMITTED)
-        ready_jobs = filter(lambda job: job.is_ready_to_start, submitted_jobs)
-        self._handle_ready_jobs(ready_jobs)
+        my_submitted_jobs = TestJob.objects.filter(
+            status=TestJob.SUBMITTED,
+            actual_device_id__in=self.my_devices(),
+        )
+        my_ready_jobs = filter(lambda job: job.is_ready_to_start, my_submitted_jobs)
+
         transaction.commit()
-        return ready_jobs
-
-    def _handle_ready_jobs(self, jobs):
-        for job in jobs:
-            job.status = TestJob.RUNNING
-
-            # need to set the device RUNNING if device was RESERVED
-            device = job.actual_device
-            if device.status == Device.RESERVED:
-                msg = "Job: %s" % job.id
-                device.state_transition_to(Device.RUNNING, message=msg, job=job)
-            device.save()
-            job.start_time = datetime.datetime.utcnow()
-            shutil.rmtree(job.output_dir, ignore_errors=True)
-            job.log_file.save('job-%s.log' % job.id, ContentFile(''), save=False)
-            job.save()
+        return my_ready_jobs
 
     def getJobList(self):
         return self.deferForDB(self.getJobList_impl)
@@ -276,6 +275,24 @@ class DatabaseJobSource(object):
 
     def getOutputDirForJobOnBoard(self, board_name):
         return self.deferForDB(self.getOutputDirForJobOnBoard_impl, board_name)
+
+    def jobStarted_impl(self, job):
+        job.status = TestJob.RUNNING
+
+        # need to set the device RUNNING if device was RESERVED
+        device = job.actual_device
+        if device.status == Device.RESERVED:
+            msg = "Job: %s" % job.id
+            device.state_transition_to(Device.RUNNING, message=msg, job=job)
+        device.save()
+        job.start_time = datetime.datetime.utcnow()
+        shutil.rmtree(job.output_dir, ignore_errors=True)
+        job.log_file.save('job-%s.log' % job.id, ContentFile(''), save=False)
+        job.save()
+        transaction.commit()
+
+    def jobStarted(self, job):
+        return self.deferForDB(self.jobStarted_impl, job)
 
     def jobCompleted_impl(self, board_name, exit_code, kill_reason):
         self.logger.debug('marking job as complete on %s', board_name)
@@ -368,10 +385,8 @@ class DatabaseJobSource(object):
         # Call TestJob.cancel to reset the TestJob status
         if len(cancel_list) > 0:
             self.logger.debug("Number of jobs in cancelling status %d" % len(cancel_list))
-            configured_boards = [
-                x.hostname for x in dispatcher_config.get_devices()]
             for job in cancel_list:
-                if job.actual_device and job.actual_device.hostname in configured_boards:
+                if job.actual_device and job.actual_device.hostname in self.my_devices():
                     self.logger.debug("Looking for pid of dispatch job %s in %s" % (job.id, job.output_dir))
                     self._kill_canceling(job)
                     device = Device.objects.get(hostname=job.actual_device.hostname)

@@ -17,7 +17,6 @@
 # along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import lava_dispatcher.config as dispatcher_config
 
 from twisted.application.service import Service
 from twisted.internet import defer
@@ -40,15 +39,10 @@ class JobQueue(Service):
     def _checkJobs(self):
         self.logger.debug("Refreshing jobs")
         return self.source.getJobList().addCallback(
-            self._cbCheckJobs).addErrback(catchall_errback(self.logger))
+            self._startJobs).addErrback(catchall_errback(self.logger))
 
-    def _cbCheckJobs(self, job_list):
-        my_devices = [x.hostname for x in dispatcher_config.get_devices()]
-
-        my_jobs = filter(lambda job: job.actual_device.hostname in my_devices,
-                         job_list)
-
-        for job in my_jobs:
+    def _startJobs(self, jobs):
+        for job in jobs:
             new_job = JobRunner(self.source, job, self.dispatcher,
                                 self.reactor, self.daemon_options)
             self.logger.info("Starting Job: %d " % job.id)

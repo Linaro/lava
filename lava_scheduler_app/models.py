@@ -1107,8 +1107,12 @@ class TestJob(RestrictedResource):
     def is_ready_to_start(self):
         def ready(job):
             return job.status == TestJob.SUBMITTED and job.actual_device is not None
+
+        def ready_or_running(job):
+            return job.status in [TestJob.SUBMITTED, TestJob.RUNNING] and job.actual_device is not None
+
         if self.is_multinode:
-            return all(map(ready, self.sub_jobs_list))
+            return ready(self) and all(map(ready_or_running, self.sub_jobs_list))
         else:
             return ready(self)
 
