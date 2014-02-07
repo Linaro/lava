@@ -957,7 +957,8 @@ class TestJob(RestrictedResource):
                                                              indent=4 * ' '),
                         multinode_definition=json_data,
                         health_check=health_check, user=user, group=group,
-                        is_public=is_public, priority=priority,
+                        is_public=is_public,
+                        priority=TestJob.MEDIUM,  # multinode jobs have fixed priority
                         target_group=target_group)
                     job.save()
                     job_list.append(job)
@@ -992,9 +993,10 @@ class TestJob(RestrictedResource):
 
     def can_change_priority(self, user):
         """
-        Permission and state required to change job priority
+        Permission and state required to change job priority.
+        Multinode jobs cannot have their priority changed.
         """
-        return self._can_admin(user) and self.status == TestJob.SUBMITTED
+        return self._can_admin(user) and self.status == TestJob.SUBMITTED and not self.is_multinode
 
     def can_annotate(self, user):
         """

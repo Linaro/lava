@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+import datetime
 import os
 
 from django_testscenarios.ubertest import TestCase
@@ -83,6 +84,10 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
         panda = self.panda
         self.panda01 = self.factory.make_device(device_type=panda, hostname='panda01')
         self.panda02 = self.factory.make_device(device_type=panda, hostname='panda02')
+
+        arndale = self.arndale
+        self.arndale01 = self.factory.make_device(device_type=arndale, hostname='arndale01')
+        self.arndale02 = self.factory.make_device(device_type=arndale, hostname='arndale02')
 
         self.user = self.factory.make_user()
 
@@ -225,7 +230,7 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
     def test_multinode_job_across_different_workers(self):
         master = self.master
         worker = DatabaseJobSource(lambda: ['arndale01'])
-        arndale01 = self.factory.make_device(device_type=self.arndale, hostname='arndale01')
+        arndale01 = self.arndale01
         self.panda02.state_transition_to(Device.OFFLINE)
         panda01 = self.panda01
 
@@ -244,3 +249,88 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
 
         self.assertEqual(1, len(worker_jobs))
         self.assertEqual(worker_jobs[0].actual_device, arndale01)
+
+    def test_two_multinode_jobs_plus_two_singlenode_jobs(self):
+
+        single1 = self.submit_job(device_type='panda')
+        single2 = self.submit_job(device_type='panda')
+
+        multi1a, multi1b = self.submit_job(
+            device_group=[
+                {"device_type": "panda", "count": 1, "role": "client"},
+                {"device_type": "panda", "count": 1, "role": "server"},
+            ]
+        )
+
+        multi2a, multi2b = self.submit_job(
+            device_group=[
+                {"device_type": "panda", "count": 1, "role": "client"},
+                {"device_type": "panda", "count": 1, "role": "server"},
+            ]
+        )
+
+        # make it confusing by making both multinode jobs have the exact same
+        # submit time
+        # also set the target_group string to make the outcome predictable
+        now = datetime.datetime.now()
+        for job in [multi1a, multi1b]:
+            job.submit_time = now
+            job.target_group = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+            job.save()
+        for job in [multi2a, multi2b]:
+            job.submit_time = now
+            job.target_group = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+            job.save()
+
+        scheduled = sorted(self.scheduler_tick(), key=lambda job: job.id)
+        self.assertEqual([single1, single2], scheduled)
+        single1, single2 = scheduled  # reload locals
+
+        self.job_finished(single1)
+
+        self.assertEqual([], self.scheduler_tick())
+
+        self.job_finished(single2)
+
+        scheduled = sorted(self.scheduler_tick(), key=lambda job: job.id)
+        self.assertEqual([multi1a, multi1b], scheduled)
+
+    def test_two_multinode_and_multiworker_jobs_waiting_in_the_queue(self):
+        master = self.master
+        worker = DatabaseJobSource(lambda: ['arndale01', 'arndale02'])
+
+        self.submit_job(device_type='panda')
+        self.submit_job(device_type='panda')
+        self.submit_job(device_type='arndale')
+        self.submit_job(device_type='arndale')
+
+        p1, p2 = self.scheduler_tick(master)
+        a1, a2 = self.scheduler_tick(worker)
+
+        m1p, m1a = self.submit_job(
+            device_group=[
+                {"device_type": "panda", "count": 1, "role": "client"},
+                {"device_type": "arndale", "count": 1, "role": "server"},
+            ]
+        )
+        m1p.target_group = m1a.target_group = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+        m1p.save()
+        m1a.save()
+        m2p, m2a = self.submit_job(
+            device_group=[
+                {"device_type": "panda", "count": 1, "role": "client"},
+                {"device_type": "arndale", "count": 1, "role": "server"},
+            ]
+        )
+        m2p.target_group = m2a.target_group = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+        m2p.save()
+        m2a.save()
+
+        self.assertEqual([], self.scheduler_tick(master))
+        self.assertEqual([], self.scheduler_tick(worker))
+
+        self.job_finished(p1, master)
+        self.job_finished(a1, worker)
+
+        self.assertEqual([m1p], self.scheduler_tick(master))
+        self.assertEqual([m1a], self.scheduler_tick(worker))

@@ -144,35 +144,22 @@ class DatabaseJobSource(object):
         """
         Order of precedence:
 
-        * health checks
-        * multinode jobs, sorted by group name then by submit time (but not
-          priority). This is important to avoid deadlocks. Once a multinode job
-          got into the queue in a given position, no other multinode job can
-          get in the queue before it.
-          This ordering ensures that all sub-jobs of a multinode job will be
-          contiguously placed in the queue.
-        * all the rest of the jobs, sorted by priority and submission time
+        - health checks before everything else
+        - all the rest of the jobs, sorted by priority, then submission time.
+
+        Additionally, we also sort by target_group, so that if you have two
+        multinode job groups with the same priority submitted at the same time,
+        their sub jobs will be contiguous to each other in the list.  Lastly,
+        we also sort by id to make sure we have a stable order and that jobs
+        that came later into the system (as far as the DB is concerned) get
+        later into the queue.
         """
 
         jobs = TestJob.objects.filter(status=TestJob.SUBMITTED)
         jobs = jobs.filter(actual_device=None)
-        jobs = jobs.order_by('-health_check', '-priority', 'submit_time')
+        jobs = jobs.order_by('-health_check', '-priority', 'submit_time', 'target_group', 'id')
 
-        jobs = list(jobs)  # force evaluation of the DB query
-
-        health_check = filter(lambda job: job.health_check, jobs)
-
-        multinode = filter(lambda job: job.is_multinode, jobs)
-        by_multinode_group = lambda job: job.target_group
-        by_submit_time = lambda job: job.submit_time
-        multinode = sorted(multinode, key=by_multinode_group)
-        multinode = sorted(multinode, key=by_submit_time)
-
-        def regular_job(job):
-            return not job.health_check and not job.is_multinode
-        others = filter(regular_job, jobs)
-
-        return health_check + multinode + others
+        return jobs
 
     def _get_available_devices(self):
         """
@@ -188,7 +175,7 @@ class DatabaseJobSource(object):
         return devices
 
     def _assign_jobs(self):
-        jobs = self._get_job_queue()
+        jobs = list(self._get_job_queue())
         devices = list(self._get_available_devices())
         for job in jobs:
             device = find_device_for_job(job, devices)
