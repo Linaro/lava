@@ -22,6 +22,7 @@ import logging
 import contextlib
 import time
 import os
+import subprocess
 
 from lava_dispatcher.device.master import (
     MasterImageTarget
@@ -45,6 +46,22 @@ from lava_dispatcher.downloader import (
     download_image,
 )
 from lava_dispatcher import deployment_data
+
+
+def is_uboot_ramdisk(ramdisk):
+    try:
+        out = subprocess.check_output('mkimage -l %s' % ramdisk, shell=True).splitlines()
+    except subprocess.CalledProcessError:
+        return False
+
+    for line in out:
+        if not line.startswith('Image Type:'):
+            continue
+        key, val = line.split(':')
+        if val.find('RAMDisk') > 0:
+            return True
+
+    return False
 
 
 class BootloaderTarget(MasterImageTarget):
@@ -107,6 +124,18 @@ class BootloaderTarget(MasterImageTarget):
                     ramdisk = download_image(ramdisk, self.context,
                                              self.scratch_dir,
                                              decompress=False)
+                    # Ensure ramdisk has u-boot header
+                    if not is_uboot_ramdisk(ramdisk):
+                        ramdisk_uboot = ramdisk + ".uboot"
+                        logging.info("RAMdisk needs u-boot header.  Adding.")
+                        cmd = "mkimage -A arm -T ramdisk -C none -d %s %s > /dev/null" \
+                            % (ramdisk, ramdisk_uboot)
+                        r = subprocess.call(cmd, shell=True)
+                        if r == 0:
+                            ramdisk = ramdisk_uboot
+                        else:
+                            logging.warn("Unable to add u-boot header to ramdisk.  Tried %s" % cmd)
+
                     self._lava_cmds += "setenv lava_ramdisk " + \
                                        ramdisk[self._offset::] + ","
                 if dtb is not None:
