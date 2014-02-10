@@ -68,12 +68,18 @@ version parameter should be explicit.
 
 A lava-test-shell is run by:
 
- * "compiling" the above test defintion into a shell script
- * copying this script onto the device and arranging for it to be run
-   when the device boots
- * booting the device and letting the test run
- * retrieving the output from the device and turning it into a test
-   result bundle
+* "compiling" the above test defintion into a shell script.
+
+  - Note that this shell script will have a ``set -x`` at the top, so a
+    failing step will abort the entire test run. If you need to specify
+    a step that might fail, but should not cause the run to be aborted,
+    make sure you finish the command with ``|| true``.
+
+* copying this script onto the device and arranging for it to be run
+  when the device boots
+* booting the device and letting the test run
+* retrieving the output from the device and turning it into a test
+  result bundle
 
 Writing a test for lava-test-shell
 ==================================
