@@ -19,7 +19,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.actions.lmp.board import lmp_send_command, lmp_set_identify
+from lava_dispatcher.actions.lmp.board import lmp_send_command, lmp_set_identify, lmp_reset
 
 
 def device(serial):
@@ -39,3 +39,10 @@ def set_identify(serial, identify):
         lmp_set_identify(serial, "usb", True)
     elif identify == "off":
         lmp_set_identify(serial, "usb", False)
+
+
+def reset(serial, reset_value=False):
+    if reset_value is True:
+        lmp_reset(serial, "usb", True)
+    elif reset_value is False:
+        lmp_reset(serial, "usb", False)

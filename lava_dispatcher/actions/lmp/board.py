@@ -179,6 +179,17 @@ class LAVALmpDeviceSerial(object):
             message = '{"schema":"org.linaro.lmp.base", "identify":false}'
         self.send_frame(message)
 
+    def software_reset(self, reset_value=False):
+        """
+        Software reset LMP module by serial port.
+        :param reset_value: to specify the reset status we want
+        """
+        if reset_value is True:
+            message = '{"schema":"org.linaro.lmp.base", "reset":true}'
+        else:
+            message = '{"schema":"org.linaro.lmp.base", "reset":false}'
+        self.send_frame(message)
+
     def send_command(self, mode, selection):
         """
         Send command to module and getting the feedback message. It's a wrapper of send_frame.
@@ -297,6 +308,20 @@ def lmp_set_identify(serial, lmp_type, identify=True):
     """
     lmp = LAVALmpDeviceSerial(serial, lmp_type, False)
     lmp.set_identify(identify)
+    lmp.close()
+    return None
+
+
+def lmp_reset(serial, lmp_type, reset_value=False):
+    """
+    Helper function for sending a single command to a LMP module
+    :param serial: serial number of the module set
+    :param lmp_type: to specify the module we want operate
+    :param reset_value(option): Bool
+    :return a Python object that is decoded from the feedback message
+    """
+    lmp = LAVALmpDeviceSerial(serial, lmp_type, False)
+    lmp.software_reset(reset_value)
     lmp.close()
     return None
 

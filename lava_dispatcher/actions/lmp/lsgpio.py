@@ -24,7 +24,8 @@ from lava_dispatcher.actions.lmp.board import (
     lmp_send_command,
     lmp_send_multi_command,
     get_one_of_report,
-    lmp_set_identify
+    lmp_set_identify,
+    lmp_reset
 )
 
 
@@ -111,3 +112,10 @@ def set_identify(serial, identify):
         lmp_set_identify(serial, "lsgpio", True)
     elif identify == "off":
         lmp_set_identify(serial, "lsgpio", False)
+
+
+def reset(serial, reset_value=False):
+    if reset_value is True:
+        lmp_reset(serial, "lsgpio", True)
+    elif reset_value is False:
+        lmp_reset(serial, "lsgpio", False)

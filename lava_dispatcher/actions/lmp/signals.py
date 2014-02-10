@@ -65,6 +65,8 @@ def lsgpio_signal(connection, config, command, module_name):
             lmp_lsgpio.audio_disconnect(lmp_lsgpio_id)
         elif command[:3] == "id_":
             lmp_lsgpio.set_identify(lmp_lsgpio_id, command[-3:])
+        elif command == "reset":
+            lmp_lsgpio.reset(lmp_lsgpio_id, True)
 
     connection.sendline("<LAVA_LSGPIO_COMPLETE%s>" % message_str)
 
@@ -86,6 +88,8 @@ def eth_signal(connection, config, command, module_name):
             lmp_eth.disconnect(lmp_eth_id)
         elif command[:3] == "id_":
             lmp_eth.set_identify(lmp_eth_id, command[-3:])
+        elif command == "reset":
+            lmp_eth.reset(lmp_eth_id, True)
 
     connection.sendline("<LAVA_ETH_COMPLETE%s>" % message_str)
 
@@ -110,6 +114,8 @@ def hdmi_signal(connection, config, command, module_name, fakeedid=None):
             lmp_hdmi.fake(lmp_hdmi_id)
         elif command[:3] == "id_":
             lmp_hdmi.set_identify(lmp_hdmi_id, command[-3:])
+        elif command == "reset":
+            lmp_hdmi.reset(lmp_hdmi_id, True)
 
     connection.sendline("<LAVA_HDMI_COMPLETE%s>" % message_str)
 
@@ -131,6 +137,8 @@ def sata_signal(connection, config, command, module_name):
             lmp_sata.dutDisconnect(lmp_sata_id)
         elif command[:3] == "id_":
             lmp_sata.set_identify(lmp_sata_id, command[-3:])
+        elif command == "reset":
+            lmp_sata.reset(lmp_sata_id, True)
 
     connection.sendline("<LAVA_SATA_COMPLETE%s>" % message_str)
 
@@ -154,5 +162,7 @@ def usb_signal(connection, config, command, module_name):
             lmp_usb.disconnect(lmp_usb_id)
         elif command[:3] == "id_":
             lmp_usb.set_identify(lmp_usb_id, command[-3:])
+        elif command == "reset":
+            lmp_usb.reset(lmp_usb_id, True)
 
     connection.sendline("<LAVA_USB_COMPLETE%s>" % message_str)
