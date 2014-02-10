@@ -45,7 +45,7 @@ add_filter_container = function(data, filter_id, title) {
         content += '<div id="test_select_container">' +
             '<select id="test_select">' +
             '<option value="">--Select Test--</option>';
-        content += generate_test_options(data);
+        content += generate_test_options(data, "pass/fail");
         content += '</select></div>';
     }
 
@@ -55,7 +55,7 @@ add_filter_container = function(data, filter_id, title) {
     content += '<select id="available_tests" multiple class="filtered">';
 
     if ($('#id_chart_type').val() == "pass/fail") {
-        content += generate_test_options(data);
+        content += generate_test_options(data, "pass/fail");
     }
 
     content += '</select>';
@@ -89,7 +89,7 @@ add_filter_container = function(data, filter_id, title) {
     update_events(filter_id);
 }
 
-generate_test_options = function(data, chart_type="pass/fail") {
+generate_test_options = function(data, chart_type) {
 
     content = "";
     for (i in data) {
