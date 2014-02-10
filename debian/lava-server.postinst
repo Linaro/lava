@@ -85,7 +85,7 @@ die() {
 install_database()
 {
     # Create database user, if it doesn't exist
-    if ! su postgres -c "psql \"-c SELECT usename FROM pg_user WHERE usename='$LAVA_DB_USER'\""; then
+    if ! su postgres -c "psql \"-c SELECT usename FROM pg_user WHERE usename='$LAVA_DB_USER'\"" | grep "$LAVA_DB_USER"; then
         su postgres -c "createuser --no-createdb --encrypted --login --no-superuser --no-createrole --no-password --port $LAVA_DB_PORT $LAVA_DB_USER"|| "Failed to create database user"
     fi
 
