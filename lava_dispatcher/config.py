@@ -188,6 +188,7 @@ class DeviceSchema(schema.Schema):
     shared_working_directory = schema.StringOption(default=None)
 
     uefi_image_filename = schema.StringOption(default=None)
+    customize = schema.DictOption(default=None)
     vexpress_uefi_path = schema.StringOption(default=None)
     vexpress_uefi_backup_path = schema.StringOption(default=None)
     vexpress_stop_autoboot_prompt = schema.StringOption(

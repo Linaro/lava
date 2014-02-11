@@ -95,12 +95,12 @@ class SDMuxTarget(Target):
     def deploy_linaro(self, hwpack, rootfs, bootloadertype, rootfstype):
         img = generate_image(self, hwpack, rootfs, self.scratch_dir,
                              rootfstype, bootloadertype)
-        self._customize_linux(img)
+        self.customize_image(img)
         self._write_image(img)
 
     def deploy_linaro_prebuilt(self, image, rootfstype, bootloadertype):
         img = download_image(image, self.context)
-        self._customize_linux(img)
+        self.customize_image(img)
         self._write_image(img)
 
     def _customize_android(self, img):

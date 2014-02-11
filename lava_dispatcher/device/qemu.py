@@ -63,7 +63,7 @@ class QEMUTarget(Target):
 
         # build the QEMU command line
         self._sd_image = download_image(rootfs, self.context)
-        self._customize_linux(self._sd_image)
+        self.customize_image(self._sd_image)
 
         kernel = download_image(kernel, self.context)
         self._is_kernel_present = True
@@ -82,11 +82,11 @@ class QEMUTarget(Target):
         odir = self.scratch_dir
         self._sd_image = generate_image(self, hwpack, rootfs, odir,
                                         bootloadertype, rootfstype)
-        self._customize_linux(self._sd_image)
+        self.customize_image(self._sd_image)
 
     def deploy_linaro_prebuilt(self, image, rootfstype, bootloadertype):
         self._sd_image = download_image(image, self.context)
-        self._customize_linux(self._sd_image)
+        self.customize_image(self._sd_image)
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):

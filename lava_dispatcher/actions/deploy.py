@@ -54,6 +54,7 @@ class cmd_deploy_linaro_image(BaseAction):
             'hwpack': {'type': 'string', 'optional': True},
             'rootfs': {'type': 'string', 'optional': True},
             'image': {'type': 'string', 'optional': True},
+            'customize': {'type': 'object', 'optional': True},
             'rootfstype': {'type': 'string', 'optional': True},
             'bootloadertype': {'type': 'string', 'optional': True,
                                'default': 'u_boot'},
@@ -95,7 +96,7 @@ class cmd_deploy_linaro_image(BaseAction):
     def run(self, hwpack=None, rootfs=None, image=None,
             rootfstype='ext4', bootloadertype='u_boot', login_prompt=None,
             password_prompt=None, username=None, password=None,
-            login_commands=None):
+            login_commands=None, customize=None):
         if login_prompt is not None:
             self.client.config.login_prompt = login_prompt
         if password_prompt is not None:
@@ -106,6 +107,8 @@ class cmd_deploy_linaro_image(BaseAction):
             self.client.config.password = password
         if login_commands is not None:
             self.client.config.login_commands = login_commands
+        if customize is not None:
+            self.client.config.customize = customize
         self.client.deploy_linaro(
             hwpack=hwpack, rootfs=rootfs, image=image,
             rootfstype=rootfstype, bootloadertype=bootloadertype,)

@@ -219,24 +219,22 @@ class FastModelTarget(Target):
 
         generate_fastmodel_image(self.context, hwpack, rootfs, odir, bootloadertype)
         self._sd_image = '%s/sd.img' % odir
+        self.customize_image(self._sd_image)
 
         self._copy_needed_files_from_partition(self.config.boot_part, 'rtsm')
         self._copy_needed_files_from_partition(self.config.boot_part, 'fvp')
         self._copy_needed_files_from_partition(self.config.boot_part, '')
         self._copy_needed_files_from_partition(self.config.root_part, 'boot')
-
-        self._customize_linux(self._sd_image)
 
     def deploy_linaro_prebuilt(self, image, rootfstype, bootloadertype):
         self._sd_image = download_image(image, self.context)
         self._bootloadertype = bootloadertype
+        self.customize_image(self._sd_image)
 
         self._copy_needed_files_from_partition(self.config.boot_part, 'rtsm')
         self._copy_needed_files_from_partition(self.config.boot_part, 'fvp')
         self._copy_needed_files_from_partition(self.config.boot_part, '')
         self._copy_needed_files_from_partition(self.config.root_part, 'boot')
-
-        self._customize_linux(self._sd_image)
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
