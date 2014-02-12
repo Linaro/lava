@@ -1,7 +1,7 @@
 Deploying a KVM (x86_64) Device
 ===============================
 
-Adding a LVM device to LAVA is an easy way to make sure things work without
+Adding a KVM device to LAVA is an easy way to make sure things work without
 having to worry about connecting to a physical device and setting up a master
 image. This page outlines the steps required to add a new KVM device to your
 LAVA deployment and make it able to accept job requests.
