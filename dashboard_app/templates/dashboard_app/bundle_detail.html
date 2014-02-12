@@ -8,6 +8,13 @@
 {% block extrahead %}
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/pygments.css"/>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/bug-links.js"></script>
+
+<script language="javascript">
+  image_url = '{{ STATIC_URL }}dashboard_app/images/';
+  unlink_bug_url = '{% url dashboard_app.views.unlink_bug_and_testrun %}';
+  link_bug_url = '{% url dashboard_app.views.link_bug_to_testrun %}';
+</script>
 {% endblock %}
 
 
@@ -80,6 +87,7 @@ located in, by using this <a href="{{bundle.get_permalink}}">permalink</a></p>
 <script type="text/javascript" charset="utf-8">
 $(document).ready(function() {
     show_test_runs();
+    add_bug_link();
 });
     function show_test_runs() {
     document.getElementById("test_runs").style.display="block";
@@ -135,4 +143,13 @@ function show_deserialized() {
 </div>
 </span>
 
+<form method="POST"
+      action="{% url dashboard_app.views.link_bug_to_testrun %}"
+      id="add-bug-dialog" style="display: none">
+  {% csrf_token %}
+  <input type="hidden" name="back" value="{{ request.path }}"/>
+  <input type="hidden" name="uuid"/>
+  <div class="linked" style="display:none"></div>
+  <input name="bug_link" style="width: 100%"/>
+</form>
 {% endblock %}
