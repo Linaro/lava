@@ -54,7 +54,7 @@ the ``role`` which the device will have during the test::
             "parameters": {
                 "testdef_repos": [
                     {
-                        "git-repo": "http://staging.git.linaro.org/git/people/neil.williams/temp-functional-tests.git",
+                        "git-repo": "http://git.linaro.org/git/people/neil.williams/temp-functional-tests.git",
                         "testdef": "android/android-multinode01.yaml"
                     }
                 ],
@@ -67,7 +67,7 @@ the ``role`` which the device will have during the test::
             "parameters": {
                 "testdef_repos": [
                     {
-                        "git-repo": "http://staging.git.linaro.org/git/people/neil.williams/temp-functional-tests.git",
+                        "git-repo": "http://git.linaro.org/git/people/neil.williams/temp-functional-tests.git",
                         "testdef": "android/ubuntu-multinode01.yaml"
                     }
                 ],

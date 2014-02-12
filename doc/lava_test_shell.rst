@@ -230,7 +230,7 @@ The JSON would override these defaults using the syntax::
             "parameters": {
                 "testdef_repos": [
                     {
-                        "git-repo": "http://staging.git.linaro.org/git-ro/people/neil.williams/temp-functional-tests.git",
+                        "git-repo": "http://git.linaro.org/git-ro/people/neil.williams/temp-functional-tests.git",
                         "testdef": "params.yaml",
                         "parameters": {"VARIABLE_NAME_1": "eth2"}
                     }
@@ -262,9 +262,9 @@ value strings, that will **not** be expanded.
 
 Examples:
 
-http://staging.git.linaro.org/people/neil.williams/temp-functional-tests.git/blob/HEAD:/kvm-parameters.json
+http://git.linaro.org/people/neil.williams/temp-functional-tests.git/blob/HEAD:/kvm-parameters.json
 
-http://staging.git.linaro.org/people/neil.williams/temp-functional-tests.git/blob/HEAD:/params.yaml
+http://git.linaro.org/people/neil.williams/temp-functional-tests.git/blob/HEAD:/params.yaml
 
 Install Steps
 =============
