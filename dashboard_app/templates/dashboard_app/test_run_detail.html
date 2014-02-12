@@ -5,6 +5,15 @@
 {% load humanize %}
 
 {% block content %}
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/bug-links.js"></script>
+<script language="javascript">
+  image_url = '{{ STATIC_URL }}dashboard_app/images/';
+  unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testresult' %}';
+  link_bug_url = '{% url 'dashboard_app.views.link_bug_to_testresult' %}';
+  $(document).ready(function() {
+    add_bug_link();
+  });
+</script>
 
 {% if bundle.testjob %}
 <div class="row">
@@ -128,4 +137,14 @@
 {% include "dashboard_app/_attachments.html" with attachments=test_run.attachments %}
 
 
+<form method="POST"
+      action="{% url 'dashboard_app.views.link_bug_to_testresult' %}"
+      id="add-bug-dialog" style="display: none">
+  {% csrf_token %}
+  <input type="hidden" name="back" value="{{ request.path }}"/>
+  <input type="hidden" name="uuid"/>
+  <input type="hidden" name="relative_index"/>
+  <div class="linked" style="display:none"></div>
+  <input name="bug_link" style="width: 100%"/>
+</form>
 {% endblock %}

@@ -410,9 +410,15 @@ $(document).ready(function () {
                         cls = "pass";
                     }
                     uuid = cell["test_run_uuid"];
+                    relative_index_str = "";
+                    if (cell["measurement"]) {
+                        arr = cell["link"].split("/")
+                        relative_index = arr[arr.length-2]
+                        relative_index_str = 'data-relative_index="' + relative_index +'"'
+                    }
 
                     table_body += '<td class="' + cls + '" data-chart-id="' +
-                        this.chart_id + '" data-uuid="' + uuid + '">';
+                        this.chart_id + '" data-uuid="' + uuid + '" ' + relative_index_str + '>';
 
                     if (this.chart_data["chart_type"] == "pass/fail") {
                         table_body += '<a target="_blank" href="' +
@@ -1055,7 +1061,7 @@ $(document).ready(function () {
                 modal: true,
                 title: "Link bug to XXX"
             });
-
+         
         get_testrun_and_buildnumber = function (element) {
             var cell = element.closest('td');
             var row = cell.closest('tr');
@@ -1110,13 +1116,24 @@ $(document).ready(function () {
                 var linked_div = add_bug_dialog.find('div.linked');
                 var names = get_testrun_and_buildnumber($(this));
                 var uuid = $(this).closest('td').data('uuid');
+                var rel_idx = $(this).closest('td').data('relative_index');
                 var chart_id = $(this).closest('td').data('chart-id');
                 var back_url = add_bug_dialog.find('input[name=back]').val().split('?')[0] + '?bug_links_chart_id=' + chart_id;
 
                 current_bug = get_linked_bugs($(this));
                 add_bug_dialog.find('input[name=back]').val(back_url);
                 add_bug_dialog.find('input[name=bug_link]').val('');
+                add_bug_dialog.find('input[name=uuid]').val(uuid);
 
+                if (rel_idx) {
+                    add_bug_dialog.find('input[name=relative_index]').val(rel_idx);
+                    link_bug_url = testresult_link_bug_url
+                    unlink_bug_url = testresult_unlink_bug_url
+                } else {
+                    link_bug_url = testrun_link_bug_url
+                    unlink_bug_url = testrun_unlink_bug_url
+                }
+                    
                 if(current_bug.length) {
                     var html = '<b>Bug(s) linked to ' + names.testrun + ':</b><table width="95%" border="0">';
                     linked_div.show();
@@ -1141,9 +1158,8 @@ $(document).ready(function () {
                             if(confirm("Unlink '" + bug + "'")) {
                                 // unlink bug right now, so clear current_bug which is used for checking if the bug is duplicated when adding a bug
                                 current_bug = [];
-                                $('#add-bug-dialog').attr('action', del_bug_url);
+                                $('#add-bug-dialog').attr('action', unlink_bug_url);
                                 add_bug_dialog.find('input[name=bug_link]').val(bug);
-                                add_bug_dialog.find('input[name=uuid]').val(uuid);
                                 add_bug_dialog.submit();
                             }
                         }
@@ -1171,6 +1187,7 @@ $(document).ready(function () {
 
                             e.preventDefault();
                             if (confirm("Link '" + bug + "' to the '" + names.testrun + "' run of build" + names.buildnumber)) {
+                                $('#add-bug-dialog').attr('action', link_bug_url);
                                 add_bug_dialog.find('input[name=bug_link]').val(bug);
                                 add_bug_dialog.submit();
                             }
@@ -1181,7 +1198,7 @@ $(document).ready(function () {
 
                 var title = "Link a bug to the '" + names.testrun +
                     "' run of build " + names.buildnumber;
-                add_bug_dialog.find('input[name=uuid]').val(uuid);
+                $('#add-bug-dialog').attr('action', link_bug_url);
                 add_bug_dialog.dialog('option', 'title', title);
                 add_bug_dialog.dialog('open');
             }

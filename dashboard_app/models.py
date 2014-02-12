@@ -1404,7 +1404,17 @@ class BugLink(models.Model):
         blank=True,
         help_text=_help_max_length(1024))
 
-    test_runs = models.ManyToManyField(TestRun, related_name='bug_links')
+    test_runs = models.ManyToManyField(
+        TestRun,
+        blank=True,
+        related_name='bug_links'
+    )
+
+    test_result = models.ManyToManyField(
+        TestResult,
+        blank=True,
+        related_name='bug_links'
+    )
 
     def __unicode__(self):
         return unicode(self.bug_link)
@@ -2027,7 +2037,7 @@ class ImageReportChart(models.Model):
             for test_result in match.specific_results:
 
                 bug_links = sorted(
-                    [b.bug_link for b in test_result.test_run.bug_links.all()])
+                    [b.bug_link for b in test_result.bug_links.all()])
 
                 metadata_content = {}
                 try:

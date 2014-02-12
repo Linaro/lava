@@ -10,7 +10,6 @@
 {% endblock %}
 
 {% block content %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery-1.5.1.min.js"></script>
 <div class="row">
   <div class="col-md-6">
 <h3>Bundle information</h3>
@@ -77,9 +76,18 @@ located in, by using this <a href="{{bundle.get_permalink}}">permalink</a></p>
 {% endif %}
 </div>
 <hr/>
+<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery-1.5.1.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/bug-links.js"></script>
+<script language="javascript">
+  image_url = '{{ STATIC_URL }}dashboard_app/images/';
+  unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testrun' %}';
+  link_bug_url = '{% url 'dashboard_app.views.link_bug_to_testrun' %}';
+</script>
+
 <script type="text/javascript" charset="utf-8">
 $(document).ready(function() {
     show_test_runs();
+    add_bug_link();
 });
 function show_test_runs() {
     document.getElementById("test_runs").style.display="block";
@@ -103,9 +111,9 @@ function show_deserialized() {
 
 <div class="modal-header" id="bundle-run-container">
   <ul class="nav nav-pills">
-    <li><button onclick=show_test_runs() class="btn btn-sm btn-primary">Test Runs</button>
+    <li><button onclick='show_test_runs()' class="btn btn-sm btn-primary">Test Runs</button>
     </li>
-    <li><button onclick=show_deserialized() class="btn btn-sm btn-default">Bundle Viewer</button>
+    <li><button onclick='show_deserialized()' class="btn btn-sm btn-default">Bundle Viewer</button>
     </li>
   </ul>
 </div>
@@ -151,5 +159,16 @@ function show_deserialized() {
 
 </div>
 </span>
+</div>
+
+<form method="POST"
+      action="{% url 'dashboard_app.views.link_bug_to_testrun' %}"
+      id="add-bug-dialog" style="display: none">
+  {% csrf_token %}
+  <input type="hidden" name="back" value="{{ request.path }}"/>
+  <input type="hidden" name="uuid"/>
+  <div class="linked" style="display:none"></div>
+  <input name="bug_link" style="width: 100%"/>
+</form>
 
 {% endblock %}
