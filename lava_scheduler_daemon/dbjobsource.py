@@ -133,6 +133,8 @@ class DatabaseJobSource(object):
                 run_health_check = True
             elif not device.last_health_report_job:
                 run_health_check = True
+            elif not device.last_health_report_job.end_time:
+                run_health_check = True
             else:
                 run_health_check = device.last_health_report_job.end_time < \
                     datetime.datetime.now() - datetime.timedelta(days=1)
