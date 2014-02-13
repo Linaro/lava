@@ -914,6 +914,7 @@ class cmd_lava_test_shell(BaseAction):
 
         try:
             with target.file_system(results_part, '/lava') as d:
+                filesystem_access_failure = False
                 err_log = os.path.join(d, 'parse_err.log')
                 results_dir = os.path.join(d, 'results')
                 bundle = lava_test_shell.get_bundle(results_dir, testdef_objs, err_log)
