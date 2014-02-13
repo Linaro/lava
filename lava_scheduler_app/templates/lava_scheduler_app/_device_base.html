@@ -43,7 +43,11 @@
 
     <dt>Device Tags</dt>
     {% for tag in device.tags.all %}
-    <dd>{{ tag.name }}</dd>
+    <dd>{{ tag.name }}
+    {% if tag.description %}
+      <abbr title="{{ tag.description }}">(?)</abbr>
+    {% endif %}
+    </dd>
     {% empty %}
     <dd><i>None</i></dd>
     {% endfor %}
