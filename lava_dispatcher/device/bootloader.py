@@ -23,6 +23,7 @@ import contextlib
 import time
 import os
 import subprocess
+import pexpect
 
 from lava_dispatcher.device.master import (
     MasterImageTarget
@@ -254,7 +255,7 @@ class BootloaderTarget(MasterImageTarget):
                 else:
                     self._soft_reboot()
                     self._run_boot()
-            except:
+            except pexpect.TIMEOUT:
                 raise OperationFailed("_run_boot failed:")
             # When the kernel does DHCP which is the case for NFS
             # the nameserver data does get populated by the DHCP
