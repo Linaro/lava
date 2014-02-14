@@ -313,7 +313,14 @@ class DatabaseJobSource(object):
             self.logger.error(
                 "Unexpected job state in jobCompleted: %s" % job.status)
             job.status = TestJob.COMPLETE
-        msg = "Job: %s completed" % job.id
+        if new_device_status == Device.OFFLINE:
+            try:
+                reason = device.transitions.filter(message__isnull=False).latest('created_on').message
+            except DeviceStateTransition.DoesNotExist:
+                reason = None
+            msg = reason
+        else:
+            msg = "Job: %s completed" % job.id
 
         device.state_transition_to(new_device_status, message=msg, job=job)
 
