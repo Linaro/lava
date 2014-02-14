@@ -124,6 +124,8 @@ def extract_rootfs(tfname, tmpdir):
     """
     if logging_system('nice tar --strip-components=1 -C %s -xf %s' % (tmpdir, tfname)):
         raise CriticalError('Unable to extract tarball: %s' % tfname)
+    if logging_system('rm %s' % tfname):
+        raise CriticalError('Unable to remove tarball: %s' % tfname)
 
 
 def ensure_directory(path):

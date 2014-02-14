@@ -40,7 +40,6 @@ class DeviceSchema(schema.Schema):
     boot_cmds = schema.StringOption(fatal=True)  # Can do better here
     boot_cmds_android = schema.StringOption(fatal=True)  # And here
     boot_cmds_oe = schema.StringOption(fatal=True)  # And here?
-    pre_boot_cmd = schema.StringOption()
     read_boot_cmds_from_image = schema.BoolOption(default=True)
     boot_options = schema.ListOption()
     boot_linaro_timeout = schema.IntOption(default=300)
@@ -205,6 +204,12 @@ class DeviceSchema(schema.Schema):
     dummy_ssh_port = schema.IntOption(default=22)
     dummy_ssh_username = schema.StringOption(default='root')
     dummy_ssh_identity_file = schema.StringOption(default=None)
+
+    # for bootloader devices
+    pre_boot_cmd = schema.StringOption()
+    use_lava_tmpdir = schema.BoolOption(default=True)
+    alternative_create_tmpdir = schema.BoolOption(default=True)
+    alternative_dir = schema.StringOption(default=None)
 
 
 class OptionDescriptor(object):
