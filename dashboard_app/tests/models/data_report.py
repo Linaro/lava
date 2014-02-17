@@ -35,7 +35,7 @@ class DataReportTests(TestCase):
         expect(report._get_raw_html()).result("{{API_URL}}")
         with mocker:
             observed = report.get_html()
-            expected = reverse("dashboard_app.views.dashboard_xml_rpc_handler")
+            expected = '/RPC2'
             self.assertEqual(observed, expected)
 
     def test_template_context_does_not_have_RequestContext_things(self):

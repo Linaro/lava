@@ -30,7 +30,7 @@ class DataViewHandlerTests(TestCase):
         Simple dataview that selects all bundle streams
         </documentation>
         <summary>List all bundle streams</summary>
-        <sql backend="sqlite">
+        <sql backend="pgsql">
             SELECT *
             FROM dashboard_app_bundlestreams
             ORDER BY <value name="order_by"/>
@@ -57,9 +57,9 @@ class DataViewHandlerTests(TestCase):
         self.assertEqual(self.dataview.summary, "List all bundle streams")
 
     def test_sql_parsed_ok(self):
-        self.assertTrue("sqlite" in self.dataview.backend_queries)
-        backend_query = self.dataview.backend_queries["sqlite"]
-        self.assertEqual(backend_query.backend, "sqlite")
+        self.assertTrue("pgsql" in self.dataview.backend_queries)
+        backend_query = self.dataview.backend_queries["pgsql"]
+        self.assertEqual(backend_query.backend, "pgsql")
         self.assertEqual(
             backend_query.sql_template,
             "SELECT * FROM dashboard_app_bundlestreams ORDER BY {order_by}")

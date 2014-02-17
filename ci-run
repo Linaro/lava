@@ -5,6 +5,8 @@ set -e
 
 pep8 --ignore E501 .
 
+./lava_server/manage.py test dashboard_app
+
 ./lava_server/manage.py test lava_scheduler_app
 
 ./lava_server/manage.py test lava_scheduler_daemon

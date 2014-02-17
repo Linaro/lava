@@ -247,7 +247,7 @@ class DashboardAPIGetFailureTests(DashboardXMLRPCViewsTestCase):
             try:
                 self.xml_rpc_call('get', self.content_sha1)
             except xmlrpclib.Fault as ex:
-                self.assertEqual(ex.faultCode, errors.NOT_FOUND)
+                self.assertIn(ex.faultCode, [errors.NOT_FOUND, errors.FORBIDDEN])
             else:
                 self.fail("Should have raised an exception")
 
@@ -342,8 +342,7 @@ class DashboardAPIPutFailureTransactionTests(TransactionTestCase):
 
     def setUp(self):
         super(DashboardAPIPutFailureTransactionTests, self).setUp()
-        self.endpoint_path = reverse(
-            "dashboard_app.views.dashboard_xml_rpc_handler")
+        self.endpoint_path = 'http://localhost/RPC2'
         self.content_sha1 = None
 
     def tearDown(self):
@@ -352,7 +351,7 @@ class DashboardAPIPutFailureTransactionTests(TransactionTestCase):
         super(DashboardAPIPutFailureTransactionTests, self).tearDown()
 
     def xml_rpc_call(self, method, *args):
-        request_body = xmlrpclib.dumps(tuple(args), methodname=method)
+        request_body = xmlrpclib.dumps(tuple(args), methodname='dashboard.%s' % method)
         response = self.client.post(self.endpoint_path,
                                     request_body, "text/xml")
         return xmlrpclib.loads(response.content)[0][0]

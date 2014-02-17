@@ -105,7 +105,7 @@ class DashboardAPI(ExposedAPI):
     def _put(self, content, content_filename, pathname):
         try:
             logging.debug("Getting bundle stream")
-            if self.user.is_superuser:
+            if self.user and self.user.is_superuser:
                 bundle_stream = BundleStream.objects.get(pathname=pathname)
             else:
                 bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
@@ -524,7 +524,7 @@ class DashboardAPI(ExposedAPI):
             - personal streams are accessible to owners
             - team streams are accessible to team members
         """
-        if self.user.is_superuser:
+        if self.user and self.user.is_superuser:
             bundle_streams = BundleStream.objects.all()
         else:
             bundle_streams = BundleStream.objects.accessible_by_principal(
@@ -595,7 +595,7 @@ class DashboardAPI(ExposedAPI):
             - team streams are accessible to team members
         """
         try:
-            if self.user.is_superuser:
+            if self.user and self.user.is_superuser:
                 bundle_stream = BundleStream.objects.get(pathname=pathname)
             else:
                 bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)

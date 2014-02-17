@@ -40,7 +40,7 @@ from django.core.files import locks, File
 from django.core.files.storage import FileSystemStorage
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
-from django.db import models
+from django.db import models, connection
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
@@ -49,7 +49,7 @@ from django.template.defaultfilters import filesizeformat
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
-
+from django.db.utils import DatabaseError
 from django_restricted_resource.models import RestrictedResource
 from linaro_dashboard_bundle.io import DocumentIO
 
@@ -1490,7 +1490,7 @@ class DataReport(RepositoryItem):
 
     def _get_html_template_context(self):
         return Context({
-            "API_URL": reverse("dashboard_app.views.dashboard_xml_rpc_handler"),
+            "API_URL": '/RPC2',
             "STATIC_URL": settings.STATIC_URL
         })
 
@@ -1699,6 +1699,14 @@ class TestRunFilter(models.Model):
 
     @classmethod
     def matches_against_bundle(self, bundle):
+        cursor = connection.cursor()
+        try:
+            cursor.execute("select id from dashboard_app_testrunfilterattribute where (name,value) not in ("
+                           "select name, value from dashboard_app_namedattribute where content_type_id = ("
+                           "select django_content_type.id from django_content_type "
+                           "where app_label = 'dashboard_app' and model='testrun'));")
+        except DatabaseError:
+            return []
         from dashboard_app.filters import FilterMatch
         bundle_filters = bundle.bundle_stream.testrunfilter_set.all()
         attribute_filters = bundle_filters.extra(

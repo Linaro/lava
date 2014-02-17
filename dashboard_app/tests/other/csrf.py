@@ -60,8 +60,8 @@ class CSRFConfigurationTestCase(CSRFTestCase):
 
     def test_csrf_not_protecting_xml_rpc_views(self):
         """call version and check that we didn't get 403"""
-        endpoint_path = reverse('dashboard_app.views.dashboard_xml_rpc_handler')
-        request_body = xmlrpclib.dumps((), methodname="version")
+        endpoint_path = 'http://localhost/RPC2/'
+        request_body = xmlrpclib.dumps((), methodname="dashboard.version")
         response = self.client.post(endpoint_path, request_body, "text/xml")
         self.assertContains(response, "<methodResponse>", status_code=200)
 

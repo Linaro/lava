@@ -74,7 +74,7 @@ class TestRunListViewAnonymousTest(TestCaseWithScenarios):
         if self.bundle_stream.is_accessible_by(self.user):
             self.assertEqual(response.status_code, 200)
         else:
-            self.assertEqual(response.status_code, 404)
+            self.assertEqual(response.status_code, 403)
 
     def test_template_used(self):
         response = self.client.get(self.url)
@@ -83,7 +83,7 @@ class TestRunListViewAnonymousTest(TestCaseWithScenarios):
                                     "dashboard_app/test_run_list.html")
         else:
             self.assertTemplateUsed(response,
-                                    "404.html")
+                                    "403.html")
 
 
 class TestRunListViewAuthorizedTest(TestRunListViewAnonymousTest):
