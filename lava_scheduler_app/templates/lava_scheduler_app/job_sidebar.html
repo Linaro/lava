@@ -132,7 +132,7 @@
     <li><b>Device reports</b>
     <ul>
     {% if job.actual_device %}
-    <li>Name:&nbsp;<a href="{% url lava.scheduler.device_report job.actual_device.hostname %}">{{ job.actual_device.hostname }}</a></li>
+    <li>Name:&nbsp;<a href="{% url lava.scheduler.device_report job.actual_device.pk %}">{{ job.actual_device.hostname }}</a></li>
     {% endif %}
     {% if job.requested_device %}
     <li>Type:&nbsp;<a href="{% url lava.scheduler.device_type_report job.requested_device.device_type %}">
