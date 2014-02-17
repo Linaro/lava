@@ -169,8 +169,9 @@ def image_report_display(request, name):
 
     image_report = ImageReport.objects.get(name=name)
 
-    if not image_report.is_published and image_report.user != request.user:
-        raise PermissionDenied
+    if not request.user.is_superuser:
+        if not image_report.is_published and image_report.user != request.user:
+            raise PermissionDenied
 
     chart_data = {}
     for chart in image_report.imagereportchart_set.all():

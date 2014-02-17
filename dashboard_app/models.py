@@ -327,7 +327,7 @@ class BundleStream(RestrictedResource):
         """
         Return True if the user can upload bundles here
         """
-        return self.is_anonymous or self.is_owned_by(user)
+        return self.is_anonymous or self.is_owned_by(user) or user.is_superuser
 
 
 class GzipFileSystemStorage(FileSystemStorage):

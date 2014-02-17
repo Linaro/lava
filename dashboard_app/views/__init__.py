@@ -117,8 +117,9 @@ def get_restricted_object(klass, via, user, *args, **kwargs):
     try:
         obj = queryset.get(*args, **kwargs)
         ownership_holder = via(obj)
-        if not ownership_holder.is_accessible_by(user):
-            raise PermissionDenied()
+        if not user.is_superuser:
+            if not ownership_holder.is_accessible_by(user):
+                raise PermissionDenied()
         return obj
     except queryset.model.DoesNotExist:
         raise Http404('No %s matches the given query.' % queryset.model._meta.object_name)
@@ -127,7 +128,11 @@ def get_restricted_object(klass, via, user, *args, **kwargs):
 class BundleStreamView(LavaView):
 
     def get_queryset(self):
-        return BundleStream.objects.accessible_by_principal(self.request.user).order_by('pathname')
+        if self.request.user.is_superuser:
+            return BundleStream.objects.all().order_by('pathname')
+        else:
+            return BundleStream.objects.accessible_by_principal(
+                self.request.user).order_by('pathname')
 
     def results_query(self, term):
         matches = [p for p, r in TestResult.RESULT_MAP.iteritems() if r == term]

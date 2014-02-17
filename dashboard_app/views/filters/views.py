@@ -158,8 +158,9 @@ def filter_preview_json(request):
 @BreadCrumb("Filter ~{username}/{name}", parent=filters_list, needs=['username', 'name'])
 def filter_detail(request, username, name):
     filter = TestRunFilter.objects.get(owner__username=username, name=name)
-    if not filter.public and filter.owner != request.user:
-        raise PermissionDenied()
+    if not request.user.is_superuser:
+        if not filter.public and filter.owner != request.user:
+            raise PermissionDenied()
     if not request.user.is_authenticated():
         subscription = None
     else:
@@ -186,8 +187,9 @@ def filter_detail(request, username, name):
 @login_required
 def filter_subscribe(request, username, name):
     filter = TestRunFilter.objects.get(owner__username=username, name=name)
-    if not filter.public and filter.owner != request.user:
-        raise PermissionDenied()
+    if not request.user.is_superuser:
+        if not filter.public and filter.owner != request.user:
+            raise PermissionDenied()
     try:
         subscription = TestRunFilterSubscription.objects.get(
             user=request.user, filter=filter)
@@ -218,7 +220,11 @@ def filter_subscribe(request, username, name):
 
 def filter_form(request, bread_crumb_trail, instance=None):
     if request.method == 'POST':
-        form = TestRunFilterForm(request.user, request.POST, instance=instance)
+        if instance:
+            owner = instance.owner
+        else:
+            owner = request.user
+        form = TestRunFilterForm(owner, request.POST, instance=instance)
 
         if form.is_valid():
             if 'save' in request.POST:
@@ -234,7 +240,7 @@ def filter_form(request, bread_crumb_trail, instance=None):
                         'table': FilterPreviewTable(
                             'filter-preview',
                             reverse(filter_preview_json) + '?' + c.urlencode(),
-                            params=(request.user, form.as_data())),
+                            params=(owner, form.as_data())),
                     }, RequestContext(request))
     else:
         form = TestRunFilterForm(request.user, instance=instance)
@@ -256,9 +262,10 @@ def filter_add(request):
 
 @BreadCrumb("Edit", parent=filter_detail, needs=['name', 'username'])
 def filter_edit(request, username, name):
-    if request.user.username != username:
-        raise PermissionDenied()
-    filter = TestRunFilter.objects.get(owner=request.user, name=name)
+    if not request.user.is_superuser:
+        if request.user.username != username:
+            raise PermissionDenied()
+    filter = TestRunFilter.objects.get(owner__username=username, name=name)
     return filter_form(
         request,
         BreadCrumbTrail.leading_to(filter_edit, name=name, username=username),
@@ -267,9 +274,10 @@ def filter_edit(request, username, name):
 
 @BreadCrumb("Delete", parent=filter_detail, needs=['name', 'username'])
 def filter_delete(request, username, name):
-    if request.user.username != username:
-        raise PermissionDenied()
-    filter = TestRunFilter.objects.get(owner=request.user, name=name)
+    if not request.user.is_superuser:
+        if request.user.username != username:
+            raise PermissionDenied()
+    filter = TestRunFilter.objects.get(owner__username=username, name=name)
     if request.method == "POST":
         if 'yes' in request.POST:
             filter.delete()
@@ -468,8 +476,9 @@ def compare_matches(request, username, name, tag1, tag2):
         filter = TestRunFilter.objects.get(owner__username=username, name=name)
     except TestRunFilter.DoesNotExist:
         raise Http404("Filter ~%s/%s not found." % (username, name))
-    if not filter.public and filter.owner != request.user:
-        raise PermissionDenied()
+    if not request.user.is_superuser:
+        if not filter.public and filter.owner != request.user:
+            raise PermissionDenied()
     filter_data = filter.as_data()
     test_run_info = compare_filter_matches(request.user, filter_data, tag1, tag2)
     return render_to_response(
