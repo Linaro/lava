@@ -367,7 +367,7 @@ def device_report_data(start_day, end_day, device, health_check):
                                  status__in=(TestJob.COMPLETE, TestJob.INCOMPLETE,
                                              TestJob.CANCELED, TestJob.CANCELING),).values('status')
     url = reverse('lava.scheduler.failure_report')
-    params = 'start=%s&end=%s&device=%s&health_check=%d' % (start_day, end_day, device, health_check)
+    params = 'start=%s&end=%s&device=%s&health_check=%d' % (start_day, end_day, device.pk, health_check)
     return {
         'pass': res.filter(status=TestJob.COMPLETE).count(),
         'fail': res.exclude(status=TestJob.COMPLETE).count(),
