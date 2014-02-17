@@ -185,7 +185,7 @@ class DatabaseJobSource(object):
                 job.actual_device = device
                 job.submit_token = AuthToken.objects.create(user=job.submitter)
                 device.current_job = job
-                device.state_transition_to(Device.RESERVED)
+                device.state_transition_to(Device.RESERVED, message="Reserved for job %s" % job.display_id)
                 job.save()
                 device.save()
                 devices.remove(device)
@@ -271,7 +271,7 @@ class DatabaseJobSource(object):
         # need to set the device RUNNING if device was RESERVED
         device = job.actual_device
         if device.status == Device.RESERVED:
-            msg = "Job: %s" % job.id
+            msg = "Started running job %s" % job.display_id
             device.state_transition_to(Device.RUNNING, message=msg, job=job)
         device.save()
         job.start_time = datetime.datetime.utcnow()
@@ -320,7 +320,7 @@ class DatabaseJobSource(object):
                 reason = None
             msg = reason
         else:
-            msg = "Job: %s completed" % job.id
+            msg = "Job %s completed" % job.display_id
 
         device.state_transition_to(new_device_status, message=msg, job=job)
 
@@ -389,7 +389,7 @@ class DatabaseJobSource(object):
                     if device.status == Device.RUNNING:
                         self.logger.debug("Transitioning %s to Idle" % device.hostname)
                         device.current_job = None
-                        msg = "Cancelled job: %s from list" % job.id
+                        msg = "Job %s cancelled" % job.display_id
                         device.state_transition_to(Device.IDLE, message=msg,
                                                    job=job)
                     self.logger.debug('Marking job %s as cancelled on %s' % (job.id, job.actual_device))
