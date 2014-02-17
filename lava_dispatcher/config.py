@@ -195,6 +195,8 @@ class DeviceSchema(schema.Schema):
     vexpress_usb_mass_storage_device = schema.StringOption(default=None)
 
     ecmeip = schema.StringOption()
+    ipmi_power_sleep = schema.IntOption(default=1)
+    ipmi_power_retries = schema.IntOption(default=10)
 
     # for dummy devices
     dummy_driver = schema.StringOption(default=None)

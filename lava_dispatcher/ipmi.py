@@ -20,6 +20,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import time
+from lava_dispatcher.errors import CriticalError
+
 
 class IPMITool(object):
     """
@@ -28,10 +31,12 @@ class IPMITool(object):
     managed with IPMI.
     """
 
-    def __init__(self, context, host, ipmitool="ipmitool"):
+    def __init__(self, context, host, power_sleep, power_retries, ipmitool="ipmitool"):
         self.host = host
         self.context = context
         self.ipmitool = ipmitool
+        self.power_sleep = power_sleep
+        self.power_retries = power_retries
 
     def __ipmi(self, command):
         self.context.run_command(
@@ -54,18 +59,33 @@ class IPMITool(object):
         self.__ipmi("chassis bootdev pxe")
 
     def power_off(self):
-        self.__ipmi("chassis power off")
+        if self.get_power_status() != "off":
+            self.__ipmi("chassis power off")
+        self.check_power_status("off")
 
     def power_on(self):
-        self.__ipmi("chassis power on")
+        if self.get_power_status() != "on":
+            self.__ipmi("chassis power on")
+        self.check_power_status("on")
 
     def reset(self):
         self.__ipmi("chassis power reset")
 
-    def get_power_status(self):
+    def check_power_status(self, check_status):
         """ Command 'ipmitool power status' will output 'Chassis Power is on'
             or 'Chassis Power is off'.
             Before we return the last string, the '\n' needs to be strip."""
+        power_status = None
+        retries = 0
+        while power_status != check_status and retries < self.power_retries:
+            time.sleep(self.power_sleep)
+            power_status = self.get_power_status()
+            retries += 1
+        if power_status != check_status:
+            raise CriticalError("Failed to power node on")
+
+    def get_power_status(self):
+        time.sleep(self.power_sleep)
         return self.__ipmi_cmd_output("power status").split(' ')[-1].rstrip()
 
 
@@ -76,24 +96,19 @@ class IpmiPxeBoot(object):
     and disk boot devices using ipmi commands.
     """
 
-    def __init__(self, context, host):
-        self.ipmitool = IPMITool(context, host)
+    def __init__(self, context, host, power_sleep, power_retries):
+        self.ipmitool = IPMITool(context, host, power_sleep, power_retries)
 
     def power_on_boot_master(self):
-        if self.ipmitool.get_power_status() == 'on':
-            self.ipmitool.power_off()
         self.ipmitool.power_on()
 
     def power_on_boot_image(self):
         self.ipmitool.set_to_boot_from_disk()
-        if self.ipmitool.get_power_status() == 'on':
-            self.ipmitool.power_off()
+        self.ipmitool.power_off()
         self.ipmitool.power_on()
 
     def power_off(self):
-        if self.ipmitool.get_power_status() == 'on':
-            self.ipmitool.power_off()
+        self.ipmitool.power_off()
 
     def power_on(self):
-        if self.ipmitool.get_power_status() == 'off':
-            self.ipmitool.power_on()
+        self.ipmitool.power_on()

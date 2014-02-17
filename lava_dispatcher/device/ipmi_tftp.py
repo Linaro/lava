@@ -59,7 +59,8 @@ class IpmiPxeTarget(Target):
             msg = "The ecmeip address is not set for this target"
             logging.error(msg)
             raise CriticalError(msg)
-        self.bootcontrol = IpmiPxeBoot(context, self.config.ecmeip)
+        self.bootcontrol = IpmiPxeBoot(context, self.config.ecmeip, self.config.ipmi_power_sleep,
+                                       self.config.ipmi_power_retries)
 
     def power_on(self):
         self.bootcontrol.power_on_boot_image()
