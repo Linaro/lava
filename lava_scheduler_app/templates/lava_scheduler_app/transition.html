@@ -20,7 +20,7 @@
 <dd>{{ transition.created_on }}</dd>
 
 <dt>Device:</dt>
-    <dd><a href="{{ transition.device.get_absolute_url }}">{{ transition.device }}</a></dd>
+    <dd><a href="{{ transition.device.get_absolute_url }}">{{ transition.device.hostname }}</a></dd>
 
 <dt>Device type:</dt>
     <dd><a href="{{ transition.device.device_type.get_absolute_url }}">{{ transition.device.device_type }}</a></dd>
@@ -55,7 +55,7 @@
 </table>
 <br/>
 
-<h2>Status transitions for {{ device }}</h2>
+<h2>Status transitions for {{ device.hostname }}</h2>
 
 {% render_table transition_table %}
 
