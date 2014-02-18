@@ -1131,6 +1131,12 @@ class DeviceStateTransition(models.Model):
     new_state = models.IntegerField(choices=Device.STATUS_CHOICES)
     message = models.TextField(null=True, blank=True)
 
+    def __unicode__(self):
+        return u"%s: %s -> %s (%s)" % (self.device.hostname,
+                                       self.get_old_state_display(),
+                                       self.get_new_state_display(),
+                                       self.message)
+
     def update_message(self, message):
         self.message = message
         self.save()
