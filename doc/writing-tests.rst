@@ -186,6 +186,11 @@ Each YAML file contains metadata and instructions. Metadata includes:
       name: singlenode-advanced
       description: "Advanced (level 3): single node test commands for Linux Linaro ubuntu Images"
 
+
+.. note:: the short name of the purpose of the test definition, i.e., value of field **name**,
+          should not contain any non-ascii characters and special characters
+          from the following list, including white space(s): ``$& "'`()<>/\|;``
+
 If the file is not under version control (i.e. not in a git or bzr
 repository), the version of the file must also be specified in the
 metadata:
