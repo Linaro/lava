@@ -135,6 +135,26 @@ The first form takes these additional arguments:
     steps:
       - "lava-test-case bottle-count --result pass --measurement 99 --units bottles"
 
+:ref:`custom_scripts` allows preparation of LAVA results from other
+sources, complete with measurements by calling ``lava-test-case``
+from scripts executed in the YAML file::
+
+ #!/usr/bin/env python
+
+ from subprocess import call
+
+ def main():
+     call(
+         ['lava-test-case',
+          'bottle-count',
+          '--result', 'pass',
+          '--measurement', '99',
+          '--units', 'bottles'])
+     return 0
+
+ if __name__ == '__main__':
+     main()
+
 The second form is indicated by the --shell argument, for example::
 
   run:
