@@ -69,4 +69,5 @@ Other Topics
    lava-scheduler-device-help.rst
    lava-scheduler-device-type-help.rst
    lava-scheduler-submit-job.rst
+   lava-scheduler-job.rst
    linaro-dashboard-bundle/index.rst
