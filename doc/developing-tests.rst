@@ -406,9 +406,7 @@ definition file. The "parameters" could be used in order to pass the
 parameters for those variables, If your test definition file include
 Shell variables in "install" and "run" sections.
 
-.. seealso:: The test definition format for `lava_test_shell actions <lava_test_shell.html>`_
-
-Developer documentation for `lava_test_shell <http://validation.linaro.org/static/docs/lava-dispatcher/lava_test_shell.html>`_
+.. seealso:: ``lava_test_shell`` `developer documentation <lava_test_shell.html>`_
 
 .. _testdef_repos:
 
