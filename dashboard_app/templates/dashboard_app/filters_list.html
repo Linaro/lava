@@ -1,7 +1,6 @@
 {% extends "dashboard_app/_content.html" %}
 {% load i18n %}
 {% load django_tables2 %}
-
 {% block content %}
 <h1>Filters</h1>
 
@@ -16,7 +15,7 @@
 {% render_table user_filters_table %}
 
 <p>
-  <a href="{% url dashboard_app.views.filters.views.filter_add %}">Add new filter…</a>
+  <a href="{% url 'dashboard_app.views.filters.views.filter_add' %}">Add new filter…</a>
 </p>
 
 {% else %}

@@ -647,7 +647,7 @@ class Test(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ('dashboard_app.views.test_detail', [self.test_id])
+        return self.test_id
 
     def count_results_without_test_case(self):
         return TestResult.objects.filter(

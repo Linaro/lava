@@ -15,7 +15,7 @@
       <dt>Email</dt>
       <dd>{{ user.email }}</dd>
       <dt>Password</dt>
-      <dd><a href="{% url django.contrib.auth.views.password_change %}"><span class="glyphicon glyphicon-lock"></span> Update</a></dd>
+      <dd><a href="{% url 'django.contrib.auth.views.password_change %}"><span class="glyphicon glyphicon-lock"></span> Update</a></dd>
     </dl>
   </div>
 
@@ -37,9 +37,9 @@
   <div class="col-md-6">
     <h4 class="modal-header">Personal reports</h4>
     <ul>
-      <li><a href="{% url lava.scheduler.myjobs %}">Your jobs</a></li>
-      <li><a href="{% url dashboard_app.views.mybundlestreams %}">Your bundle streams</a></li>
-      <li><a href="{% url lava.scheduler.mydevice_list %}">Your devices</a></li>
+      <li><a href="{% url 'lava.scheduler.myjobs' %}">Your jobs</a></li>
+      <li><a href="{% url 'dashboard_app.views.mybundlestreams' %}">Your bundle streams</a></li>
+      <li><a href="{% url 'lava.scheduler.mydevice_list' %}">Your devices</a></li>
     </ul>
   </div>
 </div>

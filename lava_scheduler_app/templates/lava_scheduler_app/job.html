@@ -1,5 +1,4 @@
 {% extends "lava_scheduler_app/job_sidebar.html" %}
-
 {% block extrahead %}
 {{ block.super }}
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jQuery.Rule.js"></script>
@@ -32,7 +31,7 @@ No log file yet.
 {% endif %}
 
 <h3 id="top">Dispatcher Log messages (file size = {{ job_file_size|filesizeformat }}) &nbsp;  &nbsp;
-    <a href="{% url lava.scheduler.job.log_file.plain job.pk %}">Download as text file</a>
+    <a href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}">Download as text file</a>
 </h3>
 <a href="#bottom">Go to end of log file</a><br/><br/>
 <span class="logbuttons">
@@ -82,7 +81,7 @@ var pollTimer = null, logLenth = '{{ job_file_size }}';
 
 function poll (start) {
   $.ajax({
-    url: '{% url lava_scheduler_app.views.job_log_incremental pk=job.pk %}?start=' + logLenth,
+    url: '{% url 'lava_scheduler_app.views.job_log_incremental' pk=job.pk %}?start=' + logLenth,
     dataType: 'json',
     global: false,
     success: function (data, success, xhr) {
@@ -125,11 +124,11 @@ pollTimer = setTimeout(poll, 1000);
 </script>
 [ <a id="bottom" href="#top">Go to start of log file</a> ]
 {% if job_file_present %}
-[ <a href="{% url lava.scheduler.job.log_file job.pk %}">Complete log</a> ]
+[ <a href="{% url 'lava.scheduler.job.log_file' job.pk %}">Complete log</a> ]
 {% endif %}
-[ <a href="{% url lava.scheduler.job.definition job.pk %}">Definition</a> ]
+[ <a href="{% url 'lava.scheduler.job.definition' job.pk %}">Definition</a> ]
 {% if job.is_multinode %}
-[ <a href="{% url lava.scheduler.job.multinode_definition job.pk %}"> Multinode Definition</a> ]
+[ <a href="{% url 'lava.scheduler.job.multinode_definition' job.pk %}"> Multinode Definition</a> ]
 {% endif %}
 {% if job.results_link %}
 [ <a href="{{ job.results_link }}">Results Bundle</a> ]

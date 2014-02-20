@@ -40,7 +40,7 @@ setup(
     standard LAVA extensions (dashboard and scheduler) are already contained in
     this package.
     """,
-    url='https://launchpad.net/lava-server',
+    url='http://www.linaro.org/engineering/engineering-groups/validation',
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
@@ -53,30 +53,28 @@ setup(
         "Topic :: Software Development :: Testing",
     ],
     install_requires=[
-        'django >= 1.3',
-        'django-openid-auth >= 0.2',
+        'django >= 1.6.1',
+        'django-openid-auth >= 0.5',
         'django-restricted-resource >= 0.2.7',
-        'django-staticfiles >= 0.3.4',
-        "django-tables2 >= 0.9.4",
+        'django-tables2 >= 0.13.0',
+        'django-testscenarios >= 0.7.2',
         'docutils >= 0.6',
         'lava-tool >= 0.2',
         'lava-utils-interface >= 1.0',
         'linaro-django-xmlrpc >= 0.4',
-        'python-openid >= 2.2.4',  # this should be a part of
-                                   # django-openid-auth deps
         'south >= 0.7.3',
         'versiontools >= 1.8',
         'markdown >= 2.0.3',
         'longerusername',
         'psycopg2',
         'markupsafe',
+        'mocker >= 1.0',
 
         # optional dependency; for authentication with Attlassian Crowd SSO
         # 'django-crowd-rest-backend >= 0.3,
 
         # dashboard
         'linaro-dashboard-bundle >= 1.10.2',
-        'linaro-django-pagination >= 2.0.2',
         'pygments >= 1.2',
 
         # scheduler

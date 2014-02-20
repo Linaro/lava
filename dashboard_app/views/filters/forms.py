@@ -47,13 +47,13 @@ class TestRunFilterSubscriptionForm(forms.ModelForm):
 test_run_filter_head = '''
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/filter-edit.css" />
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/wider-filter-horizontal.css" />
-<script type="text/javascript" src="{% url admin:jsi18n %}"></script>
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
 <script type="text/javascript">
 var django = {};
 django.jQuery = $;
-var test_case_url = "{% url dashboard_app.views.filters.views.filter_add_cases_for_test_json %}?test=";
-var attr_name_completion_url = "{% url dashboard_app.views.filters.views.filter_attr_name_completion_json %}";
-var attr_value_completion_url = "{% url dashboard_app.views.filters.views.filter_attr_value_completion_json %}";
+var test_case_url = "{% url 'dashboard_app.views.filters.views.filter_add_cases_for_test_json' %}?test=";
+var attr_name_completion_url = "{% url 'dashboard_app.views.filters.views.filter_attr_name_completion_json' %}";
+var attr_value_completion_url = "{% url 'dashboard_app.views.filters.views.filter_attr_value_completion_json' %}";
 </script>
 <script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/jquery.formset.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/filter-edit.js"></script>

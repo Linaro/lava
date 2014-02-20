@@ -1,5 +1,4 @@
 {% extends "lava_scheduler_app/_content.html" %}
-
 {% load django_tables2 %}
 
 {% block content %}
@@ -10,17 +9,17 @@
 
 {% render_table device_type_table %}
 
-<p><a href="{% url lava.scheduler.alldevices %}">All Devices</a></p>
+<p><a href="{% url 'lava.scheduler.alldevices' %}">All Devices</a></p>
 
-<p><a href="{% url lava.scheduler.active_devices %}">All Active Devices</a></p>
+<p><a href="{% url 'lava.scheduler.active_devices' %}">All Active Devices</a></p>
 
-<p><a href="{% url lava.scheduler.labhealth %}">All Devices Health</a></p>
+<p><a href="{% url 'lava.scheduler.labhealth' %}">All Devices Health</a></p>
 
 <h2>Active Jobs</h2>
 
 {% render_table active_jobs_table %}
 
-<a href="{% url lava.scheduler.job.list %}">All jobs</a>
+<a href="{% url 'lava.scheduler.job.list' %}">All jobs</a>
 
 <h2>Workers</h2>
 

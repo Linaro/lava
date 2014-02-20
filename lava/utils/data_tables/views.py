@@ -18,7 +18,7 @@
 
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse
-from django.utils import simplejson
+import simplejson
 from django.views.generic import View
 
 from lava.utils.data_tables.query import DataTableQuery
