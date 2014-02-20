@@ -69,7 +69,6 @@ from dashboard_app.views.image_reports.tables import (
 from django_tables2 import (
     RequestConfig,
 )
-from dashboard_app.views.filters.tables import AllFiltersSimpleTable
 from lava.utils.lavatable import LavaView
 
 
@@ -439,13 +438,10 @@ def image_chart_form(request, bread_crumb_trail, instance=None,
         form = ImageReportChartForm(request.user, instance=instance)
         form.fields['image_report'].initial = image_report
 
-    filters_table = AllFiltersSimpleTable("all-filters", None)
-
     return render_to_response(
         'dashboard_app/image_report_chart_form.html', {
             'bread_crumb_trail': bread_crumb_trail,
             'form': form,
-            'filters_table': filters_table,
         }, RequestContext(request))
 
 
@@ -558,12 +554,9 @@ def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
         form = ImageChartFilterForm(request.user, instance=instance,
                                     initial={'image_chart': chart_instance})
 
-    filters_table = AllFiltersSimpleTable("all-filters", None)
-
     return render_to_response(
         'dashboard_app/image_chart_filter_form.html', {
             'bread_crumb_trail': bread_crumb_trail,
-            'filters_table': filters_table,
             'image_chart': chart_instance,
             'instance': instance,
             'form': form,

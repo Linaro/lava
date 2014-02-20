@@ -70,6 +70,10 @@ class OtherImageReportTable(UserImageReportTable):
         super(OtherImageReportTable, self).__init__(*args, **kwargs)
         self.length = 10
 
+    name = tables.TemplateColumn('''
+    <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
+    ''')
+
     class Meta(UserImageReportTable.Meta):
         fields = (
             'name', 'description', 'user',
@@ -85,6 +89,10 @@ class GroupImageReportTable(UserImageReportTable):
     def __init__(self, *args, **kwargs):
         super(GroupImageReportTable, self).__init__(*args, **kwargs)
         self.length = 10
+
+    name = tables.TemplateColumn('''
+    <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
+    ''')
 
     class Meta(UserImageReportTable.Meta):
         fields = (

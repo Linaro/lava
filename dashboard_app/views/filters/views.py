@@ -78,12 +78,6 @@ class FilterView(LavaView):
         return Q(bundle_streams__in=streams)
 
 
-class AllFiltersView(FilterView):
-
-    def get_queryset(self):
-        return TestRunFilter.objects.all()
-
-
 class UserFiltersView(FilterView):
 
     def get_queryset(self):
@@ -142,6 +136,19 @@ def filters_list(request):
 def filter_json(request, username, name):
     jfilter = TestRunFilter.objects.get(owner__username=username, name=name)
     return FilterTable.json(request, params=(request.user, jfilter.as_data()))
+
+
+def filter_name_list_json(request):
+
+    term = request.GET['term']
+    filters = []
+    for filter in TestRunFilter.objects.filter(Q(name__istartswith=term) |
+                                               Q(owner__username__istartswith=term)):
+        filters.append(
+            {"id": filter.id,
+             "name": filter.name,
+             "label": filter.owner_name})
+    return HttpResponse(json.dumps(filters), mimetype='application/json')
 
 
 def filter_preview_json(request):

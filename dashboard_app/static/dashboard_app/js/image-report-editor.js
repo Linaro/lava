@@ -1,10 +1,11 @@
-select_filter = function() {
-    // Open the filter select dialog.
-    $('#filter_select_dialog').dialog('open');
+filter_select_callback = function(filter_item) {
+    $("#id_filter").val(filter_item.id);
+    filters_callback(filter_item.id, filter_item.name);
+    $(".ui-autocomplete-input").focus();
 }
 
 filters_callback = function(id, name) {
-    // Function which will be called when a filter is selected from the dialog.
+    // Function which will be called when a filter is selected.
 
     url = "/dashboard/filters/+get-tests-json";
 
@@ -14,7 +15,6 @@ filters_callback = function(id, name) {
         data: {"id": id},
         beforeSend: function () {
             $('#filter-container').remove();
-            $('#filter_select_dialog').dialog('close');
             $('#loading_dialog').dialog('open');
         },
         success: function (data) {
@@ -233,23 +233,6 @@ sort_aliases = function() {
     $('#aliases_div input').sort(function(a,b) {
         return parseInt(a.dataset.sid) > parseInt(b.dataset.sid);
     }).appendTo('#aliases_div');
-}
-
-init_filter_dialog = function() {
-    // Setup the filter table dialog.
-
-    var filter_dialog = $('<div id="filter_select_dialog"></div>');
-    $('#all-filters_wrapper').wrapAll(filter_dialog);
-
-    $('#filter_select_dialog').dialog({
-        autoOpen: false,
-        title: 'Select Filter',
-        draggable: false,
-        height: 550,
-        width: 820,
-        modal: true,
-        resizable: false
-    });
 }
 
 init_loading_dialog = function() {

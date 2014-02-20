@@ -127,16 +127,6 @@ class PublicFiltersTable(UserFiltersTable):
         }
 
 
-class AllFiltersSimpleTable(LavaTable):
-
-    name = tables.TemplateColumn('''
-    <a href="#" onclick="filters_callback('{{ record.id }}', '{{ record.name }}');">~{{ record.owner.username }}/{{ record.name }}</a>
-    ''')
-
-    class Meta(LavaTable.Meta):
-        pass
-
-
 class TestRunColumn(tables.Column):
     def render(self, record):
         # This column is only rendered if we don't really expect
