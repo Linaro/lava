@@ -23,7 +23,7 @@ import xmlrpclib
 
 import django
 from django import forms
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.template import Template, RequestContext

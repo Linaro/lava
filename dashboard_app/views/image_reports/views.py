@@ -473,7 +473,7 @@ def image_chart_filter_add(request, name, id):
         chart_instance=image_chart)
 
 
-@BreadCrumb("Update image chart filter", parent=image_report_list)
+@BreadCrumb("Update image chart filter", parent=image_report_list, needs=['id'])
 @login_required
 def image_chart_filter_edit(request, id):
     image_chart_filter = ImageChartFilter.objects.get(id=id)
@@ -483,7 +483,7 @@ def image_chart_filter_edit(request, id):
         instance=image_chart_filter)
 
 
-@BreadCrumb("Image chart add filter", parent=image_report_list)
+@BreadCrumb("Image chart add filter", parent=image_report_list, needs=['id'])
 def image_chart_filter_delete(request, id):
     image_chart_filter = ImageChartFilter.objects.get(id=id)
     url = image_chart_filter.image_chart.get_absolute_url()

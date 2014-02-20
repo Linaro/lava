@@ -2,7 +2,6 @@
 {% load humanize %}
 {% load i18n %}
 {% load stylize %}
-
 {% load django_tables2 %}
 
 {% block extrahead %}
@@ -16,7 +15,7 @@
 <p>You can navigate to this bundle, regardless of the bundle stream it is
 located in, by using this <a href="{{bundle.get_permalink}}">permalink</a></p>
 <h3>Export</h3>
-<p>Export test run data <a href="{% url dashboard_app.views.bundle_export bundle_stream.pathname bundle.content_sha1 %}">as CSV</a></p>
+<p>Export test run data <a href="{% url 'dashboard_app.views.bundle_export' bundle_stream.pathname bundle.content_sha1 %}">as CSV</a></p>
 
 <h3>Upload details</h3>
 {% if bundle.uploaded_by %}
@@ -67,9 +66,9 @@ located in, by using this <a href="{{bundle.get_permalink}}">permalink</a></p>
 <p>You can download this bundle with the following command:</p>
 <div class="console">
 {% if bundle.private %}
-  <code>lava-tool get --dashboard-url=http://{{request.user.username}}@{{site.domain}}{% url lava.api_handler %} {{bundle.content_sha1}}</code>
+  <code>lava-tool get --dashboard-url=http://{{request.user.username}}@{{site.domain}}{% url 'lava.api_handler' %} {{bundle.content_sha1}}</code>
 {% else %}
-  <code>lava-tool get --dashboard-url=http://{{site.domain}}{% url lava.api_handler %} {{bundle.content_sha1}}</code>
+  <code>lava-tool get --dashboard-url=http://{{site.domain}}{% url 'lava.api_handler' %} {{bundle.content_sha1}}</code>
 {% endif %}
 </div>
 {% endblock %}

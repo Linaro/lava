@@ -1,5 +1,4 @@
 {% extends "lava_scheduler_app/job_sidebar.html" %}
-
 {% block extrahead %}
 {{ block.super }}
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/shCore.js"></script>
@@ -12,7 +11,7 @@
 
 {% block content %}
 <h2>Multinode Job definition file - {{ job.sub_id }} </h2>
-<a href="{% url lava.scheduler.job.multinode_definition.plain job.pk %}">Download as text file</a>
+<a href="{% url 'lava.scheduler.job.multinode_definition.plain' job.pk %}">Download as text file</a>
 <pre class="brush: js">{{ job.multinode_definition }}</pre>
 
 <script type="text/javascript">

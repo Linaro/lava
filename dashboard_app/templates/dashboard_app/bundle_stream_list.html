@@ -2,8 +2,6 @@
 
 {% load django_tables2 %}
 {% load i18n %}
-{% load pagination_tags %}
-
 
 {% block content %}
 
@@ -30,6 +28,6 @@
   {% endif %}
 </ul>
 {% if not user.is_authenticated %}
-<p>{% trans "You must" %} <a href="{% url django.contrib.auth.views.login %}">{% trans "sign in" %}</a> {% trans "to get more access" %}</p>
+<p>{% trans "You must" %} <a href="{% url 'django.contrib.auth.views.login' %}">{% trans "sign in" %}</a> {% trans "to get more access" %}</p>
 {% endif %}
 {% endblock %}

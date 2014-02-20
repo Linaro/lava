@@ -4,12 +4,13 @@ import json
 import xmlrpclib
 import logging
 import sys
+import warnings
 from dashboard_app.models import BundleStream
 
 from django.contrib.auth.models import Group, Permission, User
 from django.test import TransactionTestCase
 from django.test.client import Client
-
+from django.core.exceptions import ValidationError
 from django_testscenarios.ubertest import TestCase
 
 from linaro_django_xmlrpc.models import AuthToken
@@ -29,6 +30,9 @@ logger = logging.getLogger()
 logger.level = logging.INFO  # change to DEBUG to see *all* output
 stream_handler = logging.StreamHandler(sys.stdout)
 logger.addHandler(stream_handler)
+# filter out warnings from django sub systems like httpresponse
+warnings.filterwarnings('ignore', r"Using mimetype keyword argument is deprecated")
+warnings.filterwarnings('ignore', r"StrAndUnicode is deprecated")
 
 
 # Based on http://www.technobabble.dk/2008/apr/02/xml-rpc-dispatching-through-django-test-client/
@@ -128,7 +132,7 @@ class ModelFactory(object):
         if 'user' not in kwargs:
             kwargs['user'] = submitter
         testjob = TestJob(
-            definition=definition, submitter=submitter, **kwargs)
+            definition=definition, is_public=True, submitter=submitter, **kwargs)
         testjob.save()
         return testjob
 
@@ -315,8 +319,9 @@ class TestTestJob(TestCaseWithFactory):
         user = self.factory.make_user()
         user.groups.add(group)
         b = BundleStream.objects.create(
-            group=group, slug='blah', is_public=True)
+            group=group, slug='blah', is_public=True, is_anonymous=False)
         b.save()
+        self.assertEqual(group, b.group)
         j = self.make_job_json_for_stream_name(b.pathname)
         job = TestJob.from_json_and_user(j, user)
         self.assertEqual(group, job.group)
@@ -337,7 +342,7 @@ class TestTestJob(TestCaseWithFactory):
         user = self.factory.make_user()
         user.groups.add(group)
         b = BundleStream.objects.create(
-            group=group, slug='blah', is_public=False)
+            group=group, slug='blah', is_public=False, is_anonymous=False)
         b.save()
         j = self.make_job_json_for_stream_name(b.pathname)
         job = TestJob.from_json_and_user(j, user)
@@ -352,10 +357,16 @@ class TestTestJob(TestCaseWithFactory):
         stream_user = self.factory.make_user()
         job_user = self.factory.make_user()
         b = BundleStream.objects.create(
-            user=stream_user, slug='blah', is_public=True)
+            user=stream_user, slug='blah', is_public=True, is_anonymous=False)
         b.save()
         j = self.make_job_json_for_stream_name(b.pathname)
         self.assertRaises(ValueError, TestJob.from_json_and_user, j, job_user)
+
+    def test_anonymous_public_validation(self):
+        # Anonymous streams must be public
+        stream_user = self.factory.make_user()
+        self.assertRaises(ValidationError, BundleStream.objects.create,
+                          user=stream_user, slug='invalid', is_public=False, is_anonymous=True)
 
 
 class TestSchedulerAPI(TestCaseWithFactory):

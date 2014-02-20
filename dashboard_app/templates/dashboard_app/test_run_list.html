@@ -4,7 +4,6 @@
 {% load i18n %}
 {% load humanize %}
 
-
 {% block content %}
 <div>
   <span
@@ -14,13 +13,13 @@
     <label for="as_bundles">
       [&nbsp;<a
         id="as_bundles_link"
-        href="{% url dashboard_app.views.bundle_list bundle_stream.pathname %}"
+        href="{% url 'dashboard_app.views.bundle_list' bundle_stream.pathname %}"
         >{% trans "Bundles" %}</a>&nbsp;]
     </label>
     <label for="as_test_runs">
       [&nbsp;<a
         id="as_test_runs_link"
-        href="{% url dashboard_app.views.test_run_list bundle_stream.pathname %}"
+        href="{% url 'dashboard_app.views.test_run_list' bundle_stream.pathname %}"
         >{% trans "Test Runs" %}</a>&nbsp;]
     </label>
   </span>

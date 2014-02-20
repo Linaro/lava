@@ -690,7 +690,7 @@ class DeviceTransitionTable(LavaTable):
             '%s &rarr; %s' % (t.get_old_state_display(), t.get_new_state_display(),))
 
     created_on = tables.Column('when')
-    transition = tables.Column('transition', sortable=False, accessor='old_state')
+    transition = tables.Column('transition', orderable=False, accessor='old_state')
     created_by = tables.Column('by', accessor='created_by')
     message = tables.TemplateColumn('''
     <div class="edit_transition" id="{{ record.id }}" style="width: 100%">{{ record.message }}</div>
