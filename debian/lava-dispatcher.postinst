@@ -20,8 +20,6 @@ set -e
 
 case "$1" in
     configure)
-      # dispatcher needs to be able to use serial comms as root
-      adduser root dialout || true
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
