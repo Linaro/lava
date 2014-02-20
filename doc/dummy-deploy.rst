@@ -26,7 +26,14 @@ existing machines. There are 3 types of dummy devices:
 Configuration: dummy-schroot
 ----------------------------
 
-``dummy-schroot`` has a single configuration variable:
+Before anything, you will want to create one or more chroots to use with
+``dummy-schroot`` devices. The Debian wiki contains instructions_ to get
+started with schroot. After you create your chroot(s) you will want to
+take note of their names.
+
+.. _instructions: https://wiki.debian.org/Schroot
+
+A ``dummy-schroot`` device has a single configuration variable:
 
 * ``dummy_schroot_chroot`` indicates the name of the base chroot to be
   used. Default value: *default*.
