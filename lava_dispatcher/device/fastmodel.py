@@ -326,7 +326,7 @@ class FastModelTarget(Target):
 
         self._fix_perms()
 
-        cli_pattern = self.config.simulator_command_flag + '%s=%s'
+        cli_pattern = self.config.simulator_command_flag + '%s=%s' + ' '
 
         options = boot_options.as_string(self, join_pattern=cli_pattern)
 
