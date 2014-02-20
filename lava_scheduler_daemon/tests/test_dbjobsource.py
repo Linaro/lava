@@ -10,7 +10,7 @@ from lava_scheduler_app.models import (
     Tag,
     DevicesUnavailableException,
 )
-from lava_scheduler_app.tests.submission import TestCaseWithFactory
+from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource, find_device_for_job
 
 

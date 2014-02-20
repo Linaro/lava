@@ -18,7 +18,7 @@
   chart_data = $.parseJSON($('<div/>').html('{{chart_data}}').text());
   csrf_token = '{{csrf_token}}';
   image_url = '{{ STATIC_URL }}dashboard_app/images/';
-  del_bug_url = '{% url dashboard_app.views.images.unlink_bug_and_testrun %}';
+  del_bug_url = '{% url 'dashboard_app.views.images.unlink_bug_and_testrun' %}';
   buglinks_chartid = '{{ bug_links_chart_id }}';
 </script>
 {% endblock %}
@@ -36,7 +36,7 @@ Report Group:&nbsp;&nbsp;<a href="{% url dashboard_app.views.image_reports.views
 </div>
 
 <form method="POST"
-      action="{% url dashboard_app.views.images.link_bug_to_testrun %}"
+      action="{% url 'dashboard_app.views.images.link_bug_to_testrun' %}"
       id="add-bug-dialog" style="display: none">
   {% csrf_token %}
   <input type="hidden" name="back" value="{{ request.path }}"/>

@@ -1,7 +1,6 @@
 {% extends "registration/base.html" %}
 {% load i18n %}
 
-
 {% block title %}
 {{block.super }}
 | {% trans "Sign in" %}
@@ -35,7 +34,7 @@
 
 
 {% block content %}
-<form method="post" action="{% url django.contrib.auth.views.login %}">
+<form method="post" action="{% url 'django.contrib.auth.views.login' %}">
   {% csrf_token %} 
   <table>
     {% if openid_available %}
@@ -70,7 +69,7 @@
         <p class="error">{% trans "Your user name and password didn't match." %}</p>
         <p>{% trans "If you have problems signing in please" %}
         <a id="forgot_password"
-          href="{% url django.contrib.auth.views.password_reset %}"
+          href="{% url 'django.contrib.auth.views.password_reset' %}"
           >{% trans "reset your password" %}</a>.<p>
         {% endif %}
       </td>
@@ -78,7 +77,7 @@
     <tr>
       {% if openid_available %}
       <th>
-        <a class="button" href="{% url django_openid_auth.views.login_begin %}?next={{next|escape}}"
+        <a class="button" href="{% url 'django_openid_auth.views.login_begin' %}?next={{next|escape}}"
           >{% blocktrans %}Sign in with {{ openid_provider }}{% endblocktrans %}</a>
       </th>
       {% endif %}

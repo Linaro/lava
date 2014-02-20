@@ -1,7 +1,6 @@
 {% extends "lava_scheduler_app/_content.html" %}
 
 {% load django_tables2 %}
-
 {% block extrahead %}
 {{ block.super }}
 <style>
@@ -117,12 +116,12 @@
 <td style="vertical-align:text-top;text-align:right;">
 {% if show_maintenance %}
 <form method="POST"
-      action="{% url lava.scheduler.device.maintenance device.pk %}">
+      action="{% url 'lava.scheduler.device.maintenance' device.pk %}">
   {% csrf_token %}
   <button id="maintenance-button">Put into maintenance mode</button>
 </form>
 <form method="POST"
-      action="{% url lava.scheduler.device.maintenance device.pk %}"
+      action="{% url 'lava.scheduler.device.maintenance' device.pk %}"
       id="maintenance-dialog" style="display: none">
   {% csrf_token %}
   A reason must be specified:
@@ -135,12 +134,12 @@
 
 {% if show_online %}
 <form method="POST"
-      action="{% url lava.scheduler.device.online device.pk %}">
+      action="{% url 'lava.scheduler.device.online' device.pk %}">
   {% csrf_token %}
   <button id="online-button">Put online</button>
 </form>
 <form method="POST"
-      action="{% url lava.scheduler.device.online device.pk %}"
+      action="{% url 'lava.scheduler.device.online' device.pk %}"
       id="online-dialog" style="display: none">
   {% csrf_token %}
   A reason must be specified:
@@ -149,12 +148,12 @@
       Health Check
 </form><br/>
 <form method="POST"
-      action="{% url lava.scheduler.device.looping device.pk %}">
+      action="{% url 'lava.scheduler.device.looping' device.pk %}">
   {% csrf_token %}
   <button id="looping-button">Put into looping mode</button>
 </form>
 <form method="POST"
-      action="{% url lava.scheduler.device.looping device.pk %}"
+      action="{% url 'lava.scheduler.device.looping' device.pk %}"
       id="looping-dialog" style="display: none">
   {% csrf_token %}
   A reason must be specified:
@@ -165,7 +164,7 @@
 
 {% if show_forcehealthcheck %}
 <form style="..." method="POST"
-      action="{% url lava.scheduler.device.forcehealthcheck device.pk %}">
+      action="{% url 'lava.scheduler.device.forcehealthcheck' device.pk %}">
   {% csrf_token %}
   <button id="forcehealthcheck-button">Force Health Check</button>
 </form><br/>
@@ -175,12 +174,12 @@
 <td style="vertical-align:text-top;text-align:left;">
 {% if edit_description %}
 <form method="POST"
-      action="{% url lava.scheduler.device.edit_description device.pk %}">
+      action="{% url 'lava.scheduler.device.edit_description' device.pk %}">
   {% csrf_token %}
   <button id="description-button">Edit the device description</button>
 </form>
 <form method="POST"
-      action="{% url lava.scheduler.device.edit_description device.pk %}"
+      action="{% url 'lava.scheduler.device.edit_description' device.pk %}"
       id="description-dialog" style="...">
   {% csrf_token %}
     An empty description will clear the existing content.
@@ -190,12 +189,12 @@
 
 {% if show_restrict %}
 <form method="POST"
-      action="{% url lava.scheduler.device.restrict_device device.pk %}">
+      action="{% url 'lava.scheduler.device.restrict_device' device.pk %}">
   {% csrf_token %}
   <button id="restrict-button">Restrict submissions to {{ device.hostname }}</button>
 </form>
 <form method="POST"
-      action="{% url lava.scheduler.device.restrict_device device.pk %}"
+      action="{% url 'lava.scheduler.device.restrict_device' device.pk %}"
       id="restrict-dialog" style="...">
   {% csrf_token %}
   A reason must be specified:
@@ -205,12 +204,12 @@
 
 {% if show_pool %}
 <form method="POST"
-      action="{% url lava.scheduler.device.derestrict_device device.pk %}">
+      action="{% url 'lava.scheduler.device.derestrict_device' device.pk %}">
   {% csrf_token %}
   <button id="derestrict-button">Return {{ device.hostname }} to the pool</button>
 </form>
 <form method="POST"
-      action="{% url lava.scheduler.device.derestrict_device device.pk %}"
+      action="{% url 'lava.scheduler.device.derestrict_device' device.pk %}"
       id="derestrict-dialog" style="...">
   {% csrf_token %}
   A reason must be specified:
@@ -339,7 +338,7 @@ $(document).ready(
     );
 {% endif %}
 {% if can_admin %}
-    $('.edit_transition').editable('{% url lava.scheduler.edit_transition %}',
+    $('.edit_transition').editable('{% url 'lava.scheduler.edit_transition' %}',
     {
         indicator  : 'Saving ...',
         tooltip    : 'Click to edit ...',

@@ -1,7 +1,5 @@
 {% extends "layouts/content.html" %}
-{% load markup %}
 {% load i18n %}
-
 
 {% block title %}
 {{ block.super }} | {% trans "XML-RPC" %}
@@ -10,19 +8,19 @@
 
 {% block breadcrumbs %}
 {{ block.super }}
-<li><a href="{% url lava.home %}">{% trans "LAVA" %}</a></li>
+<li><a href="{% url 'lava.home' %}">{% trans "LAVA" %}</a></li>
 <li>{% trans "API" %}</li>
-<li><a href="{% url lava.api_help %}">{% trans "Available Methods" %}</a></li>
+<li><a href="{% url 'lava.api_help' %}">{% trans "Available Methods" %}</a></li>
 {% endblock %}
 
 
 {% block navigation %}
 <div id="lava-extension-navigation">
   <ul>
-    <li><a class="lava-back" href="{% url lava.home %}"
+    <li><a class="lava-back" href="{% url 'lava.home' %}"
       >{% trans "Back to LAVA" %}</a></li>
-    <li><a href="{% url lava.api_help %}">{% trans "API Help" %}</a></li>
-    <li><a href="{% url linaro_django_xmlrpc.views.tokens %}">{% trans "Authentication Tokens" %}</a></li>
+    <li><a href="{% url 'lava.api_help' %}">{% trans "API Help" %}</a></li>
+    <li><a href="{% url 'linaro_django_xmlrpc.views.tokens' %}">{% trans "Authentication Tokens" %}</a></li>
   </ul>
 </div>
 {% endblock %}
@@ -34,7 +32,7 @@
 client. For example, in python you can do this:</p>
 <pre>
 import xmlrpclib
-server = xmlrpclib.ServerProxy("{{ site_url }}{% url lava.api_handler %}")
+server = xmlrpclib.ServerProxy("{{ site_url }}{% url 'lava.api_handler' %}")
 print server.system.listMethods()
 </pre>
 
@@ -42,7 +40,7 @@ print server.system.listMethods()
 <div id="accordion">
   {% for method in methods %}
   <h3><a href="#{{method.name}}">{{ method.name }}</a></h3>
-  <div>{{ method.help|restructuredtext }}</div>
+  <div><pre>{{ method.help }}</pre></div>
   {% endfor %}
 </div>
 <script type="text/javascript">

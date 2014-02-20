@@ -1,6 +1,5 @@
 {% extends "layouts/content.html" %}
 
-
 {% block extension_navigation %}
 <p>Additional per-extension navigation can be located here</p>
 {% endblock %}
@@ -8,7 +7,7 @@
 
 {% block breadcrumbs %}
 {{ block.super }}
-<li><a href="{% url demo_app.views.hello %}">Hello from demo application</a></li>
+<li><a href="{% url 'demo_app.views.hello' %}">Hello from demo application</a></li>
 {% endblock %}
 
 

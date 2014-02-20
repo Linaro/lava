@@ -1,7 +1,6 @@
 {% extends "dashboard_app/_content.html" %}
 {% load i18n %}
 {% load django_tables2 %}
-
 {% block extrahead %}
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
@@ -15,7 +14,7 @@
 <h2>Your Image Reports</h2>
 
 <p style="margin-left: 10px;">
-  <a href="{% url dashboard_app.views.image_reports.views.image_report_add %}">
+  <a href="{% url 'dashboard_app.views.image_reports.views.image_report_add' %}">
     Add new Image Report
   </a>
 </p>

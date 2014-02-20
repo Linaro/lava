@@ -1,7 +1,6 @@
 {% extends "dashboard_app/_content.html" %}
 {% load i18n %}
 {% load keep_spacing %}
-
 {% block extrahead %}
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
@@ -68,7 +67,7 @@
 <script type="text/javascript">
 
   $("#image_report_group").editable(
-  "{% url dashboard_app.views.image_reports.views.image_report_add_group name=image_report.name %}",
+  "{% url 'dashboard_app.views.image_reports.views.image_report_add_group' name=image_report.name %}",
   {
     onblur: "submit",
     width: 200,
@@ -89,7 +88,7 @@
         $(event.target).val("");
       {% endif %}
       $(event.target).autocomplete({
-        source: '{% url dashboard_app.views.image_reports.views.image_report_group_list %}',
+        source: '{% url 'dashboard_app.views.image_reports.views.image_report_group_list' %}',
         minLength: 2,
       });
   });
@@ -100,7 +99,7 @@
 <h3>Charts</h3>
 
 <div class="fields-container">
-  <a href="{% url dashboard_app.views.image_reports.views.image_chart_add image_report.name %}">
+  <a href="{% url 'dashboard_app.views.image_reports.views.image_chart_add' image_report.name %}">
     Add new chart
   </a>
 </div>

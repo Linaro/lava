@@ -1,5 +1,4 @@
 {% extends "lava_scheduler_app/_content.html" %}
-
 {% load django_tables2 %}
 
 {% block extrahead %}
@@ -63,7 +62,7 @@
 <td style="vertical-align:text-top;text-align:left;">
   {% if can_admin %}
   <form method="POST"
-        action="{% url lava.scheduler.edit_worker_desc %}">
+        action="{% url 'lava.scheduler.edit_worker_desc' %}">
     <dd>Description:
       {% csrf_token %}
       <div class="edit_desc" id="{{ worker.pk }}">{{ worker.get_description }}
@@ -118,7 +117,7 @@ $(document).ready(
         $("#swinfo-content").toggle();
         $("#swinfo-content").html({{ worker.get_software_info }});
     });
-    $('.edit_desc').editable('{% url lava.scheduler.edit_worker_desc %}',
+    $('.edit_desc').editable('{% url 'lava.scheduler.edit_worker_desc' %}',
     {
         indicator  : 'Saving ...',
         tooltip    : 'Click to edit ...',

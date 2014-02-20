@@ -14,9 +14,11 @@
 
 {% block breadcrumbs %}
 {{ block.super }}
-<li><a href="{% url lava.home %}">{% trans "LAVA" %}</a></li>
+<li><a href="{% url 'lava.home' %}">{% trans "LAVA" %}</a></li>
 <li>{% trans "API" %}</li>
-<li><a href="{% url linaro_django_xmlrpc.views.tokens %}">{% trans "Authentication Tokens" %}</a></li>
+<li><a
+  href="{% url 'linaro_django_xmlrpc.views.tokens' %}"
+  >{% trans "Authentication Tokens" %}</a></li>
 {% endblock %}
 
 {% block content %}

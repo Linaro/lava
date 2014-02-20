@@ -1,11 +1,10 @@
 {% extends "lava_scheduler_app/_content.html" %}
-
 {% block extrahead %}
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_scheduler_app/css/jquery-linedtextarea.css"/>
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_scheduler_app/css/scheduler.css"/>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery-linedtextarea.js"></script>
-{% url lava.scheduler.get_remote_json as remote_json_url %}
+{% url 'lava.scheduler.get_remote_json' as remote_json_url %}
 <script type="text/javascript">
   var remote_json_url = '{{ remote_json_url }}';
 </script>
@@ -20,8 +19,8 @@
 
 {% if job_id %}
 
-{% url lava.scheduler.job.detail job_id as detail_url %}
-{% url lava.scheduler.job.list as list_url %}
+{% url 'lava.scheduler.job.detail' job_id as detail_url %}
+{% url 'lava.scheduler.job.list' as list_url %}
 
 <div id="job-success">Job submission successfull!
 <br>
@@ -32,13 +31,13 @@ To view the full job list click <a href="{{ list_url }}">here</a>.
 </div>
 
 {% elif job_list %}
-{% url lava.scheduler.job.list as list_url %}
+{% url 'lava.scheduler.job.list' as list_url %}
 <div id="job-success">Multinode Job submission successfull!
 <br>
 <br>
 Jobs have been created with the IDs:
 {% for job in job_list %}
-{% url lava.scheduler.job.detail job as detail_url %}
+{% url 'lava.scheduler.job.detail job' as detail_url %}
 [ <a href="{{ detail_url }}">{{ job }}</a> ]
 {% endfor %}
 <br>
