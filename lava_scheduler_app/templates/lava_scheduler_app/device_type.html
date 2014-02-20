@@ -1,5 +1,4 @@
 {% extends "lava_scheduler_app/_content.html" %}
-
 {% load django_tables2 %}
 
 {% block content %}
@@ -54,7 +53,7 @@
 {% render_table health_job_summary_table %}
 
 <h3>Reports</h3>
-<a href="{% url lava.scheduler.device_type_report device_type %}">Health check and job failure report</a>
+<a href="{% url 'lava.scheduler.device_type_report' device_type %}">Health check and job failure report</a>
 
 <h3>Devices Overview</h3>
 {% render_table devices_table_no_dt %}

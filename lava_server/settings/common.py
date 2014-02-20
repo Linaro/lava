@@ -113,7 +113,6 @@ LOGIN_URL = MOUNT_POINT + "/accounts/login/"
 INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.markup',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.humanize',
@@ -181,3 +180,7 @@ ME_PAGE_ACTIONS = [
     ("django.contrib.auth.views.password_change", "Change your password"),
     ("django.contrib.auth.views.logout", "Sign out"),
 ]
+
+ALLOWED_HOSTS = ['*']
+
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'

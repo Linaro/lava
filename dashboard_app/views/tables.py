@@ -19,6 +19,22 @@ from dashboard_app.models import (
 )
 
 
+def pklink(record):
+    return mark_safe(
+        '<a href="%s">%s</a>' % (
+            record.get_absolute_url(),
+            escape(record.pathname)))
+
+
+class BundleLinkColumn(tables.Column):
+
+    def __init__(self, **kw):
+        super(BundleLinkColumn, self).__init__(**kw)
+
+    def render(self, record):
+        return pklink(record)
+
+
 class BundleStreamTable(LavaTable):
     """
     List of bundle streams
@@ -28,18 +44,11 @@ class BundleStreamTable(LavaTable):
         super(BundleStreamTable, self).__init__(*args, **kwargs)
         self.length = 25
 
-    pathname = tables.TemplateColumn(
-        '<a href="{% url dashboard_app.views.bundle_list record.pathname %}">'
-        '<code>{{ record.pathname }}</code></a>')
-    name = tables.TemplateColumn(
-        '{{ record.name|default:"<i>not set</i>" }}')
-    number_of_test_runs = tables.TemplateColumn(
-        '<a href="{% url dashboard_app.views.test_run_list record.pathname %}">'
-        '{{ record.get_test_run_count }}')
+    pathname = BundleLinkColumn()
+    name = tables.TemplateColumn('{{ record.name|default:"<i>not set</i>" }}')
+    number_of_test_runs = tables.TemplateColumn('{{ record.get_test_run_count }}')
     number_of_test_runs.orderable = False
-    number_of_bundles = tables.TemplateColumn(
-        '<a href="{% url dashboard_app.views.bundle_list record.pathname %}">'
-        '{{ record.bundles.count}}</a>')
+    number_of_bundles = tables.TemplateColumn('{{ record.bundles.count}}')
     number_of_bundles.orderable = False
 
     class Meta(LavaTable.Meta):

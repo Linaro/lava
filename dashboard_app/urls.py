@@ -19,7 +19,7 @@
 """
 URL mappings for the Dashboard application
 """
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 
 urlpatterns = patterns(
     'dashboard_app.views',

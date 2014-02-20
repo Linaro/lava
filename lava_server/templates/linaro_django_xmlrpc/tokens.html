@@ -14,16 +14,18 @@
 
 {% block breadcrumbs %}
 {{ block.super }}
-<li><a href="{% url lava.home %}">{% trans "LAVA" %}</a></li>
+<li><a href="{% url 'lava.home' %}">{% trans "LAVA" %}</a></li>
 <li>{% trans "API" %}</li>
-<li><a href="{% url linaro_django_xmlrpc.views.tokens %}">{% trans "Authentication Tokens" %}</a></li>
+<li><a
+  href="{% url 'linaro_django_xmlrpc.views.tokens' %}"
+  >{% trans "Authentication Tokens" %}</a></li>
 {% endblock %}
 
 {% block content %}
 <h2>Authentication Tokens</h2>
 <p>Authentication tokens allow scripts using <a href="https://launchpad.net/lava-tool">lava-tool</a> to securely access LAVA resources. You can create and use any number of tokens simultaneously. If you believe a token is compromised you can quickly remove it.  Anyone using that token will no longer be able to authenticate as You in the system.</p>
 
-<h2>Your tokens <a class="btn btn-xs btn-primary" href="{% url linaro_django_xmlrpc.views.create_token %}"><span class="glyphicon glyphicon-plus-sign"></span> new</a></h2>
+<h2>Your tokens <a class="btn btn-xs btn-primary" href="{% url 'linaro_django_xmlrpc.views.create_token' %}"><span class="glyphicon glyphicon-plus-sign"></span> new</a></h2>
 
 {% if token_list %}
 <div class="row">
@@ -40,7 +42,7 @@
         {% for token in token_list|dictsort:"pk" %}
         <tr>
           <td>{{ token.pk }}</td>
-          <td><a href="{% url linaro_django_xmlrpc.views.edit_token token.pk %}">{{ token.description|default:"empty" }}</a></td>
+          <td><a href="{% url 'linaro_django_xmlrpc.views.edit_token' token.pk %}">{{ token.description|default:"empty" }}</a></td>
           <td>{{ token.created_on|date }}</td>
           {% if token.last_used_on %}
           <td>{{ token.last_used_on|timesince }}</td>
@@ -61,7 +63,7 @@
               </div>
             </div>
           </div>
-          <a class="btn btn-xs btn-primary" href="{% url linaro_django_xmlrpc.views.edit_token token.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
+          <a class="btn btn-xs btn-primary" href="{% url 'linaro_django_xmlrpc.views.edit_token' token.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
           <button class="btn btn-xs btn-danger" data-toggle="modal" data-target="#deleteTokenModal{{ token.pk }}" title="supprimer"><span class="glyphicon glyphicon-trash"></span></button>
           <div class="modal fade" id="deleteTokenModal{{ token.pk }}" tabindex="-1" role="dialog" aria-labelledby="deleteTokenModal{{ token.pk }}Label" aria-hidden="true">
             <div class="modal-dialog">
@@ -75,7 +77,7 @@
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                  <a class="btn btn-danger" href="{% url linaro_django_xmlrpc.views.delete_token token.pk %}">Delete</a>
+                  <a class="btn btn-danger" href="{% url 'linaro_django_xmlrpc.views.delete_token' token.pk %}">Delete</a>
                 </div>
               </div>
             </div>

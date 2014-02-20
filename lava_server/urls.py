@@ -17,10 +17,9 @@
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf import settings
-from django.conf.urls.defaults import (
+from django.conf.urls import (
     handler404, include, patterns, url)
 from django.contrib import admin
-from staticfiles.urls import staticfiles_urlpatterns
 from longerusername.forms import AuthenticationForm
 from linaro_django_xmlrpc import urls as api_urls
 
@@ -96,12 +95,6 @@ urlpatterns = patterns(
         include(api_urls.default_mapper_urlpatterns)),
     url(r'^{mount_point}utils/markitup/'.format(mount_point=settings.MOUNT_POINT),
         include('lava_markitup.urls')))
-
-
-# Enable static files serving for development server
-# NOTE: This can be removed in django 1.3
-if settings.DEBUG:
-    urlpatterns += staticfiles_urlpatterns()
 
 
 # Load URLs for extensions

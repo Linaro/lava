@@ -79,7 +79,7 @@
         $(event.target).val("");
         {% endif %}
         $(event.target).autocomplete({
-            source: '{% url dashboard_app.views.filters.views.filter_name_list_json %}',
+            source: '{% url 'dashboard_app.views.filters.views.filter_name_list_json' %}',
             minLength: 2,
             select: function(event, ui) {
               filter_select_callback(ui.item);

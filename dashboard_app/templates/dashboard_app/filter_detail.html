@@ -1,7 +1,6 @@
 {% extends "dashboard_app/_content.html" %}
 {% load i18n %}
 {% load django_tables2 %}
-
 {% block extrahead %}
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/filter-detail.css"/>
@@ -23,11 +22,11 @@
 
 {% if subscription %}
 <p>
-  <a href="{% url dashboard_app.views.filters.views.filter_subscribe username=filter.owner.username name=filter.name %}">Manage</a> your subscription to this filter.
+  <a href="{% url 'dashboard_app.views.filters.views.filter_subscribe' username=filter.owner.username name=filter.name %}">Manage</a> your subscription to this filter.
 </p>
 {% else %}
 <p>
-  <a href="{% url dashboard_app.views.filters.views.filter_subscribe username=filter.owner.username name=filter.name %}">Subscribe</a> to this filter.
+  <a href="{% url 'dashboard_app.views.filters.views.filter_subscribe' username=filter.owner.username name=filter.name %}">Subscribe</a> to this filter.
 </p>
 {% endif %}
 

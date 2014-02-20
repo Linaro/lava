@@ -1,5 +1,4 @@
 {% extends "dashboard_app/_content.html" %}
-
 {% block extrahead %}
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-report.css"/>
@@ -15,7 +14,7 @@
   test_names = $.parseJSON($('<div/>').html("{{test_names}}").text());
   columns = $.parseJSON($('<div/>').html("{{columns}}").text());
   image_url = '{{ STATIC_URL }}dashboard_app/images/';
-  del_bug_url = '{% url dashboard_app.views.images.unlink_bug_and_testrun %}';
+  del_bug_url = '{% url 'dashboard_app.views.images.unlink_bug_and_testrun' %}';
 </script>
 {% endblock %}
 
@@ -114,7 +113,7 @@
 </table>
 
 <form method="POST"
-      action="{% url dashboard_app.views.images.link_bug_to_testrun %}"
+      action="{% url 'dashboard_app.views.images.link_bug_to_testrun' %}"
       id="add-bug-dialog" style="display: none">
   {% csrf_token %}
   <input type="hidden" name="back" value="{{ request.path }}"/>
