@@ -37,7 +37,7 @@ class DeviceSchema(schema.Schema):
     master_sdcard_label = schema.StringOption()
     master_userdata_dir = schema.StringOption()
     master_userdata_label = schema.StringOption()
-    android_binary_drivers = schema.StringOption()
+    android_binary_drivers = schema.StringOption(default=None)
     cts_media_url = schema.StringOption()
     boot_cmds = schema.StringOption(fatal=True)  # Can do better here
     boot_cmds_android = schema.StringOption(fatal=True)  # And here
