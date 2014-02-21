@@ -27,7 +27,8 @@ import lava_dispatcher.config as dispatcher_config
 
 from lava_scheduler_app.models import (
     Device,
-    TestJob)
+    TestJob
+)
 from lava_scheduler_app import utils
 from lava_scheduler_daemon.worker import WorkerData
 from lava_scheduler_daemon.jobsource import IJobSource
@@ -45,16 +46,23 @@ except ImportError:
 
 
 def find_device_for_job(job, device_list):
+    """
+    If the device has the same tags as the job or all the tags required
+    for the job and some others which the job does not explicitly specify,
+    check if this device be assigned to this job for this user.
+    """
     if job.health_check is True:
         if job.requested_device.status == Device.OFFLINE:
             return job.requested_device
     for device in device_list:
         if device == job.requested_device:
-            if device.can_submit(job.submitter):
+            if device.can_submit(job.submitter) and\
+               set(job.tags.all()) & set(device.tags.all()) == set(job.tags.all()):
                 return device
     for device in device_list:
         if device.device_type == job.requested_device_type:
-            if device.can_submit(job.submitter):
+            if device.can_submit(job.submitter) and\
+               set(job.tags.all()) & set(device.tags.all()) == set(job.tags.all()):
                 return device
     return None
 

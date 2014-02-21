@@ -1,10 +1,15 @@
 from contextlib import contextmanager
 import datetime
 import os
-
 from django_testscenarios.ubertest import TestCase
 
-from lava_scheduler_app.models import Device, DeviceType, TestJob
+from lava_scheduler_app.models import (
+    Device,
+    DeviceType,
+    TestJob,
+    Tag,
+    DevicesUnavailableException,
+)
 from lava_scheduler_app.tests.submission import TestCaseWithFactory
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource, find_device_for_job
 
@@ -17,11 +22,13 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
         DeviceType.objects.all().delete()
 
         self.panda = self.factory.ensure_device_type(name='panda')
+        self.beaglebone = self.factory.ensure_device_type(name='beaglebone')
         self.arndale = self.factory.ensure_device_type(name='arndale')
 
         # make sure the DB is in a clean state wrt devices and jobs
         Device.objects.all().delete()
         TestJob.objects.all().delete()
+        Tag.objects.all().delete()
 
         panda = self.panda
         self.panda01 = self.factory.make_device(device_type=panda, hostname='panda01')
@@ -30,6 +37,16 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
         arndale = self.arndale
         self.arndale01 = self.factory.make_device(device_type=arndale, hostname='arndale01')
         self.arndale02 = self.factory.make_device(device_type=arndale, hostname='arndale02')
+
+        self.common_tag = self.factory.ensure_tag('common')
+        self.unique_tag = self.factory.ensure_tag('unique')
+        self.exclusion_tag = self.factory.ensure_tag('exclude')
+
+        self.black01 = self.factory.make_device(device_type=self.beaglebone, hostname='black01', tags=[self.common_tag])
+        self.black02 = self.factory.make_device(device_type=self.beaglebone, hostname='black02', tags=[
+            self.common_tag, self.unique_tag])
+        self.black03 = self.factory.make_device(device_type=self.beaglebone, hostname='black03', tags=[
+            self.exclusion_tag])
 
         self.user = self.factory.make_user()
 
@@ -104,7 +121,7 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
 
         scheduled_jobs = self.scheduler_tick()
 
-        self.assertEqual(submitted_jobs, scheduled_jobs)
+        self.assertEqual(sorted(submitted_jobs), sorted(scheduled_jobs))
 
     def test_single_node_and_multinode(self):
         singlenode_job1 = self.submit_job(device_type='panda')
@@ -339,3 +356,84 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
         self.assertTrue(all([job.actual_device is not None for job in jobs]))
         self.assertEqual(self.panda01.status, Device.OFFLINE)
         self.assertEqual(self.panda02.status, Device.OFFLINE)
+
+    def test_find_device_for_job_with_tag(self):
+        """
+        test that tags are used to set which device is selected
+        panda should be excluded by device_type
+        black03 should be excluded as it does not have the common tag
+        black02 would also match but is not included in the device check
+        """
+        job = self.submit_job(device_type='beaglebone', device_tags=[
+            self.common_tag.name
+        ])
+        devices = [self.panda01, self.arndale02, self.black01, self.black03]
+        chosen_device = find_device_for_job(job, devices)
+        self.assertEqual(self.black01, chosen_device)
+
+    def test_find_device_for_devices_without_tags(self):
+        """
+        ensure that tags do not interfere with finding devices of
+        unrelated types
+        """
+        job = self.submit_job(device_type='arndale', device_tags=[])
+        devices = [self.panda01, self.arndale02, self.black01, self.black03]
+        chosen_device = find_device_for_job(job, devices)
+        self.assertEqual(self.arndale02, chosen_device)
+        try:
+            job = self.submit_job(device_type='arndale', device_tags=[
+                self.common_tag.name
+            ])
+        except DevicesUnavailableException:
+            pass
+        else:
+            self.fail("Offered an arndale when no arndale support the requested tags")
+
+    def test_find_device_for_job_with_multiple_tags(self):
+        """
+        test that tags are used to set which device is selected
+        choose black02 and never black01 due to the presence
+        of both the common tag and the unique tag only with black02.
+        """
+
+        job = self.submit_job(device_type='beaglebone', device_tags=[
+            self.common_tag.name, self.unique_tag.name
+        ])
+        devices = [self.panda01, self.black01, self.black02, self.black03]
+        chosen_device = find_device_for_job(job, devices)
+        self.assertEqual(self.black02, chosen_device)
+        try:
+            job = self.submit_job(device_type='panda', device_tags=[
+                self.common_tag.name, self.unique_tag.name
+            ])
+        except DevicesUnavailableException:
+            pass
+        else:
+            self.fail("Offered a panda when no pandas support the requested tags")
+
+        devices = [self.black01, self.black02, self.black03]
+        chosen_device = find_device_for_job(job, devices)
+        self.assertEqual(self.black02, chosen_device)
+
+        devices = [self.arndale02, self.panda02, self.black02, self.black03]
+        chosen_device = find_device_for_job(job, devices)
+        self.assertEqual(self.black02, chosen_device)
+
+    def test_find_device_with_single_job_tag(self):
+        """
+        tests handling of jobs with less tags than supported but still
+        choosing one tag which only applies to one device in the set.
+        """
+        job = self.submit_job(device_type='beaglebone', device_tags=[
+            self.unique_tag.name
+        ])
+        devices = [self.panda02, self.black02, self.black03]
+        chosen_device = find_device_for_job(job, devices)
+        self.assertEqual(self.black02, chosen_device)
+
+        job = self.submit_job(device_type='beaglebone', device_tags=[
+            self.exclusion_tag.name
+        ])
+        devices = [self.panda02, self.black02, self.black03]
+        chosen_device = find_device_for_job(job, devices)
+        self.assertEqual(self.black03, chosen_device)

@@ -35,7 +35,7 @@
     <dt>Required Device Tag</dt>
     {% endif %}
     {% endif %}
-    <dd>{{ tag.name }}</dd>
+    <dd>{{ tag.name }}<abbr title="{{ tag.description }}">(?)</abbr></dd>
     {% endfor %}
 
     {% if job.description %}

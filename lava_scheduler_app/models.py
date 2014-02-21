@@ -594,6 +594,110 @@ class JobFailureTag(models.Model):
         return self.name
 
 
+def _get_tag_list(tags):
+    """
+    Creates a list of Tag objects for the specified device tags
+    for singlenode and multinode jobs.
+    :param tags: a list of strings from the JSON
+    :return: a list of tags which match the strings
+    :raise: JSONDataError if a tag cannot be found in the database.
+    """
+    taglist = []
+    if type(tags) != list:
+        raise JSONDataError("'device_tags' needs to be a list - received %s" % type(tags))
+    for tag_name in tags:
+        try:
+            taglist.append(Tag.objects.get(name=tag_name))
+        except Tag.DoesNotExist:
+            raise JSONDataError("Device tag '%s' does not exist in the database." % tag_name)
+    return taglist
+
+
+def _check_tags(taglist, device_type=None, hostname=None):
+    """
+    Checks each available device against required tags
+    :param taglist: list of Tag objects (not strings) for this job
+    :param device_type: which types of device need to satisfy the tags -
+    called during submission.
+    :param hostname: check if this device can satisfy the tags - called
+    from the daemon when scheduling from the queue.
+    :return: a list of devices suitable for all the specified tags
+    :raise: DevicesUnavailableException if no devices can satisfy the
+    combination of tags.
+    """
+    if not device_type and not hostname:
+        # programming error
+        return []
+    if len(taglist) == 0:
+        # no tags specified in the job, any device can be used.
+        return []
+    q = models.Q()
+    if device_type:
+        q = q.__and__(models.Q(device_type=device_type))
+    if hostname:
+        q = q.__and__(models.Q(hostname=hostname))
+    q = q.__and__(~models.Q(status=Device.RETIRED))
+    tag_devices = set(Device.objects.filter(q))
+    matched_devices = []
+    for device in tag_devices:
+        if set(device.tags.all()) & set(taglist) == set(taglist):
+            matched_devices.append(device)
+    if len(matched_devices) == 0 and device_type:
+        raise DevicesUnavailableException(
+            "No devices of type %s are available which have all of the tags '%s'."
+            % (device_type, ", ".join([x.name for x in taglist])))
+    if len(matched_devices) == 0 and hostname:
+        raise DevicesUnavailableException(
+            "Device %s does not support all of the tags '%s'."
+            % (hostname, ", ".join([x.name for x in taglist])))
+    return list(set(matched_devices))
+
+
+def _check_submit_to_device(device_list, user):
+    """
+    Handles the affects of Device Ownership on job submission
+    :param device_list: A list of device objects to check
+    :param user: The user submitting the job
+    :return: a subset of the device_list to which the user
+    is allowed to submit a TestJob.
+    :raise: DevicesUnavailableException if none of the
+    devices in device_list are available for submission by this user.
+    """
+    allow = []
+    if type(device_list) != list or len(device_list) == 0:
+        # logic error
+        return allow
+    for device in device_list:
+        if device.status != Device.RETIRED and device.can_submit(user):
+            allow.append(device)
+    if len(allow) == 0:
+        raise DevicesUnavailableException(
+            "No devices of the requested type are currently available to user %s"
+            % user)
+    return allow
+
+
+def _check_tags_support(tag_devices, device_list):
+    """
+    Combines the Device Ownership list with the requested tag list and
+    returns any devices which meet both criteria.
+    If neither the job nor the device have any tags, tag_devices will
+    be empty, so the check will pass.
+    :param tag_devices: A list of devices which meet the tag
+    requirements
+    :param device_list: A list of devices to which the user is able
+    to submit a TestJob
+    :raise: DevicesUnavailableException if there is no overlap between
+    the two sets.
+    """
+    if len(tag_devices) == 0:
+        # no tags requested in the job: proceed.
+        return
+    if len(set(tag_devices) & set(device_list)) == 0:
+        raise DevicesUnavailableException(
+            "Not enough devices available matching the requested tags.")
+
+
 class TestJob(RestrictedResource):
     """
     A test job is a test process that will be run on a Device.
@@ -816,7 +920,7 @@ class TestJob(RestrictedResource):
     @classmethod
     def from_json_and_user(cls, json_data, user, health_check=False):
         """
-        Contructs one or more TestJob objects from a JSON data and a submitting
+        Constructs one or more TestJob objects from a JSON data and a submitting
         user. Handles multinode jobs and creates one job for each target
         device.
 
@@ -851,6 +955,7 @@ class TestJob(RestrictedResource):
             # dt[0] -> device type name
             # dt[1] -> device type count
             all_devices[dt[0]] = dt[1]
+        taglist = _get_tag_list(job_data.get('device_tags', []))
 
         if 'target' in job_data:
             device_type = None
@@ -858,13 +963,10 @@ class TestJob(RestrictedResource):
                 target = Device.objects.filter(
                     ~models.Q(status=Device.RETIRED))\
                     .get(hostname=job_data['target'])
-            except Exception as e:
+            except Device.DoesNotExist:
                 raise DevicesUnavailableException(
                     "Requested device %s is unavailable." % job_data['target'])
-            if not target.can_submit(user):
-                raise DevicesUnavailableException("%s is not allowed to submit to "
-                                                  "the restricted device '%s'."
-                                                  % (user.username, target))
+            _check_tags_support(_check_tags(taglist, hostname=target), _check_submit_to_device([target], user))
         elif 'device_type' in job_data:
             target = None
             try:
@@ -873,15 +975,9 @@ class TestJob(RestrictedResource):
                 raise DevicesUnavailableException(
                     "Device type '%s' is unavailable. %s" %
                     (job_data['device_type'], e))
-            device_list = Device.objects.filter(device_type=device_type)
-            allow = []
-            for device in device_list:
-                if device.can_submit(user):
-                    allow.append(device)
-            if len(allow) == 0:
-                raise DevicesUnavailableException("No devices of type %s are currently "
-                                                  "available to user %s"
-                                                  % (device_type, user))
+            allow = _check_submit_to_device(list(Device.objects.filter(
+                device_type=device_type)), user)
+            _check_tags_support(_check_tags(taglist, device_type=device_type), allow)
         elif 'device_group' in job_data:
             target = None
             device_type = None
@@ -889,8 +985,17 @@ class TestJob(RestrictedResource):
 
             # Check if the requested devices are available for job run.
             for device_group in job_data['device_group']:
-                device_type = device_group['device_type']
+                try:
+                    device_type = DeviceType.objects.get(name=device_group['device_type'])
+                except Device.DoesNotExist as e:
+                    raise DevicesUnavailableException(
+                        "Device type '%s' is unavailable. %s" %
+                        (device_group['device_type'], e))
                 count = device_group['count']
+                taglist = _get_tag_list(device_group.get('tags', []))
+                allow = _check_submit_to_device(list(Device.objects.filter(
+                    device_type=device_type)), user)
+                _check_tags_support(_check_tags(taglist, device_type=device_type), allow)
                 if device_type in requested_devices:
                     requested_devices[device_type] += count
                 else:
@@ -963,16 +1068,6 @@ class TestJob(RestrictedResource):
             action["parameters"]["server"] = utils.rewrite_hostname(server)
             if parsed_server.hostname is None:
                 raise ValueError("invalid server: %s" % server)
-
-        taglist = []
-        tags = job_data.get('device_tags', [])
-        if type(tags) != list:
-            raise JSONDataError("device_tags needs to be a list - received %s" % type(tags))
-        for tag_name in tags:
-            try:
-                taglist.append(Tag.objects.get(name=tag_name))
-            except Tag.DoesNotExist:
-                raise JSONDataError("tag %r does not exist" % tag_name)
 
         # MultiNode processing - tally allowed devices with the
         # device_types requested per role.
