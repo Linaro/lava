@@ -31,7 +31,7 @@ class cmd_android_install_binaries(BaseAction):
         partition = self.client.config.root_part
 
         if driver_tarball is None:
-            logging.error("android_binary_drivers not defined in any config")
+            logging.warning("android_binary_drivers not defined in any config")
             return
 
         self.client.target_device.extract_tarball(driver_tarball, partition)
