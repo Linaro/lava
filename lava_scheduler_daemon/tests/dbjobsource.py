@@ -136,10 +136,11 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
         with self.log_scheduler_state("job %d completes" % job.id):
             worker.jobCompleted_impl(job.actual_device.hostname, 0, None)
 
-    def device_status(self, hostname, status, health_status=None):
+    def device_status(self, hostname, status=None, health_status=None):
         device = Device.objects.get(pk=hostname)
-        device.status = status
-        if health_status:
+        if status is not None:
+            device.status = status
+        if health_status is not None:
             device.health_status = health_status
         device.save()
 
@@ -334,3 +335,34 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
 
         self.assertEqual([m1p], self.scheduler_tick(master))
         self.assertEqual([m1a], self.scheduler_tick(worker))
+
+    def test_looping_mode(self):
+
+        self.panda.health_check_job = self.factory.make_job_json(health_check='true')
+        self.panda.save()
+        self.device_status('panda01', health_status=Device.HEALTH_LOOPING)
+        self.device_status('panda02', status=Device.OFFLINE)
+
+        jobs = self.scheduler_tick()
+        self.assertEqual(1, len(jobs))
+        health_check = jobs[0]
+        self.assertTrue(health_check.health_check)
+        self.assertEqual(health_check.actual_device.hostname, 'panda01')
+
+        # no new health check while the original one is running
+        self.assertEqual(0, len(self.scheduler_tick()))
+
+        self.job_finished(health_check)
+        jobs = self.scheduler_tick()
+        self.assertEqual(1, len(jobs))
+        new_health_check = jobs[0]
+        self.assertTrue(new_health_check.health_check)
+        self.assertEqual(new_health_check.actual_device.hostname, 'panda01')
+
+        # again just to be sure
+        self.job_finished(new_health_check)
+        jobs = self.scheduler_tick()
+        self.assertEqual(1, len(jobs))
+        third_health_check = jobs[0]
+        self.assertTrue(third_health_check.health_check)
+        self.assertEqual(third_health_check.actual_device.hostname, 'panda01')
