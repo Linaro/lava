@@ -13,7 +13,7 @@ same group during tests.
 
 Within a MultiNode group, devices are assigned a role and a ``count`` of devices to
 include into that role. Each role has a ``device_type`` and any number of roles can
-have the same ``device_type``. Each role can be assigned ``tags``.
+have the same ``device_type``. Each role can be assigned device ``tags``.
 
 Once roles are defined, actions (including test images and test definitions) can be marked
 as applying to specific roles (if no role is specified, all roles use the action).
@@ -104,7 +104,7 @@ Example JSON::
             "count": 2,
             "device_type": "panda",
             "tags": [
-                "mytag1"
+                "usb-flash"
             ]
         },
         {
@@ -112,7 +112,7 @@ Example JSON::
             "count": 1,
             "device_type": "beaglexm",
             "tags": [
-                "mytag2"
+                "audio-loopback"
             ]
         }
     ],

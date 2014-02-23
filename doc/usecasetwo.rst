@@ -54,10 +54,7 @@ multiple devices of the same type, simply increase the ``count``:
         {
             "role": "bear",
             "count": 2,
-            "device_type": "panda",
-            "tags": [
-                "use-case-two"
-            ]
+            "device_type": "panda"
         }
  }
 

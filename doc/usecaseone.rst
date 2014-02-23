@@ -283,18 +283,12 @@ not enough devices available to satisfy the count.)
         {
             "role": "sender",
             "count": 1,
-            "device_type": "beaglebone-black",
-            "tags": [
-                "use-case-one"
-            ]
+            "device_type": "beaglebone-black"
         },
         {
             "role": "receiver",
             "count": 1,
-            "device_type": "kvm",
-            "tags": [
-                "use-case-one"
-            ]
+            "device_type": "kvm"
         }
     ],
  }
