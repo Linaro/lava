@@ -105,6 +105,7 @@ class IpmiPxeBoot(object):
         self.ipmitool = IPMITool(context, host, power_sleep, power_retries)
 
     def power_on_boot_master(self):
+        self.ipmitool.power_off()
         self.ipmitool.power_on()
 
     def power_on_boot_image(self):
