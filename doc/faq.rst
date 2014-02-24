@@ -69,10 +69,8 @@ file.json below is the original JSON file submitted.::
 This prompts an error report but also clears the invalid status.
 gnomekeyring.IOError
 
-I'm trying to submit a job over ssh, but I get a
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-gnomekeyring.IOError. Why does this happen?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+I'm trying to submit a job over ssh, but I get a gnomekeyring.IOError. Why does this happen?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
