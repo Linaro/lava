@@ -341,7 +341,7 @@ class BootloaderTarget(MasterImageTarget):
     def file_system(self, partition, directory):
         if self._is_bootloader() and not self._booted:
             self.power_on()
-        if self._is_uboot() and self._lava_nfsrootfs:
+        if self._is_bootloader() and self._lava_nfsrootfs:
             path = '%s/%s' % (self._lava_nfsrootfs, directory)
             ensure_directory(path)
             yield path
@@ -363,10 +363,10 @@ class BootloaderTarget(MasterImageTarget):
 
                 url = url_base + '/fs.tgz'
                 logging.info("Fetching url: %s" % url)
-                tf = download_image(url, self.context, self._tmpdir,
+                tf = download_image(url, self.context, self.scratch_dir,
                                     decompress=False)
 
-                tfdir = os.path.join(self._tmpdir, str(time.time()))
+                tfdir = os.path.join(self.scratch_dir, str(time.time()))
 
                 try:
                     os.mkdir(tfdir)
@@ -374,7 +374,7 @@ class BootloaderTarget(MasterImageTarget):
                                              % (tfdir, tf))
                     yield os.path.join(tfdir, target_name)
                 finally:
-                    tf = os.path.join(self._tmpdir, 'fs.tgz')
+                    tf = os.path.join(self.scratch_dir, 'fs.tgz')
                     mk_targz(tf, tfdir)
                     rmtree(tfdir)
 
