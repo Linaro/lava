@@ -19,7 +19,15 @@
 {% endblock %}
 
 {% block content %}
-<h2>Worker: {{ worker }}</h2>
+<h2>
+  {% if worker.too_long_since_last_heartbeat %}
+  <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
+       alt="{{ offline }}" />
+  {% else %}
+  <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
+       alt="{{ online }}" />
+  {% endif %}&nbsp;&nbsp;Worker: {{ worker }}
+</h2>
 
 <table border=0 width="100%">
 <colgroup>
@@ -29,8 +37,20 @@
 </colgroup>
 <tr>
 <td style="vertical-align:text-top;text-align:left;">
+    <dt>IP Address:</dt>
+    <dd>{{ worker.ip_address }}</dd>
+
+    <dt>Is Master? :</dt>
+    <dd>{{ worker.is_master }}</dd>
+
     <dt>Uptime:</dt>
-    <dd>{{ worker.uptime }}</dd>
+    <dd>
+      {% if worker.too_long_since_last_heartbeat %}
+      ---
+      {% else %}
+      {{ worker.uptime }}
+      {% endif %}
+    </dd>
 
     <dt>Architecture:</dt>
     <dd>{{ worker.arch }}</dd>

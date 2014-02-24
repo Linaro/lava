@@ -619,15 +619,31 @@ class WorkerTable(tables.Table):
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
     {% endif %}
         ''')
-    uptime = tables.Column()
+    status = tables.TemplateColumn('''
+    {% if record.too_long_since_last_heartbeat %}
+    down
+    {% else %}
+    up
+    {% endif %}
+        ''')
+    is_master = tables.Column()
+    uptime = tables.TemplateColumn('''
+    {% if record.too_long_since_last_heartbeat %}
+    ---
+    {% else %}
+    {{ record.uptime }}
+    {% endif %}
+        ''')
     arch = tables.Column()
-    platform = tables.Column()
 
     class Meta(LavaTable.Meta):
         model = Worker
         exclude = [
-            'is_master', 'rpc2_url', 'description', 'hardware_info',
-            'software_info', 'last_heartbeat'
+            'rpc2_url', 'description', 'hardware_info',
+            'software_info', 'platform', 'last_heartbeat'
+        ]
+        sequence = [
+            'hostname', 'ip_address', 'status', 'is_master', 'uptime', 'arch'
         ]
 
 
