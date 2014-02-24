@@ -22,9 +22,10 @@ $(window).ready(
 validate_input = function(json_input) {
 
     if ($("#json-input").val() != "") {
-        if ($("#json-input").val().split("\n").length == 1) {
+        if (is_url($("#json-input").val().split("\n"))) {
             load_url();
         } else {
+            $("#json-input").val(JSON.stringify(JSON.parse(json_input), null, 4));
             validate_job_data(json_input);
         }
     }
@@ -43,7 +44,7 @@ load_url = function() {
             success: function(data) {
                 try {
                     $.parseJSON(data);
-                    $("#json-input").val(data);
+                    $("#json-input").val(JSON.stringify(JSON.parse(data), null, 4));
                     validate_job_data(data);
                 } catch (e) {
                     $("#json-valid-container").html("Invalid JSON: " + data);
@@ -108,4 +109,9 @@ select_error_line = function(error) {
     $("#json-input").scrollTop(
         line_number * (parseInt($("#lineno1").css(
             "height")) - 1) - ($("#json-input").height() / 2));
+}
+
+is_url = function (str) {
+    var regexp = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/
+    return regexp.test(str);
 }
