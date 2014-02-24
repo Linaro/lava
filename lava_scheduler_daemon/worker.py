@@ -73,6 +73,7 @@ class WorkerData:
         self.worker['hostname'] = utils.get_fqdn()
         self.worker['uptime'] = utils.get_uptime()
         self.worker['hardware_info'] = utils.get_lshw_out()
+        self.worker['software_info'] = utils.get_software_info()
         self.worker['arch'] = platform.machine()
         self.worker['platform'] = platform.platform()
         self.worker['ipaddr'] = utils.get_ip_address()

@@ -133,7 +133,7 @@ class Worker(models.Model):
         max_length=20,
         null=True,
         blank=True,
-        editable=True,
+        editable=False,
         default=None
     )
 
@@ -148,7 +148,8 @@ class Worker(models.Model):
         max_length=200,
         null=True,
         blank=True,
-        default=None
+        default=None,
+        editable=True
     )
 
     uptime = models.CharField(
@@ -157,6 +158,7 @@ class Worker(models.Model):
         null=True,
         blank=True,
         default=None,
+        editable=False
     )
 
     arch = models.CharField(
@@ -165,6 +167,7 @@ class Worker(models.Model):
         null=True,
         blank=True,
         default=None,
+        editable=False
     )
 
     platform = models.CharField(
@@ -173,11 +176,18 @@ class Worker(models.Model):
         null=True,
         blank=True,
         default=None,
+        editable=False
     )
 
     hardware_info = models.TextField(
         verbose_name=_(u"Complete Hardware Information"),
-        editable=True,
+        editable=False,
+        blank=True
+    )
+
+    software_info = models.TextField(
+        verbose_name=_(u"Complete Software Information"),
+        editable=False,
         blank=True
     )
 
@@ -215,6 +225,9 @@ class Worker(models.Model):
     def get_hardware_info(self):
         return mark_safe(self.hardware_info)
 
+    def get_software_info(self):
+        return mark_safe(self.software_info)
+
     def too_long_since_last_heartbeat(self):
         """Calculates if the last_heartbeat is more than 180 seconds.
 
@@ -246,6 +259,7 @@ class Worker(models.Model):
         worker.uptime = heartbeat_data.get('uptime', None)
         worker.arch = heartbeat_data.get('arch', None)
         worker.hardware_info = heartbeat_data.get('hardware_info', "")
+        worker.software_info = heartbeat_data.get('software_info', "")
         worker.platform = heartbeat_data.get('platform', None)
         worker.ip_address = heartbeat_data.get('ipaddr', None)
         worker.last_heartbeat = datetime.datetime.utcnow()

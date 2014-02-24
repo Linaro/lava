@@ -62,13 +62,20 @@
 
 <br>
 <div id="hwinfo-text">
-    <img src="{{ STATIC_URL }}lava_scheduler_app/images/server-information-icon.png" alt="Click to View">&nbsp;
+    <img src="{{ STATIC_URL }}lava_scheduler_app/images/hardware-information-icon.png" alt="Click to View">&nbsp;
     <a href=""><b>Hardware Information</b></a>
 </div>
 
 <div id="hwinfo-content" width="40%" style="display:none;">
 </div>
 
+<div id="swinfo-text">
+    <img src="{{ STATIC_URL }}lava_scheduler_app/images/server-information-icon.png" alt="Click to View">&nbsp;
+    <a href=""><b>Software Information</b></a>
+</div><br>
+
+<div id="swinfo-content" width="40%" style="display:none;">
+</div>
 
 <div id="devices-attached">
 <h2>Devices Attached</h2>
@@ -85,6 +92,11 @@ $(document).ready(
         $("#hwinfo-content").toggle();
         $("#hwinfo-content").html({{ worker.get_hardware_info }} +
                                   "<a href=#hwinfo-text>Go to Top</a>");
+    });
+    $("#swinfo-text").click(function (e) {
+        e.preventDefault();
+        $("#swinfo-content").toggle();
+        $("#swinfo-content").html({{ worker.get_software_info }});
     });
     $('.edit_desc').editable('{% url lava.scheduler.edit_worker_desc %}',
     {

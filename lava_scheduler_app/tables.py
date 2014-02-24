@@ -627,7 +627,7 @@ class WorkerTable(tables.Table):
         model = Worker
         exclude = [
             'is_master', 'rpc2_url', 'description', 'hardware_info',
-            'last_heartbeat'
+            'software_info', 'last_heartbeat'
         ]
 
 
