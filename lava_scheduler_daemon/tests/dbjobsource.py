@@ -9,64 +9,6 @@ from lava_scheduler_app.tests.submission import TestCaseWithFactory
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource, find_device_for_job
 
 
-def make_job(requested_device_type, requested_device):
-    return FindDeviceForJobTest.Job(requested_device_type, requested_device)
-
-
-def make_device(hostname, device_type=None):
-    return FindDeviceForJobTest.Device(hostname, device_type)
-
-
-def make_device_type(device_type):
-    return FindDeviceForJobTest.DeviceType(device_type)
-
-
-class FindDeviceForJobTest(TestCase):
-
-    class Job(object):
-
-        def __init__(self, requested_device_type, requested_device):
-            self.requested_device_type = make_device_type(requested_device_type)
-            self.requested_device = make_device(requested_device)
-            self.submitter = None  # FIXME
-
-    class DeviceType(object):
-
-        def __init__(self, name):
-            self.name = name
-
-        def __eq__(self, other):
-            return self.name == other.name
-
-        def __repr__(self):
-            return self.name
-
-    class Device(object):
-
-        def __init__(self, name, device_type=None):
-            self.name = name
-            self.device_type = device_type and FindDeviceForJobTest.DeviceType(device_type)
-
-        def __eq__(self, other):
-            return self.name == other.name
-
-        def __repr__(self):
-            return "/".join([self.name, repr(self.device_type)])
-
-        def can_submit(self, user):
-            return True  # TODO
-
-    def test_requested_device(self):
-        """
-        tests that find_device_for_job gives preference to matching by requested
-        _device_ over matching by requested device _type_.
-        """
-        job = make_job('panda', 'panda01')
-        devices = [make_device('panda02', 'panda'), make_device('panda01', 'panda')]
-        chosen_device = find_device_for_job(job, devices)
-        self.assertEqual(devices[1], chosen_device)
-
-
 class DatabaseJobSourceTest(TestCaseWithFactory):
 
     def setUp(self):
@@ -366,3 +308,13 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
         third_health_check = jobs[0]
         self.assertTrue(third_health_check.health_check)
         self.assertEqual(third_health_check.actual_device.hostname, 'panda01')
+
+    def test_find_device_for_job(self):
+        """
+        tests that find_device_for_job gives preference to matching by requested
+        _device_ over matching by requested device _type_.
+        """
+        job = self.submit_job(target='panda01', device_type='panda')
+        devices = [self.panda02, self.panda01]
+        chosen_device = find_device_for_job(job, devices)
+        self.assertEqual(self.panda01, chosen_device)
