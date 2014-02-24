@@ -20,6 +20,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import logging
 import time
 from lava_dispatcher.errors import CriticalError
 
@@ -59,22 +60,23 @@ class IPMITool(object):
         self.__ipmi("chassis bootdev pxe")
 
     def power_off(self):
-        if self.get_power_status() != "off":
+        if self.get_power_status() == 'on':
+            logging.debug("Powering off node")
             self.__ipmi("chassis power off")
-        self.check_power_status("off")
+        self.check_power_status('off')
+        logging.debug("Node powered off")
 
     def power_on(self):
-        if self.get_power_status() != "on":
+        if self.get_power_status() == 'off':
+            logging.debug("Powering on node")
             self.__ipmi("chassis power on")
-        self.check_power_status("on")
+        self.check_power_status('on')
+        logging.debug("Node powered on")
 
     def reset(self):
         self.__ipmi("chassis power reset")
 
     def check_power_status(self, check_status):
-        """ Command 'ipmitool power status' will output 'Chassis Power is on'
-            or 'Chassis Power is off'.
-            Before we return the last string, the '\n' needs to be strip."""
         power_status = None
         retries = 0
         while power_status != check_status and retries < self.power_retries:
@@ -82,9 +84,12 @@ class IPMITool(object):
             power_status = self.get_power_status()
             retries += 1
         if power_status != check_status:
-            raise CriticalError("Failed to power node on")
+            raise CriticalError("Failed to power node %s" % check_status)
 
     def get_power_status(self):
+        """ Command 'ipmitool power status' will output 'Chassis Power is on'
+            or 'Chassis Power is off'.
+            Before we return the last string, the '\n' needs to be strip."""
         time.sleep(self.power_sleep)
         return self.__ipmi_cmd_output("power status").split(' ')[-1].rstrip()
 
