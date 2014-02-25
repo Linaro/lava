@@ -29,12 +29,12 @@ A minimal test definition looks like this::
     TEST_1: pass
 
   run:
-      steps:
-          - echo "test-1: $TEST_1"
-          - echo "test-2: fail"
+    steps:
+      - echo "test-1: $TEST_1"
+      - echo "test-2: fail"
 
   parse:
-      pattern: "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
+    pattern: "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
 
 **NOTE:** The parse pattern has similar quoting rules as Python, so
 \\s must be escaped as \\\\s and similar.
