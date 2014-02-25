@@ -761,8 +761,11 @@ class DashboardAPI(ExposedAPI):
             assert is_anonymous is True
             assert user_name is None
             assert group_name is None
-            # Hacky but will suffice for now
-            user = User.objects.get_or_create(username="anonymous-owner")[0]
+            if self.user is not None:
+                user = self.user
+            else:
+                # Hacky but will suffice for now
+                user = User.objects.get_or_create(username="anonymous-owner")[0]
         try:
             bundle_stream = BundleStream.objects.create(
                 user=user,
