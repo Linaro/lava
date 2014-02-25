@@ -114,9 +114,9 @@
       </dd>
   {% else %}
   <dt>Test job details</dt>
-  <dd><a href="{{ bundle.testjob.get_absolute_url }}">{{ bundle.testjob.id }}</a></dd>
+  <dd><a href="{{ bundle.testjob.get_absolute_url }}">Job {{ bundle.testjob.id }}</a></dd>
   <dt>Test job complete log</dt>
-  <dd><a href="{{ bundle.testjob.get_absolute_url }}/log_file">{{ bundle.testjob.id }}/log_file</a></dd>
+  <dd><a href="{{ bundle.testjob.get_absolute_url }}/log_file">Job logs {{ bundle.testjob.id }}</a></dd>
     {% endif %}
   <dt>Test job start time</dt>
   <dd>{{ bundle.testjob.start_time }}</dd>
@@ -134,11 +134,11 @@
   <dd>{{ test_run.sw_image_desc|default:"<i>Unspecified</i>" }}</dd>
   <dt>{% trans "Software packages" %} (<abbr title="LAVA keeps track of all the software packages (such as Debian packages managed with dpkg) that were installed prior to running a test. This information can help you track down errors caused by a particular buggy dependency">?</abbr>):</dt>
   <dd><a href="{% url dashboard_app.views.test_run_software_context test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}"
-    >See all {{ test_run.packages.all.count }} software packages</a>
+    >{{ test_run.packages.all.count }} packages</a>
   </dd>
   <dt>{% trans "Software sources" %} (<abbr title="LAVA can track more data than just package name and version. You can track precise software information such as the version control system branch or repository, revision or tag name and more.">?</abbr>):</dt>
-  <dd><a href="{% url dashboard_app.views.test_run_software_context test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}"
-    >See all {{ test_run.sources.all.count }} source references</a>
+  <dd><a href="{% url dashboard_app.views.test_run_software_context test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}#tab-software-sources"
+    >{{ test_run.sources.all.count }} sources</a>
   </dd>
 </dl>
 
