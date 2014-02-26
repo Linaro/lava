@@ -1,3 +1,9 @@
+lava-server (0.22.1-2) unstable; urgency=medium
+
+  * Add support for creating the devel database for unit tests
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 26 Feb 2014 11:04:55 +0000
+
 lava-server (0.22.1-1) unstable; urgency=medium
 
   * Port to django1.6 

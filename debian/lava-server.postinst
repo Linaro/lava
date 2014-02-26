@@ -96,6 +96,16 @@ install_database()
     if ! su postgres -c "psql -c \"SELECT datname FROM pg_database WHERE datname='$LAVA_DB_NAME'\"" | grep "$LAVA_DB_NAME"; then
         su postgres -c "createdb --port $LAVA_DB_PORT --locale=C.UTF-8 --encoding=UTF-8 --owner=$LAVA_DB_USER --template=template0 --no-password $LAVA_DB_NAME" || die "Failed to create a database"
     fi
+    # Create devel user, if it doesn't exist, for unit test support
+    if ! su postgres -c "psql \"-c SELECT usename FROM pg_user WHERE usename='devel'\"" | grep "devel"; then
+        su postgres -c "createuser --createdb --login --no-superuser --no-createrole --no-password --port $LAVA_DB_PORT devel"|| "Failed to create test case user"
+    fi
+    # Set a password for the devel user
+    su postgres -c "psql --port $LAVA_DB_PORT --quiet --command=\"ALTER USER \"devel\" WITH PASSWORD 'devel'\"" || die "Failed to set test case password"
+    # create the devel database, if it doesn't exist
+    if ! su postgres -c "psql -c \"SELECT datname FROM pg_database WHERE datname='devel'\"" | grep "devel"; then
+        su postgres -c "createdb devel --owner devel"
+    fi
 }
 
 case "$1" in
