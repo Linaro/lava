@@ -376,8 +376,8 @@ Single role: ``peer``, any number of devices
 Example 4: using lava-network
 -----------------------------
 
-If the available roles include ''server'' and there is a board named
-''database''::
+If the available roles include ``server`` and there is a board named
+``database``::
 
    #!/bin/sh
    ifconfig eth0 up

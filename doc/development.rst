@@ -123,7 +123,7 @@ public key there.
 Obtaining the repository
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Let's say you want to contribute to '''lava-server'''.
+Let's say you want to contribute to ``lava-server``.
 
 ::
 

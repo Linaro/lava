@@ -212,7 +212,7 @@ message ID denotes the correct point in the YAML.
         - lava-test-case multinode-wait-message --shell lava-wait-all sending
 
 This example will wait until all devices in the group have sent the
-message ID ''sending'' (with or without the associated key value pairs).
+message ID ``sending`` (with or without the associated key value pairs).
 
 Summary
 =======
