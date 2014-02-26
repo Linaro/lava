@@ -115,7 +115,7 @@ Patch Submissions and workflow
 This is a short guide on how to send your patches to LAVA. The LAVA team
 uses the gerrit_ code review system to review changes.
 
-.. _gerrit: http://staging.review.linaro.org/
+.. _gerrit: http://review.linaro.org/
 
 So the first step will be logging in to gerrit_ and uploading you SSH
 public key there.
@@ -286,12 +286,6 @@ of the clone is up to date before creating the review branch.
     $ git pull
     $ git checkout -b review-111
 
-There may be problems with SSL verification with staging.review and this
-can be overridden with this environment variable::
-
-    GIT_SSL_NO_VERIFY=true
-
-
 To pull in the changes in the review already marked for commit in your
 local branch, use the ``pull`` link in the patch set of the review you
 want to run.
@@ -306,7 +300,7 @@ branch as a patch set.
     $ git checkout master
     $ git pull
     $ git checkout -b review-159
-    $ GIT_SSL_NO_VERIFY=true git fetch https://staging.review.linaro.org/lava/lava-server refs/changes/59/159/2 && $ git format-patch -1 --stdout FETCH_HEAD | patch -p1
+    $ git fetch https://review.linaro.org/lava/lava-server refs/changes/59/159/2 && git format-patch -1 --stdout FETCH_HEAD | patch -p1
     $ git status
 
 Handle the local branch as normal. If the reviewed change needs
