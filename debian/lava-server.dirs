@@ -1,5 +1,4 @@
 /etc/lava-server/default/templates
-/usr/share/lava-server/static/
 /etc/lava-server/reports/
 /etc/lava-server/views/
 /etc/lava-server/templates
