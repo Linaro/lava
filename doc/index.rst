@@ -32,6 +32,7 @@ LAVA Test Developer Guide
    dispatcher-actions.rst
    lava_test_shell.rst
    multinode.rst
+   vm-groups.rst
    boot-management.rst
    tftp-deploy.rst
    external_measurement.rst
