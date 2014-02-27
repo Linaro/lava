@@ -639,8 +639,8 @@ class WorkerTable(tables.Table):
     class Meta(LavaTable.Meta):
         model = Worker
         exclude = [
-            'rpc2_url', 'description', 'hardware_info',
-            'software_info', 'platform', 'last_heartbeat'
+            'rpc2_url', 'description', 'hardware_info', 'software_info',
+            'platform', 'last_heartbeat', 'last_complete_info_update'
         ]
         sequence = [
             'hostname', 'ip_address', 'status', 'is_master', 'uptime', 'arch'

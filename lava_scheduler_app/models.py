@@ -252,17 +252,20 @@ class Worker(models.Model):
     @classmethod
     def update_heartbeat(cls, heartbeat_data):
         heartbeat_data = simplejson.loads(heartbeat_data)
+        info_size = heartbeat_data.get('info_size', None)
         hostname = heartbeat_data.get('hostname', None)
         devices = heartbeat_data.get('devices', None)
 
         worker, created = Worker.objects.get_or_create(hostname=hostname)
         worker.uptime = heartbeat_data.get('uptime', None)
-        worker.arch = heartbeat_data.get('arch', None)
-        worker.hardware_info = heartbeat_data.get('hardware_info', "")
-        worker.software_info = heartbeat_data.get('software_info', "")
-        worker.platform = heartbeat_data.get('platform', None)
-        worker.ip_address = heartbeat_data.get('ipaddr', None)
         worker.last_heartbeat = datetime.datetime.utcnow()
+
+        if info_size and info_size == 'complete':
+            worker.arch = heartbeat_data.get('arch', None)
+            worker.hardware_info = heartbeat_data.get('hardware_info', "")
+            worker.software_info = heartbeat_data.get('software_info', "")
+            worker.platform = heartbeat_data.get('platform', None)
+            worker.ip_address = heartbeat_data.get('ipaddr', None)
 
         if worker:
             worker.save()

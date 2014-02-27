@@ -69,16 +69,25 @@ class WorkerData:
     def __init__(self):
         self.logger = logging.getLogger(__name__ + '.Worker')
         self.worker = {}
-        # Fill information
+
+        # Populate information
+        self.worker['info_size'] = 'minimal'
         self.worker['hostname'] = utils.get_fqdn()
         self.worker['uptime'] = utils.get_uptime()
-        self.worker['hardware_info'] = utils.get_lshw_out()
-        self.worker['software_info'] = utils.get_software_info()
+        self.worker['devices'] = [x.hostname for x in
+                                  dispatcher_config.get_devices()]
+
+    def populate_complete_worker_data(self):
+        """This method populates the complete information about the worker
+        node, which is a lengthy operation.
+        """
+        self.worker['info_size'] = 'complete'
         self.worker['arch'] = platform.machine()
         self.worker['platform'] = platform.platform()
         self.worker['ipaddr'] = utils.get_ip_address()
-        self.worker['devices'] = [x.hostname for x in
-                                  dispatcher_config.get_devices()]
+        self.worker['hardware_info'] = utils.get_lshw_out()
+        self.worker['software_info'] = utils.get_software_info()
+        self.logger.debug("Complete worker data populated ...")
 
     def get_worker_data(self):
         """Returns worker related information in json format.
