@@ -164,9 +164,9 @@ the token.
 ::
 
   $ lava-tool auth-add http://<username>@validation.linaro.org/RPC2/
-  Paste token for http://<username>@validation.linaro.org/RPC2/: 
-  Please set a password for your new keyring: 
-  Please confirm the password: 
+  Paste token for http://<username>@validation.linaro.org/RPC2/:
+  Please set a password for your new keyring:
+  Please confirm the password:
   Token added successfully for user <username>.
 
 .. note:: Paste the token copied previously when it is asked
@@ -281,7 +281,7 @@ Once you have copied the above job definition to a file, for example
 
   $ lava-tool submit-job https://<username>@validation.linaro.org/RPC2/
   /tmp/job.json
-  Please enter password for encrypted keyring: 
+  Please enter password for encrypted keyring:
   submitted as job id: 82287
 
 .. note:: Replace *username* with your username. Enter the password
@@ -343,7 +343,7 @@ Once you have copied the above job definition to a file, for example
 
   $ lava-tool submit-job https://<username>@validation.linaro.org/RPC2/
   /tmp/job.json
-  Please enter password for encrypted keyring: 
+  Please enter password for encrypted keyring:
   submitted as job id: 82287
 
 .. note:: Replace *username* with your username. Enter the password

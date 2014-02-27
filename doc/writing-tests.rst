@@ -516,6 +516,8 @@ and export the script writer chooses to use.
 Splitting a large job into smaller chunks also means that the device can
 run other jobs for other users in between the smaller jobs.
 
+.. _tests_and_reboots:
+
 Minimise the number of reboots within a single test
 ***************************************************
 

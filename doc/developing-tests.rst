@@ -3,7 +3,7 @@
 Introduction to the LAVA Test Developer Guide
 #############################################
 
-This guide aims to enable engineers to be able to 
+This guide aims to enable engineers to be able to
 
 #. Submit desired jobs/tests on target deployed where the LAVA server
    is located and report results.

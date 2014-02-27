@@ -36,15 +36,20 @@ A minimal test definition looks like this::
   parse:
     pattern: "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
 
-**NOTE:** The parse pattern has similar quoting rules as Python, so
-\\s must be escaped as \\\\s and similar.
+.. note::  The parse pattern has similar quoting rules as Python, so
+          \\s must be escaped as \\\\s and similar.
 
 However, the parameters such as os, devices, environment are optional in
 the metadata section. On the other hand parameters such as name, format,
 description are mandatory in the metadata section.
 
+.. _versioned_test_definitions:
+
+Versioned test definitions
+--------------------------
+
 If your test definition is not part of a bzr or git repository then it
-is mandatory to have a 'version' parameter in metadata section. The
+is mandatory to have a **version** parameter in metadata section. The
 following example shows how a test definition metadata section will
 look like for a test definition which is not part of bzr or git
 repository::
@@ -63,33 +68,40 @@ repository::
     environment:
       - lava-test-shell
 
-**NOTE:** Only if the test definition is referred from a URL the
-version parameter should be explicit.
+.. note:: Only if the test definition is referred from a URL the
+          version parameter should be explicit.
+
+.. _lava_test_shell_setx
+
+How a lava test shell is run
+----------------------------
 
 A lava-test-shell is run by:
 
-* "compiling" the above test defintion into a shell script.
+* *compiling* the above test defintion into a shell script.
 
-  - Note that this shell script will have a ``set -x`` at the top, so a
-    failing step will abort the entire test run. If you need to specify
-    a step that might fail, but should not cause the run to be aborted,
-    make sure you finish the command with ``|| true``.
+   .. note:: This shell script will have a ``set -x`` at the top, so a
+          failing step will abort the entire test run. If you need to specify
+          a step that might fail, but should not cause the run to be aborted,
+          make sure you finish the command with ``|| true``.
 
 * copying this script onto the device and arranging for it to be run
   when the device boots
 * booting the device and letting the test run
 * retrieving the output from the device and turning it into a test
   result bundle
+* run subsequent test definitions, if any. See :ref:`tests_and_reboots`.
 
 Writing a test for lava-test-shell
 ==================================
 
 For the majority of cases, the above approach is the easiest thing to
 do: write shell code that outputs "test-case-id: result" for each test
-case you are interested in.  This is similar to how the lava-test
-parsing works, so until we get around to writing documentation here,
-see
-http://lava-test.readthedocs.org/en/latest/usage.html#adding-results-parsing.
+case you are interested in.  See the Test Developer Guide:
+
+ * :ref:`test_developer`,
+ * :ref:`writing_tests`
+ * :ref:`parsing_output`.
 
 The advantage of the parsing approach is that it means your test is
 easy to work on independently from LAVA: simply write a script that
@@ -269,16 +281,16 @@ Always set default values for all variables in the test definition file to
 allow for missing values in the JSON file. In the example above, ``$VARIABLE_NAME_2``
 is not defined in the JSON snippet, so the default would be used.
 
-**NOTE:** The format of default parameters in yaml file is below, please note that
-there is **not** a hyphen at the start of the line and **not** quotes around either
-the variable name or the variable value ::
+.. note:: The format of default parameters in yaml file is below, please note that
+          there is **not** a hyphen at the start of the line and **not** quotes
+          around either the variable name or the variable value ::
 
-    VARIABLE_NAME_1: value_1
+          VARIABLE_NAME_1: value_1
 
-**NOTE:** The code which implements this parameter function will put variable
-name and value at the head of test shell script like below::
+.. note:: The code which implements this parameter function will put variable
+          name and value at the head of test shell script like below::
 
-    VARIABLE_NAME_1='value_1'
+          VARIABLE_NAME_1='value_1'
 
 So please make sure you didn't put any special character(like single quote) into value or
 variable name. But Spaces and double quotes can be included in value.
@@ -307,15 +319,15 @@ you could do::
           - cd lt_ti_lava
           - make
 
-**NOTE:** The repo steps are done in the dispatcher itself. The install steps
-are run directly on the target.
+.. note:: The repo steps are done in the dispatcher itself. The install steps
+          are run directly on the target.
 
 Advanced Parsing
 ================
 
 You may need to incorporate an existing test that doesn't output results in
-in the required pass/fail/skip/unknown format required by LAVA. The parse
-section has a fixup mechanism that can help::
+in the required ``pass``/``fail``/``skip``/``unknown`` format required by
+LAVA. The parse section has a fixup mechanism that can help::
 
   parse:
       pattern: "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|FAIL))"
@@ -346,18 +358,17 @@ keys that can be specified inside the 'test-case-deps' section::
  3. tar-repo
  4. url
 
-NOTE: For keys such as git-repo, bzr-repo and tar-repo testdef name
-within this repo must be specfied with 'testdef' parameter else
-lavatest.yaml is the name assumed.
+.. note:: For keys such as git-repo, bzr-repo and tar-repo testdef name
+          within this repo must be specfied with *testdef* parameter else
+          *lavatest.yaml* is the name assumed.
 
-CAUTION: lava-test-shell does not take care of circular dependencies
-within these test definitions, ie., if a test definition say tc1.yaml
-is specified within test-case-deps section of tc-main.yaml and in
-tc1.yaml there is a test-case-deps section which refers to
-tc-main.yaml then this will create a circular dependency. This will
-result in lava-test-shell fetching these test definitions tc1.yaml and
-tc-main.yaml indefinitely and failing after timeout. But the user is
-adviced to avoid this kind of situation, which could be easily
-identified by many number of (more than the user thinks is fair for
-the current test that is running) "loading ttest definition..."
-messages in the job log file.
+.. _circular_dependencies:
+
+.. caution:: lava-test-shell does not take care of circular dependencies
+             within these test definitions. If a test definition say ``tc1.yaml``
+             is specified within ``test-case-deps`` section of ``tc-main.yaml`` and in
+             ``tc1.yaml`` there is a ``test-case-deps`` section which refers to
+             ``tc-main.yaml`` then this will create a **circular dependency**.
+             ``lava-test-shell`` will fetch the test definitions ``tc1.yaml`` and
+             ``tc-main.yaml`` indefinitely and fail after timeout. The log
+             for such cases would show many attempts at ``loading test definition...``.

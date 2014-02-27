@@ -71,7 +71,7 @@ Glossary of terms
 
   test run
     The result from a single test definition execution. The individual
-    id and result of a single test within a test run is called the 
+    id and result of a single test within a test run is called the
     Test Case.
 
   hwpack
