@@ -221,6 +221,17 @@ class DeviceSchema(schema.Schema):
     dummy_ssh_username = schema.StringOption(default='root')
     dummy_ssh_identity_file = schema.StringOption(default=None)
 
+    # for jtag devices
+    jtag_driver = schema.StringOption(default=None)
+    jtag_hard_reset_command = schema.StringOption(default=None)
+    jtag_hard_reset_sleep = schema.IntOption(default=60)
+    # for stmc devices
+    jtag_stmc_boot_script = schema.StringOption(default=None)
+    jtag_stmc_boot_options = schema.StringOption(default=None)
+    jtag_stmc_kernel_command = schema.StringOption(default=None)
+    jtag_stmc_ramdisk_command = schema.StringOption(default=None)
+    jtag_stmc_dtb_command = schema.StringOption(default=None)
+
     # for bootloader devices
     pre_boot_cmd = schema.StringOption()
     use_lava_tmpdir = schema.BoolOption(default=True)

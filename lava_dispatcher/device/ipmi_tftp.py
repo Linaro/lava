@@ -174,42 +174,8 @@ class IpmiPxeTarget(Target):
             runner.run('mkdir -p /mnt')
             partition = self.get_partition(runner, partition)
             runner.run('mount %s /mnt' % partition)
-            try:
-                targetdir = '/mnt%s' % directory
-                runner.run('mkdir -p %s' % targetdir)
-
-                parent_dir, target_name = os.path.split(targetdir)
-
-                runner.run('/bin/tar -cmzf /tmp/fs.tgz -C %s %s' % (parent_dir, target_name))
-                runner.run('cd /tmp')  # need to be in same dir as fs.tgz
-
-                ip = runner.get_target_ip()
-                url_base = self._start_busybox_http_server(runner, ip)
-
-                url = url_base + '/fs.tgz'
-                logging.info("Fetching url: %s" % url)
-                tf = download_image(url, self.context, self.scratch_dir, decompress=False)
-
-                tfdir = os.path.join(self.scratch_dir, str(time.time()))
-
-                try:
-                    os.mkdir(tfdir)
-                    self.context.run_command('/bin/tar -C %s -xzf %s' % (tfdir, tf))
-                    yield os.path.join(tfdir, target_name)
-
-                finally:
-                    tf = os.path.join(self.scratch_dir, 'fs.tgz')
-                    mk_targz(tf, tfdir)
-                    rmtree(tfdir)
-
-                    # get the last 2 parts of tf, ie "scratchdir/tf.tgz"
-                    tf = '/'.join(tf.split('/')[-2:])
-                    runner.run('rm -rf %s' % targetdir)
-                    self._target_extract(runner, tf, parent_dir)
-
-            finally:
-                    self._stop_busybox_http_server(runner)
-                    runner.run('umount /mnt')
+            with self._busybox_file_system(runner, directory) as path:
+                yield path
 
     @contextlib.contextmanager
     def _as_master(self):

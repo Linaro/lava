@@ -51,7 +51,6 @@ class BaseDriver(object):
         raise NotImplementedError("connect")
 
     def finalize(self, proc):
-        """"""
         finalize_process(proc)
 
 
