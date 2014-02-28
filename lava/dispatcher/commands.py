@@ -9,7 +9,7 @@ from lava.tool.command import Command
 from lava.tool.errors import CommandError
 from lava.dispatcher.node import NodeDispatcher
 import lava_dispatcher.config
-from lava_dispatcher.config import get_config, get_device_config, get_devices
+from lava_dispatcher.config import get_config, get_device_config, list_devices
 from lava_dispatcher.job import LavaTestJob, validate_job_data
 
 
@@ -44,8 +44,8 @@ class devices(DispatcherCommand):
     Lists all the configured devices in this LAVA instance.
     """
     def invoke(self):
-        for d in get_devices():
-            print d.hostname
+        for d in list_devices():
+            print d
 
 
 class dispatch(DispatcherCommand):
