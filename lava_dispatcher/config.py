@@ -212,6 +212,10 @@ class DeviceSchema(schema.Schema):
     alternative_create_tmpdir = schema.BoolOption(default=True)
     alternative_dir = schema.StringOption(default=None)
 
+    # for dynamic_vm devices
+    dynamic_vm_backend_device_type = schema.StringOption(default='kvm')
+    dynamic_vm_host = schema.StringOption(default=None)
+
 
 class OptionDescriptor(object):
     def __init__(self, name):
@@ -367,7 +371,7 @@ def _hack_report(report):
     return scrubbed
 
 
-def get_device_config(name):
+def get_device_config(name, backend_device_type=None):
     # We read the device config once to get the device type, then we start
     # again and read device-defaults, device-types/$device-type and
     # devices/$device in that order.
@@ -380,7 +384,18 @@ def get_device_config(name):
 
     real_device_config = parser.SchemaConfigParser(DeviceSchema())
     _get_config("device-defaults", real_device_config)
+
+    client_type = None
+    if backend_device_type:
+        _get_config("device-types/%s" % backend_device_type, real_device_config)
+        client_type = real_device_config.get('__main__', 'client_type')
+
     _get_config("device-types/%s" % device_type, real_device_config)
+
+    if backend_device_type:
+        real_device_config.set('__main__', 'device_type', backend_device_type)
+        real_device_config.set('__main__', 'client_type', client_type)
+
     _get_config("devices/%s" % name, real_device_config)
     if custom_config_file:
         _read_into(custom_config_file, real_device_config)
