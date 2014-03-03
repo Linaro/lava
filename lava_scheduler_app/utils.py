@@ -29,6 +29,8 @@ import datetime
 
 from collections import OrderedDict
 
+from django.contrib.sites.models import Site
+
 from lava_server.settings.getsettings import Settings
 from lava_server.settings.config_file import ConfigFile
 
@@ -41,12 +43,23 @@ def rewrite_hostname(result_url):
 
     See https://cards.linaro.org/browse/LAVA-611
     """
+    domain = socket.getfqdn()
+    try:
+        site = Site.objects.get_current()
+    except (Site.DoesNotExist, ImproperlyConfigured):
+        pass
+    else:
+        domain = site.domain
+
+    if domain == 'example.com' or domain == 'www.example.com':
+        domain = get_ip_address()
+
     host = urlparse.urlparse(result_url).netloc
     if host == "localhost":
-        result_url = result_url.replace("localhost", socket.getfqdn())
+        result_url = result_url.replace("localhost", domain)
     elif host.startswith("127.0.0"):
         ip_pat = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
-        result_url = re.sub(ip_pat, socket.getfqdn(), result_url)
+        result_url = re.sub(ip_pat, domain, result_url)
     return result_url
 
 
