@@ -20,6 +20,27 @@ from lava_scheduler_app.views import (
 class SchedulerAPI(ExposedAPI):
 
     def submit_job(self, job_data):
+        """
+        Name
+        ----
+        `submit_job` (`job_data`)
+
+        Description
+        -----------
+        Submit the given job data which is in LAVA job JSON format as a new
+        job to LAVA scheduler.
+
+        Arguments
+        ---------
+        `job_data`: string
+            Job JSON string.
+
+        Return value
+        ------------
+        This function returns an XML-RPC integer which is the newly created
+        job's id,  provided the user is authenticated with an username and
+        token.
+        """
         if not self.user:
             raise xmlrpclib.Fault(
                 401, "Authentication with user and token required for this "
@@ -47,6 +68,26 @@ class SchedulerAPI(ExposedAPI):
             return job.id
 
     def resubmit_job(self, job_id):
+        """
+        Name
+        ----
+        `resubmit_job` (`job_id`)
+
+        Description
+        -----------
+        Resubmit the given job reffered by its id.
+
+        Arguments
+        ---------
+        `job_id`: string
+            The job's id which should be re-submitted.
+
+        Return value
+        ------------
+        This function returns an XML-RPC integer which is the newly created
+        job's id,  provided the user is authenticated with an username and
+        token.
+        """
         try:
             job = get_restricted_job(self.user, job_id)
         except TestJob.DoesNotExist:
@@ -57,6 +98,24 @@ class SchedulerAPI(ExposedAPI):
             return self.submit_job(job.definition)
 
     def cancel_job(self, job_id):
+        """
+        Name
+        ----
+        `cancel_job` (`job_id`)
+
+        Description
+        -----------
+        Cancel the given job reffered by its id.
+
+        Arguments
+        ---------
+        `job_id`: string
+            Job id which should be canceled.
+
+        Return value
+        ------------
+        None. The user should be authenticated with an username and token.
+        """
         if not self.user:
             raise xmlrpclib.Fault(401, "Authentication required.")
         try:
@@ -163,12 +222,12 @@ class SchedulerAPI(ExposedAPI):
         device_type_list = []
         keys = ['busy', 'name', 'idle', 'offline']
 
-        device_types = DeviceType.objects.filter(display=True)\
-            .annotate(idle=SumIf('device', condition='status=%s' % Device.IDLE),
-                      offline=SumIf('device', condition='status in (%s,%s)'
-                                                        % (Device.OFFLINE, Device.OFFLINING)),
-                      busy=SumIf('device', condition='status in (%s,%s)'
-                                                     % (Device.RUNNING, Device.RESERVED)), ).order_by('name')
+        device_types = DeviceType.objects.filter(display=True).annotate(
+            idle=SumIf('device', condition='status=%s' % Device.IDLE),
+            offline=SumIf('device', condition='status in (%s,%s)'
+                          % (Device.OFFLINE, Device.OFFLINING)),
+            busy=SumIf('device', condition='status in (%s,%s)'
+                       % (Device.RUNNING, Device.RESERVED)), ).order_by('name')
 
         for dev_type in device_types:
             device_type = {}
@@ -272,14 +331,16 @@ class SchedulerAPI(ExposedAPI):
 
         Return value
         ------------
-        This function returns an XML-RPC structures of job status with the follwing fields.
+        This function returns an XML-RPC structures of job status with the
+        following fields.
         The user is authenticated with an username and token.
 
         `job_status`: string
-                    ['Submitted'|'Running'|'Complete'|'Incomplete'|'Canceled'|'Canceling']
+        ['Submitted'|'Running'|'Complete'|'Incomplete'|'Canceled'|'Canceling']
 
         `bundle_sha1`: string
-                     The sha1 hash code of the bundle, if it existed. Otherwise it will be an empty string.
+        The sha1 hash code of the bundle, if it existed. Otherwise it will be
+        an empty string.
         """
 
         if not self.user:
