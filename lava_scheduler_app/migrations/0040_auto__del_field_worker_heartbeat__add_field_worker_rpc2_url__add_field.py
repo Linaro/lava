@@ -3,6 +3,8 @@ import datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
+from django.contrib.sites.models import Site
+
 from lava_scheduler_app import utils
 
 
@@ -37,16 +39,21 @@ class Migration(SchemaMigration):
         # Since migrations run only on master node, we assume the current node
         # should be designated as master.
         is_master = True
-        localhost = utils.get_fqdn()
         ipaddr = utils.get_ip_address()
+        try:
+            localhost = orm['Site'].objects.get_current()
+        except (Site.DoesNotExist, ImproperlyConfigured):
+            pass
+        else:
+            localhost = site.domain
 
         # NOTE: RPC2_URL formed below is a guess. The administrator should
         #       revisit the correctness of this URL from the administration
         #       UI, fixing it for the node which is designated as the master.
-        rpc2_url = "http://{0}/RPC2".format(ipaddr)
+        rpc2_url = "http://{0}/RPC2".format(localhost)
 
         if localhost == 'example.com' or localhost == 'www.example.com':
-            raise ValueError("Unable to get FQDN")
+            rpc2_url = "http://{0}/RPC2".format(ipaddr)
 
         try:
             worker = orm['lava_scheduler_app.Worker'].objects.get(
