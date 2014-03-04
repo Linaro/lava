@@ -536,16 +536,13 @@ class Device(RestrictedResource):
     def get_existing_health_check_job(self):
         """Get the existing health check job.
         """
-        scheduled_job = TestJob.objects.filter(
-            (models.Q(actual_device=self) |
-             models.Q(requested_device=self)),
-            status__in=[TestJob.SUBMITTED, TestJob.RUNNING],
-            health_check=True
-        )
-
-        if scheduled_job:
-            return scheduled_job[0]
-        else:
+        try:
+            return TestJob.objects.filter((models.Q(actual_device=self) |
+                                           models.Q(requested_device=self)),
+                                          status__in=[TestJob.SUBMITTED,
+                                                      TestJob.RUNNING],
+                                          health_check=True)[0]
+        except IndexError:
             return None
 
     def initiate_health_check_job(self):
