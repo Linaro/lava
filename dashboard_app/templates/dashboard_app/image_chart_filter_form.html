@@ -53,9 +53,6 @@
     </div>
   </div>
 
-  <div id="aliases_div">
-  </div>
-
   <div class="submit-button">
     <input type="submit" value="Save" />
   </div>
@@ -91,7 +88,6 @@
 
     $('form').submit(function() {
         add_selected_options();
-        sort_aliases();
     });
 
     {% if form.filter.value %}
@@ -109,19 +105,6 @@
           value: {{ imagecharttestcase.test_case.id }},
           text: '{{ imagecharttestcase.test_case.test_case_id }}'
         }));
-        update_aliases();
-        toggle_alias();
-      {% endfor %}
-      }
-
-      if ($('#id_chart_type').val() == "pass/fail") {
-      {% for test in instance.imagecharttest_set.all %}
-        $('#alias_{{ test.test_id }}').val('{{ test.name }}');
-      {% endfor %}
-      } else {
-      {% for test in instance.imagecharttestcase_set.all %}
-
-        $('#alias_{{ test.test_case_id }}').val('{{ test.name }}');
       {% endfor %}
       }
 

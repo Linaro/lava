@@ -74,14 +74,10 @@ add_filter_container = function(data, filter_id, title) {
     content += '<div class="selector-chosen"><h2>' +
         'Choosen ' + test_label + '</h2>';
 
-    content += '<select id="chosen_tests" onchange="toggle_alias()" multiple class="filtered"></select>';
+    content += '<select id="chosen_tests" multiple class="filtered"></select>';
     content += '<a id="remove_all_link" href="javascript: void(0)">' +
         'Remove All</a>';
     content += '</div></div>';
-
-    content += '<div id="alias_container">Alias<br/>';
-    content += '<input type="text" onkeyup="copy_alias(this);" id="alias" />';
-    content += '</div>';
 
     $('<div id="filter-container"></div>').html(
         content).appendTo($('#filters_div'));
@@ -137,9 +133,6 @@ move_options = function(from_element, to_element) {
     var options = $("#" + from_element + " option:selected");
     $("#" + to_element).append(options.clone());
     $(options).remove();
-
-    update_aliases();
-    toggle_alias();
 }
 
 add_selected_options = function() {
@@ -154,49 +147,6 @@ add_selected_options = function() {
         $('<input type="hidden" name="' + field_name +
           '" value="'+ $(this).val() + '" />').appendTo($('#add_filter_link'));
     });
-}
-
-update_aliases = function() {
-    // Update hidden aliases inputs based on chosen tests.
-
-    $('#chosen_tests option').each(function() {
-        if ($('#alias_' + $(this).val()).length == 0) {
-            $('<input type="hidden" class="alias" data-sid="' + $(this).val() +
-              '" name="aliases" id="alias_' + $(this).val() +
-              '" />').appendTo($('#aliases_div'));
-        }
-    });
-    chosen_tests = $.map($('#chosen_tests option'), function(e) {
-        return e.value;
-    });
-    $('.alias').each(function(index, value) {
-        test_id = value.id.split('_')[1];
-
-        if (chosen_tests.indexOf(test_id) == -1) {
-            $('#alias_' + test_id).remove();
-        }
-    });
-}
-
-toggle_alias = function() {
-    // Show/hide alias input field.
-
-    if ($('#chosen_tests option:selected').length == 1) {
-        $('#alias_container').show();
-        test_id = $('#chosen_tests option:selected').val();
-        $('#alias').val($('#alias_' + test_id).val());
-    } else {
-        $('#alias_container').hide();
-    }
-}
-
-copy_alias = function(e) {
-    // Populate alias input based on the selected test.
-
-    if ($('#chosen_tests option:selected').length == 1) {
-        test_id = $('#chosen_tests option:selected').val();
-        $('#alias_' + test_id).val(e.value);
-    }
 }
 
 test_changed = function(filter_id, test_id) {
@@ -227,14 +177,6 @@ test_changed = function(filter_id, test_id) {
     }
 }
 
-sort_aliases = function() {
-    // Pre submit function. Sort the aliases hidden inputs.
-
-    $('#aliases_div input').sort(function(a,b) {
-        return parseInt(a.dataset.sid) > parseInt(b.dataset.sid);
-    }).appendTo('#aliases_div');
-}
-
 init_loading_dialog = function() {
     // Setup the loading image dialog.
 
@@ -250,4 +192,56 @@ init_loading_dialog = function() {
     });
 
     $('.loading-dialog div.ui-dialog-titlebar').hide();
+}
+
+init_test_edit_dialog = function() {
+    // Setup the test edit dialog.
+    $('#test_edit_dialog').dialog({
+        autoOpen: false,
+        title: '',
+        draggable: false,
+        height: 380,
+        width: 480,
+        modal: true,
+        resizable: false,
+        dialogClass: 'edit-dialog'
+    });
+
+    $('.edit-dialog div.ui-dialog-titlebar').hide();
+}
+
+open_test_edit = function(chart_filter_id, chart_test_id) {
+    // Get the chart test data and open the dialog window
+    url = "/dashboard/image-charts/+get-chart-test";
+
+    $.ajax({
+        url: url,
+        async: false,
+        data: {
+            chart_filter_id: chart_filter_id,
+            chart_test_id: chart_test_id},
+        beforeSend: function () {
+            $('#loading_dialog').dialog('open');
+        },
+        success: function (data) {
+            $('#loading_dialog').dialog('close');
+            set_chart_test_data(data);
+        },
+        error: function(data, status, error) {
+            $('#loading_dialog').dialog('close');
+            alert('Data could not be loaded, please try again.');
+        }
+    });
+}
+
+set_chart_test_data = function(data) {
+    data = data[0];
+    $("#dialog_test_name").html(data.test_name);
+    $("#chart_test_id").val(data.id);
+    $("#alias").val(data.name);
+    $(data.all_attributes).each(function(iter, value) {
+        $("#attributes").append($("<option>", {value: value, html: value}));
+    });
+    $("#attributes").val(data.attributes);
+    $("#test_edit_dialog").dialog('open');
 }
