@@ -576,7 +576,8 @@ $(document).ready(function () {
                     "alias": row["alias"],
                     "representation": row["filter_rep"],
                     "data": [],
-                    "meta": []
+                    "meta": [],
+                    "labels": []
                 };
             }
         }
@@ -619,14 +620,41 @@ $(document).ready(function () {
                     tooltip = "Value: " + value;
                 }
 
+                tooltip += "<br>";
+                label = "";
+
+                // Support metadata content with image and tooltip text.
+                if (!$.isEmptyObject(row["metadata_content"])) {
+                    label = "/static/dashboard_app/images/metadata.png";
+                    for (key in row["metadata_content"]) {
+                        tooltip += key + " changed to " +
+                            row["metadata_content"][key][1] + "<br>";
+                    }
+                }
+
+                // Support test result comments. Metadata display will have
+                // priority over comments.
+                if (row["comments"]) {
+                    if (label == "") {
+                        label = "/static/dashboard_app/images/icon-info.png";
+                    }
+                    if (chart_data["chart_type"] == "pass/fail") {
+                        tooltip += "Has comments<br>";
+                    } else {
+                        tooltip += row["comments"] + "<br>";
+                    }
+                }
+
                 meta_item = {
                     "link": row["link"],
                     "pass": row["pass"],
                     "tooltip": tooltip,
                 };
                 if (chart_data.has_build_numbers) {
-                    insert_data_item([build_number, value],
+                    insert_data_item(build_number, [build_number, value],
                                      plot_data[test_filter_id]["data"]);
+                    insert_data_item(build_number, label,
+                                     plot_data[test_filter_id]["labels"]);
                     meta_key = build_number + "_" +  value;
                     plot_data[test_filter_id]["meta"][meta_key] = meta_item;
                     build_numbers.push(build_number);
@@ -637,6 +665,7 @@ $(document).ready(function () {
                     dates.push(key);
                     data_item = [key, value];
                     plot_data[test_filter_id]["data"].push(data_item);
+                    plot_data[test_filter_id]["labels"].push(label);
                     // Make meta keys are made unique by concatination.
                     plot_data[test_filter_id]["meta"][data_item.join("_")] =
                         meta_item;
@@ -671,6 +700,10 @@ $(document).ready(function () {
 
             data.push({
                 label: plot_data[test_filter_id]["alias"],
+                showLabels: true,
+                labels: plot_data[test_filter_id]["labels"],
+                labelPlacement: "above",
+                canvasRender: true,
                 data: plot_data[test_filter_id]["data"],
                 meta: plot_data[test_filter_id]["meta"],
                 bars: bars_options,
@@ -716,7 +749,7 @@ $(document).ready(function () {
 
 	    data.push({
                 data: goal_data, dashes: {show: true},
-                lines: {show: false}, color: "#999999"
+                lines: {show: false}, points: { show: false }, color: "#999999"
             });
         }
 
@@ -739,7 +772,11 @@ $(document).ready(function () {
 
         y_label = "Pass/Fail";
         if (chart_data["chart_type"] != "pass/fail") {
-            y_label = chart_data.test_data[0].units;
+            if (chart_data.test_data[0]) {
+                y_label = chart_data.test_data[0].units;
+            } else {
+                y_label = "units";
+            }
         }
 
 
@@ -762,11 +799,10 @@ $(document).ready(function () {
             };
         }
 
-
         var options = {
 	    series: {
 	        lines: { show: true },
-	        points: { show: false },
+	        points: { show: true },
                 bars: { barWidth: 0.5 },
 	    },
             grid: {
@@ -814,21 +850,21 @@ $(document).ready(function () {
         return url.match(/^https?:\/\/[a-z0-9-\.]+\.[a-z]{2,4}\/?([^\s<>\#%"\,\{\}\\|\\\^\[\]`]+)?$/);
     }
 
-    insert_data_item = function(item, data) {
+    insert_data_item = function(key, value, data) {
         // Insert item at the sorted position in the data.
         // data represents list of two-value lists.
-        if (data.length == 0 || parseInt(item[0]) <= parseInt(data[0][0])) {
-            data.splice(0, 0, item);
+        if (data.length == 0 || parseInt(key) <= parseInt(data[0][0])) {
+            data.splice(0, 0, value);
             return;
         }
         for (var i=0; i < data.length-1; i++) {
-            if (parseInt(item[0]) > parseInt(data[i][0]) &&
-                parseInt(item[0]) <= parseInt(data[i+1][0])) {
-                data.splice(i+1, 0, item);
+            if (parseInt(key) > parseInt(data[i][0]) &&
+                parseInt(key) <= parseInt(data[i+1][0])) {
+                data.splice(i+1, 0, value);
                 return;
             }
         }
-        data.splice(data.length, 0, item);
+        data.splice(data.length, 0, value);
     }
 
     format_date = function(date_string) {
