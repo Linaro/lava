@@ -14,6 +14,7 @@ LAVA Manual
    writing-multinode.rst
    test-repositories.rst
    filters-reports.rst
+   lava-dashboard-image-reports.rst
    healthchecks.rst
    multinode-usecases.rst
    development.rst

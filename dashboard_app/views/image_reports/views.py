@@ -156,8 +156,8 @@ def image_report_list(request):
             "discrete_data": discrete_data,
             'terms_data': terms_data,
             'group_tables': group_tables,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                image_report_list),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(image_report_list),
+            'context_help': BreadCrumbTrail.leading_to(image_report_list),
         }, RequestContext(request)
     )
 
@@ -198,6 +198,7 @@ def image_report_detail(request, name):
             'image_report': image_report,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 image_report_detail, name=name),
+            'context_help': BreadCrumbTrail.leading_to(image_report_list),
         }, RequestContext(request)
     )
 
@@ -356,11 +357,23 @@ def image_report_add_group(request, name):
     if request.method != 'POST':
         raise PermissionDenied
 
+    group_name = request.POST.get("value")
     image_report = ImageReport.objects.get(name=name)
-    image_report.image_report_group = ImageReportGroup.objects.get_or_create(
-        name=request.POST.get("value"))[0]
+    old_group = image_report.image_report_group
+
+    if not group_name:
+        image_report.image_report_group = None
+    else:
+        new_group = ImageReportGroup.objects.get_or_create(name=group_name)[0]
+        image_report.image_report_group = new_group
+
     image_report.save()
-    return HttpResponse(request.POST.get("value"), mimetype='application/json')
+
+    if old_group:
+        if not old_group.imagereport_set.count():
+            old_group.delete()
+
+    return HttpResponse(group_name, mimetype='application/json')
 
 
 @login_required
