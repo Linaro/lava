@@ -44,6 +44,9 @@ except ImportError:
 
 
 def find_device_for_job(job, device_list):
+    if job.health_check == True:
+        if job.requested_device.status == Device.OFFLINE:
+            return job.requested_device
     for device in device_list:
         if device == job.requested_device:
             if device.can_submit(job.submitter):
@@ -187,7 +190,8 @@ class DatabaseJobSource(object):
                 device.state_transition_to(Device.RESERVED, message="Reserved for job %s" % job.display_id)
                 job.save()
                 device.save()
-                devices.remove(device)
+                if device in devices:
+                    devices.remove(device)
 
     def _kill_canceling(self, job):
         """
@@ -287,13 +291,18 @@ class DatabaseJobSource(object):
         device = Device.objects.get(hostname=board_name)
         old_device_status = device.status
         new_device_status = None
+        previous_state = None
+
+        previous_transition = device.previous_transition()
+        if previous_transition:
+            previous_state = previous_transition.old_state
 
         if old_device_status == Device.RUNNING:
-            new_device_status = Device.IDLE
+            new_device_status = previous_state
         elif old_device_status == Device.OFFLINING:
             new_device_status = Device.OFFLINE
         elif old_device_status == Device.RESERVED:
-            new_device_status = Device.IDLE
+            new_device_status = previous_state
         else:
             self.logger.error(
                 "Unexpected device state in jobCompleted: %s" % device.status)
@@ -312,15 +321,8 @@ class DatabaseJobSource(object):
             self.logger.error(
                 "Unexpected job state in jobCompleted: %s" % job.status)
             job.status = TestJob.COMPLETE
-        if new_device_status == Device.OFFLINE:
-            try:
-                reason = device.transitions.filter(message__isnull=False).latest('created_on').message
-            except DeviceStateTransition.DoesNotExist:
-                reason = None
-            msg = reason
-        else:
-            msg = "Job %s completed" % job.display_id
 
+        msg = "Job %s completed" % job.display_id
         device.state_transition_to(new_device_status, message=msg, job=job)
 
         if job.health_check:
@@ -386,10 +388,14 @@ class DatabaseJobSource(object):
                     self._kill_canceling(job)
                     device = Device.objects.get(hostname=job.actual_device.hostname)
                     if device.status == Device.RUNNING:
-                        self.logger.debug("Transitioning %s to Idle" % device.hostname)
+                        previous_state = Device.IDLE
+                        previous_transition = device.previous_transition()
+                        if previous_transition:
+                            previous_state = previous_transition.old_state
+                        self.logger.debug("Transitioning %s to %s" % (device.hostname, previous_state))
                         device.current_job = None
                         msg = "Job %s cancelled" % job.display_id
-                        device.state_transition_to(Device.IDLE, message=msg,
+                        device.state_transition_to(previous_state, message=msg,
                                                    job=job)
                     self.logger.debug('Marking job %s as cancelled on %s' % (job.id, job.actual_device))
                     job.cancel()

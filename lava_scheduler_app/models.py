@@ -574,6 +574,15 @@ class Device(RestrictedResource):
                     None, "Job submission failed for health job: %s" % e)
                 raise JSONDataError("Health check job submission failed.")
 
+    def previous_transition(self):
+        """Returns the last but one transition object for this device.
+        """
+        try:
+            return DeviceStateTransition.objects.filter(
+                device=self).order_by('-created_on')[1]
+        except IndexError:
+            return None
+
 
 class JobFailureTag(models.Model):
     """

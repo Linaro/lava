@@ -318,3 +318,24 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
         devices = [self.panda02, self.panda01]
         chosen_device = find_device_for_job(job, devices)
         self.assertEqual(self.panda01, chosen_device)
+
+    def test_offline_health_check(self):
+        """
+        tests whether we are able to submit health check jobs for devices that
+        are OFFLINE.
+        """
+        self.panda.health_check_job = self.factory.make_job_json(health_check='true')
+        self.panda.save()
+
+        self.panda01.state_transition_to(Device.OFFLINE)
+        self.panda02.state_transition_to(Device.OFFLINE)
+
+        Device.initiate_health_check_job(self.panda01)
+        Device.initiate_health_check_job(self.panda02)
+
+        jobs = self.scheduler_tick()
+
+        self.assertEqual(2, len(jobs))
+        self.assertTrue(all([job.actual_device is not None for job in jobs]))
+        self.assertEqual(self.panda01.status, Device.OFFLINE)
+        self.assertEqual(self.panda02.status, Device.OFFLINE)
