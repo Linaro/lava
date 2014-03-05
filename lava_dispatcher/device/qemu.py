@@ -54,31 +54,32 @@ class QEMUTarget(Target):
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
                              bootloader, firmware, rootfstype, bootloadertype,
                              target_type):
-        if rootfs is not None:
-            self._sd_image = download_image(rootfs, self.context)
-            self._customize_linux(self._sd_image)
-            self.append_qemu_options(self.config.qemu_options.format(
-                DISK_IMAGE=self._sd_image))
-            kernel_args = 'root=/dev/sda1'
-        else:
+        # Check for errors
+        if rootfs is None:
             raise CriticalError("You must specify a QEMU file system image")
-
-        if kernel is not None:
-            kernel = download_image(kernel, self.context)
-            self.append_qemu_options(' -kernel %s' % kernel)
-            kernel_args += ' console=ttyS0,115200'
-            if ramdisk is not None:
-                ramdisk = download_image(ramdisk, self.context)
-                self.append_qemu_options(' -initrd %s' % ramdisk)
-            if dtb is not None:
-                dtb = download_image(dtb, self.context)
-                self.append_qemu_options(' -dtb %s' % ramdisk)
-            if firmware is not None:
-                firmware = download_image(firmware, self.context)
-                self.append_qemu_options(' -bios %s' % firmware)
-            self.append_qemu_options(' -append "%s"' % kernel_args)
-        else:
+        if kernel is None:
             raise CriticalError("No kernel images to boot")
+
+        # build the QEMU command line
+        self._sd_image = download_image(rootfs, self.context)
+        self._customize_linux(self._sd_image)
+        self.append_qemu_options(self.config.qemu_options.format(
+            DISK_IMAGE=self._sd_image))
+        kernel_args = 'root=/dev/sda1'
+
+        kernel = download_image(kernel, self.context)
+        self.append_qemu_options(' -kernel %s' % kernel)
+        kernel_args += ' console=ttyS0,115200'
+        if ramdisk is not None:
+            ramdisk = download_image(ramdisk, self.context)
+            self.append_qemu_options(' -initrd %s' % ramdisk)
+        if dtb is not None:
+            dtb = download_image(dtb, self.context)
+            self.append_qemu_options(' -dtb %s' % ramdisk)
+        if firmware is not None:
+            firmware = download_image(firmware, self.context)
+            self.append_qemu_options(' -bios %s' % firmware)
+        self.append_qemu_options(' -append "%s"' % kernel_args)
 
     def deploy_linaro(self, hwpack, rootfs, rootfstype, bootloadertype):
         odir = self.scratch_dir
