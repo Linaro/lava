@@ -64,8 +64,6 @@ class QEMUTarget(Target):
         # build the QEMU command line
         self._sd_image = download_image(rootfs, self.context)
         self._customize_linux(self._sd_image)
-        self.append_qemu_options(self.config.qemu_options.format(
-            DISK_IMAGE=self._sd_image))
 
         kernel = download_image(kernel, self.context)
         self._is_kernel_present = True
@@ -85,14 +83,10 @@ class QEMUTarget(Target):
         self._sd_image = generate_image(self, hwpack, rootfs, odir,
                                         bootloadertype, rootfstype)
         self._customize_linux(self._sd_image)
-        self.append_qemu_options(self.config.qemu_options.format(
-            DISK_IMAGE=self._sd_image))
 
     def deploy_linaro_prebuilt(self, image, rootfstype, bootloadertype):
         self._sd_image = download_image(image, self.context)
         self._customize_linux(self._sd_image)
-        self.append_qemu_options(self.config.qemu_options.format(
-            DISK_IMAGE=self._sd_image))
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
@@ -120,7 +114,8 @@ class QEMUTarget(Target):
             kernel_args = ' '.join(self._load_boot_cmds())
             self.append_qemu_options(' -append "%s"' % kernel_args)
 
-        qemu_cmd = '%s %s' % (self.config.qemu_binary, self._qemu_options)
+        qemu_cmd = '%s %s %s' % (self.config.qemu_binary, self.config.qemu_options, self._qemu_options or '')
+        qemu_cmd = qemu_cmd.format(DISK_IMAGE=self._sd_image)
         logging.info('launching qemu with command %r' % qemu_cmd)
         self.proc = self.context.spawn(qemu_cmd, timeout=1200)
         self._auto_login(self.proc)
