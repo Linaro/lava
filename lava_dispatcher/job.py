@@ -98,6 +98,62 @@ job_schema = {
                 },
             },
         },
+        'vm_group': {
+            'type': 'object',
+            'additionalProperties': False,
+            'optional': True,
+            'properties': {
+                'host': {
+                    'optional': False,
+                    'type': 'object',
+                    'additionalProperties': False,
+                    'properties': {
+                        'device_type': {
+                            'optional': False,
+                            'type': 'string',
+                        },
+                        'role': {
+                            'optional': True,
+                            'type': 'string',
+                        }
+                    }
+                },
+                'vms': {
+                    'optional': False,
+                    'type': 'array',
+                    'additionalProperties': False,
+                    'items': {
+                        'type': 'object',
+                        'additionalProperties': False,
+                        'properties': {
+                            'role': {
+                                'optional': False,
+                                'type': 'string',
+                            },
+                            'device_type': {
+                                'optional': False,
+                                'type': 'string',
+                            },
+                            'count': {
+                                'optional': True,
+                                'type': 'integer',
+                            },
+                            'launch_with': {
+                                'type': 'string',
+                                'optional': True,
+                            },
+                            'tags': {
+                                'type': 'array',
+                                'uniqueItems': True,
+                                'items': {'type': 'string'},
+                                'optional': True,
+                            },
+                        }
+
+                    }
+                },
+            },
+        },
         'job_name': {
             'type': 'string',
             'optional': True,
