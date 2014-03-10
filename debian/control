@@ -16,10 +16,12 @@ Vcs-Git: https://alioth.debian.org/anonscm/git/pkg-linaro-lava/lava-dispatcher.g
 Vcs-Browser: https://alioth.debian.org/plugins/scmgit/cgi-bin/gitweb.cgi?p=pkg-linaro-lava/lava-dispatcher.git;a=summary
 
 Package: lava-dispatcher
-Architecture: all
+Architecture: any
 Depends: python-serial (>= 2.6), parted, kpartx, ser2net, sshfs,
  ${python:Depends}, ${misc:Depends}
-Recommends: ntp, git, tftpd-hpa, openbsd-inetd, qemu-system-x86, unzip
+Multi-Arch: foreign
+Recommends: ntp, git, tftpd-hpa, openbsd-inetd, 
+ qemu-system-x86 [amd64], qemu-system-x86 [i386], unzip
 Description: Linaro Automated Validation Architecture dispatcher
  This package provides lava-dispatcher to dispatch
  LAVA jobs to configured devices.
