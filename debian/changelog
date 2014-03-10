@@ -1,3 +1,10 @@
+lava-dispatcher (0.33.3-4) unstable; urgency=medium
+
+  * Convert to arch:any to support arch-specific recommends like qemu-
+    system-x86
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 10 Mar 2014 15:34:12 +0000
+
 lava-dispatcher (0.33.3-3) unstable; urgency=medium
 
   * Depend on kpartx and package an almost usable lava-dispatcher.conf
