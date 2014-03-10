@@ -5,7 +5,9 @@ lava-server for Debian
  a LAVA server at http://localhost/ once enabled.
 
  Current versions of LAVA depend on django 1.4 and do not
- operate with django 1.5. Until this is fixed upstream, a
+ operate with django 1.5. Patches exist to migrate to 1.6
+ and these have been applied to the current packages. If
+ building packages directly from LAVA upstream git, a
  snapshot version of python-django *must* be used.
 
  To install all of LAVA on a single machine, use:
@@ -17,6 +19,17 @@ lava-server for Debian
  $ sudo a2dissite 000-default
  $ sudo a2ensite lava-server.conf
  $ sudo service apache2 restart
+
+ To install just the lava-server from the current packages
+ patched to support django1.6, use:
+
+ $ sudo apt-get install lava-server
+ $ sudo a2dissite 000-default
+ $ sudo a2ensite lava-server.conf
+ $ sudo service apache2 restart
+
+ This will install lava-dispatcher and lava-server but not
+ linaro-media-create and other optional packages.
 
 Superuser
 =========
@@ -106,6 +119,19 @@ lava-dispatcher dispatches jobs to devices
 
  1. Only one instance can be running at any one time.
  2. Instance templates share a common folder: /usr/share/lava-server/templates
+
+Daemon renaming
+===============
+
+ The main scheduler daemon is now explicitly named and only restarts
+ the scheduler daemon::
+
+ $ sudo service lava-server restart
+
+ The web application itself is handled within apache, so to refresh
+ the code running behind the front end, use::
+
+ $ sudo apache2ctl restart
 
 WSGI debugging help
 ===================

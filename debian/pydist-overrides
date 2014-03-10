@@ -5,6 +5,7 @@ django_tables2 python-django-tables2; PEP386
 lava_tool lava-tool; PEP386
 lava_utils_interface lava-utils-interface; PEP386
 linaro_django_xmlrpc linaro-django-xmlrpc; PEP386
+linaro_django_pagination linaro-django-pagination; PEP386
 linaro_dashboard_bundle linaro-dashboard-bundle; PEP386
 south python-django-south; PEP386
 versiontools python-versiontools; PEP386
