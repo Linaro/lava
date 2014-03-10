@@ -77,6 +77,8 @@ Incomplete.
 Exclusive text search can be combined with simple text search by using
 the **search** variable in the querystring.
 
+::
+
  ?device=mx5&length=25&description=ARMMP&status=Incom&search=single
 
 The fields which support exclusive search are listed above each table.
