@@ -127,7 +127,7 @@ class BundleDetailTable(LavaTable):
 
 class TestRunTable(LavaTable):
     """
-    TAble of test runs in a specified bundle in a bundle stream.
+    Table of test runs in a specified bundle in a bundle stream.
     """
 
     record = tables.TemplateColumn(

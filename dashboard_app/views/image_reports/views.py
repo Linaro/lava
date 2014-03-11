@@ -117,7 +117,6 @@ def image_report_list(request):
 
     group_tables = {}
     terms_data = search_data = discrete_data = {}
-    config = RequestConfig(request)
     for group in ImageReportGroup.objects.all():
         if group.imagereport_set.count():
             prefix = "group_%s_" % group.name
@@ -127,11 +126,13 @@ def image_report_list(request):
             discrete_data.update(table.prepare_discrete_data(group_view))
             terms_data.update(table.prepare_terms_data(group_view))
             group_tables[group.name] = table
+            config = RequestConfig(request, paginate={"per_page": table.length})
             config.configure(table)
 
     prefix = "other_"
     other_view = OtherImageReportView(request, model=ImageReportChart, table_class=OtherImageReportTable)
     other_image_table = OtherImageReportTable(other_view.get_table_data(prefix), prefix=prefix)
+    config = RequestConfig(request, paginate={"per_page": other_image_table.length})
     config.configure(other_image_table)
     search_data.update(other_image_table.prepare_search_data(other_view))
     discrete_data.update(other_image_table.prepare_discrete_data(other_view))
@@ -141,6 +142,7 @@ def image_report_list(request):
         prefix = "user_"
         view = UserImageReportView(request, model=ImageReportChart, table_class=UserImageReportTable)
         user_image_table = UserImageReportTable(view.get_table_data(prefix), prefix=prefix)
+        config = RequestConfig(request, paginate={"per_page": user_image_table.length})
         config.configure(user_image_table)
         search_data.update(user_image_table.prepare_search_data(view))
         discrete_data.update(user_image_table.prepare_discrete_data(view))

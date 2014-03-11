@@ -136,7 +136,7 @@ def index(request):
         index_data.get_table_data(prefix),
         prefix=prefix,
     )
-    config = RequestConfig(request)
+    config = RequestConfig(request, paginate={"per_page": index_table.length})
     config.configure(index_table)
 
     prefix = 'device_'
@@ -145,6 +145,7 @@ def index(request):
         dt_overview_data.get_table_data(prefix),
         prefix=prefix,
     )
+    config = RequestConfig(request, paginate={"per_page": dt_overview_table.length})
     config.configure(dt_overview_table)
 
     prefix = 'worker_'
@@ -153,6 +154,7 @@ def index(request):
         worker_data.get_table_data(prefix),
         prefix=prefix,
     )
+    config = RequestConfig(request, paginate={"per_page": worker_table.length})
     config.configure(worker_table)
 
     search_data = index_table.prepare_search_data(index_data)
@@ -562,7 +564,7 @@ def device_type_detail(request, pk):
         filter(device_type=dt),
         prefix=prefix,
     )
-    config = RequestConfig(request)
+    config = RequestConfig(request, paginate={"per_page": no_dt_ptable.length})
     config.configure(no_dt_ptable)
 
     prefix = "dt_"
@@ -573,6 +575,7 @@ def device_type_detail(request, pk):
         .filter(actual_device__in=Device.objects.filter(device_type=dt)),
         prefix=prefix,
     )
+    config = RequestConfig(request, paginate={"per_page": dt_jobs_ptable.length})
     config.configure(dt_jobs_ptable)
 
     prefix = 'health_'
@@ -580,6 +583,7 @@ def device_type_detail(request, pk):
         health_summary_data,
         prefix=prefix,
     )
+    config = RequestConfig(request, paginate={"per_page": health_table.length})
     config.configure(health_table)
 
     search_data = no_dt_ptable.prepare_search_data(no_dt_data)
@@ -1273,6 +1277,7 @@ def device_detail(request, pk):
         trans_data.get_table_data(prefix),
         prefix=prefix,
     )
+    config = RequestConfig(request, paginate={"per_page": trans_table.length})
     config.configure(trans_table)
 
     search_data = recent_ptable.prepare_search_data(recent_data)

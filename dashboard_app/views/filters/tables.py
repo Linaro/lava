@@ -24,10 +24,11 @@ from django.template import defaultfilters
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 import django_tables2 as tables
-from lava.utils.data_tables.tables import DataTablesTable
 from lava.utils.lavatable import LavaTable
 from dashboard_app.filters import evaluate_filter
 from dashboard_app.models import (
+    Bundle,
+    TestRun,
     TestRunFilter,
     TestRunFilterSubscription,
 )
@@ -128,11 +129,20 @@ class PublicFiltersTable(UserFiltersTable):
 
 
 class TestRunColumn(tables.Column):
+
+    def __init__(self, verbose_name=None):
+        super(TestRunColumn, self).__init__(verbose_name=verbose_name)
+        self.orderable = False
+        self.empty_values = ()
+
     def render(self, record):
         # This column is only rendered if we don't really expect
         # record.test_runs to be very long...
         links = []
-        trs = [tr for tr in record.test_runs if tr.test.test_id == self.verbose_name]
+        results = []
+        if 'id__arrayagg' in record:
+            results = TestRun.objects.filter(id__in=record['id__arrayagg'])
+        trs = [tr for tr in results if tr.test.test_id == self.verbose_name]
         for tr in trs:
             text = '%s / %s' % (tr.denormalization.count_pass, tr.denormalization.count_all())
             links.append('<a href="%s">%s</a>' % (tr.get_absolute_url(), text))
@@ -141,70 +151,118 @@ class TestRunColumn(tables.Column):
 
 class SpecificCaseColumn(tables.Column):
 
-    def __init__(self, test_case, verbose_name=None):
+    def __init__(self, test_case, match_maker, verbose_name=None):
         if verbose_name is None:
             verbose_name = mark_safe(test_case.test_case_id)
         super(SpecificCaseColumn, self).__init__(verbose_name)
         self.test_case = test_case
+        self.orderable = False
+        self.empty_values = ()
+        self.match_maker = match_maker
 
     def render(self, record):
         r = []
-        for result in record.specific_results:
+        results = []
+        if 'id__arrayagg' in record:
+            results = TestRun.objects.filter(id__in=record['id__arrayagg'])[0].get_results()
+        for result in results:
             if result.test_case_id != self.test_case.id:
                 continue
             if result.result == result.RESULT_PASS and result.units:
                 s = '%s %s' % (result.measurement, result.units)
             else:
                 s = result.RESULT_MAP[result.result]
-            r.append('<a href="' + result.get_absolute_url() + '">' + escape(s) + '</a>')
+            r.append('<a href="'
+                     + result.get_absolute_url() + '">'
+                     + escape(s) + '</a>')
+        return mark_safe(', '.join(r))
+
+
+class BundleTestColumn(tables.Column):
+
+    def __init__(self, verbose_name=None):
+        super(BundleTestColumn, self).__init__(verbose_name=verbose_name)
+        self.empty_values = ()
+
+    def render(self, record):
+        r = []
+        if 'id__arrayagg' in record:
+            runs = TestRun.objects.filter(id__in=record['id__arrayagg'])
+            for run in runs:
+                r.append('<a href="'
+                         + run.bundle.get_absolute_url() + '">'
+                         + run.bundle.content_filename
+                         + '</a>')
+        descriptions = sorted(set(r))
+        return mark_safe(', '.join(descriptions))
+
+
+class TestSummaryColumn(tables.Column):
+
+    def __init__(self, total=False, verbose_name=None):
+        super(TestSummaryColumn, self).__init__(verbose_name=verbose_name)
+        self.empty_values = ()
+        self.total = total
+
+    def render(self, record):
+        r = []
+        tag = 'pass' if not self.total else 'total'
+        if 'id__arrayagg' in record:
+            runs = TestRun.objects.filter(id__in=record['id__arrayagg'])
+            count = 0
+            for run in runs:
+                if tag in run._get_summary_results():
+                    count += run._get_summary_results()[tag]
+            r.append("%d" % count)
         return mark_safe(', '.join(r))
 
 
 class BundleColumn(tables.Column):
+
     def render(self, record):
-        return mark_safe('<a href="' + record.bundle.get_absolute_url() + '">' + escape(record.bundle.content_filename) + '</a>')
+        return mark_safe('<a href="'
+                         + record.bundle.get_absolute_url() + '">'
+                         + escape(record.bundle.content_filename) + '</a>')
 
 
-class FilterTable(DataTablesTable):
-    def __init__(self, *args, **kwargs):
-        kwargs['template'] = 'dashboard_app/filter_results_table.html'
-        super(FilterTable, self).__init__(*args, **kwargs)
-        match_maker = self.data.queryset
+class FilterPassTable(LavaTable):
+
+    tag = tables.Column()
+
+    def __init__(self, data, match_maker, *args, **kwargs):
         self.base_columns['tag'].verbose_name = match_maker.key_name
-        bundle_stream_col = self.base_columns.pop('bundle_stream')
-        bundle_col = self.base_columns.pop('bundle')
         tag_col = self.base_columns.pop('tag')
+        tag_col.accessor = match_maker.key
         self.complex_header = False
-        if match_maker.filter_data['tests']:
-            del self.base_columns['passes']
-            del self.base_columns['total']
-            for i, t in enumerate(reversed(match_maker.filter_data['tests'])):
-                if len(t['test_cases']) == 0:
-                    col = TestRunColumn(mark_safe(t['test'].test_id))
-                    self.base_columns.insert(0, 'test_run_%s' % i, col)
-                elif len(t['test_cases']) == 1:
-                    tc = t['test_cases'][0]
-                    n = t['test'].test_id + ':' + tc.test_case_id
-                    col = SpecificCaseColumn(tc, n)
-                    self.base_columns.insert(0, 'test_run_%s_case' % i, col)
-                else:
-                    col0 = SpecificCaseColumn(t['test_cases'][0])
-                    col0.in_group = True
-                    col0.first_in_group = True
-                    col0.group_length = len(t['test_cases'])
-                    col0.group_name = mark_safe(t['test'].test_id)
-                    self.complex_header = True
-                    self.base_columns.insert(0, 'test_run_%s_case_%s' % (i, 0), col0)
-                    for j, tc in enumerate(t['test_cases'][1:], 1):
-                        col = SpecificCaseColumn(tc)
-                        col.in_group = True
-                        col.first_in_group = False
-                        self.base_columns.insert(j, 'test_run_%s_case_%s' % (i, j), col)
-        else:
-            self.base_columns.insert(0, 'bundle', bundle_col)
-        if len(match_maker.filter_data['bundle_streams']) > 1:
-            self.base_columns.insert(0, 'bundle_stream', bundle_stream_col)
+        if not match_maker or not match_maker.filter_data['tests']:
+            raise
+        self.exclude = ['passes', 'total', 'bundle']
+        for i, t in enumerate(reversed(match_maker.filter_data['tests'])):
+            if len(t['test_cases']) == 0:
+                col = TestRunColumn(mark_safe(t['test'].test_id))
+                self.base_columns.insert(0, 'test_run_%s' % i, col)
+            elif len(t['test_cases']) == 1:
+                tc = t['test_cases'][0]
+                n = t['test'].test_id + ':' + tc.test_case_id
+                col = SpecificCaseColumn(tc, match_maker=match_maker, verbose_name=n)
+                self.base_columns.insert(0, 'test_run_%s_case' % i, col)
+            else:
+                col0 = SpecificCaseColumn(t['test_cases'][0], match_maker=match_maker)
+                col0.in_group = True
+                col0.first_in_group = True
+                col0.group_length = len(t['test_cases'])
+                col0.group_name = mark_safe(t['test'].test_id)
+                self.complex_header = True
+                self.base_columns.insert(0, 'test_run_%s_case_%s' % (i, 0), col0)
+                for j, tc in enumerate(t['test_cases'][1:], 1):
+                    col = SpecificCaseColumn(tc, match_maker=match_maker)
+                    col.in_group = True
+                    col.first_in_group = False
+                    self.base_columns.insert(j, 'test_run_%s_case_%s' % (i, j), col)
         self.base_columns.insert(0, 'tag', tag_col)
+        super(FilterPassTable, self).__init__(data, *args, **kwargs)
+        self.length = 25
+        self.template = 'dashboard_app/filter_results_table.html'
 
     def render_tag(self, value):
         if isinstance(value, datetime.datetime):
@@ -212,47 +270,65 @@ class FilterTable(DataTablesTable):
         else:
             strvalue = value
         return mark_safe('<span data-machinetag="%s">%s</span>' % (escape(str(value)), strvalue))
+
+    class Meta:
+        model = None
+        attrs = {"class": "display"}
+        per_page_field = "length"
+        template = 'dashboard_app/filter_results_table.html'
+
+
+class FilterSummaryTable(LavaTable):
+
     tag = tables.Column()
 
-    def render_bundle_stream(self, record):
-        bundle_streams = set(tr.bundle.bundle_stream for tr in record.test_runs)
-        links = []
-        for bs in sorted(bundle_streams, key=operator.attrgetter('pathname')):
-            links.append('<a href="%s">%s</a>' % (
-                bs.get_absolute_url(), escape(bs.pathname)))
-        return mark_safe('<br />'.join(links))
-    bundle_stream = tables.Column(mark_safe("Bundle Stream(s)"))
+    def __init__(self, data, match_maker, *args, **kwargs):
+        self.base_columns['tag'].verbose_name = match_maker.key_name
+        tag_col = self.base_columns.pop('tag')
+        tag_col.accessor = match_maker.key
+        self.complex_header = False
+        total = TestSummaryColumn(total=True)
+        self.base_columns.insert(0, 'total', total)
+        passes = TestSummaryColumn()
+        self.base_columns.insert(0, 'passes', passes)
+        bundle_col = BundleTestColumn(verbose_name=mark_safe("Bundle(s)"))
+        self.base_columns.insert(0, 'bundle', bundle_col)
+        self.base_columns.insert(0, 'tag', tag_col)
+        super(FilterSummaryTable, self).__init__(data, *args, **kwargs)
+        self.length = 25
+        self.template = 'dashboard_app/filter_results_table.html'
 
-    def render_bundle(self, record):
-        bundles = set(tr.bundle for tr in record.test_runs)
-        links = []
-        for b in sorted(bundles, key=operator.attrgetter('uploaded_on')):
-            links.append('<a href="%s">%s</a>' % (
-                b.get_absolute_url(), escape(b.content_filename)))
-        return mark_safe('<br />'.join(links))
-    bundle = tables.Column(mark_safe("Bundle(s)"))
+    def render_tag(self, value):
+        if isinstance(value, datetime.datetime):
+            strvalue = defaultfilters.date(value, settings.DATETIME_FORMAT)
+        else:
+            strvalue = value
+        return mark_safe('<span data-machinetag="%s">%s</span>' % (escape(str(value)), strvalue))
 
-    passes = tables.Column(accessor='pass_count')
-    total = tables.Column(accessor='result_count')
-
-    def get_queryset(self, user, filter_data):
-        return evaluate_filter(user, filter_data)
-
-    datatable_opts = {
-        "sPaginationType": "full_numbers",
-        "iDisplayLength": 25,
-        "bSort": False,
-    }
-
-
-class FilterPreviewTable(FilterTable):
-    datatable_opts = FilterTable.datatable_opts.copy()
-    datatable_opts.update({
-        "iDisplayLength": 10,
-    })
+    class Meta:
+        model = None
+        attrs = {"class": "display"}
+        per_page_field = "length"
+        template = 'dashboard_app/filter_results_table.html'
 
 
-class TestResultDifferenceTable(DataTablesTable):
+class FilterTable(tables.Table):
+    """
+    Deprecated - extensions looking for FilterTable need to migrate to LavaTable
+    or use FilterPassTable or FilterSummaryTable.
+    """
+    def __init__(self, *args, **kwargs):
+        super(FilterTable, self).__init__(*args, **kwargs)
+        self.length = 10
+        raise Exception("FilterTable is deprecated, migrate to LavaTable.")
+
+
+class TestResultDifferenceTable(LavaTable):
+
+    def __init__(self, *args, **kwargs):
+        super(TestResultDifferenceTable, self).__init__(*args, **kwargs)
+        self.length = 25
+
     test_case_id = tables.Column(verbose_name=mark_safe('test_case_id'))
     first_result = tables.TemplateColumn('''
     {% if record.first_result %}
@@ -270,8 +346,3 @@ class TestResultDifferenceTable(DataTablesTable):
     <i>missing</i>
     {% endif %}
         ''')
-
-    datatable_opts = {
-        'iDisplayLength': 25,
-        'sPaginationType': "full_numbers",
-    }

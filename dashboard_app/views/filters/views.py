@@ -59,8 +59,8 @@ from dashboard_app.views.filters.forms import (
     TestRunFilterSubscriptionForm,
 )
 from dashboard_app.views.filters.tables import (
-    FilterTable,
-    FilterPreviewTable,
+    FilterSummaryTable,
+    FilterPassTable,
     PublicFiltersTable,
     TestResultDifferenceTable,
     UserFiltersTable,
@@ -133,11 +133,6 @@ def filters_list(request):
     )
 
 
-def filter_json(request, username, name):
-    jfilter = TestRunFilter.objects.get(owner__username=username, name=name)
-    return FilterTable.json(request, params=(request.user, jfilter.as_data()))
-
-
 def filter_name_list_json(request):
 
     term = request.GET['term']
@@ -151,39 +146,54 @@ def filter_name_list_json(request):
     return HttpResponse(json.dumps(filters), mimetype='application/json')
 
 
-def filter_preview_json(request):
-    try:
-        filter = TestRunFilter.objects.get(owner=request.user, name=request.GET['name'])
-    except TestRunFilter.DoesNotExist:
-        filter = None
-    form = TestRunFilterForm(request.user, request.GET, instance=filter)
-    if not form.is_valid():
-        raise ValidationError(str(form.errors))
-    return FilterPreviewTable.json(request, params=(request.user, form.as_data()))
+class FilterDetailView(LavaView):
+
+    def __init__(self, request, filter_object, **kwargs):
+        super(FilterDetailView, self).__init__(request, **kwargs)
+        self.filter_object = filter_object
+        self.match_maker = None
+
+    def get_queryset(self):
+        return self.match_maker.queryset
+
+    def is_pass_table(self):
+        if not self.match_maker:
+            self.match_maker = evaluate_filter(self.request.user, self.filter_object.as_data())
+        if self.match_maker.filter_data['tests']:
+            self.table_class = FilterPassTable
+            return True
+        self.table_class = FilterSummaryTable
+        return False
 
 
 @BreadCrumb("Filter ~{username}/{name}", parent=filters_list, needs=['username', 'name'])
 def filter_detail(request, username, name):
-    filter = TestRunFilter.objects.get(owner__username=username, name=name)
+    qfilter = TestRunFilter.objects.get(owner__username=username, name=name)
     if not request.user.is_superuser:
-        if not filter.public and filter.owner != request.user:
+        if not qfilter.public and qfilter.owner != request.user:
             raise PermissionDenied()
     if not request.user.is_authenticated():
         subscription = None
     else:
         try:
             subscription = TestRunFilterSubscription.objects.get(
-                user=request.user, filter=filter)
+                user=request.user, filter=qfilter)
         except TestRunFilterSubscription.DoesNotExist:
             subscription = None
+    view = FilterDetailView(request, qfilter, model=TestRun)
+    if view.is_pass_table():
+        table = FilterPassTable(view.get_table_data(), match_maker=view.match_maker)
+    else:
+        table = FilterSummaryTable(view.get_table_data(), match_maker=view.match_maker)
+    RequestConfig(request, paginate={"per_page": table.length}).configure(table)
     return render_to_response(
         'dashboard_app/filter_detail.html', {
-            'filter': filter,
+            'filter': qfilter,
             'subscription': subscription,
-            'filter_table': FilterTable(
-                "filter-table",
-                reverse(filter_json, kwargs=dict(username=username, name=name)),
-                params=(request.user, filter.as_data())),
+            'filter_table': table,
+            "terms_data": table.prepare_terms_data(view),
+            "search_data": table.prepare_search_data(view),
+            "discrete_data": table.prepare_discrete_data(view),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 filter_detail, name=name, username=username),
         }, RequestContext(request)
@@ -235,19 +245,22 @@ def filter_form(request, bread_crumb_trail, instance=None):
 
         if form.is_valid():
             if 'save' in request.POST:
-                filter = form.save()
-                return HttpResponseRedirect(filter.get_absolute_url())
+                qfilter = form.save()
+                return HttpResponseRedirect(qfilter.get_absolute_url())
             else:
                 c = request.POST.copy()
                 c.pop('csrfmiddlewaretoken', None)
+                view = FilterDetailView(request, form, model=TestRun)
+                if view.is_pass_table():
+                    table = FilterPassTable(view.get_table_data(), match_maker=view.match_maker)
+                else:
+                    table = FilterSummaryTable(view.get_table_data(), match_maker=view.match_maker)
+                RequestConfig(request, paginate={"per_page": table.length}).configure(table)
                 return render_to_response(
                     'dashboard_app/filter_preview.html', {
                         'bread_crumb_trail': bread_crumb_trail,
                         'form': form,
-                        'table': FilterPreviewTable(
-                            'filter-preview',
-                            reverse(filter_preview_json) + '?' + c.urlencode(),
-                            params=(owner, form.as_data())),
+                        'table': table,
                     }, RequestContext(request))
     else:
         form = TestRunFilterForm(request.user, instance=instance)
@@ -308,7 +321,8 @@ def filter_add_cases_for_test_json(request):
 
 def get_tests_json(request):
 
-    tests = Test.objects.filter(test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id']).distinct('test_id').order_by('test_id')
+    tests = Test.objects.filter(
+        test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id']).distinct('test_id').order_by('test_id')
 
     data = serializers.serialize('json', tests)
     return HttpResponse(data, mimetype='application/json')
@@ -316,7 +330,9 @@ def get_tests_json(request):
 
 def get_test_cases_json(request):
 
-    test_cases = TestCase.objects.filter(test__test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id'], test__id=request.GET['test_id']).exclude(units__exact='').distinct('test_case_id').order_by('test_case_id')
+    test_cases = TestCase.objects.filter(
+        test__test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id'],
+        test__id=request.GET['test_id']).exclude(units__exact='').distinct('test_case_id').order_by('test_case_id')
 
     data = serializers.serialize('json', test_cases)
     return HttpResponse(data, mimetype='application/json')
