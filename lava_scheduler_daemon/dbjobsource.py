@@ -44,7 +44,7 @@ except ImportError:
 
 
 def find_device_for_job(job, device_list):
-    if job.health_check == True:
+    if job.health_check is True:
         if job.requested_device.status == Device.OFFLINE:
             return job.requested_device
     for device in device_list:
