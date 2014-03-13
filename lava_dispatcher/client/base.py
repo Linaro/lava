@@ -27,7 +27,7 @@ import pexpect
 import sys
 import time
 import traceback
-
+import subprocess
 from lava_dispatcher.device.target import (
     get_target,
 )
@@ -522,6 +522,9 @@ class LavaClient(object):
 
             self.setup_proxy(TESTER_PS1_PATTERN)
             logging.info("System is in test image now")
+            logging.debug("mount information: \n%s" % subprocess.check_output(['mount']))
+            logging.debug("root directory information: \n%s" % subprocess.check_output(['ls', '-l', '/']))
+            logging.debug("free space information: \n%s" % subprocess.check_output(['df', '-hl', '/']))
             in_linaro_image = True
 
         if not in_linaro_image:
