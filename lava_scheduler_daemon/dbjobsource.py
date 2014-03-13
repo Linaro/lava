@@ -29,6 +29,7 @@ from lava_scheduler_app.models import (
     Device,
     TestJob)
 from lava_scheduler_app import utils
+from lava_scheduler_daemon.worker import WorkerData
 from lava_scheduler_daemon.jobsource import IJobSource
 import signal
 import platform
@@ -352,15 +353,21 @@ class DatabaseJobSource(object):
         job.submit_token = None
         device.save()
         job.save()
-        token.delete()
-        try:
-            job.send_summary_mails()
-        except:
-            # Better to catch all exceptions here and log it than have this
-            # method fail.
-            self.logger.exception(
-                'sending job summary mails for job %r failed', job.pk)
+        # notification needs to have the correct status in the database
         transaction.commit()
+        if utils.is_master():
+            try:
+                job.send_summary_mails()
+            except:
+                # Better to catch all exceptions here and log it than have this
+                # method fail.
+                self.logger.exception(
+                    'sending job summary mails for job %r failed', job.pk)
+        else:
+            worker = WorkerData()
+            worker.notify_on_incomplete(job.id)
+        # need the token for the XMLRPC
+        token.delete()
 
     def jobCompleted(self, board_name, exit_code, kill_reason):
         return self.deferForDB(self.jobCompleted_impl, board_name, exit_code, kill_reason)

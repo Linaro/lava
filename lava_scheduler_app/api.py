@@ -396,3 +396,34 @@ class SchedulerAPI(ExposedAPI):
 
         worker.update_heartbeat(heartbeat_data)
         return True
+
+    def notify_incomplete_job(self, job_id):
+        """
+        Name
+        ----
+        `notify_incomplete_job` (`job_id`)
+
+        Description
+        -----------
+        Internal call to notify the master scheduler that a job on a remote worker
+        ended in the Incomplete state. This allows the master to send the
+        notification emails, if any. The status of the TestJob is not altered.
+
+        Arguments
+        ---------
+        The TestJob.id which ended in status Incomplete.
+
+        Return value
+        ------------
+        None. The user should be authenticated with a username and token.
+        """
+        if not self.user:
+            raise xmlrpclib.Fault(
+                401, "Authentication with user and token required for this API.")
+        if not job_id:
+            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not specified.")
+        try:
+            job = get_restricted_job(self.user, job_id)
+        except TestJob.DoesNotExist:
+            raise xmlrpclib.Fault(404, "TestJob with id '%s' was not found." % job_id)
+        job.send_summary_mails()

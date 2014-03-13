@@ -119,3 +119,15 @@ class WorkerData:
                 self.logger.error("Error code: %d" % err.errcode)
                 self.logger.error("Error message: %s" % err.errmsg)
                 raise xmlrpclib.ProtocolError
+
+    def notify_on_incomplete(self, job_id):
+        """
+        Worker nodes do not require a working email configuration, so to
+        avoid losing email, ask the master via XMLRPC to send out the
+        notification emails, if any.
+        :param job_id: the TestJob.id which ended in state Incomplete
+        """
+        if not job_id:
+            return
+        server = _get_scheduler_rpc()
+        server.notify_incomplete_job(job_id)
