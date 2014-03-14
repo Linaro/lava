@@ -46,7 +46,7 @@ table.select-compare3 tr.selected-1 {
 table.select-compare3 tr.selected-2 {
     cursor: pointer;
 }
-#filter-table input {
+#filter-detail-table input {
     margin-top: 0;
     margin-bottom: 0;
 }

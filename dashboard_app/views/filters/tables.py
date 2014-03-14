@@ -273,7 +273,7 @@ class FilterPassTable(LavaTable):
 
     class Meta:
         model = None
-        attrs = {"class": "display"}
+        attrs = {"class": "display", "id": "filter-detail-table"}
         per_page_field = "length"
         template = 'dashboard_app/filter_results_table.html'
 
@@ -307,7 +307,7 @@ class FilterSummaryTable(LavaTable):
 
     class Meta:
         model = None
-        attrs = {"class": "display"}
+        attrs = {"class": "display", "id": "filter-detail-table"}
         per_page_field = "length"
         template = 'dashboard_app/filter_results_table.html'
 
