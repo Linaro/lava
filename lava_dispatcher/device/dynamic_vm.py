@@ -36,6 +36,7 @@ from lava_dispatcher.client.lmc_utils import (
     image_partition_mounted,
 )
 
+
 class DynamicVmTarget(Target):
 
     supported_backends = {
@@ -87,6 +88,7 @@ class DynamicVmTarget(Target):
     def extract_tarball(self, tarball_url, partition, directory='/'):
         # FIXME
         raise NotImplementedError("extract_tarball")
+
 
 class kvm_adapter(object):
 
