@@ -301,6 +301,7 @@ class DatabaseJobSource(object):
         old_device_status = device.status
         new_device_status = None
         previous_state = None
+        MAX_RETRIES = 3
 
         previous_transition = device.previous_transition()
         if previous_transition:
@@ -362,7 +363,14 @@ class DatabaseJobSource(object):
         device.save()
         job.save()
         # notification needs to have the correct status in the database
-        transaction.commit()
+        for retry in range(MAX_RETRIES):
+            try:
+                transaction.commit()
+                self.logger.debug('%s job completed and status saved' % job.id)
+                break
+            except psycopg2.extensions.TransactionRollbackError as err:
+                self.logger.warn('Retrying %s job completion ...' % job.id)
+                continue
         if utils.is_master():
             try:
                 job.send_summary_mails()
