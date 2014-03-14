@@ -346,3 +346,8 @@ class TestResultDifferenceTable(LavaTable):
     <i>missing</i>
     {% endif %}
         ''')
+
+    class Meta:
+        attrs = {"class": "display"}
+        template = "tables.html"
+        per_page_field = "length"

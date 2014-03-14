@@ -429,8 +429,8 @@ def _test_run_difference(test_run1, test_run2, cases=None):
     return differences
 
 
-def compare_filter_matches(user, filter_data, tag1, tag2):
-    matches = evaluate_filter(user, filter_data)
+def compare_filter_matches(request, filter_data, tag1, tag2):
+    matches = evaluate_filter(request.user, filter_data)
     match1, match2 = matches.with_tags(tag1, tag2)
     test_cases_for_test_id = {}
     for test in filter_data['tests']:
@@ -464,14 +464,14 @@ def compare_filter_matches(user, filter_data, tag1, tag2):
             cases = test_cases_for_test_id.get(key)
             test_result_differences = _test_run_difference(tr1, tr2, cases)
             if test_result_differences:
-                table = TestResultDifferenceTable(
-                    "test-result-difference-" + escape(key), data=test_result_differences)
+                table = TestResultDifferenceTable(test_result_differences, prefix=key)
                 table.base_columns['first_result'].verbose_name = mark_safe(
                     '<a href="%s">build %s: %s</a>' % (
                         tr1.get_absolute_url(), escape(tag1), escape(key)))
                 table.base_columns['second_result'].verbose_name = mark_safe(
                     '<a href="%s">build %s: %s</a>' % (
                         tr2.get_absolute_url(), escape(tag2), escape(key)))
+                RequestConfig(request, paginate={"per_page": table.length}).configure(table)
             else:
                 table = None
             if cases:
@@ -503,7 +503,7 @@ def compare_matches(request, username, name, tag1, tag2):
         if not filter.public and filter.owner != request.user:
             raise PermissionDenied()
     filter_data = filter.as_data()
-    test_run_info = compare_filter_matches(request.user, filter_data, tag1, tag2)
+    test_run_info = compare_filter_matches(request, filter_data, tag1, tag2)
     return render_to_response(
         "dashboard_app/filter_compare_matches.html", {
             'test_run_info': test_run_info,
