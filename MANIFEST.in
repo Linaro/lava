@@ -38,3 +38,5 @@ include contrib/install.sh
 include contrib/virtualenv-install.sh
 include assets.src/icons.xcf
 include fake-dispatcher
+include version.py
+include share/*
