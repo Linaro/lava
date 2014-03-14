@@ -19,11 +19,12 @@
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
 from setuptools import setup, find_packages
+from version import version_tag
 
 
 setup(
     name='lava-server',
-    version=":versiontools:lava_server:__version__",
+    version=version_tag(),
     author="Zygmunt Krynicki",
     author_email="zygmunt.krynicki@linaro.org",
     namespace_packages=['lava', 'lava.utils'],
@@ -83,9 +84,6 @@ setup(
         "simplejson",
         "twisted",
     ],
-    setup_requires=[
-        'versiontools >= 1.8',
-    ],
     data_files=[
         ('/etc/lava-server',
             ['etc/settings.conf',
@@ -100,9 +98,11 @@ setup(
                 'etc/logrotate.d/lava-server-uwsgi-log']),
         ('/usr/share/lava-server',
             ['instance.template']),
+        ('/usr/share/lava-server',
+            ['share/add_device.py']),
     ],
     scripts=[
-        'lava_server/lava-daemon'
+        'lava_server/lava-daemon',
     ],
     tests_require=[
         'django-testscenarios >= 0.7.1',
