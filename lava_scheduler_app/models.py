@@ -1002,13 +1002,13 @@ class TestJob(RestrictedResource):
                     requested_devices[device_type] = count
 
             for board, count in requested_devices.iteritems():
-                if all_devices.get(board, None) and \
-                        count <= all_devices[board]:
+                if all_devices.get(board.name, None) and \
+                        count <= all_devices[board.name]:
                     continue
                 else:
                     raise DevicesUnavailableException(
                         "Requested %d %s device(s) - only %d available." %
-                        (count, board, all_devices.get(board, 0)))
+                        (count, board, all_devices.get(board.name, 0)))
         else:
             raise JSONDataError(
                 "No 'target' or 'device_type' or 'device_group' are found "
