@@ -1,3 +1,3 @@
 lava_dispatcher/default-config/lava-dispatcher/device-types ./etc/lava-dispatcher/
 lava_dispatcher/default-config/lava-dispatcher/device-defaults.conf ./etc/lava-dispatcher/
-debian/lava-dispatcher.conf ./etc/lava-dispatcher/
+debian/lava-dispatcher.conf ./usr/share/lava-dispatcher/

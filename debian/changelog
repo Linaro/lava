@@ -1,3 +1,9 @@
+lava-dispatcher (0.33.3-5) unstable; urgency=medium
+
+  * Add postinst support for retrieving the dispatcher IP addr
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 17 Mar 2014 15:59:15 +0000
+
 lava-dispatcher (0.33.3-4) unstable; urgency=medium
 
   * Convert to arch:any to support arch-specific recommends like qemu-

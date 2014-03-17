@@ -18,8 +18,19 @@ set -e
 # the debian-policy package
 
 
+# this is ugly and will be resolved upstream
+# but for now, we just need the IP address of this box.
+LAVA_SERVER_IP=`ip addr | awk '{ if ($1 == "inet" && $4 != "host") { gsub("/.*", "", $2); print($2) } }'`
+
 case "$1" in
     configure)
+        if [ -n "${LAVA_SERVER_IP}" ]; then
+            if [ -f /etc/lava-dispatcher/lava-dispatcher.conf ]; then
+                perl -pi -e 's/#LAVASERVERIP#/${LAVA_SERVER_IP}/g' /etc/lava-dispatcher/lava-dispatcher.conf
+            else
+                sed -e 's/#LAVASERVERIP#/${LAVA_SERVER_IP}/' /usr/share/lava-dispatcher/lava-dispatcher.conf > /etc/lava-dispatcher/lava-dispatcher.conf
+            fi
+        fi
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)

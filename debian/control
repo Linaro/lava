@@ -21,7 +21,8 @@ Depends: python-serial (>= 2.6), parted, kpartx, ser2net, sshfs,
  ${python:Depends}, ${misc:Depends}
 Multi-Arch: foreign
 Recommends: ntp, git, tftpd-hpa, openbsd-inetd, 
- qemu-system-x86 [amd64], qemu-system-x86 [i386], unzip
+ qemu-system-x86 [amd64], qemu-system-x86 [i386],
+ telnet, unzip
 Description: Linaro Automated Validation Architecture dispatcher
  This package provides lava-dispatcher to dispatch
  LAVA jobs to configured devices.
