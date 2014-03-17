@@ -101,26 +101,6 @@ function removeCheckbox() {
 }
 $(window).load(
     function () {
-        $("#filter-detail-table").dataTable().fnSettings().fnRowCallback = function(tr, data, index) {
-            if (compareState) {
-                insertCheckbox.call(tr);
-                $(tr).click(rowClickHandler);
-                $("#filter-detail-table tr").hover(rowHoverHandlerIn, rowHoverHandlerOut);
-                if (compareState >= 2 && tagFromRow(tr).machinetag == compare1.machinetag) {
-                    $(tr).addClass("selected-1");
-                    $(tr).find("input").attr("checked", true);
-                }
-                if (compareState >= 3) {
-                    if (tagFromRow(tr).machinetag == compare2.machinetag) {
-                        $(tr).addClass("selected-2");
-                        $(tr).find("input").attr("checked", true);
-                    } else if (tagFromRow(tr).machinetag != compare1.machinetag) {
-                        $(tr).find("input").attr("disabled", true);
-                    }
-                }
-            }
-            return tr;
-        };
         $("#compare-button").button();
         $("#compare-button").click(
             function (e) {
@@ -133,6 +113,7 @@ $(window).load(
         );
         $("div.dataTables_length").remove();
         $("div.dataTables_info").remove();
+        $("div.dataTables_filter").remove();
     }
 
 );
