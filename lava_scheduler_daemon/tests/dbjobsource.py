@@ -438,3 +438,25 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
         devices = [self.panda02, self.black02, self.black03]
         chosen_device = find_device_for_job(job, devices)
         self.assertEqual(self.black03, chosen_device)
+
+    def _test_basic_vm_groups_scheduling(self):
+        self.factory.ensure_device_type(name='kvm-arm')
+        self.factory.ensure_device_type(name='dynamic-vm')
+        self.submit_job(vm_group={
+            "host": {
+                "device_type": "arndale",
+                "role": "host"
+            },
+            "vms": [
+                {
+                    "device_type": "kvm-arm",
+                    "role": "server"
+                },
+                {
+                    "device_type": "kvm-arm",
+                    "role": "client"
+                }
+            ]
+        })
+        jobs = self.scheduler_tick()
+        self.assertEqual(3, len(jobs))

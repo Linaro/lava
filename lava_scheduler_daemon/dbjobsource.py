@@ -27,7 +27,8 @@ import lava_dispatcher.config as dispatcher_config
 
 from lava_scheduler_app.models import (
     Device,
-    TestJob
+    TestJob,
+    TemporaryDevice,
 )
 from lava_scheduler_app import utils
 from lava_scheduler_daemon.worker import WorkerData
@@ -69,6 +70,24 @@ def find_device_for_job(job, device_list):
 
 def get_configured_devices():
     return dispatcher_config.list_devices()
+
+
+def get_temporary_devices(devices):
+    tmp_device_list = set()
+    for dev in devices:
+        try:
+            device = Device.objects.get(hostname=dev)
+            if device.current_job and device.current_job.vm_group:
+                vm_group = device.current_job.vm_group
+                tmp_devices = TemporaryDevice.objects.filter(vm_group=vm_group)
+                for tmp_dev in tmp_devices:
+                    tmp_device_list.add(tmp_dev.hostname)
+        except Device.DoesNotExist:
+            # this will happen when you have configuration files for devices
+            # that are not in the database. You don't want the entire thing to
+            # crash if that is the case.
+            pass
+    return devices + list(tmp_device_list)
 
 
 class DatabaseJobSource(object):
@@ -170,7 +189,8 @@ class DatabaseJobSource(object):
 
         jobs = TestJob.objects.filter(status=TestJob.SUBMITTED)
         jobs = jobs.filter(actual_device=None)
-        jobs = jobs.order_by('-health_check', '-priority', 'submit_time', 'target_group', 'id')
+        jobs = jobs.order_by('-health_check', '-priority', 'submit_time',
+                             'vm_group', 'target_group', 'id')
 
         return jobs
 
@@ -230,10 +250,12 @@ class DatabaseJobSource(object):
             self._submit_health_check_jobs()
             self._assign_jobs()
 
+        my_devices = get_temporary_devices(self.my_devices())
         my_submitted_jobs = TestJob.objects.filter(
             status=TestJob.SUBMITTED,
-            actual_device_id__in=self.my_devices(),
+            actual_device_id__in=my_devices,
         )
+
         my_ready_jobs = filter(lambda job: job.is_ready_to_start, my_submitted_jobs)
 
         transaction.commit()
@@ -316,6 +338,16 @@ class DatabaseJobSource(object):
         if new_device_status is None:
             new_device_status = Device.IDLE
         job = device.current_job
+
+        # Temporary devices should be marked as RETIRED once the job is
+        # complete or canceled.
+        if job.is_vmgroup:
+            try:
+                if device.temporarydevice:
+                    new_device_status = Device.RETIRED
+            except TemporaryDevice.DoesNotExist:
+                self.logger.debug("%s is not a tmp device" % device.hostname)
+
         device.device_version = _get_device_version(job.results_bundle)
         device.current_job = None
         if job.status == TestJob.RUNNING:

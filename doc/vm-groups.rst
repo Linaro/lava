@@ -15,11 +15,8 @@ To submit a VM group test job, you need:
 
 - system images for the host system and for the VM's'.
 
-A VM group test job consists of a :ref:`lava-test-shell` action that
-includes a ``nested_vms`` attribute, specifying a group os VM's that
-will spawned before the action starts. The submitted test definition
-will then be able to specify code to be run on the host and on each of
-the virtual machines.
+A VM group test job consists of a ``vm_group`` attribute, specifying
+the host machine and a list of VM's that will spawned on the host.
 
 Example job definition::
 
@@ -32,39 +29,38 @@ Example job definition::
           "device_type": "arndale",
           "role": "host"
         },
-        vms: [
+        "vms": [
           {
-            "type": "kvm",
-            "role": "server",
+            "device_type": "kvm",
+            "role": "server"
           },
           {
-            "type": "kvm",
-            "role": "client",
+            "device_type": "kvm",
+            "role": "client"
           }
         ]
-      }
-      ],
+      },
       "actions": [
         {
           "command": "deploy_linaro_image",
           "parameters": {
-            "image": "file:///path/to/host.img"
-          },
-          "role": "host"
+            "image": "file:///path/to/host.img",
+            "role": "host"
+          }
         },
         {
           "command": "deploy_linaro_image",
           "parameters": {
-            "image": "file:///path/to/host.img"
-          },
-          "role": "client"
+            "image": "file:///path/to/host.img",
+            "role": "client"
+          }
         },
         {
           "command": "deploy_linaro_image",
           "parameters": {
-            "image": "file:///path/to/host.img"
-          },
-          "role": "server"
+            "image": "file:///path/to/host.img",
+            "role": "server"
+          }
         },
         {
           "command": "lava_test_shell",
@@ -79,11 +75,11 @@ Example job definition::
 
 .. _nested_vms:
 
-The ``nested_vms`` section contains an array of VM descriptions, which
+The ``vms`` section contains an array of VM descriptions, which
 will be used to instantiate the VMs on the host device. Each item in
 that array must have the following mandatory attributes:
 
-- ``type``: the type of VM that should be spawned. For now the only
+- ``device_type``: the type of VM that should be spawned. For now the only
   supported value is ``kvm``, but it will be updated in the future to
   support ``xen`` as well.
 

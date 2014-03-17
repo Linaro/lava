@@ -647,6 +647,27 @@ class Device(RestrictedResource):
             return None
 
 
+class TemporaryDevice(Device):
+    """
+    A temporary device which inherits all properties of a normal Device.
+    Heavily used by vm-groups implementation.
+
+    This uses "Multi-table inheritance" of django models, since we need a
+    separate table to maintain the temporary devices.
+    See: https://docs.djangoproject.com/en/dev/topics/db/models/#multi-table-inheritance
+    """
+    vm_group = models.CharField(
+        verbose_name=_(u"VM Group"),
+        blank=True,
+        max_length=64,
+        null=True,
+        default=None
+    )
+
+    class Meta:
+        pass
+
+
 class JobFailureTag(models.Model):
     """
     Allows us to maintain a set of common ways jobs fail. These can then be
@@ -863,6 +884,14 @@ class TestJob(RestrictedResource):
         default=None
     )
 
+    vm_group = models.CharField(
+        verbose_name=_(u"VM Group"),
+        blank=True,
+        max_length=64,
+        null=True,
+        default=None
+    )
+
     submitter = models.ForeignKey(
         User,
         verbose_name=_(u"Submitter"),
@@ -948,6 +977,11 @@ class TestJob(RestrictedResource):
         blank=True
     )
 
+    vmgroup_definition = models.TextField(
+        editable=False,
+        blank=True
+    )
+
     # only one value can be set as there is only one opportunity
     # to transition a device from Running to Offlining.
     admin_notifications = models.TextField(
@@ -998,8 +1032,8 @@ class TestJob(RestrictedResource):
             return None
 
     @property
-    def multinode_role(self):
-        if not self.is_multinode:
+    def device_role(self):
+        if not (self.is_multinode or self.is_vmgroup):
             return "Error"
         json_data = simplejson.loads(self.definition)
         if 'role' not in json_data:
@@ -1104,10 +1138,51 @@ class TestJob(RestrictedResource):
                     raise DevicesUnavailableException(
                         "Requested %d %s device(s) - only %d available." %
                         (count, board, all_devices.get(board.name, 0)))
+        elif 'vm_group' in job_data:
+            target = None
+            device_type = None
+            requested_devices = {}
+            vm_group = job_data['vm_group']
+
+            # Check if the requested device is available for job run.
+            try:
+                device_type = DeviceType.objects.get(
+                    name=vm_group['host']['device_type'])
+            except Device.DoesNotExist as e:
+                raise DevicesUnavailableException(
+                    "Device type '%s' is unavailable. %s" %
+                    (vm_group['host']['device_type'], e))
+            role = vm_group['host'].get('role', None)
+            allow = _check_submit_to_device(
+                list(Device.objects.filter(device_type=device_type)), user)
+            requested_devices[device_type] = (1, role)
+
+            # Validate and get the list of vms requested. These are dynamic vms
+            # that will be created by the above vm_group host, so we need not
+            # bother about whether this vm device exists at this point of time
+            # (they won't since they will be created dynamically).
+            vms_list = vm_group['vms']
+            for vm in vms_list:
+                device_type = vm['device_type']
+                count = vm.get('count', 1)
+                role = vm.get('role', None)
+                # Right now we support only 'kvm' type vms.
+                #
+                # FIXME: Once we have support for 'xen' augment this list
+                if device_type in ['kvm', 'kvm-arm']:
+                    if device_type in requested_devices:
+                        count = count + requested_devices[device_type][0]
+                        requested_devices[device_type] = (count, role)
+                    else:
+                        requested_devices[device_type] = (count, role)
+                else:
+                    raise DevicesUnavailableException(
+                        "Device type '%s' is not a supported VMs type" %
+                        device_type)
         else:
             raise JSONDataError(
-                "No 'target' or 'device_type' or 'device_group' are found "
-                "in job data.")
+                "No 'target' or 'device_type', 'device_group' or 'vm_group' "
+                "are found in job data.")
 
         priorities = dict([(j.upper(), i) for i, j in cls.PRIORITY_CHOICES])
         priority = cls.MEDIUM
@@ -1170,6 +1245,8 @@ class TestJob(RestrictedResource):
         # we need to have already prevented other users from
         # seeing this device_type before getting to this point.
         check_type = target.device_type if target else device_type
+        if isinstance(check_type, unicode):
+            check_type = DeviceType.objects.get(name=check_type)
         if check_type.owners_only and is_public:
             raise DevicesUnavailableException(
                 "%s is a hidden device type and must have a private bundle stream" %
@@ -1239,6 +1316,71 @@ class TestJob(RestrictedResource):
                     for tag in Tag.objects.filter(name__in=taglist):
                         job.tags.add(tag)
                     child_id += 1
+            return job_list
+
+        elif 'vm_group' in job_data:
+            target = None
+            vm_group = str(uuid.uuid4())
+            node_json = utils.split_vm_job(job_data, vm_group)
+            job_list = []
+            try:
+                parent_id = (TestJob.objects.latest('id')).id + 1
+            except:
+                parent_id = 1
+            child_id = 0
+
+            for role in node_json:
+                role_count = len(node_json[role])
+                for c in range(0, role_count):
+                    name = node_json[role][c]["device_type"]
+                    try:
+                        device_type = DeviceType.objects.get(name=name)
+                    except DeviceType.DoesNotExist as e:
+                        if name != "dynamic-vm":
+                            raise DevicesUnavailableException("device type %s does not exist" % name)
+                        else:
+                            device_type = DeviceType.objects.create(name="dynamic-vm")
+                    sub_id = '.'.join([str(parent_id), str(child_id)])
+
+                    is_vmhost = False
+                    if 'is_vmhost' in node_json[role][c]:
+                        is_vmhost = node_json[role][c]['is_vmhost']
+                    if not is_vmhost:
+                        description = "tmp device for %s vm-group" % vm_group
+                        node_json[role][c]["target"] = '%s-job%s' % \
+                            (node_json[role][c]['target'], sub_id)
+                        target = TemporaryDevice(
+                            hostname=node_json[role][c]["target"],
+                            device_type=device_type, description=description,
+                            worker_host=None, vm_group=vm_group)
+                        target.save()
+
+                    # Add sub_id to the generated job dictionary.
+                    node_json[role][c]["sub_id"] = sub_id
+
+                    job = TestJob(
+                        sub_id=sub_id, submitter=submitter,
+                        requested_device=target,
+                        description=job_name,
+                        requested_device_type=device_type,
+                        definition=simplejson.dumps(node_json[role][c],
+                                                    sort_keys=True,
+                                                    indent=4 * ' '),
+                        original_definition=simplejson.dumps(json_data,
+                                                             sort_keys=True,
+                                                             indent=4 * ' '),
+                        vmgroup_definition=json_data,
+                        health_check=health_check, user=user, group=group,
+                        is_public=is_public,
+                        priority=TestJob.MEDIUM,  # vm_group jobs have fixed priority
+                        vm_group=vm_group)
+                    job.save()
+                    job_list.append(job)
+                    child_id += 1
+
+                    # Reset values if already set
+                    device_type = None
+                    target = None
             return job_list
 
         else:
@@ -1381,12 +1523,23 @@ class TestJob(RestrictedResource):
             jobs = TestJob.objects.filter(
                 target_group=self.target_group).order_by('id')
             return jobs
+        elif self.is_vmgroup:
+            jobs = TestJob.objects.filter(
+                vm_group=self.vm_group).order_by('id')
+            return jobs
         else:
             return None
 
     @property
     def is_multinode(self):
         if self.target_group:
+            return True
+        else:
+            return False
+
+    @property
+    def is_vmgroup(self):
+        if self.vm_group:
             return True
         else:
             return False
@@ -1418,7 +1571,8 @@ class TestJob(RestrictedResource):
         which do not have ORIGINAL_DEFINITION ie., jobs that were submitted
         before this attribute was introduced, return the DEFINITION.
         """
-        if self.original_definition and not self.is_multinode:
+        if self.original_definition and\
+                not (self.is_multinode or self.is_vmgroup):
             return self.original_definition
         else:
             return self.definition
@@ -1431,7 +1585,7 @@ class TestJob(RestrictedResource):
         def ready_or_running(job):
             return job.status in [TestJob.SUBMITTED, TestJob.RUNNING] and job.actual_device is not None
 
-        if self.is_multinode:
+        if self.is_multinode or self.is_vmgroup:
             return ready(self) and all(map(ready_or_running, self.sub_jobs_list))
         else:
             return ready(self)

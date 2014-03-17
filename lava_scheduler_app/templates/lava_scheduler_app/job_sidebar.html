@@ -86,7 +86,7 @@
     <dt>Finished at:</dt>
     <dd>{{ job.end_time|default:"not finished" }}</dd>
 
-    {% if job.is_multinode %}
+    {% if job.is_multinode or job.is_vmgroup %}
     <dt>Sub Jobs:</dt>
     {% for subjob in job.sub_jobs_list %}
     <dd>
@@ -97,9 +97,9 @@
     <dd>on:
       <a href="{{ subjob.actual_device.get_absolute_url }}">{{ subjob.actual_device.hostname }}</a>
     </dd>
-    <dd>as: {{ subjob.multinode_role }}</dd>
+    <dd>as: {{ subjob.device_role }}</dd>
     {% else %}
-    <dd>No device assigned as {{ subjob.multinode_role }}.</dd>
+    <dd>No device assigned as {{ subjob.device_role }}.</dd>
     {% endif %}
     {% endfor %}
     {% endif %}
@@ -121,6 +121,11 @@
     {% if job.is_multinode %}
     <li>
         <a href="{% url lava.scheduler.job.multinode_definition job.pk %}"> Multinode Definition</a>
+    </li>
+    {% endif %}
+    {% if job.is_vmgroup %}
+    <li>
+        <a href="{% url lava.scheduler.job.vmgroup_definition job.pk %}"> VM Group Definition</a>
     </li>
     {% endif %}
     {% if job.results_link %}

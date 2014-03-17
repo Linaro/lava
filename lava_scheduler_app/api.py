@@ -94,6 +94,8 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(404, "Specified job not found.")
         if job.is_multinode:
             return self.submit_job(job.multinode_definition)
+        elif job.is_vmgroup:
+            return self.submit_job(job.vmgroup_definition)
         else:
             return self.submit_job(job.definition)
 
@@ -127,6 +129,9 @@ class SchedulerAPI(ExposedAPI):
         if job.is_multinode:
             for multinode_job in job.sub_jobs_list:
                 multinode_job.cancel(self.user)
+        elif job.is_vmgroup:
+            for vmgroup_job in job.sub_jobs_list:
+                vmgroup_job.cancel(self.user)
         else:
             job.cancel(self.user)
         return True
