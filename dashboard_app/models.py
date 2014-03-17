@@ -1846,16 +1846,16 @@ def send_image_report_notifications(sender, bundle):
                 if chart_user.image_chart.chart_type == "pass/fail":
                     runs = TestRun.objects.filter(
                         bundle=bundle,
-                        imagecharttest__image_chart_filter__image_chart=chart_user.image_chart)
+                        test__imagecharttest__image_chart_filter__image_chart=chart_user.image_chart)
                     for run in runs:
-                        denorm = runs.denormalization
-                        if denorm.count_pass < target_goal:
+                        denorm = run.denormalization
+                        if denorm.count_pass < chart_user.image_chart.target_goal:
                             matches.append(run)
 
                 else:
                     results = TestResult.objects.filter(
                         test_run__bundle=bundle,
-                        imagecharttestcase__image_chart_filter__image_chart=chart_user.image_chart)
+                        test_case__imagecharttestcase__image_chart_filter__image_chart=chart_user.image_chart)
                     for result in results:
                         if result.measurement < \
                                 chart_user.image_chart.target_goal:
@@ -1863,9 +1863,7 @@ def send_image_report_notifications(sender, bundle):
 
                 if matches:
                     image_chart = chart_user.image_chart
-                    filter_names = ', '.join(
-                        match.filter.name for match in matches)
-                    title = "LAVA image report notification: %s" % filter_names
+                    title = "LAVA image report notification: %s" % image_chart.name
                     template = "dashboard_app/chart_subscription_mail.txt"
                     data = {'bundle': bundle, 'user': chart_user.user,
                             'image_report': image_chart.image_report,
