@@ -50,35 +50,35 @@ class QEMUTarget(Target):
         self.proc = None
         self._qemu_options = None
         self._sd_image = None
+        self._is_kernel_present = False
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
                              bootloader, firmware, rootfstype, bootloadertype,
                              target_type):
-        if rootfs is not None:
-            self._sd_image = download_image(rootfs, self.context)
-            self._customize_linux(self._sd_image)
-            self.append_qemu_options(self.config.qemu_options.format(
-                DISK_IMAGE=self._sd_image))
-            kernel_args = 'root=/dev/sda1'
-        else:
+        # Check for errors
+        if rootfs is None:
             raise CriticalError("You must specify a QEMU file system image")
-
-        if kernel is not None:
-            kernel = download_image(kernel, self.context)
-            self.append_qemu_options(' -kernel %s' % kernel)
-            kernel_args += ' console=ttyS0,115200'
-            if ramdisk is not None:
-                ramdisk = download_image(ramdisk, self.context)
-                self.append_qemu_options(' -initrd %s' % ramdisk)
-            if dtb is not None:
-                dtb = download_image(dtb, self.context)
-                self.append_qemu_options(' -dtb %s' % ramdisk)
-            if firmware is not None:
-                firmware = download_image(firmware, self.context)
-                self.append_qemu_options(' -bios %s' % firmware)
-            self.append_qemu_options(' -append "%s"' % kernel_args)
-        else:
+        if kernel is None:
             raise CriticalError("No kernel images to boot")
+
+        # build the QEMU command line
+        self._sd_image = download_image(rootfs, self.context)
+        self._customize_linux(self._sd_image)
+        self.append_qemu_options(self.config.qemu_options.format(
+            DISK_IMAGE=self._sd_image))
+
+        kernel = download_image(kernel, self.context)
+        self._is_kernel_present = True
+        self.append_qemu_options(' -kernel %s' % kernel)
+        if ramdisk is not None:
+            ramdisk = download_image(ramdisk, self.context)
+            self.append_qemu_options(' -initrd %s' % ramdisk)
+        if dtb is not None:
+            dtb = download_image(dtb, self.context)
+            self.append_qemu_options(' -dtb %s' % ramdisk)
+        if firmware is not None:
+            firmware = download_image(firmware, self.context)
+            self.append_qemu_options(' -bios %s' % firmware)
 
     def deploy_linaro(self, hwpack, rootfs, rootfstype, bootloadertype):
         odir = self.scratch_dir
@@ -112,6 +112,14 @@ class QEMUTarget(Target):
         if self.proc is not None:
             logging.warning('device already powered on, powering off first')
             self.power_off(None)
+
+        # If the -kernel option was given, find the boot command
+        # We load it here in order to get the configuration from the job
+        # definition if needed
+        if self._is_kernel_present:
+            kernel_args = ' '.join(self._load_boot_cmds())
+            self.append_qemu_options(' -append "%s"' % kernel_args)
+
         qemu_cmd = '%s %s' % (self.config.qemu_binary, self._qemu_options)
         logging.info('launching qemu with command %r' % qemu_cmd)
         self.proc = self.context.spawn(qemu_cmd, timeout=1200)

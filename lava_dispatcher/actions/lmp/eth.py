@@ -18,12 +18,26 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.actions.lmp.board import lmp_send_command
+from lava_dispatcher.actions.lmp.board import lmp_send_command, lmp_set_identify, lmp_reset
 
 
 def disconnect(serial):
-    lmp_send_command(serial, "eth", "eth", "disconnect")
+    lmp_send_command(serial, "eth", "eth", "disconnect", need_check_mode=True)
 
 
 def passthru(serial):
-    lmp_send_command(serial, "eth", "eth", "passthru")
+    lmp_send_command(serial, "eth", "eth", "passthru", need_check_mode=True)
+
+
+def set_identify(serial, identify):
+    if identify == "_on":
+        lmp_set_identify(serial, "eth", True)
+    elif identify == "off":
+        lmp_set_identify(serial, "eth", False)
+
+
+def reset(serial, reset_value=False):
+    if reset_value is True:
+        lmp_reset(serial, "eth", True)
+    elif reset_value is False:
+        lmp_reset(serial, "eth", False)

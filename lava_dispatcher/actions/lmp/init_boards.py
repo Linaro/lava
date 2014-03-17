@@ -57,11 +57,7 @@ lmp_module_schema = {
                 'optional': True,
                 'type': 'string',
             },
-            'lsgpio_a': {
-                'optional': True,
-                'type': 'string',
-            },
-            'lsgpio_b': {
+            'lsgpio': {
                 'optional': True,
                 'type': 'string',
             },
@@ -141,22 +137,16 @@ def init(lmp_module_data, config):
             elif lmp_module_element['audio'] == "disconnect":
                 lmp_lsgpio.audio_disconnect(lmp_lsgpio_id)
 
-        if 'lsgpio_a' in lmp_module_element:
+        if 'lsgpio' in lmp_module_element:
             lmp_lsgpio_id = get_module_serial(config.lmp_lsgpio_id, module_name, config)
-            logging.debug("lmp lsgpio_a module %s init as %s"
+            logging.debug("lmp lsgpio module %s init as %s"
                           % (lmp_lsgpio_id,
-                             lmp_module_element['lsgpio_a']))
-            if lmp_module_element['lsgpio_a'] == "in":
+                             lmp_module_element['lsgpio']))
+            if lmp_module_element['lsgpio'] == "a_in":
                 lmp_lsgpio.a_dir_in(lmp_lsgpio_id)
-            elif lmp_module_element['lsgpio_a'] == "out":
-                lmp_lsgpio.a_dir_out(lmp_lsgpio_id)
-
-        if 'lsgpio_b' in lmp_module_element:
-            lmp_lsgpio_id = get_module_serial(config.lmp_lsgpio_id, module_name, config)
-            logging.debug("lmp lsgpio_b module %s init as %s"
-                          % (lmp_lsgpio_id,
-                             lmp_module_element['lsgpio_b']))
-            if lmp_module_element['lsgpio_b'] == "in":
+            elif lmp_module_element['lsgpio'][:6] == "a_out_":
+                lmp_lsgpio.a_data_out(lmp_lsgpio_id, lmp_module_element['lsgpio'][-2:])
+            elif lmp_module_element['lsgpio'] == "b_in":
                 lmp_lsgpio.b_dir_in(lmp_lsgpio_id)
-            elif lmp_module_element['lsgpio_b'] == "out":
-                lmp_lsgpio.b_dir_out(lmp_lsgpio_id)
+            elif lmp_module_element['lsgpio'][:6] == "b_out_":
+                lmp_lsgpio.b_data_out(lmp_lsgpio_id, lmp_module_element['lsgpio'][-2:])

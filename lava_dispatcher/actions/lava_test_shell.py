@@ -154,6 +154,8 @@ LAVA_LMP_CACHE_FILE = '/tmp/lava_lmp_cache.txt'
 # 755 file permissions
 XMOD = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH
 
+INVALID_CHARS = " $&()\"'<>/\\|;`"
+
 
 def _get_testdef_git_repo(testdef_repo, tmpdir, revision):
     cwd = os.getcwd()
@@ -286,11 +288,24 @@ class TestDefinitionLoader(object):
                 self.load_from_repo(testcase)
 
     def load_from_url(self, url):
+        i = []
         tmpdir = utils.mkdtemp(self.tmpbase)
         testdef_file = download_image(url, self.context, tmpdir)
         with open(testdef_file, 'r') as f:
             logging.debug('loading test definition ...')
             testdef = yaml.safe_load(f)
+
+        for e in INVALID_CHARS:
+            i.extend(indices(testdef["metadata"]["name"], e))
+        if i:
+            msg = "Test name contains invalid symbol(s) at position(s): %s" % ", ".join(map(str, i))
+            raise GeneralError(msg)
+
+        try:
+            testdef["metadata"]["name"].encode()
+        except UnicodeEncodeError as e:
+            msg = "Test name contains non-ascii symbols: %s" % e
+            raise GeneralError(msg)
 
         if 'test-case-deps' in testdef:
             self._get_dependent_test_cases(testdef)
@@ -375,6 +390,11 @@ class TestDefinitionLoader(object):
             idx = len(self.testdefs)
             self._append_testdef(
                 RepoTestDefinition(self.context, idx, testdef, repo, info))
+
+
+def indices(string, char):
+
+    return [i for i, c in enumerate(string) if c == char]
 
 
 def _bzr_info(url, bzrdir, name):

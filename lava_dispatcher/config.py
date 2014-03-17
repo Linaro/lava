@@ -40,7 +40,7 @@ class DeviceSchema(schema.Schema):
     boot_cmds = schema.StringOption(fatal=True)  # Can do better here
     boot_cmds_android = schema.StringOption(fatal=True)  # And here
     boot_cmds_oe = schema.StringOption(fatal=True)  # And here?
-    pre_boot_cmd = schema.StringOption()
+    boot_cmds_master = schema.StringOption()  # Optional
     read_boot_cmds_from_image = schema.BoolOption(default=True)
     boot_options = schema.ListOption()
     boot_linaro_timeout = schema.IntOption(default=300)
@@ -195,6 +195,8 @@ class DeviceSchema(schema.Schema):
     vexpress_usb_mass_storage_device = schema.StringOption(default=None)
 
     ecmeip = schema.StringOption()
+    ipmi_power_sleep = schema.IntOption(default=1)
+    ipmi_power_retries = schema.IntOption(default=10)
 
     # for dummy devices
     dummy_driver = schema.StringOption(default=None)
@@ -203,6 +205,16 @@ class DeviceSchema(schema.Schema):
     dummy_ssh_port = schema.IntOption(default=22)
     dummy_ssh_username = schema.StringOption(default='root')
     dummy_ssh_identity_file = schema.StringOption(default=None)
+
+    # for bootloader devices
+    pre_boot_cmd = schema.StringOption()
+    use_lava_tmpdir = schema.BoolOption(default=True)
+    alternative_create_tmpdir = schema.BoolOption(default=True)
+    alternative_dir = schema.StringOption(default=None)
+
+    # for dynamic_vm devices
+    dynamic_vm_backend_device_type = schema.StringOption(default='kvm')
+    dynamic_vm_host = schema.StringOption(default=None)
 
 
 class OptionDescriptor(object):
@@ -359,7 +371,7 @@ def _hack_report(report):
     return scrubbed
 
 
-def get_device_config(name):
+def get_device_config(name, backend_device_type=None):
     # We read the device config once to get the device type, then we start
     # again and read device-defaults, device-types/$device-type and
     # devices/$device in that order.
@@ -372,7 +384,18 @@ def get_device_config(name):
 
     real_device_config = parser.SchemaConfigParser(DeviceSchema())
     _get_config("device-defaults", real_device_config)
+
+    client_type = None
+    if backend_device_type:
+        _get_config("device-types/%s" % backend_device_type, real_device_config)
+        client_type = real_device_config.get('__main__', 'client_type')
+
     _get_config("device-types/%s" % device_type, real_device_config)
+
+    if backend_device_type:
+        real_device_config.set('__main__', 'device_type', backend_device_type)
+        real_device_config.set('__main__', 'client_type', client_type)
+
     _get_config("devices/%s" % name, real_device_config)
     if custom_config_file:
         _read_into(custom_config_file, real_device_config)
@@ -389,7 +412,7 @@ def get_device_config(name):
     return DeviceConfig(real_device_config)
 
 
-def get_devices():
+def list_devices():
     devices = []
     for config_dir in search_path():
         devices_dir = os.path.join(config_dir, 'devices')
@@ -397,8 +420,12 @@ def get_devices():
             for d in os.listdir(devices_dir):
                 if d.endswith('.conf'):
                     d = os.path.splitext(d)[0]
-                    devices.append(get_device_config(d))
+                    devices.append(d)
     return devices
+
+
+def get_devices():
+    return [get_device_config(d) for d in list_devices()]
 
 
 def get_config_file(config_file):

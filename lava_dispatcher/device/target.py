@@ -180,7 +180,7 @@ class Target(object):
                 connection.sendline(command)
 
     def _load_boot_cmds(self, default=None, boot_cmds_dynamic=None,
-                        extend=None):
+                        boot_tags=None):
         # Set flags
         boot_cmds_job_file = False
         boot_cmds_boot_options = False
@@ -227,8 +227,8 @@ class Target(object):
             boot_cmds = self.config.cp.get('__main__', boot_cmds)
             boot_cmds = utils.string_to_list(boot_cmds.encode('ascii'))
 
-        if extend is not None:
-            boot_cmds = utils.string_to_list(extend.encode('ascii')) + boot_cmds
+        if boot_tags is not None:
+            boot_cmds = self._tag_boot_cmds(boot_cmds, boot_tags)
 
         return boot_cmds
 
@@ -253,6 +253,14 @@ class Target(object):
                 break
         #we can add more actions here
         logging.debug('boot_cmds(after preprocessing): %s', boot_cmds)
+        return boot_cmds
+
+    def _tag_boot_cmds(self, boot_cmds, boot_tags):
+        for i, cmd in enumerate(boot_cmds):
+            for key, value in boot_tags.iteritems():
+                if key in cmd:
+                    boot_cmds[i] = boot_cmds[i].replace(key, value)
+
         return boot_cmds
 
     def _customize_bootloader(self, connection, boot_cmds):

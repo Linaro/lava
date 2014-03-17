@@ -161,12 +161,12 @@ class VexpressTarget(MasterImageTarget):
         # Ubuntu ones have it at ./*.bin
         #
         # --no-anchored matches the name inside any directory in the tarball.
-        self.context.run_command_with_retries('tar --no-anchored -xaf %s -C %s %s' % (tarball, tmpdir,
-                                                                                      uefi_on_image))
+        self.context.run_command('tar --no-anchored -xaf %s -C %s %s' % (tarball, tmpdir,
+                                                                         uefi_on_image))
 
         uefi_on_image = os.path.join(tmpdir, uefi_on_image)
         test_uefi = os.path.join(tmpdir, 'uefi.bin')
-        self.context.run_command_with_retries('mv %s %s' % (uefi_on_image, test_uefi))
+        self.context.run_command('mv %s %s' % (uefi_on_image, test_uefi))
 
         self.test_uefi = test_uefi
 
@@ -189,7 +189,7 @@ class VexpressTarget(MasterImageTarget):
         uefi = os.path.join(mount_point, uefi_path)
         # FIXME what if self.test_uefi is not set, or points to an unexisting
         # file?
-        self.context.run_command_with_retries('cp %s %s' % (self.test_uefi, uefi))
+        self.context.run_command('cp %s %s' % (self.test_uefi, uefi))
 
 
 target_class = VexpressTarget

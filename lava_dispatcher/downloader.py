@@ -34,6 +34,7 @@ import zlib
 from tempfile import mkdtemp
 from lava_dispatcher.config import get_config_file
 from lava_dispatcher.utils import rmtree
+import hashlib
 
 
 @contextlib.contextmanager
@@ -169,11 +170,19 @@ def download_image(url, context, imgdir=None,
             cookies = context.config.lava_cookies
             with reader(url, context.config.lava_proxy, cookies) as r:
                 with _decompressor_stream(url, imgdir, decompress) as (writer, fname):
+                    md5 = hashlib.md5()
+                    sha256 = hashlib.sha256()
                     bsize = 32768
                     buff = r.read(bsize)
+                    md5.update(buff)
+                    sha256.update(buff)
                     while buff:
                         writer(buff)
                         buff = r.read(bsize)
+                        md5.update(buff)
+                        sha256.update(buff)
+            logging.info("md5sum of downloaded content: %s" % md5.hexdigest())
+            logging.debug("sha256sum of downloaded content: %s" % sha256.hexdigest())
             return fname
         except:
             logging.warn("unable to download: %r" % traceback.format_exc())

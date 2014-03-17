@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+lava-install-packages openssh-server
+
+if grep -q 'lava insecure public key' /root/.ssh/authorized_keys; then
+  exit 0
+fi
+
+cat >> /root/.ssh/authorized_keys <<EOF
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDLsQXteu02Mvs8Srs8TI/XJqTnfoNDjT5zJVQNI6BqUvvaHSna0iZpcPln9lbmRwAkf84rZAP3eAn051l+GYcRAVAH3bu9HDA8XXIbA4EkCZJ9aCPX7jqtSTBLaIUH28JRPhvP6iZWvqSQck4OmoyrBaMJByBm5CaPR4IhpcAyORF88AGmRW/qFIZTxNm/z1JN/WO+4+C/uM07T+KuInAPBQCTY9pYk4Vd2tZ4msWMYuWs3uVKRdN8aTgyqeyOE3zmXN8Tr2r5uFU0SAe1ZmVnex3s9ZF4YhgmX9SUBuxQw/FjNUajx2D18x/+RQuWXxZOpPQ5ecAysDKROTFWl6QB lava insecure public key
+EOF
