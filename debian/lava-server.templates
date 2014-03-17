@@ -1,0 +1,15 @@
+Template: lava-server/instance-name
+Type: string
+Default: default
+_Description: Name for this LAVA instance:
+ LAVA servers typically have an instance name. If this is a new
+ instance, you can safely use the default name. If this is an upgrade
+ of a previous LAVA instance, specify the instance name here to
+ upgrade the database or use a different name to start fresh with
+ a new database.
+
+Template: lava-server/missingname
+Type: note
+_Description: Missing LAVA instance name
+ An instance name must be specified for LAVA-server. Using
+ the instance name 'default'.

@@ -23,6 +23,11 @@ else
     . /usr/share/lava-server/instance.template
 fi
 
+# Source debconf library.
+. /usr/share/debconf/confmodule
+db_get lava-server/instance-name
+LAVA_INSTANCE=$RET
+
 if [ "$LAVA_DB_NAME" = '$LAVA_DB_NAME' ]
 then
   LAVA_DB_NAME="lavaserver"
