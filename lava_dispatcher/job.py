@@ -62,6 +62,10 @@ job_schema = {
                     'metadata': {
                         'optional': True,
                     },
+                    'role': {
+                        'optional': True,
+                        'type': 'string',
+                    },
                 },
                 'additionalProperties': False,
             },
