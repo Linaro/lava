@@ -23,6 +23,12 @@ case "$1" in
       rm -f /etc/lava-server/instance.conf
       rm -f /etc/lava-server/secret_key.conf
       rm -rf /var/lib/lava-server/home/
+        if [ "$1" = "purge" ] && [ -e /usr/share/debconf/confmodule ]; then
+            # Source debconf library.
+            . /usr/share/debconf/confmodule
+            # Remove my changes to the db.
+            db_purge
+        fi
     ;;
     remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
     ;;
