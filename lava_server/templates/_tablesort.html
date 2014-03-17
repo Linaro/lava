@@ -1,0 +1,14 @@
+<style>
+table.display thead th.orderable > a {
+    padding-right: 20px;
+    background: url({{ STATIC_URL }}lava_scheduler_app/images/arrow-up-down.png) right center no-repeat;
+}
+
+table.display thead th.orderable.asc > a {
+    background-image: url({{ STATIC_URL }}lava_scheduler_app/images/arrow-up-active.png);
+}
+
+table.display thead th.orderable.desc > a {
+    background-image: url({{ STATIC_URL }}lava_scheduler_app/images/arrow-down-active.png);
+}
+</style>

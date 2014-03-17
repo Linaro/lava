@@ -5,19 +5,12 @@
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jQuery.Rule.js"></script>
 {% endblock %}
 
-
 {% block content %}
 <h2>Dispatcher Log Summary</h2>
 {% if job.status < job.RUNNING %}
 No log file yet.
 {% else %}
 {% if job_file_present %}
-{% if job_has_error %}
-<div id="dispatcher-error">
-<h3>Dispatcher error or test failure</h3>
-<pre>{{ job_errors }}</pre>
-</div>
-{% endif %}
 
 {% for tag in job.failure_tags.all %}
 {% if forloop.first %}
@@ -32,8 +25,10 @@ No log file yet.
 {% endfor %}
 
 {% if job.failure_comment %}
-<h3>Job failure comment</h3>
-<h4>{{ job.failure_comment }}</h4>
+<h2>Job failure comment</h2>
+<div id="dispatcher-error">
+<pre>{{ job.failure_comment }}</pre>
+</div>
 {% endif %}
 
 <h3 id="top">Dispatcher Log messages (file size = {{ job_file_size|filesizeformat }}) &nbsp;  &nbsp;

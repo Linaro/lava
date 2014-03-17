@@ -30,7 +30,7 @@ The JSON file is submitted to the LAVA server and contains:
 #. The location to which the results should be uploaded.
 
 The JSON determines how the test is deployed onto the device and
-where to find the tests to be run. 
+where to find the tests to be run.
 
 All user tests should use::
 
@@ -42,7 +42,7 @@ Multiple tests can be defined in a single JSON file by listing multiple
 locations of YAML files. Each set of instructions in the YAML files can
 be run with or without a reboot between each set.
 
-If a test needs to use more than one device, it is the JSON file which 
+If a test needs to use more than one device, it is the JSON file which
 determines which other devices are available within the test and how
 the test(s) are deployed to the devices in the group.
 
@@ -186,6 +186,11 @@ Each YAML file contains metadata and instructions. Metadata includes:
       name: singlenode-advanced
       description: "Advanced (level 3): single node test commands for Linux Linaro ubuntu Images"
 
+
+.. note:: the short name of the purpose of the test definition, i.e., value of field **name**,
+          should not contain any non-ascii characters and special characters
+          from the following list, including white space(s): ``$& "'`()<>/\|;``
+
 If the file is not under version control (i.e. not in a git or bzr
 repository), the version of the file must also be specified in the
 metadata:
@@ -251,7 +256,7 @@ Writing commands to run on the device
 ######################################
 
 #. All commands need to be executables available on the device.
-   This is why the metadata includes an "os" flag, so that commands 
+   This is why the metadata includes an "os" flag, so that commands
    specific to that operating system can be accessed.
 #. All tests run in a dedicated working directory. If a repository is
    used, all files in the repository copy on the device will be in
@@ -324,8 +329,8 @@ Script interpreters
    your shell scripts if you use ``#!/bin/sh``.
 #. **python** - ensure that python is installed in the test image. Add
    all the python dependencies necessary for your script.
-#. **perl** - ensure that any modules required by your script are 
-   available, bearing in mind that some images may only have the base 
+#. **perl** - ensure that any modules required by your script are
+   available, bearing in mind that some images may only have the base
    perl install or a limited selection of modules.
 
 If your YAML file does not reside in a repository, the YAML *run steps*
@@ -347,7 +352,7 @@ exit value is a test case failure. This produces a simple list of
 passes and failures in the result bundle which can be easily tracked
 over time.
 
-To use the exit value, simply precede the command with a call to 
+To use the exit value, simply precede the command with a call to
 ``lava-test-case`` with a test-case name (no spaces)::
 
   run:
@@ -438,7 +443,7 @@ This syntax will result in the test results::
   test6 -> fail
 
 .. _recording_test_measurements:
- 
+
 Recording test case measurements and units
 ******************************************
 
@@ -511,6 +516,8 @@ and export the script writer chooses to use.
 Splitting a large job into smaller chunks also means that the device can
 run other jobs for other users in between the smaller jobs.
 
+.. _tests_and_reboots:
+
 Minimise the number of reboots within a single test
 ***************************************************
 
@@ -538,7 +545,7 @@ to not use two ``lava_test_shell`` commands::
             "parameters": {
                 "testdef_repos": [
                     {
-                        "git-repo": "http://staging.git.linaro.org/git-ro/people/neil.williams/temp-functional-tests.git",
+                        "git-repo": "http://git.linaro.org/git-ro/people/neil.williams/temp-functional-tests.git",
                         "testdef": "singlenode/singlenode01.yaml"
                     }
                 ],
@@ -557,7 +564,7 @@ Becomes::
                         "testdef": "ubuntu/smoke-tests-basic.yaml"
                     },
                     {
-                        "git-repo": "http://staging.git.linaro.org/git-ro/people/neil.williams/temp-functional-tests.git",
+                        "git-repo": "http://git.linaro.org/git-ro/people/neil.williams/temp-functional-tests.git",
                         "testdef": "singlenode/singlenode01.yaml"
                     }
                 ],

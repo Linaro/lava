@@ -23,12 +23,12 @@ how the group will be created::
     "logging_level": "INFO",
     "device_group": [
         {
-            "role": "omap4",
+            "role": "target",
             "count": 2,
             "device_type": "panda"
         },
         {
-            "role": "omap3",
+            "role": "host",
             "count": 1,
             "device_type": "beaglexm"
         }
@@ -54,7 +54,7 @@ the ``role`` which the device will have during the test::
             "parameters": {
                 "testdef_repos": [
                     {
-                        "git-repo": "http://staging.git.linaro.org/git/people/neil.williams/temp-functional-tests.git",
+                        "git-repo": "http://git.linaro.org/git/people/neil.williams/temp-functional-tests.git",
                         "testdef": "android/android-multinode01.yaml"
                     }
                 ],
@@ -67,7 +67,7 @@ the ``role`` which the device will have during the test::
             "parameters": {
                 "testdef_repos": [
                     {
-                        "git-repo": "http://staging.git.linaro.org/git/people/neil.williams/temp-functional-tests.git",
+                        "git-repo": "http://git.linaro.org/git/people/neil.williams/temp-functional-tests.git",
                         "testdef": "android/ubuntu-multinode01.yaml"
                     }
                 ],
@@ -105,7 +105,7 @@ until the YAML file specified for the role ``server`` uses
 Each message sent using the MultiNode API uses a :term:`messageID` which
 is a string, unique within the group. It is recommended to make these
 strings descriptive using underscores instead of spaces. The messageID
-will be included the the log files of the test.
+will be included in the log files of the test.
 
 In the YAML file to be used by devices with the role ``server``::
 

@@ -40,7 +40,7 @@ from django.core.files import locks, File
 from django.core.files.storage import FileSystemStorage
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
-from django.db import models
+from django.db import models, connection
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
@@ -49,7 +49,7 @@ from django.template.defaultfilters import filesizeformat
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
-
+from django.db.utils import DatabaseError
 from django_restricted_resource.models import RestrictedResource
 from linaro_dashboard_bundle.io import DocumentIO
 
@@ -327,7 +327,7 @@ class BundleStream(RestrictedResource):
         """
         Return True if the user can upload bundles here
         """
-        return self.is_anonymous or self.is_owned_by(user)
+        return self.is_anonymous or self.is_owned_by(user) or user.is_superuser
 
 
 class GzipFileSystemStorage(FileSystemStorage):
@@ -988,16 +988,22 @@ class TestRun(models.Model):
         except HardwareDevice.MultipleObjectsReturned:
             pass
 
-    def get_results(self):
+    def get_results(self, result=None):
         """
         Get all results efficiently
+        :param result: used for filtering the result which we want.
+                       It will return all reaults if the parameter 'result' is not in TestResult.RESULT_MAP.
         """
-        return self.test_results.select_related(
+        test_results = self.test_results.select_related(
             "test_case",  # explicit join on test_case which might be NULL
             "test_run",  # explicit join on test run, needed by all the get_absolute_url() methods
             "test_run__bundle",  # explicit join on bundle
             "test_run__bundle__bundle_stream",  # explicit join on bundle stream
         ).order_by("relative_index")  # sort as they showed up in the bundle
+        if result in TestResult.RESULT_MAP:
+            return test_results.filter(result=result)
+        else:
+            return test_results
 
     def denormalize(self):
         try:
@@ -1484,7 +1490,7 @@ class DataReport(RepositoryItem):
 
     def _get_html_template_context(self):
         return Context({
-            "API_URL": reverse("dashboard_app.views.dashboard_xml_rpc_handler"),
+            "API_URL": '/RPC2',
             "STATIC_URL": settings.STATIC_URL
         })
 
@@ -1560,14 +1566,18 @@ class ImageSet(models.Model):
         return self.name
 
 
-class LaunchpadBug(models.Model):
+class BugLink(models.Model):
 
-    bug_id = models.PositiveIntegerField(unique=True)
+    bug_link = models.CharField(
+        verbose_name=_(u"Bug Link"),
+        max_length=1024,
+        blank=True,
+        help_text=_help_max_length(1024))
 
-    test_runs = models.ManyToManyField(TestRun, related_name='launchpad_bugs')
+    test_runs = models.ManyToManyField(TestRun, related_name='bug_links')
 
     def __unicode__(self):
-        return unicode(self.bug_id)
+        return unicode(self.bug_link)
 
 
 @receiver(post_delete)
@@ -1693,6 +1703,14 @@ class TestRunFilter(models.Model):
 
     @classmethod
     def matches_against_bundle(self, bundle):
+        cursor = connection.cursor()
+        try:
+            cursor.execute("select id from dashboard_app_testrunfilterattribute where (name,value) not in ("
+                           "select name, value from dashboard_app_namedattribute where content_type_id = ("
+                           "select django_content_type.id from django_content_type "
+                           "where app_label = 'dashboard_app' and model='testrun'));")
+        except DatabaseError:
+            return []
         from dashboard_app.filters import FilterMatch
         bundle_filters = bundle.bundle_stream.testrunfilter_set.all()
         attribute_filters = bundle_filters.extra(
@@ -1906,9 +1924,23 @@ class PMQABundleStream(models.Model):
     bundle_stream = models.ForeignKey(BundleStream, related_name='+')
 
 
+class ImageReportGroup(models.Model):
+
+    name = models.SlugField(max_length=1024, unique=True)
+
+    def __unicode__(self):
+        return self.name
+
+
 class ImageReport(models.Model):
 
     name = models.SlugField(max_length=1024, unique=True)
+
+    image_report_group = models.ForeignKey(
+        ImageReportGroup,
+        default=None,
+        null=True,
+        on_delete=models.CASCADE)
 
     user = models.ForeignKey(
         User,
@@ -1928,6 +1960,7 @@ class ImageReport(models.Model):
     def get_absolute_url(self):
         return ("dashboard_app.views.image_reports.views.image_report_display",
                 (), dict(name=self.name))
+
 
 # Chart types
 CHART_TYPES = ((r'pass/fail', 'Pass/Fail'),
@@ -2068,8 +2101,8 @@ class ImageReportChart(models.Model):
             for test_run in match.test_runs:
 
                 denorm = test_run.denormalization
-                bug_ids = sorted(
-                    [b.bug_id for b in test_run.launchpad_bugs.all()])
+                bug_links = sorted(
+                    [b.bug_link for b in test_run.bug_links.all()])
 
                 alias = ImageChartTest.objects.get(
                     image_chart_filter=image_chart_filter,
@@ -2091,6 +2124,7 @@ class ImageReportChart(models.Model):
                     "pass": denorm.count_fail == 0,
                     "passes": denorm.count_pass,
                     "total": denorm.count_pass + denorm.count_fail,
+                    "bug_links": bug_links,
                 }
 
                 chart_data["test_data"].append(chart_item)

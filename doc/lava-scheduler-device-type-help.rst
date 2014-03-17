@@ -9,8 +9,12 @@ Device type status
 * Number of jobs running and the number of jobs queued
 * Details of the :term:`device type`.
 
-Device capabilities
-*******************
+.. index:: device type information
+
+.. _device_type_information:
+
+Device capabilities and information
+***********************************
 
 Device capabilities are shown if:
 

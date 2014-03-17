@@ -29,5 +29,5 @@ Running the Scheduler Daemon
 ****************************
 
 If you installed from source or from pypi, you can start it manually
-by simply running *lava-server manage lava-scheduler*, or by adding an
+by simply running ``lava-server manage lava-scheduler``, or by adding an
 init script for it.

@@ -13,11 +13,11 @@ Source Code
 
 * The YAML snippets in this example are not complete, for a working example of the code, see:
 
-  https://git.linaro.org/gitweb?p=people/neilwilliams/multinode-yaml.git;a=blob_plain;f=forwarder.yaml;hb=refs/heads/master
+  https://git.linaro.org/people/neil.williams/multinode-yaml.git/blob_plain/HEAD:/forwarder.yaml
 
-  https://git.linaro.org/gitweb?p=people/neilwilliams/multinode-yaml.git;a=blob_plain;f=receiver.yaml;hb=refs/heads/master
+  https://git.linaro.org/people/neil.williams/multinode-yaml.git/blob_plain/HEAD:receiver.yaml
 
-  https://git.linaro.org/gitweb?p=people/neilwilliams/multinode-yaml.git;a=blob_plain;f=json/beagleblack-use-case.json;hb=HEAD
+  https://git.linaro.org/people/neil.williams/multinode-yaml.git/blob/HEAD:/json/beagleblack-use-case.json
 
 Requirements
 ============
@@ -283,18 +283,12 @@ not enough devices available to satisfy the count.)
         {
             "role": "sender",
             "count": 1,
-            "device_type": "beaglebone-black",
-            "tags": [
-                "use-case-one"
-            ]
+            "device_type": "beaglebone-black"
         },
         {
             "role": "receiver",
             "count": 1,
-            "device_type": "kvm",
-            "tags": [
-                "use-case-one"
-            ]
+            "device_type": "kvm"
         }
     ],
  }
@@ -501,7 +495,7 @@ Summary
 
 The full version of this use case are available:
 
-http://git.linaro.org/gitweb?p=people/neilwilliams/multinode-yaml.git;a=blob_plain;f=json/kvm-beagleblack-group.json;hb=HEAD
+http://git.linaro.org/people/neil.williams/multinode-yaml.git/blob_plain/HEAD:/json/kvm-beagleblack-group.json
 
 Example test results are visible here:
 
@@ -514,7 +508,7 @@ did not have a bridged configuration, so the internal networking of the kvm mean
 that although the KVM could connect to the beaglebone-black, the beaglebone-black
 could not connect to the kvm.
 
-https://git.linaro.org/gitweb?p=people/neilwilliams/multinode-yaml.git;a=blob_plain;f=json/beagleblack-use-case.json;hb=HEAD
+https://git.linaro.org/people/neil.williams/multinode-yaml.git/blob_plain/HEAD:/json/beagleblack-use-case.json
 
 https://staging.validation.linaro.org/dashboard/image-reports/beagleblack-usecase
 

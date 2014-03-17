@@ -105,7 +105,10 @@ class DashboardAPI(ExposedAPI):
     def _put(self, content, content_filename, pathname):
         try:
             logging.debug("Getting bundle stream")
-            bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
+            if self.user and self.user.is_superuser:
+                bundle_stream = BundleStream.objects.get(pathname=pathname)
+            else:
+                bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
         except BundleStream.DoesNotExist:
             logging.debug("Bundle stream does not exist, aborting")
             raise xmlrpclib.Fault(errors.NOT_FOUND,
@@ -300,7 +303,10 @@ class DashboardAPI(ExposedAPI):
         """
         try:
             logging.debug("Getting bundle stream")
-            bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
+            if self.user.is_superuser:
+                bundle_stream = BundleStream.objects.get(pathname=pathname)
+            else:
+                bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
         except BundleStream.DoesNotExist:
             logging.debug("Bundle stream does not exist, aborting")
             raise xmlrpclib.Fault(errors.NOT_FOUND,
@@ -518,7 +524,11 @@ class DashboardAPI(ExposedAPI):
             - personal streams are accessible to owners
             - team streams are accessible to team members
         """
-        bundle_streams = BundleStream.objects.accessible_by_principal(self.user)
+        if self.user and self.user.is_superuser:
+            bundle_streams = BundleStream.objects.all()
+        else:
+            bundle_streams = BundleStream.objects.accessible_by_principal(
+                self.user)
         return [
             {
                 'pathname': bundle_stream.pathname,
@@ -585,7 +595,10 @@ class DashboardAPI(ExposedAPI):
             - team streams are accessible to team members
         """
         try:
-            bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
+            if self.user and self.user.is_superuser:
+                bundle_stream = BundleStream.objects.get(pathname=pathname)
+            else:
+                bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
         except BundleStream.DoesNotExist:
             raise xmlrpclib.Fault(errors.NOT_FOUND, "Bundle stream not found")
         return [
@@ -723,14 +736,18 @@ class DashboardAPI(ExposedAPI):
                 assert is_anonymous is False
                 assert self.user is not None
                 if user_name is not None:
-                    if user_name != self.user.username:
-                        raise xmlrpclib.Fault(
-                            errors.FORBIDDEN,
-                            "Only user {user!r} could create this stream".format(user=user_name))
+                    if not self.user.is_superuser:
+                        if user_name != self.user.username:
+                            raise xmlrpclib.Fault(
+                                errors.FORBIDDEN,
+                                "Only user {user!r} could create this stream".format(user=user_name))
                     user = self.user  # map to real user object
                 elif group_name is not None:
                     try:
-                        group = self.user.groups.get(name=group_name)
+                        if self.user.is_superuser:
+                            group = Group.objects.get(name=group_name)
+                        else:
+                            group = self.user.groups.get(name=group_name)
                     except Group.DoesNotExist:
                         raise xmlrpclib.Fault(
                             errors.FORBIDDEN,
@@ -744,8 +761,11 @@ class DashboardAPI(ExposedAPI):
             assert is_anonymous is True
             assert user_name is None
             assert group_name is None
-            # Hacky but will suffice for now
-            user = User.objects.get_or_create(username="anonymous-owner")[0]
+            if self.user is not None:
+                user = self.user
+            else:
+                # Hacky but will suffice for now
+                user = User.objects.get_or_create(username="anonymous-owner")[0]
         try:
             bundle_stream = BundleStream.objects.create(
                 user=user,

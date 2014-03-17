@@ -119,12 +119,37 @@ class Worker(models.Model):
         default=None
     )
 
+    rpc2_url = models.CharField(
+        verbose_name=_(u"Master RPC2 URL"),
+        max_length=200,
+        null=True,
+        blank=True,
+        editable=True,
+        default=None
+    )
+
+    ip_address = models.CharField(
+        verbose_name=_(u"IP Address"),
+        max_length=20,
+        null=True,
+        blank=True,
+        editable=False,
+        default=None
+    )
+
+    is_master = models.BooleanField(
+        verbose_name=_(u"Is Master?"),
+        default=False,
+        editable=False
+    )
+
     description = models.TextField(
         verbose_name=_(u"Worker Description"),
         max_length=200,
         null=True,
         blank=True,
-        default=None
+        default=None,
+        editable=True
     )
 
     uptime = models.CharField(
@@ -133,6 +158,7 @@ class Worker(models.Model):
         null=True,
         blank=True,
         default=None,
+        editable=False
     )
 
     arch = models.CharField(
@@ -141,6 +167,7 @@ class Worker(models.Model):
         null=True,
         blank=True,
         default=None,
+        editable=False
     )
 
     platform = models.CharField(
@@ -149,11 +176,18 @@ class Worker(models.Model):
         null=True,
         blank=True,
         default=None,
+        editable=False
     )
 
     hardware_info = models.TextField(
         verbose_name=_(u"Complete Hardware Information"),
-        editable=True,
+        editable=False,
+        blank=True
+    )
+
+    software_info = models.TextField(
+        verbose_name=_(u"Complete Software Information"),
+        editable=False,
         blank=True
     )
 
@@ -166,17 +200,20 @@ class Worker(models.Model):
         editable=False
     )
 
-    heartbeat = models.BooleanField(
-        verbose_name=_(u"Heartbeat"),
-        default=False
-    )
-
     def __unicode__(self):
         return self.hostname
 
     def can_admin(self, user):
         if user.has_perm('lava_scheduler_app.change_worker'):
             return True
+
+    def can_update(self, user):
+        if user.has_perm('lava_scheduler_app.change_worker'):
+            return True
+        elif user.username == "lava-health":
+            return True
+        else:
+            return False
 
     @models.permalink
     def get_absolute_url(self):
@@ -188,20 +225,22 @@ class Worker(models.Model):
     def get_hardware_info(self):
         return mark_safe(self.hardware_info)
 
+    def get_software_info(self):
+        return mark_safe(self.software_info)
+
     def too_long_since_last_heartbeat(self):
         """Calculates if the last_heartbeat is more than 180 seconds.
 
-        If there is a delay update heartbeat value to False else True.
+        If there is a delay return True else False.
         """
         if self.last_heartbeat is None:
-            self.last_heartbeat = datetime.datetime.utcnow()
-        difference = datetime.datetime.utcnow() - self.last_heartbeat
+            return False
 
+        difference = datetime.datetime.utcnow() - self.last_heartbeat
         if difference.total_seconds() > 180:
-            self.heartbeat = False
+            return True
         else:
-            self.heartbeat = True
-        self.save()
+            return False
 
     def attached_devices(self):
         return Device.objects.filter(worker_host=self)
@@ -209,6 +248,54 @@ class Worker(models.Model):
     def update_description(self, description):
         self.description = description
         self.save()
+
+    @classmethod
+    def update_heartbeat(cls, heartbeat_data):
+        heartbeat_data = simplejson.loads(heartbeat_data)
+        info_size = heartbeat_data.get('info_size', None)
+        hostname = heartbeat_data.get('hostname', None)
+        devices = heartbeat_data.get('devices', None)
+
+        worker, created = Worker.objects.get_or_create(hostname=hostname)
+        worker.uptime = heartbeat_data.get('uptime', None)
+        worker.last_heartbeat = datetime.datetime.utcnow()
+
+        if info_size and info_size == 'complete':
+            worker.arch = heartbeat_data.get('arch', None)
+            worker.hardware_info = heartbeat_data.get('hardware_info', "")
+            worker.software_info = heartbeat_data.get('software_info', "")
+            worker.platform = heartbeat_data.get('platform', None)
+            worker.ip_address = heartbeat_data.get('ipaddr', None)
+
+        if worker:
+            worker.save()
+            for d in devices:
+                device = Device.objects.get(hostname=d)
+                device.worker_host = worker
+                device.save()
+            return True
+        else:
+            return False
+
+    def on_master(self):
+        return self.is_master
+
+    @classmethod
+    def get_master(cls):
+        """Returns the master node.
+        """
+        try:
+            worker = Worker.objects.get(is_master=True)
+            return worker
+        except:
+            raise ValueError("Unable to find master node")
+
+    @classmethod
+    def get_rpc2_url(cls):
+        """Returns the RPC2 URL of master node.
+        """
+        master = Worker.get_master()
+        return master.rpc2_url
 
 
 class Device(RestrictedResource):
@@ -312,19 +399,6 @@ class Device(RestrictedResource):
         default=None
     )
 
-    last_heartbeat = models.DateTimeField(
-        verbose_name=_(u"Last Heartbeat"),
-        auto_now=False,
-        auto_now_add=False,
-        null=True,
-        blank=True,
-        editable=False
-    )
-
-    heartbeat = models.BooleanField(
-        verbose_name=_(u"Heartbeat"),
-        default=False)
-
     def clean(self):
         """
         Complies with the RestrictedResource constraints
@@ -386,7 +460,7 @@ class Device(RestrictedResource):
         ).filter(
             actual_device=self
         ).order_by(
-            '-start_time'
+            '-submit_time'
         )
 
     def can_admin(self, user):
@@ -404,6 +478,13 @@ class Device(RestrictedResource):
             return True
         return self.is_owned_by(user)
 
+    def state_transition_to(self, new_status, user=None, message=None, job=None):
+        DeviceStateTransition.objects.create(
+            created_by=user, device=self, old_state=self.status,
+            new_state=new_status, message=message, job=job).save()
+        self.status = new_status
+        self.save()
+
     def put_into_maintenance_mode(self, user, reason, notify=None):
         if self.status in [self.RESERVED, self.OFFLINING]:
             new_status = self.OFFLINING
@@ -415,81 +496,53 @@ class Device(RestrictedResource):
             new_status = self.OFFLINING
         else:
             new_status = self.OFFLINE
-        DeviceStateTransition.objects.create(
-            created_by=user, device=self, old_state=self.status,
-            new_state=new_status, message=reason, job=None).save()
-        self.status = new_status
         if self.health_status == Device.HEALTH_LOOPING:
             self.health_status = Device.HEALTH_UNKNOWN
-        self.save()
+        self.state_transition_to(new_status, user=user, message=reason)
 
     def put_into_online_mode(self, user, reason, skiphealthcheck=False):
         if self.status == Device.OFFLINING:
             new_status = self.RUNNING
         else:
             new_status = self.IDLE
-        DeviceStateTransition.objects.create(
-            created_by=user, device=self, old_state=self.status,
-            new_state=new_status, message=reason, job=None).save()
-        self.status = new_status
+
         if not skiphealthcheck:
             self.health_status = Device.HEALTH_UNKNOWN
-        self.save()
+
+        self.state_transition_to(new_status, user=user, message=reason)
 
     def put_into_looping_mode(self, user, reason):
         if self.status not in [Device.OFFLINE, Device.OFFLINING]:
             return
-        new_status = self.IDLE
-        DeviceStateTransition.objects.create(
-            created_by=user, device=self, old_state=self.status,
-            new_state=new_status, message=reason, job=None).save()
-        self.status = new_status
+
         self.health_status = Device.HEALTH_LOOPING
-        self.save()
+
+        self.state_transition_to(self.IDLE, user=user, message=reason)
 
     def cancel_reserved_status(self, user, reason):
         if self.status != Device.RESERVED:
             return
-        new_status = self.IDLE
-        DeviceStateTransition.objects.create(
-            created_by=user, device=self, old_state=self.status,
-            new_state=new_status, message=reason, job=None).save()
-        self.status = new_status
-        self.save()
+
+        self.state_transition_to(self.IDLE, user=user, message=reason)
 
     def too_long_since_last_heartbeat(self):
-        """Calculates if the last_heartbeat is more than 180 seconds.
-
-        If there is a delay update heartbeat value to False else True.
+        """This is same as worker heartbeat.
         """
-        if self.last_heartbeat is None:
-            self.last_heartbeat = datetime.datetime.utcnow()
-        difference = datetime.datetime.utcnow() - self.last_heartbeat
-
-        if difference.total_seconds() > 180:
-            self.heartbeat = False
+        if self.worker_host:
+            return self.worker_host.too_long_since_last_heartbeat()
         else:
-            self.heartbeat = True
-
-        if self.status == Device.RETIRED and self.worker_host is not None:
-            self.worker_host = None
-            self.heartbeat = False
-
-        self.save()
+            return True
 
     def get_existing_health_check_job(self):
         """Get the existing health check job.
         """
-        scheduled_job = TestJob.objects.filter(
-            (models.Q(actual_device=self) |
-             models.Q(requested_device=self)),
-            status__in=[TestJob.SUBMITTED, TestJob.RUNNING],
-            health_check=True
-        )
-
-        if scheduled_job:
-            return scheduled_job[0]
-        else:
+        try:
+            return TestJob.objects.filter((models.Q(actual_device=self) |
+                                           models.Q(requested_device=self)),
+                                          status__in=[TestJob.SUBMITTED,
+                                                      TestJob.RUNNING],
+                                          health_check=True)[0]
+        except IndexError:
             return None
 
     def initiate_health_check_job(self):
@@ -518,6 +571,15 @@ class Device(RestrictedResource):
                     None, "Job submission failed for health job: %s" % e)
                 raise JSONDataError("Health check job submission failed.")
 
+    def previous_transition(self):
+        """Returns the last but one transition object for this device.
+        """
+        try:
+            return DeviceStateTransition.objects.filter(
+                device=self).order_by('-created_on')[1]
+        except IndexError:
+            return None
+
 
 class JobFailureTag(models.Model):
     """
@@ -530,6 +592,110 @@ class JobFailureTag(models.Model):
 
     def __unicode__(self):
         return self.name
+
+
+def _get_tag_list(tags):
+    """
+    Creates a list of Tag objects for the specified device tags
+    for singlenode and multinode jobs.
+    :param tags: a list of strings from the JSON
+    :return: a list of tags which match the strings
+    :raise: JSONDataError if a tag cannot be found in the database.
+    """
+    taglist = []
+    if type(tags) != list:
+        raise JSONDataError("'device_tags' needs to be a list - received %s" % type(tags))
+    for tag_name in tags:
+        try:
+            taglist.append(Tag.objects.get(name=tag_name))
+        except Tag.DoesNotExist:
+            raise JSONDataError("Device tag '%s' does not exist in the database." % tag_name)
+    return taglist
+
+
+def _check_tags(taglist, device_type=None, hostname=None):
+    """
+    Checks each available device against required tags
+    :param taglist: list of Tag objects (not strings) for this job
+    :param device_type: which types of device need to satisfy the tags -
+    called during submission.
+    :param hostname: check if this device can satisfy the tags - called
+    from the daemon when scheduling from the queue.
+    :return: a list of devices suitable for all the specified tags
+    :raise: DevicesUnavailableException if no devices can satisfy the
+    combination of tags.
+    """
+    if not device_type and not hostname:
+        # programming error
+        return []
+    if len(taglist) == 0:
+        # no tags specified in the job, any device can be used.
+        return []
+    q = models.Q()
+    if device_type:
+        q = q.__and__(models.Q(device_type=device_type))
+    if hostname:
+        q = q.__and__(models.Q(hostname=hostname))
+    q = q.__and__(~models.Q(status=Device.RETIRED))
+    tag_devices = set(Device.objects.filter(q))
+    matched_devices = []
+    for device in tag_devices:
+        if set(device.tags.all()) & set(taglist) == set(taglist):
+            matched_devices.append(device)
+    if len(matched_devices) == 0 and device_type:
+        raise DevicesUnavailableException(
+            "No devices of type %s are available which have all of the tags '%s'."
+            % (device_type, ", ".join([x.name for x in taglist])))
+    if len(matched_devices) == 0 and hostname:
+        raise DevicesUnavailableException(
+            "Device %s does not support all of the tags '%s'."
+            % (hostname, ", ".join([x.name for x in taglist])))
+    return list(set(matched_devices))
+
+
+def _check_submit_to_device(device_list, user):
+    """
+    Handles the affects of Device Ownership on job submission
+    :param device_list: A list of device objects to check
+    :param user: The user submitting the job
+    :return: a subset of the device_list to which the user
+    is allowed to submit a TestJob.
+    :raise: DevicesUnavailableException if none of the
+    devices in device_list are available for submission by this user.
+    """
+    allow = []
+    if type(device_list) != list or len(device_list) == 0:
+        # logic error
+        return allow
+    for device in device_list:
+        if device.status != Device.RETIRED and device.can_submit(user):
+            allow.append(device)
+    if len(allow) == 0:
+        raise DevicesUnavailableException(
+            "No devices of the requested type are currently available to user %s"
+            % user)
+    return allow
+
+
+def _check_tags_support(tag_devices, device_list):
+    """
+    Combines the Device Ownership list with the requested tag list and
+    returns any devices which meet both criteria.
+    If neither the job nor the device have any tags, tag_devices will
+    be empty, so the check will pass.
+    :param tag_devices: A list of devices which meet the tag
+    requirements
+    :param device_list: A list of devices to which the user is able
+    to submit a TestJob
+    :raise: DevicesUnavailableException if there is no overlap between
+    the two sets.
+    """
+    if len(tag_devices) == 0:
+        # no tags requested in the job: proceed.
+        return
+    if len(set(tag_devices) & set(device_list)) == 0:
+        raise DevicesUnavailableException(
+            "Not enough devices available matching the requested tags.")
 
 
 class TestJob(RestrictedResource):
@@ -753,6 +919,14 @@ class TestJob(RestrictedResource):
 
     @classmethod
     def from_json_and_user(cls, json_data, user, health_check=False):
+        """
+        Constructs one or more TestJob objects from a JSON data and a submitting
+        user. Handles multinode jobs and creates one job for each target
+        device.
+
+        For single node jobs, returns the job object created. For multinode
+        jobs, returns an array of test objects.
+        """
         job_data = simplejson.loads(json_data)
         validate_job_data(job_data)
 
@@ -781,6 +955,7 @@ class TestJob(RestrictedResource):
             # dt[0] -> device type name
             # dt[1] -> device type count
             all_devices[dt[0]] = dt[1]
+        taglist = _get_tag_list(job_data.get('device_tags', []))
 
         if 'target' in job_data:
             device_type = None
@@ -788,13 +963,10 @@ class TestJob(RestrictedResource):
                 target = Device.objects.filter(
                     ~models.Q(status=Device.RETIRED))\
                     .get(hostname=job_data['target'])
-            except Exception as e:
+            except Device.DoesNotExist:
                 raise DevicesUnavailableException(
                     "Requested device %s is unavailable." % job_data['target'])
-            if not target.can_submit(user):
-                raise DevicesUnavailableException("%s is not allowed to submit to "
-                                                  "the restricted device '%s'."
-                                                  % (user.username, target))
+            _check_tags_support(_check_tags(taglist, hostname=target), _check_submit_to_device([target], user))
         elif 'device_type' in job_data:
             target = None
             try:
@@ -803,15 +975,9 @@ class TestJob(RestrictedResource):
                 raise DevicesUnavailableException(
                     "Device type '%s' is unavailable. %s" %
                     (job_data['device_type'], e))
-            device_list = Device.objects.filter(device_type=device_type)
-            allow = []
-            for device in device_list:
-                if device.can_submit(user):
-                    allow.append(device)
-            if len(allow) == 0:
-                raise DevicesUnavailableException("No devices of type %s are currently "
-                                                  "available to user %s"
-                                                  % (device_type, user))
+            allow = _check_submit_to_device(list(Device.objects.filter(
+                device_type=device_type)), user)
+            _check_tags_support(_check_tags(taglist, device_type=device_type), allow)
         elif 'device_group' in job_data:
             target = None
             device_type = None
@@ -819,21 +985,30 @@ class TestJob(RestrictedResource):
 
             # Check if the requested devices are available for job run.
             for device_group in job_data['device_group']:
-                device_type = device_group['device_type']
+                try:
+                    device_type = DeviceType.objects.get(name=device_group['device_type'])
+                except Device.DoesNotExist as e:
+                    raise DevicesUnavailableException(
+                        "Device type '%s' is unavailable. %s" %
+                        (device_group['device_type'], e))
                 count = device_group['count']
+                taglist = _get_tag_list(device_group.get('tags', []))
+                allow = _check_submit_to_device(list(Device.objects.filter(
+                    device_type=device_type)), user)
+                _check_tags_support(_check_tags(taglist, device_type=device_type), allow)
                 if device_type in requested_devices:
                     requested_devices[device_type] += count
                 else:
                     requested_devices[device_type] = count
 
             for board, count in requested_devices.iteritems():
-                if all_devices.get(board, None) and \
-                        count <= all_devices[board]:
+                if all_devices.get(board.name, None) and \
+                        count <= all_devices[board.name]:
                     continue
                 else:
                     raise DevicesUnavailableException(
                         "Requested %d %s device(s) - only %d available." %
-                        (count, board, all_devices.get(board, 0)))
+                        (count, board, all_devices.get(board.name, 0)))
         else:
             raise JSONDataError(
                 "No 'target' or 'device_type' or 'device_group' are found "
@@ -894,13 +1069,6 @@ class TestJob(RestrictedResource):
             if parsed_server.hostname is None:
                 raise ValueError("invalid server: %s" % server)
 
-        taglist = []
-        for tag_name in job_data.get('device_tags', []):
-            try:
-                taglist.append(Tag.objects.get(name=tag_name))
-            except Tag.DoesNotExist:
-                raise JSONDataError("tag %r does not exist" % tag_name)
-
         # MultiNode processing - tally allowed devices with the
         # device_types requested per role.
         allowed_devices = {}
@@ -949,16 +1117,19 @@ class TestJob(RestrictedResource):
                         requested_device=target,
                         description=job_name,
                         requested_device_type=device_type,
-                        definition=simplejson.dumps(node_json[role][c]),
+                        definition=simplejson.dumps(node_json[role][c],
+                                                    sort_keys=True,
+                                                    indent=4 * ' '),
                         original_definition=simplejson.dumps(json_data,
                                                              sort_keys=True,
                                                              indent=4 * ' '),
                         multinode_definition=json_data,
                         health_check=health_check, user=user, group=group,
-                        is_public=is_public, priority=priority,
+                        is_public=is_public,
+                        priority=TestJob.MEDIUM,  # multinode jobs have fixed priority
                         target_group=target_group)
                     job.save()
-                    job_list.append(sub_id)
+                    job_list.append(job)
                     for tag in Tag.objects.filter(name__in=taglist):
                         job.tags.add(tag)
                     child_id += 1
@@ -990,9 +1161,10 @@ class TestJob(RestrictedResource):
 
     def can_change_priority(self, user):
         """
-        Permission and state required to change job priority
+        Permission and state required to change job priority.
+        Multinode jobs cannot have their priority changed.
         """
-        return self._can_admin(user) and self.status == TestJob.SUBMITTED
+        return self._can_admin(user) and self.status == TestJob.SUBMITTED and not self.is_multinode
 
     def can_annotate(self, user):
         """
@@ -1008,15 +1180,20 @@ class TestJob(RestrictedResource):
         states = [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]
         return self._can_admin(user) and self.status in states
 
-    def cancel(self):
+    def cancel(self, user=None):
+        if not user:
+            user = self.submitter
         # if SUBMITTED with actual_device - clear the actual_device back to idle.
         if self.status == TestJob.SUBMITTED and self.actual_device is not None:
-            device = Device.objects.get(hostname=self.actual_device)
-            device.cancel_reserved_status(self.submitter, "multinode-cancel")
+            self.actual_device.cancel_reserved_status(self.submitter, "job-cancel")
+            self._send_cancellation_mail(user)
         if self.status == TestJob.RUNNING:
             self.status = TestJob.CANCELING
+            self._send_cancellation_mail(user)
         else:
             self.status = TestJob.CANCELED
+        if user:
+            self.failure_comment = "Canceled by %s" % user.username
         self.save()
 
     def _generate_summary_mail(self):
@@ -1031,6 +1208,33 @@ class TestJob(RestrictedResource):
         return render_to_string(
             'lava_scheduler_app/job_summary_mail.txt',
             {'job': self, 'url_prefix': url_prefix})
+
+    def _generate_cancellation_mail(self, user):
+        domain = '???'
+        try:
+            site = Site.objects.get_current()
+        except (Site.DoesNotExist, ImproperlyConfigured):
+            pass
+        else:
+            domain = site.domain
+        url_prefix = 'http://%s' % domain
+        return render_to_string(
+            'lava_scheduler_app/job_cancelled_mail.txt',
+            {'job': self, 'url_prefix': url_prefix, 'user': user})
+
+    def _send_cancellation_mail(self, user):
+        if user == self.submitter:
+            return
+        recipient = get_object_or_404(User.objects.select_related(), id=self.submitter.id)
+        mail = self._generate_cancellation_mail(user)
+        description = self.description.splitlines()[0]
+        if len(description) > 200:
+            description = description[197:] + '...'
+        logger = logging.getLogger(self.__class__.__name__ + '.' + str(self.pk))
+        logger.info("sending mail to %s", recipient.email)
+        send_mail(
+            "LAVA job notification: " + description, mail,
+            settings.SERVER_EMAIL, [recipient.email])
 
     def _get_notification_recipients(self):
         job_data = simplejson.loads(self.definition)
@@ -1102,6 +1306,19 @@ class TestJob(RestrictedResource):
         else:
             return self.definition
 
+    @property
+    def is_ready_to_start(self):
+        def ready(job):
+            return job.status == TestJob.SUBMITTED and job.actual_device is not None
+
+        def ready_or_running(job):
+            return job.status in [TestJob.SUBMITTED, TestJob.RUNNING] and job.actual_device is not None
+
+        if self.is_multinode:
+            return ready(self) and all(map(ready_or_running, self.sub_jobs_list))
+        else:
+            return ready(self)
+
 
 class DeviceStateTransition(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
@@ -1111,6 +1328,12 @@ class DeviceStateTransition(models.Model):
     old_state = models.IntegerField(choices=Device.STATUS_CHOICES)
     new_state = models.IntegerField(choices=Device.STATUS_CHOICES)
     message = models.TextField(null=True, blank=True)
+
+    def __unicode__(self):
+        return u"%s: %s -> %s (%s)" % (self.device.hostname,
+                                       self.get_old_state_display(),
+                                       self.get_new_state_display(),
+                                       self.message)
 
     def update_message(self, message):
         self.message = message

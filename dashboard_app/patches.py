@@ -87,26 +87,5 @@ class PatchDjangoTicket1476(object):
         FormWizard.__call__ = __call__
 
 
-class PatchDjangoTicket15155(object):
-    """
-    Patch for bug http://code.djangoproject.com/ticket/15155
-    """
-
-    PROPER_FORMAT = r'(?<!%)%s'
-
-    @classmethod
-    def apply_if_needed(patch):
-        from django.db.backends.sqlite3 import base
-        if base.FORMAT_QMARK_REGEX != patch.PROPER_FORMAT:
-            patch.apply()
-
-    @classmethod
-    def apply(cls):
-        from django.db.backends.sqlite3 import base
-        import re
-        base.FORMAT_QMARK_REGEX = re.compile(cls.PROPER_FORMAT)
-
-
 def patch():
     PatchDjangoTicket1476.apply_if_needed()
-    PatchDjangoTicket15155.apply_if_needed()

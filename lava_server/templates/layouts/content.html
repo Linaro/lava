@@ -19,7 +19,7 @@
     <!-- menu -->
     <div id="lava-menu-bar-left">
       <div class="lava-panel-element">
-        <a href="http://www.linaro.org/"><img src="{{ STATIC_URL }}lava-server/images/linaro-sprinkles.png" style="margin-left: 5px"/></a>
+        <a href="http://www.linaro.org/"><img src="{{ STATIC_URL }}lava-server/images/linaro-sprinkles.png" alt="linaro logo" style="margin-left: 5px"/></a>
       </div>
       <div class="lava-panel-element">
         <a class="lava-panel-menu-text" id="lava-logo-caption">LAVA</a>
@@ -75,9 +75,7 @@
     <div class="lava-indicator lava-panel-element {% if user.is_authenticated %}has-menu{% endif %}" id="lava-user-indicator">
       <div class="lava-panel-menu-text">
         {% if user.is_authenticated %}
-        <img 
-        src="{{ STATIC_URL }}lava-server/images/avatar-default-symbolic.svg"
-        width="18" height="18"/>
+        <img src="{{ STATIC_URL }}lava-server/images/avatar-default-symbolic.svg" alt="default avatar" width="18" height="18"/>
         <a href="{% url lava.me %}" class="username">{{user.get_full_name|default:user.username}} &#x25BE;</a>
         {% else %}
           {% if request.get_full_path == "/accounts/logout/" %}

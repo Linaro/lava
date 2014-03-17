@@ -1,14 +1,14 @@
 var compareState = 0;
 var compare1 = null, compare2 = null;
 function cancelCompare () {
-    $("#filter-table").removeClass("select-compare1");
-    $("#filter-table").removeClass("select-compare2");
-    $("#filter-table").removeClass("select-compare3");
-    $("#filter-table tr").removeClass("selected-1");
-    $("#filter-table tr").removeClass("selected-2");
-    $("#filter-table tr").unbind("click");
-    $("#filter-table tr").unbind("hover");
-    $("#filter-table tr").each(removeCheckbox);
+    $("#filter-detail-table").removeClass("select-compare1");
+    $("#filter-detail-table").removeClass("select-compare2");
+    $("#filter-detail-table").removeClass("select-compare3");
+    $("#filter-detail-table tr").removeClass("selected-1");
+    $("#filter-detail-table tr").removeClass("selected-2");
+    $("#filter-detail-table tr").unbind("click");
+    $("#filter-detail-table tr").unbind("hover");
+    $("#filter-detail-table tr").each(removeCheckbox);
     $("#first-prompt").hide();
     $("#second-prompt").hide();
     $("#third-prompt").hide();
@@ -17,10 +17,10 @@ function cancelCompare () {
 }
 function startCompare () {
     $("#compare-button").button({label:"Cancel"});
-    $("#filter-table").addClass("select-compare1");
-    $("#filter-table tr").click(rowClickHandler);
-    $("#filter-table tr").each(insertCheckbox);
-    $("#filter-table tr").hover(rowHoverHandlerIn, rowHoverHandlerOut);
+    $("#filter-detail-table").addClass("select-compare1");
+    $("#filter-detail-table tr").click(rowClickHandler);
+    $("#filter-detail-table tr").each(insertCheckbox);
+    $("#filter-detail-table tr").hover(rowHoverHandlerIn, rowHoverHandlerOut);
     $("#first-prompt").show();
     compareState = 1;
 }
@@ -39,8 +39,8 @@ function rowClickHandler() {
         $("#p2-build").text(compare1.usertag);
         $("#first-prompt").hide();
         $("#second-prompt").show();
-        $("#filter-table").removeClass("select-compare1");
-        $("#filter-table").addClass("select-compare2");
+        $("#filter-detail-table").removeClass("select-compare1");
+        $("#filter-detail-table").addClass("select-compare2");
         compareState = 2;
     } else if (compareState == 2) {
         var thistag = tagFromRow($(this));
@@ -53,14 +53,14 @@ function rowClickHandler() {
             $(this).addClass("selected-2");
             $("#second-prompt").hide();
             $("#third-prompt").show();
-            $("#filter-table").removeClass("select-compare2");
-            $("#filter-table").addClass("select-compare3");
-            $("#filter-table input").attr("disabled", true);
-            $("#filter-table .selected-1 input").attr("disabled", false);
-            $("#filter-table .selected-2 input").attr("disabled", false);
+            $("#filter-detail-table").removeClass("select-compare2");
+            $("#filter-detail-table").addClass("select-compare3");
+            $("#filter-detail-table input").attr("disabled", true);
+            $("#filter-detail-table .selected-1 input").attr("disabled", false);
+            $("#filter-detail-table .selected-2 input").attr("disabled", false);
             $("#p3-build-1").text(compare1.usertag);
             $("#p3-build-2").text(compare2.usertag);
-            $("#third-prompt a").attr("href", window.location + '/+compare/' + compare1.machinetag + '/' + compare2.machinetag);
+            $("#third-prompt a").attr("href", window.location.pathname + '/+compare/' + compare1.machinetag + '/' + compare2.machinetag);
             compareState = 3;
         }
     } else if (compareState == 3) {
@@ -68,18 +68,18 @@ function rowClickHandler() {
         if (thistag.machinetag == compare1.machinetag || thistag.machinetag == compare2.machinetag) {
             $("#second-prompt").show();
             $("#third-prompt").hide();
-            $("#filter-table").addClass("select-compare2");
-            $("#filter-table").removeClass("select-compare3");
-            $("#filter-table input").attr("disabled", false);
+            $("#filter-detail-table").addClass("select-compare2");
+            $("#filter-detail-table").removeClass("select-compare3");
+            $("#filter-detail-table input").attr("disabled", false);
             compareState = 2;
             $(this).find("input").attr("checked", false);
             if (thistag.machinetag == compare1.machinetag) {
                 compare1 = compare2;
-                $("#filter-table .selected-1").removeClass("selected-1");
-                $("#filter-table .selected-2").addClass("selected-1");
+                $("#filter-detail-table .selected-1").removeClass("selected-1");
+                $("#filter-detail-table .selected-2").addClass("selected-1");
                 $("#p2-build").text(compare1.usertag);
             }
-            $("#filter-table .selected-2").removeClass("selected-2");
+            $("#filter-detail-table .selected-2").removeClass("selected-2");
         }
     }
     tagFromRow(this);
@@ -101,11 +101,11 @@ function removeCheckbox() {
 }
 $(window).load(
     function () {
-        $("#filter-table").dataTable().fnSettings().fnRowCallback = function(tr, data, index) {
+        $("#filter-detail-table").dataTable().fnSettings().fnRowCallback = function(tr, data, index) {
             if (compareState) {
                 insertCheckbox.call(tr);
                 $(tr).click(rowClickHandler);
-                $("#filter-table tr").hover(rowHoverHandlerIn, rowHoverHandlerOut);
+                $("#filter-detail-table tr").hover(rowHoverHandlerIn, rowHoverHandlerOut);
                 if (compareState >= 2 && tagFromRow(tr).machinetag == compare1.machinetag) {
                     $(tr).addClass("selected-1");
                     $(tr).find("input").attr("checked", true);
@@ -131,5 +131,8 @@ $(window).load(
                 }
             }
         );
+        $("div.dataTables_length").remove();
+        $("div.dataTables_info").remove();
     }
+
 );

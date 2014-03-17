@@ -35,7 +35,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import (
     Http404,
     HttpResponse,
@@ -45,19 +45,12 @@ from django.http import (
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
 from django.utils.safestring import mark_safe
-from django.views.generic.list_detail import object_list, object_detail
 from django.forms import ModelForm
-from django import forms
-
-from django_tables2 import Attrs, Column, TemplateColumn
-
-from lava.utils.data_tables.tables import DataTablesTable
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
     BreadCrumb,
     BreadCrumbTrail,
 )
-
 from dashboard_app.models import (
     Attachment,
     Bundle,
@@ -66,6 +59,7 @@ from dashboard_app.models import (
     DataView,
     Tag,
     Test,
+    TestCase,
     TestResult,
     TestRun,
     TestDefinition,
@@ -73,6 +67,22 @@ from dashboard_app.models import (
 from lava_scheduler_app.models import (
     TestJob
 )
+from dashboard_app.views.tables import (
+    BundleStreamTable,
+    BundleTable,
+    BundleDetailTable,
+    TestRunTable,
+    TestTable,
+    TestDefinitionTable,
+)
+from django_tables2 import (
+    Attrs,
+    Column,
+    RequestConfig,
+    SingleTableView,
+    TemplateColumn,
+)
+from lava.utils.lavatable import LavaView
 
 
 def _get_queryset(klass):
@@ -107,11 +117,40 @@ def get_restricted_object(klass, via, user, *args, **kwargs):
     try:
         obj = queryset.get(*args, **kwargs)
         ownership_holder = via(obj)
-        if not ownership_holder.is_accessible_by(user):
-            raise PermissionDenied()
+        if not user.is_superuser:
+            if not ownership_holder.is_accessible_by(user):
+                raise PermissionDenied()
         return obj
     except queryset.model.DoesNotExist:
         raise Http404('No %s matches the given query.' % queryset.model._meta.object_name)
+
+
+class BundleStreamView(LavaView):
+
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            return BundleStream.objects.all().order_by('pathname')
+        else:
+            return BundleStream.objects.accessible_by_principal(
+                self.request.user).order_by('pathname')
+
+    def results_query(self, term):
+        matches = [p for p, r in TestResult.RESULT_MAP.iteritems() if r == term]
+        return Q(result__in=matches)
+
+    def test_case_query(self, term):
+        test_cases = TestCase.objects.filter(test_case_id__contains=term)
+        return Q(test_case__in=test_cases)
+
+    def test_run_query(self, term):
+        test_runs = Test.objects.filter(test_id__contains=term)
+        return Q(test_id__in=test_runs)
+
+
+class MyBundleStreamView(BundleStreamView):
+
+    def get_queryset(self):
+        return BundleStream.objects.owned_by_principal(self.request.user).order_by('pathname')
 
 
 @BreadCrumb("Dashboard", parent=lava_index)
@@ -122,50 +161,19 @@ def index(request):
         }, RequestContext(request))
 
 
-class BundleStreamTable(DataTablesTable):
-
-    pathname = TemplateColumn(
-        '<a href="{% url dashboard_app.views.bundle_list record.pathname %}">'
-        '<code>{{ record.pathname }}</code></a>')
-    name = TemplateColumn(
-        '{{ record.name|default:"<i>not set</i>" }}')
-    number_of_test_runs = TemplateColumn(
-        '<a href="{% url dashboard_app.views.test_run_list record.pathname %}">'
-        '{{ record.get_test_run_count }}')
-    number_of_bundles = TemplateColumn(
-        '<a href="{% url dashboard_app.views.bundle_list record.pathname %}">'
-        '{{ record.bundles.count}}</a>')
-
-    def get_queryset(self, user):
-        return BundleStream.objects.accessible_by_principal(user)
-
-    datatable_opts = {
-        'iDisplayLength': 25,
-        'sPaginationType': "full_numbers",
-    }
-
-    searchable_columns = ['pathname', 'name']
-
-
-def bundle_stream_list_json(request):
-    return BundleStreamTable.json(request, params=(request.user,))
-
-
-class MyBundleStreamTable(BundleStreamTable):
-
-    def get_queryset(self, user):
-        return BundleStream.objects.owned_by_principal(user)
-
-
 @BreadCrumb("My Bundle Streams", parent=index)
 def mybundlestreams(request):
+    data = MyBundleStreamView(request, model=BundleStream, table_class=BundleStreamTable)
+    table = BundleStreamTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": table.length}).configure(table)
     return render_to_response(
         "dashboard_app/mybundlestreams.html",
         {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(mybundlestreams),
-            "bundle_stream_table": MyBundleStreamTable(
-                'bundle-stream-table', reverse(bundle_stream_list_json),
-                params=(request.user,)),
+            "bundle_stream_table": table,
+            "terms_data": table.prepare_terms_data(data),
+            "search_data": table.prepare_search_data(data),
+            "discrete_data": table.prepare_discrete_data(data),
         },
         RequestContext(request))
 
@@ -175,13 +183,17 @@ def bundle_stream_list(request):
     """
     List of bundle streams.
     """
+    data = BundleStreamView(request, model=BundleStream, table_class=BundleStreamTable)
+    table = BundleStreamTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": table.length}).configure(table)
     return render_to_response(
         'dashboard_app/bundle_stream_list.html', {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 bundle_stream_list),
-            "bundle_stream_table": BundleStreamTable(
-                'bundle-stream-table', reverse(bundle_stream_list_json),
-                params=(request.user,)),
+            "bundle_stream_table": table,
+            "terms_data": table.prepare_terms_data(data),
+            "search_data": table.prepare_search_data(data),
+            "discrete_data": table.prepare_discrete_data(data),
             'has_personal_streams': (
                 request.user.is_authenticated() and
                 BundleStream.objects.filter(user=request.user).count() > 0),
@@ -193,50 +205,15 @@ def bundle_stream_list(request):
     )
 
 
-class BundleTable(DataTablesTable):
+class BundleView(BundleStreamView):
 
-    content_filename = TemplateColumn(
-        '<a href="{{ record.get_absolute_url }}">'
-        '<code>{{ record.content_filename }}</code></a>',
-        verbose_name="bundle name")
+    def __init__(self, request, bundle_stream, **kwargs):
+        super(BundleView, self).__init__(request, **kwargs)
+        self.bundle_stream = bundle_stream
 
-    passes = TemplateColumn('{{ record.get_summary_results.pass|default:"0" }}')
-    fails = TemplateColumn('{{ record.get_summary_results.fail|default:"0" }}')
-    total_results = TemplateColumn('{{ record.get_summary_results.total }}')
-
-    uploaded_on = TemplateColumn('{{ record.uploaded_on|date:"Y-m-d H:i:s"}}')
-    uploaded_by = TemplateColumn('''
-        {% load i18n %}
-        {% if record.uploaded_by %}
-            {{ record.uploaded_by }}
-        {% else %}
-            <em>{% trans "anonymous user" %}</em>
-        {% endif %}''')
-    deserializaled = TemplateColumn('{{ record.is_deserialized|yesno }}')
-
-    def get_queryset(self, bundle_stream):
-        return bundle_stream.bundles.select_related(
-            'bundle_stream', 'deserialization_error')
-
-    datatable_opts = {
-        'aaSorting': [[4, 'desc']],
-        'sPaginationType': 'full_numbers',
-        'iDisplayLength': 25,
-        # 'aLengthMenu': [[10, 25, 50, -1], [10, 25, 50, "All"]],
-        'sDom': 'lfr<"#master-toolbar">t<"F"ip>',
-    }
-
-    searchable_columns = ['content_filename']
-
-
-def bundle_list_table_json(request, pathname):
-    bundle_stream = get_restricted_object(
-        BundleStream,
-        lambda bundle_stream: bundle_stream,
-        request.user,
-        pathname=pathname
-    )
-    return BundleTable.json(request, params=(bundle_stream,))
+    def get_queryset(self):
+        return self.bundle_stream.bundles.select_related(
+            'bundle_stream', 'deserialization_error').order_by('-uploaded_on')
 
 
 @BreadCrumb(
@@ -253,18 +230,21 @@ def bundle_list(request, pathname):
         request.user,
         pathname=pathname
     )
+    data = BundleView(request, bundle_stream, model=Bundle, table_class=BundleTable)
+    table = BundleTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": table.length}).configure(table)
     return render_to_response(
         "dashboard_app/bundle_list.html",
         {
-            'bundle_table': BundleTable(
-                'bundle-table',
-                reverse(
-                    bundle_list_table_json, kwargs=dict(pathname=pathname)),
-                params=(bundle_stream,)),
+            'bundle_list': table,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 bundle_list,
                 pathname=pathname),
-            "bundle_stream": bundle_stream
+            "terms_data": table.prepare_terms_data(data),
+            "search_data": table.prepare_search_data(data),
+            "discrete_data": table.prepare_discrete_data(data),
+            "times_data": table.prepare_times_data(data),
+            "bundle_stream": bundle_stream,
         },
         RequestContext(request))
 
@@ -281,8 +261,9 @@ def _remove_dir(path):
 
 
 def bundle_list_export(request, pathname):
-    # Create and serve the CSV file.
-
+    """
+    Create and serve the CSV file.
+    """
     bundle_stream = get_restricted_object(
         BundleStream,
         lambda bundle_stream: bundle_stream,
@@ -294,6 +275,7 @@ def bundle_list_export(request, pathname):
     tmp_dir = tempfile.mkdtemp()
     file_path = os.path.join(tmp_dir, "%s.csv" % file_name)
 
+    bundle_keys = []
     for bundle in bundle_stream.bundles.all():
         bundle_keys = bundle.__dict__.keys()
         break
@@ -338,6 +320,24 @@ def bundle_list_export(request, pathname):
     return response
 
 
+class BundleDetailView(BundleStreamView):
+    """
+    View of a bundle from a particular stream
+    """
+
+    def __init__(self, request, pathname, content_sha1, **kwargs):
+        super(BundleDetailView, self).__init__(request, **kwargs)
+        self.pathname = pathname
+        self.content_sha1 = content_sha1
+
+    def get_queryset(self):
+        bundle_stream = BundleStream.objects.filter(pathname=self.pathname)
+        if not bundle_stream[0].is_accessible_by(self.request.user):
+            raise PermissionDenied
+        bundle = Bundle.objects.filter(bundle_stream=bundle_stream, content_sha1=self.content_sha1)[:1][0]
+        return bundle.test_runs.all().order_by('test')
+
+
 @BreadCrumb(
     "Bundle {content_sha1}",
     parent=bundle_list,
@@ -346,31 +346,32 @@ def bundle_detail(request, pathname, content_sha1):
     """
     Detail about a bundle from a particular stream
     """
-    bundle_stream = get_restricted_object(
-        BundleStream,
-        lambda bundle_stream: bundle_stream,
-        request.user,
-        pathname=pathname
-    )
-    return object_detail(
-        request,
-        queryset=bundle_stream.bundles.all(),
-        slug=content_sha1,
-        slug_field="content_sha1",
-        template_name="dashboard_app/bundle_detail.html",
-        template_object_name="bundle",
-        extra_context={
+    bundle_stream = BundleStream.objects.filter(pathname=pathname)
+    bundle = Bundle.objects.filter(bundle_stream=bundle_stream, content_sha1=content_sha1)
+    view = BundleDetailView(request, pathname=pathname, content_sha1=content_sha1, model=TestRun, table_class=BundleDetailTable)
+    bundle_table = BundleDetailTable(view.get_table_data())
+    RequestConfig(request, paginate={"per_page": bundle_table.length}).configure(bundle_table)
+    return render_to_response(
+        "dashboard_app/bundle_detail.html",
+        {
+            'bundle_table': bundle_table,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 bundle_detail,
                 pathname=pathname,
                 content_sha1=content_sha1),
+            "terms_data": bundle_table.prepare_terms_data(view),
+            "search_data": bundle_table.prepare_search_data(view),
+            "discrete_data": bundle_table.prepare_discrete_data(view),
+            "times_data": bundle_table.prepare_times_data(view),
             "site": Site.objects.get_current(),
-            "bundle_stream": bundle_stream
-        })
+            "bundle": bundle[0],
+            "bundle_stream": bundle_stream[0],
+        },
+        RequestContext(request))
 
 
 def bundle_export(request, pathname, content_sha1):
-    # Create and serve the CSV file.
+    """ Create and serve the CSV file. """
 
     bundle = get_restricted_object(
         Bundle,
@@ -382,6 +383,7 @@ def bundle_export(request, pathname, content_sha1):
     tmp_dir = tempfile.mkdtemp()
     file_path = os.path.join(tmp_dir, "%s.csv" % file_name)
 
+    test_run_keys = []
     for test_run in bundle.test_runs.all():
         test_run_keys = test_run.__dict__.keys()
         break
@@ -472,30 +474,17 @@ def ajax_bundle_viewer(request, pk):
         RequestContext(request))
 
 
-class TestRunTable(DataTablesTable):
+class TestRunView(BundleStreamView):
+    """
+    View of test runs in a specified bundle stream.
+    """
+    def __init__(self, request, bundle_stream, **kwargs):
+        super(TestRunView, self).__init__(request, **kwargs)
+        self.bundle_stream = bundle_stream
 
-    record = TemplateColumn(
-        '<a href="{{ record.get_absolute_url }}">'
-        '<code>{{ record.test }} results<code/></a>',
-        accessor="test__test_id",
-    )
-
-    test = TemplateColumn(
-        '<a href="{{ record.test.get_absolute_url }}">{{ record.test }}</a>',
-        accessor="test__test_id",
-    )
-
-    uploaded_on = TemplateColumn(
-        '{{ record.bundle.uploaded_on|date:"Y-m-d H:i:s" }}',
-        accessor='bundle__uploaded_on')
-
-    analyzed_on = TemplateColumn(
-        '{{ record.analyzer_assigned_date|date:"Y-m-d H:i:s" }}',
-        accessor='analyzer_assigned_date')
-
-    def get_queryset(self, bundle_stream):
+    def get_queryset(self):
         return TestRun.objects.filter(
-            bundle__bundle_stream=bundle_stream
+            bundle__bundle_stream=self.bundle_stream
         ).select_related(
             "test",
             "bundle",
@@ -509,26 +498,7 @@ class TestRunTable(DataTablesTable):
             "bundle__bundle_stream__pathname",  # Needed by TestRun.get_absolute_url
             "test__name",  # needed by Test.__unicode__
             "test__test_id",  # needed by Test.__unicode__
-        )
-
-    datatable_opts = {
-        "sPaginationType": "full_numbers",
-        "aaSorting": [[1, "desc"]],
-        "iDisplayLength": 25,
-        "sDom": 'lfr<"#master-toolbar">t<"F"ip>'
-    }
-
-    searchable_columns = ['test__test_id']
-
-
-def test_run_list_json(request, pathname):
-    bundle_stream = get_restricted_object(
-        BundleStream,
-        lambda bundle_stream: bundle_stream,
-        request.user,
-        pathname=pathname
-    )
-    return TestRunTable.json(request, params=(bundle_stream,))
+        ).order_by('test')
 
 
 @BreadCrumb(
@@ -537,7 +507,7 @@ def test_run_list_json(request, pathname):
     needs=['pathname'])
 def test_run_list(request, pathname):
     """
-    List of test runs in a specified bundle stream.
+    List of test runs in a specified bundle in a bundle stream.
     """
     bundle_stream = get_restricted_object(
         BundleStream,
@@ -545,67 +515,33 @@ def test_run_list(request, pathname):
         request.user,
         pathname=pathname
     )
+    view = TestRunView(request, bundle_stream, model=TestRun, table_class=TestRunTable)
+    table = TestRunTable(view.get_table_data())
+    RequestConfig(request, paginate={"per_page": table.length}).configure(table)
     return render_to_response(
         'dashboard_app/test_run_list.html', {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 test_run_list,
                 pathname=pathname),
-            "test_run_table": TestRunTable(
-                'test-runs',
-                reverse(test_run_list_json, kwargs=dict(pathname=pathname)),
-                params=(bundle_stream,)),
+            "test_run_table": table,
             "bundle_stream": bundle_stream,
+            "terms_data": table.prepare_terms_data(view),
+            "search_data": table.prepare_search_data(view),
+            "discrete_data": table.prepare_discrete_data(view),
+            "times_data": table.prepare_times_data(view),
         }, RequestContext(request)
     )
 
 
-class TestTable(DataTablesTable):
+class TestRunDetailView(BundleStreamView):
 
-    relative_index = Column(
-        verbose_name="#", attrs=Attrs(th=dict(style="width: 1%")),
-        default=mark_safe("<em>Not specified</em>"))
+    def __init__(self, request, test_run, analyzer_assigned_uuid, **kwargs):
+        super(TestRunDetailView, self).__init__(request, **kwargs)
+        self.test_run = test_run
+        self.analyzer_assigned_uuid = analyzer_assigned_uuid
 
-    test_case = Column()
-
-    result = TemplateColumn('''
-        <a href="{{record.get_absolute_url}}">
-          <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ record.result_code }}.png"
-          alt="{{ record.result_code }}" width="16" height="16" border="0"/>{{ record.result_code }}
-        {% if record.attachments__count %}
-        <a href="{{record.get_absolute_url}}#attachments">
-          <img style="float:right;" src="{{ STATIC_URL }}dashboard_app/images/attachment.png"
-               alt="This result has {{ record.attachments__count }} attachments"
-               title="This result has {{ record.attachments__count }} attachments"
-               /></a>
-        {% endif %}
-        ''')
-
-    units = TemplateColumn(
-        '{{ record.measurement|default_if_none:"Not specified" }} {{ record.units }}',
-        verbose_name="measurement")
-
-    comments = TemplateColumn('''
-    {{ record.comments|default_if_none:"Not specified"|truncatewords:7 }}
-    ''')
-
-    def get_queryset(self, test_run):
-        return test_run.get_results().annotate(Count("attachments"))
-
-    datatable_opts = {
-        'sPaginationType': "full_numbers",
-        'iDisplayLength': 25,
-    }
-
-    searchable_columns = ['test_case__test_case_id']
-
-
-def test_run_detail_test_json(request, pathname, content_sha1, analyzer_assigned_uuid):
-    test_run = get_restricted_object(
-        TestRun, lambda test_run: test_run.bundle.bundle_stream,
-        request.user,
-        analyzer_assigned_uuid=analyzer_assigned_uuid
-    )
-    return TestTable.json(request, params=(test_run,))
+    def get_queryset(self):
+        return self.test_run.get_results().annotate(Count("attachments"))
 
 
 @BreadCrumb(
@@ -613,17 +549,15 @@ def test_run_detail_test_json(request, pathname, content_sha1, analyzer_assigned
     parent=bundle_detail,
     needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid'])
 def test_run_detail(request, pathname, content_sha1, analyzer_assigned_uuid):
-    test_run = get_restricted_object(
+    job_list = []
+    view = TestRunDetailView(request, get_restricted_object(
         TestRun,
         lambda test_run: test_run.bundle.bundle_stream,
         request.user,
         analyzer_assigned_uuid=analyzer_assigned_uuid
-    )
-    try:
-        target_group = test_run.bundle.testjob.target_group
-        job_list = TestJob.objects.filter(target_group=target_group)
-    except TestJob.DoesNotExist:
-        job_list = []
+    ), analyzer_assigned_uuid, model=TestResult, table_class=TestTable)
+    table = TestTable(view.get_table_data())
+    RequestConfig(request, paginate={"per_page": table.length}).configure(table)
     return render_to_response(
         "dashboard_app/test_run_detail.html", {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
@@ -631,22 +565,19 @@ def test_run_detail(request, pathname, content_sha1, analyzer_assigned_uuid):
                 pathname=pathname,
                 content_sha1=content_sha1,
                 analyzer_assigned_uuid=analyzer_assigned_uuid),
-            "test_run": test_run,
-            "bundle": test_run.bundle,
+            "test_run": view.test_run,
+            "bundle": view.test_run.bundle,
             "job_list": job_list,
-            "test_table": TestTable(
-                'test-table',
-                reverse(test_run_detail_test_json, kwargs=dict(
-                    pathname=pathname,
-                    content_sha1=content_sha1,
-                    analyzer_assigned_uuid=analyzer_assigned_uuid)),
-                params=(test_run,))
-
+            "terms_data": table.prepare_terms_data(view),
+            "search_data": table.prepare_search_data(view),
+            "discrete_data": table.prepare_discrete_data(view),
+            "times_data": table.prepare_times_data(view),
+            "test_table": table,
         }, RequestContext(request))
 
 
 def test_run_export(request, pathname, content_sha1, analyzer_assigned_uuid):
-    # Create and serve the CSV data file.
+    """ Create and serve the CSV data file."""
 
     test_run = get_restricted_object(
         TestRun,
@@ -661,6 +592,7 @@ def test_run_export(request, pathname, content_sha1, analyzer_assigned_uuid):
 
     test_results = test_run.get_results()
 
+    test_result_keys = []
     for test_result in test_results:
         test_result_keys = test_result.__dict__.keys()
         break
@@ -905,28 +837,21 @@ def redirect_to_bundle(request, content_sha1, trailing=''):
     return redirect_to(request, bundle, trailing)
 
 
-class TestDefinitionTable(DataTablesTable):
-    name = Column()
-    version = Column()
-    location = Column()
-    description = Column()
+class TestDefinitionView(BundleStreamView):
 
     def get_queryset(self):
         return TestDefinition.objects.all()
 
 
-def testdefinition_table_json(request):
-    return TestDefinitionTable.json(request)
-
-
 @BreadCrumb("Test Definitions", parent=index)
 def test_definition(request):
+    view = TestDefinitionView(request)
+    table = TestDefinitionTable(view.get_table_data())
+    RequestConfig(request, paginate={"per_page": table.length}).configure(table)
     return render_to_response(
         "dashboard_app/test_definition.html", {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(test_definition),
-            "testdefinition_table": TestDefinitionTable(
-                'testdeflist',
-                reverse(testdefinition_table_json))
+            "testdefinition_table": table,
         }, RequestContext(request))
 
 

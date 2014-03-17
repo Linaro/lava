@@ -109,7 +109,7 @@ The name is the name of an `entry point`_ from the
 a package installed into the instance that the dispatcher is running
 from.
 
-.. _`entry point`: http://packages.python.org/distribute/pkg_resources.html#entry-points
+.. _`entry point`: https://pythonhosted.org/setuptools/pkg_resources.html#entry-points
 
 Providing handlers as shell scripts
 -----------------------------------

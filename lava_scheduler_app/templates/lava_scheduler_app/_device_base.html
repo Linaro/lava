@@ -43,13 +43,28 @@
 
     <dt>Device Tags</dt>
     {% for tag in device.tags.all %}
-    <dd>{{ tag.name }}</dd>
+    <dd>{{ tag.name }}
+    {% if tag.description %}
+      <abbr title="{{ tag.description }}">(?)</abbr>
+    {% endif %}
+    </dd>
     {% empty %}
     <dd><i>None</i></dd>
     {% endfor %}
 
     <dt>Worker Hostname</dt>
-    <dd>{{ device.worker_host }}</dd>
+    <dd>
+    {% if device.too_long_since_last_heartbeat %}
+      <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"/>
+    {% else %}
+      <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"/>
+    {% endif %}&nbsp;&nbsp;
+    {% if device.worker_host.is_master %}
+      <b><a href="{{ device.worker_host.get_absolute_url }}">{{ device.worker_host.hostname }}</a></b>
+    {% else %}
+      <a href="{{ device.worker_host.get_absolute_url }}">{{ device.worker_host.hostname }}</a>
+    {% endif %}
+    </dd>
 </td>
 <td style="vertical-align:text-top;text-align:left;">
     <dt>Device Owner:
@@ -139,7 +154,7 @@
   <button id="looping-button">Put into looping mode</button>
 </form>
 <form method="POST"
-      action="{% url lava.scheduler.device.online device.pk %}"
+      action="{% url lava.scheduler.device.looping device.pk %}"
       id="looping-dialog" style="display: none">
   {% csrf_token %}
   A reason must be specified:

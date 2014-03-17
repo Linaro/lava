@@ -19,7 +19,9 @@ from lava_scheduler_app.models import (
     DeviceType,
     JSONDataError,
     Tag,
-    TestJob)
+    TestJob,
+    DevicesUnavailableException,
+)
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 import simplejson
 
@@ -89,13 +91,17 @@ class ModelFactory(object):
     def ensure_tag(self, name):
         return Tag.objects.get_or_create(name=name)[0]
 
-    def make_device(self, device_type=None, hostname=None, **kw):
+    def make_device(self, device_type=None, hostname=None, tags=None, **kw):
         if device_type is None:
             device_type = self.ensure_device_type()
         if hostname is None:
             hostname = self.getUniqueString()
+        if type(tags) != list:
+            tags = []
         device = Device(device_type=device_type, is_public=True, hostname=hostname, **kw)
-        logging.debug("making a device of type %s %s %s" % (device_type, device.is_public, device.hostname))
+        device.tags = tags
+        logging.debug("making a device of type %s %s %s with tags '%s'"
+                      % (device_type, device.is_public, device.hostname, ", ".join([x.name for x in device.tags.all()])))
         device.save()
         return device
 
@@ -190,13 +196,39 @@ class TestTestJob(TestCaseWithFactory):
         self.assertEqual(set(job.tags.all()), set([]))
 
     def test_from_json_and_user_errors_on_unknown_tags(self):
+        """
+        Tests that tags which are not already defined in the database
+        cause job submissions to be rejected.
+        """
         self.assertRaises(
             JSONDataError, TestJob.from_json_and_user,
             self.factory.make_job_json(device_tags=['unknown']),
             self.factory.make_user())
 
+    def test_from_json_and_user_errors_on_unsupported_tags(self):
+        """
+        Tests that tags which do exist but are not defined for the
+        any of the devices of the requested type cause the submission
+        to be rejected with Devices Unavailable.
+        """
+        device_type = self.factory.ensure_device_type(name='panda')
+        self.factory.make_device(device_type=device_type, hostname="panda2")
+        self.factory.ensure_tag('tag1')
+        self.factory.ensure_tag('tag2')
+        try:
+            TestJob.from_json_and_user(
+                self.factory.make_job_json(device_tags=['tag1', 'tag2']),
+                self.factory.make_user())
+        except DevicesUnavailableException:
+            pass
+        else:
+            self.fail("Device tags failure: job submitted without any devices supporting the requested tags")
+
     def test_from_json_and_user_sets_tag_from_device_tags(self):
+        device_type = self.factory.ensure_device_type(name='panda')
         self.factory.ensure_tag('tag')
+        tags = list(Tag.objects.filter(name='tag'))
+        self.factory.make_device(device_type=device_type, hostname="panda1", tags=tags)
         job = TestJob.from_json_and_user(
             self.factory.make_job_json(device_tags=['tag']),
             self.factory.make_user())
@@ -204,9 +236,12 @@ class TestTestJob(TestCaseWithFactory):
             set(tag.name for tag in job.tags.all()), {'tag'})
 
     def test_from_json_and_user_sets_multiple_tag_from_device_tags(self):
-        self.factory.ensure_device_type(name='panda')
-        self.factory.ensure_tag('tag1')
-        self.factory.ensure_tag('tag2')
+        device_type = self.factory.ensure_device_type(name='panda')
+        tag_list = [
+            self.factory.ensure_tag('tag1'),
+            self.factory.ensure_tag('tag2')
+        ]
+        self.factory.make_device(device_type=device_type, hostname="panda2", tags=tag_list)
         job = TestJob.from_json_and_user(
             self.factory.make_job_json(device_tags=['tag1', 'tag2']),
             self.factory.make_user())
@@ -214,8 +249,10 @@ class TestTestJob(TestCaseWithFactory):
             set(tag.name for tag in job.tags.all()), {'tag1', 'tag2'})
 
     def test_from_json_and_user_reuses_tag_objects(self):
-        self.factory.ensure_device_type(name='panda')
+        device_type = self.factory.ensure_device_type(name='panda')
         self.factory.ensure_tag('tag')
+        tags = list(Tag.objects.filter(name='tag'))
+        self.factory.make_device(device_type=device_type, hostname="panda3", tags=tags)
         job1 = TestJob.from_json_and_user(
             self.factory.make_job_json(device_tags=['tag']),
             self.factory.make_user())
@@ -225,6 +262,29 @@ class TestTestJob(TestCaseWithFactory):
         self.assertEqual(
             set(tag.pk for tag in job1.tags.all()),
             set(tag.pk for tag in job2.tags.all()))
+
+    def test_from_json_and_user_matches_available_tags(self):
+        """
+        Test that with more than one device of the requested type supporting
+        tags, that the tag list set for the TestJob matches the list requested,
+        not a shorter list from a different device or a combined list of multiple
+        devices.
+        """
+        device_type = self.factory.ensure_device_type(name='panda')
+        tag_list = [
+            self.factory.ensure_tag('common_tag1'),
+            self.factory.ensure_tag('common_tag2')
+        ]
+        self.factory.make_device(device_type=device_type, hostname="panda4", tags=tag_list)
+        tag_list.append(self.factory.ensure_tag('unique_tag'))
+        self.factory.make_device(device_type=device_type, hostname="panda5", tags=tag_list)
+        job = TestJob.from_json_and_user(
+            self.factory.make_job_json(device_tags=['common_tag1', 'common_tag2', 'unique_tag']),
+            self.factory.make_user())
+        self.assertEqual(
+            set(tag for tag in job.tags.all()),
+            set(tag_list)
+        )
 
     def test_from_json_and_user_rejects_invalid_json(self):
         self.assertRaises(

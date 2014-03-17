@@ -1,28 +1,171 @@
-{% extends "ajax_table.html" %}
+{% load django_tables2 %}
+{% load tables %}
+{% block content %}
+<style>
+table.display thead th.orderable > a {
+    padding-right: 20px;
+    background: url(/static/lava_scheduler_app/images/arrow-up-down.png) right center no-repeat;
+}
 
-{% block table.thead %}
-{% if table.complex_header %}
-<thead>
-  <tr>
-    {% for column in table.columns %}
-    {% if not column.column.in_group %}
-    <th {{ column.attrs.th.as_html }} rowspan="2">{{ column.header }}</th>
-    {% else %}
-    {% if column.column.first_in_group %}
-    <th class="ui-state-default" colspan="{{ column.column.group_length }}">{{ column.column.group_name }}</th>
-    {% endif %}
-    {% endif %}
-    {% endfor %}
-  </tr>
-  <tr>
-    {% for column in table.columns %}
-    {% if column.column.in_group %}
-    <th {{ column.attrs.th.as_html }}>{{ column.header }}</th>
-    {% endif %}
-    {% endfor %}
-  </tr>
-</thead>
-{% else %}
-{{ block.super }}
+table.display thead th.orderable.asc > a {
+    background-image: url(/static/lava_scheduler_app/images/arrow-up-active.png);
+}
+
+table.display thead th.orderable.desc > a {
+    background-image: url(/static/lava_scheduler_app/images/arrow-down-active.png);
+}
+</style>
+{% load i18n %}
+{% if table.page %}
+<div class="table-container">
+<table width="100%">
+<tr>
+    <td>
+{%  if search_data|get_search_data:table.prefix %}
+    Simple text searches are supported for <b>{{ search_data|get_search_data:table.prefix|join:", " }}</b>&nbsp;
+    <abbr title="text entered in the search box will be used in case sensitive matches - any field can match.">(?)</abbr><br/>
+{%  endif %}
+{%  if times_data|get_search_data:table.prefix %}
+    Time based filters are supported for <b>{{ times_data|get_search_data:table.prefix|join:", " }}</b>&nbsp;
+    <abbr title="add the filter and a number in the query string, e.g. end_time=48 - all rows must match.">(?)</abbr><br/>
+{%  endif %}
+{%  if discrete_data|get_discrete_data:table.prefix %}
+    Exclusive text searches are supported for <b>{{ discrete_data|get_discrete_data:table.prefix|join:", " }}</b>&nbsp;
+    <abbr title="add field=text in the querystring to make case sensitive matches - all fields must match.">(?)</abbr><br/>
+{%  endif %}
+    </td><td>
 {% endif %}
-{% endblock table.thead %}
+{%  if terms_data|get_terms_data:table.prefix %}
+    Showing simple case-sensitive text search for <b>{{ terms_data|get_terms_data:table.prefix|join:", " }}</b><br/>
+{%  endif %}
+    </td>
+</tr>
+</table>
+{% block table %}
+
+<div class="ui-widget-header">
+<table border=0 width="100%">
+<tr>
+<td><form id="{{ table.prefix }}search_form" action="{% querystring %}" method="get">
+Show <select name="{{ table.prefix }}length" onchange="submit_search_form('{{ table.prefix }}');">
+{{ table|get_length_select:request.GET }}
+</select> entries
+<input type="hidden" name="{{ table.prefix }}search" value="{{ request.GET.search }}">
+</form></td><td>
+{%  if search_data|get_search_data:table.prefix %}
+<form style="text-align: right" action="{% querystring "search"="" %}" method="get">
+Search: <input type="text" name="{{ table.prefix }}search" value="{{ terms_data|get_terms_data:table.prefix|join:" " }}">
+<input type="hidden" name="{{ table.prefix }}length" value="{{ table|get_prefix_length:request.GET }}">
+</form>
+{%  endif %}
+</td></tr>
+</table>
+</div>
+
+<table{% if table.attrs %} {{ table.attrs.as_html }}{% endif %}>
+    {% block table.thead %}
+    {% if table.complex_header %}
+    <thead>
+        <tr class="ui-widget-header">
+        {% for column in table.columns %}
+            {% if not column.column.in_group %}
+                {% if column.orderable %}
+                    <th class="ui-state-default" {{ column.attrs.th.as_html }} rowspan="2"><a
+                    href="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}">{{ column.header }}</a></th>
+                {% else %}
+                    <th class="ui-state-default" {{ column.attrs.th.as_html }} rowspan="2">{{ column.header }}</th>
+                {%  endif %}
+            {% else %}
+              {% if column.column.first_in_group %}
+                  {% if column.orderable %}
+                    <th class="ui-state-default" colspan="{{ column.column.group_length }}"><a href="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}">
+{{ column.column.group_name }}</a></th>
+                  {% else %}
+                     <th class="ui-state-default" colspan="{{ column.column.group_length }}">{{ column.column.group_name }}</th>
+                  {% endif %}
+            {% endif %}
+            {% endif %}
+        {% endfor %}
+        </tr>
+        <tr>
+    {% for column in table.columns %}
+        {% if column.column.in_group %}
+            <th class="ui-state-default" {{ column.attrs.th.as_html }}>{{ column.header }}</th>
+        {% endif %}
+    {% endfor %}
+        </tr>
+    </thead>
+    {% else %}
+    <thead>
+        <tr>
+        {% for column in table.columns %}
+            <th class="ui-state-default"  {{ column.attrs.th.as_html }}>{{ column.header }}</th>
+        {% endfor %}
+        </tr>
+    </thead>
+    {% endif %}
+    {% endblock table.thead %}
+    {% block table.tbody %}
+    <tbody>
+        {% for row in table.page.object_list|default:table.rows %} {# support pagination #}
+        {% block table.tbody.row %}
+        <tr class="{% cycle "odd" "even" %}">
+            {% for column, cell in row.items %}
+                <td {{ column.attrs.td.as_html }}>{{ cell }}</td>
+            {% endfor %}
+        </tr>
+        {% endblock table.tbody.row %}
+        {% empty %}
+        {% if table.empty_text %}
+        {% block table.tbody.empty_text %}
+        <tr><td colspan="{{ table.columns|length }}">{{ table.empty_text }}</td></tr>
+        {% endblock table.tbody.empty_text %}
+        {% endif %}
+        {% endfor %}
+    </tbody>
+    {% endblock table.tbody %}
+    {% block table.tfoot %}
+    <tfoot></tfoot>
+    {% endblock table.tfoot %}
+</table>
+{% endblock table %}
+
+{% if table.page %}
+{% with table.page.paginator.count as total %}
+{% with table.page.object_list|length as count %}
+{% block pagination %}
+<ul class="pagination ui-widget-header">
+    {% if table.page.has_previous %}
+    {% block pagination.previous %}<li class="previous"><a
+            href="{% querystring table.prefixed_page_field=table.page.previous_page_number %}">
+        {% trans "Previous" %}</a></li>{% endblock pagination.previous %}
+    {% endif %}
+
+    {% if table.page.has_previous or table.page.has_next %}
+    {% block pagination.current %}<li
+            class="current">{% blocktrans with table.page.number as current and table.paginator.num_pages as total %}
+        Page {{ current }} of {{ total }}{% endblocktrans %}</li>{% endblock pagination.current %}
+    {% endif %}
+
+    {% if table.page.has_next %}
+    {% block pagination.next %}<li
+            class="next"><a href="{% querystring table.prefixed_page_field=table.page.next_page_number %}">
+        {% trans "Next" %}</a></li>{% endblock pagination.next %}
+    {% endif %}
+
+    {% block pagination.cardinality %}<li
+            class="cardinality">{% if total != count %}{% blocktrans %}{{ count }} of {{ total }}{% endblocktrans %}
+    {% else %}{{ total }}{% endif %} {% if total == 1 %}{{ table.data.verbose_name }}
+    {% else %}{{ table.data.verbose_name_plural }}{% endif %}</li>{% endblock pagination.cardinality %}
+</ul>
+{% endblock pagination %}
+{% endwith %}
+{% endwith %}
+</div>
+{%  else %}
+<ul class="pagination ui-widget-header">
+<li class="current">{{ table.data.verbose_name }}</li>
+</ul>
+{% endif %}
+
+{% endblock %}

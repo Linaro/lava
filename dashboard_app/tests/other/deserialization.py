@@ -741,7 +741,8 @@ class BundleDeserializerAtomicityTestCase(TransactionTestCase):
             [
                 'A test with UUID 1ab86b36-c23d-11df-a81b-002163936223 already exists',
                 'column analyzer_assigned_uuid is not unique',
-                u'duplicate key value violates unique constraint '
+                u'duplicate key value violates unique constraint "dashboard_app_testrun_analyzer_assigned_uuid_key"',
+                u'UNIQUE constraint failed: dashboard_app_testrun.analyzer_assigned_uuid',
                 '"dashboard_app_testrun_analyzer_assigned_uuid_key"',
             ])
 

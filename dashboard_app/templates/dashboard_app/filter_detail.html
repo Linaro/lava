@@ -14,7 +14,7 @@
 
 {% include "dashboard_app/filter_summary.html" with filter_data=filter.as_data %}
 
-{% if filter.owner == request.user %}
+{% if filter.owner == request.user or request.user.is_superuser %}
 <p>
   You can <a href="{{ filter.get_absolute_url }}/+edit">edit</a>
   or <a href="{{ filter.get_absolute_url }}/+delete">delete</a> this filter.

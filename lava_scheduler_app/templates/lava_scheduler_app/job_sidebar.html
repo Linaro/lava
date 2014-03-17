@@ -1,5 +1,5 @@
 {% extends "layouts/content_with_sidebar.html" %}
-
+{% load utils %}
 
 {% block extrahead %}
 {{ block.super }}
@@ -35,7 +35,7 @@
     <dt>Required Device Tag</dt>
     {% endif %}
     {% endif %}
-    <dd>{{ tag.name }}</dd>
+    <dd>{{ tag.name }}<abbr title="{{ tag.description }}">(?)</abbr></dd>
     {% endfor %}
 
     {% if job.description %}
@@ -51,7 +51,7 @@
     {% if job.actual_device %}
     <dt>On device:</dt>
     <dd>
-      <a href="{{ job.actual_device.get_absolute_url }}">{{ job.actual_device }}</a>
+      <a href="{{ job.actual_device.get_absolute_url }}">{{ job.actual_device.hostname }}</a>
     </dd>
     <dt>Device Owner:
         <abbr title="If specified, submissions to {{ device.hostname }} are restricted to this user or group.">(?)</abbr>
@@ -66,7 +66,7 @@
         {% endif %}
     </dd>
     <dt>User(s) with physical access:
-        <abbr title="If known, this is the user or group of users with physical access to {{ job.actual_device }}.">(?)</abbr>
+        <abbr title="If known, this is the user or group of users with physical access to {{ job.actual_device.hostname }}.">(?)</abbr>
     </dt>
     <dd>
         {% if job.actual_device.physical_owner %}
@@ -93,9 +93,9 @@
       <a href="{% url lava.scheduler.job.detail subjob.sub_id %}">
         {{ subjob.sub_id }}</a>
     </dd>
-    {% if subjob.actual_device %}
+    {% if subjob.actual_device.hostname %}
     <dd>on:
-      <a href="{{ subjob.actual_device.get_absolute_url }}">{{ subjob.actual_device }}</a>
+      <a href="{{ subjob.actual_device.get_absolute_url }}">{{ subjob.actual_device.hostname }}</a>
     </dd>
     <dd>as: {{ subjob.multinode_role }}</dd>
     {% else %}
@@ -132,14 +132,14 @@
     <li><b>Device reports</b>
     <ul>
     {% if job.actual_device %}
-    <li><a href="{% url lava.scheduler.device_report job.actual_device %}">{{ job.actual_device }}</a></li>
+    <li>Name:&nbsp;<a href="{% url lava.scheduler.device_report job.actual_device.pk %}">{{ job.actual_device.hostname }}</a></li>
     {% endif %}
     {% if job.requested_device %}
-    <li><a href="{% url lava.scheduler.device_type_report job.requested_device.device_type %}">
+    <li>Type:&nbsp;<a href="{% url lava.scheduler.device_type_report job.requested_device.device_type %}">
         {{ job.requested_device.device_type }}</a></li>
 
     {% elif job.requested_device_type %}
-    <li><a href="{% url lava.scheduler.device_type_report job.requested_device_type %}">
+    <li>Type:&nbsp;<a href="{% url lava.scheduler.device_type_report job.requested_device_type %}">
         {{ job.requested_device_type }}</a></li>
     {% endif %}
     </ul></li>
@@ -169,7 +169,6 @@
 {% endif %}
 
 {% if change_priority %}
-{% if job.actual_device or job.requested_device %}
 <h3>Job priority: <abbr
 title="Priority affects the order in which submitted jobs are scheduled.
 Default is to schedule by submission time with health checks
@@ -179,22 +178,9 @@ always running before submitted jobs. Running jobs are never affected.">(?)</abb
       action="{% url lava.scheduler.job.priority job.pk %}"
       id="priority-choice">
   {% csrf_token %}
-    {% if job.priority == 0 %}
-    <input type="radio" name="priority" style="..." id="low" value="0" checked>Low</input><br/>
-    <input type="radio" name="priority" style="..." id="medium" value="50">Medium</input> [default]<br/>
-    <input type="radio" name="priority" style="..." id="high" value="100">High</input><br/>
-    {% elif job.priority == 100 %}
-    <input type="radio" name="priority" style="..." id="low" value="0">Low</input><br/>
-    <input type="radio" name="priority" style="..." id="medium" value="50">Medium</input> [default]<br/>
-    <input type="radio" name="priority" style="..." id="high" value="100" checked>High</input><br/>
-    {% else %}
-    <input type="radio" name="priority" style="..." id="low" value="0">Low</input><br/>
-    <input type="radio" name="priority" style="..." id="medium" value="50" checked>Medium</input><br/>
-    <input type="radio" name="priority" style="..." id="high" value="100">High</input><br/>
-    {% endif %}
+  {{ job.priority|get_priority_select }}
   <button id="priority-button">Set priority</button>
 </form>
-{% endif %}
 {% endif %}
 {% endif %}
 

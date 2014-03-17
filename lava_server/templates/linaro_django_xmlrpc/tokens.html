@@ -14,10 +14,8 @@
 {% block breadcrumbs %}
 {{ block.super }}
 <li><a href="{% url lava.home %}">{% trans "LAVA" %}</a></li>
-<li>{% trans "API" %}</a></li>
-<li><a
-  href="{% url linaro_django_xmlrpc.views.tokens %}"
-  >{% trans "Authentication Tokens" %}</a></li>
+<li>{% trans "API" %}</li>
+<li><a href="{% url linaro_django_xmlrpc.views.tokens %}">{% trans "Authentication Tokens" %}</a></li>
 {% endblock %}
 
 
@@ -37,47 +35,54 @@ resources. You can create and use any number of tokens simultaneously. If you
 believe a token is compromised you can quickly remove it.  Anyone using that
 token will no longer be able to authenticate as You in the system.</p>
 <h2>Your tokens</h2>
-{% for token in token_list %}
-<h3>Token No. {{ token.pk }}</h3>
-<dl>
-  <dt>Description:</dt>
-  <dd><a 
-    href="{% url linaro_django_xmlrpc.views.edit_token token.pk %}"
-    >{{token.description|default:"empty"}}</a></dd>
-  <dt>Created on:</dt>
-  <dd>{{token.created_on|date}}</dd>
-  <dt>Last used:</dt>
-  <dd>
-  {% if token.last_used_on %}
-  {{token.last_used_on|timesince }} ago
-  {% else %}
-  <em>It was not used yet</em>
-  {% endif %}
-  </dd>
-  <dt>Secret:</dt>
-  <dd>
-  <span id="notice_{{ forloop.counter }}">The secret is currently hidden.</span>
-  <div class="console" style="display:none;" id="secret_{{ forloop.counter }}">
-    <code>{{ token.secret }}</code>
-  </div>
-  </dd>
-</dl>
-<ul>
-  <li><a
-    href="#" 
-    id="button_{{ forloop.counter }}"
-    >display this token</a></li>
-  <li><a 
-    href="{% url linaro_django_xmlrpc.views.delete_token token.pk %}"
-    >delete this token</a></li>
-</ul>
+
+{% if token_list %}
+<table class="display">
+  <thead>
+    <th class="ui-state-default">No.</th>
+    <th class="ui-state-default">Description</th>
+    <th class="ui-state-default">Created on</th>
+    <th class="ui-state-default">Last used</th>
+    <th class="ui-state-default">Display token</th>
+    <th class="ui-state-default">Delete token</th>
+  </thead>
+  <tbody>
+    {% for token in token_list|dictsort:"pk" %}
+    <tr>
+      <td>{{ token.pk }}</td>
+      <td><a href="{% url linaro_django_xmlrpc.views.edit_token token.pk %}">{{ token.description|default:"empty" }}</a></td>
+      <td>{{ token.created_on|date }}</td>
+      {% if token.last_used_on %}
+      <td>{{ token.last_used_on|timesince }}</td>
+      {% else %}
+      <td><em>It was not used yet</em></td>
+      {% endif %}
+      <td><div id="dialog_{{ token.pk }}" title="Token {{ token.pk }}">
+            <code>{{ token.secret }}</code>
+          </div>
+          <a href="#" id="button_{{ token.pk }}">display</a></td>
+      <td><a href="{% url linaro_django_xmlrpc.views.delete_token token.pk %}">delete</a></td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
 <script type="text/javascript">
-  $("#button_{{ forloop.counter }}").click(function() {
-    $("#secret_{{ forloop.counter }}").toggle();
-    $("#notice_{{ forloop.counter }}").toggle();
+$(function() {
+  {% for token in token_list %}
+  $("#dialog_{{ token.pk }}").dialog({
+    width : 600,
+    autoOpen: false
   });
+
+  $("#button_{{ token.pk }}").click(function() {
+    $("#dialog_{{ token.pk }}").dialog("open");
+  });
+  {% endfor %}
+});
 </script>
-{% empty %}
+{% else %}
 <p>You don't have any tokens yet.</p>
-{% endfor %}
+{% endif %}
+
 {% endblock %}

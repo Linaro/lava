@@ -14,6 +14,7 @@ LAVA Manual
    writing-multinode.rst
    test-repositories.rst
    filters-reports.rst
+   lava-dashboard-image-reports.rst
    healthchecks.rst
    multinode-usecases.rst
    development.rst
@@ -25,12 +26,13 @@ LAVA Test Developer Guide
 #########################
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
    developing-tests.rst
    dispatcher-actions.rst
    lava_test_shell.rst
    multinode.rst
+   vm-groups.rst
    boot-management.rst
    tftp-deploy.rst
    external_measurement.rst
@@ -69,4 +71,5 @@ Other Topics
    lava-scheduler-device-help.rst
    lava-scheduler-device-type-help.rst
    lava-scheduler-submit-job.rst
+   lava-scheduler-job.rst
    linaro-dashboard-bundle/index.rst

@@ -96,4 +96,4 @@ class TestRunViewAuth(TestCaseWithScenarios):
 
     def test_run_unauth_access(self):
         response = self.client.get(self.test_run_url)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 403)

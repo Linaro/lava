@@ -79,11 +79,10 @@ class DashboardXMLRPCViewsTestCase(TestCaseWithScenarios):
 
     def setUp(self):
         super(DashboardXMLRPCViewsTestCase, self).setUp()
-        self.endpoint_path = reverse(
-            "dashboard_app.views.dashboard_xml_rpc_handler")
+        self.endpoint_path = "http://localhost/RPC2/"
 
     def xml_rpc_call(self, method, *args):
-        request_body = xmlrpclib.dumps(tuple(args), methodname=method)
+        request_body = xmlrpclib.dumps(tuple(args), methodname='dashboard.%s' % method)
         response = self.client.post(self.endpoint_path,
                                     request_body, "text/xml")
         return xmlrpclib.loads(response.content)[0][0]

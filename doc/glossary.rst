@@ -10,7 +10,8 @@ Glossary of terms
     run at regular intervals to ensure that the physical device is capable
     of performing the minimum range of tasks. If the health check fails on
     a particular device of the specified device type, LAVA will automatically
-    put that device :term:`Offline`. See :ref:`health_checks`.
+    put that device :term:`Offline`. See :ref:`health_checks`. Health checks
+    have higher :term:`priority` than any other jobs.
 
   device type
     The common type of a number of devices in LAVA. The device type may
@@ -70,7 +71,7 @@ Glossary of terms
 
   test run
     The result from a single test definition execution. The individual
-    id and result of a single test within a test run is called the 
+    id and result of a single test within a test run is called the
     Test Case.
 
   hwpack
@@ -198,3 +199,19 @@ Glossary of terms
     or optionally the host at any time. That should include having
     one SD card in use by the DUT and the other in use by the host
     at the same time.
+
+  priority
+    A job has a default priority of ``Medium``. This means that the job
+    will be scheduled according to the submit time of the job, in a list
+    of jobs of the same priority. Every :term:`health check` has a higher
+    priority than any submitted job and if a health check is required, it
+    will **always** run before any other jobs. Priority only has any
+    effect whilst the job is queued as ``Submitted``.
+
+  device status transition
+    A record of when a device changed :ref:`device_status`, who caused
+    the transition, when the transition took place as well as any message
+    assigned to the transition. Individual transitions can be viewed in
+    LAVA at ``<server>scheduler/transition/<ID>`` where the ID is a
+    sequential integer. If the transition was caused by a job, this view
+    will link to that job.

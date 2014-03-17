@@ -76,7 +76,8 @@ Now that the dispatcher understand the QEMU device and can work with it, we
 need to inform the LAVA scheduler about it. This is done from the admin panel
 in the LAVA web app.
 
-You'll first add a "qemu" device type by going to a URL like:
+You'll first add a "qemu" device type by going to a URL like::
+
  http://localhost/admin/lava_scheduler_app/devicetype/
 
 That page will give you an option to add a device type. From the add device
@@ -87,7 +88,8 @@ After adding a device type you can add a device. From this page you'll want
 to set the hostname to the same value you set for 'target' in the dispatch
 config. Then select "qemu" from the device type list.
 
-Now when you view:
+Now when you view::
+
  http://localhost/scheduler/
 
 You should see your new device type and be able to drill down to the device.
@@ -95,7 +97,5 @@ You should see your new device type and be able to drill down to the device.
 Submitting a QEMU Job
 ---------------------
 
-The scheduler documentation includes instructions for `submitting a job`_ to
+The scheduler documentation includes instructions for :ref:`job_submission` to
 LAVA. You can use the job file shown above as the basis for your new job.
-
-.. _submitting a job: http://lava-scheduler.readthedocs.org/en/latest/usage.html#submitting-jobs

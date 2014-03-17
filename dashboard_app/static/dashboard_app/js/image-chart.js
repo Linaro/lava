@@ -303,7 +303,8 @@ $(document).ready(function () {
             table[number][test_data["test_filter_id"]].push({
                 "passes": test_data["passes"],
                 "total": test_data["total"],
-                "link": test_data["link"]
+                "link": test_data["link"],
+                "bug_links": test_data["bug_links"]
             });
         }
 
@@ -363,11 +364,22 @@ $(document).ready(function () {
                     } else {
                         cls = "pass";
                     }
+                    a = cell["link"].split("/").reverse();
+                    uuid = a[1];
 
-                    table_body += '<td class="' + cls + '">';
+                    table_body += '<td class="' + cls + '" data-chart-id="' + chart_id + '" data-uuid="' + uuid + '">';
 
                     table_body += '<a target="_blank" href="' + cell["link"] +
                         '">' + cell["passes"] + '/' + cell["total"] + '</a>';
+
+                    table_body += '&nbsp;&nbsp;<a href="#" class="add-bug-link"><img src="' + image_url + 'icon-bug-link.png" width="16" height="16"> [' + cell["bug_links"].length + ']</a>';
+                    table_body += '<span class="bug-links" style="display: none">';
+                    for (bug_link in cell["bug_links"]) {
+                        bug = cell["bug_links"];
+                        table_body += '<li class="bug-link">' + bug[bug_link] + '</li>';
+                    }   
+                    table_body += '</span>';
+
                     table_body += "</td>";
                 }
             }
@@ -794,6 +806,10 @@ $(document).ready(function () {
         return !isNaN(parseFloat(n)) && isFinite(n);
     }
 
+    isValidUrl = function(url) {
+        return url.match(/^https?:\/\/[a-z0-9-\.]+\.[a-z]{2,4}\/?([^\s<>\#%"\,\{\}\\|\\\^\[\]`]+)?$/);
+    }
+
     insert_data_item = function(item, data) {
         // Insert item at the sorted position in the data.
         // data represents list of two-value lists.
@@ -849,15 +865,180 @@ $(document).ready(function () {
         alert("End build number must be greater then the start build number.");
     }
 
+    add_bug_link = function () {
+        var current_bug = [];
+
+        $("#add-bug-dialog").bind('submit', function(e) {
+            var bug_url = $("#add-bug-dialog").find('input[name=bug_link]').val();
+            if (!isValidUrl(bug_url)) {
+                e.preventDefault();
+                alert("'" + bug_url + "' is not a valid url!!");
+            }
+            if (current_bug.indexOf(bug_url) > -1) {
+                e.preventDefault();
+                alert("'" + bug_url + "' is already linked!!");
+            }
+        });
+
+        _submit = function () {
+            $(this).submit();
+        }
+
+        var add_bug_dialog = $('#add-bug-dialog').dialog(
+            {
+                autoOpen: false,
+                buttons: {'Cancel': function () {$(this).dialog('close');}, 'OK': _submit },
+                modal: true,
+                title: "Link bug to XXX"
+            });
+
+        get_testrun_and_buildnumber = function (element) {
+            var cell = element.closest('td');
+            var row = cell.closest('tr');
+            var testrun = $($("#test-run-names_"+chart_id+" > tbody > tr")[row.index()]).text();
+            var header_cells = element.closest('table').find('thead > tr > th');
+            var buildnumber = $(header_cells[cell.index()]).text();
+            return {testrun: $.trim(testrun), buildnumber: $.trim(buildnumber)};
+        }
+
+        find_previous_bugs = function (element) {
+            var td = $(element).closest('td');
+            var bugs = [];
+            var start = td;
+            while ((td = td.prev()) && td.size()) {
+                td.find(".bug-link").each(
+                    function () {
+                        var bug_link = $(this).text();
+                        if (bugs.indexOf(bug_link) < 0) bugs.push(bug_link);
+                    });
+            }
+            var already_linked = [];
+            start.find(".bug-link").each(
+                function () {
+                    var bug_link = $(this).text();
+                    if (bugs.indexOf(bug_link) >= 0) {
+                        bugs.splice(bugs.indexOf(bug_link), 1);
+                        already_linked.push(bug_link);
+                    }
+                });
+            return {bugs:bugs, already_linked:already_linked};
+        }
+
+        get_linked_bugs = function (element) {
+            var start = $(element).closest('td');
+            var bugs = [];
+
+            start.find(".bug-link").each(
+                function () {
+                    var bug_link = $(this).text();
+                    bugs.push(bug_link);
+                }
+            )
+            return bugs;
+        }
+
+        $('a.add-bug-link').click(
+            function (e) {
+                e.preventDefault();
+
+                var previous = find_previous_bugs($(this));
+                var prev_div = add_bug_dialog.find('div.prev');
+                var linked_div = add_bug_dialog.find('div.linked');
+                var names = get_testrun_and_buildnumber($(this));
+                var uuid = $(this).closest('td').data('uuid');
+                var chart_id = $(this).closest('td').data('chart-id');
+                var back_url = add_bug_dialog.find('input[name=back]').val().split('?')[0] + '?bug_links_chart_id=' + chart_id;
+
+                current_bug = get_linked_bugs($(this));
+                add_bug_dialog.find('input[name=back]').val(back_url);
+                add_bug_dialog.find('input[name=bug_link]').val('');
+
+                if(current_bug.length) {
+                    var html = '<b>Bug(s) linked to ' + names.testrun + ':</b><table width="95%" border="0">';
+                    linked_div.show();
+                    for (bug in current_bug) {
+                        html += '<tr>';
+                        html += '<td><a id="linked-bug" href="#">' + current_bug[bug] + '</a></td>';
+                        html += '<td width="16"><a id="unlink-bug" href="#" data-bug-link="' + current_bug[bug] + '"><img src="'+image_url+'icon-bug-delete.png" width="16" height="16" title="Unlink this bug"></a></td></tr>';
+                    }
+                    html += '</table><hr>';
+                    linked_div.html(html);
+                    $('a#linked-bug').click(
+                        function (e) {
+                            e.preventDefault();
+                            window.open($(this).text());
+                        }
+                    );
+                    $('a#unlink-bug').click(
+                        function (e) {
+                            var bug = $(this).data('bug-link');
+
+                            e.preventDefault();
+                            if(confirm("Unlink '" + bug + "'")) {
+                                // unlink bug right now, so clear current_bug which is used for checking if the bug is duplicated when adding a bug
+                                current_bug = [];
+                                $('#add-bug-dialog').attr('action', del_bug_url);
+                                add_bug_dialog.find('input[name=bug_link]').val(bug);
+                                add_bug_dialog.find('input[name=uuid]').val(uuid);
+                                add_bug_dialog.submit();
+                            }
+                        }
+                    );
+                } else {
+                    linked_div.hide();
+                }
+
+                if (previous.bugs.length) {
+                    var html = '';
+                    prev_div.show();
+                    html = '<b>Use a bug previously linked to ' + names.testrun + ':</b><table width="95%">';
+                    for (var i = 0; i < previous.already_linked.length; i++) {
+                        html += '<tr><td style="text-decoration: line-through">' + previous.already_linked[i] + '</td><td><img src="'+image_url+'icon-bug-link.png" width="16" height="16" title="This bug already linked"></td></tr>';
+                    }
+                    for (var i = 0; i < previous.bugs.length; i++) {
+                        html += '<tr><td>' + previous.bugs[i] + '</td><td width="16"><a href="#" data-bug-link="' + previous.bugs[i] + '"><img src="'+image_url+'icon-bug-add.png" width="16" height="16" title="Link this bug"></a></td></tr>';
+                    }
+                    html += '</table><hr>';
+                    html += "<b>Or enter another bug link:</b>";
+                    prev_div.html(html);
+                    prev_div.find('a').click(
+                        function (e) {
+                            var bug = $(this).data('bug-link');
+
+                            e.preventDefault();
+                            if (confirm("Link '" + bug + "' to the '" + names.testrun + "' run of build" + names.buildnumber)) {
+                                add_bug_dialog.find('input[name=bug_link]').val(bug);
+                                add_bug_dialog.submit();
+                            }
+                        });
+                } else {
+                    prev_div.hide();
+                }
+
+                var title = "Link a bug to the '" + names.testrun +
+                    "' run of build " + names.buildnumber;
+                add_bug_dialog.find('input[name=uuid]').val(uuid);
+                add_bug_dialog.dialog('option', 'title', title);
+                add_bug_dialog.dialog('open');
+            }
+        );
+    }
+
     // Add charts.
     for (chart_id in chart_data) {
         add_chart(chart_id, chart_data[chart_id]);
     }
+    
+    add_bug_link();
 
     $(window).resize(function () {
         for (chart_id in chart_data) {
             update_plot(chart_id, chart_data[chart_id]);
         }
     });
+
+    if (chartid.length) {
+        $('#data_table_link_' + chartid).click();
+    }
 
 });

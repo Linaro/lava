@@ -20,7 +20,7 @@ import sys
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseServerError
+from django.http import HttpResponse, HttpResponseServerError, HttpResponseForbidden
 from django.template import Context, loader, RequestContext
 from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import requires_csrf_token
@@ -96,4 +96,4 @@ def server_error(request, template_name='500.html'):
 def permission_error(request, template_name='403.html'):
     t = loader.get_template(template_name)
     context = RequestContext(request)
-    return HttpResponse(t.render(context))
+    return HttpResponseForbidden(t.render(context))

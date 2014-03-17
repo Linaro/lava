@@ -86,6 +86,10 @@ div.selector .selector-chosen select {
     display: none;
 }
 
+#test_select_container {
+    margin-bottom: 10px;
+}
+
 .outer-chart {
 }
 

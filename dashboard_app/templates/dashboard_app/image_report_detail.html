@@ -5,6 +5,7 @@
 {% block extrahead %}
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -38,9 +39,44 @@
     <a href="{{ image_report.get_absolute_url }}/+unpublish">Unpublish</a> this image report.
     {% else %}
     <a href="{{ image_report.get_absolute_url }}/+publish">Publish</a> this image report.
-{% endif %}
+    {% endif %}
   </div>
+
+  {% if image_report.is_published %}
+  <div class="form-field" style="font-size: 16px; float: left;">
+    Image Report Group:&nbsp;&nbsp;
+  </div>
+  <div id="image_report_group" style="font-size: 16px; float: left;">
+{{ image_report.image_report_group|default:"Click here to select"}}</div>
+  <div style="clear: both;"></div>
+
+  {% endif %}
+
 </div>
+
+{% if image_report.is_published %}
+<script type="text/javascript">
+
+  $("#image_report_group").editable(
+  "{% url dashboard_app.views.image_reports.views.image_report_add_group name=image_report.name %}",
+  {
+    onblur: "submit",
+    width: 200,
+    submitdata : {"csrfmiddlewaretoken": '{{csrf_token}}'},
+  });
+
+  $("#image_report_group").focus(function(event) {
+      {% if not image_report.image_report_group %}
+        $(event.target).val("");
+      {% endif %}
+      $(event.target).autocomplete({
+        source: '{% url dashboard_app.views.image_reports.views.image_report_group_list %}',
+        minLength: 2,
+      });
+  });
+
+</script>
+{% endif %}
 
 <h3>Charts</h3>
 

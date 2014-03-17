@@ -29,17 +29,21 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
-
+from django.db.models import Q
 from lava_server.bread_crumbs import (
     BreadCrumb,
     BreadCrumbTrail,
 )
-
 from dashboard_app.filters import (
     evaluate_filter,
 )
+from django_tables2 import (
+    RequestConfig,
+)
+
 from dashboard_app.models import (
     Bundle,
+    BundleStream,
     NamedAttribute,
     Test,
     TestCase,
@@ -55,72 +59,141 @@ from dashboard_app.views.filters.forms import (
     TestRunFilterSubscriptionForm,
 )
 from dashboard_app.views.filters.tables import (
-    FilterTable,
-    FilterPreviewTable,
+    FilterSummaryTable,
+    FilterPassTable,
     PublicFiltersTable,
     TestResultDifferenceTable,
     UserFiltersTable,
 )
+from lava.utils.lavatable import LavaView
+
+
+class FilterView(LavaView):
+
+    def __init__(self, request, **kwargs):
+        super(FilterView, self).__init__(request, **kwargs)
+
+    def stream_query(self, term):
+        streams = BundleStream.objects.filter(pathname__contains=term)
+        return Q(bundle_streams__in=streams)
+
+
+class UserFiltersView(FilterView):
+
+    def get_queryset(self):
+        return TestRunFilter.objects.filter(owner=self.request.user)
+
+
+class PublicFiltersView(FilterView):
+
+    def get_queryset(self):
+        return TestRunFilter.objects.filter(public=True)
 
 
 @BreadCrumb("Filters and Subscriptions", parent=index)
 def filters_list(request):
-    public_filters_table = PublicFiltersTable("public-filters", None)
+    public_view = PublicFiltersView(None, model=TestRunFilter, table_class=PublicFiltersTable)
+    prefix = "public_"
+    public_filters_table = PublicFiltersTable(
+        public_view.get_table_data(prefix),
+        prefix=prefix
+    )
+    config = RequestConfig(request)
+    config.configure(public_filters_table)
+
+    search_data = public_filters_table.prepare_search_data(public_view)
+    discrete_data = public_filters_table.prepare_discrete_data(public_view)
+    terms_data = public_filters_table.prepare_terms_data(public_view)
+    times_data = public_filters_table.prepare_times_data(public_view)
+
+    user_filters_table = None
     if request.user.is_authenticated():
-        public_filters_table.user = request.user
-        user_filters_table = UserFiltersTable("user-filters", None, params=(request.user,))
-        user_filters_table.user = request.user
-    else:
-        user_filters_table = None
-        del public_filters_table.base_columns['subscription']
+        user_view = UserFiltersView(request, model=TestRunFilter, table_class=UserFiltersTable)
+        prefix = "user_"
+        user_filters_table = UserFiltersTable(
+            user_view.get_table_data(prefix),
+            prefix=prefix
+        )
+        config.configure(user_filters_table)
+        search_data.update(user_filters_table.prepare_search_data(user_view))
+        discrete_data.update(user_filters_table.prepare_discrete_data(user_view))
+        terms_data.update(user_filters_table.prepare_terms_data(user_view))
 
     return render_to_response(
         'dashboard_app/filters_list.html', {
             'user_filters_table': user_filters_table,
             'public_filters_table': public_filters_table,
+            "terms_data": terms_data,
+            "search_data": search_data,
+            "times_data": times_data,
+            "discrete_data": discrete_data,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 filters_list),
         }, RequestContext(request)
     )
 
 
-def filter_json(request, username, name):
-    filter = TestRunFilter.objects.get(owner__username=username, name=name)
-    return FilterTable.json(request, params=(request.user, filter.as_data()))
+def filter_name_list_json(request):
+
+    term = request.GET['term']
+    filters = []
+    for filter in TestRunFilter.objects.filter(Q(name__istartswith=term) |
+                                               Q(owner__username__istartswith=term)):
+        filters.append(
+            {"id": filter.id,
+             "name": filter.name,
+             "label": filter.owner_name})
+    return HttpResponse(json.dumps(filters), mimetype='application/json')
 
 
-def filter_preview_json(request):
-    try:
-        filter = TestRunFilter.objects.get(owner=request.user, name=request.GET['name'])
-    except TestRunFilter.DoesNotExist:
-        filter = None
-    form = TestRunFilterForm(request.user, request.GET, instance=filter)
-    if not form.is_valid():
-        raise ValidationError(str(form.errors))
-    return FilterPreviewTable.json(request, params=(request.user, form.as_data()))
+class FilterDetailView(LavaView):
+
+    def __init__(self, request, filter_object, **kwargs):
+        super(FilterDetailView, self).__init__(request, **kwargs)
+        self.filter_object = filter_object
+        self.match_maker = None
+
+    def get_queryset(self):
+        return self.match_maker.queryset
+
+    def is_pass_table(self):
+        if not self.match_maker:
+            self.match_maker = evaluate_filter(self.request.user, self.filter_object.as_data())
+        if self.match_maker.filter_data['tests']:
+            self.table_class = FilterPassTable
+            return True
+        self.table_class = FilterSummaryTable
+        return False
 
 
 @BreadCrumb("Filter ~{username}/{name}", parent=filters_list, needs=['username', 'name'])
 def filter_detail(request, username, name):
-    filter = TestRunFilter.objects.get(owner__username=username, name=name)
-    if not filter.public and filter.owner != request.user:
-        raise PermissionDenied()
+    qfilter = TestRunFilter.objects.get(owner__username=username, name=name)
+    if not request.user.is_superuser:
+        if not qfilter.public and qfilter.owner != request.user:
+            raise PermissionDenied()
     if not request.user.is_authenticated():
         subscription = None
     else:
         try:
             subscription = TestRunFilterSubscription.objects.get(
-                user=request.user, filter=filter)
+                user=request.user, filter=qfilter)
         except TestRunFilterSubscription.DoesNotExist:
             subscription = None
+    view = FilterDetailView(request, qfilter, model=TestRun)
+    if view.is_pass_table():
+        table = FilterPassTable(view.get_table_data(), match_maker=view.match_maker)
+    else:
+        table = FilterSummaryTable(view.get_table_data(), match_maker=view.match_maker)
+    RequestConfig(request, paginate={"per_page": table.length}).configure(table)
     return render_to_response(
         'dashboard_app/filter_detail.html', {
-            'filter': filter,
+            'filter': qfilter,
             'subscription': subscription,
-            'filter_table': FilterTable(
-                "filter-table",
-                reverse(filter_json, kwargs=dict(username=username, name=name)),
-                params=(request.user, filter.as_data())),
+            'filter_table': table,
+            "terms_data": table.prepare_terms_data(view),
+            "search_data": table.prepare_search_data(view),
+            "discrete_data": table.prepare_discrete_data(view),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 filter_detail, name=name, username=username),
         }, RequestContext(request)
@@ -131,8 +204,9 @@ def filter_detail(request, username, name):
 @login_required
 def filter_subscribe(request, username, name):
     filter = TestRunFilter.objects.get(owner__username=username, name=name)
-    if not filter.public and filter.owner != request.user:
-        raise PermissionDenied()
+    if not request.user.is_superuser:
+        if not filter.public and filter.owner != request.user:
+            raise PermissionDenied()
     try:
         subscription = TestRunFilterSubscription.objects.get(
             user=request.user, filter=filter)
@@ -163,23 +237,30 @@ def filter_subscribe(request, username, name):
 
 def filter_form(request, bread_crumb_trail, instance=None):
     if request.method == 'POST':
-        form = TestRunFilterForm(request.user, request.POST, instance=instance)
+        if instance:
+            owner = instance.owner
+        else:
+            owner = request.user
+        form = TestRunFilterForm(owner, request.POST, instance=instance)
 
         if form.is_valid():
             if 'save' in request.POST:
-                filter = form.save()
-                return HttpResponseRedirect(filter.get_absolute_url())
+                qfilter = form.save()
+                return HttpResponseRedirect(qfilter.get_absolute_url())
             else:
                 c = request.POST.copy()
                 c.pop('csrfmiddlewaretoken', None)
+                view = FilterDetailView(request, form, model=TestRun)
+                if view.is_pass_table():
+                    table = FilterPassTable(view.get_table_data(), match_maker=view.match_maker)
+                else:
+                    table = FilterSummaryTable(view.get_table_data(), match_maker=view.match_maker)
+                RequestConfig(request, paginate={"per_page": table.length}).configure(table)
                 return render_to_response(
                     'dashboard_app/filter_preview.html', {
                         'bread_crumb_trail': bread_crumb_trail,
                         'form': form,
-                        'table': FilterPreviewTable(
-                            'filter-preview',
-                            reverse(filter_preview_json) + '?' + c.urlencode(),
-                            params=(request.user, form.as_data())),
+                        'table': table,
                     }, RequestContext(request))
     else:
         form = TestRunFilterForm(request.user, instance=instance)
@@ -201,9 +282,10 @@ def filter_add(request):
 
 @BreadCrumb("Edit", parent=filter_detail, needs=['name', 'username'])
 def filter_edit(request, username, name):
-    if request.user.username != username:
-        raise PermissionDenied()
-    filter = TestRunFilter.objects.get(owner=request.user, name=name)
+    if not request.user.is_superuser:
+        if request.user.username != username:
+            raise PermissionDenied()
+    filter = TestRunFilter.objects.get(owner__username=username, name=name)
     return filter_form(
         request,
         BreadCrumbTrail.leading_to(filter_edit, name=name, username=username),
@@ -212,9 +294,10 @@ def filter_edit(request, username, name):
 
 @BreadCrumb("Delete", parent=filter_detail, needs=['name', 'username'])
 def filter_delete(request, username, name):
-    if request.user.username != username:
-        raise PermissionDenied()
-    filter = TestRunFilter.objects.get(owner=request.user, name=name)
+    if not request.user.is_superuser:
+        if request.user.username != username:
+            raise PermissionDenied()
+    filter = TestRunFilter.objects.get(owner__username=username, name=name)
     if request.method == "POST":
         if 'yes' in request.POST:
             filter.delete()
@@ -239,7 +322,7 @@ def filter_add_cases_for_test_json(request):
 def get_tests_json(request):
 
     tests = Test.objects.filter(
-        test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id']).distinct()
+        test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id']).distinct('test_id').order_by('test_id')
 
     data = serializers.serialize('json', tests)
     return HttpResponse(data, mimetype='application/json')
@@ -248,7 +331,8 @@ def get_tests_json(request):
 def get_test_cases_json(request):
 
     test_cases = TestCase.objects.filter(
-        test__test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id']).exclude(units__exact='').distinct()
+        test__test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id'],
+        test__id=request.GET['test_id']).exclude(units__exact='').distinct('test_case_id').order_by('test_case_id')
 
     data = serializers.serialize('json', test_cases)
     return HttpResponse(data, mimetype='application/json')
@@ -345,8 +429,8 @@ def _test_run_difference(test_run1, test_run2, cases=None):
     return differences
 
 
-def compare_filter_matches(user, filter_data, tag1, tag2):
-    matches = evaluate_filter(user, filter_data)
+def compare_filter_matches(request, filter_data, tag1, tag2):
+    matches = evaluate_filter(request.user, filter_data)
     match1, match2 = matches.with_tags(tag1, tag2)
     test_cases_for_test_id = {}
     for test in filter_data['tests']:
@@ -380,14 +464,14 @@ def compare_filter_matches(user, filter_data, tag1, tag2):
             cases = test_cases_for_test_id.get(key)
             test_result_differences = _test_run_difference(tr1, tr2, cases)
             if test_result_differences:
-                table = TestResultDifferenceTable(
-                    "test-result-difference-" + escape(key), data=test_result_differences)
+                table = TestResultDifferenceTable(test_result_differences, prefix=key)
                 table.base_columns['first_result'].verbose_name = mark_safe(
                     '<a href="%s">build %s: %s</a>' % (
                         tr1.get_absolute_url(), escape(tag1), escape(key)))
                 table.base_columns['second_result'].verbose_name = mark_safe(
                     '<a href="%s">build %s: %s</a>' % (
                         tr2.get_absolute_url(), escape(tag2), escape(key)))
+                RequestConfig(request, paginate={"per_page": table.length}).configure(table)
             else:
                 table = None
             if cases:
@@ -415,10 +499,11 @@ def compare_matches(request, username, name, tag1, tag2):
         filter = TestRunFilter.objects.get(owner__username=username, name=name)
     except TestRunFilter.DoesNotExist:
         raise Http404("Filter ~%s/%s not found." % (username, name))
-    if not filter.public and filter.owner != request.user:
-        raise PermissionDenied()
+    if not request.user.is_superuser:
+        if not filter.public and filter.owner != request.user:
+            raise PermissionDenied()
     filter_data = filter.as_data()
-    test_run_info = compare_filter_matches(request.user, filter_data, tag1, tag2)
+    test_run_info = compare_filter_matches(request, filter_data, tag1, tag2)
     return render_to_response(
         "dashboard_app/filter_compare_matches.html", {
             'test_run_info': test_run_info,

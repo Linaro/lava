@@ -50,6 +50,7 @@ from dashboard_app.views.image_reports.forms import (
 
 from dashboard_app.models import (
     ImageReport,
+    ImageReportGroup,
     ImageReportChart,
     ImageChartFilter,
     ImageChartTest,
@@ -62,32 +63,103 @@ from dashboard_app.models import (
 
 from dashboard_app.views.image_reports.tables import (
     UserImageReportTable,
-    PublicImageReportTable,
+    OtherImageReportTable,
+    GroupImageReportTable,
 )
+from django_tables2 import (
+    RequestConfig,
+)
+from lava.utils.lavatable import LavaView
 
-from dashboard_app.views.filters.tables import AllFiltersSimpleTable
+
+class UserImageReportView(LavaView):
+
+    def get_queryset(self):
+        return ImageReport.objects.filter(user=self.request.user).order_by('name')
+
+
+class OtherImageReportView(LavaView):
+
+    def get_queryset(self):
+        # All public reports for authenticated users which are not part
+        # of any group.
+        # Only reports containing all public filters for non-authenticated.
+        other_reports = ImageReport.objects.filter(is_published=True,
+                                                   image_report_group=None).order_by('name')
+        if self.request and self.request.user.is_authenticated():
+            return other_reports
+        else:
+            return other_reports.exclude(
+                imagereportchart__imagechartfilter__filter__public=False).order_by('name')
+
+
+class GroupImageReportView(LavaView):
+
+    def __init__(self, request, group, **kwargs):
+        super(GroupImageReportView, self).__init__(request, **kwargs)
+        self.image_report_group = group
+
+    def get_queryset(self):
+        # Specific group reports for authenticated users.
+        # Only reports containing all public filters for non-authenticated.
+        group_reports = ImageReport.objects.filter(
+            is_published=True,
+            image_report_group=self.image_report_group).order_by('name')
+        if self.request.user.is_authenticated():
+            return group_reports
+        else:
+            return group_reports.exclude(
+                imagereportchart__imagechartfilter__filter__public=False).order_by('name')
 
 
 @BreadCrumb("Image reports", parent=index)
 def image_report_list(request):
 
-    image_reports = ImageReport.objects.all()
+    group_tables = {}
+    terms_data = search_data = discrete_data = {}
+    for group in ImageReportGroup.objects.all():
+        if group.imagereport_set.count():
+            prefix = "group_%s_" % group.name
+            group_view = GroupImageReportView(request, group, model=ImageReportChart, table_class=GroupImageReportTable)
+            table = GroupImageReportTable(group_view.get_table_data(prefix), prefix=prefix)
+            search_data.update(table.prepare_search_data(group_view))
+            discrete_data.update(table.prepare_discrete_data(group_view))
+            terms_data.update(table.prepare_terms_data(group_view))
+            group_tables[group.name] = table
+            config = RequestConfig(request, paginate={"per_page": table.length})
+            config.configure(table)
 
-    public_image_table = PublicImageReportTable("public-image-reports", None,
-                                                params=(request.user,))
+    prefix = "other_"
+    other_view = OtherImageReportView(request, model=ImageReportChart, table_class=OtherImageReportTable)
+    other_image_table = OtherImageReportTable(other_view.get_table_data(prefix), prefix=prefix)
+    config = RequestConfig(request, paginate={"per_page": other_image_table.length})
+    config.configure(other_image_table)
+    search_data.update(other_image_table.prepare_search_data(other_view))
+    discrete_data.update(other_image_table.prepare_discrete_data(other_view))
+    terms_data.update(other_image_table.prepare_terms_data(other_view))
 
     if request.user.is_authenticated():
-        user_image_table = UserImageReportTable("user-image-reports", None,
-                                                params=(request.user,))
+        prefix = "user_"
+        view = UserImageReportView(request, model=ImageReportChart, table_class=UserImageReportTable)
+        user_image_table = UserImageReportTable(view.get_table_data(prefix), prefix=prefix)
+        config = RequestConfig(request, paginate={"per_page": user_image_table.length})
+        config.configure(user_image_table)
+        search_data.update(user_image_table.prepare_search_data(view))
+        discrete_data.update(user_image_table.prepare_discrete_data(view))
+        terms_data.update(user_image_table.prepare_terms_data(view))
     else:
         user_image_table = None
 
     return render_to_response(
         'dashboard_app/image_report_list.html', {
             'user_image_table': user_image_table,
-            'public_image_table': public_image_table,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                image_report_list),
+            'other_image_table': other_image_table,
+            'search_data': search_data,
+            "discrete_data": discrete_data,
+            'terms_data': terms_data,
+            'group_tables': group_tables,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(image_report_list),
+            'context_help': BreadCrumbTrail.leading_to(image_report_list),
         }, RequestContext(request)
     )
 
@@ -98,17 +170,21 @@ def image_report_display(request, name):
 
     image_report = ImageReport.objects.get(name=name)
 
-    if not image_report.is_published and image_report.user != request.user:
-        raise PermissionDenied
+    if not request.user.is_superuser:
+        if not image_report.is_published and image_report.user != request.user:
+            raise PermissionDenied
 
     chart_data = {}
     for chart in image_report.imagereportchart_set.all():
         chart_data[chart.id] = chart.get_chart_data(request.user)
 
+    bug_links_chart_id = request.GET.get('bug_links_chart_id', '')
+
     return render_to_response(
         'dashboard_app/image_report_display.html', {
             'image_report': image_report,
             'chart_data': simplejson.dumps(chart_data),
+            'bug_links_chart_id': bug_links_chart_id,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 image_report_detail, name=name),
         }, RequestContext(request)
@@ -127,6 +203,7 @@ def image_report_detail(request, name):
             'image_report': image_report,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 image_report_detail, name=name),
+            'context_help': BreadCrumbTrail.leading_to(image_report_list),
         }, RequestContext(request)
     )
 
@@ -271,6 +348,40 @@ def image_chart_delete(request, name, id):
 
 
 @login_required
+def image_report_group_list(request):
+
+    term = request.GET['term']
+    groups = [str(group.name) for group in ImageReportGroup.objects.filter(
+        name__istartswith=term)]
+    return HttpResponse(simplejson.dumps(groups), mimetype='application/json')
+
+
+@login_required
+def image_report_add_group(request, name):
+
+    if request.method != 'POST':
+        raise PermissionDenied
+
+    group_name = request.POST.get("value")
+    image_report = ImageReport.objects.get(name=name)
+    old_group = image_report.image_report_group
+
+    if not group_name:
+        image_report.image_report_group = None
+    else:
+        new_group = ImageReportGroup.objects.get_or_create(name=group_name)[0]
+        image_report.image_report_group = new_group
+
+    image_report.save()
+
+    if old_group:
+        if not old_group.imagereport_set.count():
+            old_group.delete()
+
+    return HttpResponse(group_name, mimetype='application/json')
+
+
+@login_required
 def image_chart_settings_update(request, name, id):
 
     if request.method != 'POST':
@@ -303,6 +414,7 @@ def image_chart_export(request, name, id):
     tmp_dir = tempfile.mkdtemp()
     file_path = os.path.join(tmp_dir, "%s.csv" % chart.name)
 
+    chart_data_keys = []
     for chart_item in chart_data["test_data"]:
         chart_data_keys = chart_item.keys()
         break
@@ -344,13 +456,10 @@ def image_chart_form(request, bread_crumb_trail, instance=None,
         form = ImageReportChartForm(request.user, instance=instance)
         form.fields['image_report'].initial = image_report
 
-    filters_table = AllFiltersSimpleTable("all-filters", None)
-
     return render_to_response(
         'dashboard_app/image_report_chart_form.html', {
             'bread_crumb_trail': bread_crumb_trail,
             'form': form,
-            'filters_table': filters_table,
         }, RequestContext(request))
 
 
@@ -401,8 +510,7 @@ def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
             if chart_filter.image_chart.chart_type == 'pass/fail':
 
                 image_chart_tests = Test.objects.filter(
-                    imagecharttest__image_chart_filter=chart_filter).order_by(
-                    'id')
+                    imagecharttest__image_chart_filter=chart_filter).order_by('id')
 
                 tests = form.cleaned_data['image_chart_tests']
 
@@ -464,12 +572,9 @@ def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
         form = ImageChartFilterForm(request.user, instance=instance,
                                     initial={'image_chart': chart_instance})
 
-    filters_table = AllFiltersSimpleTable("all-filters", None)
-
     return render_to_response(
         'dashboard_app/image_chart_filter_form.html', {
             'bread_crumb_trail': bread_crumb_trail,
-            'filters_table': filters_table,
             'image_chart': chart_instance,
             'instance': instance,
             'form': form,

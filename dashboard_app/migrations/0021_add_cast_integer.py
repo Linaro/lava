@@ -15,6 +15,20 @@ class Migration(SchemaMigration):
         except django.db.utils.DatabaseError:
             db.rollback_transaction()
             db.start_transaction()
+        db.execute("""
+CREATE FUNCTION convert_to_integer(v_input text)
+RETURNS INTEGER AS $a$
+DECLARE v_int_value INTEGER DEFAULT NULL;
+BEGIN
+    BEGIN
+        v_int_value := v_input::INTEGER;
+    EXCEPTION WHEN OTHERS THEN
+        RETURN NULL;
+    END;
+RETURN v_int_value;
+END;
+$a$ LANGUAGE plpgsql;
+        """)
         db.commit_transaction()
 
     def backwards(self, orm):

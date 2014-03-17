@@ -15,7 +15,7 @@ other files which are part of the repository, inside the test image.::
     "parameters": {
         "testdef_repos": [
             {
-                "git-repo": "http://staging.git.linaro.org/git-ro/people/neil.williams/temp-functional-tests.git",
+                "git-repo": "http://git.linaro.org/git-ro/people/neil.williams/temp-functional-tests.git",
                 "testdef": "multinode/multinode02.yaml"
             }
         ],
@@ -33,15 +33,15 @@ when using the **Submit Job** support in the LAVA web interface. Simply
 enter the full path to the JSON file in your repository and LAVA will
 replace the URL with the contents of the file before submission.::
 
-  http://staging.git.linaro.org/people/neil.williams/temp-functional-tests.git/blob_plain/HEAD:/singlenode/kvm-single-node.json
+  http://git.linaro.org/people/neil.williams/temp-functional-tests.git/blob_plain/HEAD:/singlenode/kvm-single-node.json
 
 (When copying and pasting this example, ensure you remove the
 trailing line ending and paste only a single line.)
 
 There are numerous example test repositories in use, including:
 
-* http://staging.git.linaro.org/lava-team/lava-functional-tests.git
-* http://staging.git.linaro.org/qa/test-definitions.git
+* http://git.linaro.org/lava-team/lava-functional-tests.git
+* http://git.linaro.org/qa/test-definitions.git
 
 Using specific revisions of a test definition
 *********************************************
@@ -54,7 +54,7 @@ revision will be used instead of HEAD.::
     "parameters": {
         "testdef_repos": [
             {
-                "git-repo": "http://staging.git.linaro.org/git-ro/people/neil.williams/temp-functional-tests.git",
+                "git-repo": "http://git.linaro.org/git-ro/people/neil.williams/temp-functional-tests.git",
                 "testdef": "multinode/multinode02.yaml",
                 "revision": "3d555378"
             }
@@ -110,7 +110,7 @@ LAVA regularly runs a set of test definitions to check for regressions
 and the set is available for others to use as a template for their
 own tests::
 
-* http://staging.git.linaro.org/lava-team/lava-functional-tests.git
+* http://git.linaro.org/lava-team/lava-functional-tests.git
 
 Results of these tests are available in this :term:`bundle stream` page:
 

@@ -9,6 +9,7 @@ from lava_scheduler_app.models import (
     JSONDataError,
     DevicesUnavailableException,
     TestJob,
+    Worker,
 )
 from lava_scheduler_app.views import (
     SumIf,
@@ -19,6 +20,27 @@ from lava_scheduler_app.views import (
 class SchedulerAPI(ExposedAPI):
 
     def submit_job(self, job_data):
+        """
+        Name
+        ----
+        `submit_job` (`job_data`)
+
+        Description
+        -----------
+        Submit the given job data which is in LAVA job JSON format as a new
+        job to LAVA scheduler.
+
+        Arguments
+        ---------
+        `job_data`: string
+            Job JSON string.
+
+        Return value
+        ------------
+        This function returns an XML-RPC integer which is the newly created
+        job's id,  provided the user is authenticated with an username and
+        token.
+        """
         if not self.user:
             raise xmlrpclib.Fault(
                 401, "Authentication with user and token required for this "
@@ -41,11 +63,31 @@ class SchedulerAPI(ExposedAPI):
         except DevicesUnavailableException as e:
             raise xmlrpclib.Fault(400, str(e))
         if isinstance(job, type(list())):
-            return job
+            return [j.id for j in job]
         else:
             return job.id
 
     def resubmit_job(self, job_id):
+        """
+        Name
+        ----
+        `resubmit_job` (`job_id`)
+
+        Description
+        -----------
+        Resubmit the given job reffered by its id.
+
+        Arguments
+        ---------
+        `job_id`: string
+            The job's id which should be re-submitted.
+
+        Return value
+        ------------
+        This function returns an XML-RPC integer which is the newly created
+        job's id,  provided the user is authenticated with an username and
+        token.
+        """
         try:
             job = get_restricted_job(self.user, job_id)
         except TestJob.DoesNotExist:
@@ -56,6 +98,24 @@ class SchedulerAPI(ExposedAPI):
             return self.submit_job(job.definition)
 
     def cancel_job(self, job_id):
+        """
+        Name
+        ----
+        `cancel_job` (`job_id`)
+
+        Description
+        -----------
+        Cancel the given job reffered by its id.
+
+        Arguments
+        ---------
+        `job_id`: string
+            Job id which should be canceled.
+
+        Return value
+        ------------
+        None. The user should be authenticated with an username and token.
+        """
         if not self.user:
             raise xmlrpclib.Fault(401, "Authentication required.")
         try:
@@ -66,9 +126,9 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(403, "Permission denied.")
         if job.is_multinode:
             for multinode_job in job.sub_jobs_list:
-                multinode_job.cancel()
+                multinode_job.cancel(self.user)
         else:
-            job.cancel()
+            job.cancel(self.user)
         return True
 
     def job_output(self, job_id):
@@ -162,12 +222,12 @@ class SchedulerAPI(ExposedAPI):
         device_type_list = []
         keys = ['busy', 'name', 'idle', 'offline']
 
-        device_types = DeviceType.objects.filter(display=True)\
-            .annotate(idle=SumIf('device', condition='status=%s' % Device.IDLE),
-                      offline=SumIf('device', condition='status in (%s,%s)'
-                                                        % (Device.OFFLINE, Device.OFFLINING)),
-                      busy=SumIf('device', condition='status in (%s,%s)'
-                                                     % (Device.RUNNING, Device.RESERVED)), ).order_by('name')
+        device_types = DeviceType.objects.filter(display=True).annotate(
+            idle=SumIf('device', condition='status=%s' % Device.IDLE),
+            offline=SumIf('device', condition='status in (%s,%s)'
+                          % (Device.OFFLINE, Device.OFFLINING)),
+            busy=SumIf('device', condition='status in (%s,%s)'
+                       % (Device.RUNNING, Device.RESERVED)), ).order_by('name')
 
         for dev_type in device_types:
             device_type = {}
@@ -248,6 +308,7 @@ class SchedulerAPI(ExposedAPI):
 
         try:
             job = get_restricted_job(self.user, job_id)
+            job.status = job.get_status_display()
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
@@ -270,14 +331,16 @@ class SchedulerAPI(ExposedAPI):
 
         Return value
         ------------
-        This function returns an XML-RPC structures of job status with the follwing fields.
+        This function returns an XML-RPC structures of job status with the
+        following fields.
         The user is authenticated with an username and token.
 
         `job_status`: string
-                    ['Submitted'|'Running'|'Complete'|'Incomplete'|'Canceled'|'Canceling']
+        ['Submitted'|'Running'|'Complete'|'Incomplete'|'Canceled'|'Canceling']
 
         `bundle_sha1`: string
-                     The sha1 hash code of the bundle, if it existed. Otherwise it will be an empty string.
+        The sha1 hash code of the bundle, if it existed. Otherwise it will be
+        an empty string.
         """
 
         if not self.user:
@@ -302,3 +365,65 @@ class SchedulerAPI(ExposedAPI):
         }
 
         return job_status
+
+    def worker_heartbeat(self, heartbeat_data):
+        """
+        Name
+        ----
+        `worker_heartbeat` (`heartbeat_data`)
+
+        Description
+        -----------
+        Pushes the heartbeat of dispatcher worker node.
+
+        Arguments
+        ---------
+        `heartbeat_data`: string
+            Heartbeat data extracted from dispatcher worker node.
+
+        Return value
+        ------------
+        This function returns an XML-RPC boolean output, provided the user is
+        authenticated with an username and token.
+        """
+        worker = Worker()
+        if not self.user:
+            raise xmlrpclib.Fault(
+                401, "Authentication with user and token required for this "
+                "API.")
+        if not worker.can_update(self.user):
+            raise xmlrpclib.Fault(403, "Permission denied.")
+
+        worker.update_heartbeat(heartbeat_data)
+        return True
+
+    def notify_incomplete_job(self, job_id):
+        """
+        Name
+        ----
+        `notify_incomplete_job` (`job_id`)
+
+        Description
+        -----------
+        Internal call to notify the master scheduler that a job on a remote worker
+        ended in the Incomplete state. This allows the master to send the
+        notification emails, if any. The status of the TestJob is not altered.
+
+        Arguments
+        ---------
+        The TestJob.id which ended in status Incomplete.
+
+        Return value
+        ------------
+        None. The user should be authenticated with a username and token.
+        """
+        if not self.user:
+            raise xmlrpclib.Fault(
+                401, "Authentication with user and token required for this API.")
+        if not job_id:
+            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not specified.")
+        try:
+            job = get_restricted_job(self.user, job_id)
+        except TestJob.DoesNotExist:
+            raise xmlrpclib.Fault(404, "TestJob with id '%s' was not found." % job_id)
+        job.send_summary_mails()

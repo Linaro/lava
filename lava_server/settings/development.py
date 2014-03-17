@@ -70,7 +70,7 @@ DEBUG_PROPAGATE_EXCEPTIONS = True
 TEMPLATE_DEBUG = DEBUG
 
 # It would be good to have rails-like configuration file in the future
-devel_db = os.getenv("DEVEL_DB", "sqlite")
+devel_db = os.getenv("DEVEL_DB", "pgsql")
 if devel_db == "pgsql":
     DATABASES = {
         'default': {
@@ -79,15 +79,6 @@ if devel_db == "pgsql":
             'USER': 'devel',
             'PASSWORD': 'devel',
             'HOST': 'localhost',
-            'PORT': ''}}
-elif devel_db == "sqlite":
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(PROJECT_STATE_DIR, 'development.db'),
-            'USER': '',
-            'PASSWORD': '',
-            'HOST': '',
             'PORT': ''}}
 elif devel_db == "nosql":
     raise ValueError("not yet ;-)")

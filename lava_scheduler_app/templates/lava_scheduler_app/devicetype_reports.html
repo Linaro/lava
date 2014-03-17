@@ -12,7 +12,7 @@ $(document).ready(function() {
 var dpass = [];
 var ddates= [];
 {% for day in health_day_report %}
-  dpass.push([{{forloop.counter0}}, 100*{{day.pass}}/({{day.pass}}+{{day.fail}})]);
+  dpass.push([{{forloop.counter0}}, 100*{{day.pass}}{% if day.pass %}/({{day.pass}}+{{day.fail}}){% endif %}]);
   ddates.push([{{forloop.counter0}}, "<a href='{{day.failure_url}}'>{{day.date}}</a><br/>Pass: {{day.pass}}<br/>Fail: {{day.fail}}"]);
 {% endfor %}
 
@@ -45,7 +45,7 @@ $(document).ready(function() {
 var wpass = [];
 var wdates= [];
 {% for week in health_week_report %}
-  wpass.push([{{forloop.counter0}}, 100*{{week.pass}}/({{week.pass}}+{{week.fail}})]);
+  wpass.push([{{forloop.counter0}}, 100*{{week.pass}}{% if week.pass %}/({{week.pass}}+{{week.fail}}){% endif %}]);
   wdates.push([{{forloop.counter0}}, "<a href='{{week.failure_url}}'>{{week.date}}</a><br/>Pass: {{week.pass}}<br/>Fail: {{week.fail}}"]);
 {% endfor %}
 
@@ -79,7 +79,7 @@ $(document).ready(function() {
 var jdpass = [];
 var jddates= [];
 {% for day in job_day_report %}
-  jdpass.push([{{forloop.counter0}}, 100*{{day.pass}}/({{day.pass}}+{{day.fail}})]);
+  jdpass.push([{{forloop.counter0}}, 100*{{day.pass}}{% if day.pass %}/({{day.pass}}+{{day.fail}}){% endif %}]);
   jddates.push([{{forloop.counter0}}, "<a href='{{day.failure_url}}'>{{day.date}}</a><br/>Pass: {{day.pass}}<br/>Fail: {{day.fail}}"]);
 {% endfor %}
 
@@ -112,7 +112,7 @@ $(document).ready(function() {
 var jwpass = [];
 var jwdates= [];
 {% for week in job_week_report %}
-  jwpass.push([{{forloop.counter0}}, 100*{{week.pass}}/({{week.pass}}+{{week.fail}})]);
+  jwpass.push([{{forloop.counter0}}, 100*{{week.pass}}{% if week.pass %}/({{week.pass}}+{{week.fail}}){% endif %}]);
   jwdates.push([{{forloop.counter0}}, "<a href='{{week.failure_url}}'>{{week.date}}</a><br/>Pass: {{week.pass}}<br/>Fail: {{week.fail}}"]);
 {% endfor %}
 

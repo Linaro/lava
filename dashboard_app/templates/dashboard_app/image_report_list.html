@@ -30,8 +30,14 @@
 
 {% endif %}
 
-<h2>Public Image Reports</h2>
+{% for name, group_table in group_tables.items %}
+  <h2>{{ name }}</h2>
+  {% render_table group_table %}
+{% endfor %}
 
-{% render_table public_image_table %}
+
+<h2>Other Image Reports</h2>
+
+{% render_table other_image_table %}
 
 {% endblock %}

@@ -11,7 +11,7 @@ LAVA uses sd-mux devices to allow running unmodified test images including
 bootloaders on test devices. This is a big improvement to the
 `master image`_ approach.
 
-.. _`master image`: http://lava.readthedocs.org/en/latest/lava-image-creation.html#preparing-a-master-image
+.. _`master image`: https://validation.linaro.org/static/docs/lava-image-creation.html#preparing-a-master-image
 
 .. image:: sdmux.png
 

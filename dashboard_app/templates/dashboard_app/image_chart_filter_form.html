@@ -1,12 +1,11 @@
 {% extends "dashboard_app/_content.html" %}
 {% load i18n %}
-{% load django_tables2 %}
 
 {% block extrahead %}
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
 <script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/image-report-editor.js"></script>
-
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script>
 {% endblock %}
 
 
@@ -33,7 +32,14 @@
 
   <div id="filters_div">
     <div id="add_filter_link">
-      <a href="#" onclick="select_filter()">Select filter</a>
+
+      <div class="form-field" style="font-size: 16px; float: left;">
+        Filter:&nbsp;&nbsp;
+      </div>
+      <div id="image_chart_filter" style="font-size: 16px; float: left;">
+{{ instance.filter.owner_name|default:"Click here to select"}}</div>
+      <div style="clear: both;"></div>
+
       {{ form.filter }}
       {{ form.image_chart }}
       <input type="hidden" id="id_chart_type" value="{{ image_chart.chart_type }}"/>
@@ -57,8 +63,6 @@
 
 {% endblock content_form %}
 
-{% render_table filters_table %}
-
 <div id="loading_dialog">
 <img src="{{ STATIC_URL }}dashboard_app/images/ajax-progress.gif" alt="Loading..." />
 </div>
@@ -66,7 +70,23 @@
 <script type="text/javascript">
   $().ready(function () {
 
-    init_filter_dialog();
+    $("#image_chart_filter").editable(function(value, settings){
+      return value;
+    }, {onblur: "submit"});
+
+    $("#image_chart_filter").focus(function(event) {
+        {% if not instance.filter %}
+        $(event.target).val("");
+        {% endif %}
+        $(event.target).autocomplete({
+            source: '{% url dashboard_app.views.filters.views.filter_name_list_json %}',
+            minLength: 2,
+            select: function(event, ui) {
+              filter_select_callback(ui.item);
+            }
+        });
+    });
+
     init_loading_dialog();
 
     $('form').submit(function() {
@@ -82,13 +102,17 @@
       {% for test in instance.imagecharttest_set.all %}
         $('#available_tests option[value="{{ test.test_id }}"]').attr('selected', 'selected');
       {% endfor %}
+        move_options('available_tests', 'chosen_tests');
       } else {
-      {% for test in instance.imagecharttestcase_set.all %}
-        $('#available_tests option[value="{{ test.test_case_id }}"]').attr('selected', 'selected');
+      {% for imagecharttestcase in instance.imagecharttestcase_set.all %}
+        $('#chosen_tests').append($('<option>', {
+          value: {{ imagecharttestcase.test_case.id }},
+          text: '{{ imagecharttestcase.test_case.test_case_id }}'
+        }));
+        update_aliases();
+        toggle_alias();
       {% endfor %}
       }
-
-      move_options('available_tests', 'chosen_tests');
 
       if ($('#id_chart_type').val() == "pass/fail") {
       {% for test in instance.imagecharttest_set.all %}

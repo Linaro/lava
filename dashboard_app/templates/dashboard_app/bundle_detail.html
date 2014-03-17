@@ -3,6 +3,7 @@
 {% load i18n %}
 {% load stylize %}
 
+{% load django_tables2 %}
 
 {% block extrahead %}
 {{ block.super }}
@@ -10,12 +11,10 @@
 {% endblock %}
 
 
-
 {% block sidebar %}
 <h3>Permalink</h3>
 <p>You can navigate to this bundle, regardless of the bundle stream it is
 located in, by using this <a href="{{bundle.get_permalink}}">permalink</a></p>
-
 <h3>Export</h3>
 <p>Export test run data <a href="{% url dashboard_app.views.bundle_export bundle_stream.pathname bundle.content_sha1 %}">as CSV</a></p>
 
@@ -77,47 +76,49 @@ located in, by using this <a href="{{bundle.get_permalink}}">permalink</a></p>
 
 
 {% block content %}
-<script type="text/javascript">
-  $(document).ready(function() {
-    $("#tabs").tabs({
-      cache: true,
-      show: function(event, ui) {
-        var oTable = $('div.dataTables_scrollBody>table.display', ui.panel).dataTable();
-        if ( oTable.length > 0 ) {
-          oTable.fnAdjustColumnSizing();
-        }
-      },
-      ajaxOptions: {
-        dataType: "html",
-        error: function( xhr, status, index, anchor ) {
-          $( anchor.hash ).html(
-          "Couldn't load this tab. We'll try to fix this as soon as possible.");
-        }
-      }
-    });
-    $('#test_runs').dataTable({
-      bJQueryUI: true,
-      sPaginationType: "full_numbers",
-      aaSorting: [[0, "desc"]],
-    });
-  });
+
+<script type="text/javascript" charset="utf-8">
+$(document).ready(function() {
+    show_test_runs();
+});
+    function show_test_runs() {
+    document.getElementById("test_runs").style.display="block";
+    document.getElementById("bundle_view").style.display="none";
+}
+function show_deserialized() {
+    document.getElementById("test_runs").style.display="none";
+    document.getElementById("bundle_view").style.display="block";
+}
 </script>
-<div id="tabs">
+
+<div class="ui-tabs ui-widget -ui-widget-content ui-corner-all">
+  <span
+    class="ui-tabs-nav ui-corner-all ui-tabs-panel">
+    <input onclick=show_test_runs() checked name="radio" type="radio" id="tab-test-runs"/>Test Runs
+    <input onclick=show_deserialized() name="radio" type="radio" id="tabs"/>Bundle Viewer
+
+<div id="test_runs">
+{% render_table bundle_table %}
+</div>
+
+<div id="bundle_view" style="display: none">
   <ul>
-    {% if bundle.is_deserialized %}
-    <li><a href="#tab-test-runs">{% trans "Test Runs" %}</a></li>
-    {% endif %}
     {% if bundle.deserialization_error %}
     <li><a href="#tab-deserialization-error">{% trans "Deserialization Error" %}</a></li>
     {% endif %}
-    <li><a href="{% url dashboard_app.views.ajax_bundle_viewer bundle.pk %}">{% trans "Bundle Viewer" %}</a></li>
   </ul>
   {% if bundle.is_deserialized %}
-  <div id="tab-test-runs">
-    {% with bundle.test_runs.all as test_run_list %}
-    {% include "dashboard_app/_test_run_list_table.html" %}
-    {% endwith %}
+{% if sanitized_bundle.did_remove_attachments %}
+<div class="ui-widget">
+  <div class="ui-state-highlight ui-corner-all" style="margin-top: 20px; padding: 0.7em">
+  <span class="ui-icon ui-icon-info" style="float: left; margin-right: 0.3em;"></span>
+  <strong>Note:</strong> Inline attachments were removed to make this page more readable.
   </div>
+</div>
+{% endif %}
+  {% with bundle.get_sanitized_bundle as sanitized_bundle %}
+      <pre>{{ sanitized_bundle.get_human_readable_json|safe }}</pre>
+  {% endwith %}
   {% endif %}
 
   {% if bundle.deserialization_error %}
@@ -130,5 +131,8 @@ located in, by using this <a href="{{bundle.get_permalink}}">permalink</a></p>
     </div>
   </div>
   {% endif %}
+
 </div>
+</span>
+
 {% endblock %}
