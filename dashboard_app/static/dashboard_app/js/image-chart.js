@@ -581,8 +581,8 @@ $(document).ready(function () {
             }
         }
 
-        // Maximum number of test runs.
-        max_iter = 0;
+        // Dates on the x-axis.
+        dates = [];
         // Store all build numbers
         build_numbers = [];
 
@@ -634,15 +634,12 @@ $(document).ready(function () {
                 } else {
                     date = row["date"].split(".")[0].split(" ").join("T");
                     key = Date.parse(date);
+                    dates.push(key);
                     data_item = [key, value];
                     plot_data[test_filter_id]["data"].push(data_item);
                     // Make meta keys are made unique by concatination.
                     plot_data[test_filter_id]["meta"][data_item.join("_")] =
                         meta_item;
-                }
-
-                if (iter > max_iter) {
-                    max_iter = iter;
                 }
             }
         }
@@ -712,8 +709,8 @@ $(document).ready(function () {
                                     chart_data["target_goal"]]);
 	        }
             } else {
-	        for (iter = 0; iter <= max_iter; iter++) {
-	            goal_data.push([iter, chart_data["target_goal"]]);
+	        for (key in dates) {
+	            goal_data.push([dates[key], chart_data["target_goal"]]);
 	        }
             }
 
