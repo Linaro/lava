@@ -308,11 +308,13 @@ class DatabaseJobSource(object):
             previous_state = previous_transition.old_state
 
         if old_device_status == Device.RUNNING:
-            new_device_status = previous_state
+            #new_device_status = previous_state
+            new_device_status = Device.IDLE
         elif old_device_status == Device.OFFLINING:
             new_device_status = Device.OFFLINE
         elif old_device_status == Device.RESERVED:
-            new_device_status = previous_state
+            #new_device_status = previous_state
+            new_device_status = Device.IDLE
         else:
             self.logger.error(
                 "Unexpected device state in jobCompleted: %s" % device.status)
@@ -415,10 +417,10 @@ class DatabaseJobSource(object):
                         previous_transition = device.previous_transition()
                         if previous_transition:
                             previous_state = previous_transition.old_state
-                        self.logger.debug("Transitioning %s to %s" % (device.hostname, previous_state))
+                        self.logger.debug("Transitioning %s to Idle" % device.hostname)
                         device.current_job = None
                         msg = "Job %s cancelled" % job.display_id
-                        device.state_transition_to(previous_state, message=msg,
+                        device.state_transition_to(Device.IDLE, message=msg,
                                                    job=job)
                     self.logger.debug('Marking job %s as cancelled on %s' % (job.id, job.actual_device))
                     job.cancel()
