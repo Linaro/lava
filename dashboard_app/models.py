@@ -2124,6 +2124,7 @@ class ImageReportChart(models.Model):
                     "pass": denorm.count_fail == 0,
                     "passes": denorm.count_pass,
                     "total": denorm.count_pass + denorm.count_fail,
+                    "test_run_uuid": test_run.analyzer_assigned_uuid,
                     "bug_links": bug_links,
                 }
 
@@ -2154,6 +2155,9 @@ class ImageReportChart(models.Model):
         for match in matches:
             for test_result in match.specific_results:
 
+                bug_links = sorted(
+                    [b.bug_link for b in test_result.test_run.bug_links.all()])
+
                 try:
                     alias = ImageChartTestCase.objects.get(
                         image_chart_filter=image_chart_filter,
@@ -2181,6 +2185,8 @@ class ImageReportChart(models.Model):
                     "pass": test_result.result == 0,
                     "number": str(match.tag),
                     "date": str(test_result.test_run.bundle.uploaded_on),
+                    "test_run_uuid": test_result.test_run.analyzer_assigned_uuid,
+                    "bug_links": bug_links,
                 }
                 chart_data["test_data"].append(chart_item)
 

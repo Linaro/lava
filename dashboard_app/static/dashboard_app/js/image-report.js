@@ -147,7 +147,7 @@ function update_table(column_data, table_data, test_run_names) {
                     result_table_body += '<td class="' + row[iter]["cls"] + '" data-uuid="' + row[iter]["uuid"] + '">';
                     if (row[iter]["uuid"]) {
                         result_table_body += '<a href="' + row[iter]["link"] + '">' + row[iter]["passes"] + '/' + row[iter]["total"] + '</a>';
-                        result_table_body += '&nbsp;&nbsp;<a href="#" class="add-bug-link"><img src="'+image_url+'icon-bug-link.png" width="16" height="16">[' + row[iter]["bug_links"].length + ']</a>';
+                        result_table_body += '<span class="bug-link-container"><a href="#" class="add-bug-link">[' + row[iter]["bug_links"].length + ']</a></span>';
                         result_table_body += '<span class="bug-links" style="display: none">';
                         for (bug_link in row[iter]["bug_links"]) {
                             bug = row[iter]["bug_links"];

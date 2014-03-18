@@ -303,7 +303,9 @@ $(document).ready(function () {
             table[number][test_data["test_filter_id"]].push({
                 "passes": test_data["passes"],
                 "total": test_data["total"],
+                "measurement": test_data["measurement"],
                 "link": test_data["link"],
+                "test_run_uuid": test_data["test_run_uuid"],
                 "bug_links": test_data["bug_links"]
             });
         }
@@ -364,20 +366,25 @@ $(document).ready(function () {
                     } else {
                         cls = "pass";
                     }
-                    a = cell["link"].split("/").reverse();
-                    uuid = a[1];
+                    uuid = cell["test_run_uuid"];
 
                     table_body += '<td class="' + cls + '" data-chart-id="' + chart_id + '" data-uuid="' + uuid + '">';
 
-                    table_body += '<a target="_blank" href="' + cell["link"] +
-                        '">' + cell["passes"] + '/' + cell["total"] + '</a>';
+                    if (chart_data["chart_type"] == "pass/fail") {
+                        table_body += '<a target="_blank" href="' +
+                            cell["link"] + '">' + cell["passes"] + '/' +
+                            cell["total"] + '</a>';
+                    } else {
+                        table_body += '<a target="_blank" href="' +
+                            cell["link"] + '">' + cell["measurement"] + '</a>';
+                    }
 
-                    table_body += '&nbsp;&nbsp;<a href="#" class="add-bug-link"><img src="' + image_url + 'icon-bug-link.png" width="16" height="16"> [' + cell["bug_links"].length + ']</a>';
+                    table_body += '<span class="bug-link-container"><a href="#" class="add-bug-link"> [' + cell["bug_links"].length + ']</a></span>';
                     table_body += '<span class="bug-links" style="display: none">';
                     for (bug_link in cell["bug_links"]) {
                         bug = cell["bug_links"];
                         table_body += '<li class="bug-link">' + bug[bug_link] + '</li>';
-                    }   
+                    }
                     table_body += '</span>';
 
                     table_body += "</td>";
