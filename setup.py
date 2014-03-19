@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
+from version import version_tag
+
 
 setup(
     name="lava-dispatcher",
-    version=":versiontools:lava_dispatcher:",
+    version=version_tag(),
     url='https://launchpad.net/lava-dispatcher',
     license='GPL v2 or later',
     description="Part of the LAVA framework for dispatching test jobs",
@@ -54,11 +56,11 @@ setup(
         'pexpect >= 2.3',
         'configglue',
         'PyYAML',
-        'versiontools >= 1.8',
         'pyserial >= 2.6',
     ],
-    setup_requires=[
-        'versiontools >= 1.8',
+    data_files=[
+        ('/etc/default',
+            ['etc/tftpd-hpa']),
     ],
     scripts=[
         'lava-dispatch'
