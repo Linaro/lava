@@ -71,7 +71,7 @@ repository::
 .. note:: Only if the test definition is referred from a URL the
           version parameter should be explicit.
 
-.. _lava_test_shell_setx
+.. _lava_test_shell_setx:
 
 How a lava test shell is run
 ----------------------------
@@ -283,14 +283,14 @@ is not defined in the JSON snippet, so the default would be used.
 
 .. note:: The format of default parameters in yaml file is below, please note that
           there is **not** a hyphen at the start of the line and **not** quotes
-          around either the variable name or the variable value ::
+          around either the variable name or the variable value::
 
-          VARIABLE_NAME_1: value_1
+            VARIABLE_NAME_1: value_1
 
 .. note:: The code which implements this parameter function will put variable
           name and value at the head of test shell script like below::
 
-          VARIABLE_NAME_1='value_1'
+            VARIABLE_NAME_1='value_1'
 
 So please make sure you didn't put any special character(like single quote) into value or
 variable name. But Spaces and double quotes can be included in value.

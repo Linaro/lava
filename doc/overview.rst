@@ -31,7 +31,7 @@ and a few servers.
           http://validation.linaro.org/ which is the official
           production instance of LAVA hosted by Linaro.
 
-.. _index:: login
+.. index:: login
 
 Logging In
 ==========
@@ -80,7 +80,7 @@ authenticate the user and redirects to http://validation.linaro.org/
     :width: 640
     :height: 480
 
-.. _index:: token
+.. index:: token
 
 .. _authentication_tokens:
 
