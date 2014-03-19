@@ -76,6 +76,8 @@ release = '0.21.1'
 # for source files.
 exclude_trees = []
 
+exclude_patterns = ['pages/reference-architecture', 'tables.rst']
+
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
 

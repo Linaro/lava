@@ -67,6 +67,7 @@ Other Topics
    usage.rst
    arm_energy_probe.rst
    device-capabilities.rst
+   packaging.rst
    lava-scheduler.rst
    lava-scheduler-device-help.rst
    lava-scheduler-device-type-help.rst
