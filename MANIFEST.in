@@ -10,8 +10,10 @@ include lava_dispatcher/tests/test-config/devices/*
 include lava_dispatcher/tests/test-config/*
 include requirements.txt
 include man/*
+include etc/*
 recursive-include doc/images *.png *.jpg *.odg
 include doc/examples/jobs/*
 include doc/examples/plugins/demo-action-plugin/*
 include doc/examples/plugins/demo-action-plugin/demo_action_plugin/*
+include version.py
 
