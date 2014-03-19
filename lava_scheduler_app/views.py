@@ -413,7 +413,7 @@ class DeviceTypeOverView(JobTableView):
 class NoDTDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        return Device.objects.all()
+        return Device.objects.all().order_by('hostname')
 
 
 def populate_capabilities(dt):
