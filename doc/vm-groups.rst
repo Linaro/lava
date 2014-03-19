@@ -15,7 +15,7 @@ To submit a VM group test job, you need:
 
 - system images for the host system and for the VM's'.
 
-A VM group test job consists of a :ref:`lava-test-shell` action that
+A VM group test job consists of a :ref:`lava_test_shell` action that
 includes a ``nested_vms`` attribute, specifying a group os VM's that
 will spawned before the action starts. The submitted test definition
 will then be able to specify code to be run on the host and on each of
