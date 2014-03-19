@@ -1236,15 +1236,20 @@ class TestJob(RestrictedResource):
         if user == self.submitter:
             return
         recipient = get_object_or_404(User.objects.select_related(), id=self.submitter.id)
+        if not recipient.email:
+            return
         mail = self._generate_cancellation_mail(user)
         description = self.description.splitlines()[0]
         if len(description) > 200:
             description = description[197:] + '...'
         logger = logging.getLogger(self.__class__.__name__ + '.' + str(self.pk))
         logger.info("sending mail to %s", recipient.email)
-        send_mail(
-            "LAVA job notification: " + description, mail,
-            settings.SERVER_EMAIL, [recipient.email])
+        try:
+            send_mail(
+                "LAVA job notification: " + description, mail,
+                settings.SERVER_EMAIL, [recipient.email])
+        except SMTPRecipientsRefused:
+            logger.info("unable to send email to recipient")
 
     def _get_notification_recipients(self):
         job_data = simplejson.loads(self.definition)
@@ -1264,9 +1269,12 @@ class TestJob(RestrictedResource):
             description = description[197:] + '...'
         logger = logging.getLogger(self.__class__.__name__ + '.' + str(self.pk))
         logger.info("sending mail to %s", recipients)
-        send_mail(
-            "LAVA job notification: " + description, mail,
-            settings.SERVER_EMAIL, recipients)
+        try:
+            send_mail(
+                "LAVA job notification: " + description, mail,
+                settings.SERVER_EMAIL, recipients)
+        except SMTPRecipientsRefused:
+            logger.info("unable to send email - recipient refused")
 
     @property
     def sub_jobs_list(self):
