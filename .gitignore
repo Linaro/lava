@@ -9,5 +9,6 @@ versiontools-*.egg
 build
 .idea
 doc/html
+man/_build
 *.pyc
 tags
