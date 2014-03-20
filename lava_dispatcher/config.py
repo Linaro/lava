@@ -158,6 +158,7 @@ class DeviceSchema(schema.Schema):
     simulator_kernel = schema.StringOption(default=None)
     simulator_initrd_files = schema.ListOption(default=None)
     simulator_initrd = schema.StringOption(default=None)
+    simulator_dtb_files = schema.ListOption(default=None)
     simulator_dtb = schema.StringOption(default=None)
     simulator_uefi = schema.StringOption(default=None)
     simulator_bl1 = schema.StringOption(default=None)

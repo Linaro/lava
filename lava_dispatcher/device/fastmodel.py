@@ -132,9 +132,11 @@ class FastModelTarget(Target):
                                                 self.config.simulator_initrd_files,
                                                 self.config.simulator_initrd)
         # Extract the dtb from the image
-        if self.config.simulator_dtb and self._dtb is None:
-            self._dtb = self._find_and_copy(
-                subdir, odir, self.config.simulator_dtb)
+        if self.config.simulator_dtb_files and self._dtb is None:
+            self._dtb = \
+                self._copy_first_find_from_list(subdir, odir,
+                                                self.config.simulator_dtb_files,
+                                                self.config.simulator_dtb)
 
             # workaround for renamed device tree blobs
             # see https://bugs.launchpad.net/linaro-oe/+bug/1255527
@@ -174,12 +176,12 @@ class FastModelTarget(Target):
                                self.config.simulator_kernel_files)
         # Initrd is needed only for b.L models
         if self._initrd is None and self.config.simulator_initrd_files:
-            logging.info('No INITRD found, %r' %
-                         self.config.simulator_initrd_files)
+            logging.warning('No INITRD found, %r' %
+                            self.config.simulator_initrd_files)
         # DTB is needed only for b.L models
-        if self._dtb is None and self.config.simulator_dtb:
-            logging.info('No DTB found, %r' %
-                         self.config.simulator_dtb)
+        if self._dtb is None and self.config.simulator_dtb_files:
+            logging.warning('No DTB found, %r' %
+                            self.config.simulator_dtb_files)
         # SECURE FLASHLOADERs are needed only for base and cortex models
         if self._bl1 is None and self.config.simulator_bl1:
             raise RuntimeError('No SECURE FLASHLOADER found, %r' %
