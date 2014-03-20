@@ -1,13 +1,15 @@
 import logging
 import sys
+from django.contrib.auth.models import Group, Permission, User
 from django.test import TransactionTestCase
 from django.test.client import Client
 from django_testscenarios.ubertest import TestCase
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
-    TestJob
+    TestJob,
 )
+from lava_scheduler_app.views import filter_device_types
 from lava.utils.lavatable import LavaTable, LavaView
 from lava_scheduler_app.tables import (
     JobTable,
@@ -73,8 +75,11 @@ class TestDeviceTable(DeviceTable):
 
 
 class TestDeviceView(LavaView):
-    def get_queryset(self, request=None):
-        return Device.objects.select_related("device_type").order_by("hostname")
+
+    def get_queryset(self):
+        visible = filter_device_types(None)
+        return Device.objects.select_related("device_type")\
+            .order_by("hostname").filter(device_type__in=visible)
 
 
 class TestJobView(LavaView):
@@ -172,6 +177,40 @@ class TestForDeviceTable(TestCase):
                                      'status']})
         self.assertEqual(table.prepare_terms_data(view), {'terms': {}})
         self.assertEqual(table.prepare_times_data(view), {'times': []})
+
+
+class TestHiddenDevicesInDeviceTable(TestCase):
+    """
+    Tests for the DeviceTable when it contains hidden
+    device types
+    """
+
+    def getUniqueString(self, prefix='generic'):
+        return '%s-%d' % (prefix, self.getUniqueInteger())
+
+    def make_user(self):
+        return User.objects.create_user(
+            self.getUniqueString(),
+            '%s@mail.invalid' % (self.getUniqueString(),),
+            self.getUniqueString())
+
+    def test_device_table_view(self):
+        device_type = DeviceType(name="generic", owners_only=False, health_check_job='')
+        device_type.save()
+        device = Device(device_type=device_type, hostname='generic1', status=Device.OFFLINE)
+        user = self.make_user()
+        device.user = user
+        device.save()
+        view = TestDeviceView(None)
+        self.assertEqual(len(view.get_queryset()), 1)
+
+    def test_device_table_hidden(self):
+        hidden = DeviceType(name="hidden", owners_only=True, health_check_job='')
+        hidden.save()
+        device = Device(device_type=hidden, hostname='hidden1', status=Device.OFFLINE)
+        device.save()
+        view = TestDeviceView(None)
+        self.assertEqual(len(view.get_queryset()), 0)
 
 
 class TestBundleStreamTable(BundleStreamTable):
