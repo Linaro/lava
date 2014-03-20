@@ -215,3 +215,13 @@ Glossary of terms
     LAVA at ``<server>scheduler/transition/<ID>`` where the ID is a
     sequential integer. If the transition was caused by a job, this view
     will link to that job.
+
+  hidden device type
+    A device type can be hidden by the LAVA administrators. Devices of
+    a hidden type will only be visible to owners of at least once device
+    of this type. Other users will not be able to access the job output,
+    device status transition pages or bundle streams of devices of a
+    hidden type. Devices of a hidden type will be shown as ``Unavailable``
+    in tables of test jobs and omitted from tables of devices and
+    device types if the user viewing the table does not own any devices
+    of the hidden type.
