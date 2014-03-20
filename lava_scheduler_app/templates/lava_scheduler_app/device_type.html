@@ -6,6 +6,12 @@
 
 {{running_jobs_num}} jobs running / {{queued_jobs_num}} jobs queued
 
+{% if device_type.owners_only %}
+<h3>Hidden device type</h3>
+Only owners of one or more devices of type {{ device_type }}
+can see this information.
+{% endif %}
+
 {% if capabilities_date %}
 <h3>Device capabilities as at {{ capabilities_date }}</h3>
 <table border=0 width="100%">

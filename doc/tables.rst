@@ -94,3 +94,12 @@ Resetting a table
 
 The breadcrumb link should take you back to the default table. Alternatively,
 clear the querystring in the browser address bar manually.
+
+Unavailable entries
+-------------------
+
+Certain tables may contain data relating to a :term:`hidden device type`
+which would show as ``Unavailable`` if the user viewing the table does
+not own a device of this type. It is not possible to search these tables
+for details of the hidden type and the ``Unavailable`` label itself does
+not match as a search term.
