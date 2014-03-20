@@ -121,6 +121,9 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
 
         scheduled_jobs = self.scheduler_tick()
 
+        for job in submitted_jobs:
+            job.status = TestJob.RUNNING
+
         self.assertEqual(sorted(submitted_jobs), sorted(scheduled_jobs))
 
     def test_single_node_and_multinode(self):
