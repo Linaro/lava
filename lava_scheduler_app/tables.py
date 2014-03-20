@@ -39,7 +39,17 @@ class IDLinkColumn(tables.Column):
 class RestrictedIDLinkColumn(IDLinkColumn):
 
     def render(self, record, table=None):
-        if record.is_accessible_by(table.context.get('request').user):
+
+        if record.actual_device:
+            device_type = record.actual_device.device_type
+        elif record.requested_device:
+            device_type = record.requested_device.device_type
+        else:
+            device_type = record.requested_device_type
+
+        if len(device_type.devices_visible_to(table.context.get('request').user)) == 0:
+            return "Unavailable"
+        elif record.is_accessible_by(table.context.get('request').user):
             return pklink(record)
         else:
             return record.pk
@@ -101,86 +111,6 @@ class RestrictedDeviceColumn(tables.Column):
         return "Job submissions restricted to %s" % label
 
 
-class JobTableView(LavaView):
-
-    def __init__(self, request, **kwargs):
-        super(JobTableView, self).__init__(request, **kwargs)
-
-    def device_query(self, term):
-        device = list(Device.objects.filter(hostname__contains=term))
-        return Q(actual_device__in=device)
-
-    def owner_query(self, term):
-        owner = list(User.objects.filter(username__contains=term))
-        return Q(submitter__in=owner)
-
-    def device_type_query(self, term):
-        dt = list(DeviceType.objects.filter(name__contains=term))
-        return Q(device_type__in=dt)
-
-    def job_status_query(self, term):
-        # could use .lower() but that prevents matching Complete discrete from Incomplete
-        matches = [p[0] for p in TestJob.STATUS_CHOICES if term in p[1]]
-        return Q(status__in=matches)
-
-    def device_status_query(self, term):
-        # could use .lower() but that prevents matching Complete discrete from Incomplete
-        matches = [p[0] for p in Device.STATUS_CHOICES if term in p[1]]
-        return Q(status__in=matches)
-
-    def health_status_query(self, term):
-        # could use .lower() but that prevents matching Complete discrete from Incomplete
-        matches = [p[0] for p in Device.HEALTH_CHOICES if term in p[1]]
-        return Q(health_status__in=matches)
-
-    def restriction_query(self, term):
-        """
-        This may turn out to be too much work for search to support.
-        :param term: user submitted string
-        :return: a query for devices which match the rendered restriction text
-        """
-        q = Q()
-
-        query_list = []
-        device_list = []
-        user_list = User.objects.filter(
-            id__in=Device.objects.filter(
-                user__isnull=False).values('user'))
-        for users in user_list:
-            query_list.append(users.id)
-        if len(query_list) > 0:
-            device_list = User.objects.filter(id__in=query_list).filter(email__contains=term)
-        query_list = []
-        for users in device_list:
-            query_list.append(users.id)
-        if len(query_list) > 0:
-            q = q.__or__(Q(user__in=query_list))
-
-        query_list = []
-        device_list = []
-        group_list = Group.objects.filter(
-            id__in=Device.objects.filter(
-                group__isnull=False).values('group'))
-        for groups in group_list:
-            query_list.append(groups.id)
-        if len(query_list) > 0:
-            device_list = Group.objects.filter(id__in=query_list).filter(name__contains=term)
-        query_list = []
-        for groups in device_list:
-            query_list.append(groups.id)
-        if len(query_list) > 0:
-            q = q.__or__(Q(group__in=query_list))
-
-        # if the render function is changed, these will need to change too
-        if term in "all users in group":
-            q = q.__or__(Q(group__isnull=False))
-        if term in "Unrestricted usage" or term in "Device owner by":
-            q = q.__or__(Q(is_public=True))
-        elif term in "Job submissions restricted to %s":
-            q = q.__or__(Q(is_public=False))
-        return q
-
-
 def all_jobs_with_custom_sort():
     jobs = TestJob.objects.select_related(
         "actual_device",
@@ -229,11 +159,17 @@ class JobTable(LavaTable):
 
     def render_device(self, record):
         if record.actual_device:
-            return pklink(record.actual_device)
+            device_type = record.actual_device.device_type
+            retval = pklink(record.actual_device)
         elif record.requested_device:
-            return pklink(record.requested_device)
+            device_type = record.requested_device.device_type
+            retval = pklink(record.requested_device)
         else:
-            return mark_safe('<i>%s</i>' % escape(record.requested_device_type.pk))
+            device_type = record.requested_device_type
+            retval = mark_safe('<i>%s</i>' % escape(record.requested_device_type.pk))
+        if len(device_type.devices_visible_to(self.context.get('request').user)) == 0:
+            return "Unavailable"
+        return retval
 
     def render_description(self, value):
         if value:
@@ -323,36 +259,6 @@ class TagsColumn(tables.Column):
 
     def render(self, value):
         return ', '.join([x.name for x in value.all()])
-
-
-class FailureTableView(JobTableView):
-
-    def get_queryset(self):
-        failures = [TestJob.INCOMPLETE, TestJob.CANCELED, TestJob.CANCELING]
-        jobs = all_jobs_with_custom_sort().filter(status__in=failures)
-
-        health = self.request.GET.get('health_check', None)
-        if health:
-            jobs = jobs.filter(health_check=_str_to_bool(health))
-
-        dt = self.request.GET.get('device_type', None)
-        if dt:
-            jobs = jobs.filter(actual_device__device_type__name=dt)
-
-        device = self.request.GET.get('device', None)
-        if device:
-            jobs = jobs.filter(actual_device__hostname=device)
-
-        start = self.request.GET.get('start', None)
-        if start:
-            now = datetime.now()
-            start = now + timedelta(int(start))
-
-            end = self.request.GET.get('end', None)
-            if end:
-                end = now + timedelta(int(end))
-                jobs = jobs.filter(start_time__range=(start, end))
-        return jobs
 
 
 class FailedJobTable(JobTable):
@@ -512,7 +418,7 @@ class DeviceTypeTable(LavaTable):
     class Meta(LavaTable.Meta):
         model = DeviceType
         exclude = [
-            'display', 'health_check_job'
+            'display', 'health_check_job', 'owners_only'
         ]
         searches = {
             'name': 'contains',
@@ -582,12 +488,6 @@ class DeviceTable(LavaTable):
             'health_status_query': 'health_status',
             'restriction_query': 'restrictions',
         }
-
-
-class DeviceTableView(JobTableView):
-
-    def get_queryset(self):
-        return Device.objects.select_related("device_type").order_by("hostname")
 
 
 class NoDTDeviceTable(DeviceTable):
@@ -699,7 +599,7 @@ class DeviceTransitionTable(LavaTable):
             '%s &rarr; %s' % (t.get_old_state_display(), t.get_new_state_display(),))
 
     created_on = tables.Column('when')
-    transition = tables.Column('transition', sortable=False, accessor='old_state')
+    transition = tables.Column('transition', orderable=False, accessor='old_state')
     created_by = tables.Column('by', accessor='created_by')
     message = tables.TemplateColumn('''
     <div class="edit_transition" id="{{ record.id }}" style="width: 100%">{{ record.message }}</div>

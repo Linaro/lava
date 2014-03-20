@@ -98,6 +98,10 @@ of devices and making submissions available only to the device owner
 or group of users of which the device owner is a member. Device owners
 can also update the free text description of a device.
 
+.. note:: Devices which are a :term:`hidden device type` cannot be
+          returned to the pool until the type itself is visible to
+          everyone.
+
 .. index:: maintenance
 
 .. _maintenance_mode:

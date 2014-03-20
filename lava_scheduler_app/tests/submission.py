@@ -4,12 +4,13 @@ import json
 import xmlrpclib
 import logging
 import sys
+import warnings
 from dashboard_app.models import BundleStream
 
 from django.contrib.auth.models import Group, Permission, User
 from django.test import TransactionTestCase
 from django.test.client import Client
-
+from django.core.exceptions import ValidationError
 from django_testscenarios.ubertest import TestCase
 
 from linaro_django_xmlrpc.models import AuthToken
@@ -29,6 +30,9 @@ logger = logging.getLogger()
 logger.level = logging.INFO  # change to DEBUG to see *all* output
 stream_handler = logging.StreamHandler(sys.stdout)
 logger.addHandler(stream_handler)
+# filter out warnings from django sub systems like httpresponse
+warnings.filterwarnings('ignore', r"Using mimetype keyword argument is deprecated")
+warnings.filterwarnings('ignore', r"StrAndUnicode is deprecated")
 
 
 # Based on http://www.technobabble.dk/2008/apr/02/xml-rpc-dispatching-through-django-test-client/
@@ -88,6 +92,16 @@ class ModelFactory(object):
         logging.debug("asking for a device of type %s" % device_type.name)
         return device_type
 
+    def make_hidden_device_type(self, name=None, health_check_job=None):
+        if name is None:
+            name = self.getUniqueString('name')
+        device_type = DeviceType.objects.create(
+            owners_only=True,
+            name=name, health_check_job=health_check_job)
+        device_type.save()
+        logging.debug("asking for a device of type %s" % device_type.name)
+        return device_type
+
     def ensure_tag(self, name):
         return Tag.objects.get_or_create(name=name)[0]
 
@@ -98,6 +112,7 @@ class ModelFactory(object):
             hostname = self.getUniqueString()
         if type(tags) != list:
             tags = []
+        # a hidden device type will override is_public
         device = Device(device_type=device_type, is_public=True, hostname=hostname, **kw)
         device.tags = tags
         logging.debug("making a device of type %s %s %s with tags '%s'"
@@ -127,8 +142,7 @@ class ModelFactory(object):
             submitter = self.make_user()
         if 'user' not in kwargs:
             kwargs['user'] = submitter
-        testjob = TestJob(
-            definition=definition, submitter=submitter, **kwargs)
+        testjob = TestJob.from_json_and_user(definition, submitter)
         testjob.save()
         return testjob
 
@@ -315,8 +329,9 @@ class TestTestJob(TestCaseWithFactory):
         user = self.factory.make_user()
         user.groups.add(group)
         b = BundleStream.objects.create(
-            group=group, slug='blah', is_public=True)
+            group=group, slug='blah', is_public=True, is_anonymous=False)
         b.save()
+        self.assertEqual(group, b.group)
         j = self.make_job_json_for_stream_name(b.pathname)
         job = TestJob.from_json_and_user(j, user)
         self.assertEqual(group, job.group)
@@ -337,7 +352,7 @@ class TestTestJob(TestCaseWithFactory):
         user = self.factory.make_user()
         user.groups.add(group)
         b = BundleStream.objects.create(
-            group=group, slug='blah', is_public=False)
+            group=group, slug='blah', is_public=False, is_anonymous=False)
         b.save()
         j = self.make_job_json_for_stream_name(b.pathname)
         job = TestJob.from_json_and_user(j, user)
@@ -352,10 +367,78 @@ class TestTestJob(TestCaseWithFactory):
         stream_user = self.factory.make_user()
         job_user = self.factory.make_user()
         b = BundleStream.objects.create(
-            user=stream_user, slug='blah', is_public=True)
+            user=stream_user, slug='blah', is_public=True, is_anonymous=False)
         b.save()
         j = self.make_job_json_for_stream_name(b.pathname)
         self.assertRaises(ValueError, TestJob.from_json_and_user, j, job_user)
+
+    def test_anonymous_public_validation(self):
+        # Anonymous streams must be public
+        stream_user = self.factory.make_user()
+        self.assertRaises(ValidationError, BundleStream.objects.create,
+                          user=stream_user, slug='invalid', is_public=False, is_anonymous=True)
+
+
+class TestHiddenTestJob(TestCaseWithFactory):
+
+    def test_hidden_device_type_sets_restricted_device(self):
+        device_type = self.factory.make_hidden_device_type('hidden')
+        device = self.factory.make_device(device_type=device_type, hostname="hidden1")
+        device.save()
+        self.assertEqual(device.is_public, False)
+
+    def make_job_json_for_stream_name(self, stream_name, **kw):
+        return self.factory.make_job_json(
+            actions=[
+                {
+                    'command': 'submit_results',
+                    'parameters': {
+                        'server': 'http://localhost/RPC2',
+                        'stream': stream_name,
+                    }
+                }
+            ], **kw)
+
+    def test_from_json_and_user_rejects_submit_without_stream(self):
+        user = self.factory.make_user()
+        device_type = self.factory.make_hidden_device_type('hide_me')
+        device = self.factory.make_device(device_type=device_type, hostname="hideme1")
+        device.save()
+        self.assertEqual(device.is_public, False)
+        j = self.factory.make_job_json(target='hidden1')
+        self.assertRaises(DevicesUnavailableException, TestJob.from_json_and_user, j, user)
+
+    def test_from_json_and_user_rejects_submit_to_anonmyous(self):
+        user = self.factory.make_user()
+        anon_user = User.objects.get_or_create(username="anonymous-owner")[0]
+        device_type = self.factory.make_hidden_device_type('hide_me_now')
+        self.factory.make_device(device_type=device_type, hostname="hidden1")
+        b = BundleStream.objects.create(
+            slug='anonymous', is_anonymous=True, user=anon_user,
+            is_public=True)
+        b.save()
+        j = self.make_job_json_for_stream_name('/anonymous/anonymous/', target='hidden1')
+        self.assertRaises(DevicesUnavailableException, TestJob.from_json_and_user, j, user)
+
+    def test_hidden_submitted_job_is_hidden(self):
+        user = self.factory.make_user()
+        anon_user = User.objects.get_or_create(username="anonymous-owner")[0]
+        device_type = self.factory.make_hidden_device_type('hide_me_now')
+        device = self.factory.make_device(device_type=device_type, hostname="hidden1")
+        device.user = user
+        device.is_public = False
+        device.save()
+        b = BundleStream.objects.create(
+            slug='hidden', is_anonymous=False, user=user,
+            is_public=False)
+        b.save()
+        self.assertEqual(b.is_public, False)
+        j = self.make_job_json_for_stream_name('/private/personal/generic-1/hidden/', target='hidden1')
+        job = TestJob.from_json_and_user(j, user)
+        self.assertEqual(job.user, device.user)
+        self.assertEqual(job.is_public, False)
+        self.assertEqual(device.is_public, False)
+        self.assertRaises(DevicesUnavailableException, TestJob.from_json_and_user, j, anon_user)
 
 
 class TestSchedulerAPI(TestCaseWithFactory):
