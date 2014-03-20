@@ -78,6 +78,11 @@
         Unrestricted
         {% endif %}
     </dd>
+    {% if device.device_type.owners_only %}
+        <dt>Hidden device type</dt>
+        <dd>Only owners of one or more devices of type {{ device.device_type }}
+        can see this information.</dd>
+    {% endif %}
     <dt>User or group with physical access:
         <abbr title="If known, this is the user or group with physical access to {{ device.hostname }}.">(?)</abbr>
     </dt>
