@@ -23,7 +23,6 @@ import contextlib
 import time
 import os
 import subprocess
-import pexpect
 
 from lava_dispatcher.device.master import (
     MasterImageTarget
@@ -311,21 +310,17 @@ class BootloaderTarget(MasterImageTarget):
 
     def _boot_linaro_image(self):
         if self._is_bootloader() and not self._booted:
-            try:
-                if self.config.hard_reset_command:
-                    self._hard_reboot()
-                    self._run_boot()
-                else:
-                    self._soft_reboot()
-                    self._run_boot()
-            except pexpect.TIMEOUT:
-                raise OperationFailed("_run_boot failed:")
-            # When the kernel does DHCP which is the case for NFS
+            if self.config.hard_reset_command:
+                self._hard_reboot()
+                self._run_boot()
+            else:
+                self._soft_reboot()
+                self._run_boot()
+            # When the kernel does DHCP which is the case for NFS/Ramdisk boot
             # the nameserver data does get populated by the DHCP
             # daemon. Thus, LAVA will populate the name server data.
-            if self._lava_nfsrootfs:
-                self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
-                                   send_char=self.config.send_char)
+            self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
+                               send_char=self.config.send_char)
             self.proc.sendline('export PS1="%s"'
                                % self.tester_ps1,
                                send_char=self.config.send_char)
@@ -340,7 +335,7 @@ class BootloaderTarget(MasterImageTarget):
     @contextlib.contextmanager
     def file_system(self, partition, directory):
         if self._is_bootloader() and not self._booted:
-            self.power_on()
+            self.context.client.boot_linaro_image()
         if self._is_bootloader() and self._lava_nfsrootfs:
             path = '%s/%s' % (self._lava_nfsrootfs, directory)
             ensure_directory(path)
