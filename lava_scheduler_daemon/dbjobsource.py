@@ -412,7 +412,7 @@ class DatabaseJobSource(object):
                         previous_state = device.previous_state()
                         if previous_state is None:
                             previous_state = Device.IDLE
-                        self.logger.debug("Transitioning %s to %s" % device.hostname, previous_state)
+                        self.logger.debug("Transitioning %s to %s" % (device.hostname, previous_state))
                         device.current_job = None
                         msg = "Job %s cancelled" % job.display_id
                         device.state_transition_to(previous_state, message=msg,
