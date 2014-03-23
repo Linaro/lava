@@ -57,12 +57,12 @@ def find_device_for_job(job, device_list):
     for device in device_list:
         if device == job.requested_device:
             if device.can_submit(job.submitter) and\
-               set(job.tags.all()) & set(device.tags.all()) == set(job.tags.all()):
+                    set(job.tags.all()) & set(device.tags.all()) == set(job.tags.all()):
                 return device
     for device in device_list:
         if device.device_type == job.requested_device_type:
             if device.can_submit(job.submitter) and\
-               set(job.tags.all()) & set(device.tags.all()) == set(job.tags.all()):
+                    set(job.tags.all()) & set(device.tags.all()) == set(job.tags.all()):
                 return device
     return None
 
