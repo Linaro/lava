@@ -4,6 +4,7 @@ import uuid
 import simplejson
 import urlparse
 import datetime
+import smtplib
 
 from django.conf import settings
 from django.contrib import admin
@@ -1248,7 +1249,7 @@ class TestJob(RestrictedResource):
             send_mail(
                 "LAVA job notification: " + description, mail,
                 settings.SERVER_EMAIL, [recipient.email])
-        except SMTPRecipientsRefused:
+        except smtplib.SMTPRecipientsRefused:
             logger.info("unable to send email to recipient")
 
     def _get_notification_recipients(self):
@@ -1273,7 +1274,7 @@ class TestJob(RestrictedResource):
             send_mail(
                 "LAVA job notification: " + description, mail,
                 settings.SERVER_EMAIL, recipients)
-        except SMTPRecipientsRefused:
+        except smtplib.SMTPRecipientsRefused:
             logger.info("unable to send email - recipient refused")
 
     @property
