@@ -8,55 +8,7 @@
 {% block content %}
 
 <h2>Test run results</h2>
-<div id="master-toolbar-splice" >
-  <span
-    class="length"
-    style="float:left; display:inline-block; text-align:left;"></span>
 
-  <span
-    class="view-as"
-    style="text-align:center; display: inline-block; width:auto">
-    {% trans "filter by result" %}
-    <select id="result_selection">
-        <option value="-1"
-                       {% if result not in result_map %}selected disabled{% endif %}>{% trans "All" %}</option>
-        {% for key, value in result_map.items %}
-        <option value="{{key}}"
-                       {% if result == key %}selected disabled{% endif %}  >
-            {% trans value.title %}
-        </option>
-        {% endfor %}
-    </select>
-  </span>
-
-  <span
-    class="search"
-    style="float:right; display:inline-block; text-align:right"></span>
-</div>
-<script type="text/javascript" charset="utf-8">
-  $(document).ready(function() {
-    // Insane splicing below
-    $("div.dataTables_length").children().appendTo("#master-toolbar-splice span.length");
-    $("div.dataTables_filter").children().appendTo("#master-toolbar-splice span.search");
-    $("#master-toolbar-splice").children().appendTo($("#master-toolbar"));
-    $("div.dataTables_length").remove();
-    $("div.dataTables_filter").remove();
-    $("#master-toolbar-splice").remove();
-    $("#master-toolbar").addClass("ui-widget-header ui-corner-tl ui-corner-tr").css(
-      "padding", "5pt").css("text-align", "center");
-    var oTable = $("#test-table").dataTable();
-    var oSetting = oTable.fnSettings();
-    oSetting.sAjaxSource = oSetting.sAjaxSource + "?result_sel=" + $("#result_selection").val();
-{% if search_str %}
-    $("span.search label input[type=text]").val('{{search_str}}');
-    $("#test-table").dataTable().fnFilter('{{search_str}}');
-{% endif %}
-  });
-
-  $("#result_selection").change(function (event) {
-    location.href=window.location.pathname + "?result_sel=" + $("#result_selection").val()+"&search_str=" + $("span.search label input[type=text]").val();
-  });
-</script>
 {% render_table test_table %}
 
 <h3>Test job attachments</h3>

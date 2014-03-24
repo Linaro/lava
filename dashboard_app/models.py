@@ -988,22 +988,18 @@ class TestRun(models.Model):
         except HardwareDevice.MultipleObjectsReturned:
             pass
 
-    def get_results(self, result=None):
+    def get_results(self):
         """
         Get all results efficiently
         :param result: used for filtering the result which we want.
                        It will return all reaults if the parameter 'result' is not in TestResult.RESULT_MAP.
         """
-        test_results = self.test_results.select_related(
+        return self.test_results.select_related(
             "test_case",  # explicit join on test_case which might be NULL
             "test_run",  # explicit join on test run, needed by all the get_absolute_url() methods
             "test_run__bundle",  # explicit join on bundle
             "test_run__bundle__bundle_stream",  # explicit join on bundle stream
         ).order_by("relative_index")  # sort as they showed up in the bundle
-        if result in TestResult.RESULT_MAP:
-            return test_results.filter(result=result)
-        else:
-            return test_results
 
     def denormalize(self):
         try:
