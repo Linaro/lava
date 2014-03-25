@@ -53,7 +53,7 @@ Variable                  Description                           Default value
 ========================= ===================================== =============
 dummy_ssh_host            Hostname to connect to                *None*
 dummy_ssh_username        User name to login with               `root`
-dummy_ssh_port            Port to connect to                    80
+dummy_ssh_port            Port to connect to                    22
 dummy_ssh_identity_file   SSH private key file to connect with  *None*
 ========================= ===================================== =============
 
