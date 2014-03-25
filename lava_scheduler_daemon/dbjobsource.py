@@ -16,7 +16,7 @@ from django.db.models import Q
 from django.db.utils import DatabaseError
 
 from linaro_django_xmlrpc.models import AuthToken
-
+from psycopg2.extensions import TransactionRollbackError
 import simplejson
 
 from twisted.internet.threads import deferToThread
@@ -366,8 +366,8 @@ class DatabaseJobSource(object):
                 transaction.commit()
                 self.logger.debug('%s job completed and status saved' % job.id)
                 break
-            except psycopg2.extensions.TransactionRollbackError as err:
-                self.logger.warn('Retrying %s job completion ...' % job.id)
+            except TransactionRollbackError as err:
+                self.logger.warn('Retrying %s job completion ... %s' % (job.id, err))
                 continue
         if utils.is_master():
             try:
