@@ -43,19 +43,22 @@ Description: Linaro Automated Validation Architecture metapackage
  Metapackage to bring in all LAVA components on a single
  machine.
 
-# Need a sufficiently dumb worker scheduler that dispatcher
-# has all the code it needs.
-#Package: lava-worker
-#Section: metapackages
-#Architecture: all
-#Depends: lava-dispatcher, fuse, openssh-client,
-# postgresql-client, ${misc:Depends}
-#Conflicts: lava-server, lava-coordinator
-#Description: Linaro Automated Validation Architecture metapackage
-# Metapackage to bring in all LAVA worker components on a single
-# remote dispatcher machine.
-# .
-# This metapackage is not yet fully supported.
+# this is not a proper module, so the deps are not calculated.
+Package: lava-worker
+Section: net
+Architecture: all
+Depends: adduser, lava-dispatcher, fuse, openssh-client,
+ python-daemon, python-django, python-django-restricted-resource,
+ lava-tool, linaro-django-xmlrpc, linaro-dashboard-bundle,
+ python-simplejson,python-twisted, postgresql-client,
+ ${python:Depends}, ${misc:Depends}
+Conflicts: lava-server, lava-coordinator, lava
+Description: Linaro Automated Validation Architecture metapackage
+ Metapackage to bring in all LAVA worker components on a single
+ remote dispatcher machine.
+ .
+ This package contains the scheduler components used
+ by remote workers.
 
 Package: lava-server-doc
 Architecture: all

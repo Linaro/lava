@@ -55,6 +55,14 @@ Superuser
  http://localhost/admin and select Users in the administrator interface.
  Select lavaserver and click the Delete link at the bottom of the page.
 
+Apache distribution support
+===========================
+
+ /etc/apache2/sites-available/lava-server.conf
+
+Aimed at apache2.4 with comments for apache2.2 usage. Edit where necessary
+and then enable and restart apache to use.
+
 Adding known devices using the LAVA admin helpers
 =================================================
 
