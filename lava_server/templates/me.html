@@ -1,34 +1,47 @@
-{% extends "layouts/content_with_sidebar.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
-
-{% block sidebar %}
-<h3>{% trans "Actions" %}</h3>
-<ul>
-  {% for action in actions %}
-    <li><a href="{{ action.0 }}">{{ action.1 }}</a></li>
-  {% endfor %}
-</ul>
-{% endblock %}
 
 
 {% block content %}
 <h2>Hi {% firstof user.first_name user.username %}</h2>
-<h3>Current email address: {% firstof user.email %} </h3>
-<p>This is where more interesting things about your actions will show up,
-eventually</p>
+<div class="row">
+  <div class="col-md-6">
+    <h4 class="modal-header">Personal information</h4>
+    <dl class="dl-horizontal">
+      <dt>Full name</dt>
+      <dd>{{ user.get_full_name|default:"??" }}</dd>
+      <dt>Username</dt>
+      <dd>{{ user.username }}</dd>
+      <dt>Email</dt>
+      <dd>{{ user.email }}</dd>
+      <dt>Password</dt>
+      <dd><a href="{% url 'django.contrib.auth.views.password_change' %}"><span class="glyphicon glyphicon-lock"></span> Update</a></dd>
+    </dl>
+  </div>
 
-<p>You are member of the following LAVA groups:</p>
-<ul>
-  {% for g in user.groups.all %}
-    <li>{{ g.name }}</li>
-  {% empty %}
-    <li>(none)</li>
-  {% endfor %}
-</ul>
-
-<h3>Personal reports</h3>
-<p><a href="{% url 'lava.scheduler.myjobs' %}">All jobs submitted by {{ user.username }}</a></p>
-<p><a href="{% url 'dashboard_app.views.mybundlestreams' %}">All bundle streams owned by {{ user.username }}</a></p>
-<p><a href="{% url 'lava.scheduler.mydevice_list' %}">All devices owned by {{ user.username }}</a></p>
+  <div class="col-md-6">
+    <h4 class="modal-header">Groups</h4>
+    {% if user.group.all %}
+    <p>You are member of the following LAVA groups:</p>
+    <ul>
+    {% for g in user.groups.all %}
+      <li>{{ g.name }}</li>
+    {% endfor %}
+    {% else %}
+    <p>You are not member of any group.</p>
+    {% endif %}
+    </ul>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-6">
+    <h4 class="modal-header">Personal reports</h4>
+    <ul>
+      <li><a href="{% url 'lava.scheduler.myjobs' %}">Your jobs</a></li>
+      <li><a href="{% url 'dashboard_app.views.mybundlestreams' %}">Your bundle streams</a></li>
+      <li><a href="{% url 'lava.scheduler.mydevice_list' %}">Your devices</a></li>
+    </ul>
+  </div>
+</div>
 
 {% endblock %}
