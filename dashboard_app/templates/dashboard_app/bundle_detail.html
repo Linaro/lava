@@ -104,6 +104,26 @@ function show_deserialized() {
     class="ui-tabs-nav ui-corner-all ui-tabs-panel">
     <input onclick=show_test_runs() checked name="radio" type="radio" id="tab-test-runs"/>Test Runs
     <input onclick=show_deserialized() name="radio" type="radio" id="tabs"/>Bundle Viewer
+<div>
+    <table width="100%">
+        <tr>
+            <td style="float: left">
+                {% if previous_bundle %}
+                    &lt;&nbsp;<a href="{{ previous_bundle.get_absolute_url }}">{% trans "Previous Bundle" %}</a>
+                {% else %}
+                    {% trans "< Previous Bundle" %}
+                {% endif %}
+            </td>
+            <td style="float: right">
+                {% if next_bundle %}
+                    <a href="{{ next_bundle.get_absolute_url }}">{% trans "Next Bundle" %}</a>&nbsp;&gt;
+                {% else %}
+                    {% trans "Next Bundle >" %}
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+</div>
 
 <div id="test_runs">
 {% render_table bundle_table %}
