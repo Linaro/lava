@@ -43,6 +43,17 @@ Description: Linaro Automated Validation Architecture metapackage
  Metapackage to bring in all LAVA components on a single
  machine.
 
+Package: lava-dev
+Architecture: all
+Section: devel
+Depends: devscripts, dpkg-dev, git, debhelper (>= 8.0.0),
+ python | python-all | python-dev | python-all-dev,
+ python-sphinx (>= 1.0.7+dfsg) | python3-sphinx, po-debconf,
+ python-mocker, python-setuptools, python-versiontools
+Description: Developer support for LAVA
+ This package provides a helper script to build LAVA packages
+ from local git working copies.
+
 # this is not a proper module, so the deps are not calculated.
 Package: lava-worker
 Section: net
