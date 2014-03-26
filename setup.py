@@ -78,7 +78,7 @@ setup(
         'pygments >= 1.2',
 
         # scheduler
-        "lava-dispatcher >= 0.33.3",
+        "lava-dispatcher >= 2014.01",
         "simplejson",
         "twisted",
     ],
