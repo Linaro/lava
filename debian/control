@@ -17,7 +17,7 @@ Vcs-Browser: https://alioth.debian.org/plugins/scmgit/cgi-bin/gitweb.cgi?p=pkg-l
 
 Package: lava-dispatcher
 Architecture: any
-Depends: python-serial (>= 2.6), parted, kpartx, ser2net, sshfs,
+Depends: python-serial (>= 2.6), parted, kpartx, telent, ser2net, sshfs,
  ${python:Depends}, ${misc:Depends}
 Multi-Arch: foreign
 Recommends: ntp, git, tftpd-hpa, openbsd-inetd, 
