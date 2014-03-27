@@ -46,6 +46,7 @@ class Command(SchedulerCommand):
         from lava_scheduler_daemon.service import JobQueue
         from lava_scheduler_daemon.worker import WorkerData
         from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
+        import xmlrpclib
 
         daemon_options = self._configure(options)
 
