@@ -118,7 +118,7 @@ class WorkerData:
                 self.logger.error("HTTP/HTTPS headers: %s" % err.headers)
                 self.logger.error("Error code: %d" % err.errcode)
                 self.logger.error("Error message: %s" % err.errmsg)
-                raise xmlrpclib.ProtocolError
+                raise err
 
     def notify_on_incomplete(self, job_id):
         """
