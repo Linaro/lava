@@ -10,21 +10,12 @@ class Migration(DataMigration):
     def forwards(self, orm):
         "Write your forwards methods here."
         # Note: Remember to use orm['appname.ModelName'] rather than "from appname.models..."
-        # Migrate data from dashboard_app_launchpadbug to dashboard_app_buglink
-        bugs = db.execute("SELECT * FROM dashboard_app_launchpadbug")
-        for key, bug_id in bugs:
-            bug_link = "https://bugs.launchpad.net/bugs/" + str(bug_id)
-            db.execute("INSERT INTO dashboard_app_buglink (bug_link) VALUES ('%s')" % (bug_link))
-        db.execute("DELETE FROM dashboard_app_launchpadbug")
-
-        # Migrate data from dashboard_app_launchpadbug_test_runs to dashboard_app_buglink_test_runs
-        rec = db.execute("SELECT * FROM dashboard_app_launchpadbug_test_runs")
-        for key, bug_id, testrun_id in rec:
-            db.execute("INSERT INTO dashboard_app_buglink_test_runs (buglink_id, testrun_id) VALUES (%d, %d)" % (bug_id, testrun_id))
-        db.execute("DELETE FROM dashboard_app_launchpadbug_test_runs")
+        db.execute("SELECT setval('dashboard_app_buglink_test_runs_id_seq', (select max(id) from dashboard_app_buglink_test_runs), true)")
+        db.execute("SELECT setval('dashboard_app_buglink_id_seq', (select max(id) from dashboard_app_buglink), true)")
 
     def backwards(self, orm):
         "Write your backwards methods here."
+        pass
 
     models = {
         'auth.group': {
@@ -134,12 +125,24 @@ class Migration(DataMigration):
             'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'test': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.Test']"})
         },
+        'dashboard_app.imagecharttestattribute': {
+            'Meta': {'object_name': 'ImageChartTestAttribute'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'image_chart_test': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.ImageChartTest']"}),
+            'name': ('django.db.models.fields.TextField', [], {})
+        },
         'dashboard_app.imagecharttestcase': {
             'Meta': {'unique_together': "(('image_chart_filter', 'test_case'),)", 'object_name': 'ImageChartTestCase'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'image_chart_filter': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.ImageChartFilter']"}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'test_case': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.TestCase']"})
+        },
+        'dashboard_app.imagecharttestcaseattribute': {
+            'Meta': {'object_name': 'ImageChartTestCaseAttribute'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'image_chart_test_case': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.ImageChartTestCase']"}),
+            'name': ('django.db.models.fields.TextField', [], {})
         },
         'dashboard_app.imagechartuser': {
             'Meta': {'unique_together': "(('image_chart', 'user'),)", 'object_name': 'ImageChartUser'},
@@ -180,12 +183,6 @@ class Migration(DataMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'images': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['dashboard_app.Image']", 'symmetrical': 'False'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '1024'})
-        },
-        'dashboard_app.launchpadbug': {
-            'Meta': {'object_name': 'LaunchpadBug'},
-            'bug_id': ('django.db.models.fields.PositiveIntegerField', [], {'unique': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'test_runs': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'launchpad_bugs'", 'symmetrical': 'False', 'to': "orm['dashboard_app.TestRun']"})
         },
         'dashboard_app.namedattribute': {
             'Meta': {'unique_together': "(('object_id', 'name'),)", 'object_name': 'NamedAttribute'},
