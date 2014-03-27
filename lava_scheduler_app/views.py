@@ -1172,7 +1172,6 @@ def job_output(request, pk):
     return response
 
 
-@post_only
 def job_cancel(request, pk):
     job = get_restricted_job(request.user, pk)
     if job.can_cancel(request.user):
@@ -1189,7 +1188,6 @@ def job_cancel(request, pk):
             "you cannot cancel this job", content_type="text/plain")
 
 
-@post_only
 def job_resubmit(request, pk):
 
     is_resubmit = request.POST.get("is_resubmit", False)
