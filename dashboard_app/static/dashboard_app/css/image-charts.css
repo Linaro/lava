@@ -107,6 +107,10 @@ div.selector .selector-chosen select {
     white-space: nowrap;
 }
 
+.legend tr {
+    cursor: pointer;
+}
+
 #main_container {
     padding-left: 20px;
     margin-bottom: 20px;
@@ -237,7 +241,7 @@ div.selector .selector-chosen select {
 
 #tooltip h3, #tooltip div { margin: 0; }
 
-#scroller {
+.scroller {
     width: 800px;
     overflow-x: scroll;
     overflow-y: visible;
