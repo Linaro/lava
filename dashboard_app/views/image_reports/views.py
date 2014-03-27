@@ -119,7 +119,7 @@ def image_report_list(request):
     terms_data = search_data = discrete_data = {}
     for group in ImageReportGroup.objects.all():
         if group.imagereport_set.count():
-            prefix = "group_%s_" % group.name
+            prefix = "group_%s_" % group.id
             group_view = GroupImageReportView(request, group, model=ImageReportChart, table_class=GroupImageReportTable)
             table = GroupImageReportTable(group_view.get_table_data(prefix), prefix=prefix)
             search_data.update(table.prepare_search_data(group_view))
