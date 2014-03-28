@@ -4,6 +4,7 @@ lava-server (0.22.1-5) unstable; urgency=medium
     strings.
   * Add support for reconfiguring lava-server as a remote worker - ssh
     and xmlrpc support needs to be done manually.
+  * Create the superuser after completing migrations
 
  -- Neil Williams <codehelp@debian.org>  Fri, 28 Mar 2014 10:58:41 +0000
 

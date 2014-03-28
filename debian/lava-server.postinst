@@ -209,11 +209,11 @@ case "$1" in
         chown $LAVA_SYS_USER:$LAVA_SYS_USER /etc/lava-server/secret_key.conf
          if [ ! -f /etc/lava-server/worker.conf ]; then
             install_database
-            # superuser - password must be changed
-            su $LAVA_SYS_USER -c "lava-server manage createsuperuser --noinput --username=$LAVA_SYS_USER --email=$LAVA_SYS_USER@lava.invalid" || true
             # syncdb
             su $LAVA_SYS_USER -c "lava-server manage syncdb --noinput"
             su $LAVA_SYS_USER -c "lava-server manage migrate --noinput"
+            # superuser - password must be changed
+            su $LAVA_SYS_USER -c "lava-server manage createsuperuser --noinput --username=$LAVA_SYS_USER --email=$LAVA_SYS_USER@lava.invalid" || true
             # Allow instance user to put stuff in temporary directory
             # Set the sticky and setgid bits there
             #    chgrp -R $LAVA_SYS_USER $LAVA_PREFIX/$LAVA_INSTANCE/tmp
