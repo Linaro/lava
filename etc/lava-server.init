@@ -11,8 +11,11 @@
 
 # Author: Neil Williams <codehelp@debian.org>
 
+# example command:
+# /usr/bin/lava-daemon manage --instance-template=/etc/lava-server/{{filename}}.conf --instance=default scheduler --logfile /var/log/lava-server/lava-scheduler.log --loglevel=info
+. /etc/lava-server/instance.conf
 INST_TMPL="--instance-template=/etc/lava-server/{{filename}}.conf"
-INSTANCE="--instance=default"
+INSTANCE="--instance=$LAVA_INSTANCE"
 LOGFILE="--logfile /var/log/lava-server/lava-scheduler.log"
 LOGLEVEL="--loglevel=info"
 

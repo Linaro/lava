@@ -142,20 +142,26 @@ The three stages for a new device are:
 #. Create a configuration for the this instance of the new type on the dispatcher
 #. Populate the database so that the scheduler can submit jobs.
 
-The current packaging for LAVA does not support separate dispatchers and
-schedulers, so all three steps need to happen on the same machine. If you
-want to use the initial data so that this install gets a KVM device, use::
+The examples directory in the LAVA source contains a number of device
+configuration files which you can adapt to your needs.
+
+.. note:: If you want to use KVM devices on an i386 or amd64 master
+          instance or remote worker, either install the lava metapackage
+          available for Debian or add ``qemu-system-x86``. KVM support
+          for ARM devices is an ongoing project within Linaro.
+
+Example on Debian::
 
  $ sudo apt-get install qemu-system-x86
- $ sudo cp /usr/share/lava-server/starterkvm.conf /etc/lava-dispatcher/devices/
- $ sudo lava-server manage loaddata /usr/share/lava-server/starterkvm.json
+ $ sudo cp examples/devices/kvm.conf /etc/lava-dispatcher/devices/
+ $ sudo lava-server manage loaddata examples/models/kvm.json
 
-The example starterkvm.conf only supports NAT networking, so will not be
+The example kvm.conf only supports NAT networking, so will not be
 visible over TCP/IP to other devices when running tests.
 
-An example KVM health check is packaged::
+An example KVM health check is in the lava-server source code::
 
- /usr/share/doc/lava-server/examples/kvm-health.json
+ examples/health-checks/kvm-health.json
 
 The contents of this JSON file should be added to the kvm device type
 entry in the admin interface, with some adaptations:
@@ -163,33 +169,49 @@ entry in the admin interface, with some adaptations:
 #. Set a usable location in deploy_linaro_image
 #. Ensure a suitable bundle stream exists, matching the stream variable
 
-** TODO **
+Generating KVM images on Debian
+*******************************
 
-* The example KVM device needs an image to be tested.
-* Document use of vmdebootstrap to create one and
-  location to download one
-* Provide a health check JSON and a first job JSON and where to look
-  for JSON on other sites.
-* Add JSON to create suitable lava-health bundle stream
-  lava-dispatcher configuration - set the LAVA_SERVER_IP sensibly.
+Debian has packaged a tool called ``vmdebootstrap`` - there may be equivalent
+tools for other distributions - which wraps a call to create a minimal
+Debian rootfs to create an image of that system which can be booted as
+a KVM.
+
+LAVA can use ``vmdebootstrap`` to create a LAVA image for KVM, once the
+LAVA overlays are downloaded from Launchpad::
+
+ https://launchpad.net/~linaro-maintainers/+archive/overlay/+files
+
+You will need::
+
+ linaro-overlay_1112.2_all.deb
+ linaro-overlay-minimal_1112.2_all.deb
+
+::
+
+ #!/bin/sh
+ set -e
+ sudo vmdebootstrap \
+   --custom-package='linaro-overlay_1112.2_all.deb' \
+   --custom-package='linaro-overlay-minimal_1112.2_all.deb' \
+   --enable-dhcp \
+   --serial-console --serial-console-command='/bin/auto-serial-console' \
+   --root-password='root' \
+   --verbose \
+   "$@"
 
 Instance name
 *************
+
 #. Only one instance can be running at any one time.
 #. Instance templates share a common folder: /usr/share/lava-server/templates
 
-Debian-based distributions
-##########################
-
-The Debian packaging currently configures LAVA to use the instance
-name of default, with an option to upgrade an existing instance to
-the packaged code by entering the name of the current instance when
-asked by debconf.
-
 Further information
-===================
+*******************
 
-See also http://wiki.debian.org/LAVA
+* http://wiki.debian.org/LAVA
+* https://wiki.linaro.org/Platform/LAVA/LAVA_packaging
+* https://github.com/Linaro
 
 LAVA Components
 ***************
@@ -255,6 +277,15 @@ ready for use with ``$ sudo dpkg -i``.
           installed or updated. Also note that ``lava-server`` builds
           packages which may conflict with each other - select the
           packages you already have installed.
+
+Currently, the helper only supports the public ``packaging`` branch of
+``lava-server``::
+
+ $ sudo apt-get install lava-dev
+ $ git clone http://git.linaro.org/git/lava/lava-server.git
+ $ cd lava-server
+ $ git checkout packaging
+ $ /usr/share/lava-server/debian-dev-build.sh lava-server
 
 Helpers for other distributions may be added in due course. Patches
 welcome.
