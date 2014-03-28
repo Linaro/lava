@@ -1,3 +1,12 @@
+lava-server (0.22.1-5) unstable; urgency=medium
+
+  * Add support for lava-dev - future versions will use git tag version
+    strings.
+  * Add support for reconfiguring lava-server as a remote worker - ssh
+    and xmlrpc support needs to be done manually.
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 28 Mar 2014 10:58:41 +0000
+
 lava-server (0.22.1-4) unstable; urgency=medium
 
   * Add debconf support for migrating existing LAVA instances.
