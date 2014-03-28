@@ -6,7 +6,6 @@ import StringIO
 import datetime
 import urllib2
 from dateutil.relativedelta import relativedelta
-from datetime import datetime, timedelta
 from django import forms
 
 from django.core.exceptions import PermissionDenied
@@ -200,12 +199,12 @@ class FailureTableView(JobTableView):
 
         start = self.request.GET.get('start', None)
         if start:
-            now = datetime.now()
-            start = now + timedelta(int(start))
+            now = datetime.datetime.now()
+            start = now + datetime.timedelta(int(start))
 
             end = self.request.GET.get('end', None)
             if end:
-                end = now + timedelta(int(end))
+                end = now + datetime.timedelta(int(end))
                 jobs = jobs.filter(start_time__range=(start, end))
         return jobs
 

@@ -769,10 +769,13 @@ def _check_device_types(user):
     # if this type is hidden  Skip if this results in zero devices of that type.
     all_devices = {}
     for dt in device_types:
-        if dt.owners_only:
-            dt[1] = len(dt.devices_visible_to(user))
         # dt[0] -> device type name
         # dt[1] -> device type count
+        device_type = DeviceType.objects.get(name=dt[0])
+        if device_type.owners_only:
+            count = len(device_type.devices_visible_to(user))
+            if count > 0:
+                all_devices[dt[0]] = count
         if dt[1] > 0:
             all_devices[dt[0]] = dt[1]
     return all_devices
