@@ -6,7 +6,7 @@ import StringIO
 import datetime
 import urllib2
 from dateutil.relativedelta import relativedelta
-
+from datetime import datetime, timedelta
 from django import forms
 
 from django.core.exceptions import PermissionDenied
@@ -92,6 +92,10 @@ def post_only(func):
             return HttpResponseNotAllowed('Only POST here')
         return func(request, *args, **kwargs)
     return decorated
+
+
+def _str_to_bool(string):
+    return string.lower() in ['1', 'true', 'yes']
 
 
 class JobTableView(LavaView):
