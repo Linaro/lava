@@ -52,9 +52,7 @@ class BaseDriver(object):
 
     def finalize(self, proc):
         """"""
-
-        # does nothing by default
-        pass
+        finalize_process(proc)
 
 
 class schroot(BaseDriver):
@@ -107,9 +105,6 @@ class host(BaseDriver):
 
     def connect(self):
         return self.context.spawn('bash')
-
-    def finalize(self, proc):
-        finalize_process(proc)
 
 
 class ssh(BaseDriver):
@@ -173,6 +168,3 @@ class ssh(BaseDriver):
             logging.debug("SSH configuration in use: \n" + open(filename).read())
 
         return self.__ssh_config__
-
-    def finalize(self, proc):
-        finalize_process(proc)
