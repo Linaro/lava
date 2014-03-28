@@ -206,9 +206,9 @@
 <div class="btn-group" data-toggle="buttons" id="logbuttons">
 {% for level in levels %}
 {% if level.1 %}
-  <label class="btn btn-primary" for="{{ level.0 }}"><input type="checkbox" id="{{ level.0 }}">{{ level.0 }}</label>
+  <label class="btn btn-primary" id="{{ level.0 }}" for="{{ level.0 }}"><input type="checkbox" id="{{ level.0 }}">{{ level.0 }}</label>
 {% else %}
-  <label class="btn btn-primary disabled" for="{{ level.0 }}"><input type="checkbox" id="{{ level.0 }}">{{ level.0 }}</label>
+  <label class="btn btn-primary disabled" id="{{ level.0 }}" for="{{ level.0 }}"><input type="checkbox" id="{{ level.0 }}">{{ level.0 }}</label>
 {% endif %}
 {% endfor %}
 </div>
@@ -259,22 +259,17 @@ function poll (start) {
           var node = $('<pre class="log"></pre>');
           node.addClass(d[0]);
           node.text(d[1]);
-          node.insertBefore(progressNode);
-/*
-          var toggleButton = $("#" + d[0]);
-          if (toggleButton.length) {
-                          console.log('a');
-              $("#" + d[0]).button('option', 'disabled', false);
-          } else {
-                          console.log('b');
-              var button = $('<input type="checkbox" checked="checked"/>').attr('id', d[0]);
-              var label = $('<label></label>').attr('for', d[0]).text(d[0]);
-              $('.logbuttons').append(button, label);
-              rules[d[0]] = $.rule('pre.'+d[0]+' {}').appendTo('style'),
-              button.button();
-              button.click(showHideLogClick);
+
+          // if the button is checked we should hide the new elements
+          var button = $('input#' + d[0]);
+          if (button.is(':checked')) {
+            node.css('display', 'none');
           }
-*/
+          node.insertBefore(progressNode);
+
+          // Activate the label if needed
+          var label = $('label#' + d[0]);
+          label.removeClass('disabled');
       }
       logLenth = xhr.getResponseHeader('X-Current-Size');
       if (xhr.getResponseHeader('X-Is-Finished')) {
