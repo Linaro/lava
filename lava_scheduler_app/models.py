@@ -1188,8 +1188,11 @@ class TestJob(RestrictedResource):
         return self._can_admin(user) and self.status <= TestJob.RUNNING
 
     def can_resubmit(self, user):
-        states = [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]
-        return self._can_admin(user) and self.status in states
+        owner = False
+        if self.actual_device is not None:
+            owner = self.actual_device.can_admin(user)
+        return (user.is_superuser or owner or
+                user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
 
     def cancel(self, user=None):
         if not user:
