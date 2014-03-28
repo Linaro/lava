@@ -98,11 +98,11 @@
     <h4 class="modal-header">Timing</h4>
     <dl class="dl-horizontal">
       <dt>Submitted</dt>
-      <dd>{{ job.submit_time|timesince }}</dd>
+      <dd title="{{ job.submit_time }}">{{ job.submit_time|timesince }}</dd>
       <dt>Started</dt>
-      <dd>{% if job.start_time %}{{ job.start_time|timesince }}{% else %}<i>not started</i>{% endif %}</dd>
+      <dd title="{{ job.start_time|default:"not started" }}">{% if job.start_time %}{{ job.start_time|timesince }}{% else %}<i>not started</i>{% endif %}</dd>
       <dt>Finished</dt>
-      <dd>{% if job.end_time %}{{ job.end_time|timesince }}{% else %}<i>not finished</i>{% endif %}</dd>
+      <dd title="{{ job.end_time|default:"not finished" }}">{% if job.end_time %}{{ job.end_time|timesince }}{% else %}<i>not finished</i>{% endif %}</dd>
     </dl>
   </div>
   {% if job.is_multinode %}
