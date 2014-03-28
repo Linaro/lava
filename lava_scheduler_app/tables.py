@@ -251,10 +251,6 @@ class IndexJobTable(JobTable):
         exclude = ('end_time', 'duration', )
 
 
-def _str_to_bool(string):
-    return string.lower() in ['1', 'true', 'yes']
-
-
 class TagsColumn(tables.Column):
 
     def render(self, value):
