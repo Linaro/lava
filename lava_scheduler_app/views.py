@@ -793,7 +793,7 @@ def job_submit(request):
                 job = TestJob.from_json_and_user(json_data, request.user)
 
                 if isinstance(job, type(list())):
-                    response_data["job_list"] = [j.id for j in job]
+                    response_data["job_list"] = [j.sub_id for j in job]
                 else:
                     response_data["job_id"] = job.id
                 return render_to_response(
@@ -1058,7 +1058,7 @@ def job_resubmit(request, pk):
                     request.POST.get("json-input"), request.user)
 
                 if isinstance(job, type(list())):
-                    response_data["job_list"] = [j.id for j in job]
+                    response_data["job_list"] = [j.sub_id for j in job]
                 else:
                     response_data["job_id"] = job.id
                 return render_to_response(

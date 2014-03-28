@@ -63,7 +63,7 @@ class SchedulerAPI(ExposedAPI):
         except DevicesUnavailableException as e:
             raise xmlrpclib.Fault(400, str(e))
         if isinstance(job, type(list())):
-            return [j.id for j in job]
+            return [j.sub_id for j in job]
         else:
             return job.id
 
