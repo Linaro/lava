@@ -1,3 +1,41 @@
+Template: lava-server/master
+Type: boolean
+Default: true
+_Description: Is this a single master instance of LAVA?
+ LAVA can be set up in one of two ways, as a single instance
+ with attached devices or as a master instance and remote
+ dispatchers providing (more) devices.
+ .
+ Configuration of remote dispatchers is currently experimental
+ and a single master instance is recommended.
+
+Template: lava-server/db-port
+Type: string
+Default: 5432
+_Description: Port number of the postgresql database:
+ Please enter the port number for the postgresql database.
+
+Template: lava-server/worker-note
+Type: note
+_Description: This install looks like a remote worker
+ You have asked for a master instance install but the current install
+ looks like a remote worker install. Select back to change this or
+ confirm to proceed and change to a master instance.
+ .
+ Note that you will have to ensure that the lava-coordinator
+ configuration is correct.
+
+Template: lava-server/master-note
+Type: note
+_Description: This install looks like a master instance
+ You have asked for a remote worker install but the current install
+ looks like a master instance. Select back to change this or
+ confirm to proceed and change to a remote worker.
+ .
+ Note that you will have to ensure that the lava-coordinator
+ configuration is changed to point to the master instance for
+ this remote worker.
+
 Template: lava-server/instance-name
 Type: string
 Default: default
@@ -13,3 +51,67 @@ Type: note
 _Description: Missing LAVA instance name
  An instance name must be specified for LAVA-server. Using
  the instance name 'default'.
+
+Template: lava-worker/master-instance-name
+Type: string
+Default: default
+_Description: Name of the master instance for this worker:
+ LAVA servers need to have an instance name. Each remote
+ worker must be given the instance name of the master
+ lava-server which it will poll for new jobs to run
+ on the devices attached to the worker.
+
+Template: lava-worker/db-server
+Type: string
+_Description: Name of the master scheduler for this worker:
+ Each remote worker needs to connect to a master scheduler
+ running lava-server. This name will be used to connect to the
+ master database.
+ .
+ To work with remote nodes, the Master needs to be configured
+ to allow the database to listen to the workers. Ensure that
+ the Master allows remote access from workers before submitting
+ jobs or health checks.
+ .
+ You can continue setting up the worker, as long as
+ remote database access is enabled before jobs are submitted.
+
+Template: lava-worker/db-name
+Type: string
+_Description: Name of the database on the master:
+ Please enter the name of the database on the master scheduler
+ running lava-server. The worker will use this name to contact
+ the database.
+
+Template: lava-worker/db-user
+Type: string
+_Description: Username for the database on the master:
+ Please enter the username for the database on the master scheduler
+ running lava-server. The worker will use this username to contact
+ the database.
+
+Template: lava-worker/db-port
+Type: string
+Default: 5432
+_Description: Port number of the database on the master:
+ Please enter the database port number for the database on the
+ master scheduler running lava-server. The worker will use this
+ port to contact the database.
+
+Template: lava-worker/db-pass
+Type: string
+_Description: Password for the database on the master:
+ Please enter the password for the database on the master scheduler
+ running lava-server. The worker will use this username to contact
+ the database.
+
+Template: lava-server/missingname
+Type: note
+_Description: Missing LAVA instance name
+ An instance name must be specified for LAVA-server. Using
+ the instance name 'default'.
+
+Template: lava-server/missingip
+Type: note
+_Description: Missing server IP address
+ The IP address of the master scheduler must be specified.

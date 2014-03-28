@@ -20,10 +20,10 @@ Architecture: all
 Provides: lava-scheduler, lava-dashboard
 Conflicts: lava-scheduler, lava-dashboard
 Replaces: lava-scheduler, lava-dashboard
-Depends: apache2, adduser, libapache2-mod-uwsgi, libjs-jquery-cookie,
- libapache2-mod-wsgi, lshw, python-daemon, python-dateutil,
+Depends: apache2, adduser, fuse, libapache2-mod-uwsgi, libjs-jquery-cookie,
+ libapache2-mod-wsgi, lshw, iproute2, python-daemon, python-dateutil,
  python-django-auth-openid (>= 0.5-2), linaro-django-pagination,
- postgresql, postgresql-client, postgresql-common,
+ openssh-client, postgresql, postgresql-client, postgresql-common,
  ${python:Depends}, ${misc:Depends}
 Recommends: ntp, lava-coordinator, lava-server-doc
 Suggests: libguestfs-tools
@@ -32,6 +32,10 @@ Description: Linaro Automated Validation Architecture server
  Apache and WSGI configuration and LAVA support files to run
  the validation server on the local Apache instance as a
  lava-server virtual host as well as the scheduler and dispatcher.
+ .
+ This package can be configured as the master scheduler or as a
+ remote worker, although limitations in the remote worker design
+ mean that an unused database will need to be installed.
 
 Package: lava
 Architecture: all
@@ -46,30 +50,15 @@ Description: Linaro Automated Validation Architecture metapackage
 Package: lava-dev
 Architecture: all
 Section: devel
-Depends: devscripts, dpkg-dev, git, debhelper (>= 8.0.0),
+Depends: ca-certificates, devscripts, dpkg-dev, debhelper (>= 8.0.0),
+ fakeroot, git, libdistro-info-perl,
  python | python-all | python-dev | python-all-dev,
  python-sphinx (>= 1.0.7+dfsg) | python3-sphinx, po-debconf,
- python-mocker, python-setuptools, python-versiontools
+ python-mocker, python-setuptools, python-versiontools,
+ ${misc:Depends}
 Description: Developer support for LAVA
  This package provides a helper script to build LAVA packages
  from local git working copies.
-
-# this is not a proper module, so the deps are not calculated.
-Package: lava-worker
-Section: net
-Architecture: all
-Depends: adduser, lava-dispatcher, fuse, openssh-client,
- python-daemon, python-django, python-django-restricted-resource,
- lava-tool, linaro-django-xmlrpc, linaro-dashboard-bundle,
- python-simplejson,python-twisted, postgresql-client,
- ${python:Depends}, ${misc:Depends}
-Conflicts: lava-server, lava-coordinator, lava
-Description: Linaro Automated Validation Architecture metapackage
- Metapackage to bring in all LAVA worker components on a single
- remote dispatcher machine.
- .
- This package contains the scheduler components used
- by remote workers.
 
 Package: lava-server-doc
 Architecture: all

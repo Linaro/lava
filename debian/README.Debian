@@ -4,11 +4,11 @@ lava-server for Debian
  The default install provides an Apache2 config suitable for
  a LAVA server at http://localhost/ once enabled.
 
- Current versions of LAVA depend on django 1.4 and do not
- operate with django 1.5. Patches exist to migrate to 1.6
- and these have been applied to the current packages. If
- building packages directly from LAVA upstream git, a
- snapshot version of python-django *must* be used.
+ The packaged versions of LAVA have migrated to django1.6
+ but the deployment-tool installs have not. If you are
+ building packages directly from LAVA upstream git, master
+ or release branch, a snapshot version of python-django
+ *must* be used.
 
  To install all of LAVA on a single machine, use:
 
@@ -31,16 +31,49 @@ lava-server for Debian
  This will install lava-dispatcher and lava-server but not
  linaro-media-create and other optional packages.
 
+Master frontend or remote worker
+================================
+
+LAVA can be set up in one of two ways:
+
+* a single instance with attached devices
+* a master instance and remote dispatchers providing (more) devices
+
+The configuration of a single instance is much simpler and is
+recommended for users new to LAVA. Configuring a remote worker
+configuration currently requires installing a full lava-server and
+then disabling portions in configuration. This is an upstream bug and
+there are plans to remove this stage. When complete, the remote worker
+configuration step will become an error and lava-dispatcher will take
+over the communication with the master instance of lava-server.
+
+LAVA offers the choice of configuration during the install, with the
+default of a single instance deployment.
+
+If a remote worker configuration is chosen, details of the associated
+master instance will be required during configuration of the worker. These
+currently include parameters to allow remote write access to the postgresql
+database by the worker as well as sshfs support. This support is due to
+become redundant once the remote worker design is fixed.
+
+Additionally, an SSH key needs to be generated on the remote worker
+and installed as an authorized_key on the master instance. This is a
+slight change from lava-deployment-tool but is a cleaner solution for
+packaging. A helper for this stage is under consideration.
+
 Superuser
 =========
 
- A default lavaserver superuser is setup during package installation with
- a random password. The default superuser is not the same as the lavaserver
- system user nor the postgres user (despite the name).
+ A default lavaserver superuser is setup during package installation of
+ a master instance, with a random password. The default superuser is
+ a django user and is not the same as the lavaserver system user nor
+ the postgres user (despite the name).
 
  $ sudo lava-server manage createsuperuser --username default --email=$DEBEMAIL
 
  This will prompt for name, email address and password.
+
+ A superuser is only needed on the master instance.
 
  You can always delete this user later, but at least it gets
  you a default [sic] admin user with a password you know.
@@ -51,7 +84,7 @@ Superuser
  and below the password field is a link to change the password without
  needing to know the random password.
 
- To delete the dummy superuser, login as this new superuser at 
+ To delete the dummy superuser, login as this new superuser at
  http://localhost/admin and select Users in the administrator interface.
  Select lavaserver and click the Delete link at the bottom of the page.
 
@@ -63,118 +96,24 @@ Apache distribution support
 Aimed at apache2.4 with comments for apache2.2 usage. Edit where necessary
 and then enable and restart apache to use.
 
-Adding known devices using the LAVA admin helpers
-=================================================
+Remote workers will still need an apache configuration although the WSGI
+support will not be used.
 
-LAVA provides helper scripts to automate the creation of the initial
-devices and bundle streams for the new instance. Devices added in this
-way need to be already known to LAVA, i.e. a suitable device type
-configuration needs to exist in /etc/lava-dispatcher/device-types/
+For help on using admin helpers to add known devices to your LAVA
+instance, see packaging.html#adding-known-devices-using-the-lava-admin-helpers
+in the lava-server-doc documentation which is also accessible via the
+Documentation link on the site.
 
-Adding a device to LAVA involves changes to the database and to the
-dispatcher. Currently, the helper scripts do not directly support
-adding devices to remote workers, although once added, a device can
-easily be moved to a remote worker by copying the device configuration
-file out of /etc/lava-dispatcher/devices/ to the equivalent directory
-of the worker.
-
-To make it easier to automate the creation of a usable LAVA instance,
-the helper can also create a default lab-health anonymous bundle stream
-which can be used to collect results from the initial test jobs as a
-check that the instance is working correctly. If a default bundle stream
-is desired, add the -b option to the helper command.
-
-The syntax for the add device helper is:
-
- $ sudo /usr/share/lava-server/add_device.py <TYPE> <NAME> [<options>]
-
-For example, to add an iMX.53 device (for which the device_type in LAVA
-is called 'mx53loco') and to label that device as 'foo', use:
-
- $ sudo /usr/share/lava-server/add_device.py mx53loco foo
-
-This will create an initial device configuration file and add the device
-to the database. In order to use the device for a job, a connection_command
-and probably a hard_reset_command are also needed in the device
-configuration file. The helper supports connection commands based on
-ser2net and hard reset commands based on lavapdu. ser2net exposes a serial
-connection over a telnet interface at a specified port on the server.
-lavapdu exposes a power distribution interface over a custom interface
-and supports a number of APC PDU units.
-
-For example, if device foo is on ser2net port 4006, then the helper
-can create a connection_command setting of 'telnet localhost 4006':
-
- $ sudo /usr/share/lava-server/add_device.py mx53loco foo -t 4006
-
-If the device foo is on PDU port 5, the helper can create a 
-hard_reset_command setting of:
-
- /usr/bin/pduclient --daemon localhost --hostname pdu --command reboot --port 05
-
-To combine all these steps into one command, use:
-
- $ sudo /usr/share/lava-server/add_device.py mx53loco foo -t 4006 -p 5 -b
-
-This command will:
-
-* check that mx53loco is supported on this instance
-* check that device foo does not already exist
-* check to see if any bundle streams exist
-* add device foo as a type mx53loco to the database
-* create a device configuration file /etc/lava-dispatcher/devices/foo.conf
-* set the hostname and device_type of device foo in the configuration file
-* add the connection_command telnet localhost 4006
-* add the hard_reset_command for port 05
-* create a default bundle stream /anonymous/lab-health/ if no streams exist
-
-Adding initial data manually
-=============================
-
-The three stages for a new device are:
-
-0: Create a configuration file for this type of device on the dispatcher
-1: Create a configuration for the this instance of the new type on the dispatcher
-2: Populate the database so that the scheduler can submit jobs.
-
-The current packaging for LAVA does not support separate dispatchers and
-schedulers, so all three steps need to happen on the same machine. If you
-want to use the initial data so that this install gets a KVM device, use:
-
- $ sudo apt-get install qemu-system-x86
- $ sudo cp /usr/share/lava-server/starterkvm.conf /etc/lava-dispatcher/devices/
- $ sudo lava-server manage loaddata /usr/share/lava-server/starterkvm.json
-
-The example starterkvm.conf only supports NAT networking, so will not be
-visible over TCP/IP to other devices when running tests.
-
-An example KVM health check is packaged:
-
-/usr/share/doc/lava-server/examples/kvm-health.json
-
-The contents of this JSON file should be added to the kvm device type
-entry in the admin interface, with some adaptations:
-
-0: Set a usable location in deploy_linaro_image
-1: Ensure a suitable bundle stream exists, matching the stream variable
-
-** TODO **
-The example KVM device needs an image to be tested.
-Document use of vmdebootstrap to create one and
-location to download one
-Provide a health check JSON and a first job JSON and where to look
-for JSON on other sites.
-Add JSON to create suitable lava-health bundle stream
-lava-dispatcher configuration - set the LAVA_SERVER_IP sensibly.
-
-Instance name
-=============
-
- The packaging currently configures LAVA to use the instance name of
- default.
+Note that if you want to use KVM devices on an i386 or amd64 master
+instance or remote worker, either install the lava metapackage or add
+qemu-system-x86. KVM support for ARM devices is an ongoing project
+within Linaro.
 
 Further information
 ===================
+
+lava-server provides extensive documentation on using and configuring
+LAVA. See the Documentation link on the master instance.
 
 See also http://wiki.debian.org/LAVA
 
@@ -212,3 +151,33 @@ WSGI debugging help
  https://code.google.com/p/modwsgi/wiki/DebuggingTechniques
 
  If you get a 502 bad gateway, the uwsgi is probably not setup.
+
+Preseeding debconf
+==================
+
+debconf can be easily automated with a text file which contains the
+answers for debconf questions - just keep the file up to date if the
+questions change. For example, to preseed a worker install:
+
+# cat preseed.txt
+lava-server   lava-worker/db-port string 5432
+lava-server   lava-worker/db-user string lava-server
+lava-server   lava-server/master boolean false
+lava-server   lava-worker/master-instance-name string default
+lava-server   lava-worker/db-server string snagglepuss.codehelp
+lava-server   lava-worker/db-pass string werewolves
+lava-server   lava-worker/db-name string lava-server
+
+# debconf-set-selections < preseed.txt
+
+# debconf-show lava-server
+* lava-worker/master-instance-name: default
+* lava-server/master: false
+* lava-worker/db-pass: werewolves
+* lava-worker/db-port: 5432
+* lava-worker/db-name: lava-server
+* lava-worker/db-server: snagglepuss.codehelp
+* lava-worker/db-user: lava-server
+
+http://www.debian-administration.org/articles/394
+http://www.fifi.org/doc/debconf-doc/tutorial.html

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lava-server\n"
 "Report-Msgid-Bugs-To: lava-server@packages.debian.org\n"
-"POT-Creation-Date: 2014-03-25 22:30+0000\n"
+"POT-Creation-Date: 2014-03-27 23:14+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,15 +17,96 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#. Type: string
+#. Type: boolean
 #. Description
 #: ../lava-server.templates:1001
+msgid "Is this a single master instance of LAVA?"
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:1001
+msgid ""
+"LAVA can be set up in one of two ways, as a single instance with attached "
+"devices or as a master instance and remote dispatchers providing (more) "
+"devices."
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:1001
+msgid ""
+"Configuration of remote dispatchers is currently experimental and a single "
+"master instance is recommended."
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:2001
+msgid "Port number of the postgresql database:"
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:2001
+msgid "Please enter the port number for the postgresql database."
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:3001
+msgid "This install looks like a remote worker"
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:3001
+msgid ""
+"You have asked for a master instance install but the current install looks "
+"like a remote worker install. Select back to change this or confirm to "
+"proceed and change to a master instance."
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:3001
+msgid ""
+"Note that you will have to ensure that the lava-coordinator configuration is "
+"correct."
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:4001
+msgid "This install looks like a master instance"
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:4001
+msgid ""
+"You have asked for a remote worker install but the current install looks "
+"like a master instance. Select back to change this or confirm to proceed and "
+"change to a remote worker."
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:4001
+msgid ""
+"Note that you will have to ensure that the lava-coordinator configuration is "
+"changed to point to the master instance for this remote worker."
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:5001
 msgid "Name for this LAVA instance:"
 msgstr ""
 
 #. Type: string
 #. Description
-#: ../lava-server.templates:1001 ../lava-worker.templates:1001
+#: ../lava-server.templates:5001
 msgid ""
 "LAVA servers typically have an instance name. If this is a new instance, you "
 "can safely use the default name. If this is an upgrade of a previous LAVA "
@@ -35,13 +116,17 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../lava-server.templates:2001 ../lava-worker.templates:2001
+#. Type: note
+#. Description
+#: ../lava-server.templates:6001 ../lava-server.templates:13001
 msgid "Missing LAVA instance name"
 msgstr ""
 
 #. Type: note
 #. Description
-#: ../lava-server.templates:2001 ../lava-worker.templates:2001
+#. Type: note
+#. Description
+#: ../lava-server.templates:6001 ../lava-server.templates:13001
 msgid ""
 "An instance name must be specified for LAVA-server. Using the instance name "
 "'default'."
@@ -49,6 +134,115 @@ msgstr ""
 
 #. Type: string
 #. Description
-#: ../lava-worker.templates:1001
+#: ../lava-server.templates:7001
 msgid "Name of the master instance for this worker:"
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:7001
+msgid ""
+"LAVA servers need to have an instance name. Each remote worker must be given "
+"the instance name of the master lava-server which it will poll for new jobs "
+"to run on the devices attached to the worker."
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:8001
+msgid "Name of the master scheduler for this worker:"
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:8001
+msgid ""
+"Each remote worker needs to connect to a master scheduler running lava-"
+"server. This name will be used to connect to the master database."
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:8001
+msgid ""
+"To work with remote nodes, the Master needs to be configured to allow the "
+"database to listen to the workers. Ensure that the Master allows remote "
+"access from workers before submitting jobs or health checks."
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:8001
+msgid ""
+"You can continue setting up the worker, as long as remote database access is "
+"enabled before jobs are submitted."
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:9001
+msgid "Name of the database on the master:"
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:9001
+msgid ""
+"Please enter the name of the database on the master scheduler running lava-"
+"server. The worker will use this name to contact the database."
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:10001
+msgid "Username for the database on the master:"
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:10001
+msgid ""
+"Please enter the username for the database on the master scheduler running "
+"lava-server. The worker will use this username to contact the database."
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:11001
+msgid "Port number of the database on the master:"
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:11001
+msgid ""
+"Please enter the database port number for the database on the master "
+"scheduler running lava-server. The worker will use this port to contact the "
+"database."
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:12001
+msgid "Password for the database on the master:"
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:12001
+msgid ""
+"Please enter the password for the database on the master scheduler running "
+"lava-server. The worker will use this username to contact the database."
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:14001
+msgid "Missing server IP address"
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:14001
+msgid "The IP address of the master scheduler must be specified."
 msgstr ""
