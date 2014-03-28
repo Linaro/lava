@@ -31,7 +31,7 @@
 {% endif %}
 
 {% for name, group_table in group_tables.items %}
-  <h2>{{ name }}</h2>
+  <h2 id="{{ name }}">{{ name }}</h2>
   {% render_table group_table %}
 {% endfor %}
 

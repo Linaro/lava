@@ -296,3 +296,8 @@ div.selector .selector-chosen select {
 .dialog-field-title {
     vertical-align: top;
 }
+
+.group-link {
+    margin: 0 0 0 10px;
+    float: left;
+}
