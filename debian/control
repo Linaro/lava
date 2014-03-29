@@ -22,6 +22,7 @@ Depends: python-serial (>= 2.6), parted, kpartx, telnet, ser2net, sshfs,
 Multi-Arch: foreign
 Recommends: ntp, git, tftpd-hpa, openbsd-inetd, 
  qemu-system-x86 [amd64], qemu-system-x86 [i386],
+ libguestfs-tools [amd64], libguestfs-tools [i386],
  telnet, unzip
 Description: Linaro Automated Validation Architecture dispatcher
  This package provides lava-dispatcher to dispatch

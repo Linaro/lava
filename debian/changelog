@@ -1,3 +1,9 @@
+lava-dispatcher (0.33.3-6) unstable; urgency=medium
+
+  * Add arch-dependent libguestfs-tools recommendation.
+
+ -- Neil Williams <codehelp@debian.org>  Sat, 29 Mar 2014 22:21:34 +0000
+
 lava-dispatcher (0.33.3-5) unstable; urgency=medium
 
   * Add postinst support for retrieving the dispatcher IP addr
