@@ -1,9 +1,9 @@
-lava-server (0.22.1-6) UNRELEASED; urgency=medium
+lava-server (0.22.1-6) unstable; urgency=medium
 
   * Drop libguestfs-tools as it has moved to lava-dispatcher to be
     architecture-dependent.
 
- -- Neil Williams <codehelp@debian.org>  Sat, 29 Mar 2014 22:20:49 +0000
+ -- Neil Williams <codehelp@debian.org>  Sat, 29 Mar 2014 22:21:41 +0000
 
 lava-server (0.22.1-5) unstable; urgency=medium
 
