@@ -90,7 +90,12 @@ class BundleStreamTests(TestCaseWithScenarios):
 
     def test_creation(self):
         bundle_stream = BundleStream.objects.create(
-            user=self.user, group=self.group, name=self.name, slug=self.slug)
+            user=self.user,
+            group=self.group,
+            name=self.name,
+            is_anonymous=False,
+            is_public=False,
+            slug=self.slug)
         bundle_stream.save()
         self.assertEqual(bundle_stream.user, self.user)
         self.assertEqual(bundle_stream.group, self.group)
@@ -106,7 +111,12 @@ class BundleStreamTests(TestCaseWithScenarios):
 
     def test_pathname_uniqueness(self):
         bundle_stream = BundleStream.objects.create(
-            user=self.user, group=self.group, name=self.name, slug=self.slug)
+            user=self.user,
+            group=self.group,
+            name=self.name,
+            is_anonymous=False,
+            is_public=False,
+            slug=self.slug)
         bundle_stream.save()
         self.assertRaises(
             IntegrityError,
@@ -117,7 +127,12 @@ class BundleStreamTests(TestCaseWithScenarios):
 
     def test_pathname_update(self):
         bundle_stream = BundleStream.objects.create(
-            user=self.user, group=self.group, name=self.name, slug=self.slug)
+            user=self.user,
+            group=self.group,
+            name=self.name,
+            is_anonymous=False,
+            is_public=False,
+            slug=self.slug)
         bundle_stream.save()
         old_pathname = bundle_stream.pathname
         bundle_stream.slug += "-changed"

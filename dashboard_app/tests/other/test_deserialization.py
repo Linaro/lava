@@ -123,6 +123,7 @@ class BundleFormatImporter_1_1Tests(TestHelper, TestCaseWithScenarios):
             bundle=self.s_getUniqueBundle(),
             analyzer_assigned_date=datetime.datetime.now(),
             analyzer_assigned_uuid=self.getUniqueStringForField(TestRun, "analyzer_assigned_uuid"),
+            time_check_performed=False,
         )
 
     def test_import_sources(self):

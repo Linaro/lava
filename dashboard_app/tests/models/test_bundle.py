@@ -25,8 +25,13 @@ class BundleTests(TestCase, ObjectFactoryMixIn):
             def bundle_stream(self):
                 from django.contrib.auth.models import User
                 user = User.objects.get_or_create(username="dummy_user")[0]
-                return BundleStream.objects.get_or_create(slug="foobar", user=user)[0]
+                return BundleStream.objects.get_or_create(
+                    slug="foobar",
+                    is_anonymous=False,
+                    is_public=False,
+                    user=user)[0]
             uploaded_by = None
+            is_deserialized = False
             content = ContentFile("file content")
             content_filename = "file.txt"
 

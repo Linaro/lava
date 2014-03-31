@@ -224,6 +224,11 @@ class BundleStream(RestrictedResource):
         return TestRun.objects.filter(bundle__bundle_stream=self).count()
 
     def clean(self):
+        # default values are None if not specified, assert False.
+        if not self.is_anonymous:
+            self.is_anonymous = False
+        if not self.is_public:
+            self.is_public = False
         if self.is_anonymous and not self.is_public:
             raise ValidationError(
                 'Anonymous streams must be public')
@@ -470,6 +475,8 @@ class Bundle(models.Model):
         return reverse("dashboard_app.views.redirect_to_bundle", args=[self.content_sha1])
 
     def save(self, *args, **kwargs):
+        if not self.is_deserialized:
+            self.is_deserialized = False
         if self.content:
             try:
                 self.content.open('rb')
@@ -1152,9 +1159,11 @@ class Attachment(models.Model):
     def bundle(self):
         if self.is_test_result_attachment():
             run = self.test_result.test_run
+            return run.bundle
         elif self.is_test_run_attachment():
             run = self.test_run
-        return run.bundle
+            return run.bundle
+        return None
 
     def get_content_size(self):
         try:
@@ -1728,7 +1737,7 @@ class TestRunFilter(models.Model):
             TestRunFilter.objects.filter(
                 id__in=TestRunFilterTest.objects.filter(
                     filter__in=attribute_filters, test__in=bundle.test_runs.all().values('test_id')).annotate(
-                    models.Count('cases')).filter(cases__count=0).values('filter__id'),
+                        models.Count('cases')).filter(cases__count=0).values('filter__id'),
             ))
         tcf = TestRunFilter.objects.filter(
             id__in=TestRunFilterTest.objects.filter(
@@ -1745,7 +1754,7 @@ class TestRunFilter(models.Model):
             unknown_count=models.Sum('test_runs__denormalization__count_unknown'),
             skip_count=models.Sum('test_runs__denormalization__count_skip'),
             fail_count=models.Sum('test_runs__denormalization__count_fail')).get(
-            id=bundle.id)
+                id=bundle.id)
         for filter in filters:
             match = FilterMatch()
             match.filter = filter
