@@ -33,6 +33,7 @@ import yaml
 import logging
 import os
 import re
+import fnmatch
 
 from lava_dispatcher.test_data import create_attachment
 from lava_dispatcher.utils import read_content, write_content
@@ -187,16 +188,16 @@ def _result_to_dir(test_result, res_dir):
 
 
 def _result_from_dir(res_dir, test_case_id=None):
-    if not test_case_id:
-        test_case_id = os.path.basename(res_dir)
-    data = {
-        'test_case_id': test_case_id
-    }
+    data = {}
+    test_run_dir = os.path.dirname(res_dir)
 
     for fname in 'result', 'measurement', 'units', 'message', 'timestamp', 'duration':
-        fpath = os.path.join(res_dir, fname)
-        if os.path.isfile(fpath):
-            data[fname] = read_content(fpath).strip()
+        for path, dirs, files in os.walk(os.path.abspath(res_dir)):
+            for filename in fnmatch.filter(files, fname):
+                fpath = os.path.join(path, filename)
+                if os.path.isfile(fpath):
+                    data['test_case_id'] = os.path.relpath(path, test_run_dir)
+                    data[fname] = read_content(fpath).strip()
 
     result = parse_testcase_result(data)
 
