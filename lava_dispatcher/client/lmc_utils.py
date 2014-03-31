@@ -13,6 +13,7 @@ from tempfile import mkdtemp
 from lava_dispatcher.downloader import (
     download_image,
 )
+from lava_dispatcher.errors import CriticalError
 from lava_dispatcher.utils import (
     logging_system,
 )
@@ -92,6 +93,8 @@ def get_partition_offset(image, partno):
 
 @contextlib.contextmanager
 def image_partition_mounted(image_file, partno):
+    if not os.path.exists(image_file):
+        raise RuntimeError("Not able to mount %s: file does not exist" % image_file)
     mntdir = mkdtemp()
     image = image_file
     offset = get_partition_offset(image, partno)
@@ -107,11 +110,12 @@ def image_partition_mounted(image_file, partno):
         rc = logging_system(mount_cmd)
         if rc == 0:
             break
+        if mounted_loops == available_loops:
+            logging.debug("Mount failed. %d of %d loopback devices already mounted. %d of %d attempts." %
+                          (mounted_loops, available_loops, allow_repeat, max_repeat))
         if allow_repeat >= max_repeat:
-            raise RuntimeError("Could not mount %s after %d attempts. Possible lack of loopback devices." % (image, max_repeat))
+            raise RuntimeError("Could not mount %s after %d attempts." % (image, max_repeat))
         time.sleep(10)
-        logging.debug("Mount failed. %d of %d loopback devices already mounted. %d of %d attempts." %
-                      (mounted_loops, available_loops, allow_repeat, max_repeat))
         allow_repeat += 1
         pro = subprocess.Popen(args, stdout=PIPE, stderr=PIPE)
         mounted_loops = len(pro.communicate()[0].strip().split("\n"))
@@ -228,4 +232,7 @@ def _run_linaro_media_create(context, cmd):
         match_id = proc.expect(patterns, timeout=state_data['timeout'])
         state = next_state_names[match_id]
         if state is None:
+            proc.close()
+            if proc.exitstatus:
+                raise CriticalError("linaro-media-create returned a non-zero value %s" % proc.exitstatus)
             return
