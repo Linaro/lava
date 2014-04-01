@@ -123,7 +123,7 @@
 <form method="POST"
       action="{% url 'lava.scheduler.device.maintenance' device.pk %}">
   {% csrf_token %}
-  <button id="maintenance-button">Put into maintenance mode</button>
+  <button class="btn btn-primary" id="maintenance-button">Put into maintenance mode</button>
 </form>
 <form method="POST"
       action="{% url 'lava.scheduler.device.maintenance' device.pk %}"
@@ -141,11 +141,11 @@
 <form method="POST"
       action="{% url 'lava.scheduler.device.online' device.pk %}">
   {% csrf_token %}
-  <button id="online-button">Put online</button>
+  <button class="btn btn-block btn-primary" id="online-button">Put online</button>
 </form>
 <form method="POST"
       action="{% url 'lava.scheduler.device.online' device.pk %}"
-      id="online-dialog" style="display: none">
+      id="online-dialog" class="hidden">
   {% csrf_token %}
   A reason must be specified:
   <input id="online-reason" name="reason" style="width: 100%"/>
@@ -155,7 +155,7 @@
 <form method="POST"
       action="{% url 'lava.scheduler.device.looping' device.pk %}">
   {% csrf_token %}
-  <button id="looping-button">Put into looping mode</button>
+  <button class="btn btn-block btn-warning" id="looping-button">Put into looping mode</button>
 </form>
 <form method="POST"
       action="{% url 'lava.scheduler.device.looping' device.pk %}"
@@ -171,7 +171,7 @@
 <form style="..." method="POST"
       action="{% url 'lava.scheduler.device.forcehealthcheck' device.pk %}">
   {% csrf_token %}
-  <button id="forcehealthcheck-button">Force Health Check</button>
+  <button class="btn btn-block btn-info" id="forcehealthcheck-button">Force Health Check</button>
 </form><br/>
 {% endif %}
 
@@ -181,11 +181,11 @@
 <form method="POST"
       action="{% url 'lava.scheduler.device.edit_description' device.pk %}">
   {% csrf_token %}
-  <button id="description-button">Edit the device description</button>
+  <button class="btn btn-block btn-info" id="description-button">Edit the device description</button>
 </form>
 <form method="POST"
       action="{% url 'lava.scheduler.device.edit_description' device.pk %}"
-      id="description-dialog" style="...">
+      id="description-dialog" class="hidden">
   {% csrf_token %}
     An empty description will clear the existing content.
     <input id="device-description" name="desc" value="{{ device.get_description }}"/>
@@ -200,7 +200,7 @@
 </form>
 <form method="POST"
       action="{% url 'lava.scheduler.device.restrict_device' device.pk %}"
-      id="restrict-dialog" style="...">
+      id="restrict-dialog" class="hidden">
   {% csrf_token %}
   A reason must be specified:
     <input id="restriction-reason" name="reason" style="width: 100%"/>
@@ -211,11 +211,11 @@
 <form method="POST"
       action="{% url 'lava.scheduler.device.derestrict_device' device.pk %}">
   {% csrf_token %}
-  <button id="derestrict-button">Return {{ device.hostname }} to the pool</button>
+  <button class="btn btn-block btn-danger" id="derestrict-button">Return {{ device.hostname }} to the pool</button>
 </form>
 <form method="POST"
       action="{% url 'lava.scheduler.device.derestrict_device' device.pk %}"
-      id="derestrict-dialog" style="...">
+      id="derestrict-dialog" class="hidden">
   {% csrf_token %}
   A reason must be specified:
     <input id="derestriction-reason" name="reason" style="width: 100%"/>

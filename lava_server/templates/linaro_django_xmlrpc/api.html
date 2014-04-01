@@ -1,4 +1,4 @@
-{% extends "layouts/content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
 
 {% block title %}
@@ -36,14 +36,18 @@ server = xmlrpclib.ServerProxy("{{ site_url }}{% url 'lava.api_handler' %}")
 print server.system.listMethods()
 </pre>
 
-<h2>Available functions</h2>
-<div id="accordion">
+<h2 id="top">Available functions</h2>
+<div>
   {% for method in methods %}
-  <h3><a href="#{{method.name}}">{{ method.name }}</a></h3>
-  <div><pre>{{ method.help }}</pre></div>
+  [&nbsp;<a href="#{{method.name}}">{{ method.name }}</a>&nbsp;]
   {% endfor %}
 </div>
-<script type="text/javascript">
-  $(function(){ $('#accordion').accordion({ navigation: true, active: false, collapsible: true}) });
-</script>
+
+{% for method in methods %}<hr/>
+<div id="{{ method.name }}">
+  <h3><a href="#{{method.name}}">{{ method.name }}</a></h3>
+  <div><pre>{{ method.help }}</pre></div>
+  <a href="#top">Available functions</a>
+</div>
+{% endfor %}
 {% endblock %}
