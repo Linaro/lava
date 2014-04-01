@@ -164,3 +164,12 @@ class BundleStreamPermissionTests(TestCase):
         bundle_stream = fixtures.create_bundle_stream("/public/personal/owner/")
         user = User.objects.create(username='non-owner')
         self.assertFalse(bundle_stream.can_upload(user))
+
+    def test_group_can_upload_to_owned(self):
+        group = Group.objects.create(name='group')
+        member = User.objects.create(username="member")
+        group.user_set.add(member)
+        other = User.objects.create(username="other")
+        bundle_stream = fixtures.create_bundle_stream("/public/team/group/basic/")
+        self.assertTrue(bundle_stream.can_upload(member))
+        self.assertFalse(bundle_stream.can_upload(other))
