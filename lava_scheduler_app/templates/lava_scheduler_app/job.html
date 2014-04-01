@@ -3,25 +3,30 @@
 
 {% block styles %}
   <style>
-    pre.log {
+    code.log {
       margin: 0px;
       padding-top: 0px;
       padding-bottom: 0px;
       border: 0px;
+      color: black;
+
+      display: block;
+      font-size: 13px;
+      background-color: rgb(245, 245, 245);
     }
-    pre.action {
+    code.action {
       font-style: italic;
     }
-    pre.log.INFO {
+    code.log.INFO {
       color: blue;
     }
-    pre.log.WARNING {
+    code.log.WARNING {
       color: orange;
     }
-    pre.log.ERROR {
+    code.log.ERROR {
       color: red;
     }
-    pre.log.CRITICAL {
+    code.log.CRITICAL {
       color: red;
       font-weight: bold;
     }
@@ -215,7 +220,7 @@
 
 <div id="log-messages">
   {% for log in job_log_messages %}
-  <pre class="log {{log.0}} {{log.2}}">{{ log.1 }}</pre>
+  <code class="log {{log.0}} {{log.2}}">{{ log.1 }}</code>
   {% endfor %}
   {% if job.status == job.RUNNING %}
   <img src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-progress.gif"/>
@@ -238,9 +243,9 @@
     var label = e.target.htmlFor;
     var input = $('input#' + label);
     if (input.is(':checked')) {
-      $('pre.log.' + label).css('display', 'block');
+      $('code.log.' + label).css('display', 'block');
     } else {
-      $('pre.log.' + label).css('display', 'none');
+      $('code.log.' + label).css('display', 'none');
     }
   });
 
@@ -256,7 +261,7 @@ function poll (start) {
       var progressNode = $('#log-messages img');
       for (var i = 0; i < data.length; i++) {
           var d = data[i];
-          var node = $('<pre class="log"></pre>');
+          var node = $('<code class="log"></code>');
           node.addClass(d[0]);
           node.text(d[1]);
 
