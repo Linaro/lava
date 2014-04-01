@@ -79,6 +79,7 @@ from lava_scheduler_app.tables import (
     DeviceTransitionTable,
     OverviewJobsTable,
     NoWorkerDeviceTable,
+    QueueJobsTable,
 )
 
 # The only functions which need to go in this file are those directly
@@ -527,8 +528,7 @@ class SumIf(models.Aggregate):
     name = 'SumIf'
 
     def add_to_query(self, query, alias, col, source, is_summary):
-        aggregate = SumIfSQL(col,
-                             source=source, is_summary=is_summary, **self.extra)
+        aggregate = SumIfSQL(col, source=source, is_summary=is_summary, **self.extra)
         query.aggregates[alias] = aggregate
 
 
@@ -1641,3 +1641,31 @@ def edit_worker_desc(request):
     else:
         return HttpResponseForbidden("Permission denied.",
                                      content_type="text/plain")
+
+
+class QueueJobsView(JobTableView):
+
+    def get_queryset(self):
+        return all_jobs_with_custom_sort().filter(status=TestJob.SUBMITTED)
+
+
+@BreadCrumb("Queue", parent=index)
+def queue(request):
+    queue_data = QueueJobsView(request, model=TestJob, table_class=QueueJobsTable)
+    queue_ptable = QueueJobsTable(
+        queue_data.get_table_data(),
+    )
+    config = RequestConfig(request, paginate={"per_page": queue_ptable.length})
+    config.configure(queue_ptable)
+
+    return render_to_response(
+        "lava_scheduler_app/queue.html",
+        {
+            "times_data": queue_ptable.prepare_times_data(queue_data),
+            "terms_data": queue_ptable.prepare_terms_data(queue_data),
+            "search_data": queue_ptable.prepare_search_data(queue_data),
+            "discrete_data": queue_ptable.prepare_discrete_data(queue_data),
+            'queue_table': queue_ptable,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(queue),
+        },
+        RequestContext(request))

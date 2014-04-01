@@ -399,13 +399,24 @@ class DeviceTypeTable(LavaTable):
                                                                 record.busy,
                                                                 record.restricted)
 
+    def render_queue(self, record):
+        return TestJob.objects.filter(
+            Q(status=TestJob.SUBMITTED),
+            Q(requested_device_type=record.name) |
+            Q(requested_device__in=Device.objects.filter(device_type=record.name))).count()
+
     name = IDLinkColumn("name")
-    display = tables.Column()
+    idle = tables.Column()
+    offline = tables.Column()
+    busy = tables.Column()
+    restricted = tables.Column()
+    # sadly, this needs to be not orderable as it would otherwise sort by the accessor.
+    queue = tables.Column(accessor="name", verbose_name="queue", orderable=False)
 
     class Meta(LavaTable.Meta):
         model = DeviceType
         exclude = [
-            'health_check_job', 'owners_only'
+            'display', 'health_check_job', 'owners_only'
         ]
         searches = {
             'name': 'contains',
@@ -603,3 +614,22 @@ class DeviceTransitionTable(LavaTable):
         searches = {}
         queries = {}
         times = {}
+
+
+class QueueJobsTable(JobTable):
+
+    id = RestrictedIDLinkColumn(accessor="id")
+    device = tables.Column(accessor='device_sort')
+
+    def __init__(self, *args, **kwargs):
+        super(QueueJobsTable, self).__init__(*args, **kwargs)
+        self.length = 50
+
+    class Meta(JobTable.Meta):
+        fields = (
+            'id', 'device', 'description', 'submitter', 'submit_time',
+        )
+        sequence = (
+            'id', 'device', 'description', 'submitter', 'submit_time',
+        )
+        exclude = ('status', 'priority', 'end_time', 'duration')
