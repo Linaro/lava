@@ -491,19 +491,28 @@ class DeviceTypeTable(LavaTable):
         super(DeviceTypeTable, self).__init__(*args, **kwargs)
         self.length = 50
 
-    def render_display(self, record):
-        return "%d idle, %d offline, %d busy, %d restricted" % (record.idle,
-                                                                record.offline,
-                                                                record.busy,
-                                                                record.restricted)
+    def render_idle(self, record):
+        return "%d" % record.idle
+
+    def render_offline(self, record):
+        return "%d" % record.offline
+
+    def render_busy(self, record):
+        return "%d" % record.busy
+
+    def render_restricted(self, record):
+        return "%d" % record.restricted
 
     name = IDLinkColumn("name")
-    display = tables.Column()
+    idle = tables.Column()
+    offline = tables.Column()
+    busy = tables.Column()
+    restricted = tables.Column()
 
     class Meta(LavaTable.Meta):
         model = DeviceType
         exclude = [
-            'health_check_job'
+            'display', 'health_check_job'
         ]
         searches = {
             'name': 'contains',

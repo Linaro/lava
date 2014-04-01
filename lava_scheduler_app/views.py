@@ -394,10 +394,6 @@ class ActiveDeviceView(DeviceTableView):
 
 class DeviceTypeOverView(JobTableView):
 
-    name = IDLinkColumn("name")
-    # columns must match fields which actually exist in the relevant table.
-    display = Column()
-
     def get_queryset(self):
         return DeviceType.objects.filter(display=True)\
             .annotate(idle=SumIf('device', condition='status=%s' % Device.IDLE),
