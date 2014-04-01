@@ -378,6 +378,24 @@ class TestTestJob(TestCaseWithFactory):
         self.assertRaises(ValidationError, BundleStream.objects.create,
                           user=stream_user, slug='invalid', is_public=False, is_anonymous=True)
 
+    def test_from_json_and_user_can_submit_to_group_stream(self):
+        user = self.factory.make_user()
+        anon_user = User.objects.get_or_create(username="anonymous-owner")[0]
+        group = Group.objects.get_or_create(name="owner")[0]
+        group.user_set.add(user)
+        b = BundleStream.objects.create(
+            slug='basic',
+            is_anonymous=False,
+            group=group,
+            is_public=True)
+        b.save()
+        self.assertEqual(b.pathname, "/public/team/owner/basic/")
+        j = self.make_job_json_for_stream_name(b.pathname)
+        job = TestJob.from_json_and_user(j, user)
+        self.assertEqual(user, job.submitter)
+        self.assertEqual(True, job.is_public)
+        self.assertRaises(ValueError, TestJob.from_json_and_user, j, anon_user)
+
 
 class TestHiddenTestJob(TestCaseWithFactory):
 
