@@ -5,6 +5,7 @@ import simplejson
 import urlparse
 import datetime
 import smtplib
+import socket
 
 from django.conf import settings
 from django.contrib import admin
@@ -12,7 +13,12 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User, Group
 from django.contrib.sites.models import Site
 from django.utils.safestring import mark_safe
-from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.exceptions import (
+    ImproperlyConfigured,
+    ValidationError,
+    ObjectDoesNotExist,
+    MultipleObjectsReturned,
+)
 from django.core.mail import send_mail
 from django.core.validators import validate_email
 from django.db import models
@@ -731,13 +737,13 @@ def _check_tags_support(tag_devices, device_list):
 
 def _get_device_type(user, name):
     """
-    Filters the list of device types to exclude types which are
-    owner_only if the user is not an owner of one of those devices.
+    Gets the device type for the supplied name and ensures
+    the user is an owner of at least one of those devices.
     :param user: the user submitting the TestJob
     """
     try:
         device_type = DeviceType.objects.get(name=name)
-    except Exception as e:
+    except (ObjectDoesNotExist, MultipleObjectsReturned) as e:
         raise DevicesUnavailableException(
             "Device type '%s' is unavailable. %s" %
             (name, e))
@@ -1310,7 +1316,7 @@ class TestJob(RestrictedResource):
             send_mail(
                 "LAVA job notification: " + description, mail,
                 settings.SERVER_EMAIL, [recipient.email])
-        except smtplib.SMTPRecipientsRefused:
+        except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused, socket.error):
             logger.info("unable to send email to recipient")
 
     def _get_notification_recipients(self):
@@ -1335,7 +1341,7 @@ class TestJob(RestrictedResource):
             send_mail(
                 "LAVA job notification: " + description, mail,
                 settings.SERVER_EMAIL, recipients)
-        except smtplib.SMTPRecipientsRefused:
+        except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused, socket.error):
             logger.info("unable to send email - recipient refused")
 
     @property
