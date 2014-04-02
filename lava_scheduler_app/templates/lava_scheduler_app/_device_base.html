@@ -308,7 +308,7 @@
             <h4 class="modal-title" id="DerestrictModelLabel">Reason for returning {{ device.hostname }} to the pool</h4>
           </div>
           <div class="modal-body">
-          <form role="form" method="post" action="{% url 'lava.scheduler.device.derestrict' device.pk %}">
+          <form role="form" method="post" action="{% url 'lava.scheduler.device.derestrict_device' device.pk %}">
           <div id="derestrict-container" class="form-group has-error has-feedback">
             <p>A reason must be specified:</p>
               <input id="derestrict-reason" name="reason"/>
