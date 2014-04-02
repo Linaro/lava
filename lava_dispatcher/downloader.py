@@ -138,24 +138,24 @@ def _url_mapping(url, context):
     return url
 
 
-def download_image(url, context, imgdir=None,
+def download_image(url_string, context, imgdir=None,
                    delete_on_exit=True, decompress=True, timeout=300):
     """downloads a image that's been compressed as .bz2 or .gz and
     optionally decompresses it on the file to the cache directory
     will retry if the download fails, default five minute timeout
     """
-    logging.debug("About to download %s to the host" % url)
+    logging.debug("About to download %s to the host" % url_string)
     now = time.time()
     tries = 0
     while True:
         try:
-            logging.info("Downloading image: %s" % url)
+            logging.info("Downloading image: %s" % url_string)
             if not imgdir:
                 imgdir = mkdtemp(dir=context.config.lava_image_tmpdir)
                 if delete_on_exit:
                     atexit.register(rmtree, imgdir)
 
-            url = _url_mapping(url, context)
+            url = _url_mapping(url_string, context)
 
             url = urlparse.urlparse(url)
             if url.scheme == 'scp':
@@ -189,7 +189,7 @@ def download_image(url, context, imgdir=None,
             tries += 1
             if time.time() >= now + timeout:
                 raise RuntimeError(
-                    'downloading %s failed after %d tries' % (url, tries))
+                    'downloading %s failed after %d tries' % (url_string, tries))
             else:
                 logging.info('Sleep one minute and retry (%d)' % tries)
                 time.sleep(60)
