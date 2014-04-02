@@ -77,6 +77,10 @@
 <!-- lava-container -->
 <div class="container">
   {% block breadcrumb_container %}
+    {% if context_help %}
+       <span style="float: right; padding-right: 1em; padding-top: 0.5em"><a
+           href="/static/docs/{{ context_help|join:'-'|slugify }}.html"><b>Help</b></a></span>
+    {% endif %}
   <ul class="breadcrumb">
     {% block breadcrumbs %}
     {% for bread_crumb in bread_crumb_trail %}

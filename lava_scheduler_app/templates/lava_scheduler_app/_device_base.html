@@ -13,6 +13,9 @@
   .no-details details.open summary:before { content: '▼ '; }
   .no-details details summary { display: block; }
   .ui-button { width: 250px }
+  dd {padding-left: 1em; padding-right: 1em;}
+  dt {padding-right: 1em;}
+  .oneline { white-space: nowrap; }
 </style>
 {% endblock %}
 
@@ -30,7 +33,7 @@
 <tr>
 <td style="vertical-align:text-top;text-align:left;">
     <dt>Hostname:</dt>
-    <dd>{{ device.hostname }}</dd>
+    <dd class="oneline">{{ device.hostname }}</dd>
 
     <dt>Device type:</dt>
     <dd><a href="{{ device.device_type.get_absolute_url }}">{{ device.device_type }}</a></dd>
@@ -50,12 +53,12 @@
     {% endfor %}
 
     <dt>Worker Hostname</dt>
-    <dd>
+    <dd class="oneline">
     {% if device.too_long_since_last_heartbeat %}
       <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"/>
     {% else %}
       <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"/>
-    {% endif %}&nbsp;&nbsp;
+    {% endif %}
     {% if device.worker_host.is_master %}
       <b><a href="{{ device.worker_host.get_absolute_url }}">{{ device.worker_host.hostname }}</a></b>
     {% else %}
@@ -77,11 +80,11 @@
         {% endif %}
     </dd>
     {% if device.device_type.owners_only %}
-        <dt>Hidden device type</dt>
-        <dd>Only owners of one or more devices of type {{ device.device_type }}
+        <dt><i>{{  device.device_type.name }}</i> is a hidden device type.</dt>
+        <dd>Only owners of one or more devices of type <i>{{ device.device_type }}</i>
         can see this information.</dd>
     {% endif %}
-    <dt>User or group with physical access:
+    <dt class="oneline">User or group with physical access:
         <abbr title="If known, this is the user or group with physical access to {{ device.hostname }}.">(?)</abbr>
     </dt>
     <dd>
@@ -99,7 +102,7 @@
     <dd>{{ device.get_description|truncatewords_html:200|wordwrap:80|linebreaksbr }}</dd>
 </td>
 <td style="vertical-align:text-top;text-align:left;">
-    <dt>Status:</dt>
+    <dt>Device Status:</dt>
     <dd>
       {{ device.get_status_display }}
       {% if transition %}

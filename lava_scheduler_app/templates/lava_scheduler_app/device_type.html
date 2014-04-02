@@ -2,13 +2,13 @@
 {% load django_tables2 %}
 
 {% block content %}
-<h2>{{device_type}} Status</h2>
+<h2>{{device_type}} status</h2>
 
 {{running_jobs_num}} jobs running / {{queued_jobs_num}} jobs queued
 
 {% if device_type.owners_only %}
-<h3>Hidden device type</h3>
-Only owners of one or more devices of type {{ device_type }}
+<h3><i>{{ device_type.name }}</i> is a hidden device type.</h3>
+Only owners of one or more devices of type <i>{{ device_type }}</i>
 can see this information.
 {% endif %}
 
