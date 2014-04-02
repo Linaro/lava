@@ -54,7 +54,7 @@ Selecting lavaserver brings up the details of the installation superuser
 and below the password field is a link to change the password without
 needing to know the random password.
 
-To delete the dummy superuser, login as this new superuser at 
+To delete the dummy superuser, login as this new superuser at
 ``http://localhost/admin`` and select Users in the administrator interface.
 Select lavaserver and click the `Delete` link at the bottom of the page.
 
@@ -112,7 +112,7 @@ can create a connection_command setting of ``telnet localhost 4006``::
 
  $ sudo /usr/share/lava-server/add_device.py mx53loco foo -t 4006
 
-If the device foo is on PDU port 5, the helper can create a 
+If the device foo is on PDU port 5, the helper can create a
 ``hard_reset_command`` setting of::
 
  /usr/bin/pduclient --daemon localhost --hostname pdu --command reboot --port 05
