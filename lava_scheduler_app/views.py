@@ -870,6 +870,7 @@ def job_definition(request, pk):
         {
             'job': job,
             'job_file_present': bool(log_file),
+            'show_cancel': job.can_cancel(request.user),
             'show_resubmit': job.can_resubmit(request.user),
         },
         RequestContext(request))
@@ -891,6 +892,8 @@ def multinode_job_definition(request, pk):
         {
             'job': job,
             'job_file_present': bool(log_file),
+            'show_cancel': job.can_cancel(request.user),
+            'show_resubmit': job.can_resubmit(request.user),
         },
         RequestContext(request))
 
@@ -931,6 +934,8 @@ def job_log_file(request, pk):
     return render_to_response(
         "lava_scheduler_app/job_log_file.html",
         {
+            'show_cancel': job.can_cancel(request.user),
+            'show_resubmit': job.can_resubmit(request.user),
             'job': TestJob.objects.get(pk=pk),
             'job_file_present': bool(job.output_file()),
             'sections': content,
@@ -1080,6 +1085,20 @@ def job_resubmit(request, pk):
                 definition = job.multinode_definition
             else:
                 definition = job.display_definition
+
+            if request.user != job.owner and not request.user.is_superuser:
+                obj = simplejson.loads(definition)
+
+                # Iterate through the objects in the JSON and pop (remove)
+                # the submit_results action once we find it.
+                for key in obj:
+                    if key == "actions":
+                        for i in xrange(len(obj[key])):
+                            if obj[key][i]["command"] == "submit_results_on_host" or \
+                               obj[key][i]["command"] == "submit_results":
+                                obj[key].pop(i)
+                                break
+                definition = simplejson.dumps(obj, sort_keys=True, indent=4, separators=(',', ': '))
 
             try:
                 response_data["json_input"] = definition
