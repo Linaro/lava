@@ -678,7 +678,7 @@ def lab_health(request):
 def health_job_list(request, pk):
     device = get_object_or_404(Device, pk=pk)
     trans_data = TransitionView(request, device)
-    trans_table = DeviceTransitionTable(data.get_table_data())
+    trans_table = DeviceTransitionTable(trans_data.get_table_data())
     config = RequestConfig(request, paginate={"per_page": trans_table.length})
     config.configure(trans_table)
 
