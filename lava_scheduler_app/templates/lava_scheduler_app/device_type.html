@@ -1,70 +1,54 @@
-{% extends "lava_scheduler_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load django_tables2 %}
 
 {% block content %}
-<h2>{{device_type}} status</h2>
-
-{{running_jobs_num}} jobs running / {{queued_jobs_num}} jobs queued
 
 {% if device_type.owners_only %}
-<h3><i>{{ device_type.name }}</i> is a hidden device type.</h3>
-Only owners of one or more devices of type <i>{{ device_type }}</i>
-can see this information.
+<div class="alert alert-warning alert-dismissable">
+  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+  <p><strong><i>{{ device_type.name }}</i> is a hidden device type.</strong></p>
+  Only owners of one or more devices of type <i>{{ device_type }}</i> can see this information.
+</div>
 {% endif %}
 
-{% if capabilities_date %}
-<h3>Device capabilities as at {{ capabilities_date }}</h3>
-<table border=0 width="100%">
-<colgroup>
-<col width="20%">
-<col width="20%">
-</colgroup>
-<tr>
-<td style="vertical-align:text-top;text-align:left;">
+<h2><i>{{device_type}}</i> status</h2>
 
-    {% if processor %}
-<dt>Processor:</dt>
-<dd>{{ processor }}</dd>
-{% endif %}
+<div class="row">
+  <div class="col-md-6">
+    <h4 class="modal-header">Capabilities{% if capabilities_date %} <small>({{ capabilities_date }})</small>{% endif %}</h4>
+    <dl class="dl-horizontal">
+      <dt>Processor</dt>
+      <dd>{{ processor|default:"<i>unknown</i>" }}</dd>
+      <dt>Model</dt>
+      <dd>{{ models|default:"<i>unknown</i>" }}</dd>
+      <dt>Flags</dt>
+      <dd>{{ flags|default:"<i>unknown</i>" }}</dd>
+      <dt>Emulated</dt>
+      <dd>{{ emulated|default:"<i>unknown</i>" }}</dd>
+      <dt>Cores</dt>
+      <dd>{{ cores|default:"<i>unknown</i>" }}</dd>
+    </dl>
+  </div>
+  <div class="col-md-6">
+    <h4 class="modal-header">Current state</h4>
+    <dl class="dl-horizontal">
+      <dt>Running jobs</dt>
+      <dd>{{ running_jobs_num }}</dd>
+      <dt>Queued jobs</dt>
+      <dd>{{ queued_jobs_num }}</dd>
+      <dt>Reports</dt>
+      <dd><a href="{% url 'lava.scheduler.device_type_report' device_type %}">Health check and job failure</a></dt>
+    </dl>
+  </div>
+</div>
 
-{% if models %}
-<dt>Model:</dt>
-<dd>{{ models }}</dd>
-{% endif %}
-
-{% if flags %}
-<dt>Flags:</dt>
-<dd>{{ flags }}</dd>
-{% endif %}
-
-</td>
-<td style="vertical-align:text-top;text-align:left;">
-
-{% if emulated %}
-<dt>Emulated:</dt>
-<dd>{{ emulated }}</dd>
-{% endif %}
-
-{% if cores %}
-<dt>Cores:</dt>
-<dd>{{ cores }}</dd>
-{% endif %}
-
-</td>
-</tr>
-</table>
-{% endif %}
-
-<h3>Health Job Summary</h3>
+<h4 class="modal-header">Health Job Summary</h4>
 {% render_table health_job_summary_table %}
 
-<h3>Reports</h3>
-<a href="{% url 'lava.scheduler.device_type_report' device_type %}">Health check and job failure report</a>
-
-<h3>Devices Overview</h3>
+<h4 class="modal-header">Devices Overview</h3>
 {% render_table devices_table_no_dt %}
 
-<h3>Jobs for devices of type {{ device_type }}</h3>
+<h4 class="modal-header">Jobs for devices of type {{ device_type }}</h4>
 {% render_table device_type_jobs_table %}
 
 {% endblock %}
