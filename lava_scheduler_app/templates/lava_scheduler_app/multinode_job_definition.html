@@ -1,4 +1,5 @@
-{% extends "lava_scheduler_app/job_sidebar.html" %}
+{% extends "layouts/content-bootstrap.html" %}
+
 {% block extrahead %}
 {{ block.super }}
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/shCore.js"></script>
@@ -10,8 +11,63 @@
 {% endblock %}
 
 {% block content %}
-<h2>Multinode Job definition file - {{ job.sub_id }} </h2>
-<a href="{% url 'lava.scheduler.job.multinode_definition.plain' job.pk %}">Download as text file</a>
+<h2>Multinode Job definition file - {{ job.sub_id }}  <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.multinode_definition.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h2>
+
+  <div class="col-md-4">
+    <h4 class="modal-header">Device</h4>
+    <dl class="dl-horizontal">
+    {% if job.actual_device %}
+      <dt>Name</dt>
+      <dd><a href="{{ job.actual_device.get_absolute_url }}">{{ job.actual_device.hostname }}</a> <a href="{% url 'lava.scheduler.device_report' job.actual_device.pk %}">(reports)</a></dd>
+    {% endif %}
+
+    {% if job.requested_device %}
+      <dt>Type</dt>
+      <dd><a href="{{ job.requested_device.device_type.get_absolute_url }}">{{ job.requested_device.device_type }}</a> <a href="{% url 'lava.scheduler.device_type_report' job.requested_device.device_type %}">(reports)</a></dd>
+    {% elif job.requested_device_type %}
+      <dt>Requested type</dt>
+      <dd><a href="{{ job.requested_device_type.get_absolute_url }}">{{ job.requested_device_type }}</a> <a href="{% url 'lava.scheduler.device_type_report' job.requested_device_type %}">(reports)</a></dd>
+    {% endif %}
+    </dl>
+  </div>
+  {% if job.is_multinode %}
+  <div class="col-md-4">
+    <h4 class="modal-header">Sub jobs</h4>
+    <dl class="dl-horizontal">
+    {% for subjob in job.sub_jobs_list %}
+      <dt><a href="{% url 'lava.scheduler.job.detail' subjob.sub_id %}">{{ subjob.sub_id }}</a></dt>
+    {% if subjob.actual_device.hostname %}
+      <dd>on: <a href="{{ subjob.actual_device.get_absolute_url }}">{{ subjob.actual_device.hostname }}</a></dd>
+      <dd>as: {{ subjob.multinode_role }}</dd>
+    {% else %}
+      <dd>No device assigned as {{ subjob.multinode_role }}.</dd>
+    {% endif %}
+    {% endfor %}
+    </dl>
+  </div>
+  {% endif %}
+  <div class="col-md-4">
+    <h4 class="modal-header">Logs</h4>
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+        {% if job_file_present %}
+          <li><a href="{{ job.get_absolute_url }}" class="btn btn-primary">Summary</a></li>
+        {% endif %}
+        {% if job.results_link %}
+          <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
+        {% endif %}
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+        {% if job_file_present %}
+          <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary">Complete log</a></li>
+        {% endif %}
+          <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition</a></li>
+        </ul>
+    </div>
+  </div>
+
 <pre class="brush: js">{{ job.multinode_definition }}</pre>
 
 <script type="text/javascript">

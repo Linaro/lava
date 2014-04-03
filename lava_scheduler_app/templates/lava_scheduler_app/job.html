@@ -34,6 +34,10 @@
 {% endblock %}
 
 {% block content %}
+{% if job.status >= job.RUNNING %}
+<a id="top" href="#bottom">Go to end of log file</a><br/><br/>
+{% endif %}
+
 <div class="row">
   <div class="col-md-4">
     <h4 class="modal-header">Job information</h4>
@@ -133,19 +137,19 @@
     <div class="row">
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
-          <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-default">Definition</a></li>
+          <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition</a></li>
         {% if job.is_multinode %}
-          <li><a href="{% url 'lava.scheduler.job.multinode_definition' job.pk %}" class="btn btn-default">Multinode Definition</a></li>
+          <li><a href="{% url 'lava.scheduler.job.multinode_definition' job.pk %}" class="btn btn-info">Multinode Definition</a></li>
         {% endif %}
         </ul>
       </div>
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
         {% if job_file_present %}
-          <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-default">Complete log</a></li>
+          <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary">Complete log</a></li>
         {% endif %}
         {% if job.results_link %}
-          <li><a href="{{ job.results_link }}" class="btn btn-default">Results Bundle</a></li>
+          <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
         {% endif %}
         </ul>
       </div>
@@ -160,7 +164,7 @@
           <li><a href="{% url 'lava.scheduler.job.cancel' job.pk %}" class="btn btn-warning">Cancel</a></li>
         {% endif %}
         {% if show_resubmit %}
-          <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-success">Resubmit</a></li>
+          <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
         {% endif %}
         </ul>
       </div>
@@ -205,7 +209,7 @@
 <div class="alert alert-danger">{{ job.failure_comment }}</div>
 {% endif %}
 
-<h4 class="modal-header" id="top">Dispatcher Log messages (file size = {{ job_file_size|filesizeformat }}) <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h4>
+<h4 class="modal-header">Dispatcher Log messages (file size = {{ job_file_size|filesizeformat }}) <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h4>
 <a href="#bottom">Go to end of log file</a><br/><br/>
 
 <div class="btn-group" data-toggle="buttons" id="logbuttons">
@@ -220,7 +224,7 @@
 
 <div id="log-messages">
   {% for log in job_log_messages %}
-  <code class="log {{log.0}} {{log.2}}">{{ log.1 }}</code>
+    <code class="log {{log.0}} {{log.2}}">{{ log.1 }}</code>
   {% endfor %}
   {% if job.status == job.RUNNING %}
   <img src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-progress.gif"/>
@@ -232,7 +236,40 @@
 {% endif %}
 
 {% if job.status >= job.RUNNING %}
-<a id="bottom" href="#top">Go to start of log file</a><br/><br/>
+<a id="bottom" href="#top">Go to start of log file</a>
+<br/><br/>
+<div class="row">
+  <div class="col-md-6">
+    <div class="row">
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+          <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition</a></li>
+        {% if job.is_multinode %}
+          <li><a href="{% url 'lava.scheduler.job.multinode_definition' job.pk %}" class="btn btn-info">Multinode Definition</a></li>
+        {% endif %}
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+        {% if job_file_present %}
+          <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary">Complete log</a></li>
+        {% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="row">
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+        {% if job.results_link %}
+          <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
+        {% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
 {% endif %}
 {% endblock %}
 

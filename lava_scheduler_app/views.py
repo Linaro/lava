@@ -1089,6 +1089,11 @@ def job_log_file(request, pk):
             'job_file_present': bool(job.output_file()),
             'sections': content,
             'job_file_size': job_file_size,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_log_file, pk=pk),
+            'show_cancel': job.can_cancel(request.user),
+            'show_failure': job.can_annotate(request.user),
+            'show_resubmit': job.can_resubmit(request.user),
+            'context_help': BreadCrumbTrail.leading_to(job_detail, pk='detail'),
         },
         RequestContext(request))
 
