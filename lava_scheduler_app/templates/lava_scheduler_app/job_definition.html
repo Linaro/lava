@@ -9,7 +9,8 @@
 {% block content %}
 <h2>Job definition file - {{ job.id }} <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.definition.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h2>
 
-      <div class="col-md-4">
+<div class="row">
+  <div class="col-md-4">
     <h4 class="modal-header">Device</h4>
     <dl class="dl-horizontal">
     {% if job.actual_device %}
@@ -44,6 +45,7 @@
   {% endif %}
   <div class="col-md-4">
     <h4 class="modal-header">Logs</h4>
+    <div class="row">
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
         {% if job_file_present %}
@@ -66,9 +68,12 @@
           <li><a href="{% url 'lava.scheduler.job.multinode_definition' job.pk %}" class="btn btn-info">Multinode Definition</a></li>
         {% endif %}
         </ul>
+      </div>
     </div>
   </div>
+</div>
 
+<h4 class="modal-header">Definition</h4>
 <pre class="brush: js">{{ job.display_definition }}</pre>
 
 {% endblock content %}
