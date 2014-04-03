@@ -52,6 +52,9 @@
         {% if job.results_link %}
           <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
         {% endif %}
+        {% if show_resubmit %}
+          <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
+        {% endif %}
         </ul>
       </div>
       <div class="col-md-6">
