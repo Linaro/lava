@@ -11,6 +11,7 @@ setup(
     author='Linaro Validation Team',
     author_email='linaro-validation@lists.linaro.org',
     namespace_packages=['lava'],
+    test_suite='lava_dispatcher.tests.test_suite',
     entry_points="""
     [lava.commands]
     dispatch = lava.dispatcher.commands:dispatch
