@@ -7,7 +7,11 @@
 {% endblock styles %}
 
 {% block content %}
-<h2>Job definition file - {{ job.id }} <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.definition.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h2>
+<h2>Job definition file - {% if job.is_multinode %}{{ job.sub_id }}{% else %}{{ job.id }}{% endif %}
+ <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.definition.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h2>
+{% if job.is_multinode %}
+     {{ job.sub_id }} is part of a multinode job. Use the Multinode Definition to resubmit.
+{% endif %}
 
 <div class="row">
   <div class="col-md-4">
@@ -32,13 +36,19 @@
     <h4 class="modal-header">Sub jobs</h4>
     <dl class="dl-horizontal">
     {% for subjob in job.sub_jobs_list %}
-      <dt><a href="{% url 'lava.scheduler.job.detail' subjob.sub_id %}">{{ subjob.sub_id }}</a></dt>
+      <dt><a href="{% url 'lava.scheduler.job.detail' subjob.sub_id %}">{{ subjob.sub_id }}</a>
+        {% if '0' in subjob.sub_id and '0' not in job.sub_id %}
+            <abbr title="view job {{ subjob.sub_id }} to see the result bundle, if any.">(?)</abbr>
+        {% endif %}
+      </dt>
+      <dd>
     {% if subjob.actual_device.hostname %}
-      <dd>on: <a href="{{ subjob.actual_device.get_absolute_url }}">{{ subjob.actual_device.hostname }}</a></dd>
-      <dd>as: {{ subjob.multinode_role }}</dd>
+      on: <a href="{{ subjob.actual_device.get_absolute_url }}">{{ subjob.actual_device.hostname }}</a>
+      as: {{ subjob.multinode_role }}&nbsp;
     {% else %}
-      <dd>No device assigned as {{ subjob.multinode_role }}.</dd>
+      No device assigned as {{ subjob.multinode_role }}.</dd>
     {% endif %}
+      </dd>
     {% endfor %}
     </dl>
   </div>
@@ -51,11 +61,11 @@
         {% if job_file_present %}
           <li><a href="{{ job.get_absolute_url }}" class="btn btn-primary">Summary</a></li>
         {% endif %}
+        {% if show_resubmit and not job.is_multinode %}
+          <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
+        {% endif %}
         {% if job.results_link %}
           <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
-        {% endif %}
-        {% if show_resubmit %}
-          <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
         {% endif %}
         </ul>
       </div>
