@@ -73,6 +73,7 @@ urlpatterns = patterns(
     url(r'^{mount_point}reset/done/$'.format(mount_point=settings.MOUNT_POINT),
         'django.contrib.auth.views.password_reset_complete'),
 
+    url(r'^admin/jsi18n', 'django.views.i18n.javascript_catalog'),
     url(r'^{mount_point}admin/'.format(mount_point=settings.MOUNT_POINT),
         include(admin.site.urls)),
     url(r'^{mount_point}openid/'.format(mount_point=settings.MOUNT_POINT),
