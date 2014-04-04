@@ -80,6 +80,7 @@ urlpatterns = patterns(
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>[a-zA-Z0-9-_]+)/\+edit$', 'image_reports.views.image_chart_edit'),
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>[a-zA-Z0-9-_]+)/\+delete$', 'image_reports.views.image_chart_delete'),
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>[a-zA-Z0-9-_]+)/\+settings-update$', 'image_reports.views.image_chart_settings_update'),
+    url(r'^image-charts/\+filter-type-check$', 'image_reports.views.image_chart_filter_type_check'),
     url(r'^image-charts/\+get-chart-test$', 'image_reports.views.get_chart_test_data'),
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>[a-zA-Z0-9-_]+)/\+export$', 'image_reports.views.image_chart_export'),
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>[a-zA-Z0-9-_]+)/\+add-filter$', 'image_reports.views.image_chart_filter_add'),
