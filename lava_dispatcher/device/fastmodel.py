@@ -132,9 +132,11 @@ class FastModelTarget(Target):
                                                 self.config.simulator_initrd_files,
                                                 self.config.simulator_initrd)
         # Extract the dtb from the image
-        if self.config.simulator_dtb and self._dtb is None:
-            self._dtb = self._find_and_copy(
-                subdir, odir, self.config.simulator_dtb)
+        if self.config.simulator_dtb_files and self._dtb is None:
+            self._dtb = \
+                self._copy_first_find_from_list(subdir, odir,
+                                                self.config.simulator_dtb_files,
+                                                self.config.simulator_dtb)
 
             # workaround for renamed device tree blobs
             # see https://bugs.launchpad.net/linaro-oe/+bug/1255527
@@ -174,12 +176,12 @@ class FastModelTarget(Target):
                                self.config.simulator_kernel_files)
         # Initrd is needed only for b.L models
         if self._initrd is None and self.config.simulator_initrd_files:
-            logging.info('No INITRD found, %r' %
-                         self.config.simulator_initrd_files)
+            logging.warning('No INITRD found, %r' %
+                            self.config.simulator_initrd_files)
         # DTB is needed only for b.L models
-        if self._dtb is None and self.config.simulator_dtb:
-            logging.info('No DTB found, %r' %
-                         self.config.simulator_dtb)
+        if self._dtb is None and self.config.simulator_dtb_files:
+            logging.warning('No DTB found, %r' %
+                            self.config.simulator_dtb_files)
         # SECURE FLASHLOADERs are needed only for base and cortex models
         if self._bl1 is None and self.config.simulator_bl1:
             raise RuntimeError('No SECURE FLASHLOADER found, %r' %
@@ -219,24 +221,22 @@ class FastModelTarget(Target):
 
         generate_fastmodel_image(self.context, hwpack, rootfs, odir, bootloadertype)
         self._sd_image = '%s/sd.img' % odir
+        self.customize_image(self._sd_image)
 
         self._copy_needed_files_from_partition(self.config.boot_part, 'rtsm')
         self._copy_needed_files_from_partition(self.config.boot_part, 'fvp')
         self._copy_needed_files_from_partition(self.config.boot_part, '')
         self._copy_needed_files_from_partition(self.config.root_part, 'boot')
-
-        self._customize_linux(self._sd_image)
 
     def deploy_linaro_prebuilt(self, image, rootfstype, bootloadertype):
         self._sd_image = download_image(image, self.context)
         self._bootloadertype = bootloadertype
+        self.customize_image(self._sd_image)
 
         self._copy_needed_files_from_partition(self.config.boot_part, 'rtsm')
         self._copy_needed_files_from_partition(self.config.boot_part, 'fvp')
         self._copy_needed_files_from_partition(self.config.boot_part, '')
         self._copy_needed_files_from_partition(self.config.root_part, 'boot')
-
-        self._customize_linux(self._sd_image)
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):

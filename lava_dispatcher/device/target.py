@@ -34,6 +34,129 @@ from lava_dispatcher.client.lmc_utils import (
 import lava_dispatcher.utils as utils
 from lava_dispatcher import deployment_data
 
+from lava_dispatcher.downloader import (
+    download_image,
+)
+
+from lava_dispatcher.errors import CriticalError
+
+
+class ImagePathHandle(object):
+
+    def __init__(self, image, image_path, config, mount_info):
+        if image_path[:5] == "boot:":
+            self.part = config.boot_part
+            self.part_mntdir = mount_info['boot']
+            self.path = image_path[5:]
+        elif image_path[:7] == "rootfs:":
+            self.part = config.root_part
+            self.part_mntdir = mount_info['rootfs']
+            self.path = image_path[7:]
+        else:
+            # FIXME: we can support more patitions here!
+            logging.error('The partition we have supported : boot, rootfs. \n\
+            And the right image path format is \"<partition>:<path>\".')
+            raise CriticalError('Do not support this partition or path format %s yet!' % image_path)
+
+        self.dir_full = os.path.dirname(self.path)
+        self.dir_name = os.path.basename(self.dir_full)
+        self.file_name = os.path.basename(self.path)
+        self.image = image
+
+    def copy_to(self, context, local_path=None):
+        # copy file from image to local path
+        des_path = None
+
+        # make default local path in the lava
+        if local_path is None:
+            local_path = utils.mkdtemp(basedir=context.config.lava_image_tmpdir)
+
+        src_path = '%s/%s' % (self.part_mntdir, self.path)
+        if not os.path.exists(src_path):
+            raise CriticalError('Can not find source in image (%s at part %s)!' % (self.path, self.part))
+        if os.path.isdir(src_path):
+            if not os.path.exists(local_path):
+                des_path = local_path
+            else:
+                if self.file_name == '':
+                    des_name = self.dir_name
+                else:
+                    des_name = self.file_name
+                des_path = os.path.join(local_path, des_name)
+            logging.debug("Copying dir from #%s:%s(%s) to %s!" % (self.part, self.path, src_path, des_path))
+            shutil.copytree(src_path, des_path)
+        elif os.path.isfile(src_path):
+            if not os.path.exists(local_path):
+                if os.path.basename(local_path) == '':
+                    des_name = os.path.basename(src_path)
+                    des_path = os.path.join(local_path, des_name)
+                    os.makedirs(local_path)
+                else:
+                    if not os.path.exists(os.path.dirname(local_path)):
+                        os.makedirs(os.path.dirname(local_path))
+                    des_path = local_path
+            else:
+                if os.path.isdir(local_path):
+                    des_name = os.path.basename(src_path)
+                    des_path = os.path.join(local_path, des_name)
+                else:
+                    des_path = local_path
+            logging.debug("Copying file from #%s:%s(%s) to %s!" % (self.part, self.path, src_path, des_path))
+            shutil.copyfile(src_path, des_path)
+        else:
+            raise CriticalError('Please check the source file type, we only support file and dir!')
+
+        return des_path
+
+    def copy_from(self, local_path):
+        # copy file from local path into image
+        src_path = local_path
+        if not os.path.exists(src_path):
+            raise CriticalError('Can not find source in local server (%s)!' % src_path)
+
+        if os.path.isdir(src_path):
+            des_path = '%s/%s' % (self.part_mntdir, self.path)
+            if os.path.exists(des_path):
+                if os.path.basename(src_path) == '':
+                    des_name = os.path.basename(os.path.dirname(src_path))
+                else:
+                    des_name = os.path.basename(src_path)
+                des_path = os.path.join(des_path, des_name)
+            logging.debug("Copying dir from %s to #%s:%s(%s)!" % (des_path, self.part, self.path, src_path))
+            shutil.copytree(src_path, des_path)
+        elif os.path.isfile(src_path):
+            des_path = '%s/%s' % (self.part_mntdir, self.path)
+            if not os.path.exists(des_path):
+                if os.path.basename(des_path) == '':
+                    os.makedirs(des_path)
+                    des_name = os.path.basename(src_path)
+                    des_path = os.path.join(des_path, des_name)
+                else:
+                    if not os.path.exists(os.path.dirname(des_path)):
+                        os.makedirs(os.path.dirname(des_path))
+            else:
+                if os.path.isdir(des_path):
+                    des_name = os.path.basename(src_path)
+                    des_path = os.path.join(des_path, des_name)
+            logging.debug("Copying file from %s to #%s:%s(%s)!" % (des_path, self.part, self.path, src_path))
+            shutil.copyfile(src_path, des_path)
+        else:
+            raise CriticalError('Please check the source file type, we only support file and dir!')
+
+        return des_path
+
+    def remove(self):
+        # delete the file/dir from Image
+        des_path = '%s/%s' % (self.part_mntdir, self.path)
+        if os.path.isdir(des_path):
+            logging.debug("Removing dir(%s) %s from #%s partition of image!" % (des_path, self.path, self.part))
+            shutil.rmtree(des_path)
+        elif os.path.isfile(des_path):
+            logging.debug("Removing file(%s) %s from #%s partition of image!" % (des_path, self.path, self.part))
+            os.remove(des_path)
+        else:
+            logging.warning('Unrecognized file type or file/dir doesn\'t exist(%s)! Skipped' % des_path)
+
 
 def get_target(context, device_config):
     ipath = 'lava_dispatcher.device.%s' % device_config.client_type
@@ -52,6 +175,7 @@ class Target(object):
         self.boot_options = []
         self._scratch_dir = None
         self.__deployment_data__ = None
+        self.mount_info = {'boot': None, 'rootfs': None}
 
     @property
     def deployment_data(self):
@@ -382,33 +506,137 @@ class Target(object):
         else:
             return value
 
-    def _customize_linux(self, image):
+    def _customize_linux(self):
         # XXX Re-examine what to do here in light of deployment_data import.
         #perhaps make self.deployment_data = deployment_data({overrides: dict})
         #and remove the write function completely?
 
-        root_part = self.config.root_part
         os_release_id = 'linux'
-        with image_partition_mounted(image, root_part) as mnt:
-            os_release_file = '%s/etc/os-release' % mnt
-            if os.path.exists(os_release_file):
-                for line in open(os_release_file):
-                    if line.startswith('ID='):
-                        os_release_id = line[(len('ID=')):]
-                        os_release_id = os_release_id.strip('\"\n')
-                        break
+        mnt = self.mount_info['rootfs']
+        os_release_file = '%s/etc/os-release' % mnt
+        if os.path.exists(os_release_file):
+            for line in open(os_release_file):
+                if line.startswith('ID='):
+                    os_release_id = line[(len('ID=')):]
+                    os_release_id = os_release_id.strip('\"\n')
+                    break
 
-            profile_path = "%s/etc/profile"
-            if os_release_id == 'debian' or os_release_id == 'ubuntu' or \
-                    os.path.exists('%s/etc/debian_version' % mnt):
-                self.deployment_data = deployment_data.ubuntu
-                profile_path = '%s/root/.bashrc'
-            elif os_release_id == 'fedora':
-                self.deployment_data = deployment_data.fedora
+        profile_path = "%s/etc/profile" % mnt
+        if os_release_id == 'debian' or os_release_id == 'ubuntu' or \
+                os.path.exists('%s/etc/debian_version' % mnt):
+            self.deployment_data = deployment_data.ubuntu
+            profile_path = '%s/root/.bashrc' % mnt
+        elif os_release_id == 'fedora':
+            self.deployment_data = deployment_data.fedora
+        else:
+            # assume an OE based image. This is actually pretty safe
+            # because we are doing pretty standard linux stuff, just
+            # just no upstart or dash assumptions
+            self.deployment_data = deployment_data.oe
+
+        self._customize_prompt_hostname(mnt, profile_path)
+
+    def _pre_download_src(self, customize_info, image=None):
+        # for self.customize_image
+
+        if image is not None:
+            for customize_object in customize_info["image"]:
+                image_path = ImagePathHandle(image, customize_object["src"], self.config, self.mount_info)
+                temp_file = image_path.copy_to(self.context, None)
+                customize_object["src"] = temp_file
+        else:
+            customize_info["image"] = []
+            logging.debug("There are not image files which will be pre-download to temp dir!")
+
+        for customize_object in customize_info["remote"]:
+            temp_file = download_image(customize_object["src"], self.context)
+            customize_object["src"] = temp_file
+
+    def _reorganize_customize_files(self):
+        # for self.customize_image
+        # translate the raw customize info from
+        #    "customize": {
+        #    "http://my.server/files/startup.nsh": ["boot:/EFI/BOOT/", "boot:/startup_backup.nsh"],
+        #    "http://my.server/files/my-crazy-bash-binary": ["rootfs:/bin/bash"],
+        #    "rootfs:/lib/modules/eth.ko": ["rootfs:/lib/modules/firmware/eth.ko", "delete"]
+        #    }
+        #
+        # to a specific object
+        #   customize_info = {
+        #       "delete":[image_path_1, image_path_2],
+        #       "image":[
+        #           {"src":"image_path_1", "des":[image_path_1]},
+        #           {"src":"image_path_2", "des":[image_path_1, image_path_2]}
+        #       ],
+        #       "remote":[
+        #           {"src":"url_1", "des":[image_path_1, image_path_2]},
+        #           {"src":"url_2", "des":[image_path_1]}
+        #       ]
+        #   }
+        #
+        # make this info easy to be processed
+        #
+
+        customize_info = {
+            "delete": [],
+            "image": [],
+            "remote": []
+        }
+        image_part = ["boot", "root"]
+
+        for src, des in self.config.customize.items():
+            temp_dic = {"src": src, "des": des}
+            for des_tmp in temp_dic["des"]:
+                if des_tmp[:5] != "boot:" and des_tmp[:7] != "rootfs:" and des_tmp != "delete":
+                    logging.error('Customize function only support <boot, rootfs>:<path> as image path, for now!')
+                    raise CriticalError("Unrecognized image path %s, Please check your test definition!" % des_tmp)
+                    #temp_dic["des"].remove(des_tmp)
+            if src[:4] in image_part:
+                if "delete" in temp_dic["des"]:
+                    customize_info["delete"].append(src)
+                    temp_dic["des"].remove("delete")
+                customize_info["image"].append(temp_dic)
             else:
-                # assume an OE based image. This is actually pretty safe
-                # because we are doing pretty standard linux stuff, just
-                # just no upstart or dash assumptions
-                self.deployment_data = deployment_data.oe
+                if "delete" in temp_dic["des"]:
+                    logging.warning("Do not try to delete the remote file %s" % temp_dic["src"])
+                    temp_dic["des"].remove("delete")
+                customize_info["remote"].append(temp_dic)
 
-            self._customize_prompt_hostname(mnt, profile_path)
+        logging.debug("Do customizing image with %s" % customize_info)
+
+        return customize_info
+
+    def customize_image(self, image=None):
+        with image_partition_mounted(image, self.config.boot_part) as boot_mnt:
+            with image_partition_mounted(image, self.config.root_part) as rootfs_mnt:
+
+                self.mount_info = {'boot': boot_mnt, 'rootfs': rootfs_mnt}
+
+                # for _customize_linux integration
+                self._customize_linux()
+
+                # for files injection function.
+                if self.config.customize is not None and image is not None:
+                    # format raw config.customize to customize_info object
+                    customize_info = self._reorganize_customize_files()
+
+                    # fetch all the src file into the local temp dir
+                    self._pre_download_src(customize_info, image)
+
+                    # delete file or dir in image
+                    for delete_item in customize_info["delete"]:
+                        image_item = ImagePathHandle(image, delete_item, self.config, self.mount_info)
+                        image_item.remove()
+
+                    # inject files/dirs, all the items should be pre-downloaded into temp dir.
+                    for customize_object in customize_info["image"]:
+                        for des_image_path in customize_object["des"]:
+                            def_item = ImagePathHandle(image, des_image_path, self.config, self.mount_info)
+                            def_item.copy_from(customize_object["src"])
+                    for customize_object in customize_info["remote"]:
+                        for des_image_path in customize_object["des"]:
+                            def_item = ImagePathHandle(image, des_image_path, self.config, self.mount_info)
+                            def_item.copy_from(customize_object["src"])
+                else:
+                    logging.debug("Skip customizing temp image %s !" % image)
+                    logging.debug("Customize object is %s !" % self.config.customize)

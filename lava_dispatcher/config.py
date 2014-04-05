@@ -158,6 +158,7 @@ class DeviceSchema(schema.Schema):
     simulator_kernel = schema.StringOption(default=None)
     simulator_initrd_files = schema.ListOption(default=None)
     simulator_initrd = schema.StringOption(default=None)
+    simulator_dtb_files = schema.ListOption(default=None)
     simulator_dtb = schema.StringOption(default=None)
     simulator_uefi = schema.StringOption(default=None)
     simulator_bl1 = schema.StringOption(default=None)
@@ -188,6 +189,7 @@ class DeviceSchema(schema.Schema):
     shared_working_directory = schema.StringOption(default=None)
 
     uefi_image_filename = schema.StringOption(default=None)
+    customize = schema.DictOption(default=None)
     vexpress_uefi_path = schema.StringOption(default=None)
     vexpress_uefi_backup_path = schema.StringOption(default=None)
     vexpress_stop_autoboot_prompt = schema.StringOption(

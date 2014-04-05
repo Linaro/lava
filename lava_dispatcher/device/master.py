@@ -270,7 +270,7 @@ class MasterImageTarget(Target):
         runner.run('nice mkfs.vfat %s -n %s' % (self.testboot_path, self.testboot_label))
 
     def _generate_tarballs(self, image_file):
-        self._customize_linux(image_file)
+        self.customize_image(image_file)
         self._read_boot_cmds(image=image_file)
         boot_tgz = os.path.join(self.scratch_dir, "boot.tgz")
         root_tgz = os.path.join(self.scratch_dir, "root.tgz")

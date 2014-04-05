@@ -48,7 +48,7 @@ class DummyTarget(Target):
 
     def power_off(self, proc):
         super(DummyTarget, self).power_off(proc)
-        self.driver.finalize()
+        self.driver.finalize(proc)
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):

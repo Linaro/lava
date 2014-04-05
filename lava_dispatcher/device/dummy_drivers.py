@@ -29,6 +29,7 @@ import time
 from lava_dispatcher.errors import (
     CriticalError,
 )
+from lava_dispatcher.utils import finalize_process
 
 
 class BaseDriver(object):
@@ -49,11 +50,9 @@ class BaseDriver(object):
         """
         raise NotImplementedError("connect")
 
-    def finalize(self):
+    def finalize(self, proc):
         """"""
-
-        # does nothing by default
-        pass
+        finalize_process(proc)
 
 
 class schroot(BaseDriver):
@@ -92,7 +91,7 @@ class schroot(BaseDriver):
         proc = self.context.spawn(cmd, timeout=1200)
         return proc
 
-    def finalize(self):
+    def finalize(self, proc):
         logging.info("Finalizing schroot session %s" % self.session)
         subprocess.check_call(['schroot', '--end-session', '--chroot',
                                self.session])

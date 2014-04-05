@@ -67,17 +67,17 @@ if [ -z "${RESULT+x}" ]; then
     echo "--result must be specified"
     exit 1
 else
-    echo $RESULT > $result_dir/result
+    echo $RESULT > "$result_dir/result"
     TCDATA="$TCDATA RESULT=$RESULT"
 fi
 
 if [ -n "${UNITS+x}" ]; then
-    echo $UNITS > $result_dir/units
+    echo $UNITS > "$result_dir/units"
     TCDATA="$TCDATA UNITS=$UNITS"
 fi
 
 if [ -n "${MEASUREMENT+x}" ]; then
-    echo $MEASUREMENT > $result_dir/measurement
+    echo $MEASUREMENT > "$result_dir/measurement"
     TCDATA="$TCDATA MEASUREMENT=$MEASUREMENT"
 fi
 
