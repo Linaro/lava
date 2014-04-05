@@ -92,7 +92,7 @@ class PublicFiltersView(FilterView):
 
 @BreadCrumb("Filters and Subscriptions", parent=index)
 def filters_list(request):
-    public_view = PublicFiltersView(None, model=TestRunFilter, table_class=PublicFiltersTable)
+    public_view = PublicFiltersView(request, model=TestRunFilter, table_class=PublicFiltersTable)
     prefix = "public_"
     public_filters_table = PublicFiltersTable(
         public_view.get_table_data(prefix),

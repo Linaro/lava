@@ -43,11 +43,21 @@
   </div>
 
   {% if image_report.is_published %}
-  <div class="form-field" style="font-size: 16px; float: left;">
+  <div class="form-field" style="float: left;">
     Image Report Group:&nbsp;&nbsp;
   </div>
-  <div id="image_report_group" style="font-size: 16px; float: left;">
-{{ image_report.image_report_group|default:"Click here to select"}}</div>
+  <div id="image_report_group" style="float: left;">{{ image_report.image_report_group|default:"Click here to select"}}</div>
+
+  {% if image_report.image_report_group %}
+  <div id="group_link" class="group-link">
+    <a href="{% url dashboard_app.views.image_reports.views.image_report_list %}#{{ image_report.image_report_group|iriencode }}">Group link</a>
+  </div>
+  {% else %}
+  <div id="group_link" class="group-link" style="display: none;">
+    <a href="{% url dashboard_app.views.image_reports.views.image_report_list %}#">Group link</a>
+  </div>
+  {% endif %}
+
   <div style="clear: both;"></div>
 
   {% endif %}
@@ -63,6 +73,15 @@
     onblur: "submit",
     width: 200,
     submitdata : {"csrfmiddlewaretoken": '{{csrf_token}}'},
+    callback: function(data) {
+      if(data != "") {
+        $("#group_link").show();
+        href = $("#group_link a:first-child").attr("href").split("#")[0] + "#";
+        $("#group_link a:first-child").attr("href", href + data);
+      } else {
+        $("#group_link").hide();
+      }
+    }
   });
 
   $("#image_report_group").focus(function(event) {

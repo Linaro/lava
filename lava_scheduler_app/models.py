@@ -4,6 +4,8 @@ import uuid
 import simplejson
 import urlparse
 import datetime
+import smtplib
+import socket
 
 from django.conf import settings
 from django.contrib import admin
@@ -1187,8 +1189,11 @@ class TestJob(RestrictedResource):
         return self._can_admin(user) and self.status <= TestJob.RUNNING
 
     def can_resubmit(self, user):
-        states = [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]
-        return self._can_admin(user) and self.status in states
+        owner = False
+        if self.actual_device is not None:
+            owner = self.actual_device.can_admin(user)
+        return (user.is_superuser or owner or
+                user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
 
     def cancel(self, user=None):
         if not user:
@@ -1248,7 +1253,7 @@ class TestJob(RestrictedResource):
             send_mail(
                 "LAVA job notification: " + description, mail,
                 settings.SERVER_EMAIL, [recipient.email])
-        except SMTPRecipientsRefused:
+        except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused, socket.error):
             logger.info("unable to send email to recipient")
 
     def _get_notification_recipients(self):
@@ -1273,7 +1278,7 @@ class TestJob(RestrictedResource):
             send_mail(
                 "LAVA job notification: " + description, mail,
                 settings.SERVER_EMAIL, recipients)
-        except SMTPRecipientsRefused:
+        except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused, socket.error):
             logger.info("unable to send email - recipient refused")
 
     @property

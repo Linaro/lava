@@ -394,10 +394,6 @@ class ActiveDeviceView(DeviceTableView):
 
 class DeviceTypeOverView(JobTableView):
 
-    name = IDLinkColumn("name")
-    # columns must match fields which actually exist in the relevant table.
-    display = Column()
-
     def get_queryset(self):
         return DeviceType.objects.filter(display=True)\
             .annotate(idle=SumIf('device', condition='status=%s' % Device.IDLE),
@@ -413,7 +409,7 @@ class DeviceTypeOverView(JobTableView):
 class NoDTDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        return Device.objects.all()
+        return Device.objects.all().order_by('hostname')
 
 
 def populate_capabilities(dt):
@@ -682,7 +678,7 @@ def lab_health(request):
 def health_job_list(request, pk):
     device = get_object_or_404(Device, pk=pk)
     trans_data = TransitionView(request, device)
-    trans_table = DeviceTransitionTable(data.get_table_data())
+    trans_table = DeviceTransitionTable(trans_data.get_table_data())
     config = RequestConfig(request, paginate={"per_page": trans_table.length})
     config.configure(trans_table)
 
@@ -793,7 +789,7 @@ def job_submit(request):
                 job = TestJob.from_json_and_user(json_data, request.user)
 
                 if isinstance(job, type(list())):
-                    response_data["job_list"] = [j.id for j in job]
+                    response_data["job_list"] = [j.sub_id for j in job]
                 else:
                     response_data["job_id"] = job.id
                 return render_to_response(
@@ -874,6 +870,7 @@ def job_definition(request, pk):
         {
             'job': job,
             'job_file_present': bool(log_file),
+            'show_cancel': job.can_cancel(request.user),
             'show_resubmit': job.can_resubmit(request.user),
         },
         RequestContext(request))
@@ -895,6 +892,8 @@ def multinode_job_definition(request, pk):
         {
             'job': job,
             'job_file_present': bool(log_file),
+            'show_cancel': job.can_cancel(request.user),
+            'show_resubmit': job.can_resubmit(request.user),
         },
         RequestContext(request))
 
@@ -935,6 +934,8 @@ def job_log_file(request, pk):
     return render_to_response(
         "lava_scheduler_app/job_log_file.html",
         {
+            'show_cancel': job.can_cancel(request.user),
+            'show_resubmit': job.can_resubmit(request.user),
             'job': TestJob.objects.get(pk=pk),
             'job_file_present': bool(job.output_file()),
             'sections': content,
@@ -1058,7 +1059,7 @@ def job_resubmit(request, pk):
                     request.POST.get("json-input"), request.user)
 
                 if isinstance(job, type(list())):
-                    response_data["job_list"] = [j.id for j in job]
+                    response_data["job_list"] = [j.sub_id for j in job]
                 else:
                     response_data["job_id"] = job.id
                 return render_to_response(
@@ -1084,6 +1085,20 @@ def job_resubmit(request, pk):
                 definition = job.multinode_definition
             else:
                 definition = job.display_definition
+
+            if request.user != job.owner and not request.user.is_superuser:
+                obj = simplejson.loads(definition)
+
+                # Iterate through the objects in the JSON and pop (remove)
+                # the submit_results action once we find it.
+                for key in obj:
+                    if key == "actions":
+                        for i in xrange(len(obj[key])):
+                            if obj[key][i]["command"] == "submit_results_on_host" or \
+                               obj[key][i]["command"] == "submit_results":
+                                obj[key].pop(i)
+                                break
+                definition = simplejson.dumps(obj, sort_keys=True, indent=4, separators=(',', ': '))
 
             try:
                 response_data["json_input"] = definition

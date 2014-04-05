@@ -1,30 +1,35 @@
 # -*- coding: utf-8 -*-
 import datetime
 from south.db import db
-from south.v2 import DataMigration
+from south.v2 import SchemaMigration
 from django.db import models
 
 
-class Migration(DataMigration):
+class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        "Write your forwards methods here."
-        # Note: Remember to use orm['appname.ModelName'] rather than "from appname.models..."
-        # Migrate data from dashboard_app_launchpadbug to dashboard_app_buglink
-        bugs = db.execute("SELECT * FROM dashboard_app_launchpadbug")
-        for key, bug_id in bugs:
-            bug_link = "https://bugs.launchpad.net/bugs/" + str(bug_id)
-            db.execute("INSERT INTO dashboard_app_buglink (bug_link) VALUES ('%s')" % (bug_link))
-        db.execute("DELETE FROM dashboard_app_launchpadbug")
+        # Adding model 'ImageChartTestCaseAttribute'
+        db.create_table('dashboard_app_imagecharttestcaseattribute', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('image_chart_test_case', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.ImageChartTestCase'])),
+            ('name', self.gf('django.db.models.fields.TextField')()),
+        ))
+        db.send_create_signal('dashboard_app', ['ImageChartTestCaseAttribute'])
 
-        # Migrate data from dashboard_app_launchpadbug_test_runs to dashboard_app_buglink_test_runs
-        rec = db.execute("SELECT * FROM dashboard_app_launchpadbug_test_runs")
-        for key, bug_id, testrun_id in rec:
-            db.execute("INSERT INTO dashboard_app_buglink_test_runs (buglink_id, testrun_id) VALUES (%d, %d)" % (bug_id, testrun_id))
-        db.execute("DELETE FROM dashboard_app_launchpadbug_test_runs")
+        # Adding model 'ImageChartTestAttribute'
+        db.create_table('dashboard_app_imagecharttestattribute', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('image_chart_test', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.ImageChartTest'])),
+            ('name', self.gf('django.db.models.fields.TextField')()),
+        ))
+        db.send_create_signal('dashboard_app', ['ImageChartTestAttribute'])
 
     def backwards(self, orm):
-        "Write your backwards methods here."
+        # Deleting model 'ImageChartTestCaseAttribute'
+        db.delete_table('dashboard_app_imagecharttestcaseattribute')
+
+        # Deleting model 'ImageChartTestAttribute'
+        db.delete_table('dashboard_app_imagecharttestattribute')
 
     models = {
         'auth.group': {
@@ -134,12 +139,24 @@ class Migration(DataMigration):
             'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'test': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.Test']"})
         },
+        'dashboard_app.imagecharttestattribute': {
+            'Meta': {'object_name': 'ImageChartTestAttribute'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'image_chart_test': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.ImageChartTest']"}),
+            'name': ('django.db.models.fields.TextField', [], {})
+        },
         'dashboard_app.imagecharttestcase': {
             'Meta': {'unique_together': "(('image_chart_filter', 'test_case'),)", 'object_name': 'ImageChartTestCase'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'image_chart_filter': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.ImageChartFilter']"}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'test_case': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.TestCase']"})
+        },
+        'dashboard_app.imagecharttestcaseattribute': {
+            'Meta': {'object_name': 'ImageChartTestCaseAttribute'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'image_chart_test_case': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.ImageChartTestCase']"}),
+            'name': ('django.db.models.fields.TextField', [], {})
         },
         'dashboard_app.imagechartuser': {
             'Meta': {'unique_together': "(('image_chart', 'user'),)", 'object_name': 'ImageChartUser'},
@@ -338,4 +355,3 @@ class Migration(DataMigration):
     }
 
     complete_apps = ['dashboard_app']
-    symmetrical = True

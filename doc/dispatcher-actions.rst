@@ -86,6 +86,43 @@ Available parameters
   use this action. The parameter accepts any string, the string must
   exactly match one of the roles specified in the :term:`device group`.
 
+* customize: A optional parameter for customizing the prebuilt image or
+  the image made by a hwpack and a rootfs before testing.
+  The formation of this parameter is::
+
+   "customize": {
+       "<source file url>": ["<destination image path 1>", "<destination image path 2>"],
+       "<source image path>": ["<destination image path 1>", "delete"]
+       }
+
+  The <source file url> accepts http, local and scp urls::
+
+   http://myserver.com/myfile
+   file:///home/user/myfile
+   scp://username@myserver.com:/home/user/myfile
+
+  The <source image path> accepts the path of the file/dir in the image,
+  the definition of the path is <partition>:<path>, for example::
+
+   boot:/EFI/BOOT/
+   rootfs:/home/user/myfile
+
+  The <destination image path> is a array, that means we can copy
+  the source file/dir to multidestination. And all the destination paths
+  must be the "image path"(<partition>:<path>), it could be a non-existent
+  file or dir.
+
+  If the <destination image path> is dir name(end up with '/'),
+  the source file/dir will be copied to that dir.
+  If the <destination image path> is file name, the source file will
+  be copied and renamed to that path.
+
+  If you want to delete the file/dir in the original image, you can add
+  a "delete" in the destination path array. It only affects the item
+  which uses <source image path> as the source.
+
+  Please check the example below.
+
 ::
 
  {
@@ -95,7 +132,11 @@ Available parameters
             "parameters": {
                 "rootfs": "http://<server>/<hw_pack>.tar.gz",
                 "hwpack": "http://<server>/<rootfs>.tar.gz",
-                "bootloadertype": "uefi"
+                "bootloadertype": "uefi",
+                "customize": {
+                    "http://myserver.com/myfile": ["boot:/"],
+                    "boot:/img.axf": ["rootfs:/tekkamanninja/", "delete"]
+                }
             }
         }
     ]
@@ -104,6 +145,10 @@ Available parameters
 Example functional test: **model-express-group-multinode**:
 
 http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/neil.williams/fastmodel-vexpress-group.json
+
+Example functional test: **model-customize-image-singlenode**:
+
+https://git.linaro.org/people/fu.wei/lava-test-job-definition_example.git/blob/refs/heads/master:/LAVA/file_injection_in_deploy_linaro_image.json
 
 .. index:: deploy_linaro_kernel
 
@@ -142,6 +187,25 @@ Available parameters
 * :term:`role`: Determines which devices in a MultiNode group will
   use this action. The parameter accepts any string, the string must
   exactly match one of the roles specified in the :term:`device group`.
+
+* customize: A optional parameter for customizing the image made by
+  the components above before testing. see also :ref:`deploy_linaro_image`
+
+  For example ::
+
+   {
+      "command": "deploy_linaro_kernel",
+      "parameters": {
+        "kernel": "http://community.validation.linaro.org/images/beagle/zImage",
+        "ramdisk": "http://community.validation.linaro.org/images/beagle/uInitrd",
+        "dtb": "http://community.validation.linaro.org/images/beagle/omap3-beagle-xm.dtb",
+        "rootfs": "http://community.validation.linaro.org/images/qemu/beagle-nano.img.gz",
+        "customize": {
+            "http://myserver.com/myfile": ["boot:/"],
+            "boot:/img.axf": ["rootfs:/tekkamanninja/", "delete"]
+        }
+    }
+
 
 .. index:: boot_linaro_image
 

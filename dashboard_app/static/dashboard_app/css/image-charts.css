@@ -107,6 +107,10 @@ div.selector .selector-chosen select {
     white-space: nowrap;
 }
 
+.legend tr {
+    cursor: pointer;
+}
+
 #main_container {
     padding-left: 20px;
     margin-bottom: 20px;
@@ -237,7 +241,7 @@ div.selector .selector-chosen select {
 
 #tooltip h3, #tooltip div { margin: 0; }
 
-#scroller {
+.scroller {
     width: 800px;
     overflow-x: scroll;
     overflow-y: visible;
@@ -250,4 +254,50 @@ div.selector .selector-chosen select {
 .bug-link-container {
     overflow: hidden;
     float: right;
+}
+.dialog-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #98c13d;
+}
+
+.edit-dialog {
+    background-color: #eee;
+}
+
+.dialog-field {
+    margin-bottom: 5px;
+    font-weight: bold;
+    vertical-align: top;
+}
+
+.dialog-field input {
+    margin-left: 35px;
+}
+
+.dialog-field select {
+    margin-left: 10px;
+}
+
+.dialog-submit {
+    margin-top: 5px;
+}
+
+.dialog-input {
+    width: 300px;
+}
+
+.dialog-select {
+    width: 300px;
+    height: 250px;
+}
+
+.dialog-field-title {
+    vertical-align: top;
+}
+
+.group-link {
+    margin: 0 0 0 10px;
+    float: left;
 }
