@@ -28,6 +28,7 @@ import sys
 import time
 import traceback
 import subprocess
+import json
 from lava_dispatcher.device.target import (
     get_target,
 )
@@ -35,6 +36,7 @@ from lava_dispatcher.device.target import (
 from lava_dispatcher.utils import (
     mkdtemp,
     mk_targz,
+    read_content,
     wait_for_prompt,
 )
 
@@ -535,6 +537,32 @@ class LavaClient(object):
             prompt = self.target_device.tester_ps1_pattern
             self.proc.expect([prompt, pexpect.TIMEOUT], timeout=10)
             in_linaro_image = True
+            logging.debug("Checking for vm-group host")
+            if 'is_vmhost' in self.context.test_data.metadata and\
+                    self.context.test_data.metadata['is_vmhost'] == "true":
+
+                runner = NetworkCommandRunner(
+                    self.context.client,
+                    self.target_device.tester_ps1_pattern,
+                    self.target_device.tester_ps1_includes_rc
+                )
+
+                logging.debug("vm-group host: injecting SSH public key")
+                public_key_file = os.path.join(os.path.dirname(__file__), '../device/dynamic_vm_keys/lava.pub')
+                public_key = read_content(public_key_file).strip()
+                runner.run('mkdir -p /root/.ssh && echo "%s" >> /root/.ssh/authorized_keys' % public_key)
+
+                logging.debug("vm-group host: obtaining host IP for guest VM.")
+                try:
+                    host_ip = runner.get_target_ip()
+                except NetworkError as e:
+                    raise CriticalError("Failed to get network up: " % e)
+                # send a message to each guest
+                msg = {"request": "lava_send", "messageID": "lava_vm_start", "message": {"host_ip": host_ip}}
+                reply = self.context.transport(json.dumps(msg))
+                if reply == "nack":
+                    raise CriticalError("lava_vm_start failed")
+                logging.info("[ACTION-B] LAVA VM start, using %s" % host_ip)
 
         if not in_linaro_image:
             msg = "Could not get the test image booted properly"

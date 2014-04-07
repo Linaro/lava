@@ -186,6 +186,11 @@ job_schema = {
             'optional': True,
             'type': 'array',
         },
+        'is_vmhost': {
+            'type': 'boolean',
+            'default': False,
+            'optional': True,
+        },
         'group_size': {
             'type': 'integer',
             'optional': True,
@@ -250,7 +255,7 @@ class LavaTestJob(object):
         except:
             return None
 
-    def run(self, transport=None, group_data=None):
+    def run(self, transport=None, group_data=None, vm_host_ip=None):
         self.context.assign_transport(transport)
         self.context.assign_group_data(group_data)
         validate_job_data(self.job_data)
@@ -281,7 +286,15 @@ class LavaTestJob(object):
             metadata['logging_level'] = self.job_data['logging_level']
             self.context.test_data.add_metadata(metadata)
 
-        if 'target_group' in self.job_data:
+        if 'is_vmhost' in self.job_data:
+            metadata['is_vmhost'] = "true" if self.job_data['is_vmhost'] else "false"
+            metadata['host_ip'] = str(vm_host_ip)
+            logging.debug("[ACTION-B] VM group test!")
+            if not self.job_data['is_vmhost']:
+                logging.debug("[ACTION-B] VM host IP is (%s)." % metadata['host_ip'])
+            self.context.test_data.add_metadata(metadata)
+
+        elif 'target_group' in self.job_data:
             metadata['target_group'] = self.job_data['target_group']
             self.context.test_data.add_metadata(metadata)
 
@@ -290,7 +303,7 @@ class LavaTestJob(object):
                 self.context.test_data.add_metadata(metadata)
 
             if 'group_size' in self.job_data:
-                metadata['group_size'] = self.job_data['group_size']
+                s_metadata['group_size'] = self.job_data['group_size']
                 self.context.test_data.add_metadata(metadata)
 
             logging.debug("[ACTION-B] Multi Node test!")
