@@ -70,17 +70,22 @@ class WorkerData:
         self.logger = logging.getLogger(__name__ + '.Worker')
         self.worker = {}
 
-        # Populate information
+    def populate_minimal_worker_data(self):
+        """This method populates the minimal information about the worker
+        node.
+        """
         self.worker['info_size'] = 'minimal'
         self.worker['hostname'] = utils.get_fqdn()
         self.worker['uptime'] = utils.get_uptime()
         self.worker['devices'] = [x.hostname for x in
                                   dispatcher_config.get_devices()]
+        self.logger.debug("Minimal worker data populated ...")
 
     def populate_complete_worker_data(self):
         """This method populates the complete information about the worker
         node, which is a lengthy operation.
         """
+        self.populate_minimal_worker_data()
         self.worker['info_size'] = 'complete'
         self.worker['arch'] = platform.machine()
         self.worker['platform'] = platform.platform()
@@ -94,9 +99,25 @@ class WorkerData:
         """
         return self.worker
 
-    def put_heartbeat_data(self):
+    def put_heartbeat_data(self, restart=False):
         """Puts heartbeat data via the xmlrpc api.
+
+        If the scheduler daemon was restarted identified by RESTART, populate
+        the complete worker data, else populate minimal worker data, if it is
+        too long since the last heartbeat data was updated.
         """
+        try:
+            localhost = Worker.localhost()
+            if localhost.too_long_since_last_heartbeat():
+                self.populate_minimal_worker_data()
+            elif restart:
+                self.populate_complete_worker_data()
+            else:
+                return
+        except ValueError:
+            self.logger.debug("Worker %s unavailable" % utils.get_fqdn())
+            self.populate_complete_worker_data()
+
         MAX_RETRIES = 3
         data = simplejson.dumps(self.worker)
 

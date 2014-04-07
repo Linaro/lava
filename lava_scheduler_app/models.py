@@ -259,7 +259,8 @@ class Worker(models.Model):
         return mark_safe(self.software_info)
 
     def too_long_since_last_heartbeat(self):
-        """Calculates if the last_heartbeat is more than 180 seconds.
+        """Calculates if the last_heartbeat is more than the heartbeat_timeout
+        specified in seconds.
 
         If there is a delay return True else False.
         """
@@ -267,7 +268,7 @@ class Worker(models.Model):
             return False
 
         difference = datetime.datetime.utcnow() - self.last_heartbeat
-        if difference.total_seconds() > 180:
+        if difference.total_seconds() > utils.get_heartbeat_timeout():
             return True
         else:
             return False
@@ -326,6 +327,16 @@ class Worker(models.Model):
         """
         master = Worker.get_master()
         return master.rpc2_url
+
+    @classmethod
+    def localhost(cls):
+        """Return self ie., the current worker object.
+        """
+        try:
+            localhost = Worker.objects.get(hostname=utils.get_fqdn())
+            return localhost
+        except Worker.DoesNotExist:
+            raise ValueError("Worker node unavailable")
 
 
 class Device(RestrictedResource):
