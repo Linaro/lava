@@ -33,9 +33,11 @@ class UserImageReportTable(LavaTable):
 
     is_published = tables.Column()
 
-    description = tables.TemplateColumn('''
-    {{ record.description|truncatewords:10 }}
-    ''')
+    description = tables.Column()
+
+    def render_description(self, value):
+        value = ' '.join(value.split(" ")[:15])
+        return value.split("\n")[0]
 
     user = tables.TemplateColumn('''
     {{ record.user.username }}
@@ -74,6 +76,12 @@ class OtherImageReportTable(UserImageReportTable):
     <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
     ''')
 
+    description = tables.Column()
+
+    def render_description(self, value):
+        value = ' '.join(value.split(" ")[:15])
+        return value.split("\n")[0]
+
     class Meta(UserImageReportTable.Meta):
         fields = (
             'name', 'description', 'user',
@@ -93,6 +101,12 @@ class GroupImageReportTable(UserImageReportTable):
     name = tables.TemplateColumn('''
     <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
     ''')
+
+    description = tables.Column()
+
+    def render_description(self, value):
+        value = ' '.join(value.split(" ")[:15])
+        return value.split("\n")[0]
 
     class Meta(UserImageReportTable.Meta):
         fields = (
