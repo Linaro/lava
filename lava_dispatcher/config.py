@@ -237,6 +237,8 @@ class DeviceSchema(schema.Schema):
     use_lava_tmpdir = schema.BoolOption(default=True)
     alternative_create_tmpdir = schema.BoolOption(default=True)
     alternative_dir = schema.StringOption(default=None)
+    u_load_addrs = schema.ListOption(default=None)
+    z_load_addrs = schema.ListOption(default=None)
 
     # for dynamic_vm devices
     dynamic_vm_backend_device_type = schema.StringOption(default='kvm')
