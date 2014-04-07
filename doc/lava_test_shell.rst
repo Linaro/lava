@@ -211,6 +211,7 @@ The arguments are:
  2. (optional) the MIME type of the file (if no MIME type is passed, a
     guess is made based on the filename)
 
+.. _handling_dependencies:
 
 Handling Dependencies (Ubuntu)
 ==============================
@@ -222,6 +223,11 @@ express that in the ``install`` section with::
       deps:
           - linux-libc-dev
           - build-essential
+
+Installation of packages can be skipped by specifying ``"skip_install": "deps"``
+parameter in the JSON job definition :ref:`lava_test_shell_parameters`.
+
+.. _adding_repositories:
 
 Adding Git/BZR Repositories
 ===========================
@@ -242,6 +248,9 @@ data on your behalf with::
 
 This repository information will also be added to resulting bundle's software
 context when the results are submitted to the LAVA dashboard.
+
+Cloning of the repositories can be skipped by specifying ``"skip_install": "repos"``
+parameter in the JSON job definition :ref:`lava_test_shell_parameters`.
 
 default parameters
 ==================
@@ -304,6 +313,8 @@ http://git.linaro.org/people/neil.williams/temp-functional-tests.git/blob/HEAD:/
 
 http://git.linaro.org/people/neil.williams/temp-functional-tests.git/blob/HEAD:/params.yaml
 
+.. _install_steps:
+
 Install Steps
 =============
 
@@ -318,6 +329,9 @@ you could do::
       steps:
           - cd lt_ti_lava
           - make
+
+Running installation steps can be skipped by specifying ``"skip_install": "steps"``
+parameter in the JSON job definition :ref:`lava_test_shell_parameters`.
 
 .. note:: The repo steps are done in the dispatcher itself. The install steps
           are run directly on the target.
