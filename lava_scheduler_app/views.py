@@ -1094,8 +1094,9 @@ def job_resubmit(request, pk):
                 for key in obj:
                     if key == "actions":
                         for i in xrange(len(obj[key])):
-                            if obj[key][i]["command"] == "submit_results_on_host" or \
-                               obj[key][i]["command"] == "submit_results":
+                            if obj[key][i]["command"] == \
+                                    "submit_results_on_host" or \
+                                    obj[key][i]["command"] == "submit_results":
                                 obj[key].pop(i)
                                 break
                 definition = simplejson.dumps(obj, sort_keys=True, indent=4, separators=(',', ': '))
