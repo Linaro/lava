@@ -65,8 +65,7 @@ class Command(SchedulerCommand):
         # on every start/restart of the scheduler daemon.
         worker = WorkerData()
         try:
-            worker.populate_complete_worker_data()
-            worker.put_heartbeat_data()
+            worker.put_heartbeat_data(restart=True)
         except (xmlrpclib.Fault, xmlrpclib.ProtocolError) as err:
             worker.logger.error("Complete heartbeat update failed!")
 
