@@ -384,6 +384,72 @@ Example functional test: **bootloader-lava-test-shell-multinode**:
 
 http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/bootloader/bootloader-lava-test-shell-multinode.json
 
+Example functional test with skipping installation steps:  **kvm**:
+
+https://git.linaro.org/qa/test-definitions.git/blob/HEAD:/ubuntu/kvm.yaml
+
+To run tests with skipping all installation steps, i.e. neither additional packages nor hackbench will be installed::
+
+ {
+    "actions": [
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
+                        "testdef": "ubuntu/kvm.yaml"
+                    }
+                ],
+                "skip_install": "all",
+                "timeout": 900
+            }
+        }
+    ]
+ }
+
+To run tests with skipping only installation of a hackbench::
+
+ {
+    "actions": [
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
+                        "testdef": "ubuntu/kvm.yaml"
+                    }
+                ],
+                "skip_install": "steps",
+                "timeout": 900
+            }
+        }
+    ]
+ }
+
+To run tests with skipping installation of packages, but with insatallation of a hackbench::
+
+ {
+    "actions": [
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
+                        "testdef": "ubuntu/kvm.yaml"
+                    }
+                ],
+                "skip_install": "deps",
+                "timeout": 900
+            }
+        }
+    ]
+ }
+
+.. _lava_test_shell_parameters:
+
 Available parameters
 --------------------
 
@@ -395,6 +461,19 @@ Available parameters
 * :term:`role`: Determines which devices in a MultiNode group will
   use this action. The parameter accepts any string, the string must
   exactly match one of the roles specified in the :term:`device group`.
+* ``skip_install``: This parameter allows to skip particular install step
+  in the YAML test definition. The parameter accepts any string and is optional.
+  Available options known by the dispatcher are:
+
+  ``all``: skip all installation steps
+
+  ``deps``: skip installation of packages dependencies, :ref:`handling_dependencies`
+
+  ``repos``: skip cloning of repositories, :ref:`adding_repositories`
+
+  ``steps``: skip running installation steps, :ref:`install_steps`
+
+  The default is None, i.e. nothing is skipped.
 
 Example functional test: **kvm-group-multinode**:
 
