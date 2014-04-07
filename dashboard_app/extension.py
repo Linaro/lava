@@ -46,11 +46,6 @@ class DashboardExtension(LavaServerExtension):
         subm.append(Menu("Image Reports 2.0", reverse("dashboard_app.views.image_reports.views.image_report_list")))
         subm.append(Menu("Filters", reverse("dashboard_app.views.filters.views.filters_list")))
         subm.append(Menu("Bundle Streams", reverse("dashboard_app.views.bundle_stream_list")))
-        if hasattr(settings, 'DATAVIEW_HIDE') and not settings.DATAVIEW_HIDE:
-            subm.append(Menu("Data Views", reverse("dashboard_app.views.data_view_list")))
-        if hasattr(settings, 'DATAREPORTS_HIDE') and not settings.DATAREPORTS_HIDE:
-            subm.append(Menu("Reports", reverse("dashboard_app.views.report_list")))
-        subm.append(Menu("Test Definitions", reverse("dashboard_app.views.test_definition")))
         if hasattr(settings, 'PM_QA_HIDE') and not settings.PM_QA_HIDE:
             subm.append(Menu("PM-QA", reverse("dashboard_app.views.pmqa.pmqa_view")))
 

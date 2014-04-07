@@ -6,19 +6,9 @@
 
 {% block content %}
 
-<h2>Test run results</h2>
-
-{% render_table test_table %}
-
-<h3>Test job attachments</h3>
-
-{% include "dashboard_app/_attachments.html" with attachments=test_run.attachments %}
-
-{% endblock %}
-
-
-{% block sidebar %}
 {% if bundle.testjob %}
+<div class="row">
+  <div class="col-md-4">
 <h3>Test run details</h3>
 <dl>
   <dt>{% trans "Test Name" %} (<abbr title="This is the identifier of the test that was invoked. A test is a collection of test cases. Test is also the smallest piece of code that can be invoked by lava-test.">?</abbr>):</dt>
@@ -75,7 +65,8 @@
   <dd>{{ bundle.testjob.end_time }}</dd>
 </dl>
 {% endif %}
-
+</div>
+<div class="col-md-4">
 <h3>Export</h3>
 <p>Export test results data <a href="{% url 'dashboard_app.views.test_run_export' test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}">as CSV</a></p>
 
@@ -103,6 +94,8 @@
     >See all {{ test_run.devices.all.count }} devices</a>
   </dd>
 </dl>
+</div>
+<div class="col-md-4">
 
 <h3>Custom attributes (<abbr title="LAVA can store arbitrary key-value attributes associated with each test run (and separately, each test result)">?</abbr>)</h3>
 <ul class="attributes">
@@ -137,4 +130,14 @@
   ({{ test_run.bundle.uploaded_on|timesince }} ago)
   </dd>
 </dl>
+</div>
+<h2 class="modal-header">Test run results</h2>
+
+{% render_table test_table %}
+
+<h3>Test job attachments</h3>
+
+{% include "dashboard_app/_attachments.html" with attachments=test_run.attachments %}
+
+
 {% endblock %}

@@ -5,32 +5,16 @@
 {% load humanize %}
 
 {% block content %}
-<div>
-  <span
-    class="length"
-    style="float:left; display:inline-block; width:30%; text-align:left;"></span>
-  <span class="view-as">
-    <label for="as_bundles">
-      [&nbsp;<a
-        id="as_bundles_link"
-        href="{% url 'dashboard_app.views.bundle_list' bundle_stream.pathname %}"
-        >{% trans "Bundles" %}</a>&nbsp;]
-    </label>
-    <label for="as_test_runs">
-      [&nbsp;<a
-        id="as_test_runs_link"
-        href="{% url 'dashboard_app.views.test_run_list' bundle_stream.pathname %}"
-        >{% trans "Test Runs" %}</a>&nbsp;]
-    </label>
-  </span>
-  <span
-    class="search"
-    style="float:right; display:inline-block; width: 30%; text-align:right"></span>
+{% include "dashboard_app/_bundle_stream_sidebar.html" %}
+
+<div class="modal-header">
+  <ul class="nav nav-pills">
+    <li><a href="{% url 'dashboard_app.views.bundle_list' bundle_stream.pathname %}"
+        class="btn btn-info btn-sm">{% trans "Bundles" %}</a></li>
+    <li><a href="{% url 'dashboard_app.views.test_run_list' bundle_stream.pathname %}"
+        class="btn btn-default btn-sm">{% trans "Test Runs" %}</a></li>
+  </ul>
 </div>
 
 {% render_table test_run_table %}
-{% endblock %}
-
-{% block sidebar %}
-{% include "dashboard_app/_bundle_stream_sidebar.html" %}
 {% endblock %}

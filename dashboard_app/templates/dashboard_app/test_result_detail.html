@@ -22,6 +22,46 @@ full details of the test job which generated this test result.</p>
 <p>If the test result output was captured as an attachment of the test run, the attachment name and line number will be
 shown as links. The same output can also be viewed in the attachments of the test run itself.</p>
 </p>
+
+
+<h3>Metadata</h3>
+<dl>
+  <dt>ID</dt>
+  <dd>
+    <small><span style="white-space:nowrap">{{ test_result.test_run.analyzer_assigned_uuid }}/{{ test_result.relative_index }}</span> (<a href="{{ test_result.get_permalink }}">{% trans "permalink" %}</a>)</small>
+  </dd>
+  <dt>Test Case</dt>
+  <dd>
+    {% if test_result.test_case %}
+    <b>{{ test_result.test_case }}</b>
+    {% else %}
+    <i>{% trans "unknown test case" %}</i>
+    {% endif %}
+    {% trans "from test" %} <b><a href="{{ test_result.test_run.test.get_absolute_url }}">{{ test_result.test_run.test }}</a></b>
+  </dd>
+</dl>
+<h3>Result Attributes</h3>
+{% with test_result.attributes.values as attrs %}
+<ul class="attributes">
+  {% for item in attrs|dictsort:"name" %}
+  <li>{{ item.name }}&nbsp;=&nbsp;{{ item.value }}</li>
+  {% empty %}
+  <i>none</i>
+  {% endfor %}
+</ul>
+{% endwith %}
+<h3>Run Attributes</h3>
+{% with test_result.test_run.attributes.values as attrs %}
+<ul class="attributes">
+  {% for item in attrs|dictsort:"name" %}
+  <li>{{ item.name }}&nbsp;=&nbsp;{{ item.value }}</li>
+  {% empty %}
+  <i>none</i>
+  {% endfor %}
+</ul>
+{% endwith %}
+
+
 <dl>
   <dt>{% trans "Outcome" %}</dt>
   <dd>
@@ -131,43 +171,4 @@ shown as links. The same output can also be viewed in the attachments of the tes
 </script>
 {% endif %}
 
-{% endblock %}
-
-{% block sidebar %}
-<h3>Metadata</h3>
-<dl>
-  <dt>ID</dt>
-  <dd>
-    <small><span style="white-space:nowrap">{{ test_result.test_run.analyzer_assigned_uuid }}/{{ test_result.relative_index }}</span> (<a href="{{ test_result.get_permalink }}">{% trans "permalink" %}</a>)</small>
-  </dd>
-  <dt>Test Case</dt>
-  <dd>
-    {% if test_result.test_case %}
-    <b>{{ test_result.test_case }}</b>
-    {% else %}
-    <i>{% trans "unknown test case" %}</i>
-    {% endif %}
-    {% trans "from test" %} <b><a href="{{ test_result.test_run.test.get_absolute_url }}">{{ test_result.test_run.test }}</a></b>
-  </dd>
-</dl>
-<h3>Result Attributes</h3>
-{% with test_result.attributes.values as attrs %}
-<ul class="attributes">
-  {% for item in attrs|dictsort:"name" %}
-  <li>{{ item.name }}&nbsp;=&nbsp;{{ item.value }}</li>
-  {% empty %}
-  <i>none</i>
-  {% endfor %}
-</ul>
-{% endwith %}
-<h3>Run Attributes</h3>
-{% with test_result.test_run.attributes.values as attrs %}
-<ul class="attributes">
-  {% for item in attrs|dictsort:"name" %}
-  <li>{{ item.name }}&nbsp;=&nbsp;{{ item.value }}</li>
-  {% empty %}
-  <i>none</i>
-  {% endfor %}
-</ul>
-{% endwith %}
 {% endblock %}
