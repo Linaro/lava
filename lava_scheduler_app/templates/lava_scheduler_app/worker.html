@@ -1,117 +1,118 @@
-{% extends "lava_scheduler_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load django_tables2 %}
 
-{% block extrahead %}
-{{ block.super }}
-<style>
-  details, summary { display: block; padding: 0.2em; }
-  summary { cursor: pointer; }
-  summary:hover, summary:focus { background: #ddd; }
-  .no-details details > * { display: none; }
-  .no-details details.open > * { display: block; }
-  .no-details details summary:before { width: 20px; content: '► '; }
-  .no-details details.open summary:before { content: '▼ '; }
-  .no-details details summary { display: block; }
-</style>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.details.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava-server//js/jquery-1.5.1.min.js"></script>
+{% block styles %}
+  <style>
+    details, summary { display: block; padding: 0.2em; }
+    summary { cursor: pointer; }
+    summary:hover, summary:focus { background: #ddd; }
+    .no-details details > * { display: none; }
+    .no-details details.open > * { display: block; }
+    .no-details details summary:before { width: 20px; content: '► '; }
+    .no-details details.open summary:before { content: '▼ '; }
+    .no-details details summary { display: block; }
+  </style>
 {% endblock %}
 
 {% block content %}
-<div class="row">
-  <div class="col-md-6">
-    <h2 class="modal-header">
-  {% if worker.too_long_since_last_heartbeat %}
-  <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
-       alt="{{ offline }}" />
+<h2>{% if worker.too_long_since_last_heartbeat %}
+  <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png" alt="{{ offline }}" />
   {% else %}
-  <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
-       alt="{{ online }}" />
-  {% endif %}&nbsp;&nbsp;Worker: {{ worker }}
+  <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png" alt="{{ online }}" />
+  {% endif %}Worker: {{ worker }}
 </h2>
 
+<div class="row">
+  <div class="col-md-6">
+    <h4 class="modal-header">Worker details</h4>
     <dl class="dl-horizontal">
-    <dt>IP Address:</dt>
-    <dd>{{ worker.ip_address }}</dd>
-
-    <dt>Is Master? :</dt>
-    <dd>{{ worker.is_master }}</dd>
-
-    <dt>Uptime:</dt>
-    <dd>
-      {% if worker.too_long_since_last_heartbeat %}
-      ---
+      <dt>IP</dt>
+      <dd>{{ worker.ip_address }}</dd>
+      <dt>Uptime</dt>
+      <dd>{% if worker.too_long_since_last_heartbeat %}---{% else %}{{ worker.uptime }}{% endif %}</dd>
+      <dt>Architecture</dt>
+      <dd>{{ worker.arch }}</dd>
+      <dt>Platform</dt>
+      <dd>{{ worker.platform }}</dd>
+      <dt>Environment</dt>
+      <dd><a href="#" data-toggle="modal" id="hwinfo-modal" data-target="#hardwareModal">Hardware</a> <img src="{{ STATIC_URL }}lava_scheduler_app/images/hardware-information-icon.png" alt="Click to View">
+        <div class="modal fade" id="hardwareModal" tabindex="-1" role="dialog" aria-labelledby="hardwareModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="hardwareModalLabel">Hardware details</h4>
+              </div>
+              <div class="modal-body">
+                <div id="hwinfo-content">
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </dd>
+    </dl>
+  </div>
+  <div class="col-md-6">
+    <h4 class="modal-header">LAVA details</h4>
+    <dl class="dl-horizontal">
+      <dt>Is Master</dt>
+      <dd>{{ worker.is_master }}</dd>
+      <dt>Description</dt>
+      {% if can_admin %}
+      <form method="POST" action="{% url 'lava.scheduler.edit_worker_desc' %}">
+        <dd>
+          {% csrf_token %}
+          <div class="edit_desc" id="{{ worker.pk }}">{{ worker.get_description }}</div>
+        </dd>
+      </form>
       {% else %}
-      {{ worker.uptime }}
+      <dd>{{ worker.get_description|default:"<i>empty</i>" }}</dd>
       {% endif %}
-    </dd>
-
-    <dt>Architecture:</dt>
-    <dd>{{ worker.arch }}</dd>
-
-    <dt>Platform:</dt>
-    <dd>{{ worker.platform }}</dd>
-
-  {% if can_admin %}
-  <form method="POST"
-        action="{% url 'lava.scheduler.edit_worker_desc' %}">
-    <dt>Description:</dt>
-      {% csrf_token %}
-      <dd>
-      <div class="edit_desc" id="{{ worker.pk }}">{{ worker.get_description }}
-      </div>
-    </dd>
-  </form>
-  {% else %}
-  <dt>Description:</dt>
-    <dd>
-    <div name="description">{{ worker.get_description }}
-    </div>
-  </dd>
-  {% endif %}
-</dl>
-</div>
+      <dt>Environment</dt>
+      <dd><a href="#" data-toggle="modal" id="swinfo-modal" data-target="#softwareModal">Software</a> <img src="{{ STATIC_URL }}lava_scheduler_app/images/server-information-icon.png" alt="Click to View">
+        <div class="modal fade" id="softwareModal" tabindex="-1" role="dialog" aria-labelledby="softwareModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="softwareModalLabel">Software details</h4>
+              </div>
+              <div class="modal-body">
+                <div id="swinfo-content">
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </dd>
+    </dl>
+  </div>
 </div>
 
-<br>
-<div id="hwinfo-text">
-    <span class="caret"></span>
-    <img src="{{ STATIC_URL }}lava_scheduler_app/images/hardware-information-icon.png" alt="Click to View">&nbsp;
-    <a href=""><b>Hardware Information</b></a>
-</div>
-
-<div id="hwinfo-content" width="40%" style="display:none;">
-</div>
-
-<div id="swinfo-text">
-    <span class="caret"></span>
-    <img src="{{ STATIC_URL }}lava_scheduler_app/images/server-information-icon.png" alt="Click to View">&nbsp;
-    <a href=""><b>Software Information</b></a>
-</div><br>
-
-<div id="swinfo-content" width="40%" style="display:none;">
-</div>
-
-<div id="devices-attached">
-<h2>Devices Attached</h2>
-
+<h3 class="modal-header">Devices Attached</h3>
+{% block content_columns %}
 {% render_table worker_device_table %}
+{% endblock %}
 
-</div>
+{% endblock %}
 
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.details.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script>
 <script>
 $(document).ready(
   function() {
-    $("#hwinfo-text").click(function (e) {
-        e.preventDefault();
-        $("#hwinfo-content").toggle();
-        $("#hwinfo-content").html({{ worker.get_hardware_info }} +
-                                  "<a href=#hwinfo-text>Go to Top</a>");
+    $("#hwinfo-modal").click(function (e) {
+        $("#hwinfo-content").html({{ worker.get_hardware_info }});
     });
-    $("#swinfo-text").click(function (e) {
-        e.preventDefault();
-        $("#swinfo-content").toggle();
+    $("#swinfo-modal").click(function (e) {
         $("#swinfo-content").html({{ worker.get_software_info }});
     });
     $('.edit_desc').editable('{% url 'lava.scheduler.edit_worker_desc' %}',
@@ -123,5 +124,4 @@ $(document).ready(
     });
 });
 </script>
-
 {% endblock %}
