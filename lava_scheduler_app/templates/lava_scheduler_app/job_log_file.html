@@ -24,7 +24,6 @@
 {% endblock %}
 
 {% block content %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava-server//js/jquery-1.5.1.min.js"></script>
 {% load linenumbers %}
 
 <div class="row">
@@ -196,162 +195,12 @@
   {% linenumbers section.2 forloop.counter0 section.0 %}
 {% endfor %}
 
-{% if job.status == job.RUNNING %}
-<img id="progress" src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-progress.gif"/>
-{% endif %}
+  {% if job.status == job.RUNNING %}
+  <img id="progress" src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-progress.gif"/>
+  {% endif %}
 </div>
 
-{% if job.status == job.RUNNING %}
-<script type="text/javascript">
-var pollTimer = null, logLenth = '{{ job_file_size }}';
-
-function poll (start) {
-  $.ajax({
-    url: '{% url 'lava_scheduler_app.views.job_full_log_incremental' pk=job.pk %}?start=' + logLenth,
-    dataType: 'json',
-    global: false,
-    success: function (data, success, xhr) {
-      var progressNode = $('#progress');
-      for (var i = 0; i < data.length; i++) {
-          var d = data[i];
-          var cls = 'log_' + d[0];
-          var last_pre = $("#logfile_content pre:last");
-          var s = $("html"), w = $(window);
-          var atBottom = w.attr('innerHeight') + w.scrollTop() >= s.attr('scrollHeight')
-                      && w.attr('innerHeight') > progressNode.attr('offsetHeight');
-          if (last_pre.attr('class') == cls) {
-              append_to_section(last_pre, d);
-          } else {
-              var newNode = create_new_section_node(d);
-              newNode.insertBefore(progressNode);
-          }
-          if (atBottom) {
-            w.scrollTop(s.attr('scrollHeight'))
-          }
-      }
-      logLenth = xhr.getResponseHeader('X-Current-Size');
-      if (xhr.getResponseHeader('X-Is-Finished')) {
-        progressNode.css('display', 'none');
-      } else {
-        pollTimer = setTimeout(poll, 1000);
-      }
-    }
-  });
-}
-
-append_to_section = function (element, data) {
-
-    current_table = $("#logfile_content table:last");
-    data_arr = data[2].replace(/\r\n/, "\n").split("\n");
-    line_number = get_current_section_number()[1];
-
-    if (data_arr[data_arr.length-1] == "") {
-        data_arr.pop();
-    }
-
-    for (var i in data_arr) {
-        line_number++;
-        name = "L_" + section_number + "_" + line_number;
-        display = section_number + "." + line_number;
-
-        link_node = $("<a>", {
-            href: "#" + name,
-            html: display
-        });
-
-        section_line = $("<div>", {
-            class: "line",
-        }).append($("<a>", {
-            name: name,
-        })).append(link_node);
-
-        $(current_table).find("td:first").append(section_line);
-
-        line_node = $("<div>", {
-            id: name,
-            class: "line"
-        }).html("&nbsp;" + data_arr[i]);
-        element.append(line_node);
-    }
-}
-
-create_new_section_node = function(data) {
-
-    section_number++;
-    data_arr = data[2].split("\n");
-    if (data_arr[data_arr.length-1] == "") {
-        data_arr.pop();
-    }
-
-    section_node = $("<td>");
-    for (var i in data_arr) {
-        name = "L_" + section_number + "_" + i;
-        if (i == 0) {
-            display = "Section " + section_number;
-        } else {
-            display = section_number + "." + i;
-        }
-
-        link_node = $("<a>", {
-            href: "#" + name,
-            html: display
-        });
-
-        section_node.append($("<div>", {
-            class: "line",
-        }).append($("<a>", {
-            name: name,
-        })).append(link_node));
-    }
-
-    text_element = $("<pre>", {
-                  class: "log_" + data[0],
-              });
-    for (var i in data_arr) {
-        var id = "L_" + section_number + "_" + i;
-        text_element.append($("<div>", {
-            id: id,
-            class: "line"
-
-        }).html("&nbsp;" + data_arr[i]));
-    }
-
-    var text_node = $("<td>", {
-                      class: "code",
-                  }).append($("<div>",{
-                      class: "container",
-                  }).append(text_element));
-
-    var node = $("<table>")
-                .append($("<tr>")
-                .append(section_node)
-                .append(text_node)
-               );
-
-    return node;
-}
-
-get_current_section_number = function() {
-
-    last_div = $("#logfile_content div:last");
-
-    if ($(last_div).attr("id")) {
-        div_id_arr = $(last_div).attr("id").split('_');
-        return [div_id_arr[1], div_id_arr[2]];
-    }
-
-    return [-1, -1];
-}
-
-var section_line_number = get_current_section_number();
-var section_number = section_line_number[0];
-
-$(document).ready(function () {
-  pollTimer = setTimeout(poll, 1000);
-});
-</script>
-{% endif %}
-<a href="#lava_test_shell">Start of <b>lava test shell</b></a><br/><br/>
+<a href="#top" id="bottom">Start of log file</a><br/><br/>
 <div class="row">
   <div class="col-md-6">
     <div class="row">
@@ -384,4 +233,115 @@ $(document).ready(function () {
     </div>
   </div>
 </div>
+
 {% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery-1.5.1.min.js"></script>
+
+{% if job.status == job.RUNNING %}
+<script type="text/javascript">
+var pollTimer = null, logLenth = '{{ job_file_size }}';
+var section_number = -1;
+var line_number = -1;
+
+function poll (start) {
+  $.ajax({
+    url: '{% url 'lava_scheduler_app.views.job_full_log_incremental' pk=job.pk %}?start=' + logLenth,
+    dataType: 'json',
+    global: false,
+    success: function (data, success, xhr) {
+      var progressNode = $('#progress');
+      // Do we have to scroll down ?
+      var scroll_down = false;
+      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+        scroll_down = true;
+      }
+      for (var i = 0; i < data.length; i++) {
+        var d = data[i];
+        var cls = 'line ' + d[0];
+        var last_code = $("#logfile_content > div:last > code:last");
+        if (last_code.attr('class') == cls) {
+          append_to_section(last_code, d);
+        } else {
+          var newNode = create_new_section_node(d);
+          newNode.insertBefore(progressNode);
+        }
+
+        // Scroll if needed
+        if (scroll_down) {
+          document.getElementById('bottom').scrollIntoView();
+        }
+      }
+      logLenth = xhr.getResponseHeader('X-Current-Size');
+      if (xhr.getResponseHeader('X-Is-Finished')) {
+        progressNode.css('display', 'none');
+      } else {
+        pollTimer = setTimeout(poll, 1000);
+      }
+    }
+  });
+}
+
+function append_to_section (element, data) {
+  // Spit at end of line
+  var data_arr = data[2].replace(/\r\n/, "\n").split("\n");
+
+  // Remove trailing empty line
+  if (data_arr[data_arr.length-1] == "") {
+      data_arr.pop();
+  }
+
+  var old_node = element;
+  // Add new lines, one by one
+  for (var i in data_arr) {
+    var name = 'L_' + section_number + '_' + line_number;
+    var node = $('<code id="' + name + '" class="line ' + data[0] + '"><a href="#' + name + '">' + section_number + '.' + line_number + '</a> &nbsp;' + data_arr[i] + '</code>');
+    node.insertAfter(old_node);
+    old_node = node;
+    line_number++;
+  }
+}
+
+function create_new_section_node (data) {
+  section_number++;
+  line_number = 0;
+  // Spit at end of line
+  var data_arr = data[2].replace(/\r\n/, "\n").split("\n");
+  if (data_arr[data_arr.length-1] == "") {
+    data_arr.pop();
+  }
+
+  var node = '<a href="#L_' + section_number + '" id="L_' + section_number + '">Section ' + section_number + '</a>\n<div>\n';
+
+  for (var i in data_arr) {
+    var name = 'L_' + section_number + '_' + i;
+    var code_node = '<code id="' + name + '" class="line ' + data[0] + '"><a href="#' + name + '">' + section_number + '.' + line_number + '</a> &nbsp;' + data_arr[i] + '</code>';
+    node = node + code_node;
+    line_number++;
+  }
+  return $(node);
+}
+
+function get_current_section_number () {
+
+    last_code = $("#logfile_content > div:last > code:last");
+
+    if ($(last_code).attr("id")) {
+        code_id_arr = $(last_code).attr("id").split('_');
+        return [code_id_arr[1], code_id_arr[2]];
+    }
+
+    return [-1, -1];
+}
+
+$(function () {
+  var initial_numbers = get_current_section_number();
+  section_number = initial_numbers[0];
+  line_number = initial_numbers[1];
+
+  pollTimer = setTimeout(poll, 1000);
+});
+</script>
+{% endif %}
+{% endblock scripts %}
