@@ -1,10 +1,12 @@
-{% extends "dashboard_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
+{% include "_tablesort.html" %}
 {% load i18n %}
 {% load django_tables2 %}
 {% block extrahead %}
 {{ block.super }}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/dashboard.css"/>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava-server/css/demo_table_jui.css"/>
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/filter-detail.css"/>
-<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/filter-detail.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -13,35 +15,48 @@
 
 {% include "dashboard_app/filter_summary.html" with filter_data=filter.as_data %}
 
+<div class="row">
+  <div class="col-md-4">
 {% if filter.owner == request.user or request.user.is_superuser %}
+<h3 class="modal-header">Filter Actions</h3>
 <p>
-  You can <a href="{{ filter.get_absolute_url }}/+edit">edit</a>
-  or <a href="{{ filter.get_absolute_url }}/+delete">delete</a> this filter.
+  <a href="{{ filter.get_absolute_url }}/+edit" class="btn btn-lg btn-info">Edit</a>
+  <a href="{{ filter.get_absolute_url }}/+delete" class="btn btn-lg btn-warning">Delete</a>.
 </p>
 {% endif %}
-
+</div>
+<div class="col-md-4">
+<h3 class="modal-header">Subscription</h3>
 {% if subscription %}
 <p>
-  <a href="{% url 'dashboard_app.views.filters.views.filter_subscribe' username=filter.owner.username name=filter.name %}">Manage</a> your subscription to this filter.
+  <a href="{% url 'dashboard_app.views.filters.views.filter_subscribe' username=filter.owner.username name=filter.name %}"
+          class="btn btn-lg btn-primary">Manage</a> your subscription to this filter.
 </p>
 {% else %}
 <p>
-  <a href="{% url 'dashboard_app.views.filters.views.filter_subscribe' username=filter.owner.username name=filter.name %}">Subscribe</a> to this filter.
+  <a href="{% url 'dashboard_app.views.filters.views.filter_subscribe' username=filter.owner.username name=filter.name %}"
+          class="btn btn-lg btn-default">Subscribe</a>.
 </p>
 {% endif %}
+</div>
+</div>
+<h3 class="modal-header">Filter matches</h3>
 
 {% render_table filter_table %}
 
+<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery-1.5.1.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/filter-detail.js"></script>
 <p>
-  <button id="compare-button">Compare builds</button>
+  <button class="btn btn btn-primary" id="compare-button">Compare builds</button>
   <span id="first-prompt" style="display:none">
     Click a build to compare.
   </span>
   <span id="second-prompt" style="display:none">
-    Click build to compare with build <span id="p2-build">XXX</span>.
+    Click a build to compare with build <span id="p2-build">XXX</span>.
   </span>
   <span id="third-prompt" style="display:none">
-    Click <a href="#">here</a> to compare with build <span id="p3-build-1">XXX</span> with build <span id="p3-build-2">XXX</span>.
+    <a class="btn btn btn-success" href="#">View comparison</a> of <span id="p3-build-1">XXX</span> with build <span id="p3-build-2">XXX</span>.
   </span>
 </p>
 
