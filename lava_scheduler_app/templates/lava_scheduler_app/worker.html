@@ -19,7 +19,9 @@
 {% endblock %}
 
 {% block content %}
-<h2>
+<div class="row">
+  <div class="col-md-6">
+    <h2 class="modal-header">
   {% if worker.too_long_since_last_heartbeat %}
   <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
        alt="{{ offline }}" />
@@ -29,14 +31,7 @@
   {% endif %}&nbsp;&nbsp;Worker: {{ worker }}
 </h2>
 
-<table border=0 width="100%">
-<colgroup>
-<col width="40%">
-<col width="40%">
-<col width="20%">
-</colgroup>
-<tr>
-<td style="vertical-align:text-top;text-align:left;">
+    <dl class="dl-horizontal">
     <dt>IP Address:</dt>
     <dd>{{ worker.ip_address }}</dd>
 
@@ -58,30 +53,30 @@
     <dt>Platform:</dt>
     <dd>{{ worker.platform }}</dd>
 
-</td>
-
-<td style="vertical-align:text-top;text-align:left;">
   {% if can_admin %}
   <form method="POST"
         action="{% url 'lava.scheduler.edit_worker_desc' %}">
-    <dd>Description:
+    <dt>Description:</dt>
       {% csrf_token %}
+      <dd>
       <div class="edit_desc" id="{{ worker.pk }}">{{ worker.get_description }}
       </div>
     </dd>
   </form>
   {% else %}
-  <dd>Description:
+  <dt>Description:</dt>
+    <dd>
     <div name="description">{{ worker.get_description }}
     </div>
   </dd>
   {% endif %}
-</td>
-
-</table>
+</dl>
+</div>
+</div>
 
 <br>
 <div id="hwinfo-text">
+    <span class="caret"></span>
     <img src="{{ STATIC_URL }}lava_scheduler_app/images/hardware-information-icon.png" alt="Click to View">&nbsp;
     <a href=""><b>Hardware Information</b></a>
 </div>
@@ -90,6 +85,7 @@
 </div>
 
 <div id="swinfo-text">
+    <span class="caret"></span>
     <img src="{{ STATIC_URL }}lava_scheduler_app/images/server-information-icon.png" alt="Click to View">&nbsp;
     <a href=""><b>Software Information</b></a>
 </div><br>
@@ -99,9 +95,9 @@
 
 <div id="devices-attached">
 <h2>Devices Attached</h2>
-{% block content_columns %}
+
 {% render_table worker_device_table %}
-{% endblock %}
+
 </div>
 
 <script>
