@@ -11,8 +11,15 @@
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/job-submit.js"></script>
 {% endblock %}
 
-
 {% block content %}
+
+{% if error %}
+<div class="alert alert-warning alert-dismissable">
+  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+  <strong>Job submission error:</strong> {{ error }}
+</div>
+{% endif %}
+
 <h2>Submit Job</h2>
 
 {% if is_authorized %}
@@ -22,60 +29,40 @@
 {% url 'lava.scheduler.job.detail' job_id as detail_url %}
 {% url 'lava.scheduler.job.list' as list_url %}
 
-<div id="job-success">Job submission successfull!
-<br>
-<br>
-Job with ID <a href="{{ detail_url }}">{{ job_id }}</a> has been created.
-<br>
-To view the full job list click <a href="{{ list_url }}">here</a>.
-</div>
+<p>Job submission successfull!</p>
+<p>Job with ID <a href="{{ detail_url }}">{{ job_id }}</a> has been created.</p>
+<p>To view the full job list click <a href="{{ list_url }}">here</a>.</p>
 
 {% elif job_list %}
 {% url 'lava.scheduler.job.list' as list_url %}
-<div id="job-success">Multinode Job submission successfull!
-<br>
-<br>
-Jobs have been created with the IDs:
+<p>Multinode Job submission successfull!</p>
+<p>Jobs have been created with the IDs:</p>
+<ul>
 {% for job in job_list %}
-{% url 'lava.scheduler.job.detail job' as detail_url %}
-[ <a href="{{ detail_url }}">{{ job }}</a> ]
+  <li><a href="{% url 'lava.scheduler.job.detail job' %}">{{ job }}</a></li>
 {% endfor %}
-<br>
-To view the full job list click <a href="{{ list_url }}">here</a>.
-</div>
+</ul>
+<p>To view the full job list click <a href="{{ list_url }}">here</a>.</p>
 
 {% else %}
-
-{% if error %}
-<div id="job-error">
-  Job submission error: {{ error }}
-</div>
-{% endif %}
-
 <p>Paste your job definition JSON here. Alternatively, you can paste a URL to your job definition file:</p>
 
 <form action="" method="post">
   {% csrf_token %}
-  <textarea id="json-input" name="json-input" placeholder="Enter your job definition or link to a job definition here.">
-{% if json_input %}{{ json_input }}{% endif %}
-  </textarea>
+  <textarea id="json-input" name="json-input" placeholder="Enter your job definition or link to a job definition here.">{% if json_input %}{{ json_input }}{% endif %}</textarea>
   <div id="json-valid-container">
   </div>
   <div id="submit-container">
     <input type="hidden" name="is_resubmit" value="true">
-    <input id="submit" type="submit" value="Submit">
+    <button class="btn btn-success" id="submit" type="submit" value="Submit">Submit</button>
   </div>
 </form>
-
 {% endif %}
 
 {% else %}
-<h3>
-Error:
-</h3>
-<p>Permission denied. You not have the required permissions to submit new jobs.
-<br>
-Please contact the administrators.</p>
+<h3>Error:</h3>
+<p>Permission denied. You not have the required permissions to submit new jobs.</p>
+<p>Please contact the administrators.</p>
 {% endif %}
 
 {% endblock %}
