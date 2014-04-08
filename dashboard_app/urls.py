@@ -24,10 +24,6 @@ from django.conf.urls import *
 urlpatterns = patterns(
     'dashboard_app.views',
     url(r'^$', 'index'),
-    url(r'^data-views/$', 'data_view_list'),
-    url(r'^data-views/(?P<name>[a-zA-Z0-9-_]+)/$', 'data_view_detail'),
-    url(r'^reports/$', 'report_list'),
-    url(r'^reports/(?P<name>[a-zA-Z0-9-_]+)/$', 'report_detail'),
     url(r'^filters/$', 'filters.views.filters_list'),
     url(r'^filters/filters_names_json$', 'filters.views.filter_name_list_json', name='filter_name_list_json'),
     url(r'^filters/\+add$', 'filters.views.filter_add'),
@@ -91,9 +87,6 @@ urlpatterns = patterns(
     url(r'^pmqa(?P<pathname>/[a-zA-Z0-9/._-]+/)(?P<device_type>[a-zA-Z0-9-_]+)$', 'pmqa.pmqa_filter_view'),
     url(r'^pmqa(?P<pathname>/[a-zA-Z0-9/._-]+/)(?P<device_type>[a-zA-Z0-9-_]+)/json$', 'pmqa.pmqa_filter_view_json'),
     url(r'^pmqa(?P<pathname>/[a-zA-Z0-9/._-]+/)(?P<device_type>[a-zA-Z0-9-_]+)/\+compare/(?P<build1>[0-9]+)/(?P<build2>[0-9]+)$', 'pmqa.compare_pmqa_results'),
-    url(r'^image-reports/(?P<name>[A-Za-z0-9_-]+)$', 'images.image_report_detail'),
     url(r'^api/link-bug-to-testrun', 'images.link_bug_to_testrun'),
     url(r'^api/unlink-bug-and-testrun', 'images.unlink_bug_and_testrun'),
-    url(r'^test-definition/add_test_definition', 'add_test_definition'),
-    url(r'^test-definition/$', 'test_definition'),
 )

@@ -1,0 +1,35 @@
+{% extends "dashboard_app/_content.html" %}
+
+
+{% block content %}
+<h1 class="modal-header">Welcome</h1>
+<p>The <em>Validation Dashboard</em> is your window to
+test results, regardless of how your run your tests you
+can upload the results here and analyze them with simple
+built-in views. Additionally, you can export data view
+the <a href="{% url 'lava.api_help' %}">XML-RPC API</a>
+to build your own customized reports.</p>
+
+<h2 class="modal-header">Getting Started</h2>
+
+<p>The dashboard stores results of tests in <em>bundles</em>. These
+bundles are then grouped by a thing called <em>bundle streams</em>.
+You can drill down by viewing the
+<a href="{% url 'dashboard_app.views.bundle_stream_list' %}">bundle stream list</a>.
+However, that view can present too much data.</p>
+
+<p>There are two good ways to limit the data in order to see the
+results you are interested in</p>
+
+<h3 class="modal-header">Filters</h3>
+<p><a href="{% url 'dashboard_app.views.filters.views.filters_list' %}">Filters</a>
+allow you to create your own list of criteria for what you'd like to look at.
+These can be created as "public" so others can use them, or private so only
+you can see them.</p>
+
+<h3 class="modal-header">Image Reports</h3>
+<p><a href="{% url 'dashboard_app.views.images.image_report_list' %}">Image Reports</a>
+are a feature built on top of filters, that allow a nice view of daily jobs
+that are being run in LAVA.</p>
+
+{% endblock %}

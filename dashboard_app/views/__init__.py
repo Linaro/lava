@@ -55,8 +55,6 @@ from dashboard_app.models import (
     Attachment,
     Bundle,
     BundleStream,
-    DataReport,
-    DataView,
     Tag,
     Test,
     TestCase,
@@ -743,60 +741,6 @@ def attachment_view(request, pk):
     return render_to_response(
         "dashboard_app/attachment_view.html", {
             'attachment': attachment,
-        }, RequestContext(request))
-
-
-@BreadCrumb("Reports", parent=index)
-def report_list(request):
-    return render_to_response(
-        "dashboard_app/report_list.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(report_list),
-            "report_list": DataReport.repository.all()
-        }, RequestContext(request))
-
-
-@BreadCrumb("{title}", parent=report_list, needs=['name'])
-def report_detail(request, name):
-    try:
-        report = DataReport.repository.get(name=name)
-    except DataReport.DoesNotExist:
-        raise Http404('No report matches given name.')
-    return render_to_response(
-        "dashboard_app/report_detail.html", {
-            "is_iframe": request.GET.get("iframe") == "yes",
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                report_detail,
-                name=report.name,
-                title=report.title),
-            "report": report,
-        }, RequestContext(request))
-
-
-@BreadCrumb("Data views", parent=index)
-def data_view_list(request):
-    return render_to_response(
-        "dashboard_app/data_view_list.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(data_view_list),
-            "data_view_list": DataView.repository.all(),
-        }, RequestContext(request))
-
-
-@BreadCrumb(
-    "Details of {name}",
-    parent=data_view_list,
-    needs=['name'])
-def data_view_detail(request, name):
-    try:
-        data_view = DataView.repository.get(name=name)
-    except DataView.DoesNotExist:
-        raise Http404('No data view matches the given query.')
-    return render_to_response(
-        "dashboard_app/data_view_detail.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                data_view_detail,
-                name=data_view.name,
-                summary=data_view.summary),
-            "data_view": data_view
         }, RequestContext(request))
 
 

@@ -9,8 +9,6 @@ from dashboard_app.models import (
     Attachment,
     Bundle,
     BundleStream,
-    DataReport,
-    DataView,
     Tag,
     Test,
     TestResult,

@@ -55,9 +55,6 @@ from linaro_dashboard_bundle.io import DocumentIO
 
 from dashboard_app.helpers import BundleDeserializer
 from dashboard_app.managers import BundleManager, TestRunDenormalizationManager
-from dashboard_app.repositories import RepositoryItem
-from dashboard_app.repositories.data_report import DataReportRepository
-from dashboard_app.repositories.data_view import DataViewRepository
 from dashboard_app.signals import bundle_was_deserialized
 
 
