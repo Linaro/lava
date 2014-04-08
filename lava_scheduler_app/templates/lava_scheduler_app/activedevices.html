@@ -1,11 +1,9 @@
-{% extends "lava_scheduler_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load django_tables2 %}
 
 {% block content %}
 
-<h2>All Active Devices</h2>
-
-<p><a href="{% url 'lava.scheduler.alldevices' %}">All devices</a></p>
+<h2>Active Devices <small><a href="{% url 'lava.scheduler.alldevices' %}">(see all)</a></small></h2>
 
 {% render_table active_devices_table %}
 
