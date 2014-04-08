@@ -1,18 +1,11 @@
-{% extends "lava_scheduler_app/_content.html" %}
-
+{% extends "layouts/content-bootstrap.html" %}
 {% load django_tables2 %}
 
 {% block content %}
 {% if device %}
-<h2>Failure Report</h2>
-<dt>Device:</dt>
-<dd><a href="/scheduler/device/{{ device }}">{{ device }}</a></dd>
-<br/>
+<h2>Failure Report <small>(device <a href="{% url 'lava.scheduler.device.detail' device %}">{{ device }}</a>)</small></h2>
 {% elif device_type %}
-<h2>Failure Report</h2>
-<dt>Device Type:</dt>
-<dd><a href="/scheduler/device_type/{{ device_type }}">{{ device_type }}</a></dd>
-<br/>
+<h2>Failure Report <small>(type <a href="{% url 'lava.scheduler.device_type.detail' device_type %}">{{ device_type }}</a>)</small></h2>
 {% else %}
 <h2>Failure Report</h2>
 {% endif %}
