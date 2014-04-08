@@ -28,7 +28,7 @@
 <h1>Image Report {{ image_report.name }}</h1>
 
 {% if image_report.image_report_group %}
-Report Group:&nbsp;&nbsp;<a href="{% url dashboard_app.views.image_reports.views.image_report_list %}#{{ image_report.image_report_group|iriencode }}">{{ image_report.image_report_group }}</a>
+Report Group:&nbsp;&nbsp;<a href="{% url 'dashboard_app.views.image_reports.views.image_report_list' %}#{{ image_report.image_report_group|iriencode }}">{{ image_report.image_report_group }}</a>
 {% endif %}
 {{ image_report.description|keep_spacing|linebreaks }}
 

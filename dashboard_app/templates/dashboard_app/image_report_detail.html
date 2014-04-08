@@ -49,11 +49,11 @@
 
   {% if image_report.image_report_group %}
   <div id="group_link" class="group-link">
-    <a href="{% url dashboard_app.views.image_reports.views.image_report_list %}#{{ image_report.image_report_group|iriencode }}">Group link</a>
+    <a href="{% url 'dashboard_app.views.image_reports.views.image_report_list' %}#{{ image_report.image_report_group|iriencode }}">Group link</a>
   </div>
   {% else %}
   <div id="group_link" class="group-link" style="display: none;">
-    <a href="{% url dashboard_app.views.image_reports.views.image_report_list %}#">Group link</a>
+    <a href="{% url 'dashboard_app.views.image_reports.views.image_report_list' %}#">Group link</a>
   </div>
   {% endif %}
 
