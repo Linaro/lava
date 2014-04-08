@@ -8,9 +8,9 @@
 
 {% if bundle.testjob %}
 <div class="row">
-  <div class="col-md-4">
+  <div class="col-md-6">
 <h3>Test run details</h3>
-<dl>
+<dl class="dl-horizontal">
   <dt>{% trans "Test Name" %} (<abbr title="This is the identifier of the test that was invoked. A test is a collection of test cases. Test is also the smallest piece of code that can be invoked by lava-test.">?</abbr>):</dt>
   <dd><a href="{{ test_run.test.get_absolute_url }}">{{ test_run.test.test_id }}</a>
   </dd>
@@ -63,15 +63,15 @@
   <dd>{{ bundle.testjob.start_time }}</dd>
   <dt>Test job end time</dt>
   <dd>{{ bundle.testjob.end_time }}</dd>
-</dl>
 {% endif %}
+  <dt>Export</h3>
+  <dd>Export test results data <a href="{% url 'dashboard_app.views.test_run_export' test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}">as CSV</a></dd>
+</dl>
 </div>
-<div class="col-md-4">
-<h3>Export</h3>
-<p>Export test results data <a href="{% url 'dashboard_app.views.test_run_export' test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}">as CSV</a></p>
+<div class="col-md-6">
 
-<h3>Software context</h3>
-<dl>
+<h3 class="modal-header">Software context</h3>
+<dl class="dl-horizontal">
   <dt>{% trans "OS Distribution:" %}</dt>
   <dd>{{ test_run.sw_image_desc|default:"<i>Unspecified</i>" }}</dd>
   <dt>{% trans "Software packages" %} (<abbr title="LAVA keeps track of all the software packages (such as Debian packages managed with dpkg) that were installed prior to running a test. This information can help you track down errors caused by a particular buggy dependency">?</abbr>):</dt>
@@ -85,7 +85,7 @@
 </dl>
 
 <h3>Hardware context</h3>
-<dl>
+<dl class="dl-horizontal">
   <dt>{% trans "Board:" %}</dt>
   <dd>{{ test_run.get_board|default_if_none:"There are no boards associated with this test run" }}</dd>
   <dt>{% trans "Other devices" %} (<abbr title="LAVA keeps track of the hardware that was used for testing. This can help cross-reference benchmarks and identify hardware-specific issues.">?</abbr>):</dt>
@@ -95,9 +95,12 @@
   </dd>
 </dl>
 </div>
-<div class="col-md-4">
+
+<div class="row">
+  <div class="col-md-6">
 
 <h3>Custom attributes (<abbr title="LAVA can store arbitrary key-value attributes associated with each test run (and separately, each test result)">?</abbr>)</h3>
+<dl class="dl-horizontal">
 <ul class="attributes">
   {% for attribute in test_run.attributes.all %}
   <li>{{ attribute.name }} = {{ attribute.value }}</li>
@@ -105,9 +108,11 @@
   <i>none</i>
   {% endfor %}
 </ul>
-
+</dl>
+  </div>
+  <div class="col-md-6">
 <h3>Time stamps (<abbr title="There are three different timestamps associated with each test run. They are explained below.">?</abbr>)</h3>
-<dl>
+<dl class="dl-horizontal">
   <dt>{% trans "Log analyzed on" %} (<abbr title="This is the moment this that this test run's artifacts (such as log files and other output) were processed by the log analyzer. Typically the analyzer is a part of lava-test framework and test output is analyzed on right on the device so this time may not be trusted, see below for the description of &quot;time check performed&quot;">?</abbr>):</dt>
   <dd>
   {{ test_run.analyzer_assigned_date|naturalday }}
@@ -130,6 +135,7 @@
   ({{ test_run.bundle.uploaded_on|timesince }} ago)
   </dd>
 </dl>
+</div>
 </div>
 <h2 class="modal-header">Test run results</h2>
 
