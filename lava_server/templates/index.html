@@ -6,14 +6,54 @@
 {% endblock %}
 
 {% block content %}
-<h2>LAVA Highlights</h2>
-<p>This page contains highlights from the installed lava server extensions.
-Using LAVA Server extension API anyone can create applications that run on the
-LAVA server.</p>
+
+<h2>Welcome to LAVA</h2>
+
+<p>LAVA is an automated validation architecture primarily aimed at testing deployments of systems based around the
+Linux kernel on ARM devices, specifically ARMv7 and later. The current range of boards (<a
+href="/static/docs/glossary.html#term-device-type">device types</a>) supported by this LAVA instance can be seen
+on the <a href="{% url 'lava.scheduler' %}">scheduler status</a> page which includes details of how many boards
+of each type are available for tests and currently running jobs.</p>
+
+<h3>Testing in LAVA</h3>
+<h4><a href="/static/docs/writing-tests.html">Writing a LAVA test definition</a></h4>
+
+<p>Each test can provide a result, including a <a
+href="/static/docs/writing-tests.html#recording-test-case-measurements-and-units">measurement and units</a> or a as
+<a href="/static/docs/writing-tests.html#recording-test-case-results">a pass/fail/skip</a>, with
+<a href="/static/docs/glossary.html#term-bundle-stream">results being bundled into set</a> from each test job.
+Tests can be as simple as using <code>ping</code> with a known address to ensure that the kernel has raised the
+network interface correctly, to a single result obtained by downloading, compiling and executing third party test
+suites.</p>
+
+<p>Tests can be run on a single device or combined across multiple devices and some devices can use dedicated test
+hardware like <a href="/static/docs/lmp_test_guide.html">lmp</a> with jobs selecting those devices using tags.
+LAVA does not dictate which tests can be run, so to get an idea of what tests other people have been running in LAVA,
+take a look at the <a href="/dashboard/">Dashboard</a>. Bundles contain details of the environment in which the test
+was run as well as the test results from completed jobs. Bundles are collected into <a
+href="/static/docs/glossary.html#term-bundle-stream">bundle streams</a>, some of which are publicly visible. Each
+bundle stream provides access to bundles of test results and each bundle can be inspected exported
+or downloaded for further analysis. Exports are available as CSV or JSON. A variety of queries are supported
+over <a href="/api/help">XMLRPC</a>.</p>
+
+<p><a href="{% url 'dashboard_app.views.filters.views.filters_list' %}">Dashboard filters</a> allow results in bundles
+to be <a href="/static/docs/filters-reports.html">compared by matching criteria about the device under test</a>, the
+type of test being run or most other elements of a test job. Filters then provide the basis for <a
+href="/static/docs/lava-dashboard-image-reports.html">image reports</a> which can provide detailed graphs of results
+over time, with links back to individual tests, output from the LAVA log file and the original
+<a href="/static/docs/glossary.html#term-job-definition">test job definition</a>.</p>
+
+<p><a href="/static/docs/">Introduction to LAVA</a></p>
+
+<p><a href="http://www.linaro.org/projects/test-validation/">More about LAVA</a></p>
+
+{% if extension_list %}
+<h2>LAVA Extensions</h2>
 {% for extension in extension_list %}
 {% if extension.front_page_template %}
 <h3>{{ extension.description }}</h3>
 {% include extension.front_page_template %}
 {% endif %}
 {% endfor %}
+{% endif %}
 {% endblock %}
