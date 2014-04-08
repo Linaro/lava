@@ -9,14 +9,14 @@
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/pygments.css"/>
 {% endblock %}
 
-
 {% block content %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery-1.5.1.min.js"></script>
 <div class="row">
   <div class="col-md-6">
 <h3>Bundle information</h3>
 <p>You can navigate to this bundle, regardless of the bundle stream it is
 located in, by using this <a href="{{bundle.get_permalink}}">permalink</a></p>
-<p>Export test run data <a href="{% url 'dashboard_app.views.bundle_export' bundle_stream.pathname bundle.content_sha1 %}">as CSV</a></p>
+<p><b>Export test run data</b> <a href="{% url 'dashboard_app.views.bundle_export' bundle_stream.pathname bundle.content_sha1 %}">as CSV</a></p>
 {% if bundle.uploaded_by %}
 <p>This bundle was uploaded by <strong>{{bundle.uploaded_by}}</strong> on
 {{bundle.uploaded_on}} ({{bundle.uploaded_on|timesince}} ago)</p>
@@ -81,21 +81,38 @@ located in, by using this <a href="{{bundle.get_permalink}}">permalink</a></p>
 $(document).ready(function() {
     show_test_runs();
 });
-    function show_test_runs() {
+function show_test_runs() {
     document.getElementById("test_runs").style.display="block";
     document.getElementById("bundle_view").style.display="none";
+    $('#bundle-run-container').html('<ul class="nav nav-pills">' +
+            '<li><button onclick=show_test_runs() class="btn btn-sm btn-primary">Test Runs</button>' +
+            '</li>' +
+            '<li><button onclick=show_deserialized() class="btn btn-sm btn-default">Bundle Viewer</button>' +
+            '</li></ul>')
 }
 function show_deserialized() {
     document.getElementById("test_runs").style.display="none";
     document.getElementById("bundle_view").style.display="block";
+    $('#bundle-run-container').html('<ul class="nav nav-pills">' +
+            '<li><button onclick=show_test_runs() class="btn btn-sm btn-default">Test Runs</button>' +
+            '</li>' +
+            '<li><button onclick=show_deserialized() class="btn btn-sm btn-primary">Bundle Viewer</button>' +
+            '</li></ul>')
 }
 </script>
+
+<div class="modal-header" id="bundle-run-container">
+  <ul class="nav nav-pills">
+    <li><button onclick=show_test_runs() class="btn btn-sm btn-primary">Test Runs</button>
+    </li>
+    <li><button onclick=show_deserialized() class="btn btn-sm btn-default">Bundle Viewer</button>
+    </li>
+  </ul>
+</div>
 
 <div class="ui-tabs ui-widget -ui-widget-content ui-corner-all">
   <span
     class="ui-tabs-nav ui-corner-all ui-tabs-panel">
-    <input onclick=show_test_runs() checked name="radio" type="radio" id="tab-test-runs"/>Test Runs
-    <input onclick=show_deserialized() name="radio" type="radio" id="tabs"/>Bundle Viewer
 
 <div id="test_runs">
 {% render_table bundle_table %}

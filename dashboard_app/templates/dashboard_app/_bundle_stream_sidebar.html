@@ -16,10 +16,11 @@
     <p>{% trans "This stream is owned by group called" %} <q>{{ bundle_stream.group }}</q></p>
     {% endif %}
      </dd>
+    <dt>{%  trans "Export" %}</dt>
+    <dd>
+       <p>test run data <a href="{% url 'dashboard_app.views.bundle_list_export' bundle_stream.pathname %}">as CSV</a></p>
+    </dd>
    </dl>
-   <h3 class="modal-header">{% trans "Export" %}</h3>
-   <p>Export test run data <a 
-   href="{% url 'dashboard_app.views.bundle_list_export' bundle_stream.pathname %}">as CSV</a></p>
   </div>
 
   <div class="col-md-6">
@@ -67,7 +68,8 @@
     <div class="alert alert-warning alert-dismissable">
       <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
       <p><strong><i>Changing stream access</i></strong>
-      A stream can be marked as anonymous in the administration panel.</p>
+      A stream can be marked as anonymous or private in the administration panel
+      but note that the pathname of the stream will change.</p>
     </div>
   </dl>
   </div>
