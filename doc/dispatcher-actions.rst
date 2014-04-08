@@ -475,42 +475,6 @@ Available parameters
 
   The default is None, i.e. nothing is skipped.
 
-Example functional test: **kvm-group-multinode**:
-
-http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/neil.williams/kvm-only-group.json
-
-To run multiple tests without a reboot in between each test run, extra ``testdef_repos`` can be listed::
-
-    "actions": [
-        {
-            "command": "lava_test_shell",
-            "parameters": {
-                "testdef_repos": [
-                    {
-                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
-                        "testdef": "ubuntu/smoke-tests-basic.yaml"
-                    },
-                    {
-                        "git-repo": "http://git.linaro.org/lava-team/lava-functional-tests.git",
-                        "testdef": "lava-test-shell/multi-node/multinode02.yaml"
-                    }
-                ],
-                "timeout": 900
-            }
-        },
-
-Example functional test: **model-express-group-multinode**:
-
-http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/neil.williams/fastmodel-vexpress-group.json
-
-To run multiple tests with a reboot in between each test run, add extra ``lava_test_shell``
-actions:
-
-* :term:`stream`: the bundle stream to which the results will be submitted.
-  The user submitting the test must be able to upload to the specified
-  stream.
-* ``server``: The server to which the results will be submitted.
-
 .. _android_specific_actions:
 
 Android specific actions
@@ -537,44 +501,6 @@ LAVA job to test Android::
         }
     ]
  }
-
-Example functional test: **master-lava-android-test-multinode**:
-
-http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/master/master-lava-android-test-multinode.json
-
-Available parameters
---------------------
-
-* ``boot``: Android ``boot.img`` or ``boot.bz2``. Typically this is
-  a kernel image and ramdisk. The parameter accepts http, local and
-  scp urls::
-
-   http://myserver.com/boot.img
-   file:///home/user/boot.img
-   scp://username@myserver.com:/home/user/boot.img
-
-* ``system``: Android ``system.img`` or ``system.bz2``. Typically 
-  this is the system partition. The parameter accepts http, local and
-  scp urls::
-
-   http://myserver.com/system.img
-   file:///home/user/system.img
-   scp://username@myserver.com:/home/user/system.img
-
-* ``data``: Android ``userdata.img`` or ``userdata.bz2``. Typically
-  this is the data partition. The parameter accepts http, local and
-  scp urls::
-
-   http://myserver.com/userdata.img
-   file:///home/user/userdata.img
-   scp://username@myserver.com:/home/user/userdata.img
-
-* :term:`rootfstype`: This is the filesystem type for the :term:`rootfs`.
-  (i.e. ext2, ext3, ext4...). The parameter accepts any string and is
-  optional. The default is ``ext4``.
-* :term:`role`: Determines which devices in a MultiNode group will
-  use this action. The parameter accepts any string, the string must
-  exactly match one of the roles specified in the :term:`device group`.
 
 Example functional test: **master-lava-android-test-multinode**:
 
@@ -642,10 +568,6 @@ Example functional test: **master-job-defined-boot-cmds-android**:
 
 http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/single-node-job/master/master-job-defined-boot-cmds-android.json
 
-Example functional test: **master-job-defined-boot-cmds-android**:
-
-http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/single-node-job/master/master-job-defined-boot-cmds-android.json
-
 .. _lava_android_test_install:
 
 Installing Android tests in a deployed Android image
@@ -704,21 +626,6 @@ Available parameters
 Example functional test: **master-lava-android-test-multinode**:
 
 http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/master/master-lava-android-test-multinode.json
-
-Available parameters
---------------------
-
-* ``test_name``: The name of the test you want to invoke from
-  lava-android-test. Any string is accepted. If an unknown test is
-  specified it will cause an error.
-* ``option``: Allows you to add additional command line parameters to
-  lava-android-test install. Any string is accepted. If an unknown
-  option is specified it will cause an error.
-* ``timeout``: Allows you set a timeout for the action. Any integer
-  value, optional.
-* :term:`role`: Determines which devices in a MultiNode group will
-  use this action. The parameter accepts any string, the string must
-  exactly match one of the roles specified in the :term:`device group`.
 
 .. _lava_android_test_shell:
 
