@@ -245,7 +245,7 @@ class logging_spawn(pexpect.spawn):
 
         try:
             proc = super(logging_spawn, self).expect(*args, **kw)
-        except pexcept.EOF:
+        except pexpect.EOF:
             raise CriticalError(" ".join(self.before.split('\r\n')))
         return proc
 
