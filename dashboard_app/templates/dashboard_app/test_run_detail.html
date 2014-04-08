@@ -9,7 +9,7 @@
 {% if bundle.testjob %}
 <div class="row">
   <div class="col-md-6">
-<h3>Test run details</h3>
+<h3 class="modal-header">Test run details</h3>
 <dl class="dl-horizontal">
   <dt>{% trans "Test Name" %} (<abbr title="This is the identifier of the test that was invoked. A test is a collection of test cases. Test is also the smallest piece of code that can be invoked by lava-test.">?</abbr>):</dt>
   <dd><a href="{{ test_run.test.get_absolute_url }}">{{ test_run.test.test_id }}</a>
@@ -64,8 +64,8 @@
   <dt>Test job end time</dt>
   <dd>{{ bundle.testjob.end_time }}</dd>
 {% endif %}
-  <dt>Export</h3>
-  <dd>Export test results data <a href="{% url 'dashboard_app.views.test_run_export' test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}">as CSV</a></dd>
+  <dt>Export</dt>
+  <dd>test results data <a href="{% url 'dashboard_app.views.test_run_export' test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}">as CSV</a></dd>
 </dl>
 </div>
 <div class="col-md-6">
@@ -95,11 +95,10 @@
   </dd>
 </dl>
 </div>
-
+</div>
 <div class="row">
   <div class="col-md-6">
-
-<h3>Custom attributes (<abbr title="LAVA can store arbitrary key-value attributes associated with each test run (and separately, each test result)">?</abbr>)</h3>
+<h3 class="modal-header">Custom attributes (<abbr title="LAVA can store arbitrary key-value attributes associated with each test run (and separately, each test result)">?</abbr>)</h3>
 <dl class="dl-horizontal">
 <ul class="attributes">
   {% for attribute in test_run.attributes.all %}
