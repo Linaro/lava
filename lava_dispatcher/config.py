@@ -293,8 +293,6 @@ if "VIRTUAL_ENV" in os.environ:
 else:
     system_config_path = "/etc/lava-dispatcher"
 
-deprecated_system_config_path = "/etc/xdg/lava-dispatcher"
-
 default_config_path = os.path.join(os.path.dirname(__file__),
                                    'default-config/lava-dispatcher')
 

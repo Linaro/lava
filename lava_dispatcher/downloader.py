@@ -193,11 +193,3 @@ def download_image(url_string, context, imgdir=None,
             else:
                 logging.info('Sleep one minute and retry (%d)' % tries)
                 time.sleep(60)
-
-
-def download_with_retry(context, imgdir, url, decompress=True, timeout=300, delete_on_exit=True):
-    """
-    download test result with a retry mechanism and 5 minute default timeout
-    Deprecated function, download_image now has retry support and is called by this function.
-    """
-    return download_image(url, context, imgdir, delete_on_exit, decompress, timeout)
