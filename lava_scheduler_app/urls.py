@@ -135,4 +135,7 @@ urlpatterns = patterns(
     url(r'^mydevices$',
         'mydevice_list',
         name='lava.scheduler.mydevice_list'),
+    url(r'^queue$',
+        'queue',
+        name='lava.scheduler.queue'),
 )

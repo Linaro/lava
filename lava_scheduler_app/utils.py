@@ -292,3 +292,20 @@ def get_software_info():
         sw_info.update(local_diffstat(prefix))
 
     return simplejson.dumps(format_sw_info_to_html(sw_info))
+
+
+def get_heartbeat_timeout():
+    """Returns the HEARTBEAT_TIMEOUT value specified in worker.conf
+
+    If there is no value found, we return a default timeout value 300.
+    """
+    settings = Settings("lava-server")
+    worker_config_path = settings._get_pathname("worker")
+    try:
+        worker_config = ConfigFile.load(worker_config_path)
+        if worker_config and worker_config.HEARTBEAT_TIMEOUT != '':
+            return int(worker_config.HEARTBEAT_TIMEOUT)
+        else:
+            return 300
+    except (IOError, AttributeError):
+        return 300

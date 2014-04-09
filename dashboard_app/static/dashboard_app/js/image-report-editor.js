@@ -1,26 +1,59 @@
-filter_select_callback = function(filter_item) {
+filter_select_callback = function(filter_item, chart_id) {
     $("#id_filter").val(filter_item.id);
-    filters_callback(filter_item.id, filter_item.name);
-    $(".ui-autocomplete-input").focus();
+    filters_callback(chart_id, filter_item.id, filter_item.name);
+    $(".ui-autocomplete-input").blur();
 }
 
-filters_callback = function(id, name) {
+filters_callback = function(chart_id, filter_id, name) {
     // Function which will be called when a filter is selected.
+
+    url = "/dashboard/image-charts/+filter-type-check";
+    do_break = false;
+
+    $.ajax({
+        url: url,
+        async: false,
+        type: "POST",
+        data: {
+            csrfmiddlewaretoken: csrf_token,
+            chart_id: chart_id,
+            filter_id: filter_id
+        },
+        beforeSend: function () {
+            $('#loading_dialog').dialog('open');
+        },
+        success: function (data) {
+            $('#loading_dialog').dialog('close');
+            if (data.result == "False") {
+                alert('You must select filter with the same type' +
+                      '(date/build numbers).');
+                do_break = true;
+            }
+        },
+        error: function(data, status, error) {
+            $('#loading_dialog').dialog('close');
+            alert('Filter could not be loaded, please try again.');
+        }
+    });
+
+    if (do_break) {
+        return;
+    }
 
     url = "/dashboard/filters/+get-tests-json";
 
     $.ajax({
         url: url,
         async: false,
-        data: {"id": id},
+        data: {"id": filter_id},
         beforeSend: function () {
             $('#filter-container').remove();
             $('#loading_dialog').dialog('open');
         },
         success: function (data) {
             $('#loading_dialog').dialog('close');
-            $("#id_filter").val(id);
-            add_filter_container(data, id, name);
+            $("#id_filter").val(filter_id);
+            add_filter_container(data, filter_id, name);
         },
         error: function(data, status, error) {
             $('#loading_dialog').dialog('close');
