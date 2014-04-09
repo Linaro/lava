@@ -174,7 +174,7 @@ class IpmiPxeTarget(Target):
             runner.run('mkdir -p /mnt')
             partition = self.get_partition(runner, partition)
             runner.run('mount %s /mnt' % partition)
-            with self._busybox_file_system(runner, directory) as path:
+            with self._busybox_file_system(runner, directory, mounted=True) as path:
                 yield path
 
     @contextlib.contextmanager
