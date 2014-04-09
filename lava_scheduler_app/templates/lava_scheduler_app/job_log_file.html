@@ -227,6 +227,13 @@
         <ul class="nav nav-pills nav-stacked">
         {% if job.results_link %}
           <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
+        {% else %}
+        {% if show_cancel %}
+          <li><a href="{% url 'lava.scheduler.job.cancel' job.pk %}" class="btn btn-warning">Cancel</a></li>
+        {% endif %}
+        {% if show_resubmit %}
+          <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
+        {% endif %}
         {% endif %}
         </ul>
       </div>
