@@ -85,13 +85,13 @@ class WGTarget(MasterImageTarget):
 
     def _deploy_android_tarballs(self, master, boot, system, data):
         super(WGTarget, self)._deploy_android_tarballs(master, boot,
-                                                             system, data)
+                                                       system, data)
         # android images have boot files inside boot/ in the tarball
         self._extract_firmware_from_tarball(boot, 'boot')
 
     def _deploy_tarballs(self, boot_tgz, root_tgz, rootfstype):
         super(WGTarget, self)._deploy_tarballs(boot_tgz, root_tgz,
-                                                     rootfstype)
+                                               rootfstype)
         self._extract_firmware_from_tarball(boot_tgz)
 
     ##################################################################
@@ -163,7 +163,7 @@ class WGTarget(MasterImageTarget):
         bl1_on_image = self.config.bl1_image_filename
         fip_on_image = self.config.fip_image_filename
 
-        if hwpack_path != None:
+        if hwpack_path is not None:
             bl1_on_image = os.path.join(hwpack_path, bl1_on_image)
             fip_on_image = os.path.join(hwpack_path, fip_on_image)
 
@@ -213,7 +213,7 @@ class WGTarget(MasterImageTarget):
             raise CriticalError("No path to bl1 firmware")
 
         fip_path = self.config.wg_fip_path
-        fip = os.path.join(mount_point, bl1_path)
+        fip = os.path.join(mount_point, fip_path)
 
         if os.path.exists(self.test_fip):
             self.context.run_command('cp %s %s' % (self.test_fip, fip))
