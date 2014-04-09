@@ -77,8 +77,8 @@ def _get_dashboard(server, token):
     srv = AuthenticatingServerProxy(
         server, allow_none=True, use_datetime=True, auth_backend=auth_backend)
     if server.endswith("xml-rpc/"):
-        logging.warn("Please use RPC2 endpoint instead, xml-rpc is deprecated!!!")
-        dashboard = srv
+        logging.error("Please use RPC2 endpoint instead, xml-rpc is no longer supported")
+        raise OperationFailed("xml-rpc endpoint is not supported.")
     elif server.endswith("RPC2/"):
         #include lava-server/RPC2/
         dashboard = srv.dashboard
