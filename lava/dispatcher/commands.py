@@ -102,7 +102,16 @@ class dispatch(DispatcherCommand):
         FORMAT = '<LAVA_DISPATCHER>%(asctime)s %(levelname)s: %(message)s'
         DATEFMT = '%Y-%m-%d %I:%M:%S %p'
         logging.basicConfig(format=FORMAT, datefmt=DATEFMT)
-        config = get_config()
+        try:
+            config = get_config()
+        except CommandError as e:
+            if self.args.output_dir:
+                reporter = os.path.join(self.args.output_dir, "output.txt")
+                with open(reporter, 'a') as f:
+                    f.write("Configuration error: %s\n" % e)
+            else:
+                print(e)
+            exit(1)
         logging.root.setLevel(config.logging_level)
 
         # Set process id if job-id was passed to dispatcher

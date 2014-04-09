@@ -19,9 +19,11 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from ConfigParser import ConfigParser
+from lava.tool.errors import CommandError
 import os
 import StringIO
 import logging
+import commands
 
 from configglue import parser, schema
 
@@ -270,7 +272,8 @@ class DispatcherSchema(schema.Schema):
     lava_image_url = schema.StringOption()
     lava_proxy = schema.StringOption()
     lava_result_dir = schema.StringOption()
-    lava_server_ip = schema.StringOption(fatal=True)
+    lava_server_ip = schema.StringOption()
+    lava_network_iface = schema.ListOption()
     lava_test_deb = schema.StringOption()
     lava_test_url = schema.StringOption()
     logging_level = schema.IntOption()
@@ -362,13 +365,26 @@ def _get_config(name, cp):
     return cp
 
 
+def _lookup_ip(lava_network_iface):
+    for iface in lava_network_iface:
+        line = commands.getoutput("ip address show dev %s" % iface).split()
+        if 'inet' in line:
+            return line[line.index('inet') + 1].split('/')[0]
+    raise CommandError("LAVA_NETWORK_IFACE is set to '%s' "
+                       "but no IP address was found for any listed interface." % ", ".join(lava_network_iface))
+
+
 def get_config():
     cp = parser.SchemaConfigParser(DispatcherSchema())
     _get_config("lava-dispatcher", cp)
     valid, report = cp.is_valid(report=True)
     if not valid:
         logging.warning("dispatcher config is not valid:\n    %s", '\n    '.join(report))
-    return DispatcherConfig(cp)
+    config = DispatcherConfig(cp)
+    if config.lava_network_iface:
+        config.lava_server_ip = _lookup_ip(config.lava_network_iface)
+        config.lava_image_url = cp.get('__main__', "LAVA_IMAGE_URL", vars={'LAVA_SERVER_IP': config.lava_server_ip})
+    return config
 
 
 def _hack_boot_options(scp):
