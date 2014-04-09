@@ -120,8 +120,8 @@ class stmc(BaseDriver):
         if self.config.jtag_hard_reset_command:
             logging.info("Hard resetting STMC")
             self.context.run_command(self.config.jtag_hard_reset_command)
-            logging.info("Waiting for %d seconds for STMC to initialize"
-                          % self.config.jtag_hard_reset_sleep)
+            logging.info("Waiting for %d seconds for STMC to initialize" %
+                         self.config.jtag_hard_reset_sleep)
             time.sleep(self.config.jtag_hard_reset_sleep)
 
         # Hard reset platform
