@@ -522,9 +522,18 @@ class LavaClient(object):
 
             self.setup_proxy(TESTER_PS1_PATTERN)
             logging.info("System is in test image now")
-            logging.debug("mount information: \n%s" % subprocess.check_output(['mount']))
-            logging.debug("root directory information: \n%s" % subprocess.check_output(['ls', '-l', '/']))
-            logging.debug("free space information: \n%s" % subprocess.check_output(['df', '-hl', '/']))
+            logging.debug("mount information")
+            self.proc.sendline('mount')
+            prompt = self.target_device.tester_ps1_pattern
+            self.proc.expect([prompt, pexpect.TIMEOUT], timeout=10)
+            logging.debug("root directory information")
+            self.proc.sendline('ls -l /')
+            prompt = self.target_device.tester_ps1_pattern
+            self.proc.expect([prompt, pexpect.TIMEOUT], timeout=10)
+            logging.debug("free space information")
+            self.proc.sendline('df -hl /')
+            prompt = self.target_device.tester_ps1_pattern
+            self.proc.expect([prompt, pexpect.TIMEOUT], timeout=10)
             in_linaro_image = True
 
         if not in_linaro_image:
