@@ -27,7 +27,7 @@ from dashboard_app.tests.utils import TestClient
 
 
 def auth_test(request):
-    response = HttpResponse(mimetype="text/plain")
+    response = HttpResponse(content_type="text/plain")
     if (request.user and request.user.is_authenticated and request.user.is_active):
         response.write(request.user.username)
     response['Content-length'] = str(len(response.content))

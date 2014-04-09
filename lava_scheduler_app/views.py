@@ -935,7 +935,7 @@ def job_submit(request):
                 return HttpResponse(simplejson.dumps("success"))
             except Exception as e:
                 return HttpResponse(simplejson.dumps(str(e)),
-                                    mimetype="application/json")
+                                    content_type="application/json")
 
         else:
             try:
@@ -1034,7 +1034,7 @@ def job_definition(request, pk):
 
 def job_definition_plain(request, pk):
     job = get_restricted_job(request.user, pk)
-    response = HttpResponse(job.display_definition, mimetype='text/plain')
+    response = HttpResponse(job.display_definition, content_type='text/plain')
     response['Content-Disposition'] = "attachment; filename=job_%d.json" % \
         job.id
     return response
@@ -1058,7 +1058,7 @@ def multinode_job_definition(request, pk):
 
 def multinode_job_definition_plain(request, pk):
     job = get_restricted_job(request.user, pk)
-    response = HttpResponse(job.multinode_definition, mimetype='text/plain')
+    response = HttpResponse(job.multinode_definition, content_type='text/plain')
     response['Content-Disposition'] = \
         "attachment; filename=multinode_job_%d.json" % job.id
     return response
@@ -1109,7 +1109,7 @@ def job_log_file(request, pk):
 
 def job_log_file_plain(request, pk):
     job = get_restricted_job(request.user, pk)
-    response = HttpResponse(job.output_file(), mimetype='text/plain')
+    response = HttpResponse(job.output_file(), content_type='text/plain')
     response['Content-Disposition'] = "attachment; filename=job_%d.log" % job.id
     return response
 
@@ -1241,7 +1241,7 @@ def job_resubmit(request, pk):
                     return HttpResponse(simplejson.dumps("success"))
                 except Exception as e:
                     return HttpResponse(simplejson.dumps(str(e)),
-                                        mimetype="application/json")
+                                        content_type="application/json")
             if job.is_multinode:
                 definition = job.multinode_definition
             else:
@@ -1346,7 +1346,7 @@ def get_remote_json(request):
         simplejson.loads(data)
     except Exception as e:
         return HttpResponse(simplejson.dumps(str(e)),
-                            mimetype="application/json")
+                            content_type="application/json")
 
     return HttpResponse(data)
 

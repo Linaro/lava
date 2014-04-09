@@ -39,4 +39,4 @@ class DataTableView(View):
         result = self.backend.process(query)
         return HttpResponse(
             simplejson.dumps(result),
-            mimetype='application/json')
+            content_type='application/json')

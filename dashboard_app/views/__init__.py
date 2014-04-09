@@ -309,7 +309,7 @@ def bundle_list_export(request, pathname):
                 pk=bundle.uploaded_by_id).username
             out.writerow(bundle_dict)
 
-    response = HttpResponse(mimetype='text/csv')
+    response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = "attachment; filename=%s.csv" % file_name
     with open(file_path, 'r') as csv_file:
         response.write(csv_file.read())
@@ -413,7 +413,7 @@ def bundle_export(request, pathname, content_sha1):
             test_run_dict["device"] = test_run.show_device()
             out.writerow(test_run_dict)
 
-    response = HttpResponse(mimetype='text/csv')
+    response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = "attachment; filename=%s.csv" % file_name
     with open(file_path, 'r') as csv_file:
         response.write(csv_file.read())
@@ -614,7 +614,7 @@ def test_run_export(request, pathname, content_sha1, analyzer_assigned_uuid):
                 test_result_dict["result"]]
             out.writerow(test_result_dict)
 
-    response = HttpResponse(mimetype='text/csv')
+    response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = "attachment; filename=%s.csv" % file_name
     with open(file_path, 'r') as csv_file:
         response.write(csv_file.read())
@@ -709,7 +709,7 @@ def test_result_update_comments(request, pathname, content_sha1,
     test_result.comments = request.POST.get('comments')
     test_result.save()
     data = serializers.serialize('json', [test_result])
-    return HttpResponse(data, mimetype='application/json')
+    return HttpResponse(data, content_type='application/json')
 
 
 def attachment_download(request, pk):
@@ -722,7 +722,7 @@ def attachment_download(request, pk):
     if not attachment.content:
         return HttpResponseBadRequest(
             "Attachment %s not present on dashboard" % pk)
-    response = HttpResponse(mimetype=attachment.mime_type)
+    response = HttpResponse(content_type=attachment.mime_type)
     response['Content-Disposition'] = 'attachment; filename=%s' % (
         attachment.content_filename)
     response.write(attachment.content.read())
