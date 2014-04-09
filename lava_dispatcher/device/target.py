@@ -391,7 +391,7 @@ class Target(object):
         delay = self.config.bootloader_serial_delay_ms
         _boot_cmds = self._boot_cmds_preprocessing(boot_cmds)
         for line in _boot_cmds:
-            parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)',
+            parts = re.match('^(?P<action>sendline|sendcontrol|expect)\s*(?P<command>.*)',
                              line)
             if parts:
                 try:
@@ -405,6 +405,8 @@ class Target(object):
                                     send_char=self.config.send_char)
                     connection.sendline('', delay,
                                         send_char=self.config.send_char)
+                elif action == "sendcontrol":
+                    connection.sendcontrol(command)
                 elif action == "expect":
                     command = re.escape(command)
                     connection.expect(command, timeout=300)

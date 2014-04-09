@@ -196,12 +196,25 @@ class DeviceSchema(schema.Schema):
         default='Press Enter to stop auto boot...')
     vexpress_usb_mass_storage_device = schema.StringOption(default=None)
 
+    bl1_image_filename = schema.StringOption(default="bl1.bin")
+    fip_image_filename = schema.StringOption(default="fip.bin")
+
+    wg_bl1_path = schema.StringOption(default="SOFTWARE/bl1.bin")
+    wg_fip_path = schema.StringOption(default="SOFTWARE/fip.bin")
+
+    wg_bl1_backup_path = schema.StringOption(default="SOFTWARE/backup-bl1.bin")
+    wg_fip_backup_path = schema.StringOption(default="SOFTWARE/backup-fip.bin")
+
+    wg_usb_mass_storage_device = schema.StringOption(default="/dev/disk/by-label/WG")
+    wg_stop_autoboot_prompt = schema.StringOption(
+        default='Press Enter to stop auto boot...')
+
     ecmeip = schema.StringOption()
     ipmi_power_sleep = schema.IntOption(default=1)
     ipmi_power_retries = schema.IntOption(default=10)
 
     # for dummy devices
-    dummy_driver = schema.StringOption(default=None)
+    dumver = schema.StringOption(default=None)
     dummy_schroot_chroot = schema.StringOption(default="default")
     dummy_ssh_host = schema.StringOption(default=None)
     dummy_ssh_port = schema.IntOption(default=22)
