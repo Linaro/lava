@@ -37,6 +37,7 @@ class JtagTarget(Target):
 
     def __init__(self, context, config):
         super(JtagTarget, self).__init__(context, config)
+        self.proc = None
         self._booted = False
         self._boot_tags = None
         self._default_boot_cmds = None
@@ -74,7 +75,8 @@ class JtagTarget(Target):
         proc.sendline('export PS1="%s"' % self.tester_ps1,
                       send_char=self.config.send_char)
         self._booted = True
-        return proc
+        self.proc = proc
+        return self.proc
 
     def power_off(self, proc):
         super(JtagTarget, self).power_off(proc)
