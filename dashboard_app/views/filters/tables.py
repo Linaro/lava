@@ -312,17 +312,6 @@ class FilterSummaryTable(LavaTable):
         template = 'dashboard_app/filter_results_table.html'
 
 
-class FilterTable(tables.Table):
-    """
-    Deprecated - extensions looking for FilterTable need to migrate to LavaTable
-    or use FilterPassTable or FilterSummaryTable.
-    """
-    def __init__(self, *args, **kwargs):
-        super(FilterTable, self).__init__(*args, **kwargs)
-        self.length = 10
-        raise Exception("FilterTable is deprecated, migrate to LavaTable.")
-
-
 class TestResultDifferenceTable(LavaTable):
 
     def __init__(self, *args, **kwargs):
