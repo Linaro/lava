@@ -82,6 +82,21 @@ Available parameters
   The parameter accepts any string and is optional.
   The default is ``u_boot``.
 
+* ``login_prompt``: A string that will match a login prompt.
+  The parameter accepts any string and is optional.
+
+* ``username``: A string that represents a username. This will be sent
+  to the login prompt. The parameter accepts any string and is optional.
+
+* ``password_prompt``: A string that will match a password prompt.
+  The parameter accepts any string and is optional.
+
+* ``password``: A string that represents a password. This will be sent
+  to the password prompt. The parameter accepts any string and is optional.
+
+* ``login_commands``: An array of strings that will be sent to the target after login.
+  The parameter accepts any strings and is optional.
+
 * :term:`role`: Determines which devices in a MultiNode group will
   use this action. The parameter accepts any string, the string must
   exactly match one of the roles specified in the :term:`device group`.
@@ -154,11 +169,11 @@ https://git.linaro.org/people/fu.wei/lava-test-job-definition_example.git/blob/r
 
 .. _deploy_linaro_kernel:
 
-Deploying a Linaro kernel with device tree blob
-===============================================
+Deploying a Linaro kernel
+=========================
 
-Use ``deploy_linaro_kernel`` to deploy a kernel which uses on a
-device tree blob::
+Use ``deploy_linaro_kernel`` to deploy a kernel and other bits. To use this
+deployment action the target's boot loader must be capable of network booting.::
 
    {
       "command": "deploy_linaro_kernel",
@@ -180,32 +195,64 @@ http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/single-node
 Available parameters
 --------------------
 
-* ``kernel``:
-* ``ramdisk``:
-* ``dtb``:
-* :term:`rootfs`:
+* ``kernel``: A kernel image. The :term:`boot tag` for this parameter is `{KERNEL}`.
+  The parameter accepts any string and is required.
+
+* ``ramdisk``: A ramdisk image. The :term:`boot tag` for this parameter is `{RAMDISK}`.
+  The parameter accepts any string and is optional.
+
+* ``dtb``: A flattened device tree blob. The :term:`boot tag` for this parameter is `{DTB}`.
+  The parameter accepts any string and is optional.
+
+* :term:`rootfs`: A root filesystem image. This parameter assumes that
+  the target's boot loader can deliver the image to a storage device. The :term:`boot tag`
+  for this parameter is `{ROOTFS}`. The parameter accepts any string and is optional.
+
+* ``nfsrootfs``: A tarball for the root file system. LAVA will extract
+  this tarball and create an NFS mount point dynamically. The :term:`boot tag` for this
+  parameter is `{NFSROOTFS}`. The parameter accepts any string and is optional.
+
+* ``bootloader``: A boot loader image. This parameter assumes that
+  the target's boot loader can deliver the boot loader image to a storage device.
+  The :term:`boot tag` for this parameter is `{BOOTLOADER}`. The parameter accepts
+  any string and is optional.
+
+* ``firmware``: A firmware image. This parameter assumes that
+  the target's boot loader can deliver the firmware image to a storage device.
+  The :term:`boot tag` for this parameter is `{FIRMWARE}`. The parameter accepts
+  any string and is optional.
+
+* ``rootfstype``: This is the filesystem type for the rootfs.
+  (i.e. ext2, ext3, ext4...). The parameter accepts
+  any string and is optional.
+
+* ``bootloadertype``: The type of bootloader a target is using.
+  The parameter accepts any string and is optional.
+  The default is ``u_boot``.
+
+* ``target_type``: The type of distribution a target is using. This is useful
+  when using a ``nfsrootfs`` or a ramdisk that have distribution specific dependencies.
+  The parameter accepts any of the following strings:
+  ``ubuntu`` ``oe`` ``fedora`` or ``android``. The default is ``oe``.
+
+* ``login_prompt``: A string that will match a login prompt.
+  The parameter accepts any string and is optional.
+
+* ``username``: A string that represents a username. This will be sent
+  to the login prompt. The parameter accepts any string and is optional.
+
+* ``password_prompt``: A string that will match a password prompt.
+  The parameter accepts any string and is optional.
+
+* ``password``: A string that represents a password. This will be sent
+  to the password prompt. The parameter accepts any string and is optional.
+
+* ``login_commands``: An array of strings that will be sent to the target after login.
+  The parameter accepts any strings and is optional.
+
 * :term:`role`: Determines which devices in a MultiNode group will
   use this action. The parameter accepts any string, the string must
   exactly match one of the roles specified in the :term:`device group`.
-
-* customize: A optional parameter for customizing the image made by
-  the components above before testing. see also :ref:`deploy_linaro_image`
-
-  For example ::
-
-   {
-      "command": "deploy_linaro_kernel",
-      "parameters": {
-        "kernel": "http://community.validation.linaro.org/images/beagle/zImage",
-        "ramdisk": "http://community.validation.linaro.org/images/beagle/uInitrd",
-        "dtb": "http://community.validation.linaro.org/images/beagle/omap3-beagle-xm.dtb",
-        "rootfs": "http://community.validation.linaro.org/images/qemu/beagle-nano.img.gz",
-        "customize": {
-            "http://myserver.com/myfile": ["boot:/"],
-            "boot:/img.axf": ["rootfs:/tekkamanninja/", "delete"]
-        }
-    }
-
 
 .. index:: boot_linaro_image
 
