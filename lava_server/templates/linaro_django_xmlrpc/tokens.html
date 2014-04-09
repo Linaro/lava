@@ -23,11 +23,20 @@
 
 {% block content %}
 <h2>Authentication Tokens</h2>
-<p>Authentication tokens allow scripts using <a href="https://git.linaro.org/lava/lava-tool.git">lava-tool</a> to securely access LAVA resources. You can create and use any number of tokens simultaneously. If you believe a token is compromised you can quickly remove it.  Anyone using that token will no longer be able to authenticate as You in the system.</p>
+<p>Authentication tokens allow scripts using <a href="https://git.linaro.org/lava/lava-tool.git">lava-tool</a> to
+securely access LAVA resources. You can create and use any number of tokens simultaneously. If you believe a token
+is compromised you can quickly remove it. Anyone using that token will no longer be able to authenticate as You
+in the system.</p>
 
-<h2>Your tokens <a class="btn btn-xs btn-primary" href="{% url 'linaro_django_xmlrpc.views.create_token' %}"><span class="glyphicon glyphicon-plus-sign"></span> new</a></h2>
+<h2>Your tokens <a class="btn btn-xs btn-primary" href="{% url 'linaro_django_xmlrpc.views.create_token' %}"><span
+class="glyphicon glyphicon-plus-sign"></span> new</a></h2>
 
 {% if token_list %}
+    {% if token_list|length > 1 %}
+        <p>You have {{ token_list|length }} tokens.</p>
+    {% else %}
+        <p>You have {{ token_list|length }} token.</p>
+    {% endif %}
 <div class="row">
   <div class="col-md-12">
     <table class="table table-striped table-hover">
@@ -73,11 +82,20 @@
                   <h3 class="modal-title" id="deleteTokenModal{{ token.pk }}Label">Deleting token</h3>
                 </div>
                 <div class="modal-body">
-                  <p>Are you sure that you want to delete this token?</p>
+                  <p>Are you sure that you want to delete {{ token }}
+                    {% if token.description %}
+                     with description &ldquo;{{ token.description }}&rdquo;?
+                    {% else %}
+                     with no description?
+                    {% endif %}
+                  </p>
                 </div>
                 <div class="modal-footer">
-                  <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                  <a class="btn btn-danger" href="{% url 'linaro_django_xmlrpc.views.delete_token' token.pk %}">Delete</a>
+                    <form method="post" action="{% url 'linaro_django_xmlrpc.views.delete_token' token.pk %}">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <input class="btn btn-danger" type="submit" value="Delete"/>
+                        {% csrf_token %}
+                     </form>
                 </div>
               </div>
             </div>
