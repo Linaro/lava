@@ -267,7 +267,13 @@ class Worker(models.Model):
             return False
 
         difference = datetime.datetime.utcnow() - self.last_heartbeat
-        if difference.total_seconds() > utils.get_heartbeat_timeout():
+        # The 30 seconds is added here because, the scheduler tick happens
+        # every 20 seconds and the timeout value cannot be taken with accuracy.
+        # Hence 20 seconds plus 10 seconds for network update overhead gives
+        # us the approximate timeout before we declare the worker is down.
+        # Added since we observe offline worker in the UI which uses the same
+        # API to display offline workers.
+        if difference.total_seconds() > (utils.get_heartbeat_timeout() + 30):
             return True
         else:
             return False
