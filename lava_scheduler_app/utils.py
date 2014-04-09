@@ -307,5 +307,5 @@ def get_heartbeat_timeout():
             return int(worker_config.HEARTBEAT_TIMEOUT)
         else:
             return 300
-    except IOError:
+    except (IOError, AttributeError):
         return 300
