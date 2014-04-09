@@ -445,6 +445,7 @@ class URLTestDefinition(object):
         self.handler = None
         self.__pattern__ = None
         self.__fixupdict__ = None
+        self.skip_install = None
 
     def load_signal_handler(self):
         hook_data = self.testdef.get('handler')
@@ -515,25 +516,27 @@ class URLTestDefinition(object):
             f.write('set -ex\n')
             f.write('cd %s\n' % targetdir)
 
-            distro = self.context.client.target_device.deployment_data['distro']
+            if self.skip_install != 'deps':
+                distro = self.context.client.target_device.deployment_data['distro']
 
-            # generic dependencies - must be named the same across all distros
-            # supported by the testdef
-            deps = self.testdef['install'].get('deps', [])
+                # generic dependencies - must be named the same across all distros
+                # supported by the testdef
+                deps = self.testdef['install'].get('deps', [])
 
-            # distro-specific dependencies
-            deps = deps + self.testdef['install'].get('deps-' + distro, [])
+                # distro-specific dependencies
+                deps = deps + self.testdef['install'].get('deps-' + distro, [])
 
-            if deps:
-                f.write('lava-install-packages ')
-                for dep in deps:
-                    f.write('%s ' % dep)
-                f.write('\n')
+                if deps:
+                    f.write('lava-install-packages ')
+                    for dep in deps:
+                        f.write('%s ' % dep)
+                    f.write('\n')
 
-            steps = self.testdef['install'].get('steps', [])
-            if steps:
-                for cmd in steps:
-                    f.write('%s\n' % cmd)
+            if self.skip_install != 'steps':
+                steps = self.testdef['install'].get('steps', [])
+                if steps:
+                    for cmd in steps:
+                        f.write('%s\n' % cmd)
 
     def copy_test(self, hostdir, targetdir):
         """Copy the files needed to run this test to the device.
@@ -552,9 +555,11 @@ class URLTestDefinition(object):
         with open('%s/testdef_metadata' % hostdir, 'w') as f:
             f.write(yaml.safe_dump(self.testdef_metadata))
 
-        if 'install' in self.testdef:
-            self._create_repos(hostdir)
-            self._create_target_install(hostdir, targetdir)
+        if self.skip_install != "all":
+            if 'install' in self.testdef:
+                if self.skip_install != 'repos':
+                    self._create_repos(hostdir)
+                self._create_target_install(hostdir, targetdir)
 
         with open('%s/run.sh' % hostdir, 'w') as f:
             self._inject_testdef_parameters(f)
@@ -667,6 +672,7 @@ class cmd_lava_test_shell(BaseAction):
                               },
             'timeout': {'type': 'integer', 'optional': True},
             'role': {'type': 'string', 'optional': True},
+            'skip_install': {'type': 'string', 'optional': True},
         },
         'additionalProperties': False,
     }
@@ -682,13 +688,13 @@ class cmd_lava_test_shell(BaseAction):
             'format': 'Dashboard Bundle Format 1.7',
         }
 
-    def run(self, testdef_urls=None, testdef_repos=None, timeout=-1):
+    def run(self, testdef_urls=None, testdef_repos=None, timeout=-1, skip_install=None):
         target = self.client.target_device
 
         delay = target.config.test_shell_serial_delay_ms
 
         testdef_objs = self._configure_target(target, testdef_urls,
-                                              testdef_repos)
+                                              testdef_repos, skip_install)
 
         self._testdefs_by_name = {}
         for testdef in testdef_objs:
@@ -883,7 +889,7 @@ class cmd_lava_test_shell(BaseAction):
         utils.ensure_directory_empty('%s/tests' % mntdir)
         utils.ensure_directory_empty('%s/results' % mntdir)
 
-    def _configure_target(self, target, testdef_urls, testdef_repos):
+    def _configure_target(self, target, testdef_urls, testdef_repos, skip_install):
         results_part = target.deployment_data['lava_test_results_part_attr']
         results_part = getattr(target.config, results_part)
 
@@ -907,6 +913,7 @@ class cmd_lava_test_shell(BaseAction):
 
             tdirs = []
             for testdef in testdef_loader.testdefs:
+                testdef.skip_install = skip_install
                 # android mount the partition under /system, while ubuntu
                 # mounts under /, so we have hdir for where it is on the
                 # host and tdir for how the target will see the path

@@ -38,7 +38,6 @@ def create_device_config(name, data):
     create_config("devices/%s.conf" % name, data)
     lava_dispatcher.config.custom_config_path = tmp_config_dir
     config = get_device_config(name)
-    lava_dispatcher.config.custom_config_path = None
     return config
 
 

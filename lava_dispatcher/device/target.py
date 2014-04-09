@@ -23,6 +23,7 @@ import os
 import shutil
 import re
 import logging
+import time
 
 from lava_dispatcher.device import boot_options
 from lava_dispatcher.utils import (
@@ -391,7 +392,7 @@ class Target(object):
         delay = self.config.bootloader_serial_delay_ms
         _boot_cmds = self._boot_cmds_preprocessing(boot_cmds)
         for line in _boot_cmds:
-            parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)',
+            parts = re.match('^(?P<action>sendline|sendcontrol|expect)\s*(?P<command>.*)',
                              line)
             if parts:
                 try:
@@ -405,6 +406,8 @@ class Target(object):
                                     send_char=self.config.send_char)
                     connection.sendline('', delay,
                                         send_char=self.config.send_char)
+                elif action == "sendcontrol":
+                    connection.sendcontrol(command)
                 elif action == "expect":
                     command = re.escape(command)
                     connection.expect(command, timeout=300)
@@ -436,6 +439,51 @@ class Target(object):
         runner.run('wget -O - %s %s | /bin/tar -C %s -xmf -'
                    % (tar_url, decompression_cmd, dest),
                    timeout=timeout)
+
+    @contextlib.contextmanager
+    def _busybox_file_system(self, runner, directory, mounted=False):
+        try:
+            if mounted:
+                targetdir = '/mnt%s' % directory
+            else:
+                targetdir = os.path.join('/', directory)
+
+            runner.run('mkdir -p %s' % targetdir)
+
+            parent_dir, target_name = os.path.split(targetdir)
+
+            runner.run('/bin/tar -cmzf /tmp/fs.tgz -C %s %s'
+                       % (parent_dir, target_name))
+            runner.run('cd /tmp')  # need to be in same dir as fs.tgz
+
+            ip = runner.get_target_ip()
+            url_base = self._start_busybox_http_server(runner, ip)
+
+            url = url_base + '/fs.tgz'
+            logging.info("Fetching url: %s" % url)
+            tf = download_image(url, self.context, self.scratch_dir,
+                                decompress=False)
+
+            tfdir = os.path.join(self.scratch_dir, str(time.time()))
+
+            try:
+                os.mkdir(tfdir)
+                self.context.run_command('/bin/tar -C %s -xzf %s'
+                                         % (tfdir, tf))
+                yield os.path.join(tfdir, target_name)
+            finally:
+                tf = os.path.join(self.scratch_dir, 'fs.tgz')
+                utils.mk_targz(tf, tfdir)
+                utils.rmtree(tfdir)
+
+                # get the last 2 parts of tf, ie "scratchdir/tf.tgz"
+                tf = '/'.join(tf.split('/')[-2:])
+                runner.run('rm -rf %s' % targetdir)
+                self._target_extract(runner, tf, parent_dir)
+        finally:
+            self._stop_busybox_http_server(runner)
+            if mounted:
+                runner.run('umount /mnt')
 
     def _start_busybox_http_server(self, runner, ip):
         runner.run('busybox httpd -f -p %d &' % self.config.busybox_http_port)

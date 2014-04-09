@@ -20,7 +20,6 @@
 
 import logging
 import contextlib
-import time
 import os
 import subprocess
 
@@ -99,6 +98,50 @@ class BootloaderTarget(MasterImageTarget):
 
         return False
 
+    def _set_load_addresses(self, bootz):
+        if not bootz and self.config.u_load_addrs and len(self.config.u_load_addrs) == 3:
+            logging.info("Setting uImage Load Addresses")
+            self._boot_tags['{KERNEL_ADDR}'] = self.config.u_load_addrs[0]
+            self._boot_tags['{RAMDISK_ADDR}'] = self.config.u_load_addrs[1]
+            self._boot_tags['{DTB_ADDR}'] = self.config.u_load_addrs[2]
+        elif bootz and self.config.z_load_addrs and len(self.config.z_load_addrs) == 3:
+            logging.info("Setting zImage Load Addresses")
+            self._boot_tags['{KERNEL_ADDR}'] = self.config.z_load_addrs[0]
+            self._boot_tags['{RAMDISK_ADDR}'] = self.config.z_load_addrs[1]
+            self._boot_tags['{DTB_ADDR}'] = self.config.z_load_addrs[2]
+        else:
+            logging.debug("Undefined u_load_addrs or z_load_addrs. Three values required!")
+
+    def _get_uboot_boot_command(self, kernel, ramdisk, dtb):
+        bootz = False
+        bootx = []
+        uimage = ['u-boot', 'uImage']
+
+        # Detect if zImage or uImage is used.
+        # Raw ELF images are not supported by u-boot.
+        cmd = 'file ' + kernel
+        output = self.context.run_command_get_output(cmd)
+        if any(x in output for x in uimage):
+            bootx.append('bootm')
+        else:
+            bootx.append('bootz')
+            bootz = True
+
+        # At minimal we have a kernel
+        bootx.append('${kernel_addr_r}')
+
+        if ramdisk is not None:
+            bootx.append('${initrd_addr_r}')
+        elif ramdisk is None and dtb is not None:
+            bootx.append('-')
+
+        if dtb is not None:
+            bootx.append('${fdt_addr_r}')
+
+        self._set_load_addresses(bootz)
+
+        return ' '.join(bootx)
+
     def _setup_nfs(self, nfsrootfs):
         self._lava_nfsrootfs = mkdtemp(basedir=self._tmpdir)
         extract_rootfs(nfsrootfs, self._lava_nfsrootfs)
@@ -147,6 +190,8 @@ class BootloaderTarget(MasterImageTarget):
         self._set_boot_type(bootloadertype)
         # We are not booted yet
         self._booted = False
+        # Setup the u-boot boot command
+        bootx = []
         # At a minimum we must have a kernel
         if kernel is None:
             raise CriticalError("No kernel image to boot")
@@ -203,6 +248,9 @@ class BootloaderTarget(MasterImageTarget):
                                           self._tmpdir,
                                           decompress=False)
                 self._boot_tags['{FIRMWARE}'] = self._get_rel_path(firmware)
+            self._boot_tags['{BOOTX}'] = self._get_uboot_boot_command(kernel,
+                                                                      ramdisk,
+                                                                      dtb)
         elif self._is_ipxe():
             # We have been passed kernel image
             kernel = download_image(kernel, self.context,
@@ -341,44 +389,11 @@ class BootloaderTarget(MasterImageTarget):
             ensure_directory(path)
             yield path
         elif self._is_bootloader():
-            try:
-                pat = self.tester_ps1_pattern
-                incrc = self.tester_ps1_includes_rc
-                runner = NetworkCommandRunner(self, pat, incrc)
-
-                targetdir = os.path.join('/', directory)
-                runner.run('mkdir -p %s' % targetdir)
-                parent_dir, target_name = os.path.split(targetdir)
-                runner.run('/bin/tar -cmzf /tmp/fs.tgz -C %s %s'
-                           % (parent_dir, target_name))
-                runner.run('cd /tmp')  # need to be in same dir as fs.tgz
-
-                ip = runner.get_target_ip()
-                url_base = self._start_busybox_http_server(runner, ip)
-
-                url = url_base + '/fs.tgz'
-                logging.info("Fetching url: %s" % url)
-                tf = download_image(url, self.context, self.scratch_dir,
-                                    decompress=False)
-
-                tfdir = os.path.join(self.scratch_dir, str(time.time()))
-
-                try:
-                    os.mkdir(tfdir)
-                    self.context.run_command('/bin/tar -C %s -xzf %s'
-                                             % (tfdir, tf))
-                    yield os.path.join(tfdir, target_name)
-                finally:
-                    tf = os.path.join(self.scratch_dir, 'fs.tgz')
-                    mk_targz(tf, tfdir)
-                    rmtree(tfdir)
-
-                    # get the last 2 parts of tf, ie "scratchdir/tf.tgz"
-                    tf = '/'.join(tf.split('/')[-2:])
-                    runner.run('rm -rf %s' % targetdir)
-                    self._target_extract(runner, tf, parent_dir)
-            finally:
-                self._stop_busybox_http_server(runner)
+            pat = self.tester_ps1_pattern
+            incrc = self.tester_ps1_includes_rc
+            runner = NetworkCommandRunner(self, pat, incrc)
+            with self._busybox_file_system(runner, directory) as path:
+                yield path
         else:
             with super(BootloaderTarget, self).file_system(
                     partition, directory) as path:

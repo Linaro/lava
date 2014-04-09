@@ -24,6 +24,9 @@ import os
 
 from lava_dispatcher.device.target import Target
 import lava_dispatcher.device.dummy_drivers as drivers
+from lava_dispatcher.errors import (
+    CriticalError,
+)
 
 
 class DummyTarget(Target):

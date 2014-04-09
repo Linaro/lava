@@ -196,23 +196,49 @@ class DeviceSchema(schema.Schema):
         default='Press Enter to stop auto boot...')
     vexpress_usb_mass_storage_device = schema.StringOption(default=None)
 
+    bl1_image_filename = schema.StringOption(default="bl1.bin")
+    fip_image_filename = schema.StringOption(default="fip.bin")
+
+    wg_bl1_path = schema.StringOption(default="SOFTWARE/bl1.bin")
+    wg_fip_path = schema.StringOption(default="SOFTWARE/fip.bin")
+
+    wg_bl1_backup_path = schema.StringOption(default="SOFTWARE/backup-bl1.bin")
+    wg_fip_backup_path = schema.StringOption(default="SOFTWARE/backup-fip.bin")
+
+    wg_usb_mass_storage_device = schema.StringOption(default="/dev/disk/by-label/WG")
+    wg_stop_autoboot_prompt = schema.StringOption(
+        default='Press Enter to stop auto boot...')
+
     ecmeip = schema.StringOption()
     ipmi_power_sleep = schema.IntOption(default=1)
     ipmi_power_retries = schema.IntOption(default=10)
 
     # for dummy devices
-    dummy_driver = schema.StringOption(default=None)
+    dumver = schema.StringOption(default=None)
     dummy_schroot_chroot = schema.StringOption(default="default")
     dummy_ssh_host = schema.StringOption(default=None)
     dummy_ssh_port = schema.IntOption(default=22)
     dummy_ssh_username = schema.StringOption(default='root')
     dummy_ssh_identity_file = schema.StringOption(default=None)
 
+    # for jtag devices
+    jtag_driver = schema.StringOption(default=None)
+    jtag_hard_reset_command = schema.StringOption(default=None)
+    jtag_hard_reset_sleep = schema.IntOption(default=60)
+    # for stmc devices
+    jtag_stmc_boot_script = schema.StringOption(default=None)
+    jtag_stmc_boot_options = schema.StringOption(default=None)
+    jtag_stmc_kernel_command = schema.StringOption(default=None)
+    jtag_stmc_ramdisk_command = schema.StringOption(default=None)
+    jtag_stmc_dtb_command = schema.StringOption(default=None)
+
     # for bootloader devices
     pre_boot_cmd = schema.StringOption()
     use_lava_tmpdir = schema.BoolOption(default=True)
     alternative_create_tmpdir = schema.BoolOption(default=True)
     alternative_dir = schema.StringOption(default=None)
+    u_load_addrs = schema.ListOption(default=None)
+    z_load_addrs = schema.ListOption(default=None)
 
     # for dynamic_vm devices
     dynamic_vm_backend_device_type = schema.StringOption(default='kvm')
