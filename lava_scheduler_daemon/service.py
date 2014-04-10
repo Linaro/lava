@@ -23,6 +23,7 @@ from twisted.application.service import Service
 from twisted.internet import defer
 from twisted.internet.task import LoopingCall
 
+from lava_scheduler_app import utils
 from lava_scheduler_daemon.job import JobRunner, catchall_errback
 from lava_scheduler_daemon.worker import WorkerData
 
@@ -44,6 +45,9 @@ class JobQueue(Service):
             self._startJobs).addErrback(catchall_errback(self.logger))
 
     def _startJobs(self, jobs):
+        # Record the scheduler tick (timestamp).
+        utils.record_scheduler_tick()
+
         # Update Worker Heartbeat
         #
         # NOTE: This will recide here till we finalize scheduler refactoring
