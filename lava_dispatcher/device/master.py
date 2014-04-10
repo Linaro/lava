@@ -407,6 +407,7 @@ class MasterImageTarget(Target):
             boot_cmds = self._load_boot_cmds(default='boot_cmds_master')
             self._customize_bootloader(self.proc, boot_cmds)
         self.proc.expect(self.config.image_boot_msg, timeout=300)
+        self._auto_login(self.proc)
         self._wait_for_prompt(self.proc, self.config.master_str, timeout=300)
 
     def boot_master_image(self):
