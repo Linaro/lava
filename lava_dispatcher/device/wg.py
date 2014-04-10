@@ -92,7 +92,7 @@ class WGTarget(MasterImageTarget):
     def _deploy_tarballs(self, boot_tgz, root_tgz, rootfstype):
         super(WGTarget, self)._deploy_tarballs(boot_tgz, root_tgz,
                                                rootfstype)
-        self._extract_firmware_from_tarball(boot_tgz, 'juno')
+        self._extract_firmware_from_tarball(boot_tgz)
 
     ##################################################################
     # implementation-specific methods
