@@ -222,6 +222,14 @@ class Target(object):
         if proc is not None:
             proc.close()
 
+    def is_booted(self):
+        # By default we pass
+        pass
+
+    def reset_boot(self):
+        # By default we pass
+        pass
+
     @contextlib.contextmanager
     def file_system(self, partition, directory):
         """ Allows the caller to interact directly with a directory on

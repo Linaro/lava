@@ -52,6 +52,7 @@ class BootloaderTarget(MasterImageTarget):
     def __init__(self, context, config):
         super(BootloaderTarget, self).__init__(context, config)
         self._booted = False
+        self._reset_boot = False
         self._default_boot_cmds = 'boot_cmds_ramdisk'
         self._lava_nfsrootfs = None
         self._uboot_boot = False
@@ -380,8 +381,18 @@ class BootloaderTarget(MasterImageTarget):
         else:
             super(BootloaderTarget, self)._boot_linaro_image()
 
+    def is_booted(self):
+        return self._booted
+
+    def reset_boot(self):
+        self._reset_boot = True
+
     @contextlib.contextmanager
     def file_system(self, partition, directory):
+        if self._is_bootloader() and self._reset_boot:
+            self._booted = False
+            self._reset_boot = False
+            raise Exception("Operation timed out, resetting platform!")
         if self._is_bootloader() and not self._booted:
             self.context.client.boot_linaro_image()
         if self._is_bootloader() and self._lava_nfsrootfs:
