@@ -214,7 +214,7 @@ class DeviceSchema(schema.Schema):
     ipmi_power_retries = schema.IntOption(default=10)
 
     # for dummy devices
-    dumver = schema.StringOption(default=None)
+    dummy_driver = schema.StringOption(default=None)
     dummy_schroot_chroot = schema.StringOption(default="default")
     dummy_ssh_host = schema.StringOption(default=None)
     dummy_ssh_port = schema.IntOption(default=22)
