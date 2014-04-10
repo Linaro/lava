@@ -309,3 +309,22 @@ def get_heartbeat_timeout():
             return 300
     except (IOError, AttributeError):
         return 300
+
+
+# Private variable to record scheduler tick, which shouldn't be accessed from
+# other modules, except via the following APIs.
+__last_scheduler_tick = datetime.datetime.utcnow()
+
+
+def record_scheduler_tick():
+    """Records the scheduler tick timestamp in the global variable
+    __last_scheduler_tick
+    """
+    global __last_scheduler_tick
+    __last_scheduler_tick = datetime.datetime.utcnow()
+
+
+def last_scheduler_tick():
+    """Returns datetime.dateime object of last scheduler tick timestamp.
+    """
+    return __last_scheduler_tick
