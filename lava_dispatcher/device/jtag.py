@@ -23,6 +23,7 @@
 import contextlib
 import logging
 import time
+import os
 
 from lava_dispatcher.device.target import Target
 from lava_dispatcher.client.base import NetworkCommandRunner
@@ -30,6 +31,9 @@ from lava_dispatcher import deployment_data
 import lava_dispatcher.device.jtag_drivers as jtags
 from lava_dispatcher.errors import (
     CriticalError,
+)
+from lava_dispatcher.utils import (
+    ensure_directory
 )
 
 
@@ -86,13 +90,21 @@ class JtagTarget(Target):
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
-        if not self._booted:
-            self.context.client.boot_linaro_image()
-        pat = self.tester_ps1_pattern
-        incrc = self.tester_ps1_includes_rc
-        runner = NetworkCommandRunner(self, pat, incrc)
-        with self._busybox_file_system(runner, directory) as path:
+
+        # If we are using NFS
+        if self._boot_tags['{NFSROOTFS}']:
+            path = self._boot_tags['{NFSROOTFS}'] + directory
+            logging.info("NFSROOTFS=%s" % (path))
+            ensure_directory(path)
             yield path
+        else:
+            if not self._booted:
+              self.context.client.boot_linaro_image()
+            pat = self.tester_ps1_pattern
+            incrc = self.tester_ps1_includes_rc
+            runner = NetworkCommandRunner(self, pat, incrc)
+            with self._busybox_file_system(runner, directory) as path:
+                yield path
 
 
 target_class = JtagTarget
