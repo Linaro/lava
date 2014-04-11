@@ -179,7 +179,7 @@ class WGTarget(MasterImageTarget):
     def _restore_firmware_backup(self, mount_point):
         bl1_path = self.config.wg_bl1_path
         bl1 = os.path.join(mount_point, bl1_path)
-        bl1_backup_path = self.config.bl1_backup_path
+        bl1_backup_path = self.config.wg_bl1_backup_path
         bl1_backup = os.path.join(mount_point, bl1_backup_path)
 
         if os.path.exists(bl1_backup):
@@ -192,7 +192,7 @@ class WGTarget(MasterImageTarget):
 
         fip_path = self.config.wg_fip_path
         fip = os.path.join(mount_point, fip_path)
-        fip_backup_path = self.config.fip_backup_path
+        fip_backup_path = self.config.wg_fip_backup_path
         fip_backup = os.path.join(mount_point, fip_backup_path)
 
         if os.path.exists(fip_backup):
