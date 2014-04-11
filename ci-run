@@ -2,6 +2,6 @@
 
 set -e
 
-pep8 --ignore E501
+pep8 --ignore E501 .
 
 python setup.py test
