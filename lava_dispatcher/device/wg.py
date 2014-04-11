@@ -177,7 +177,7 @@ class WGTarget(MasterImageTarget):
         self.test_fip = os.path.join(tmpdir, self.config.fip_image_filename)
 
     def _restore_firmware_backup(self, mount_point):
-        bl1_path = self.config.wg_bl1_path_path
+        bl1_path = self.config.wg_bl1_path
         bl1 = os.path.join(mount_point, bl1_path)
         bl1_backup_path = self.config.bl1_backup_path
         bl1_backup = os.path.join(mount_point, bl1_backup_path)
@@ -190,7 +190,7 @@ class WGTarget(MasterImageTarget):
             # the firmware in there is the good one, and we backup it up.
             self.context.run_command_with_retries('cp %s %s' % (bl1, bl1_backup))
 
-        fip_path = self.config.wg_fip_path_path
+        fip_path = self.config.wg_fip_path
         fip = os.path.join(mount_point, fip_path)
         fip_backup_path = self.config.fip_backup_path
         fip_backup = os.path.join(mount_point, fip_backup_path)
