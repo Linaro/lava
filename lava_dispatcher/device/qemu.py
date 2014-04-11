@@ -111,7 +111,7 @@ class QEMUTarget(Target):
         # We load it here in order to get the configuration from the job
         # definition if needed
         if self._is_kernel_present:
-            kernel_args = ' '.join(self._load_boot_cmds())
+            kernel_args = ' '.join(self._load_boot_cmds(default='boot_cmds'))
             self.append_qemu_options(' -append "%s"' % kernel_args)
 
         qemu_cmd = '%s %s %s' % (self.config.qemu_binary, self.config.qemu_options, self._qemu_options or '')
