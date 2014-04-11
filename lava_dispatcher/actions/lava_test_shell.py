@@ -717,13 +717,13 @@ class cmd_lava_test_shell(BaseAction):
                 timeout = runner._connection.timeout
             initial_timeout = timeout
             signal_director.set_connection(runner._connection)
-            while self._keep_running(runner, timeout, signal_director):
+            while self._keep_running(runner, target, timeout, signal_director):
                 elapsed = time.time() - start
                 timeout = int(initial_timeout - elapsed)
 
         self._bundle_results(target, signal_director, testdef_objs)
 
-    def _keep_running(self, runner, timeout, signal_director):
+    def _keep_running(self, runner, target, timeout, signal_director):
         if self._current_testdef:
             test_case_result = self._current_testdef.pattern
         else:
@@ -758,7 +758,8 @@ class cmd_lava_test_shell(BaseAction):
             logging.warn('lava_test_shell connection dropped')
 
         elif event == TIMEOUT:
-            runner._connection.sendcontrol('c')
+            if target.is_booted():
+                target.reset_boot()
             logging.warn('lava_test_shell has timed out')
 
         elif event == SIGNAL:
@@ -801,7 +802,8 @@ class cmd_lava_test_shell(BaseAction):
         elif event == TEST_CASE_RESULT:
             match = runner._connection.match
             if match is pexpect.TIMEOUT:
-                runner._connection.sendcontrol('c')
+                if target.is_booted():
+                    target.reset_boot()
                 logging.warn('lava_test_shell has timed out')
             else:
                 self._handle_parsed_testcase(match.groupdict())
