@@ -92,8 +92,10 @@ urlpatterns = patterns(
     url(r'^pmqa(?P<pathname>/[a-zA-Z0-9/._-]+/)(?P<device_type>[a-zA-Z0-9-_]+)/json$', 'pmqa.pmqa_filter_view_json'),
     url(r'^pmqa(?P<pathname>/[a-zA-Z0-9/._-]+/)(?P<device_type>[a-zA-Z0-9-_]+)/\+compare/(?P<build1>[0-9]+)/(?P<build2>[0-9]+)$', 'pmqa.compare_pmqa_results'),
     url(r'^image-reports/(?P<name>[A-Za-z0-9_-]+)$', 'images.image_report_detail'),
-    url(r'^api/link-bug-to-testrun', 'images.link_bug_to_testrun'),
-    url(r'^api/unlink-bug-and-testrun', 'images.unlink_bug_and_testrun'),
+    url(r'^api/link-bug-to-testrun', 'link_bug_to_testrun'),
+    url(r'^api/unlink-bug-and-testrun', 'unlink_bug_and_testrun'),
+    url(r'^api/link-bug-to-testresult', 'link_bug_to_testresult'),
+    url(r'^api/unlink-bug-and-testresult', 'unlink_bug_and_testresult'),
     url(r'^test-definition/add_test_definition', 'add_test_definition'),
     url(r'^test-definition/$', 'test_definition'),
 )

@@ -33,6 +33,7 @@ from django.contrib.sites.models import Site
 from django.core import serializers
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.views.decorators.http import require_POST
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
 from django.db.models import Count, Q
@@ -63,6 +64,7 @@ from dashboard_app.models import (
     TestResult,
     TestRun,
     TestDefinition,
+    BugLink,
 )
 from lava_scheduler_app.models import (
     TestJob
@@ -400,6 +402,9 @@ def bundle_export(request, pathname, content_sha1):
     test_run_keys[:0] = ["device", "test", "count_pass", "count_fail",
                          "count_skip", "count_unknown"]
 
+    # Add bug link
+    test_run_keys.append("bug_link")
+
     with open(file_path, 'w+') as csv_file:
         out = csv.DictWriter(csv_file, quoting=csv.QUOTE_ALL,
                              extrasaction='ignore',
@@ -413,6 +418,7 @@ def bundle_export(request, pathname, content_sha1):
             test_run_dict.update(test_run_denorm.__dict__)
             test_run_dict["test"] = test_run.test.test_id
             test_run_dict["device"] = test_run.show_device()
+            test_run_dict["bug_link"] = " ".join([b.bug_link for b in test_run.bug_links.all()])
             out.writerow(test_run_dict)
 
     response = HttpResponse(mimetype='text/csv')
@@ -604,6 +610,8 @@ def test_run_export(request, pathname, content_sha1, analyzer_assigned_uuid):
         if field in test_result_keys:
             test_result_keys.remove(field)
 
+    test_result_keys.append('bug_link')
+
     with open(file_path, 'w+') as csv_file:
         out = csv.DictWriter(csv_file, quoting=csv.QUOTE_ALL,
                              extrasaction='ignore',
@@ -614,6 +622,7 @@ def test_run_export(request, pathname, content_sha1, analyzer_assigned_uuid):
             # Update result field to show human readable value.
             test_result_dict["result"] = TestResult.RESULT_MAP[
                 test_result_dict["result"]]
+            test_result_dict["bug_link"] = " ".join([b.bug_link for b in test_result.bug_links.all()])
             out.writerow(test_result_dict)
 
     response = HttpResponse(mimetype='text/csv')
@@ -878,3 +887,45 @@ def add_test_definition(request):
                 add_test_definition),
             "form": form,
         }, RequestContext(request))
+
+
+@require_POST
+def link_bug_to_testrun(request):
+    testrun = get_object_or_404(TestRun, analyzer_assigned_uuid=request.POST['uuid'])
+    bug_link = request.POST['bug_link']
+    bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
+    testrun.bug_links.add(bug)
+    testrun.save()
+    return HttpResponseRedirect(request.POST['back'])
+
+
+@require_POST
+def unlink_bug_and_testrun(request):
+    testrun = get_object_or_404(TestRun, analyzer_assigned_uuid=request.POST['uuid'])
+    bug_link = request.POST['bug_link']
+    bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
+    testrun.bug_links.remove(bug)
+    testrun.save()
+    return HttpResponseRedirect(request.POST['back'])
+
+
+@require_POST
+def link_bug_to_testresult(request):
+    testrun = get_object_or_404(TestRun, analyzer_assigned_uuid=request.POST['uuid'])
+    testresult = get_object_or_404(testrun.test_results, relative_index=request.POST['relative_index'])
+    bug_link = request.POST['bug_link']
+    bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
+    testresult.bug_links.add(bug)
+    testresult.save()
+    return HttpResponseRedirect(request.POST['back'])
+
+
+@require_POST
+def unlink_bug_and_testresult(request):
+    testrun = get_object_or_404(TestRun, analyzer_assigned_uuid=request.POST['uuid'])
+    testresult = get_object_or_404(testrun.test_results, relative_index=request.POST['relative_index'])
+    bug_link = request.POST['bug_link']
+    bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
+    testresult.bug_links.remove(bug)
+    testresult.save()
+    return HttpResponseRedirect(request.POST['back'])

@@ -18,7 +18,10 @@
   chart_data = $.parseJSON($('<div/>').html('{{chart_data}}').text());
   csrf_token = '{{csrf_token}}';
   image_url = '{{ STATIC_URL }}dashboard_app/images/';
-  del_bug_url = '{% url dashboard_app.views.images.unlink_bug_and_testrun %}';
+  testrun_unlink_bug_url = '{% url dashboard_app.views.unlink_bug_and_testrun %}';
+  testrun_link_bug_url = '{% url dashboard_app.views.link_bug_to_testrun %}';
+  testresult_unlink_bug_url = '{% url dashboard_app.views.unlink_bug_and_testresult %}';
+  testresult_link_bug_url = '{% url dashboard_app.views.link_bug_to_testresult %}';
   buglinks_chartid = '{{ bug_links_chart_id }}';
 </script>
 {% endblock %}
@@ -36,11 +39,12 @@ Report Group:&nbsp;&nbsp;<a href="{% url dashboard_app.views.image_reports.views
 </div>
 
 <form method="POST"
-      action="{% url dashboard_app.views.images.link_bug_to_testrun %}"
+      action="{% url dashboard_app.views.link_bug_to_testrun %}"
       id="add-bug-dialog" style="display: none">
   {% csrf_token %}
   <input type="hidden" name="back" value="{{ request.path }}"/>
   <input type="hidden" name="uuid"/>
+  <input type="hidden" name="relative_index"/>
   <div class="linked" style="display:none"></div>
   <div class="prev" style="display:none">
     XXX

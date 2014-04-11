@@ -105,6 +105,13 @@ class BundleDetailTable(LavaTable):
     uploaded_on.orderable = False
     analyzed_on = tables.TemplateColumn('{{ record.analyzer_assigned_date|date:"Y-m-d H:i:s" }}')
     analyzed_on.orderable = False
+    bug_links = tables.TemplateColumn('''
+        <span data-uuid="{{ record.analyzer_assigned_uuid }}"
+         data-record="{{ record.test }}">
+        <p style="float: right"><a href="#" class="add-bug-link">
+        [{{ record.bug_links.all|length }}]</a></p><span class="bug-links" style="display: none">
+        {% for b in record.bug_links.all %} <li class="bug-link">{{ b }}</li> {% endfor %}</span></span>''')
+    bug_links.orderable = False
 
     def render_device(self, record):
         return record.show_device()
@@ -116,7 +123,7 @@ class BundleDetailTable(LavaTable):
         model = TestRun
         fields = (
             'device', 'test_run', 'test', 'passes',
-            'fails', 'uploaded_on', 'analyzed_on'
+            'fails', 'uploaded_on', 'analyzed_on', 'bug_links'
         )
         sequence = fields
         searches = {}
@@ -199,11 +206,21 @@ class TestTable(LavaTable):
     {{ record.comments|default_if_none:"Not specified"|truncatewords:7 }}
     ''')
 
+    bug_links = tables.TemplateColumn('''
+        <span data-uuid="{{ record.test_run.analyzer_assigned_uuid }}"
+         data-relative_index="{{ record.relative_index }}"
+         data-record="{{ record.test_case.test_case_id }}">
+        <p style="float: right"><a href="#" class="add-bug-link">
+        [{{ record.bug_links.all|length }}]</a></p><span class="bug-links" style="display: none">
+        {% for b in record.bug_links.all %} <li class="bug-link">{{ b }}</li> {% endfor %}</span></span>''')
+
+    bug_links.orderable = False
+
     class Meta(LavaTable.Meta):
         model = TestResult
         fields = (
             'relative_index', 'test_case', 'result',
-            'measurement', 'comments',
+            'measurement', 'comments', 'bug_links',
         )
         sequence = fields
         searches = {

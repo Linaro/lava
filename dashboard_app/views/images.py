@@ -142,23 +142,3 @@ def image_report_detail(request, name):
             'test_names': json.dumps(test_run_names),
             'columns': json.dumps(cols),
         }, RequestContext(request))
-
-
-@require_POST
-def link_bug_to_testrun(request):
-    testrun = get_object_or_404(TestRun, analyzer_assigned_uuid=request.POST['uuid'])
-    bug_link = request.POST['bug_link']
-    bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
-    testrun.bug_links.add(bug)
-    testrun.save()
-    return HttpResponseRedirect(request.POST['back'])
-
-
-@require_POST
-def unlink_bug_and_testrun(request):
-    testrun = get_object_or_404(TestRun, analyzer_assigned_uuid=request.POST['uuid'])
-    bug_link = request.POST['bug_link']
-    bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
-    testrun.bug_links.remove(bug)
-    testrun.save()
-    return HttpResponseRedirect(request.POST['back'])
