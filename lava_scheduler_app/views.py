@@ -609,7 +609,10 @@ def populate_capabilities(dt):
         # multiple core cpus have multiple device.cpu entries, each with attributes.
         if device['device_type'] == 'device.cpu':
             if device['attributes']['cpu_type'] == '?':
-                model = device['attributes']['model name']
+                if 'cpu type' in device['attributes']:
+                    model = device['attributes']['cpu type']
+                else:
+                    model = device['attributes']['model name']
             else:
                 model = device['attributes']['cpu_type']
             if 'cpu_part' in device['attributes']:
@@ -634,6 +637,8 @@ def populate_capabilities(dt):
                 hardware_flags.append(device['attributes']['Features'])
             elif 'flags' in device['attributes']:
                 hardware_flags.append(device['attributes']['flags'])
+            elif 'cpu flags' in device['attributes']:
+                hardware_flags.append(device['attributes']['cpu flags'])
             if device['attributes']['cpu_type'].startswith("QEMU"):
                 capability['emulated'] = True
             capability['cores'] += 1
