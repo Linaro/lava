@@ -1432,6 +1432,18 @@ def device_detail(request, pk):
         visible = filter_device_types(request.user)
         if not device.device_type.name in visible:
             raise Http404('No device matches the given query.')
+
+    devices = Device.objects.filter(device_type_id=device.device_type_id).order_by('hostname')
+    devices_list = [dev[0] for dev in devices.values_list('hostname')]
+    try:
+        next_device = devices_list[devices_list.index(device.hostname) + 1]
+    except IndexError:
+        next_device = None
+    try:
+        previous_device = devices_list[:devices_list.index(device.hostname)].pop()
+    except IndexError:
+        previous_device = None
+
     if device.status in [Device.OFFLINE, Device.OFFLINING]:
         try:
             transition = device.transitions.filter(message__isnull=False).latest('created_on').message
@@ -1498,6 +1510,8 @@ def device_detail(request, pk):
                           and not device.device_type.owners_only),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_detail, pk=pk),
             'context_help': BreadCrumbTrail.show_help(device_detail, pk="help"),
+            'next_device': next_device,
+            'previous_device': previous_device,
         },
         RequestContext(request))
 
