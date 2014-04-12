@@ -2040,14 +2040,15 @@ class ImageReportChart(models.Model):
                     [b.bug_link for b in test_result.bug_links.all()])
 
                 metadata_content = {}
+
+                test_case_id = test_result.test_case.test_case_id
+                if test_case_id not in metadata.keys():
+                    metadata[test_case_id] = {}
+
                 try:
                     chart_test_case = ImageChartTestCase.objects.get(
                         image_chart_filter=image_chart_filter,
                         test_case=test_result.test_case)
-
-                    test_case_id = test_result.test_case.test_case_id
-                    if test_case_id not in metadata.keys():
-                        metadata[test_case_id] = {}
 
                     # Metadata delta content. Contains attribute names as
                     # keys and value is tuple with old and new value.
