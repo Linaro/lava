@@ -71,11 +71,11 @@ class WGTarget(MasterImageTarget):
 
         self._hard_reboot()
 
-    def _enter_bootloader(self, connection):
+    def _boot_linaro_image(self):
         with self._mcc_setup() as mount_point:
             self._install_test_firmware(mount_point)
 
-        super(WGTarget, self)._enter_bootloader(connection)
+        super(WGTarget, self)._boot_linaro_image()
 
     def _wait_for_master_boot(self):
         with self._mcc_setup() as mount_point:
