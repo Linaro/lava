@@ -71,6 +71,38 @@ class DashboardAPI(ExposedAPI):
     All public methods are automatically exposed as XML-RPC methods
     """
 
+    @xml_rpc_signature('str')
+    def version(self):
+        """
+        Name
+        ----
+        `version` ()
+
+        Description
+        -----------
+        Return dashboard server version. The version is a string with
+        dots separating five components.
+
+        The components are:
+            1. major version
+            2. minor version
+            3. micro version
+            4. release level
+            5. serial
+
+        See: http://docs.python.org/library/sys.html#sys.version_info
+
+        Note that this version will change to reflect the new versioning
+        scheme, based on git tags named after release dates instead of
+        arbitrary major and minor versions, once the migration to packaging
+         is complete.
+
+        Return value
+        -------------
+        Server version string
+        """
+        return ".".join(map(str, (0, 29, 0, "final", 0)))
+
     def _put(self, content, content_filename, pathname):
         try:
             logging.debug("Getting bundle stream")
