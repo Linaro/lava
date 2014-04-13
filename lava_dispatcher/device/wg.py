@@ -72,6 +72,8 @@ class WGTarget(MasterImageTarget):
         self._hard_reboot()
 
     def _boot_linaro_image(self):
+        self._soft_reboot()
+
         with self._mcc_setup() as mount_point:
             self._install_test_firmware(mount_point)
 
