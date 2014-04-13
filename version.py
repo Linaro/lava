@@ -25,6 +25,7 @@
 
 import subprocess
 import os
+import datetime
 
 
 def version_tag():
@@ -35,7 +36,7 @@ def version_tag():
     a directory created from the tarball created by setup.py when
     it uses this script and retrieves the original version string
     from that.
-    :return: a version string based on the tag or commit hash
+    :return: a version string based on the tag and date
     """
     if not os.path.exists("./.git/"):
         base = os.path.basename(os.getcwd())
@@ -66,7 +67,9 @@ def version_tag():
     if tag_hash == clone_hash:
         return tag_name
     else:
-        return "%s.%s" % (tag_name, clone_hash)
+        dev_time = datetime.datetime.now()
+        return "%s.%02d.%02d.%02d" % (tag_name, dev_time.day,
+                                      dev_time.hour, dev_time.minute)
 
 
 def main():
