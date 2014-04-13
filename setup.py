@@ -27,7 +27,7 @@ setup(
     version=version_tag(),
     author="Zygmunt Krynicki",
     author_email="zygmunt.krynicki@linaro.org",
-    namespace_packages=['lava',],
+    namespace_packages=['lava', ],
     packages=find_packages(),
     entry_points=open('entry_points.ini', 'r').read(),
     test_suite="lava_server.tests.run_tests",

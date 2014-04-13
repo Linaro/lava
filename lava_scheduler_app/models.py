@@ -234,7 +234,7 @@ class Worker(models.Model):
         if user.has_perm('lava_scheduler_app.change_worker'):
             return True
         else:
-          return False
+            return False
 
     def can_update(self, user):
         if user.has_perm('lava_scheduler_app.change_worker'):

@@ -1571,8 +1571,8 @@ class TestRunFilter(models.Model):
         no_test_case_filters = list(
             TestRunFilter.objects.filter(
                 id__in=TestRunFilterTest.objects.filter(
-                    filter__in=attribute_filters, test__in=bundle.test_runs.all().values('test_id')).annotate(
-                        models.Count('cases')).filter(cases__count=0).values('filter__id'),
+                    filter__in=attribute_filters, test__in=bundle.test_runs.all()
+                    .values('test_id')).annotate(models.Count('cases')).filter(cases__count=0).values('filter__id'),
             ))
         tcf = TestRunFilter.objects.filter(
             id__in=TestRunFilterTest.objects.filter(
@@ -1588,8 +1588,8 @@ class TestRunFilter(models.Model):
             pass_count=models.Sum('test_runs__denormalization__count_pass'),
             unknown_count=models.Sum('test_runs__denormalization__count_unknown'),
             skip_count=models.Sum('test_runs__denormalization__count_skip'),
-            fail_count=models.Sum('test_runs__denormalization__count_fail')).get(
-                id=bundle.id)
+            fail_count=models.Sum('test_runs__denormalization__count_fail')
+        ).get(id=bundle.id)
         for filter in filters:
             match = FilterMatch()
             match.filter = filter
