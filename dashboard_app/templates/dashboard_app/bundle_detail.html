@@ -10,6 +10,109 @@
 {% endblock %}
 
 {% block content %}
+
+<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery-1.5.1.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/bug-links.js"></script>
+<script language="javascript">
+  image_url = '{{ STATIC_URL }}dashboard_app/images/';
+  unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testrun' %}';
+  link_bug_url = '{% url 'dashboard_app.views.link_bug_to_testrun' %}';
+</script>
+
+<script type="text/javascript" charset="utf-8">
+$(document).ready(function() {
+    show_test_runs();
+    add_bug_link();
+});
+function show_test_runs() {
+    document.getElementById("test_runs").style.display="block";
+    document.getElementById("bundle_view").style.display="none";
+    $('#bundle-run-container').html('<ul class="nav nav-pills">' +
+            '<li><button onclick=show_test_runs() class="btn btn-sm btn-primary">Test Runs</button>' +
+            '</li>' +
+            '<li><button onclick=show_deserialized() class="btn btn-sm btn-default">Bundle Viewer</button>' +
+            '</li></ul>')
+}
+function show_deserialized() {
+    document.getElementById("test_runs").style.display="none";
+    document.getElementById("bundle_view").style.display="block";
+    $('#bundle-run-container').html('<ul class="nav nav-pills">' +
+            '<li><button onclick=show_test_runs() class="btn btn-sm btn-default">Test Runs</button>' +
+            '</li>' +
+            '<li><button onclick=show_deserialized() class="btn btn-sm btn-primary">Bundle Viewer</button>' +
+            '</li></ul>')
+}
+</script>
+
+<div class="modal-header" id="bundle-run-container">
+  <ul class="nav nav-pills">
+    <li><button onclick='show_test_runs()' class="btn btn-sm btn-primary">Test Runs</button>
+    </li>
+    <li><button onclick='show_deserialized()' class="btn btn-sm btn-default">Bundle Viewer</button>
+    </li>
+  </ul>
+</div>
+
+<div class="modal-header">
+  <ul class="nav nav-pills">
+  <li>
+       {% if previous_bundle %}
+          <a class="btn btn-sm btn-default"
+             href="{{ previous_bundle.get_absolute_url }}"><span
+                  class="glyphicon glyphicon-backward"></span>&nbsp;{% trans "Previous Bundle" %}</a>
+       {% endif %}
+  </li>
+  <li>
+       {% if next_bundle %}
+          <a class="btn btn-sm btn-default"
+             href="{{ next_bundle.get_absolute_url }}">{% trans "Next Bundle" %}&nbsp;<span
+                  class="glyphicon glyphicon-forward"></span></a>
+       {% endif %}
+  </li>
+</ul>
+</div>
+
+<div class="modal-header ui-tabs ui-widget -ui-widget-content ui-corner-all">
+  <span
+    class="ui-tabs-nav ui-corner-all ui-tabs-panel">
+
+<div id="test_runs">
+{% render_table bundle_table %}
+</div>
+
+<div id="bundle_view" style="display: none">
+  <ul>
+    {% if bundle.deserialization_error %}
+    <li><a href="#tab-deserialization-error">{% trans "Deserialization Error" %}</a></li>
+    {% endif %}
+  </ul>
+  {% if bundle.is_deserialized %}
+{% if sanitized_bundle.did_remove_attachments %}
+<div class="ui-widget">
+  <div class="ui-state-highlight ui-corner-all" style="margin-top: 20px; padding: 0.7em">
+  <span class="ui-icon ui-icon-info" style="float: left; margin-right: 0.3em;"></span>
+  <strong>Note:</strong> Inline attachments were removed to make this page more readable.
+  </div>
+</div>
+{% endif %}
+  {% with bundle.get_sanitized_bundle as sanitized_bundle %}
+      <pre>{{ sanitized_bundle.get_human_readable_json|safe }}</pre>
+  {% endwith %}
+  {% endif %}
+
+  {% if bundle.deserialization_error %}
+  <div id="tab-deserialization-error">
+    <h3>Cause</h3>
+    <p>{{ bundle.deserialization_error.error_message }}</p>
+    <h3>Deserialization failure traceback</h3>
+    <div style="overflow-x: scroll">
+      {% stylize "pytb" %}{{ bundle.deserialization_error.traceback|safe }}{% endstylize %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
 <div class="row">
   <div class="col-md-6">
 <h3>Bundle information</h3>
@@ -76,88 +179,7 @@ located in, by using this <a href="{{bundle.get_permalink}}">permalink</a></p>
 {% endif %}
 </div>
 <hr/>
-<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery-1.5.1.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/bug-links.js"></script>
-<script language="javascript">
-  image_url = '{{ STATIC_URL }}dashboard_app/images/';
-  unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testrun' %}';
-  link_bug_url = '{% url 'dashboard_app.views.link_bug_to_testrun' %}';
-</script>
 
-<script type="text/javascript" charset="utf-8">
-$(document).ready(function() {
-    show_test_runs();
-    add_bug_link();
-});
-function show_test_runs() {
-    document.getElementById("test_runs").style.display="block";
-    document.getElementById("bundle_view").style.display="none";
-    $('#bundle-run-container').html('<ul class="nav nav-pills">' +
-            '<li><button onclick=show_test_runs() class="btn btn-sm btn-primary">Test Runs</button>' +
-            '</li>' +
-            '<li><button onclick=show_deserialized() class="btn btn-sm btn-default">Bundle Viewer</button>' +
-            '</li></ul>')
-}
-function show_deserialized() {
-    document.getElementById("test_runs").style.display="none";
-    document.getElementById("bundle_view").style.display="block";
-    $('#bundle-run-container').html('<ul class="nav nav-pills">' +
-            '<li><button onclick=show_test_runs() class="btn btn-sm btn-default">Test Runs</button>' +
-            '</li>' +
-            '<li><button onclick=show_deserialized() class="btn btn-sm btn-primary">Bundle Viewer</button>' +
-            '</li></ul>')
-}
-</script>
-
-<div class="modal-header" id="bundle-run-container">
-  <ul class="nav nav-pills">
-    <li><button onclick='show_test_runs()' class="btn btn-sm btn-primary">Test Runs</button>
-    </li>
-    <li><button onclick='show_deserialized()' class="btn btn-sm btn-default">Bundle Viewer</button>
-    </li>
-  </ul>
-</div>
-
-<div class="ui-tabs ui-widget -ui-widget-content ui-corner-all">
-  <span
-    class="ui-tabs-nav ui-corner-all ui-tabs-panel">
-
-<div id="test_runs">
-{% render_table bundle_table %}
-</div>
-
-<div id="bundle_view" style="display: none">
-  <ul>
-    {% if bundle.deserialization_error %}
-    <li><a href="#tab-deserialization-error">{% trans "Deserialization Error" %}</a></li>
-    {% endif %}
-  </ul>
-  {% if bundle.is_deserialized %}
-{% if sanitized_bundle.did_remove_attachments %}
-<div class="ui-widget">
-  <div class="ui-state-highlight ui-corner-all" style="margin-top: 20px; padding: 0.7em">
-  <span class="ui-icon ui-icon-info" style="float: left; margin-right: 0.3em;"></span>
-  <strong>Note:</strong> Inline attachments were removed to make this page more readable.
-  </div>
-</div>
-{% endif %}
-  {% with bundle.get_sanitized_bundle as sanitized_bundle %}
-      <pre>{{ sanitized_bundle.get_human_readable_json|safe }}</pre>
-  {% endwith %}
-  {% endif %}
-
-  {% if bundle.deserialization_error %}
-  <div id="tab-deserialization-error">
-    <h3>Cause</h3>
-    <p>{{ bundle.deserialization_error.error_message }}</p>
-    <h3>Deserialization failure traceback</h3>
-    <div style="overflow-x: scroll">
-      {% stylize "pytb" %}{{ bundle.deserialization_error.traceback|safe }}{% endstylize %}
-    </div>
-  </div>
-  {% endif %}
-
-</div>
 </span>
 </div>
 

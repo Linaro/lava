@@ -348,6 +348,14 @@ def bundle_detail(request, pathname, content_sha1):
     """
     bundle_stream = BundleStream.objects.filter(pathname=pathname)
     bundle = Bundle.objects.filter(bundle_stream=bundle_stream, content_sha1=content_sha1)
+    try:
+        next_bundle = Bundle.objects.filter(bundle_stream=bundle_stream, id__lt=bundle[0].id)[0]
+    except IndexError:
+        next_bundle = None
+    try:
+        previous_bundle = Bundle.objects.filter(bundle_stream=bundle_stream, id__gt=bundle[0].id).reverse()[0]
+    except IndexError:
+        previous_bundle = None
     view = BundleDetailView(request, pathname=pathname, content_sha1=content_sha1, model=TestRun, table_class=BundleDetailTable)
     bundle_table = BundleDetailTable(view.get_table_data())
     RequestConfig(request, paginate={"per_page": bundle_table.length}).configure(bundle_table)
@@ -366,6 +374,8 @@ def bundle_detail(request, pathname, content_sha1):
             "site": Site.objects.get_current(),
             "bundle": bundle[0],
             "bundle_stream": bundle_stream[0],
+            "next_bundle": next_bundle,
+            "previous_bundle": previous_bundle,
         },
         RequestContext(request))
 
