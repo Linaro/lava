@@ -1,1 +1,2 @@
 share/debian-dev-build.sh /usr/share/lava-server/
+share/schroot-dev-build.sh /usr/share/lava-server/

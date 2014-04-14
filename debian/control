@@ -55,6 +55,7 @@ Depends: ca-certificates, devscripts, dpkg-dev, debhelper (>= 8.0.0),
  python-sphinx (>= 1.0.7+dfsg) | python3-sphinx, po-debconf,
  python-mocker, python-setuptools, python-versiontools,
  ${misc:Depends}
+Recommends: sbuild
 Description: Developer support for LAVA
  This package provides a helper script to build LAVA packages
  from local git working copies.
