@@ -1,3 +1,9 @@
+lava-server (0.22.1-7) UNRELEASED; urgency=medium
+
+  * Add sbuild sample script to lava-dev
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 14 Apr 2014 10:37:27 +0100
+
 lava-server (0.22.1-6) unstable; urgency=medium
 
   * Drop libguestfs-tools as it has moved to lava-dispatcher to be
