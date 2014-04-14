@@ -68,8 +68,8 @@ def version_tag():
         return tag_name
     else:
         dev_time = datetime.datetime.now()
-        return "%s.%02d.%02d.%02d" % (tag_name, dev_time.day,
-                                      dev_time.hour, dev_time.minute)
+        return "%s.%02d.%02d" % (tag_name, dev_time.day,
+                                      dev_time.hour)
 
 
 def main():
