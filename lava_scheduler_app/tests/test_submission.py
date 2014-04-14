@@ -105,7 +105,7 @@ class ModelFactory(object):
     def ensure_tag(self, name):
         return Tag.objects.get_or_create(name=name)[0]
 
-    def make_device(self, device_type=None, hostname=None, tags=None, **kw):
+    def make_device(self, device_type=None, hostname=None, tags=None, is_public=True, **kw):
         if device_type is None:
             device_type = self.ensure_device_type()
         if hostname is None:
@@ -113,7 +113,7 @@ class ModelFactory(object):
         if type(tags) != list:
             tags = []
         # a hidden device type will override is_public
-        device = Device(device_type=device_type, is_public=True, hostname=hostname, **kw)
+        device = Device(device_type=device_type, is_public=is_public, hostname=hostname, **kw)
         device.tags = tags
         logging.debug("making a device of type %s %s %s with tags '%s'"
                       % (device_type, device.is_public, device.hostname, ", ".join([x.name for x in device.tags.all()])))
@@ -312,7 +312,7 @@ class TestTestJob(TestCaseWithFactory):
             ValueError, TestJob.from_json_and_user, '{}',
             self.factory.make_user())
 
-    def make_job_json_for_stream_name(self, stream_name):
+    def make_job_json_for_stream_name(self, stream_name, **kw):
         return self.factory.make_job_json(
             actions=[
                 {
@@ -322,7 +322,7 @@ class TestTestJob(TestCaseWithFactory):
                         'stream': stream_name,
                     }
                 }
-            ])
+            ], **kw)
 
     def test_from_json_and_user_sets_group_from_bundlestream(self):
         group = Group.objects.create(name='group')
@@ -395,6 +395,73 @@ class TestTestJob(TestCaseWithFactory):
         self.assertEqual(user, job.submitter)
         self.assertEqual(True, job.is_public)
         self.assertRaises(ValueError, TestJob.from_json_and_user, j, anon_user)
+
+    def test_restricted_submitted_job_with_group_bundle_and_multinode(self):
+        """
+        Need to expand this into a MultiNode test class / file with factory
+        functions and add the rest of the MultiNode tests.
+        """
+        superuser = self.factory.make_user()
+        superuser.is_superuser = True
+        user = self.factory.make_user()
+        anon_user = User.objects.get_or_create(username="anonymous-owner")[0]
+        group = Group.objects.get_or_create(name="owner")[0]
+        group.user_set.add(user)
+        device_type1 = self.factory.make_device_type('hide_me_now')
+        device_type2 = self.factory.make_device_type('secretive')
+        device1 = self.factory.make_device(device_type=device_type1, hostname="hidden1", group=group, is_public=False)
+        device1.save()
+        device2 = self.factory.make_device(device_type=device_type2, hostname="terces", group=group, is_public=False)
+        device2.save()
+        self.assertEqual(device1.is_public, False)
+        self.assertEqual(device2.is_public, False)
+        b = BundleStream.objects.create(
+            slug='hidden', is_anonymous=False, group=group,
+            is_public=True)
+        b.save()
+        self.assertEqual(b.is_public, True)
+        self.assertEqual(b.user, None)
+        self.assertEqual(b.pathname, '/public/team/owner/hidden/')
+        # singlenode must pass
+        j = self.make_job_json_for_stream_name(b.pathname, target="hidden1")
+        self.assertRaises(DevicesUnavailableException, TestJob.from_json_and_user, j, anon_user)
+        job = TestJob.from_json_and_user(j, user)
+        self.assertEqual(job.user, device1.user)
+        self.assertEqual(job.group, device1.group)
+        self.assertEqual(job.user, device2.user)
+        self.assertEqual(job.group, device2.group)
+        self.assertEqual(job.is_public, True)
+        self.assertEqual(device1.is_public, False)
+        # multinode must pass
+        job_data = {
+            'actions': [
+                {
+                    'command': 'submit_results',
+                    'parameters': {
+                        'server': 'http://localhost/RPC2',
+                        'stream': b.pathname,
+                    }
+                }
+            ],
+            'device_group': [
+                {
+                    "role": "felix",
+                    "count": 1,
+                    "device_type": device_type1.name
+                },
+                {
+                    "role": "rex",
+                    "count": 1,
+                    "device_type": device_type2.name
+                }
+            ],
+        }
+        job_data.update({'timeout': 1, 'health_check': False})
+        job_json = simplejson.dumps(job_data, sort_keys=True, indent=4 * ' ')
+        job = TestJob.from_json_and_user(job_json, user)
+        self.assertEqual(len(job), 2)
+        self.assertEqual(job[0].is_public, True)
+        self.assertEqual(job[1].is_public, True)
 
 
 class TestHiddenTestJob(TestCaseWithFactory):

@@ -474,11 +474,13 @@ class Device(RestrictedResource):
                 default_owner.save()
                 first_super_user.defaultdeviceowner.user = first_super_user
                 first_super_user.save()
-            self.is_public = not self.device_type.owners_only
+            if self.device_type.owners_only:
+                self.is_public = False
             return
         default_user = default_user_list[0]
         if self.user is None and self.group is None:
-            self.is_public = not self.device_type.owners_only
+            if self.device_type.owners_only:
+                self.is_public = False
             if default_user:
                 self.user = User.objects.filter(id=default_user.user_id)[0]
         if self.user is not None and self.group is not None:
@@ -1151,6 +1153,8 @@ class TestJob(RestrictedResource):
             if not bundle_stream.can_upload(submitter):
                 raise ValueError(
                     "you cannot submit to the stream %s" % stream)
+            # NOTE: this *overwrites* the HTTP:Request.user with the BundleStream.user
+            # use the cached submitter value for user checks.
             if not bundle_stream.is_anonymous:
                 user, group, is_public = (bundle_stream.user,
                                           bundle_stream.group,
@@ -1187,12 +1191,12 @@ class TestJob(RestrictedResource):
 
                 device_list = Device.objects.filter(device_type=device_type)
                 for device in device_list:
-                    if device.can_submit(user):
+                    if device.can_submit(submitter):
                         allowed_devices[device_type].append(device)
                 if len(allowed_devices[device_type]) < device_count[device_type]:
                     raise DevicesUnavailableException("Not enough devices of type %s are currently "
                                                       "available to user %s"
-                                                      % (device_type, user))
+                                                      % (device_type, submitter))
 
             target_group = str(uuid.uuid4())
             node_json = utils.split_multi_job(job_data, target_group)
