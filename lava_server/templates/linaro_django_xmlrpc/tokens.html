@@ -65,7 +65,7 @@ in the system.</p>
       <h2>You have {{ token_list|length }} token.</h2>
   {% endif %}
 
-  <h3>Most recently used tokens shown first</h3>
+  <h3>Most recently created tokens shown first</h3>
 
 <div class="row">
   <div class="col-md-12">
@@ -78,7 +78,7 @@ in the system.</p>
         <th>Actions</th>
       </thead>
       <tbody>
-        {% for token in token_list|dictsortreversed:"last_used_on" %}
+        {% for token in token_list|dictsortreversed:"created_on" %}
         <tr>
           <td>{{ token.pk }}</td>
           <td>{{ token.description|default:"empty" }}</td>
