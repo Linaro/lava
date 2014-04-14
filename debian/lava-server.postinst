@@ -174,6 +174,13 @@ install_database()
     if ! su postgres -c "psql -c \"SELECT datname FROM pg_database WHERE datname='devel'\"" | grep "devel"; then
         su postgres -c "createdb devel --owner devel"
     fi
+    # syncdb
+    su $LAVA_SYS_USER -c "lava-server manage syncdb --noinput"
+    su $LAVA_SYS_USER -c "lava-server manage migrate --noinput"
+    # superuser - password must be changed
+    if ! su postgres -c "psql \"-c SELECT usename FROM pg_user WHERE usename='$LAVA_SYS_USER'\"" | grep "$LAVA_SYS_USER"; then
+        su $LAVA_SYS_USER -c "lava-server manage createsuperuser --noinput --username=$LAVA_SYS_USER --email=$LAVA_SYS_USER@lava.invalid" || true
+    fi
 }
 
 
@@ -209,11 +216,6 @@ case "$1" in
         chown $LAVA_SYS_USER:$LAVA_SYS_USER /etc/lava-server/secret_key.conf
          if [ ! -f /etc/lava-server/worker.conf ]; then
             install_database
-            # syncdb
-            su $LAVA_SYS_USER -c "lava-server manage syncdb --noinput"
-            su $LAVA_SYS_USER -c "lava-server manage migrate --noinput"
-            # superuser - password must be changed
-            su $LAVA_SYS_USER -c "lava-server manage createsuperuser --noinput --username=$LAVA_SYS_USER --email=$LAVA_SYS_USER@lava.invalid" || true
             # Allow instance user to put stuff in temporary directory
             # Set the sticky and setgid bits there
             #    chgrp -R $LAVA_SYS_USER $LAVA_PREFIX/$LAVA_INSTANCE/tmp
