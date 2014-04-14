@@ -4,25 +4,17 @@
 {% block content %}
 <h1>Filters</h1>
 
-<p>
- A filter matches test runs by a number of criteria.
-</p>
+<p>A filter matches test runs by a number of criteria.</p>
 
 {% if user_filters_table %}
 
-<h2>Your Filters</h2>
+<h2>Your Filters <small><a href="{% url 'dashboard_app.views.filters.views.filter_add' %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-plus-sign"></span> Create</a></small></h2>
 
 {% render_table user_filters_table %}
 
-<p>
-  <a href="{% url 'dashboard_app.views.filters.views.filter_add' %}">Add new filter…</a>
-</p>
-
 {% else %}
 
-<p>
-  Please log in to see and manage your filters.
-</p>
+<p>Please log in to see and manage your filters.</p>
 
 {% endif %}
 
