@@ -57,7 +57,6 @@ setup(
         'django-openid-auth >= 0.5',
         'django-restricted-resource >= 0.2.7',
         'django-tables2 >= 0.13.0',
-        'django-testscenarios >= 0.7.2',
         'docutils >= 0.6',
         'lava-tool >= 0.2',
         'linaro-django-xmlrpc >= 0.4',
@@ -102,7 +101,7 @@ setup(
         'lava_server/lava-daemon',
     ],
     tests_require=[
-        'django-testscenarios >= 0.7.1',
+        'django-testscenarios >= 0.7.2',
     ],
     zip_safe=False,
     include_package_data=True)
