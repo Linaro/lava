@@ -622,7 +622,7 @@ class Device(RestrictedResource):
             except (JSONDataError, ValueError) as e:
                 self.put_into_maintenance_mode(
                     None, "Job submission failed for health job: %s" % e)
-                raise JSONDataError("Health check job submission failed.")
+                raise JSONDataError("Health check job submission failed: %s" % e)
 
     def previous_state(self):
         """Returns the previous state which will not be any form of device
