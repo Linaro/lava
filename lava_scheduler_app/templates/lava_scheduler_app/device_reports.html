@@ -35,7 +35,7 @@
 {% else %}
 <ul>
 {% for job in long_running %}
-  <li><a href="{{job.get_absolute_url}}">{{job.id}}</a>: {{job.start_time}}</li>
+  <li><a href="{{job.get_absolute_url}}">{{job.id}}</a>: {{job.start_time|timesince}}</li>
 {% endfor %}
 </ul>
 {% endif %}
