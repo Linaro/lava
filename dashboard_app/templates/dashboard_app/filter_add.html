@@ -19,9 +19,9 @@
     {% csrf_token %}
     {% include "dashboard_app/filter_form.html" %}
 {% if form.instance.pk %}
-    <input type="submit" value="Preview changes">
+    <input class="btn btn-primary" type="submit" value="Preview changes">
 {% else %}
-    <input type="submit" value="Preview">
+    <input class="btn btn-primary" type="submit" value="Preview">
 {% endif %}
 </form>
 
