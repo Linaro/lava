@@ -12,8 +12,8 @@ Build-Depends: debhelper (>= 8.0.0),
 X-Python-Version: 2.7
 Standards-Version: 3.9.5
 Homepage: http://www.linaro.org/projects/test-validation/
-Vcs-Git: https://alioth.debian.org/anonscm/git/pkg-linaro-lava/lava-server.git
-Vcs-Browser: https://alioth.debian.org/plugins/scmgit/cgi-bin/gitweb.cgi?p=pkg-linaro-lava/lava-server.git;a=summary
+Vcs-Git: https://github.com/Linaro/pkg-lava-server.git
+Vcs-Browser: https://github.com/Linaro/pkg-lava-server
 
 Package: lava-server
 Architecture: all
@@ -22,7 +22,7 @@ Conflicts: lava-scheduler, lava-dashboard
 Replaces: lava-scheduler, lava-dashboard
 Depends: apache2, adduser, fuse, libapache2-mod-uwsgi, libjs-jquery-cookie,
  libapache2-mod-wsgi, lshw, iproute2, python-daemon, python-dateutil,
- python-django-auth-openid (>= 0.5-2), linaro-django-pagination,
+ python-django-auth-openid (>= 0.5-2),
  openssh-client, postgresql, postgresql-client, postgresql-common,
  ${python:Depends}, ${misc:Depends}
 Recommends: ntp, lava-coordinator, lava-server-doc
@@ -39,8 +39,8 @@ Description: Linaro Automated Validation Architecture server
 Package: lava
 Architecture: all
 Section: metapackages
-Depends: lava-server, lava-dispatcher, lava-coordinator,
- postgresql, lava-tool, linaro-image-tools,
+Depends: lava-server, lava-server-doc, lava-dispatcher, lava-coordinator,
+ lava-dev, lava-tool, linaro-image-tools, ntp, tftpd-hpa,
  ${misc:Depends}
 Description: Linaro Automated Validation Architecture metapackage
  Metapackage to bring in all LAVA components on a single
@@ -50,7 +50,7 @@ Package: lava-dev
 Architecture: all
 Section: devel
 Depends: ca-certificates, devscripts, dpkg-dev, debhelper (>= 8.0.0),
- fakeroot, git, libdistro-info-perl,
+ fakeroot, git, libdistro-info-perl, django-testscenarios,
  python | python-all | python-dev | python-all-dev,
  python-sphinx (>= 1.0.7+dfsg) | python3-sphinx, po-debconf,
  python-mocker, python-setuptools, python-versiontools,
@@ -58,7 +58,8 @@ Depends: ca-certificates, devscripts, dpkg-dev, debhelper (>= 8.0.0),
 Recommends: sbuild
 Description: Developer support for LAVA
  This package provides a helper script to build LAVA packages
- from local git working copies.
+ from local git working copies and support for running the
+ LAVA unit tests.
 
 Package: lava-server-doc
 Architecture: all

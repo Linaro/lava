@@ -1,8 +1,11 @@
-lava-server (0.22.1-7) UNRELEASED; urgency=medium
+lava-server (0.22.1-7) unstable; urgency=medium
 
   * Add sbuild sample script to lava-dev
   * Move creation of superuser into install_database function and check
     if the superuser needs to be created.
+  * Update vcs location
+  * Drop linaro-django-pagination from lava-server
+  * Add lava-dev to the metapackage
 
  -- Neil Williams <codehelp@debian.org>  Mon, 14 Apr 2014 10:37:27 +0100
 
