@@ -96,6 +96,7 @@ class UserFiltersTable(LavaTable):
     public = tables.Column()
 
     class Meta(LavaTable.Meta):
+        attrs = {"class": "table table-striped", "width": "100%"}
         exclude = (
             'subscription'
         )
@@ -273,7 +274,7 @@ class FilterPassTable(LavaTable):
 
     class Meta:
         model = None
-        attrs = {"class": "display", "id": "filter-detail-table"}
+        attrs = {"class": "table table-striped", "width": "100%", "id": "filter-detail-table"}
         per_page_field = "length"
         template = 'dashboard_app/filter_results_table.html'
 
@@ -307,7 +308,7 @@ class FilterSummaryTable(LavaTable):
 
     class Meta:
         model = None
-        attrs = {"class": "display", "id": "filter-detail-table"}
+        attrs = {"class": "table table-striped", "width": "100%", "id": "filter-detail-table"}
         per_page_field = "length"
         template = 'dashboard_app/filter_results_table.html'
 
@@ -337,6 +338,6 @@ class TestResultDifferenceTable(LavaTable):
         ''')
 
     class Meta:
-        attrs = {"class": "display"}
+        attrs = {"class": "table table-striped", "width": "100%"}
         template = "tables.html"
         per_page_field = "length"

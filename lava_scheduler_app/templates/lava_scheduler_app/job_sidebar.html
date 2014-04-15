@@ -3,9 +3,7 @@
 
 {% block extrahead %}
 {{ block.super }}
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava-server/css/demo_table_jui.css"/>
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_scheduler_app/css/scheduler.css"/>
-<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery.dataTables.min.js"></script>
 {% endblock %}
 
 
@@ -90,7 +88,7 @@
     <dt>Sub Jobs:</dt>
     {% for subjob in job.sub_jobs_list %}
     <dd>
-      <a href="{% url 'lava.scheduler.job.detail' subjob.sub_id %}">
+      <a href="{% url lava.scheduler.job.detail subjob.sub_id %}">
         {{ subjob.sub_id }}</a>
     </dd>
     {% if subjob.actual_device.hostname %}
@@ -108,19 +106,19 @@
 <h2>Views</h2>
 <ul>
     <li>
-        <a href="{% url 'lava.scheduler.job.detail' job.pk %}">Summary</a>
+        <a href="{% url lava.scheduler.job.detail job.pk %}">Summary</a>
     </li>
 {% if job_file_present %}
     <li>
-        <a href="{% url 'lava.scheduler.job.log_file' job.pk %}">Complete log</a>
+        <a href="{% url lava.scheduler.job.log_file job.pk %}">Complete log</a>
     </li>
 {% endif %}
     <li>
-        <a href="{% url 'lava.scheduler.job.definition' job.pk %}">Definition</a>
+        <a href="{% url lava.scheduler.job.definition job.pk %}">Definition</a>
     </li>
     {% if job.is_multinode %}
     <li>
-        <a href="{% url 'lava.scheduler.job.multinode_definition' job.pk %}"> Multinode Definition</a>
+        <a href="{% url lava.scheduler.job.multinode_definition job.pk %}"> Multinode Definition</a>
     </li>
     {% endif %}
     {% if job.results_link %}
@@ -132,14 +130,14 @@
     <li><b>Device reports</b>
     <ul>
     {% if job.actual_device %}
-    <li>Name:&nbsp;<a href="{% url 'lava.scheduler.device_report' job.actual_device.pk %}">{{ job.actual_device.hostname }}</a></li>
+    <li>Name:&nbsp;<a href="{% url lava.scheduler.device_report job.actual_device.pk %}">{{ job.actual_device.hostname }}</a></li>
     {% endif %}
     {% if job.requested_device %}
-    <li>Type:&nbsp;<a href="{% url 'lava.scheduler.device_type_report' job.requested_device.device_type %}">
+    <li>Type:&nbsp;<a href="{% url lava.scheduler.device_type_report job.requested_device.device_type %}">
         {{ job.requested_device.device_type }}</a></li>
 
     {% elif job.requested_device_type %}
-    <li>Type:&nbsp;<a href="{% url 'lava.scheduler.device_type_report' job.requested_device_type %}">
+    <li>Type:&nbsp;<a href="{% url lava.scheduler.device_type_report job.requested_device_type %}">
         {{ job.requested_device_type }}</a></li>
     {% endif %}
     </ul></li>
@@ -149,21 +147,21 @@
 <h2>Job Actions</h2>
 {% if show_cancel %}
 <form method="POST"
-      action="{% url 'lava.scheduler.job.cancel' job.pk %}">
+      action="{% url lava.scheduler.job.cancel job.pk %}">
   {% csrf_token %}
   <button id="cancel-button">Cancel</button>
 </form>
 {% endif %}
 {% if show_resubmit %}
 <form method="POST"
-      action="{% url 'lava.scheduler.job.resubmit' job.pk %}">
+      action="{% url lava.scheduler.job.resubmit job.pk %}">
   {% csrf_token %}
   <button>Re-submit</button>
 </form>
 {% endif %}
 {% if show_failure %}
 <form method="GET"
-      action="{% url 'lava.scheduler.job.annotate_failure' job.pk %}">
+      action="{% url lava.scheduler.job.annotate_failure job.pk %}">
   <button>Comment on failure</button>
 </form>
 {% endif %}
@@ -175,7 +173,7 @@ Default is to schedule by submission time with health checks
 always running before submitted jobs. Running jobs are never affected.">(?)</abbr>
 </h3>
 <form method="POST"
-      action="{% url 'lava.scheduler.job.priority' job.pk %}"
+      action="{% url lava.scheduler.job.priority job.pk %}"
       id="priority-choice">
   {% csrf_token %}
   {{ job.priority|get_priority_select }}

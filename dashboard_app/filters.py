@@ -214,7 +214,7 @@ class MatchMakingQuerySet(object):
     """Wrap a QuerySet and construct FilterMatchs from what the wrapped query
     set returns.
 
-    Just enough of the QuerySet API to work with DataTable (i.e. pretend
+    Just enough of the QuerySet API to work with Django Tables (i.e. pretend
     ordering and real slicing)."""
 
     model = TestRun
