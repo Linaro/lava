@@ -28,13 +28,13 @@
   <p>
     If this is what you expected, you can
     {% if form.instance.pk %}
-    <input type="submit" name="save" value="save changes"> to the filter.
+    <input class="btn btn-primary" type="submit" name="save" value="save changes"> to the filter.
     {% else %}
-    <input type="submit" name="save" value="save"> the filter.
+    <input class="btn btn-primary" type="submit" name="save" value="save"> the filter.
     {% endif %}
   </p>
   <p>
-    Otherwise, you can <a href="#" id="edit-link">edit</a> it.
+    Otherwise, you can <a class="btn btn-default" href="#" id="edit-link">edit</a> it.
   </p>
   {% csrf_token %}
   <div id="filter-edit" style="display: none">
