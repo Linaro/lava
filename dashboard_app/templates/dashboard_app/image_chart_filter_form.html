@@ -82,7 +82,7 @@
         {% endif %}
         field.autocomplete({
             source: '{% url 'dashboard_app.views.filters.views.filter_name_list_json' %}',
-            minLength: 2,
+            minLength: 1,
             select: function(event, ui) {
               filter_select_callback(ui.item, '{{ image_chart.id }}');
             }
