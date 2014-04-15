@@ -21,9 +21,21 @@ eventually</p>
 <p>You are member of the following LAVA groups:</p>
 <ul>
   {% for g in user.groups.all %}
-    <li>{{ g.name }}</li>
-  {% empty %}
-    <li>(none)</li>
+      {% if g.user_set.all|length > 1 %}
+      <li><b>{{ g.name }}</b> group:
+      <ul>
+          {% for u in g.user_set.all %}
+              {% if u != user %}
+                <li>{{ u.username }}</li>
+              {% endif %}
+          {% endfor %}
+      </ul>
+      {% else %}
+      <li><b>{{ g.name }}</b> group.</li>
+      {% endif %}
+      {% empty %}
+      <li>(none)</li>
+    </li>
   {% endfor %}
 </ul>
 
