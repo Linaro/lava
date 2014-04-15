@@ -21,11 +21,23 @@
 
   <div class="col-md-6">
     <h4 class="modal-header">Groups</h4>
-    {% if user.group.all %}
+    {% if user.groups.all %}
     <p>You are member of the following LAVA groups:</p>
     <ul>
     {% for g in user.groups.all %}
-      <li>{{ g.name }}</li>
+      {% if g.user_set.all|length > 1 %}
+      <li><b>{{ g.name }}</b> group:
+      <ul>
+          {% for u in g.user_set.all %}
+              {% if u != user %}
+                <li>{{ u.username }}</li>
+              {% endif %}
+          {% endfor %}
+      </ul>
+      {% else %}
+      <li><b>{{ g.name }}</b> group.</li>
+      {% endif %}
+      </li>
     {% endfor %}
     {% else %}
     <p>You are not member of any group.</p>
