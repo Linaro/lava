@@ -539,6 +539,8 @@ class WorkerTable(tables.Table):
     up
     {% endif %}
         ''')
+    status.orderable = False
+
     is_master = tables.Column()
     uptime = tables.TemplateColumn('''
     {% if record.too_long_since_last_heartbeat %}
