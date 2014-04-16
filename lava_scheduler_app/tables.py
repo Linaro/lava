@@ -86,7 +86,7 @@ class ExpandedStatusColumn(tables.Column):
 
 class RestrictedDeviceColumn(tables.Column):
 
-    def __init__(self, verbose_name="Restrictions", **kw):
+    def __init__(self, verbose_name="Submissions restricted to", **kw):
         kw['verbose_name'] = verbose_name
         super(RestrictedDeviceColumn, self).__init__(**kw)
 
@@ -100,15 +100,13 @@ class RestrictedDeviceColumn(tables.Column):
         label = None
         if record.status == Device.RETIRED:
             return "Retired, no submissions possible."
+        if record.is_public:
+            return "None"
         if record.user:
             label = record.user.email
         if record.group:
-            label = "all users in %s group" % record.group
-        if record.is_public:
-            message = "Unrestricted usage" \
-                if label is None else "Unrestricted usage. Device owned by %s." % label
-            return message
-        return "Job submissions restricted to %s" % label
+            label = "group %s" % record.group
+        return label
 
 
 def all_jobs_with_custom_sort():
@@ -340,13 +338,13 @@ class DeviceHealthTable(LavaTable):
             return pklink(report)
 
     hostname = tables.TemplateColumn('''
-    {% if record.too_long_since_last_heartbeat or record.status == record.RETIRED %}
+    {% if record.too_long_since_last_heartbeat or record.status == record.RETIRED or record.status == record.OFFLINE %}
     <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
           alt="{{ offline }}" />
     {% else %}
     <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
           alt="{{ online }}" />
-    {% endif %}&nbsp;&nbsp;
+    {% endif %}
     {% if record.is_master %}
     <b><a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a></b>
     {% else %}
@@ -360,7 +358,7 @@ class DeviceHealthTable(LavaTable):
     {% else %}
     <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
           alt="{{ online }}" />
-    {% endif %}&nbsp;&nbsp;
+    {% endif %}
     {% if record.is_master %}
     <b><a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a></b>
     {% else %}
@@ -439,13 +437,13 @@ class DeviceTable(LavaTable):
         return pklink(record.device_type)
 
     hostname = tables.TemplateColumn('''
-    {% if record.too_long_since_last_heartbeat or record.status == record.RETIRED %}
+    {% if record.too_long_since_last_heartbeat or record.status == record.RETIRED or record.status == record.OFFLINE %}
     <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
           alt="{{ offline }}" />
     {% else %}
     <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
           alt="{{ online }}" />
-    {% endif %}&nbsp;&nbsp;
+    {% endif %}
     {% if record.is_master %}
     <b><a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a></b>
     {% else %}
@@ -459,7 +457,7 @@ class DeviceTable(LavaTable):
     {% else %}
     <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
           alt="{{ online }}" />
-    {% endif %}&nbsp;&nbsp;
+    {% endif %}
     {% if record.is_master %}
     <b><a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a></b>
     {% else %}
@@ -470,7 +468,7 @@ class DeviceTable(LavaTable):
     status = ExpandedStatusColumn("status")
     owner = RestrictedDeviceColumn()
     owner.orderable = False
-    health_status = tables.Column()
+    health_status = tables.Column(verbose_name='Health')
 
     class Meta(LavaTable.Meta):
         model = Device
@@ -525,7 +523,7 @@ class WorkerTable(tables.Table):
     {% else %}
     <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
           alt="{{ online }}" />
-    {% endif %}&nbsp;&nbsp;
+    {% endif %}
     {% if record.is_master %}
     <b><a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a></b>
     {% else %}
