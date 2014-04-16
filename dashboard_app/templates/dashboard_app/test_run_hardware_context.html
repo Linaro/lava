@@ -1,31 +1,27 @@
-{% extends "dashboard_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
 
-
 {% block content %}
-<table class="demo_jui display" id="hardware_devices">
-  <thead>
-    <tr>
-      <th>Description</th>
-      <th>Device Type</th>
-      <th>Attributes</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for hardware_device in test_run.devices.all %} 
-    <tr>
-      <td>{{ hardware_device.description }}</td>
-      <td>{{ hardware_device.get_device_type_display }}</td>
-      <td>
-        <dl class="dl-horizontal">
-          {% for attribute in hardware_device.attributes.all %}
-          <dt>{{ attribute.name }}</dt>
-          <dd>{{ attribute.value }}</dd>
-          {% endfor %}
-        </dl>
-      </td>
-    </tr>
+{% for hardware_device in test_run.devices.all %}
+{% if forloop.counter|divisibleby:2 %}
+<div class="row">
+{% endif %}
+  <div class="col-md-6">
+    <h4 class="modal-header">{{ hardware_device.description }} <small>({{ hardware_device.get_device_type_display }})</small></h4>
+    {% if hardware_device.attributes.all %}
+    <dl class="dl-horizontal">
+    {% for attribute in hardware_device.attributes.all %}
+      <dt>{{ attribute.name }}</dt>
+      <dd>{{ attribute.value }}</dd>
     {% endfor %}
-  </tbody>
-</table>
+    </dl>
+    {% else %}
+    <p>{% trans "No details available." %}</p>
+    {% endif %}
+  </div>
+{% if forloop.counter|divisibleby:2 %}
+</div>
+{% endif %}
+{% endfor %}
+
 {% endblock %}
