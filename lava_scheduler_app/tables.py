@@ -101,7 +101,7 @@ class RestrictedDeviceColumn(tables.Column):
         if record.status == Device.RETIRED:
             return "Retired, no submissions possible."
         if record.is_public:
-            return "None"
+            return ""
         if record.user:
             label = record.user.email
         if record.group:
