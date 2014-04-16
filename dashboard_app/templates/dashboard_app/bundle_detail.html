@@ -1,186 +1,139 @@
-{% extends "dashboard_app/_content_with_sidebar.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load humanize %}
 {% load i18n %}
 {% load stylize %}
 {% load django_tables2 %}
 
-{% block extrahead %}
-{{ block.super }}
+{% block styles %}
+
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/pygments.css"/>
+{% include "_tablesort.html" %}
 {% endblock %}
+
 
 {% block content %}
 
-<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery-1.5.1.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/bug-links.js"></script>
-<script language="javascript">
-  image_url = '{{ STATIC_URL }}dashboard_app/images/';
-  unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testrun' %}';
-  link_bug_url = '{% url 'dashboard_app.views.link_bug_to_testrun' %}';
-</script>
-
-<script type="text/javascript" charset="utf-8">
-$(document).ready(function() {
-    show_test_runs();
-    add_bug_link();
-});
-function show_test_runs() {
-    document.getElementById("test_runs").style.display="block";
-    document.getElementById("bundle_view").style.display="none";
-    $('#bundle-run-container').html('<ul class="nav nav-pills">' +
-            '<li><button onclick=show_test_runs() class="btn btn-sm btn-primary">Test Runs</button>' +
-            '</li>' +
-            '<li><button onclick=show_deserialized() class="btn btn-sm btn-default">Bundle Viewer</button>' +
-            '</li></ul>')
-}
-function show_deserialized() {
-    document.getElementById("test_runs").style.display="none";
-    document.getElementById("bundle_view").style.display="block";
-    $('#bundle-run-container').html('<ul class="nav nav-pills">' +
-            '<li><button onclick=show_test_runs() class="btn btn-sm btn-default">Test Runs</button>' +
-            '</li>' +
-            '<li><button onclick=show_deserialized() class="btn btn-sm btn-primary">Bundle Viewer</button>' +
-            '</li></ul>')
-}
-</script>
-
-<div class="modal-header" id="bundle-run-container">
-  <ul class="nav nav-pills">
-    <li><button onclick='show_test_runs()' class="btn btn-sm btn-primary">Test Runs</button>
-    </li>
-    <li><button onclick='show_deserialized()' class="btn btn-sm btn-default">Bundle Viewer</button>
-    </li>
-  </ul>
-</div>
-
-<div class="modal-header">
-  <ul class="nav nav-pills">
-  <li>
-       {% if previous_bundle %}
-          <a class="btn btn-sm btn-default"
-             href="{{ previous_bundle.get_absolute_url }}"><span
-                  class="glyphicon glyphicon-backward"></span>&nbsp;{% trans "Previous Bundle" %}</a>
-       {% endif %}
+<ul class="pager">
+  <li class="previous{% if not previous_bundle %} disabled{% endif %}">
+    <a href="{% if previous_bundle %}{{ previous_bundle.get_absolute_url }}{% else %}#{% endif %}">
+      <span class="glyphicon glyphicon-backward"></span> Previous bundle</a>
   </li>
-  <li>
-       {% if next_bundle %}
-          <a class="btn btn-sm btn-default"
-             href="{{ next_bundle.get_absolute_url }}">{% trans "Next Bundle" %}&nbsp;<span
-                  class="glyphicon glyphicon-forward"></span></a>
-       {% endif %}
+  <li class="next{% if not next_bundle %} disabled{% endif %}">
+    <a href="{% if next_bundle %}{{ next_bundle.get_absolute_url }}{% else %}#{% endif %}">
+      Next bundle <span class="glyphicon glyphicon-forward"></span></a>
   </li>
 </ul>
-</div>
 
-<div class="modal-header ui-tabs ui-widget -ui-widget-content ui-corner-all">
-  <span
-    class="ui-tabs-nav ui-corner-all ui-tabs-panel">
+<ul class="nav nav-tabs">
+  <li class="active"><a href="#Test" data-toggle="tab">Test runs</a></li>
+  <li><a href="#Bundle" data-toggle="tab">Bundle Viewer</a></li>
+</ul>
 
-<div id="test_runs">
-{% render_table bundle_table %}
-</div>
-
-<div id="bundle_view" style="display: none">
-  <ul>
-    {% if bundle.deserialization_error %}
-    <li><a href="#tab-deserialization-error">{% trans "Deserialization Error" %}</a></li>
-    {% endif %}
-  </ul>
-  {% if bundle.is_deserialized %}
-{% if sanitized_bundle.did_remove_attachments %}
-<div class="ui-widget">
-  <div class="ui-state-highlight ui-corner-all" style="margin-top: 20px; padding: 0.7em">
-  <span class="ui-icon ui-icon-info" style="float: left; margin-right: 0.3em;"></span>
-  <strong>Note:</strong> Inline attachments were removed to make this page more readable.
+<div class="tab-content">
+  <div class="tab-pane active" id="Test">
+    {% render_table bundle_table %}
   </div>
-</div>
-{% endif %}
-  {% with bundle.get_sanitized_bundle as sanitized_bundle %}
-      <pre>{{ sanitized_bundle.get_human_readable_json|safe }}</pre>
-  {% endwith %}
+  <div class="tab-pane" id="Bundle">
+    <ul>
+    {% if bundle.deserialization_error %}
+      <li><a href="#tab-deserialization-error">{% trans "Deserialization Error" %}</a></li>
+    {% endif %}
+    </ul>
+  {% if bundle.is_deserialized %}
+    {% if sanitized_bundle.did_remove_attachments %}
+    <div class="alert alert-warning alert-dismissable">
+      <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+      <strong>Note:</strong> Inline attachments were removed to make this page more readable.
+    </div>
+    {% endif %}
+    {% with bundle.get_sanitized_bundle as sanitized_bundle %}
+    <pre>{{ sanitized_bundle.get_human_readable_json|safe }}</pre>
+    {% endwith %}
   {% endif %}
 
   {% if bundle.deserialization_error %}
-  <div id="tab-deserialization-error">
-    <h3>Cause</h3>
-    <p>{{ bundle.deserialization_error.error_message }}</p>
-    <h3>Deserialization failure traceback</h3>
-    <div style="overflow-x: scroll">
-      {% stylize "pytb" %}{{ bundle.deserialization_error.traceback|safe }}{% endstylize %}
+    <div id="tab-deserialization-error">
+      <h3>Cause</h3>
+      <p>{{ bundle.deserialization_error.error_message }}</p>
+      <h3>Deserialization failure traceback</h3>
+      <div style="overflow-x: scroll">
+        {% stylize "pytb" %}{{ bundle.deserialization_error.traceback|safe }}{% endstylize %}
+      </div>
     </div>
-  </div>
   {% endif %}
-
+  </div>
 </div>
 
 <div class="row">
   <div class="col-md-6">
-<h3>Bundle information</h3>
-<p>You can navigate to this bundle, regardless of the bundle stream it is
-located in, by using this <a href="{{bundle.get_permalink}}">permalink</a></p>
-<p><b>Export test run data</b> <a href="{% url 'dashboard_app.views.bundle_export' bundle_stream.pathname bundle.content_sha1 %}">as CSV</a></p>
-{% if bundle.uploaded_by %}
-<p>This bundle was uploaded by <strong>{{bundle.uploaded_by}}</strong> on
-{{bundle.uploaded_on}} ({{bundle.uploaded_on|timesince}} ago)</p>
-{% else %}
-<p>This bundle was uploaded by an anonymous contributor on
-{{bundle.uploaded_on}} ({{bundle.uploaded_on|timesince}} ago)</p>
-{% endif %}
-<h3>Storage and format</h3>
-<dl class="dl-horizontal">
-  <dt>Document format:</dt>
-  <dd><q>{{bundle.get_document_format}}</q></dd>
-  <dt>Serialization format:</dt>
-  <dd><q>{{ bundle.get_serialization_format}}</q></dd>
-</dl>
-</div>
-<div class="col-md-6">
-{% if bundle.testjob %}
-<h3>Job details</h3>
-<dl class="dl-horizontal">
-  {% if bundle.testjob.sub_id %}
-  <dt>Parent job id (<abbr title="MultiNode result bundles are aggregated into the job with the ID which ends in .0 Other jobs in the group are listed in the parent job log file.">?</abbr>)</dt>
-  <dd><a href="{{ bundle.testjob.get_absolute_url }}">{{ bundle.testjob.sub_id }}</a>
-  </dd>
+    <h4 class="modal-header">Bundle information</h4>
+    <p>You can navigate to this bundle, regardless of the bundle stream it is located in, by using this <a href="{{bundle.get_permalink}}">permalink</a></p>
+    <p><b>Export test run data</b> <a href="{% url 'dashboard_app.views.bundle_export' bundle_stream.pathname bundle.content_sha1 %}">as CSV</a></p>
+  {% if bundle.uploaded_by %}
+    <p>This bundle was uploaded by <strong>{{bundle.uploaded_by}}</strong> on {{bundle.uploaded_on}} ({{bundle.uploaded_on|timesince}} ago)</p>
   {% else %}
-  <dt>Job id</dt>
-  <dd><a href="{{ bundle.testjob.get_absolute_url }}">{{ bundle.testjob.id }}</a></dd>
+    <p>This bundle was uploaded by an anonymous contributor on {{bundle.uploaded_on}} ({{bundle.uploaded_on|timesince}} ago)</p>
   {% endif %}
-  <dt>Start time</dt>
-  <dd>{{ bundle.testjob.start_time }}</dd>
-  <dt>End time</dt>
-  <dd>{{ bundle.testjob.end_time }}</dd>
-</dl>
-{% endif %}
-</div>
-<div class="col-md-6">
+  </div>
 
-<h3>File details</h3>
-<dl class="dl-horizontal">
-  <dt>Declared file name:</dt>
-  <dd><q>{{ bundle.content_filename }}</q></dd>
-  <dt>Content SHA1:</dt>
-  <dd>{{ bundle.content_sha1 }}</dd>
-  <dt>Content size:</dt>
-  <dd>{{ bundle.get_content_size }}</dd>
-</dl>
-</div>
+  <div class="col-md-6">
+  {% if bundle.testjob %}
+    <h4 class="modal-header">Job details</h4>
+    <dl class="dl-horizontal">
+    {% if bundle.testjob.sub_id %}
+      <dt>Parent job id (<abbr title="MultiNode result bundles are aggregated into the job with the ID which ends in .0 Other jobs in the group are listed in the parent job log file.">?</abbr>)</dt>
+      <dd><a href="{{ bundle.testjob.get_absolute_url }}">{{ bundle.testjob.sub_id }}</a></dd>
+    {% else %}
+      <dt>Job id</dt>
+      <dd><a href="{{ bundle.testjob.get_absolute_url }}">{{ bundle.testjob.id }}</a></dd>
+      {% endif %}
+      <dt>Start time</dt>
+      <dd>{{ bundle.testjob.start_time }}</dd>
+      <dt>End time</dt>
+      <dd>{{ bundle.testjob.end_time }}</dd>
+    </dl>
+  {% endif %}
+  </div>
 </div>
 
-<h3 class="modal-header">Tips</h3>
-<p>You can download this bundle with the following command:</p>
-<div class="console">
-{% if bundle.private %}
-  <code>lava-tool get --dashboard-url=http://{{request.user.username}}@{{site.domain}}{% url 'lava.api_handler' %}
+<div class="row">
+  <div class="col-md-6">
+    <h4 class="modal-header">Storage and format</h4>
+    <dl class="dl-horizontal">
+      <dt>Document format:</dt>
+      <dd><q>{{bundle.get_document_format}}</q></dd>
+      <dt>Serialization format:</dt>
+      <dd><q>{{ bundle.get_serialization_format}}</q></dd>
+    </dl>
+  </div>
+
+  <div class="col-md-6">
+    <h4 class="modal-header">File details</h4>
+    <dl class="dl-horizontal">
+      <dt>Declared file name:</dt>
+      <dd><q>{{ bundle.content_filename }}</q></dd>
+      <dt>Content SHA1:</dt>
+      <dd>{{ bundle.content_sha1 }}</dd>
+      <dt>Content size:</dt>
+      <dd>{{ bundle.get_content_size }}</dd>
+    </dl>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    <h4 class="modal-header">Tips</h4>
+    <p>You can download this bundle with the following command:</p>
+    <div class="console">
+    {% if bundle.private %}
+      <code>lava-tool get --dashboard-url=http://{{request.user.username}}@{{site.domain}}{% url 'lava.api_handler' %}
       {{bundle.content_sha1}}</code>
-{% else %}
-  <code>lava-tool get --dashboard-url=http://{{site.domain}}{% url 'lava.api_handler' %}
+    {% else %}
+      <code>lava-tool get --dashboard-url=http://{{site.domain}}{% url 'lava.api_handler' %}
       {{bundle.content_sha1}}</code>
-{% endif %}
-</div>
-<hr/>
-
-</span>
+    {% endif %}
+    </div>
+  </div>
 </div>
 
 <form method="POST"
@@ -192,5 +145,20 @@ located in, by using this <a href="{{bundle.get_permalink}}">permalink</a></p>
   <div class="linked" style="display:none"></div>
   <input name="bug_link" style="width: 100%"/>
 </form>
+{% endblock %}
 
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/bug-links.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery-ui-1.8.12.custom.min.js"></script>
+<script>
+  image_url = '{{ STATIC_URL }}dashboard_app/images/';
+  unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testrun' %}';
+  link_bug_url = '{% url 'dashboard_app.views.link_bug_to_testrun' %}';
+
+$(document).ready(function() {
+    add_bug_link();
+});
+
+</script>
 {% endblock %}
