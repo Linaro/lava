@@ -35,7 +35,7 @@
 
 {% block content %}
 {% if job.status >= job.RUNNING %}
-<a id="top" href="#bottom">Go to end of log file</a><br/><br/>
+<a class="btn btn-sm btn-default" id="top" href="#bottom">End of log file&nbsp;<span class="glyphicon glyphicon-fast-forward"/></a><br/><br/>
 {% endif %}
 
 <div class="row">
@@ -218,7 +218,7 @@
 {% endif %}
 
 <h4 class="modal-header">Dispatcher Log messages (file size = {{ job_file_size|filesizeformat }}) <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h4>
-<a href="#bottom">Go to end of log file</a><br/><br/>
+<a class="btn btn-sm btn-default" href="#bottom">End of log file&nbsp;<span class="glyphicon glyphicon-fast-forward"/></a><br/><br/>
 
 <div class="btn-group" data-toggle="buttons" id="logbuttons">
 {% for level in levels %}
@@ -244,7 +244,7 @@
 {% endif %}
 
 {% if job.status >= job.RUNNING %}
-<a id="bottom" href="#top">Go to start of log file</a>
+<a class="btn btn-sm btn-default" id="bottom" href="#top"><span class="glyphicon glyphicon-fast-backward"/>&nbsp;Start of log file</a>
 <br/><br/>
 <div class="row">
   <div class="col-md-6">
