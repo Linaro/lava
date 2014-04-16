@@ -1,85 +1,75 @@
-{% extends "dashboard_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
 
-
 {% block content %}
-<div id="tabs">
-  <ul>
-    <li><a href="#tab-software-packages">Software Packages</a></li>
-    <li><a href="#tab-software-sources">Software Sources</a></li>
-  </ul>
+<ul class="nav nav-tabs">
+  <li class="active"><a href="#Packages" data-toggle="tab">Packages</a></li>
+  <li><a href="#Sources" data-toggle="tab">Sources</a></li>
+</ul>
 
-  <div id="tab-software-packages">
-    <table class="demo_jui display" id="software_packages">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Version</th>
-        </tr>
-      </thead>
-      <tbody>
+{% with test_run.packages.count as packages_count %}
+<div class="tab-content">
+  <div class="tab-pane active" id="Packages">
+    <h4>Software packages</h4>
+    <div class="row">
+      <div class="col-md-6">
+        <dl class="dl-horizontal">
         {% for software_package in test_run.packages.all %}
-        <tr>
-          <td><a href="{{software_package.link_to_packages_ubuntu_com}}">{{software_package.name}}</a></td>
-          <td>{{software_package.version}}</td>
-        </tr>
+          {% if forloop.counter <= half_packages_count %}
+          <dt>{{ software_package.name }}</dt>
+          <dd>{{ software_package.version }}</dd>
+          {% endif %}
         {% endfor %}
-      </tbody>
-    </table>
+        </dl>
+      </div>
+      <div class="col-md-6">
+        <dl class="dl-horizontal">
+        {% for software_package in test_run.packages.all %}
+          {% if forloop.counter > half_packages_count %}
+          <dt>{{ software_package.name }}</dt>
+          <dd>{{ software_package.version }}</dd>
+          {% endif %}
+        {% endfor %}
+        </dl>
+      </div>
+    </div>
   </div>
-
-  <div id="tab-software-sources">
-    <table class="demo_jui display" id="software_sources">
-      <thead>
-        <tr>
-          <th>Project</th>
-          <th><abbr title="Version Control System">VCS</abbr></th>
-          <th>Branch</th>
-          <th>Tag or revision</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for software_source in test_run.sources.all %}
-        <tr>
-          {% if software_source.is_hosted_on_launchpad %}
-          <td><a href="{{ software_source.link_to_project }}">{{ software_source.project_name }}</a></td>
-          <td>{{software_source.branch_vcs}}</td>
-          <td><a href="{{ software_source.link_to_branch }}">{{ software_source.branch_url }}</a></td>
-          {% if software_source.is_tag_revision %}
-          <td>{{ software_source.branch_tag }}</td>
-          {% else %}
-          <td>{{ software_source.branch_revision }}</td>
-          {% endif %}
-          {% else %}
-          <td>{{software_source.project_name}}</td>
-          <td>{{software_source.branch_vcs}}</td>
-          <td>{{software_source.branch_url}}</td>
-          <td>{{software_source.branch_revision}}</td>
-          {% endif %}
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="tab-pane" id="Sources">
+    <div class="row">
+      {% for software_source in test_run.sources.all %}
+      <div class="col-md-6">
+        <h4 class="modal-header">{{ software_source.project_name }}</h4>
+        <dl class="dl-horizontal">
+        {% if software_source.is_hosted_on_launchpad %}
+          <dt>launchpad</dt>
+          <dd><a href="{{ software_source.link_to_project }}">{{ software_source.project_name }}</a></dd>
+        {% endif %}
+          <dt>VCS</dt>
+          <dd>{{software_source.branch_vcs}}</dd>
+          <dt>URL</dt>
+          <dd>{{software_source.branch_url}}</dd>
+        {% if software_source.is_tag_revision %}
+          <dt>Tag</dt>
+          <dd>{{ software_source.branch_tag }}</dd>
+        {% endif %}
+          <dt>Rev</dt>
+          <dd>{{software_source.branch_revision}}</dd>
+        </dl>
+      </div>
+      {% endfor %}
+    </div>
   </div>
 </div>
+{% endwith %}
+{% endblock %}
 
-<script type="text/javascript" charset="utf-8"> 
-  $(document).ready(function() {
-    $('#software_packages').dataTable({
-      bJQueryUI: true,
-    });
-    $('#software_sources').dataTable({
-      bJQueryUI: true
-    });
-    $("#tabs").tabs({
-      cache: true,
-      show: function(event, ui) {
-        var oTable = $('div.dataTables_scrollBody>table.display', ui.panel).dataTable();
-        if ( oTable.length > 0 ) {
-          oTable.fnAdjustColumnSizing();
-        }
-      }
-    });
-  });
-</script> 
+{% block scripts %}
+<script>
+$(function() {
+  var hash = document.location.hash;
+  if (hash) {
+    $('.nav-tabs a[href='+hash+']').tab('show');
+  }
+})
+</script>
 {% endblock %}

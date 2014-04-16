@@ -63,7 +63,7 @@
       <dd><a href="{% url 'dashboard_app.views.test_run_software_context' test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}">
             {{ test_run.packages.all.count }} packages</a></dd>
       <dt>{% trans "Software sources" %} (<abbr title="LAVA can track more data than just package name and version. You can track precise software information such as the version control system branch or repository, revision or tag name and more.">?</abbr>):</dt>
-      <dd><a href="{% url 'dashboard_app.views.test_run_software_context' test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}#tab-software-sources">
+      <dd><a href="{% url 'dashboard_app.views.test_run_software_context' test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}#Sources">
           {{ test_run.sources.all.count }} sources</a></dd>
     </dl>
   </div>
