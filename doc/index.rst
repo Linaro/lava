@@ -7,7 +7,7 @@ LAVA Manual
    :maxdepth: 2
 
    overview.rst
-   deployment-tool.rst
+   installation.rst
    single-deployment.rst
    distributed-deployment.rst
    writing-tests.rst
@@ -47,6 +47,7 @@ LAVA Administrator Guide
 
    configuration.rst
    running.rst
+   hiddentypes.rst
    sdmux.rst
    proxy.rst
    lava-image-creation.rst
@@ -73,4 +74,3 @@ Other Topics
    lava-scheduler-device-type-help.rst
    lava-scheduler-submit-job.rst
    lava-scheduler-job.rst
-   linaro-dashboard-bundle/index.rst

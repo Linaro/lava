@@ -1,0 +1,179 @@
+LAVA Installation
+*****************
+
+The default install provides an Apache2 config suitable for
+a LAVA server at ``http://localhost/`` once enabled.
+
+See :ref:`packaging_distribution` for more information or for
+debugging.
+
+Debian-based distributions
+##########################
+
+LAVA is currently packaged for Debian unstable using Django1.6 and
+Postgresql. Until LAVA packages are available from official repositories,
+the packages can be installed from ``people.linaro.org``::
+
+ $ sudo apt-get install emdebian-archive-keyring
+ $ sudo apt-get update
+ 
+Add the ``people.linaro.org`` LAVA source. Usually, you can just create
+a file called ``lava.list`` in ``/etc/apt/sources.list.d/``
+containing::
+
+ deb http://people.linaro.org/~neil.williams/lava sid main
+
+Update your apt sources to find the LAVA packages.
+
+ $ sudo apt-get update
+
+To install all of LAVA on a single machine, use::
+
+ $ sudo apt-get install postgresql
+ $ sudo apt-get install lava
+ $ sudo a2dissite 000-default
+ $ sudo a2ensite lava-server.conf
+ $ sudo service apache2 restart
+
+To install just the lava-server from the current packages, use::
+
+ $ sudo apt-get install lava-server
+ $ sudo a2dissite 000-default
+ $ sudo a2ensite lava-server.conf
+ $ sudo service apache2 restart
+
+This will install lava-dispatcher and lava-server but not
+linaro-media-create and other optional packages.
+
+Superuser
+#########
+
+A default lavaserver superuser is setup during package installation with
+a random password. The default superuser is not the same as the lavaserver
+system user nor the postgres user (despite the name)::
+
+ $ sudo lava-server manage createsuperuser --username default --email=$EMAIL
+
+This will prompt for name, email address and password.
+
+You can always delete this user later, but at least it gets
+you a default [sic] admin user with a password you know.
+
+To change the password of the dummy superuser, login as this new superuser
+at ``http://localhost/admin`` and select Users in the administrator interface.
+Selecting lavaserver brings up the details of the installation superuser
+and below the password field is a link to change the password without
+needing to know the random password.
+
+To delete the dummy superuser, login as this new superuser at
+``http://localhost/admin`` and select Users in the administrator interface.
+Select lavaserver and click the `Delete` link at the bottom of the page.
+
+Software Requirements
+=====================
+
+We currently recommend using Debian unstable. Work is ongoing to support
+Ubuntu and other distributions.
+
+If you'd like to help us with other distributions feel free to contact
+us at linaro-validation (at) lists (dot) linaro (dot) org.
+
+Hardware Requirements
+=====================
+
+A small LAVA instance can be deployed on any modest hardware. We
+recommend at least one 1GB of RAM for runtime activity (this is
+shared, on a single host, among the database server, the application
+server and the web server). For storage please reserve about 20GB for
+application data, especially if you wish to mirror current public LAVA
+instance used by Linaro.  LAVA uses append-only models so the storage
+requirements will grow at about several GB a year.
+
+Multi-Node hardware requirements
+--------------------------------
+
+If the instance is going to be sent any job submissions from third
+parties or if your own job submissions are going to use Multi-Node,
+there are additional considerations for hardware requirements.
+
+Multi-Node is explicitly about synchronising test operations across
+multiple boards and running Multi-Node jobs on a particular instance
+will have implications for the workload of that instance. This can
+become a particular problem if the instance is running on virtualised
+hardware with shared I/O, a limited amount of RAM or a limited number
+of available cores.
+
+.. note:: Downloading, preparing and deploying test images can result
+ in a lot of synchronous I/O and if this instance is running the server
+ and the dispatcher, running synchronised Multi-Node jobs can cause the
+ load on that machine to rise significantly, possibly causing the
+ server to become unresponsive.
+
+It is strongly recommended that Multi-Node instances use a separate
+dispatcher running on non-virtualised hardware so that the (possibly
+virtualised) server can continue to operate.
+
+Also, consider the number of boards connected to any one dispatcher. 
+MultiNode jobs will commonly compress and decompress several test image
+files of several hundred megabytes at precisely the same time. Even
+with a powerful multi-core machine, this has been shown to cause
+appreciable load. It is worth considering matching the number of boards
+to the number of cores for parallel decompression and matching the
+amount of available RAM to the number and size of test images which
+are likely to be in use.
+
+A note on Heartbeat
+===================
+The heartbeat data of the dispatcher node is sent to the database via
+xmlrpc. For this feature to work correctly the ``rpc2_url`` parameter
+should be set properly. Login as an admin user and go to
+http://localhost/admin/lava_scheduler_app/worker/ (replace localhost
+with your server name/IP). Click on the machine which is your master
+(in case of distributed deployment), or the machine that is listed in
+the page (in case of single LAVA instance). In the page that opens,
+set the "Master RPC2 URL:" with the correct value, if it is not set
+properly, already. Do not touch any other values in this page except
+the description, since all the other fields except description is
+populated automatically. The following figure illustrates this:
+
+.. image:: ./images/lava-worker-rpc2-url.png
+
+A note on wsgi buffers
+----------------------
+
+When submitting a large amount of data to the django application, 
+it is possible to get an HTTP 500 internal server error. This problem
+can be fixed by appending ``buffer-size = 65535`` to 
+``/etc/lava-server/uwsgi.ini``
+
+User authentication
+^^^^^^^^^^^^^^^^^^^
+
+LAVA frontend is developed using Django_ web application framework
+and user authentication and authorization is based on standard `Django
+auth subsystems`_. This means that it is fairly easy to integrate authentication
+against any source for which Django backend exists. Discussed below are
+tested and supported authentication methods for LAVA.
+
+.. _Django: https://www.djangoproject.com/
+.. _`Django auth subsystems`: https://docs.djangoproject.com/en/dev/topics/auth/
+
+OpenID + local user database
+=============================
+
+LAVA server by default is preconfigured to authenticate using
+Google+ OpenID service. However, this service is already deprecated and
+is due to be deactivated in September 2014. Local Django user accounts
+are supported at the same time. Using OpenID (registration
+is free) allows for quick start with LAVA bring-up and testing.
+
+When using local Django user accounts, new user accounts need to be
+created by Django admin prior to use.
+
+Contact and bug reports
+========================
+
+Please report bugs using
+https://bugs.launchpad.net/lava-deployment-tool/+filebug
+
+Feel free to contact us at validation (at) linaro (dot) org.

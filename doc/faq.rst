@@ -165,64 +165,37 @@ Either remove this file or change the autostart values to::
   X-GNOME-AutoRestart=false
   X-GNOME-Autostart-Notify=false
 
-Installation problems/failures with lava-deployment-tool and
-postgresql (on Ubuntu 12.04.2)
+.. _ser2net:
 
-Ran::
+Ser2net daemon
+--------------
 
-  $ ./lava-deployment-tool setup
-  $ ./lava-deployment-tool install testinstance
+ser2net provides a way for a user to connect from a network connection to a serial port, usually over telnet.
 
-and noticed the following error::
+http://ser2net.sourceforge.net/
 
-  psql: could not connect to server: No such file or directory
-  Is the server running locally and accepting connections on Unix domain
-  socket /var/run/postgresql/.s.PGSQL.5432"?
-  createuser: could not connect to database postgres: could not connect
-  to server: No such file or directory
+Example config (in /etc/ser2net.conf)
 
-If you look in /var/log/postgresql/postgresql-9.1-main.log you may
-find an entry that looks like::
-
-  BST FATAL:  could not create shared memory segment: Invalid argument
-  BST DETAIL:  Failed system call was shmget(key=5432001, size=41263104,
-  03600).
-  BST HINT:  This error usually means that PostgreSQL's request for a
-  shared memory segment exceeded your kernel's SHMMAX parameter.  You
-  can either reduce the request size or reconfigure the kernel with
-  larger SHMMAX.  To reduce the request size (currently 41263104 bytes),
-  reduce PostgreSQL's shared memory usage, perhaps by reducing
-  shared_buffers or max_connections.
-
-The PostgreSQL documentation contains more information about shared
-memory configuration.
-
-Changed the entry for shared_buffers in
-/etc/postgresql/9.1/main/postgresql.conf from 32MB to 8MB and 
-restarted the service ::
-
-  $ sudo service postgresql restart 
-   * Restarting PostgreSQL 9.1 database server  [ OK ] 
-  $ sudo service postgresql status
-  Running clusters: 9.1/main
-
-The alternative, as suggested, is to increase the size of
-kernel.shmmax value (e.g., 8589934592) in /etc/sysctl.conf and reload
 ::
+ #port:connectiontype:idle_timeout:serial_device:baudrate databit parity stopbit
+ 7001:telnet:36000:/dev/serial_port1:115200 8DATABITS NONE 1STOPBIT
 
-  $ sudo sysctl -p
 
-If you were now to reinstall the testinstance you should no longer see
-the error about not being able to connect to the database when the
-instance is created. ::
+StarTech rackmount usb
+-----------------------
 
-  $ ./lava-deployment-tool remove testinstance
-  $ ./lava-deployment-tool install testinstance
+W.I.P
 
-With these changes in place the Lava instance is available on
-reboot. It would previously fail because the postgres service had
-failed to load (i.e., could not create shared memory segment: Invalid
-argument).
+* udev rules
+
+::
+ SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="ST167570", SYMLINK+="rack-usb02"
+ SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="ST167569", SYMLINK+="rack-usb01"
+ SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="ST167572", SYMLINK+="rack-usb04"
+ SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="ST167571", SYMLINK+="rack-usb03"
+
+This will create a symlink in /dev called rack-usb01 etc. which can then be addressed in the :ref:`_ser2net` config file.
+
 
 Vagrant
 -------

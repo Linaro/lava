@@ -1,62 +1,7 @@
+.. _packaging_distribution:
+
 Packaging lava-server for distributions
 ***************************************
-
-The default install provides an Apache2 config suitable for
-a LAVA server at ``http://localhost/`` once enabled.
-
-Current versions of LAVA depend on django 1.4 and do not
-operate with django 1.5. Patches exist to migrate to 1.6
-and these have been applied to the current packages. If
-building packages directly from LAVA upstream git, a
-snapshot version of python-django **must** be used.
-
-Debian-based distributions
-##########################
-
-To install all of LAVA on a single machine, use::
-
- $ sudo apt-get install postgresql postgresql-9.1
- $ wget http://snapshot.debian.org/archive/debian/20130224T223605Z/pool/main/p/python-django/python-django_1.4.5-1_all.deb
- $ sudo dpkg -i python-django_1.4.5-1_all.deb
- $ sudo apt-get install lava
- $ sudo a2dissite 000-default
- $ sudo a2ensite lava-server.conf
- $ sudo service apache2 restart
-
-To install just the lava-server from the current packages
-patched to support django1.6, use::
-
- $ sudo apt-get install lava-server
- $ sudo a2dissite 000-default
- $ sudo a2ensite lava-server.conf
- $ sudo service apache2 restart
-
-This will install lava-dispatcher and lava-server but not
-linaro-media-create and other optional packages.
-
-Superuser
-*********
-
-A default lavaserver superuser is setup during package installation with
-a random password. The default superuser is not the same as the lavaserver
-system user nor the postgres user (despite the name)::
-
- $ sudo lava-server manage createsuperuser --username default --email=$EMAIL
-
-This will prompt for name, email address and password.
-
-You can always delete this user later, but at least it gets
-you a default [sic] admin user with a password you know.
-
-To change the password of the dummy superuser, login as this new superuser
-at ``http://localhost/admin`` and select Users in the administrator interface.
-Selecting lavaserver brings up the details of the installation superuser
-and below the password field is a link to change the password without
-needing to know the random password.
-
-To delete the dummy superuser, login as this new superuser at
-``http://localhost/admin`` and select Users in the administrator interface.
-Select lavaserver and click the `Delete` link at the bottom of the page.
 
 Apache distribution support
 ***************************
@@ -246,7 +191,7 @@ Developing LAVA on Debian
 *************************
 
 When using the packages to develop LAVA, there is a change to
-the workflow compared to lava-deployment-tool buildouts.
+the workflow compared to the old lava-deployment-tool buildouts.
 
 .. _dev_builds:
 
@@ -266,10 +211,9 @@ name of the package to build::
  $ /usr/share/lava-server/debian-dev-build.sh lava-server
 
 The packages will be built in a temporary directory using a version string
-based on the current git tag and the latest git commit hash. You can use
-lightweight git tags to make incremental builds. The helper outputs the
-location of all the built packages at the end of a successful build,
-ready for use with ``$ sudo dpkg -i``.
+based on the current git tag and the time of the build. The helper
+outputs the location of all the built packages at the end of a successful
+build, ready for use with ``$ sudo dpkg -i``.
 
 .. note:: the helper does **not** install the packages for you, neither
           do the packages restart apache, although the ``lava-server``

@@ -47,8 +47,7 @@ The major LAVA components are depicted below::
 On single-server deployments, both the web interface and the worker
 components (scheduler daemon + dispatcher) run on a same server. You can
 also install one or more separated worked nodes, that will only run
-scheduler daemon + dispatcher. Learn more about that on
-:ref:`lava-deployment-tool`.
+scheduler daemon + dispatcher.
 
 Pre-requisites to start with development
 ****************************************
@@ -63,43 +62,6 @@ you will need to Django if you need to modify the web interface.
 Also, you will need git_.
 
 .. _git: http://www.git-scm.org/
-
-
-Setting up a development environment
-************************************
-
-LAVA is tested on Ubuntu 12.04, so that's the recommended deployment
-environment. Likewise, when developing LAVA you should test against
-Ubuntu 12.04.
-
-The best way to create a development environment is to install a LAVA
-instance in development mode::
-
-    $ lava-deployment-tool --developer-mode development
-
-In the above example our development instance is conveniently callled
-"development".
-
-The next step is to install a local repository into the instance. Let's
-exemplify that with lava-server here, but you can do the same for
-lava-dispatcher as well.
-
-The first step is to clone the repository locally::
-
-    $ git clone http://git.linaro.org/git-ro/lava/lava-server.git
-
-Then install your local repository into the instance with::
-
-    $ /srv/lava/instances/development/bin/lava-develop-local /path/to/lava-server
-
-With the above command, your LAVA instance will use your local
-lava-server copy at `/path/to/lava-server` as the source for the
-corresponding component.
-
-Example: making a change to lava-server
-***************************************
-
-*TODO*
 
 Contributing Upstream
 *********************
