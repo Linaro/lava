@@ -2353,12 +2353,14 @@ class ImageChartTest(models.Model):
         content_type_id = ContentType.objects.get_for_model(TestRun).id
         test_run_id_list = TestRun.objects.filter(
             test=self.test).values_list('id', flat=True)
-        result = NamedAttribute.objects.filter(
-            object_id__in=list(test_run_id_list),
-            content_type_id=content_type_id).distinct().order_by('name').values_list('name', flat=True)
+
+        result = NamedAttribute.objects.all()
+        result = result.filter(
+            content_type_id=content_type_id,
+            object_id__in=list(test_run_id_list)).distinct().order_by('name').values_list('name', flat=True)
 
         attributes = [str(name) for name in result]
-        return attributes
+        return list(set(attributes))
 
 
 class ImageChartTestAttribute(models.Model):
@@ -2411,12 +2413,14 @@ class ImageChartTestCase(models.Model):
         content_type_id = ContentType.objects.get_for_model(TestRun).id
         test_run_id_list = TestRun.objects.filter(
             test=self.test_case.test).values_list('id', flat=True)
-        result = NamedAttribute.objects.filter(
-            object_id__in=list(test_run_id_list),
-            content_type_id=content_type_id).distinct().order_by('name').values_list('name', flat=True)
+
+        result = NamedAttribute.objects.all()
+        result = result.filter(
+            content_type_id=content_type_id,
+            object_id__in=list(test_run_id_list)).distinct().order_by('name').values_list('name', flat=True)
 
         attributes = [str(name) for name in result]
-        return attributes
+        return list(set(attributes))
 
 
 class ImageChartTestCaseAttribute(models.Model):
