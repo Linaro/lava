@@ -32,6 +32,12 @@ owner group for a device of this type). Generally, the private bundle
 streams used for any devices of a hidden type will therefore be owned
 by the same user or group as the devices themselves.
 
+.. note:: A TestJob is public unless a bundle stream is supplied and
+          that bundle stream is private. Therefore, a TestJob for a
+          device of a hidden device type **must** include a submit_results
+          section with a private bundle stream or it will not be
+          accepted for submission.
+
 Health Checks
 =============
 
