@@ -1,18 +1,6 @@
-{% extends "dashboard_app/_content_with_sidebar.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
 {% load humanize %}
-
-{% block extrahead %}
-{{ block.super }}
-<script language="javascript">
-  csrf_token = '{{csrf_token}}';
-</script>
-<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/test_result_detail.js"></script>
-<style type="text/css">
-dt { font-weight: bold }
-dd pre { margin: 0;}
-</style>
-{% endblock %}
 
 {% block content %}
 <h2 class="modal-header">Test Result: {{ test_result.test_case|default:"<i>unknown test case</i>" }}</h2>
@@ -21,163 +9,201 @@ In the <i>"You are here"</i> breadcrumb list above, click the Run link to go up 
 full details of the test job which generated this test result.</p>
 <p>If the test result output was captured as an attachment of the test run, the attachment name and line number will be
 shown as links. The same output can also be viewed in the attachments of the test run itself.</p>
-</p>
+
 <div class="row">
-<div class="col-md-6">
-<h3 class="modal-header">Metadata</h3>
-<dl class="horizontal">
-  <dt>ID</dt>
-  <dd>
-    <small><span style="white-space:nowrap">{{ test_result.test_run.analyzer_assigned_uuid }}/{{ test_result.relative_index }}</span> (<a href="{{ test_result.get_permalink }}">{% trans "permalink" %}</a>)</small>
-  </dd>
-  <dt>Test Case</dt>
-  <dd>
+  <div class="col-md-4">
+    <h4 class="modal-header">Metadata</h4>
+    <dl class="horizontal">
+      <dt>ID</dt>
+      <dd>
+        <small><span style="white-space:nowrap">{{ test_result.test_run.analyzer_assigned_uuid }}/{{ test_result.relative_index }}</span> (<a href="{{ test_result.get_permalink }}">{% trans "permalink" %}</a>)</small>
+      </dd>
+      <dt>Test Case</dt>
+      <dd>
     {% if test_result.test_case %}
-    <b>{{ test_result.test_case }}</b>
+      <b>{{ test_result.test_case }}</b>
     {% else %}
-    <i>{% trans "unknown test case" %}</i>
+      <i>{% trans "unknown test case" %}</i>
     {% endif %}
-    {% trans "from test" %} <b><a href="{{ test_result.test_run.test.get_absolute_url }}">{{ test_result.test_run.test }}</a></b>
-  </dd>
-</dl>
-<h3 class="modal-header">Result Attributes</h3>
-{% with test_result.attributes.values as attrs %}
-<ul class="attributes">
-  {% for item in attrs|dictsort:"name" %}
-  <li>{{ item.name }}&nbsp;=&nbsp;{{ item.value }}</li>
-  {% empty %}
-  <i>none</i>
-  {% endfor %}
-</ul>
-{% endwith %}
-</div>
-<div class="col-md-6">
-<h3 class="modal-header">Run Attributes</h3>
-{% with test_result.test_run.attributes.values as attrs %}
-<ul class="attributes">
-  {% for item in attrs|dictsort:"name" %}
-  <li>{{ item.name }}&nbsp;=&nbsp;{{ item.value }}</li>
-  {% empty %}
-  <i>none</i>
-  {% endfor %}
-</ul>
-{% endwith %}
-</dl>
-</div>
-</div>
+      {% trans "from test" %} <b><a href="{{ test_result.test_run.test.get_absolute_url }}">{{ test_result.test_run.test }}</a></b></dd>
+    </dl>
+  </div>
 
-<dl>
-<h3 class="modal-header">Test result details</h3>
-  <dt>{% trans "Outcome" %}</dt>
-  <dd>
-    <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ test_result.result_code }}.png"
-         alt="{{ test_result.result_code }}" width="16" height="16" border="0"/>
-    {{ test_result.result_code }}
-  </dd>
-  <dt>{% trans "Measurement" %}</dt>
-  <dd>
-  {% if test_result.measurement != None %}
-    {{ test_result.measurement }} {{ test_result.test_case.units }}
-  {% else %}
-    <i>{% trans "no measurement taken" %}</i>
-  {% endif %}
-  </dd>
-  <dt>{% trans "Test Result output file and location" %}</dt>
-  <dd>
-    {% if test_result.filename %}
-        {% if test_result.related_attachment_available and test_result.related_attachment.is_viewable %}
-        {% with test_result.related_attachment as attachment %}
-        <a href="{{ attachment.get_view_url }}">{{ test_result.filename }}</a> line <a href="{{ attachment.get_view_url }}#L{{test_result.lineno}}">{{ test_result.lineno }}</a>
-        {% endwith %}
-        {% else %}
-            {{ test_result.filename }} line {{ test_result.lineno }}
-        {% endif %}
-    {% else %}
-        <i>{% trans "no output captured for this test result" %}</i>
-    {% endif %}
-  </dd>
-  <dt>{% trans "Message from the log file" %}</dt>
-  <dd>
-  {% if test_result.message %}
-    <pre>{{ test_result.message }}</pre>
-  {% else %}
-    <i>{% trans "no message was captured for this test result" %}</i>
-  {% endif %}
-  </dd>
-  <dt>{% trans "Test started on" %}</dt>
-  <dd>
-  {% if test_result.timestamp %}
-    {{ test_result.timestamp|naturalday }}
-    {{ test_result.timestamp|time }}
-  {% else %}
-    <i>{% trans "test result did not output a start time" %}</i>
-  {% endif %}
-  </dd>
-  <dt>{% trans "Test duration" %}</dt>
-  <dd>
-  {% if test_result.duration %}
-    {# TODO need a filter for displaying this sensibly. Currently there are some rounding errors #}
-    {{ test_result.duration }}
-  {% else %}
-    <i>{% trans "test result did not output a duration" %}</i>
-  {% endif %}
-  </dd>
-</dl>
-
-<h3 id="comments" class="modal-header">Comments
-<span class="glyphicon glyphicon-pencil"></span></h3>
-
-<div id="comments_container" style="clear: both;">
-{% if test_result.comments %}
-{{ test_result.comments|linebreaksbr }}
-{% else %}
-<i>{% trans "no comments" %}</i>
-{% endif %}
-</div>
-<div id="comments_edit_dialog">
-<div>
-<textarea id="comments_text" cols="40" rows="10" style="resize: none;">
-{{ test_result.comments|default_if_none:"" }}
-</textarea>
-</div>
-<div>
-  <button class="btn btn-success" onclick="comments_dialog_callback()" id="comments_save">Save</button>
-</div>
-</div>
-
-<h3 id="attachments">Attachments</h3>
-
-{% include "dashboard_app/_attachments.html" with attachments=test_result.attachments %}
-
-{% if test_result.test_run.get_results.count > 1 %}
-<h3>Other results from the same test run</h3>
-
-<div class="btn-group dropup">
-  <button type="button" class="btn btn-default">{{ test_result.test_case }}</button>
-  <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-    <span class="caret"></span>
-    <span class="sr-only">Toggle Dropdown</span>
-  </button>
-  <ul class="dropdown-menu">
-  {% regroup test_result.test_run.get_results by test_case as test_result_group_list %}
-  {% for test_result_group in test_result_group_list %}
-    {% for other_test_result in test_result_group.list %}
-    <li><a href="{{ other_test_result.get_absolute_url }}">
-    {% if other_test_result.pk == test_result.pk %}disabled selected{% endif %}
-      Result #{{ other_test_result.relative_index }}: {{ other_test_result.get_result_display }}
-      {% if test_result_group.list|length == 1 %} from test case {{ test_result_group.grouper }}{% endif %}
-      {% if other_test_result.measurement != None %} ({{ other_test_result.measurement }}){% endif %}
-    </a></li>
+  <div class="col-md-4">
+    <h4 class="modal-header">Run Attributes</h4>
+  {% with test_result.test_run.attributes.values as attrs %}
+    <ul class="attributes">
+    {% for item in attrs|dictsort:"name" %}
+      <li>{{ item.name }}&nbsp;=&nbsp;{{ item.value }}</li>
+    {% empty %}
+      <i>none</i>
     {% endfor %}
-  {% endfor %}
-  </ul>
+    </ul>
+  {% endwith %}
+  </div>
+
+  <div class="col-md-4">
+    <h4 class="modal-header">Result Attributes</h4>
+  {% with test_result.attributes.values as attrs %}
+    <ul class="attributes">
+    {% for item in attrs|dictsort:"name" %}
+      <li>{{ item.name }}&nbsp;=&nbsp;{{ item.value }}</li>
+    {% empty %}
+      <i>none</i>
+    {% endfor %}
+    </ul>
+  {% endwith %}
+  </div>
 </div>
 
-<script type="text/javascript">
-  $("#other_results").change(function (event) {
-    location.href=$(this).val();
+<div class="row">
+  <div class="col-md-6">
+    <h3 class="modal-header">Test result details</h3>
+    <dl class="dl-horizontal">
+      <dt>{% trans "Outcome" %}</dt>
+      <dd>
+        <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ test_result.result_code }}.png"
+             alt="{{ test_result.result_code }}" width="16" height="16" border="0"/>
+        {{ test_result.result_code }}
+      </dd>
+      <dt>{% trans "Measurement" %}</dt>
+      <dd>
+      {% if test_result.measurement != None %}
+        {{ test_result.measurement }} {{ test_result.test_case.units }}
+      {% else %}
+        <i>{% trans "no measurement taken" %}</i>
+      {% endif %}
+      </dd>
+      <dt>{% trans "output file/location" %}</dt>
+      <dd>
+        {% if test_result.filename %}
+            {% if test_result.related_attachment_available and test_result.related_attachment.is_viewable %}
+            {% with test_result.related_attachment as attachment %}
+            <a href="{{ attachment.get_view_url }}">{{ test_result.filename }}</a> line <a href="{{ attachment.get_view_url }}#L{{test_result.lineno}}">{{ test_result.lineno }}</a>
+            {% endwith %}
+            {% else %}
+                {{ test_result.filename }} line {{ test_result.lineno }}
+            {% endif %}
+        {% else %}
+            <i>{% trans "no output captured for this test result" %}</i>
+        {% endif %}
+      </dd>
+      <dt>{% trans "Message from the log file" %}</dt>
+      <dd>
+      {% if test_result.message %}
+        <pre>{{ test_result.message }}</pre>
+      {% else %}
+        <i>{% trans "no message was captured for this test result" %}</i>
+      {% endif %}
+      </dd>
+      <dt>{% trans "Test started on" %}</dt>
+      <dd>
+      {% if test_result.timestamp %}
+        {{ test_result.timestamp|naturalday }}
+        {{ test_result.timestamp|time }}
+      {% else %}
+        <i>{% trans "test result did not output a start time" %}</i>
+      {% endif %}
+      </dd>
+      <dt>{% trans "Test duration" %}</dt>
+      <dd>
+      {% if test_result.duration %}
+        {# TODO need a filter for displaying this sensibly. Currently there are some rounding errors #}
+        {{ test_result.duration }}
+      {% else %}
+        <i>{% trans "test result did not output a duration" %}</i>
+      {% endif %}
+      </dd>
+    </dl>
+  </div>
+
+  <div class="col-md-6">
+    <h3 id="comments" class="modal-header">Comments <button class="btn btn-xs btn-info" data-toggle="modal" data-target="#commentModal"><span class="glyphicon glyphicon-pencil"></span></button></h3>
+    <div class="modal fade" id="commentModal" tabindex="-1" role="dialog" aria-labelledby="commentModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title" id="commentModalLabel">Update comments</h4>
+          </div>
+          <div class="modal-body">
+            <textarea id="comments_text" cols="40" rows="10">{{ test_result.comments|default_if_none:"" }}</textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="saveBtn">Save changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="comments_container">
+    {% if test_result.comments %}
+      {{ test_result.comments|linebreaksbr }}
+    {% else %}
+      <i>{% trans "no comments" %}</i>
+    {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <h4 class="modal-header" id="attachments">Attachments</h4>
+    {% include "dashboard_app/_attachments.html" with attachments=test_result.attachments %}
+  </div>
+  <div class="col-md-6">
+    {% if test_result.test_run.get_results.count > 1 %}
+    <h4 class="modal-header">Other results from the same test run</h4>
+    <div class="btn-group dropup">
+      <button type="button" class="btn btn-default">{{ test_result.test_case }}</button>
+      <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+        <span class="caret"></span>
+        <span class="sr-only">Toggle Dropdown</span>
+      </button>
+      <ul class="dropdown-menu">
+      {% regroup test_result.test_run.get_results by test_case as test_result_group_list %}
+      {% for test_result_group in test_result_group_list %}
+        {% for other_test_result in test_result_group.list %}
+        <li{% if other_test_result.pk == test_result.pk %} class="disabled"{% endif %}><a href="{{ other_test_result.get_absolute_url }}">
+          Result #{{ other_test_result.relative_index }}: {{ other_test_result.get_result_display }}
+          {% if test_result_group.list|length == 1 %} for {{ test_result_group.grouper }}{% endif %}
+          {% if other_test_result.measurement != None %} ({{ other_test_result.measurement }}){% endif %}
+        </a></li>
+        {% endfor %}
+      {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  $(function() {
+    $('#saveBtn').click(function(e) {
+      var comments = $('#comments_text').val();
+      var url_addition = "";
+      if (window.location.pathname[
+        window.location.pathname.length-1] != "/") {
+        url_addition = "/";
+      }
+      var url = window.location.pathname + url_addition + "+update-comments";
+
+      $.ajax({
+          url: url,
+          type: "POST",
+          data: {
+            'csrfmiddlewaretoken': '{{ csrf_token }}',
+            'comments': comments,
+          },
+          success: function (data) {
+            $('#commentModal').modal('hide');
+            $('#comments_container').html(
+              data[0].fields.comments.replace(/\n/g, "<br/>"));
+            },
+        });
+    });
   });
 </script>
-{% endif %}
-
 {% endblock %}
