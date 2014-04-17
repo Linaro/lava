@@ -33,7 +33,7 @@
 <p>Jobs have been created with the IDs:</p>
 <ul>
 {% for job in job_list %}
-  <li><a href="{% url 'lava.scheduler.job.detail job' %}">{{ job }}</a></li>
+  <li><a href="{% url 'lava.scheduler.job.detail' job %}">{{ job }}</a></li>
 {% endfor %}
 </ul>
 <p>To view the full job list click <a href="{{ list_url }}">here</a>.</p>
