@@ -272,6 +272,7 @@ set_chart_test_data = function(data) {
     $("#dialog_test_name").html(data.test_name);
     $("#chart_test_id").val(data.id);
     $("#alias").val(data.name);
+    $("#attributes").empty();
     $(data.all_attributes).each(function(iter, value) {
         $("#attributes").append($("<option>", {value: value, html: value}));
     });

@@ -75,13 +75,14 @@
       return value;
     }, {onblur: "submit"});
 
-    $("#image_chart_filter").focus(function(event) {
+    $("#image_chart_filter").on("click", function() {
+        var field = $(this).find("input");
         {% if not instance.filter %}
-        $(event.target).val("");
+        field.val("");
         {% endif %}
-        $(event.target).autocomplete({
+        field.autocomplete({
             source: '{% url 'dashboard_app.views.filters.views.filter_name_list_json' %}',
-            minLength: 2,
+            minLength: 1,
             select: function(event, ui) {
               filter_select_callback(ui.item, '{{ image_chart.id }}');
             }

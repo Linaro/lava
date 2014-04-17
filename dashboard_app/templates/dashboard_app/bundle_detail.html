@@ -10,6 +10,14 @@
 {% include "_tablesort.html" %}
 {% endblock %}
 
+{% block content %}
+
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/bug-links.js"></script>
+<script language="javascript">
+  image_url = '{{ STATIC_URL }}dashboard_app/images/';
+  unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testrun' %}';
+  link_bug_url = '{% url 'dashboard_app.views.link_bug_to_testrun' %}';
+</script>
 
 {% block content %}
 

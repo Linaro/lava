@@ -83,11 +83,12 @@
     }
   });
 
-  $("#image_report_group").focus(function(event) {
+  $("#image_report_group").on("click", function(event) {
+      var field = $(this).find("input");
       {% if not image_report.image_report_group %}
-        $(event.target).val("");
+        field.val("");
       {% endif %}
-      $(event.target).autocomplete({
+      field.autocomplete({
         source: '{% url 'dashboard_app.views.image_reports.views.image_report_group_list' %}',
         minLength: 2,
       });
