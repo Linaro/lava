@@ -48,11 +48,17 @@
 <div class="row">
   <div class="col-md-6">
     <h4 class="modal-header">Personal reports</h4>
-    <ul>
-      <li><a href="{% url 'lava.scheduler.myjobs' %}">Your jobs</a></li>
-      <li><a href="{% url 'dashboard_app.views.mybundlestreams' %}">Your bundle streams</a></li>
-      <li><a href="{% url 'lava.scheduler.mydevice_list' %}">Your devices</a></li>
-    </ul>
+    <ul class="nav nav-pills nav-stacked">
+      <li>
+        <a href="{% url 'lava.scheduler.myjobs' %}"><span class="glyphicon glyphicon-tasks pull-right"></span> Your jobs</a>
+      </li>
+      <li>
+        <a href="{% url 'dashboard_app.views.mybundlestreams' %}"><span class="glyphicon glyphicon-folder-open pull-right"></span> Your bundle streams</a>
+      </li>
+      <li>
+        <a href="{% url 'lava.scheduler.mydevice_list' %}"><span class="glyphicon glyphicon-phone pull-right"></span> Your devices</a>
+      </li>
+    </div>
   </div>
 </div>
 
