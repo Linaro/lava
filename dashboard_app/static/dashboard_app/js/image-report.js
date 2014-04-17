@@ -2,7 +2,7 @@ function _resize() {
     // I couldn't figure out how to do this in CSS: resize the table
     // so that it takes as much space as it can without expanding the
     // page horizontally.
-    var space = parseInt($("#lava-breadcrumbs").outerWidth() - $("#outer-table").outerWidth());
+    var space = parseInt($(".breadcrumb").outerWidth() - $("#outer-table").outerWidth());
     space -= $("#lava-content").outerWidth() - $("#lava-content").width();
     var table = $("#results-table"), scroller=$("#scroller");
     var atRight = scroller.width() + scroller.scrollLeft() >= table.attr('scrollWidth');
@@ -103,7 +103,7 @@ function update_table(column_data, table_data, test_run_names) {
 	    if (test_name.length > 20) {
 		test_name = test_name.substring(0,20) + "...";
 	    }
-	    test_name_rows += "<tr><td tooltip='" + test_run_names[iter] + "'>" + test_name + "</td></tr>";
+	    test_name_rows += "<tr><td title='" + test_run_names[iter] + "'>" + test_name + "</td></tr>";
 	}
     }
     $("#test-run-names tbody").html(test_name_rows);
@@ -190,15 +190,7 @@ function update_filter_link() {
 
 function update_tooltips() {
     // Update tooltips on the remaining td's for the test names.
-    $("td", "#test-run-names").each(function () {
-	if ($(this).attr('tooltip')) {
-	    $(this).tooltip({
-		bodyHandler: function() {
-		    return $(this).attr('tooltip');
-		}
-	    });
-	}
-    });
+    $(document).tooltip({items: "td"});
 }
 
 function store_filters() {
@@ -563,7 +555,6 @@ $(window).ready(
 	if (!$("#toggle_graph").attr("checked")) {
 	    $("#outer-container").toggle();
 	}
-
     });
 // Because what resize does depends on the final sizes of elements,
 // run it again after everything is loaded (things end up wrong in

@@ -113,10 +113,11 @@ $(document).ready(function () {
     }
 
     ImageChart.prototype.setup_print_menu = function() {
-        $("#print_menu_" + this.chart_id).menu({menus: "div"});
-        $("#print_menu_" + this.chart_id).hide();
-        $("#print_menu_" + this.chart_id).mouseleave(function() {
-            $("#print_menu_" + this.chart_id).hide();
+        chart_id = this.chart_id;
+        $("#print_menu_" + chart_id).menu();
+        $("#print_menu_" + chart_id).hide();
+        $("#print_menu_" + chart_id).mouseleave(function() {
+            $("#print_menu_" + chart_id).hide();
         });
     }
 
@@ -186,14 +187,14 @@ $(document).ready(function () {
                 '</span>');
 
         $("#filter_links_container_" + this.chart_id).append(
-            '<div class="print-menu" id="print_menu_' + this.chart_id + '">' +
-                '<div class="print-menu-item"><a href="#" id="chart_csv_' +
+            '<ul class="print-menu" id="print_menu_' + this.chart_id + '">' +
+                '<li class="print-menu-item"><a href="#" id="chart_csv_' +
                 this.chart_id + '">' +
-                'Download as CSV</a></div>' +
-                '<div class="print-menu-item"><a target="_blank" href="#"' +
+                'Download as CSV</a></li>' +
+                '<li class="print-menu-item"><a target="_blank" href="#"' +
                 ' id="chart_img_' + this.chart_id +
-                '">View as image</a></div>' +
-                '</div>');
+                '">View as image</a></li>' +
+                '</ul>');
 
         this.setup_print_menu();
     }
@@ -321,7 +322,7 @@ $(document).ready(function () {
                 if (test_name.length > 10) {
                     test_name = test_name.substring(0,10) + "...";
                 }
-                table_rows += "<tr><td tooltip='" + test_data["alias"] +
+                table_rows += "<tr><td title='" + test_data["alias"] +
                     "'>" + test_name + "</td></tr>";
             }
         }
@@ -457,15 +458,7 @@ $(document).ready(function () {
 
     ImageChart.prototype.update_tooltips = function() {
         // Update tooltips on the remaining td's for the test names.
-        $("td", "#test-run-names_" + this.chart_id).each(function () {
-            if ($(this).attr('tooltip')) {
-                $(this).tooltip({
-                    bodyHandler: function() {
-                        return $(this).attr('tooltip');
-                    }
-                });
-            }
-        });
+        $(document).tooltip({items: "td"});
     }
 
     ImageChart.prototype.set_dates = function() {
@@ -551,12 +544,12 @@ $(document).ready(function () {
 
         $("#is_legend_visible_"+this.chart_id).change(function() {
             chart.update_plot();
+            chart.update_settings();
         });
 
         if (this.chart_data["chart_type"] == "pass/fail") {
             $("#is_percentage_"+this.chart_id).change(function() {
                 chart.update_plot();
-                chart.update_settings();
             });
         }
 
@@ -575,7 +568,7 @@ $(document).ready(function () {
                     this.chart_data.user.start_date);
             }
             if (this.chart_data.user.is_legend_visible == false) {
-                $("#is_legend_visible_" + this.chart_id).attr("checked",
+                $("#is_legend_visible_" + this.chart_id).prop("checked",
                                                               false);
             }
 
@@ -596,7 +589,7 @@ $(document).ready(function () {
             data: {
                 csrfmiddlewaretoken: csrf_token,
                 start_date: $("#start_date_" + this.chart_id).val(),
-                is_legend_visible: $("#is_legend_visible_" + this.chart_id).attr("checked"),
+                is_legend_visible: $("#is_legend_visible_" + this.chart_id).prop("checked"),
                 has_subscription: $("#has_subscription_" + this.chart_id).val(),
             },
             success: function (data) {
@@ -687,7 +680,7 @@ $(document).ready(function () {
                 iter = plot_data[test_filter_id]["data"].length;
 
                 if (this.chart_data["chart_type"] == "pass/fail") {
-                    if ($("#is_percentage_" + this.chart_id).attr("checked") == true) {
+                    if ($("#is_percentage_" + this.chart_id).prop("checked") == true) {
                         value = parseFloat(row["passes"]/row["total"]).toFixed(4) * 100;
                         tooltip = "Pass rate: " + value + "%";
                     } else {
@@ -719,7 +712,7 @@ $(document).ready(function () {
                     if (label == "") {
                         label = "/static/dashboard_app/images/icon-info.png";
                     }
-                    if (chart_data["chart_type"] == "pass/fail") {
+                    if (this.chart_data["chart_type"] == "pass/fail") {
                         tooltip += "Has comments<br>";
                     } else {
                         tooltip += row["comments"] + "<br>";
@@ -885,7 +878,7 @@ $(document).ready(function () {
         chart_width = $("#inner_container_" + this.chart_id).width();
 
         show_legend = true;
-        if ($("#is_legend_visible_" + this.chart_id).attr("checked") == false) {
+        if ($("#is_legend_visible_" + this.chart_id).prop("checked") == false) {
             $("#legend_container_" + this.chart_id).html("");
             $("#legend_container_" + this.chart_id).css("width", "0");
             $("#inner_container_" + this.chart_id).css("width", "98%");
@@ -964,7 +957,7 @@ $(document).ready(function () {
             canvas: true,
         };
 
-        if ($("#is_percentage_" + this.chart_id).attr("checked") == true) {
+        if ($("#is_percentage_" + this.chart_id).prop("checked") == true) {
             options["yaxis"]["max"] = 105;
             options["yaxis"]["min"] = 0;
         }
@@ -1031,7 +1024,7 @@ $(document).ready(function () {
     }
 
     toggle_print_menu = function(e, chart_id) {
-        $("#print_menu_" + chart_id).toggle();
+        $("#print_menu_" + chart_id).show();
         $("#print_menu_" + chart_id).offset({left: e.pageX, top: e.pageY});
     }
 

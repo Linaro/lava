@@ -60,6 +60,7 @@ urlpatterns = patterns(
     url(r'^permalink/bundle/(?P<content_sha1>[0-9a-z]+)/$', 'redirect_to_bundle'),
     url(r'^permalink/bundle/(?P<content_sha1>[0-9a-z]+)/(?P<trailing>.*)$', 'redirect_to_bundle'),
     url(r'^image-reports/$', 'images.image_report_list'),
+    url(r'^image-reports/(?P<name>[A-Za-z0-9_-]+)$', 'images.image_report_detail'),
     url(r'^image-charts/$', 'image_reports.views.image_report_list',
         name='image_report_list'),
     url(r'^image-charts/get-report-groups$', 'image_reports.views.image_report_group_list', name='image_report_group_list'),
