@@ -50,7 +50,7 @@ It is possible to set a :term:`device status transition` but this might not
 clear the state of the actual device:::
 
   >>> from lava_scheduler_app.models import DevicesStateTransition
-  >>> DeviceStateTransition.objects.create(created_by=None, 
+  >>> DeviceStateTransition.objects.create(created_by=None,
   device=Device.objects.get(hostname="qemu01"),
   old_state = 2,
   new_state = 1,
@@ -75,7 +75,7 @@ I'm trying to submit a job over ssh, but I get a gnomekeyring.IOError. Why does 
 ::
 
   $ lava-tool auth-add http://administrator@192.168.11.100/RPC2/
-  Paste token for http://administrator@192.168.11.100/RPC2/: 
+  Paste token for http://administrator@192.168.11.100/RPC2/:
   Traceback (most recent call last):
   ...
     File "/usr/lib/python2.7/dist-packages/keyring/backend.py", line
@@ -158,7 +158,7 @@ this issue when tested.
 An alternative is to disable the specific part of gnome-keyring which
 causes this bug::
 
-  /etc/xdg/autostart/gnome-keyring-secrets.desktop 
+  /etc/xdg/autostart/gnome-keyring-secrets.desktop
 
 Either remove this file or change the autostart values to::
 
@@ -209,4 +209,4 @@ starting vagrant, if you want to use qemu to run LAVA tests. Vagrant
 prefers particular versions of virtualbox. Vagrant version 1.0.3 does
 not work with virtualbox 4.2 but a vagrant session setup in an earlier
 version of virtualbox can still be accessed from the virtualbox
-manager. Login as vagrant:vagrant. 
+manager. Login as vagrant:vagrant.

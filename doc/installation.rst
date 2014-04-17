@@ -16,7 +16,7 @@ the packages can be installed from ``people.linaro.org``::
 
  $ sudo apt-get install emdebian-archive-keyring
  $ sudo apt-get update
- 
+
 Add the ``people.linaro.org`` LAVA source. Usually, you can just create
 a file called ``lava.list`` in ``/etc/apt/sources.list.d/``
 containing::
@@ -113,7 +113,7 @@ It is strongly recommended that Multi-Node instances use a separate
 dispatcher running on non-virtualised hardware so that the (possibly
 virtualised) server can continue to operate.
 
-Also, consider the number of boards connected to any one dispatcher. 
+Also, consider the number of boards connected to any one dispatcher.
 MultiNode jobs will commonly compress and decompress several test image
 files of several hundred megabytes at precisely the same time. Even
 with a powerful multi-core machine, this has been shown to cause
@@ -127,23 +127,23 @@ A note on Heartbeat
 The heartbeat data of the dispatcher node is sent to the database via
 xmlrpc. For this feature to work correctly the ``rpc2_url`` parameter
 should be set properly. Login as an admin user and go to
-http://localhost/admin/lava_scheduler_app/worker/ (replace localhost
-with your server name/IP). Click on the machine which is your master
-(in case of distributed deployment), or the machine that is listed in
-the page (in case of single LAVA instance). In the page that opens,
-set the "Master RPC2 URL:" with the correct value, if it is not set
-properly, already. Do not touch any other values in this page except
-the description, since all the other fields except description is
-populated automatically. The following figure illustrates this:
+``http://localhost/admin/lava_scheduler_app/worker/``. Click on the
+machine which is your master (in case of distributed deployment), or
+the machine that is listed in the page (in case of single LAVA instance).
+In the page that opens, set the "Master RPC2 URL:" with the correct
+value, if it is not set properly, already. Do not touch any other
+values in this page except the description, since all the other fields
+except description is populated automatically. The following figure
+illustrates this:
 
 .. image:: ./images/lava-worker-rpc2-url.png
 
 A note on wsgi buffers
 ----------------------
 
-When submitting a large amount of data to the django application, 
+When submitting a large amount of data to the django application,
 it is possible to get an HTTP 500 internal server error. This problem
-can be fixed by appending ``buffer-size = 65535`` to 
+can be fixed by appending ``buffer-size = 65535`` to
 ``/etc/lava-server/uwsgi.ini``
 
 User authentication
@@ -174,6 +174,6 @@ Contact and bug reports
 ========================
 
 Please report bugs using
-https://bugs.launchpad.net/lava-deployment-tool/+filebug
+https://bugs.launchpad.net/lava-server/+filebug
 
 Feel free to contact us at validation (at) linaro (dot) org.

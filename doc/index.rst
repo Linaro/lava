@@ -31,6 +31,7 @@ LAVA Test Developer Guide
    developing-tests.rst
    dispatcher-actions.rst
    lava_test_shell.rst
+   hacking-session.rst
    multinode.rst
    vm-groups.rst
    boot-management.rst

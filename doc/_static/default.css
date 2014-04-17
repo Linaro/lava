@@ -186,7 +186,7 @@ div.admonition ul, div.admonition ol {
 }
 
 div.note {
-    background-color: #eee;
+    background-color: #fdd;
     border: 1px solid #ccc;
 }
 
@@ -214,7 +214,7 @@ p.admonition-title:after {
 
 pre {
     padding: 5px;
-    background-color: #f9f9f9;
+    background-color: #DAF2FF;
     color: #black;
     line-height: 120%;
     border: 1px solid #ac9;
