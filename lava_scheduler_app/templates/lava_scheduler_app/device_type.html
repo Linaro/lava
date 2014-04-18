@@ -36,17 +36,17 @@
       <dd>{{ running_jobs_num }}</dd>
       <dt>Queued jobs</dt>
       <dd>{{ queued_jobs_num }}</dd>
-      <dt>Reports</dt>
-      <dd><a href="{% url 'lava.scheduler.device_type_report' device_type %}">Health check and job failure</a></dt>
+      <dt>Checks/failures</dt>
+      <dd><a href="{% url 'lava.scheduler.device_type_report' device_type %}">Graphical reports</a></dt>
     </dl>
   </div>
 </div>
 
+<h4 class="modal-header">Devices list</h4>
+{% render_table devices_table_no_dt %}
+
 <h4 class="modal-header">Health Job Summary</h4>
 {% render_table health_job_summary_table %}
-
-<h4 class="modal-header">Devices Overview</h3>
-{% render_table devices_table_no_dt %}
 
 <h4 class="modal-header">Jobs for devices of type {{ device_type }}</h4>
 {% render_table device_type_jobs_table %}
