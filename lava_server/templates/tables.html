@@ -66,7 +66,7 @@
 <table id="{{ table.prefix|default:"table" }}" class="table table-striped">
     {% block table.thead %}
     <thead>
-        <tr class="ui-widget-header">
+        <tr>
         {% for column in table.columns %}
             {% if column.orderable %}
             <th {{ column.attrs.th.as_html }}><a
@@ -104,39 +104,43 @@
 {% endblock table %}
 
 {% if table.page %}
-{% with table.page.paginator.count as total %}
-{% with table.page.object_list|length as count %}
 {% block pagination %}
-<ul class="pagination ui-widget-header">
+{% if table.page.has_previous or table.page.has_next %}
+<ul class="pager">
+  {% block pagination.previous %}
     {% if table.page.has_previous %}
-    {% block pagination.previous %}<li class="previous"><a
-            href="{% querystring table.prefixed_page_field=table.page.previous_page_number %}#{{ table.prefix|default:"table" }}">
-        {% trans "Previous" %}</a></li>{% endblock pagination.previous %}
+    <li class="previous">
+      <a href="{% querystring table.prefixed_page_field=table.page.previous_page_number %}#{{ table.prefix|default:"table" }}">
+    {% else %}
+    <li class="previous disabled">
+      <a>
     {% endif %}
+      <span class="glyphicon glyphicon-backward"></span> {% trans "Previsous" %}</a>
+    </li>
+  {% endblock pagination.previous %}
 
-    {% if table.page.has_previous or table.page.has_next %}
-    {% block pagination.current %}<li
-            class="current">{% blocktrans with table.page.number as current and table.paginator.num_pages as total %}
-        Page {{ current }} of {{ total }}{% endblocktrans %}.</li>{% endblock pagination.current %}
-    {% endif %}
+  {% block pagination.current %}
+    <li>Page {{ table.page.number }} / {{ table.paginator.num_pages }}</li>
+  {% endblock pagination.current %}
 
+
+  {% block pagination.cardinality %}
+    <li>(showing {{ table.page.object_list|length }} over {{ table.page.paginator.count }})</li>
+  {% endblock %}
+
+  {% block pagination.next %}
     {% if table.page.has_next %}
-    {% block pagination.next %}<li
-            class="next"><a href="{% querystring table.prefixed_page_field=table.page.next_page_number %}#{{ table.prefix|default:"table" }}">
-        {% trans "Next" %}</a></li>{% endblock pagination.next %}
+    <li class="next">
+      <a href="{% querystring table.prefixed_page_field=table.page.next_page_number %}#{{ table.prefix|default:"table" }}">
+    {% else %}
+    <li class="next disabled">
+      <a href="#">
     {% endif %}
-
-    {% block pagination.cardinality %}<li
-            class="cardinality">{% if total != count %}{% blocktrans %}Showing {{ count }} of {{ total }}&nbsp;{% endblocktrans %}
-    {% else %}Showing {{ total }}{% endif %} {% if total == 1 %}{{ table.data.verbose_name }}
-    {% else %}{{ table.data.verbose_name_plural }}{% endif %}.</li>{% endblock pagination.cardinality %}
+      {% trans "Next" %} <span class="glyphicon glyphicon-forward"></span></a>
+  </li>
+  {% endblock pagination.next %}
 </ul>
+{% endif %}
 {% endblock pagination %}
-{% endwith %}
-{% endwith %}
-{%  else %}
-<ul class="pagination ui-widget-header">
-<li class="current">{{ table.data.verbose_name }}</li>
-</ul>
 {% endif %}
 {% endblock %}
