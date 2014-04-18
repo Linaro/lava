@@ -1,14 +1,11 @@
-{% extends "dashboard_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
 
-{% block extrahead %}
-{{ block.super }}
+{% block styles %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
-<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/image-report-editor.js"></script>
 {% endblock %}
 
 {% block content %}
-
 <h1>Chart settings for ~{{ chart_filter.filter.owner }}/{{ chart_filter.filter.name }}</h1>
 
 <div class="fields-container">
@@ -41,7 +38,7 @@
     </a>
   </div>
   <div>
-    Alias:&nbsp
+    Alias:&nbsp;
     {{ chart_test.name }}
   </div>
   <div>
@@ -80,13 +77,15 @@
     </div>
   </form>
 </div>
+{% endblock %}
 
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/image-report-editor.js"></script>
 <script type="text/javascript">
   $().ready(function () {
     init_loading_dialog();
     init_test_edit_dialog();
   });
 </script>
-
 {% endblock %}
 

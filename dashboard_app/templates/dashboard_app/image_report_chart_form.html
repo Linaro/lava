@@ -1,11 +1,9 @@
-{% extends "dashboard_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
 {% load django_tables2 %}
 
-{% block extrahead %}
-{{ block.super }}
+{% block styles %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
-
 {% endblock %}
 
 

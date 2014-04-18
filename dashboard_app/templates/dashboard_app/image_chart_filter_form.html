@@ -1,15 +1,8 @@
-{% extends "dashboard_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
 
-{% block extrahead %}
-{{ block.super }}
+{% block styles %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
-<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/image-report-editor.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script>
-
-<script language="javascript">
-  csrf_token = '{{csrf_token}}';
-</script>
 {% endblock %}
 
 
@@ -67,8 +60,13 @@
 <div id="loading_dialog">
 <img src="{{ STATIC_URL }}dashboard_app/images/ajax-progress.gif" alt="Loading..." />
 </div>
+{% endblock %}
 
-<script type="text/javascript">
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/image-report-editor.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script>
+<script>
+  csrf_token = '{{csrf_token}}';
   $().ready(function () {
 
     $("#image_chart_filter").editable(function(value, settings){
@@ -115,8 +113,6 @@
       }
 
     {% endif %}
-});
-
+  });
 </script>
-
 {% endblock %}

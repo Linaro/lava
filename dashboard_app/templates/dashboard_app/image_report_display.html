@@ -1,28 +1,10 @@
-{% extends "dashboard_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
+
 {% load i18n %}
 {% load keep_spacing %}
 
-{% block extrahead %}
-{{ block.super }}
+{% block styles %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
-<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/image-chart.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.min.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.canvas.min.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.dashes.min.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.axislabels.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.time.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.labels.js"></script>
-
-<script language="javascript">
-  chart_data = $.parseJSON($('<div/>').html('{{chart_data}}').text());
-  csrf_token = '{{csrf_token}}';
-  image_url = '{{ STATIC_URL }}dashboard_app/images/';
-  testrun_unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testrun' %}';
-  testrun_link_bug_url = '{% url 'dashboard_app.views.link_bug_to_testrun' %}';
-  testresult_unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testresult' %}';
-  testresult_link_bug_url = '{% url 'dashboard_app.views.link_bug_to_testresult' %}';
-  buglinks_chartid = '{{ bug_links_chart_id }}';
-</script>
 {% endblock %}
 
 {% block content %}
@@ -50,5 +32,27 @@ Report Group:&nbsp;&nbsp;<a href="{% url 'dashboard_app.views.image_reports.view
   </div>
   <input name="bug_link" style="width: 100%"/>
 </form>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ STATIC_URL }}dashboard_app/js/image-chart.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.canvas.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.dashes.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.axislabels.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.time.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.labels.js"></script>
+
+<script>
+  chart_data = $.parseJSON($('<div/>').html('{{chart_data}}').text());
+  csrf_token = '{{csrf_token}}';
+  image_url = '{{ STATIC_URL }}dashboard_app/images/';
+  testrun_unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testrun' %}';
+  testrun_link_bug_url = '{% url 'dashboard_app.views.link_bug_to_testrun' %}';
+  testresult_unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testresult' %}';
+  testresult_link_bug_url = '{% url 'dashboard_app.views.link_bug_to_testresult' %}';
+  buglinks_chartid = '{{ bug_links_chart_id }}';
+</script>
 
 {% endblock %}
