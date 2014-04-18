@@ -292,14 +292,18 @@ def index(request):
     discrete_data = index_table.prepare_discrete_data(index_data)
     discrete_data.update(dt_overview_table.prepare_discrete_data(dt_overview_data))
 
+    (num_online, num_not_retired) = _online_total()
+    health_check_completed = health_jobs_in_hr().filter(status=TestJob.COMPLETE).count()
+    health_check_total = health_jobs_in_hr().count()
     return render(
         request,
         "lava_scheduler_app/index.html",
         {
             'device_status': "%d/%d" % _online_total(),
-            'health_check_status': "%s/%s" % (
-                health_jobs_in_hr().filter(status=TestJob.COMPLETE).count(),
-                health_jobs_in_hr().count()),
+            'num_online': num_online,
+            'num_not_retired': num_not_retired,
+            'hc_completed': health_check_completed,
+            'hc_total': health_check_total,
             'device_type_table': dt_overview_table,
             'worker_table': worker_table,
             'active_jobs_table': index_table,
