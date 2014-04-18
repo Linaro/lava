@@ -12,15 +12,6 @@
 
 {% block content %}
 
-<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/bug-links.js"></script>
-<script language="javascript">
-  image_url = '{{ STATIC_URL }}dashboard_app/images/';
-  unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testrun' %}';
-  link_bug_url = '{% url 'dashboard_app.views.link_bug_to_testrun' %}';
-</script>
-
-{% block content %}
-
 <ul class="pager">
   <li class="previous{% if not previous_bundle %} disabled{% endif %}">
     <a href="{% if previous_bundle %}{{ previous_bundle.get_absolute_url }}{% else %}#{% endif %}">
@@ -158,7 +149,6 @@
 
 {% block scripts %}
 <script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/bug-links.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery-ui-1.8.12.custom.min.js"></script>
 <script>
   image_url = '{{ STATIC_URL }}dashboard_app/images/';
   unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testrun' %}';
