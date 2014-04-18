@@ -1,4 +1,4 @@
-{% extends "lava_scheduler_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load django_tables2 %}
 
 {% block styles %}
@@ -58,4 +58,8 @@
 <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
      alt="{{ down }}" />&nbsp; indicates the worker is <b>down</b>.
 
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
 {% endblock %}
