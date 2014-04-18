@@ -68,7 +68,7 @@ def find_device_for_job(job, device_list):
 
 
 def get_configured_devices():
-    return [dev.hostname for dev in dispatcher_config.get_devices()]
+    return dispatcher_config.list_devices()
 
 
 class DatabaseJobSource(object):
