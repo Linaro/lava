@@ -43,7 +43,7 @@ table.display thead th.orderable.desc > a {
 </table>
 {% block table %}
 
-<div class="ui-widget-header">
+<div>
 <table border=0 width="100%">
 <tr>
 <td><form id="{{ table.prefix }}search_form" action="{% querystring %}" method="get">
@@ -66,22 +66,22 @@ Search: <input type="text" name="{{ table.prefix }}search" value="{{ terms_data|
     {% block table.thead %}
     {% if table.complex_header %}
     <thead>
-        <tr class="ui-widget-header">
+        <tr>
         {% for column in table.columns %}
             {% if not column.column.in_group %}
                 {% if column.orderable %}
-                    <th class="ui-state-default" {{ column.attrs.th.as_html }} rowspan="2"><a
+                    <th {{ column.attrs.th.as_html }} rowspan="2"><a
                     href="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}">{{ column.header }}</a></th>
                 {% else %}
-                    <th class="ui-state-default" {{ column.attrs.th.as_html }} rowspan="2">{{ column.header }}</th>
+                    <th {{ column.attrs.th.as_html }} rowspan="2">{{ column.header }}</th>
                 {%  endif %}
             {% else %}
               {% if column.column.first_in_group %}
                   {% if column.orderable %}
-                    <th class="ui-state-default" colspan="{{ column.column.group_length }}"><a href="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}">
+                    <th colspan="{{ column.column.group_length }}"><a href="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}">
 {{ column.column.group_name }}</a></th>
                   {% else %}
-                     <th class="ui-state-default" colspan="{{ column.column.group_length }}">{{ column.column.group_name }}</th>
+                     <th colspan="{{ column.column.group_length }}">{{ column.column.group_name }}</th>
                   {% endif %}
             {% endif %}
             {% endif %}
@@ -90,7 +90,7 @@ Search: <input type="text" name="{{ table.prefix }}search" value="{{ terms_data|
         <tr>
     {% for column in table.columns %}
         {% if column.column.in_group %}
-            <th class="ui-state-default" {{ column.attrs.th.as_html }}>{{ column.header }}</th>
+            <th {{ column.attrs.th.as_html }}>{{ column.header }}</th>
         {% endif %}
     {% endfor %}
         </tr>
@@ -99,7 +99,7 @@ Search: <input type="text" name="{{ table.prefix }}search" value="{{ terms_data|
     <thead>
         <tr>
         {% for column in table.columns %}
-            <th class="ui-state-default"  {{ column.attrs.th.as_html }}>{{ column.header }}</th>
+            <th {{ column.attrs.th.as_html }}>{{ column.header }}</th>
         {% endfor %}
         </tr>
     </thead>
@@ -134,7 +134,7 @@ Search: <input type="text" name="{{ table.prefix }}search" value="{{ terms_data|
 {% with table.page.paginator.count as total %}
 {% with table.page.object_list|length as count %}
 {% block pagination %}
-<ul class="pagination ui-widget-header">
+<ul class="pagination">
     {% if table.page.has_previous %}
     {% block pagination.previous %}<li class="previous"><a
             href="{% querystring table.prefixed_page_field=table.page.previous_page_number %}">
@@ -163,7 +163,7 @@ Search: <input type="text" name="{{ table.prefix }}search" value="{{ terms_data|
 {% endwith %}
 </div>
 {%  else %}
-<ul class="pagination ui-widget-header">
+<ul class="pagination">
 <li class="current">{{ table.data.verbose_name }}</li>
 </ul>
 {% endif %}
