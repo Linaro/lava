@@ -125,7 +125,7 @@
 
 
   {% block pagination.cardinality %}
-    <li>(showing {{ table.page.object_list|length }} over {{ table.page.paginator.count }})</li>
+    <li>(showing {{ table.page.object_list|length }} of {{ table.page.paginator.count }})</li>
   {% endblock %}
 
   {% block pagination.next %}
