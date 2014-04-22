@@ -6,6 +6,7 @@ lava-server (0.22.1-7) unstable; urgency=medium
   * Update vcs location
   * Drop linaro-django-pagination from lava-server
   * Add lava-dev to the metapackage
+  * Add vmdebootstrap to lava metapackage and a README to lava-dev.
 
  -- Neil Williams <codehelp@debian.org>  Mon, 14 Apr 2014 10:37:27 +0100
 
