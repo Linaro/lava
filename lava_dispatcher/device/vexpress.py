@@ -76,6 +76,8 @@ class VexpressTarget(MasterImageTarget):
         with self._mcc_setup() as mount_point:
             self._restore_uefi_backup(mount_point)
 
+        self.proc.expect(self.config.ve_uefi_flash_msg, timeout=300)
+
         super(VexpressTarget, self)._wait_for_master_boot()
 
     def _deploy_android_tarballs(self, master, boot, system, data):

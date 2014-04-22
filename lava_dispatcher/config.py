@@ -96,6 +96,7 @@ class DeviceSchema(schema.Schema):
     sys_part_android_org = schema.IntOption()
     tester_ps1 = schema.StringOption(null=True)
     tester_ps1_pattern = schema.StringOption(null=True)
+    ve_uefi_flash_msg = schema.StringOption(default="Erasing Flash image uefi")
 
     # tester_ps1_includes_rc is a string so we can decode it later as yes/no/
     # not set. If it isn't set, we stick with the device default. We can't do
