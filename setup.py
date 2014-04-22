@@ -61,6 +61,10 @@ setup(
     data_files=[
         ('/etc/default',
             ['etc/tftpd-hpa']),
+        ('/etc/exports.d',
+            ['etc/lava-dispatcher-nfs.exports']),
+        ('/etc/modprobe.d',
+            ['etc/lava-modules.conf']),
     ],
     scripts=[
         'lava-dispatch'
