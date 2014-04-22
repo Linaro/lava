@@ -12,18 +12,18 @@ Build-Depends: debhelper (>= 8.0.0),
 X-Python-Version: 2.7
 Standards-Version: 3.9.5
 Homepage: http://www.linaro.org/projects/test-validation/
-Vcs-Git: https://alioth.debian.org/anonscm/git/pkg-linaro-lava/lava-dispatcher.git
-Vcs-Browser: https://alioth.debian.org/plugins/scmgit/cgi-bin/gitweb.cgi?p=pkg-linaro-lava/lava-dispatcher.git;a=summary
+Vcs-Git: https://github.com/Linaro/pkg-lava-dispatcher.git
+Vcs-Browser: https://github.com/Linaro/pkg-lava-dispatcher
 
 Package: lava-dispatcher
-Architecture: any
+Architecture: linux-any
 Depends: python-serial (>= 2.6), parted, kpartx, telnet, ser2net, sshfs,
- ${python:Depends}, ${misc:Depends}
+ sudo, ${python:Depends}, ${misc:Depends}
 Multi-Arch: foreign
 Recommends: ntp, git, tftpd-hpa, openbsd-inetd, 
  qemu-system-x86 [amd64], qemu-system-x86 [i386],
  libguestfs-tools [amd64], libguestfs-tools [i386],
- unzip
+ nfs-kernel-server, rpcbind, unzip
 Description: Linaro Automated Validation Architecture dispatcher
  This package provides lava-dispatcher to dispatch
  LAVA jobs to configured devices.
