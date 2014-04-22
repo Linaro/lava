@@ -50,3 +50,53 @@ packages.
 
 The Debian packaging for lava-server and lava-dispatcher are
 available at http://github.com/Linaro/
+
+Building KVM images for LAVA
+============================
+
+ git clone git://git.linaro.org/lava/lava-vmdebootstrap.git
+
+lava-vmdebootstrap is just a small wrapper around
+[vmdebootstrap](https://gitorious.org/vmdebootstrap) which does all the hard
+work. What lava-vmdebootstrap does is download the Linaro image overlays
+and pass some options that we will always need so that you don't need to.
+
+Example invocation::
+
+ $ sudo ./lava-vmdebootstrap --image=myimage.img
+
+To run the test image, make sure it is writeable:
+
+ $ sudo chmod a+w ./myimage.img
+
+Execute using qemu, e.g. on amd64 using qemu-system-x86_64:
+
+ $ qemu-system-x86_64 ./myimage.img
+
+See vmdebootstrap(1)
+
+Once the overlay packages have been downloaded, you can call vmdebootstrap
+directly to create other types of images without needing to modify
+lava-vmdebootstrap. e.g. this is a call to vmdebootstrap to create a
+KVM image based on Ubuntu:
+
+ sudo vmdebootstrap \
+  --custom-package='linaro-overlay_1112.2_all.deb' \
+  --custom-package='linaro-overlay-minimal_1112.2_all.deb' \
+  --enable-dhcp --no-kernel --package=linux-image \
+  --serial-console --serial-console-command='/bin/auto-serial-console' \
+  --root-password='root' --hostname='ubuntu' --user=linaro/linaro --sudo \
+  --verbose --image=myimage.img
+
+This command extends lava-vmdebootstrap to make a 4G image based on
+Debian testing using the UK Debian mirror:
+
+ sudo vmdebootstrap \
+  --custom-package='linaro-overlay_1112.2_all.deb' \
+  --custom-package='linaro-overlay-minimal_1112.2_all.deb' \
+  --enable-dhcp \
+  --serial-console --serial-console-command='/bin/auto-serial-console' \
+  --root-password='root' \
+  --distribution testing --size 4g \
+  --mirror http://ftp.uk.debian.org/debian \
+  --verbose --image=myimage.img
