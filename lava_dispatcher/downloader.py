@@ -183,6 +183,14 @@ def download_image(url_string, context, imgdir=None,
                         sha256.update(buff)
             logging.info("md5sum of downloaded content: %s" % md5.hexdigest())
             logging.debug("sha256sum of downloaded content: %s" % sha256.hexdigest())
+
+            if fname.endswith('.qcow2'):
+                orig = fname
+                fname = re.sub('\.qcow2$', '.img', fname)
+                logging.warning("Converting downloaded image from qcow2 to raw")
+                subprocess.check_call(['qemu-img', 'convert', '-f', 'qcow2',
+                                       '-O', 'raw', orig, fname])
+
             return fname
         except:
             logging.warn("unable to download: %r" % traceback.format_exc())
