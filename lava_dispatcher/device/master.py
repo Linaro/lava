@@ -25,7 +25,6 @@ import os
 import time
 import re
 import hashlib
-
 import pexpect
 
 from lava_dispatcher import tarballcache
@@ -120,7 +119,7 @@ class MasterImageTarget(Target):
         self._deploy_tarballs(boot_tgz, root_tgz, rootfstype)
 
     def deploy_android(self, boot, system, userdata, rootfstype,
-                       bootloadertype):
+                       bootloadertype, target_type):
         self.deployment_data = deployment_data.android
         self.boot_master_image()
 
@@ -333,63 +332,6 @@ class MasterImageTarget(Target):
                 'unknown master image partition(%d)' % partition)
         return partition
 
-    @contextlib.contextmanager
-    def file_system(self, partition, directory):
-        logging.info('attempting to access master filesystem %r:%s' %
-                     (partition, directory))
-
-        assert directory != '/', "cannot mount entire partition"
-
-        with self._as_master() as runner:
-            partition = self.get_partition(runner, partition)
-            runner.run('mount %s /mnt' % partition)
-            try:
-                targetdir = os.path.join('/mnt/%s' % directory)
-                if not runner.is_file_exist(targetdir):
-                    runner.run('mkdir %s' % targetdir)
-
-                parent_dir, target_name = os.path.split(targetdir)
-
-                runner.run('nice tar -czf /tmp/fs.tgz -C %s %s' %
-                           (parent_dir, target_name))
-                runner.run('cd /tmp')  # need to be in same dir as fs.tgz
-                self.proc.sendline('python -m SimpleHTTPServer 0 2>/dev/null')
-                match_id = self.proc.expect([
-                    'Serving HTTP on 0.0.0.0 port (\d+) \.\.',
-                    pexpect.EOF, pexpect.TIMEOUT])
-                if match_id != 0:
-                    msg = "Unable to start HTTP server on master"
-                    logging.error(msg)
-                    raise CriticalError(msg)
-                port = self.proc.match.groups()[match_id]
-
-                url = "http://%s:%s/fs.tgz" % (self.master_ip, port)
-                tf = download_image(url,
-                                    self.context, self.scratch_dir, decompress=False)
-
-                tfdir = os.path.join(self.scratch_dir, str(time.time()))
-                try:
-                    os.mkdir(tfdir)
-                    self.context.run_command('nice tar -C %s -xzf %s' % (tfdir, tf))
-                    yield os.path.join(tfdir, target_name)
-
-                finally:
-                    tf = os.path.join(self.scratch_dir, 'fs.tgz')
-                    mk_targz(tf, tfdir)
-                    rmtree(tfdir)
-
-                    self.proc.sendcontrol('c')  # kill SimpleHTTPServer
-
-                    # get the last 2 parts of tf, ie "scratchdir/tf.tgz"
-                    tf = '/'.join(tf.split('/')[-2:])
-                    url = '%s/%s' % (self.context.config.lava_image_url, tf)
-                    runner.run('rm -rf %s' % targetdir)
-                    self.target_extract(runner, url, parent_dir)
-
-            finally:
-                    self.proc.sendcontrol('c')  # kill SimpleHTTPServer
-                    runner.run('umount /mnt')
-
     def extract_tarball(self, tarball_url, partition, directory='/'):
         logging.info('extracting %s to target' % tarball_url)
 
@@ -400,6 +342,19 @@ class MasterImageTarget(Target):
                 self.target_extract(runner, tarball_url, '/mnt/%s' % directory)
             finally:
                 runner.run('umount /mnt')
+
+    @contextlib.contextmanager
+    def file_system(self, partition, directory):
+        logging.info('attempting to access master filesystem %r:%s' %
+                    (partition, directory))
+
+        assert directory != '/', "cannot mount entire partition"
+
+        with self._as_master() as runner:
+            partition = self.get_partition(runner, partition)
+            runner.run('mount %s /mnt' % partition)
+            with self._python_file_system(runner, directory, mounted=True) as root:
+                yield root
 
     def _wait_for_master_boot(self):
         if self.config.boot_cmds_master:
@@ -421,12 +376,14 @@ class MasterImageTarget(Target):
             logging.info("Booting the system master image. Attempt: %d" %
                          (attempts + 1))
             try:
-                self._soft_reboot()
+                self.master_ip = None
+                self._soft_reboot(self.proc)
                 self._wait_for_master_boot()
             except (OperationFailed, pexpect.TIMEOUT) as e:
                 logging.info("Soft reboot failed: %s" % e)
                 try:
-                    self._hard_reboot()
+                    self.master_ip = None
+                    self._hard_reboot(self.proc)
                     self._wait_for_master_boot()
                 except (OperationFailed, pexpect.TIMEOUT) as e:
                     msg = "Hard reboot into master image failed: %s" % e
@@ -477,31 +434,6 @@ class MasterImageTarget(Target):
             self.boot_master_image()
         yield MasterCommandRunner(self)
 
-    def _soft_reboot(self):
-        logging.info("Perform soft reboot the system")
-        self.master_ip = None
-        # Try to C-c the running process, if any.
-        self.proc.sendcontrol('c')
-        self.proc.sendline(self.config.soft_boot_cmd)
-        # Looking for reboot messages or if they are missing, the U-Boot
-        # message will also indicate the reboot is done.
-        match_id = self.proc.expect(
-            [pexpect.TIMEOUT, 'Restarting system.',
-             'The system is going down for reboot NOW',
-             'Will now restart', 'U-Boot'], timeout=120)
-        if match_id == 0:
-            raise OperationFailed("Soft reboot failed")
-
-    def _hard_reboot(self):
-        logging.info("Perform hard reset on the system")
-        self.master_ip = None
-        if self.config.hard_reset_command != "":
-            self.context.run_command(self.config.hard_reset_command)
-        else:
-            self.proc.send("~$")
-            self.proc.sendline("hardreset")
-            self.proc.empty_buffer()
-
     def _boot_linaro_image(self):
 
         if self.__boot_cmds_dynamic__ is not None:
@@ -515,11 +447,13 @@ class MasterImageTarget(Target):
 
     def _boot(self, boot_cmds):
         try:
-            self._soft_reboot()
+            self.master_ip = None
+            self._soft_reboot(self.proc)
             self._enter_bootloader(self.proc)
         except:
             logging.exception("_enter_bootloader failed")
-            self._hard_reboot()
+            self.master_ip = None
+            self._hard_reboot(self.proc)
             self._enter_bootloader(self.proc)
         self._customize_bootloader(self.proc, boot_cmds)
         self._auto_login(self.proc)

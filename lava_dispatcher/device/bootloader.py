@@ -360,10 +360,10 @@ class BootloaderTarget(MasterImageTarget):
     def _boot_linaro_image(self):
         if self._is_bootloader() and not self._booted:
             if self.config.hard_reset_command:
-                self._hard_reboot()
+                self._hard_reboot(self.proc)
                 self._run_boot()
             else:
-                self._soft_reboot()
+                self._soft_reboot(self.proc)
                 self._run_boot()
             # When the kernel does DHCP which is the case for NFS/Ramdisk boot
             # the nameserver data does get populated by the DHCP

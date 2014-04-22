@@ -56,7 +56,7 @@ class WGTarget(MasterImageTarget):
     # methods inherited from MasterImageTarget and overriden here
     ##################################################################
 
-    def _soft_reboot(self):
+    def _soft_reboot(self, connection):
         """
         The WG board only displays the prompt to interrupt the MCC when
         it is power-cycled, so we must always do a hard reset in practice.
@@ -65,14 +65,14 @@ class WGTarget(MasterImageTarget):
         before sending the hard reset.
         """
         # Try to C-c the running process, if any
-        self.proc.sendcontrol('c')
+        connection.sendcontrol('c')
         # Flush file system buffers
-        self.proc.sendline('sync')
+        connection.sendline('sync')
 
-        self._hard_reboot()
+        self._hard_reboot(connection)
 
     def _boot_linaro_image(self):
-        self._soft_reboot()
+        self._soft_reboot(self.proc)
 
         with self._mcc_setup() as mount_point:
             self._install_test_firmware(mount_point)

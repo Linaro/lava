@@ -193,7 +193,8 @@ class FastModelTarget(Target):
             raise RuntimeError('No SECURE FLASHLOADER found, %r' %
                                self.config.simulator_bl3)
 
-    def deploy_android(self, boot, system, data, rootfstype, bootloadertype):
+    def deploy_android(self, boot, system, data, rootfstype, bootloadertype,
+                       target_type):
         logging.info("Deploying Android on %s" % self.config.hostname)
 
         self._bootloadertype = bootloadertype

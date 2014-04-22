@@ -112,7 +112,8 @@ class SDMuxTarget(Target):
                 f.write('\n# LAVA CUSTOMIZATIONS\n')
                 f.write('PS1="%s"\n' % self.tester_ps1)
 
-    def deploy_android(self, boot, system, data, rootfstype, bootloadertype):
+    def deploy_android(self, boot, system, data, rootfstype, bootloadertype,
+                       target_type):
         scratch = self.scratch_dir
         boot = download_image(boot, self.context, scratch, decompress=False)
         data = download_image(data, self.context, scratch, decompress=False)
