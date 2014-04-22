@@ -53,6 +53,8 @@ class DeviceSchema(schema.Schema):
     send_char = schema.BoolOption(default=True)
     test_image_prompts = schema.ListOption(default=["\(initramfs\)",
                                                     "linaro-test",
+                                                    "root@android",
+                                                    "root@linaro",
                                                     "root@master",
                                                     "root@linaro-nano:~#",
                                                     "root@linaro-developer:~#",
@@ -187,10 +189,6 @@ class DeviceSchema(schema.Schema):
     arm_probe_config = schema.StringOption(default='/usr/local/etc/arm-probe-config')
     arm_probe_channels = schema.ListOption(default=['VDD_VCORE1'])
 
-    adb_command = schema.StringOption()
-    fastboot_command = schema.StringOption()
-    shared_working_directory = schema.StringOption(default=None)
-
     uefi_image_filename = schema.StringOption(default=None)
     customize = schema.DictOption(default=None)
     vexpress_uefi_path = schema.StringOption(default=None)
@@ -234,6 +232,14 @@ class DeviceSchema(schema.Schema):
     jtag_stmc_kernel_command = schema.StringOption(default=None)
     jtag_stmc_ramdisk_command = schema.StringOption(default=None)
     jtag_stmc_dtb_command = schema.StringOption(default=None)
+
+    # for fastboot devices
+    fastboot_driver = schema.StringOption(default=None)
+    adb_command = schema.StringOption()
+    fastboot_command = schema.StringOption()
+    fastboot_kernel_load_addr = schema.StringOption()
+    rootfs_partition = schema.StringOption(default='userdata')
+    shared_working_directory = schema.StringOption(default=None)
 
     # for bootloader devices
     pre_boot_cmd = schema.StringOption()

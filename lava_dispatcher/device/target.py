@@ -24,6 +24,7 @@ import shutil
 import re
 import logging
 import time
+import pexpect
 
 from lava_dispatcher.device import boot_options
 from lava_dispatcher.utils import (
@@ -39,7 +40,10 @@ from lava_dispatcher.downloader import (
     download_image,
 )
 
-from lava_dispatcher.errors import CriticalError
+from lava_dispatcher.errors import (
+    CriticalError,
+    OperationFailed,
+)
 
 
 class ImagePathHandle(object):
@@ -207,7 +211,7 @@ class Target(object):
         raise NotImplementedError('deploy_image')
 
     def deploy_android(self, boot, system, userdata, rootfstype,
-                       bootloadertype):
+                       bootloadertype, target_type):
         raise NotImplementedError('deploy_android_image')
 
     def deploy_linaro_prebuilt(self, image, rootfstype, bootloadertype):
@@ -365,6 +369,29 @@ class Target(object):
 
         return boot_cmds
 
+    def _soft_reboot(self, connection):
+        logging.info("Perform soft reboot the system")
+        # Try to C-c the running process, if any.
+        connection.sendcontrol('c')
+        connection.sendline(self.config.soft_boot_cmd)
+        # Looking for reboot messages or if they are missing, the U-Boot
+        # message will also indicate the reboot is done.
+        match_id = connection.expect(
+            [pexpect.TIMEOUT, 'Restarting system.',
+             'The system is going down for reboot NOW',
+             'Will now restart', 'U-Boot'], timeout=120)
+        if match_id == 0:
+            raise OperationFailed("Soft reboot failed")
+
+    def _hard_reboot(self, connection):
+        logging.info("Perform hard reset on the system")
+        if self.config.hard_reset_command != "":
+            self.context.run_command(self.config.hard_reset_command)
+        else:
+            connection.send("~$")
+            connection.sendline("hardreset")
+            connection.empty_buffer()
+
     def _enter_bootloader(self, connection):
         if connection.expect(self.config.interrupt_boot_prompt) != 0:
             raise Exception("Failed to enter bootloader")
@@ -451,10 +478,65 @@ class Target(object):
                    timeout=timeout)
 
     @contextlib.contextmanager
+    def _python_file_system(self, runner, directory, mounted=False):
+        connection = runner.get_connection()
+        try:
+            if mounted:
+                targetdir = os.path.join('/mnt/%s' % directory)
+            else:
+                targetdir = os.path.join('/', directory)
+
+            runner.run('mkdir -p %s' % targetdir)
+
+            parent_dir, target_name = os.path.split(targetdir)
+
+            runner.run('nice tar -czf /tmp/fs.tgz -C %s %s' %
+                       (parent_dir, target_name))
+            runner.run('cd /tmp')  # need to be in same dir as fs.tgz
+            ip = runner.get_target_ip()
+            connection.sendline('python -m SimpleHTTPServer 0 2>/dev/null')
+            match_id = connection.expect([
+                'Serving HTTP on 0.0.0.0 port (\d+) \.\.',
+                pexpect.EOF, pexpect.TIMEOUT])
+            if match_id != 0:
+                msg = "Unable to start HTTP server"
+                logging.error(msg)
+                raise CriticalError(msg)
+            port = connection.match.groups()[match_id]
+
+            url = "http://%s:%s/fs.tgz" % (ip, port)
+            tf = download_image(url,
+                                self.context, self.scratch_dir, decompress=False)
+
+            tfdir = os.path.join(self.scratch_dir, str(time.time()))
+            try:
+                os.mkdir(tfdir)
+                self.context.run_command('nice tar -C %s -xzf %s' % (tfdir, tf))
+                yield os.path.join(tfdir, target_name)
+
+            finally:
+                tf = os.path.join(self.scratch_dir, 'fs.tgz')
+                utils.mk_targz(tf, tfdir)
+                utils.rmtree(tfdir)
+
+                connection.sendcontrol('c')  # kill SimpleHTTPServer
+
+                # get the last 2 parts of tf, ie "scratchdir/tf.tgz"
+                tf = '/'.join(tf.split('/')[-2:])
+                runner.run('rm -rf %s' % targetdir)
+                self._target_extract(runner, tf, parent_dir)
+
+        finally:
+                # kill SimpleHTTPServer
+                connection.sendcontrol('c')
+                if mounted:
+                    runner.run('umount /mnt')
+
+    @contextlib.contextmanager
     def _busybox_file_system(self, runner, directory, mounted=False):
         try:
             if mounted:
-                targetdir = '/mnt%s' % directory
+                targetdir = os.path.join('/mnt/%s' % directory)
             else:
                 targetdir = os.path.join('/', directory)
 

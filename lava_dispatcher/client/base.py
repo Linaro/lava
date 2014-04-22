@@ -73,6 +73,9 @@ class CommandRunner(object):
     def wait_for_prompt(self, timeout=-1):
         wait_for_prompt(self._connection, self._prompt_str, timeout)
 
+    def get_connection(self):
+        return self._connection
+
     def run(self, cmd, response=None, timeout=-1,
             failok=False, wait_prompt=True, log_in_host=None):
         """Run `cmd` and wait for a shell response.
@@ -369,9 +372,9 @@ class LavaClient(object):
         self.target_device = get_target(context, config)
 
     def deploy_linaro_android(self, boot, system, data, rootfstype,
-                              bootloadertype):
+                              bootloadertype, target_type):
         self.target_device.deploy_android(boot, system, data, rootfstype,
-                                          bootloadertype)
+                                          bootloadertype, target_type)
 
     def deploy_linaro(self, hwpack, rootfs, image, rootfstype, bootloadertype):
         if image is None:
