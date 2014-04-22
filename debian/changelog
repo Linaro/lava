@@ -3,6 +3,7 @@ lava-dispatcher (0.33.3-7) unstable; urgency=medium
   * Add LAVA_NETWORK_IFACE support for dispatchers which change network
     frequently.
   * Update home page location
+  * Add sudo as a dependency and nfs support in recommends.
 
  -- Neil Williams <codehelp@debian.org>  Mon, 14 Apr 2014 10:43:07 +0100
 
