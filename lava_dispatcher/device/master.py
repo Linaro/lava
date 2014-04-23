@@ -439,7 +439,7 @@ class MasterImageTarget(Target):
                 self.proc.expect(
                     self.MASTER_PS1_PATTERN, timeout=120, lava_no_logging=1)
             except pexpect.TIMEOUT as e:
-                msg = "Failed to get command line prompt: " % e
+                msg = "Failed to get command line prompt: %s" % e
                 logging.warning(msg)
                 attempts += 1
                 continue
@@ -449,7 +449,7 @@ class MasterImageTarget(Target):
                 self.master_ip = runner.get_target_ip()
                 self.device_version = runner.get_device_version()
             except NetworkError as e:
-                msg = "Failed to get network up: " % e
+                msg = "Failed to get network up: %s" % e
                 logging.warning(msg)
                 attempts += 1
                 continue
