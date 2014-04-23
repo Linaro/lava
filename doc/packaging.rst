@@ -13,6 +13,8 @@ Apache distribution support
 Aimed at apache2.4 with comments for apache2.2 usage. Edit where necessary
 and then enable and restart apache to use.
 
+.. _admin_helpers:
+
 Adding known devices using the LAVA admin helpers
 *************************************************
 
@@ -32,7 +34,7 @@ To make it easier to automate the creation of a usable LAVA instance,
 the helper can also create a default lab-health anonymous bundle stream
 which can be used to collect results from the initial test jobs as a
 check that the instance is working correctly. If a default bundle stream
-is desired, add the -b option to the helper command.
+is desired, add the ``-b`` option to the helper command.
 
 The syntax for the add device helper is::
 
@@ -51,6 +53,33 @@ configuration file. The helper supports connection commands based on
 connection over a telnet interface at a specified port on the server.
 lavapdu exposes a power distribution interface over a custom interface
 and supports a number of APC PDU units.
+
+Once all devices have been added, restart the LAVA server daemon::
+
+ sudo service lava-server restart
+
+Options
+#######
+
+::
+
+  -h, --help            show this help message and exit
+  -p PDUPORT, --pduport=PDUPORT
+                        PDU Portnumber (ex: 04)
+  -t TELNETPORT, --telnetport=TELNETPORT
+                        ser2net port (ex: 4003)
+  -b, --bundlestream    add a lab health bundle stream if no streams exist.
+  -s, --simulate        output the data files without adding the device.
+
+Defaults
+########
+
+``add_device.py`` currently sets the ``ser2net`` server as ``localhost``
+and the ``lavapdu`` server as ``localhost``. These may need to be changed
+in the device configuration file before the first jobs are submitted.
+
+Examples
+########
 
 For example, if device ``foo`` is on ``ser2net`` port 4006, then the helper
 can create a connection_command setting of ``telnet localhost 4006``::
@@ -79,7 +108,7 @@ This command will:
 * create a default bundle stream /anonymous/lab-health/ if no streams exist
 
 Adding initial data manually
-############################
+****************************
 
 The three stages for a new device are:
 
@@ -90,14 +119,16 @@ The three stages for a new device are:
 The examples directory in the LAVA source contains a number of device
 configuration files which you can adapt to your needs.
 
-.. note:: If you want to use KVM devices on an i386 or amd64 master
-          instance or remote worker, either install the lava metapackage
-          available for Debian or add ``qemu-system-x86``. KVM support
-          for ARM devices is an ongoing project within Linaro.
+KVM support on x86 architectures
+################################
+
+Installing ``lava-dispatcher`` on ``amd64`` and ``i386`` devices
+provides ``qemu-system-x86`` to allow the use of KVM devices on these
+architectures. KVM support for ARM devices is an ongoing project within
+Linaro.
 
 Example on Debian::
 
- $ sudo apt-get install qemu-system-x86
  $ sudo cp examples/devices/kvm.conf /etc/lava-dispatcher/devices/
  $ sudo lava-server manage loaddata examples/models/kvm.json
 
@@ -114,36 +145,7 @@ entry in the admin interface, with some adaptations:
 #. Set a usable location in deploy_linaro_image
 #. Ensure a suitable bundle stream exists, matching the stream variable
 
-Generating KVM images on Debian
-*******************************
-
-Debian has packaged a tool called ``vmdebootstrap`` - there may be equivalent
-tools for other distributions - which wraps a call to create a minimal
-Debian rootfs to create an image of that system which can be booted as
-a KVM.
-
-LAVA can use ``vmdebootstrap`` to create a LAVA image for KVM, once the
-LAVA overlays are downloaded from Launchpad::
-
- https://launchpad.net/~linaro-maintainers/+archive/overlay/+files
-
-You will need::
-
- linaro-overlay_1112.2_all.deb
- linaro-overlay-minimal_1112.2_all.deb
-
-::
-
- #!/bin/sh
- set -e
- sudo vmdebootstrap \
-   --custom-package='linaro-overlay_1112.2_all.deb' \
-   --custom-package='linaro-overlay-minimal_1112.2_all.deb' \
-   --enable-dhcp \
-   --serial-console --serial-console-command='/bin/auto-serial-console' \
-   --root-password='root' \
-   --verbose \
-   "$@"
+See :ref:`deploy_kvm`
 
 Instance name
 *************
