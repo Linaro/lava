@@ -26,9 +26,9 @@ case "$1" in
     configure)
         if [ -n "${LAVA_SERVER_IP}" ]; then
             if [ -f /etc/lava-dispatcher/lava-dispatcher.conf ]; then
-                perl -pi -e 's/#LAVASERVERIP#/${LAVA_SERVER_IP}/g' /etc/lava-dispatcher/lava-dispatcher.conf
+                perl -pi -e "s/#LAVASERVERIP#/${LAVA_SERVER_IP}/g" /etc/lava-dispatcher/lava-dispatcher.conf
             else
-                sed -e 's/#LAVASERVERIP#/${LAVA_SERVER_IP}/' /usr/share/lava-dispatcher/lava-dispatcher.conf > /etc/lava-dispatcher/lava-dispatcher.conf
+                sed -e "s/#LAVASERVERIP#/${LAVA_SERVER_IP}/" /usr/share/lava-dispatcher/lava-dispatcher.conf > /etc/lava-dispatcher/lava-dispatcher.conf
             fi
         fi
     ;;
