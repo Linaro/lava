@@ -56,9 +56,9 @@ def template_bundle_stream():
         return None
     return {
         'fields': {
-            "is_public": true,
-            "group": null,
-            "is_anonymous": true,
+            "is_public": True,
+            "group": None,
+            "is_anonymous": True,
             "slug": "lab-health",
             "name": "lab-health",
             "pathname": "/anonymous/lab-health/",
@@ -172,13 +172,13 @@ def main(dt, name, options):
                                   "--port %02d" % options.pdu
     else:
         print("Skipping hard_reset_command for %s" % name)
-    if hasattr(options, 'telnet'):
+    if hasattr(options, 'telnetport'):
         try:
-            options.telnet = int(options.telnet)
+            options.telnetport = int(options.telnetport)
         except ValueError:
-            print ("Unable to parse %s as a port number" % options.telnet)
+            print ("Unable to parse %s as a port number" % options.telnetport)
             exit(1)
-        config['connection_command'] = "telnet hobbes %d" % options.telnet
+        config['connection_command'] = "telnet localhost %d" % options.telnetport
     else:
         print("Skipping connection_command for %s" % name)
     template = [template_device_type()]
@@ -198,7 +198,7 @@ def main(dt, name, options):
                 f.write("%s = %s\n" % (key, config[key]))
     fd, json = tempfile.mkstemp(suffix=".json", text=True)
     if options.bundlestream:
-        template.update(template_bundle_stream())
+        template.append(template_bundle_stream())
     with open(json, 'wt') as f:
         simplejson.dump(template, f, indent=4)
         f.write("\n")
