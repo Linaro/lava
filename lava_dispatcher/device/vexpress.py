@@ -70,6 +70,8 @@ class VexpressTarget(MasterImageTarget):
         with self._mcc_setup() as mount_point:
             self._install_test_uefi(mount_point)
 
+        self.proc.expect(self.config.ve_uefi_flash_msg, timeout=300)
+
         super(VexpressTarget, self)._enter_bootloader(connection)
 
     def _wait_for_master_boot(self):
