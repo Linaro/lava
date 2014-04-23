@@ -127,6 +127,10 @@ class QEMUTarget(Target):
         if self._firmware:
             qemu_options += ' -bios %s' % self._firmware
 
+        # workaround for quoting issues with `ssh -- qemu-system-??? ...`
+        if self.config.qemu_binary.startswith('ssh'):
+            qemu_options = re.sub('"', '\\"', qemu_options)
+
         qemu_cmd = '%s %s %s' % (self.config.qemu_binary, self.config.qemu_options, qemu_options)
         qemu_cmd = qemu_cmd.format(DISK_IMAGE=self._sd_image)
         logging.info('launching qemu with command %r' % qemu_cmd)
