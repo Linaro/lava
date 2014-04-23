@@ -11,15 +11,15 @@ Parameters
 ==========
  * ``GATEWAY`` - The gateway for the network the target device is on
    (check with your LAVA admins)
- * ``PUB_KEY`` - A plain-text string containing the ssh public key(s) you 
+ * ``PUB_KEY`` - A plain-text string containing the ssh public key(s) you
    wish to use to connect to the device over ssh
  * testdef - The test definition (distrbution specific)
 
-  * `hacking-session-debian.yaml`_ - run the hacking session on a 
+  * `hacking-session-debian.yaml`_ - run the hacking session on a
     Debian or Ubuntu filesystem, **openssh-server will be installed
     using the package manager** if not already installed. The test
     image **must** raise a network interface automatically.
-  * `hacking-session-oe.yaml`_ - run the hacking session on an Open 
+  * `hacking-session-oe.yaml`_ - run the hacking session on an Open
     Embedded filesystem. **openssh-server must be installed in
     the test image**
   * **hacking-session-android.yaml** - run the hacking session on an
@@ -52,7 +52,7 @@ Starting a Hacking Session
                 }
             ],
             "timeout": 3600
-        }    
+        }
     }
 
 .. note:: The session **will not end** simply because you log out. Always
@@ -64,7 +64,7 @@ Connecting to a Hacking Session
 ===============================
 
 The hacking session test definition will report the commands to ssh within the
-LAVA log file.  To access the log file, you can use a web browser; navigate to 
+LAVA log file.  To access the log file, you can use a web browser; navigate to
 your hacking session and scroll to the end of the job to see instructions
 
  * This hack session was executed on Linaro's LAVA system, job ID: 116632
@@ -74,7 +74,7 @@ your hacking session and scroll to the end of the job to see instructions
 SSH tunneling
 -------------
 
-If your target device is located on a remote server, as is the case when 
+If your target device is located on a remote server, as is the case when
 accessing the Linaro LAVA lab, you'll want to tunnel onto the Linaro network
 to the device under test
 
@@ -113,7 +113,7 @@ echo to ``/dev/ttyS0`` will be recorded within LAVA.
 Stopping a Hacking Session
 ==========================
 
-During a hacking session, the target your are connected to can't be used for 
+During a hacking session, the target your are connected to can't be used for
 other tasks, to complete your session
 
  * Cancel the job in the LAVA using the link in the job detail or
