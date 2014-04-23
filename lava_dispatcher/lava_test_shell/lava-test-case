@@ -83,7 +83,6 @@ fi
 
 # signal the test case results
 echo "<LAVA_SIGNAL_TESTCASE TEST_CASE_ID=$TEST_CASE_ID$TCDATA>"
-read
 
 # lava-test-case testname --shell false should report a fail as test result
 # but not fail itself; hence don't honor 'rc' if we reach this, but exit 0
