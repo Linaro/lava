@@ -22,6 +22,7 @@ import atexit
 import bz2
 import contextlib
 import logging
+import lzma
 import os
 import re
 import subprocess
@@ -94,6 +95,8 @@ def _decompressor_stream(url, imgdir, decompress):
         decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
     elif suffix == 'bz2' and decompress:
         decompressor = bz2.BZ2Decompressor()
+    elif suffix == 'xz' and decompress:
+        decompressor = lzma.LZMADecompressor()
     else:
         # don't remove the file's real suffix
         fname = '%s.%s' % (fname, suffix)
