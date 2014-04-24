@@ -56,7 +56,7 @@ setup(
         'PyYAML',
         'versiontools >= 1.8',
         'pyserial >= 2.6',
-        'lzma'
+        'pyliblzma >= 0.5.3'
     ],
     setup_requires=[
         'versiontools >= 1.8',
