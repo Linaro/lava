@@ -57,6 +57,7 @@ setup(
         'configglue',
         'PyYAML',
         'pyserial >= 2.6',
+        'lzma'
     ],
     data_files=[
         ('/etc/default',
