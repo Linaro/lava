@@ -1,3 +1,11 @@
+lava-dispatcher (0.33.3-8) unstable; urgency=medium
+
+  * Include updates from tip including lzma support
+  * Add recommendation for qemu-system-arm on armhf in preparation for
+    vm_groups testing.
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 25 Apr 2014 10:34:43 +0100
+
 lava-dispatcher (0.33.3-7) unstable; urgency=medium
 
   * Add LAVA_NETWORK_IFACE support for dispatchers which change network
