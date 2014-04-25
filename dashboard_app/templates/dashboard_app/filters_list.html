@@ -1,6 +1,7 @@
-{% extends "dashboard_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
 {% load django_tables2 %}
+
 {% block content %}
 <h1>Filters</h1>
 
@@ -22,5 +23,8 @@
 
 {% render_table public_filters_table %}
 
+{% endblock %}
 
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
 {% endblock %}

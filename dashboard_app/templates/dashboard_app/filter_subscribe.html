@@ -1,10 +1,9 @@
-{% extends "dashboard_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
-{% load django_tables2 %}
 
 {% block content %}
 
-<h1>Subscribe to filter {{ filter.name }}</h1>
+<h2>Subscribe to filter {{ filter.name }}</h2>
 
 <form action="" method="POST">
   {% csrf_token %}

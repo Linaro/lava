@@ -1,10 +1,9 @@
-{% extends "dashboard_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 
 {% load django_tables2 %}
 
-{% block extrahead %}
-{{ block.super }}
-<style type="text/css">
+{% block styles %}
+<style>
   th.orderable.sortable a {
     color: rgb(0, 136, 204);
     text-decoration: underline;
@@ -25,4 +24,8 @@
 <p>No difference in {{ trinfo.key }} results{% if trinfo.cases %} for {{ trinfo.cases }}{% endif %}.</p>
 {% endif %}
 {% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
 {% endblock %}

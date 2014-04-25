@@ -1,4 +1,4 @@
-{% extends "dashboard_app/_content_with_sidebar.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 
 {% load django_tables2 %}
 {% load i18n %}
@@ -36,4 +36,8 @@
 <hr/>
 {% render_table bundle_stream_table %}
 
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
 {% endblock %}

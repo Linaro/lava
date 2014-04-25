@@ -1,11 +1,9 @@
-{% extends "dashboard_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
 {% load django_tables2 %}
 
-{% block extrahead %}
-{{ block.super }}
+{% block styles %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/filter-detail.css"/>
-<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/filter-detail.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -26,4 +24,9 @@
   </span>
 </p>
 
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/filter-detail.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
 {% endblock %}
