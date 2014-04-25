@@ -63,9 +63,9 @@
           {% if device.user %}
           <a href="mailto:{{ device.user.email }}">{{ device.user.email }}</a>
           {% elif device.group %}
-          All users in the <b>{{ device.group }}</b> group.
+          Group <em>{{ device.group }}</em>
           {% else %}
-          Unrestricted
+          <i>Unrestricted</i>
           {% endif %}
       </dd>
       <dt>Physical access <abbr title="If known, this is the user or group with physical access to {{ device.hostname }}.">(?)</abbr></dt>
@@ -73,9 +73,9 @@
           {% if device.physical_owner %}
           <a href="mailto:{{ device.physical_owner.email }}">{{ device.physical_owner.email }}</a>
           {% elif device.physical_group %}
-          <b>{{ device.physical_group }}</b> group.
+          Group <em>{{ device.physical_group }}</em>
           {% else %}
-          Unknown
+          <i>Unknown</i>
           {% endif %}
       </dd>
       <dt>Worker</dt>

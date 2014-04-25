@@ -73,7 +73,7 @@
       {% if job.actual_device.user %}
         <a href="mailto:{{ job.actual_device.user.email }}">{{ job.actual_device.user.email }}</a>
       {% elif job.actual_device.group %}
-        All users in the {{ job.actual_device.group }} group.
+        Group <em>{{ job.actual_device.group }}</em>
       {% else %}
         <i>Unrestricted</i>
       {% endif %}
@@ -83,7 +83,7 @@
       {% if job.actual_device.physical_owner %}
         <a href="mailto:{{ job.actual_device.physical_owner.email }}">{{ job.actual_device.physical_owner.email }}</a>
       {% elif job.actual_device.physical_group %}
-        {{ job.actual_device.physical_group }} group.
+        Group <em>{{ job.actual_device.physical_group }}</em>
       {% else %}
         <i>Unknown</i>
       {% endif %}
