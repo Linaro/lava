@@ -4,3 +4,4 @@ lava_utils_interface lava-utils-interface; PEP386
 pexpect python-pexpect
 configglue python-configglue
 linaro-dashboard-bundle linaro-dashboard-bundle; PEP386
+pyliblzma python-lzma; PEP386
