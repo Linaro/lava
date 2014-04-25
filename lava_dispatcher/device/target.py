@@ -439,6 +439,8 @@ class Target(object):
             decompression_cmd = '| /bin/gzip -dc'
         elif tar_url.endswith('.bz2'):
             decompression_cmd = '| /bin/bzip2 -dc'
+        elif tar_url.endswith('.xz'):
+            decompression_cmd = '| /usr/bin/xz -dc'
         elif tar_url.endswith('.tar'):
             decompression_cmd = ''
         else:
