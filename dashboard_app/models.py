@@ -2182,16 +2182,25 @@ class ImageChartTest(models.Model):
 
     attributes = property(get_attributes, set_attributes)
 
-    def get_available_attributes(self):
+    def get_available_attributes(self, user):
+
+        from dashboard_app.filters import evaluate_filter
 
         content_type_id = ContentType.objects.get_for_model(TestRun).id
-        test_run_id_list = TestRun.objects.filter(
-            test=self.test).values_list('id', flat=True)
+        tests = [{
+            'test': self.test,
+            'test_cases': [],
+        }]
+
+        filter_data = self.image_chart_filter.filter.as_data()
+        filter_data['tests'] = tests
+        matches = list(evaluate_filter(user, filter_data)[:1])
+        test_run_id = matches[0].test_runs[0].id
 
         result = NamedAttribute.objects.all()
         result = result.filter(
             content_type_id=content_type_id,
-            object_id__in=list(test_run_id_list)).distinct().order_by('name').values_list('name', flat=True)
+            object_id=test_run_id).distinct().order_by('name').values_list('name', flat=True)
 
         attributes = [str(name) for name in result]
         return list(set(attributes))
@@ -2242,16 +2251,25 @@ class ImageChartTestCase(models.Model):
 
     attributes = property(get_attributes, set_attributes)
 
-    def get_available_attributes(self):
+    def get_available_attributes(self, user):
+
+        from dashboard_app.filters import evaluate_filter
 
         content_type_id = ContentType.objects.get_for_model(TestRun).id
-        test_run_id_list = TestRun.objects.filter(
-            test=self.test_case.test).values_list('id', flat=True)
+        tests = [{
+            'test': self.test_case.test,
+            'test_cases': [],
+        }]
+
+        filter_data = self.image_chart_filter.filter.as_data()
+        filter_data['tests'] = tests
+        matches = list(evaluate_filter(user, filter_data)[:1])
+        test_run_id = matches[0].test_runs[0].id
 
         result = NamedAttribute.objects.all()
         result = result.filter(
             content_type_id=content_type_id,
-            object_id__in=list(test_run_id_list)).distinct().order_by('name').values_list('name', flat=True)
+            object_id=test_run_id).distinct().order_by('name').values_list('name', flat=True)
 
         attributes = [str(name) for name in result]
         return list(set(attributes))
