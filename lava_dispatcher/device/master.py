@@ -369,6 +369,8 @@ class MasterImageTarget(Target):
         """
         reboot the system, and check that we are in a master shell
         """
+        self.context.client.vm_group.wait_for_vms()
+
         boot_attempts = self.config.boot_retries
         attempts = 0
         in_master_image = False

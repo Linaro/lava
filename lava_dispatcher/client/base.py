@@ -370,6 +370,7 @@ class LavaClient(object):
         # used for apt-get in lava-test.py
         self.aptget_cmd = "apt-get"
         self.target_device = get_target(context, config)
+        self.vm_group = VmGroupHandler(self)
 
     def deploy_linaro_android(self, boot, system, data, rootfstype,
                               bootloadertype, target_type):
@@ -509,6 +510,8 @@ class LavaClient(object):
             timeout = self.config.boot_linaro_timeout
             TESTER_PS1_PATTERN = self.target_device.tester_ps1_pattern
 
+            self.vm_group.wait_for_vms()
+
             try:
                 self._boot_linaro_image()
             except (OperationFailed, pexpect.TIMEOUT) as e:
@@ -541,31 +544,8 @@ class LavaClient(object):
             self.proc.expect([prompt, pexpect.TIMEOUT], timeout=10)
             in_linaro_image = True
             logging.debug("Checking for vm-group host")
-            if 'is_vmhost' in self.context.test_data.metadata and\
-                    self.context.test_data.metadata['is_vmhost'] == "true":
 
-                runner = NetworkCommandRunner(
-                    self.context.client,
-                    self.target_device.tester_ps1_pattern,
-                    self.target_device.tester_ps1_includes_rc
-                )
-
-                logging.debug("vm-group host: injecting SSH public key")
-                public_key_file = os.path.join(os.path.dirname(__file__), '../device/dynamic_vm_keys/lava.pub')
-                public_key = read_content(public_key_file).strip()
-                runner.run('mkdir -p /root/.ssh && echo "%s" >> /root/.ssh/authorized_keys' % public_key)
-
-                logging.debug("vm-group host: obtaining host IP for guest VM.")
-                try:
-                    host_ip = runner.get_target_ip()
-                except NetworkError as e:
-                    raise CriticalError("Failed to get network up: " % e)
-                # send a message to each guest
-                msg = {"request": "lava_send", "messageID": "lava_vm_start", "message": {"host_ip": host_ip}}
-                reply = self.context.transport(json.dumps(msg))
-                if reply == "nack":
-                    raise CriticalError("lava_vm_start failed")
-                logging.info("[ACTION-B] LAVA VM start, using %s" % host_ip)
+            self.vm_group.start_vms()
 
         if not in_linaro_image:
             msg = "Could not get the test image booted properly"
@@ -593,6 +573,7 @@ class LavaClient(object):
 
     def finish(self):
         self.target_device.power_off(self.proc)
+        self.vm_group.vm_finished()
 
     # Android stuff
 
@@ -724,3 +705,88 @@ class LavaClient(object):
         logging.info("Disabling adb over USB")
         session = AndroidTesterCommandRunner(self)
         session.run('echo 0>/sys/class/android_usb/android0/enable')
+
+
+class VmGroupHandler(object):
+
+    def __init__(self, client):
+        self.client = client
+        self.vms_started = False
+
+    @property
+    def is_vm_group_job(self):
+        return 'is_vmhost' in self.client.context.test_data.metadata
+
+    @property
+    def is_host(self):
+        return self.is_vm_group_job and self.client.context.test_data.metadata['is_vmhost'] == "true"
+
+    @property
+    def is_vm(self):
+        return self.is_vm_group_job and self.client.context.test_data.metadata['is_vmhost'] == "false"
+
+    def start_vms(self):
+        if not self.is_host:
+            return
+
+        runner = NetworkCommandRunner(
+            self.client,
+            self.client.target_device.tester_ps1_pattern,
+            self.client.target_device.tester_ps1_includes_rc
+        )
+
+        logging.debug("vm-group host: injecting SSH public key")
+        public_key_file = os.path.join(os.path.dirname(__file__), '../device/dynamic_vm_keys/lava.pub')
+        public_key = read_content(public_key_file).strip()
+        runner.run('mkdir -p /root/.ssh && echo "%s" >> /root/.ssh/authorized_keys' % public_key)
+
+        logging.debug("vm-group host: obtaining host IP for guest VM.")
+        try:
+            host_ip = runner.get_target_ip()
+        except NetworkError as e:
+            raise CriticalError("Failed to get network up: " % e)
+        # send a message to each guest
+        msg = {"request": "lava_send", "messageID": "lava_vm_start", "message": {"host_ip": host_ip}}
+        reply = self.client.context.transport(json.dumps(msg))
+        if reply == "nack":
+            raise CriticalError("lava_vm_start failed")
+        logging.info("[ACTION-B] LAVA VM start, using %s" % host_ip)
+
+        self.vms_started = True
+
+    def wait_for_vms(self):
+        if not (self.is_host and self.vms_started):
+            return
+
+        logging.info("Waiting for all VMs to finish ...")
+
+        self.client.context.transport(
+            json.dumps({
+                "request": "lava_send",
+                "messageID": "lava_vm_stop",
+                "message": {}
+            })
+        )
+
+        reply = self.client.context.transport(
+            json.dumps({
+                "request": "lava_wait_all",
+                "messageID": "lava_vm_stop"
+            })
+        )
+
+        if reply == 'nack':
+            raise CriticalError("Failure while waiting for VMs to finish")
+        logging.info("All VMs finished, proceeding with reboot")
+
+        self.vms_started = False
+
+    def vm_finished(self):
+        if not (self.is_vm):
+            return
+
+        msg = {"request": "lava_send", "messageID": "lava_vm_stop", "message": {}}
+        reply = self.client.context.transport(json.dumps(msg))
+        if reply == 'nack':
+            raise CriticalError("Failure when notifying VM finish to group")
+        logging.info("VM finished")
