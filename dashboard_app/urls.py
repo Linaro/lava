@@ -23,8 +23,8 @@ from django.conf.urls import *
 
 urlpatterns = patterns(
     'dashboard_app.views',
-    url(r'^$', 'index'),
-    url(r'^filters/$', 'filters.views.filters_list'),
+    url(r'^$', 'index', name='lava.dashboard'),
+    url(r'^filters/$', 'filters.views.filters_list', name='lava.dashboard.filters_list'),
     url(r'^filters/filters_names_json$', 'filters.views.filter_name_list_json', name='filter_name_list_json'),
     url(r'^filters/\+add$', 'filters.views.filter_add'),
     url(r'^filters/\+add-cases-for-test-json$', 'filters.views.filter_add_cases_for_test_json'),
