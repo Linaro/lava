@@ -77,8 +77,8 @@ class DynamicVmTarget(Target):
                                           target_type)
         self.backend_adapter.copy_images()
 
-    def deploy_linaro_prebuilt(self, image, rootfstype, bootloadertype):
-        self.backend.deploy_linaro_prebuilt(image, rootfstype, bootloadertype)
+    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype):
+        self.backend.deploy_linaro_prebuilt(image, dtb, rootfstype, bootloadertype)
         self.backend_adapter.copy_images()
 
     def power_off(self, proc):

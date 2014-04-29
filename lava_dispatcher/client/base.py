@@ -376,7 +376,7 @@ class LavaClient(object):
         self.target_device.deploy_android(boot, system, data, rootfstype,
                                           bootloadertype, target_type)
 
-    def deploy_linaro(self, hwpack, rootfs, image, rootfstype, bootloadertype):
+    def deploy_linaro(self, hwpack, rootfs, image, dtb, rootfstype, bootloadertype):
         if image is None:
             if hwpack is None or rootfs is None:
                 raise CriticalError(
@@ -387,10 +387,10 @@ class LavaClient(object):
                 "cannot specify hwpack or rootfs when specifying image")
 
         if image is None:
-            self.target_device.deploy_linaro(hwpack, rootfs,
+            self.target_device.deploy_linaro(hwpack, rootfs, dtb,
                                              rootfstype, bootloadertype)
         else:
-            self.target_device.deploy_linaro_prebuilt(image, rootfstype,
+            self.target_device.deploy_linaro_prebuilt(image, dtb, rootfstype,
                                                       bootloadertype)
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs,

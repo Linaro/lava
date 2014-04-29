@@ -219,14 +219,15 @@ class FastModelTarget(Target):
 
         self._customize_android()
 
-    def deploy_linaro(self, hwpack, rootfs, rootfstype, bootloadertype):
+    def deploy_linaro(self, hwpack, rootfs, dtb, rootfstype, bootloadertype):
         hwpack = download_image(hwpack, self.context, decompress=False)
         rootfs = download_image(rootfs, self.context, decompress=False)
         odir = os.path.dirname(rootfs)
 
         self._bootloadertype = bootloadertype
 
-        generate_fastmodel_image(self.context, hwpack, rootfs, odir, bootloadertype)
+        generate_fastmodel_image(self.context, hwpack, rootfs, dtb, odir,
+                                 bootloadertype)
         self._sd_image = '%s/sd.img' % odir
         self.customize_image(self._sd_image)
 
@@ -234,10 +235,13 @@ class FastModelTarget(Target):
         self._copy_needed_files_from_partition(self.config.root_part, 'boot')
         self._copy_needed_files_from_partition(self.config.root_part, 'lib')
 
-    def deploy_linaro_prebuilt(self, image, rootfstype, bootloadertype):
+    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype):
         self._sd_image = download_image(image, self.context)
         self._bootloadertype = bootloadertype
         self.customize_image(self._sd_image)
+
+        if dtb is not None:
+            self.config.simulator_dtb_files = [dtb]
 
         self._copy_needed_files_from_partition(self.config.boot_part, '')
         self._copy_needed_files_from_partition(self.config.root_part, 'boot')

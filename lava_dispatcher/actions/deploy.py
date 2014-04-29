@@ -54,6 +54,7 @@ class cmd_deploy_linaro_image(BaseAction):
             'hwpack': {'type': 'string', 'optional': True},
             'rootfs': {'type': 'string', 'optional': True},
             'image': {'type': 'string', 'optional': True},
+            'dtb': {'type': 'string', 'optional': True},
             'customize': {'type': 'object', 'optional': True},
             'rootfstype': {'type': 'string', 'optional': True},
             'bootloadertype': {'type': 'string', 'optional': True,
@@ -93,7 +94,7 @@ class cmd_deploy_linaro_image(BaseAction):
                 raise ValueError('must specify a login prompt or password \
                       prompt when specifying login commands')
 
-    def run(self, hwpack=None, rootfs=None, image=None,
+    def run(self, hwpack=None, rootfs=None, image=None, dtb=None,
             rootfstype='ext4', bootloadertype='u_boot', login_prompt=None,
             password_prompt=None, username=None, password=None,
             login_commands=None, customize=None):
@@ -110,7 +111,7 @@ class cmd_deploy_linaro_image(BaseAction):
         if customize is not None:
             self.client.config.customize = customize
         self.client.deploy_linaro(
-            hwpack=hwpack, rootfs=rootfs, image=image,
+            hwpack=hwpack, rootfs=rootfs, image=image, dtb=dtb,
             rootfstype=rootfstype, bootloadertype=bootloadertype,)
 
 

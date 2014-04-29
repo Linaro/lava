@@ -92,13 +92,13 @@ class SDMuxTarget(Target):
 
         self.proc = connect_to_serial(self.context)
 
-    def deploy_linaro(self, hwpack, rootfs, bootloadertype, rootfstype):
-        img = generate_image(self, hwpack, rootfs, self.scratch_dir,
+    def deploy_linaro(self, hwpack, rootfs, dtb, bootloadertype, rootfstype):
+        img = generate_image(self, hwpack, rootfs, dtb, self.scratch_dir,
                              rootfstype, bootloadertype)
         self.customize_image(img)
         self._write_image(img)
 
-    def deploy_linaro_prebuilt(self, image, rootfstype, bootloadertype):
+    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype):
         img = download_image(image, self.context)
         self.customize_image(img)
         self._write_image(img)
