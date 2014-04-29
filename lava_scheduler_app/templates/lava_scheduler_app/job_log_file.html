@@ -156,7 +156,7 @@
       </div>
     </div>
   </div>
-  {% if job.is_multinode %}
+  {% if job.is_multinode or job.is_vmgroup %}
   <div class="col-md-4">
     <h4 class="modal-header">Sub jobs</h4>
     <dl class="dl-horizontal">
@@ -169,10 +169,10 @@
         <dd>
     {% if subjob.actual_device.hostname %}
       on: <a href="{{ subjob.actual_device.get_absolute_url }}">{{ subjob.actual_device.hostname }}</a>
-      as: {{ subjob.multinode_role }}
+      as: {{ subjob.device_role }}
       </dd>
     {% else %}
-      No device assigned as {{ subjob.multinode_role }}.</dd>
+      No device assigned as {{ subjob.devicee_role }}.</dd>
     {% endif %}
     {% endfor %}
     </dl>

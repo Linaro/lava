@@ -1,19 +1,18 @@
 {% extends "layouts/content-bootstrap.html" %}
 
-{% block styles %}
-  <link href="{{ STATIC_URL }}lava_scheduler_app/css/shCore.css" rel="stylesheet" type="text/css" />
-  <link href="{{ STATIC_URL }}lava_scheduler_app/css/shThemeDefault.css" rel="stylesheet" type="text/css" />
-  <link href="{{ STATIC_URL }}lava_scheduler_app/css/shThemeLAVA.css" rel="stylesheet" type="text/css" />
-{% endblock styles %}
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/shCore.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/shBrushJScript.js"></script>
+
+<link href="{{ STATIC_URL }}lava_scheduler_app/css/shCore.css" rel="stylesheet" type="text/css" />
+<link href="{{ STATIC_URL }}lava_scheduler_app/css/shThemeDefault.css" rel="stylesheet" type="text/css" />
+<link href="{{ STATIC_URL }}lava_scheduler_app/css/shThemeLAVA.css" rel="stylesheet" type="text/css" />
+{% endblock %}
 
 {% block content %}
-<h2>Job definition file - {% if job.is_multinode %}{{ job.sub_id }}{% else %}{{ job.id }}{% endif %}
- <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.definition.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h2>
-{% if job.is_multinode %}
-     {{ job.sub_id }} is part of a multinode job. Use the Multinode Definition to resubmit.
-{% endif %}
+<h2>VM Group Job definition file - {{ job.sub_id }}  <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.multinode_definition.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h2>
 
-<div class="row">
   <div class="col-md-4">
     <h4 class="modal-header">Device</h4>
     <dl class="dl-horizontal">
@@ -41,27 +40,26 @@
             <abbr title="view job {{ subjob.sub_id }} to see the result bundle, if any.">(?)</abbr>
         {% endif %}
       </dt>
-      <dd>
+       <dd>
     {% if subjob.actual_device.hostname %}
       on: <a href="{{ subjob.actual_device.get_absolute_url }}">{{ subjob.actual_device.hostname }}</a>
       as: {{ subjob.device_role }}&nbsp;
+      </dd>
     {% else %}
       No device assigned as {{ subjob.device_role }}.</dd>
     {% endif %}
-      </dd>
     {% endfor %}
     </dl>
   </div>
   {% endif %}
   <div class="col-md-4">
-    <h4 class="modal-header">Logs</h4>
-    <div class="row">
+    <h4 class="modal-header">Logs and Actions</h4>
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
         {% if job_file_present %}
           <li><a href="{{ job.get_absolute_url }}" class="btn btn-primary">Summary</a></li>
         {% endif %}
-        {% if show_resubmit and not job.is_multinode %}
+        {% if show_resubmit %}
           <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
         {% endif %}
         {% if job.results_link %}
@@ -74,27 +72,15 @@
         {% if job_file_present %}
           <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary">Complete log</a></li>
         {% endif %}
-        {% if job.is_multinode %}
-          <li><a href="{% url 'lava.scheduler.job.multinode_definition' job.pk %}" class="btn btn-info">Multinode Definition</a></li>
-        {% endif %}
+          <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition of {{ job.sub_id }}</a></li>
         </ul>
-      </div>
     </div>
   </div>
-</div>
 
-<h4 class="modal-header">Definition</h4>
-<pre class="brush: js">{{ job.display_definition }}</pre>
-
-{% endblock content %}
-
-{% block scripts %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/shCore.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/shBrushJScript.js"></script>
+<pre class="brush: js">{{ job.vmgroup_definition }}</pre>
 
 <script type="text/javascript">
-  $(function() {
-     SyntaxHighlighter.all();
-  });
+     SyntaxHighlighter.all()
 </script>
-{% endblock scripts %}
+
+{% endblock %}

@@ -78,6 +78,7 @@
           <i>Unknown</i>
           {% endif %}
       </dd>
+{% if not device.temporarydevice %}
       <dt>Worker</dt>
       <dd>
         {% if device.too_long_since_last_heartbeat %}
@@ -91,6 +92,7 @@
           <a href="{{ device.worker_host.get_absolute_url }}">{{ device.worker_host.hostname }}</a>
         {% endif %}
       </dd>
+{% endif %}
     </dl>
   </div>
 </div>

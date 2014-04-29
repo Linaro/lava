@@ -82,6 +82,7 @@ class Job(object):
         self._killing = False
         self._kill_reason = ''
         self._pidrecord = None
+        self._device_config = None
 
     def _checkCancel(self):
         if self._killing:
@@ -128,14 +129,25 @@ class Job(object):
     def _run(self, output_dir):
         d = defer.Deferred()
         json_data = self.job_data
+        custom_config = json_data.pop('config', None)
         fd, self._json_file = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
+
+        args = [self.dispatcher, self._json_file, '--output-dir', output_dir]
+
+        if custom_config:
+            fd, self._device_config = tempfile.mkstemp()
+            with os.fdopen(fd, 'wb') as f:
+                for k in custom_config:
+                    f.write(k + '=' + custom_config[k] + "\n")
+            args.append('--config')
+            args.append(self._device_config)
+
         self._protocol = DispatcherProcessProtocol(d, self)
-        ret = self.reactor.spawnProcess(
-            self._protocol, self.dispatcher, args=[
-                self.dispatcher, self._json_file, '--output-dir', output_dir],
-            childFDs={0: 0, 1: 'r', 2: 'r'}, env=None)
+        ret = self.reactor.spawnProcess(self._protocol, self.dispatcher,
+                                        args=args, env=None,
+                                        childFDs={0: 0, 1: 'r', 2: 'r'})
         if ret:
             os.mkdir(output_dir)
             self._pidrecord = os.path.join(output_dir, "jobpid")
@@ -163,8 +175,7 @@ class Job(object):
             self.source.jobCompleted,
             self.board_name,
             exit_code,
-            self._killing).addCallback(
-            lambda r: exit_code)
+            self._killing).addCallback(lambda r: exit_code)
 
 
 class SchedulerMonitorPP(ProcessProtocol):
