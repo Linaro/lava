@@ -1,91 +1,57 @@
-{% extends "registration/base.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
 
-{% block title %}
-{{block.super }}
-| {% trans "Sign in" %}
-{% endblock %}
-
-
-{% block extrahead %}
-{{ block.super }}
-<style type="text/css">
-  #master_container {
-    max-width: 750px;
-    width: 88%;
-  }
-</style>
-<script type="text/javascript">
-  $(function () {
-      $("#id_username").watermark("{% trans "Username" %}");
-      $("#id_password").watermark("{% trans "Password" %}");
-      });
-</script>
-{% endblock %}
-
-
-{% block header %}
-{% if next %}
-<h1 class="long">{% trans "You need to sign-in to access that page" %}</h1>
-{% else %}
-<h1>{% trans "Sign in" %}</h1>
-{% endif %}
-{% endblock %}
+{% block title %}{{block.super }}| {% trans "Sign in" %}{% endblock %}
 
 
 {% block content %}
-<form method="post" action="{% url 'django.contrib.auth.views.login' %}">
-  {% csrf_token %} 
-  <table>
-    {% if openid_available %}
-    <tr>
-      <th id="lp_net_column">{% blocktrans %}Use {{ openid_provider }} account{% endblocktrans %}</th>
-      <th id="or_column" rowspan="3">&ge;</th>
-      <th id="local_account_column">{% trans "Use custom account" %}</th>
-    </tr>
-    {% endif %}
-    <tr>
-      {% if openid_available %}
-      <td>
-        {% blocktrans %}
-        <p>Thanks to the <a
-          href="http://openid.net/get-an-openid/what-is-openid/"
-          >OpenID technology</a> you can use your existing
-          {{ openid_provider }} account to
-        access the dashboard.</p>
-        <p>This is the recommended method as you don't need to worry about
-        having to maintain another account just for this website.</p>
-        {% endblocktrans %}
-      </td>
-      {% endif %}
-      <td>
-        {% blocktrans %}
-        <p>If you already have a local account you can sign-in with your user
-        name and password.</p>
-        {% endblocktrans %}
-        <p>{{ form.username }}</p>
-        <p>{{ form.password }}</p>
-        {% if form.errors %}
-        <p class="error">{% trans "Your user name and password didn't match." %}</p>
-        <p>{% trans "If you have problems signing in please" %}
-        <a id="forgot_password"
-          href="{% url 'django.contrib.auth.views.password_reset' %}"
-          >{% trans "reset your password" %}</a>.<p>
-        {% endif %}
-      </td>
-    </tr>
-    <tr>
-      {% if openid_available %}
-      <th>
-        <a class="button" href="{% url 'django_openid_auth.views.login_begin' %}?next={{next|escape}}"
-          >{% blocktrans %}Sign in with {{ openid_provider }}{% endblocktrans %}</a>
-      </th>
-      {% endif %}
-      <th>
-        <input id="id_submit" type="submit" value="{% trans "Sign in with username and password" %}" />
-        <input type="hidden" name="next" value="{{ next }}" />
-      </th>
-    </tr>
-  </table>
-</form>
+{% if next %}
+<h2>{% trans "You need to sign-in to access that page" %}</h2>
+{% else %}
+<h2>{% trans "Sign in" %}</h2>
+{% endif %}
+
+
+<div class="row">
+  {% if openid_available %}
+  <div class="col-md-6">
+    <h4 class="modal-header">Using OpenID</h4>
+    {% blocktrans %}
+    <p>Thanks to the <a href="http://openid.net/get-an-openid/what-is-openid/">OpenID technology</a> you can use your existing {{ openid_provider }} account to access the dashboard.</p>
+    <p>This is the recommended method as you don't need to worry about having to maintain another account just for this website.</p>
+    {% endblocktrans %}
+    <a class="btn btn-success" href="{% url 'django_openid_auth.views.login_begin' %}?next={{next|escape}}">{% blocktrans %}Sign in with {{ openid_provider }}{% endblocktrans %}</a>
+  </div>
+  {% endif %}
+  <div class="col-md-6">
+    <h4 class="modal-header">Local account</h4>
+    <form class="form-horizontal" method="post" action="{% url 'login' %}">
+      {% csrf_token %}
+      <div class="form-group{% if form.errors %} has-error{% endif %}">
+        <label class="col-md-2 control-label" for="id_username">{% trans "Username" %}</label>
+        <div class="col-md-4">
+          {{ form.username }}
+          {% for error in form.username.errors %}
+          <p class="help-block">{{ error }}</p>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="form-group{% if form.errors %} has-error{% endif %}">
+        <label class="col-md-2 control-label" for="id_password">{% trans "Password" %}</label>
+        <div class="col-md-4">
+          {{ form.password }}
+          {% for error in form.password.errors %}
+          <p class="help-block">{{ error }}</p>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="col-md-6 col-md-offset-2">
+          <button class="btn btn-success" type="submit">{% trans "Login" %}</button>
+          <a href="{% url 'password_reset' %}">{% trans "Reset password" %}</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}
