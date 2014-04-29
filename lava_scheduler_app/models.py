@@ -1350,7 +1350,7 @@ class TestJob(RestrictedResource):
                         node_json[role][c]["target"] = '%s-job%s' % \
                             (node_json[role][c]['target'], sub_id)
                         target = TemporaryDevice(
-                            hostname=node_json[role][c]["target"],
+                            hostname=node_json[role][c]["target"], is_public=True,
                             device_type=device_type, description=description,
                             worker_host=None, vm_group=vm_group)
                         target.save()
