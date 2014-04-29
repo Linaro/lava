@@ -82,13 +82,13 @@ class QEMUTarget(Target):
             firmware = download_image(firmware, self.context)
             self._firmware = firmware
 
-    def deploy_linaro(self, hwpack, rootfs, rootfstype, bootloadertype):
+    def deploy_linaro(self, hwpack, rootfs, dtb, rootfstype, bootloadertype):
         odir = self.scratch_dir
-        self._sd_image = generate_image(self, hwpack, rootfs, odir,
-                                        bootloadertype, rootfstype)
+        self._sd_image = generate_image(self, hwpack, rootfs, dtb,
+                                        odir, bootloadertype, rootfstype)
         self.customize_image(self._sd_image)
 
-    def deploy_linaro_prebuilt(self, image, rootfstype, bootloadertype):
+    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype):
         self._sd_image = download_image(image, self.context)
         self.customize_image(self._sd_image)
 

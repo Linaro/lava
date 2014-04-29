@@ -315,12 +315,12 @@ class BootloaderTarget(MasterImageTarget):
                                           decompress=False)
                 self._boot_tags['{FIRMWARE}'] = self._get_rel_path(firmware)
 
-    def deploy_linaro(self, hwpack, rfs, rootfstype, bootloadertype):
+    def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootloadertype):
         self._uboot_boot = False
-        super(BootloaderTarget, self).deploy_linaro(hwpack, rfs,
+        super(BootloaderTarget, self).deploy_linaro(hwpack, rfs, dtb,
                                                     rootfstype, bootloadertype)
 
-    def deploy_linaro_prebuilt(self, image, rootfstype, bootloadertype):
+    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype):
         self._uboot_boot = False
         if self._is_ipxe():
             if image is not None:
@@ -340,6 +340,7 @@ class BootloaderTarget(MasterImageTarget):
                 raise CriticalError("No image to boot")
         else:
             super(BootloaderTarget, self).deploy_linaro_prebuilt(image,
+                                                                 dtb,
                                                                  rootfstype,
                                                                  bootloadertype)
 

@@ -29,6 +29,7 @@ from lava_dispatcher.device.target import (
     get_target,
 )
 from lava_dispatcher.config import get_device_config
+from lava_dispatcher.errors import CriticalError
 from lava_dispatcher.utils import (
     ensure_directory,
 )
@@ -41,6 +42,7 @@ class DynamicVmTarget(Target):
 
     supported_backends = {
         'kvm': lambda: kvm_adapter,
+        'kvm-arm': lambda: kvm_adapter,
     }
 
     def __init__(self, context, config):
@@ -69,11 +71,21 @@ class DynamicVmTarget(Target):
         return self.backend.deployment_data
 
     def power_on(self):
+        self.backend_adapter.amend_config()
         return self.backend.power_on()
 
-    def deploy_linaro_prebuilt(self, image, rootfstype, bootloadertype):
-        self.backend.deploy_linaro_prebuilt(image, rootfstype, bootloadertype)
-        self.backend_adapter.copy_image()
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
+                             bootloader, firmware, rootfstype, bootloadertype,
+                             target_type):
+        self.backend.deploy_linaro_kernel(kernel, ramdisk, dtb, rootfs,
+                                          nfsrootfs, bootloader, firmware,
+                                          rootfstype, bootloadertype,
+                                          target_type)
+        self.backend_adapter.copy_images()
+
+    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype):
+        self.backend.deploy_linaro_prebuilt(image, dtb, rootfstype, bootloadertype)
+        self.backend_adapter.copy_images()
 
     def power_off(self, proc):
         self.backend.power_off(proc)
@@ -92,36 +104,70 @@ class DynamicVmTarget(Target):
 
 class kvm_adapter(object):
 
+    ssh_options = '-o Compression=yes -o UserKnownHostsFile=/dev/null -o PasswordAuthentication=no -o StrictHostKeyChecking=no'
+    ssh = 'ssh %s' % ssh_options
+    scp = 'scp %s' % ssh_options
+
     def __init__(self, device):
         self.device = device
         self.identity_file = '%s/dynamic_vm_keys/lava' % os.path.dirname(__file__)
-        self.local_image = None
-        self.remote_image = None
+        self.local_sd_image = None
+        self.__host__ = None
 
-    def copy_image(self):
+    @property
+    def host(self):
+        if self.__host__ is not None:
+            return self.__host__
+
+        device = self.device
+        self.__host__ = device.config.dynamic_vm_host
+        if self.__host__ is None and \
+           'is_vmhost' in device.context.test_data.metadata and \
+           'host_ip' in device.context.test_data.metadata:
+            self.__host__ = device.context.test_data.metadata['host_ip']
+
+        if self.__host__ is None:
+            raise CriticalError("Config item dynamic_vm_host is mandatory")
+
+        return self.__host__
+
+    def copy_images(self):
+        device = self.device
+        self.local_sd_image = device._sd_image  # save local image location
+        device._sd_image = self.copy_image(device._sd_image)
+        device._kernel = self.copy_image(device._kernel)
+        device._dtb = self.copy_image(device._dtb)
+        device._ramdisk = self.copy_image(device._ramdisk)
+        device._firmware = self.copy_image(device._firmware)
+
+    def copy_image(self, local_image):
+        if local_image is None:
+            return None
+
         device = self.device
 
-        self.local_image = device._sd_image
-        self.remote_image = '/lava/vm-images/%s/%s' % (device.config.hostname, os.path.basename(self.local_image))
+        remote_image = '/lava/vm-images/%s/%s' % (device.config.hostname, os.path.basename(local_image))
 
         device.context.run_command('rm -rf /lava/vm-images/%s' % device.config.hostname, failok=False)
-        device.context.run_command('ssh -o StrictHostKeyChecking=no -i %s root@%s -- mkdir -p %s' % (self.identity_file, device.config.dynamic_vm_host, os.path.dirname(self.remote_image)), failok=False)
-        device.context.run_command('scp -o StrictHostKeyChecking=no -i %s %s root@%s:%s' % (self.identity_file, self.local_image, device.config.dynamic_vm_host, self.remote_image), failok=False)
+        device.context.run_command(self.ssh + ' -i %s root@%s -- mkdir -p %s' % (self.identity_file, self.host, os.path.dirname(remote_image)), failok=False)
+        device.context.run_command(self.scp + ' -i %s %s root@%s:%s' % (self.identity_file, local_image, self.host, remote_image), failok=False)
 
-        device._sd_image = self.remote_image
+        return remote_image
 
     def amend_config(self):
         device = self.device
-        ssh = 'ssh -o StrictHostKeyChecking=no root@' + device.config.dynamic_vm_host + ' -i ' + self.identity_file
+        ssh = self.ssh + ' root@' + self.host + ' -i ' + self.identity_file
         device.config.qemu_binary = '%s -- %s' % (ssh, device.config.qemu_binary)
 
     @contextlib.contextmanager
     def mount(self, partition):
         device = self.device
-        rsync_ssh = 'ssh -o StrictHostKeyChecking=no -i %s' % self.identity_file
-        device.context.run_command('rsync -avp -e "%s" root@%s:%s %s' % (rsync_ssh, device.config.dynamic_vm_host, self.remote_image, self.local_image), failok=False)
-        with image_partition_mounted(self.local_image, partition) as mount_point:
+        local_sd_image = self.local_sd_image
+        remote_sd_image = self.device._sd_image
+        rsync_ssh = self.ssh + ' -i %s' % self.identity_file
+        device.context.run_command('rsync -avpz --progress -e "%s" root@%s:%s %s' % (rsync_ssh, self.host, remote_sd_image, local_sd_image), failok=False)
+        with image_partition_mounted(local_sd_image, partition) as mount_point:
             yield mount_point
-        device.context.run_command('rsync -avp -e "%s" %s root@%s:%s' % (rsync_ssh, self.local_image, device.config.dynamic_vm_host, self.remote_image))
+        device.context.run_command('rsync -avpz --progress -e "%s" %s root@%s:%s' % (rsync_ssh, local_sd_image, self.host, remote_sd_image))
 
 target_class = DynamicVmTarget
