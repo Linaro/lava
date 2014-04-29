@@ -206,7 +206,7 @@ def split_vm_job(json_jobdata, vm_group):
             if json_jobdata.get("job_name", False):
                 node_json[role][c]["job_name"] = json_jobdata["job_name"]
             node_json[role][c]["group_size"] = group_count
-            node_json[role][c]["target_group"] = vm_group
+            node_json[role][c]["vm_group"] = vm_group
             node_json[role][c]["actions"] = node_actions[role]
             node_json[role][c]["role"] = role
             # vm_group node stage 2
