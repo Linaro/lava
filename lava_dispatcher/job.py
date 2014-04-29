@@ -303,7 +303,7 @@ class LavaTestJob(object):
                 self.context.test_data.add_metadata(metadata)
 
             if 'group_size' in self.job_data:
-                s_metadata['group_size'] = self.job_data['group_size']
+                metadata['group_size'] = self.job_data['group_size']
                 self.context.test_data.add_metadata(metadata)
 
             logging.debug("[ACTION-B] Multi Node test!")
