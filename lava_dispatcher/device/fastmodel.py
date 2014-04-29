@@ -145,17 +145,23 @@ class FastModelTarget(Target):
                 os.symlink(self._dtb, dest_dtb)
 
         # Extract the first secure flashloader binary from the image
-        if self.config.simulator_bl1 and self._bl1 is None:
-            self._bl1 = self._find_and_copy(
-                subdir, odir, self.config.simulator_bl1)
+        if self.config.simulator_bl1_files and self._bl1 is None:
+            self._bl1 = \
+                self._copy_first_find_from_list(subdir, odir,
+                                                self.config.simulator_bl1_files,
+                                                self.config.simulator_bl1)
         # Extract the second secure flashloader binary from the image
-        if self.config.simulator_bl2 and self._bl2 is None:
-            self._bl2 = self._find_and_copy(
-                subdir, odir, self.config.simulator_bl2)
+        if self.config.simulator_bl2_files and self._bl2 is None:
+            self._bl2 = \
+                self._copy_first_find_from_list(subdir, odir,
+                                                self.config.simulator_bl2_files,
+                                                self.config.simulator_bl2)
         # Extract the second secure flashloader binary from the image
-        if self.config.simulator_bl3 and self._bl3 is None:
-            self._bl3 = self._find_and_copy(
-                subdir, odir, self.config.simulator_bl3)
+        if self.config.simulator_bl31_files and self._bl3 is None:
+            self._bl3 = \
+                self._copy_first_find_from_list(subdir, odir,
+                                                self.config.simulator_bl31_files,
+                                                self.config.simulator_bl31)
 
     def _check_needed_files(self):
         if self._bootloadertype == 'u_boot':
@@ -183,15 +189,15 @@ class FastModelTarget(Target):
             logging.warning('No DTB found, %r' %
                             self.config.simulator_dtb_files)
         # SECURE FLASHLOADERs are needed only for base and cortex models
-        if self._bl1 is None and self.config.simulator_bl1:
+        if self._bl1 is None and self.config.simulator_bl1_files:
             raise RuntimeError('No SECURE FLASHLOADER found, %r' %
-                               self.config.simulator_bl1)
-        if self._bl2 is None and self.config.simulator_bl2:
+                               self.config.simulator_bl1_files)
+        if self._bl2 is None and self.config.simulator_bl2_files:
             raise RuntimeError('No SECURE FLASHLOADER found, %r' %
-                               self.config.simulator_bl2)
-        if self._bl3 is None and self.config.simulator_bl3:
+                               self.config.simulator_bl2_files)
+        if self._bl3 is None and self.config.simulator_bl31_files:
             raise RuntimeError('No SECURE FLASHLOADER found, %r' %
-                               self.config.simulator_bl3)
+                               self.config.simulator_bl31_files)
 
     def deploy_android(self, boot, system, data, rootfstype, bootloadertype,
                        target_type):
@@ -224,20 +230,18 @@ class FastModelTarget(Target):
         self._sd_image = '%s/sd.img' % odir
         self.customize_image(self._sd_image)
 
-        self._copy_needed_files_from_partition(self.config.boot_part, 'rtsm')
-        self._copy_needed_files_from_partition(self.config.boot_part, 'fvp')
         self._copy_needed_files_from_partition(self.config.boot_part, '')
         self._copy_needed_files_from_partition(self.config.root_part, 'boot')
+        self._copy_needed_files_from_partition(self.config.root_part, 'lib')
 
     def deploy_linaro_prebuilt(self, image, rootfstype, bootloadertype):
         self._sd_image = download_image(image, self.context)
         self._bootloadertype = bootloadertype
         self.customize_image(self._sd_image)
 
-        self._copy_needed_files_from_partition(self.config.boot_part, 'rtsm')
-        self._copy_needed_files_from_partition(self.config.boot_part, 'fvp')
         self._copy_needed_files_from_partition(self.config.boot_part, '')
         self._copy_needed_files_from_partition(self.config.root_part, 'boot')
+        self._copy_needed_files_from_partition(self.config.root_part, 'lib')
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):

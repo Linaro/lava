@@ -272,7 +272,7 @@ class Target(object):
 
     def _find_and_copy(self, rootdir, odir, pattern, name=None):
         dest = None
-        for root, dirs, files in os.walk(rootdir):
+        for root, dirs, files in os.walk(rootdir, topdown=False):
             for file_name in files:
                 if re.match(pattern, file_name):
                     src = os.path.join(root, file_name)
