@@ -23,6 +23,7 @@ import ConfigParser
 import contextlib
 import logging
 import os
+import shutil
 
 from lava_dispatcher.device.target import (
     Target,
@@ -104,7 +105,10 @@ class kvm_adapter(object):
 
     def __init__(self, device):
         self.device = device
-        self.identity_file = '%s/dynamic_vm_keys/lava' % os.path.dirname(__file__)
+        identity_file = '%s/dynamic_vm_keys/lava' % os.path.dirname(__file__)
+        self.identity_file = os.path.join(device.scratch_dir, 'lava')
+        shutil.copyfile(identity_file, self.identity_file)
+        os.chmod(self.identity_file, 0600)
         self.local_sd_image = None
         self.__host__ = None
 
