@@ -22,20 +22,35 @@
       </div>
       <div class="navbar-collapse collapse">
         <ul class="nav navbar-nav">
-          {% for menu in lava.menu_list %}
-          {% if menu.sub_menu %}
+          <li><a href="{% url 'lava.home' %}"><span class="glyphicon glyphicon-home"></span> Home</a></li>
           <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ menu.label }} <b class="caret"></b></a>
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-dashboard"></span> Dashboard <b class="caret"></b></a>
             <ul class="dropdown-menu">
-              {% for sub_menu in menu.sub_menu %}
-              <li><a href="{{ sub_menu.url }}">{{ sub_menu.label }}</a></li>
-              {% endfor %}
+              <li><a href="{% url 'dashboard_app.views.images.image_report_list' %}">Image Reports</a></li>
+              <li><a href="{% url 'dashboard_app.views.image_reports.views.image_report_list' %}">Image Reports 2.0</a></li>
+              <li><a href="{% url 'dashboard_app.views.filters.views.filters_list' %}">Filters</a></li>
+              <li><a href="{% url 'dashboard_app.views.bundle_stream_list' %}">Bundle Streams</a></li>
             </ul>
           </li>
-          {% else %}
-          <li><a href="{{ menu.url }}">{{ menu.label }}</a></li>
-          {% endif %}
-          {% endfor %}
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-calendar"></span> Scheduler <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="{% url 'lava.scheduler' %}">Status</a></li>
+              <li><a href="{% url 'lava.scheduler.job.list' %}">Jobs</a></li>
+              <li><a href="{% url 'lava.scheduler.active_devices' %}">Devices</a></li>
+              <li><a href="{% url 'lava.scheduler.queue' %}">Queue</a></li>
+              <li><a href="{% url 'lava.scheduler.reports' %}">Reports</a></li>
+              <li><a href="{% url 'lava.scheduler.job.submit' %}">Submit Job</a></li>
+            </ul>
+          </li>
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-flash"></span> API <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="{% url 'lava.api_help' %}">Available Methods</a></li>
+              <li><a href="{% url 'linaro_django_xmlrpc.views.tokens' %}">Authentication Tokens</a></li>
+            </ul>
+          </li>
+          <li><a href="{{ STATIC_URL }}docs/"><span class="glyphicon glyphicon-question-sign"></span> Help</a></li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
           {% if lava.instance_name %}

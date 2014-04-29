@@ -26,21 +26,6 @@ from django.conf import settings
 
 
 def lava(request):
-    menu_list = [
-        Menu("Home", reverse('lava.home')),
-    ]
-    for extension in loader.extensions:
-        menu = extension.get_menu()
-        if menu:
-            menu_list.append(menu)
-    menu_list.extend([
-        Menu("API", reverse("lava.api_help"), [
-            Menu("Available Methods", reverse("lava.api_help")),
-            Menu("Authentication Tokens", reverse("linaro_django_xmlrpc.views.tokens")),
-        ]),
-        Menu("Documentation", "/static/docs/"),
-    ])
-
     try:
         instance_name = os.environ["LAVA_INSTANCE"]
     except KeyError:
@@ -56,7 +41,6 @@ def lava(request):
 
     return {
         'lava': {
-            'menu_list': menu_list,
             'extension_list': loader.extensions,
             'instance_name': instance_name,
             'version': versiontools.format_version(
