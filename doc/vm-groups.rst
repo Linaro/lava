@@ -6,14 +6,18 @@ Virtual Machine Groups
 ######################
 
 Virtual machine (VM) groups are a special type of multinode test job,
-where dynamically allocated virtual machines participate.
+where dynamically allocated virtual machines participate in a single
+test job.
 
 To submit a VM group test job, you need:
 
 - a device that supports virtualization (at the time of writing Arndale
   and Versatile Express boards are known to have it).
 
-- system images for the host system and for the VM's'.
+- system images for the host system and for the VM's'. The host system
+  image needs to include ``openssh-server``.
+
+- the instance configured to support a ``kvm-arm`` :term:`device type`.
 
 A VM group test job consists of a ``vm_group`` attribute, specifying
 the host machine and a list of VM's that will spawned on the host.
@@ -31,11 +35,11 @@ Example job definition::
         },
         "vms": [
           {
-            "device_type": "kvm",
+            "device_type": "kvm-arm",
             "role": "server"
           },
           {
-            "device_type": "kvm",
+            "device_type": "kvm-arm",
             "role": "client"
           }
         ]
@@ -85,7 +89,9 @@ that array must have the following mandatory attributes:
 
 - ``role``: like in regular multinode jobs, this indicates a label that
   will be associated with the given VM's and can be used See
-  :ref:`multinode` for more information.
+  :ref:`multinode` for more information. Always make sure you are clear
+  on what ``role`` is assigned to each ``lava_test_shell`` command.
+  See :ref:`writing_vm_group_tests`.
 
 - ``image``: which image that should be used to boot the virtual machine.
 
@@ -101,3 +107,27 @@ There are additional parameters that can be used, but are optional:
 
 - ``shell_prompt``: the shell prompt of the VM, used by LAVA to identify
   that the VM finished booting.
+
+.. _writing_vm_group_tests:
+
+Writing tests for virtual machine groups
+========================================
+
+The VMs will run on the host device and LAVA supports running
+:ref:`lava_test_shell` on the host and inside each VM.
+
+* The host test shell will start and run its tests and then wait until
+  all of the VM test shells have finished.
+* If a second test shell command is given for the host, this test shell
+  will only operate once all of the VMs have closed, allowing for tests
+  to be run to check for a successful clean up on the host device.
+* If the host device needs to run tests from multiple repositories,
+  see :ref:`tests_and_reboots`.
+* See :ref:`writing_multinode` for more on how to communicate between
+  the VM and the host using the :ref:`multinode_api`.
+* It is not possible to list one test shell for multiple roles, only
+  for a single role or all roles. If you have multiple tests to run on
+  different VMs, consider whether it is better to have multiple roles,
+  each with a ``lava_test_shell`` command or to combine the tests into
+  one role and use the :ref:`multinode_api` or other features to
+  distinguish one VM from another.
