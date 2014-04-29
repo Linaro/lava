@@ -50,7 +50,7 @@ urlpatterns = patterns(
     # include('django.contrib.auth.urls') doesn't work due to login
     # override above.
     url(r'^{mount_point}accounts/login/$'.format(mount_point=settings.MOUNT_POINT),
-        'django.contrib.auth.views.login', {'authentication_form': AuthenticationForm}),
+        'django.contrib.auth.views.login', {'authentication_form': AuthenticationForm}, name='login'),
     url(r'^{mount_point}accounts/logout/$'.format(mount_point=settings.MOUNT_POINT),
         'django.contrib.auth.views.logout'),
     url(r'^{mount_point}password_change/done/$'.format(mount_point=settings.MOUNT_POINT),
@@ -58,7 +58,7 @@ urlpatterns = patterns(
     url(r'^{mount_point}password_change/$'.format(mount_point=settings.MOUNT_POINT),
         'django.contrib.auth.views.password_change'),
     url(r'^{mount_point}password_reset/$'.format(mount_point=settings.MOUNT_POINT),
-        'django.contrib.auth.views.password_reset'),
+        'django.contrib.auth.views.password_reset', name='password_reset'),
     url(r'^{mount_point}password_reset/done/$'.format(mount_point=settings.MOUNT_POINT),
         'django.contrib.auth.views.password_reset_done'),
     url(r'^{mount_point}admin_password_reset/$'.format(mount_point=settings.MOUNT_POINT),
