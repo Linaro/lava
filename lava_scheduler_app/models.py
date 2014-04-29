@@ -1338,7 +1338,7 @@ class TestJob(RestrictedResource):
                         if name != "dynamic-vm":
                             raise DevicesUnavailableException("device type %s does not exist" % name)
                         else:
-                            device_type = DeviceType.objects.create(name="dynamic-vm")
+                            device_type = DeviceType.objects.create(name="dynamic-vm", is_public=True)
                     sub_id = '.'.join([str(parent_id), str(child_id)])
 
                     is_vmhost = False
