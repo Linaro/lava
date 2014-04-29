@@ -247,8 +247,9 @@ class DeviceTableView(JobTableView):
 
     def get_queryset(self):
         visible = filter_device_types(self.request.user)
-        return Device.objects.select_related("device_type")\
-            .order_by("hostname").filter(device_type__in=visible)
+        return Device.objects.select_related("device_type").order_by(
+            "hostname").filter(temporarydevice=None,
+                               device_type__in=visible)
 
 
 @BreadCrumb("Scheduler", parent=lava_index)
@@ -560,7 +561,9 @@ class DeviceTypeOverView(JobTableView):
 class NoDTDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        return Device.objects.all().order_by('hostname')
+        return Device.objects.filter(Q(temporarydevice=None) and
+                                     ~Q(status__in=[Device.RETIRED])
+                                     ).order_by('hostname')
 
 
 def populate_capabilities(dt):
