@@ -444,6 +444,12 @@ class DatabaseJobSource(object):
                         previous_state = device.previous_state()
                         if previous_state is None:
                             previous_state = Device.IDLE
+                        if job.is_vmgroup:
+                            try:
+                                if device.temporarydevice:
+                                    previous_state = Device.RETIRED
+                            except TemporaryDevice.DoesNotExist:
+                                self.logger.debug("%s is not a tmp device" % device.hostname)
                         self.logger.debug("Transitioning %s to %s" % (device.hostname, previous_state))
                         device.current_job = None
                         msg = "Job %s cancelled" % job.display_id
