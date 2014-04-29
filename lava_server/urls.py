@@ -43,9 +43,6 @@ urlpatterns = patterns(
     url(r'^{mount_point}me/$'.format(mount_point=settings.MOUNT_POINT),
         me,
         name='lava.me'),
-    url(r'^{mount_point}version/$'.format(mount_point=settings.MOUNT_POINT),
-        version,
-        name='lava.version_details'),
 
     # We need to override for login action to support longer usernames.
     # Then we have different code trying to access other actions,
