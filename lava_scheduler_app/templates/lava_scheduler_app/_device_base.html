@@ -110,10 +110,12 @@
         (<a href="{{ device.current_job.get_absolute_url }}">Job {{ device.current_job.pk }}</a>)
         {% endif %}
       </dd>
+{% if device.device_type.name != 'dynamic-vm' %}
       <dt>Health</dt>
       <dd>{{ device.get_health_status_display }}</dd>
       <dt>Checks/failures</dt>
       <dd><a href="{% url 'lava.scheduler.device_report' device.pk %}">Graphical reports</a></dd>
+{% endif %}
     </dl>
   </div>
 
