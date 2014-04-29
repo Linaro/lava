@@ -471,7 +471,9 @@ class Target(object):
         else:
             raise RuntimeError('bad file extension: %s' % tar_url)
 
-        runner.run('wget -O - %s %s | /bin/tar -C %s -xmf -'
+        runner.run('wget --no-check-certificate --no-proxy '
+                   '--connect-timeout=30 -S --progress=dot -e dotbytes=2M '
+                   '-O - %s %s | /bin/tar -C %s -xmf -'
                    % (tar_url, decompression_cmd, dest),
                    timeout=timeout)
 
