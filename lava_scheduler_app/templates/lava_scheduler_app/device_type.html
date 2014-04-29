@@ -14,6 +14,7 @@
 <h2><i>{{device_type}}</i> status</h2>
 
 <div class="row">
+{% if device_type.name != 'dynamic-vm' %}
   <div class="col-md-6">
     <h4 class="modal-header">Capabilities{% if capabilities_date %} <small>({{ capabilities_date }})</small>{% endif %}</h4>
     <dl class="dl-horizontal">
@@ -29,6 +30,7 @@
       <dd>{{ cores|default:"<i>unknown</i>" }}</dd>
     </dl>
   </div>
+{% endif %}
   <div class="col-md-6">
     <h4 class="modal-header">Current state</h4>
     <dl class="dl-horizontal">
@@ -36,8 +38,10 @@
       <dd>{{ running_jobs_num }}</dd>
       <dt>Queued jobs</dt>
       <dd>{{ queued_jobs_num }}</dd>
+{% if device_type.name != 'dynamic-vm' %}
       <dt>Checks/failures</dt>
       <dd><a href="{% url 'lava.scheduler.device_type_report' device_type %}">Graphical reports</a></dd>
+{% endif %}
     </dl>
   </div>
 </div>
