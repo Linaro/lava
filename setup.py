@@ -35,6 +35,7 @@ setup(
             'default-config/lava-dispatcher/device-types/*.conf',
             'default-config/lava-dispatcher/devices/*.conf',
             'device/sdmux.sh',
+            'device/dynamic_vm_keys/lava*',
             'lava_test_shell/lava-installed-packages',
             'lava_test_shell/lava-os-build',
             'lava_test_shell/lava-test-case',
