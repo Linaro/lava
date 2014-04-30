@@ -19,7 +19,7 @@ from lava_dispatcher.utils import (
 )
 
 
-def generate_image(client, hwpack_url, rootfs_url, outdir, bootloadertype,
+def generate_image(client, hwpack_url, rootfs_url, dtb, outdir, bootloadertype,
                    rootfstype, extra_boot_args=None, image_size=None):
     """Generate image from a hwpack and rootfs url
 
@@ -50,6 +50,8 @@ def generate_image(client, hwpack_url, rootfs_url, outdir, bootloadertype,
     cmd = ("sudo flock /var/lock/lava-lmc.lck linaro-media-create --hwpack-force-yes --dev %s "
            "--image-file %s --binary %s --hwpack %s --image-size 3G --bootloader %s" %
            (client.config.lmc_dev_arg, image_file, rootfs_path, hwpack_path, bootloadertype))
+    if dtb is not None:
+        cmd += ' --dtb ' + dtb
     if rootfstype is not None:
         cmd += ' --rootfs ' + rootfstype
     if image_size is not None:
@@ -63,11 +65,13 @@ def generate_image(client, hwpack_url, rootfs_url, outdir, bootloadertype,
     return image_file
 
 
-def generate_fastmodel_image(context, hwpack, rootfs, odir,
-                             bootloadertype, size="2000M"):
+def generate_fastmodel_image(context, hwpack, rootfs, dtb,
+                             odir, bootloadertype, size="2000M"):
     cmd = ("flock /var/lock/lava-lmc.lck sudo linaro-media-create "
            "--dev fastmodel --output-directory %s --image-size %s "
            "--hwpack %s --binary %s --hwpack-force-yes --bootloader %s" % (odir, size, hwpack, rootfs, bootloadertype))
+    if dtb is not None:
+        cmd += ' --dtb ' + dtb
     logging.info("Generating fastmodel image with: %s" % cmd)
     _run_linaro_media_create(context, cmd)
 

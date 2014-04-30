@@ -50,6 +50,10 @@ class QEMUTarget(Target):
         self.proc = None
         self._qemu_options = None
         self._sd_image = None
+        self._kernel = None
+        self._ramdisk = None
+        self._dtb = None
+        self._firmware = None
         self._is_kernel_present = False
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
@@ -61,30 +65,30 @@ class QEMUTarget(Target):
         if kernel is None:
             raise CriticalError("No kernel images to boot")
 
-        # build the QEMU command line
         self._sd_image = download_image(rootfs, self.context)
         self.customize_image(self._sd_image)
 
-        kernel = download_image(kernel, self.context)
-        self._is_kernel_present = True
-        self.append_qemu_options(' -kernel %s' % kernel)
+        self._kernel = download_image(kernel, self.context)
+
         if ramdisk is not None:
             ramdisk = download_image(ramdisk, self.context)
-            self.append_qemu_options(' -initrd %s' % ramdisk)
+            self._ramdisk = ramdisk
+
         if dtb is not None:
             dtb = download_image(dtb, self.context)
-            self.append_qemu_options(' -dtb %s' % ramdisk)
+            self._dtb = dtb
+
         if firmware is not None:
             firmware = download_image(firmware, self.context)
-            self.append_qemu_options(' -bios %s' % firmware)
+            self._firmware = firmware
 
-    def deploy_linaro(self, hwpack, rootfs, rootfstype, bootloadertype):
+    def deploy_linaro(self, hwpack, rootfs, dtb, rootfstype, bootloadertype):
         odir = self.scratch_dir
-        self._sd_image = generate_image(self, hwpack, rootfs, odir,
-                                        bootloadertype, rootfstype)
+        self._sd_image = generate_image(self, hwpack, rootfs, dtb,
+                                        odir, bootloadertype, rootfstype)
         self.customize_image(self._sd_image)
 
-    def deploy_linaro_prebuilt(self, image, rootfstype, bootloadertype):
+    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype):
         self._sd_image = download_image(image, self.context)
         self.customize_image(self._sd_image)
 
@@ -107,14 +111,27 @@ class QEMUTarget(Target):
             logging.warning('device already powered on, powering off first')
             self.power_off(None)
 
-        # If the -kernel option was given, find the boot command
-        # We load it here in order to get the configuration from the job
-        # definition if needed
-        if self._is_kernel_present:
-            kernel_args = ' '.join(self._load_boot_cmds())
-            self.append_qemu_options(' -append "%s"' % kernel_args)
+        qemu_options = ''
 
-        qemu_cmd = '%s %s %s' % (self.config.qemu_binary, self.config.qemu_options, self._qemu_options or '')
+        if self._kernel:
+            qemu_options += ' -kernel %s' % self._kernel
+            kernel_args = ' '.join(self._load_boot_cmds(default='boot_cmds'))
+            qemu_options += ' -append "%s"' % kernel_args
+
+        if self._ramdisk:
+            qemu_options += ' -initrd %s' % self._ramdisk
+
+        if self._dtb:
+            qemu_options += ' -dtb %s' % self._dtb
+
+        if self._firmware:
+            qemu_options += ' -bios %s' % self._firmware
+
+        # workaround for quoting issues with `ssh -- qemu-system-??? ...`
+        if self.config.qemu_binary.startswith('ssh'):
+            qemu_options = re.sub('"', '\\"', qemu_options)
+
+        qemu_cmd = '%s %s %s' % (self.config.qemu_binary, self.config.qemu_options, qemu_options)
         qemu_cmd = qemu_cmd.format(DISK_IMAGE=self._sd_image)
         logging.info('launching qemu with command %r' % qemu_cmd)
         self.proc = self.context.spawn(qemu_cmd, timeout=1200)
@@ -134,10 +151,5 @@ class QEMUTarget(Target):
         except subprocess.CalledProcessError:
             return "unknown"
 
-    def append_qemu_options(self, parameter):
-        if self._qemu_options is None:
-            self._qemu_options = parameter
-        else:
-            self._qemu_options += parameter
 
 target_class = QEMUTarget

@@ -19,9 +19,11 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from ConfigParser import ConfigParser
+from lava.tool.errors import CommandError
 import os
 import StringIO
 import logging
+import commands
 
 from configglue import parser, schema
 
@@ -51,6 +53,8 @@ class DeviceSchema(schema.Schema):
     send_char = schema.BoolOption(default=True)
     test_image_prompts = schema.ListOption(default=["\(initramfs\)",
                                                     "linaro-test",
+                                                    "root@android",
+                                                    "root@linaro",
                                                     "root@master",
                                                     "root@linaro-nano:~#",
                                                     "root@linaro-developer:~#",
@@ -96,6 +100,7 @@ class DeviceSchema(schema.Schema):
     sys_part_android_org = schema.IntOption()
     tester_ps1 = schema.StringOption(null=True)
     tester_ps1_pattern = schema.StringOption(null=True)
+    ve_uefi_flash_msg = schema.StringOption(default="Erasing Flash image uefi")
 
     # tester_ps1_includes_rc is a string so we can decode it later as yes/no/
     # not set. If it isn't set, we stick with the device default. We can't do
@@ -161,9 +166,12 @@ class DeviceSchema(schema.Schema):
     simulator_dtb_files = schema.ListOption(default=None)
     simulator_dtb = schema.StringOption(default=None)
     simulator_uefi = schema.StringOption(default=None)
+    simulator_bl1_files = schema.ListOption(default=None)
     simulator_bl1 = schema.StringOption(default=None)
+    simulator_bl2_files = schema.ListOption(default=None)
     simulator_bl2 = schema.StringOption(default=None)
-    simulator_bl3 = schema.StringOption(default=None)
+    simulator_bl31_files = schema.ListOption(default=None)
+    simulator_bl31 = schema.StringOption(default=None)
     simulator_boot_wrapper = schema.StringOption(default=None)
 
     android_disable_suspend = schema.BoolOption(default=True)
@@ -183,10 +191,6 @@ class DeviceSchema(schema.Schema):
     arm_probe_binary = schema.StringOption(default='/usr/local/bin/arm-probe')
     arm_probe_config = schema.StringOption(default='/usr/local/etc/arm-probe-config')
     arm_probe_channels = schema.ListOption(default=['VDD_VCORE1'])
-
-    adb_command = schema.StringOption()
-    fastboot_command = schema.StringOption()
-    shared_working_directory = schema.StringOption(default=None)
 
     uefi_image_filename = schema.StringOption(default=None)
     customize = schema.DictOption(default=None)
@@ -232,6 +236,14 @@ class DeviceSchema(schema.Schema):
     jtag_stmc_ramdisk_command = schema.StringOption(default=None)
     jtag_stmc_dtb_command = schema.StringOption(default=None)
 
+    # for fastboot devices
+    fastboot_driver = schema.StringOption(default=None)
+    adb_command = schema.StringOption()
+    fastboot_command = schema.StringOption()
+    fastboot_kernel_load_addr = schema.StringOption()
+    rootfs_partition = schema.StringOption(default='userdata')
+    shared_working_directory = schema.StringOption(default=None)
+
     # for bootloader devices
     pre_boot_cmd = schema.StringOption()
     use_lava_tmpdir = schema.BoolOption(default=True)
@@ -269,7 +281,8 @@ class DispatcherSchema(schema.Schema):
     lava_image_url = schema.StringOption()
     lava_proxy = schema.StringOption()
     lava_result_dir = schema.StringOption()
-    lava_server_ip = schema.StringOption(fatal=True)
+    lava_server_ip = schema.StringOption()
+    lava_network_iface = schema.ListOption()
     lava_test_deb = schema.StringOption()
     lava_test_url = schema.StringOption()
     logging_level = schema.IntOption()
@@ -363,13 +376,26 @@ def _get_config(name, cp):
     return cp
 
 
+def _lookup_ip(lava_network_iface):
+    for iface in lava_network_iface:
+        line = commands.getoutput("ip address show dev %s" % iface).split()
+        if 'inet' in line:
+            return line[line.index('inet') + 1].split('/')[0]
+    raise CommandError("LAVA_NETWORK_IFACE is set to '%s' "
+                       "but no IP address was found for any listed interface." % ", ".join(lava_network_iface))
+
+
 def get_config():
     cp = parser.SchemaConfigParser(DispatcherSchema())
     _get_config("lava-dispatcher", cp)
     valid, report = cp.is_valid(report=True)
     if not valid:
         logging.warning("dispatcher config is not valid:\n    %s", '\n    '.join(report))
-    return DispatcherConfig(cp)
+    config = DispatcherConfig(cp)
+    if config.lava_network_iface:
+        config.lava_server_ip = _lookup_ip(config.lava_network_iface)
+        config.lava_image_url = cp.get('__main__', "LAVA_IMAGE_URL", vars={'LAVA_SERVER_IP': config.lava_server_ip})
+    return config
 
 
 def _hack_boot_options(scp):

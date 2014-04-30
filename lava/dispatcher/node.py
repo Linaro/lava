@@ -191,6 +191,8 @@ class NodeDispatcher(object):
     output_dir = None
     base_msg = None
     json_data = None
+    vm_host_ip = None
+    is_dynamic_vm = False
 
     def __init__(self, json_data, oob_file=sys.stderr, output_dir=None):
         """
@@ -220,6 +222,9 @@ class NodeDispatcher(object):
             logging.debug("Port is no longer supported in the incoming JSON. Using %d" % settings["port"])
         if 'role' in json_data:
             self.role = json_data['role']
+        # look for a vm temporary device - vm_host is managed in boot_linaro_image.
+        if 'is_vmhost' in json_data and not json_data['is_vmhost']:
+            self.is_dynamic_vm = True
         # hostname of the server for the connection.
         if 'hostname' in json_data:
             # lava-coordinator provides a conffile for the group_hostname
@@ -246,6 +251,8 @@ class NodeDispatcher(object):
         Initialises the node into the group, registering the group if necessary
         (via group_size) and *waiting* until the rest of the group nodes also
         register before starting the actual job,
+        Temporary devices in a vm_group do not begin running tests until
+        the host is ready.
         """
         init_msg = {"request": "group_data", "group_size": self.group_size}
         init_msg.update(self.base_msg)
@@ -253,6 +260,18 @@ class NodeDispatcher(object):
         logging.debug("init_msg %s" % json.dumps(init_msg))
         response = json.loads(self.poller.poll(json.dumps(init_msg)))
         logging.info("Starting the test run for %s in group %s" % (self.client_name, self.group_name))
+
+        # if this is a temporary device, wait for lava_vm_start from host
+        # before starting job
+        if self.is_dynamic_vm:
+            logging.info("Waiting for host IP address ...")
+            host_info = self.request_wait("lava_vm_start")  # blocking call
+            host_data = json.loads(host_info)["message"]
+            logging.info("Host data: %r" % host_data)
+            for host in host_data:
+                self.vm_host_ip = host_data[host]['host_ip']
+                logging.info("Host %s has IP address %s" % (host, self.vm_host_ip))
+
         self.run_tests(self.json_data, response)
         # send a message to the GroupDispatcher to close the group (when all nodes have sent fin_msg)
         fin_msg = {"request": "clear_group", "group_size": self.group_size}
@@ -408,4 +427,4 @@ class NodeDispatcher(object):
             os.makedirs(self.output_dir)
         job = LavaTestJob(jobdata, self.oob_file, config, self.output_dir)
         # pass this NodeDispatcher down so that the lava_test_shell can __call__ nodeTransport to write a message
-        job.run(self, group_data)
+        job.run(self, group_data, vm_host_ip=self.vm_host_ip)

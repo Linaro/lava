@@ -54,6 +54,7 @@ class cmd_deploy_linaro_image(BaseAction):
             'hwpack': {'type': 'string', 'optional': True},
             'rootfs': {'type': 'string', 'optional': True},
             'image': {'type': 'string', 'optional': True},
+            'dtb': {'type': 'string', 'optional': True},
             'customize': {'type': 'object', 'optional': True},
             'rootfstype': {'type': 'string', 'optional': True},
             'bootloadertype': {'type': 'string', 'optional': True,
@@ -93,7 +94,7 @@ class cmd_deploy_linaro_image(BaseAction):
                 raise ValueError('must specify a login prompt or password \
                       prompt when specifying login commands')
 
-    def run(self, hwpack=None, rootfs=None, image=None,
+    def run(self, hwpack=None, rootfs=None, image=None, dtb=None,
             rootfstype='ext4', bootloadertype='u_boot', login_prompt=None,
             password_prompt=None, username=None, password=None,
             login_commands=None, customize=None):
@@ -110,7 +111,7 @@ class cmd_deploy_linaro_image(BaseAction):
         if customize is not None:
             self.client.config.customize = customize
         self.client.deploy_linaro(
-            hwpack=hwpack, rootfs=rootfs, image=image,
+            hwpack=hwpack, rootfs=rootfs, image=image, dtb=dtb,
             rootfstype=rootfstype, bootloadertype=bootloadertype,)
 
 
@@ -120,12 +121,14 @@ class cmd_deploy_linaro_android_image(BaseAction):
         'type': 'object',
         'properties': {
             'boot': {'type': 'string'},
-            'system': {'type': 'string'},
-            'data': {'type': 'string'},
+            'system': {'type': 'string', 'optional': True},
+            'data': {'type': 'string', 'optional': True},
             'rootfstype': {'type': 'string', 'optional': True,
                            'default': 'ext4'},
             'bootloadertype': {'type': 'string', 'optional': True,
                                'default': 'u_boot'},
+            'target_type': {'type': 'string', 'enum': ['ubuntu', 'oe', 'android', 'fedora'],
+                            'optional': True, 'default': 'android'},
             'login_prompt': {'type': 'string', 'optional': True},
             'password_prompt': {'type': 'string', 'optional': True},
             'username': {'type': 'string', 'optional': True},
@@ -154,8 +157,8 @@ class cmd_deploy_linaro_android_image(BaseAction):
                 raise ValueError('must specify a login prompt or password \
                       prompt when specifying login commands')
 
-    def run(self, boot, system, data, rootfstype='ext4', bootloadertype='u_boot',
-            login_prompt=None, password_prompt=None, username=None,
+    def run(self, boot=None, system=None, data=None, rootfstype='ext4', bootloadertype='u_boot',
+            target_type='android', login_prompt=None, password_prompt=None, username=None,
             password=None, login_commands=None):
         if login_prompt is not None:
             self.client.config.login_prompt = login_prompt
@@ -169,7 +172,8 @@ class cmd_deploy_linaro_android_image(BaseAction):
             self.client.config.login_commands = login_commands
         self.client.deploy_linaro_android(boot=boot, system=system, data=data,
                                           rootfstype=rootfstype,
-                                          bootloadertype=bootloadertype)
+                                          bootloadertype=bootloadertype,
+                                          target_type=target_type)
 
 
 class cmd_deploy_linaro_kernel(BaseAction):

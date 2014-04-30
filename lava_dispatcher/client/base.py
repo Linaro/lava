@@ -28,6 +28,7 @@ import sys
 import time
 import traceback
 import subprocess
+import json
 from lava_dispatcher.device.target import (
     get_target,
 )
@@ -35,6 +36,7 @@ from lava_dispatcher.device.target import (
 from lava_dispatcher.utils import (
     mkdtemp,
     mk_targz,
+    read_content,
     wait_for_prompt,
 )
 
@@ -70,6 +72,9 @@ class CommandRunner(object):
 
     def wait_for_prompt(self, timeout=-1):
         wait_for_prompt(self._connection, self._prompt_str, timeout)
+
+    def get_connection(self):
+        return self._connection
 
     def run(self, cmd, response=None, timeout=-1,
             failok=False, wait_prompt=True, log_in_host=None):
@@ -116,7 +121,7 @@ class CommandRunner(object):
             if self._prompt_str_includes_rc:
                 rc = int(self._connection.match.group(1))
                 if rc != 0 and not failok:
-                    raise OperationFailed(
+                    raise RuntimeError(
                         "executing %r failed with code %s" % (cmd, rc))
             else:
                 rc = None
@@ -365,13 +370,14 @@ class LavaClient(object):
         # used for apt-get in lava-test.py
         self.aptget_cmd = "apt-get"
         self.target_device = get_target(context, config)
+        self.vm_group = VmGroupHandler(self)
 
     def deploy_linaro_android(self, boot, system, data, rootfstype,
-                              bootloadertype):
+                              bootloadertype, target_type):
         self.target_device.deploy_android(boot, system, data, rootfstype,
-                                          bootloadertype)
+                                          bootloadertype, target_type)
 
-    def deploy_linaro(self, hwpack, rootfs, image, rootfstype, bootloadertype):
+    def deploy_linaro(self, hwpack, rootfs, image, dtb, rootfstype, bootloadertype):
         if image is None:
             if hwpack is None or rootfs is None:
                 raise CriticalError(
@@ -382,10 +388,10 @@ class LavaClient(object):
                 "cannot specify hwpack or rootfs when specifying image")
 
         if image is None:
-            self.target_device.deploy_linaro(hwpack, rootfs,
+            self.target_device.deploy_linaro(hwpack, rootfs, dtb,
                                              rootfstype, bootloadertype)
         else:
-            self.target_device.deploy_linaro_prebuilt(image, rootfstype,
+            self.target_device.deploy_linaro_prebuilt(image, dtb, rootfstype,
                                                       bootloadertype)
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs,
@@ -504,6 +510,8 @@ class LavaClient(object):
             timeout = self.config.boot_linaro_timeout
             TESTER_PS1_PATTERN = self.target_device.tester_ps1_pattern
 
+            self.vm_group.wait_for_vms()
+
             try:
                 self._boot_linaro_image()
             except (OperationFailed, pexpect.TIMEOUT) as e:
@@ -535,6 +543,9 @@ class LavaClient(object):
             prompt = self.target_device.tester_ps1_pattern
             self.proc.expect([prompt, pexpect.TIMEOUT], timeout=10)
             in_linaro_image = True
+            logging.debug("Checking for vm-group host")
+
+            self.vm_group.start_vms()
 
         if not in_linaro_image:
             msg = "Could not get the test image booted properly"
@@ -562,6 +573,7 @@ class LavaClient(object):
 
     def finish(self):
         self.target_device.power_off(self.proc)
+        self.vm_group.vm_finished()
 
     # Android stuff
 
@@ -693,3 +705,88 @@ class LavaClient(object):
         logging.info("Disabling adb over USB")
         session = AndroidTesterCommandRunner(self)
         session.run('echo 0>/sys/class/android_usb/android0/enable')
+
+
+class VmGroupHandler(object):
+
+    def __init__(self, client):
+        self.client = client
+        self.vms_started = False
+
+    @property
+    def is_vm_group_job(self):
+        return 'is_vmhost' in self.client.context.test_data.metadata
+
+    @property
+    def is_host(self):
+        return self.is_vm_group_job and self.client.context.test_data.metadata['is_vmhost'] == "true"
+
+    @property
+    def is_vm(self):
+        return self.is_vm_group_job and self.client.context.test_data.metadata['is_vmhost'] == "false"
+
+    def start_vms(self):
+        if not self.is_host:
+            return
+
+        runner = NetworkCommandRunner(
+            self.client,
+            self.client.target_device.tester_ps1_pattern,
+            self.client.target_device.tester_ps1_includes_rc
+        )
+
+        logging.debug("vm-group host: injecting SSH public key")
+        public_key_file = os.path.join(os.path.dirname(__file__), '../device/dynamic_vm_keys/lava.pub')
+        public_key = read_content(public_key_file).strip()
+        runner.run('mkdir -p /root/.ssh && echo "%s" >> /root/.ssh/authorized_keys' % public_key)
+
+        logging.debug("vm-group host: obtaining host IP for guest VM.")
+        try:
+            host_ip = runner.get_target_ip()
+        except NetworkError as e:
+            raise CriticalError("Failed to get network up: " % e)
+        # send a message to each guest
+        msg = {"request": "lava_send", "messageID": "lava_vm_start", "message": {"host_ip": host_ip}}
+        reply = self.client.context.transport(json.dumps(msg))
+        if reply == "nack":
+            raise CriticalError("lava_vm_start failed")
+        logging.info("[ACTION-B] LAVA VM start, using %s" % host_ip)
+
+        self.vms_started = True
+
+    def wait_for_vms(self):
+        if not (self.is_host and self.vms_started):
+            return
+
+        logging.info("Waiting for all VMs to finish ...")
+
+        self.client.context.transport(
+            json.dumps({
+                "request": "lava_send",
+                "messageID": "lava_vm_stop",
+                "message": {}
+            })
+        )
+
+        reply = self.client.context.transport(
+            json.dumps({
+                "request": "lava_wait_all",
+                "messageID": "lava_vm_stop"
+            })
+        )
+
+        if reply == 'nack':
+            raise CriticalError("Failure while waiting for VMs to finish")
+        logging.info("All VMs finished, proceeding with reboot")
+
+        self.vms_started = False
+
+    def vm_finished(self):
+        if not (self.is_vm):
+            return
+
+        msg = {"request": "lava_send", "messageID": "lava_vm_stop", "message": {}}
+        reply = self.client.context.transport(json.dumps(msg))
+        if reply == 'nack':
+            raise CriticalError("Failure when notifying VM finish to group")
+        logging.info("VM finished")

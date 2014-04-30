@@ -22,6 +22,7 @@ import atexit
 import bz2
 import contextlib
 import logging
+import lzma
 import os
 import re
 import subprocess
@@ -94,6 +95,8 @@ def _decompressor_stream(url, imgdir, decompress):
         decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
     elif suffix == 'bz2' and decompress:
         decompressor = bz2.BZ2Decompressor()
+    elif suffix == 'xz' and decompress:
+        decompressor = lzma.LZMADecompressor()
     else:
         # don't remove the file's real suffix
         fname = '%s.%s' % (fname, suffix)
@@ -183,6 +186,14 @@ def download_image(url_string, context, imgdir=None,
                         sha256.update(buff)
             logging.info("md5sum of downloaded content: %s" % md5.hexdigest())
             logging.debug("sha256sum of downloaded content: %s" % sha256.hexdigest())
+
+            if fname.endswith('.qcow2'):
+                orig = fname
+                fname = re.sub('\.qcow2$', '.img', fname)
+                logging.warning("Converting downloaded image from qcow2 to raw")
+                subprocess.check_call(['qemu-img', 'convert', '-f', 'qcow2',
+                                       '-O', 'raw', orig, fname])
+
             return fname
         except:
             logging.warn("unable to download: %r" % traceback.format_exc())
