@@ -112,6 +112,8 @@
           <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition</a></li>
         {% if job.is_multinode %}
           <li><a href="{% url 'lava.scheduler.job.multinode_definition' job.pk %}" class="btn btn-info">Multinode Definition</a></li>
+        {% elif job.is_vmgroup %}
+           <li><a href="{% url 'lava.scheduler.job.vmgroup_definition' job.pk %}" class="btn btn-info">VMGroup Definition</a></li>
         {% endif %}
         </ul>
       </div>
@@ -209,6 +211,8 @@
           <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition</a></li>
         {% if job.is_multinode %}
           <li><a href="{% url 'lava.scheduler.job.multinode_definition' job.pk %}" class="btn btn-info">Multinode Definition</a></li>
+        {% elif job.is_vmgroup %}
+           <li><a href="{% url 'lava.scheduler.job.vmgroup_definition' job.pk %}" class="btn btn-info">VMGroup Definition</a></li>
         {% endif %}
         </ul>
       </div>
