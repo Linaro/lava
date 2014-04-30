@@ -57,12 +57,14 @@
     <dl class="dl-horizontal">
     {% if job.actual_device %}
       <dt>Name</dt>
-      <dd><a href="{{ job.actual_device.get_absolute_url }}">{{ job.actual_device.hostname }}</a> <a href="{% url 'lava.scheduler.device_report' job.actual_device.pk %}">(reports)</a></dd>
+      <dd><a href="{{ job.actual_device.get_absolute_url }}">{{ job.actual_device.hostname }}</a>{% if not job.is_vmgroup %} <a
+      href="{% url 'lava.scheduler.device_report' job.actual_device.pk %}">(reports)</a>{% endif %}</dd>
     {% endif %}
 
     {% if job.requested_device %}
       <dt>Type</dt>
-      <dd><a href="{{ job.requested_device.device_type.get_absolute_url }}">{{ job.requested_device.device_type }}</a> <a href="{% url 'lava.scheduler.device_type_report' job.requested_device.device_type %}">(reports)</a></dd>
+      <dd><a href="{{ job.requested_device.device_type.get_absolute_url }}">{{ job.requested_device.device_type }}</a>{% if not job.is_vmgroup %} <a
+      href="{% url 'lava.scheduler.device_type_report' job.requested_device.device_type %}">(reports)</a>{% endif %}</dd>
     {% elif job.requested_device_type %}
       <dt>Requested type</dt>
       <dd><a href="{{ job.requested_device_type.get_absolute_url }}">{{ job.requested_device_type }}</a> <a href="{% url 'lava.scheduler.device_type_report' job.requested_device_type %}">(reports)</a></dd>
@@ -112,6 +114,10 @@
       <dd title="{{ job.start_time|default:"not started" }}">{% if job.start_time %}{{ job.start_time|timesince }}{% else %}<i>not started</i>{% endif %}</dd>
       <dt>Finished</dt>
       <dd title="{{ job.end_time|default:"not finished" }}">{% if job.end_time %}{{ job.end_time|timesince }}{% else %}<i>not finished</i>{% endif %}</dd>
+      {% if job.start_time and job.end_time %}
+      <dt>Duration</dt>
+      <dd>{{ job.end_time|timeuntil:job.start_time }}</dd>
+      {% endif %}
     </dl>
   </div>
 </div>
