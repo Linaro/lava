@@ -218,7 +218,7 @@ class BaseDriver(object):
 
     def _get_image(self, url):
         sdir = self.working_dir
-        image = download_image(url, self.context, sdir, decompress=False)
+        image = download_image(url, self.context, sdir, decompress=True)
         return image
 
     def _get_partition_mount_point(self, partition):
