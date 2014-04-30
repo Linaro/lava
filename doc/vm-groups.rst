@@ -77,7 +77,14 @@ Example job definition::
       ]
     }
 
-.. _nested_vms:
+The ``host`` section declares the device that will be used as host for
+the VMs. Note the following requirements for system images used for host
+devices:
+
+- openssh server must come installed, with ``sftp`` support.
+
+- ``qemu-system`` must be installed (or at least the specific flavor
+  that needs to be tested e.g. ``qemu-system-arm``)
 
 The ``vms`` section contains an array of VM descriptions, which
 will be used to instantiate the VMs on the host device. Each item in
@@ -93,8 +100,9 @@ that array must have the following mandatory attributes:
   on what ``role`` is assigned to each ``lava_test_shell`` command.
   See :ref:`writing_vm_group_tests`.
 
-- ``image``: which image that should be used to boot the virtual machine.
-
+- ``image``: which image that should be used to boot the virtual
+  machine. Note that you can also use the ``deploy_linaro_kernel``
+  action and use separate kernel/dtb/rootfs images.
 
 There are additional parameters that can be used, but are optional:
 

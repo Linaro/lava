@@ -17,6 +17,7 @@ LAVA Manual
    lava-dashboard-image-reports.rst
    healthchecks.rst
    multinode-usecases.rst
+   vm-groups.rst
    development.rst
    process.rst
    faq.rst
