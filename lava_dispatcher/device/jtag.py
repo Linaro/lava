@@ -99,7 +99,7 @@ class JtagTarget(Target):
             yield path
         else:
             if not self._booted:
-              self.context.client.boot_linaro_image()
+                self.context.client.boot_linaro_image()
             pat = self.tester_ps1_pattern
             incrc = self.tester_ps1_includes_rc
             runner = NetworkCommandRunner(self, pat, incrc)

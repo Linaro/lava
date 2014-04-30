@@ -49,11 +49,6 @@ class DynamicVmTarget(Target):
 
         super(DynamicVmTarget, self).__init__(context, config)
 
-        self.__host__ = config.dynamic_vm_host
-        if self.__host__ is None:
-            raise CriticalError(
-                "dynamic_vm_host configuration entry is mandatory")
-
         device_type = config.dynamic_vm_backend_device_type
         if not device_type in self.supported_backends.keys():
             raise CriticalError("%s is not supported as a backend" %
@@ -64,7 +59,6 @@ class DynamicVmTarget(Target):
         self.backend = get_target(context, backend_config)
         adapter_class = self.supported_backends[device_type]()
         self.backend_adapter = adapter_class(self.backend)
-        self.backend_adapter.amend_config()
 
     @property
     def deployment_data(self):
