@@ -1,3 +1,4 @@
+usr/sbin
 etc/lava-dispatcher/devices
 var/lib/lava/dispatcher/tmp
 var/lib/lava/dispatcher/cache

@@ -1,3 +1,9 @@
+lava-dispatcher (0.33.3-9) UNRELEASED; urgency=medium
+
+  * Move lava-dispatch to /usr/sbin as it must be run as root.
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 30 Apr 2014 10:06:41 +0100
+
 lava-dispatcher (0.33.3-8) unstable; urgency=medium
 
   * Include updates from tip including lzma support
