@@ -247,8 +247,9 @@ class DeviceTableView(JobTableView):
 
     def get_queryset(self):
         visible = filter_device_types(self.request.user)
-        return Device.objects.select_related("device_type")\
-            .order_by("hostname").filter(device_type__in=visible)
+        return Device.objects.select_related("device_type").order_by(
+            "hostname").filter(temporarydevice=None,
+                               device_type__in=visible)
 
 
 @BreadCrumb("Scheduler", parent=lava_index)
@@ -560,7 +561,9 @@ class DeviceTypeOverView(JobTableView):
 class NoDTDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        return Device.objects.all().order_by('hostname')
+        return Device.objects.filter(Q(temporarydevice=None) and
+                                     ~Q(status__in=[Device.RETIRED])
+                                     ).order_by('hostname')
 
 
 def populate_capabilities(dt):
@@ -1061,6 +1064,26 @@ def multinode_job_definition_plain(request, pk):
     return response
 
 
+def vmgroup_job_definition(request, pk):
+    job = get_restricted_job(request.user, pk)
+    log_file = job.output_file()
+    return render_to_response(
+        "lava_scheduler_app/vmgroup_job_definition.html",
+        {
+            'job': job,
+            'job_file_present': bool(log_file),
+        },
+        RequestContext(request))
+
+
+def vmgroup_job_definition_plain(request, pk):
+    job = get_restricted_job(request.user, pk)
+    response = HttpResponse(job.vmgroup_definition, mimetype='text/plain')
+    response['Content-Disposition'] = \
+        "attachment; filename=vmgroup_job_%d.json" % job.id
+    return response
+
+
 @BreadCrumb("My Jobs", parent=index)
 def myjobs(request):
     data = MyJobsView(request, model=TestJob, table_class=JobTable)
@@ -1186,6 +1209,11 @@ def job_cancel(request, pk):
                 target_group=job.target_group)
             for multinode_job in multinode_jobs:
                 multinode_job.cancel(request.user)
+        elif job.is_vmgroup:
+            vmgroup_jobs = TestJob.objects.all().filter(
+                vm_group=job.vm_group)
+            for vmgroup_job in vmgroup_jobs:
+                vmgroup_job.cancel(request.user)
         else:
             job.cancel(request.user)
         return redirect(job)
@@ -1238,6 +1266,8 @@ def job_resubmit(request, pk):
                                         mimetype="application/json")
             if job.is_multinode:
                 definition = job.multinode_definition
+            elif job.is_vmgroup:
+                definition = job.vmgroup_definition
             else:
                 definition = job.display_definition
 

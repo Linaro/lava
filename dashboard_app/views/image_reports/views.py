@@ -443,7 +443,7 @@ def get_chart_test_data(request):
     data.pop("_state", None)
     data["test_name"] = chart_test.test_name
     data["attributes"] = chart_test.attributes
-    data["all_attributes"] = chart_test.get_available_attributes()
+    data["all_attributes"] = chart_test.get_available_attributes(request.user)
     return HttpResponse(simplejson.dumps([data]), mimetype='application/json')
 
 

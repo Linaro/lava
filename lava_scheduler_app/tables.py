@@ -332,10 +332,6 @@ class DeviceHealthTable(LavaTable):
         super(DeviceHealthTable, self).__init__(*args, **kwargs)
         self.length = 25
 
-    def get_queryset(self):
-        return Device.objects.select_related(
-            "hostname", "last_health_report_job")
-
     def render_last_health_report_job(self, record):
         report = record.last_health_report_job
         if report is None:

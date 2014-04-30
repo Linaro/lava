@@ -1,3 +1,5 @@
+.. _writing_multinode:
+
 Writing MultiNode tests
 #######################
 
