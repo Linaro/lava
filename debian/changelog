@@ -1,6 +1,7 @@
-lava-dispatcher (0.33.3-9) UNRELEASED; urgency=medium
+lava-dispatcher (0.33.3-9) unstable; urgency=medium
 
   * Move lava-dispatch to /usr/sbin as it must be run as root.
+  * Add support for vm-group ssh keys
 
  -- Neil Williams <codehelp@debian.org>  Wed, 30 Apr 2014 10:06:41 +0100
 
