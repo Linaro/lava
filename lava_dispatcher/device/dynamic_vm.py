@@ -84,6 +84,7 @@ class DynamicVmTarget(Target):
 
     def power_off(self, proc):
         self.backend.power_off(proc)
+        self.backend_adapter.cleanup()
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
@@ -99,7 +100,7 @@ class DynamicVmTarget(Target):
 
 class kvm_adapter(object):
 
-    ssh_options = '-o Compression=yes -o UserKnownHostsFile=/dev/null -o PasswordAuthentication=no -o StrictHostKeyChecking=no'
+    ssh_options = '-o Compression=yes -o UserKnownHostsFile=/dev/null -o PasswordAuthentication=no -o StrictHostKeyChecking=no -o LogLevel=FATAL'
     ssh = 'ssh %s' % ssh_options
     scp = 'scp %s' % ssh_options
 
@@ -111,6 +112,7 @@ class kvm_adapter(object):
         os.chmod(self.identity_file, 0600)
         self.local_sd_image = None
         self.__host__ = None
+        self.vm_images_dir = '/lava-vm-images/%s' % device.config.hostname
 
     @property
     def host(self):
@@ -130,6 +132,9 @@ class kvm_adapter(object):
         return self.__host__
 
     def copy_images(self):
+        self.run_on_host('rm -rf %s' % self.vm_images_dir)
+        self.run_on_host('mkdir -p %s' % self.vm_images_dir)
+
         device = self.device
         self.local_sd_image = device._sd_image  # save local image location
         device._sd_image = self.copy_image(device._sd_image)
@@ -142,13 +147,14 @@ class kvm_adapter(object):
         if local_image is None:
             return None
 
+        image = os.path.basename(local_image)
+        logging.info("Copying %s to the host device" % image)
+
         device = self.device
 
-        remote_image = '/lava/vm-images/%s/%s' % (device.config.hostname, os.path.basename(local_image))
-
-        device.context.run_command('rm -rf /lava/vm-images/%s' % device.config.hostname, failok=False)
-        device.context.run_command(self.ssh + ' -i %s root@%s -- mkdir -p %s' % (self.identity_file, self.host, os.path.dirname(remote_image)), failok=False)
-        device.context.run_command(self.scp + ' -i %s %s root@%s:%s' % (self.identity_file, local_image, self.host, remote_image), failok=False)
+        vm_images_dir = self.vm_images_dir
+        remote_image = '%s/%s' % (vm_images_dir, os.path.basename(local_image))
+        self.scp_to_host(local_image, remote_image)
 
         return remote_image
 
@@ -160,12 +166,47 @@ class kvm_adapter(object):
     @contextlib.contextmanager
     def mount(self, partition):
         device = self.device
-        local_sd_image = self.local_sd_image
+
         remote_sd_image = self.device._sd_image
+        remote_sd_location = os.path.dirname(remote_sd_image)
+        remote_sd_name = os.path.basename(remote_sd_image)
+
+        dir_mount_point = os.path.join(device.scratch_dir, self.host)
+        if not os.path.exists(dir_mount_point):
+            os.makedirs(dir_mount_point)
+
+        local_sd_image = os.path.join(dir_mount_point, remote_sd_name)
+
+        run = device.context.run_command
+
+        run('sshfs %s:%s %s %s -o IdentityFile=%s' % (self.host, remote_sd_location, dir_mount_point, self.ssh_options, self.identity_file), failok=False)
+
+        try:
+            with image_partition_mounted(local_sd_image, partition) as mount_point:
+                yield mount_point
+        finally:
+            run('fusermount -u %s' % dir_mount_point, failok=False)
+
+    def cleanup(self):
+        image = self.device._sd_image
+        self.run_on_host(
+            'pkill -f "qemu-system-arm.*%s"' % image)
+        self.run_on_host('rm -rf %s' % self.vm_images_dir)
+
+    def run_on_host(self, cmd):
+        ssh = self.ssh + ' -i %s' % self.identity_file
+        run = self.device.context.run_command
+        run('%s root@%s -- %s' % (ssh, self.host, cmd), failok=False)
+
+    def scp_to_host(self, src, dst):
         scp = self.scp + ' -i %s' % self.identity_file
-        device.context.run_command('%s root@%s:%s %s' % (scp, self.host, remote_sd_image, local_sd_image), failok=False)
-        with image_partition_mounted(local_sd_image, partition) as mount_point:
-            yield mount_point
-        device.context.run_command('%s %s root@%s:%s' % (scp, local_sd_image, self.host, remote_sd_image), failok=False)
+        run = self.device.context.run_command
+        run('%s %s root@%s:%s' % (scp, src, self.host, dst), failok=False)
+
+    def scp_from_host(self, src, dst):
+        scp = self.scp + ' -i %s' % self.identity_file
+        run = self.device.context.run_command
+        run('%s root@%s:%s %s' % (scp, self.host, src, dst), failok=False)
+
 
 target_class = DynamicVmTarget
