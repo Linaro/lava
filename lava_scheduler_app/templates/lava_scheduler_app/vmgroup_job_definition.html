@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% block content %}
-<h2>VM Group Job definition file - {{ job.sub_id }}  <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.multinode_definition.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h2>
+<h2>VM Group Job definition file - {{ job.sub_id }}  <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.vmgroup_definition.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h2>
 
   <div class="col-md-4">
     <h4 class="modal-header">Device</h4>
@@ -30,7 +30,7 @@
     {% endif %}
     </dl>
   </div>
-  {% if job.is_multinode or job.is_vmgroup %}
+  {% if job.is_vmgroup %}
   <div class="col-md-4">
     <h4 class="modal-header">Sub jobs</h4>
     <dl class="dl-horizontal">
