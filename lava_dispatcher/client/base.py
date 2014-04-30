@@ -121,7 +121,7 @@ class CommandRunner(object):
             if self._prompt_str_includes_rc:
                 rc = int(self._connection.match.group(1))
                 if rc != 0 and not failok:
-                    raise OperationFailed(
+                    raise RuntimeError(
                         "executing %r failed with code %s" % (cmd, rc))
             else:
                 rc = None
