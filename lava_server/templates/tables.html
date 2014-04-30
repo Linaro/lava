@@ -34,14 +34,14 @@
 <div class="ui-widget-header">
 <table border=0 width="100%">
 <tr>
-<td><form id="{{ table.prefix }}search_form" action="{% querystring %}" method="get">
+<td><form id="{{ table.prefix }}search_form" action="{% querystring %}#{{ table.prefix|default:"table" }}" method="get">
 Show <select name="{{ table.prefix }}length" onchange="submit_search_form('{{ table.prefix }}');">
 {{ table|get_length_select:request.GET }}
 </select> entries
 <input type="hidden" name="{{ table.prefix }}search" value="{{ request.GET.search }}">
 </form></td><td>
 {%  if search_data|get_search_data:table.prefix %}
-<form style="text-align: right" action="{% querystring "search"="" %}" method="get">
+<form style="text-align: right" action="{% querystring "search"="" %}#{{ table.prefix|default:"table" }}" method="get">
 Search: <input type="text" name="{{ table.prefix }}search" value="{{ terms_data|get_terms_data:table.prefix|join:" " }}">
 <input type="hidden" name="{{ table.prefix }}length" value="{{ table|get_prefix_length:request.GET }}">
 </form>
@@ -53,11 +53,11 @@ Search: <input type="text" name="{{ table.prefix }}search" value="{{ terms_data|
 <table{% if table.attrs %} {{ table.attrs.as_html }}{% endif %}>
     {% block table.thead %}
     <thead>
-        <tr class="ui-widget-header">
+        <tr id="{{ table.prefix|default:"table" }}" class="ui-widget-header">
         {% for column in table.columns %}
             {% if column.orderable %}
             <th {{ column.attrs.th.as_html }}><a
-                    href="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}">{{ column.header }}</a></th>
+                    href="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}#{{ table.prefix|default:"table" }}">{{ column.header }}</a></th>
             {% else %}
             <th {{ column.attrs.th.as_html }}>{{ column.header }}</th>
             {% endif %}
@@ -97,7 +97,7 @@ Search: <input type="text" name="{{ table.prefix }}search" value="{{ terms_data|
 <ul class="pagination ui-widget-header">
     {% if table.page.has_previous %}
     {% block pagination.previous %}<li class="previous"><a
-            href="{% querystring table.prefixed_page_field=table.page.previous_page_number %}">
+            href="{% querystring table.prefixed_page_field=table.page.previous_page_number %}#{{ table.prefix|default:"table" }}">
         {% trans "Previous" %}</a></li>{% endblock pagination.previous %}
     {% endif %}
 
@@ -109,7 +109,7 @@ Search: <input type="text" name="{{ table.prefix }}search" value="{{ terms_data|
 
     {% if table.page.has_next %}
     {% block pagination.next %}<li
-            class="next"><a href="{% querystring table.prefixed_page_field=table.page.next_page_number %}">
+            class="next"><a href="{% querystring table.prefixed_page_field=table.page.next_page_number %}#{{ table.prefix|default:"table" }}">
         {% trans "Next" %}</a></li>{% endblock pagination.next %}
     {% endif %}
 

@@ -26,7 +26,7 @@ setup(
     version=":versiontools:lava_server:__version__",
     author="Zygmunt Krynicki",
     author_email="zygmunt.krynicki@linaro.org",
-    namespace_packages=['lava', 'lava.utils'],
+    namespace_packages=['lava'],
     packages=find_packages(),
     entry_points=open('entry_points.ini', 'r').read(),
     test_suite="lava_server.tests.run_tests",
@@ -59,7 +59,6 @@ setup(
         "django-tables2 >= 0.9.4",
         'docutils >= 0.6',
         'lava-tool >= 0.2',
-        'lava-utils-interface >= 1.0',
         'linaro-django-xmlrpc >= 0.4',
         'python-openid >= 2.2.4',  # this should be a part of
                                    # django-openid-auth deps

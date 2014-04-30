@@ -1,6 +1,7 @@
 {% extends "lava_scheduler_app/_device_base.html" %}
 
 {% load django_tables2 %}
+{% load i18n %}
 
 {% block device_heading %}
 <h2>Device {{ device.hostname }}</h2>
@@ -12,5 +13,27 @@
 <a href="{% url lava.scheduler.device_report device.pk %}">Health check and job failure report</a>
 
 <h3>Recent jobs on {{ device.hostname }}</h3>
+<div>
+    <table width="100%">
+        <tr>
+            <td style="float: left">
+                {% if previous_device %}
+                    &lt;&nbsp;<a href="{% url lava.scheduler.device.detail previous_device %}">{% trans "Previous Device" %}</a>
+                {% else %}
+                    &lt;&nbsp;{% trans "Previous Device" %}
+                {% endif %}
+            </td>
+            <td style="float: right">
+                {% if next_device %}
+                    <a href="{% url lava.scheduler.device.detail next_device %}">{% trans "Next Device" %}</a>&nbsp;&gt;
+                {% else %}
+                    {% trans "Next Device" %}&nbsp;&gt;
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+</div>
+<div id="recent_job">
 {% render_table recent_job_table %}
+</div>
 {% endblock %}

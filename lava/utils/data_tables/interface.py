@@ -16,15 +16,12 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
-from lava.utils.interface import Interface, abstractmethod
 
-
-class IBackend(Interface):
+class IBackend(object):
     """
     Interface for data-store-and-compute backends to data-tables.
     """
 
-    @abstractmethod
     def process(self, query):
         """
         Process data query.
@@ -32,3 +29,4 @@ class IBackend(Interface):
         Process the query and return a JSON response object compatible with
         data tables.
         """
+        raise NotImplementedError("IBackend.process")
