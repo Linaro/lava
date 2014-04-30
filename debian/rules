@@ -31,6 +31,7 @@ override_dh_auto_install:
 	dh_auto_install
 	dh_installman -plava-dispatcher man/_build/man/lava-dispatch.1
 	python setup.py install --root=$(CURDIR)/debian/lava-dispatcher/ --install-layout=deb
+	mv -v debian/lava-dispatcher/usr/bin/lava-dispatch debian/lava-dispatcher/usr/sbin/
 
 override_dh_auto_clean:
 	dh_auto_clean
