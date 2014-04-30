@@ -69,6 +69,8 @@ class FastBoot(object):
 
     def on(self):
         try:
+            logging.info("Waiting for 10 seconds for connection to settle")
+            sleep(10)
             self('getvar all', timeout=2)
             return True
         except subprocess.CalledProcessError:
