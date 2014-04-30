@@ -162,10 +162,10 @@ class kvm_adapter(object):
         device = self.device
         local_sd_image = self.local_sd_image
         remote_sd_image = self.device._sd_image
-        rsync_ssh = self.ssh + ' -i %s' % self.identity_file
-        device.context.run_command('rsync -avpz --progress -e "%s" root@%s:%s %s' % (rsync_ssh, self.host, remote_sd_image, local_sd_image), failok=False)
+        scp = self.scp + ' -i %s' % self.identity_file
+        device.context.run_command('%s root@%s:%s %s' % (scp, self.host, remote_sd_image, local_sd_image), failok=False)
         with image_partition_mounted(local_sd_image, partition) as mount_point:
             yield mount_point
-        device.context.run_command('rsync -avpz --progress -e "%s" %s root@%s:%s' % (rsync_ssh, local_sd_image, self.host, remote_sd_image))
+        device.context.run_command('%s %s root@%s:%s' % (scp, local_sd_image, self.host, remote_sd_image), failok=False)
 
 target_class = DynamicVmTarget
