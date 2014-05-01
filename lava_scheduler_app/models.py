@@ -313,9 +313,12 @@ class Worker(models.Model):
         if worker:
             worker.save()
             for d in devices:
-                device = Device.objects.get(hostname=d)
-                device.worker_host = worker
-                device.save()
+                try:
+                    device = Device.objects.get(hostname=d)
+                    device.worker_host = worker
+                    device.save()
+                except Device.DoesNotExist:
+                    continue
             return True
         else:
             return False
