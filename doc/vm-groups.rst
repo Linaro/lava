@@ -22,6 +22,11 @@ To submit a VM group test job, you need:
 A VM group test job consists of a ``vm_group`` attribute, specifying
 the host machine and a list of VM's that will spawned on the host.
 
+See :ref:`writing_multinode` for more information on VMGroup test
+definitions. Virtual Machine groups are an extension of MultiNode, so
+the definition which would be resubmitted as a new VMGroup job will
+be the VMGroup Definition.
+
 Example job definition::
 
     {
