@@ -540,6 +540,8 @@ class LavaClient(object):
             self.proc.expect([prompt, pexpect.TIMEOUT], timeout=10)
             logging.debug("free space information")
             self.proc.sendline('df -hl /')
+            logging.debug("IP addr information")
+            self.proc.sendline('ip addr')
             prompt = self.target_device.tester_ps1_pattern
             self.proc.expect([prompt, pexpect.TIMEOUT], timeout=10)
             in_linaro_image = True
