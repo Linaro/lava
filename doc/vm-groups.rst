@@ -21,6 +21,11 @@ will spawned before the action starts. The submitted test definition
 will then be able to specify code to be run on the host and on each of
 the virtual machines.
 
+See :ref:`writing_multinode` for more information on VMGroup test
+definitions. Virtual Machine groups are an extension of MultiNode, so
+the definition which would be resubmitted as a new VMGroup job will
+be the VMGroup Definition.
+
 Example job definition::
 
     {
