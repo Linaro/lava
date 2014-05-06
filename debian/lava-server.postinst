@@ -231,7 +231,7 @@ case "$1" in
         # ssh-keygen -q is not safe to use here - -q prevents it prompting for
         # more randomness
         if [ -f /etc/apache2/sites-enabled/lava-server.conf ]; then
-            apache2ctl reload
+            apache2ctl restart
         fi
     ;;
 
