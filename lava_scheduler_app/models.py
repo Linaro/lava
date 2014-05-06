@@ -1095,7 +1095,7 @@ class TestJob(RestrictedResource):
             raise JSONDataError("Reserved parameters found in job data %s" %
                                 str([x for x in reserved_params_found]))
 
-        taglist = _get_tag_list(job_data.get('device_tags', []))
+        taglist = _get_tag_list(job_data.get('tags', []))
 
         if 'target' in job_data:
             device_type = None

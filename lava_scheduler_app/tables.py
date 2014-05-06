@@ -80,6 +80,11 @@ class ExpandedStatusColumn(tables.Column):
                              pklink(record.current_job),
                              record.current_job.description,
                              record.current_job.submitter))
+        elif record.status == Device.RESERVED:
+            return mark_safe("Reserved for job #%s - %s submitted by %s" % (
+                             pklink(record.current_job),
+                             record.current_job.description,
+                             record.current_job.submitter))
         else:
             return Device.STATUS_CHOICES[record.status][1]
 
