@@ -230,6 +230,9 @@ case "$1" in
         fi
         # ssh-keygen -q is not safe to use here - -q prevents it prompting for
         # more randomness
+        if [ -f /etc/apache2/sites-enabled/lava-server.conf ]; then
+            apache2ctl reload
+        fi
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
