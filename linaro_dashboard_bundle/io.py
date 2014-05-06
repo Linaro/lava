@@ -76,6 +76,11 @@ class DocumentIO(object):
                 resource_string(
                     __name__,
                     'schemas/dashboard_bundle_format_1.6.json'))),
+        'Dashboard Bundle Format 1.7': Schema(
+            json.loads(
+                resource_string(
+                    __name__,
+                    'schemas/dashboard_bundle_format_1.7.json'))),
     }
 
     @classmethod
@@ -119,7 +124,7 @@ class DocumentIO(object):
                 This method can also raise exceptions raised by
                 DocumentIO.check()
         """
-        object_pairs_hook = cls._get_dict_impl(retain_order) 
+        object_pairs_hook = cls._get_dict_impl(retain_order)
         doc = json.load(stream, parse_float=decimal.Decimal, object_pairs_hook=object_pairs_hook)
         fmt = cls.check(doc)
         return fmt, doc
@@ -129,7 +134,7 @@ class DocumentIO(object):
         """
         Same as load() but reads data from a string
         """
-        object_pairs_hook = cls._get_dict_impl(retain_order) 
+        object_pairs_hook = cls._get_dict_impl(retain_order)
         doc = json.loads(text, parse_float=decimal.Decimal, object_pairs_hook=object_pairs_hook)
         fmt = cls.check(doc)
         return fmt, doc
@@ -142,7 +147,7 @@ class DocumentIO(object):
         :Discussion:
             The document is validated against a set of known formats and
             schemas and saved to the specified stream.
-            
+
             If human_readable is True the serialized stream is meant to be read
             by humans, it will have newlines, proper indentation and spaces
             after commas and colons. This option is enabled by default.
@@ -181,7 +186,7 @@ class DocumentIO(object):
             If human_readable is True the serialized value is meant to be read
             by humans, it will have newlines, proper indentation and spaces
             after commas and colons. This option is enabled by default.
-            
+
             If sort_keys is True then resulting JSON object will have sorted
             keys in all objects. This is useful for predictable format but is
             not recommended if you want to load-modify-save an existing
@@ -199,7 +204,7 @@ class DocumentIO(object):
         cls.check(doc)
         indent, separators = cls._get_indent_and_separators(human_readable)
         return json.dumps(doc,
-                          use_decimal=True, 
+                          use_decimal=True,
                           indent=indent,
                           separators=separators,
                           sort_keys=sort_keys)

@@ -7,7 +7,7 @@ from version import version_tag
 setup(
     name="lava-dispatcher",
     version=version_tag(),
-    url='https://launchpad.net/lava-dispatcher',
+    url='http://git.linaro.org/git/lava/lava-dispatcher.git',
     license='GPL v2 or later',
     description="Part of the LAVA framework for dispatching test jobs",
     author='Linaro Validation Team',
@@ -48,6 +48,10 @@ setup(
             'lava_test_shell/distro/fedora/*',
             'lava_test_shell/distro/android/*',
             'lava_test_shell/distro/ubuntu/*',
+        ],
+        'linaro_dashboard_bundle': [
+            'schemas/*',
+            'test_documents/*',
         ],
     },
     install_requires=[

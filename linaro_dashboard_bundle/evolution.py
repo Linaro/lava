@@ -90,7 +90,7 @@ class DocumentEvolution(object):
             in a dictionary where the name denoted the pathname of the attachment
             and the value was an array-of-strings. Each array item was a separate
             line from the text file. Line terminators were preserved.
-            
+
             The new format is much more flexible and allows to store binary
             files and their mime type. The format stores attachments as an
             array of objects. Each attachment object has tree mandatory
@@ -136,25 +136,25 @@ class DocumentEvolution(object):
     def _evolution_from_1_1_to_1_2(doc):
         """
         Evolution method for 1.1 -> 1.2:
-            
+
             * No changes required
         """
         assert doc.get("format") == "Dashboard Bundle Format 1.1"
         doc["format"] = "Dashboard Bundle Format 1.2"
-    
+
     def _evolution_from_1_2_to_1_3(doc):
         """
         Evolution method for 1.2 -> 1.3:
-            
+
             * No changes required
         """
         assert doc.get("format") == "Dashboard Bundle Format 1.2"
         doc["format"] = "Dashboard Bundle Format 1.3"
-    
+
     def _evolution_from_1_3_to_1_4(doc):
         """
         Evolution method for 1.3 -> 1.4:
-            
+
             * No changes required
         """
         assert doc.get("format") == "Dashboard Bundle Format 1.3"
@@ -163,7 +163,7 @@ class DocumentEvolution(object):
     def _evolution_from_1_4_to_1_5(doc):
         """
         Evolution method for 1.4 -> 1.5:
-            
+
             * No changes required
         """
         assert doc.get("format") == "Dashboard Bundle Format 1.4"
@@ -177,6 +177,15 @@ class DocumentEvolution(object):
         """
         assert doc.get("format") == "Dashboard Bundle Format 1.5"
         doc["format"] = "Dashboard Bundle Format 1.6"
+
+    def _evolution_from_1_6_to_1_7(doc):
+        """
+        Evolution method for 1.6 -> 1.7:
+
+            * No changes required
+        """
+        assert doc.get("format") == "Dashboard Bundle Format 1.6"
+        doc["format"] = "Dashboard Bundle Format 1.7"
 
     EVOLUTION_PATH = [
         ("Dashboard Bundle Format 1.0",
@@ -200,4 +209,7 @@ class DocumentEvolution(object):
         ("Dashboard Bundle Format 1.5",
          "Dashboard Bundle Format 1.6",
          _evolution_from_1_5_to_1_6),
+        ("Dashboard Bundle Format 1.6",
+         "Dashboard Bundle Format 1.7",
+         _evolution_from_1_6_to_1_7),
     ]
