@@ -2,45 +2,56 @@ Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: lava-server
 Source: http://git.linaro.org/lava/lava-server.git
 
-Files: lava_scheduler_app/* lava_scheduler_daemon/* dashboard_app/*
+Files: lava_scheduler_app/management/commands/crowd.py
+ lava_scheduler_app/management/commands/migrate-users-to-crowd.py
 Copyright: 2010-2013, Linaro Limited
-License: GPL-2.0+
+License: GPL-3.0+
  This package is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
+ the Free Software Foundation; either version 3 of the License, or
  (at your option) any later version.
  .
- This package is distributed in the hope that it will be useful,
+ This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
  .
  You should have received a copy of the GNU General Public License
- along with this program. If not, see <http://www.gnu.org/licenses/>
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  .
  On Debian systems, the complete text of the GNU General
- Public License version 2 can be found in "/usr/share/common-licenses/GPL-2".
+ Public License version 2 can be found in "/usr/share/common-licenses/GPL-3".
 
 Files: debian/*
 Copyright: 2013 Neil Williams <codehelp@debian.org>
-License: GPL-2.0+
+License: GPL-3.0+
  This package is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
+ the Free Software Foundation; either version 3 of the License, or
  (at your option) any later version.
  .
- This package is distributed in the hope that it will be useful,
+ This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
  .
  You should have received a copy of the GNU General Public License
- along with this program. If not, see <http://www.gnu.org/licenses/>
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  .
  On Debian systems, the complete text of the GNU General
- Public License version 2 can be found in "/usr/share/common-licenses/GPL-2".
+ Public License version 2 can be found in "/usr/share/common-licenses/GPL-3".
 
 Files: *
 Copyright: 2010-2013, Linaro Limited
 License: AGPL 3.0
-    http://www.fsf.org/licensing/licenses/agpl-3.0.html
+ This package is free software: you can redistribute it and/or modify it
+ under the terms of the GNU Affero General Public License version 3 as
+ published by the Free Software Foundation
+ .
+ This package is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ more details.
+ .
+ You should have received a copy of the GNU Affero General Public License
+ along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
