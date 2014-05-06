@@ -76,3 +76,11 @@ Other Topics
    lava-scheduler-device-type-help.rst
    lava-scheduler-submit-job.rst
    lava-scheduler-job.rst
+
+Developer guides
+################
+
+.. toctree::
+   :maxdepth: 2
+
+   schema.rst

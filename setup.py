@@ -72,7 +72,6 @@ setup(
         # 'django-crowd-rest-backend >= 0.3,
 
         # dashboard
-        'linaro-dashboard-bundle >= 1.10.2',
         'pygments >= 1.2',
 
         # scheduler
