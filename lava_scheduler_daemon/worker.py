@@ -126,13 +126,12 @@ class WorkerData:
                 server = _get_scheduler_rpc()
                 server.worker_heartbeat(data)
                 self.logger.debug("Heartbeat updated")
-                break
+                return
             except (CommandError, URLError, IOError) as err:
                 self.logger.debug("Error message: %s" % str(err))
             except xmlrpclib.Fault as err:
                 time.sleep(1)
                 self.logger.debug("Retrying heartbeat update (%d) ..." % retry)
-                continue
             except xmlrpclib.ProtocolError as err:
                 self.logger.error("Protocol error occured")
                 self.logger.error("URL: %s" % err.url)
@@ -140,6 +139,7 @@ class WorkerData:
                 self.logger.error("Error code: %d" % err.errcode)
                 self.logger.error("Error message: %s" % err.errmsg)
                 raise err
+        self.logger.error("Unable to update the Heartbeat, trying later")
 
     def notify_on_incomplete(self, job_id):
         """
