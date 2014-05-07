@@ -216,7 +216,7 @@ class TestTestJob(TestCaseWithFactory):
         """
         self.assertRaises(
             JSONDataError, TestJob.from_json_and_user,
-            self.factory.make_job_json(device_tags=['unknown']),
+            self.factory.make_job_json(tags=['unknown']),
             self.factory.make_user())
 
     def test_from_json_and_user_errors_on_unsupported_tags(self):
@@ -231,7 +231,7 @@ class TestTestJob(TestCaseWithFactory):
         self.factory.ensure_tag('tag2')
         try:
             TestJob.from_json_and_user(
-                self.factory.make_job_json(device_tags=['tag1', 'tag2']),
+                self.factory.make_job_json(tags=['tag1', 'tag2']),
                 self.factory.make_user())
         except DevicesUnavailableException:
             pass
@@ -244,7 +244,7 @@ class TestTestJob(TestCaseWithFactory):
         tags = list(Tag.objects.filter(name='tag'))
         self.factory.make_device(device_type=device_type, hostname="panda1", tags=tags)
         job = TestJob.from_json_and_user(
-            self.factory.make_job_json(device_tags=['tag']),
+            self.factory.make_job_json(tags=['tag']),
             self.factory.make_user())
         self.assertEqual(
             set(tag.name for tag in job.tags.all()), {'tag'})
@@ -257,7 +257,7 @@ class TestTestJob(TestCaseWithFactory):
         ]
         self.factory.make_device(device_type=device_type, hostname="panda2", tags=tag_list)
         job = TestJob.from_json_and_user(
-            self.factory.make_job_json(device_tags=['tag1', 'tag2']),
+            self.factory.make_job_json(tags=['tag1', 'tag2']),
             self.factory.make_user())
         self.assertEqual(
             set(tag.name for tag in job.tags.all()), {'tag1', 'tag2'})
@@ -268,10 +268,10 @@ class TestTestJob(TestCaseWithFactory):
         tags = list(Tag.objects.filter(name='tag'))
         self.factory.make_device(device_type=device_type, hostname="panda3", tags=tags)
         job1 = TestJob.from_json_and_user(
-            self.factory.make_job_json(device_tags=['tag']),
+            self.factory.make_job_json(tags=['tag']),
             self.factory.make_user())
         job2 = TestJob.from_json_and_user(
-            self.factory.make_job_json(device_tags=['tag']),
+            self.factory.make_job_json(tags=['tag']),
             self.factory.make_user())
         self.assertEqual(
             set(tag.pk for tag in job1.tags.all()),
@@ -293,7 +293,7 @@ class TestTestJob(TestCaseWithFactory):
         tag_list.append(self.factory.ensure_tag('unique_tag'))
         self.factory.make_device(device_type=device_type, hostname="panda5", tags=tag_list)
         job = TestJob.from_json_and_user(
-            self.factory.make_job_json(device_tags=['common_tag1', 'common_tag2', 'unique_tag']),
+            self.factory.make_job_json(tags=['common_tag1', 'common_tag2', 'unique_tag']),
             self.factory.make_user())
         self.assertEqual(
             set(tag for tag in job.tags.all()),
