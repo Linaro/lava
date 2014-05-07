@@ -39,10 +39,34 @@ override_dh_auto_install:
 	dh_installman -plava-server man/_build/man/lava-daemon.1
 	# FIXME: should not need this mv
 	mv debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/htdocs/ debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/lava-server
+	# move ssfs script to /usr/sbin
+	mkdir debian/lava-server/usr/sbin/
+	mv debian/lava-server/usr/bin/lava-mount-masterfs debian/lava-server/usr/sbin/
 	# handle embedded JS
 	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/lava-server/js/jquery.cookie.js
 	ln -s /usr/share/javascript/jquery-cookie/jquery.cookie.js \
 		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/lava-server/js/jquery.cookie.js
+	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.navigate.min.js
+	ln -s /usr/share/javascript/jquery-flot/jquery.flot.navigate.min.js \
+		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.navigate.min.js
+	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.canvas.min.js
+	ln -s /usr/share/javascript/jquery-flot/jquery.flot.canvas.min.js \
+		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.canvas.min.js
+	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.min.js
+	ln -s /usr/share/javascript/jquery-flot/jquery.flot.min.js \
+		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.min.js
+	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/lava_scheduler_app/static/lava_scheduler_app/js/jquery.flot.min.js
+	ln -s /usr/share/javascript/jquery-flot/jquery.flot.min.js \
+		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/lava_scheduler_app/static/lava_scheduler_app/js/jquery.flot.min.js
+	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.selection.min.js
+	ln -s /usr/share/javascript/jquery-flot/jquery.flot.selection.min.js \
+		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.selection.min.js
+	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.stack.min.js
+	ln -s /usr/share/javascript/jquery-flot/jquery.flot.stack.min.js \
+		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.stack.min.js
+	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.time.min.js
+	ln -s /usr/share/javascript/jquery-flot/jquery.flot.time.min.js \
+		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.time.min.js
 
 override_dh_auto_clean:
 	dh_auto_clean
@@ -51,6 +75,9 @@ override_dh_auto_clean:
 	[ ! -f doc/Makefile ] || make -C doc/ clean
 	[ ! -f man/Makefile ] || make -C man/ clean
 	debconf-updatepo
+	mkdir -p debian/missing-sources
+	$(RM) debian/missing-sources/*
+	ln -s -t debian/missing-sources/ share/js/*
 
 # get upstream version for get-orig-source target
 VERSION:= $(shell dpkg-parsechangelog | grep '^Version: ' | sed -e 's/^Version: //' | sed -e 's/\-.*$$//')
