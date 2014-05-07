@@ -1,3 +1,5 @@
+.. _installation:
+
 LAVA Installation
 *****************
 
@@ -6,6 +8,8 @@ a LAVA server at ``http://localhost/`` once enabled.
 
 See :ref:`packaging_distribution` for more information or for
 debugging.
+
+.. _debian_installation:
 
 Debian-based distributions
 ##########################
@@ -43,10 +47,17 @@ To install just the lava-server from the current packages, use::
  $ sudo service apache2 restart
 
 This will install lava-dispatcher and lava-server but not
-linaro-media-create and other optional packages.
+linaro-media-create and other optional packages which come from
+the Linaro PPA::
+
+ deb http://ppa.launchpad.net/linaro-maintainers/tools/ubuntu precise main
+
+The PPA uses this signing key::
+
+http://keyserver.ubuntu.com:11371/pks/lookup?search=0x1DD749B890A6F66D050D985CF1FCBACA7BE1F97B&op=index
 
 Superuser
-#########
+=========
 
 A default lavaserver superuser is setup during package installation with
 a random password. The default superuser is not the same as the lavaserver
@@ -72,8 +83,18 @@ Select lavaserver and click the `Delete` link at the bottom of the page.
 Software Requirements
 =====================
 
-We currently recommend using Debian unstable. Work is ongoing to support
-Ubuntu and other distributions.
+We currently recommend using `Debian`_ unstable. Work is ongoing to support
+Debian Jessie, Ubuntu Trusty, Ubuntu Unicorn and other distributions.
+
+Support for Debian Jessie needs migrations affecting `uwsgi`_ to complete.
+
+Dependencies of LAVA are migrating automatically into Ubuntu Unicorn
+but these will need backports to be used with Trusty. Adapting LAVA to
+Ubuntu builds is not currently working.
+
+.. _Debian: http://www.debian.org/
+
+.. _uwsgi: http://packages.qa.debian.org/u/uwsgi.html
 
 If you'd like to help us with other distributions feel free to contact
 us at linaro-validation (at) lists (dot) linaro (dot) org.
@@ -177,3 +198,7 @@ Please report bugs using
 https://bugs.launchpad.net/lava-server/+filebug
 
 Feel free to contact us at validation (at) linaro (dot) org.
+
+.. include:: single-deployment.rst
+
+.. include:: distributed-deployment.rst

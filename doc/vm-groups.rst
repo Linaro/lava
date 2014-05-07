@@ -26,7 +26,10 @@ definitions. Virtual Machine groups are an extension of MultiNode, so
 the definition which would be resubmitted as a new VMGroup job will
 be the VMGroup Definition.
 
-Example job definition::
+Example job definition
+======================
+
+::
 
     {
       "timeout": 18000,

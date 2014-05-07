@@ -8,8 +8,6 @@ LAVA Manual
 
    overview.rst
    installation.rst
-   single-deployment.rst
-   distributed-deployment.rst
    writing-tests.rst
    writing-multinode.rst
    test-repositories.rst
@@ -53,6 +51,7 @@ LAVA Administrator Guide
    sdmux.rst
    proxy.rst
    lava-image-creation.rst
+   known-devices.rst
    qemu-deploy.rst
    pdudaemon.rst
    kvm-deploy.rst
@@ -83,4 +82,5 @@ Developer guides
 .. toctree::
    :maxdepth: 2
 
+   debian.rst
    schema.rst

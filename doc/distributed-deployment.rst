@@ -1,7 +1,7 @@
 .. _distributed_deployment:
 
 Deploying Distributed Instances
-*******************************
+###############################
 
 When deploying a large LAVA "lab" instance with many :term:`DUT` it is
 suggested to use :ref:`remote_worker` nodes.
@@ -11,7 +11,7 @@ suggested to use :ref:`remote_worker` nodes.
 Remote Worker
 =============
 
-A remote worker node is a reconfired duced installation of ``lava-server``
+A remote worker node is a reconfigured installation of ``lava-server``
 that is capable of running test jobs and submitting the results back to
 the master ``lava_server``. In a lab environment, you will likely have
 too many test devices for a single server to handle, so a worker-node
@@ -20,35 +20,61 @@ struggle to cope with multiple high-IO process while dispatching images
 to a :term:`DUT`
 
 Configuring Master server for remote workers
-============================================
+--------------------------------------------
 
 When installing LAVA on a Debian based distribution, ``debconf`` will
 ask if this installation is a single instance or a remote instance. Other
 distributions will have different ways of configuring ``lava-server``.
 
-In order for remote workers to be able to access the master database, 
-Postgres has to be configured to allow access from external clients over
-the network.
-
-TBD
-
 Configuring remote worker
-=========================
+-------------------------
 
 LAVA servers need to have an instance name. Each remote
 worker must be given the instance name of the master
 lava-server which it will poll for new jobs to run
 on the devices attached to the worker.
 
-TODO: update for the other packaging changes.
-
 A remote worker needs to know the network address of the Master
-``lava_server``. This can be set with LAVA_MASTER.
-LAVA_DB_PASSWORD can be used if you wish to preset the database
+``lava_server``. This can be set with ``LAVA_MASTER``.
+``LAVA_DB_PASSWORD`` can be used if you wish to preset the database
 password, otherwise you will be asked in the prompt.
 
+SSHFS mount operations
+----------------------
+
+``lava-server`` provides a script to manage the mounting of the media
+directory over sshfs. On Debian-based distributions, this script
+remounts the directory each time the ``lava-server`` package is
+installed or reconfigured.
+
 Remote databases
-================
+----------------
+
+Configuring database access from remote workers
+-----------------------------------------------
+
+Currently, remote workers need to be able to access the master database,
+so postgres has to be manually configured to allow access from external
+clients over the network.
+
+.. note:: The communication between the remote worker and the master
+          is likely to be re-designed and this step may become unnecessary
+          in future. This section will be updated at that time.
+
+The ``lava-server`` installation does not dictate how the remote database
+connection is configured but an (overly permissive) example would be to
+adjust the ``listen_addresses`` in ``postgresql.conf``::
+
+ listen_addresses = '*'
+
+Also adjust the host allowed to connect to this database::
+
+ ALLOW="host    all    all    0.0.0.0/0    trust"
+
+In most cases, the administrator for the machine providing the database
+will want to constrain these settings to particular addresses and/or
+network masks. LAVA just needs each remote worker to be in the list of
+trusted connections and for the database to be listening to it.
 
 ``lava-server`` remoteworker installations assume the DB resides on the
 LAVA_MASTER and remote worker installations will prompt to set up your
@@ -59,16 +85,16 @@ instance using a database on LAVA_MASTER.
          part of the setup task. If you are using a remote database,
          the master instance will need to be configured separately.
 
-LAVA_MASTER is still needed to support sshfs connections for results.
+``LAVA_MASTER`` is still needed to support sshfs connections for results.
 
 Heartbeat
-=========
+---------
 
 Each dispatcher worker node sends heartbeat data to the master node
 via xmlrpc. For this feature to work correctly the ``rpc2_url``
 parameter should be set properly. Login as an admin user and go to
 ``http://localhost/admin/lava_scheduler_app/worker/``.  Click on the
-machine which is your master and in the page that opens, set the 
+machine which is your master and in the page that opens, set the
 ``Master RPC2 URL:`` with the correct value, if it is not set properly,
 already. Do not touch any other values in this page except the
 description, since all the other fields except description is populated
@@ -77,7 +103,7 @@ automatically. The following figure illustrates this:
 .. image:: ./images/lava-worker-rpc2-url.png
 
 Frequently encountered problems
-===============================
+-------------------------------
 
 Make sure that your database connectivity is configured correctly in::
 
@@ -88,17 +114,21 @@ and your LAVA_SERVER_IP (worker ip address) is configured correctly in::
  /etc/lava-server/instance.conf
  /etc/lava-dispatcher/lava-dispatcher.conf
 
+A :ref:`remote_worker` has configuration in::
+
+ /etc/lava-server/worker.conf
+
 Postgres on the master server is running on the default port 5432 (or
 whatever port you have configured)
 
-SSHFS on the worker has successfully mounted from the master. Check 
+SSHFS on the worker has successfully mounted from the master. Check
 `mount` and `dmesg` outputs for help.
 
 Considerations for Geographically separate Master/Worker setups
 ===============================================================
 
-A :ref:`remote_worker` needs to be able to communicate with the 
-``lava_server`` over SSH and Postgres (standard ports 22 and 5432) 
+A :ref:`remote_worker` needs to be able to communicate with the
+``lava_server`` over SSH and Postgres (standard ports 22 and 5432)
 so some configuration will be needed if the ``lava-server``
 is behind a firewall.
 
@@ -154,5 +184,5 @@ Proxy server
   the download traffic via this proxy server, which prevents image
   downloads directly and saves bandwidth. The proxy server can be set
   for the dispatcher during installation via lava deployment tool or
-  by editing the value of ``LAVA_PROXY`` in 
+  by editing the value of ``LAVA_PROXY`` in
   ``/etc/lava-server/instance.conf``.

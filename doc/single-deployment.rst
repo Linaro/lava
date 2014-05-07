@@ -1,7 +1,7 @@
 .. _single_deployment:
 
 Deploying Single LAVA Instances
-*******************************
+###############################
 
 This section will lead you through installing a single LAVA server and
 dispatcher instance on a single computer. If you wish to deploy a
@@ -9,10 +9,10 @@ distributed instance with a LAVA server and multiple worker nodes, you
 should read :ref:`distributed_deployment`.
 
 Assumptions
-###########
+===========
 
 The device you wish to deploy in LAVA is:
- * Physically connected to the server via usb, usb-serial, 
+ * Physically connected to the server via usb, usb-serial,
    or serial [#f1]_ or
  * connected over the network via a serial console server [#f1]_ or
  * a fastboot capable device accessible from the server or
@@ -37,12 +37,12 @@ We recommend:
 .. _serial_connections:
 
 Setting Up Serial Connections to LAVA Devices
-#############################################
+=============================================
 
 .. _ser2net:
 
 Ser2net daemon
-==============
+--------------
 
 ser2net provides a way for a user to connect from a network connection to a serial port, usually over telnet.
 
@@ -54,7 +54,7 @@ Example config (in /etc/ser2net.conf)::
  7001:telnet:36000:/dev/serial_port1:115200 8DATABITS NONE 1STOPBIT
 
 StarTech rackmount usb
-======================
+----------------------
 
 W.I.P
 
