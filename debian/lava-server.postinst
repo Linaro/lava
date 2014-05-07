@@ -79,6 +79,8 @@ INSTANCE_CONF
 
     write_config >/etc/lava-server/instance.conf
     rm -f /etc/lava-server/worker.conf
+    # lava-mount-masterfs support
+    touch /var/lib/lava-server/default/media/.mounted
 }
 
 worker_config() {
@@ -216,6 +218,7 @@ case "$1" in
         chown $LAVA_SYS_USER:$LAVA_SYS_USER /etc/lava-server/secret_key.conf
          if [ ! -f /etc/lava-server/worker.conf ]; then
             install_database
+            lava-mount-masterfs
             # Allow instance user to put stuff in temporary directory
             # Set the sticky and setgid bits there
             #    chgrp -R $LAVA_SYS_USER $LAVA_PREFIX/$LAVA_INSTANCE/tmp
@@ -224,9 +227,9 @@ case "$1" in
 
         # allow reinstalls when the user has not been removed.
         if [ ! -d $LAVA_SYS_HOME/ ]; then
-         mkdir -p $LAVA_SYS_HOME/
+            mkdir -p $LAVA_SYS_HOME/
         else
-         chown $LAVA_SYS_USER:$LAVA_SYS_USER $LAVA_SYS_HOME/
+            chown $LAVA_SYS_USER:$LAVA_SYS_USER $LAVA_SYS_HOME/
         fi
         # ssh-keygen -q is not safe to use here - -q prevents it prompting for
         # more randomness

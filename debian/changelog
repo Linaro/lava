@@ -8,6 +8,7 @@ lava-server (0.22.1-7) unstable; urgency=medium
   * Add lava-dev to the metapackage
   * Add vmdebootstrap to lava metapackage and a README to lava-dev.
   * Add libjs-jquery-flot and symlink relevant copies.
+  * Add the sshfs mount script for remote workers.
 
  -- Neil Williams <codehelp@debian.org>  Mon, 14 Apr 2014 10:37:27 +0100
 
