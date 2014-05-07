@@ -44,7 +44,7 @@ from lava_dispatcher.downloader import (
 )
 from lava_dispatcher.utils import (
     ensure_directory,
-    extract_targz,
+    extract_tar,
     connect_to_serial,
 )
 from lava_dispatcher import deployment_data
@@ -243,7 +243,7 @@ class SDMuxTarget(Target):
         logging.info('extracting %s to target', tarball_url)
         with self.file_system(partition, directory) as mntdir:
             tb = download_image(tarball_url, self.context, decompress=False)
-            extract_targz(tb, '%s/%s' % (mntdir, directory))
+            extract_tar(tb, '%s/%s' % (mntdir, directory))
 
     def power_off(self, proc):
         logging.info('powering off')

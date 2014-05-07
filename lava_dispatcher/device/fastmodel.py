@@ -44,7 +44,7 @@ from lava_dispatcher.test_data import (
 )
 from lava_dispatcher.utils import (
     ensure_directory,
-    extract_targz,
+    extract_tar,
     DrainConsoleOutput,
     finalize_process,
 )
@@ -94,15 +94,6 @@ class FastModelTarget(Target):
         with image_partition_mounted(self._sd_image, partno) as mntdir:
             subdir = os.path.join(mntdir, subdir)
             self._copy_needed_files_from_directory(subdir)
-
-    def _copy_first_find_from_list(self, subdir, odir, file_list, rename=None):
-        f_path = None
-        for fname in file_list:
-            f_path = self._find_and_copy(subdir, odir, fname, rename)
-            if f_path:
-                break
-
-        return f_path
 
     def _copy_needed_files_from_directory(self, subdir):
         odir = os.path.dirname(self._sd_image)
@@ -195,10 +186,10 @@ class FastModelTarget(Target):
                                self.config.simulator_bl1_files)
         if self._bl2 is None and self.config.simulator_bl2_files:
             logging.warning('No SECURE FLASHLOADER found, %r' %
-                               self.config.simulator_bl2_files)
+                            self.config.simulator_bl2_files)
         if self._bl31 is None and self.config.simulator_bl31_files:
             logging.warning('No SECURE FLASHLOADER found, %r' %
-                               self.config.simulator_bl31_files)
+                            self.config.simulator_bl31_files)
 
     def deploy_android(self, boot, system, data, rootfstype, bootloadertype,
                        target_type):
@@ -260,7 +251,7 @@ class FastModelTarget(Target):
 
         with image_partition_mounted(self._sd_image, partition) as mntdir:
             tb = download_image(tarball_url, self.context, decompress=False)
-            extract_targz(tb, '%s/%s' % (mntdir, directory))
+            extract_tar(tb, '%s/%s' % (mntdir, directory))
 
     def _fix_perms(self):
         """ The directory created for the image download/creation gets created

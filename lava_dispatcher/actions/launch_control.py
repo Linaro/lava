@@ -139,7 +139,7 @@ class cmd_submit_results(BaseAction):
             result_path = self.client.retrieve_results(result_disk)
             if result_path is not None:
                 d = tempfile.mkdtemp(dir=self.client.target_device.scratch_dir)
-                files = utils.extract_targz(result_path, d)
+                files = utils.extract_tar(result_path, d)
                 bundles = self._get_bundles(files)
         except GatherResultsError:
             raise

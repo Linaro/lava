@@ -38,7 +38,10 @@ class DeviceSchema(schema.Schema):
     master_userdata_dir = schema.StringOption()
     master_userdata_label = schema.StringOption()
     android_binary_drivers = schema.StringOption(default=None)
-    cts_media_url = schema.StringOption()
+    android_ramdisk_files = schema.ListOption(default=["uInitrd",
+                                                       "ramdisk.img"])
+    android_init_files = schema.ListOption(default=["init.rc",
+                                                    "init.environ.rc"])
     boot_cmds = schema.StringOption(fatal=True)  # Can do better here
     boot_cmds_android = schema.StringOption(fatal=True)  # And here
     boot_cmds_oe = schema.StringOption(fatal=True)  # And here?
@@ -200,7 +203,9 @@ class DeviceSchema(schema.Schema):
         default='Press Enter to stop auto boot...')
     vexpress_usb_mass_storage_device = schema.StringOption(default=None)
 
+    bl1_image_files = schema.ListOption(default=None)
     bl1_image_filename = schema.StringOption(default="bl1.bin")
+    fip_image_files = schema.ListOption(default=None)
     fip_image_filename = schema.StringOption(default="fip.bin")
 
     wg_bl1_path = schema.StringOption(default="SOFTWARE/bl1.bin")
