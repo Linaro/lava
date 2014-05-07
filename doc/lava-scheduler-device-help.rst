@@ -20,7 +20,8 @@ Static device information
 
   **Device tags**
     Device specific labels to allow test jobs to request specific
-    hardware capabilities.
+    hardware capabilities. A :term:`device tag` can only be used in
+    in TestJob if supported by a device of the relevant device type.
 
   **Worker Hostname**
     The dispatcher which has a configuration file for a device matching

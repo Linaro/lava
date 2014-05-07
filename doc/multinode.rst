@@ -87,7 +87,7 @@ Changes to submission JSON
      devices will be allocated to match the count and all such devices will
      have the same role and use the same commands and the same actions.
 
-3. Add tags, if required, to each role.
+3. Add :term:`device tag` to each role, if supported for the relevant devices.
 4. If specific actions should only be used for particular roles, add a
    role field to the parameters of the action.
 5. If any action has no role specified, it will be actioned for all roles.
