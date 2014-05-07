@@ -26,7 +26,7 @@ setup(
     name='lava-server',
     version=version_tag(),
     author="Zygmunt Krynicki",
-    author_email="zygmunt.krynicki@linaro.org",
+    author_email="lava-team@linaro.org",
     namespace_packages=['lava', ],
     packages=find_packages(),
     entry_points=open('entry_points.ini', 'r').read(),
@@ -98,6 +98,7 @@ setup(
     ],
     scripts=[
         'lava_server/lava-daemon',
+        'share/lava-mount-masterfs',
     ],
     tests_require=[
         'django-testscenarios >= 0.7.2',
