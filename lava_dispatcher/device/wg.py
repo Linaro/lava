@@ -26,6 +26,7 @@ from contextlib import contextmanager
 
 from lava_dispatcher.device.master import MasterImageTarget
 from lava_dispatcher.errors import CriticalError
+from lava_dispatcher.utils import extract_tar
 
 
 class WGTarget(MasterImageTarget):
@@ -37,7 +38,9 @@ class WGTarget(MasterImageTarget):
         self.test_fip = None
 
         if (self.config.bl1_image_filename is None or
+                self.config.bl1_image_files is None or
                 self.config.fip_image_filename is None or
+                self.config.fip_image_files is None or
                 self.config.wg_bl1_path is None or
                 self.config.wg_bl1_backup_path is None or
                 self.config.wg_fip_path is None or
@@ -47,7 +50,8 @@ class WGTarget(MasterImageTarget):
             raise CriticalError(
                 "WG devices must specify all "
                 "of the following configuration variables: "
-                "bl1_image_filename, fip_image_filename "
+                "bl1_image_filename, bl1_image_files, "
+                "fip_image_filename, fip_image_files, "
                 "wg_bl1_path, wg_bl1_bacup_path "
                 "wg_fip_path, wg_fip backup_path "
                 "wg_usb_mass_storage_device")
@@ -89,7 +93,7 @@ class WGTarget(MasterImageTarget):
         super(WGTarget, self)._deploy_android_tarballs(master, boot,
                                                        system, data)
         # android images have boot files inside boot/ in the tarball
-        self._extract_firmware_from_tarball(boot, 'boot')
+        self._extract_firmware_from_tarball(boot)
 
     def _deploy_tarballs(self, boot_tgz, root_tgz, rootfstype):
         super(WGTarget, self)._deploy_tarballs(boot_tgz, root_tgz,
@@ -159,24 +163,17 @@ class WGTarget(MasterImageTarget):
     def _leave_mcc(self):
         self.proc.sendline("reboot")
 
-    def _extract_firmware_from_tarball(self, tarball, hwpack_path=None):
-        tmpdir = self.scratch_dir
+    def _extract_firmware_from_tarball(self, tarball):
 
-        bl1_on_image = self.config.bl1_image_filename
-        fip_on_image = self.config.fip_image_filename
+        extract_tar(tarball, self.scratch_dir)
 
-        if hwpack_path is not None:
-            bl1_on_image = os.path.join(hwpack_path, bl1_on_image)
-            fip_on_image = os.path.join(hwpack_path, fip_on_image)
+        self.test_bl1 = self._copy_first_find_from_list(self.scratch_dir, self.scratch_dir,
+                                                        self.config.bl1_image_files,
+                                                        self.config.bl1_image_filename)
 
-        # --no-anchored matches the name inside any directory in the tarball.
-        self.context.run_command('tar --no-anchored -xaf %s -C %s %s' % (tarball, tmpdir,
-                                                                         bl1_on_image))
-        self.context.run_command('tar --no-anchored -xaf %s -C %s %s' % (tarball, tmpdir,
-                                                                         fip_on_image))
-
-        self.test_bl1 = os.path.join(tmpdir, self.config.bl1_image_filename)
-        self.test_fip = os.path.join(tmpdir, self.config.fip_image_filename)
+        self.test_fip = self._copy_first_find_from_list(self.scratch_dir, self.scratch_dir,
+                                                        self.config.fip_image_files,
+                                                        self.config.fip_image_filename)
 
     def _restore_firmware_backup(self, mount_point):
         bl1_path = self.config.wg_bl1_path
