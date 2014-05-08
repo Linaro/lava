@@ -4,6 +4,7 @@ lava-server (0.22.1-8) unstable; urgency=medium
     Automated Validation Architecture server)
   * Add python-setuptools to ensure lava-server manage operates
     properly.
+  * Use common static file locations in Debian and Ubuntu
 
  -- Neil Williams <codehelp@debian.org>  Wed, 07 May 2014 20:05:26 +0100
 
