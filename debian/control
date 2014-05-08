@@ -20,10 +20,11 @@ Architecture: all
 Provides: lava-scheduler, lava-dashboard
 Conflicts: lava-scheduler, lava-dashboard
 Replaces: lava-scheduler, lava-dashboard
-Depends: apache2, adduser, fuse, libapache2-mod-uwsgi, libjs-jquery-cookie,
- libapache2-mod-wsgi, lshw, iproute2, python-daemon, python-dateutil,
- python-django-auth-openid (>= 0.5-2), diffstat, libjs-jquery-flot (>= 0.8.2),
- openssh-client, postgresql, postgresql-client, postgresql-common,
+Depends: apache2, adduser, diffstat, fuse, iproute2,
+ libapache2-mod-uwsgi, libapache2-mod-wsgi, lshw,
+ python-daemon, python-dateutil, python-django-auth-openid (>= 0.5-2), python-setuptools,
+ libjs-jquery-cookie, libjs-jquery-flot (>= 0.8.2), openssh-client,
+ postgresql, postgresql-client, postgresql-common,
  ${python:Depends}, ${misc:Depends}
 Recommends: ntp, lava-coordinator, lava-server-doc
 Description: Linaro Automated Validation Architecture server

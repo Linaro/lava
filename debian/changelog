@@ -1,3 +1,12 @@
+lava-server (0.22.1-8) unstable; urgency=medium
+
+  * Initial release. (Closes: #747356: ITP: lava-server -- Linaro
+    Automated Validation Architecture server)
+  * Add python-setuptools to ensure lava-server manage operates
+    properly.
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 07 May 2014 20:05:26 +0100
+
 lava-server (0.22.1-7) unstable; urgency=medium
 
   * Add sbuild sample script to lava-dev
