@@ -1,8 +1,6 @@
-usr/share/pyshared/django/contrib/admin/static/admin usr/share/pyshared/lava_server/admin
-usr/share/pyshared/google_analytics/templatetags/analytics.py usr/share/pyshared/lava_scheduler_app/templatetags/analytics.py
-usr/share/pyshared/dashboard_app/static/dashboard_app usr/share/pyshared/lava_server/dashboard_app
-usr/share/pyshared/lava_scheduler_app/static/lava_scheduler_app usr/share/pyshared/lava_server/lava_scheduler_app
-# create once packages are merged
-#etc/lava-dispatcher/device-types/ ./var/lib/lava-server/
-#etc/lava-dispatcher/device-defaults.conf ./var/lib/lava-server/
-#usr/share/pyshared/lava_dispatcher/default-config/lava-dispatcher/lava-dispatcher.conf ./var/lib/lava-server/default-config/lava-dispatcher/
+usr/lib/python2.7/dist-packages/django/contrib/admin/static/admin/ usr/share/lava-server/static/admin
+usr/lib/python2.7/dist-packages/google_analytics/templatetags/analytics.py usr/lib/python2.7/dist-packages/lava_scheduler_app/templatetags/analytics.py
+usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app usr/share/lava-server/static/dashboard_app
+usr/lib/python2.7/dist-packages/lava_scheduler_app/static/lava_scheduler_app usr/share/lava-server/static/lava_scheduler_app
+usr/lib/python2.7/dist-packages/lava_server/lava-server usr/share/lava-server/static/lava-server
+usr/share/doc/lava-server-doc/html/ usr/share/lava-server/static/docs
