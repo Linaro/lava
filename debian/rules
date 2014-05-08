@@ -32,8 +32,11 @@ override_dh_auto_install:
 	dh_installman -plava-dispatcher man/_build/man/lava-dispatch.1
 	python setup.py install --root=$(CURDIR)/debian/lava-dispatcher/ --install-layout=deb
 	mv -v debian/lava-dispatcher/usr/bin/lava-dispatch debian/lava-dispatcher/usr/sbin/
-	# vm_groups use a shared private key
-	chmod 0600 /usr/share/pyshared/lava_dispatcher/device/dynamic_vm_keys/lava
+
+override_dh_fixperms:
+	dh_fixperms -X debian/lava-dispatcher/usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys/lava
+	# vm_groups use a shared private key - use the same location for debian & ubuntu
+	chmod 0600 debian/lava-dispatcher/usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys/lava
 
 override_dh_auto_clean:
 	dh_auto_clean
