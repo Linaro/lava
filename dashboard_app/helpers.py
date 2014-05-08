@@ -395,9 +395,12 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
 
         for index, c_test_result in enumerate(c_test_run.get("test_results", []), 1):
             if c_test_result.get("attributes", {}):
-                s_test_result = TestResult.objects.get(
-                    relative_index=index, test_run=s_test_run)
-                self._import_attributes(c_test_result, s_test_result)
+                try:
+                    s_test_result = TestResult.objects.get(
+                        relative_index=index, test_run=s_test_run)
+                    self._import_attributes(c_test_result, s_test_result)
+                except TestResult.DoesNotExist:
+                    continue
         self._log('test result attributes')
 
     def _import_test_cases_sqlite(self, c_test_results, s_test):
@@ -738,9 +741,12 @@ class BundleFormatImporter_1_5(BundleFormatImporter_1_4):
         super(BundleFormatImporter_1_5, self)._import_test_results(c_test_run, s_test_run)
         for index, c_test_result in enumerate(c_test_run.get("test_results", []), 1):
             if c_test_result.get("attachments", {}):
-                s_test_result = TestResult.objects.get(
-                    relative_index=index, test_run=s_test_run)
-                self._import_test_result_attachments(c_test_result, s_test_result)
+                try:
+                    s_test_result = TestResult.objects.get(
+                        relative_index=index, test_run=s_test_run)
+                    self._import_test_result_attachments(c_test_result, s_test_result)
+                except TestResult.DoesNotExist:
+                    continue
 
 
 class BundleFormatImporter_1_6(BundleFormatImporter_1_5):
