@@ -1,3 +1,12 @@
+lava-dispatcher (0.33.3-10) unstable; urgency=medium
+
+  * Initial release. (Closes: #747355: ITP: lava-dispatcher -- Linaro
+    Automated Validation Architecture dispatcher)
+  * Add setuptools dependency and override dh_fixperms for the vm_groups
+    key file.
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 07 May 2014 20:04:45 +0100
+
 lava-dispatcher (0.33.3-9) unstable; urgency=medium
 
   * Move lava-dispatch to /usr/sbin as it must be run as root.

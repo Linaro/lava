@@ -17,7 +17,8 @@ Vcs-Browser: https://github.com/Linaro/pkg-lava-dispatcher
 
 Package: lava-dispatcher
 Architecture: linux-any
-Depends: python-serial (>= 2.6), parted, kpartx, telnet, ser2net, sshfs,
+Depends: python-serial (>= 2.6), python-setuptools,
+ parted, kpartx, telnet, ser2net, sshfs,
  sudo, ${python:Depends}, ${misc:Depends}
 Conflicts: linaro-dashboard-bundle
 Provides: linaro-dashboard-bundle
