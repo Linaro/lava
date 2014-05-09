@@ -294,7 +294,7 @@ class LavaTestJob(object):
                 logging.debug("[ACTION-B] VM host IP is (%s)." % metadata['host_ip'])
             self.context.test_data.add_metadata(metadata)
 
-        elif 'target_group' in self.job_data:
+        if 'target_group' in self.job_data:
             metadata['target_group'] = self.job_data['target_group']
             self.context.test_data.add_metadata(metadata)
 
