@@ -17,9 +17,9 @@ Vcs-Browser: https://github.com/Linaro/pkg-lava-server
 
 Package: lava-server
 Architecture: all
-Provides: lava-scheduler, lava-dashboard
-Conflicts: lava-scheduler, lava-dashboard
-Replaces: lava-scheduler, lava-dashboard
+Provides: lava-scheduler, lava-dashboard, linaro-django-xmlrpc
+Conflicts: lava-scheduler, lava-dashboard, linaro-django-xmlrpc
+Replaces: lava-scheduler, lava-dashboard, linaro-django-xmlrpc
 Depends: apache2, adduser, diffstat, fuse, iproute2,
  libapache2-mod-uwsgi, libapache2-mod-wsgi, lshw,
  python-daemon, python-dateutil, python-django-auth-openid (>= 0.5-2), python-setuptools,
