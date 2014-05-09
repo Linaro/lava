@@ -1157,7 +1157,7 @@ class TestJob(RestrictedResource):
             role = vm_group['host'].get('role', None)
             allow = _check_submit_to_device(
                 list(Device.objects.filter(device_type=device_type)), user)
-            requested_devices[device_type] = (1, role)
+            requested_devices[device_type.name] = (1, role)
 
             # Validate and get the list of vms requested. These are dynamic vms
             # that will be created by the above vm_group host, so we need not
@@ -1165,22 +1165,22 @@ class TestJob(RestrictedResource):
             # (they won't since they will be created dynamically).
             vms_list = vm_group['vms']
             for vm in vms_list:
-                device_type = vm['device_type']
+                dtype = vm['device_type']
                 count = vm.get('count', 1)
                 role = vm.get('role', None)
                 # Right now we support only 'kvm' type vms.
                 #
                 # FIXME: Once we have support for 'xen' augment this list
-                if device_type in ['kvm', 'kvm-arm']:
-                    if device_type in requested_devices:
-                        count = count + requested_devices[device_type][0]
-                        requested_devices[device_type] = (count, role)
+                if dtype in ['kvm', 'kvm-arm']:
+                    if dtype in requested_devices:
+                        count = count + requested_devices[dtype][0]
+                        requested_devices[dtype] = (count, role)
                     else:
-                        requested_devices[device_type] = (count, role)
+                        requested_devices[dtype] = (count, role)
                 else:
                     raise DevicesUnavailableException(
                         "Device type '%s' is not a supported VMs type" %
-                        device_type)
+                        dtype)
         else:
             raise JSONDataError(
                 "No 'target' or 'device_type', 'device_group' or 'vm_group' "
