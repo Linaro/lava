@@ -522,6 +522,26 @@ class Device(RestrictedResource):
             '-submit_time'
         )
 
+    def is_visible_to(self, user):
+        """
+        Checks if this device is visible to the specified user.
+        Retired devices are deemed to be visible - filter these out
+        explicitly where necessary.
+        :param user: If empty, restricted or hidden devices always return False
+        :return: True if the user can see this device
+        """
+        if self.device_type.owners_only:
+            if not user:
+                return False
+            if len(self.device_type.devices_visible_to(user)) == 0:
+                return False
+        if not self.is_public:
+            if not user:
+                return False
+            if not self.can_submit(user):
+                return False
+        return True
+
     def can_admin(self, user):
         if self.is_owned_by(user):
             return True
