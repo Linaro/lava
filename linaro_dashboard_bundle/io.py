@@ -95,7 +95,7 @@ class DocumentIO(object):
     def _get_indent_and_separators(cls, human_readable):
         if human_readable:
             indent = ' ' * 2
-            separators = (', ', ': ')
+            separators = (',', ': ')
         else:
             indent = None
             separators = (',', ':')

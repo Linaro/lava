@@ -100,8 +100,8 @@ class DocumentIODumpTests(TestCase):
             ("test_runs", []),
             ("format", "Dashboard Bundle Format 1.0"),
         ])
-        self.expected_readable_text = '{\n  "test_runs": [], \n  "format": "Dashboard Bundle Format 1.0"\n}'
-        self.expected_readable_sorted_text = '{\n  "format": "Dashboard Bundle Format 1.0", \n  "test_runs": []\n}'
+        self.expected_readable_text = '{\n  "test_runs": [],\n  "format": "Dashboard Bundle Format 1.0"\n}'
+        self.expected_readable_sorted_text = '{\n  "format": "Dashboard Bundle Format 1.0",\n  "test_runs": []\n}'
         self.expected_compact_text = '{"test_runs":[],"format":"Dashboard Bundle Format 1.0"}'
         self.expected_compact_sorted_text = '{"format":"Dashboard Bundle Format 1.0","test_runs":[]}'
 
@@ -249,8 +249,8 @@ class DocumentIORegressionTests(TestWithScenarios, TestCase):
             'linaro_dashboard_bundle', 'test_documents/' +
             self.filename)
         fmt, doc = DocumentIO.loads(original_text)
-        final_text = DocumentIO.dumps(doc)
-        final_text += "\n" # the original string has newline at the end
+        final_text = DocumentIO.dumps(doc,)
+        final_text += "\n"  # the original string has newline at the end
         self.assertEqual(final_text, original_text)
 
 
@@ -497,7 +497,7 @@ class DocumentEvolutionTests_1_5_to_1_6(TestCase):
     def test_evolved_document_is_latest_format(self):
         self.assertFalse(DocumentEvolution.is_latest(self.doc))
         DocumentEvolution.evolve_document(self.doc, one_step=True)
-        self.assertTrue(DocumentEvolution.is_latest(self.doc))
+        self.assertFalse(DocumentEvolution.is_latest(self.doc))
 
     def test_evolved_document_is_valid(self):
         DocumentEvolution.evolve_document(self.doc, one_step=True)
