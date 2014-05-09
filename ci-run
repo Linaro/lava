@@ -10,3 +10,5 @@ pep8 --ignore E501 .
 ./lava_server/manage.py test lava_scheduler_app
 
 ./lava_server/manage.py test lava_scheduler_daemon
+
+./lava_server/manage.py test linaro_django_xmlrpc.tests

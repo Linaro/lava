@@ -59,7 +59,6 @@ setup(
         'django-tables2 >= 0.13.0',
         'docutils >= 0.6',
         'lava-tool >= 0.2',
-        'linaro-django-xmlrpc >= 0.4',
         'south >= 0.7.3',
         'versiontools >= 1.8',
         'markdown >= 2.0.3',
