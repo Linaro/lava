@@ -3,7 +3,4 @@
 /etc/lava-server/views/
 /etc/lava-server/templates
 /var/log/lava-server/
-/var/lib/lava-server/default/media/job-output/
-/var/lib/lava-server/default/media/lava-logs/
-/var/lib/lava-server/default/media/attachments/
-/var/lib/lava-server/default/media/bundles/
+/var/lib/lava-server/default/media/
