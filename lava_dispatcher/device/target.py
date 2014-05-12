@@ -276,6 +276,7 @@ class Target(object):
             for file_name in files:
                 if re.match(pattern, file_name):
                     src = os.path.join(root, file_name)
+                    logging.info('Loading file: %s' % src)
                     if name is not None:
                         dest = os.path.join(odir, name)
                         new_src = os.path.join(root, name)

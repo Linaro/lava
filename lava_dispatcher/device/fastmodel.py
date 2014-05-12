@@ -70,7 +70,7 @@ class FastModelTarget(Target):
         self._uefi = None
         self._bl1 = None
         self._bl2 = None
-        self._bl3 = None
+        self._bl31 = None
         self._bootloadertype = 'u_boot'
 
     def _customize_android(self):
@@ -114,9 +114,10 @@ class FastModelTarget(Target):
                                                     self.config.simulator_axf_files)
         elif self._bootloadertype == 'uefi':
             # Extract the uefi binary from the image
-            if self.config.simulator_uefi and self._uefi is None:
-                self._uefi = self._find_and_copy(
-                    subdir, odir, self.config.simulator_uefi)
+            if self.config.simulator_uefi_files and self._uefi is None:
+                self._uefi = \
+                    self._copy_first_find_from_list(subdir, odir,
+                                                    self.config.simulator_uefi_files)
 
         # These are common to both AXF and UEFI
         # Extract the kernel from the image
@@ -157,8 +158,8 @@ class FastModelTarget(Target):
                                                 self.config.simulator_bl2_files,
                                                 self.config.simulator_bl2)
         # Extract the second secure flashloader binary from the image
-        if self.config.simulator_bl31_files and self._bl3 is None:
-            self._bl3 = \
+        if self.config.simulator_bl31_files and self._bl31 is None:
+            self._bl31 = \
                 self._copy_first_find_from_list(subdir, odir,
                                                 self.config.simulator_bl31_files,
                                                 self.config.simulator_bl31)
@@ -171,9 +172,9 @@ class FastModelTarget(Target):
                                    self.config.simulator_axf_files)
         elif self._bootloadertype == 'uefi':
             # UEFI binary is needed when specified
-            if self._uefi is None and self.config.simulator_uefi:
+            if self._uefi is None and self.config.simulator_uefi_files:
                 raise RuntimeError('No UEFI binary found, %r' %
-                                   self.config.simulator_uefi)
+                                   self.config.simulator_uefi_files)
 
         # These are common to both AXF and UEFI
         # Kernel is needed only for b.L models
@@ -195,7 +196,7 @@ class FastModelTarget(Target):
         if self._bl2 is None and self.config.simulator_bl2_files:
             raise RuntimeError('No SECURE FLASHLOADER found, %r' %
                                self.config.simulator_bl2_files)
-        if self._bl3 is None and self.config.simulator_bl31_files:
+        if self._bl31 is None and self.config.simulator_bl31_files:
             raise RuntimeError('No SECURE FLASHLOADER found, %r' %
                                self.config.simulator_bl31_files)
 
@@ -284,8 +285,8 @@ class FastModelTarget(Target):
             os.chmod(self._bl1, stat.S_IRWXG | stat.S_IRWXU)
         if self._bl2:
             os.chmod(self._bl2, stat.S_IRWXG | stat.S_IRWXU)
-        if self._bl3:
-            os.chmod(self._bl3, stat.S_IRWXG | stat.S_IRWXU)
+        if self._bl31:
+            os.chmod(self._bl31, stat.S_IRWXG | stat.S_IRWXU)
 
         #lmc ignores the parent directories group owner
         st = os.stat(d)
@@ -304,8 +305,8 @@ class FastModelTarget(Target):
             os.chown(self._bl1, st.st_uid, st.st_gid)
         if self._bl2:
             os.chown(self._bl2, st.st_uid, st.st_gid)
-        if self._bl3:
-            os.chown(self._bl3, st.st_uid, st.st_gid)
+        if self._bl31:
+            os.chown(self._bl31, st.st_uid, st.st_gid)
 
     def power_off(self, proc):
         super(FastModelTarget, self).power_off(proc)
