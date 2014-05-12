@@ -17,19 +17,18 @@ set -e
 # for details, see http://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
+# network interface calculation
+NET_IFACE=`ip route get %s | sed 's/.*via\ //' | cut -d ' ' -f3`
 
-# this is ugly and will be resolved upstream
-# but for now, we just need the IP address of this box.
+# Move this into a debconf question with the dumb dispatcher model
 LAVA_SERVER_IP=`ip addr | awk '{ if ($1 == "inet" && $4 != "host") { gsub("/.*", "", $2); print($2) } }'`
 
 case "$1" in
     configure)
-        if [ -n "${LAVA_SERVER_IP}" ]; then
-            if [ -f /etc/lava-dispatcher/lava-dispatcher.conf ]; then
+        if [ -n "$NET_IFACE" ]; then
+            if [ ! -f /etc/lava-dispatcher/lava-dispatcher.conf ]; then
+                sed -e "s/#LAVANETWORKIFACE#/${NET_IFACE}/" /usr/share/lava-dispatcher/lava-dispatcher.conf > /etc/lava-dispatcher/lava-dispatcher.conf
                 perl -pi -e "s/#LAVASERVERIP#/${LAVA_SERVER_IP}/g" /etc/lava-dispatcher/lava-dispatcher.conf
-            else
-                sed -e "s/#LAVASERVERIP#/${LAVA_SERVER_IP}/" /usr/share/lava-dispatcher/lava-dispatcher.conf > /etc/lava-dispatcher/lava-dispatcher.conf
-            fi
         fi
     ;;
 
