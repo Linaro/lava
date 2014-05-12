@@ -26,6 +26,12 @@ When installing LAVA on a Debian based distribution, ``debconf`` will
 ask if this installation is a single instance or a remote instance. Other
 distributions will have different ways of configuring ``lava-server``.
 
+.. note:: You will need various settings from the
+          ``/etc/lava-server/instance.conf`` configuration file on
+          the master when setting up the remote worker. It is useful
+          to have an SSH login to the master and the worker. So ensure
+          the master is installed before any of the workers.
+
 Configuring remote worker
 -------------------------
 
@@ -35,9 +41,33 @@ lava-server which it will poll for new jobs to run
 on the devices attached to the worker.
 
 A remote worker needs to know the network address of the Master
-``lava_server``. This can be set with ``LAVA_MASTER``.
-``LAVA_DB_PASSWORD`` can be used if you wish to preset the database
-password, otherwise you will be asked in the prompt.
+``lava_server``. This can be a hostname or an IP address.
+
+The remote worker will also need these variables from the master:
+
+* LAVA_DB_NAME - Name of the database on the master.
+* LAVA_DB_USER - Username for the database on the master.
+* LAVA_DB_PORT - Port number of the database on the master.
+* LAVA_DB_PASSWORD - Password for the database on the master.
+
+LAVA Coordinator configuration
+------------------------------
+
+Only one coordinator is used for each lab, so the remote worker needs
+to know where to find this coordinator. Specify the hostname or IP
+address of the master running the coordinator in
+``/etc/lava-coordinator/lava-coordiantor.conf``
+
+ {
+   "port": 3079,
+   "blocksize": 4096,
+   "poll_delay": 3,
+   "coordinator_hostname": <MASTER>
+ }
+
+If ``lava-coordinator`` is installed as a package on the worker, this
+package can be removed. If the install was made without recommended
+packages, simply create the directory and the file.
 
 SSHFS mount operations
 ----------------------
@@ -47,22 +77,38 @@ directory over sshfs. On Debian-based distributions, this script
 remounts the directory each time the ``lava-server`` package is
 installed or reconfigured.
 
+SSH key setup
+^^^^^^^^^^^^^
+
 An SSH key will have been generated during the configuration of the
 ``lava-server`` package. The public part of this key '''must''' be
 appended to the ``authorized_keys`` file on the master for the SSHFS
 mount operation to work::
 
- sudo -u lavaserver cat /var/lib/lava-server/home/.ssh/id_rsa.pub 
+ sudo -u lavaserver cat /var/lib/lava-server/home/.ssh/id_rsa.pub
 
 Now enter this public key into the file on the server::
 
  sudo -u lavaserver vim /var/lib/lava-server/home/.ssh/authorized_keys
 
+fuse configuration
+^^^^^^^^^^^^^^^^^^
+
+Edit ``/etc/fuse.conf`` on the worker and enable the ``user_allow_other``
+option.
+
+Mounting the SSHFS
+^^^^^^^^^^^^^^^^^^
+
+The command used by LAVA to mount the ssfs can also be used during
+configuration. After this, it will be run each time ``lava-server``
+is upgraded or configured.
+
 The SSHFS mount should then be visible on the worker::
 
  $ mount | grep lavaserver
- lavaserver@192.168.100.235:/var/lib/lava-server//default/media on 
- /var/lib/lava-server/default/media type fuse.sshfs 
+ lavaserver@192.168.100.235:/var/lib/lava-server//default/media on
+ /var/lib/lava-server/default/media type fuse.sshfs
  (rw,nosuid,nodev,relatime,user_id=110,group_id=115,allow_other)
 
 Remote databases
@@ -87,7 +133,7 @@ adjust the ``listen_addresses`` in ``postgresql.conf``::
 
 Also adjust the host allowed to connect to this database::
 
- ALLOW="host    all    all    0.0.0.0/0    trust"
+ host    all    all    0.0.0.0/0    trust
 
 In most cases, the administrator for the machine providing the database
 will want to constrain these settings to particular addresses and/or

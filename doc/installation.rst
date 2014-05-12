@@ -191,6 +191,17 @@ is free) allows for quick start with LAVA bring-up and testing.
 When using local Django user accounts, new user accounts need to be
 created by Django admin prior to use.
 
+LAVA Dispatcher network configuration
+=====================================
+
+``/etc/lava-dispatcher/lava-dispatcher.conf`` supports overriding the
+``LAVA_SERVER_IP`` with the currently active IP address using a list of
+network interfaces specified in the ``LAVA_NETWORK_IFACE`` instead of a
+fixed IP address, e.g. for LAVA installations on laptops and other devices
+which change network configuration between jobs. The interfaces in the
+list should include the interface which a remote worker can use to
+serve files to all devices connected to this worker.
+
 Contact and bug reports
 ========================
 
