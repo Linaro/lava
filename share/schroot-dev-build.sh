@@ -28,8 +28,8 @@ cd ${DIR}/pkg-${NAME}/
 dpkg-checkbuilddeps
 git archive master debian | tar -x -C ../${NAME}-${VERSION}
 cd ${DIR}/${NAME}-${VERSION}
-dch -v ${VERSION}-1ubuntu1 -D ${suite} "Local developer build"
-sbuild -A -c ${chroot} -d ${suite}
+dch --force-distribution -v ${VERSION}-1ubuntu1 -D ${suite} "Local developer build"
+sbuild -A -s -c ${chroot} -d ${suite}
 cd ${DIR}
 rm -rf ${DIR}/pkg-${NAME}
 rm -rf ${DIR}/${NAME}-${VERSION}

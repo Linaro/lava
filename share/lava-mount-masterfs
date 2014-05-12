@@ -40,6 +40,6 @@ if [ -f $LOCAL_DIR/.mounted ] ; then
         exit 0
     fi
 fi
-
-umount $LOCAL_DIR
-sudo -u $LOCAL_USER sshfs -o allow_root -o reconnect $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR $LOCAL_DIR
+SSH_OPTS="-o PasswordAuthentication=no -o StrictHostKeyChecking=no -o allow_root -o reconnect"
+umount $LOCAL_DIR || true
+sudo -u $LOCAL_USER sshfs $SSH_OPTS $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR $LOCAL_DIR
