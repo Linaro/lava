@@ -99,7 +99,7 @@ connection to the device::
  lava connect foo
 
 If the connection works, use the Escape character (by default ``telnet``
-uses Ctrl+]) and then ``quit`` at the ``telnet> `` prompt to close the
+uses Ctrl+]) and then ``quit`` at the ``telnet`` prompt to close the
 connection (or other connections will be refused).
 
 Adding initial data manually

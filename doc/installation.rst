@@ -27,7 +27,7 @@ containing::
 
  deb http://people.linaro.org/~neil.williams/lava sid main
 
-Update your apt sources to find the LAVA packages.
+Update your apt sources to find the LAVA packages::
 
  $ sudo apt-get update
 
@@ -54,7 +54,7 @@ the Linaro PPA::
 
 The PPA uses this signing key::
 
-http://keyserver.ubuntu.com:11371/pks/lookup?search=0x1DD749B890A6F66D050D985CF1FCBACA7BE1F97B&op=index
+ http://keyserver.ubuntu.com:11371/pks/lookup?search=0x1DD749B890A6F66D050D985CF1FCBACA7BE1F97B&op=index
 
 Superuser
 =========
