@@ -5,6 +5,9 @@ lava-server (0.22.1-8) unstable; urgency=medium
   * Add python-setuptools to ensure lava-server manage operates
     properly.
   * Use common static file locations in Debian and Ubuntu
+  * Create all the SSHFS directories and generate the SSH key for the
+    worker.
+  * Improve the remote worker setup support.
 
  -- Neil Williams <codehelp@debian.org>  Wed, 07 May 2014 20:05:26 +0100
 
