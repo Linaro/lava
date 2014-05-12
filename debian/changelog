@@ -4,6 +4,8 @@ lava-dispatcher (0.33.3-10) unstable; urgency=medium
     Automated Validation Architecture dispatcher)
   * Add setuptools dependency and override dh_fixperms for the vm_groups
     key file.
+  * Migrate to support LAVANETWORKIFACE and avoid changing existing
+    details in /etc/
 
  -- Neil Williams <codehelp@debian.org>  Wed, 07 May 2014 20:04:45 +0100
 
