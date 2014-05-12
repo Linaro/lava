@@ -29,6 +29,7 @@ case "$1" in
             if [ ! -f /etc/lava-dispatcher/lava-dispatcher.conf ]; then
                 sed -e "s/#LAVANETWORKIFACE#/${NET_IFACE}/" /usr/share/lava-dispatcher/lava-dispatcher.conf > /etc/lava-dispatcher/lava-dispatcher.conf
                 perl -pi -e "s/#LAVASERVERIP#/${LAVA_SERVER_IP}/g" /etc/lava-dispatcher/lava-dispatcher.conf
+            fi
         fi
     ;;
 
