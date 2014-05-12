@@ -25,6 +25,8 @@ case "$1" in
       rm -f /etc/lava-server/worker.conf
       rm -rf /usr/sbin/lava-mount-masterfs
       rm -rf /var/lib/lava-server/home/
+      # explicitly not deleting /var/lib/lava-server/default
+      # or dropping the database.
         if [ "$1" = "purge" ] && [ -e /usr/share/debconf/confmodule ]; then
             # Source debconf library.
             . /usr/share/debconf/confmodule
