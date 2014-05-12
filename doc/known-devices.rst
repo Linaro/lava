@@ -90,6 +90,18 @@ This command will:
 * add the hard_reset_command for port 05
 * create a default bundle stream /anonymous/lab-health/ if no streams exist
 
+Checking the connection
+=======================
+
+Use the lava command (part of the ``lava-tool`` package) to test the
+connection to the device::
+
+ lava connect foo
+
+If the connection works, use the Escape character (by default ``telnet``
+uses Ctrl+]) and then ``quit`` at the ``telnet> `` prompt to close the
+connection (or other connections will be refused).
+
 Adding initial data manually
 ****************************
 
