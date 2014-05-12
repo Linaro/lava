@@ -144,7 +144,7 @@ INSTANCE_CONF
     }
 
     write_config >/etc/lava-server/instance.conf
-    echo "Created by LAVA server postinst script" > /etc/lava-server/worker.conf
+    echo "# Created by LAVA server postinst script" > /etc/lava-server/worker.conf
 }
 
 die() {
@@ -216,9 +216,18 @@ case "$1" in
         # Allow lava user to write the secret key
         touch /etc/lava-server/secret_key.conf
         chown $LAVA_SYS_USER:$LAVA_SYS_USER /etc/lava-server/secret_key.conf
+        SSHDIR="/var/lib/lava-server/home/.ssh"
+        if [ ! -d $SSHDIR ]; then
+            sudo -u $LAVA_SYS_USER mkdir $SSHDIR
+        fi
          if [ ! -f /etc/lava-server/worker.conf ]; then
             install_database
-            lava-mount-masterfs
+            if [ ! -f $SSHDIR/id_rsa ]; then
+                # ssh-keygen -q might be a problem here, prevents it prompting for
+                # more randomness, but that is what openssh-server uses.
+                sudo -u $LAVA_SYS_USER ssh-keygen -C "ssh key used by LAVA for sshfs" -f $sshdir/id_rsa -t rsa -N ""
+            fi
+            lava-mount-masterfs || true
             # Allow instance user to put stuff in temporary directory
             # Set the sticky and setgid bits there
             #    chgrp -R $LAVA_SYS_USER $LAVA_PREFIX/$LAVA_INSTANCE/tmp
@@ -231,8 +240,6 @@ case "$1" in
         else
             chown $LAVA_SYS_USER:$LAVA_SYS_USER $LAVA_SYS_HOME/
         fi
-        # ssh-keygen -q is not safe to use here - -q prevents it prompting for
-        # more randomness
         if [ -f /etc/apache2/sites-enabled/lava-server.conf ]; then
             apache2ctl restart
         fi
