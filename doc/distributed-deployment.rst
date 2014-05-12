@@ -56,7 +56,7 @@ LAVA Coordinator configuration
 Only one coordinator is used for each lab, so the remote worker needs
 to know where to find this coordinator. Specify the hostname or IP
 address of the master running the coordinator in
-``/etc/lava-coordinator/lava-coordiantor.conf``
+``/etc/lava-coordinator/lava-coordiantor.conf``::
 
  {
    "port": 3079,
