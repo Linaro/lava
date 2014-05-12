@@ -47,6 +47,24 @@ directory over sshfs. On Debian-based distributions, this script
 remounts the directory each time the ``lava-server`` package is
 installed or reconfigured.
 
+An SSH key will have been generated during the configuration of the
+``lava-server`` package. The public part of this key '''must''' be
+appended to the ``authorized_keys`` file on the master for the SSHFS
+mount operation to work::
+
+ sudo -u lavaserver cat /var/lib/lava-server/home/.ssh/id_rsa.pub 
+
+Now enter this public key into the file on the server::
+
+ sudo -u lavaserver vim /var/lib/lava-server/home/.ssh/authorized_keys
+
+The SSHFS mount should then be visible on the worker::
+
+ $ mount | grep lavaserver
+ lavaserver@192.168.100.235:/var/lib/lava-server//default/media on 
+ /var/lib/lava-server/default/media type fuse.sshfs 
+ (rw,nosuid,nodev,relatime,user_id=110,group_id=115,allow_other)
+
 Remote databases
 ----------------
 
