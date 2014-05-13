@@ -45,22 +45,24 @@ Currently, the helper only supports the public ``packaging`` branch of
 Helpers for other distributions may be added in due course. Patches
 welcome.
 
+.. _quick_fixes:
+
 Quick fixes and testing
 #######################
 
 The paths to execute LAVA python scripts have changed and developing
 LAVA based on packages has a different workflow.
 
-Modified files can be copied to the equivalent path beneath ``/usr/share/pyshared/``
-with sudo::
+Modified files can be copied to the equivalent python path. The current
+LAVA packages use python2.7, so the path is beneath
+``/usr/lib/python2.7/dist-packages/`` with sudo::
 
- $ sudo cp <git-path> /usr/share/pyshared/<git-path>
+ $ sudo cp <git-path> /usr/lib/python2.7/dist-packages/<git-path>
 
-New files will need to be copied directly into the python path for the
-module - or added by doing a local :ref:`dev_builds`. e.g. for python2.7
-the path would be: ``/usr/lib/python2.7/dist-packages/<git-path>``. When
-the package is built to include the new files, the old files will be
-replaced with symlinks to the packaged files in ``/usr/share/pyshared``.
+.. tip:: This path has recently changed - there are no files in
+         ``/usr/share/pyshared/`` after change in python2.7.
+         However, this does simplify changes which involve new
+         files.
 
 Viewing changes
 ===============
