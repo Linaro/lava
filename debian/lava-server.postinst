@@ -194,6 +194,7 @@ case "$1" in
             . /usr/share/lava-server/instance.template
         fi
         db_get lava-server/master
+        adduser --quiet --system --group --home $LAVA_SYS_HOME $LAVA_SYS_USER --shell /bin/sh
         if [ "$RET" = "false" ]; then
             worker_config
         else
@@ -210,7 +211,6 @@ case "$1" in
         if [ -z "$LAVA_SYS_USER" ]; then
             LAVA_SYS_USER="lava-server"
         fi
-        adduser --quiet --system --group --home $LAVA_SYS_HOME $LAVA_SYS_USER --shell /bin/sh
         # user may not have been removed but the directory has, after purge.
         if [ ! -d $LAVA_SYS_HOME ]; then
             mkdir $LAVA_SYS_HOME
