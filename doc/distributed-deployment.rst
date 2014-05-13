@@ -56,8 +56,8 @@ LAVA Coordinator configuration
 
 Only one coordinator is used for each lab, so the remote worker needs
 to know where to find this coordinator. Specify the hostname or IP
-address of the master running the coordinator in
-``/etc/lava-coordinator/lava-coordiantor.conf``::
+address of the master running the coordinator in the 
+``/etc/lava-coordinator/lava-coordiantor.conf`` file on each **worker**::
 
  {
    "port": 3079,
@@ -160,12 +160,19 @@ worker::
 
  sudo service lava-server restart
 
-In most cases, the administrator for the machine providing the database
-will want to constrain these settings to particular addresses and/or
-network masks. LAVA just needs each remote worker to be in the list of
-trusted connections and for the database to be listening to it. See the
-example :ref:`example_postgres` for a more restrictive postgres
-configuration.
+You can also check the connection directly on the worker, e.g. if the
+IP address of the master running postgres is 192.168.100.175::
+
+ $ psql -h 192.168.100.175 -U lavaserver
+
+.. note:: In most cases, the administrator for the machine providing the
+          database will want to constrain these settings to particular
+          addresses and/or network masks. LAVA just needs each remote
+          worker to be in the list of trusted connections and for the
+          database to be listening to it. See the example 
+          :ref:`example_postgres` for a more restrictive postgres
+          configuration. In particular, the connection should use
+          ``md5`` rather than ``password`` or ``trust``.
 
 Check the /var/log/lava-server/lava-scheduler.log for cnnection errors of a
 normal startup of lava-scheduler::
@@ -208,6 +215,11 @@ status page, Workers table::
 
  http://localhost/scheduler/#worker_
 
+If this is not working, you will likely see this report in the
+scheduler log: ``/var/log/lava-server/lava-scheduler.log``::
+
+ [ERROR] [lava_scheduler_daemon.worker.Worker] Unable to update the Heartbeat, trying later
+
 Example configuration
 =====================
 
@@ -239,7 +251,7 @@ Postgresql configuration
 ::
 
  $ sudo tail /etc/postgresql/9.3/main/pg_hba.conf
- host   lavaserver   lavaserver   192.168.100.204/32    trust
+ host   lavaserver   lavaserver   192.168.100.204/32    md5
 
 Lava coordinator setup
 ----------------------
