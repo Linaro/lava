@@ -203,6 +203,9 @@ case "$1" in
             mkdir -p /var/lib/lava-server/default/media/job-output/
             mkdir -p /var/lib/lava-server/default/media/attachments/
             mkdir -p /var/lib/lava-server/default/media/bundles/
+            # Allow instance to write to media directory
+            chown -R $LAVA_SYS_USER:$LAVA_SYS_USER /var/lib/lava-server/default/
+            chmod -R g+rwXs /var/lib/lava-server/default/
         fi
         if [ -z "$LAVA_SYS_USER" ]; then
             LAVA_SYS_USER="lava-server"
@@ -213,9 +216,6 @@ case "$1" in
             mkdir $LAVA_SYS_HOME
             chown -R $LAVA_SYS_USER:$LAVA_SYS_USER $LAVA_SYS_HOME
         fi
-        # Allow instance to write to media directory
-        chown -R $LAVA_SYS_USER:$LAVA_SYS_USER /var/lib/lava-server/default/
-        chmod -R g+rwXs /var/lib/lava-server/default/
         # Prevent anyone else from reading from the media directory
         chmod -R o-rX /var/lib/lava-server/default/
         # Allow users in the adm group to read the scheduler logs
@@ -235,7 +235,6 @@ case "$1" in
                 # more randomness, but that is what openssh-server uses.
                 sudo -u $LAVA_SYS_USER ssh-keygen -C "ssh key used by LAVA for sshfs" -f $SSHDIR/id_rsa -t rsa -N ""
             fi
-            lava-mount-masterfs || true
         else
             # install database only on the master
             install_database
