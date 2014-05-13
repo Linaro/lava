@@ -194,10 +194,10 @@ class FastModelTarget(Target):
             raise RuntimeError('No SECURE FLASHLOADER found, %r' %
                                self.config.simulator_bl1_files)
         if self._bl2 is None and self.config.simulator_bl2_files:
-            raise RuntimeError('No SECURE FLASHLOADER found, %r' %
+            logging.warning('No SECURE FLASHLOADER found, %r' %
                                self.config.simulator_bl2_files)
         if self._bl31 is None and self.config.simulator_bl31_files:
-            raise RuntimeError('No SECURE FLASHLOADER found, %r' %
+            logging.warning('No SECURE FLASHLOADER found, %r' %
                                self.config.simulator_bl31_files)
 
     def deploy_android(self, boot, system, data, rootfstype, bootloadertype,
