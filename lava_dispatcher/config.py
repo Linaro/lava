@@ -37,7 +37,7 @@ class DeviceSchema(schema.Schema):
     master_sdcard_label = schema.StringOption()
     master_userdata_dir = schema.StringOption()
     master_userdata_label = schema.StringOption()
-    android_binary_drivers = schema.StringOption()
+    android_binary_drivers = schema.StringOption(default=None)
     cts_media_url = schema.StringOption()
     boot_cmds = schema.StringOption(fatal=True)  # Can do better here
     boot_cmds_android = schema.StringOption(fatal=True)  # And here
@@ -165,7 +165,7 @@ class DeviceSchema(schema.Schema):
     simulator_initrd = schema.StringOption(default=None)
     simulator_dtb_files = schema.ListOption(default=None)
     simulator_dtb = schema.StringOption(default=None)
-    simulator_uefi = schema.StringOption(default=None)
+    simulator_uefi_files = schema.ListOption(default=None)
     simulator_bl1_files = schema.ListOption(default=None)
     simulator_bl1 = schema.StringOption(default=None)
     simulator_bl2_files = schema.ListOption(default=None)
