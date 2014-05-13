@@ -41,5 +41,5 @@ if [ -f $LOCAL_DIR/.mounted ] ; then
     fi
 fi
 SSH_OPTS="-o PasswordAuthentication=no -o StrictHostKeyChecking=no -o allow_root -o reconnect"
-umount $LOCAL_DIR || true
+umount $LOCAL_DIR 2>/dev/null || true
 sudo -u $LOCAL_USER sshfs $SSH_OPTS $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR $LOCAL_DIR
