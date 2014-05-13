@@ -1,10 +1,11 @@
 .. _distributed_deployment:
 
 Deploying Distributed Instances
-###############################
+*******************************
 
 When deploying a large LAVA "lab" instance with many :term:`DUT` it is
-suggested to use :ref:`remote_worker` nodes.
+suggested to use one machine for the web frontend and the master
+scheduler with separate machines to act as remote worker nodes.
 
 .. _remote_worker:
 
@@ -62,20 +63,21 @@ address of the master running the coordinator in
    "port": 3079,
    "blocksize": 4096,
    "poll_delay": 3,
-   "coordinator_hostname": <MASTER>
+   "coordinator_hostname": "192.168.100.5"
  }
 
 If ``lava-coordinator`` is installed as a package on the worker, this
 package can be removed. If the install was made without recommended
-packages, simply create the directory and the file.
+packages, simply create the directory and the file. This support is
+due for an upstream fix.
 
 SSHFS mount operations
 ----------------------
 
 ``lava-server`` provides a script to manage the mounting of the media
 directory over sshfs. On Debian-based distributions, this script
-remounts the directory each time the ``lava-server`` package is
-installed or reconfigured.
+remounts the directory each time the ``lava-server`` daemon is
+restarted.
 
 SSH key setup
 ^^^^^^^^^^^^^
@@ -97,25 +99,39 @@ fuse configuration
 Edit ``/etc/fuse.conf`` on the worker and enable the ``user_allow_other``
 option.
 
+Additionally, you will need to ensure that the ``fuse`` (and ``loop``)
+kernel modules are loaded. ``lava-dispatcher`` provides a file in
+``/etc/modprobe.d/``. Check the output of ``lsmod`` on the worker
+and uncomment the lines to add calls to install the relevant 
+module **only** if that module does not load automatically.
+
+.. note:: Enabling the fuse or loop modules unnecessarily can cause
+          protracted complaints from the kernel and the fuse package
+          support may fail to operate. This can show up as the ``fuse``
+          package failing to install or upgrade, it will also prevent
+          the worker from mounting the ssfs and jobs will likely fail
+          to run on the remote worker.
+
 Mounting the SSHFS
 ^^^^^^^^^^^^^^^^^^
 
-The command used by LAVA to mount the ssfs can also be used during
-configuration. After this, it will be run each time ``lava-server``
-is upgraded or configured.
+LAVA will unmount and re-mount the ssfs each time the ``lava-server``
+daemon is restarted.
 
-The SSHFS mount should then be visible on the worker::
+The SSHFS mount should be visible on the worker::
 
  $ mount | grep lavaserver
  lavaserver@192.168.100.235:/var/lib/lava-server//default/media on
  /var/lib/lava-server/default/media type fuse.sshfs
  (rw,nosuid,nodev,relatime,user_id=110,group_id=115,allow_other)
 
+.. _remote_database:
+
 Remote databases
 ----------------
 
 Configuring database access from remote workers
------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Currently, remote workers need to be able to access the master database,
 so postgres has to be manually configured to allow access from external
@@ -135,21 +151,36 @@ Also adjust the host allowed to connect to this database::
 
  host    all    all    0.0.0.0/0    trust
 
+Now restart postgresql to pick up these changes::
+
+ sudo service postgresql restart
+
+If postgresql gives no errors on restart, restart lava-server on the
+worker::
+
+ sudo service lava-server restart
+
 In most cases, the administrator for the machine providing the database
 will want to constrain these settings to particular addresses and/or
 network masks. LAVA just needs each remote worker to be in the list of
-trusted connections and for the database to be listening to it.
+trusted connections and for the database to be listening to it. See the
+example :ref:`example_postgres` for a more restrictive postgres
+configuration.
 
-``lava-server`` remoteworker installations assume the DB resides on the
-LAVA_MASTER and remote worker installations will prompt to set up your
-instance using a database on LAVA_MASTER.
+Check the /var/log/lava-server/lava-scheduler.log for cnnection errors of a
+normal startup of lava-scheduler::
 
-.. note:: A remote postgres database only works with remote workers,
-         the master install will still install a postgres server as
-         part of the setup task. If you are using a remote database,
-         the master instance will need to be configured separately.
+ 2014-05-05 20:17:20,327 Running LAVA Daemon
+ 2014-05-05 20:17:20,345 lava-scheduler-daemon: /usr/bin/lava-server manage 
+  --instance-template=/etc/lava-server/{{filename}}.conf 
+  --instance=default scheduler --logfile /var/log/lava-server/lava-scheduler.log 
+  --loglevel=info pid: 10036
 
-``LAVA_MASTER`` is still needed to support sshfs connections for results.
+Create a superuser
+------------------
+
+On the master, create a :ref:`create_superuser`, if this has not been
+done already.
 
 Heartbeat
 ---------
@@ -166,8 +197,73 @@ automatically. The following figure illustrates this:
 
 .. image:: ./images/lava-worker-rpc2-url.png
 
+Sign in to the master django admin interface and scroll down in the
+Admin home page to Lava_Scheduler_App and select Workers - ensure
+that the XML_RPC URL is valid. e.g. you may need to put the IP
+address of the <MASTER> in place of a local hostname as the worker
+will need to be able to resolve this address.
+
+If this is working, a second worker will appear on the scheduler
+status page, Workers table::
+
+ http://localhost/scheduler/#worker_
+
+Example configuration
+=====================
+
+Assumptions
+-----------
+
+* Device is connected to a machine on ``192.168.1.228``
+* Master is running on ``192.168.100.235``
+* Worker is running on ``192.168.100.204``
+
+Device configuration on worker
+------------------------------
+
+::
+
+ connection_command = telnet 192.168.1.228 6000
+
+.. _example_postgres:
+
+Postgresql configuration
+------------------------
+
+::
+
+ $ grep listen /etc/postgresql/9.3/main/postgresql.conf
+ listen_addresses = 'localhost, 192.168.100.235'
+
+
+::
+
+ $ sudo tail /etc/postgresql/9.3/main/pg_hba.conf
+ host   lavaserver   lavaserver   192.168.100.204/32    trust
+
+Lava coordinator setup
+----------------------
+
+::
+
+ {
+   "port": 3079,
+   "blocksize": 4096,
+   "poll_delay": 3,
+   "coordinator_hostname": "192.168.100.235"
+ }
+
+
 Frequently encountered problems
--------------------------------
+===============================
+
+::
+
+ Is the server running on host "<MASTER>" and accepting
+ TCP/IP connections on port 5432?
+
+This is a postgres configuration change. See :ref:`remote_database`.
+
 
 Make sure that your database connectivity is configured correctly in::
 
@@ -178,7 +274,12 @@ and your LAVA_SERVER_IP (worker ip address) is configured correctly in::
  /etc/lava-server/instance.conf
  /etc/lava-dispatcher/lava-dispatcher.conf
 
-A :ref:`remote_worker` has configuration in::
+If there are errors in the postgres connection settings in the ``instance.conf``
+file, use ``debconf`` to update the values::
+
+ sudo dpkg-reconfigure lava-server
+
+A :ref:`remote_worker` has an empty configuration file::
 
  /etc/lava-server/worker.conf
 
@@ -186,7 +287,7 @@ Postgres on the master server is running on the default port 5432 (or
 whatever port you have configured)
 
 SSHFS on the worker has successfully mounted from the master. Check
-`mount` and `dmesg` outputs for help.
+``mount`` and ``dmesg`` outputs for help.
 
 Considerations for Geographically separate Master/Worker setups
 ===============================================================
