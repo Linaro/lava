@@ -6,6 +6,8 @@ lava-dispatcher (0.33.3-10) unstable; urgency=medium
     key file.
   * Migrate to support LAVANETWORKIFACE and avoid changing existing
     details in /etc/
+  * Adapt lintian overrides for changes in python 2.7.6 which no longer
+    moves files into /usr/share/pyshared
 
  -- Neil Williams <codehelp@debian.org>  Wed, 07 May 2014 20:04:45 +0100
 
