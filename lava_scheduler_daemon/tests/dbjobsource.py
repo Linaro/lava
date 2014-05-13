@@ -365,7 +365,7 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
         black03 should be excluded as it does not have the common tag
         black02 would also match but is not included in the device check
         """
-        job = self.submit_job(device_type='beaglebone', device_tags=[
+        job = self.submit_job(device_type='beaglebone', tags=[
             self.common_tag.name
         ])
         devices = [self.panda01, self.arndale02, self.black01, self.black03]
@@ -377,12 +377,12 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
         ensure that tags do not interfere with finding devices of
         unrelated types
         """
-        job = self.submit_job(device_type='arndale', device_tags=[])
+        job = self.submit_job(device_type='arndale', tags=[])
         devices = [self.panda01, self.arndale02, self.black01, self.black03]
         chosen_device = find_device_for_job(job, devices)
         self.assertEqual(self.arndale02, chosen_device)
         try:
-            job = self.submit_job(device_type='arndale', device_tags=[
+            job = self.submit_job(device_type='arndale', tags=[
                 self.common_tag.name
             ])
         except DevicesUnavailableException:
@@ -397,14 +397,14 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
         of both the common tag and the unique tag only with black02.
         """
 
-        job = self.submit_job(device_type='beaglebone', device_tags=[
+        job = self.submit_job(device_type='beaglebone', tags=[
             self.common_tag.name, self.unique_tag.name
         ])
         devices = [self.panda01, self.black01, self.black02, self.black03]
         chosen_device = find_device_for_job(job, devices)
         self.assertEqual(self.black02, chosen_device)
         try:
-            job = self.submit_job(device_type='panda', device_tags=[
+            job = self.submit_job(device_type='panda', tags=[
                 self.common_tag.name, self.unique_tag.name
             ])
         except DevicesUnavailableException:
@@ -425,14 +425,14 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
         tests handling of jobs with less tags than supported but still
         choosing one tag which only applies to one device in the set.
         """
-        job = self.submit_job(device_type='beaglebone', device_tags=[
+        job = self.submit_job(device_type='beaglebone', tags=[
             self.unique_tag.name
         ])
         devices = [self.panda02, self.black02, self.black03]
         chosen_device = find_device_for_job(job, devices)
         self.assertEqual(self.black02, chosen_device)
 
-        job = self.submit_job(device_type='beaglebone', device_tags=[
+        job = self.submit_job(device_type='beaglebone', tags=[
             self.exclusion_tag.name
         ])
         devices = [self.panda02, self.black02, self.black03]

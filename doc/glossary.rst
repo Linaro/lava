@@ -225,3 +225,14 @@ Glossary of terms
     as ``Unavailable`` in tables of test jobs and omitted from tables
     of devices and device types if the user viewing the table does not
     own any devices of the hidden type.
+
+  device tag
+    A tag is a device specific label which describes specific hardware
+    capabilities of this specific device. Test jobs using tags will fail
+    if no suitable devices exist matching the requested device tag or
+    tags. Tags are typically used when only a proportion of the devices
+    of the specified type have hardware support for a particular feature,
+    possibly because those devices have peripheral hardware connected or
+    enabled. A device tag can only be created or assigned to a particular
+    device by a lab admin. When requesting tags, remember to include a
+    description of what the tagged device can provide to a Test Job.
