@@ -149,7 +149,16 @@ adjust the ``listen_addresses`` in ``postgresql.conf``::
 
 Also adjust the host allowed to connect to this database::
 
- host    all    all    0.0.0.0/0    trust
+ host    all    all    0.0.0.0/0    md5
+
+.. warning:: In most cases, the administrator for the machine providing the
+             database will want to constrain these settings to particular
+             addresses and/or network masks. LAVA just needs each remote
+             worker to be in the list of trusted connections and for the
+             database to be listening to it. See the example 
+             :ref:`example_postgres` for a more restrictive postgres
+             configuration. In particular, the connection should use
+             ``md5`` rather than ``password`` or ``trust``.
 
 Now restart postgresql to pick up these changes::
 
@@ -164,15 +173,6 @@ You can also check the connection directly on the worker, e.g. if the
 IP address of the master running postgres is 192.168.100.175::
 
  $ psql -h 192.168.100.175 -U lavaserver
-
-.. note:: In most cases, the administrator for the machine providing the
-          database will want to constrain these settings to particular
-          addresses and/or network masks. LAVA just needs each remote
-          worker to be in the list of trusted connections and for the
-          database to be listening to it. See the example 
-          :ref:`example_postgres` for a more restrictive postgres
-          configuration. In particular, the connection should use
-          ``md5`` rather than ``password`` or ``trust``.
 
 Check the /var/log/lava-server/lava-scheduler.log for cnnection errors of a
 normal startup of lava-scheduler::
@@ -274,8 +274,8 @@ Frequently encountered problems
  Is the server running on host "<MASTER>" and accepting
  TCP/IP connections on port 5432?
 
-This is a postgres configuration change. See :ref:`remote_database`.
-
+This is an error in the postgres configuration changes. See 
+:ref:`remote_database` and the example :ref:`example_postgres`.
 
 Make sure that your database connectivity is configured correctly in::
 
@@ -285,6 +285,11 @@ and your LAVA_SERVER_IP (worker ip address) is configured correctly in::
 
  /etc/lava-server/instance.conf
  /etc/lava-dispatcher/lava-dispatcher.conf
+
+.. tip:: You can check the connection directly on the worker, e.g. if
+         the IP address of the master running postgres is 
+         192.168.100.175::
+          $ psql -h 192.168.100.175 -U lavaserver
 
 If there are errors in the postgres connection settings in the ``instance.conf``
 file, use ``debconf`` to update the values::
