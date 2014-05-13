@@ -102,6 +102,8 @@ do_reload() {
 	# restarting (for example, when it is sent a SIGHUP),
 	# then implement that here.
 	#
+	# on master, this is a no-op. on a worker, refresh the sshfs mount
+	lava-mount-masterfs || true
 	start-stop-daemon --stop --signal 1 --quiet --pidfile $PIDFILE --name $NAME
 	return 0
 }
