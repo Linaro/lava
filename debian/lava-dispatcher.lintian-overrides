@@ -1,34 +1,34 @@
 # needs to be executable to be put onto the target later, the shebang is substituted
-lava-dispatcher: executable-not-elf-or-script usr/share/pyshared/lava_dispatcher/lava_test_shell/lava-test-shell
+lava-dispatcher: executable-not-elf-or-script usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-shell
 # become executable once copied into the target system
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/lava-installed-packages
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/lava-os-build
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/multi_node/lava-group
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/multi_node/lava-multi-node.lib
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/multi_node/lava-role
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/multi_node/lava-self
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/multi_node/lava-send
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/multi_node/lava-sync
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/multi_node/lava-wait
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/multi_node/lava-wait-all
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/multi_node/lava-network
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/lmp/lava-lmp-audio-jack
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/lmp/lava-lmp-eth
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/lmp/lava-lmp-hdmi
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/lmp/lava-lmp-lsgpio
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/lmp/lava-lmp-sata
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/lmp/lava-lmp-usb
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/lmp/lava-lmp.lib
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/distro/fedora/lava-install-packages
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/distro/fedora/lava-installed-packages
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/distro/fedora/lava-os-build
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/distro/ubuntu/lava-install-packages
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/distro/ubuntu/lava-installed-packages
-lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/distro/ubuntu/lava-os-build
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/fedora/lava-install-packages
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/fedora/lava-installed-packages
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/fedora/lava-os-build
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/ubuntu/lava-install-packages
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/ubuntu/lava-installed-packages
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/ubuntu/lava-os-build
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-installed-packages
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-os-build
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lmp/lava-lmp-audio-jack
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lmp/lava-lmp-eth
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lmp/lava-lmp-hdmi
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lmp/lava-lmp-lsgpio
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lmp/lava-lmp-sata
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lmp/lava-lmp-usb
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lmp/lava-lmp.lib
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-group
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-multi-node.lib
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-network
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-role
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-self
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-send
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-sync
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-wait
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-wait-all
+
 # android specific
-lava-dispatcher: wrong-path-for-interpreter usr/share/pyshared/lava_dispatcher/lava_test_shell/distro/android/lava-test-runner (#!/system/bin/mksh != /bin/mksh)
-lava-dispatcher: missing-dep-for-interpreter mksh => mksh (usr/share/pyshared/lava_dispatcher/lava_test_shell/distro/android/lava-test-runner)
+lava-dispatcher: wrong-path-for-interpreter usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/android/lava-test-runner (#!/system/bin/mksh != /bin/mksh)
+lava-dispatcher: missing-dep-for-interpreter mksh => mksh (usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/android/lava-test-runner)
 # Running a VM on a device under test needs a usable SSH private key
 # which is only usable during the test
-lava-dispatcher: non-standard-file-perm usr/share/pyshared/lava_dispatcher/device/dynamic_vm_keys/lava 0600 != 0644
-
+lava-dispatcher: non-standard-file-perm usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys/lava 0600 != 0644
