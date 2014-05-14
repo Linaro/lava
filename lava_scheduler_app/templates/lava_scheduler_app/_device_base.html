@@ -153,7 +153,8 @@
   A reason must be specified:
   <input id="online-reason" name="reason" style="width: 100%"/>
   <input type="checkbox" name="skiphealthcheck" value="True"/> Skip
-      Health Check
+      manual health check <abbr title="An automatic health check may
+      still run if one is already due.">(?)</abbr>
 </form><br/>
 <form method="POST"
       action="{% url lava.scheduler.device.looping device.pk %}">
