@@ -46,6 +46,10 @@ master_config() {
     then
       LAVA_DB_PORT=5432
     fi
+    if [ "$LAVA_PREFIX" = '' ]
+    then
+      LAVA_PREFIX="/var/lib/lava-server/"
+    fi
     write_config() {
         # reduce the content of this conf file once l-d-t is replaced.
         cat <<INSTANCE_CONF
@@ -157,11 +161,9 @@ install_database()
     # Create database user, if it doesn't exist
     if ! su postgres -c "psql \"-c SELECT usename FROM pg_user WHERE usename='$LAVA_DB_USER'\"" | grep "$LAVA_DB_USER"; then
         su postgres -c "createuser --no-createdb --encrypted --login --no-superuser --no-createrole --no-password --port $LAVA_DB_PORT $LAVA_DB_USER"|| "Failed to create database user"
+        # Set a password for our new user
+        su postgres -c "psql --port $LAVA_DB_PORT --quiet --command=\"ALTER USER \"$LAVA_DB_USER\" WITH PASSWORD '$LAVA_DB_PASSWORD'\"" || die "Failed to set database password"
     fi
-
-    # Set a password for our new user
-    su postgres -c "psql --port $LAVA_DB_PORT --quiet --command=\"ALTER USER \"$LAVA_DB_USER\" WITH PASSWORD '$LAVA_DB_PASSWORD'\"" || die "Failed to set database password"
-
     # Create a database for our new user, if it doesn't exist
     if ! su postgres -c "psql -c \"SELECT datname FROM pg_database WHERE datname='$LAVA_DB_NAME'\"" | grep "$LAVA_DB_NAME"; then
         su postgres -c "createdb --port $LAVA_DB_PORT --locale=C.UTF-8 --encoding=UTF-8 --owner=$LAVA_DB_USER --template=template0 --no-password $LAVA_DB_NAME" || die "Failed to create a database"
@@ -169,9 +171,9 @@ install_database()
     # Create devel user, if it doesn't exist, for unit test support
     if ! su postgres -c "psql \"-c SELECT usename FROM pg_user WHERE usename='devel'\"" | grep "devel"; then
         su postgres -c "createuser --createdb --login --no-superuser --no-createrole --no-password --port $LAVA_DB_PORT devel"|| "Failed to create test case user"
+        # Set a password for the devel user
+        su postgres -c "psql --port $LAVA_DB_PORT --quiet --command=\"ALTER USER \"devel\" WITH PASSWORD 'devel'\"" || die "Failed to set test case password"
     fi
-    # Set a password for the devel user
-    su postgres -c "psql --port $LAVA_DB_PORT --quiet --command=\"ALTER USER \"devel\" WITH PASSWORD 'devel'\"" || die "Failed to set test case password"
     # create the devel database, if it doesn't exist
     if ! su postgres -c "psql -c \"SELECT datname FROM pg_database WHERE datname='devel'\"" | grep "devel"; then
         su postgres -c "createdb devel --owner devel"
