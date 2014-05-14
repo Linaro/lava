@@ -142,14 +142,21 @@ clients over the network.
           in future. This section will be updated at that time.
 
 The ``lava-server`` installation does not dictate how the remote database
-connection is configured but an (overly permissive) example would be to
-adjust the ``listen_addresses`` in ``postgresql.conf``::
+connection is configured but an example would be to adjust the 
+``listen_addresses`` in ``postgresql.conf``::
 
  listen_addresses = '*'
 
-Also adjust the host allowed to connect to this database::
+This sets postgresql to listen to connections on all of the network
+interfaces available on the master. For remote workers, at least
+``localhost`` and the IP address of the interface(s) connecting to the
+remote workers is required.
 
- host    all    all    0.0.0.0/0    md5
+Also adjust the host allowed to connect to this database, so that the
+``LAVA_DB_USER`` has access only using the ``LAVA_DB_PASSWORD`` (which,
+in turn, is not sent in clear text)::
+
+ host    lavaserver    lavaserver    0.0.0.0/0    md5
 
 .. warning:: In most cases, the administrator for the machine providing the
              database will want to constrain these settings to particular
@@ -157,8 +164,8 @@ Also adjust the host allowed to connect to this database::
              worker to be in the list of trusted connections and for the
              database to be listening to it. See the example 
              :ref:`example_postgres` for a more restrictive postgres
-             configuration. In particular, the connection should use
-             ``md5`` rather than ``password`` or ``trust``.
+             configuration. Always ensure that the connection uses at
+             least ``md5`` and not ``password`` or ``trust``.
 
 Now restart postgresql to pick up these changes::
 
