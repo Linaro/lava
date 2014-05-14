@@ -57,7 +57,7 @@ def getDaemonLogger(filePath, log_format=None, loglevel=logging.INFO):
     try:
         watchedHandler = WatchedFileHandler(filePath)
     except Exception as e:
-        return e
+        return e, None
 
     watchedHandler.setFormatter(logging.Formatter(log_format or '%(asctime)s %(msg)s'))
     logger.addHandler(watchedHandler)
