@@ -25,6 +25,7 @@ import re
 import logging
 import time
 import pexpect
+import subprocess
 
 from lava_dispatcher.device import boot_options
 from lava_dispatcher.utils import (
@@ -270,6 +271,15 @@ class Target(object):
         """
         return 'unknown'
 
+    def _copy_first_find_from_list(self, subdir, odir, file_list, rename=None):
+        f_path = None
+        for fname in file_list:
+            f_path = self._find_and_copy(subdir, odir, fname, rename)
+            if f_path:
+                break
+
+        return f_path
+
     def _find_and_copy(self, rootdir, odir, pattern, name=None):
         dest = None
         for root, dirs, files in os.walk(rootdir, topdown=False):
@@ -316,6 +326,21 @@ class Target(object):
         if self.config.login_commands is not None:
             for command in self.config.login_commands:
                 connection.sendline(command)
+
+    def _is_uboot_ramdisk(self, ramdisk):
+        try:
+            out = subprocess.check_output('mkimage -l %s' % ramdisk, shell=True).splitlines()
+        except subprocess.CalledProcessError:
+            return False
+
+        for line in out:
+            if not line.startswith('Image Type:'):
+                continue
+            key, val = line.split(':')
+            if val.find('RAMDisk') > 0:
+                return True
+
+        return False
 
     def _load_boot_cmds(self, default=None, boot_cmds_dynamic=None,
                         boot_tags=None):

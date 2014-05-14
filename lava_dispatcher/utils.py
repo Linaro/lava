@@ -108,12 +108,18 @@ def _list_files(dirname):
     return files
 
 
-def extract_targz(tfname, tmpdir):
+def extract_tar(tfname, tmpdir):
     """ Extracts the contents of a .tgz file to the tmpdir. It then returns
     a list of all the files (full path). This is being used to get around
     issues that python's tarfile seems to have with unicode
     """
-    if logging_system('nice tar -C %s -xzf %s' % (tmpdir, tfname)):
+    if tfname.endswith('.bz2'):
+        if logging_system('nice tar -C %s -jxf %s' % (tmpdir, tfname)):
+            raise CriticalError('Unable to extract tarball: %s' % tfname)
+    elif tfname.endswith('.gz') or tfname.endswith('.tgz'):
+        if logging_system('nice tar -C %s -xzf %s' % (tmpdir, tfname)):
+            raise CriticalError('Unable to extract tarball: %s' % tfname)
+    else:
         raise CriticalError('Unable to extract tarball: %s' % tfname)
 
     return _list_files(tmpdir)

@@ -48,7 +48,7 @@ from lava_dispatcher.utils import (
     mk_targz,
     rmtree,
     mkdtemp,
-    extract_targz,
+    extract_tar,
     finalize_process,
 )
 from lava_dispatcher.client.lmc_utils import (
@@ -245,7 +245,7 @@ class MasterImageTarget(Target):
 
         elif boot_tgz:
             tmp_dir = mkdtemp()
-            extracted_files = extract_targz(boot_tgz, tmp_dir)
+            extracted_files = extract_tar(boot_tgz, tmp_dir)
             for boot_file in self.config.boot_files:
                 for file_path in extracted_files:
                     if boot_file == os.path.basename(file_path):
@@ -496,7 +496,7 @@ class MasterImageTarget(Target):
         session.run('mount %s /mnt/lava/boot' % self.testboot_path)
         _test_filesystem_writeable(session, '/mnt/lava/boot')
         session._client.target_extract(session, boottbz2, '/mnt/lava')
-        _recreate_uInitrd(session, target)
+        _recreate_ramdisk(session, target)
         session.run('umount /mnt/lava/boot')
 
     def _deploy_linaro_rootfs(self, session, rootfs):
@@ -561,10 +561,11 @@ class MasterImageTarget(Target):
             session.run('chmod +x %s' % script_path)
             session.run('chown :2000 %s' % script_path)
 
-        session.run(
-            ('sed -i "s/^PS1=.*$/PS1=\'%s\'/" '
-             '/mnt/lava/system/etc/mkshrc') % target.tester_ps1,
-            failok=True)
+        session.run("""sed -i '/export HOME/i \
+                    PS1="%s"
+                    ' /mnt/lava/system/etc/mkshrc""" % target.tester_ps1,
+                    failok=True)
+        session.run('cat /mnt/lava/system/etc/mkshrc', failok=True)
 
         session.run('umount /mnt/lava/system')
 
@@ -634,7 +635,7 @@ def _extract_partition(image, partno, tarfile):
         mk_targz(tarfile, mntdir, asroot=True)
 
 
-def _update_uInitrd_partitions(session, rc_filename):
+def _update_ramdisk_partitions(session, rc_filename):
     # Original android sdcard partition layout by l-a-m-c
     sys_part_org = session._client.config.sys_part_android_org
     cache_part_org = session._client.config.cache_part_android_org
@@ -658,20 +659,41 @@ def _update_uInitrd_partitions(session, rc_filename):
                                                    partition_padding_string_lava, sys_part_lava, rc_filename))
 
 
-def _recreate_uInitrd(session, target):
-    logging.debug("Recreate uInitrd")
+def _recreate_ramdisk(session, target):
+    logging.debug("Recreate Ramdisk")
+
+    ramdisk_name = None
+    is_uboot = False
 
     session.run('mkdir -p ~/tmp/')
-    session.run('mv /mnt/lava/boot/uInitrd ~/tmp')
+    for ramdisk in target.config.android_ramdisk_files:
+        rc = session.run('mv /mnt/lava/boot/%s ~/tmp/' % ramdisk, failok=True)
+        if rc == 0:
+            ramdisk_name = ramdisk
+            break
+
+    if ramdisk_name is None:
+        raise CriticalError("No valid ramdisk found!")
+
     session.run('cd ~/tmp/')
 
-    session.run('nice dd if=uInitrd of=uInitrd.data ibs=64 skip=1')
-    session.run('mv uInitrd.data ramdisk.cpio.gz')
+    rc = session.run('file %s | grep u-boot' % ramdisk_name, failok=True)
+
+    if rc == 0:
+        logging.info("U-Boot Header Detected")
+        is_uboot = True
+        session.run('nice dd if=%s of=ramdisk.cpio.gz ibs=64 skip=1' % ramdisk_name)
+    else:
+        session.run('mv %s ramdisk.cpio.gz' % ramdisk_name)
+
     session.run('nice gzip -d -f ramdisk.cpio.gz; cpio -i -F ramdisk.cpio')
 
-    session.run(
-        'sed -i "/export PATH/a \ \ \ \ export PS1 \'%s\'" init.rc' %
-        target.tester_ps1)
+    for init in target.config.android_init_files:
+        rc = session.run('test -f %s' % init, failok=True)
+        if rc == 0:
+            session.run(
+                'sed -i "/export PATH/a \ \ \ \ export PS1 \'%s\'" %s' %
+                (target.tester_ps1, init))
 
     # The mount partitions have moved from init.rc to init.partitions.rc
     # For backward compatible with early android build, we update both rc files
@@ -681,18 +703,21 @@ def _recreate_uInitrd(session, target):
 
     for f in possible_partitions_files:
         if session.is_file_exist(f):
-            _update_uInitrd_partitions(session, f)
+            _update_ramdisk_partitions(session, f)
             session.run("cat %s" % f, failok=True)
 
     session.run('nice cpio -i -t -F ramdisk.cpio | cpio -o -H newc | \
             gzip > ramdisk_new.cpio.gz')
 
-    session.run(
-        'nice mkimage -A arm -O linux -T ramdisk -n "Android Ramdisk Image" \
-            -d ramdisk_new.cpio.gz uInitrd')
+    if is_uboot:
+        session.run(
+            'nice mkimage -A arm -O linux -T ramdisk -n "Android Ramdisk Image" \
+                -d ramdisk_new.cpio.gz %s' % ramdisk_name)
+    else:
+        session.run('mv ramdisk_new.cpio.gz %s' % ramdisk_name)
 
     session.run('cd -')
-    session.run('mv ~/tmp/uInitrd /mnt/lava/boot/uInitrd')
+    session.run('mv ~/tmp/%s /mnt/lava/boot/%s' % (ramdisk_name, ramdisk_name))
     session.run('rm -rf ~/tmp')
 
 

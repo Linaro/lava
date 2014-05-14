@@ -84,21 +84,6 @@ class BootloaderTarget(MasterImageTarget):
         prefix = self.context.config.lava_image_url
         return prefix + '/' + self._get_rel_path(path)
 
-    def _is_uboot_ramdisk(self, ramdisk):
-        try:
-            out = subprocess.check_output('mkimage -l %s' % ramdisk, shell=True).splitlines()
-        except subprocess.CalledProcessError:
-            return False
-
-        for line in out:
-            if not line.startswith('Image Type:'):
-                continue
-            key, val = line.split(':')
-            if val.find('RAMDisk') > 0:
-                return True
-
-        return False
-
     def _set_load_addresses(self, bootz):
         if not bootz and self.config.u_load_addrs and len(self.config.u_load_addrs) == 3:
             logging.info("Setting uImage Load Addresses")
