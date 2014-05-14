@@ -152,23 +152,23 @@ def main(dt, name, options):
         exit(1)
     config['hostname'] = name
     # FIXME: need a config file for daemon, pdu hostname and telnet ser2net host
-    if hasattr(options, 'pdu'):
+    if options.pduport:
         try:
-            options.pdu = int(options.pdu)
+            options.pduport = int(options.pduport)
         except ValueError:
-            print ("Unable to parse %s as a port number" % options.pdu)
+            print ("Unable to parse %s as a port number" % options.pduport)
             exit(1)
         config['hard_reset_command'] = "/usr/bin/pduclient " \
                                        "--daemon localhost " \
                                        "--hostname pdu --command reboot " \
-                                       "--port %02d" % options.pdu
+                                       "--port %02d" % options.pduport
         config['power_off_cmd'] = "/usr/bin/pduclient " \
                                   "--daemon localhost " \
                                   "--hostname pdu --command off " \
-                                  "--port %02d" % options.pdu
+                                  "--port %02d" % options.pduport
     else:
         print("Skipping hard_reset_command for %s" % name)
-    if hasattr(options, 'telnetport'):
+    if options.telnetport:
         try:
             options.telnetport = int(options.telnetport)
         except ValueError:
