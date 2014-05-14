@@ -224,7 +224,6 @@ class TestTable(LavaTable):
         )
         sequence = fields
         searches = {
-            'comments': 'contains',
         }
         queries = {
             'results_query': 'result',
