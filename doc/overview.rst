@@ -273,7 +273,7 @@ Once you have copied the above job definition to a file, for example
 Once the job is submitted successfully, the job-id is returned back,
 which could be used in order to check the status of the job on the
 UI. In the above submission job-id returned is 82287. Visit
-http://validation.linaro.org/scheduler/job/<job-id> in order to see
+``http://validation.linaro.org/scheduler/job/<job-id>`` in order to see
 the details of the job run.
 
 
@@ -336,7 +336,7 @@ Once you have copied the above job definition to a file, for example
 Once the job is submitted successfully, the job-id is returned back,
 which could be used in order to check the status of the job on the
 UI. In the above submission job-id returned is 82287. Visit
-http://validation.linaro.org/scheduler/job/<job-id> in order to see
+``http://validation.linaro.org/scheduler/job/<job-id>`` in order to see
 the details of the job run.
 
 Web Based Job Submission
