@@ -1,5 +1,12 @@
-Developing LAVA on Debian
-*************************
+Developing LAVA on Debian or Ubuntu
+***********************************
+
+Packages for LAVA are available for:
+
+========================-=============================
+Debian Jessie (testing)   Ubuntu Trusty Tahr 10.04LTS
+Debian Sid (unstable)     Ubuntu Utopic Unicorn
+========================-=============================
 
 When using the packages to develop LAVA, there is a change to
 the workflow compared to the old lava-deployment-tool buildouts.

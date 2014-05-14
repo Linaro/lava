@@ -278,3 +278,11 @@ Distributed deployment
    :maxdepth: 2
 
    distributed-deployment.rst
+
+Migrating existing LAVA instances
+#################################
+
+.. toctree::
+   :maxdepth: 2
+
+   migration.rst

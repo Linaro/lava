@@ -83,4 +83,5 @@ Developer guides
    :maxdepth: 2
 
    debian.rst
+   migration.rst
    schema.rst
