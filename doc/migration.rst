@@ -166,6 +166,16 @@ Preparing for the upgrade
    there are no development changes like database migrations which
    exist only in the buildout and not in master.)
 
+Select the upgrade path:
+========================
+
+Now select how you want to upgrade:
+
+* :ref:`ubuntu_trusty_upgrade`
+* :ref:`debian_jessie`
+
+.. _ubuntu_trusty_upgrade:
+
 Upgrading Ubuntu to Trusty Tahr 14.04LTS
 ########################################
 
@@ -520,6 +530,11 @@ The data needed off the old Precise instance will be:
 
 #. The database (except for remote workers) See :ref:`postgres_export`.
 
+* The device configuration files::
+
+   /srv/lava/instances/<INSTANCE>/etc/lava-dispatcher/devices/
+   /srv/lava/instances/<INSTANCE>/etc/lava-dispatcher/device-types/
+
 #. The instance configuration::
 
     /srv/lava/instances/<INSTANCE>/etc/lava-server/instance.conf
@@ -568,7 +583,7 @@ packages.
    The upgrade will bring in a new kernel, so a reboot is recommended
    at this point.
 
-   .. tip:: ``apt`` has migrated to version 1.0 in Trusty, which means
+   .. tip:: ``apt`` has migrated to version 1.0 in Jessie, which means
             that some commands can now be run as just ``apt`` as well as
             the previous ``apt-get``. See man 1 apt after the upgrade.
 
@@ -581,10 +596,8 @@ packages.
 
 #. Add the LAVA packaging repository.
 
-   This will remain necessary on Trusty (although the path and keyring
-   may change to an official repository) but on Ubuntu Utopic Unicorn
-   and later releases, the necessary packages will migrate automatically
-   from Debian::
+   This will remain necessary only until all the necessary packages
+   are in Debian unstable and able to migrate into jessie::
 
     sudo apt install emdebian-archive-keyring
     sudo vim /etc/apt/sources.list.d/lava.list
@@ -678,7 +691,7 @@ packages.
    The upgrade will bring in a new kernel, so a reboot is recommended
    at this point.
 
-   .. tip:: ``apt`` has migrated to version 1.0 in Trusty, which means
+   .. tip:: ``apt`` has migrated to version 1.0 in Jessie, which means
             that some commands can now be run as just ``apt`` as well as
             the previous ``apt-get``. See man 1 apt after the upgrade.
 
@@ -691,10 +704,8 @@ packages.
 
 #. Add the LAVA packaging repository.
 
-   This will remain necessary on Trusty (although the path and keyring
-   may change to an official repository) but on Ubuntu Utopic Unicorn
-   and later releases, the necessary packages will migrate automatically
-   from Debian::
+   This will remain necessary only until all the necessary packages
+   are in Debian unstable and able to migrate into jessie::
 
     sudo apt install emdebian-archive-keyring
     sudo vim /etc/apt/sources.list.d/lava.list
