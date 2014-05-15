@@ -28,6 +28,8 @@ Further information
 * https://wiki.linaro.org/LAVA/LAVA_packaging
 * https://github.com/Linaro
 
+.. _packaging_components:
+
 LAVA Components
 ###############
 
@@ -36,6 +38,8 @@ lava            meta-package for single instance setup
 lava-server     apache and WSGI settings and HTML content
 lava-dispatcher dispatches jobs to devices
 =============== =========================================
+
+.. _packaging_daemon_renaming:
 
 Daemon renaming
 ===============
@@ -49,6 +53,11 @@ The web application itself is handled within apache, so to refresh
 the code running behind the front end, use::
 
  $ sudo apache2ctl restart
+
+The ``LAVA_SYS_USER`` has also been renamed from an instance-specific
+name to ``lavaserver``. ``lava-server manage`` can also be run as a
+normal user or by root. The system user is used just for the filesystem
+permissions.
 
 WSGI debugging help
 ===================

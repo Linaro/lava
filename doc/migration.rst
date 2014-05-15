@@ -1,5 +1,11 @@
+.. _migrating_from_deployment_tool:
+
 Migrating from lava-deployment-tool to packages
 ***********************************************
+
+Please read the section on :ref:`packaging_components` for details of
+how the LAVA packaging is organised. In particular, note the section
+on :ref:`packaging_daemon_renaming`.
 
 There are two main migrations methods:
 
@@ -16,6 +22,13 @@ useful.
 
 Upgrading Ubuntu to Trusty Tahr 14.04LTS
 ########################################
+
+.. warning:: It is worth investigating any issues with the upgrade from
+             precise to trusty, in advance, using virtual machines or
+             test deployments. These tests do not need LAVA installed,
+             just a basic server, as there are issues with the precise
+             to trusty upgrade. Fresh installs of Trusty do not seem to
+             be affected or consider :ref:`debian_jessie`.
 
 Once migrated to Trusty and using packages, the OS can be further
 upgraded to Utopic Unicorn and subsequent releases in much the same way
@@ -34,6 +47,11 @@ Assumptions
 
 #. there are idle devices or possibly running test jobs
 
+#. any local buildouts are either removed or merged back to
+   master and updated. (This is a precaution to ensure that
+   there are no development changes like database migrations which
+   exist only in the buildout and not in master.)
+
 Requirements
 ============
 
@@ -49,13 +67,22 @@ The only parts of the existing LAVA instance which will be retained are:
 
 * The database (master instance only)
 
+* The device configuration files::
+
+   /srv/lava/instances/<INSTANCE>/etc/lava-dispatcher/devices/
+   /srv/lava/instances/<INSTANCE>/etc/lava-dispatcher/device-types/
+
 Preparing for the upgrade
 =========================
 
 #. Declare a maintenance window for scheduled downtime.
 #. Take all devices offline using the Django admin interface.
-#. Complete all :ref:`remote_worker_upgrade` tasks before restarting
-   LAVA on the master instance.
+#. Incorporate into the plan for the upgrade that the master will need
+   to be upgraded but then work will need to concentrate on all the
+   :ref:`remote_worker_upgrade` tasks before restarting the ``lava-server``
+   service on the master instance.
+#. Exit out of all shells currently using the ``/srv/lava/instances/<INSTANCE>/bin/activate``
+   virtual environment settings.
 
 .. _master_instance_upgrade:
 
@@ -75,7 +102,7 @@ Master instance upgrade
             Apache will restart during the upgrade but this will be
             only for a brief period.
 
-#. Remove postgresql-9.1 without dropping the cluster::
+#. Stop postgresql-9.1 without dropping the cluster::
 
     sudo service postgresql stop
 
@@ -106,12 +133,16 @@ Master instance upgrade
    need to be restared, this is best done automatically when prompted
    by debconf.
 
-   The upgrade will bring in a new kernel, so a reboot is recommended
-   at this point.
+   The upgrade will bring in a new kernel, so a reboot is required
+   at this point to allow fuse to use the upgraded kernel module.
 
    .. tip:: ``apt`` has migrated to version 1.0 in Trusty, which means
             that some commands can now be run as just ``apt`` as well as
             the previous ``apt-get``. See man 1 apt after the upgrade.
+
+   .. note:: If the machine is virtualised, ensure that the kernel upgrade
+             is handled and that the machine reboots into the new image
+             cleanly.
 
 #. Remove ``lava-deployment-tool`` - this may seem premature but
    deployment-tool is unusable on Trusty or later and would undo some
@@ -201,13 +232,22 @@ Master instance upgrade
    Some settings are no longer used by the packaging but these will simply
    be ignored by the packaging.
 
+#. Migrate the device configurations to the packaging locations::
+
+    sudo cp /srv/lava/instances/<INSTANCE>/etc/lava-dispatcher/devices/* /etc/lava-dispatcher/devices/
+
 #. Migrate the instance logfiles to the packaging location.
 
    The permissions on these files will be fixed once ``lava-server`` is
    installed. Depending on the amount of files, the simplest way to
    migrate the files may be to use rsync::
 
+    sudo mkdir -p /var/lib/lava-server/default/media/
     sudo rsync -vaz /srv/lava/instances/<INSTANCE>/var/lib/lava-server/media/* /var/lib/lava-server/default/media/
+
+   .. note:: The wildcard at the end of the source directory and the
+             forward slash at the end of the destination directory are
+             very important.
 
 #. Install LAVA from packages::
 
@@ -235,11 +275,23 @@ Remote worker upgrade
 =====================
 
 This is essentially the same as a :ref:`master_instance_upgrade`
-without any database work.
+without any database work and without copying the log files which
+are all on the master.
 
 #. Stop lava::
 
     sudo service lava stop
+
+#. umount the sshfs::
+
+   Check the output of ``mount`` and umount the relevant sshfs location.
+   e.g.::
+
+    lava-staging@staging.validation.linaro.org:/srv/lava/instances/staging/var/lib/lava-server/media
+     on /srv/lava/instances/staging/var/lib/lava-server/media type
+     fuse.sshfs (rw,nosuid,nodev,max_read=65536,allow_other,user=lava-staging)
+
+    $ sudo umount /srv/lava/instances/<INSTANCE>/var/lib/lava-server/media
 
 #. Stop apache::
 
@@ -269,12 +321,16 @@ without any database work.
    need to be restared, this is best done automatically when prompted
    by debconf.
 
-   The upgrade will bring in a new kernel, so a reboot is recommended
-   at this point.
+   The upgrade will bring in a new kernel, so a reboot is required
+   at this point to use the matching fuse support for the master.
 
    .. tip:: ``apt`` has migrated to version 1.0 in Trusty, which means
             that some commands can now be run as just ``apt`` as well as
             the previous ``apt-get``. See man 1 apt after the upgrade.
+
+   .. note:: If the machine is virtualised, ensure that the kernel upgrade
+             is handled and that the machine reboots into the new image
+             cleanly.
 
 #. Remove ``lava-deployment-tool`` - this may seem premature but
    deployment-tool is unusable on Trusty or later and would undo some
@@ -315,13 +371,10 @@ without any database work.
    Some settings are no longer used by the packaging but these will simply
    be ignored by the packaging.
 
-#. Migrate the instance logfiles to the packaging location.
+#. Do not Migrate the instance logfiles to the packaging location.
 
-   The permissions on these files will be fixed once ``lava-server`` is
-   installed. Depending on the amount of files, the simplest way to
-   migrate the files may be to use rsync::
-
-    sudo rsync -vaz /srv/lava/instances/<INSTANCE>/var/lib/lava-server/media/* /var/lib/lava-server/default/media/
+   There is no ``rsync`` operation - the files are on an sshfs from the
+   master.
 
 #. Install LAVA from packages::
 
@@ -340,6 +393,8 @@ without any database work.
    The other details which will be needed during installation are available
    in the ``instance.conf`` of the original worker. Enter the details
    when prompted. See :ref:`distributed_deployment`.
+
+.. _debian_jessie:
 
 Upgrading Ubuntu to Debian Jessie (testing)
 ###########################################
@@ -431,7 +486,7 @@ packages.
    The packages will respect an existing LAVA configuration, if the relevant
    files are in the correct location ``/etc/lava-server/instance.conf``.
    Copy the ``instance.conf`` from the precise box to the new Debian
-   machine and put into place::
+   machine and put into place. e.g.::
 
     sudo mkdir -p /etc/lava-server/
     sudo cp /tmp/instance.conf /etc/lava-server/instance.conf
