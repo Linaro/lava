@@ -179,7 +179,8 @@
                         <p>A reason must be specified:</p>
                         <input id="online-reason" name="reason"/>
                         {% csrf_token %}
-                        <input type="checkbox" name="skiphealthcheck" value="True"/> Skip Health Check
+                        <input type="checkbox" name="skiphealthcheck" value="True"/> Skip manual health check <abbr
+                        title="An automatic health check may still run if one is already due.">(?)</abbr>
                         <div id="online-feedback">
                         </div>
                       </div>

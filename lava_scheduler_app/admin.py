@@ -28,7 +28,7 @@ def online_action_without_health_check(modeladmin, request, queryset):
         if device.can_admin(request.user):
             device.put_into_online_mode(request.user, "admin action", True)
 online_action_without_health_check.short_description = \
-    "take online without health check"
+    "take online without manual health check"
 
 
 def retire_action(modeladmin, request, queryset):
