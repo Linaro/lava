@@ -40,7 +40,7 @@ master_config() {
     then
       LAVA_DB_PASSWORD=`env LANG=C LC_ALL=C tr -dc "[:alnum:]" < /dev/urandom | dd bs=1 count=12 2>/dev/null`
     fi
-    LAVA_SYS_USER="$LAVA_DB_NAME"
+    LAVA_SYS_USER="lavaserver"
     LAVA_SYS_HOME=/var/lib/lava-server/home/
     if [ "$LAVA_DB_PORT" = '' ]
     then
@@ -101,7 +101,7 @@ worker_config() {
     db_get lava-worker/db-pass
     LAVA_DB_PASSWORD=$RET
 
-    LAVA_SYS_USER="$LAVA_DB_NAME"
+    LAVA_SYS_USER="lavaserver"
     LAVA_SYS_HOME=/var/lib/lava-server/home/
 
     # LAVA_SERVER_IP is where this worker will allow boards to
@@ -111,8 +111,6 @@ worker_config() {
     iface=$(ip route | awk '{ if ($1 == "default") { print($5); exit; } }')
     LAVA_SERVER_IP=$(ip addr show "$iface" | awk '{ if ($1 == "inet") { gsub("/.*", "", $2); print($2) } }')
 
-    LAVA_SYS_USER="$LAVA_DB_NAME"
-    LAVA_SYS_HOME=/var/lib/lava-server/home/
     if [ "$LAVA_DB_PORT" = '' ]
     then
       LAVA_DB_PORT=5432
@@ -179,11 +177,11 @@ install_database()
         su postgres -c "createdb devel --owner devel"
     fi
     # syncdb
-    su $LAVA_SYS_USER -c "lava-server manage syncdb --noinput"
-    su $LAVA_SYS_USER -c "lava-server manage migrate --noinput"
+    lava-server manage syncdb --noinput
+    lava-server manage migrate --noinput
     # superuser - password must be changed
     if ! su postgres -c "psql \"-c SELECT usename FROM pg_user WHERE usename='$LAVA_SYS_USER'\"" | grep "$LAVA_SYS_USER"; then
-        su $LAVA_SYS_USER -c "lava-server manage createsuperuser --noinput --username=$LAVA_SYS_USER --email=$LAVA_SYS_USER@lava.invalid" || true
+        lava-server manage createsuperuser --noinput --username=$LAVA_SYS_USER --email=$LAVA_SYS_USER@lava.invalid || true
     fi
 }
 
@@ -195,10 +193,10 @@ case "$1" in
         else
             . /usr/share/lava-server/instance.template
         fi
-        db_get lava-server/master
         if [ -z "$LAVA_SYS_USER" ]; then
-            LAVA_SYS_USER="lava-server"
+            LAVA_SYS_USER="lavaserver"
         fi
+        db_get lava-server/master
         if [ "$RET" = "false" ]; then
             worker_config
             adduser --quiet --system --group --home $LAVA_SYS_HOME $LAVA_SYS_USER --shell /bin/sh
