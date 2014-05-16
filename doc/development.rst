@@ -82,15 +82,23 @@ uses the gerrit_ code review system to review changes.
 So the first step will be logging in to gerrit_ and uploading you SSH
 public key there.
 
+If you do not have access to gerrit and it is a small change, you could
+use another git hosting service, push the LAVA code and point us at
+commits which could be cherry picked.
+
 Obtaining the repository
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Let's say you want to contribute to ``lava-server``.
+There are two main components to LAVA, ``lava-server`` and
+``lava-dispatcher``.
 
 ::
 
-    git clone http://git.linaro.org/git-ro/lava/lava-server.git
+    git clone http://git.linaro.org/git/lava/lava-server.git
     cd lava-server
+
+    git clone http://git.linaro.org/git/lava/lava-dispatcher.git
+    cd lava-dispatcher
 
 
 Setting git-review up
