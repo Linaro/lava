@@ -1,7 +1,13 @@
-lava-server (0.22.1-8) unstable; urgency=medium
+lava-server (2014.04.16-1) experimental; urgency=medium
 
   * Initial release. (Closes: #747356: ITP: lava-server -- Linaro
     Automated Validation Architecture server)
+  * Target experimental during final changes.
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 16 May 2014 21:11:32 +0100
+
+lava-server (0.22.1-8) unstable; urgency=medium
+
   * Add python-setuptools to ensure lava-server manage operates
     properly.
   * Use common static file locations in Debian and Ubuntu
