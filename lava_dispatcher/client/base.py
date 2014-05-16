@@ -727,6 +727,10 @@ class VmGroupHandler(object):
     def is_vm(self):
         return self.is_vm_group_job and self.client.context.test_data.metadata['is_vmhost'] == "false"
 
+    @property
+    def auto_start_vms(self):
+        return self.is_vm_group_job and self.client.context.test_data.metadata['auto_start_vms']
+
     def start_vms(self):
         if not self.is_host:
             return
@@ -747,14 +751,16 @@ class VmGroupHandler(object):
             host_ip = runner.get_target_ip()
         except NetworkError as e:
             raise CriticalError("Failed to get network up: " % e)
-        # send a message to each guest
-        msg = {"request": "lava_send", "messageID": "lava_vm_start", "message": {"host_ip": host_ip}}
-        reply = self.client.context.transport(json.dumps(msg))
-        if reply == "nack":
-            raise CriticalError("lava_vm_start failed")
-        logging.info("[ACTION-B] LAVA VM start, using %s" % host_ip)
+        runner.run('export _LAVA_VM_GROUP_HOST_IP=%s' % host_ip)
 
-        self.vms_started = True
+        if self.auto_start_vms:
+            # send a message to each guest
+            msg = {"request": "lava_send", "messageID": "lava_vm_start", "message": {"host_ip": host_ip}}
+            reply = self.client.context.transport(json.dumps(msg))
+            if reply == "nack":
+                raise CriticalError("lava_vm_start failed")
+            logging.info("[ACTION-B] LAVA VM start, using %s" % host_ip)
+            self.vms_started = True
 
     def wait_for_vms(self):
         if not (self.is_host and self.vms_started):

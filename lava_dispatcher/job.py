@@ -118,6 +118,11 @@ job_schema = {
                         }
                     }
                 },
+                'auto_start_vms': {
+                    'type': 'boolean',
+                    'optional': True,
+                    'default': True,
+                },
                 'vms': {
                     'optional': False,
                     'type': 'array',
@@ -189,6 +194,11 @@ job_schema = {
         'is_vmhost': {
             'type': 'boolean',
             'default': False,
+            'optional': True,
+        },
+        'auto_start_vms': {
+            'type': 'boolean',
+            'default': True,
             'optional': True,
         },
         'group_size': {
@@ -292,6 +302,10 @@ class LavaTestJob(object):
             logging.debug("[ACTION-B] VM group test!")
             if not self.job_data['is_vmhost']:
                 logging.debug("[ACTION-B] VM host IP is (%s)." % metadata['host_ip'])
+
+            if 'auto_start_vms' in self.job_data:
+                metadata['auto_start_vms'] = self.job_data['auto_start_vms']
+
             self.context.test_data.add_metadata(metadata)
 
         if 'target_group' in self.job_data:
