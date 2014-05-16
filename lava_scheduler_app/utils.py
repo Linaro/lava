@@ -161,6 +161,9 @@ def split_vm_job(json_jobdata, vm_group):
     device_type = json_jobdata['vm_group']['host']['device_type']
     role = json_jobdata['vm_group']['host']['role']
     is_vmhost = True
+    auto_start_vms = None
+    if 'auto_start_vms' in json_jobdata['vm_group']:
+        auto_start_vms = json_jobdata['vm_group']['auto_start_vms']
     vms_list.append((device_type, role, 1, is_vmhost))  # where 1 is the count
 
     # Get all other constituting VMs.
@@ -203,6 +206,8 @@ def split_vm_job(json_jobdata, vm_group):
             node_json[role].append({})
             node_json[role][c]["timeout"] = json_jobdata["timeout"]
             node_json[role][c]["is_vmhost"] = is_vmhost
+            if auto_start_vms is not None:
+                node_json[role][c]["auto_start_vms"] = auto_start_vms
             if json_jobdata.get("job_name", False):
                 node_json[role][c]["job_name"] = json_jobdata["job_name"]
             node_json[role][c]["group_size"] = group_count
