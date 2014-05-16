@@ -41,7 +41,7 @@ Package: lava
 Architecture: all
 Section: metapackages
 Depends: lava-server, lava-server-doc, lava-dispatcher, lava-coordinator,
- lava-dev, lava-tool, linaro-image-tools, ntp, tftpd-hpa,
+ lava-dev, lava-tool, linaro-image-tools, ntp | ntpdate, tftpd-hpa,
  vmdebootstrap, ${misc:Depends}
 Description: Linaro Automated Validation Architecture metapackage
  Metapackage to bring in all LAVA components on a single
