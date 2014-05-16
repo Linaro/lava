@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lava-server\n"
 "Report-Msgid-Bugs-To: lava-server@packages.debian.org\n"
-"POT-Creation-Date: 2014-03-27 23:14+0000\n"
+"POT-Creation-Date: 2014-05-16 21:17+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -95,7 +95,8 @@ msgstr ""
 #: ../lava-server.templates:4001
 msgid ""
 "Note that you will have to ensure that the lava-coordinator configuration is "
-"changed to point to the master instance for this remote worker."
+"changed to point to the master instance for this remote worker. You can then "
+"remove the lava-coordinator package from the remote worker."
 msgstr ""
 
 #. Type: string
@@ -158,7 +159,8 @@ msgstr ""
 #: ../lava-server.templates:8001
 msgid ""
 "Each remote worker needs to connect to a master scheduler running lava-"
-"server. This name will be used to connect to the master database."
+"server. This hostname or IP address will be used to connect to the master "
+"database."
 msgstr ""
 
 #. Type: string
@@ -166,8 +168,10 @@ msgstr ""
 #: ../lava-server.templates:8001
 msgid ""
 "To work with remote nodes, the Master needs to be configured to allow the "
-"database to listen to the workers. Ensure that the Master allows remote "
-"access from workers before submitting jobs or health checks."
+"database to listen to the workers. An SSH key also needs to be generated on "
+"the worker and added to the master list of authorized_keys. Ensure that the "
+"Master allows remote access from workers before submitting jobs or health "
+"checks."
 msgstr ""
 
 #. Type: string
