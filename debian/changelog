@@ -1,7 +1,13 @@
-lava-dispatcher (0.33.3-10) unstable; urgency=medium
+lava-dispatcher (2014.04.16-1) experimental; urgency=medium
 
   * Initial release. (Closes: #747355: ITP: lava-dispatcher -- Linaro
     Automated Validation Architecture dispatcher)
+  * Target experimental during final testing.
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 16 May 2014 21:13:36 +0100
+
+lava-dispatcher (0.33.3-10) unstable; urgency=medium
+
   * Add setuptools dependency and override dh_fixperms for the vm_groups
     key file.
   * Migrate to support LAVANETWORKIFACE and avoid changing existing
