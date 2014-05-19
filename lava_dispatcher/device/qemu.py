@@ -57,8 +57,8 @@ class QEMUTarget(Target):
         self._is_kernel_present = False
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
-                             bootloader, firmware, rootfstype, bootloadertype,
-                             target_type):
+                             bootloader, firmware, bl1, bl2, bl31, rootfstype,
+                             bootloadertype, target_type):
         # Check for errors
         if rootfs is None:
             raise CriticalError("You must specify a QEMU file system image")

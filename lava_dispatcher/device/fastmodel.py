@@ -31,6 +31,9 @@ import lava_dispatcher.device.boot_options as boot_options
 from lava_dispatcher.device.target import (
     Target
 )
+from lava_dispatcher.client.base import (
+    NetworkCommandRunner,
+)
 from lava_dispatcher.client.lmc_utils import (
     image_partition_mounted,
     generate_android_image,
@@ -41,6 +44,9 @@ from lava_dispatcher.downloader import (
 )
 from lava_dispatcher.test_data import (
     create_attachment,
+)
+from lava_dispatcher.errors import (
+    CriticalError,
 )
 from lava_dispatcher.utils import (
     ensure_directory,
@@ -62,7 +68,6 @@ class FastModelTarget(Target):
         super(FastModelTarget, self).__init__(context, config)
 
         self._sim_proc = None
-
         self._axf = None
         self._kernel = None
         self._dtb = None
@@ -71,7 +76,13 @@ class FastModelTarget(Target):
         self._bl1 = None
         self._bl2 = None
         self._bl31 = None
+        self._default_boot_cmds = None
+        self._ramdisk_boot = False
+        self._booted = False
+        self._reset_boot = False
         self._bootloadertype = 'u_boot'
+        self._boot_tags = {}
+        self._scratch_dir = self.scratch_dir
 
     def _customize_android(self):
         self.deployment_data = deployment_data.android
@@ -239,12 +250,81 @@ class FastModelTarget(Target):
         self._copy_needed_files_from_partition(self.config.root_part, 'boot')
         self._copy_needed_files_from_partition(self.config.root_part, 'lib')
 
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
+                             bootloader, firmware, bl1, bl2, bl31, rootfstype,
+                             bootloadertype, target_type):
+        # Required
+        if kernel is None:
+            raise CriticalError("A kernel image is required")
+        elif ramdisk is None:
+            raise CriticalError("A ramdisk image is required")
+        elif dtb is None:
+            raise CriticalError("A dtb is required")
+        elif bootloader is None:
+            raise CriticalError("UEFI image is required")
+        elif bootloader is None:
+            raise CriticalError("BL1 firmware is required")
+
+        if rootfs is not None or nfsrootfs is not None or firmware is not None:
+            logging.warn("This platform only suports ramdisk booting, ignoring other parameters")
+
+        self._ramdisk_boot = True
+
+        self._kernel = download_image(kernel, self.context, self._scratch_dir,
+                                      decompress=False)
+        self._boot_tags['{KERNEL}'] = os.path.relpath(self._kernel, self._scratch_dir)
+        self._initrd = download_image(ramdisk, self.context, self._scratch_dir,
+                                      decompress=False)
+        self._boot_tags['{RAMDISK}'] = os.path.relpath(self._initrd, self._scratch_dir)
+        self._dtb = download_image(dtb, self.context, self._scratch_dir,
+                                   decompress=False)
+        self._boot_tags['{DTB}'] = os.path.relpath(self._dtb, self._scratch_dir)
+        self._uefi = download_image(bootloader, self.context, self._scratch_dir,
+                                    decompress=False)
+        self._bl1 = download_image(bl1, self.context, self._scratch_dir,
+                                   decompress=False)
+
+        # Optional
+        if bl2 is not None:
+            self._bl2 = download_image(bl2, self.context, self._scratch_dir,
+                                       decompress=False)
+        if bl31 is not None:
+            self._bl31 = download_image(bl31, self.context, self._scratch_dir,
+                                        decompress=False)
+
+        # Get deployment data
+        self.deployment_data = deployment_data.get(target_type)
+
+        # Booting is not supported without an _sd_image defined
+        self._sd_image = self._kernel
+
+        self._default_boot_cmds = 'boot_cmds_ramdisk'
+
+    def is_booted(self):
+        return self._booted
+
+    def reset_boot(self):
+        self._reset_boot = True
+
     @contextlib.contextmanager
     def file_system(self, partition, directory):
-        with image_partition_mounted(self._sd_image, partition) as mntdir:
-            path = '%s/%s' % (mntdir, directory)
-            ensure_directory(path)
-            yield path
+        if self._ramdisk_boot:
+            if self._reset_boot:
+                self._booted = False
+                self._reset_boot = False
+                raise Exception("Operation timed out, resetting platform!")
+            elif not self._booted:
+                self.context.client.boot_linaro_image()
+            pat = self.tester_ps1_pattern
+            incrc = self.tester_ps1_includes_rc
+            runner = NetworkCommandRunner(self, pat, incrc)
+            with self._busybox_file_system(runner, directory) as path:
+                yield path
+        else:
+            with image_partition_mounted(self._sd_image, partition) as mntdir:
+                path = '%s/%s' % (mntdir, directory)
+                ensure_directory(path)
+                yield path
 
     def extract_tarball(self, tarball_url, partition, directory='/'):
         logging.info('extracting %s to target' % tarball_url)
@@ -319,6 +399,11 @@ class FastModelTarget(Target):
         DrainConsoleOutput(proc=self._sim_proc).start()
 
     def power_on(self):
+        if self._ramdisk_boot and self._booted:
+            self.proc.sendline('export PS1="%s"'
+                               % self.tester_ps1,
+                               send_char=self.config.send_char)
+            return self.proc
         if self._sim_proc is not None:
             logging.warning('device already powered on, powering off first')
             self.power_off(None)
@@ -367,10 +452,21 @@ class FastModelTarget(Target):
 
         if self._uefi:
             self._enter_bootloader(self.proc)
-            boot_cmds = self._load_boot_cmds()
+            boot_cmds = self._load_boot_cmds(default=self._default_boot_cmds,
+                                             boot_tags=self._boot_tags)
             self._customize_bootloader(self.proc, boot_cmds)
 
         self._auto_login(self.proc)
+
+        if self._ramdisk_boot:
+            self._wait_for_prompt(self.proc, self.config.test_image_prompts,
+                                  self.config.boot_linaro_timeout)
+            self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
+                               send_char=self.config.send_char)
+            self.proc.sendline('export PS1="%s"'
+                               % self.tester_ps1,
+                               send_char=self.config.send_char)
+            self._booted = True
 
         return self.proc
 

@@ -156,8 +156,8 @@ class BaseDriver(object):
         finalize_process(proc)
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
-                             bootloader, firmware, rootfstype, bootloadertype,
-                             target_type, scratch_dir):
+                             bootloader, firmware, bl1, bl2, bl31, rootfstype,
+                             bootloadertype, target_type, scratch_dir):
         self.target_type = target_type
         self.scratch_dir = scratch_dir
         if kernel is not None:
@@ -244,8 +244,8 @@ class fastboot(BaseDriver):
         super(fastboot, self).__init__(device)
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
-                             bootloader, firmware, rootfstype, bootloadertype,
-                             target_type, scratch_dir):
+                             bootloader, firmware, bl1, bl2, bl31, rootfstype,
+                             bootloadertype, target_type, scratch_dir):
         raise CriticalError('This platform does not support kernel deployment!')
 
     def enter_fastboot(self):
@@ -267,8 +267,8 @@ class nexus10(fastboot):
         super(nexus10, self).__init__(device)
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
-                             bootloader, firmware, rootfstype, bootloadertype,
-                             target_type, scratch_dir):
+                             bootloader, firmware, bl1, bl2, bl31, rootfstype,
+                             bootloadertype, target_type, scratch_dir):
         raise CriticalError('This platform does not support kernel deployment!')
 
     def boot(self):
