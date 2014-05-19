@@ -32,13 +32,19 @@
 # hold the results and these latter sub-hierarchy whole lot is poked at on the
 # host during analysis.
 #
-# On Ubuntu and OpenEmbedded, the hierarchy is rooted at /lava.  / is mounted
-# read-only on Android, so there we root the hierarchy at /data/lava.  I'll
-# assume Ubuntu paths from here for simplicity.
+# On Ubuntu and OpenEmbedded, the hierarchy is rooted at
+# /lava-$(DEVICE_HOSTNAME). / is mounted read-only on Android, so there we root
+# the hierarchy at /data/lava-$(DEVICE_HOSTNAME). These directories can be
+# configured with the value of the lava_test_dir configuration variable, and
+# the values mentioned above are just their defaults.  See
+# lava_dispatcher/deployment_data.py and lava_dispatcher/device/target.py for
+# details.
+#
+# I'll assume Ubuntu paths from here for simplicity.
 #
 # The directory tree that is created during installation looks like this:
 #
-# /lava/
+# /lava-$(DEVICE_HOSTNAME)/
 #    bin/                          This directory is put on the path when the
 #                                  test code is running -- these binaries can
 #                                  be viewed as a sort of device-side "API"
@@ -60,11 +66,11 @@
 #                                  repositories to clone into this directory.
 #
 # In addition, a file /etc/lava-test-runner.conf is created containing the
-# names of the directories in /lava/tests/ to execute.
+# names of the directories in /lava-$(DEVICE_HOSTNAME)/tests/ to execute.
 #
 # During execution, the following files are created:
 #
-# /lava/
+# /lava-$(DEVICE_HOSTNAME)/
 #    results/
 #       hwcontext/                 Each test_run in the bundle has the same
 #                                  hw & sw context info attached to it.
@@ -102,8 +108,9 @@
 #                   ${FILENAME}           The attached data.
 #                   ${FILENAME}.mimetype  The mime type of the attachment.
 #
-# After the test run has completed, the /lava/results directory is pulled over
-# to the host and turned into a bundle for submission to the dashboard.
+# After the test run has completed, the /lava-$(DEVICE_HOSTNAME)/results
+# directory is pulled over to the host and turned into a bundle for submission
+# to the dashboard.
 
 from datetime import datetime
 from glob import glob
@@ -910,7 +917,7 @@ class cmd_lava_test_shell(BaseAction):
         results_part = target.deployment_data['lava_test_results_part_attr']
         results_part = getattr(target.config, results_part)
 
-        with target.file_system(results_part, '/lava') as d:
+        with target.file_system(results_part, target.lava_test_results_dir) as d:
             self._mk_runner_dirs(d)
             self._copy_runner(d, target)
             if 'target_group' in self.context.test_data.metadata:
@@ -957,7 +964,7 @@ class cmd_lava_test_shell(BaseAction):
         filesystem_access_failure = True
 
         try:
-            with target.file_system(results_part, '/lava') as d:
+            with target.file_system(results_part, target.lava_test_results_dir) as d:
                 filesystem_access_failure = False
                 err_log = os.path.join(d, 'parse_err.log')
                 results_dir = os.path.join(d, 'results')
