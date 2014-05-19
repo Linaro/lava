@@ -49,9 +49,14 @@ def image_report_list(request):
             # images that have not been migrated to filters for now.
             if image.filter:
                 filter_data = image.filter.as_data()
+                is_accessible = True
+                for stream in image.filter.bundle_streams.all():
+                    if not stream.is_accessible_by(request.user):
+                        is_accessible = False
+                        break
                 image_data = {
                     'name': image.name,
-                    'bundle_count': evaluate_filter(request.user, filter_data).count(),
+                    'is_accessible': is_accessible,
                     'link': image.name,
                 }
                 images_data.append(image_data)
