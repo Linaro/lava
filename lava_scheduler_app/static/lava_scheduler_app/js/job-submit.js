@@ -76,7 +76,6 @@ validate_job_data = function(data) {
            }, "json");
 }
 
-
 valid_json_css = function(success) {
     // Updates the css of the json validation container with appropriate msg.
     if (success) {

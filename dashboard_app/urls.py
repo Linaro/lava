@@ -39,6 +39,7 @@ urlpatterns = patterns(
     url(r'^filters/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+compare/(?P<tag1>[a-zA-Z0-9-_: .]+)/(?P<tag2>[a-zA-Z0-9-_: .]+)$', 'filters.views.compare_matches'),
     url(r'^streams/$', 'bundle_stream_list', name="lava.dashboard.bundle.list"),
     url(r'^streams/mybundlestreams$', 'mybundlestreams'),
+    url(r'^streams/bundlestreams-json$', 'bundlestreams_json'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/$', 'bundle_list'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/+export$', 'bundle_list_export'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/$', 'bundle_detail'),
