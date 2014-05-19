@@ -44,13 +44,13 @@ class BaseDriver(object):
         self._default_boot_cmds = 'boot_cmds_ramdisk'
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
-                             bootloader, firmware, rootfstype, bootloadertype,
-                             target_type, scratch_dir):
+                             bootloader, firmware, bl1, bl2, bl31, rootfstype,
+                             bootloadertype, target_type, scratch_dir):
         """
         """
         raise NotImplementedError("deploy_linaro_kernel")
 
-    def connect(self):
+    def connect(self, boot_cmds):
         """
         """
         raise NotImplementedError("connect")
@@ -68,8 +68,8 @@ class stmc(BaseDriver):
         self._booted = False
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
-                             bootloader, firmware, rootfstype, bootloadertype,
-                             target_type, scratch_dir):
+                             bootloader, firmware, bl1, bl2, bl31, rootfstype,
+                             bootloadertype, target_type, scratch_dir):
         # At a minimum we must have a kernel
         if kernel is None:
             raise CriticalError("No kernel image to boot")
