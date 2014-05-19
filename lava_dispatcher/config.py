@@ -112,6 +112,7 @@ class DeviceSchema(schema.Schema):
 
     tester_rc_cmd = schema.StringOption(null=True)
     lava_test_dir = schema.StringOption(null=True)
+    lava_test_results_dir = schema.StringOption(null=True)
     val = schema.StringOption()
     sdcard_mountpoint_path = schema.StringOption(default="/storage/sdcard0")
     possible_partitions_files = schema.ListOption(default=["init.partitions.rc",

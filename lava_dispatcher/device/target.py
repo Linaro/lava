@@ -661,7 +661,17 @@ class Target(object):
 
     @property
     def lava_test_dir(self):
-        return self._get_from_config_or_deployment_data('lava_test_dir')
+        lava_test_dir = self._get_from_config_or_deployment_data('lava_test_dir')
+        if re.match('.*%s', lava_test_dir):
+            lava_test_dir = lava_test_dir % self.config.hostname
+        return lava_test_dir
+
+    @property
+    def lava_test_results_dir(self):
+        lava_test_results_dir = self._get_from_config_or_deployment_data('lava_test_results_dir')
+        if re.match('.*%s', lava_test_results_dir):
+            lava_test_results_dir = lava_test_results_dir % self.config.hostname
+        return lava_test_results_dir
 
     def _get_from_config_or_deployment_data(self, key):
         value = getattr(self.config, key.lower())
