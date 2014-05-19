@@ -179,6 +179,9 @@ class FastModelTarget(Target):
                                    self.config.simulator_uefi_files)
 
         # These are common to both AXF and UEFI
+        if self._sd_image is None:
+            raise RuntimeError('No IMAGE found, %r' %
+                               self.config.simulator_kernel_files)
         # Kernel is needed only for b.L models
         if self._kernel is None and self.config.simulator_kernel_files:
             raise RuntimeError('No KERNEL found, %r' %
