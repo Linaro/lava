@@ -54,13 +54,12 @@ To view the full job list click <a href="{{ list_url }}">here</a>.
 </div>
 {% endif %}
 
-<p>Paste your job definition JSON here. Alternatively, you can paste a URL to your job definition file:</p>
+<p>You can use the <a href="{% url lava.scheduler.job.submit_wizard %}">Job Submission Wizard GUI</a> for submitting jobs.</p>
+<p>Otherwise, paste your job definition JSON here. Alternatively, you can paste a URL to your job definition file:</p>
 
 <form action="" method="post">
   {% csrf_token %}
-  <textarea id="json-input" name="json-input" placeholder="Enter your job definition or link to a job definition here.">
-{% if json_input %}{{ json_input }}{% endif %}
-  </textarea>
+  <textarea id="json-input" name="json-input" placeholder="Enter your job definition or link to a job definition here.">{{ json_input }}</textarea>
   <div id="json-valid-container">
   </div>
   <div id="submit-container">

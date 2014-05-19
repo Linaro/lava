@@ -207,6 +207,28 @@ def bundle_stream_list(request):
     )
 
 
+def bundlestreams_json(request):
+
+    term = request.GET['term']
+    streams = []
+    if request.user.is_superuser:
+        result = BundleStream.objects.filter(
+            pathname__contains=term).order_by('pathname')
+    else:
+        result = BundleStream.objects.accessible_by_principal(
+            request.user).filter(pathname__contains=term).order_by('pathname')
+
+    for stream in result:
+        streams.append(
+            {
+                "id": stream.id,
+                "name": stream.pathname,
+                "label": stream.pathname
+            }
+        )
+    return HttpResponse(json.dumps(streams), content_type='application/json')
+
+
 class BundleView(BundleStreamView):
 
     def __init__(self, request, bundle_stream, **kwargs):
