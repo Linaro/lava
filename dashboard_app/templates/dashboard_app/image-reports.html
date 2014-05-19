@@ -8,11 +8,10 @@
 <ul>
   {% for image in imageset.images %}
   <li>
-    {% if image.bundle_count %}
+    {% if image.is_accessible %}
     <a href="{{ image.link }}">{{ image.name }}</a>
-    ({{ image.bundle_count }} results)
     {% else %}
-    {{ image.name }} ({{ image.bundle_count }} results)
+    {{ image.name }} (Not enough permissions)
     {% endif %}
   </li>
   {% endfor %}
