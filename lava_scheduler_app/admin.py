@@ -118,10 +118,14 @@ class DeviceTypeAdmin(admin.ModelAdmin):
     list_display = ('name', 'has_health_check', 'display', 'owners_only')
 
 
+class WorkerAdmin(admin.ModelAdmin):
+    list_display = ('hostname', 'rpc2_url', 'ip_address', 'is_master', 'last_heartbeat')
+
+
 admin.site.register(Device, DeviceAdmin)
 admin.site.register(DeviceStateTransition, DeviceStateTransitionAdmin)
 admin.site.register(DeviceType, DeviceTypeAdmin)
 admin.site.register(TestJob, TestJobAdmin)
 admin.site.register(Tag)
 admin.site.register(JobFailureTag)
-admin.site.register(Worker)
+admin.site.register(Worker, WorkerAdmin)
