@@ -53,8 +53,21 @@ health_unknown.short_description = "set health_status to unknown"
 class DeviceAdmin(admin.ModelAdmin):
     actions = [online_action, online_action_without_health_check,
                offline_action, health_unknown, retire_action]
-    list_filter = ['device_type', 'status', 'worker_host']
+    list_filter = ('device_type', 'status', 'health_status', 'worker_host')
     raw_id_fields = ['current_job', 'last_health_report_job']
+    fieldsets = (
+        ('Properties', {
+            'fields': ('device_type', 'hostname', 'worker_host', 'device_version')}),
+        ('Device owner', {
+            'fields': ('user', 'group', 'physical_owner', 'physical_group', 'is_public')}),
+        ('Advanced properties', {
+            'fields': ('description', 'tags')}),
+        ('Status', {
+            'fields': ('status', 'health_status', 'last_health_report_job', 'current_job')}),
+    )
+    list_display = ('hostname', 'device_type', 'worker_host', 'status', 'health_status', 'is_public')
+    search_fields = ('hostname', 'device_type__name')
+
 
 
 class TestJobAdmin(admin.ModelAdmin):
