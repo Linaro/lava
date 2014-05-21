@@ -96,6 +96,4 @@ urlpatterns = patterns(
     url(r'^api/unlink-bug-and-testrun', 'unlink_bug_and_testrun'),
     url(r'^api/link-bug-to-testresult', 'link_bug_to_testresult'),
     url(r'^api/unlink-bug-and-testresult', 'unlink_bug_and_testresult'),
-    url(r'^test-definition/add_test_definition', 'add_test_definition'),
-    url(r'^test-definition/$', 'test_definition'),
 )
