@@ -76,10 +76,17 @@ class DeviceStateTransitionAdmin(admin.ModelAdmin):
             'fields': ('created_by', 'job', 'message')})
     )
 
+class DeviceTypeAdmin(admin.ModelAdmin):
+    def has_health_check(self, obj):
+        return obj.health_check_job != ""
+    has_health_check.boolean = True
+
+    list_display = ('name', 'has_health_check', 'display', 'owners_only')
+
 
 admin.site.register(Device, DeviceAdmin)
 admin.site.register(DeviceStateTransition, DeviceStateTransitionAdmin)
-admin.site.register(DeviceType)
+admin.site.register(DeviceType, DeviceTypeAdmin)
 admin.site.register(TestJob, TestJobAdmin)
 admin.site.register(Tag)
 admin.site.register(JobFailureTag)
