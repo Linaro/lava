@@ -20,8 +20,8 @@ can be used to spread the load. For example, a single LAVA server may
 struggle to cope with multiple high-IO process while dispatching images
 to a :term:`DUT`
 
-Configuring Master server for remote workers
---------------------------------------------
+Configuring remote workers to work with the master
+--------------------------------------------------
 
 When installing LAVA on a Debian based distribution, ``debconf`` will
 ask if this installation is a single instance or a remote instance. Other
@@ -79,6 +79,9 @@ directory over sshfs. On Debian-based distributions, this script
 remounts the directory each time the ``lava-server`` daemon is
 restarted.
 
+This mount operation will initially fail until the key is authenticated
+with the master.
+
 SSH key setup
 ^^^^^^^^^^^^^
 
@@ -89,7 +92,7 @@ mount operation to work::
 
  sudo -u lavaserver cat /var/lib/lava-server/home/.ssh/id_rsa.pub
 
-Now enter this public key into the file on the server::
+Now connect to the master and enter this public key into the file::
 
  sudo -u lavaserver vim /var/lib/lava-server/home/.ssh/authorized_keys
 
@@ -153,8 +156,12 @@ interfaces available on the master. For remote workers, at least
 remote workers is required.
 
 Also adjust the host allowed to connect to this database, so that the
-``LAVA_DB_USER`` has access only using the ``LAVA_DB_PASSWORD`` (which,
-in turn, is not sent in clear text)::
+``LAVA_DB_USER`` has access to the ``LAVA_DB_NAME`` database only by
+using the ``LAVA_DB_PASSWORD`` (which, in turn, is not sent in clear
+text)::
+
+For a fresh install (no previous database records), the ``LAVA_DB_USER``
+and ``LAVA_DB_NAME`` would be::
 
  host    lavaserver    lavaserver    0.0.0.0/0    md5
 

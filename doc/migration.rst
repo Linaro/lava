@@ -506,7 +506,15 @@ are all on the master.
    The other details which will be needed during installation are available
    in the ``instance.conf`` of the original worker. Enter the details
    when prompted. See :ref:`distributed_deployment`.
-  
+
+#. Enable apache on the remote worker.
+
+   This is used to serve modified files to the devices::
+
+    sudo a2dissite 000-default
+    sudo a2enstite lava-server
+    sudo service apache2 restart
+
 #. Restart daemons affected by the installation::
 
     sudo service tftpd-hpa restart
@@ -655,11 +663,24 @@ packages.
    it affect the database name or database user. The instance name
    becomes a simple label with the packaging upgrade.
 
+#. Enable the lava-server apache configuration.
+
+    sudo a2dissite 000-default
+    sudo a2enstite lava-server
+    sudo service apache2 restart
+
 #. Restart daemons affected by the installation::
 
     sudo service tftpd-hpa restart
 
 #. Ensure all devices remain offline.
+
+#. Configure the master to work with a remote worker.
+
+See :ref:`remote_databases` and remember to use the ``LAVA_DB_USER``
+and ``LAVA_DB_NAME`` from the ``instance.conf`` on the master. e.g.::
+
+ host    lava-playground    lava-playground    0.0.0.0/0    md5
 
 #. Pause to :ref:`remote_worker_debian`.
 
@@ -759,6 +780,14 @@ packages.
    this no longer affects where files are actually installed, nor does
    it affect the database name or database user. The instance name
    becomes a simple label with the packaging upgrade.
+
+#. Enable apache on the remote worker.
+
+   This is used to serve modified files to the devices::
+
+    sudo a2dissite 000-default
+    sudo a2enstite lava-server
+    sudo service apache2 restart
 
 #. Restart daemons affected by the installation::
 
