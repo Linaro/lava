@@ -63,7 +63,18 @@ class TestJobAdmin(admin.ModelAdmin):
 
 
 class DeviceStateTransitionAdmin(admin.ModelAdmin):
+    def device_hostname(self, obj):
+        return obj.device.hostname
+
     raw_id_fields = ['job']
+    list_filter = ('device__hostname', )
+    list_display = ('device_hostname', 'old_state', 'new_state', 'created_on')
+    fieldsets = (
+        ('State', {
+            'fields': ('device', 'old_state', 'new_state')}),
+        ('Metadata', {
+            'fields': ('created_by', 'job', 'message')})
+    )
 
 
 admin.site.register(Device, DeviceAdmin)
