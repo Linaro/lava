@@ -368,6 +368,10 @@ Master instance upgrade
    it affect the database name or database user. The instance name
    becomes a simple label with the packaging upgrade.
 
+#. Restart daemons affected by the installation::
+
+    sudo service tftpd-hpa restart
+
 #. Pause while completing the :ref:`remote_worker_upgrade`, if relevant.
 
 #. Run forced healthchecks on devices.
@@ -490,8 +494,8 @@ are all on the master.
     sudo apt update
     sudo apt install lava-server
 
-    Ensure you specify that this is not a single master instance when
-    prompted by debconf.
+   Ensure you specify that this is not a single master instance when
+   prompted by debconf.
 
    The install will prompt for the instance name, you can specify the
    same instance name as the original lava-deployment-tool instance but
@@ -502,6 +506,10 @@ are all on the master.
    The other details which will be needed during installation are available
    in the ``instance.conf`` of the original worker. Enter the details
    when prompted. See :ref:`distributed_deployment`.
+  
+#. Restart daemons affected by the installation::
+
+    sudo service tftpd-hpa restart
 
 #. Return to :ref:`master_instance_upgrade`.
 
@@ -647,6 +655,10 @@ packages.
    it affect the database name or database user. The instance name
    becomes a simple label with the packaging upgrade.
 
+#. Restart daemons affected by the installation::
+
+    sudo service tftpd-hpa restart
+
 #. Ensure all devices remain offline.
 
 #. Pause to :ref:`remote_worker_debian`.
@@ -747,5 +759,9 @@ packages.
    this no longer affects where files are actually installed, nor does
    it affect the database name or database user. The instance name
    becomes a simple label with the packaging upgrade.
+
+#. Restart daemons affected by the installation::
+
+    sudo service tftpd-hpa restart
 
 #. Return to :ref:`install_lava_master_debian`.
