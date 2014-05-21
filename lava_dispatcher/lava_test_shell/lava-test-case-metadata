@@ -1,0 +1,25 @@
+#NOTE the lava_test_shell_action fills in the proper interpreter path
+# above during target deployment
+
+usage () {
+    echo "Usage: lava-test-case-metadata METADATA_NAME --shell cmds ..."
+    echo ""
+    echo "Run the command specified and capture the metadata           "
+}
+
+METADATA_NAME="$1"
+shift
+if [ -z "$METADATA_NAME" ]; then
+    usage
+    exit 1
+fi
+if [ "$1" = "--shell" ]; then
+    shift
+    echo "<LAVA_SIGNAL_START_METADATA_CAPTURE $METADATA_NAME>"
+    read
+    echo $METADATA_NAME: \"`$*`\" >> $LAVA_RESULT_DIR/extra_metadata
+    echo "<LAVA_SIGNAL_END_METADATA_CAPTURE $METADATA_NAME>"
+    read
+fi
+
+exit 0
