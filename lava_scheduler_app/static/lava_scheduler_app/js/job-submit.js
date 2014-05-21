@@ -25,7 +25,7 @@ validate_input = function(json_input) {
         if (is_url($("#json-input").val().split("\n"))) {
             load_url();
         } else {
-            $("#json-input").val(JSON.stringify(JSON.parse(json_input), null, 4));
+            $("#json-input").val(js_beautify(json_input));
             validate_job_data(json_input);
         }
     }
@@ -44,7 +44,7 @@ load_url = function() {
             success: function(data) {
                 try {
                     $.parseJSON(data);
-                    $("#json-input").val(JSON.stringify(JSON.parse(data), null, 4));
+                    $("#json-input").val(js_beautify(data));
                     validate_job_data(data);
                 } catch (e) {
                     $("#json-valid-container").html("Invalid JSON: " + data);
