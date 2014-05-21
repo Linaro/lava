@@ -71,8 +71,29 @@ class DeviceAdmin(admin.ModelAdmin):
 
 
 class TestJobAdmin(admin.ModelAdmin):
-    list_filter = ['status']
+    def requested_device_hostname(self, obj):
+        return '' if obj.requested_device is None else obj.requested_device.hostname
+    requested_device_hostname.short_description = 'Requested device'
+
+    def requested_device_type_name(self, obj):
+        return '' if obj.requested_device_type is None else obj.requested_device_type
+    requested_device_type_name.short_description = 'Request device type'
+
+    list_filter = ('status', 'requested_device_type', 'requested_device__hostname')
     raw_id_fields = ['_results_bundle']
+    fieldsets = (
+        ('Owner', {
+            'fields': ('user', 'group', 'submitter', 'submit_token', 'is_public')}),
+        ('Request', {
+            'fields': ('requested_device', 'requested_device_type', 'priority', 'health_check')}),
+        ('Advanced properties', {
+            'fields': ('description', 'tags', 'sub_id', 'target_group', 'vm_group')}),
+        ('Current status', {
+            'fields': ('actual_device', 'status', 'log_file')}),
+        ('Results & Failures', {
+            'fields': ('failure_tags', 'failure_comment', '_results_link', '_results_bundle')}),
+    )
+    list_display = ('status', 'submitter', 'requested_device_type_name', 'requested_device_hostname', 'health_check', 'submit_time', 'start_time', 'end_time')
 
 
 class DeviceStateTransitionAdmin(admin.ModelAdmin):
