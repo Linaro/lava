@@ -63,14 +63,32 @@
 {% endif %}
 </div>
 
-<table id="{{ table.prefix|default:"table" }}" class="table table-striped">
+<table id="{{ table.prefix|default:"table" }}" class="table table-hover">
+    <colgroup>
+    {% for column in table.columns %}
+      <col{% if column.is_ordered %} class="sorted"{% endif %}>
+    {% endfor %}
+    </colgroup>
     {% block table.thead %}
     <thead>
         <tr>
         {% for column in table.columns %}
             {% if column.orderable %}
-            <th {{ column.attrs.th.as_html }}><a
-                    href="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}#{{ table.prefix|default:"table" }}">{{ column.header }}</a></th>
+            <th {{ column.attrs.th.as_html }}>
+              <a href="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}#{{ table.prefix|default:"table" }}">{{ column.header }}
+                <small>
+                {% if column.is_ordered %}
+                  {% if column.order_by_alias.0 == "-" %}
+                  <span class="glyphicon glyphicon-sort-by-attributes-alt"></span>
+                  {% else %}
+                  <span class="glyphicon glyphicon-sort-by-attributes"></span>
+                  {% endif %}
+                {% else %}
+                  <span class="glyphicon glyphicon-sort"></span>
+                {% endif %}
+                </small>
+              </a>
+            </th>
             {% else %}
             <th {{ column.attrs.th.as_html }}>{{ column.header }}</th>
             {% endif %}
