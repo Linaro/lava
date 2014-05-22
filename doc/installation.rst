@@ -188,15 +188,55 @@ illustrates this:
 .. image:: ./images/lava-worker-rpc2-url.png
 
 A note on wsgi buffers
-----------------------
+======================
 
 When submitting a large amount of data to the django application,
 it is possible to get an HTTP 500 internal server error. This problem
 can be fixed by appending ``buffer-size = 65535`` to
 ``/etc/lava-server/uwsgi.ini``
 
+Automated installation
+======================
+
+Using debconf pre-seeding
+-------------------------
+
+debconf can be easily automated with a text file which contains the
+answers for debconf questions - just keep the file up to date if the
+questions change. For example, to preseed a worker install::
+
+ # cat preseed.txt
+ lava-server   lava-worker/db-port string 5432
+ lava-server   lava-worker/db-user string lava-server
+ lava-server   lava-server/master boolean false
+ lava-server   lava-worker/master-instance-name string default
+ lava-server   lava-worker/db-server string snagglepuss.codehelp
+ lava-server   lava-worker/db-pass string werewolves
+ lava-server   lava-worker/db-name string lava-server
+
+Insert the seeds into the debconf database::
+
+ debconf-set-selections < preseed.txt
+
+::
+
+ # debconf-show lava-server
+ * lava-worker/master-instance-name: default
+ * lava-server/master: false
+ * lava-worker/db-pass: werewolves
+ * lava-worker/db-port: 5432
+ * lava-worker/db-name: lava-server
+ * lava-worker/db-server: snagglepuss.codehelp
+ * lava-worker/db-user: lava-server
+
+The strings available for seeding are in the Debian packaging for the
+relevant package, in the ``debian/<PACKAGE>.templates`` file.
+
+* http://www.debian-administration.org/articles/394
+* http://www.fifi.org/doc/debconf-doc/tutorial.html
+
 User authentication
-^^^^^^^^^^^^^^^^^^^
+===================
 
 LAVA frontend is developed using Django_ web application framework
 and user authentication and authorization is based on standard `Django
@@ -208,7 +248,7 @@ tested and supported authentication methods for LAVA.
 .. _`Django auth subsystems`: https://docs.djangoproject.com/en/dev/topics/auth/
 
 OpenID + local user database
-=============================
+----------------------------
 
 LAVA server by default is preconfigured to authenticate using
 Google+ OpenID service. However, this service is already deprecated and
