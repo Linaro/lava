@@ -637,8 +637,10 @@ def populate_capabilities(dt):
             if device['attributes']['cpu_type'] == '?':
                 if 'cpu type' in device['attributes']:
                     model = device['attributes']['cpu type']
-                else:
+                elif 'model name' in device['attributes']:
                     model = device['attributes']['model name']
+                else:
+                    model = "?"
             else:
                 model = device['attributes']['cpu_type']
             if 'cpu_part' in device['attributes']:
