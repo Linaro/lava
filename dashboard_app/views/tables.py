@@ -186,8 +186,7 @@ class TestTable(LavaTable):
         self.length = 25
 
     relative_index = tables.Column(
-        verbose_name="#",
-        attrs={"th": {"style": "width: 1%"}},
+        verbose_name="id",
         default=mark_safe("<em>Not specified</em>"))
 
     test_case = tables.Column()
@@ -217,8 +216,8 @@ class TestTable(LavaTable):
         <span data-uuid="{{ record.test_run.analyzer_assigned_uuid }}"
          data-relative_index="{{ record.relative_index }}"
          data-record="{{ record.test_case.test_case_id }}">
-        <p style="float: right"><a href="#" class="add-bug-link">
-        [{{ record.bug_links.all|length }}]</a></p><span class="bug-links" style="display: none">
+        <a href="#" class="add-bug-link pull-right">
+        [{{ record.bug_links.all|length }}]</a><span class="bug-links" style="display: none">
         {% for b in record.bug_links.all %} <li class="bug-link">{{ b }}</li> {% endfor %}</span></span>''')
 
     bug_links.orderable = False
