@@ -181,7 +181,9 @@ install_database()
     lava-server manage migrate --noinput
     # superuser - password must be changed
     if ! su postgres -c "psql \"-c SELECT usename FROM pg_user WHERE usename='$LAVA_SYS_USER'\"" | grep "$LAVA_SYS_USER"; then
-        lava-server manage createsuperuser --noinput --username=$LAVA_SYS_USER --email=$LAVA_SYS_USER@lava.invalid || true
+        if ! su postgres -c "psql $LAVA_DB_NAME \"-c SELECT username FROM auth_user WHERE username='$LAVA_SYS_USER'\"" | grep "$LAVA_SYS_USER"; then
+            lava-server manage createsuperuser --noinput --username=$LAVA_SYS_USER --email=$LAVA_SYS_USER@lava.invalid || true
+        fi
     fi
 }
 
