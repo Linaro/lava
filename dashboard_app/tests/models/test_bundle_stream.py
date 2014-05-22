@@ -216,4 +216,3 @@ class BundleStreamPermissionTests(TestCase):
             IntegrityError,
             BundleStream.create_from_pathname,
             "/anonymous/name/", user=None)
-

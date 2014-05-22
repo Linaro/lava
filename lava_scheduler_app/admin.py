@@ -69,7 +69,6 @@ class DeviceAdmin(admin.ModelAdmin):
     search_fields = ('hostname', 'device_type__name')
 
 
-
 class TestJobAdmin(admin.ModelAdmin):
     def requested_device_hostname(self, obj):
         return '' if obj.requested_device is None else obj.requested_device.hostname
@@ -109,6 +108,7 @@ class DeviceStateTransitionAdmin(admin.ModelAdmin):
         ('Metadata', {
             'fields': ('created_by', 'job', 'message')})
     )
+
 
 class DeviceTypeAdmin(admin.ModelAdmin):
     def has_health_check(self, obj):
