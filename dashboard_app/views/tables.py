@@ -201,7 +201,7 @@ class TestTable(LavaTable):
                alt="This result has {{ record.attachments__count }} attachments"
                title="This result has {{ record.attachments__count }} attachments"
                /></a>
-        {% endif %}
+        {% endif %}</a>
         ''')
 
     measurement = tables.TemplateColumn(
