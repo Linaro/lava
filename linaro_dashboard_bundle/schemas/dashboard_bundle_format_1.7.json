@@ -190,7 +190,6 @@
                         "description": "Container for test definition metadata defined by the test and their values during this particular run",
                         "type": "object",
                         "optional": true,
-                        "additionalProperties": false,
                         "properties": {
                             "description": {
                                 "description": "Description about the test.",
