@@ -131,6 +131,7 @@ class BundleStreamAdmin(admin.ModelAdmin):
 class SoftwarePackageAdmin(admin.ModelAdmin):
     list_display = ('name', 'version')
     search_fields = ('name', 'version')
+    ordering = ('name',)
 
 
 class SoftwareSourceAdmin(admin.ModelAdmin):
@@ -152,10 +153,11 @@ class HardwareDeviceAdmin(admin.ModelAdmin):
 class TestCaseAdmin(admin.ModelAdmin):
     list_display = ('test_case_id', 'test',)
     list_filter = ('test',)
+    ordering = ('test_case_id',)
 
 
 class TestAdmin(admin.ModelAdmin):
-    pass
+    ordering = ('test_id',)
 
 
 class TestResultAdmin(admin.ModelAdmin):
@@ -207,6 +209,7 @@ class TestRunFilterAdmin(admin.ModelAdmin):
 
 class TestDefinitionAdmin(admin.ModelAdmin):
     list_display = ('name', 'version')
+    ordering = ('name',)
 
 admin.site.register(Attachment)
 admin.site.register(Bundle, BundleAdmin)
