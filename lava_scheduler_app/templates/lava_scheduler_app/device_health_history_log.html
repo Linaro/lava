@@ -1,0 +1,14 @@
+{% extends "lava_scheduler_app/_content.html" %}
+
+{% load django_tables2 %}
+{% load i18n %}
+
+{% block content %}
+
+<h2>Health History Log for {{ device.hostname }}</h2>
+
+<div id="device_health_history_log">
+{% render_table healthhistory_table %}
+</div>
+
+{% endblock %}

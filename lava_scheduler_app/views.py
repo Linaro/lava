@@ -100,6 +100,7 @@ from lava_scheduler_app.tables import (
     OverviewJobsTable,
     NoWorkerDeviceTable,
     QueueJobsTable,
+    DeviceTypeTransitionTable,
 )
 
 # The only functions which need to go in this file are those directly
@@ -504,6 +505,29 @@ def mydevice_list(request):
         RequestContext(request))
 
 
+@BreadCrumb("My Device Type Health History", parent=index)
+def mydevice_type_health_history_log(request):
+    prefix = "mydthealthhistory_"
+    mydthhistory_data = MyDTHealthHistoryView(request,
+                                              model=DeviceStateTransition,
+                                              table_class=DeviceTypeTransitionTable)
+    mydthhistory_table = DeviceTypeTransitionTable(
+        mydthhistory_data.get_table_data(prefix),
+        prefix=prefix,
+    )
+    config = RequestConfig(request,
+                           paginate={"per_page": mydthhistory_table.length})
+    config.configure(mydthhistory_table)
+
+    return render_to_response(
+        "lava_scheduler_app/mydevice_type_health_history_log.html",
+        {
+            'mydthealthhistory_table': mydthhistory_table,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(mydevice_type_health_history_log),
+        },
+        RequestContext(request))
+
+
 def get_restricted_job(user, pk):
     """Returns JOB which is a TestJob object after checking for USER
     accessibility to the object.
@@ -832,6 +856,31 @@ def device_type_reports(request, pk):
             'job_day_report': job_day_report,
             'long_running': long_running,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_reports, pk=pk),
+        },
+        RequestContext(request))
+
+
+@BreadCrumb("{pk} device type health history", parent=device_type_detail, needs=['pk'])
+def device_type_health_history_log(request, pk):
+    device_type = get_object_or_404(DeviceType, pk=pk)
+    prefix = "dthealthhistory_"
+    dthhistory_data = DTHealthHistoryView(request, device_type,
+                                          model=DeviceStateTransition,
+                                          table_class=DeviceTypeTransitionTable)
+    dthhistory_table = DeviceTypeTransitionTable(
+        dthhistory_data.get_table_data(prefix),
+        prefix=prefix,
+    )
+    config = RequestConfig(request,
+                           paginate={"per_page": dthhistory_table.length})
+    config.configure(dthhistory_table)
+
+    return render_to_response(
+        "lava_scheduler_app/device_type_health_history_log.html",
+        {
+            'device_type': device_type,
+            'dthealthhistory_table': dthhistory_table,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_health_history_log, pk=pk),
         },
         RequestContext(request))
 
@@ -1631,6 +1680,65 @@ class TransitionView(JobTableView):
         )
 
 
+class DeviceHealthHistoryView(JobTableView):
+
+    def __init__(self, request, device, **kwargs):
+        super(DeviceHealthHistoryView, self).__init__(request, **kwargs)
+        self.device = device
+
+    def get_queryset(self):
+        states = [Device.OFFLINE, Device.OFFLINING, Device.RETIRED]
+
+        return DeviceStateTransition.objects.select_related(
+            'created_by'
+        ).filter(
+            (Q(old_state__in=states) | Q(new_state__in=states)),
+            device=self.device
+        ).order_by(
+            '-created_on'
+        )
+
+
+class DTHealthHistoryView(JobTableView):
+
+    def __init__(self, request, device_type, **kwargs):
+        super(DTHealthHistoryView, self).__init__(request, **kwargs)
+        self.device_type = device_type
+
+    def get_queryset(self):
+        states = [Device.OFFLINE, Device.OFFLINING, Device.RETIRED]
+
+        return DeviceStateTransition.objects.select_related(
+            'device__hostname', 'created_by'
+        ).filter(
+            (Q(old_state__in=states) | Q(new_state__in=states)),
+            device__device_type=self.device_type
+        ).order_by(
+            'device__hostname',
+            '-created_on'
+        )
+
+
+class MyDTHealthHistoryView(JobTableView):
+
+    def __init__(self, request, **kwargs):
+        super(MyDTHealthHistoryView, self).__init__(request, **kwargs)
+
+    def get_queryset(self):
+        states = [Device.OFFLINE, Device.OFFLINING, Device.RETIRED]
+
+        return DeviceStateTransition.objects.select_related(
+            'device__hostname', 'created_by'
+        ).filter(
+            (Q(old_state__in=states) | Q(new_state__in=states)),
+            created_by=self.request.user
+        ).order_by(
+            'device__device_type',
+            'device__hostname',
+            '-created_on'
+        )
+
+
 @BreadCrumb("Device {pk}", parent=index, needs=['pk'])
 def device_detail(request, pk):
     device = get_object_or_404(Device, pk=pk)
@@ -1842,6 +1950,31 @@ def device_derestrict_device(request, pk):
     else:
         return HttpResponseForbidden(
             "you cannot derestrict submissions to this device", content_type="text/plain")
+
+
+@BreadCrumb("{pk} device health history", parent=device_detail, needs=['pk'])
+def device_health_history_log(request, pk):
+    device = get_object_or_404(Device, pk=pk)
+    prefix = "healthhistory_"
+    hhistory_data = DeviceHealthHistoryView(request, device,
+                                            model=DeviceStateTransition,
+                                            table_class=DeviceTransitionTable)
+    hhistory_table = DeviceTransitionTable(
+        hhistory_data.get_table_data(prefix),
+        prefix=prefix,
+    )
+    config = RequestConfig(request,
+                           paginate={"per_page": hhistory_table.length})
+    config.configure(hhistory_table)
+
+    return render_to_response(
+        "lava_scheduler_app/device_health_history_log.html",
+        {
+            'device': device,
+            'healthhistory_table': hhistory_table,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(device_health_history_log, pk=pk),
+        },
+        RequestContext(request))
 
 
 @BreadCrumb("Worker: {pk}", parent=index, needs=['pk'])

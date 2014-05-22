@@ -147,4 +147,13 @@ urlpatterns = patterns(
     url(r'^queue$',
         'queue',
         name='lava.scheduler.queue'),
+    url(r'^devicehealthhistory/device/(?P<pk>[-_a-zA-Z0-9.]+)',
+        'device_health_history_log',
+        name='lava.scheduler.device_health_history_log'),
+    url(r'^dthealthhistory/device_type/(?P<pk>[-_a-zA-Z0-9.]+)',
+        'device_type_health_history_log',
+        name='lava.scheduler.device_type_health_history_log'),
+    url(r'^mydevicetypehealthhistory$',
+        'mydevice_type_health_history_log',
+        name='lava.scheduler.mydevice_type_health_history_log'),
 )

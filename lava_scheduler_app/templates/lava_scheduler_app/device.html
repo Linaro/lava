@@ -10,7 +10,9 @@
 {% block content_columns %}
 
 <h3>Reports</h3>
-<a href="{% url lava.scheduler.device_report device.pk %}">Health check and job failure report</a>
+<a href="{% url lava.scheduler.device_report device.pk %}">Health check and job failure report</a><br/>
+<a href="{% url lava.scheduler.device_health_history_log device.pk %}">Health
+  History Log</a>
 
 <h3>Recent jobs on {{ device.hostname }}</h3>
 <div>
