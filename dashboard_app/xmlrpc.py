@@ -939,51 +939,6 @@ class DashboardAPI(ExposedAPI):
         matches = matches[:100]
         return [match.serializable() for match in matches]
 
-    @xml_rpc_signature('str')
-    def get_test_definitions(self, os=None, device=None, environment=None):
-        """
-        Name
-        ----
-        `get_test_definitions` ([`os`[, `device`[, `environment`]]])
-
-        Description
-        -----------
-        Get the name and url of all the test definitions.
-
-        Arguments
-        ---------
-        `os`: string
-            The type of operating system the retrieved test definitions should
-            apply to.
-
-        `device`: string
-            The type of device the retrieved test definitions should apply to.
-
-        `environment`: string
-            The type of test environment the retrieved test definitions should
-            apply to.
-
-        Return value
-        ------------
-        This function returns an XML-RPC structure of test definition name and
-        URL where the test definition exists.
-        """
-        testdefs = {}
-        tds = TestDefinition.objects.all()
-
-        if os:
-            tds = tds.filter(target_os__contains=os)
-
-        if device:
-            tds = tds.filter(target_dev_types__contains=device)
-
-        if environment:
-            tds = tds.filter(environment__contains=environment)
-
-        for testdef in tds:
-                testdefs[testdef.name] = testdef.url
-        return testdefs
-
 # Mapper used by the legacy URL
 legacy_mapper = Mapper()
 legacy_mapper.register_introspection_methods()
