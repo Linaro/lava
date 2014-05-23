@@ -153,7 +153,7 @@ class NetworkCommandRunner(CommandRunner):
                "awk -F: '{split($2,a,\" \"); print \"<\" a[1] \">\"}'" %
                self._client.context.config.lava_server_ip)
         self.run(
-            cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=60)
+            cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=300)
         if self.match_id != 0:
             msg = "Unable to determine target image IP address"
             logging.error(msg)
@@ -532,18 +532,16 @@ class LavaClient(object):
             logging.info("System is in test image now")
             logging.debug("mount information")
             self.proc.sendline('mount')
-            prompt = self.target_device.tester_ps1_pattern
-            self.proc.expect([prompt, pexpect.TIMEOUT], timeout=10)
+            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
             logging.debug("root directory information")
             self.proc.sendline('ls -l /')
-            prompt = self.target_device.tester_ps1_pattern
-            self.proc.expect([prompt, pexpect.TIMEOUT], timeout=10)
+            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
             logging.debug("free space information")
-            self.proc.sendline('df -hl /')
+            self.proc.sendline('df -h')
+            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
             logging.debug("IP addr information")
             self.proc.sendline('ip addr')
-            prompt = self.target_device.tester_ps1_pattern
-            self.proc.expect([prompt, pexpect.TIMEOUT], timeout=10)
+            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
             in_linaro_image = True
             logging.debug("Checking for vm-group host")
 
