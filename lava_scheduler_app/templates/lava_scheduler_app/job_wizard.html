@@ -37,12 +37,11 @@
  </fieldset>
 
  <h1>Boot image</h1>
-
  <fieldset>
-   <legend style="margin-bottom: 0;">Select boot image</legend>
+   <legend style="margin-bottom: 0;">Select boot image parameter options</legend>
 
    <div class="col-xs-4" style="clear: both;">
-     <label for="boot_type" class="control-label">Image type</label>
+     <label for="boot_type" class="control-label">Image type</label> (Only options which are required or optional for each image type are supported.)
      <select id="boot_type" name="boot_type" class="form-control">
        <option value="linaro_image">Linaro Image</option>
        <option value="linaro_hwpack">Linaro hwpack+rootfs</option>
@@ -52,53 +51,53 @@
    </div>
 
    <div id="image_url_container" class="media col-xs-6" style="clear: both;">
-     <label for="image_url" class="control-label">Image URL *</label>
+     <label for="image_url" class="control-label">Image URL *</label> (Required for Linaro Image)
      <input id="image_url" name="image_url" required type="text" class="required form-control source_url">
    </div>
 
    <div id="hwpack_container" class="media col-xs-6" style="clear: both;">
-     <label for="hwpack_url" class="control-label">Hwpack URL *</label>
+     <label for="hwpack_url" class="control-label">Hwpack URL *</label> (Required for Linaro hwpack+rootfs)
      <input id="hwpack_url" name="hwpack_url" required type="text" class="required form-control source_url">
    </div>
 
    <div id="rootfs_container" class="media col-xs-6" style="clear: both;">
-     <label for="rootfs_url" class="control-label">Rootfs URL *</label>
+     <label for="rootfs_url" class="control-label">Rootfs URL *</label> (Required for Linaro hwpack+rootfs, optional for Linaro kernel)
      <input id="rootfs_url" name="rootfs_url" required type="text" class="required form-control source_url">
    </div>
 
    <div id="android_boot_container" class="media col-xs-6" style="clear: both;">
-     <label for="android_boot" class="control-label">Boot URL *</label>
+     <label for="android_boot" class="control-label">Boot URL *</label> (Required for Linaro Android Image)
      <input id="android_boot" name="android_boot" required type="text" class="required form-control source_url">
    </div>
 
    <div id="android_data_container" class="media col-xs-6" style="clear: both;">
-     <label for="android_data" class="control-label">Data URL *</label>
+     <label for="android_data" class="control-label">Data URL *</label> (Required for Linaro Android Image)
      <input id="android_data" name="android_data" required type="text" class="required form-control source_url">
    </div>
 
    <div id="android_system_container" class="media col-xs-6" style="clear: both;">
-     <label for="android_system" class="control-label">System URL *</label>
+     <label for="android_system" class="control-label">System URL *</label> (Required for Linaro Android Image)
      <input id="android_system" name="android_system" required type="text" class="required form-control source_url">
    </div>
 
    <div id="kernel_container" class="media col-xs-6" style="clear: both;">
-     <label for="kernel" class="control-label">Kernel URL *</label>
+     <label for="kernel" class="control-label">Kernel URL *</label> (Required for Linaro kernel)
      <input id="kernel" name="kernel" required type="text" class="required form-control source_url">
    </div>
 
    <div id="ramdisk_container" class="media col-xs-6" style="clear: both;">
-     <label for="ramdisk" class="control-label">Ramdisk URL *</label>
-     <input id="ramdisk" name="ramdisk" required type="text" class="required form-control source_url">
+     <label for="ramdisk" class="control-label">Ramdisk URL</label> (Optional for Linaro kernel)
+     <input id="ramdisk" name="ramdisk" type="text" class="form-control source_url">
    </div>
 
    <div id="dtb_container" class="media col-xs-6" style="clear: both;">
-     <label for="dtb" class="control-label">Device tree blob *</label>
-     <input id="dtb" name="dtb" required type="text" class="required form-control source_url">
+     <label for="dtb" class="control-label">Device tree blob</label> (Optional for Linaro kernel)
+     <input id="dtb" name="dtb" type="text" class="form-control source_url">
    </div>
 
    <div id="kernel_rootfs_container" class="media col-xs-6" style="clear: both;">
-     <label for="kernel_rootfs" class="control-label">Rootfs URL *</label>
-     <input id="kernel_rootfs" name="kernel_rootfs" required type="text" class="required form-control source_url">
+     <label for="kernel_rootfs" class="control-label">Rootfs URL *</label> (Required for Linaro hwpack+rootfs, optional for Linaro kernel)
+     <input id="kernel_rootfs" name="kernel_rootfs" type="text" class="form-control source_url">
    </div>
 
    <div class="media col-xs-6" style="clear: both;">
