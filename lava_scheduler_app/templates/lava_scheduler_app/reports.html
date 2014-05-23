@@ -2,7 +2,10 @@
 
 {% block content %}
 
-<h2>Health Job Summary</h2>
+<h2 class="modal-header">Health Job Summary <a
+class="btn btn-xs btn-info" href="{% url 'lava.scheduler.labhealth' %}"
+title="History of health changes"><span class="glyphicon glyphicon-heart"></span> history log</a></h2>
+
 
 <div class="row">
   <div class="col-md-5">
