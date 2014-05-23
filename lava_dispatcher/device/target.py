@@ -479,14 +479,14 @@ class Target(object):
                 connection.sendline(line, delay,
                                     send_char=self.config.send_char)
 
-    def _target_extract(self, runner, tar_file, dest, timeout=-1):
+    def _target_extract(self, runner, tar_file, dest, timeout=-1, busybox=False):
         tmpdir = self.context.config.lava_image_tmpdir
         url = self.context.config.lava_image_url
         tar_file = tar_file.replace(tmpdir, '')
         tar_url = '/'.join(u.strip('/') for u in [url, tar_file])
-        self._target_extract_url(runner, tar_url, dest, timeout=timeout)
+        self._target_extract_url(runner, tar_url, dest, timeout=timeout, busybox=busybox)
 
-    def _target_extract_url(self, runner, tar_url, dest, timeout=-1):
+    def _target_extract_url(self, runner, tar_url, dest, timeout=-1, busybox=False):
         decompression_cmd = ''
         if tar_url.endswith('.gz') or tar_url.endswith('.tgz'):
             decompression_cmd = '| /bin/gzip -dc'
@@ -499,10 +499,13 @@ class Target(object):
         else:
             raise RuntimeError('bad file extension: %s' % tar_url)
 
-        runner.run('wget --no-check-certificate --no-proxy '
-                   '--connect-timeout=30 -S --progress=dot -e dotbytes=2M '
-                   '-O - %s %s | /bin/tar -C %s -xmf -'
-                   % (tar_url, decompression_cmd, dest),
+        if busybox:
+            wget_options = ''
+        else:
+            wget_options = '--no-check-certificate --no-proxy --connect-timeout=30 -S --progress=dot -e dotbytes=2M'
+
+        runner.run('wget %s -O - %s %s | /bin/tar -C %s -xmf -'
+                   % (wget_options, tar_url, decompression_cmd, dest),
                    timeout=timeout)
 
     @contextlib.contextmanager
@@ -599,7 +602,7 @@ class Target(object):
                 # get the last 2 parts of tf, ie "scratchdir/tf.tgz"
                 tf = '/'.join(tf.split('/')[-2:])
                 runner.run('rm -rf %s' % targetdir)
-                self._target_extract(runner, tf, parent_dir)
+                self._target_extract(runner, tf, parent_dir, busybox=True)
         finally:
             self._stop_busybox_http_server(runner)
             if mounted:
