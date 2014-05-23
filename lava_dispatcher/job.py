@@ -305,7 +305,9 @@ class LavaTestJob(object):
                 logging.debug("[ACTION-B] VM host IP is (%s)." % metadata['host_ip'])
 
             if 'auto_start_vms' in self.job_data:
-                metadata['auto_start_vms'] = self.job_data['auto_start_vms']
+                metadata['auto_start_vms'] = str(self.job_data['auto_start_vms']).lower()
+            else:
+                metadata['auto_start_vms'] = 'true'
 
             self.context.test_data.add_metadata(metadata)
 
