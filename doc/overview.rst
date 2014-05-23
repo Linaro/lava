@@ -58,17 +58,15 @@ password enter your credentials in the provided text boxes and click
 OpenID User Account
 -------------------
 
-Alternatively Google login could be used via OpenID in order to
-login to LAVA. In order to login with Google click on "Sign in with OpenID"
-button, which will take you a Google login screen in order to confirm
-that you want to allow LAVA to use your Google profile to authenticate.
+Alternatively your Launchpad login could be used via OpenID in order to
+login to LAVA. In order to login with Launchpad click on "Sign in with OpenID"
+button, which will take you a Launchpad login screen in order to confirm
+that you want to allow LAVA to use your Launchpad profile to authenticate.
 
 A successful authentication will redirect you to http://validation.linaro.org/
 
-.. note:: Launchpad has been disabled as an OpenID server due to problems with
-          the reliance upon CACert which has been disabled in recent releases of
-          ca-certificates. Google is also migrating away from OpenID, at which
-          time LAVA will drop OpenID support.
+.. note:: Google+ can be used for OpenID on some LAVA installations,
+          instead of Launchpad.
 
 .. index:: token
 

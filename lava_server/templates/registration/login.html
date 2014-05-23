@@ -15,10 +15,12 @@
 <div class="row">
   {% if openid_available %}
   <div class="col-md-6">
-    <h4 class="modal-header">Using OpenID</h4>
+    <h4 class="modal-header">Using {{ openid_provider }}</h4>
     {% blocktrans %}
-    <p>Thanks to the <a href="http://openid.net/get-an-openid/what-is-openid/">OpenID technology</a> you can use your existing {{ openid_provider }} account to access the dashboard.</p>
-    <p>This is the recommended method as you don't need to worry about having to maintain another account just for this website.</p>
+    <p>Thanks to the <a href="http://openid.net/get-an-openid/what-is-openid/">OpenID technology</a> you can use your
+        existing {{ openid_provider }} account to access the dashboard.</p>
+    <p>This is the recommended method as you don't need to worry about having to maintain another account
+        just for this website.</p>
     {% endblocktrans %}
     <a class="btn btn-success" href="{% url 'django_openid_auth.views.login_begin' %}?next={{next|escape}}">{% blocktrans %}Sign in with {{ openid_provider }}{% endblocktrans %}</a>
   </div>

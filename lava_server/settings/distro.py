@@ -72,6 +72,9 @@ LOGIN_URL = distro_settings.LOGIN_URL
 # URL of the page you get redirected to after logging in
 LOGIN_REDIRECT_URL = distro_settings.LOGIN_REDIRECT_URL
 
+# read which openID provider to use from the settings.conf
+OPENID_SSO_SERVER_URL = distro_settings.OPENID_SSO_SERVER_URL
+
 # The email address that error messages come from, such as those sent to
 # ADMINS and MANAGERS.
 if distro_settings.get_setting("SERVER_EMAIL"):

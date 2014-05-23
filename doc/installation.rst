@@ -247,17 +247,47 @@ tested and supported authentication methods for LAVA.
 .. _Django: https://www.djangoproject.com/
 .. _`Django auth subsystems`: https://docs.djangoproject.com/en/dev/topics/auth/
 
-OpenID + local user database
-----------------------------
+Using OpenID (registration is free) allows for quick start with LAVA
+bring-up and testing.
+
+Local Django user accounts are also supported. When using local Django
+user accounts, new user accounts need to be created by Django admin prior
+to use.
+
+Support for `OAuth2`_ is under investigation in LAVA.
+
+.. _OAuth2: http://oauth.net/2/
+
+Using Launchpad OpenID
+----------------------
 
 LAVA server by default is preconfigured to authenticate using
-Google+ OpenID service. However, this service is already deprecated and
-is due to be deactivated in September 2014. Local Django user accounts
-are supported at the same time. Using OpenID (registration
-is free) allows for quick start with LAVA bring-up and testing.
+Launchpad OpenID service. (Launchpad has migrated from the problematic
+CACert.)
 
-When using local Django user accounts, new user accounts need to be
-created by Django admin prior to use.
+Your chosen OpenID server is configured using the ``OPENID_SSO_SERVER_URL``
+in ``/etc/lava-server/settings.conf`` (JSON syntax).
+
+To use Launchpad even if the LAVA default changes, use::
+
+ "OPENID_SSO_SERVER_URL": "https://login.ubuntu.com/",
+
+Restart ``lava-server`` and ``apache2`` services if this is changed.
+
+Using Google+ OpenID
+--------------------
+
+To switch from Launchpad to Google+ OpenID, change the setting for the
+``OPENID_SSO_SERVER_URL`` in ``/etc/lava-server/settings.conf``
+(JSON syntax)::
+
+ "OPENID_SSO_SERVER_URL": "https://www.google.com/accounts/o8/id",
+
+The Google+ service is already deprecated and is due to be deactivated
+in September 2014 in preference for OAuth2.
+
+Restart ``lava-server`` and ``apache2`` services for the change to
+take effect.
 
 LAVA Dispatcher network configuration
 =====================================
