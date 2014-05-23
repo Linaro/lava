@@ -727,7 +727,7 @@ class VmGroupHandler(object):
 
     @property
     def auto_start_vms(self):
-        return self.is_vm_group_job and self.client.context.test_data.metadata['auto_start_vms']
+        return self.is_vm_group_job and self.client.context.test_data.metadata['auto_start_vms'] == 'true'
 
     def start_vms(self):
         if not self.is_host:
