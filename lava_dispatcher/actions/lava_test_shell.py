@@ -447,6 +447,17 @@ class URLTestDefinition(object):
         self.__fixupdict__ = None
         self.skip_install = None
 
+    def lava_proxy_dict(self, env_dict=None):
+        full_dict = {}
+        if env_dict is not None:
+            full_dict = env_dict
+
+        if self.context.config.lava_proxy:
+            full_dict['http_proxy'] = self.context.config.lava_proxy
+            full_dict['https_proxy'] = self.context.config.lava_proxy
+
+        return full_dict
+
     def load_signal_handler(self):
         hook_data = self.testdef.get('handler')
         if not hook_data:
@@ -482,8 +493,9 @@ class URLTestDefinition(object):
                 # have non-reproducible behavior because it may rely on
                 # bzr whoami value, presence of ssh keys, etc.
                 subprocess.check_output(['bzr', 'branch', repo],
-                                        env={'BZR_HOME': '/dev/null',
-                                             'BZR_LOG': '/dev/null'},
+                                        env=self.lava_proxy_dict(
+                                            {'BZR_HOME': '/dev/null',
+                                             'BZR_LOG': '/dev/null'}),
                                         stderr=subprocess.STDOUT)
                 name = repo.replace('lp:', '').split('/')[-1]
                 self._sw_sources.append(_bzr_info(repo, name, name))
@@ -491,6 +503,7 @@ class URLTestDefinition(object):
             for repo in self.testdef['install'].get('git-repos', []):
                 logging.info("git clone %s" % repo)
                 subprocess.check_output(['git', 'clone', repo],
+                                        env=self.lava_proxy_dict(),
                                         stderr=subprocess.STDOUT)
                 name = os.path.splitext(os.path.basename(repo))[0]
                 self._sw_sources.append(_git_info(repo, name, name))
