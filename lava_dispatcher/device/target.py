@@ -777,37 +777,43 @@ class Target(object):
 
         return customize_info
 
+    def _customize_image(self, image, boot_mnt, rootfs_mnt):
+        self.mount_info = {'boot': boot_mnt, 'rootfs': rootfs_mnt}
+
+        # for _customize_linux integration
+        self._customize_linux()
+
+        # for files injection function.
+        if self.config.customize is not None and image is not None:
+            # format raw config.customize to customize_info object
+            customize_info = self._reorganize_customize_files()
+
+            # fetch all the src file into the local temp dir
+            self._pre_download_src(customize_info, image)
+
+            # delete file or dir in image
+            for delete_item in customize_info["delete"]:
+                image_item = ImagePathHandle(image, delete_item, self.config, self.mount_info)
+                image_item.remove()
+
+            # inject files/dirs, all the items should be pre-downloaded into temp dir.
+            for customize_object in customize_info["image"]:
+                for des_image_path in customize_object["des"]:
+                    def_item = ImagePathHandle(image, des_image_path, self.config, self.mount_info)
+                    def_item.copy_from(customize_object["src"])
+            for customize_object in customize_info["remote"]:
+                for des_image_path in customize_object["des"]:
+                    def_item = ImagePathHandle(image, des_image_path, self.config, self.mount_info)
+                    def_item.copy_from(customize_object["src"])
+        else:
+            logging.debug("Skip customizing temp image %s !" % image)
+            logging.debug("Customize object is %s !" % self.config.customize)
+
     def customize_image(self, image=None):
-        with image_partition_mounted(image, self.config.boot_part) as boot_mnt:
-            with image_partition_mounted(image, self.config.root_part) as rootfs_mnt:
-
-                self.mount_info = {'boot': boot_mnt, 'rootfs': rootfs_mnt}
-
-                # for _customize_linux integration
-                self._customize_linux()
-
-                # for files injection function.
-                if self.config.customize is not None and image is not None:
-                    # format raw config.customize to customize_info object
-                    customize_info = self._reorganize_customize_files()
-
-                    # fetch all the src file into the local temp dir
-                    self._pre_download_src(customize_info, image)
-
-                    # delete file or dir in image
-                    for delete_item in customize_info["delete"]:
-                        image_item = ImagePathHandle(image, delete_item, self.config, self.mount_info)
-                        image_item.remove()
-
-                    # inject files/dirs, all the items should be pre-downloaded into temp dir.
-                    for customize_object in customize_info["image"]:
-                        for des_image_path in customize_object["des"]:
-                            def_item = ImagePathHandle(image, des_image_path, self.config, self.mount_info)
-                            def_item.copy_from(customize_object["src"])
-                    for customize_object in customize_info["remote"]:
-                        for des_image_path in customize_object["des"]:
-                            def_item = ImagePathHandle(image, des_image_path, self.config, self.mount_info)
-                            def_item.copy_from(customize_object["src"])
-                else:
-                    logging.debug("Skip customizing temp image %s !" % image)
-                    logging.debug("Customize object is %s !" % self.config.customize)
+        if self.config.boot_part != self.config.root_part:
+            with image_partition_mounted(image, self.config.boot_part) as boot_mnt:
+                with image_partition_mounted(image, self.config.root_part) as rootfs_mnt:
+                    self._customize_image(image, boot_mnt, rootfs_mnt)
+        else:
+            with image_partition_mounted(image, self.config.boot_part) as boot_mnt:
+                self._customize_image(image, boot_mnt, boot_mnt)
