@@ -481,15 +481,17 @@ class URLTestDefinition(object):
                 # Pass non-existent BZR_HOME value, or otherwise bzr may
                 # have non-reproducible behavior because it may rely on
                 # bzr whoami value, presence of ssh keys, etc.
-                subprocess.check_call(['bzr', 'branch', repo],
-                                      env={'BZR_HOME': '/dev/null',
-                                           'BZR_LOG': '/dev/null'})
+                subprocess.check_output(['bzr', 'branch', repo],
+                                        env={'BZR_HOME': '/dev/null',
+                                             'BZR_LOG': '/dev/null'},
+                                        stderr=subprocess.STDOUT)
                 name = repo.replace('lp:', '').split('/')[-1]
                 self._sw_sources.append(_bzr_info(repo, name, name))
 
             for repo in self.testdef['install'].get('git-repos', []):
                 logging.info("git clone %s" % repo)
-                subprocess.check_call(['git', 'clone', repo])
+                subprocess.check_output(['git', 'clone', repo],
+                                        stderr=subprocess.STDOUT)
                 name = os.path.splitext(os.path.basename(repo))[0]
                 self._sw_sources.append(_git_info(repo, name, name))
         finally:

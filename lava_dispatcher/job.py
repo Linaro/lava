@@ -26,6 +26,7 @@ import time
 import traceback
 import hashlib
 import simplejson
+import subprocess
 from json_schema_validator.schema import Schema
 from json_schema_validator.validator import Validator
 
@@ -415,6 +416,15 @@ class LavaTestJob(object):
                     logging.info("Cancel operation")
                     err = "Cancel"
                     pass
+                except subprocess.CalledProcessError as err:
+                    if err.output is not None:
+                        logging.info("Command error code: %d, with stdout/stderr:" % (err.returncode))
+                        for line in err.output.rstrip('\n').split('\n'):
+                            logging.info("| > %s" % (line))
+                    else:
+                        logging.info("Command error code: %d, without stdout/stderr" % (err.returncode))
+                    raise
+
                 except Exception as err:
                     logging.info("General Exception: %s" % unicode(str(err)))
                     raise
