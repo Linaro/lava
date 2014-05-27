@@ -128,8 +128,15 @@ def extract_tar(tfname, tmpdir):
 def extract_rootfs(tfname, tmpdir):
     """ Extracts the contents of a .tgz rootfs to the tmpdir.
     """
+    logging.warning('Attempting to extract tarball with --strip-components=1')
     if logging_system('nice tar --strip-components=1 -C %s -xf %s' % (tmpdir, tfname)):
-        raise CriticalError('Unable to extract tarball: %s' % tfname)
+        logging.warning('Unable to extract tarball with --strip-components=1')
+        logging.warning('Cleaning up temporary directory')
+        if logging_system('rm -rf %s/*' % tmpdir):
+            raise CriticalError('Unable to clean up temporary directory')
+        logging.warning('Attempting to extract tarball without --strip-components=1')
+        if logging_system('nice tar -C %s -xf %s' % (tmpdir, tfname)):
+            raise CriticalError('Unable to extract tarball: %s' % tfname)
     if logging_system('rm %s' % tfname):
         raise CriticalError('Unable to remove tarball: %s' % tfname)
 
