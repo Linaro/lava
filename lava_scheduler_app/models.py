@@ -1098,6 +1098,8 @@ class TestJob(RestrictedResource):
         taglist = _get_tag_list(job_data.get('tags', []))
 
         if 'target' in job_data:
+            if 'device_type' in job_data:
+                del job_data['device_type']
             device_type = None
             try:
                 target = Device.objects.filter(
