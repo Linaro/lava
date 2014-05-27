@@ -56,7 +56,7 @@ class FastbootTarget(Target):
 
         self.driver = driver_class(self)
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
                              bootloader, firmware, bl1, bl2, bl31, rootfstype,
                              bootloadertype, target_type):
         self._target_type = target_type
@@ -67,7 +67,7 @@ class FastbootTarget(Target):
             self._ramdisk_deployment = True
         self.deployment_data = deployment_data.get(self._target_type)
         self._enter_fastboot()
-        self.driver.deploy_linaro_kernel(kernel, ramdisk, dtb, rootfs, nfsrootfs,
+        self.driver.deploy_linaro_kernel(kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
                                          bootloader, firmware, bl1, bl2, bl31, rootfstype,
                                          bootloadertype, self._target_type, self.scratch_dir)
 
