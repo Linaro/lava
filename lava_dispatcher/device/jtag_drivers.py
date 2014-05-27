@@ -21,7 +21,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-from contextlib import contextmanager
 import logging
 import time
 
@@ -31,7 +30,10 @@ from lava_dispatcher.downloader import download_image
 from lava_dispatcher.utils import (
     mkdtemp,
     connect_to_serial,
-    extract_rootfs
+    extract_rootfs,
+    extract_ramdisk,
+    extract_modules,
+    create_ramdisk
 )
 
 
@@ -43,7 +45,7 @@ class BaseDriver(object):
         self.config = device.config
         self._default_boot_cmds = 'boot_cmds_ramdisk'
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
                              bootloader, firmware, bl1, bl2, bl31, rootfstype,
                              bootloadertype, target_type, scratch_dir):
         """
@@ -67,7 +69,7 @@ class stmc(BaseDriver):
         self._boot_tags = {}
         self._booted = False
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
                              bootloader, firmware, bl1, bl2, bl31, rootfstype,
                              bootloadertype, target_type, scratch_dir):
         # At a minimum we must have a kernel
@@ -88,6 +90,14 @@ class stmc(BaseDriver):
             ramdisk = download_image(ramdisk, self.context,
                                      scratch_dir,
                                      decompress=False)
+            if modules is not None:
+                    modules = download_image(modules, self.context,
+                                             scratch_dir,
+                                             decompress=False)
+                    ramdisk_dir = extract_ramdisk(ramdisk, scratch_dir,
+                                                  is_uboot=False)
+                    extract_modules(modules, ramdisk_dir)
+                    ramdisk = create_ramdisk(ramdisk_dir, scratch_dir)
             stmc_command = ' '.join([stmc_command,
                                     self.config.jtag_stmc_ramdisk_command.format(RAMDISK=ramdisk)])
         if dtb is not None:
@@ -106,6 +116,11 @@ class stmc(BaseDriver):
             extract_rootfs(nfsrootfs, lava_nfsrootfs)
             self._boot_tags['{NFSROOTFS}'] = lava_nfsrootfs
             self._default_boot_cmds = 'boot_cmds_nfs'
+            if modules is not None and ramdisk is None:
+                    modules = download_image(modules, self.context,
+                                             scratch_dir,
+                                             decompress=False)
+                    extract_modules(modules, lava_nfsrootfs)
 
         # Add suffix for boot commands
         self._stmc_command = stmc_command + ' --'

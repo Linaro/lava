@@ -184,6 +184,7 @@ class cmd_deploy_linaro_kernel(BaseAction):
             'kernel': {'type': 'string', 'optional': False},
             'ramdisk': {'type': 'string', 'optional': True},
             'dtb': {'type': 'string', 'optional': True},
+            'modules': {'type': 'string', 'optional': True},
             'rootfs': {'type': 'string', 'optional': True},
             'nfsrootfs': {'type': 'string', 'optional': True},
             'bootloader': {'type': 'string', 'optional': True},
@@ -227,7 +228,7 @@ class cmd_deploy_linaro_kernel(BaseAction):
                       prompt when specifying login commands')
 
     def run(self,
-            kernel=None, ramdisk=None, dtb=None, rootfs=None,
+            kernel=None, ramdisk=None, dtb=None, modules=None, rootfs=None,
             nfsrootfs=None, bootloader=None, firmware=None, bl1=None, bl2=None,
             bl31=None, rootfstype='ext4', bootloadertype='u_boot', target_type='oe',
             login_prompt=None, password_prompt=None, username=None,
@@ -243,10 +244,11 @@ class cmd_deploy_linaro_kernel(BaseAction):
         if login_commands is not None:
             self.client.config.login_commands = login_commands
         self.client.deploy_linaro_kernel(
-            kernel=kernel, ramdisk=ramdisk, dtb=dtb, rootfs=rootfs,
-            nfsrootfs=nfsrootfs, bootloader=bootloader, firmware=firmware,
-            bl1=bl1, bl2=bl2, bl31=bl31, rootfstype=rootfstype,
-            bootloadertype=bootloadertype, target_type=target_type)
+            kernel=kernel, ramdisk=ramdisk, dtb=dtb, modules=modules,
+            rootfs=rootfs, nfsrootfs=nfsrootfs, bootloader=bootloader,
+            firmware=firmware, bl1=bl1, bl2=bl2, bl31=bl31,
+            rootfstype=rootfstype, bootloadertype=bootloadertype,
+            target_type=target_type)
 
 
 class cmd_dummy_deploy(BaseAction):
