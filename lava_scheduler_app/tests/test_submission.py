@@ -75,6 +75,11 @@ class ModelFactory(object):
             '%s@mail.invalid' % (self.getUniqueString(),),
             self.getUniqueString())
 
+    def make_group(self, name=None):
+        if name is None:
+            name = self.getUniqueString('name')
+        return Group.objects.get_or_create(name=name)[0]
+
     def ensure_device_type(self, name=None):
         if name is None:
             name = self.getUniqueString('name')
@@ -462,6 +467,45 @@ class TestTestJob(TestCaseWithFactory):
         self.assertEqual(len(job), 2)
         self.assertEqual(job[0].is_public, True)
         self.assertEqual(job[1].is_public, True)
+
+    def test_device_type_with_target(self):
+        """
+        See https://bugs.launchpad.net/lava-server/+bug/1318579
+        Check that a submission with device_type and target
+        results in the device_type being dropped.
+        """
+        user = self.factory.make_user()
+        group = self.factory.make_group()
+        group.user_set.add(user)
+        b = BundleStream.objects.create(
+            slug='hidden', is_anonymous=False, group=group,
+            is_public=True)
+        b.save()
+        device_type = self.factory.make_device_type('base')
+        device = self.factory.make_device(device_type=device_type, hostname="generic")
+        job_data = {
+            "device_type": "broken",
+            "target": device.hostname,
+            "timeout": 1,
+            "health_check": False,
+            'actions': [
+                {
+                    'command': 'submit_results',
+                    'parameters': {
+                        'server': 'http://localhost/RPC2',
+                        'stream': b.pathname,
+                    }
+                }
+            ],
+        }
+        job_json = simplejson.dumps(job_data, sort_keys=True, indent=4 * ' ')
+        job = TestJob.from_json_and_user(job_json, user)
+        self.assertNotIn("device_type", job.definition)
+        self.assertIn('device_type', job_data)
+        definition_data = simplejson.loads(job.definition)
+        self.assertEqual(definition_data['target'], job_data['target'])
+        self.assertEqual(definition_data['timeout'], job_data['timeout'])
+        self.assertEqual(definition_data['health_check'], job_data['health_check'])
 
 
 class TestHiddenTestJob(TestCaseWithFactory):
