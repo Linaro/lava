@@ -1,3 +1,4 @@
+import json
 from django.conf import settings
 from django.template import defaultfilters as filters
 from django.utils.safestring import mark_safe
@@ -306,10 +307,19 @@ class RecentJobsTable(JobTable):
 
     id = RestrictedIDLinkColumn(verbose_name="ID", accessor="id")
     device = tables.Column(accessor='device_sort')
+    log_level = tables.Column(accessor="definition", verbose_name="Log level")
 
     def __init__(self, *args, **kwargs):
         super(RecentJobsTable, self).__init__(*args, **kwargs)
         self.length = 10
+
+    def render_log_level(self, record):
+        data = json.loads(record.definition)
+        try:
+            data['logging_level']
+        except KeyError:
+            return ""
+        return data['logging_level'].lower()
 
     class Meta(JobTable.Meta):
         fields = (
@@ -320,7 +330,7 @@ class RecentJobsTable(JobTable):
         sequence = (
             'id', 'status', 'priority',
             'description', 'submitter', 'submit_time', 'end_time',
-            'duration'
+            'duration', 'log_level'
         )
         exclude = ('device',)
 
