@@ -1093,7 +1093,6 @@ def _prepare_template(request):
             }
             expand_template(command_test_shell, command_test_shell_config)
 
-
         if request.POST.get("boot_options") != "":
             action_template = copy.deepcopy(ACTIONS_LINARO_BOOT)
             action_config = {
@@ -1111,7 +1110,6 @@ def _prepare_template(request):
                 "DEPLOY_PARAMETER": image_template,
                 "COMMAND_TEST_SHELL": command_test_shell
             }
-
 
     command_submit = None
     if request.POST.get("submit_stream"):
