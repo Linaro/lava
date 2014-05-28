@@ -7,14 +7,14 @@
   <li><a href="#Sources" data-toggle="tab">Sources</a></li>
 </ul>
 
-{% with test_run.packages.count as packages_count %}
+{% with packages.count as packages_count %}
 <div class="tab-content">
   <div class="tab-pane active" id="Packages">
     <h4>Software packages</h4>
     <div class="row">
       <div class="col-md-6">
         <dl class="dl-horizontal">
-        {% for software_package in test_run.packages.all %}
+        {% for software_package in packages.all %}
           {% if forloop.counter <= half_packages_count %}
           <dt>{{ software_package.name }}</dt>
           <dd>{{ software_package.version }}</dd>
@@ -24,7 +24,7 @@
       </div>
       <div class="col-md-6">
         <dl class="dl-horizontal">
-        {% for software_package in test_run.packages.all %}
+        {% for software_package in packages.all %}
           {% if forloop.counter > half_packages_count %}
           <dt>{{ software_package.name }}</dt>
           <dd>{{ software_package.version }}</dd>
@@ -36,7 +36,7 @@
   </div>
   <div class="tab-pane" id="Sources">
     <div class="row">
-      {% for software_source in test_run.sources.all %}
+      {% for software_source in sources.all %}
       <div class="col-md-6">
         <h4 class="modal-header">{{ software_source.project_name }}</h4>
         <dl class="dl-horizontal">

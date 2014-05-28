@@ -682,7 +682,8 @@ def test_run_software_context(request, pathname, content_sha1, analyzer_assigned
                 pathname=pathname,
                 content_sha1=content_sha1,
                 analyzer_assigned_uuid=analyzer_assigned_uuid),
-            "test_run": test_run,
+            "packages": test_run.packages.all().order_by('name'),
+            "sources": test_run.sources.all(),
             "half_packages_count": int(test_run.packages.count() / 2.0)
         }, RequestContext(request))
 
