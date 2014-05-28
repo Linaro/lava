@@ -63,7 +63,7 @@
         {% if job_file_present %}
           <li><a href="{{ job.get_absolute_url }}" class="btn btn-primary">Summary</a></li>
         {% endif %}
-        {% if show_resubmit and not job.is_multinode %}
+        {% if show_resubmit and not job.is_multinode and not job.is_vmgroup %}
           <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
         {% endif %}
         {% if job.results_link %}
