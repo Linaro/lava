@@ -143,7 +143,8 @@ class Worker(models.Model):
         verbose_name=_(u"Hostname"),
         max_length=200,
         primary_key=True,
-        default=None
+        default=None,
+        editable=False
     )
 
     rpc2_url = models.CharField(
@@ -152,7 +153,9 @@ class Worker(models.Model):
         null=True,
         blank=True,
         editable=True,
-        default=None
+        default=None,
+        help_text=("Corresponds to the master node's RPC2 url. Does not have"
+                   " any impact when set on a worker node.")
     )
 
     ip_address = models.CharField(
