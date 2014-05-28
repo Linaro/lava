@@ -658,15 +658,13 @@ def populate_capabilities(dt):
     for device in devices:
         # multiple core cpus have multiple device.cpu entries, each with attributes.
         if device['device_type'] == 'device.cpu':
-            if device['attributes']['cpu_type'] == '?':
-                if 'cpu type' in device['attributes']:
+            if 'cpu type' in device['attributes']:
+                if device['attributes']['cpu_type'] == '?':
                     model = device['attributes']['cpu type']
-                elif 'model name' in device['attributes']:
-                    model = device['attributes']['model name']
-                else:
-                    model = "?"
+            elif 'model name' in device['attributes']:
+                model = device['attributes']['model name']
             else:
-                model = device['attributes']['cpu_type']
+                model = "?"
             if 'cpu_part' in device['attributes']:
                 cpu_part = int(device['attributes']['cpu_part'], 16)
             elif 'CPU part' in device['attributes']:
