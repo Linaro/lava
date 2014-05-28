@@ -1300,6 +1300,7 @@ def multinode_job_definition_plain(request, pk):
     return response
 
 
+@BreadCrumb("VMGroup definition", parent=job_detail, needs=['pk'])
 def vmgroup_job_definition(request, pk):
     job = get_restricted_job(request.user, pk)
     log_file = job.output_file()
@@ -1308,6 +1309,9 @@ def vmgroup_job_definition(request, pk):
         {
             'job': job,
             'job_file_present': bool(log_file),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(vmgroup_job_definition, pk=pk),
+            'show_cancel': job.can_cancel(request.user),
+            'show_resubmit': job.can_resubmit(request.user),
         },
         RequestContext(request))
 
