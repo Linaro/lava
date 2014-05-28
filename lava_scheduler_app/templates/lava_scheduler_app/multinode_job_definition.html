@@ -50,27 +50,42 @@
   </div>
   {% endif %}
   <div class="col-md-4">
-    <h4 class="modal-header">Logs and Actions</h4>
-    <div class="col-md-6">
-      <ul class="nav nav-pills nav-stacked">
-      {% if job_file_present %}
-        <li><a href="{{ job.get_absolute_url }}" class="btn btn-primary">Summary</a></li>
-      {% endif %}
-      {% if show_resubmit %}
-        <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
-      {% endif %}
-      {% if job.results_link %}
-        <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
-      {% endif %}
-      </ul>
+    <h4 class="modal-header">Logs</h4>
+    <div class="row">
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+        {% if job_file_present %}
+          <li><a href="{{ job.get_absolute_url }}" class="btn btn-primary">Summary</a></li>
+        {% endif %}
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+        {% if job_file_present %}
+          <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary">Complete log</a></li>
+        {% endif %}
+        {% if job.results_link %}
+          <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
+        {% endif %}
+        </ul>
+      </div>
     </div>
-    <div class="col-md-6">
-      <ul class="nav nav-pills nav-stacked">
-      {% if job_file_present %}
-        <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary">Complete log</a></li>
-      {% endif %}
-        <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition of {{ job.sub_id }}</a></li>
-      </ul>
+  </div>
+  <div class="col-md-4">
+    <h4 class="modal-header">Actions</h4>
+    <div class="row">
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+        {% if show_resubmit %}
+          <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
+        {% endif %}
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+          <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition of {{ job.sub_id }}</a></li>
+        </ul>
+      </div>
     </div>
   </div>
 </div>
