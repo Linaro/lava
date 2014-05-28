@@ -1746,41 +1746,54 @@ class TestRunFilterSubscription(models.Model):
 
 def send_image_report_notifications(sender, bundle):
     try:
-        chart_users = ImageChartUser.objects.filter(
-            has_subscription=True)
+        matches = []
+        charts = ImageReportChart.objects.filter(
+            imagechartuser__has_subscription=True)
         url_prefix = 'http://%s' % get_domain()
-        for chart_user in chart_users:
-            if chart_user.image_chart.target_goal:
-                matches = []
-                if chart_user.image_chart.chart_type == "pass/fail":
-                    runs = TestRun.objects.filter(
-                        bundle=bundle,
-                        test__imagecharttest__image_chart_filter__image_chart=chart_user.image_chart)
-                    for run in runs:
-                        denorm = run.denormalization
-                        if denorm.count_pass < chart_user.image_chart.target_goal:
-                            matches.append(run)
 
-                else:
-                    results = TestResult.objects.filter(
-                        test_run__bundle=bundle,
-                        test_case__imagecharttestcase__image_chart_filter__image_chart=chart_user.image_chart)
-                    for result in results:
-                        if result.measurement < \
-                                chart_user.image_chart.target_goal:
-                            matches.append(result)
+        filter_matches = TestRunFilter.matches_against_bundle(bundle)
 
-                if matches:
-                    image_chart = chart_user.image_chart
-                    title = "LAVA image report notification: %s" % image_chart.name
-                    template = "dashboard_app/chart_subscription_mail.txt"
-                    data = {'bundle': bundle, 'user': chart_user.user,
-                            'image_report': image_chart.image_report,
-                            'matches': matches, 'url_prefix': url_prefix}
-                    logging.info("sending notification to %s", chart_user.user)
-                    send_notification(title.format(run.test.test_id),
-                                      template, data,
-                                      chart_user.user.email)
+        for chart in charts:
+            if chart.target_goal:
+
+                chart_filters = [chart_filter.filter for chart_filter in \
+                                 chart.imagechartfilter_set.all()]
+                chart_tests = []
+                for chart_filter in chart.imagechartfilter_set.all():
+                    chart_tests += chart_filter.chart_tests
+
+                chart_tests = [chart_test.test for chart_test in chart_tests]
+
+                for filter_match in filter_matches:
+
+                    if filter_match.filter in chart_filters:
+                        if chart.chart_type == "pass/fail":
+                            for test_run in filter_match.test_runs:
+                                if test_run.test in chart_tests:
+
+
+                                    denorm = test_run.denormalization
+                                    if denorm.count_pass < chart.target_goal:
+                                        matches.append(test_run)
+
+                        else:
+                            for test_result in filter_match.specific_results:
+                                if test_result.test_case in chart_tests:
+                                    if test_result.measurement < \
+                                    chart.target_goal:
+                                        matches.append(test_result)
+
+                for chart_user in chart.imagechartuser_set.all():
+                    if matches:
+                        title = "LAVA image report test failure notification: %s" % chart.name
+                        template = "dashboard_app/chart_subscription_mail.txt"
+                        data = {'bundle': bundle, 'user': chart_user.user,
+                                'image_report': chart.image_report,
+                                'matches': matches, 'url_prefix': url_prefix}
+                        logging.info("sending notification to %s",
+                                     chart_user.user)
+                        send_notification(title, template, data,
+                                          chart_user.user.email)
 
     except:
         logging.exception("send_image_report_notifications failed")
