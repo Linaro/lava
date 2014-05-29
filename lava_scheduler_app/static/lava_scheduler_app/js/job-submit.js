@@ -1,3 +1,7 @@
+beautify_options = {
+    "brace_style": "expand"
+}
+
 $(window).ready(
     function () {
         $("#json-input").linedtextarea();
@@ -25,7 +29,7 @@ validate_input = function(json_input) {
         if (is_url($("#json-input").val().split("\n"))) {
             load_url();
         } else {
-            $("#json-input").val(js_beautify(json_input));
+            $("#json-input").val(js_beautify(json_input, beautify_options));
             validate_job_data(json_input);
         }
     }
@@ -44,7 +48,7 @@ load_url = function() {
             success: function(data) {
                 try {
                     $.parseJSON(data);
-                    $("#json-input").val(js_beautify(data));
+                    $("#json-input").val(js_beautify(data, beautify_options));
                     validate_job_data(data);
                 } catch (e) {
                     $("#json-valid-container").html("Invalid JSON: " + data);
