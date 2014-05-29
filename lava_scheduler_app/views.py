@@ -1500,16 +1500,22 @@ def job_resubmit(request, pk):
                 obj = simplejson.loads(definition)
 
                 # Iterate through the objects in the JSON and pop (remove)
-                # the submit_results action once we find it.
+                # the bundle stream path in submit_results action once we find it.
                 for key in obj:
                     if key == "actions":
                         for i in xrange(len(obj[key])):
                             if obj[key][i]["command"] == \
                                     "submit_results_on_host" or \
                                     obj[key][i]["command"] == "submit_results":
-                                obj[key].pop(i)
-                                break
+                                for key1 in obj[key][i]:
+                                    if key1 == "parameters":
+                                        for key2 in obj[key][i][key1]:
+                                            if key2 == "stream":
+                                                obj[key][i][key1][key2] = ""
+                                                break
                 definition = simplejson.dumps(obj, sort_keys=True, indent=4, separators=(',', ': '))
+                response_data["resubmit_warning"] = \
+                    "Since you were not the submitter of the original job,\\nthe bundle stream was removed, please provide a bundle stream."
 
             try:
                 response_data["json_input"] = definition

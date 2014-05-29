@@ -9,6 +9,11 @@
 <script type="text/javascript">
   var remote_json_url = '{{ remote_json_url }}';
 </script>
+{% if resubmit_warning %}
+<script type="text/javascript">
+  alert('{{ resubmit_warning }}');
+</script>
+{% endif %}
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/job-submit.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/beautify.js"></script>
 {% endblock %}
