@@ -36,7 +36,7 @@ from lava_dispatcher.utils import (
     rmtree,
 )
 from lava_dispatcher.errors import (
-    CriticalError,
+    OperationFailed,
 )
 
 
@@ -171,8 +171,8 @@ class LavaContext(object):
 
         if not successful:
             msg = "Failed to execute command '%s' on host (%s)" % (command, error)
-            logging.critical(msg)
-            raise CriticalError(msg)
+            logging.exception(msg)
+            raise OperationFailed(msg)
 
     def run_command_get_output(self, command):
         """run command 'command' then return the command output"""

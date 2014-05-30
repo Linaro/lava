@@ -27,19 +27,16 @@ import pexpect
 import sys
 import time
 import traceback
-import subprocess
 import json
 from lava_dispatcher.device.target import (
     get_target,
 )
-
 from lava_dispatcher.utils import (
     mkdtemp,
     mk_targz,
     read_content,
     wait_for_prompt,
 )
-
 from lava_dispatcher.errors import (
     NetworkError,
     OperationFailed,
@@ -156,14 +153,14 @@ class NetworkCommandRunner(CommandRunner):
             cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=300)
         if self.match_id != 0:
             msg = "Unable to determine target image IP address"
-            logging.error(msg)
-            raise CriticalError(msg)
+            logging.exception(msg)
+            raise NetworkError(msg)
 
         ip = self.match.group(1)
         if ip == "127.0.0.1":
             msg = "Got localhost (127.0.0.1) as IP address"
-            logging.error(msg)
-            raise CriticalError(msg)
+            logging.exception(msg)
+            raise NetworkError(msg)
         logging.debug("Target image IP is %s" % ip)
         return ip
 
