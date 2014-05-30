@@ -344,7 +344,13 @@ def connect_to_serial(context):
         match = proc.expect(patterns, timeout=10)
         result = results[match]
         logging.info('Matched %r which means %s', patterns[match], result)
-        if result == 'retry':
+        if result == 'retry' or result == 'reset-port':
+            reset_cmd = context.device_config.reset_port_command
+            if reset_cmd:
+                logging.warning('attempting to reset serial port')
+                context.run_command(reset_cmd)
+            else:
+                logging.warning('no reset_port command configured')
             proc.close(True)
             retry_count += 1
             time.sleep(5)
@@ -352,15 +358,6 @@ def connect_to_serial(context):
         elif result == 'all-good':
             atexit.register(proc.close, True)
             return proc
-        elif result == 'reset-port':
-            reset_cmd = context.device_config.reset_port_command
-            if reset_cmd:
-                context.run_command(reset_cmd)
-            else:
-                raise CriticalError('no reset_port command configured')
-            proc.close(True)
-            retry_count += 1
-            time.sleep(5)
     raise CriticalError('could execute connection_command successfully')
 
 
