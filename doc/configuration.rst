@@ -8,7 +8,7 @@ lava-dispatcher looks for files in:
  * Alongside the installation/source tree for the default values
    (i.e. this directory).
 
- * /srv/lava/<instance>/etc/lava-dispatcher
+ * /etc/lava-dispatcher
 
 Each config directory can contain two files and two directories:
 
