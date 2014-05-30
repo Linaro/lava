@@ -54,6 +54,7 @@ from lava_scheduler_app.models import (
     DeviceType,
     DeviceStateTransition,
     TestJob,
+    TestJobUser,
     JSONDataError,
     validate_job_json,
     DevicesUnavailableException,
@@ -968,6 +969,24 @@ class MyJobsView(JobTableView):
         return jobs.order_by('-submit_time')
 
 
+class FavoriteJobsView(JobTableView):
+
+    def get_queryset(self):
+
+        user = self.user
+        if not user:
+            user = self.request.user
+
+        jobs = TestJob.objects.select_related("actual_device", "requested_device",
+                                              "requested_device_type", "group")\
+            .extra(select={'device_sort': 'coalesce(actual_device_id, '
+                                          'requested_device_id, requested_device_type_id)',
+                           'duration_sort': 'end_time - start_time'}).all()\
+            .filter(testjobuser__user=user,
+                    testjobuser__is_favorite=True)
+        return jobs.order_by('-submit_time')
+
+
 class AllJobsView(JobTableView):
 
     def get_queryset(self):
@@ -1044,6 +1063,14 @@ def job_submit(request):
                     response_data["job_list"] = [j.sub_id for j in job]
                 else:
                     response_data["job_id"] = job.id
+
+                is_favorite = request.POST.get("is_favorite")
+                if is_favorite:
+                    testjob_user, _ = TestJobUser.objects.get_or_create(
+                        user=request.user, test_job=job)
+                    testjob_user.is_favorite = True
+                    testjob_user.save()
+
                 return render_to_response(
                     "lava_scheduler_app/job_submit.html",
                     response_data, RequestContext(request))
@@ -1053,6 +1080,7 @@ def job_submit(request):
                 response_data["error"] = str(e)
                 response_data["context_help"] = "lava scheduler submit job",
                 response_data["json_input"] = request.POST.get("json-input")
+                response_data["is_favorite"] = request.POST.get("is_favorite")
                 return render_to_response(
                     "lava_scheduler_app/job_submit.html",
                     response_data, RequestContext(request))
@@ -1203,6 +1231,12 @@ def _prepare_template(request):
 def job_detail(request, pk):
     job = get_restricted_job(request.user, pk)
 
+    is_favorite = False
+    if request.user.is_authenticated():
+        testjob_user, _ = TestJobUser.objects.get_or_create(user=request.user,
+                                                            test_job=job)
+        is_favorite = testjob_user.is_favorite
+
     data = {
         'job': job,
         'show_cancel': job.can_cancel(request.user),
@@ -1212,6 +1246,7 @@ def job_detail(request, pk):
         'show_reload_page': job.status <= TestJob.RUNNING,
         'change_priority': job.can_change_priority(request.user),
         'context_help': BreadCrumbTrail.leading_to(job_detail, pk='detail'),
+        'is_favorite': is_favorite,
     }
 
     log_file = job.output_file()
@@ -1332,6 +1367,30 @@ def myjobs(request):
         {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(myjobs),
             'myjobs_table': ptable,
+            "terms_data": ptable.prepare_terms_data(data),
+            "search_data": ptable.prepare_search_data(data),
+            "discrete_data": ptable.prepare_discrete_data(data),
+            "times_data": ptable.prepare_times_data(data),
+        },
+        RequestContext(request))
+
+
+@BreadCrumb("Favorite Jobs", parent=index)
+def favorite_jobs(request, username=None):
+
+    if not username:
+        username = request.user.username
+    user = User.objects.get(username=username)
+    data = FavoriteJobsView(request, model=TestJob,
+                            table_class=JobTable, user=user)
+    ptable = JobTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    return render_to_response(
+        "lava_scheduler_app/favorite_jobs.html",
+        {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(favorite_jobs),
+            'favoritejobs_table': ptable,
+            'username': username,
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "discrete_data": ptable.prepare_discrete_data(data),
@@ -1568,6 +1627,20 @@ def job_change_priority(request, pk):
     if job.priority != requested_priority:
         job.priority = requested_priority
         job.save()
+    return redirect(job)
+
+
+def job_toggle_favorite(request, pk):
+
+    if not request.user.is_authenticated():
+        raise PermissionDenied()
+
+    job = TestJob.objects.get(pk=pk)
+    testjob_user, _ = TestJobUser.objects.get_or_create(user=request.user,
+                                                        test_job=job)
+
+    testjob_user.is_favorite = not testjob_user.is_favorite
+    testjob_user.save()
     return redirect(job)
 
 
@@ -2036,6 +2109,18 @@ def edit_worker_desc(request):
     else:
         return HttpResponseForbidden("Permission denied.",
                                      content_type="text/plain")
+
+
+def username_list_json(request):
+
+    term = request.GET['term']
+    users = []
+    for user in User.objects.filter(Q(username__istartswith=term)):
+        users.append(
+            {"id": user.id,
+             "name": user.username,
+             "label": user.username})
+    return HttpResponse(simplejson.dumps(users), mimetype='application/json')
 
 
 class QueueJobsView(JobTableView):

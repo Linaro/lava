@@ -62,6 +62,7 @@
             <ul class="dropdown-menu">
               <li><a href="{% url 'lava.me' %}"><span class="glyphicon glyphicon-cog"></span> Profile</a></li>
               <li><a href="{% url 'lava.scheduler.myjobs' %}"><span class="glyphicon glyphicon-tasks"></span> Jobs</a></li>
+              <li><a href="{% url 'lava.scheduler.favorite_jobs' %}"><span class="glyphicon glyphicon-tasks"></span> Favorite Jobs</a></li>
               <li><a href="{% url 'dashboard_app.views.mybundlestreams' %}"><span class="glyphicon glyphicon-folder-open"></span> Bundle streams</a></li>
               <li><a href="{% url 'lava.scheduler.mydevice_list' %}"><span class="glyphicon glyphicon-phone"></span> Devices</a></li>
               {% if user.is_staff %}

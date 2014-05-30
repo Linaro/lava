@@ -1652,6 +1652,26 @@ class TestJob(RestrictedResource):
             return ready(self)
 
 
+class TestJobUser(models.Model):
+
+    class Meta:
+        unique_together = ("test_job", "user")
+
+    user = models.ForeignKey(
+        User,
+        null=False,
+        on_delete=models.CASCADE)
+
+    test_job = models.ForeignKey(
+        TestJob,
+        null=False,
+        on_delete=models.CASCADE)
+
+    is_favorite = models.BooleanField(
+        default=False,
+        verbose_name='Favorite job')
+
+
 class DeviceStateTransition(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)

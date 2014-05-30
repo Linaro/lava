@@ -53,6 +53,10 @@
   <textarea id="json-input" name="json-input" placeholder="Enter your job definition or link to a job definition here.">{{ json_input }}</textarea>
   <div id="json-valid-container">
   </div>
+  <div>
+    <input type="checkbox" name="is_favorite" id="is_favorite" {% if is_favorite %} checked {% endif %} />
+    Add to my favorite jobs
+  </div>
   <div id="submit-container">
     <input type="hidden" name="is_resubmit" value="true">
     <button class="btn btn-success" id="submit" type="submit" value="Submit">Submit</button>
