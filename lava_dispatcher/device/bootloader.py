@@ -379,6 +379,7 @@ class BootloaderTarget(MasterImageTarget):
                               self.config.boot_linaro_timeout)
 
     def _boot_linaro_image(self):
+        self.proc.empty_buffer()
         if self._is_bootloader() and not self._booted:
             if self.config.hard_reset_command:
                 self._hard_reboot(self.proc)
