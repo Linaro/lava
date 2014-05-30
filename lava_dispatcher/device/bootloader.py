@@ -347,6 +347,7 @@ class BootloaderTarget(MasterImageTarget):
         if self._is_bootloader() and not self._booted:
             if self.config.hard_reset_command:
                 self._hard_reboot(self.proc)
+                self.proc.empty_buffer()
                 self._run_boot()
             else:
                 self._soft_reboot(self.proc)
