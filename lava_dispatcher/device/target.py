@@ -44,6 +44,7 @@ from lava_dispatcher.downloader import (
 from lava_dispatcher.errors import (
     CriticalError,
     OperationFailed,
+    NetworkError,
 )
 
 
@@ -511,6 +512,7 @@ class Target(object):
     @contextlib.contextmanager
     def _python_file_system(self, runner, directory, mounted=False):
         connection = runner.get_connection()
+        error_detected = False
         try:
             if mounted:
                 targetdir = os.path.join('/mnt/%s' % directory)
@@ -524,7 +526,13 @@ class Target(object):
             runner.run('nice tar -czf /tmp/fs.tgz -C %s %s' %
                        (parent_dir, target_name))
             runner.run('cd /tmp')  # need to be in same dir as fs.tgz
-            ip = runner.get_target_ip()
+
+            try:
+                ip = runner.get_target_ip()
+            except NetworkError as e:
+                error_detected = True
+                raise CriticalError("Network error detected..aborting")
+
             connection.sendline('python -m SimpleHTTPServer 0 2>/dev/null')
             match_id = connection.expect([
                 'Serving HTTP on 0.0.0.0 port (\d+) \.\.',
@@ -558,13 +566,15 @@ class Target(object):
                 self._target_extract(runner, tf, parent_dir)
 
         finally:
+            if not error_detected:
                 # kill SimpleHTTPServer
                 connection.sendcontrol('c')
-                if mounted:
-                    runner.run('umount /mnt')
+            if mounted:
+                runner.run('umount /mnt')
 
     @contextlib.contextmanager
     def _busybox_file_system(self, runner, directory, mounted=False):
+        error_detected = False
         try:
             if mounted:
                 targetdir = os.path.join('/mnt/%s' % directory)
@@ -579,7 +589,12 @@ class Target(object):
                        % (parent_dir, target_name))
             runner.run('cd /tmp')  # need to be in same dir as fs.tgz
 
-            ip = runner.get_target_ip()
+            try:
+                ip = runner.get_target_ip()
+            except NetworkError as e:
+                error_detected = True
+                raise CriticalError("Network error detected..aborting")
+
             url_base = self._start_busybox_http_server(runner, ip)
 
             url = url_base + '/fs.tgz'
@@ -604,7 +619,8 @@ class Target(object):
                 runner.run('rm -rf %s' % targetdir)
                 self._target_extract(runner, tf, parent_dir, busybox=True)
         finally:
-            self._stop_busybox_http_server(runner)
+            if not error_detected:
+                self._stop_busybox_http_server(runner)
             if mounted:
                 runner.run('umount /mnt')
 
