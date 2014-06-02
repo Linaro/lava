@@ -360,9 +360,10 @@ def _get_run_testdef_metadata(test_run_dir):
 
     # Read extra metadata, if any. All metadata gets into testdef_metadata in
     # the bundle.
-    extra_metadata = os.path.join(test_run_dir, 'extra_metadata')
-    if os.path.exists(extra_metadata):
-        extra_metadata = read_content(extra_metadata)
+    extra_metadata = ''
+    extra_metadata_path = os.path.join(test_run_dir, 'extra_metadata')
+    if os.path.exists(extra_metadata_path):
+        extra_metadata = read_content(extra_metadata_path)
     if extra_metadata is not '':
         extra_metadata = yaml.safe_load(extra_metadata)
         testdef_metadata.update(extra_metadata)
