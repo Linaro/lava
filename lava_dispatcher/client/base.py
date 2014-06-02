@@ -27,19 +27,16 @@ import pexpect
 import sys
 import time
 import traceback
-import subprocess
 import json
 from lava_dispatcher.device.target import (
     get_target,
 )
-
 from lava_dispatcher.utils import (
     mkdtemp,
     mk_targz,
     read_content,
     wait_for_prompt,
 )
-
 from lava_dispatcher.errors import (
     NetworkError,
     OperationFailed,
@@ -153,17 +150,17 @@ class NetworkCommandRunner(CommandRunner):
                "awk -F: '{split($2,a,\" \"); print \"<\" a[1] \">\"}'" %
                self._client.context.config.lava_server_ip)
         self.run(
-            cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=60)
+            cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=300)
         if self.match_id != 0:
             msg = "Unable to determine target image IP address"
-            logging.error(msg)
-            raise CriticalError(msg)
+            logging.exception(msg)
+            raise NetworkError(msg)
 
         ip = self.match.group(1)
         if ip == "127.0.0.1":
             msg = "Got localhost (127.0.0.1) as IP address"
-            logging.error(msg)
-            raise CriticalError(msg)
+            logging.exception(msg)
+            raise NetworkError(msg)
         logging.debug("Target image IP is %s" % ip)
         return ip
 
@@ -394,12 +391,12 @@ class LavaClient(object):
             self.target_device.deploy_linaro_prebuilt(image, dtb, rootfstype,
                                                       bootloadertype)
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs,
-                             nfsrootfs, bootloader, firmware, rootfstype,
-                             bootloadertype, target_type):
-        self.target_device.deploy_linaro_kernel(kernel, ramdisk, dtb, rootfs,
-                                                nfsrootfs, bootloader,
-                                                firmware, rootfstype,
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs,
+                             nfsrootfs, bootloader, firmware, bl1, bl2, bl31,
+                             rootfstype, bootloadertype, target_type):
+        self.target_device.deploy_linaro_kernel(kernel, ramdisk, dtb, modules, rootfs,
+                                                nfsrootfs, bootloader, firmware,
+                                                bl1, bl2, bl31, rootfstype,
                                                 bootloadertype, target_type)
 
     @contextlib.contextmanager
@@ -532,18 +529,16 @@ class LavaClient(object):
             logging.info("System is in test image now")
             logging.debug("mount information")
             self.proc.sendline('mount')
-            prompt = self.target_device.tester_ps1_pattern
-            self.proc.expect([prompt, pexpect.TIMEOUT], timeout=10)
+            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
             logging.debug("root directory information")
             self.proc.sendline('ls -l /')
-            prompt = self.target_device.tester_ps1_pattern
-            self.proc.expect([prompt, pexpect.TIMEOUT], timeout=10)
+            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
             logging.debug("free space information")
-            self.proc.sendline('df -hl /')
+            self.proc.sendline('df -h')
+            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
             logging.debug("IP addr information")
             self.proc.sendline('ip addr')
-            prompt = self.target_device.tester_ps1_pattern
-            self.proc.expect([prompt, pexpect.TIMEOUT], timeout=10)
+            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
             in_linaro_image = True
             logging.debug("Checking for vm-group host")
 
@@ -727,6 +722,10 @@ class VmGroupHandler(object):
     def is_vm(self):
         return self.is_vm_group_job and self.client.context.test_data.metadata['is_vmhost'] == "false"
 
+    @property
+    def auto_start_vms(self):
+        return self.is_vm_group_job and self.client.context.test_data.metadata['auto_start_vms'] == 'true'
+
     def start_vms(self):
         if not self.is_host:
             return
@@ -747,14 +746,16 @@ class VmGroupHandler(object):
             host_ip = runner.get_target_ip()
         except NetworkError as e:
             raise CriticalError("Failed to get network up: " % e)
-        # send a message to each guest
-        msg = {"request": "lava_send", "messageID": "lava_vm_start", "message": {"host_ip": host_ip}}
-        reply = self.client.context.transport(json.dumps(msg))
-        if reply == "nack":
-            raise CriticalError("lava_vm_start failed")
-        logging.info("[ACTION-B] LAVA VM start, using %s" % host_ip)
+        runner.run('export _LAVA_VM_GROUP_HOST_IP=%s' % host_ip)
 
-        self.vms_started = True
+        if self.auto_start_vms:
+            # send a message to each guest
+            msg = {"request": "lava_send", "messageID": "lava_vm_start", "message": {"host_ip": host_ip}}
+            reply = self.client.context.transport(json.dumps(msg))
+            if reply == "nack":
+                raise CriticalError("lava_vm_start failed")
+            logging.info("[ACTION-B] LAVA VM start, using %s" % host_ip)
+            self.vms_started = True
 
     def wait_for_vms(self):
         if not (self.is_host and self.vms_started):

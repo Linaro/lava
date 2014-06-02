@@ -37,6 +37,9 @@ from lava_dispatcher.utils import (
     ensure_directory,
     extract_tar,
     finalize_process,
+    extract_ramdisk,
+    extract_modules,
+    create_ramdisk
 )
 from lava_dispatcher.errors import (
     CriticalError
@@ -56,9 +59,9 @@ class QEMUTarget(Target):
         self._firmware = None
         self._is_kernel_present = False
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
-                             bootloader, firmware, rootfstype, bootloadertype,
-                             target_type):
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
+                             bootloader, firmware, bl1, bl2, bl31, rootfstype,
+                             bootloadertype, target_type):
         # Check for errors
         if rootfs is None:
             raise CriticalError("You must specify a QEMU file system image")
@@ -72,6 +75,14 @@ class QEMUTarget(Target):
 
         if ramdisk is not None:
             ramdisk = download_image(ramdisk, self.context)
+            if modules is not None:
+                    modules = download_image(modules, self.context,
+                                             self._scratch_dir,
+                                             decompress=False)
+                    ramdisk_dir = extract_ramdisk(ramdisk, self._scratch_dir,
+                                                  is_uboot=self._is_uboot_ramdisk(ramdisk))
+                    extract_modules(modules, ramdisk_dir)
+                    ramdisk = create_ramdisk(ramdisk_dir, self._scratch_dir)
             self._ramdisk = ramdisk
 
         if dtb is not None:

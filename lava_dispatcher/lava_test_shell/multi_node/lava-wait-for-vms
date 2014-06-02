@@ -1,0 +1,6 @@
+#!/bin/sh -ex
+
+# Waits for all VM's to finish
+
+lava-send lava_vm_stop
+lava-wait-all lava_vm_stop

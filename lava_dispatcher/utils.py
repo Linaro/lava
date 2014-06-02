@@ -125,13 +125,63 @@ def extract_tar(tfname, tmpdir):
     return _list_files(tmpdir)
 
 
-def extract_rootfs(tfname, tmpdir):
-    """ Extracts the contents of a .tgz rootfs to the tmpdir.
+def extract_rootfs(rootfs, root):
+    """ Extracts the contents of a .tar.(bz2, gz, xz, lzma, etc) rootfs to the root.
     """
-    if logging_system('nice tar --strip-components=1 -C %s -xf %s' % (tmpdir, tfname)):
-        raise CriticalError('Unable to extract tarball: %s' % tfname)
-    if logging_system('rm %s' % tfname):
-        raise CriticalError('Unable to remove tarball: %s' % tfname)
+    logging.warning('Attempting to extract tarball with --strip-components=1')
+    if logging_system('nice tar --strip-components=1 -C %s -xaf %s' % (root, rootfs)):
+        logging.warning('Unable to extract tarball with --strip-components=1')
+        logging.warning('Cleaning up temporary directory')
+        if logging_system('rm -rf %s/*' % root):
+            raise CriticalError('Unable to clean up temporary directory')
+        logging.warning('Attempting to extract tarball without --strip-components=1')
+        if logging_system('nice tar -C %s -xaf %s' % (root, rootfs)):
+            raise CriticalError('Unable to extract tarball: %s' % rootfs)
+    if logging_system('rm %s' % rootfs):
+        raise CriticalError('Unable to remove tarball: %s' % rootfs)
+
+
+def extract_modules(modules, root):
+    """ Extracts the contents of a modules .tar.(bz2, gz, xz, lzma, etc) to the filesystem root.
+    """
+    logging.info('Attempting to install modules onto the filesystem')
+    if logging_system('nice tar -C %s -xaf %s' % (root, modules)):
+        raise CriticalError('Unable to extract tarball: %s to %s' % (modules, root))
+    if logging_system('rm %s' % modules):
+        raise CriticalError('Unable to remove tarball: %s' % modules)
+
+
+def extract_ramdisk(ramdisk, tmpdir, is_uboot=False):
+    """ Extracts the contents of a cpio.gz filesystem to a tmp directory.
+    """
+    logging.info('Attempting to extract ramdisk')
+    ramdisk_compressed_data = os.path.join(tmpdir, 'ramdisk.cpio.gz')
+    extracted_ramdisk = os.path.join(tmpdir, 'tmp')
+    if logging_system('mkdir -p %s' % extracted_ramdisk):
+        raise CriticalError('Unable to create directory: %s' % extracted_ramdisk)
+    if is_uboot:
+        if logging_system('nice dd if=%s of=%s ibs=64 skip=1' % (ramdisk, ramdisk_compressed_data)):
+            raise CriticalError('Unable to remove uboot header: %s' % ramdisk)
+    if logging_system('mv %s %s' % (ramdisk, ramdisk_compressed_data)):
+        raise CriticalError('Unable to rename %s to %s' % (ramdisk, ramdisk_compressed_data))
+    if logging_system('nice gzip -d -f %s' % ramdisk_compressed_data):
+        raise CriticalError('Unable to uncompress: %s' % ramdisk_compressed_data)
+    ramdisk_data = os.path.join(tmpdir, 'ramdisk.cpio')
+    if logging_system('cd %s && cpio -i -F %s' % (extracted_ramdisk, ramdisk_data)):
+        raise CriticalError('Unable to uncompress: %s' % ramdisk_data)
+    return extracted_ramdisk
+
+
+def create_ramdisk(ramdisk_dir, tmpdir):
+    """ Creates a cpio.gz filesystem from a directory
+    """
+    logging.info('Attempting to create ramdisk')
+    ramdisk_data = os.path.join(tmpdir, 'ramdisk.cpio')
+    if logging_system("cd %s && find . | cpio --create --format='newc' > %s" % (ramdisk_dir, ramdisk_data)):
+        raise CriticalError('Unable to create cpio filesystem')
+    if logging_system("cd %s && gzip %s" % (tmpdir, ramdisk_data)):
+        raise CriticalError('Unable to compress cpio filesystem')
+    return os.path.join(tmpdir, 'ramdisk.cpio.gz')
 
 
 def ensure_directory(path):
@@ -294,7 +344,13 @@ def connect_to_serial(context):
         match = proc.expect(patterns, timeout=10)
         result = results[match]
         logging.info('Matched %r which means %s', patterns[match], result)
-        if result == 'retry':
+        if result == 'retry' or result == 'reset-port':
+            reset_cmd = context.device_config.reset_port_command
+            if reset_cmd:
+                logging.warning('attempting to reset serial port')
+                context.run_command(reset_cmd)
+            else:
+                logging.warning('no reset_port command configured')
             proc.close(True)
             retry_count += 1
             time.sleep(5)
@@ -302,15 +358,6 @@ def connect_to_serial(context):
         elif result == 'all-good':
             atexit.register(proc.close, True)
             return proc
-        elif result == 'reset-port':
-            reset_cmd = context.device_config.reset_port_command
-            if reset_cmd:
-                context.run_command(reset_cmd)
-            else:
-                raise CriticalError('no reset_port command configured')
-            proc.close(True)
-            retry_count += 1
-            time.sleep(5)
     raise CriticalError('could execute connection_command successfully')
 
 

@@ -68,8 +68,9 @@ android = deployment_data_dict({
     # for lava-test-shell
     'distro': 'android',
     'lava_test_sh_cmd': '/system/bin/mksh',
-    'lava_test_dir': '/data/lava',
+    'lava_test_dir': '/data/lava-%s',
     'lava_test_results_part_attr': 'data_part_android_org',
+    'lava_test_results_dir': '/lava-%s',
 })
 
 
@@ -82,8 +83,9 @@ ubuntu = deployment_data_dict({
     # for lava-test-shell
     'distro': 'ubuntu',
     'lava_test_sh_cmd': '/bin/bash',
-    'lava_test_dir': '/lava',
+    'lava_test_dir': '/lava-%s',
     'lava_test_results_part_attr': 'root_part',
+    'lava_test_results_dir': '/lava-%s',
 })
 
 
@@ -96,8 +98,9 @@ oe = deployment_data_dict({
     # for lava-test-shell
     'distro': 'oe',
     'lava_test_sh_cmd': '/bin/sh',
-    'lava_test_dir': '/lava',
+    'lava_test_dir': '/lava-%s',
     'lava_test_results_part_attr': 'root_part',
+    'lava_test_results_dir': '/lava-%s',
 })
 
 
@@ -110,6 +113,7 @@ fedora = deployment_data_dict({
     # for lava-test-shell
     'distro': 'fedora',
     'lava_test_sh_cmd': '/bin/bash',
-    'lava_test_dir': '/lava',
+    'lava_test_dir': '/lava-%s',
     'lava_test_results_part_attr': 'root_part',
+    'lava_test_results_dir': '/lava-%s',
 })

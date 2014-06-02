@@ -32,6 +32,9 @@ from lava_dispatcher.downloader import download_image
 from lava_dispatcher.utils import (
     mkdtemp,
     connect_to_serial,
+    extract_ramdisk,
+    extract_modules,
+    create_ramdisk,
 )
 
 
@@ -155,9 +158,9 @@ class BaseDriver(object):
     def finalize(self, proc):
         finalize_process(proc)
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
-                             bootloader, firmware, rootfstype, bootloadertype,
-                             target_type, scratch_dir):
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
+                             bootloader, firmware, bl1, bl2, bl31, rootfstype,
+                             bootloadertype, target_type, scratch_dir):
         self.target_type = target_type
         self.scratch_dir = scratch_dir
         if kernel is not None:
@@ -166,6 +169,14 @@ class BaseDriver(object):
             raise CriticalError('A kernel image is required!')
         if ramdisk is not None:
             self._ramdisk = self._get_image(ramdisk)
+            if modules is not None:
+                    modules = download_image(modules, self.context,
+                                             self._working_dir,
+                                             decompress=False)
+                    ramdisk_dir = extract_ramdisk(self._ramdisk, self.working_dir,
+                                                  is_uboot=False)
+                    extract_modules(modules, ramdisk_dir)
+                    self._ramdisk = create_ramdisk(ramdisk_dir, self._working_dir)
         if rootfs is not None:
             self._default_boot_cmds = 'boot_cmds_rootfs'
             rootfs = self._get_image(rootfs)
@@ -243,9 +254,9 @@ class fastboot(BaseDriver):
     def __init__(self, device):
         super(fastboot, self).__init__(device)
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
-                             bootloader, firmware, rootfstype, bootloadertype,
-                             target_type, scratch_dir):
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
+                             bootloader, firmware, bl1, bl2, bl31, rootfstype,
+                             bootloadertype, target_type, scratch_dir):
         raise CriticalError('This platform does not support kernel deployment!')
 
     def enter_fastboot(self):
@@ -266,12 +277,12 @@ class nexus10(fastboot):
     def __init__(self, device):
         super(nexus10, self).__init__(device)
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
-                             bootloader, firmware, rootfstype, bootloadertype,
-                             target_type, scratch_dir):
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
+                             bootloader, firmware, bl1, bl2, bl31, rootfstype,
+                             bootloadertype, target_type, scratch_dir):
         raise CriticalError('This platform does not support kernel deployment!')
 
-    def boot(self):
+    def boot(self, boot_cmds=None):
         self.fastboot.flash('boot', self.__boot_image__)
         self.fastboot('reboot')
 
@@ -301,15 +312,15 @@ class capri(fastboot_serial):
     def __init__(self, device):
         super(capri, self).__init__(device)
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
-                             bootloader, firmware, rootfstype, bootloadertype,
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
+                             bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
                              target_type, scratch_dir):
         raise CriticalError('This platform does not support kernel deployment!')
 
     def erase_boot(self):
         pass
 
-    def boot(self):
+    def boot(self, boot_cmds=None):
         self.fastboot.flash('boot', self.__boot_image__)
         self.fastboot('reboot')
 
@@ -319,8 +330,8 @@ class k3v2(fastboot_serial):
     def __init__(self, device):
         super(k3v2, self).__init__(device)
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
-                             bootloader, firmware, rootfstype, bootloadertype,
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
+                             bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
                              target_type, scratch_dir):
         raise CriticalError('This platform does not support kernel deployment!')
 
@@ -329,6 +340,6 @@ class k3v2(fastboot_serial):
         # Need to sleep and wait for the first stage bootloaders to initialize.
         sleep(10)
 
-    def boot(self):
+    def boot(self, boot_cmds=None):
         self.fastboot.flash('boot', self.__boot_image__)
         self.fastboot('reboot')

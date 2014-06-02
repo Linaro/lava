@@ -44,6 +44,7 @@ from lava_dispatcher.downloader import (
 from lava_dispatcher.errors import (
     CriticalError,
     OperationFailed,
+    NetworkError,
 )
 
 
@@ -218,9 +219,9 @@ class Target(object):
     def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype):
         raise NotImplementedError('deploy_linaro_prebuilt')
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
-                             bootloader, firmware, rootfstype, bootloadertype,
-                             target_type):
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs,
+                             nfsrootfs, bootloader, firmware, bl1, bl2,
+                             bl31, rootfstype, bootloadertype, target_type):
         raise NotImplementedError('deploy_linaro_kernel')
 
     def power_off(self, proc):
@@ -511,6 +512,7 @@ class Target(object):
     @contextlib.contextmanager
     def _python_file_system(self, runner, directory, mounted=False):
         connection = runner.get_connection()
+        error_detected = False
         try:
             if mounted:
                 targetdir = os.path.join('/mnt/%s' % directory)
@@ -524,7 +526,13 @@ class Target(object):
             runner.run('nice tar -czf /tmp/fs.tgz -C %s %s' %
                        (parent_dir, target_name))
             runner.run('cd /tmp')  # need to be in same dir as fs.tgz
-            ip = runner.get_target_ip()
+
+            try:
+                ip = runner.get_target_ip()
+            except NetworkError as e:
+                error_detected = True
+                raise CriticalError("Network error detected..aborting")
+
             connection.sendline('python -m SimpleHTTPServer 0 2>/dev/null')
             match_id = connection.expect([
                 'Serving HTTP on 0.0.0.0 port (\d+) \.\.',
@@ -558,13 +566,15 @@ class Target(object):
                 self._target_extract(runner, tf, parent_dir)
 
         finally:
+            if not error_detected:
                 # kill SimpleHTTPServer
                 connection.sendcontrol('c')
-                if mounted:
-                    runner.run('umount /mnt')
+            if mounted:
+                runner.run('umount /mnt')
 
     @contextlib.contextmanager
     def _busybox_file_system(self, runner, directory, mounted=False):
+        error_detected = False
         try:
             if mounted:
                 targetdir = os.path.join('/mnt/%s' % directory)
@@ -579,7 +589,12 @@ class Target(object):
                        % (parent_dir, target_name))
             runner.run('cd /tmp')  # need to be in same dir as fs.tgz
 
-            ip = runner.get_target_ip()
+            try:
+                ip = runner.get_target_ip()
+            except NetworkError as e:
+                error_detected = True
+                raise CriticalError("Network error detected..aborting")
+
             url_base = self._start_busybox_http_server(runner, ip)
 
             url = url_base + '/fs.tgz'
@@ -604,7 +619,8 @@ class Target(object):
                 runner.run('rm -rf %s' % targetdir)
                 self._target_extract(runner, tf, parent_dir, busybox=True)
         finally:
-            self._stop_busybox_http_server(runner)
+            if not error_detected:
+                self._stop_busybox_http_server(runner)
             if mounted:
                 runner.run('umount /mnt')
 
@@ -661,7 +677,17 @@ class Target(object):
 
     @property
     def lava_test_dir(self):
-        return self._get_from_config_or_deployment_data('lava_test_dir')
+        lava_test_dir = self._get_from_config_or_deployment_data('lava_test_dir')
+        if re.match('.*%s', lava_test_dir):
+            lava_test_dir = lava_test_dir % self.config.hostname
+        return lava_test_dir
+
+    @property
+    def lava_test_results_dir(self):
+        lava_test_results_dir = self._get_from_config_or_deployment_data('lava_test_results_dir')
+        if re.match('.*%s', lava_test_results_dir):
+            lava_test_results_dir = lava_test_results_dir % self.config.hostname
+        return lava_test_results_dir
 
     def _get_from_config_or_deployment_data(self, key):
         value = getattr(self.config, key.lower())
@@ -777,37 +803,43 @@ class Target(object):
 
         return customize_info
 
+    def _customize_image(self, image, boot_mnt, rootfs_mnt):
+        self.mount_info = {'boot': boot_mnt, 'rootfs': rootfs_mnt}
+
+        # for _customize_linux integration
+        self._customize_linux()
+
+        # for files injection function.
+        if self.config.customize is not None and image is not None:
+            # format raw config.customize to customize_info object
+            customize_info = self._reorganize_customize_files()
+
+            # fetch all the src file into the local temp dir
+            self._pre_download_src(customize_info, image)
+
+            # delete file or dir in image
+            for delete_item in customize_info["delete"]:
+                image_item = ImagePathHandle(image, delete_item, self.config, self.mount_info)
+                image_item.remove()
+
+            # inject files/dirs, all the items should be pre-downloaded into temp dir.
+            for customize_object in customize_info["image"]:
+                for des_image_path in customize_object["des"]:
+                    def_item = ImagePathHandle(image, des_image_path, self.config, self.mount_info)
+                    def_item.copy_from(customize_object["src"])
+            for customize_object in customize_info["remote"]:
+                for des_image_path in customize_object["des"]:
+                    def_item = ImagePathHandle(image, des_image_path, self.config, self.mount_info)
+                    def_item.copy_from(customize_object["src"])
+        else:
+            logging.debug("Skip customizing temp image %s !" % image)
+            logging.debug("Customize object is %s !" % self.config.customize)
+
     def customize_image(self, image=None):
-        with image_partition_mounted(image, self.config.boot_part) as boot_mnt:
-            with image_partition_mounted(image, self.config.root_part) as rootfs_mnt:
-
-                self.mount_info = {'boot': boot_mnt, 'rootfs': rootfs_mnt}
-
-                # for _customize_linux integration
-                self._customize_linux()
-
-                # for files injection function.
-                if self.config.customize is not None and image is not None:
-                    # format raw config.customize to customize_info object
-                    customize_info = self._reorganize_customize_files()
-
-                    # fetch all the src file into the local temp dir
-                    self._pre_download_src(customize_info, image)
-
-                    # delete file or dir in image
-                    for delete_item in customize_info["delete"]:
-                        image_item = ImagePathHandle(image, delete_item, self.config, self.mount_info)
-                        image_item.remove()
-
-                    # inject files/dirs, all the items should be pre-downloaded into temp dir.
-                    for customize_object in customize_info["image"]:
-                        for des_image_path in customize_object["des"]:
-                            def_item = ImagePathHandle(image, des_image_path, self.config, self.mount_info)
-                            def_item.copy_from(customize_object["src"])
-                    for customize_object in customize_info["remote"]:
-                        for des_image_path in customize_object["des"]:
-                            def_item = ImagePathHandle(image, des_image_path, self.config, self.mount_info)
-                            def_item.copy_from(customize_object["src"])
-                else:
-                    logging.debug("Skip customizing temp image %s !" % image)
-                    logging.debug("Customize object is %s !" % self.config.customize)
+        if self.config.boot_part != self.config.root_part:
+            with image_partition_mounted(image, self.config.boot_part) as boot_mnt:
+                with image_partition_mounted(image, self.config.root_part) as rootfs_mnt:
+                    self._customize_image(image, boot_mnt, rootfs_mnt)
+        else:
+            with image_partition_mounted(image, self.config.boot_part) as boot_mnt:
+                self._customize_image(image, boot_mnt, boot_mnt)

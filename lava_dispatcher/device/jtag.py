@@ -55,16 +55,16 @@ class JtagTarget(Target):
 
         self.driver = driver_class(self)
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
-                             bootloader, firmware, rootfstype, bootloadertype,
-                             target_type):
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
+                             bootloader, firmware, bl1, bl2, bl31, rootfstype,
+                             bootloadertype, target_type):
         # Get deployment data
         self.deployment_data = deployment_data.get(target_type)
         self._boot_tags, self._default_boot_cmds = \
-            self.driver.deploy_linaro_kernel(kernel, ramdisk, dtb,
+            self.driver.deploy_linaro_kernel(kernel, ramdisk, dtb, modules,
                                              rootfs, nfsrootfs, bootloader,
-                                             firmware, rootfstype, bootloadertype,
-                                             target_type, self.scratch_dir)
+                                             firmware, bl1, bl2, bl31, rootfstype,
+                                             bootloadertype, target_type, self.scratch_dir)
 
     def power_on(self):
         self._boot_cmds = self._load_boot_cmds(default=self._default_boot_cmds,

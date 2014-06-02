@@ -30,16 +30,15 @@ from lava_dispatcher.client.base import (
     NetworkCommandRunner,
 )
 from lava_dispatcher.utils import (
-    string_to_list,
-    mk_targz,
-    rmtree,
     mkdtemp,
     extract_rootfs,
+    extract_modules,
+    extract_ramdisk,
+    create_ramdisk,
     ensure_directory,
 )
 from lava_dispatcher.errors import (
     CriticalError,
-    OperationFailed,
 )
 from lava_dispatcher.downloader import (
     download_image,
@@ -86,12 +85,12 @@ class BootloaderTarget(MasterImageTarget):
 
     def _set_load_addresses(self, bootz):
         if not bootz and self.config.u_load_addrs and len(self.config.u_load_addrs) == 3:
-            logging.info("Setting uImage Load Addresses")
+            logging.info("Attempting to set uImage Load Addresses")
             self._boot_tags['{KERNEL_ADDR}'] = self.config.u_load_addrs[0]
             self._boot_tags['{RAMDISK_ADDR}'] = self.config.u_load_addrs[1]
             self._boot_tags['{DTB_ADDR}'] = self.config.u_load_addrs[2]
         elif bootz and self.config.z_load_addrs and len(self.config.z_load_addrs) == 3:
-            logging.info("Setting zImage Load Addresses")
+            logging.info("Attempting to set zImage Load Addresses")
             self._boot_tags['{KERNEL_ADDR}'] = self.config.z_load_addrs[0]
             self._boot_tags['{RAMDISK_ADDR}'] = self.config.z_load_addrs[1]
             self._boot_tags['{DTB_ADDR}'] = self.config.z_load_addrs[2]
@@ -108,8 +107,10 @@ class BootloaderTarget(MasterImageTarget):
         cmd = 'file ' + kernel
         output = self.context.run_command_get_output(cmd)
         if any(x in output for x in uimage):
+            logging.info('Attempting to set boot command as bootm')
             bootx.append('bootm')
         else:
+            logging.info('Attempting to set boot command as bootz')
             bootx.append('bootz')
             bootz = True
 
@@ -167,9 +168,9 @@ class BootloaderTarget(MasterImageTarget):
         else:
             raise CriticalError("Unknown bootloader type")
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
-                             bootloader, firmware, rootfstype, bootloadertype,
-                             target_type):
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs,
+                             nfsrootfs, bootloader, firmware, bl1, bl2,
+                             bl31, rootfstype, bootloadertype, target_type):
         # Get deployment data
         self.deployment_data = deployment_data.get(target_type)
         # We set the boot type
@@ -193,6 +194,14 @@ class BootloaderTarget(MasterImageTarget):
                 ramdisk = download_image(ramdisk, self.context,
                                          self._tmpdir,
                                          decompress=False)
+                if modules is not None:
+                    modules = download_image(modules, self.context,
+                                             self._tmpdir,
+                                             decompress=False)
+                    ramdisk_dir = extract_ramdisk(ramdisk, self._tmpdir,
+                                                  is_uboot=self._is_uboot_ramdisk(ramdisk))
+                    extract_modules(modules, ramdisk_dir)
+                    ramdisk = create_ramdisk(ramdisk_dir, self._tmpdir)
                 # Ensure ramdisk has u-boot header
                 if not self._is_uboot_ramdisk(ramdisk):
                     ramdisk_uboot = ramdisk + ".uboot"
@@ -222,6 +231,11 @@ class BootloaderTarget(MasterImageTarget):
                                            decompress=False)
                 self._setup_nfs(nfsrootfs)
                 self._boot_tags['{NFSROOTFS}'] = self._lava_nfsrootfs
+                if modules is not None and ramdisk is None:
+                    modules = download_image(modules, self.context,
+                                             self._tmpdir,
+                                             decompress=False)
+                    extract_modules(modules, self._lava_nfsrootfs)
             if bootloader is not None:
                 # We have been passed a bootloader
                 bootloader = download_image(bootloader, self.context,
@@ -249,6 +263,14 @@ class BootloaderTarget(MasterImageTarget):
                 ramdisk = download_image(ramdisk, self.context,
                                          self._tmpdir,
                                          decompress=False)
+                if modules is not None:
+                    modules = download_image(modules, self.context,
+                                             self._tmpdir,
+                                             decompress=False)
+                    ramdisk_dir = extract_ramdisk(ramdisk, self._tmpdir,
+                                                  is_uboot=self._is_uboot_ramdisk(ramdisk))
+                    extract_modules(modules, ramdisk_dir)
+                    ramdisk = create_ramdisk(ramdisk_dir, self._tmpdir)
                 ramdisk_url = self._get_http_url(ramdisk)
                 self._boot_tags['{RAMDISK}'] = ramdisk_url
             elif rootfs is not None:
@@ -269,6 +291,14 @@ class BootloaderTarget(MasterImageTarget):
                 ramdisk = download_image(ramdisk, self.context,
                                          self._tmpdir,
                                          decompress=False)
+                if modules is not None:
+                    modules = download_image(modules, self.context,
+                                             self._tmpdir,
+                                             decompress=False)
+                    ramdisk_dir = extract_ramdisk(ramdisk, self._tmpdir,
+                                                  is_uboot=self._is_uboot_ramdisk(ramdisk))
+                    extract_modules(modules, ramdisk_dir)
+                    ramdisk = create_ramdisk(ramdisk_dir, self._tmpdir)
                 self._boot_tags['{RAMDISK}'] = self._get_rel_path(ramdisk)
             if dtb is not None:
                 # We have been passed a device tree blob
@@ -287,6 +317,11 @@ class BootloaderTarget(MasterImageTarget):
                                            decompress=False)
                 self._setup_nfs(nfsrootfs)
                 self._boot_tags['{NFSROOTFS}'] = self._lava_nfsrootfs
+                if modules is not None and ramdisk is None:
+                    modules = download_image(modules, self.context,
+                                             self._tmpdir,
+                                             decompress=False)
+                    self._setup_modules(modules, self._lava_nfsrootfs)
             if bootloader is not None:
                 # We have been passed a bootloader
                 bootloader = download_image(bootloader, self.context,
@@ -344,6 +379,7 @@ class BootloaderTarget(MasterImageTarget):
                               self.config.boot_linaro_timeout)
 
     def _boot_linaro_image(self):
+        self.proc.empty_buffer()
         if self._is_bootloader() and not self._booted:
             if self.config.hard_reset_command:
                 self._hard_reboot(self.proc)

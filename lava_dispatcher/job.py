@@ -26,6 +26,7 @@ import time
 import traceback
 import hashlib
 import simplejson
+import subprocess
 from json_schema_validator.schema import Schema
 from json_schema_validator.validator import Validator
 
@@ -118,6 +119,11 @@ job_schema = {
                         }
                     }
                 },
+                'auto_start_vms': {
+                    'type': 'boolean',
+                    'optional': True,
+                    'default': True,
+                },
                 'vms': {
                     'optional': False,
                     'type': 'array',
@@ -189,6 +195,11 @@ job_schema = {
         'is_vmhost': {
             'type': 'boolean',
             'default': False,
+            'optional': True,
+        },
+        'auto_start_vms': {
+            'type': 'boolean',
+            'default': True,
             'optional': True,
         },
         'group_size': {
@@ -292,6 +303,12 @@ class LavaTestJob(object):
             logging.debug("[ACTION-B] VM group test!")
             if not self.job_data['is_vmhost']:
                 logging.debug("[ACTION-B] VM host IP is (%s)." % metadata['host_ip'])
+
+            if 'auto_start_vms' in self.job_data:
+                metadata['auto_start_vms'] = str(self.job_data['auto_start_vms']).lower()
+            else:
+                metadata['auto_start_vms'] = 'true'
+
             self.context.test_data.add_metadata(metadata)
 
         if 'target_group' in self.job_data:
@@ -401,6 +418,15 @@ class LavaTestJob(object):
                     logging.info("Cancel operation")
                     err = "Cancel"
                     pass
+                except subprocess.CalledProcessError as err:
+                    if err.output is not None:
+                        logging.info("Command error code: %d, with stdout/stderr:" % (err.returncode))
+                        for line in err.output.rstrip('\n').split('\n'):
+                            logging.info("| > %s" % (line))
+                    else:
+                        logging.info("Command error code: %d, without stdout/stderr" % (err.returncode))
+                    raise
+
                 except Exception as err:
                     logging.info("General Exception: %s" % unicode(str(err)))
                     raise
