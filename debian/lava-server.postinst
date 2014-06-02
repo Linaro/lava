@@ -148,7 +148,14 @@ INSTANCE_CONF
     }
 
     write_config >/etc/lava-server/instance.conf
-    echo "# Created by LAVA server postinst script" > /etc/lava-server/worker.conf
+    if [ ! -f /etc/lava-server/worker.conf ]; then
+        echo "# Created by LAVA server postinst script" > /etc/lava-server/worker.conf
+    fi
+    HEARTBEAT=`grep HEARTBEAT_TIMEOUT /etc/lava-server/worker.conf || true`
+    if [ -z "$HEARTBEAT" ]; then
+        echo "# comment out this line if not needed." >> /etc/lava-server/worker.conf
+        echo "HEARTBEAT_TIMEOUT='300'" >> /etc/lava-server/worker.conf
+    fi
 }
 
 die() {
