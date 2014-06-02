@@ -67,7 +67,7 @@ def version_tag():
     if tag_hash == clone_hash:
         return tag_name
     else:
-        dev_time = datetime.datetime.now()
+        dev_time = datetime.datetime.utcnow()
         return "%s.%02d.%02d" % (tag_name, dev_time.day,
                                  dev_time.hour)
 
