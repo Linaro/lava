@@ -25,8 +25,8 @@ Provides: linaro-dashboard-bundle
 Replaces: linaro-dashboard-bundle
 Multi-Arch: foreign
 Recommends: ntp, git, tftpd-hpa, openbsd-inetd, 
- qemu-system-x86 [amd64] (>= 2.0.0), qemu-system-x86 [i386] (>= 2.0.0),
- qemu-system-arm [armhf] (>= 2.0.0),
+ qemu-system-x86 (>= 2.0.0) [amd64], qemu-system-x86 (>= 2.0.0) [i386],
+ qemu-system-arm (>= 2.0.0) [armhf],
  libguestfs-tools [amd64], libguestfs-tools [i386],
  nfs-kernel-server, rpcbind, unzip
 Description: Linaro Automated Validation Architecture dispatcher
