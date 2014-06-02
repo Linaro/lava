@@ -93,6 +93,7 @@
         <li><a href="{% url lava.scheduler.myjobs %}">My jobs</a></li>
         <li><a href="{% url dashboard_app.views.mybundlestreams %}">My bundle streams</a></li>
         <li><a href="{% url lava.scheduler.mydevice_list %}">My devices</a></li>
+        <li><a href="{% url lava.scheduler.mydevice_type_health_history_log %}">My devices health history</a></li>
         {% if user.is_staff %}
         <li><a href="{% url admin:index %}">Administration</a></li>
         {% endif %}

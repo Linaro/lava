@@ -1,14 +1,18 @@
 {% extends "lava_scheduler_app/_content.html" %}
 
 {% load django_tables2 %}
+{% load i18n %}
 
 {% block content %}
-<h2>Devices owned by {{ user.username }}</h2>
 
-{% render_table my_device_table %}
+<h2>Health History Log for devices owned by {{ user.username }}</h2>
+
+<div id="mydevice_type_health_history_log">
+{% render_table mydthealthhistory_table %}
+</div>
 
 <p><a href="{% url lava.scheduler.myjobs %}">My jobs</a></p>
+<p><a href="{% url lava.scheduler.mydevice_list %}">My devices</a></p>
 <p><a href="{% url dashboard_app.views.mybundlestreams %}">My bundle streams</a></p>
-<p><a href="{% url lava.scheduler.mydevice_type_health_history_log %}">My devices health history</a></p>
 
 {% endblock %}

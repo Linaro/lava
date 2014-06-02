@@ -191,9 +191,17 @@ class SchedulerAPI(ExposedAPI):
         [['panda01', 'panda', 'running'], ['qemu01', 'qemu', 'idle']]
         """
 
+        dev_list = []
+        for dev in Device.objects.all():
+            if not dev.is_visible_to(self.user):
+                continue
+            if dev.status == Device.RETIRED:
+                continue
+            dev_list.append(dev.hostname)
+
         devices = Device.objects.values_list('hostname',
                                              'device_type__name',
-                                             'status')
+                                             'status').filter(hostname__in=dev_list)
         devices = [list((x[0], x[1], Device.STATUS_CHOICES[x[2]][1].lower()))
                    for x in devices]
 
@@ -227,12 +235,17 @@ class SchedulerAPI(ExposedAPI):
         device_type_list = []
         keys = ['busy', 'name', 'idle', 'offline']
 
+        for dev_type in DeviceType.objects.all():
+            if len(dev_type.devices_visible_to(self.user)) == 0:
+                continue
+            device_type_list.append(dev_type.name)
+
         device_types = DeviceType.objects.filter(display=True).annotate(
             idle=SumIf('device', condition='status=%s' % Device.IDLE),
             offline=SumIf('device', condition='status in (%s,%s)'
                           % (Device.OFFLINE, Device.OFFLINING)),
             busy=SumIf('device', condition='status in (%s,%s)'
-                       % (Device.RUNNING, Device.RESERVED)), ).order_by('name')
+                       % (Device.RUNNING, Device.RESERVED)), ).order_by('name').filter(name__in=device_type_list)
 
         for dev_type in device_types:
             device_type = {}

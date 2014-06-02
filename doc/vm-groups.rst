@@ -38,6 +38,7 @@ Example job definition::
           "device_type": "arndale",
           "role": "host"
         },
+        "auto_start_vms": true,
         "vms": [
           {
             "device_type": "kvm-arm",
@@ -90,6 +91,25 @@ devices:
 
 - ``qemu-system`` must be installed (or at least the specific flavor
   that needs to be tested e.g. ``qemu-system-arm``)
+
+The ``auto_start_vms`` attribute is optional, and can be set to
+``false`` to make LAVA *not* start the VM's as soon as the host is
+booted (the default value is ``true``). In that case, signaling LAVA
+when the VM's should be started becomes a responsibility of the test
+writer: one has to include a call to ``lava-start-vms`` at a point in
+the test code where the VMs should be started, and another call to
+``lava-wait-vms`` before the test code finishes to make sure that the
+host will wait until the VM's are done before allowing a reboot of the
+host. Example::
+
+    #!/bin/sh
+
+    # work work work ... (e.g. build qemu from source)
+    lava-start-vms
+    # run tests on the host ...
+    # done, now wait for VM's to finish
+    lava-wait-for-vms
+
 
 The ``vms`` section contains an array of VM descriptions, which
 will be used to instantiate the VMs on the host device. Each item in

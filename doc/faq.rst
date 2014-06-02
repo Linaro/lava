@@ -237,3 +237,16 @@ prefers particular versions of virtualbox. Vagrant version 1.0.3 does
 not work with virtualbox 4.2 but a vagrant session setup in an earlier
 version of virtualbox can still be accessed from the virtualbox
 manager. Login as vagrant:vagrant. 
+
+Others
+------
+
+Why do health checks run even when "Skip Health Check" is selected when bringing a device online?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Health checks will run in the following circumstances when "Skip
+Health check" has been selected:
+
+ * When the health status of the device is in Unknown, Fail or Looping
+ * When the device has been offline for long enough that a health
+   check is already overdue.

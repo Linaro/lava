@@ -1,4 +1,5 @@
 from collections import defaultdict
+import copy
 import logging
 import os
 import simplejson
@@ -59,7 +60,25 @@ from lava_scheduler_app.models import (
     DevicesUnavailableException,
     Worker,
 )
+from dashboard_app.models import BundleStream
+
 from lava.utils.lavatable import LavaTable, LavaView
+
+from lava_scheduler_app.template_helper import expand_template
+from lava_scheduler_app.job_templates import (
+    DEFAULT_TEMPLATE,
+    DEPLOY_IMAGE,
+    DEPLOY_IMAGE_HWPACK,
+    DEPLOY_IMAGE_KERNEL,
+    LAVA_TEST_SHELL_REPO,
+    LAVA_TEST_SHELL_URL,
+    ACTIONS_LINARO,
+    ACTIONS_LINARO_BOOT,
+    ACTIONS_LINARO_ANDROID_IMAGE,
+    COMMAND_SUBMIT_RESULTS,
+    COMMAND_TEST_SHELL
+)
+
 from django.contrib.auth.models import User, Group
 from lava_scheduler_app.tables import (
     JobTable,
@@ -81,6 +100,7 @@ from lava_scheduler_app.tables import (
     OverviewJobsTable,
     NoWorkerDeviceTable,
     QueueJobsTable,
+    DeviceTypeTransitionTable,
 )
 
 # The only functions which need to go in this file are those directly
@@ -485,6 +505,29 @@ def mydevice_list(request):
         RequestContext(request))
 
 
+@BreadCrumb("My Device Type Health History", parent=index)
+def mydevice_type_health_history_log(request):
+    prefix = "mydthealthhistory_"
+    mydthhistory_data = MyDTHealthHistoryView(request,
+                                              model=DeviceStateTransition,
+                                              table_class=DeviceTypeTransitionTable)
+    mydthhistory_table = DeviceTypeTransitionTable(
+        mydthhistory_data.get_table_data(prefix),
+        prefix=prefix,
+    )
+    config = RequestConfig(request,
+                           paginate={"per_page": mydthhistory_table.length})
+    config.configure(mydthhistory_table)
+
+    return render_to_response(
+        "lava_scheduler_app/mydevice_type_health_history_log.html",
+        {
+            'mydthealthhistory_table': mydthhistory_table,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(mydevice_type_health_history_log),
+        },
+        RequestContext(request))
+
+
 def get_restricted_job(user, pk):
     """Returns JOB which is a TestJob object after checking for USER
     accessibility to the object.
@@ -612,10 +655,13 @@ def populate_capabilities(dt):
     for device in devices:
         # multiple core cpus have multiple device.cpu entries, each with attributes.
         if device['device_type'] == 'device.cpu':
-            if device['attributes']['cpu_type'] == '?':
+            if 'cpu type' in device['attributes']:
+                if device['attributes']['cpu_type'] == '?':
+                    model = device['attributes']['cpu type']
+            elif 'model name' in device['attributes']:
                 model = device['attributes']['model name']
             else:
-                model = device['attributes']['cpu_type']
+                model = "?"
             if 'cpu_part' in device['attributes']:
                 cpu_part = int(device['attributes']['cpu_part'], 16)
             elif 'CPU part' in device['attributes']:
@@ -814,6 +860,31 @@ def device_type_reports(request, pk):
         RequestContext(request))
 
 
+@BreadCrumb("{pk} device type health history", parent=device_type_detail, needs=['pk'])
+def device_type_health_history_log(request, pk):
+    device_type = get_object_or_404(DeviceType, pk=pk)
+    prefix = "dthealthhistory_"
+    dthhistory_data = DTHealthHistoryView(request, device_type,
+                                          model=DeviceStateTransition,
+                                          table_class=DeviceTypeTransitionTable)
+    dthhistory_table = DeviceTypeTransitionTable(
+        dthhistory_data.get_table_data(prefix),
+        prefix=prefix,
+    )
+    config = RequestConfig(request,
+                           paginate={"per_page": dthhistory_table.length})
+    config.configure(dthhistory_table)
+
+    return render_to_response(
+        "lava_scheduler_app/device_type_health_history_log.html",
+        {
+            'device_type': device_type,
+            'dthealthhistory_table': dthhistory_table,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_health_history_log, pk=pk),
+        },
+        RequestContext(request))
+
+
 @BreadCrumb("All Device Health", parent=index)
 def lab_health(request):
     data = DeviceTableView(request, model=Device, table_class=DeviceHealthTable)
@@ -933,6 +1004,9 @@ def job_submit(request):
     }
 
     if request.method == "POST" and is_authorized:
+
+        use_wizard = request.POST.get("wizard", None)
+
         if request.is_ajax():
             try:
                 validate_job_json(request.POST.get("json-input"))
@@ -940,6 +1014,21 @@ def job_submit(request):
             except Exception as e:
                 return HttpResponse(simplejson.dumps(str(e)),
                                     mimetype="application/json")
+
+        elif use_wizard:
+            try:
+                if request.POST.get("create_stream"):
+                    BundleStream.create_from_pathname(
+                        request.POST.get("submit_stream"), request.user)
+            except Exception as e:
+                response_data["error"] = str(e)
+
+            job_definition = _prepare_template(request)
+            response_data["json_input"] = str(job_definition).replace("'", '"')
+
+            return render_to_response(
+                "lava_scheduler_app/job_submit.html",
+                response_data, RequestContext(request))
 
         else:
             try:
@@ -967,6 +1056,142 @@ def job_submit(request):
         return render_to_response(
             "lava_scheduler_app/job_submit.html",
             response_data, RequestContext(request))
+
+
+@BreadCrumb("Submit Job", parent=index)
+def job_submit_wizard(request):
+
+    is_authorized = False
+    if request.user and request.user.has_perm(
+            'lava_scheduler_app.add_testjob'):
+        is_authorized = True
+
+    response_data = {
+        'is_authorized': is_authorized,
+        'bread_crumb_trail': BreadCrumbTrail.leading_to(job_submit),
+        'device_types': filter_device_types(request.user),
+    }
+
+    return render_to_response(
+        "lava_scheduler_app/job_wizard.html",
+        response_data, RequestContext(request))
+
+
+def _prepare_template(request):
+
+    boot_type = request.POST.get("boot_type")
+
+    if boot_type == "android_image":
+        action_template = copy.deepcopy(ACTIONS_LINARO_ANDROID_IMAGE)
+        action_config = {
+            "BOOT_IMAGE_PARAMETER": str(request.POST.get("android_boot")),
+            "DATA_IMAGE_PARAMETER": str(request.POST.get("android_data")),
+            "SYSTEM_IMAGE_PARAMETER": str(request.POST.get("android_system")),
+            "TESTS_PARAMETER": [str(request.POST.get("test_name"))],
+            "TEST_NAME_PARAMETER": str(request.POST.get("test_name")),
+            "ANDROID_BOOT_OPTIONS_PARAMETER": [x for x in str(request.POST.get("boot_options")).split("\n")]
+        }
+    else:
+        if boot_type == "linaro_image":
+            image_template = copy.deepcopy(DEPLOY_IMAGE)
+            deploy_command = "deploy_linaro_image"
+            image_config = {
+                "PREBUILT_IMAGE_PARAMETER": str(request.POST.get("image_url"))
+            }
+        elif boot_type == "linaro_hwpack":
+            image_template = copy.deepcopy(DEPLOY_IMAGE_HWPACK)
+            deploy_command = "deploy_linaro_image"
+            image_config = {
+                "HWPACK_PARAMETER": str(request.POST.get("hwpack_url")),
+                "ROOTFS_PARAMETER": str(request.POST.get("rootfs_url"))
+            }
+        elif boot_type == "linaro_kernel":
+            image_template = copy.deepcopy(DEPLOY_IMAGE_KERNEL)
+            deploy_command = "deploy_linaro_kernel"
+            image_config = {
+                "KERNEL_PARAMETER": str(request.POST.get("kernel")),
+                "RAMDISK_PARAMETER": str(request.POST.get("ramdisk")),
+                "DTB_PARAMETER": str(request.POST.get("dtb")),
+                "ROOTFS_PARAMETER": str(request.POST.get("kernel_rootfs"))
+            }
+
+        expand_template(image_template, image_config)
+
+        command_test_shell = None
+        if request.POST.get("repo") or request.POST.get("testdef_url"):
+
+            if request.POST.get("testdef_type") == "repo":
+                test_shell_template = copy.deepcopy(LAVA_TEST_SHELL_REPO)
+                test_shell_config = {
+                    "REPO_PARAMETER": str(request.POST.get("repo")),
+                    "TESTDEF_PARAMETER": str(request.POST.get("testdef"))
+                }
+            else:
+                test_shell_template = copy.deepcopy(LAVA_TEST_SHELL_URL)
+                test_shell_config = {
+                    "TESTDEF_URLS_PARAMETER": [str(request.POST.get("testdef_url"))]
+                }
+
+            expand_template(test_shell_template, test_shell_config)
+
+            command_test_shell = copy.deepcopy(COMMAND_TEST_SHELL)
+            command_test_shell_config = {
+                "TEST_SHELL_PARAMETER": test_shell_template
+            }
+            expand_template(command_test_shell, command_test_shell_config)
+
+        if request.POST.get("boot_options") != "":
+            action_template = copy.deepcopy(ACTIONS_LINARO_BOOT)
+            action_config = {
+                "DEPLOY_COMMAND_PARAMETER": deploy_command,
+                "DEPLOY_PARAMETER": image_template,
+                "INTERACTIVE_BOOT_CMDS_PARAMETER": str(request.POST.get("interactive_commands")),
+                "BOOT_OPTIONS_PARAMETER": [x for x in str(request.POST.get("boot_options")).split("\n")],
+                "COMMAND_TEST_SHELL": command_test_shell
+            }
+
+        else:
+            action_template = copy.deepcopy(ACTIONS_LINARO)
+            action_config = {
+                "DEPLOY_COMMAND_PARAMETER": deploy_command,
+                "DEPLOY_PARAMETER": image_template,
+                "COMMAND_TEST_SHELL": command_test_shell
+            }
+
+    command_submit = None
+    if request.POST.get("submit_stream"):
+        command_submit = copy.deepcopy(COMMAND_SUBMIT_RESULTS)
+        command_submit_config = {
+            "BUNDLE_STREAM": str(request.POST.get("submit_stream"))
+        }
+        expand_template(command_submit, command_submit_config)
+
+    action_config["COMMAND_SUBMIT_RESULTS"] = command_submit
+
+    print action_config
+    expand_template(action_template, action_config)
+    print "1231231231312"
+
+    notify = None
+    if request.POST.get("notify"):
+        notify = ["%s" % str(x.strip()) for x in request.POST.get("notify").split(",")]
+    device_tags = None
+    if request.POST.get("device_tags"):
+        device_tags = ["%s" % str(x.strip()) for x in request.POST.get("device_tags").split(",")]
+
+    job_template = copy.deepcopy(DEFAULT_TEMPLATE)
+    default_config = {
+        "JOBNAME_PARAMETER": str(request.POST.get("job_name")),
+        "TIMEOUT_PARAMETER": int(request.POST.get("timeout")),
+        "DEVICE_TYPE_PARAMETER": str(request.POST.get("device_type")),
+        "NOTIFY_ON_INCOMPLETE_PARAMETER": notify,
+        "ACTIONS_PARAMETER": action_template,
+        "TAGS_PARAMETER": device_tags,
+    }
+
+    expand_template(job_template, default_config)
+
+    return job_template
 
 
 @BreadCrumb("Job", parent=index, needs=['pk'])
@@ -1275,16 +1500,22 @@ def job_resubmit(request, pk):
                 obj = simplejson.loads(definition)
 
                 # Iterate through the objects in the JSON and pop (remove)
-                # the submit_results action once we find it.
+                # the bundle stream path in submit_results action once we find it.
                 for key in obj:
                     if key == "actions":
                         for i in xrange(len(obj[key])):
                             if obj[key][i]["command"] == \
                                     "submit_results_on_host" or \
                                     obj[key][i]["command"] == "submit_results":
-                                obj[key].pop(i)
-                                break
+                                for key1 in obj[key][i]:
+                                    if key1 == "parameters":
+                                        for key2 in obj[key][i][key1]:
+                                            if key2 == "stream":
+                                                obj[key][i][key1][key2] = ""
+                                                break
                 definition = simplejson.dumps(obj, sort_keys=True, indent=4, separators=(',', ': '))
+                response_data["resubmit_warning"] = \
+                    "Since you were not the submitter of the original job,\\nthe bundle stream was removed, please provide a bundle stream."
 
             try:
                 response_data["json_input"] = definition
@@ -1451,6 +1682,65 @@ class TransitionView(JobTableView):
         ).filter(
             device=self.device,
         ).order_by(
+            '-created_on'
+        )
+
+
+class DeviceHealthHistoryView(JobTableView):
+
+    def __init__(self, request, device, **kwargs):
+        super(DeviceHealthHistoryView, self).__init__(request, **kwargs)
+        self.device = device
+
+    def get_queryset(self):
+        states = [Device.OFFLINE, Device.OFFLINING, Device.RETIRED]
+
+        return DeviceStateTransition.objects.select_related(
+            'created_by'
+        ).filter(
+            (Q(old_state__in=states) | Q(new_state__in=states)),
+            device=self.device
+        ).order_by(
+            '-created_on'
+        )
+
+
+class DTHealthHistoryView(JobTableView):
+
+    def __init__(self, request, device_type, **kwargs):
+        super(DTHealthHistoryView, self).__init__(request, **kwargs)
+        self.device_type = device_type
+
+    def get_queryset(self):
+        states = [Device.OFFLINE, Device.OFFLINING, Device.RETIRED]
+
+        return DeviceStateTransition.objects.select_related(
+            'device__hostname', 'created_by'
+        ).filter(
+            (Q(old_state__in=states) | Q(new_state__in=states)),
+            device__device_type=self.device_type
+        ).order_by(
+            'device__hostname',
+            '-created_on'
+        )
+
+
+class MyDTHealthHistoryView(JobTableView):
+
+    def __init__(self, request, **kwargs):
+        super(MyDTHealthHistoryView, self).__init__(request, **kwargs)
+
+    def get_queryset(self):
+        states = [Device.OFFLINE, Device.OFFLINING, Device.RETIRED]
+
+        return DeviceStateTransition.objects.select_related(
+            'device__hostname', 'created_by'
+        ).filter(
+            (Q(old_state__in=states) | Q(new_state__in=states)),
+            created_by=self.request.user
+        ).order_by(
+            'device__device_type',
+            'device__hostname',
             '-created_on'
         )
 
@@ -1666,6 +1956,31 @@ def device_derestrict_device(request, pk):
     else:
         return HttpResponseForbidden(
             "you cannot derestrict submissions to this device", content_type="text/plain")
+
+
+@BreadCrumb("{pk} device health history", parent=device_detail, needs=['pk'])
+def device_health_history_log(request, pk):
+    device = get_object_or_404(Device, pk=pk)
+    prefix = "healthhistory_"
+    hhistory_data = DeviceHealthHistoryView(request, device,
+                                            model=DeviceStateTransition,
+                                            table_class=DeviceTransitionTable)
+    hhistory_table = DeviceTransitionTable(
+        hhistory_data.get_table_data(prefix),
+        prefix=prefix,
+    )
+    config = RequestConfig(request,
+                           paginate={"per_page": hhistory_table.length})
+    config.configure(hhistory_table)
+
+    return render_to_response(
+        "lava_scheduler_app/device_health_history_log.html",
+        {
+            'device': device,
+            'healthhistory_table': hhistory_table,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(device_health_history_log, pk=pk),
+        },
+        RequestContext(request))
 
 
 @BreadCrumb("Worker: {pk}", parent=index, needs=['pk'])

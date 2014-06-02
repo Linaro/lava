@@ -43,6 +43,7 @@ urlpatterns = patterns(
     url(r'^filters/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+compare/(?P<tag1>[a-zA-Z0-9-_: .]+)/(?P<tag2>[a-zA-Z0-9-_: .]+)$', 'filters.views.compare_matches'),
     url(r'^streams/$', 'bundle_stream_list'),
     url(r'^streams/mybundlestreams$', 'mybundlestreams'),
+    url(r'^streams/bundlestreams-json$', 'bundlestreams_json'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/$', 'bundle_list'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/+export$', 'bundle_list_export'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/$', 'bundle_detail'),
@@ -96,6 +97,4 @@ urlpatterns = patterns(
     url(r'^api/unlink-bug-and-testrun', 'unlink_bug_and_testrun'),
     url(r'^api/link-bug-to-testresult', 'link_bug_to_testresult'),
     url(r'^api/unlink-bug-and-testresult', 'unlink_bug_and_testresult'),
-    url(r'^test-definition/add_test_definition', 'add_test_definition'),
-    url(r'^test-definition/$', 'test_definition'),
 )

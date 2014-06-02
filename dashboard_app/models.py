@@ -31,16 +31,20 @@ import traceback
 import contextlib
 
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
-from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.exceptions import (
+    ImproperlyConfigured,
+    ValidationError,
+    PermissionDenied
+)
 from django.core.files import locks, File
 from django.core.files.storage import FileSystemStorage
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
-from django.db import models, connection
+from django.db import models, connection, IntegrityError
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
@@ -228,6 +232,71 @@ class BundleStream(RestrictedResource):
             raise ValidationError(
                 'Anonymous streams must be public')
         return super(BundleStream, self).clean()
+
+    @classmethod
+    def create_from_pathname(cls, pathname, user=None, name=None):
+        """
+        Create new bundle stream from pathname.
+
+        Checks for various user/group permissions.
+        Raises ValueError if the pathname is not well formed.
+        Raises PermissionDenied if user cannot create this stream or does not
+        belong to the right group.
+        Raises IntegrityError if bundle stream already exists.
+
+        :param pathname: bundle stream pathname.
+        :param name: optional name of the bundle stream.
+        :param user: user which is trying to create a bundle.
+        """
+        if name is None:
+            name = ""
+
+        try:
+            user_name, group_name, slug, is_public, is_anonymous = BundleStream.parse_pathname(pathname)
+        except ValueError:
+            raise
+
+        # Start with those to simplify the logic below
+        owner = None
+        group = None
+        if is_anonymous is False:
+            if user is not None:
+                if user_name is not None:
+                    if not user.is_superuser:
+                        if user_name != user.username:
+                            raise PermissionDenied("Only user {user!r} could create this stream".format(user=user_name))
+                    owner = user  # map to real user object
+                elif group_name is not None:
+                    try:
+                        if user.is_superuser:
+                            group = Group.objects.get(name=group_name)
+                        else:
+                            group = user.groups.get(name=group_name)
+                    except Group.DoesNotExist:
+                        raise PermissionDenied("Only a member of group {group!r} could create this stream".format(group=group_name))
+            else:
+                raise PermissionDenied(
+                    "Only anonymous streams can be constructed.")
+        else:
+            if user is not None:
+                owner = user
+            else:
+                # Hacky but will suffice for now
+                owner = User.objects.get_or_create(
+                    username="anonymous-owner")[0]
+        try:
+            bundle_stream = BundleStream.objects.create(
+                user=owner,
+                group=group,
+                slug=slug,
+                is_public=is_public,
+                is_anonymous=is_anonymous,
+                name=name)
+
+        except IntegrityError:
+            raise
+        else:
+            return bundle_stream
 
     def save(self, *args, **kwargs):
         """

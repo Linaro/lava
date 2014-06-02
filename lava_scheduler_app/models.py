@@ -522,6 +522,26 @@ class Device(RestrictedResource):
             '-submit_time'
         )
 
+    def is_visible_to(self, user):
+        """
+        Checks if this device is visible to the specified user.
+        Retired devices are deemed to be visible - filter these out
+        explicitly where necessary.
+        :param user: If empty, restricted or hidden devices always return False
+        :return: True if the user can see this device
+        """
+        if self.device_type.owners_only:
+            if not user:
+                return False
+            if len(self.device_type.devices_visible_to(user)) == 0:
+                return False
+        if not self.is_public:
+            if not user:
+                return False
+            if not self.can_submit(user):
+                return False
+        return True
+
     def can_admin(self, user):
         if self.is_owned_by(user):
             return True
@@ -1098,6 +1118,8 @@ class TestJob(RestrictedResource):
         taglist = _get_tag_list(job_data.get('tags', []))
 
         if 'target' in job_data:
+            if 'device_type' in job_data:
+                del job_data['device_type']
             device_type = None
             try:
                 target = Device.objects.filter(
@@ -1158,7 +1180,7 @@ class TestJob(RestrictedResource):
             role = vm_group['host'].get('role', None)
             allow = _check_submit_to_device(
                 list(Device.objects.filter(device_type=device_type)), user)
-            requested_devices[device_type] = (1, role)
+            requested_devices[device_type.name] = (1, role)
 
             # Validate and get the list of vms requested. These are dynamic vms
             # that will be created by the above vm_group host, so we need not
@@ -1166,22 +1188,22 @@ class TestJob(RestrictedResource):
             # (they won't since they will be created dynamically).
             vms_list = vm_group['vms']
             for vm in vms_list:
-                device_type = vm['device_type']
+                dtype = vm['device_type']
                 count = vm.get('count', 1)
                 role = vm.get('role', None)
                 # Right now we support only 'kvm' type vms.
                 #
                 # FIXME: Once we have support for 'xen' augment this list
-                if device_type in ['kvm', 'kvm-arm']:
-                    if device_type in requested_devices:
-                        count = count + requested_devices[device_type][0]
-                        requested_devices[device_type] = (count, role)
+                if dtype in ['kvm', 'kvm-arm']:
+                    if dtype in requested_devices:
+                        count = count + requested_devices[dtype][0]
+                        requested_devices[dtype] = (count, role)
                     else:
-                        requested_devices[device_type] = (count, role)
+                        requested_devices[dtype] = (count, role)
                 else:
                     raise DevicesUnavailableException(
                         "Device type '%s' is not a supported VMs type" %
-                        device_type)
+                        dtype)
         else:
             raise JSONDataError(
                 "No 'target' or 'device_type', 'device_group' or 'vm_group' "
@@ -1428,10 +1450,7 @@ class TestJob(RestrictedResource):
         return self._can_admin(user) and self.status <= TestJob.RUNNING
 
     def can_resubmit(self, user):
-        owner = False
-        if self.actual_device is not None:
-            owner = self.actual_device.can_admin(user)
-        return (user.is_superuser or owner or
+        return (user.is_superuser or
                 user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
 
     def cancel(self, user=None):

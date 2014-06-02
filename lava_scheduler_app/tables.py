@@ -647,3 +647,22 @@ class DeviceTransitionTable(LavaTable):
         searches = {}
         queries = {}
         times = {}
+
+
+class DeviceTypeTransitionTable(DeviceTransitionTable):
+
+    device = tables.TemplateColumn('''
+    <a href='/scheduler/device/{{ record.device.hostname }}'>{{ record.device.hostname}}</a>
+        ''')
+
+    class Meta(LavaTable.Meta):
+        model = DeviceStateTransition
+        exclude = [
+            'id', 'job', 'old_state', 'new_state'
+        ]
+        sequence = [
+            'device', 'created_on', 'transition', 'created_by', 'message'
+        ]
+        searches = {}
+        queries = {}
+        times = {}

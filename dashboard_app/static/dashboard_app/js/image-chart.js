@@ -22,6 +22,7 @@ $(document).ready(function () {
     }
 
     function ImageChart(chart_id, chart_data) {
+        this.plot = null;
         this.chart_id = chart_id;
         this.chart_data = chart_data;
         this.legend_items = [];
@@ -793,6 +794,10 @@ $(document).ready(function () {
             }
         }
 
+        // Grid maximum and minimum values for y axis.
+        var y_max = - Number.MAX_VALUE;
+        var y_min = Number.MAX_VALUE;
+
         // Pack data in series for plot display.
         for (var i in sorted_filter_ids) {
             test_filter_id = sorted_filter_ids[i];
@@ -824,6 +829,15 @@ $(document).ready(function () {
                 } else {
                     bars_options = {show: false};
                     lines_options = {show: true};
+                }
+
+                for (var i in plot_data[test_filter_id]["data"]) {
+                    if (plot_data[test_filter_id]["data"][i][1] > y_max) {
+                        y_max = plot_data[test_filter_id]["data"][i][1];
+                    }
+                    if (plot_data[test_filter_id]["data"][i][1] < y_min) {
+                        y_min = plot_data[test_filter_id]["data"][i][1];
+                    }
                 }
             }
 
@@ -964,12 +978,21 @@ $(document).ready(function () {
             canvas: true,
         };
 
+        // We cannot apply autoscaleMargin for y axis since y_max and y_min
+        // are explicitely set. Therefore we will manually increase/decrease
+        // the limits.
+        y_max *= 1.1;
+        y_min *= 0.9;
+
         if ($("#is_percentage_" + this.chart_id).attr("checked") == true) {
             options["yaxis"]["max"] = 105;
             options["yaxis"]["min"] = 0;
+        } else {
+            options["yaxis"]["max"] = y_max;
+            options["yaxis"]["min"] = y_min;
         }
 
-        $.plot($("#outer_container_" + this.chart_id + " #inner_container_" + this.chart_id), data, options);
+        this.plot = $.plot($("#outer_container_" + this.chart_id + " #inner_container_" + this.chart_id), data, options);
 
         // Setup click events and css in the legend.
         this.setup_clickable();
@@ -1061,7 +1084,7 @@ $(document).ready(function () {
                 modal: true,
                 title: "Link bug to XXX"
             });
-         
+
         get_testrun_and_buildnumber = function (element) {
             var cell = element.closest('td');
             var row = cell.closest('tr');
@@ -1133,7 +1156,7 @@ $(document).ready(function () {
                     link_bug_url = testrun_link_bug_url
                     unlink_bug_url = testrun_unlink_bug_url
                 }
-                    
+
                 if(current_bug.length) {
                     var html = '<b>Bug(s) linked to ' + names.testrun + ':</b><table width="95%" border="0">';
                     linked_div.show();

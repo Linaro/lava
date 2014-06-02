@@ -207,6 +207,28 @@ def bundle_stream_list(request):
     )
 
 
+def bundlestreams_json(request):
+
+    term = request.GET['term']
+    streams = []
+    if request.user.is_superuser:
+        result = BundleStream.objects.filter(
+            pathname__contains=term).order_by('pathname')
+    else:
+        result = BundleStream.objects.accessible_by_principal(
+            request.user).filter(pathname__contains=term).order_by('pathname')
+
+    for stream in result:
+        streams.append(
+            {
+                "id": stream.id,
+                "name": stream.pathname,
+                "label": stream.pathname
+            }
+        )
+    return HttpResponse(json.dumps(streams), content_type='application/json')
+
+
 class BundleView(BundleStreamView):
 
     def __init__(self, request, bundle_stream, **kwargs):
@@ -854,49 +876,6 @@ def redirect_to_bundle(request, content_sha1, trailing=''):
         request.user,
         content_sha1=content_sha1)
     return redirect_to(request, bundle, trailing)
-
-
-class TestDefinitionView(BundleStreamView):
-
-    def get_queryset(self):
-        return TestDefinition.objects.all()
-
-
-@BreadCrumb("Test Definitions", parent=index)
-def test_definition(request):
-    view = TestDefinitionView(request)
-    table = TestDefinitionTable(view.get_table_data())
-    RequestConfig(request, paginate={"per_page": table.length}).configure(table)
-    return render_to_response(
-        "dashboard_app/test_definition.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(test_definition),
-            "testdefinition_table": table,
-        }, RequestContext(request))
-
-
-class AddTestDefForm(ModelForm):
-    class Meta:
-        model = TestDefinition
-        fields = ('name', 'version', 'description', 'format', 'location',
-                  'url', 'environment', 'target_os', 'target_dev_types',
-                  'content', 'mime_type')
-
-
-@BreadCrumb("Add Test Definition", parent=index)
-def add_test_definition(request):
-    if request.method == 'POST':
-        form = AddTestDefForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return HttpResponseRedirect('/dashboard/test-definition/')
-    else:
-        form = AddTestDefForm()
-    return render_to_response(
-        "dashboard_app/add_test_definition.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                add_test_definition),
-            "form": form,
-        }, RequestContext(request))
 
 
 @require_POST

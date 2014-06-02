@@ -61,7 +61,8 @@ can see this information.
 {% render_table health_job_summary_table %}
 
 <h3>Reports</h3>
-<a href="{% url lava.scheduler.device_type_report device_type %}">Health check and job failure report</a>
+<a href="{% url lava.scheduler.device_type_report device_type %}">Health check and job failure report</a><br/>
+<a href="{% url lava.scheduler.device_type_health_history_log device_type %}">Health History Log</a>
 {% endif %}
 
 <h3>Devices Overview</h3>

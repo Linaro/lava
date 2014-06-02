@@ -21,6 +21,7 @@ Tests for the BundleStream model
 """
 
 from django.contrib.auth.models import User, Group
+from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError
 from django_testscenarios.ubertest import TestCase, TestCaseWithScenarios
 
@@ -149,3 +150,54 @@ class BundleStreamPermissionTests(TestCase):
         bundle_stream = fixtures.create_bundle_stream("/public/personal/owner/")
         user = User.objects.create(username='non-owner')
         self.assertFalse(bundle_stream.can_upload(user))
+
+    def test_group_can_upload_to_owned(self):
+        group = Group.objects.create(name='group')
+        member = User.objects.create(username="member")
+        group.user_set.add(member)
+        other = User.objects.create(username="other")
+        bundle_stream = fixtures.create_bundle_stream("/public/team/group/basic/")
+        self.assertTrue(bundle_stream.can_upload(member))
+        self.assertFalse(bundle_stream.can_upload(other))
+
+    def test_create_from_pathname_permission_denied_user(self):
+        user = User.objects.get_or_create(username="non-owner")[0]
+        self.assertRaises(
+            PermissionDenied,
+            BundleStream.create_from_pathname,
+            "/private/personal/owner/name/", user)
+
+    def test_create_from_pathname_permission_denied_group(self):
+        user = User.objects.get_or_create(username="non-owner")[0]
+        self.assertRaises(
+            PermissionDenied,
+            BundleStream.create_from_pathname,
+            "/public/team/group/name/", user)
+
+    def test_create_from_pathname_permission_denied_anonymous(self):
+        self.assertRaises(
+            PermissionDenied,
+            BundleStream.create_from_pathname,
+            "/public/team/group/name/", user=None)
+
+    def test_create_from_pathname(self):
+        user = User.objects.get_or_create(username="owner")[0]
+        bundle_stream = BundleStream.create_from_pathname(
+            "/private/personal/owner/name/", user)
+        self.assertEqual(bundle_stream.pathname,
+                         "/private/personal/owner/name/")
+        group = Group.objects.create(name='group')
+        group.user_set.add(user)
+        bundle_stream = BundleStream.create_from_pathname(
+            "/private/team/group/name/", user)
+        self.assertEqual(bundle_stream.pathname, "/private/team/group/name/")
+        bundle_stream = BundleStream.create_from_pathname(
+            "/anonymous/name/", user=None)
+        self.assertEqual(bundle_stream.pathname, "/anonymous/name/")
+
+    def test_create_from_pathname_permission_denied_integrity(self):
+        BundleStream.create_from_pathname("/anonymous/name/", user=None)
+        self.assertRaises(
+            IntegrityError,
+            BundleStream.create_from_pathname,
+            "/anonymous/name/", user=None)
