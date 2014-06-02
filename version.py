@@ -64,9 +64,18 @@ def version_tag():
     if tag_hash == clone_hash:
         return tag_name
     else:
-        dev_time = datetime.datetime.now()
-        return "%s.%02d.%02d.%02d" % (tag_name, dev_time.day,
-                                      dev_time.hour, dev_time.minute)
+        dev_time = datetime.datetime.utcnow()
+        # our tags are one month behind, 04 is tagged in 05
+        # however, the tag is not necessarily made on the first day of 05
+        # so if out by two, allow for an "extended month" to ensure
+        # an incremental version
+        bits = tag_name.split('.')
+        tag_month = int(bits[1])
+        extended = dev_time.day
+        if int(dev_time.month) - 1 > tag_month:
+            extended = int(dev_time.day) + 31
+        delayed_tag = "%d.%02d" % (dev_time.year, dev_time.month)
+        return "%s.%02d.%02d" % (tag_name, extended, dev_time.hour)
 
 
 def main():
