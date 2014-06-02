@@ -33,28 +33,6 @@
     {% endif %}
     </dl>
   </div>
-  {% if job.is_multinode or job.is_vmgroup %}
-  <div class="col-md-4">
-    <h4 class="modal-header">Sub jobs</h4>
-    <dl class="dl-horizontal">
-    {% for subjob in job.sub_jobs_list %}
-      <dt><a href="{% url 'lava.scheduler.job.detail' subjob.sub_id %}">{{ subjob.sub_id }}</a>
-        {% if '0' in subjob.sub_id and '0' not in job.sub_id %}
-            <abbr title="view job {{ subjob.sub_id }} to see the result bundle, if any.">(?)</abbr>
-        {% endif %}
-      </dt>
-      <dd>
-    {% if subjob.actual_device.hostname %}
-      on: <a href="{{ subjob.actual_device.get_absolute_url }}">{{ subjob.actual_device.hostname }}</a>
-      as: {{ subjob.device_role }}&nbsp;
-    {% else %}
-      No device assigned as {{ subjob.device_role }}.</dd>
-    {% endif %}
-      </dd>
-    {% endfor %}
-    </dl>
-  </div>
-  {% endif %}
   <div class="col-md-4">
     <h4 class="modal-header">Logs</h4>
     <div class="row">
@@ -99,6 +77,31 @@
     </div>
   </div>
 </div>
+{% if job.is_multinode or job.is_vmgroup %}
+<div class="row">
+  <div class="col-md-6">
+    <h4 class="modal-header">Sub jobs</h4>
+    <dl class="dl-horizontal">
+    {% for subjob in job.sub_jobs_list %}
+      <dt><a href="{% url 'lava.scheduler.job.detail' subjob.sub_id %}">{{ subjob.sub_id }}</a>
+        {% if '0' in subjob.sub_id and '0' not in job.sub_id %}
+            <abbr title="view job {{ subjob.sub_id }} to see the result bundle, if any.">(?)</abbr>
+        {% endif %}
+      </dt>
+      <dd>
+    {% if subjob.actual_device.hostname %}
+      on: <a href="{{ subjob.actual_device.get_absolute_url }}">{{ subjob.actual_device.hostname }}</a>
+      as: {{ subjob.device_role }}&nbsp;
+    {% else %}
+      No device assigned as {{ subjob.device_role }}.</dd>
+    {% endif %}
+      </dd>
+    {% endfor %}
+    </dl>
+  </div>
+</div>
+{% endif %}
+
 
 <h4 class="modal-header">Definition</h4>
 <pre class="brush: js">{{ job.display_definition }}</pre>
