@@ -108,10 +108,10 @@ class WorkerData:
         """
         try:
             localhost = Worker.localhost()
-            if localhost.too_long_since_last_heartbeat():
-                self.populate_minimal_worker_data()
-            elif restart:
+            if restart:
                 self.populate_complete_worker_data()
+            elif localhost.too_long_since_last_heartbeat():
+                self.populate_minimal_worker_data()
             else:
                 return
         except ValueError:
