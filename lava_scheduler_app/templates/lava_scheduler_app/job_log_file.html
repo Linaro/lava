@@ -167,8 +167,10 @@
       </div>
     </div>
   </div>
-  {% if job.is_multinode or job.is_vmgroup %}
-  <div class="col-md-4">
+</div>
+{% if job.is_multinode or job.is_vmgroup %}
+<div class="row">
+  <div class="col-md-6">
     <h4 class="modal-header">Sub jobs</h4>
     <dl class="dl-horizontal">
     {% for subjob in job.sub_jobs_list %}
@@ -183,13 +185,13 @@
       as: {{ subjob.device_role }}
       </dd>
     {% else %}
-      No device assigned as {{ subjob.devicee_role }}.</dd>
+      No device assigned as {{ subjob.device_role }}.</dd>
     {% endif %}
     {% endfor %}
     </dl>
   </div>
-  {% endif %}
 </div>
+{% endif %}
 
 
 
