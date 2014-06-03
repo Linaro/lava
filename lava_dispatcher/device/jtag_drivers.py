@@ -127,17 +127,62 @@ class stmc(BaseDriver):
 
         return self._boot_tags, self._default_boot_cmds
 
+    def stmc_status_ok(self):
+        """
+            Return the True if the STMC status is working. False overwise
+        """
+        command = "%s --ip %s --status" % (self.config.jtag_stmcconfig, self.config.jtag_stmc_ip)
+        stmc_status = self.context.spawn(command, timeout=10)
+        try:
+            stmc_status.expect("STMC booted successfully")
+        except Exception:
+            return False
+        return True
+
+    def stmc_serial_relay(self):
+        """
+            Return True if the serial relay is working. False overwise
+        """
+        command = "%s --ip %s --serial-relay" % (self.config.jtag_stmcconfig, self.config.jtag_stmc_ip)
+        stmc_serial_relay = self.context.spawn(command, timeout=5)
+        try:
+            stmc_serial_relay.expect("Starting serial relay : ip: %s port: 5331" % (self.config.jtag_stmc_ip))
+        except Exception:
+            return False
+        return True
+
     def connect(self, boot_cmds):
         boot_cmds.insert(0, self._stmc_command)
         jtag_command = ' '.join(boot_cmds)
 
-        # JTAG hard reset
-        if self.config.jtag_hard_reset_command:
+        # jtag_stmcconfig is required
+        if not self.config.jtag_stmcconfig:
+            raise CriticalError("STMC config command should be present")
+
+        # Check the STMC status command
+        logging.info("Checking STMC status")
+        if not self.stmc_status_ok():
             logging.info("Hard resetting STMC")
+            # JTAG hard reset is required
+            if not self.config.jtag_hard_reset_command:
+                raise CriticalError("STMC is not working and 'jtag_hard_reset_command' is not set")
+
             self.context.run_command(self.config.jtag_hard_reset_command)
-            logging.info("Waiting for %d seconds for STMC to initialize" %
-                         self.config.jtag_hard_reset_sleep)
-            time.sleep(self.config.jtag_hard_reset_sleep)
+            logging.info("Waiting for STMC to initialize")
+            success = False
+            for loop_index in xrange(1, 5):
+                logging.info("  checking STMC status (%d)" % (loop_index))
+                if self.stmc_status_ok():
+                    success = True
+                    break
+                time.sleep(5)
+
+            if not success:
+                raise CriticalError("The STMC fails to reboot after hard reset")
+
+            # Setup the serial-relay
+            if not self.stmc_serial_relay():
+                raise CriticalError("Unable to setup the serial relay. The STMC is not working properly")
 
         # Hard reset platform
         if self.config.hard_reset_command:
@@ -145,8 +190,6 @@ class stmc(BaseDriver):
             self.context.run_command(self.config.hard_reset_command)
         else:
             raise CriticalError("Must have a hard_reset_command defined")
-        logging.info("Waiting for 20 seconds for platform to initialize")
-        time.sleep(20)
 
         # Connect to the STMC serial relay
         logging.info("Connecting to STMC serial relay")
