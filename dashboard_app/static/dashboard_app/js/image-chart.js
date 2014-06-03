@@ -970,7 +970,6 @@ $(document).ready(function () {
             xaxis: xaxis,
 	    yaxis: {
 	        tickDecimals: 0,
-                labelWidth: 25,
                 axisLabel: y_label,
                 axisLabelUseCanvas: true,
                 axisLabelFontFamily: "Verdana",
