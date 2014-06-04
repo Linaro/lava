@@ -7,6 +7,7 @@ recursive-include lava_server *.gif *.png *.js *.css *.svg *.ico
 recursive-include lava_server/templates *.html
 recursive-include lava_projects/templates *.html
 recursive-include lava_markitup/templates *.html
+recursive-include google_analytics/templates *.html
 recursive-include lava_markitup/static *.gif *.png *.js *.css *.html
 include setup-dev-env.sh
 recursive-include dashboard_app/fixtures *.json
