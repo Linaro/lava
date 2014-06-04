@@ -2153,7 +2153,7 @@ class ImageReportChart(models.Model):
                         test_case_id
                     )
 
-                test_filter_id = "%s-%s" % (test_case_id,
+                test_filter_id = "%s-%s" % (test_case_id.replace(" ", ""),
                                             image_chart_filter.id)
                 chart_item = {
                     "filter_rep": image_chart_filter.representation,
