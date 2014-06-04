@@ -45,12 +45,14 @@ from lava_dispatcher.job import (
 tmpdir = mkdtemp()
 atexit.register(rmtree, tmpdir)
 
+
 def get_config():
     config = lava_dispatcher.config.get_config()
     config.lava_image_tmpdir = os.path.join(tmpdir, 'images')
     if not os.path.exists(config.lava_image_tmpdir):
         os.mkdir(config.lava_image_tmpdir)
     return config
+
 
 class DispatcherFactory(object):
 
