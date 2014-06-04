@@ -533,11 +533,11 @@ option is a set of key-value pairs like::
  {
     "command": "deploy_linaro_image",
     "parameters": {
-        "image": "http://releases.linaro.org/12.09/ubuntu/leb-panda/lt-panda-x11-base-precise_ubuntu-desktop_20120924-329.img.gz",
-        "metadata": {
-            "ubuntu.image_type": "ubuntu-desktop",
-            "ubuntu.build": "61"
-        }
+        "image": "http://releases.linaro.org/12.09/ubuntu/leb-panda/lt-panda-x11-base-precise_ubuntu-desktop_20120924-329.img.gz"
+    },
+    "metadata": {
+        "ubuntu.image_type": "ubuntu-desktop",
+        "ubuntu.build": "61"
     }
  }
 
