@@ -33,6 +33,8 @@ distributions will have different ways of configuring ``lava-server``.
           to have an SSH login to the master and the worker. So ensure
           the master is installed before any of the workers.
 
+.. _configuring_remote_worker:
+
 Configuring remote worker
 -------------------------
 
@@ -90,16 +92,19 @@ An SSH key will have been generated during the configuration of the
 appended to the ``authorized_keys`` file on the master for the SSHFS
 mount operation to work::
 
- sudo -u lavaserver cat /var/lib/lava-server/home/.ssh/id_rsa.pub
+ sudo -u lavaserver -c "cat /var/lib/lava-server/home/.ssh/id_rsa.pub"
 
 Now connect to the master and enter this public key into the file::
 
- sudo -u lavaserver vim /var/lib/lava-server/home/.ssh/authorized_keys
+ sudo su lavaserver
+ cd
+ vim ./.ssh/authorized_keys
+ exit
 
 fuse configuration
 ^^^^^^^^^^^^^^^^^^
 
-Edit ``/etc/fuse.conf`` on the worker and enable the ``user_allow_other``
+Edit ``/etc/fuse.conf`` on the **worker** and enable the ``user_allow_other``
 option.
 
 Additionally, you will need to ensure that the ``fuse`` (and ``loop``)
@@ -114,6 +119,8 @@ module **only** if that module does not load automatically.
           package failing to install or upgrade, it will also prevent
           the worker from mounting the ssfs and jobs will likely fail
           to run on the remote worker.
+
+.. _check_sshfs_mount:
 
 Mounting the SSHFS
 ^^^^^^^^^^^^^^^^^^
@@ -188,7 +195,7 @@ IP address of the master running postgres is 192.168.100.175::
 
  $ psql -h 192.168.100.175 -U lavaserver
 
-Check the /var/log/lava-server/lava-scheduler.log for cnnection errors of a
+Check the ``/var/log/lava-server/lava-scheduler.log`` for cnnection errors of a
 normal startup of lava-scheduler::
 
  2014-05-05 20:17:20,327 Running LAVA Daemon

@@ -31,6 +31,12 @@ Due to limitations within ``lava-deployment-tool`` and ``lava-manifest``,
 there is no way to migrate to the packaging based on django1.6 using
 the tools already installed within the existing LAVA instance.
 
+.. note:: A default LAVA install from packages supports ``http://``, not
+          ``https://`` in the Apache configuration. If your existing
+          instance uses ``https://``, ensure you have a copy of the
+          apache configuration and remember to port those changes to
+          apache2.4 in ``/etc/apache2/sites-available/lava-server.conf``.
+
 .. _postgres_export:
 
 Exporting the postgres database
@@ -333,12 +339,15 @@ Master instance upgrade
     sudo mkdir -p /etc/lava-server/
     sudo cp /srv/lava/instances/<INSTANCE>/etc/lava-server/instance.conf /etc/lava-server/instance.conf
 
-   Convert the LAVA_PREFIX to the FHS compliant path::
+   Convert the LAVA_PREFIX in `/etc/lava-server/instance.conf` to the
+   `FHS`_ (Filesystem Hierarchy Standard) compliant path::
 
     LAVA_PREFIX="/var/lib/lava-server/"
 
    Some settings are no longer used by the packaging but these will simply
    be ignored by the packaging.
+
+.. _`FHS`: http://www.pathname.com/fhs/
 
 #. Migrate the device configurations to the packaging locations::
 
@@ -475,7 +484,8 @@ are all on the master.
     sudo mkdir -p /etc/lava-server/
     sudo cp /srv/lava/instances/<INSTANCE>/etc/lava-server/instance.conf /etc/lava-server/instance.conf
 
-   Convert the LAVA_PREFIX to the FHS compliant path::
+   Convert the LAVA_PREFIX in `/etc/lava-server/instance.conf`
+   to the `FHS`_ (Filesystem Hierarchy Standard) compliant path::
 
     LAVA_PREFIX="/var/lib/lava-server/"
 
@@ -632,7 +642,8 @@ packages.
     sudo mkdir -p /etc/lava-server/
     sudo cp /tmp/instance.conf /etc/lava-server/instance.conf
 
-   Convert the LAVA_PREFIX to the FHS compliant path::
+   Convert the LAVA_PREFIX in `/etc/lava-server/instance.conf`
+   to the `FHS`_ (Filesystem Hierarchy Standard) compliant path::
 
     LAVA_PREFIX="/var/lib/lava-server/"
 
@@ -677,8 +688,9 @@ packages.
 
 #. Configure the master to work with a remote worker.
 
-See :ref:`remote_databases` and remember to use the ``LAVA_DB_USER``
-and ``LAVA_DB_NAME`` from the ``instance.conf`` on the master. e.g.::
+See :ref:`remote_database` and :ref:`example_postgres`. Remember to
+use the ``LAVA_DB_USER`` and ``LAVA_DB_NAME`` from the ``instance.conf``
+on the master. e.g.::
 
  host    lava-playground    lava-playground    0.0.0.0/0    md5
 
@@ -749,15 +761,16 @@ packages.
 
 #. Migrate the instance configuration to the packaging location.
 
-   The packages will respect an existing LAVA configuration, if the relevant
-   files are in the correct location ``/etc/lava-server/instance.conf``.
+   The packages will respect an existing LAVA configuration but still ask
+   the questions, so keep a terminal window open with the values.
    Copy the ``instance.conf`` from the precise box to the new Debian
    machine and put into place. e.g.::
 
     sudo mkdir -p /etc/lava-server/
     sudo cp /tmp/instance.conf /etc/lava-server/instance.conf
 
-   Convert the LAVA_PREFIX to the FHS compliant path::
+   Convert the LAVA_PREFIX in `/etc/lava-server/instance.conf`
+   to the `FHS`_ (Filesystem Hierarchy Standard) compliant path::
 
     LAVA_PREFIX="/var/lib/lava-server/"
 
@@ -780,6 +793,14 @@ packages.
    this no longer affects where files are actually installed, nor does
    it affect the database name or database user. The instance name
    becomes a simple label with the packaging upgrade.
+
+#. Configure the remote worker
+
+   See :ref:`configuring_remote_worker` to setup the SSH key, the ``fuse``
+   configuration and ``lava-coordinator``.
+
+   Restart the ``lava-server`` daemon once done and check that the SSHFS
+   mount operations has worked. See :ref:`check_sshfs_mount`.
 
 #. Enable apache on the remote worker.
 
