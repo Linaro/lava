@@ -122,6 +122,26 @@ class WorkerAdmin(admin.ModelAdmin):
     list_display = ('hostname', 'rpc2_url', 'ip_address', 'is_master', 'last_heartbeat')
 
 
+def hide_worker_action(modeladmin, request, queryset):
+    for worker in queryset.filter(display=True):
+        worker.display = False
+        worker.save()
+hide_worker_action.short_description = "Hide selected worker(s)"
+
+
+def show_worker_action(modeladmin, request, queryset):
+    for worker in queryset.filter(display=False):
+        worker.display = True
+        worker.save()
+show_worker_action.short_description = "Show selected worker(s)"
+
+
+class WorkerAdmin(admin.ModelAdmin):
+    actions = [hide_worker_action, show_worker_action]
+    list_display = ('hostname', 'display', 'ip_address', 'is_master',
+                    'uptime', 'arch')
+
+
 admin.site.register(Device, DeviceAdmin)
 admin.site.register(DeviceStateTransition, DeviceStateTransitionAdmin)
 admin.site.register(DeviceType, DeviceTypeAdmin)

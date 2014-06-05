@@ -233,7 +233,7 @@ class FailureTableView(JobTableView):
 class WorkerView(JobTableView):
 
     def get_queryset(self):
-        return Worker.objects.all().order_by('hostname')
+        return Worker.objects.filter(display=True).order_by('hostname')
 
 
 def health_jobs_in_hr(hr=-24):

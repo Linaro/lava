@@ -564,7 +564,8 @@ class WorkerTable(tables.Table):
         model = Worker
         exclude = [
             'rpc2_url', 'description', 'hardware_info', 'software_info',
-            'platform', 'last_heartbeat', 'last_complete_info_update'
+            'platform', 'last_heartbeat', 'last_complete_info_update',
+            'display'
         ]
         sequence = [
             'hostname', 'ip_address', 'status', 'is_master', 'uptime', 'arch'

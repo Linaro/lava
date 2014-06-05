@@ -158,6 +158,13 @@ class Worker(models.Model):
                    " any impact when set on a worker node.")
     )
 
+    display = models.BooleanField(
+        default=True,
+        help_text=("Should this be displayed in the GUI or not. This will be"
+                   " useful when a worker needs to be removed but still"
+                   " linked device status transitions and devices should be"
+                   " intact."))
+
     ip_address = models.CharField(
         verbose_name=_(u"IP Address"),
         max_length=20,
