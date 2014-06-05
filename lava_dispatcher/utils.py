@@ -23,6 +23,7 @@ import datetime
 import errno
 import logging
 import os
+import signal
 import shutil
 import tempfile
 import threading
@@ -396,8 +397,8 @@ def generate_bundle_file_name(test_name):
 
 def finalize_process(proc):
     if proc:
-        logging.debug("Finalizing child proccess with PID %d" % proc.pid)
-        proc.kill(9)
+        logging.debug("Finalizing child process group with PID %d" % proc.pid)
+        os.killpg(proc.pid, signal.SIGKILL)
         proc.close()
 
 
