@@ -230,6 +230,17 @@ class Worker(models.Model):
         editable=False
     )
 
+    last_master_scheduler_tick = models.DateTimeField(
+        verbose_name=_(u"Last Master Scheduler Tick"),
+        auto_now=False,
+        auto_now_add=False,
+        null=True,
+        blank=True,
+        editable=False,
+        help_text=("Corresponds to the master node's last scheduler tick. "
+                   "Does not have any impact when set on a worker node.")
+    )
+
     def __unicode__(self):
         return self.hostname
 
@@ -274,7 +285,7 @@ class Worker(models.Model):
 
         # We deliberately add a 10% delay to scheduler tick in order to account
         # for network, processing, etc., overheads.
-        scheduler_tick = utcnow - utils.last_scheduler_tick()
+        scheduler_tick = utcnow - self.master_scheduler_tick()
         scheduler_tick = scheduler_tick.total_seconds()
         scheduler_tick = scheduler_tick + (scheduler_tick * 0.1)
 
@@ -355,6 +366,25 @@ class Worker(models.Model):
             return localhost
         except Worker.DoesNotExist:
             raise ValueError("Worker node unavailable")
+
+    @classmethod
+    def record_last_master_scheduler_tick(self):
+        """Records the master's last scheduler tick timestamp.
+        """
+        master = Worker.get_master()
+        master.last_master_scheduler_tick = datetime.datetime.utcnow()
+        master.save()
+
+    def master_scheduler_tick(self):
+        """Returns datetime.dateime object of master's last scheduler tick
+        timestamp. If the master's last scheduler tick is not yet recorded
+        return the current timestamp in UTC.
+        """
+        master = Worker.get_master()
+        if master.last_master_scheduler_tick:
+            return master.last_master_scheduler_tick
+        else:
+            return datetime.datetime.utcnow()
 
 
 class Device(RestrictedResource):
