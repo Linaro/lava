@@ -45,14 +45,15 @@ class JobQueue(Service):
             self._startJobs).addErrback(catchall_errback(self.logger))
 
     def _startJobs(self, jobs):
-        # Record the scheduler tick (timestamp).
-        utils.record_scheduler_tick()
-
         # Update Worker Heartbeat
         #
         # NOTE: This will recide here till we finalize scheduler refactoring
         #       and a separte module for worker specific daemon gets created.
         worker = WorkerData()
+
+        # Record the scheduler tick (timestamp).
+        worker.record_master_scheduler_tick()
+
         try:
             worker.put_heartbeat_data()
         except (xmlrpclib.Fault, xmlrpclib.ProtocolError) as err:
