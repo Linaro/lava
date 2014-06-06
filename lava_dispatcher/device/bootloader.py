@@ -171,14 +171,19 @@ class BootloaderTarget(MasterImageTarget):
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs,
                              nfsrootfs, bootloader, firmware, bl1, bl2,
                              bl31, rootfstype, bootloadertype, target_type):
-        # Get deployment data
-        self.deployment_data = deployment_data.get(target_type)
+        if self.__deployment_data__ is None:
+            # Get deployment data
+            logging.debug("Attempting to set deployment data")
+            self.deployment_data = deployment_data.get(target_type)
+        else:
+            # Reset deployment data
+            logging.debug("Attempting to reset deployment data")
+            self.power_off(self.proc)
+            self.__init__(self.context, self.config)
+            # Get deployment data
+            self.deployment_data = deployment_data.get(target_type)
         # We set the boot type
         self._set_boot_type(bootloadertype)
-        # We are not booted yet
-        self._booted = False
-        # Setup the u-boot boot command
-        bootx = []
         # At a minimum we must have a kernel
         if kernel is None:
             raise CriticalError("No kernel image to boot")
