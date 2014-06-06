@@ -84,6 +84,8 @@ class dispatch(DispatcherCommand):
 
     def invoke(self):
 
+        config = None
+
         if os.getuid() != 0:
             logging.error("lava dispatch has to be run as root")
             exit(1)
