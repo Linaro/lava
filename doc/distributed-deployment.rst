@@ -92,7 +92,7 @@ An SSH key will have been generated during the configuration of the
 appended to the ``authorized_keys`` file on the master for the SSHFS
 mount operation to work::
 
- sudo -u lavaserver -c "cat /var/lib/lava-server/home/.ssh/id_rsa.pub"
+ sudo su lavaserver -c "cat /var/lib/lava-server/home/.ssh/id_rsa.pub"
 
 Now connect to the master and enter this public key into the file::
 
