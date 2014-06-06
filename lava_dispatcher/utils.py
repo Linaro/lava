@@ -397,8 +397,12 @@ def generate_bundle_file_name(test_name):
 
 def finalize_process(proc):
     if proc:
-        logging.debug("Finalizing child process group with PID %d" % proc.pid)
-        os.killpg(proc.pid, signal.SIGKILL)
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+            logging.debug("Finalizing child process group with PID %d" % proc.pid)
+        except OSError:
+            proc.kill(9)
+            logging.debug("Finalizing child process with PID %d" % proc.pid)
         proc.close()
 
 
