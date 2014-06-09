@@ -783,6 +783,7 @@ class cmd_lava_test_shell(BaseAction):
             if target.is_booted():
                 target.reset_boot()
             logging.warn('lava_test_shell has timed out')
+            raise pexpect.TIMEOUT('Timeout')
 
         elif event == SIGNAL:
             name, params = runner._connection.match.groups()

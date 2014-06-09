@@ -412,7 +412,7 @@ class LavaTestJob(object):
                     logging.info("CriticalError")
                     raise
                 except (pexpect.TIMEOUT, GeneralError) as err:
-                    logging.warn("pexpect timed out, pass with status %s" % status)
+                    logging.warn("pexpect timed out with status %s" % status)
                     pass
                 except KeyboardInterrupt:
                     logging.info("Cancel operation")
@@ -449,7 +449,7 @@ class LavaTestJob(object):
                         if cmd['command'] == 'lava_test_run':
                             err_msg += "Lava failed on test: %s" % \
                                        params.get('test_name', "Unknown")
-                        if err != "Cancel":
+                        if err.message != "Cancel" and err.message != 'Timeout':
                             err_msg = err_msg + traceback.format_exc()
                             self.context.log("ErrorMessage: %s" % unicode(str(err)))
                         self.context.log(err_msg)
