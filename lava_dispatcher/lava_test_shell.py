@@ -286,6 +286,17 @@ def _get_test_results(test_run_dir, testdef, stdout, err_log):
 
     if not pattern:
         logging.debug("No pattern set")
+
+    slim_pattern = "<LAVA_SIGNAL_TESTCASE TEST_CASE_ID=(?P<test_case_id>.*)\\s+"\
+                   "RESULT=(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))>"
+
+    test_pattern = "<LAVA_SIGNAL_TESTCASE TEST_CASE_ID=(?P<test_case_id>.*)\\s+"\
+                   "RESULT=(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))\\s"\
+                   "UNITS=(?P<units>.*)\s"\
+                   "MEASUREMENT=(?P<measurement>.*)>"
+    test_case_pattern = re.compile(test_pattern)
+    result_pattern = re.compile(slim_pattern)
+
     for lineno, line in enumerate(stdout.split('\n'), 1):
         match = pattern.match(line.strip())
         if match:
@@ -296,7 +307,22 @@ def _get_test_results(test_run_dir, testdef, stdout, err_log):
                 errmsg = errmsg.format(pattern_used, testdef['metadata']['name'])
                 write_content(err_log, errmsg)
                 return results_from_log_file
-
+            res['log_lineno'] = lineno
+            res['log_filename'] = 'stdout.log'
+            results_from_log_file.append(res)
+            continue
+        # Locate a simple lava-test-case with result to retrieve log line no
+        match = result_pattern.match(line.strip())
+        if match:
+            res = parse_testcase_result(match.groupdict(), fixupdict)
+            res['log_lineno'] = lineno
+            res['log_filename'] = 'stdout.log'
+            results_from_log_file.append(res)
+            continue
+        # also catch a lava-test-case with a unit and a measurement
+        match = test_case_pattern.match(line.strip())
+        if match:
+            res = parse_testcase_result(match.groupdict(), fixupdict)
             res['log_lineno'] = lineno
             res['log_filename'] = 'stdout.log'
             results_from_log_file.append(res)
