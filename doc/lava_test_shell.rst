@@ -124,16 +124,20 @@ measurement`_.
 lava-test-case
 --------------
 
-lava-test-case records the results of a single test case.  For example::
+lava-test-case records the results of a single test case. For example::
 
   steps:
     - "lava-test-case simpletestcase --result pass"
+    - "lava-test-case fail-test --shell false"
 
 It has two forms.  One takes arguments to describe the outcome of the
 test case and the other takes the shell command to run -- the exit
 code of this shell command is used to produce the test result.
 
 Both forms take the name of the testcase as the first argument.
+
+Specifying results directly
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The first form takes these additional arguments:
 
@@ -145,34 +149,76 @@ The first form takes these additional arguments:
 
   run:
     steps:
+      - "lava-test-case simpletestcase --result pass"
       - "lava-test-case bottle-count --result pass --measurement 99 --units bottles"
 
-:ref:`custom_scripts` allows preparation of LAVA results from other
-sources, complete with measurements by calling ``lava-test-case``
-from scripts executed in the YAML file::
+If ``--measurement`` is used, ``--units`` must also be specified, even
+if the unit is just a count.
+
+The most useful way to produce output for ``lava-test-case result`` is
+:ref:`custom_scripts` which allow preparation of LAVA results from other
+sources, complete with measurements. This involves calling ``lava-test-case``
+from scripts executed by the YAML file::
 
  #!/usr/bin/env python
 
  from subprocess import call
 
+
+ def test_case():
+     """
+     Calculate something based on a test
+     and return the data
+     """
+     return {"name": "test-rate", "result": "pass",
+         "units": "Mb/s", "measurement": 4.23}
+
+
  def main():
+     data = test_case()
      call(
          ['lava-test-case',
-          'bottle-count',
-          '--result', 'pass',
-          '--measurement', '99',
-          '--units', 'bottles'])
+          data['name'],
+          '--result', data['result'],
+          '--measurement', data['measurement'],
+          '--units', data['units']])
      return 0
 
  if __name__ == '__main__':
      main()
 
-The second form is indicated by the --shell argument, for example::
+The custom scripts themselves can be called from a ``lava-test-case``
+using the ``--shell`` command to test whether failures from the tests
+caused a subsequent failure in the custom script.
+
+Using the exit status of a command
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The second form of ``lava-test-case`` is indicated by the ``--shell``
+argument, for example::
 
   run:
     steps:
       - "lava-test-case fail-test --shell false"
       - "lava-test-case pass-test --shell true"
+
+The result of a ``shell`` call will only be recorded as a pass or fail,
+dependent on the exit code of the command. The output of the command
+can, however, be parsed as a separate result if the command produces
+output suitable for the parser in the YAML::
+
+ run:
+    steps:
+    - lava-test-case echo2 --shell echo "test2b:" "fail"
+ parse:
+    pattern: "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
+
+This example generates **two** test results to indicate that the
+shell command executed correctly but that the result of that
+execution was a fail::
+
+#. **echo2** - pass
+#. **test2b** - fail
 
 The --shell form also sends the start test case and end test case
 signals that are described in `hooks, signals and external
