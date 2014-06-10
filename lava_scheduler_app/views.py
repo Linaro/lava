@@ -1367,7 +1367,8 @@ def job_log_file(request, pk):
 
 def job_log_file_plain(request, pk):
     job = get_restricted_job(request.user, pk)
-    response = HttpResponse(job.output_file(), content_type='text/plain')
+    response = HttpResponse(job.output_file(), content_type='text/plain; charset=utf-8')
+    response['Content-Transfer-Encoding'] = 'quoted-printable'
     response['Content-Disposition'] = "attachment; filename=job_%d.log" % job.id
     return response
 
