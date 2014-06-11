@@ -177,7 +177,7 @@ class Worker(models.Model):
     is_master = models.BooleanField(
         verbose_name=_(u"Is Master?"),
         default=False,
-        editable=False
+        editable=True
     )
 
     description = models.TextField(
