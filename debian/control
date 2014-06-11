@@ -24,7 +24,7 @@ Conflicts: linaro-dashboard-bundle
 Provides: linaro-dashboard-bundle
 Replaces: linaro-dashboard-bundle
 Multi-Arch: foreign
-Recommends: ntp, git, tftpd-hpa, openbsd-inetd, 
+Recommends: ntp, git, htop, tftpd-hpa, openbsd-inetd,
  qemu-system-x86 (>= 2.0.0) [amd64], qemu-system-x86 (>= 2.0.0) [i386],
  qemu-system-arm (>= 2.0.0) [armhf],
  libguestfs-tools [amd64], libguestfs-tools [i386],
