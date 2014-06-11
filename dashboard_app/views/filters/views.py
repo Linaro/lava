@@ -280,7 +280,7 @@ def filter_add(request):
         BreadCrumbTrail.leading_to(filter_add))
 
 
-@BreadCrumb("Edit", parent=filter_detail, needs=['name', 'username'])
+@BreadCrumb("Edit", parent=filter_detail, needs=['username', 'name'])
 def filter_edit(request, username, name):
     if not request.user.is_superuser:
         if request.user.username != username:
