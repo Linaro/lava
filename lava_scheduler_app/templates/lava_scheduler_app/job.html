@@ -284,7 +284,7 @@
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
         {% if job_file_present %}
-          <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary">Complete log</a></li>
+          <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}#bottom" class="btn btn-primary">Complete log</a></li>
         {% endif %}
         </ul>
       </div>
