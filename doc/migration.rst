@@ -556,10 +556,10 @@ The data needed off the old Precise instance will be:
 
 #. The database (except for remote workers) See :ref:`postgres_export`.
 
-* The device configuration files::
+   * The device configuration files::
 
-   /srv/lava/instances/<INSTANCE>/etc/lava-dispatcher/devices/
-   /srv/lava/instances/<INSTANCE>/etc/lava-dispatcher/device-types/
+     /srv/lava/instances/<INSTANCE>/etc/lava-dispatcher/devices/
+     /srv/lava/instances/<INSTANCE>/etc/lava-dispatcher/device-types/
 
 #. The instance configuration::
 
