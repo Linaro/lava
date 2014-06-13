@@ -21,21 +21,23 @@
 {% endif %}
     <dt>Test cases</dt>
     <dd>
-          {% for test in filter_data.tests %}
-          <tr>
-            <td>
-              {{ test.test }}
-            </td>
-            <td>
-              {% for test_case in test.test_cases %}
-              {{ test_case }}
-              {% empty %}
-              <i>any</i>
-              {% endfor %}
-            </td>
-          </tr>
-          {% empty %}
-          <i>any</i>
-          {% endfor %}
+    {% if filter_data.tests %}
+        <ul>
+        {% for test in filter_data.tests %}
+            <li>{{ test.test }}
+            {% if test.test_cases %}
+                <ul>
+                {% for test_case in test.test_cases %}
+                    <li>{{ test_case }}</li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <i>any</i>
+            {% endif %}</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <i>any</i>
+    {% endif %}
     </dd>
 </dl>
