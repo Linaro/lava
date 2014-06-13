@@ -32,26 +32,28 @@ shown as links. The same output can also be viewed in the attachments of the tes
   <div class="col-md-4">
     <h4 class="modal-header">Run Attributes</h4>
   {% with test_result.test_run.attributes.values as attrs %}
-    <ul class="attributes">
+    <dl class="dl-horizontal">
     {% for item in attrs|dictsort:"name" %}
-      <li>{{ item.name }}&nbsp;=&nbsp;{{ item.value }}</li>
+      <dt>{{ item.name }}</dt>
+      <dd>{{ item.value }}</dd>
     {% empty %}
       <i>none</i>
     {% endfor %}
-    </ul>
+    </dl>
   {% endwith %}
   </div>
 
   <div class="col-md-4">
     <h4 class="modal-header">Result Attributes</h4>
   {% with test_result.attributes.values as attrs %}
-    <ul class="attributes">
+    <dl class="dl-horizontal">
     {% for item in attrs|dictsort:"name" %}
-      <li>{{ item.name }}&nbsp;=&nbsp;{{ item.value }}</li>
+      <dt>{{ item.name }}</dt>
+      <dd>{{ item.value }}</dt>
     {% empty %}
       <i>none</i>
     {% endfor %}
-    </ul>
+    </dl>
   {% endwith %}
   </div>
 </div>
