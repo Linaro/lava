@@ -522,7 +522,7 @@ are all on the master.
    This is used to serve modified files to the devices::
 
     sudo a2dissite 000-default
-    sudo a2enstite lava-server
+    sudo a2ensite lava-server
     sudo service apache2 restart
 
 #. Restart daemons affected by the installation::
@@ -674,10 +674,10 @@ packages.
    it affect the database name or database user. The instance name
    becomes a simple label with the packaging upgrade.
 
-#. Enable the lava-server apache configuration.
+#. Enable the lava-server apache configuration::
 
     sudo a2dissite 000-default
-    sudo a2enstite lava-server
+    sudo a2ensite lava-server
     sudo service apache2 restart
 
 #. Restart daemons affected by the installation::
@@ -807,7 +807,7 @@ packages.
    This is used to serve modified files to the devices::
 
     sudo a2dissite 000-default
-    sudo a2enstite lava-server
+    sudo a2ensite lava-server
     sudo service apache2 restart
 
 #. Restart daemons affected by the installation::
