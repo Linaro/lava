@@ -74,13 +74,13 @@
             </ul>
           </li>
           {% else %}
-          <p class="navbar-text">
+          <li><p class="navbar-text">
           {% if request.get_full_path == "/accounts/logout/" %}
             <a href="{% url 'django.contrib.auth.views.login' %}">{% trans "Sign In" %}</a>
            {% else %}
             <a href="{% url 'django.contrib.auth.views.login' %}?next={{request.get_full_path}}">{% trans "Sign In" %}</a>
            {% endif %}
-          </p>
+          </p></li>
           {% endif %}
         </ul>
 
