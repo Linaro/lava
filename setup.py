@@ -63,6 +63,10 @@ setup(
         'pyserial >= 2.6',
         'pyliblzma >= 0.5.3'
     ],
+    tests_require=[
+        'pep8 >= 1.4.6',
+        'testscenarios >= 0.4'
+    ],
     data_files=[
         ('/etc/default',
             ['etc/tftpd-hpa']),
