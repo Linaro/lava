@@ -245,9 +245,9 @@
 <div class="btn-group" data-toggle="buttons" id="logbuttons">
 {% for level in levels %}
 {% if level.1 %}
-  <label class="btn btn-primary" id="{{ level.0 }}" for="{{ level.0 }}"><input type="checkbox" id="{{ level.0 }}">{{ level.0 }}</label>
+  <label class="btn btn-primary" id="{{ level.0 }}_label" for="{{ level.0 }}"><input type="checkbox" id="{{ level.0 }}">{{ level.0 }}</label>
 {% else %}
-  <label class="btn btn-primary disabled" id="{{ level.0 }}" for="{{ level.0 }}"><input type="checkbox" id="{{ level.0 }}">{{ level.0 }}</label>
+  <label class="btn btn-primary disabled" id="{{ level.0 }}_label" for="{{ level.0 }}"><input type="checkbox" id="{{ level.0 }}">{{ level.0 }}</label>
 {% endif %}
 {% endfor %}
 </div>
@@ -342,7 +342,7 @@ function poll (start) {
           node.insertBefore(progressNode);
 
           // Activate the label if needed
-          var label = $('label#' + d[0]);
+          var label = $('label#' + d[0] + '_label');
           label.removeClass('disabled');
       }
       logLenth = xhr.getResponseHeader('X-Current-Size');
