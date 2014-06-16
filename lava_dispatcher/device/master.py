@@ -381,10 +381,11 @@ class MasterImageTarget(Target):
                 self.master_ip = None
                 if self.config.hard_reset_command:
                     self._hard_reboot(self.proc)
+                    self._load_master_firmware()
                     self._wait_for_master_boot()
                 else:
-                    self.master_ip = None
                     self._soft_reboot(self.proc)
+                    self._load_master_firmware()
                     self._wait_for_master_boot()
             except (OperationFailed, pexpect.TIMEOUT) as e:
                 msg = "Resetting platform into master image failed: %s" % e
@@ -446,15 +447,23 @@ class MasterImageTarget(Target):
 
         self._boot(boot_cmds)
 
+    def _load_test_firmware(self):
+        # Do nothing by default
+        pass
+
+    def _load_master_firmware(self):
+        # Do nothing by default
+        pass
+
     def _boot(self, boot_cmds):
-        try:
-            self.master_ip = None
-            self._soft_reboot(self.proc)
-            self._enter_bootloader(self.proc)
-        except:
-            logging.exception("_enter_bootloader failed")
-            self.master_ip = None
+        self.master_ip = None
+        if self.config.hard_reset_command:
             self._hard_reboot(self.proc)
+            self._load_test_firmware()
+            self._enter_bootloader(self.proc)
+        else:
+            self._soft_reboot(self.proc)
+            self._load_test_firmware()
             self._enter_bootloader(self.proc)
         self._customize_bootloader(self.proc, boot_cmds)
         self._auto_login(self.proc)

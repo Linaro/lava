@@ -25,8 +25,11 @@ from time import sleep
 from contextlib import contextmanager
 
 from lava_dispatcher.device.master import MasterImageTarget
-from lava_dispatcher.errors import CriticalError
 from lava_dispatcher.utils import extract_tar
+from lava_dispatcher.errors import (
+    CriticalError,
+    OperationFailed,
+)
 
 
 class WGTarget(MasterImageTarget):
@@ -60,19 +63,13 @@ class WGTarget(MasterImageTarget):
     # methods inherited from MasterImageTarget and overriden here
     ##################################################################
 
-    def _boot_linaro_image(self):
-        self._soft_reboot(self.proc)
-
+    def _load_test_firmware(self):
         with self._mcc_setup() as mount_point:
             self._install_test_firmware(mount_point)
 
-        super(WGTarget, self)._boot_linaro_image()
-
-    def _wait_for_master_boot(self):
+    def _load_master_firmware(self):
         with self._mcc_setup() as mount_point:
             self._restore_firmware_backup(mount_point)
-
-        super(WGTarget, self)._wait_for_master_boot()
 
     def _deploy_android_tarballs(self, master, boot, system, data):
         super(WGTarget, self)._deploy_android_tarballs(master, boot,
@@ -122,11 +119,11 @@ class WGTarget(MasterImageTarget):
     def _enter_mcc(self):
         match_id = self.proc.expect([
             self.config.wg_stop_autoboot_prompt,
-            pexpect.EOF, pexpect.TIMEOUT])
+            pexpect.EOF, pexpect.TIMEOUT], timeout=120)
         if match_id != 0:
             msg = 'Unable to intercept MCC boot prompt'
             logging.error(msg)
-            raise CriticalError(msg)
+            raise OperationFailed(msg)
         self.proc.sendline("")
         self.proc.expect(['Cmd>'])
 
