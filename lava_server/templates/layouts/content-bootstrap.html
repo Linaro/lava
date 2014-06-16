@@ -65,6 +65,7 @@
               <li><a href="{% url 'lava.scheduler.favorite_jobs' %}"><span class="glyphicon glyphicon-tasks"></span> Favorite Jobs</a></li>
               <li><a href="{% url 'dashboard_app.views.mybundlestreams' %}"><span class="glyphicon glyphicon-folder-open"></span> Bundle streams</a></li>
               <li><a href="{% url 'lava.scheduler.mydevice_list' %}"><span class="glyphicon glyphicon-phone"></span> Devices</a></li>
+              <li><a href="{% url 'lava.scheduler.mydevice_type_health_history_log' %}"><span class="glyphicon glyphicon-time"></span> Devices Health History</a></li>
               {% if user.is_staff %}
               <li class="divider"></li>
               <li><a href="{% url 'admin:index' %}"><span class="glyphicon glyphicon-fire"></span> Administration</a></li>
