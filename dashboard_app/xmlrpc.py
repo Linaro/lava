@@ -45,6 +45,9 @@ from dashboard_app.models import (
     TestRunFilter,
     TestDefinition,
 )
+from lava_scheduler_app.models import (
+    TestJob,
+)
 
 
 class errors:
@@ -577,6 +580,8 @@ class DashboardAPI(ExposedAPI):
             The size of the content
         `is_deserialized`: bool
             True if the bundle was de-serialized successfully, false otherwise
+        `associated_job`: int
+            The job with which this bundle is associated
 
 
         Exceptions raised
@@ -594,22 +599,31 @@ class DashboardAPI(ExposedAPI):
             - personal streams are accessible to owners
             - team streams are accessible to team members
         """
+        bundles = []
         try:
             if self.user and self.user.is_superuser:
                 bundle_stream = BundleStream.objects.get(pathname=pathname)
             else:
                 bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
+            for bundle in bundle_stream.bundles.all().order_by("uploaded_on"):
+                job_id = 'NA'
+                try:
+                    job = TestJob.objects.get(_results_bundle=bundle)
+                    job_id = job.id
+                except TestJob.DoesNotExist:
+                    job_id = 'NA'
+                bundles.append({
+                    'uploaded_by': bundle.uploaded_by.username if bundle.uploaded_by else "",
+                    'uploaded_on': bundle.uploaded_on,
+                    'content_filename': bundle.content_filename,
+                    'content_sha1': bundle.content_sha1,
+                    'content_size': bundle.content.size,
+                    'is_deserialized': bundle.is_deserialized,
+                    'associated_job': job_id
+                })
         except BundleStream.DoesNotExist:
             raise xmlrpclib.Fault(errors.NOT_FOUND, "Bundle stream not found")
-        return [
-            {
-                'uploaded_by': bundle.uploaded_by.username if bundle.uploaded_by else "",
-                'uploaded_on': bundle.uploaded_on,
-                'content_filename': bundle.content_filename,
-                'content_sha1': bundle.content_sha1,
-                'content_size': bundle.content.size,
-                'is_deserialized': bundle.is_deserialized
-            } for bundle in bundle_stream.bundles.all().order_by("uploaded_on")]
+        return bundles
 
     @xml_rpc_signature('str')
     def get_test_names(self, device_type=None):
