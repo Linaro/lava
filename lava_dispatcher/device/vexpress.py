@@ -25,8 +25,10 @@ from time import sleep
 from contextlib import contextmanager
 
 from lava_dispatcher.device.master import MasterImageTarget
-from lava_dispatcher.errors import CriticalError
-
+from lava_dispatcher.errors import (
+    CriticalError,
+    OperationFailed,
+)
 
 class VexpressTarget(MasterImageTarget):
 
@@ -51,21 +53,13 @@ class VexpressTarget(MasterImageTarget):
     # methods inherited from MasterImageTarget and overriden here
     ##################################################################
 
-    def _enter_bootloader(self, connection):
+    def _load_test_firmware(self):
         with self._mcc_setup() as mount_point:
             self._install_test_uefi(mount_point)
 
-        self.proc.expect(self.config.ve_uefi_flash_msg, timeout=300)
-
-        super(VexpressTarget, self)._enter_bootloader(connection)
-
-    def _wait_for_master_boot(self):
+    def _load_master_firmware(self):
         with self._mcc_setup() as mount_point:
             self._restore_uefi_backup(mount_point)
-
-        self.proc.expect(self.config.ve_uefi_flash_msg, timeout=300)
-
-        super(VexpressTarget, self)._wait_for_master_boot()
 
     def _deploy_android_tarballs(self, master, boot, system, data):
         super(VexpressTarget, self)._deploy_android_tarballs(master, boot,
@@ -117,11 +111,11 @@ class VexpressTarget(MasterImageTarget):
     def _enter_mcc(self):
         match_id = self.proc.expect([
             self.config.vexpress_stop_autoboot_prompt,
-            pexpect.EOF, pexpect.TIMEOUT])
+            pexpect.EOF, pexpect.TIMEOUT], timeout=120)
         if match_id != 0:
             msg = 'Unable to intercept MCC boot prompt'
             logging.error(msg)
-            raise CriticalError(msg)
+            raise OperationFailed(msg)
         self.proc.sendline("")
         self.proc.expect(['Cmd>'])
 
