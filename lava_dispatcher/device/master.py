@@ -379,19 +379,18 @@ class MasterImageTarget(Target):
                          (attempts + 1))
             try:
                 self.master_ip = None
-                self._soft_reboot(self.proc)
-                self._wait_for_master_boot()
-            except (OperationFailed, pexpect.TIMEOUT) as e:
-                logging.info("Soft reboot failed: %s" % e)
-                try:
-                    self.master_ip = None
+                if self.config.hard_reset_command:
                     self._hard_reboot(self.proc)
                     self._wait_for_master_boot()
-                except (OperationFailed, pexpect.TIMEOUT) as e:
-                    msg = "Hard reboot into master image failed: %s" % e
-                    logging.warning(msg)
-                    attempts += 1
-                    continue
+                else:
+                    self.master_ip = None
+                    self._soft_reboot(self.proc)
+                    self._wait_for_master_boot()
+            except (OperationFailed, pexpect.TIMEOUT) as e:
+                msg = "Resetting platform into master image failed: %s" % e
+                logging.warning(msg)
+                attempts += 1
+                continue
 
             try:
                 self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)

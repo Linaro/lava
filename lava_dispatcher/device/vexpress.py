@@ -51,21 +51,6 @@ class VexpressTarget(MasterImageTarget):
     # methods inherited from MasterImageTarget and overriden here
     ##################################################################
 
-    def _soft_reboot(self, connection):
-        """
-        The Vexpress board only displays the prompt to interrupt the MCC when
-        it is power-cycled, so we must always do a hard reset in practice.
-
-        When a soft reboot is requested, though, at least we sync the disks
-        before sending the hard reset.
-        """
-        # Try to C-c the running process, if any
-        connection.sendcontrol('c')
-        # Flush file system buffers
-        connection.sendline('sync')
-
-        self._hard_reboot(connection)
-
     def _enter_bootloader(self, connection):
         with self._mcc_setup() as mount_point:
             self._install_test_uefi(mount_point)
