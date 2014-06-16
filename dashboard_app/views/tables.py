@@ -124,7 +124,7 @@ class BundleDetailTable(LavaTable):
         return record.show_device()
 
     def render_test_run(self, record):
-        return mark_safe('<a href="%s"><code>%s results<code/></a>' % (record.get_absolute_url(), record.test))
+        return mark_safe('<a href="%s"><code>%s results</code></a>' % (record.get_absolute_url(), record.test))
 
     class Meta(LavaTable.Meta):
         model = TestRun
@@ -146,7 +146,7 @@ class TestRunTable(LavaTable):
 
     record = tables.TemplateColumn(
         '<a href="{{ record.get_absolute_url }}">'
-        '<code>{{ record.test }} results<code/></a>',
+        '<code>{{ record.test }} results</code></a>',
     )
     record.orderable = False
 
