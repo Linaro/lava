@@ -1250,8 +1250,22 @@ def job_detail(request, pk):
     }
 
     log_file = job.output_file()
-
     if log_file:
+        with job.output_file() as f:
+            f.seek(0, 2)
+            job_file_size = f.tell()
+
+        if job_file_size >= job.size_limit:
+            data.update({
+                'job_file_present': True,
+                'job_log_messages': None,
+                'levels': None,
+                'size_warning': job.size_limit,
+                'job_file_size': job_file_size,
+            })
+            return render_to_response(
+                "lava_scheduler_app/job.html", data, RequestContext(request))
+
         if not job.failure_comment:
             job_errors = getDispatcherErrors(job.output_file())
             if len(job_errors) > 0:
@@ -1267,9 +1281,6 @@ def job_detail(request, pk):
         for level, msg, _ in job_log_messages:
             levels[level] += 1
         levels = sorted(levels.items(), key=lambda (k, v): logging._levelNames.get(k))
-        with job.output_file() as f:
-            f.seek(0, 2)
-            job_file_size = f.tell()
         data.update({
             'job_file_present': True,
             'job_log_messages': job_log_messages,
@@ -1402,10 +1413,17 @@ def favorite_jobs(request, username=None):
 @BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
 def job_log_file(request, pk):
     job = get_restricted_job(request.user, pk)
-    content = formatLogFile(job.output_file())
     with job.output_file() as f:
         f.seek(0, 2)
         job_file_size = f.tell()
+
+    size_warning = 0
+    if job_file_size >= job.size_limit:
+        size_warning = job.size_limit
+        content = None
+    else:
+        content = formatLogFile(job.output_file())
+
     return render_to_response(
         "lava_scheduler_app/job_log_file.html",
         {
@@ -1414,11 +1432,10 @@ def job_log_file(request, pk):
             'job': TestJob.objects.get(pk=pk),
             'job_file_present': bool(job.output_file()),
             'sections': content,
+            'size_warning': size_warning,
             'job_file_size': job_file_size,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(job_log_file, pk=pk),
-            'show_cancel': job.can_cancel(request.user),
             'show_failure': job.can_annotate(request.user),
-            'show_resubmit': job.can_resubmit(request.user),
             'context_help': BreadCrumbTrail.leading_to(job_detail, pk='detail'),
         },
         RequestContext(request))

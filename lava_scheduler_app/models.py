@@ -1055,6 +1055,10 @@ class TestJob(RestrictedResource):
         upload_to='lava-logs', default=None, null=True, blank=True)
 
     @property
+    def size_limit(self):
+        return settings.LOG_SIZE_LIMIT * 1024 * 1024
+
+    @property
     def output_dir(self):
         return os.path.join(settings.MEDIA_ROOT, 'job-output', 'job-%s' % self.id)
 

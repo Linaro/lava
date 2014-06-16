@@ -137,7 +137,7 @@
       </div>
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
-        {% if job_file_present %}
+        {% if job_file_present and not size_warning %}
           <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary">Complete log</a></li>
         {% endif %}
         {% if job.results_link %}
@@ -239,6 +239,12 @@
 <div class="alert alert-danger">{{ job.failure_comment }}</div>
 {% endif %}
 
+{% if size_warning %}
+<div class="alert alert-warning" id="size-warning">
+<p><strong>This log file is too large to view</strong>, (over {{ size_warning }} bytes).
+    It can only be downloaded.</p>
+</div>
+{% endif %}
 <h4 class="modal-header">Dispatcher Log messages (file size = {{ job_file_size|filesizeformat }}) <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h4>
 <a class="btn btn-sm btn-default" href="#bottom">End of log file <span class="glyphicon glyphicon-fast-forward"></span></a><br/><br/>
 

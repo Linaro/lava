@@ -220,6 +220,11 @@ class Settings(object):
         return self._settings.get("MEDIA_ROOT", default)
 
     @property
+    def LOG_SIZE_LIMIT(self):
+        default = 25
+        return self._settings.get("LOG_SIZE_LIMIT", default)
+
+    @property
     def MEDIA_URL(self):
         """
         See: http://docs.djangoproject.com/en/1.2/ref/settings/#media-url

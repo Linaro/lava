@@ -66,6 +66,9 @@ MANAGERS = distro_settings.MANAGERS
 # e-mail.
 SEND_BROKEN_LINK_EMAILS = distro_settings.SEND_BROKEN_LINK_EMAILS
 
+# LOG_SIZE_LIMIT in megabytes
+LOG_SIZE_LIMIT = distro_settings.LOG_SIZE_LIMIT
+
 # URL of the login page
 LOGIN_URL = distro_settings.LOGIN_URL
 
