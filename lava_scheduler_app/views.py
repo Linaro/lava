@@ -613,7 +613,7 @@ class NoDTDeviceView(DeviceTableView):
                                      ).order_by('hostname')
 
 
-def populate_capabilities(dt):
+def populate_capabilities(device_name):
     """
     device capabilities data retrieved from health checks
     param dt: a device type to check for capabilities.
@@ -631,12 +631,13 @@ def populate_capabilities(dt):
     }
     hardware_flags = []
     hardware_cpu_models = []
-    use_health_job = dt.health_check_job != ""
+    device = Device.objects.get(hostname=device_name)
+    use_health_job = device.device_type.health_check_job != ""
     try:
         health_job = TestJob.objects.filter(
-            actual_device__in=Device.objects.filter(device_type=dt),
+            actual_device=device,
             health_check=use_health_job,
-            status=TestJob.COMPLETE).order_by('submit_time').reverse()[0]
+            status=TestJob.COMPLETE).latest('submit_time')
     except IndexError:
         return capability
     if not health_job:
@@ -659,13 +660,12 @@ def populate_capabilities(dt):
     for device in devices:
         # multiple core cpus have multiple device.cpu entries, each with attributes.
         if device['device_type'] == 'device.cpu':
+            if 'cpu_type' in device['attributes']:
+                model = device['attributes']['cpu_type']
             if 'cpu type' in device['attributes']:
-                if device['attributes']['cpu_type'] == '?':
                     model = device['attributes']['cpu type']
-            elif 'model name' in device['attributes']:
+            if 'model name' in device['attributes']:
                 model = device['attributes']['model name']
-            else:
-                model = "?"
             if 'cpu_part' in device['attributes']:
                 cpu_part = int(device['attributes']['cpu_part'], 16)
             elif 'CPU part' in device['attributes']:
@@ -760,8 +760,6 @@ def device_type_detail(request, pk):
         "Failed": monthly_failed,
         }
     ]
-    #  device capabilities data retrieved from health checks
-    capabilities = populate_capabilities(dt)
 
     prefix = 'no_dt_'
     no_dt_data = NoDTDeviceView(request, model=Device, table_class=NoDTDeviceTable)
@@ -812,18 +810,16 @@ def device_type_detail(request, pk):
             "discrete_data": discrete_data,
             'terms_data': terms_data,
             'times_data': times_data,
-            'capabilities_date': capabilities['capabilities_date'],
-            'processor': capabilities['processor'],
-            'models': capabilities['models'],
-            'cores': capabilities['cores'],
-            'emulated': capabilities['emulated'],
-            'flags': capabilities['flags'],
             'running_jobs_num': TestJob.objects.filter(
                 actual_device__in=Device.objects.filter(device_type=dt),
                 status=TestJob.RUNNING).count(),
             'queued_jobs_num': TestJob.objects.filter(
                 Q(status=TestJob.SUBMITTED), Q(requested_device_type=dt)
                 | Q(requested_device__in=Device.objects.filter(device_type=dt))).count(),
+            'idle_num': Device.objects.filter(device_type=dt, status=Device.IDLE).count(),
+            'offline_num': Device.objects.filter(device_type=dt, status__in=[Device.OFFLINE, Device.OFFLINING]).count(),
+            'retired_num': Device.objects.filter(device_type=dt, status=Device.RETIRED).count(),
+            'is_admin': request.user.has_perm('lava_scheduler_app.change_devicetype'),
             'health_job_summary_table': health_table,
             'device_type_jobs_table': dt_jobs_ptable,
             'devices_table_no_dt': no_dt_ptable,  # NoDTDeviceTable('devices' kwargs=dict(pk=pk)), params=(dt,)),
@@ -1911,6 +1907,9 @@ def device_detail(request, pk):
 
     visible = filter_device_types(request.user)
 
+    #  device capabilities data retrieved from health checks
+    capabilities = populate_capabilities(device.hostname)
+
     return render_to_response(
         "lava_scheduler_app/device.html",
         {
@@ -1939,6 +1938,12 @@ def device_detail(request, pk):
             'context_help': BreadCrumbTrail.show_help(device_detail, pk="help"),
             'next_device': next_device,
             'previous_device': previous_device,
+            'capabilities_date': capabilities['capabilities_date'],
+            'processor': capabilities['processor'],
+            'models': capabilities['models'],
+            'cores': capabilities['cores'],
+            'emulated': capabilities['emulated'],
+            'flags': capabilities['flags'],
         },
         RequestContext(request))
 

@@ -11,28 +11,21 @@
 </div>
 {% endif %}
 
+{% if is_admin and device_type.name != 'dynamic-vm' and device_type.health_check_job == '' %}
+  <div class="alert alert-info">
+  <p><strong>The '{{ device_type }}' device type has no <a
+     href="{{ STATIC_URL }}docs/glossary.html#term-health-check">health check job</a> in the <a
+     href="{{ STATIC_URL }}../admin/lava_scheduler_app/devicetype/{{ device_type.hostname }}">admin interface</a>.</strong>
+      Consider adding a <a href="{{ STATIC_URL }}docs/healthchecks.html#health-checks">health check definition</a>.
+  </p>
+  </div>
+{% endif %}
+
 <h2><i>{{device_type}}</i> status</h2>
 
 <div class="row">
-{% if device_type.name != 'dynamic-vm' %}
-  <div class="col-md-6">
-    <h4 class="modal-header">Capabilities{% if capabilities_date %} <small>({{ capabilities_date }})</small>{% endif %}</h4>
-    <dl class="dl-horizontal">
-      <dt>Processor</dt>
-      <dd>{{ processor|default:"<i>unknown</i>" }}</dd>
-      <dt>Model</dt>
-      <dd>{{ models|default:"<i>unknown</i>" }}</dd>
-      <dt>Flags</dt>
-      <dd>{{ flags|default:"<i>unknown</i>" }}</dd>
-      <dt>Emulated</dt>
-      <dd>{{ emulated|default:"<i>unknown</i>" }}</dd>
-      <dt>Cores</dt>
-      <dd>{{ cores|default:"<i>unknown</i>" }}</dd>
-    </dl>
-  </div>
-{% endif %}
-  <div class="col-md-6">
     <h4 class="modal-header">Current state</h4>
+  <div class="col-md-6">
     <dl class="dl-horizontal">
       <dt>Running jobs</dt>
       <dd>{{ running_jobs_num }}</dd>
@@ -44,12 +37,24 @@
 {% endif %}
     </dl>
   </div>
+  <div class="col-md-6">
+  <dl class="dl-horizontal">
+      <dt>Idle devices</dt>
+      <dd>{{ idle_num }}</dd>
+      <dt>Offline or going offline</dt>
+      <dd>{{ offline_num }}</dd>
+{% if device_type.name != 'dynamic-vm' %}
+      <dt>Retired</dt>
+      <dd>{{ retired_num }}</dd>
+{% endif %}
+  </dl>
+  </div>
 </div>
 
 <h4 class="modal-header">Devices list</h4>
 {% render_table devices_table_no_dt %}
 
-{% if device_type.name != 'dynamic-vm' %}
+{% if device_type.name != 'dynamic-vm' and device_type.health_check_job != '' %}
 <h4 class="modal-header">Health Job Summary</h4>
 {% render_table health_job_summary_table %}
 {% endif %}

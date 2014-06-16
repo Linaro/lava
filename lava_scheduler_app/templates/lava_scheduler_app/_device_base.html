@@ -32,7 +32,7 @@
 {% block device_heading %}{% endblock %}
 
 <div class="row">
-  <div class="col-md-6">
+  <div class="col-md-4">
     <h4 class="modal-header">Device</h4>
     <dl class="dl-horizontal">
       <dt>Hostname</dt>
@@ -55,7 +55,7 @@
       <dd>{{ device.device_version|default:"<i>Unknown</i>" }}</dd>
     </dl>
   </div>
-  <div class="col-md-6">
+  <div class="col-md-4">
     <h4 class="modal-header">Owners and status</h4>
     <dl class="dl-horizontal">
       <dt>Owner <abbr title="If specified, submissions to {{ device.hostname }} are restricted to this user or group.">(?)</abbr></dt>
@@ -95,9 +95,7 @@
 {% endif %}
     </dl>
   </div>
-</div>
-<div class="row">
-  <div class="col-md-6">
+  <div class="col-md-4">
     <h4 class="modal-header">Reports</h4>
     <dl class="dl-horizontal">
       <dt>Status</dt>
@@ -118,6 +116,25 @@
 {% endif %}
     </dl>
   </div>
+</div>
+<div class="row">
+{% if device.device_type.name != 'dynamic-vm' %}
+  <div class="col-md-6">
+    <h4 class="modal-header">Capabilities{% if capabilities_date %} <small>({{ capabilities_date }})</small>{% endif %}</h4>
+    <dl class="dl-horizontal">
+      <dt>Processor</dt>
+      <dd>{{ processor|default:"<i>unknown</i>" }}</dd>
+      <dt>Model</dt>
+      <dd>{{ models|default:"<i>unknown</i>" }}</dd>
+      <dt>Flags</dt>
+      <dd>{{ flags|default:"<i>unknown</i>" }}</dd>
+      <dt>Emulated</dt>
+      <dd>{{ emulated|default:"<i>unknown</i>" }}</dd>
+      <dt>Cores</dt>
+      <dd>{{ cores|default:"<i>unknown</i>" }}</dd>
+    </dl>
+  </div>
+{% endif %}
 
   <div class="col-md-6">
     <h4 class="modal-header">Actions</h4>
