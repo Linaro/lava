@@ -71,6 +71,10 @@ changes back. This way you don't have to maintain the changes you need
 by yourself, and you don't run the risk of LAVA changed in a way that is
 incompatible with your changes.
 
+Upstream uses Debian_, see :ref:`lava_on_debian` for more information.
+
+.. _Debian: http://www.debian.org/
+
 Patch Submissions and workflow
 ==============================
 
@@ -101,7 +105,7 @@ There are two main components to LAVA, ``lava-server`` and
     cd lava-dispatcher
 
 
-Setting git-review up
+Setting up git-review
 ^^^^^^^^^^^^^^^^^^^^^
 
 ::
@@ -117,7 +121,6 @@ branch for each logically distinct change you work on.
 
 Before you start, make sure your master branch is up to date::
 
-
     git checkout master
     git pull
 
@@ -125,11 +128,32 @@ Now create your topic branch off master::
 
     git checkout -b my-change master
 
+Run the unit tests
+^^^^^^^^^^^^^^^^^^
+
+Extra dependencies are required to run the tests. On Debian based distributions,
+you can install ``lava-dev``. (If you only need to run the ``lava-dispatcher``
+unit tests, you can just install ``pep8`` and ``python-testscenarios``.)
+
+To run the tests, use the ``ci-run`` script::
+
+ $ ./ci-run
+
+Functional testing
+^^^^^^^^^^^^^^^^^^
+
+Unit tests cannot replicate all tests required on LAVA code, some tests will need
+to be run with real devices under test. On Debian based distributions,
+see :ref:`dev_builds`. See :ref:`writing_tests` for information on writing
+LAVA test jobs to test particular device functionality.
+
 Make your changes
 ^^^^^^^^^^^^^^^^^
 
 * Follow PEP8 style for Python code.
 * Make one commit per logical change.
+* Use one topic branch for each logical change.
+* Include unit tests in the commit of the change being tested.
 * Write good commit messages. Useful reads on that topic:
 
  * `A note about git commit messages`_
@@ -140,10 +164,19 @@ Make your changes
 
 .. _`5 useful tips for a better commit message`: http://robots.thoughtbot.com/post/48933156625/5-useful-tips-for-a-better-commit-message
 
+Re-run the unit tests
+^^^^^^^^^^^^^^^^^^^^^
+
+Make sure that your changes do not cause any failures in the unit tests::
+
+ $ ./ci-run
+
+Wherever possible, always add new unit tests for new code.
+
 Send your commits for review
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-From your topic branch, just run::
+From each topic branch, just run::
 
     git review
 

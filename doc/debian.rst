@@ -1,3 +1,5 @@
+.. _lava_on_debian:
+
 Developing LAVA on Debian or Ubuntu
 ***********************************
 
@@ -24,8 +26,8 @@ build-dependencies of the package itself. The helper checks for package
 dependencies using ``dpkg-checkbuilddeps`` which halts upon failure with
 a message showing which packages need to be installed.
 
-The helper is likely to improve in time but currently needs to know the
-name of the package to build::
+The helper needs to know the name of the package to build and to be
+started from the directory containing the code for that package::
 
  $ /usr/share/lava-server/debian-dev-build.sh lava-server
 
@@ -37,18 +39,28 @@ build, ready for use with ``$ sudo dpkg -i``.
 .. note:: the helper does **not** install the packages for you, neither
           do the packages restart apache, although the ``lava-server``
           service will be restarted each time ``lava-server`` is
-          installed or updated. Also note that ``lava-server`` builds
-          packages which may conflict with each other - select the
-          packages you already have installed.
+          installed or updated.
 
-Currently, the helper only supports the public ``packaging`` branch of
-``lava-server``::
+The helper supports ``lava-server`` and ``lava-dispatcher``::
 
  $ sudo apt-get install lava-dev
  $ git clone http://git.linaro.org/git/lava/lava-server.git
  $ cd lava-server
- $ git checkout packaging
  $ /usr/share/lava-server/debian-dev-build.sh lava-server
+
+ $ git clone http://git.linaro.org/git/lava/lava-dispatcher.git
+ $ cd lava-dispatcher
+ $ /usr/share/lava-server/debian-dev-build.sh lava-dispatcher
+
+``lava-dispatcher`` has architecture-dependent dependencies. By
+default, the package is built for the native architecture and can
+only be installed on that architecture. To build for a different
+architecture, e.g. armhf, use::
+
+ $ /usr/share/lava-server/debian-dev-build.sh lava-dispatcher armhf
+
+This does a *binary build*, so the source is not included, which allows
+these builds to be included in a local repository, e.g. using ``reprepro``.
 
 Helpers for other distributions may be added in due course. Patches
 welcome.
