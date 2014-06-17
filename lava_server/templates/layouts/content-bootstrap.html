@@ -18,7 +18,7 @@
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="http://www.linaro.org"><img src="{{ STATIC_URL }}lava-server/images/linaro-sprinkles.png" alt="Linaro logo" /> LAVA</a>
+        <a class="navbar-brand hidden-sm" href="http://www.linaro.org"><img src="{{ STATIC_URL }}lava-server/images/linaro-sprinkles.png" alt="Linaro logo" /> LAVA</a>
       </div>
       <div class="navbar-collapse collapse">
         <ul class="nav navbar-nav">
@@ -54,7 +54,7 @@
         </ul>
         <ul class="nav navbar-nav navbar-right">
           {% if lava.instance_name %}
-          <li><p class="navbar-text">Instance: {{ lava.instance_name }}</p></li>
+          <li class="hidden-sm"><p class="navbar-text">Instance: {{ lava.instance_name }}</p></li>
           {% endif %}
           {% if user.is_authenticated %}
           <li class="dropdown">
