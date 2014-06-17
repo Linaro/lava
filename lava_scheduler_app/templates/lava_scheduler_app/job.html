@@ -261,11 +261,12 @@
   {% endif %}
 </div>
 {% else %}
-<p>Job file missing.</p>
+<h4 class="modal-header">Dispatcher Log messages</h4>
+<i>Job file missing.</i>
 {% endif %}
 {% endif %}
 
-{% if job.status >= job.RUNNING %}
+{% if job.status >= job.RUNNING and job_file_present and job_file_size > 0 %}
 <a class="btn btn-sm btn-default" id="bottom" href="#top"><span class="glyphicon glyphicon-fast-backward"></span> Start of log file</a>
 <br/><br/>
 <div class="row">
