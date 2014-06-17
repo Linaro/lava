@@ -30,6 +30,7 @@ from lava_dispatcher.errors import (
     OperationFailed,
 )
 
+
 class VexpressTarget(MasterImageTarget):
 
     def __init__(self, context, config):
