@@ -488,7 +488,7 @@ def active_device_list(request):
 class MyDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        return Device.objects.owned_by_principal(self.request.user)
+        return Device.objects.owned_by_principal(self.request.user).order_by('hostname')
 
 
 @BreadCrumb("My Devices", parent=index)
