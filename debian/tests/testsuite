@@ -1,0 +1,7 @@
+#!/bin/sh
+
+set -e
+
+# scenario files are not packaged, test the local tree only.
+python setup.py test
+
