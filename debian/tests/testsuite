@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -e
+
+# scenario files are not packaged & need django support, test the local tree only.
+./lava_server/manage.py test dashboard_app
+./lava_server/manage.py test lava_scheduler_app
+./lava_server/manage.py test lava_scheduler_daemon
+./lava_server/manage.py test linaro_django_xmlrpc.tests
+
