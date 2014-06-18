@@ -158,7 +158,7 @@
         {% if show_resubmit and not job.is_multinode %}
           <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
         {% endif %}
-        {% if user.is_authenticated and is_parentjob %}
+        {% if user.is_authenticated %}
         <li><a href="{% url 'lava.scheduler.job.toggle_favorite' job.pk %}"  class="btn btn-info">
             {% if is_favorite %}
               Remove from favorites

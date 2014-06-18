@@ -1232,13 +1232,10 @@ def job_detail(request, pk):
     job = get_restricted_job(request.user, pk)
 
     is_favorite = False
-    is_parentjob = False
     if request.user.is_authenticated():
         testjob_user, _ = TestJobUser.objects.get_or_create(user=request.user,
                                                             test_job=job)
         is_favorite = testjob_user.is_favorite
-    if job.is_multinode or job.is_vmgroup:
-        is_parentjob = job.sub_id.endswith(".0")
 
     data = {
         'job': job,
@@ -1250,7 +1247,6 @@ def job_detail(request, pk):
         'change_priority': job.can_change_priority(request.user),
         'context_help': BreadCrumbTrail.leading_to(job_detail, pk='detail'),
         'is_favorite': is_favorite,
-        'is_parentjob': is_parentjob,
     }
 
     log_file = job.output_file()
@@ -1316,14 +1312,6 @@ def job_definition_plain(request, pk):
 @BreadCrumb("Multinode definition", parent=job_detail, needs=['pk'])
 def multinode_job_definition(request, pk):
     job = get_restricted_job(request.user, pk)
-    is_favorite = False
-    is_parentjob = False
-    if request.user.is_authenticated():
-        testjob_user, _ = TestJobUser.objects.get_or_create(user=request.user,
-                                                            test_job=job)
-        is_favorite = testjob_user.is_favorite
-    if job.is_multinode:
-        is_parentjob = job.sub_id.endswith(".0")
     log_file = job.output_file()
     return render_to_response(
         "lava_scheduler_app/multinode_job_definition.html",
@@ -1333,8 +1321,6 @@ def multinode_job_definition(request, pk):
             'bread_crumb_trail': BreadCrumbTrail.leading_to(multinode_job_definition, pk=pk),
             'show_cancel': job.can_cancel(request.user),
             'show_resubmit': job.can_resubmit(request.user),
-            'is_favorite': is_favorite,
-            'is_parentjob': is_parentjob,
         },
         RequestContext(request))
 
@@ -1350,14 +1336,6 @@ def multinode_job_definition_plain(request, pk):
 @BreadCrumb("VMGroup definition", parent=job_detail, needs=['pk'])
 def vmgroup_job_definition(request, pk):
     job = get_restricted_job(request.user, pk)
-    is_favorite = False
-    is_parentjob = False
-    if request.user.is_authenticated():
-        testjob_user, _ = TestJobUser.objects.get_or_create(user=request.user,
-                                                            test_job=job)
-        is_favorite = testjob_user.is_favorite
-    if job.is_vm_group:
-        is_parentjob = job.sub_id.endswith(".0")
     log_file = job.output_file()
     return render_to_response(
         "lava_scheduler_app/vmgroup_job_definition.html",
@@ -1367,8 +1345,6 @@ def vmgroup_job_definition(request, pk):
             'bread_crumb_trail': BreadCrumbTrail.leading_to(vmgroup_job_definition, pk=pk),
             'show_cancel': job.can_cancel(request.user),
             'show_resubmit': job.can_resubmit(request.user),
-            'is_favorite': is_favorite,
-            'is_parentjob': is_parentjob,
         },
         RequestContext(request))
 

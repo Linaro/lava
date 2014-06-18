@@ -62,15 +62,6 @@
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
           <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition of {{ job.sub_id }}</a></li>
-        {% if user.is_authenticated %}
-        <li><a href="{% url 'lava.scheduler.job.toggle_favorite' job.pk %}" class="btn btn-info">
-            {% if is_favorite %}
-              Remove from favorites
-            {% else %}
-              Add to favorites
-            {% endif %}
-        </a></li>
-        {% endif %}
         </ul>
       </div>
     </div>
