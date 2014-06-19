@@ -28,6 +28,7 @@ import hashlib
 import signal
 import simplejson
 import subprocess
+import sys
 from json_schema_validator.schema import Schema
 from json_schema_validator.validator import Validator
 
