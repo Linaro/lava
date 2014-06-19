@@ -123,6 +123,8 @@ class cmd_submit_results(BaseAction):
                     logging.info('Adding bundle as attachment')
                     attachment = create_attachment(fname, content)
                     self.context.test_data.add_attachments([attachment])
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
             except:
                 msg = 'Unknown error processing bundle' % fname
                 logging.exception(msg)
@@ -141,6 +143,8 @@ class cmd_submit_results(BaseAction):
                 d = tempfile.mkdtemp(dir=self.client.target_device.scratch_dir)
                 files = utils.extract_tar(result_path, d)
                 bundles = self._get_bundles(files)
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
         except GatherResultsError:
             raise
         except:

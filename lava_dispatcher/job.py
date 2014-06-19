@@ -265,7 +265,7 @@ class LavaTestJob(object):
     def logging_level(self):
         try:
             return self.job_data['logging_level']
-        except:
+        except KeyError:
             return None
 
     def run(self, transport=None, group_data=None, vm_host_ip=None):

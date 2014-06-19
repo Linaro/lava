@@ -486,6 +486,8 @@ class URLTestDefinition(object):
             logging.info("Loading handler from %s" % handler_ep.dist)
             handler_cls = handler_ep.load()
             self.handler = handler_cls(self, **hook_data.get('params', {}))
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
         except Exception:
             logging.exception("loading handler failed")
 
@@ -795,6 +797,8 @@ class cmd_lava_test_shell(BaseAction):
                 self._handle_testcase(params)
             try:
                 signal_director.signal(name, params)
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
             except:
                 logging.exception("on_signal failed")
             runner._connection.sendline('echo LAVA_ACK')
@@ -807,6 +811,8 @@ class cmd_lava_test_shell(BaseAction):
             ret = False
             try:
                 ret = signal_director.signal(name, params)
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
             except:
                 logging.exception("on_signal(Multi_Node) failed")
             return ret
@@ -818,6 +824,8 @@ class cmd_lava_test_shell(BaseAction):
             ret = False
             try:
                 ret = signal_director.signal(name, params)
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
             except:
                 logging.exception("on_signal(LMP) failed")
             return ret

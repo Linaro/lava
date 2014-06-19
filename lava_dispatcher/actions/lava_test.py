@@ -86,11 +86,15 @@ class cmd_lava_test_run(BaseAction):
                     self.context.config.lava_result_dir, bundle_name))
             try:
                 rc = session.run(cmd, timeout=timeout)
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
             except:
                 logging.exception("session.run failed")
                 self.client.proc.sendcontrol('c')
                 try:
                     session.run('true', timeout=20)
+                except KeyboardInterrupt:
+                    raise KeyboardInterrupt
                 except:
                     logging.exception("killing test failed, rebooting")
                     self.client.boot_linaro_image()
