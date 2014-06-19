@@ -74,6 +74,8 @@ class SignalHandler(BaseSignalHandler):
         data = None
         try:
             data = self.start_testcase(test_case_id)
+        except KeyboardInterrupt:
+            raise
         except:
             logging.exception("start_testcase failed for %s", test_case_id)
         self._cur_case_data = self._case_data[test_case_id] = data
@@ -86,6 +88,8 @@ class SignalHandler(BaseSignalHandler):
         else:
             try:
                 self.end_testcase(test_case_id, self._cur_case_data)
+            except KeyboardInterrupt:
+                raise
             except:
                 logging.exception(
                     "stop_testcase failed for %s", test_case_id)
@@ -101,6 +105,8 @@ class SignalHandler(BaseSignalHandler):
             data = self._case_data[tc_id]
             try:
                 self.postprocess_test_result(test_result, data)
+            except KeyboardInterrupt:
+                raise
             except:
                 logging.exception("postprocess_test_result failed for %s", tc_id)
 
@@ -156,6 +162,8 @@ class SignalDirector(object):
         if handler:
             try:
                 handler(*params)
+            except KeyboardInterrupt:
+                raise
             except:
                 logging.exception("handling signal %s failed", name)
                 return False
@@ -296,6 +304,8 @@ class SignalDirector(object):
             if testdef_obj.handler:
                 try:
                     testdef_obj.handler.postprocess_test_run(test_run)
+                except KeyboardInterrupt:
+                    raise
                 except:
                     logging.exception(
                         "postprocessing test run with uuid %s failed", uuid)
