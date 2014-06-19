@@ -25,6 +25,7 @@ import pexpect
 import time
 import traceback
 import hashlib
+import signal
 import simplejson
 import subprocess
 from json_schema_validator.schema import Schema
@@ -334,6 +335,12 @@ class LavaTestJob(object):
 #init LMP module
             lmp_init_boards.init(self.job_data['lmp_module'],
                                  self.context.device_config)
+
+        def term_handler(signum, frame):
+            self.context.finish()
+            sys.exit(1)
+
+        signal.signal(signal.SIGTERM, term_handler)
 
         try:
             job_length = len(self.job_data['actions'])
