@@ -101,6 +101,8 @@ from lava_scheduler_app.tables import (
     NoWorkerDeviceTable,
     QueueJobsTable,
     DeviceTypeTransitionTable,
+    OnlineDeviceTable,
+    PassingHealthTable,
 )
 
 # The only functions which need to go in this file are those directly
@@ -481,6 +483,50 @@ def active_device_list(request):
             "search_data": ptable.prepare_search_data(data),
             "discrete_data": ptable.prepare_discrete_data(data),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(active_device_list),
+        },
+        RequestContext(request))
+
+
+class OnlineDeviceView(DeviceTableView):
+
+    def get_queryset(self):
+        visible = filter_device_types(self.request.user)
+        return Device.objects.filter(device_type__in=visible)\
+            .exclude(status=Device.RETIRED).order_by("status")
+
+
+@BreadCrumb("Online Devices", parent=index)
+def online_device_list(request):
+    data = OnlineDeviceView(request, model=Device, table_class=OnlineDeviceTable)
+    ptable = OnlineDeviceTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    return render_to_response(
+        "lava_scheduler_app/onlinedevices.html",
+        {
+            'online_devices_table': ptable,
+            "length": ptable.length,
+            "terms_data": ptable.prepare_terms_data(data),
+            "search_data": ptable.prepare_search_data(data),
+            "discrete_data": ptable.prepare_discrete_data(data),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(online_device_list),
+        },
+        RequestContext(request))
+
+
+@BreadCrumb("Passing Health Checks", parent=index)
+def passing_health_checks(request):
+    data = DeviceTableView(request, model=Device, table_class=PassingHealthTable)
+    ptable = PassingHealthTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    return render_to_response(
+        "lava_scheduler_app/passinghealthchecks.html",
+        {
+            'passing_health_checks_table': ptable,
+            "length": ptable.length,
+            "terms_data": ptable.prepare_terms_data(data),
+            "search_data": ptable.prepare_search_data(data),
+            "discrete_data": ptable.prepare_discrete_data(data),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(passing_health_checks),
         },
         RequestContext(request))
 

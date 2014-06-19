@@ -1,0 +1,14 @@
+{% extends "layouts/content-bootstrap.html" %}
+{% load django_tables2 %}
+
+{% block content %}
+
+<h2>Online Devices</h2>
+
+{% render_table online_devices_table %}
+
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
+{% endblock %}

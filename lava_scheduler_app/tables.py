@@ -403,22 +403,23 @@ class DeviceTypeTable(LavaTable):
         self.length = 50
 
     def render_idle(self, record):
-        return "%d" % record.idle
+        return record.idle if record.idle > 0 else ""
 
     def render_offline(self, record):
-        return "%d" % record.offline
+        return record.offline if record.offline > 0 else ""
 
     def render_busy(self, record):
-        return "%d" % record.busy
+        return record.busy if record.busy > 0 else ""
 
     def render_restricted(self, record):
-        return "%d" % record.restricted
+        return record.restricted if record.restricted > 0 else ""
 
     def render_queue(self, record):
-        return TestJob.objects.filter(
+        count = TestJob.objects.filter(
             Q(status=TestJob.SUBMITTED),
             Q(requested_device_type=record.name) |
             Q(requested_device__in=Device.objects.filter(device_type=record.name))).count()
+        return count if count > 0 else ""
 
     name = IDLinkColumn("name")
     idle = tables.Column()
@@ -670,3 +671,68 @@ class DeviceTypeTransitionTable(DeviceTransitionTable):
         searches = {}
         queries = {}
         times = {}
+
+
+class OnlineDeviceTable(DeviceTable):
+
+    def __init__(self, *args, **kwargs):
+        super(OnlineDeviceTable, self).__init__(*args, **kwargs)
+        self.length = 25
+
+    def render_status(self, record):
+        t = DeviceStateTransition.objects.filter(device=record).order_by('-id')
+        status = Device.STATUS_CHOICES[record.status][1]
+        if t:
+            return "%s (reason: %s)" % (status, t[0].message)
+        else:
+            return status
+
+    class Meta(LavaTable.Meta):
+        exclude = [
+            'worker_host', 'user', 'group', 'is_public', 'device_version',
+            'physical_owner', 'physical_group', 'description', 'current_job',
+            'last_health_report_job', 'health_status'
+        ]
+        sequence = [
+            'hostname', 'device_type', 'status', 'owner'
+        ]
+        searches = {
+            'hostname': 'contains',
+        }
+        queries = {
+            'device_type_query': 'device_type',
+            'device_status_query': 'status',
+            'restriction_query': 'restrictions',
+        }
+
+
+class PassingHealthTable(DeviceHealthTable):
+
+    def __init__(self, *args, **kwargs):
+        super(PassingHealthTable, self).__init__(*args, **kwargs)
+        self.length = 25
+
+    def render_device_type(self, record):
+        return pklink(record.device_type)
+
+    def render_last_health_report_job(self, record):
+        report = record.last_health_report_job
+        base = "<a href='/scheduler/job/%s'>%s</a>" % (report.id, report)
+        return mark_safe(base)
+
+    device_type = tables.Column()
+
+    class Meta(LavaTable.Meta):
+        exclude = [
+            'worker_host', 'last_report_time'
+        ]
+        sequence = [
+            'hostname', 'device_type', 'health_status',
+            'last_health_report_job'
+        ]
+        searches = {
+            'hostname': 'contains',
+        }
+        queries = {
+            'health_status_query': 'health_status',
+        }
