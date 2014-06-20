@@ -2003,18 +2003,22 @@ class ImageReportChart(models.Model):
         # evaluate_filter call.
         tests = []
 
-        selected_chart_tests = image_chart_filter.imagecharttest_set.all()
+        selected_chart_tests = image_chart_filter.imagecharttest_set.all().prefetch_related('imagecharttestattribute_set')
+
+        # Leave chart_data empty if there are no tests available.
         if not selected_chart_tests:
-            return tests
+            return
 
         for chart_test in selected_chart_tests:
             tests.append({
-                'test': chart_test.test,
-                'test_cases': [],
-            })
+                    'test': chart_test.test,
+                    'test_cases': [],
+                    })
 
         filter_data['tests'] = tests
-        matches = list(evaluate_filter(user, filter_data)[:50])
+
+        matches = list(evaluate_filter(user, filter_data,
+                                       prefetch_related=['bug_links'])[:50])
         matches.reverse()
 
         # Store metadata changes.
@@ -2028,35 +2032,42 @@ class ImageReportChart(models.Model):
                 bug_links = sorted(
                     [b.bug_link for b in test_run.bug_links.all()])
 
+                metadata_content = {}
+
                 test_id = test_run.test.test_id
-                chart_test = ImageChartTest.objects.get(
-                    image_chart_filter=image_chart_filter,
-                    test=test_run.test)
+
+                # Find corresponding chart_test object.
+                for ch_test in selected_chart_tests:
+                    if ch_test.test == test_run.test:
+                        chart_test = ch_test
+                        break
 
                 if test_id not in metadata.keys():
                     metadata[test_id] = {}
 
-                # Metadata delta content. Contains attribute names as keys and
-                # value is tuple with old and new value.
-                # If specific attribute's value didn't change since the last
-                # test run, do not include that attr.
-                metadata_content = {}
-                for attr in chart_test.attributes:
-                    if attr not in metadata[test_id].keys():
-                        try:
-                            metadata[test_id][attr] = \
-                                test_run.attributes.get(name=attr).value
-                        except NamedAttribute.DoesNotExist:
-                            # Skip this attribute.
-                            pass
-                    else:
-                        old_value = metadata[test_id][attr]
-                        new_value = test_run.attributes.get(name=attr).value
-                        if old_value != new_value:
-                            metadata_content[attr] = (old_value, new_value)
-                        metadata[test_id][attr] = new_value
+                alias = None
+                if chart_test:
+                    # Metadata delta content. Contains attribute names as keys
+                    # and value is tuple with old and new value.
+                    # If specific attribute's value didn't change since the
+                    # last test run, do not include that attr.
+                    for attr in chart_test.attributes:
+                        if attr not in metadata[test_id].keys():
+                            try:
+                                metadata[test_id][attr] = \
+                                    test_run.attributes.get(name=attr).value
+                            except NamedAttribute.DoesNotExist:
+                                # Skip this attribute.
+                                pass
+                        else:
+                            old_value = metadata[test_id][attr]
+                            new_value = test_run.attributes.get(
+                                name=attr).value
+                            if old_value != new_value:
+                                metadata_content[attr] = (old_value, new_value)
+                            metadata[test_id][attr] = new_value
 
-                alias = chart_test.name
+                    alias = chart_test.name
 
                 if not alias:
                     alias = "%s: %s" % (image_chart_filter.filter.name,
@@ -2064,10 +2075,8 @@ class ImageReportChart(models.Model):
 
                 # Add comments flag to indicate whether comments do exist in
                 # any of the test result in this test run.
-                has_comments = False
-                for test_result in test_run.get_results():
-                    if test_result.comments:
-                        has_comments = True
+                has_comments = test_run.test_results.exclude(
+                    comments__isnull=True).count() != 0
 
                 test_filter_id = "%s-%s" % (test_id, image_chart_filter.id)
                 chart_item = {
@@ -2098,8 +2107,11 @@ class ImageReportChart(models.Model):
         test_cases = TestCase.objects.filter(imagecharttestcase__image_chart_filter__image_chart=self).distinct('id')
         tests_all = Test.objects.filter(test_cases__in=test_cases).distinct('id').prefetch_related('test_cases')
 
+        selected_chart_test_cases = image_chart_filter.imagecharttestcase_set.all().prefetch_related('imagecharttestcaseattribute_set')
+
+        # Leave chart_data empty if there are no test cases available.
         if not test_cases:
-            return tests
+            return
 
         for test in tests_all:
             tests.append({
@@ -2108,7 +2120,8 @@ class ImageReportChart(models.Model):
             })
 
         filter_data['tests'] = tests
-        matches = list(evaluate_filter(user, filter_data)[:50])
+        matches = list(evaluate_filter(user, filter_data,
+                                       prefetch_related=['bug_links'])[:50])
         matches.reverse()
 
         # Store metadata changes.
@@ -2126,11 +2139,14 @@ class ImageReportChart(models.Model):
                 if test_case_id not in metadata.keys():
                     metadata[test_case_id] = {}
 
-                try:
-                    chart_test_case = ImageChartTestCase.objects.get(
-                        image_chart_filter=image_chart_filter,
-                        test_case=test_result.test_case)
+                # Find corresponding chart_test object.
+                for ch_test_case in selected_chart_test_cases:
+                    if ch_test_case.test_case == test_result.test_case:
+                        chart_test_case = ch_test_case
+                        break
 
+                alias = None
+                if chart_test_case:
                     # Metadata delta content. Contains attribute names as
                     # keys and value is tuple with old and new value.
                     # If specific attribute's value didn't change since the
@@ -2154,14 +2170,10 @@ class ImageReportChart(models.Model):
 
                     alias = chart_test_case.name
 
-                except ImageChartTestCase.DoesNotExist:
-                    # Set alias to None.
-                    alias = None
-
                 if not alias:
                     alias = "%s: %s: %s" % (
                         image_chart_filter.filter.name,
-                        test_result.test_run.test.test_id,
+                        test_result.test.test_id,
                         test_case_id
                     )
 
