@@ -105,7 +105,7 @@ class TestSocket(object):
             self.log.info("\tCoordinator header: %d bytes" % int(data, 16))
         else:
             try:
-                json_data = json.loads(data)
+                json_data = json.loads(data.decode('utf-8'))
             except ValueError:
                 assert False
             if not self.response:

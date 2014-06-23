@@ -70,7 +70,7 @@ class LavaCoordinator(object):
             logging.info("Ready to accept new connections")
             self.conn, addr = s.accept()
             # read the header to get the size of the message to follow
-            data = str(self.conn.recv(8))  # 32bit limit
+            data = self.conn.recv(8).decode('utf-8')  # 32bit limit
             try:
                 count = int(data, 16)
             except ValueError:
@@ -81,7 +81,7 @@ class LavaCoordinator(object):
             data = ''
             # get the message itself
             while c < count:
-                data += self.conn.recv(self.blocksize)
+                data += self.conn.recv(self.blocksize).decode('utf-8')
                 c += self.blocksize
             try:
                 json_data = json.loads(data)
@@ -202,7 +202,7 @@ class LavaCoordinator(object):
             logging.error("Message was too long to send! %d > %d" %
                           (int(msglen, 16), 0xFFFFFFFF))
             return None
-        return msglen, msgstr
+        return msglen.encode('utf-8'), msgstr.encode('utf-8')
 
     def _sendMessage(self, client_name, messageID):
         """ Sends a message to the currently connected client.

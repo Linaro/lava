@@ -2,3 +2,5 @@
 *.egg
 lava_coordinator.egg-info/
 dist/
+.eric6project/
+*.e4p

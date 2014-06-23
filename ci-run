@@ -1,4 +1,4 @@
 #!/bin/sh
 set -e
 
-PYTHONPATH=. python tests/testpoller.py
+PYTHONPATH=. python3 tests/testpoller.py

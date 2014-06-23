@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python3
 
 #  Copyright 2013 Linaro Limited
 #  Author Neil Williams <neil.williams@linaro.org>
@@ -88,7 +88,7 @@ if __name__ == '__main__':
         if os.path.exists(os.path.dirname(options.logfile)):
             logfile = options.logfile
         else:
-            print "No such directory for specified logfile '%s'" % logfile
+            print("No such directory for specified logfile '%s'" % logfile)
     open(logfile, 'w').close()
     level = logging.INFO
     if options.loglevel == "DEBUG":

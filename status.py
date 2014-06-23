@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 
 """
 Status check for lava-coordinator
@@ -44,7 +44,7 @@ def read_settings(filename):
                 "blocksize": 4 * 1024}
     if not os.path.exists(filename):
         # unknown as there is no usable configuration
-        print "No lava-coordinator configuration file found!"
+        print("No lava-coordinator configuration file found!")
         sys.exit(3)
     with open(filename) as stream:
         jobdata = stream.read()
@@ -97,12 +97,12 @@ def lava_poll(port, host, name, request):
         msg_len = len(msg_str)
         try:
             # send the length as 32bit hexadecimal
-            ret_bytes = sock.send("%08X" % msg_len)
+            ret_bytes = sock.send(b"%08X" % msg_len)
             if ret_bytes == 0:
                 warnings.append(
                     "zero bytes sent for length - connection closed?")
                 continue
-            ret_bytes = sock.send(msg_str)
+            ret_bytes = sock.send(msg_str.encode('utf-8'))
             if ret_bytes == 0:
                 warnings.append(
                     "zero bytes sent for message - connection closed?")
@@ -118,7 +118,7 @@ def lava_poll(port, host, name, request):
             errors.append("Exception on receive: %s" % exc)
             continue
         try:
-            json_data = json.loads(data)
+            json_data = json.loads(data.decode('utf-8'))
         except ValueError:
             warnings.append("data not JSON %s" % data)
             break
@@ -137,7 +137,8 @@ def lava_poll(port, host, name, request):
     elif warnings:
         ret = 1
     if errors or warnings:
-        print "E:%s W:%s" % (errors, warnings)
+        print("Using python%s" % sys.version_info[0])
+        print("E:%s W:%s" % (errors, warnings))
         return ret
     else:
         return ret
@@ -155,7 +156,8 @@ def main():
     ret1 = lava_poll(port, host, 'status', 'group_data')
     ret2 = lava_poll(port, host, 'status', 'clear_group')
     if not ret1 and not ret2:
-        print "status check complete. No errors"
+        print("Using python%s" % sys.version_info[0])
+        print("status check complete. No errors")
     if ret1 and ret1 >= ret2:
         sys.exit(ret1)
     if ret2:
