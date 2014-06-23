@@ -1,7 +1,16 @@
 {% extends "layouts/content-bootstrap.html" %}
+{% block styles %}
+<style>
+    .flot-text {
+        z-index: 1
+    }
+    .flot-tick-label {
+        z-index: 6
+    }
+</style>
+{% endblock styles %}
 
 {% block content %}
-
 <h2 class="modal-header">Health Job Summary for {{ device.hostname }} <a
 class="btn btn-xs btn-info" href="{% url 'lava.scheduler.device_health_history_log' device.hostname %}"
 title="History of health changes"><span class="glyphicon glyphicon-heart"></span> history log</a></h2>
