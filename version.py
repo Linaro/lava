@@ -51,17 +51,17 @@ def version_tag():
     ]
     hash_list = ['git', 'log', '-n', '1']
     tag_hash_list = ['git', 'rev-list']
-    clone_data = subprocess.check_output(hash_list).strip()
+    clone_data = subprocess.check_output(hash_list).strip().decode('utf-8')
     commits = clone_data.split('\n')
     clone_hash = commits[0].replace('commit ', '')[:8]
-    tag_data = subprocess.check_output(tag_list).strip()
+    tag_data = subprocess.check_output(tag_list).strip().decode('utf-8')
     tags = tag_data.split('\n')
     if len(tags) < 2:
         return clone_hash
     tag_line = str(tags[len(tags) - 1]).replace('\'', '').strip()
     tag_name = tag_line.split("/")[2]
     tag_hash_list.append(tag_name)
-    tag_hash = subprocess.check_output(tag_hash_list).strip()
+    tag_hash = subprocess.check_output(tag_hash_list).strip().decode('utf-8')
     tags = tag_hash.split('\n')
     tag_hash = tags[0][:8]
     if tag_hash == clone_hash:
@@ -82,7 +82,7 @@ def version_tag():
 
 
 def main():
-    print version_tag()
+    print(version_tag())
     return 0
 
 if __name__ == '__main__':

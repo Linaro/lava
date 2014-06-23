@@ -170,7 +170,7 @@ class stmc(BaseDriver):
             self.context.run_command(self.config.jtag_hard_reset_command)
             logging.info("Waiting for STMC to initialize")
             success = False
-            for loop_index in xrange(1, 5):
+            for loop_index in range(1, 5):
                 logging.info("  checking STMC status (%d)" % (loop_index))
                 if self.stmc_status_ok():
                     success = True
