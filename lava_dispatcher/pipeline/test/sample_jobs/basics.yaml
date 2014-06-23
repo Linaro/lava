@@ -1,0 +1,157 @@
+# Sample JOB defitinition for LAVA dispatcher
+
+device_type: whatever
+
+job_name: sample
+job_timeout: 8h             # timeout for the whole job (default: ??h)
+action_timeout: 30m         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+logging_level: DEBUG
+priority: medium
+
+actions:
+
+    - commands:
+        # list of pre-defined scripts installed by the server administrator at
+        # /etc/lava-server/commands.d/* to be invoked
+        #
+        # Each called script will have the data in the job definition (+ plus
+        # the actual device where the test is running) passed in by environment
+        # variables
+        - power-off
+
+    - deploy:
+        timeout: 20m
+        to: sata
+        image: http://myimage.com/target.img.gz
+        os: debian
+        # if root_partition partition is not present:
+        # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
+        # - look into device configuration
+        root_partition: 1
+
+    - deploy:
+        # formats the device, creates a single partition there and explodes the
+        # provided tarball there
+        to: usb
+        rootfs: http://myimage.com/rootfs.tgz
+        overlay: http://myimage.com/overlay.tgz
+        fstype: ext3
+        os: fedora
+
+    - deploy:
+        to: nfs
+        rootfs: http://myimage.com/rootfs.tgz
+        os: oe
+
+    - deploy:
+        partitions:
+            boot: http://myimage.com/boot.img
+            system: http://myimage.com/system.img
+            cache: http://myimage.com/cache.img
+        os: android
+
+    - boot:
+        method: tftp
+        media: nfs
+        kernel: http://myimage.com/zImage
+        kernel_args: "bla bla bla"
+        failure_retry: 10
+
+    - test:
+        failure_retry: 6
+        name: ptest # is not present, use "test $N"
+        definitions:
+            - from: url
+              path: file:///path/to/testdef.yaml
+              # name: if not present, use the name from the YAML. The name can
+              # also be overriden from the actualy commands being run by
+              # calling the lava-test-suite-name API call (e.g.
+              # `lava-test-suite-name FOO`).
+              name: ptest-dbus
+            - from: url
+              path: http:///url.to/testdef.yaml
+              name: ptest-perl
+            - from: git
+              repository: git://url.ro/repo.git
+              path: testdef.yaml
+              name: ptest-foobar
+
+    - boot:
+        timeout: 20m
+        method: block
+        media: sata
+
+    - boot:
+        timeout: 1h
+        method: tftp
+        media: usb
+        kernel: http://myimage.com/zImage
+        boot_cmds: “blah blah blah”
+
+    - boot:
+        method: fastboot
+        media: whatever
+
+    - repeat:
+        times: 10
+        actions:
+            # just a list of commands
+            - boot:
+                method: block
+                media: sata
+            - test:
+                commands:
+                    - ls -l
+            - boot:
+                method: fastboot
+                media: whatever
+
+
+    # includes other YAML test definitions at this point
+    # Only the list of actions will be included.
+    - include:
+        - from: url
+          path: http:///url.to/testdef.yaml
+        - from: git
+          repository: git://url.ro/repo.git
+          path: testdef.yaml
+
+    - if:
+        condition: ... # ← DEFINING THIS IS THE REAL PROBLEM
+        true:
+            # just a list of commands
+            - boot:
+                method: block
+                media: sata
+        false:
+            # just a list of commands
+            - test:
+                commands:
+                    - ls -l
+
+    # TODO: implementing this, try to implement TI's requirement with other
+    # existing features.
+    - in_parallel:
+        # a list of other commands that will run in parallel
+        - sequence:
+            - connection: serial2
+            - test:
+                commands:
+                    - ls -l
+                    - sleep 30m
+                    - ls -l
+            - sync: foobar # will wait for the sync in the sequence below
+            - test:
+                commands:
+                    - something else
+        - sequence:
+            - connection: ssh
+            - sync: foobar # will wait for the sync in the sequence above
+            - test:
+                commands:
+                    - suspend
+            - test:
+                commands:
+
+    - submit_results:
+        stream: /my/stream/
