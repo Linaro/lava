@@ -20,14 +20,12 @@ class Migration(SchemaMigration):
         # Adding unique constraint on 'TestJobUser', fields ['test_job', 'user']
         db.create_unique(u'lava_scheduler_app_testjobuser', ['test_job_id', 'user_id'])
 
-
     def backwards(self, orm):
         # Removing unique constraint on 'TestJobUser', fields ['test_job', 'user']
         db.delete_unique(u'lava_scheduler_app_testjobuser', ['test_job_id', 'user_id'])
 
         # Deleting model 'TestJobUser'
         db.delete_table(u'lava_scheduler_app_testjobuser')
-
 
     models = {
         u'auth.group': {
