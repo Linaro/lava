@@ -106,7 +106,7 @@ class SignalHandler(BaseSignalHandler):
             try:
                 self.postprocess_test_result(test_result, data)
             except KeyboardInterrupt:
-                raise
+                raise KeyboardInterrupt
             except:
                 logging.exception("postprocess_test_result failed for %s", tc_id)
 
@@ -163,7 +163,7 @@ class SignalDirector(object):
             try:
                 handler(*params)
             except KeyboardInterrupt:
-                raise
+                raise KeyboardInterrupt
             except:
                 logging.exception("handling signal %s failed", name)
                 return False
@@ -305,7 +305,7 @@ class SignalDirector(object):
                 try:
                     testdef_obj.handler.postprocess_test_run(test_run)
                 except KeyboardInterrupt:
-                    raise
+                    raise KeyboardInterrupt
                 except:
                     logging.exception(
                         "postprocessing test run with uuid %s failed", uuid)

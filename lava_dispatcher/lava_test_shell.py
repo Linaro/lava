@@ -464,6 +464,8 @@ def get_bundle(results_dir, testdef_objs, err_log):
         if os.path.isdir(test_run_path):
             try:
                 testruns.append(_get_test_run(test_run_path, hwctx, build, pkginfo, testdef_objs, err_log))
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
             except:
                 logging.exception('error processing results for: %s' % test_run_name)
 

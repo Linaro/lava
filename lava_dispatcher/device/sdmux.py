@@ -222,6 +222,8 @@ class SDMuxTarget(Target):
             raise
         except subprocess.CalledProcessError:
             raise CriticalError('Unable to access sdmux device')
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
         except:
             logging.exception('Error accessing sdmux filesystem')
             raise CriticalError('Error accessing sdmux filesystem')
@@ -258,6 +260,8 @@ class SDMuxTarget(Target):
         try:
             self.context.run_command(self.config.hard_reset_command)
             self._run_boot()
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
         except:
             raise OperationFailed("_run_boot failed")
 

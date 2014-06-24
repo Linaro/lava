@@ -233,6 +233,8 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
             ## by last action or last job
             ## that connection should be expired already
             self.android_adb_over_tcp_disconnect()
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
         except:
             ## ignore all exception
             ## this just in case of exception
@@ -277,6 +279,8 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
         network_interface = self._client.get_android_adb_interface()
         try:
             ip = self._get_default_nic_ip_by_ifconfig(network_interface)
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
         except:
             logging.exception("_get_default_nic_ip_by_ifconfig failed")
             return None
@@ -287,6 +291,8 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
         # Check network ip and setup adb connection
         try:
             self.wait_network_up()
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
         except:
             logging.warning(traceback.format_exc())
             return None
@@ -667,6 +673,8 @@ class LavaClient(object):
         try:
             if self.config.android_wait_for_home_screen:
                 session.wait_home_screen()
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
         except:
             # ignore home screen exception if it is a health check job.
             if not ('health_check' in self.context.job_data and self.context.job_data["health_check"] is True):
