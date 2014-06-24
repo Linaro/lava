@@ -125,7 +125,13 @@ class WGTarget(MasterImageTarget):
             logging.error(msg)
             raise OperationFailed(msg)
         self.proc.sendline("")
-        self.proc.expect(['Cmd>'])
+        match_id = self.proc.expect([
+            'Cmd>',
+            pexpect.EOF, pexpect.TIMEOUT], timeout=120)
+        if match_id != 0:
+            msg = 'MCC boot prompt not found'
+            logging.error(msg)
+            raise OperationFailed(msg)
 
     def _mount_usbmsd(self, mount_point):
         self.proc.sendline("USB_ON")
@@ -137,7 +143,19 @@ class WGTarget(MasterImageTarget):
 
         usb_device = self.config.wg_usb_mass_storage_device
 
-        self.context.run_command_with_retries('mount %s %s' % (usb_device, mount_point))
+        # Try to mount the MMC device. If we detect a failure when mounting. Toggle
+        # the USB MSD interface, and try again. If we fail again, raise an OperationFailed
+        # except to retry to the boot process.
+        if self.context.run_command('mount %s %s' % (usb_device, mount_point)) != 0:
+            self.proc.sendline("USB_OFF")
+            self.proc.expect(['Cmd>'])
+            self.proc.sendline("USB_ON")
+            self.proc.expect(['Cmd>'])
+            sleep(5)
+            if self.context.run_command('mount %s %s' % (usb_device, mount_point)) != 0:
+                msg = "Failed to mount MMC on host"
+                logging.exception(msg)
+                raise OperationFailed(msg)
 
     def _umount_usbmsd(self, mount_point):
         self.context.run_command_with_retries('umount %s' % mount_point)
