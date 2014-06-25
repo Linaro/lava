@@ -31,6 +31,7 @@ import datetime
 from collections import OrderedDict
 
 from django.contrib.sites.models import Site
+from django.core.exceptions import ImproperlyConfigured
 
 from lava_server.settings.getsettings import Settings
 from lava_server.settings.config_file import ConfigFile
