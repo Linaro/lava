@@ -684,7 +684,7 @@ def populate_capabilities(device_name):
             actual_device=device,
             health_check=use_health_job,
             status=TestJob.COMPLETE).latest('submit_time')
-    except IndexError:
+    except TestJob.DoesNotExist:
         return capability
     if not health_job:
         return capability
