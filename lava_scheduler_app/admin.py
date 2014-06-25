@@ -118,10 +118,6 @@ class DeviceTypeAdmin(admin.ModelAdmin):
     list_display = ('name', 'has_health_check', 'display', 'owners_only')
 
 
-class WorkerAdmin(admin.ModelAdmin):
-    list_display = ('hostname', 'rpc2_url', 'ip_address', 'is_master', 'last_heartbeat')
-
-
 def hide_worker_action(modeladmin, request, queryset):
     for worker in queryset.filter(display=True):
         worker.display = False
