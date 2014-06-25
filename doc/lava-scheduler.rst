@@ -17,12 +17,11 @@ Overall status
 
   Passing health checks
     Each :term:`device type` can have a single :term:`health check` job
-    defined which is run automatically. The number of health checks run
-    can be higher than the number of devices if devices had to re-run a
-    health check after an intervention. It is a link which takes to a
-    page that lists the health status of the devices (excluding
-    Retired devices) with a link to the last run health job - "Last
-    Report Job".
+    defined which is run automatically. Passing health checks
+    indicates the total number of devices that are passing health
+    checks. It is a link which takes to a page that lists the health
+    status of the devices (excluding Retired devices) with a link to
+    the last run health job - "Last Report Job".
 
 Reports
 =======

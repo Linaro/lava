@@ -240,10 +240,10 @@ class WorkerView(JobTableView):
 
 
 def health_jobs_in_hr(hr=-24):
-    return TestJob.objects.filter(health_check=True,
-                                  start_time__gte=(datetime.datetime.now() +
-                                                   relativedelta(hours=hr)))\
-        .exclude(status__in=[TestJob.SUBMITTED, TestJob.RUNNING])
+    return TestJob.objects.values('actual_device').filter(
+        health_check=True, start_time__gte=(datetime.datetime.now() +
+                                            relativedelta(hours=hr))).\
+        exclude(status__in=[TestJob.SUBMITTED, TestJob.RUNNING]).distinct()
 
 
 def _online_total():
