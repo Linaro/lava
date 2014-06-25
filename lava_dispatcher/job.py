@@ -457,7 +457,7 @@ class LavaTestJob(object):
                         if cmd['command'] == 'lava_test_run':
                             err_msg += "Lava failed on test: %s" % \
                                        params.get('test_name', "Unknown")
-                        if err.message != "Cancel" and err.message != 'Timeout':
+                        if err and err.message != "Cancel" and err.message != 'Timeout':
                             err_msg = err_msg + traceback.format_exc()
                             self.context.log("ErrorMessage: %s" % unicode(str(err)))
                         self.context.log(err_msg)
