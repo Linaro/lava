@@ -634,7 +634,7 @@ class URLTestDefinition(object):
             except re.error as e:
                 logging.warning("Error parsing regular expression %r: %s" %
                                 (input_pattern, e.message))
-                self.__pattern__ = re.compile(default_pattern, re.M)
+                self.__pattern__ = re.compile(self.default_pattern, re.M)
 
         return self.__pattern__
 
