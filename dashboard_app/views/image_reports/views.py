@@ -427,34 +427,6 @@ def image_chart_filter_type_check(request):
 
         if has_attribute_each != has_build_attribute:
             return HttpResponse(simplejson.dumps({"result": "False"}),
-                                content_type='application/json')
-
-    return HttpResponse(simplejson.dumps({"result": "True"}),
-                        content_type='application/json')
-
-
-@login_required
-def image_chart_filter_type_check(request):
-    # Check if current filter has build number comparing to all other filters
-    # already related to this image chart.
-
-    if request.method != 'POST':
-        raise PermissionDenied
-
-    chart_id = request.POST.get("chart_id")
-    filter_id = request.POST.get("filter_id")
-    image_chart = ImageReportChart.objects.get(id=chart_id)
-    filter = TestRunFilter.objects.get(id=filter_id)
-
-    has_build_attribute = True if filter.build_number_attribute else False
-
-    for chart_filter in image_chart.imagechartfilter_set.all():
-        has_attribute_each = False
-        if chart_filter.filter.build_number_attribute:
-            has_attribute_each = True
-
-        if has_attribute_each != has_build_attribute:
-            return HttpResponse(simplejson.dumps({"result": "False"}),
                                 mimetype='application/json')
 
     return HttpResponse(simplejson.dumps({"result": "True"}),
