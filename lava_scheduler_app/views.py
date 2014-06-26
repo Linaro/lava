@@ -1980,6 +1980,7 @@ def device_detail(request, pk):
             'show_pool': (not device.is_public and device.can_admin(request.user)
                           and device.status not in [Device.RETIRED]
                           and not device.device_type.owners_only),
+            'cancel_looping': device.health_status == Device.HEALTH_LOOPING,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_detail, pk=pk),
             'context_help': BreadCrumbTrail.show_help(device_detail, pk="help"),
             'next_device': next_device,

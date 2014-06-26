@@ -181,6 +181,40 @@
           </div>
         </div>
 {% endif %}
+{% if cancel_looping %}
+        <div class="btn-group btn-group-justified">
+          <div class="btn-group">
+            <button class="btn btn-warning" data-toggle="modal" data-target="#stoploopingDialog">Cancel Looping mode</button>
+            <div class="modal fade" id="stoploopingDialog" tabindex="-1" role="dialog" aria-labelledby="stoploopingDialoglabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="stoploopingDialoglabel">Reason for stopping looping mode</h4>
+                  </div>
+                  <div class="modal-body">
+                    <form role="form" method="post" action="{% url 'lava.scheduler.device.maintenance' device.pk %}">
+                      <div id="stoplooping-container" class="form-group has-error has-feedback">
+                        <p>A reason must be specified:</p>
+                        <input id="stoplooping-reason" name="reason"/>
+                        {% csrf_token %}
+                        <div id="stoplooping-feedback">
+                        </div>
+                      </div>
+                      <dl class="dl-horizontal">
+                        <div class="form-group">
+                          <div id="stoplooping-submit">
+                          </div>
+                        </div>
+                      </dl>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+{% endif %}
 {% if show_online %}
         <div class="btn-group btn-group-justified">
           <div class="btn-group">
@@ -413,6 +447,18 @@
                       $("#maintenance-submit").html('<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>')
                   }
             }
+      )
+      $("#stoplooping-container").keydown(
+          function(e) {
+                  if (document.getElementById("stoplooping-reason").value!="") {
+                      $("#stoplooping-feedback").html('<span class="glyphicon glyphicon-ok form-control-feedback"></span>')
+                      $("#stoplooping-submit").html('<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>' +
+                              '<button type="submit" class="btn btn-primary">Cancel looping mode</button>');
+                  } else {
+                      $("#stoplooping-feedback").html('<span class="glyphicon glyphicon-remove form-control-feedback"></span>&nbsp;')
+                      $("#stoplooping-submit").html('<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>')
+                  }
+          }
       )
   {% endif %}
   {% if show_online %}
