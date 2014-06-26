@@ -128,10 +128,12 @@
       <dd>{{ models|default:"<i>unknown</i>" }}</dd>
       <dt>Flags</dt>
       <dd>{{ flags|default:"<i>unknown</i>" }}</dd>
-      <dt>Emulated</dt>
-      <dd>{{ emulated|default:"<i>unknown</i>" }}</dd>
       <dt>Cores</dt>
       <dd>{{ cores|default:"<i>unknown</i>" }}</dd>
+      {% if emulated %}
+      <dt>Emulated</dt>
+      <dd>True</dd>
+      {% endif %}
     </dl>
   </div>
 {% endif %}
