@@ -2,6 +2,8 @@
 
 set -e
 
+TESTDIR=`pwd`/debian/testhome
+mkdir -p ${TESTDIR}
 # scenario files are not packaged, test the local tree only.
-python setup.py test
+HOME=${TESTDIR} TMPDIR=${TESTDIR} python setup.py test
 
