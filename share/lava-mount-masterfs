@@ -4,7 +4,7 @@ set -e
 
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
+#  the Free Software Foundation; either version 3 of the License, or
 #  (at your option) any later version.
 #
 #  This program is distributed in the hope that it will be useful,
@@ -17,7 +17,8 @@ set -e
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
-
+#  Copyright: 2010-2013, Linaro Limited
+#
 # This script will need porting to the dumb dispatcher model to get
 # the relevant config values instead of looking for lava-server files.
 
