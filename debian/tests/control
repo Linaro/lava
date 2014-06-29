@@ -1,3 +1,3 @@
 Tests: testsuite
-Depends: @, python-testscenarios
+Depends: lava-server, python-testscenarios
 Restrictions: allow-stderr

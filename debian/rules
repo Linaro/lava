@@ -75,9 +75,6 @@ override_dh_auto_clean:
 	[ ! -f doc/Makefile ] || make -C doc/ clean
 	[ ! -f man/Makefile ] || make -C man/ clean
 	debconf-updatepo
-	mkdir -p debian/missing-sources
-	$(RM) debian/missing-sources/*
-	ln -s -t debian/missing-sources/ share/js/*
 
 # get upstream version for get-orig-source target
 VERSION:= $(shell dpkg-parsechangelog | grep '^Version: ' | sed -e 's/^Version: //' | sed -e 's/\-.*$$//')
