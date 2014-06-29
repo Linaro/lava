@@ -42,4 +42,3 @@ include assets.src/icons.xcf
 include fake-dispatcher
 include version.py
 include share/*
-include share/js/*
