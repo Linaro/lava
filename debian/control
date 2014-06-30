@@ -21,9 +21,9 @@ Architecture: linux-any
 Depends: python-serial (>= 2.6), python-setuptools,
  parted, kpartx, telnet, ser2net, sshfs,
  sudo, ${python:Depends}, ${misc:Depends}
-Conflicts: linaro-dashboard-bundle
-Provides: linaro-dashboard-bundle
-Replaces: linaro-dashboard-bundle
+Conflicts: python-linaro-dashboard-bundle
+Provides: python-linaro-dashboard-bundle
+Replaces: python-linaro-dashboard-bundle
 Multi-Arch: foreign
 Recommends: ntp, git, htop, tftpd-hpa, openbsd-inetd,
  qemu-system-x86 (>= 2.0.0) [amd64], qemu-system-x86 (>= 2.0.0) [i386],
