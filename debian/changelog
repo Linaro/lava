@@ -1,6 +1,8 @@
 lava-dispatcher (2014.05.29.18-1) unstable; urgency=medium
 
   * New upstream release
+  * conflict & provide the binary package of dashboard-bundle, not the
+    source.
 
  -- Neil Williams <codehelp@debian.org>  Sun, 29 Jun 2014 19:38:43 +0100
 
