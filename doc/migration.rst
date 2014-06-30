@@ -59,6 +59,17 @@ successfully into a fresh, upgraded, install will be suitable.
         --schema=public \
         > "$destdir/database.dump"
 
+A new install will need the database user created::
+
+    sudo -u postgres createuser \
+        --no-createdb --encrypted \
+        --login --no-superuser \
+        --no-createrole --no-password \
+        --port $dbport $dbuser
+    sudo -u postgres psql --port 5432 \
+        --command="ALTER USER \"lavaserver\" WITH PASSWORD '$dbpass';"
+
+
 ``lava-deployment-tool`` would attempt a restore from this dump by
 using the variables from ``instance.conf`` and calls based on::
 
@@ -83,6 +94,11 @@ using the variables from ``instance.conf`` and calls based on::
         --role $dbuser \
         --dbname $dbname \
         "${1}" > /dev/null
+
+.. tip:: If your database is very large, consider adding the ``--jobs``
+         option to ``pg_restore`` to parallelise the postgresql workload.
+         See the postgresql documentation (``man 1 pg_restore``) for the
+         best value to pass as the number of concurrent jobs to use.
 
 Whatever method is chosen, verify that the dump from ``postgresql-9.1``
 can be successfully imported into ``postgresql-9.3`` then check the
