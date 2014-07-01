@@ -31,6 +31,13 @@ Recommends: ntp, git, htop, tftpd-hpa, openbsd-inetd,
  libguestfs-tools [amd64], libguestfs-tools [i386],
  nfs-kernel-server, rpcbind, unzip
 Description: Linaro Automated Validation Architecture dispatcher
+ LAVA is a continuous integration system for deploying operating
+ systems onto physical and virtual hardware for running tests.
+ Tests can be simple boot testing, bootloader testing and system
+ level testing, although extra hardware may be required for some
+ system tests. Results are tracked over time and data can be
+ exported for further analysis.
+ .
  This package provides lava-dispatcher to dispatch
  LAVA jobs to configured devices.
  .

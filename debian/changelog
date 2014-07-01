@@ -1,3 +1,10 @@
+lava-dispatcher (2014.05.32.13-1) unstable; urgency=medium
+
+  * Use the device and device-types defaults from /usr/lib
+    and leave /etc/ for admin overrides only. 
+
+ -- Neil Williams <codehelp@debian.org>  Tue, 01 Jul 2014 16:51:49 +0100
+
 lava-dispatcher (2014.05.29.18-1) unstable; urgency=medium
 
   * New upstream release
