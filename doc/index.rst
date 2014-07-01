@@ -34,6 +34,7 @@ LAVA Test Developer Guide
    multinode.rst
    vm-groups.rst
    boot-management.rst
+   bootimages.rst
    tftp-deploy.rst
    external_measurement.rst
    data-export.rst

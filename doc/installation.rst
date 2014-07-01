@@ -9,14 +9,122 @@ a LAVA server at ``http://localhost/`` once enabled.
 See :ref:`packaging_distribution` for more information or for
 debugging.
 
+.. _install_types:
+
+Installation Types
+##################
+
+.. _single_instance:
+
+Single Master Instance installation
+===================================
+
+A single instance runs the web frontend, the database, the scheduler
+and the dispatcher on a single machine. If this machine is also running
+tests, the device (or devices) under test (:term:`DUT`) will also need
+to be connected to this machine, possibly over the network, using
+USB or using serial cables.
+
+A single master instance can also work with a :ref:`distributed_deployment`,
+acting as the web frontend and database server for multiple remote
+workers. Depending on load, the master can also have devices attached.
+
+Remote Worker installation
+===========================
+
+``lava-server`` can be configured as a remote worker, see :ref:`distributed_deployment`.
+Remote workers are useful when the master instance is on a public server
+or external virtual host, the remote workers and the devices can be
+hosted in a separate location.
+
+Which release to install
+########################
+
+LAVA makes regular monthly releases called ``production releases`` which
+match the packages installed onto http://validation.linaro.org/. These
+releases are also uploaded to Debian (see :ref:`debian_installation`).
+Packages uploaded to Debian typically migrate automatically into the
+current Ubuntu development release - at time of writing that is
+Ubuntu Utopic Unicorn, scheduled for release as 14.10. ``production``
+releases are tracked in the ``release`` branch of the upstream git
+repositories.
+
+Interim releases remain available from ``people.linaro.org`` which also
+includes builds for Ubuntu Trusty Tahr 14.04LTS.
+
+During periods when the internal transitions within Debian require that
+``lava-server`` is unable to migrate into the testing suite, users
+running Debian Jessie (testing) can obtain the same release using the
+``people.linaro.org`` repository to provide packages which are not
+present in Debian Jessie.
+
+The ``lava-dev`` package includes scripts to assist in local developer
+builds directly from local git working copies which allows for builds
+using unreleased code, development code and patches under review.
+
+If in doubt, install the ``production`` release from official
+distribution mirrors.
+
 .. _debian_installation:
 
 Debian-based distributions
 ##########################
 
+Production releases
+===================
+
 LAVA is currently packaged for Debian unstable using Django1.6 and
-Postgresql. Until LAVA packages are available from official repositories,
-the packages can be installed from ``people.linaro.org``::
+Postgresql. LAVA packages are now available from official Debian
+mirrors for Debian unstable::
+
+ $ sudo apt install postgresql
+ $ sudo apt install lava-server
+
+If the default Apache configuration from LAVA is suitable, you can
+enable it immediately::
+
+ $ sudo a2dissite 000-default
+ $ sudo a2ensite lava-server.conf
+ $ sudo service apache2 restart
+
+Edits to the ``/etc/apache2/sites-available/lava-server.conf`` file
+will not be overwritten by package upgrades unless the admin explicitly
+asks ``dpkg`` to do so.
+
+The ``lava`` package brings in extra dependencies which may be useful
+on some instances.
+
+.. note:: Some dependencies of the ``lava`` package require the addition
+          of the Linaro Tools PPA. See https://launchpad.net/~linaro-maintainers/+archive/tools
+          for more information - click on ``Technical details about this PPA``
+          to get information on the apt sources required to use it.
+          :ref:`linaro_tools_ppa`.
+
+.. _install_debian_jessie:
+
+Installing on Debian Jessie
+---------------------------
+
+Debian Jessie is currently unreleased and is therefore a rolling suite
+called ``testing``. This means that some dependencies of LAVA may be
+temporarily removed from Jessie to assist in the development of the
+final release.
+
+The ``jessie`` suite of the ``people.linaro.org`` repository contains
+copies of all the dependencies, so add this apt source to allow LAVA
+to install on a system running Debian Jessie::
+
+ deb http://people.linaro.org/~neil.williams/lava jessie main
+
+Then update to locate the required dependencies::
+
+ $ sudo apt-get install emdebian-archive-keyring
+ $ sudo apt-get update
+
+Interim builds
+==============
+
+Interim packages can also be installed from ``people.linaro.org``::
 
  $ sudo apt-get install emdebian-archive-keyring
  $ sudo apt-get update
@@ -46,9 +154,15 @@ To install just the lava-server from the current packages, use::
  $ sudo a2ensite lava-server.conf
  $ sudo service apache2 restart
 
-This will install lava-dispatcher and lava-server but not
-linaro-media-create and other optional packages which come from
-the Linaro PPA::
+This will install lava-dispatcher and lava-server.
+
+.. _linaro_tools_ppa:
+
+Adding the Linaro Tools PPA
+---------------------------
+
+To add linaro-media-create and other optional packages which come from
+the Linaro PPA, use the apt source::
 
  deb http://ppa.launchpad.net/linaro-maintainers/tools/ubuntu precise main
 
@@ -310,9 +424,13 @@ Setting Up Serial Connections to LAVA Devices
 Ser2net daemon
 --------------
 
-ser2net provides a way for a user to connect from a network connection to a serial port, usually over telnet.
+ser2net provides a way for a user to connect from a network connection
+to a serial port, usually over telnet.
 
 http://ser2net.sourceforge.net/
+
+``ser2net`` is a dependency of ``lava-dispatcher``, so will be
+installed automatically.
 
 Example config (in /etc/ser2net.conf)::
 
@@ -336,10 +454,14 @@ This will create a symlink in /dev called rack-usb01 etc. which can then be addr
 Contact and bug reports
 ========================
 
-Please report bugs using
-https://bugs.launchpad.net/lava-server/+filebug
+Please report bugs using bugzilla:
+https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework
 
-Feel free to contact us at validation (at) linaro (dot) org.
+You can also report bugs using ``reportbug`` and the
+Debian Bug Tracking System: https://bugs.debian.org/cgi-bin/pkgreport.cgi?pkg=lava-server
+
+Feel free to contact us at validation (at) linaro (dot) org and on
+the ``#linaro-lava`` channel on OFTC.
 
 Distributed deployment
 ######################

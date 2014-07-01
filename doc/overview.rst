@@ -6,10 +6,18 @@ LAVA Overview
 What is LAVA?
 =============
 
-LAVA is the Linaro Automation and Validation Architecture. LAVA is a
-collection of participating components, the overall idea and evolving
-architecture that allows us to make testing, quality control and
-automation. LAVA-the-stack aims to make systematic, automatic and
+LAVA is the Linaro Automation and Validation Architecture.
+
+LAVA is a continuous integration system for deploying operating
+systems onto physical and virtual hardware for running tests.
+Tests can be simple boot testing, bootloader testing and system
+level testing, although extra hardware may be required for some
+system tests. Results are tracked over time and data can be
+exported for further analysis.
+
+LAVA is a collection of participating components, the overall idea and
+evolving architecture that allows us to make testing, quality control
+and automation. LAVA-the-stack aims to make systematic, automatic and
 manual quality control more approachable for projects of all sizes.
 
 LAVA is for validation - telling whether the code the other Linaro

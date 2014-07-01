@@ -536,6 +536,8 @@ are all on the master.
 Upgrading LAVA to Debian Jessie (testing)
 ###########################################
 
+See :ref:`install_debian_jessie`.
+
 The recommended method to upgrade LAVA to Debian is to backup critical
 data on the Ubuntu Precise machine and then install a fresh Debian
 install. See :ref:`requirements`.
@@ -590,9 +592,9 @@ packages.
    the database installation is best left until after the upgrade to
    Jessie. ``openssh-server`` would be useful.
 
-#. Change apt sources to point at jessie instead of wheezy::
+#. Edit the apt sources list to point at jessie instead of wheezy::
 
-    /etc/apt/sources.list
+   $ sudo vim /etc/apt/sources.list
 
 #. update, upgrade and then dist-upgrade::
 
@@ -622,8 +624,10 @@ packages.
 
 #. Add the LAVA packaging repository.
 
-   This will remain necessary only until all the necessary packages
-   are in Debian unstable and able to migrate into jessie::
+   .. tip:: See :ref:`install_debian_jessie` - the packaging repository is
+            only necessary to ensure that all dependencies exist in Jessie.
+
+   ::
 
     sudo apt install emdebian-archive-keyring
     sudo vim /etc/apt/sources.list.d/lava.list
@@ -749,8 +753,10 @@ packages.
 
 #. Add the LAVA packaging repository.
 
-   This will remain necessary only until all the necessary packages
-   are in Debian unstable and able to migrate into jessie::
+   .. tip:: See :ref:`install_debian_jessie` - the packaging repository is
+            only necessary to ensure that all dependencies exist in Jessie.
+
+   ::
 
     sudo apt install emdebian-archive-keyring
     sudo vim /etc/apt/sources.list.d/lava.list
