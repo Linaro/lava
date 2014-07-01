@@ -201,7 +201,10 @@ def download_image(url_string, context, imgdir=None,
         except (IOError, socket.error, socket.timeout,
                 urllib2.HTTPError, urllib2.URLError) as e:
             if hasattr(e, 'reason'):
-                logging.error("Unable to download '%s': %s %s" % (url_string, e.code, e.reason))
+                if hasattr(e, 'code'):
+                    logging.error("Unable to download '%s': %s %s" % (url_string, e.code, e.reason))
+                else:
+                    logging.error("Unable to download '%s': %s" % (url_string, e.reason))
             else:
                 logging.error("Unable to download '%s': %s" % (url_string, e))
             tries += 1
