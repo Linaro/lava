@@ -23,16 +23,24 @@ Conflicts: lava-scheduler, lava-dashboard, linaro-django-xmlrpc
 Replaces: lava-scheduler, lava-dashboard, linaro-django-xmlrpc
 Depends: apache2, adduser, diffstat, fuse, iproute2,
  libapache2-mod-uwsgi, libapache2-mod-wsgi, lshw,
- python-daemon, python-dateutil, python-django-auth-openid (>= 0.5-2), python-setuptools,
+ python-daemon, python-dateutil, python-django-auth-openid (>= 0.5-2),
+ python-setuptools,
  libjs-jquery-cookie, libjs-jquery-flot (>= 0.8.2), openssh-client,
  postgresql, postgresql-client, postgresql-common,
  ${python:Depends}, ${misc:Depends}
 Recommends: ntp, lava-coordinator, lava-server-doc
 Description: Linaro Automated Validation Architecture server
- This package replaces lava-deployment-tool to provide the
- Apache and WSGI configuration and LAVA support files to run
- the validation server on the local Apache instance as a
- lava-server virtual host as well as the scheduler and dispatcher.
+ LAVA is a continuous integration system for deploying operating
+ systems onto physical and virtual hardware for running tests.
+ Tests can be simple boot testing, bootloader testing and system
+ level testing, although extra hardware may be required for some
+ system tests. Results are tracked over time and data can be
+ exported for further analysis.
+ .
+ This package provides the Apache and WSGI configuration and LAVA
+ support files to run the validation server on the local Apache
+ instance as a lava-server virtual host as well as the scheduler
+ and dispatcher.
  .
  This package can be configured as the master scheduler or as a
  remote worker, although limitations in the remote worker design
@@ -46,8 +54,15 @@ Depends: lava-server, lava-server-doc, lava-dispatcher, lava-coordinator,
  tftpd-hpa, vmdebootstrap, ${misc:Depends}
 Recommends: lavapdu-daemon
 Description: Linaro Automated Validation Architecture metapackage
+ LAVA is a continuous integration system for deploying operating
+ systems onto physical and virtual hardware for running tests.
+ Tests can be simple boot testing, bootloader testing and system
+ level testing, although extra hardware may be required for some
+ system tests. Results are tracked over time and data can be
+ exported for further analysis.
+ .
  Metapackage to bring in all LAVA components on a single
- machine.
+ machine. Some dependencies require the Linaro Tools PPA.
 
 Package: lava-dev
 Architecture: all
@@ -60,9 +75,12 @@ Depends: ca-certificates, devscripts, dpkg-dev, debhelper (>= 8.0.0),
  ${misc:Depends}
 Recommends: sbuild
 Description: Developer support for LAVA
+ LAVA is a continuous integration system for deploying operating
+ systems onto physical and virtual hardware for running tests.
+ .
  This package provides a helper script to build LAVA packages
  from local git working copies and support for running the
- LAVA unit tests.
+ LAVA unit tests locally.
 
 Package: lava-server-doc
 Architecture: all
@@ -72,8 +90,19 @@ Conflicts: linaro-dashboard-bundle-doc
 Provides: linaro-dashboard-bundle-doc
 Replaces: linaro-dashboard-bundle-doc
 Description: documentation for lava-server
- This package contains an offline copy of the LAVA
- Manual available within LAVA server.
+ LAVA is a continuous integration system for deploying operating
+ systems onto physical and virtual hardware for running tests.
+ Tests can be simple boot testing, bootloader testing and system
+ level testing, although extra hardware may be required for some
+ system tests. Results are tracked over time and data can be
+ exported for further analysis.
  .
- The manual includes use cases and examples to
- help users write tests for LAVA.
+ This package contains an offline copy of the LAVA
+ Manual available on each instance running LAVA server.
+ .
+  - an overview of LAVA
+  - help on installing and configuring LAVA
+  - test developer guide to writing LAVA tests
+  - use cases and examples
+  - administrator guide for managing a LAVA lab
+  - developer guide
