@@ -3,16 +3,16 @@
 Deploying a Bootloader Device
 =============================
 
-Adding a Bootloader device allows the LAVA user to directly control the 
-bootloader on the target, and provide the desired boot sequence. This page 
-outlines the steps required to add a new Bootloader device to your LAVA 
+Adding a Bootloader device allows the LAVA user to directly control the
+bootloader on the target, and provide the desired boot sequence. This page
+outlines the steps required to add a new Bootloader device to your LAVA
 deployment and make it able to accept job requests.
 
 Overview
 --------
 
-The Bootloader device extends master image type devices to allow backwards 
-compatiblity. In the example below, an Arndale target will be used as an 
+The Bootloader device extends master image type devices to allow backwards
+compatiblity. In the example below, an Arndale target will be used as an
 example to show how you can tftp boot a target.
 
 Installing a tftp server on each dispatcher
@@ -36,7 +36,7 @@ Configure each TFTP server to serve from the dispatcher's download directory::
     # /etc/default/tftpd-hpa
 
     TFTP_USERNAME="tftp"
-    TFTP_DIRECTORY="/srv/lava/instances/<LAVA_INSTANCE>/var/www/lava-server/"
+    TFTP_DIRECTORY="/var/lib/lava/dispatcher/tmp/"
     TFTP_ADDRESS="0.0.0.0:69"
     TFTP_OPTIONS="--secure"
 
@@ -50,7 +50,7 @@ Configure the dispatcher for tftp booting
 
 Deployment schema:
 
-This schema describes the options for deploy_linaro_kernel. It is important 
+This schema describes the options for deploy_linaro_kernel. It is important
 to notice that only manditory property is "kernel."::
 
     parameters_schema = {
@@ -68,7 +68,7 @@ to notice that only manditory property is "kernel."::
 
 Device configuration example::
 
-    # /srv/lava/instances/<LAVA_INSTANCE>/etc/lava-dispatcher/devices/arndale01.conf
+    # /etc/lava-dispatcher/devices/arndale01.conf
 
     device_type = arndale
     hostname = arndale01
@@ -104,7 +104,7 @@ Device configuration example::
     boot_options =
         boot_cmds
 
-    [boot_cmds] 
+    [boot_cmds]
     default = boot_cmds
 
 Required configuration parameters::
@@ -117,7 +117,7 @@ Required configuration parameters::
 
 Job example:
 
-Below shows how to netboot an Arndale device, by supplying a kernel, ramdisk, 
+Below shows how to netboot an Arndale device, by supplying a kernel, ramdisk,
 and dtb to the LAVA server::
 
     # /tmp/boot-cmds-tftp-kernel.json
@@ -141,9 +141,9 @@ and dtb to the LAVA server::
       "job_name": "boot-cmds-tftp-kernel"
     }
 
-When this job runs, the LAVA dispatcher will download the kernel, ramdisk, dtb 
-to it's download directory. It will then set the bootloader enviroment 
-variables on the user's behalf so that they can be referenced in 
+When this job runs, the LAVA dispatcher will download the kernel, ramdisk, dtb
+to it's download directory. It will then set the bootloader enviroment
+variables on the user's behalf so that they can be referenced in
 boot_cmds_tftp and served to the target over TFTP.
 
     ARNDALE5250 # lava_server_ip=192.168.1.7
@@ -156,7 +156,6 @@ commands as ``root``:
 
 ::
 
-    . /srv/lava/instances/<INST>/bin/activate
     lava-dispatch /tmp/boot-cmds-tftp-kernel.json.json
 
 Submitting a Bootloader Job

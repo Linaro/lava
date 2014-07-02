@@ -19,7 +19,7 @@ However, once a board has a probe hooked up and plugged into the host PC,
 the dispatcher can be configured as follows::
 
   # These options should be added to the device.conf ie:
-  # /srv/lava/instances/<INST>/etc/lava-dispatcher/devices/panda01.conf
+  # /etc/lava-dispatcher/devices/panda01.conf
   # if the defaults are what's needed, then this can be skipped
 
   # The location of the binary (default=/usr/local/bin/arm-probe)

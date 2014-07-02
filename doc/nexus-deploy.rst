@@ -59,7 +59,7 @@ For a single phone, you only need the usual LAVA setup process. Say you
 want the phone to appear as `nexus01`, then you create `nexus01.conf`
 with the following content::
 
-    #/srv/lava/instances/<INST>/etc/lava-dispatcher/devices/nexus01.conf
+    #/etc/lava-dispatcher/devices/nexus01.conf
     device_type = nexus
 
 *Note:* you will also want to configure `hard_reset_command` for your
@@ -91,7 +91,7 @@ Then, for each phone, override the settings `adb_command` and `fastboot
 command`. For example, for `nexus01`, you would put the following in
 `nexus01.conf`::
 
-    #/srv/lava/instances/<INST>/etc/lava-dispatcher/devices/nexus01.conf
+    #/etc/lava-dispatcher/devices/nexus01.conf
     device_type = nexus
     adb_command = adb -s NEXUS01SERIAL
     fastboot_command = sudo fastboot -s NEXUS01SERIAL
