@@ -1,3 +1,9 @@
+lava-dispatcher (2014.06-1) unstable; urgency=medium
+
+  * New upstream production release. 
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 02 Jul 2014 18:48:20 +0100
+
 lava-dispatcher (2014.05.32.13-1) unstable; urgency=medium
 
   * Use the device and device-types defaults from /usr/lib
