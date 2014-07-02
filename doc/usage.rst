@@ -1,11 +1,10 @@
-.. _usage:
+.. _dispatcher_usage:
 
-=====
-Usage
-=====
+Lava Dispatcher Usage
+=====================
 
 Workflow Overview
-=================
+-----------------
 
 LAVA Dispatcher can be used in two different ways. One is standalone (without
 the LAVA Scheduler) and another is managed (when LAVA Dispatcher is controlled
@@ -26,9 +25,8 @@ Follow the `Quick Developer Setup`_ instructions to get started.
 Usage with the LAVA Scheduler
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The scheduler is useful for automating LAVA Dispatcher environment setup, describing test scenarios (the list of tests to invoke) and finally storing the results in the LAVA dashboard.
+The scheduler is useful for automating LAVA Dispatcher environment
+setup, describing test scenarios (the list of tests to invoke) and
+finally storing the results in the LAVA dashboard.
 
-This scenario can be configured by following our `deployment instructions`_
-or the Documentation link on any LAVA instance.
-
-.. _deployment instructions: /static/docs/
+See :ref:`installation`

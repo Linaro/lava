@@ -1,10 +1,49 @@
-{% extends "dashboard_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
 {% load django_tables2 %}
 
 {% block extrahead %}
+<script src="/static/lava-server/js/jquery-1.11.0.min.js" type="text/javascript"></script>
+<script src="/static/lava-server/js/jquery-ui-1.10.4.custom.min.js" type="text/javascript"></script>
+<script src="/static/lava-server/js/jquery.cookie.js" type="text/javascript"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/jquery.formset.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/filter-edit.js"></script>
+<script>
+function addEvent(elem, event, func ) {
+    if (!!window.attachEvent){
+
+        elem.attachEvent('on' + event, func);
+    }
+    else{
+       elem.addEventListener(event, func, false);
+    }
+}
+window.jQuery(document).ready(function ($) {
+    $("#edit-link").click(function (e) {
+        e.preventDefault();
+        $("#filter-edit").show();
+    });
+});
+
+</script>
+<script type="text/javascript" src="{{ STATIC_URL }}admin/js/jquery.init.js"></script>
+
 {{ block.super }}
-{{ form.media }}
+
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/filter-edit.css" />
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/wider-filter-horizontal.css" />
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+<script type="text/javascript">
+var test_case_url = "{% url 'dashboard_app.views.filters.views.filter_add_cases_for_test_json' %}?test=";
+var attr_name_completion_url = "{% url 'dashboard_app.views.filters.views.filter_attr_name_completion_json' %}";
+var attr_value_completion_url = "{% url 'dashboard_app.views.filters.views.filter_attr_value_completion_json' %}";
+</script>
+<script type="text/javascript" src="{{ STATIC_URL }}admin/js/SelectBox.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}admin/js/core.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}admin/js/SelectFilter2.js"></script>
+
+
 {% endblock %}
 
 {% block content %}
@@ -14,7 +53,7 @@
 <h1>Previewing new filter &ldquo;{{ form.name.value }}&rdquo;</h1>
 {% endif %}
 
-{% include "dashboard_app/filter_summary.html" with summary_data=filter.as_data %}
+{% include "dashboard_app/filter_summary.html" with filter_data=form.as_data %}
 
 <p>
   These are the results matched by your filter.
@@ -28,13 +67,13 @@
   <p>
     If this is what you expected, you can
     {% if form.instance.pk %}
-    <input type="submit" name="save" value="save changes"> to the filter.
+    <input class="btn btn-primary" type="submit" name="save" value="save changes"> to the filter.
     {% else %}
-    <input type="submit" name="save" value="save"> the filter.
+    <input class="btn btn-primary" type="submit" name="save" value="save"> the filter.
     {% endif %}
   </p>
   <p>
-    Otherwise, you can <a href="#" id="edit-link">edit</a> it.
+    Otherwise, you can <a class="btn btn-default" href="#" id="edit-link">edit</a> it.
   </p>
   {% csrf_token %}
   <div id="filter-edit" style="display: none">
@@ -43,11 +82,4 @@
   </div>
 </form>
 
-
-<script type="text/javascript">
-$("#edit-link").click(function (e) {
-e.preventDefault();
-$("#filter-edit").show();
-});
-</script>
 {% endblock %}

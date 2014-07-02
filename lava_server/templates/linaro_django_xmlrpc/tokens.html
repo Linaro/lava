@@ -1,86 +1,173 @@
-{% extends "layouts/content_with_sidebar.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
-
-
-{% block extrahead %}
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava-server/css/demo_table_jui.css"/>
-<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery.dataTables.min.js"></script> 
-{% endblock %}
-
 
 {% block title %}{{ block.super }} | {% trans "API" %} | {% trans "Authentication Tokens" %}{% endblock %}
 
+{% block styles %}
+  <style>
+    .modal-lg
+    {
+      width: 1100px;
+    }
+  </style>
+{% endblock %}
 
 {% block breadcrumbs %}
 {{ block.super }}
-<li><a href="{% url lava.home %}">{% trans "LAVA" %}</a></li>
+<li><a href="{% url 'lava.home' %}">{% trans "LAVA" %}</a></li>
 <li>{% trans "API" %}</li>
-<li><a href="{% url linaro_django_xmlrpc.views.tokens %}">{% trans "Authentication Tokens" %}</a></li>
+<li><a
+  href="{% url 'linaro_django_xmlrpc.views.tokens' %}"
+  >{% trans "Authentication Tokens" %}</a></li>
 {% endblock %}
-
-
-{% block sidebar %}
-<h3>Actions</h3>
-<ul>
-  <li><a href="{% url linaro_django_xmlrpc.views.create_token %}">Create new token</a></li>
-</ul>
-{% endblock %}
-
 
 {% block content %}
 <h2>Authentication Tokens</h2>
-<p>Authentication tokens allow scripts using <a
-  href="https://git.linaro.org/lava/lava-tool.git">lava-tool</a> to securely access LAVA
-resources. You can create and use any number of tokens simultaneously. If you
-believe a token is compromised you can quickly remove it.  Anyone using that
-token will no longer be able to authenticate as you in the system.</p>
-<h2>Your tokens</h2>
+<p>Authentication tokens allow scripts using <a href="https://git.linaro.org/lava/lava-tool.git">lava-tool</a> to
+securely access LAVA resources. You can create and use any number of tokens simultaneously. If you believe a token
+is compromised you can quickly remove it. Anyone using that token will no longer be able to authenticate as You
+in the system.</p>
+
+          <button class="btn btn-xs btn-primary" data-toggle="modal" data-target="#newTokenModal" title="supprimer">new&nbsp;<span
+                  class="glyphicon glyphicon-plus-sign"></span></button>
+          <div class="modal fade" id="newTokenModal" tabindex="-1" role="dialog" aria-labelledby="newTokenModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                  <h4 class="modal-title" id="newTokenModalLabel">Description of new token</h4>
+                </div>
+                  <div class="modal-body">
+                    <form role="form" method="post" action="{% url 'linaro_django_xmlrpc.views.create_token' %}">
+                      <div id="description-container" class="form-group">
+                      <p>The token description is arbitrary text
+                      which can help you to associate tokens with an intended purpose.
+                      </p>
+                        <input id="description" name="description"/>
+                        {% csrf_token %}
+                      </div>
+                      <dl class="dl-horizontal">
+                        <div class="form-group">
+                          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                          <button type="submit" class="btn btn-success">Create</button>
+                        </div>
+                      </dl>
+                    </form>
+                  </div>
+                </div>
+            </div>
+          </div>
 
 {% if token_list %}
-<table class="display">
-  <thead>
-    <th class="ui-state-default">No.</th>
-    <th class="ui-state-default">Description</th>
-    <th class="ui-state-default">Created on</th>
-    <th class="ui-state-default">Last used</th>
-    <th class="ui-state-default">Display token</th>
-    <th class="ui-state-default">Delete token</th>
-  </thead>
-  <tbody>
-    {% for token in token_list|dictsort:"pk" %}
-    <tr>
-      <td>{{ token.pk }}</td>
-      <td><a href="{% url linaro_django_xmlrpc.views.edit_token token.pk %}">{{ token.description|default:"empty" }}</a></td>
-      <td>{{ token.created_on|date }}</td>
-      {% if token.last_used_on %}
-      <td>{{ token.last_used_on|timesince }}</td>
-      {% else %}
-      <td><em>It was not used yet</em></td>
-      {% endif %}
-      <td><div id="dialog_{{ token.pk }}" title="Token {{ token.pk }}">
-            <code>{{ token.secret }}</code>
+  {% if token_list|length > 1 %}
+     <h2>You have {{ token_list|length }} tokens.</h2>
+  {% else %}
+      <h2>You have {{ token_list|length }} token.</h2>
+  {% endif %}
+
+  <h3>Most recently created tokens shown first</h3>
+
+<div class="row">
+  <div class="col-md-12">
+    <table class="table table-striped table-hover">
+      <thead>
+        <th>No.</th>
+        <th>Description</th>
+        <th>Created on</th>
+        <th>Last used</th>
+        <th>Actions</th>
+      </thead>
+      <tbody>
+        {% for token in token_list|dictsortreversed:"created_on" %}
+        <tr>
+          <td>{{ token.pk }}</td>
+          <td>{{ token.description|default:"empty" }}</td>
+          <td>{{ token.created_on|date }}</td>
+          {% if token.last_used_on %}
+          <td>{{ token.last_used_on|timesince }}</td>
+          {% else %}
+          <td><em>It was not used yet</em></td>
+          {% endif %}
+          <td><button class="btn btn-xs btn-success" data-toggle="modal" data-target="#hashModal{{ token.pk }}"><span class="glyphicon glyphicon-eye-open"></span></button>
+          <div class="modal fade" id="hashModal{{ token.pk }}" tabindex="-1" role="dialog" aria-labelledby="hashModal{{ token.pk }}Label" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                  <h3 class="modal-title" id="hashModal{{ token.pk }}Label">Hash for {{ token }}</h3>
+                </div>
+                <div class="modal-body">
+                    <p>{{ token.description|default:"empty description" }}</p>
+                  <code>{{ token.secret }}</code>
+                </div>
+              </div>
+            </div>
           </div>
-          <a href="#" id="button_{{ token.pk }}">display</a></td>
-      <td><a href="{% url linaro_django_xmlrpc.views.delete_token token.pk %}">delete</a></td>
-      </tr>
-    {% endfor %}
-  </tbody>
-</table>
 
-<script type="text/javascript">
-$(function() {
-  {% for token in token_list %}
-  $("#dialog_{{ token.pk }}").dialog({
-    width : 600,
-    autoOpen: false
-  });
+          <div class="btn-group">
+            <button class="btn btn-xs btn-primary" data-toggle="modal" data-target="#editTokenModal{{ token.pk }}"><span class="glyphicon glyphicon-pencil"></span></button>
+            <div class="modal fade" id="editTokenModal{{ token.pk }}" tabindex="-1" role="dialog" aria-labelledby="editTokenModal{{ token.pk }}label" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="editTokenModal{{ token.id }}">Edit description of {{ token }}</h4>
+                  </div>
+                  <div class="modal-body">
+                    <form role="form" method="post" action="{% url 'linaro_django_xmlrpc.views.edit_token' token.pk %}">
+                      <div id="description-container" class="form-group">
+                        <p>An empty description will clear the existing content.</p>
+                        <input id="description" name="description" value="{{ token.description }}"/>
+                        {% csrf_token %}
+                      </div>
+                      <dl class="dl-horizontal">
+                        <div class="form-group">
+                          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                          <button type="submit" class="btn btn-success">Set</button>
+                        </div>
+                      </dl>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-  $("#button_{{ token.pk }}").click(function() {
-    $("#dialog_{{ token.pk }}").dialog("open");
-  });
-  {% endfor %}
-});
-</script>
+          <button class="btn btn-xs btn-danger" data-toggle="modal" data-target="#deleteTokenModal{{ token.pk }}" title="supprimer"><span class="glyphicon glyphicon-trash"></span></button>
+          <div class="modal fade" id="deleteTokenModal{{ token.pk }}" tabindex="-1" role="dialog" aria-labelledby="deleteTokenModal{{ token.pk }}Label" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                  <h3 class="modal-title" id="deleteTokenModal{{ token.pk }}Label">Deleting token</h3>
+                </div>
+                <div class="modal-body">
+                  <p>Are you sure that you want to delete {{ token }}
+                    {% if token.description %}
+                     with description &ldquo;{{ token.description }}&rdquo;?
+                    {% else %}
+                     with no description?
+                    {% endif %}
+                  </p>
+                </div>
+                <div class="modal-footer">
+                    <form method="post" action="{% url 'linaro_django_xmlrpc.views.delete_token' token.pk %}">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <input class="btn btn-danger" type="submit" value="Delete"/>
+                        {% csrf_token %}
+                     </form>
+                </div>
+              </div>
+            </div>
+          </div>
+          </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
 {% else %}
 <p>You don't have any tokens yet.</p>
 {% endif %}

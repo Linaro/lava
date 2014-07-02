@@ -31,6 +31,7 @@ import datetime
 from collections import OrderedDict
 
 from django.contrib.sites.models import Site
+from django.core.exceptions import ImproperlyConfigured
 
 from lava_server.settings.getsettings import Settings
 from lava_server.settings.config_file import ConfigFile
@@ -346,6 +347,8 @@ def local_diffstat(prefix):
     diffstat = {}
 
     local_buildout_path = os.path.join(prefix, 'code/current/local')
+    if not os.path.exists(local_buildout_path):
+        return diffstat
     for d in os.listdir(local_buildout_path):
         diffstat_cmd = "cd %s; git diff | diffstat;" % \
             os.path.join(local_buildout_path, d)

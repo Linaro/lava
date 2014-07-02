@@ -334,7 +334,7 @@ Available parameters
   use this action. The parameter accepts any string, the string must
   exactly match one of the roles specified in the :term:`device group`.
 
-.. _lava_test_shell:
+.. _running_lava_test_shell:
 
 Running tests in the test image
 ===============================

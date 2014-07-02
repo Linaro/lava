@@ -59,9 +59,6 @@ from linaro_dashboard_bundle.io import DocumentIO
 
 from dashboard_app.helpers import BundleDeserializer
 from dashboard_app.managers import BundleManager, TestRunDenormalizationManager
-from dashboard_app.repositories import RepositoryItem
-from dashboard_app.repositories.data_report import DataReportRepository
-from dashboard_app.repositories.data_view import DataViewRepository
 from dashboard_app.signals import bundle_was_deserialized
 
 
@@ -228,6 +225,11 @@ class BundleStream(RestrictedResource):
         return TestRun.objects.filter(bundle__bundle_stream=self).count()
 
     def clean(self):
+        # default values are None if not specified, assert False.
+        if not self.is_anonymous:
+            self.is_anonymous = False
+        if not self.is_public:
+            self.is_public = False
         if self.is_anonymous and not self.is_public:
             raise ValidationError(
                 'Anonymous streams must be public')
@@ -539,6 +541,8 @@ class Bundle(models.Model):
         return reverse("dashboard_app.views.redirect_to_bundle", args=[self.content_sha1])
 
     def save(self, *args, **kwargs):
+        if not self.is_deserialized:
+            self.is_deserialized = False
         if self.content:
             try:
                 self.content.open('rb')
@@ -716,7 +720,7 @@ class Test(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ('dashboard_app.views.test_detail', [self.test_id])
+        return self.test_id
 
     def count_results_without_test_case(self):
         return TestResult.objects.filter(
@@ -1221,9 +1225,11 @@ class Attachment(models.Model):
     def bundle(self):
         if self.is_test_result_attachment():
             run = self.test_result.test_run
+            return run.bundle
         elif self.is_test_run_attachment():
             run = self.test_run
-        return run.bundle
+            return run.bundle
+        return None
 
     def get_content_size(self):
         try:
@@ -1418,178 +1424,6 @@ class TestResult(models.Model):
     class Meta:
         ordering = ['relative_index']
         order_with_respect_to = 'test_run'
-
-
-class DataView(RepositoryItem):
-    """
-    Data view, a container for SQL query and optional arguments
-    """
-
-    repository = DataViewRepository()
-
-    def __init__(self, name, backend_queries, arguments, documentation, summary):
-        self.name = name
-        self.backend_queries = backend_queries
-        self.arguments = arguments
-        self.documentation = documentation
-        self.summary = summary
-
-    def __unicode__(self):
-        return self.name
-
-    def __repr__(self):
-        return "<DataView name=%r>" % (self.name,)
-
-    @models.permalink
-    def get_absolute_url(self):
-        return ("dashboard_app.views.data_view_detail", [self.name])
-
-    def _get_connection_backend_name(self, connection):
-        backend = str(type(connection))
-        if "sqlite" in backend:
-            return "sqlite"
-        elif "postgresql" in backend:
-            return "postgresql"
-        else:
-            return ""
-
-    def get_backend_specific_query(self, connection):
-        """
-        Return BackendSpecificQuery for the specified connection
-        """
-        sql_backend_name = self._get_connection_backend_name(connection)
-        try:
-            return self.backend_queries[sql_backend_name]
-        except KeyError:
-            return self.backend_queries.get(None, None)
-
-    def lookup_argument(self, name):
-        """
-        Return Argument with the specified name
-
-        Raises LookupError if the argument cannot be found
-        """
-        for argument in self.arguments:
-            if argument.name == name:
-                return argument
-        raise LookupError(name)
-
-    @classmethod
-    def get_connection(cls):
-        """
-        Get the appropriate connection for data views
-        """
-        from django.db import connection, connections
-        from django.db.utils import ConnectionDoesNotExist
-        try:
-            return connections['dataview']
-        except ConnectionDoesNotExist:
-            logging.warning("dataview-specific database connection not available, dataview query is NOT sandboxed")
-            return connection  # NOTE: it's connection not connectionS (the default connection)
-
-    def __call__(self, connection, **arguments):
-        # Check if arguments have any bogus names
-        valid_arg_names = frozenset([argument.name for argument in self.arguments])
-        for arg_name in arguments:
-            if arg_name not in valid_arg_names:
-                raise TypeError("Data view %s has no argument %r" % (self.name, arg_name))
-        # Get the SQL template for our database connection
-        query = self.get_backend_specific_query(connection)
-        if query is None:
-            raise LookupError("Specified data view has no SQL implementation "
-                              "for current database")
-        # Replace SQL aruments with django placeholders (connection agnostic)
-        template = query.sql_template
-        template = template.replace("%", "%%")
-        # template = template.replace("{", "{{").replace("}", "}}")
-        sql = template.format(
-            **dict([
-                (arg_name, "%s")
-                for arg_name in query.argument_list]))
-        # Construct argument list using defaults for missing values
-        sql_args = [
-            arguments.get(arg_name, self.lookup_argument(arg_name).default)
-            for arg_name in query.argument_list]
-        with contextlib.closing(connection.cursor()) as cursor:
-            # Execute the query with the specified arguments
-            cursor.execute(sql, sql_args)
-            # Get and return the results
-            rows = cursor.fetchall()
-            columns = cursor.description
-            return rows, columns
-
-
-class DataReport(RepositoryItem):
-    """
-    Data reports are small snippets of xml that define
-    a limited django template.
-    """
-
-    repository = DataReportRepository()
-
-    def __init__(self, **kwargs):
-        self._html = None
-        self._data = kwargs
-
-    def __unicode__(self):
-        return self.title
-
-    def __repr__(self):
-        return "<DataReport name=%r>" % (self.name,)
-
-    @models.permalink
-    def get_absolute_url(self):
-        return ("dashboard_app.views.report_detail", [self.name])
-
-    def _get_raw_html(self):
-        pathname = os.path.join(self.base_path, self.path)
-        try:
-            with open(pathname) as stream:
-                return stream.read()
-        except (IOError, OSError) as ex:
-            logging.error("Unable to load DataReport HTML file from %r: %s", pathname, ex)
-            return ""
-
-    def _get_html_template(self):
-        return Template(self._get_raw_html())
-
-    def _get_html_template_context(self):
-        return Context({
-            "API_URL": '/RPC2',
-            "STATIC_URL": settings.STATIC_URL
-        })
-
-    def get_html(self):
-        DEBUG = getattr(settings, "DEBUG", False)
-        if self._html is None or DEBUG is True:
-            template = self._get_html_template()
-            context = self._get_html_template_context()
-            self._html = template.render(context)
-        return self._html
-
-    @property
-    def title(self):
-        return self._data['title']
-
-    @property
-    def path(self):
-        return self._data['path']
-
-    @property
-    def name(self):
-        return self._data['name']
-
-    @property
-    def bug_report_url(self):
-        return self._data.get('bug_report_url')
-
-    @property
-    def author(self):
-        return self._data.get('author')
-
-    @property
-    def front_page(self):
-        return self._data['front_page']
 
 
 class Tag(models.Model):
@@ -1806,8 +1640,8 @@ class TestRunFilter(models.Model):
         no_test_case_filters = list(
             TestRunFilter.objects.filter(
                 id__in=TestRunFilterTest.objects.filter(
-                    filter__in=attribute_filters, test__in=bundle.test_runs.all().values('test_id')).annotate(
-                    models.Count('cases')).filter(cases__count=0).values('filter__id'),
+                    filter__in=attribute_filters, test__in=bundle.test_runs.all()
+                    .values('test_id')).annotate(models.Count('cases')).filter(cases__count=0).values('filter__id'),
             ))
         tcf = TestRunFilter.objects.filter(
             id__in=TestRunFilterTest.objects.filter(
@@ -1823,8 +1657,8 @@ class TestRunFilter(models.Model):
             pass_count=models.Sum('test_runs__denormalization__count_pass'),
             unknown_count=models.Sum('test_runs__denormalization__count_unknown'),
             skip_count=models.Sum('test_runs__denormalization__count_skip'),
-            fail_count=models.Sum('test_runs__denormalization__count_fail')).get(
-            id=bundle.id)
+            fail_count=models.Sum('test_runs__denormalization__count_fail')
+        ).get(id=bundle.id)
         for filter in filters:
             match = FilterMatch()
             match.filter = filter
@@ -2319,7 +2153,7 @@ class ImageReportChart(models.Model):
                         test_case_id
                     )
 
-                test_filter_id = "%s-%s" % (test_case_id,
+                test_filter_id = "%s-%s" % (test_case_id.replace(" ", ""),
                                             image_chart_filter.id)
                 chart_item = {
                     "filter_rep": image_chart_filter.representation,

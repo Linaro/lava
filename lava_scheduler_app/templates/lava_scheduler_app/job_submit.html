@@ -1,65 +1,51 @@
-{% extends "lava_scheduler_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 
-{% block extrahead %}
-{{ block.super }}
+{% block styles %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_scheduler_app/css/jquery-linedtextarea.css"/>
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_scheduler_app/css/scheduler.css"/>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery-linedtextarea.js"></script>
-{% url lava.scheduler.get_remote_json as remote_json_url %}
-<script type="text/javascript">
-  var remote_json_url = '{{ remote_json_url }}';
-</script>
-{% if resubmit_warning %}
-<script type="text/javascript">
-  alert('{{ resubmit_warning }}');
-</script>
-{% endif %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/job-submit.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/beautify.js"></script>
 {% endblock %}
 
-
 {% block content %}
+
+{% if error %}
+<div class="alert alert-warning alert-dismissable">
+  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+  <strong>Job submission error:</strong> {{ error }}
+</div>
+{% endif %}
+
+{% if resubmit_warning %}
+<div class="alert alert-warning alert-dismissable">
+  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+  <strong>Job submission warning:</strong> {{ resubmit_warning }}
+</div>
+{% endif %}
 <h2>Submit Job</h2>
 
 {% if is_authorized %}
 
 {% if job_id %}
 
-{% url lava.scheduler.job.detail job_id as detail_url %}
-{% url lava.scheduler.job.list as list_url %}
+{% url 'lava.scheduler.job.detail' job_id as detail_url %}
+{% url 'lava.scheduler.job.list' as list_url %}
 
-<div id="job-success">Job submission successfull!
-<br>
-<br>
-Job with ID <a href="{{ detail_url }}">{{ job_id }}</a> has been created.
-<br>
-To view the full job list click <a href="{{ list_url }}">here</a>.
-</div>
+<p>Job submission successfull!</p>
+<p>Job with ID <a href="{{ detail_url }}">{{ job_id }}</a> has been created.</p>
+<p>To view the full job list click <a href="{{ list_url }}">here</a>.</p>
 
 {% elif job_list %}
-{% url lava.scheduler.job.list as list_url %}
-<div id="job-success">Multinode Job submission successfull!
-<br>
-<br>
-Jobs have been created with the IDs:
+{% url 'lava.scheduler.job.list' as list_url %}
+<p>Multinode Job submission successfull!</p>
+<p>Jobs have been created with the IDs:</p>
+<ul>
 {% for job in job_list %}
-{% url lava.scheduler.job.detail job as detail_url %}
-[ <a href="{{ detail_url }}">{{ job }}</a> ]
+  <li><a href="{% url 'lava.scheduler.job.detail' job %}">{{ job }}</a></li>
 {% endfor %}
-<br>
-To view the full job list click <a href="{{ list_url }}">here</a>.
-</div>
+</ul>
+<p>To view the full job list click <a href="{{ list_url }}">here</a>.</p>
 
 {% else %}
-
-{% if error %}
-<div id="job-error">
-  Job submission error: {{ error }}
-</div>
-{% endif %}
-
-<p>You can use the <a href="{% url lava.scheduler.job.submit_wizard %}">Job Submission Wizard GUI</a> for submitting jobs.</p>
+<p>You can use the <a href="{% url 'lava.scheduler.job.submit_wizard' %}">Job Submission Wizard GUI</a> for submitting jobs.</p>
 <p>Otherwise, paste your job definition JSON here. Alternatively, you can paste a URL to your job definition file:</p>
 
 <form action="" method="post">
@@ -67,21 +53,30 @@ To view the full job list click <a href="{{ list_url }}">here</a>.
   <textarea id="json-input" name="json-input" placeholder="Enter your job definition or link to a job definition here.">{{ json_input }}</textarea>
   <div id="json-valid-container">
   </div>
+  <div>
+    <input type="checkbox" name="is_favorite" id="is_favorite" {% if is_favorite %} checked {% endif %} />
+    Add to my favorite jobs
+  </div>
   <div id="submit-container">
     <input type="hidden" name="is_resubmit" value="true">
-    <input id="submit" type="submit" value="Submit">
+    <button class="btn btn-success" id="submit" type="submit" value="Submit">Submit</button>
   </div>
 </form>
-
 {% endif %}
 
 {% else %}
-<h3>
-Error:
-</h3>
-<p>Permission denied. You not have the required permissions to submit new jobs.
-<br>
-Please contact the administrators.</p>
+<h3>Error:</h3>
+<p>Permission denied. You not have the required permissions to submit new jobs.</p>
+<p>Please contact the administrators.</p>
 {% endif %}
 
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery-linedtextarea.js"></script>
+<script type="text/javascript">
+  var remote_json_url = '{% url 'lava.scheduler.get_remote_json' %}';
+</script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/beautify.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/job-submit.js"></script>
 {% endblock %}

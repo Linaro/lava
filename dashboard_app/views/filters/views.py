@@ -143,7 +143,7 @@ def filter_name_list_json(request):
             {"id": filter.id,
              "name": filter.name,
              "label": filter.owner_name})
-    return HttpResponse(json.dumps(filters), mimetype='application/json')
+    return HttpResponse(json.dumps(filters), content_type='application/json')
 
 
 class FilterDetailView(LavaView):
@@ -280,7 +280,7 @@ def filter_add(request):
         BreadCrumbTrail.leading_to(filter_add))
 
 
-@BreadCrumb("Edit", parent=filter_detail, needs=['name', 'username'])
+@BreadCrumb("Edit", parent=filter_detail, needs=['username', 'name'])
 def filter_edit(request, username, name):
     if not request.user.is_superuser:
         if request.user.username != username:
@@ -316,7 +316,7 @@ def filter_add_cases_for_test_json(request):
     result = TestCase.objects.filter(test=test).order_by('test_case_id').values('test_case_id', 'id')
     return HttpResponse(
         json.dumps(list(result)),
-        mimetype='application/json')
+        content_type='application/json')
 
 
 def get_tests_json(request):
@@ -325,7 +325,7 @@ def get_tests_json(request):
         test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id']).distinct('test_id').order_by('test_id')
 
     data = serializers.serialize('json', tests)
-    return HttpResponse(data, mimetype='application/json')
+    return HttpResponse(data, content_type='application/json')
 
 
 def get_test_cases_json(request):
@@ -335,7 +335,7 @@ def get_test_cases_json(request):
         test__id=request.GET['test_id']).exclude(units__exact='').distinct('test_case_id').order_by('test_case_id')
 
     data = serializers.serialize('json', test_cases)
-    return HttpResponse(data, mimetype='application/json')
+    return HttpResponse(data, content_type='application/json')
 
 
 def filter_attr_name_completion_json(request):
@@ -346,7 +346,7 @@ def filter_attr_name_completion_json(request):
         content_type_id=content_type_id).distinct().order_by('name').values_list('name', flat=True)
     return HttpResponse(
         json.dumps(list(result)),
-        mimetype='application/json')
+        content_type='application/json')
 
 
 def filter_attr_value_completion_json(request):
@@ -358,7 +358,7 @@ def filter_attr_value_completion_json(request):
         value__startswith=term).distinct().order_by('value').values_list('value', flat=True)
     return HttpResponse(
         json.dumps(list(result)),
-        mimetype='application/json')
+        content_type='application/json')
 
 
 def _iter_matching(seq1, seq2, key):

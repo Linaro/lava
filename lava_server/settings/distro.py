@@ -66,11 +66,17 @@ MANAGERS = distro_settings.MANAGERS
 # e-mail.
 SEND_BROKEN_LINK_EMAILS = distro_settings.SEND_BROKEN_LINK_EMAILS
 
+# LOG_SIZE_LIMIT in megabytes
+LOG_SIZE_LIMIT = distro_settings.LOG_SIZE_LIMIT
+
 # URL of the login page
 LOGIN_URL = distro_settings.LOGIN_URL
 
 # URL of the page you get redirected to after logging in
 LOGIN_REDIRECT_URL = distro_settings.LOGIN_REDIRECT_URL
+
+# read which openID provider to use from the settings.conf
+OPENID_SSO_SERVER_URL = distro_settings.OPENID_SSO_SERVER_URL
 
 # The email address that error messages come from, such as those sent to
 # ADMINS and MANAGERS.

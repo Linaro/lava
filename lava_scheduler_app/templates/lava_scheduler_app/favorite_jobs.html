@@ -1,0 +1,29 @@
+{% extends "lava_scheduler_app/_content.html" %}
+
+{% load django_tables2 %}
+
+{% block scripts %}
+{{ block.super }}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/favorite-jobs.js"></script>
+{% endblock %}
+
+{% block content %}
+{% if username != request.user.username %}
+<h2>Favorite jobs by {{ username }}</h2>
+{% else %}
+<h2>My favorite jobs</h2>
+{% endif %}
+<p><a id="user_favorite_job" href="javascript: void(0);">Favorite jobs by user</a></p>
+
+{% render_table favoritejobs_table %}
+
+<div id="user_select_dialog">
+  <div>
+    <input id="username" name="username" style="width: 95%;" value="" />
+  </div>
+  <div style="margin-top: 10px; text-align: center;">
+    <button id="submit">Submit</button>
+  </div>
+</div>
+{% endblock %}
+

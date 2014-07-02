@@ -1,15 +1,8 @@
-{% extends "dashboard_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
 
-{% block extrahead %}
-{{ block.super }}
+{% block styles %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
-<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/image-report-editor.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script>
-
-<script language="javascript">
-  csrf_token = '{{csrf_token}}';
-</script>
 {% endblock %}
 
 
@@ -67,20 +60,29 @@
 <div id="loading_dialog">
 <img src="{{ STATIC_URL }}dashboard_app/images/ajax-progress.gif" alt="Loading..." />
 </div>
+{% endblock %}
 
-<script type="text/javascript">
+{% block scripts %}
+<script language="javascript">
+  csrf_token = '{{csrf_token}}';
+</script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/image-report-editor.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script>
+<script>
+  csrf_token = '{{csrf_token}}';
   $().ready(function () {
 
     $("#image_chart_filter").editable(function(value, settings){
       return value;
     }, {onblur: "submit"});
 
-    $("#image_chart_filter").focus(function(event) {
+    $("#image_chart_filter").on("click", function() {
+        var field = $(this).find("input");
         {% if not instance.filter %}
-        $(event.target).val("");
+        field.val("");
         {% endif %}
-        $(event.target).autocomplete({
-            source: '{% url dashboard_app.views.filters.views.filter_name_list_json %}',
+        field.autocomplete({
+            source: '{% url 'dashboard_app.views.filters.views.filter_name_list_json' %}',
             minLength: 1,
             select: function(event, ui) {
               filter_select_callback(ui.item, '{{ image_chart.id }}');
@@ -114,8 +116,6 @@
       }
 
     {% endif %}
-});
-
+  });
 </script>
-
 {% endblock %}

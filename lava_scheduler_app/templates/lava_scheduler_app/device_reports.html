@@ -1,150 +1,165 @@
-{% extends "lava_scheduler_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
+{% block styles %}
+<style>
+    .flot-text {
+        z-index: 1
+    }
+    .flot-tick-label {
+        z-index: 6
+    }
+</style>
+{% endblock styles %}
 
 {% block content %}
+<h2 class="modal-header">Health Job Summary for {{ device.hostname }} <a
+class="btn btn-xs btn-info" href="{% url 'lava.scheduler.device_health_history_log' device.hostname %}"
+title="History of health changes"><span class="glyphicon glyphicon-heart"></span> history log</a></h2>
 
-<h2>Health Job Summary for {{ device.hostname }}</h2>
-<div style="display:inline-block; padding-left:20px;">
-
-<h3>By Day</h3>
-<div id="placeholder-daily" style="width:300px;height:200px;"></div>
-<script type="text/javascript">
-$(document).ready(function() {
-var dpass = [];
-var ddates= [];
-{% for day in health_day_report %}
-  dpass.push([{{forloop.counter0}}, 100*{{day.pass}}{% if day.pass %}/({{day.pass}}+{{day.fail}}){% endif %}]);
-  ddates.push([{{forloop.counter0}}, "<a href='{{day.failure_url}}'>{{day.date}}</a><br/>Pass: {{day.pass}}<br/>Fail: {{day.fail}}"]);
-{% endfor %}
-
-  var ddata = [
-    {'label': '% Pass', 'data': dpass, 'color': '#00FF00'},
-  ];
-
-  $.plot($("#placeholder-daily"), ddata, {
-    series: {
-      lines: { show: true, fill: true, steps: false },
-    },
-    xaxis: {
-      ticks: ddates,
-    },
-    yaxis: {
-      max: 100,
-    },
-  });
-}
-);
-</script>
-</div>
-
-<div style="display:inline-block; padding-left:40px;">
-
-<h3>By Week</h3>
-<div id="placeholder-weekly" style="width:500px;height:200px;"></div>
-<script type="text/javascript">
-$(document).ready(function() {
-var wpass = [];
-var wdates= [];
-{% for week in health_week_report %}
-  wpass.push([{{forloop.counter0}}, 100*{{week.pass}}{% if week.pass %}/({{week.pass}}+{{week.fail}}){% endif %}]);
-  wdates.push([{{forloop.counter0}}, "<a href='{{week.failure_url}}'>{{week.date}}</a><br/>Pass: {{week.pass}}<br/>Fail: {{week.fail}}"]);
-{% endfor %}
-
-  var wdata = [
-    {'label': '% Pass', 'data': wpass, 'color': '#00FF00'},
-  ];
-
-  $.plot($("#placeholder-weekly"), wdata, {
-    series: {
-      lines: { show: true, fill: true, steps: false },
-    },
-    xaxis: {
-      ticks: wdates,
-    },
-    yaxis: {
-      max: 100,
-    },
-  });
-}
-);
-</script>
+<div class="row">
+  <div class="col-md-5">
+    <h4 class="modal-header">By Day</h4>
+    <div id="placeholder-daily" style="height: 300px;"></div>
+  </div>
+  <div class="col-md-7">
+    <h4 class="modal-header">By Week</h4>
+    <div id="placeholder-weekly" style="height: 300px;"></div>
+ </div>
 </div>
 
 <h2>Test Job Summary for {{ device.hostname }}</h2>
-<div style="display:inline-block; padding-left:20px;">
-
-<h3>By Day</h3>
-<div id="placeholder-job-daily" style="width:300px;height:200px;"></div>
-<script type="text/javascript">
-$(document).ready(function() {
-var jdpass = [];
-var jddates= [];
-{% for day in job_day_report %}
-  jdpass.push([{{forloop.counter0}}, 100*{{day.pass}}{% if day.pass %}/({{day.pass}}+{{day.fail}}){% endif %}]);
-  jddates.push([{{forloop.counter0}}, "<a href='{{day.failure_url}}'>{{day.date}}</a><br/>Pass: {{day.pass}}<br/>Fail: {{day.fail}}"]);
-{% endfor %}
-
-  var jddata = [
-    {'label': '% Pass', 'data': jdpass, 'color': '#00FF00'},
-  ];
-
-  $.plot($("#placeholder-job-daily"), jddata, {
-    series: {
-      lines: { show: true, fill: true, steps: false },
-    },
-    xaxis: {
-      ticks: jddates,
-    },
-    yaxis: {
-      max: 100,
-    },
-  });
-}
-);
-</script>
+<div class="row">
+  <div class="col-md-5">
+    <h4 class="modal-header">By Day</h4>
+    <div id="placeholder-job-daily" style="height: 300px;"></div>
+  </div>
+  <div class="col-md-7">
+    <h4 class="modal-header">By Week</h4>
+    <div id="placeholder-job-weekly" style="height: 300px;"></div>
+    <script type="text/javascript">
+    </script>
+  </div>
 </div>
 
-<div style="display:inline-block; padding-left:40px;">
-
-<h3>By Week</h3>
-<div id="placeholder-job-weekly" style="width:500px;height:200px;"></div>
-<script type="text/javascript">
-$(document).ready(function() {
-var jwpass = [];
-var jwdates= [];
-{% for week in job_week_report %}
-  jwpass.push([{{forloop.counter0}}, 100*{{week.pass}}{% if week.pass %}/({{week.pass}}+{{week.fail}}){% endif %}]);
-  jwdates.push([{{forloop.counter0}}, "<a href='{{week.failure_url}}'>{{week.date}}</a><br/>Pass: {{week.pass}}<br/>Fail: {{week.fail}}"]);
-{% endfor %}
-
-  var jwdata = [
-    {'label': '% Pass', 'data': jwpass, 'color': '#00FF00'},
-  ];
-
-  $.plot($("#placeholder-job-weekly"), jwdata, {
-    series: {
-      lines: { show: true, fill: true, steps: false },
-    },
-    xaxis: {
-      ticks: jwdates,
-    },
-    yaxis: {
-      max: 100,
-    },
-  });
-}
-);
-</script>
-</div>
-
-<h2>Longest Running Jobs on {{ device }}</h2>
+<h2>Longest Running Jobs on {{ device.hostname }}</h2>
 {% if long_running|length_is:"0" %}
-There are no running jobs.
+<p>There are no running jobs.</p>
 {% else %}
 <ul>
 {% for job in long_running %}
-  <li><a href="{{job.get_absolute_url}}">{{job.id}}</a>: {{job.start_time}}</li>
+  <li><a href="{{job.get_absolute_url}}">{{job.id}}</a>: {{job.start_time|timesince}}</li>
 {% endfor %}
 </ul>
 {% endif %}
 
 {% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.flot.min.js"></script>
+
+<script>
+  $(function() {
+    var dpass = [];
+    var ddates= [];
+    {% for day in health_day_report %}
+      dpass.push([{{forloop.counter0}}, 100*{{day.pass}}{% if day.pass %}/({{day.pass}}+{{day.fail}}){% endif %}]);
+      ddates.push([{{forloop.counter0}}, "<a href='{{day.failure_url}}'>{{day.date}}</a><br/>Pass: {{day.pass}}<br/>Fail: {{day.fail}}"]);
+    {% endfor %}
+
+    var ddata = [
+      {'label': '% Pass', 'data': dpass, 'color': '#00FF00'},
+    ];
+
+    $.plot($("#placeholder-daily"), ddata, {
+      series: {
+        lines: { show: true, fill: true, steps: false },
+      },
+      xaxis: {
+        ticks: ddates,
+      },
+      yaxis: {
+        max: 100,
+      },
+    });
+  }
+  );
+
+  $(function() {
+    var wpass = [];
+    var wdates= [];
+    {% for week in health_week_report %}
+      wpass.push([{{forloop.counter0}}, 100*{{week.pass}}{% if week.pass %}/({{week.pass}}+{{week.fail}}){% endif %}]);
+      wdates.push([{{forloop.counter0}}, "<a href='{{week.failure_url}}'>{{week.date}}</a><br/>Pass: {{week.pass}}<br/>Fail: {{week.fail}}"]);
+    {% endfor %}
+
+      var wdata = [
+        {'label': '% Pass', 'data': wpass, 'color': '#00FF00'},
+      ];
+
+      $.plot($("#placeholder-weekly"), wdata, {
+        series: {
+          lines: { show: true, fill: true, steps: false },
+        },
+        xaxis: {
+          ticks: wdates,
+        },
+        yaxis: {
+          max: 100,
+        },
+      });
+    }
+  );
+
+  $(function() {
+    var jdpass = [];
+    var jddates= [];
+    {% for day in job_day_report %}
+      jdpass.push([{{forloop.counter0}}, 100*{{day.pass}}{% if day.pass %}/({{day.pass}}+{{day.fail}}){% endif %}]);
+      jddates.push([{{forloop.counter0}}, "<a href='{{day.failure_url}}'>{{day.date}}</a><br/>Pass: {{day.pass}}<br/>Fail: {{day.fail}}"]);
+    {% endfor %}
+
+      var jddata = [
+        {'label': '% Pass', 'data': jdpass, 'color': '#00FF00'},
+      ];
+
+      $.plot($("#placeholder-job-daily"), jddata, {
+        series: {
+          lines: { show: true, fill: true, steps: false },
+        },
+        xaxis: {
+          ticks: jddates,
+        },
+        yaxis: {
+          max: 100,
+        },
+      });
+    }
+  );
+
+  $(function() {
+    var jwpass = [];
+    var jwdates= [];
+    {% for week in job_week_report %}
+      jwpass.push([{{forloop.counter0}}, 100*{{week.pass}}{% if week.pass %}/({{week.pass}}+{{week.fail}}){% endif %}]);
+      jwdates.push([{{forloop.counter0}}, "<a href='{{week.failure_url}}'>{{week.date}}</a><br/>Pass: {{week.pass}}<br/>Fail: {{week.fail}}"]);
+    {% endfor %}
+
+      var jwdata = [
+        {'label': '% Pass', 'data': jwpass, 'color': '#00FF00'},
+      ];
+
+      $.plot($("#placeholder-job-weekly"), jwdata, {
+        series: {
+          lines: { show: true, fill: true, steps: false },
+        },
+        xaxis: {
+          ticks: jwdates,
+        },
+        yaxis: {
+          max: 100,
+        },
+      });
+    }
+  );
+</script>
+
+{% endblock scripts %}

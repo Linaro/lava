@@ -149,7 +149,8 @@ $(document).ready(function () {
         saveState: false,
         startIndex: 0,
 
-        transitionEffect: "none",
+        transitionEffect: "slideLeft",
+        transitionEffectSpeed: 200,
 
         onStepChanging: function (event, currentIndex, newIndex) {
             return true;

@@ -1,0 +1,15 @@
+Sources for minified Javascript files in LAVA.
+==============================================
+
+Download locations:
+https://github.com/andris9/jStorage/releases/tag/v0.4.3
+https://code.google.com/p/jquery-watermark/
+https://code.google.com/p/explorercanvas/downloads/list
+
+libjs-jstorage: Current version in Debian is old but the
+version in LAVA is likely to be dropped as the use of it
+is now deprecated.
+
+libjs-jquery-flot: Matches versions already in use in
+LAVA, copied here for distributions which do not carry
+version 0.8.2.

@@ -50,7 +50,7 @@ It is possible to set a :term:`device status transition` but this might not
 clear the state of the actual device:::
 
   >>> from lava_scheduler_app.models import DevicesStateTransition
-  >>> DeviceStateTransition.objects.create(created_by=None, 
+  >>> DeviceStateTransition.objects.create(created_by=None,
   device=Device.objects.get(hostname="qemu01"),
   old_state = 2,
   new_state = 1,
@@ -75,7 +75,7 @@ I'm trying to submit a job over ssh, but I get a gnomekeyring.IOError. Why does 
 ::
 
   $ lava-tool auth-add http://administrator@192.168.11.100/RPC2/
-  Paste token for http://administrator@192.168.11.100/RPC2/: 
+  Paste token for http://administrator@192.168.11.100/RPC2/:
   Traceback (most recent call last):
   ...
     File "/usr/lib/python2.7/dist-packages/keyring/backend.py", line
@@ -158,71 +158,12 @@ this issue when tested.
 An alternative is to disable the specific part of gnome-keyring which
 causes this bug::
 
-  /etc/xdg/autostart/gnome-keyring-secrets.desktop 
+  /etc/xdg/autostart/gnome-keyring-secrets.desktop
 
 Either remove this file or change the autostart values to::
 
   X-GNOME-AutoRestart=false
   X-GNOME-Autostart-Notify=false
-
-Installation problems/failures with lava-deployment-tool and
-postgresql (on Ubuntu 12.04.2)
-
-Ran::
-
-  $ ./lava-deployment-tool setup
-  $ ./lava-deployment-tool install testinstance
-
-and noticed the following error::
-
-  psql: could not connect to server: No such file or directory
-  Is the server running locally and accepting connections on Unix domain
-  socket /var/run/postgresql/.s.PGSQL.5432"?
-  createuser: could not connect to database postgres: could not connect
-  to server: No such file or directory
-
-If you look in /var/log/postgresql/postgresql-9.1-main.log you may
-find an entry that looks like::
-
-  BST FATAL:  could not create shared memory segment: Invalid argument
-  BST DETAIL:  Failed system call was shmget(key=5432001, size=41263104,
-  03600).
-  BST HINT:  This error usually means that PostgreSQL's request for a
-  shared memory segment exceeded your kernel's SHMMAX parameter.  You
-  can either reduce the request size or reconfigure the kernel with
-  larger SHMMAX.  To reduce the request size (currently 41263104 bytes),
-  reduce PostgreSQL's shared memory usage, perhaps by reducing
-  shared_buffers or max_connections.
-
-The PostgreSQL documentation contains more information about shared
-memory configuration.
-
-Changed the entry for shared_buffers in
-/etc/postgresql/9.1/main/postgresql.conf from 32MB to 8MB and 
-restarted the service ::
-
-  $ sudo service postgresql restart 
-   * Restarting PostgreSQL 9.1 database server  [ OK ] 
-  $ sudo service postgresql status
-  Running clusters: 9.1/main
-
-The alternative, as suggested, is to increase the size of
-kernel.shmmax value (e.g., 8589934592) in /etc/sysctl.conf and reload
-::
-
-  $ sudo sysctl -p
-
-If you were now to reinstall the testinstance you should no longer see
-the error about not being able to connect to the database when the
-instance is created. ::
-
-  $ ./lava-deployment-tool remove testinstance
-  $ ./lava-deployment-tool install testinstance
-
-With these changes in place the Lava instance is available on
-reboot. It would previously fail because the postgres service had
-failed to load (i.e., could not create shared memory segment: Invalid
-argument).
 
 Vagrant
 -------
@@ -236,7 +177,8 @@ starting vagrant, if you want to use qemu to run LAVA tests. Vagrant
 prefers particular versions of virtualbox. Vagrant version 1.0.3 does
 not work with virtualbox 4.2 but a vagrant session setup in an earlier
 version of virtualbox can still be accessed from the virtualbox
-manager. Login as vagrant:vagrant. 
+manager. Login as vagrant:vagrant.
+
 
 Others
 ------

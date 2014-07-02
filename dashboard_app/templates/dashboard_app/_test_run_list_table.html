@@ -15,7 +15,7 @@
     {% for test_run in test_run_list %}
     <tr>
       <td>{{ test_run.show_device }}</td>
-      <td><a href="{{ test_run.get_absolute_url }}"><code>{{ test_run.test }} results<code/></a></td>
+      <td><a href="{{ test_run.get_absolute_url }}"><code>{{ test_run.test }} results</code></a></td>
       <td>{{ test_run.test }}</td>
       <td>{{ test_run.get_summary_results.pass }}</td>
       <td>{{ test_run.get_summary_results.fail }}</td>

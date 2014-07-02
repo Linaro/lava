@@ -1,27 +1,11 @@
-{% extends "dashboard_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 
-{% block extrahead %}
-{{ block.super }}
+{% block styles %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-report.css"/>
-<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/image-report.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/excanvas.min.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.min.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.dashes.min.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jstorage.min.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.tooltip.min.js"></script>
-
-<script language="javascript">
-  chart_data = $.parseJSON($('<div/>').html("{{chart_data}}").text());
-  test_names = $.parseJSON($('<div/>').html("{{test_names}}").text());
-  columns = $.parseJSON($('<div/>').html("{{columns}}").text());
-  image_url = '{{ STATIC_URL }}dashboard_app/images/';
-  del_bug_url = '{% url dashboard_app.views.unlink_bug_and_testrun %}';
-</script>
 {% endblock %}
 
 {% block content %}
 <h1>Image Report: {{ image.name }}</h1>
-
 
 <div id="outer-container">
 <div id="inner-container">
@@ -114,7 +98,7 @@
 </table>
 
 <form method="POST"
-      action="{% url dashboard_app.views.link_bug_to_testrun %}"
+      action="{% url 'dashboard_app.views.link_bug_to_testrun' %}"
       id="add-bug-dialog" style="display: none">
   {% csrf_token %}
   <input type="hidden" name="back" value="{{ request.path }}"/>
@@ -125,8 +109,23 @@
   </div>
   <input name="bug_link" style="width: 100%"/>
 </form>
+{% endblock %}
 
-<script language="javascript">
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/image-report.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/excanvas.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.dashes.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jstorage.min.js"></script>
+
+<script>
+  chart_data = $.parseJSON($('<div/>').html("{{chart_data}}").text());
+  test_names = $.parseJSON($('<div/>').html("{{test_names}}").text());
+  columns = $.parseJSON($('<div/>').html("{{columns}}").text());
+  image_url = '{{ STATIC_URL }}dashboard_app/images/';
+  del_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testrun' %}';
+
 var current_bug = [];
 $("#add-bug-dialog").bind('submit', function(e) {
     var bug_url = $("#add-bug-dialog").find('input[name=bug_link]').val();

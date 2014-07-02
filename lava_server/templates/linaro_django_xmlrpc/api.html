@@ -1,7 +1,5 @@
-{% extends "layouts/content.html" %}
-{% load markup %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
-
 
 {% block title %}
 {{ block.super }} | {% trans "XML-RPC" %}
@@ -10,19 +8,19 @@
 
 {% block breadcrumbs %}
 {{ block.super }}
-<li><a href="{% url lava.home %}">{% trans "LAVA" %}</a></li>
+<li><a href="{% url 'lava.home' %}">{% trans "LAVA" %}</a></li>
 <li>{% trans "API" %}</li>
-<li><a href="{% url lava.api_help %}">{% trans "Available Methods" %}</a></li>
+<li><a href="{% url 'lava.api_help' %}">{% trans "Available Methods" %}</a></li>
 {% endblock %}
 
 
 {% block navigation %}
 <div id="lava-extension-navigation">
   <ul>
-    <li><a class="lava-back" href="{% url lava.home %}"
+    <li><a class="lava-back" href="{% url 'lava.home' %}"
       >{% trans "Back to LAVA" %}</a></li>
-    <li><a href="{% url lava.api_help %}">{% trans "API Help" %}</a></li>
-    <li><a href="{% url linaro_django_xmlrpc.views.tokens %}">{% trans "Authentication Tokens" %}</a></li>
+    <li><a href="{% url 'lava.api_help' %}">{% trans "API Help" %}</a></li>
+    <li><a href="{% url 'linaro_django_xmlrpc.views.tokens' %}">{% trans "Authentication Tokens" %}</a></li>
   </ul>
 </div>
 {% endblock %}
@@ -34,18 +32,22 @@
 client. For example, in python you can do this:</p>
 <pre>
 import xmlrpclib
-server = xmlrpclib.ServerProxy("{{ site_url }}{% url lava.api_handler %}")
+server = xmlrpclib.ServerProxy("{{ site_url }}{% url 'lava.api_handler' %}")
 print server.system.listMethods()
 </pre>
 
-<h2>Available functions</h2>
-<div id="accordion">
+<h2 id="top">Available functions</h2>
+<div>
   {% for method in methods %}
-  <h3><a href="#{{method.name}}">{{ method.name }}</a></h3>
-  <div>{{ method.help|restructuredtext }}</div>
+  [&nbsp;<a href="#{{method.name}}">{{ method.name }}</a>&nbsp;]
   {% endfor %}
 </div>
-<script type="text/javascript">
-  $(function(){ $('#accordion').accordion({ navigation: true, active: false, collapsible: true}) });
-</script>
+
+{% for method in methods %}<hr/>
+<div id="{{ method.name }}">
+  <h3><a href="#{{method.name}}">{{ method.name }}</a></h3>
+  <div><pre>{{ method.help }}</pre></div>
+  <a href="#top">Available functions</a>
+</div>
+{% endfor %}
 {% endblock %}

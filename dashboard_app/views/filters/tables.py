@@ -96,6 +96,7 @@ class UserFiltersTable(LavaTable):
     public = tables.Column()
 
     class Meta(LavaTable.Meta):
+        attrs = {"class": "table table-hover"}
         exclude = (
             'subscription'
         )
@@ -273,7 +274,7 @@ class FilterPassTable(LavaTable):
 
     class Meta:
         model = None
-        attrs = {"class": "display", "id": "filter-detail-table"}
+        attrs = {"class": "table table-hover", "id": "filter-detail-table"}
         per_page_field = "length"
         template = 'dashboard_app/filter_results_table.html'
 
@@ -307,20 +308,9 @@ class FilterSummaryTable(LavaTable):
 
     class Meta:
         model = None
-        attrs = {"class": "display", "id": "filter-detail-table"}
+        attrs = {"class": "table table-hover", "id": "filter-detail-table"}
         per_page_field = "length"
         template = 'dashboard_app/filter_results_table.html'
-
-
-class FilterTable(tables.Table):
-    """
-    Deprecated - extensions looking for FilterTable need to migrate to LavaTable
-    or use FilterPassTable or FilterSummaryTable.
-    """
-    def __init__(self, *args, **kwargs):
-        super(FilterTable, self).__init__(*args, **kwargs)
-        self.length = 10
-        raise Exception("FilterTable is deprecated, migrate to LavaTable.")
 
 
 class TestResultDifferenceTable(LavaTable):
@@ -348,6 +338,6 @@ class TestResultDifferenceTable(LavaTable):
         ''')
 
     class Meta:
-        attrs = {"class": "display"}
+        attrs = {"class": "table table-hover"}
         template = "tables.html"
         per_page_field = "length"

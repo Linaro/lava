@@ -200,6 +200,6 @@ class LavaTable(tables.Table):
             return {'discrete': data.discrete} if len(data.discrete) > 1 else {}
 
     class Meta:
-        attrs = {"class": "display"}
+        attrs = {"class": "table table-striped", "width": "100%"}
         template = "tables.html"
         per_page_field = "length"

@@ -7,9 +7,7 @@ LAVA Manual
    :maxdepth: 2
 
    overview.rst
-   deployment-tool.rst
-   single-deployment.rst
-   distributed-deployment.rst
+   installation.rst
    writing-tests.rst
    writing-multinode.rst
    test-repositories.rst
@@ -36,6 +34,7 @@ LAVA Test Developer Guide
    multinode.rst
    vm-groups.rst
    boot-management.rst
+   bootimages.rst
    tftp-deploy.rst
    external_measurement.rst
    data-export.rst
@@ -49,9 +48,11 @@ LAVA Administrator Guide
 
    configuration.rst
    running.rst
+   hiddentypes.rst
    sdmux.rst
    proxy.rst
    lava-image-creation.rst
+   known-devices.rst
    qemu-deploy.rst
    pdudaemon.rst
    kvm-deploy.rst
@@ -69,9 +70,19 @@ Other Topics
    usage.rst
    arm_energy_probe.rst
    device-capabilities.rst
+   packaging.rst
    lava-scheduler.rst
    lava-scheduler-device-help.rst
    lava-scheduler-device-type-help.rst
    lava-scheduler-submit-job.rst
    lava-scheduler-job.rst
-   linaro-dashboard-bundle/index.rst
+
+Developer guides
+################
+
+.. toctree::
+   :maxdepth: 2
+
+   debian.rst
+   migration.rst
+   schema.rst

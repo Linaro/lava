@@ -1,35 +1,25 @@
-{% extends "dashboard_app/_content_with_sidebar.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 
 {% load django_tables2 %}
 {% load i18n %}
 {% load humanize %}
 
-
 {% block content %}
-<div id="master-toolbar-splice" >
-  <span
-    class="view-as"
-    style="text-align:center; display: inline-block; width:auto">
-    <label for="as_bundles">
-      [&nbsp;<a
-        id="as_bundles_link"
-        href="{% url dashboard_app.views.bundle_list bundle_stream.pathname %}"
-        >{% trans "Bundles" %}</a>&nbsp;]
-    </label>
-    <label for="as_test_runs">
-      [&nbsp;<a
-        id="as_test_runs_link"
-        href="{% url dashboard_app.views.test_run_list bundle_stream.pathname %}"
-        >{% trans "Test Runs" %}</a>&nbsp;]
-    </label>
-  </span>
+{% include "dashboard_app/_bundle_stream_sidebar.html" %}
+
+<div class="modal-header">
+  <ul class="nav nav-pills">
+    <li><a href="{% url 'dashboard_app.views.bundle_list' bundle_stream.pathname %}"
+        class="btn btn-primary btn-sm">{% trans "Bundles" %}</a></li>
+    <li><a href="{% url 'dashboard_app.views.test_run_list' bundle_stream.pathname %}"
+        class="btn btn-default btn-sm">{% trans "Test Runs" %}</a></li>
+  </ul>
 </div>
 
 {% render_table bundle_list %}
 
 {% endblock %}
 
-
-{% block sidebar %}
-{% include "dashboard_app/_bundle_stream_sidebar.html" %}
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
 {% endblock %}

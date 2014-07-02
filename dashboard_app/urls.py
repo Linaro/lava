@@ -19,16 +19,12 @@
 """
 URL mappings for the Dashboard application
 """
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 
 urlpatterns = patterns(
     'dashboard_app.views',
-    url(r'^$', 'index'),
-    url(r'^data-views/$', 'data_view_list'),
-    url(r'^data-views/(?P<name>[a-zA-Z0-9-_]+)/$', 'data_view_detail'),
-    url(r'^reports/$', 'report_list'),
-    url(r'^reports/(?P<name>[a-zA-Z0-9-_]+)/$', 'report_detail'),
-    url(r'^filters/$', 'filters.views.filters_list'),
+    url(r'^$', 'index', name='lava.dashboard'),
+    url(r'^filters/$', 'filters.views.filters_list', name='lava.dashboard.filters_list'),
     url(r'^filters/filters_names_json$', 'filters.views.filter_name_list_json', name='filter_name_list_json'),
     url(r'^filters/\+add$', 'filters.views.filter_add'),
     url(r'^filters/\+add-cases-for-test-json$', 'filters.views.filter_add_cases_for_test_json'),
@@ -41,7 +37,7 @@ urlpatterns = patterns(
     url(r'^filters/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+subscribe$', 'filters.views.filter_subscribe'),
     url(r'^filters/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+delete$', 'filters.views.filter_delete'),
     url(r'^filters/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+compare/(?P<tag1>[a-zA-Z0-9-_: .]+)/(?P<tag2>[a-zA-Z0-9-_: .]+)$', 'filters.views.compare_matches'),
-    url(r'^streams/$', 'bundle_stream_list'),
+    url(r'^streams/$', 'bundle_stream_list', name="lava.dashboard.bundle.list"),
     url(r'^streams/mybundlestreams$', 'mybundlestreams'),
     url(r'^streams/bundlestreams-json$', 'bundlestreams_json'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/$', 'bundle_list'),
@@ -64,9 +60,10 @@ urlpatterns = patterns(
     url(r'^permalink/test-result/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/(?P<relative_index>[0-9]+)/(?P<trailing>.*)$', 'redirect_to_test_result'),
     url(r'^permalink/bundle/(?P<content_sha1>[0-9a-z]+)/$', 'redirect_to_bundle'),
     url(r'^permalink/bundle/(?P<content_sha1>[0-9a-z]+)/(?P<trailing>.*)$', 'redirect_to_bundle'),
-    url(r'^image-reports/$', 'images.image_report_list'),
+    url(r'^image-reports/$', 'images.image_report_list', name='lava.dashboard.image.report_list'),
+    url(r'^image-reports/(?P<name>[A-Za-z0-9_-]+)$', 'images.image_report_detail'),
     url(r'^image-charts/$', 'image_reports.views.image_report_list',
-        name='image_report_list'),
+        name='lava.dashboard.image_report.report_list'),
     url(r'^image-charts/get-report-groups$', 'image_reports.views.image_report_group_list', name='image_report_group_list'),
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)$', 'image_reports.views.image_report_display'),
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/\+detail$', 'image_reports.views.image_report_detail', name='image_report_detail'),
@@ -88,11 +85,6 @@ urlpatterns = patterns(
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>[a-zA-Z0-9-_]+)/(?P<slug>[a-zA-Z0-9-_]+)$', 'image_reports.views.image_chart_filter_detail'),
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>[a-zA-Z0-9-_]+)/(?P<slug>[a-zA-Z0-9-_]+)/\+edit$', 'image_reports.views.image_chart_filter_edit'),
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>[a-zA-Z0-9-_]+)/(?P<slug>[a-zA-Z0-9-_]+)/\+delete$', 'image_reports.views.image_chart_filter_delete'),
-    url(r'^pmqa$', 'pmqa.pmqa_view'),
-    url(r'^pmqa(?P<pathname>/[a-zA-Z0-9/._-]+/)(?P<device_type>[a-zA-Z0-9-_]+)$', 'pmqa.pmqa_filter_view'),
-    url(r'^pmqa(?P<pathname>/[a-zA-Z0-9/._-]+/)(?P<device_type>[a-zA-Z0-9-_]+)/json$', 'pmqa.pmqa_filter_view_json'),
-    url(r'^pmqa(?P<pathname>/[a-zA-Z0-9/._-]+/)(?P<device_type>[a-zA-Z0-9-_]+)/\+compare/(?P<build1>[0-9]+)/(?P<build2>[0-9]+)$', 'pmqa.compare_pmqa_results'),
-    url(r'^image-reports/(?P<name>[A-Za-z0-9_-]+)$', 'images.image_report_detail'),
     url(r'^api/link-bug-to-testrun', 'link_bug_to_testrun'),
     url(r'^api/unlink-bug-and-testrun', 'unlink_bug_and_testrun'),
     url(r'^api/link-bug-to-testresult', 'link_bug_to_testresult'),

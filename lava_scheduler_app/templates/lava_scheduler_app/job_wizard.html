@@ -1,10 +1,6 @@
-{% extends "lava_scheduler_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 
-{% block extrahead %}
-{{ block.super }}
-<script src="{{ STATIC_URL }}lava-server/js/jquery.validate.js"></script>
-<script src="{{ STATIC_URL }}lava-server/js/jquery.steps.js"></script>
-<script src="{{ STATIC_URL }}lava_scheduler_app/js/job-wizard.js"></script>
+{% block styles %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava-server/css/jquery.steps.css"/>
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_scheduler_app/css/job-wizard.css"/>
 {% endblock %}
@@ -15,7 +11,7 @@
 
 {% if is_authorized %}
 
-<form id="job_wizard" action="{% url lava.scheduler.job.submit %}" method="post">
+<form id="job_wizard" action="{% url 'lava.scheduler.job.submit' %}" method="post">
   {% csrf_token %}
   <input type="hidden" name="wizard" value="true" />
  <h1>Basic details</h1>
@@ -23,17 +19,17 @@
  <fieldset>
    <legend>Basic job details</legend>
 
-   <div class="media col-xs-4">
+   <div class="media col-xs-4" style="clear: both;">
      <label for="job_name" class="control-label">Job name *</label>
      <input id="job_name" name="job_name" required type="text" class="required form-control">
    </div>
 
-   <div class="media col-xs-4">
+   <div class="media col-xs-4" style="clear: both;">
      <label for="timeout" class="control-label">Timeout *</label>
      <input id="timeout" name="timeout" required type="text" class="required form-control" value="18000">
    </div>
 
-   <div class="media col-xs-4">
+   <div class="media col-xs-4" style="clear: both;">
      <label for="notify" class="control-label">Notify on incomplete</label>
      <input id="notify" name="notify" type="text" class="form-control">
    </div>
@@ -41,19 +37,10 @@
  </fieldset>
 
  <h1>Boot image</h1>
-<!--
-<p><b>Linaro image</b>: [Image URL (required), Boot options (optional)]</p>
- <p><b>Linaro hwpack + rootfs</b>: [Hwpack URL (required), Rootfs URL (required),
- Boot options (optional)]</p>
- <p><b>Linaro kernel</b>: [Kernel URL (required), Ramdisk URL (optional),
- Device tree blob (optional), Rootfs URL (optional), Boot options (optional)]</p>
- <p><b>Linaro android image</b>: [Boot URL (required), Data URL (required),
- System URL (required), Boot options (optional)]</p>
--->
  <fieldset>
    <legend style="margin-bottom: 0;">Select boot image parameter options</legend>
 
-   <div class="col-xs-4">
+   <div class="col-xs-4" style="clear: both;">
      <label for="boot_type" class="control-label">Image type</label> (Only options which are required or optional for each image type are supported.)
      <select id="boot_type" name="boot_type" class="form-control">
        <option value="linaro_image">Linaro Image</option>
@@ -62,64 +49,63 @@
        <option value="android_image">Linaro Android Image</option>
      </select>
    </div>
-   <div>
-   </div>
-   <div id="image_url_container" class="media col-xs-6">
+
+   <div id="image_url_container" class="media col-xs-6" style="clear: both;">
      <label for="image_url" class="control-label">Image URL *</label> (Required for Linaro Image)
      <input id="image_url" name="image_url" required type="text" class="required form-control source_url">
    </div>
 
-   <div id="hwpack_container" class="media col-xs-6">
+   <div id="hwpack_container" class="media col-xs-6" style="clear: both;">
      <label for="hwpack_url" class="control-label">Hwpack URL *</label> (Required for Linaro hwpack+rootfs)
      <input id="hwpack_url" name="hwpack_url" required type="text" class="required form-control source_url">
    </div>
 
-   <div id="rootfs_container" class="media col-xs-6">
+   <div id="rootfs_container" class="media col-xs-6" style="clear: both;">
      <label for="rootfs_url" class="control-label">Rootfs URL *</label> (Required for Linaro hwpack+rootfs, optional for Linaro kernel)
      <input id="rootfs_url" name="rootfs_url" required type="text" class="required form-control source_url">
    </div>
 
-   <div id="android_boot_container" class="media col-xs-6">
+   <div id="android_boot_container" class="media col-xs-6" style="clear: both;">
      <label for="android_boot" class="control-label">Boot URL *</label> (Required for Linaro Android Image)
      <input id="android_boot" name="android_boot" required type="text" class="required form-control source_url">
    </div>
 
-   <div id="android_data_container" class="media col-xs-6">
+   <div id="android_data_container" class="media col-xs-6" style="clear: both;">
      <label for="android_data" class="control-label">Data URL *</label> (Required for Linaro Android Image)
      <input id="android_data" name="android_data" required type="text" class="required form-control source_url">
    </div>
 
-   <div id="android_system_container" class="media col-xs-6">
+   <div id="android_system_container" class="media col-xs-6" style="clear: both;">
      <label for="android_system" class="control-label">System URL *</label> (Required for Linaro Android Image)
      <input id="android_system" name="android_system" required type="text" class="required form-control source_url">
    </div>
 
-   <div id="kernel_container" class="media col-xs-6">
+   <div id="kernel_container" class="media col-xs-6" style="clear: both;">
      <label for="kernel" class="control-label">Kernel URL *</label> (Required for Linaro kernel)
      <input id="kernel" name="kernel" required type="text" class="required form-control source_url">
    </div>
 
-   <div id="ramdisk_container" class="media col-xs-6">
+   <div id="ramdisk_container" class="media col-xs-6" style="clear: both;">
      <label for="ramdisk" class="control-label">Ramdisk URL</label> (Optional for Linaro kernel)
      <input id="ramdisk" name="ramdisk" type="text" class="form-control source_url">
    </div>
 
-   <div id="dtb_container" class="media col-xs-6">
+   <div id="dtb_container" class="media col-xs-6" style="clear: both;">
      <label for="dtb" class="control-label">Device tree blob</label> (Optional for Linaro kernel)
      <input id="dtb" name="dtb" type="text" class="form-control source_url">
    </div>
 
-   <div id="kernel_rootfs_container" class="media col-xs-6">
+   <div id="kernel_rootfs_container" class="media col-xs-6" style="clear: both;">
      <label for="kernel_rootfs" class="control-label">Rootfs URL *</label> (Required for Linaro hwpack+rootfs, optional for Linaro kernel)
      <input id="kernel_rootfs" name="kernel_rootfs" type="text" class="form-control source_url">
    </div>
 
-   <div class="media col-xs-6" style="float: left;">
+   <div class="media col-xs-6" style="clear: both;">
      <label for="boot_options" class="control-label">Boot options</label>
      <textarea id="boot_options" name="boot_options" class="form-control"></textarea>
    </div>
 
-   <div class="media col-xs-3" style="float: left; margin-left: 10px;">
+   <div class="media col-xs-3">
      <label for="interactive_commands" class="control-label">Interactive boot cmd options</label>
      <select id="interactive_commands" name="interactive_commands" class="form-control">
        <option value="false">No</option>
@@ -143,13 +129,13 @@
      </select>
    </div>
 
-   <div class="media col-xs-6">
+   <div class="media col-xs-6" style="clear: both;">
      <label for="device_tags" class="control-label">Device Tags</label>
      <input id="device_tags" name="device_tags" type="text" class="form-control">
    </div>
 
 
-   <div id="testdef_type_container" class="media col-xs-3">
+   <div id="testdef_type_container" class="media col-xs-3" style="clear: both;">
      <label for="testdef_type" class="control-label">Test definition type</label>
      <select id="testdef_type" name="testdef_type" class="form-control">
        <option value="repo">Repository</option>
@@ -157,22 +143,22 @@
      </select>
    </div>
 
-   <div id="repo_container" class="media col-xs-6">
+   <div id="repo_container" class="media col-xs-6" style="clear: both;">
      <label for="repo" class="control-label">Test definition repo</label>
      <input id="repo" name="repo" type="text" class="form-control repo_url">
    </div>
 
-   <div id="testdef_container" class="media col-xs-6">
+   <div id="testdef_container" class="media col-xs-6" style="clear: both;">
      <label for="testdef" class="control-label">Test definition path</label>
      <input id="testdef" name="testdef" type="text" class="form-control">
    </div>
 
-   <div id="testdef_url_container" class="media col-xs-6">
+   <div id="testdef_url_container" class="media col-xs-6" style="clear: both;">
      <label for="testdef_url" class="control-label">Test definition URL</label>
      <input id="testdef_url" name="testdef_url" type="text" class="form-control url">
    </div>
 
-   <div id="test_name_container" class="media col-xs-6">
+   <div id="test_name_container" class="media col-xs-6" style="clear: both;">
      <label for="test_name" class="control-label">Test name</label>
      <input id="test_name" name="test_name" type="text" class="form-control">
    </div>
@@ -195,12 +181,12 @@
  <fieldset>
    <legend>Submit results</legend>
 
-   <div class="media col-xs-6">
+   <div class="media col-xs-6" style="clear: both;">
      <label for="submit_stream" class="control-label">Bundle stream</label>
      <input id="submit_stream" name="submit_stream" type="text" class="form-control">
    </div>
 
-   <div class="media col-xs-6">
+   <div class="media col-xs-6" style="clear: both;">
      <label for="create_stream" class="control-label">Create bundle stream</label>
      <input id="create_stream" name="create_stream" type="checkbox" class="form-inline">
    </div>
@@ -217,4 +203,10 @@
 
 {% endif %}
 
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ STATIC_URL }}lava-server/js/jquery.validate.min.js"></script>
+<script src="{{ STATIC_URL }}lava-server/js/jquery.steps.js"></script>
+<script src="{{ STATIC_URL }}lava_scheduler_app/js/job-wizard.js"></script>
 {% endblock %}

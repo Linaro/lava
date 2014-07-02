@@ -47,8 +47,7 @@ The major LAVA components are depicted below::
 On single-server deployments, both the web interface and the worker
 components (scheduler daemon + dispatcher) run on a same server. You can
 also install one or more separated worked nodes, that will only run
-scheduler daemon + dispatcher. Learn more about that on
-:ref:`lava-deployment-tool`.
+scheduler daemon + dispatcher.
 
 Pre-requisites to start with development
 ****************************************
@@ -64,43 +63,6 @@ Also, you will need git_.
 
 .. _git: http://www.git-scm.org/
 
-
-Setting up a development environment
-************************************
-
-LAVA is tested on Ubuntu 12.04, so that's the recommended deployment
-environment. Likewise, when developing LAVA you should test against
-Ubuntu 12.04.
-
-The best way to create a development environment is to install a LAVA
-instance in development mode::
-
-    $ lava-deployment-tool --developer-mode development
-
-In the above example our development instance is conveniently callled
-"development".
-
-The next step is to install a local repository into the instance. Let's
-exemplify that with lava-server here, but you can do the same for
-lava-dispatcher as well.
-
-The first step is to clone the repository locally::
-
-    $ git clone http://git.linaro.org/git-ro/lava/lava-server.git
-
-Then install your local repository into the instance with::
-
-    $ /srv/lava/instances/development/bin/lava-develop-local /path/to/lava-server
-
-With the above command, your LAVA instance will use your local
-lava-server copy at `/path/to/lava-server` as the source for the
-corresponding component.
-
-Example: making a change to lava-server
-***************************************
-
-*TODO*
-
 Contributing Upstream
 *********************
 
@@ -108,6 +70,10 @@ The best way to protect your investment on LAVA is to contribute your
 changes back. This way you don't have to maintain the changes you need
 by yourself, and you don't run the risk of LAVA changed in a way that is
 incompatible with your changes.
+
+Upstream uses Debian_, see :ref:`lava_on_debian` for more information.
+
+.. _Debian: http://www.debian.org/
 
 Patch Submissions and workflow
 ==============================
@@ -120,18 +86,26 @@ uses the gerrit_ code review system to review changes.
 So the first step will be logging in to gerrit_ and uploading you SSH
 public key there.
 
+If you do not have access to gerrit and it is a small change, you could
+use another git hosting service, push the LAVA code and point us at
+commits which could be cherry picked.
+
 Obtaining the repository
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Let's say you want to contribute to ``lava-server``.
+There are two main components to LAVA, ``lava-server`` and
+``lava-dispatcher``.
 
 ::
 
-    git clone http://git.linaro.org/git-ro/lava/lava-server.git
+    git clone http://git.linaro.org/git/lava/lava-server.git
     cd lava-server
 
+    git clone http://git.linaro.org/git/lava/lava-dispatcher.git
+    cd lava-dispatcher
 
-Setting git-review up
+
+Setting up git-review
 ^^^^^^^^^^^^^^^^^^^^^
 
 ::
@@ -147,7 +121,6 @@ branch for each logically distinct change you work on.
 
 Before you start, make sure your master branch is up to date::
 
-
     git checkout master
     git pull
 
@@ -155,11 +128,32 @@ Now create your topic branch off master::
 
     git checkout -b my-change master
 
+Run the unit tests
+^^^^^^^^^^^^^^^^^^
+
+Extra dependencies are required to run the tests. On Debian based distributions,
+you can install ``lava-dev``. (If you only need to run the ``lava-dispatcher``
+unit tests, you can just install ``pep8`` and ``python-testscenarios``.)
+
+To run the tests, use the ``ci-run`` script::
+
+ $ ./ci-run
+
+Functional testing
+^^^^^^^^^^^^^^^^^^
+
+Unit tests cannot replicate all tests required on LAVA code, some tests will need
+to be run with real devices under test. On Debian based distributions,
+see :ref:`dev_builds`. See :ref:`writing_tests` for information on writing
+LAVA test jobs to test particular device functionality.
+
 Make your changes
 ^^^^^^^^^^^^^^^^^
 
 * Follow PEP8 style for Python code.
 * Make one commit per logical change.
+* Use one topic branch for each logical change.
+* Include unit tests in the commit of the change being tested.
 * Write good commit messages. Useful reads on that topic:
 
  * `A note about git commit messages`_
@@ -170,10 +164,19 @@ Make your changes
 
 .. _`5 useful tips for a better commit message`: http://robots.thoughtbot.com/post/48933156625/5-useful-tips-for-a-better-commit-message
 
+Re-run the unit tests
+^^^^^^^^^^^^^^^^^^^^^
+
+Make sure that your changes do not cause any failures in the unit tests::
+
+ $ ./ci-run
+
+Wherever possible, always add new unit tests for new code.
+
 Send your commits for review
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-From your topic branch, just run::
+From each topic branch, just run::
 
     git review
 

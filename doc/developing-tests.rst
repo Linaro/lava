@@ -252,6 +252,108 @@ Deploying an Android image
     ]
  }
 
+.. _device_tags_example:
+
+Using device tags
+=================
+
+A :term:`device tag` marks a specified device as having specific hardware
+capabilities which other devices of the same :term:`device type` do not.
+To test these capabilities, a Test Job can specify a list of tags which
+the device **must** support. If no devices exist which match all of the
+required tags, the job submission will fail. If devices support a wider
+range of tags than required in the Test Job (or the Test Job requires
+no tags), any of those devices can be used for the Test Job.
+
+.. note:: Test jobs which use :term:`device tag` support can **only** be
+          submitted to instances which have those tags defined **and**
+          assigned to the requested boards. Check the device information
+          on the instance to get the correct tag information.
+
+Singlenode example
+------------------
+
+::
+
+ {
+    "job_name": "panda-lmc",
+    "target": "panda01",
+    "timeout": 18000,
+    "tags": [
+        "hdmi",
+        "usbstick"
+    ]
+    "actions": [
+        {
+            "command": "deploy_linaro_image",
+            "parameters": {
+                "rootfs": "http://releases.linaro.org/12.09/ubuntu/precise-images/nano/linaro-precise-nano-20120923-417.tar.gz",
+                "hwpack": "http://releases.linaro.org/12.09/ubuntu/leb-panda/hwpack_linaro-lt-panda-x11-base_20120924-329_armhf_supported.tar.gz"
+            }
+        },
+        {
+            "command": "boot_linaro_image"
+        },
+        {
+            "command": "submit_results",
+            "parameters": {
+                "server": "http://localhost/RPC2/",
+                "stream": "/anonymous/test/"
+            }
+        }
+    ]
+ }
+
+Multinode example
+-----------------
+
+::
+
+ {
+    "health_check": false,
+    "logging_level": "DEBUG",
+    "timeout": 900,
+    "job_name": "multinode-example",
+    "device_group": [
+        {
+            "role": "felix",
+            "count": 1,
+            "device_type": "kvm",
+            "tags": [
+                "hdmi",
+                "sata"
+            ]
+        },
+        {
+            "role": "rex",
+            "count": 1,
+            "device_type": "kvm",
+            "tags": [
+                "usbstick"
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "command": "deploy_linaro_image",
+            "parameters": {
+                "image": "http://images.validation.linaro.org/kvm-debian-wheezy.img.gz"
+            }
+        },
+        {
+            "command": "boot_linaro_image"
+        },
+        {
+            "command": "submit_results_on_host",
+            "parameters": {
+                "stream": "/anonymous/codehelp/",
+                "server": "http://localhost/RPC2/"
+            }
+        }
+    ]
+ }
+
+
 Installing Binary Blobs
 =======================
 
@@ -431,11 +533,11 @@ option is a set of key-value pairs like::
  {
     "command": "deploy_linaro_image",
     "parameters": {
-        "image": "http://releases.linaro.org/12.09/ubuntu/leb-panda/lt-panda-x11-base-precise_ubuntu-desktop_20120924-329.img.gz",
-        "metadata": {
-            "ubuntu.image_type": "ubuntu-desktop",
-            "ubuntu.build": "61"
-        }
+        "image": "http://releases.linaro.org/12.09/ubuntu/leb-panda/lt-panda-x11-base-precise_ubuntu-desktop_20120924-329.img.gz"
+    },
+    "metadata": {
+        "ubuntu.image_type": "ubuntu-desktop",
+        "ubuntu.build": "61"
     }
  }
 

@@ -1,0 +1,64 @@
+{% load analytics %}<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% endblock %}</title>
+
+  <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava-server/css/bootstrap-3.1.1.min.css">
+  <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava-server/css/smoothness/jquery-ui-1.10.4.custom.min.css"/>
+
+  <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+  <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+  <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+  <![endif]-->
+  <style>
+    body {
+      padding-top: 60px;
+      margin-bottom: 100px;
+    }
+
+    html {
+      position: relative;
+      min-height: 100%;
+    }
+    #footer {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      /* Set the fixed height of the footer here */
+      height: 100px;
+      background-color: #f5f5f5;
+    }
+    #footer > .container {
+      padding-top: 15px;
+      padding-right: 15px;
+      padding-left: 15px;
+    }
+    colgroup col.sorted {
+      background-color: #F8F8F8;
+    }
+
+    table.table thead {
+      background-color: #F0F0F0;
+    }
+  </style>
+  {% block styles %}{% endblock %}
+  {% block extrahead %}{% endblock %}
+</head>
+
+<body>
+{% analytics %}
+{% block body %}{% endblock %}
+
+<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery-1.11.0.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery-ui-1.10.4.custom.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery.cookie.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/bootstrap-3.1.1.min.js"></script>
+{% block scripts %}
+{% endblock scripts %}
+</body>
+</html>

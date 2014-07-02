@@ -37,15 +37,16 @@ from linaro_django_xmlrpc.models import (
     xml_rpc_signature,
 )
 
-from dashboard_app import __version__
 from dashboard_app.filters import evaluate_filter
 from dashboard_app.models import (
     Bundle,
     BundleStream,
-    DataView,
     Test,
     TestRunFilter,
     TestDefinition,
+)
+from lava_scheduler_app.models import (
+    TestJob,
 )
 
 
@@ -73,8 +74,6 @@ class DashboardAPI(ExposedAPI):
     All public methods are automatically exposed as XML-RPC methods
     """
 
-    data_view_connection = DataView.get_connection()
-
     @xml_rpc_signature('str')
     def version(self):
         """
@@ -96,11 +95,16 @@ class DashboardAPI(ExposedAPI):
 
         See: http://docs.python.org/library/sys.html#sys.version_info
 
+        Note that this version will change to reflect the new versioning
+        scheme, based on git tags named after release dates instead of
+        arbitrary major and minor versions, once the migration to packaging
+         is complete.
+
         Return value
         -------------
         Server version string
         """
-        return ".".join(map(str, __version__))
+        return ".".join(map(str, (0, 29, 0, "final", 0)))
 
     def _put(self, content, content_filename, pathname):
         try:
@@ -573,10 +577,11 @@ class DashboardAPI(ExposedAPI):
         `content_sha1`: string
             The SHA1 hash if the content of the bundle
         `content_size`: int
-            This element was added in server version 0.4
             The size of the content
         `is_deserialized`: bool
             True if the bundle was de-serialized successfully, false otherwise
+        `associated_job`: int
+            The job with which this bundle is associated
 
 
         Exceptions raised
@@ -594,22 +599,31 @@ class DashboardAPI(ExposedAPI):
             - personal streams are accessible to owners
             - team streams are accessible to team members
         """
+        bundles = []
         try:
             if self.user and self.user.is_superuser:
                 bundle_stream = BundleStream.objects.get(pathname=pathname)
             else:
                 bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
+            for bundle in bundle_stream.bundles.all().order_by("uploaded_on"):
+                job_id = 'NA'
+                try:
+                    job = TestJob.objects.get(_results_bundle=bundle)
+                    job_id = job.id
+                except TestJob.DoesNotExist:
+                    job_id = 'NA'
+                bundles.append({
+                    'uploaded_by': bundle.uploaded_by.username if bundle.uploaded_by else "",
+                    'uploaded_on': bundle.uploaded_on,
+                    'content_filename': bundle.content_filename,
+                    'content_sha1': bundle.content_sha1,
+                    'content_size': bundle.content.size,
+                    'is_deserialized': bundle.is_deserialized,
+                    'associated_job': job_id
+                })
         except BundleStream.DoesNotExist:
             raise xmlrpclib.Fault(errors.NOT_FOUND, "Bundle stream not found")
-        return [
-            {
-                'uploaded_by': bundle.uploaded_by.username if bundle.uploaded_by else "",
-                'uploaded_on': bundle.uploaded_on,
-                'content_filename': bundle.content_filename,
-                'content_sha1': bundle.content_sha1,
-                'content_size': bundle.content.size,
-                'is_deserialized': bundle.is_deserialized
-            } for bundle in bundle_stream.bundles.all().order_by("uploaded_on")]
+        return bundles
 
     @xml_rpc_signature('str')
     def get_test_names(self, device_type=None):
@@ -780,156 +794,6 @@ class DashboardAPI(ExposedAPI):
                 "Stream with the specified pathname already exists")
         else:
             return bundle_stream.pathname
-
-    def data_views(self):
-        """
-        Name
-        ----
-        `data_views` ()
-
-        Description
-        -----------
-        List all data views
-
-        Arguments
-        ---------
-        None
-
-        Return value
-        ------------
-        This function returns an XML-RPC array of XML-RPC structs with
-        the following fields:
-
-        `name`: string
-            Data view name declared in the definition file
-        `summary`: string
-            One-line description string suitable for developers
-
-        Exceptions raised
-        -----------------
-        None
-        """
-        return [{
-            'name': data_view.name,
-            'summary': data_view.summary,
-            "documentation": data_view.documentation,
-            "arguments": [
-                {
-                    "name": arg.name,
-                    "type": arg.type,
-                    "help": arg.help,
-                    "default": arg.default
-                }
-                for arg in data_view.arguments
-                ]
-        } for data_view in DataView.repository.all()]
-
-    def data_view_info(self, name):
-        """
-        Name
-        ----
-        `data_view_info` (`name`)
-
-        Description
-        -----------
-        Describe a specific data view. This function looks up data view by name and returns rich information. See below for details
-
-        Arguments
-        ---------
-        `name`: string
-            Name of the data view to lookup
-
-
-        Return value
-        ------------
-        This function returns an XML-RPC struct with the following fields:
-
-        `name`: string
-            Data view name declared in the definition file
-        `summary`: string
-            One-line description string suitable for developers
-        `documentation`: string
-            Longer documentation that described the purpose and indented usage of this data view
-        `sql`: string or null
-            The SQL of query specific to the currently running database (the
-            actual query that is executed by query-data-view. Since some data
-            views use database specific SQL the query may not be available.
-        `argments` an XML-RPC array of XML-RPC structs with the following fields:
-            `name`: Argument name
-            `type`: Argument type, one of "number", "string" or "boolean"
-            `help`: Help string for this argument
-            `default`: Default value of an argument (or null if not available)
-
-
-        Exceptions raised
-        -----------------
-        404
-            Name does not designate a data view
-        """
-        try:
-            data_view = DataView.repository.get(name=name)
-        except DataView.DoesNotExist:
-            raise xmlrpclib.Fault(errors.NOT_FOUND, "Data view not found")
-        else:
-            query = data_view.get_backend_specific_query(self.data_view_connection)
-            return {
-                "name": data_view.name,
-                "summary": data_view.summary,
-                "documentation": data_view.documentation,
-                "sql": query.sql_template if query is not None else None,
-                "arguments": [{
-                    "name": arg.name,
-                    "type": arg.type,
-                    "help": arg.help,
-                    "default": arg.default
-                } for arg in data_view.arguments]
-            }
-
-    def query_data_view(self, name, arguments):
-        """
-        Name
-        ----
-        `query_data_view` (name, arguments)
-
-        Description
-        -----------
-        List all data views
-
-        Arguments
-        ---------
-        None
-
-        Return value
-        ------------
-        This function returns an XML-RPC struct with the following fields:
-
-        `rows`: XML-RPC array of XML-RPC arrays
-            Each item corresponds to cell in a row
-        `columns`: XML-RPC array of XML-RPC structs with the following fields:
-            `name`: XML-RPC string - name of the column
-            `type`: XML-RPC string - column type (future extension, currently unused)
-
-        Exceptions raised
-        -----------------
-        TBD
-        """
-        try:
-            data_view = DataView.repository.get(name=name)
-        except DataView.DoesNotExist:
-            raise xmlrpclib.Fault(errors.NOT_FOUND, "Data view not found")
-        try:
-            rows, columns = data_view(self.data_view_connection, **arguments)
-        except (LookupError, TypeError, ValueError, DatabaseError) as exc:
-            raise xmlrpclib.Fault(errors.INTERNAL_SERVER_ERROR, str(exc))
-        else:
-            rows = [[float(cell) if isinstance(cell, decimal.Decimal) else cell for cell in row] for row in rows]
-            return {
-                "rows": rows,
-                "columns": [{
-                    "name": item[0],
-                    "type": item[1]
-                } for item in columns]
-            }
 
     def _get_filter_data(self, filter_name):
         match = re.match("~([-_A-Za-z0-9]+)/([-_A-Za-z0-9]+)", filter_name)

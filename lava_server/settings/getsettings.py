@@ -11,7 +11,7 @@
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
+#  the Free Software Foundation; either version 3 of the License, or
 #  (at your option) any later version.
 #
 #  This program is distributed in the hope that it will be useful,
@@ -20,9 +20,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-#  MA 02110-1301, USA.
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
 """
@@ -222,6 +220,11 @@ class Settings(object):
         return self._settings.get("MEDIA_ROOT", default)
 
     @property
+    def LOG_SIZE_LIMIT(self):
+        default = 25
+        return self._settings.get("LOG_SIZE_LIMIT", default)
+
+    @property
     def MEDIA_URL(self):
         """
         See: http://docs.djangoproject.com/en/1.2/ref/settings/#media-url
@@ -370,3 +373,15 @@ class Settings(object):
         """
         default = "/{mount_point}".format(mount_point=self.mount_point)
         return self._settings.get("LOGIN_REDIRECT_URL", default)
+
+    @property
+    def OPENID_SSO_SERVER_URL(self):
+        """
+        Allow for local preference for Launchpad to support existing
+        groups until OAuth is fully supported. Standard installs
+        default to Google OpenID which is available until September 2014.
+        To use Google+, set the OpenID server in /etc/lava-server/settings.conf :
+        "OPENID_SSO_SERVER_URL": "https://www.google.com/accounts/o8/id"
+        """
+        default = 'https://login.ubuntu.com/'
+        return self._settings.get("OPENID_SSO_SERVER_URL", default)

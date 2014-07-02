@@ -56,8 +56,6 @@ from dashboard_app.models import (
     Attachment,
     Bundle,
     BundleStream,
-    DataReport,
-    DataView,
     Tag,
     Test,
     TestCase,
@@ -335,7 +333,7 @@ def bundle_list_export(request, pathname):
                 pk=bundle.uploaded_by_id).username
             out.writerow(bundle_dict)
 
-    response = HttpResponse(mimetype='text/csv')
+    response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = "attachment; filename=%s.csv" % file_name
     with open(file_path, 'r') as csv_file:
         response.write(csv_file.read())
@@ -453,7 +451,7 @@ def bundle_export(request, pathname, content_sha1):
             test_run_dict["bug_link"] = " ".join([b.bug_link for b in test_run.bug_links.all()])
             out.writerow(test_run_dict)
 
-    response = HttpResponse(mimetype='text/csv')
+    response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = "attachment; filename=%s.csv" % file_name
     with open(file_path, 'r') as csv_file:
         response.write(csv_file.read())
@@ -657,7 +655,7 @@ def test_run_export(request, pathname, content_sha1, analyzer_assigned_uuid):
             test_result_dict["bug_link"] = " ".join([b.bug_link for b in test_result.bug_links.all()])
             out.writerow(test_result_dict)
 
-    response = HttpResponse(mimetype='text/csv')
+    response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = "attachment; filename=%s.csv" % file_name
     with open(file_path, 'r') as csv_file:
         response.write(csv_file.read())
@@ -684,7 +682,9 @@ def test_run_software_context(request, pathname, content_sha1, analyzer_assigned
                 pathname=pathname,
                 content_sha1=content_sha1,
                 analyzer_assigned_uuid=analyzer_assigned_uuid),
-            "test_run": test_run
+            "packages": test_run.packages.all().order_by('name'),
+            "sources": test_run.sources.all(),
+            "half_packages_count": int(test_run.packages.count() / 2.0)
         }, RequestContext(request))
 
 
@@ -752,7 +752,7 @@ def test_result_update_comments(request, pathname, content_sha1,
     test_result.comments = request.POST.get('comments')
     test_result.save()
     data = serializers.serialize('json', [test_result])
-    return HttpResponse(data, mimetype='application/json')
+    return HttpResponse(data, content_type='application/json')
 
 
 def attachment_download(request, pk):
@@ -765,7 +765,7 @@ def attachment_download(request, pk):
     if not attachment.content:
         return HttpResponseBadRequest(
             "Attachment %s not present on dashboard" % pk)
-    response = HttpResponse(mimetype=attachment.mime_type)
+    response = HttpResponse(content_type=attachment.mime_type)
     response['Content-Disposition'] = 'attachment; filename=%s' % (
         attachment.content_filename)
     response.write(attachment.content.read())
@@ -784,60 +784,6 @@ def attachment_view(request, pk):
     return render_to_response(
         "dashboard_app/attachment_view.html", {
             'attachment': attachment,
-        }, RequestContext(request))
-
-
-@BreadCrumb("Reports", parent=index)
-def report_list(request):
-    return render_to_response(
-        "dashboard_app/report_list.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(report_list),
-            "report_list": DataReport.repository.all()
-        }, RequestContext(request))
-
-
-@BreadCrumb("{title}", parent=report_list, needs=['name'])
-def report_detail(request, name):
-    try:
-        report = DataReport.repository.get(name=name)
-    except DataReport.DoesNotExist:
-        raise Http404('No report matches given name.')
-    return render_to_response(
-        "dashboard_app/report_detail.html", {
-            "is_iframe": request.GET.get("iframe") == "yes",
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                report_detail,
-                name=report.name,
-                title=report.title),
-            "report": report,
-        }, RequestContext(request))
-
-
-@BreadCrumb("Data views", parent=index)
-def data_view_list(request):
-    return render_to_response(
-        "dashboard_app/data_view_list.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(data_view_list),
-            "data_view_list": DataView.repository.all(),
-        }, RequestContext(request))
-
-
-@BreadCrumb(
-    "Details of {name}",
-    parent=data_view_list,
-    needs=['name'])
-def data_view_detail(request, name):
-    try:
-        data_view = DataView.repository.get(name=name)
-    except DataView.DoesNotExist:
-        raise Http404('No data view matches the given query.')
-    return render_to_response(
-        "dashboard_app/data_view_detail.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                data_view_detail,
-                name=data_view.name,
-                summary=data_view.summary),
-            "data_view": data_view
         }, RequestContext(request))
 
 

@@ -1,5 +1,4 @@
-{% extends "lava_scheduler_app/_content.html" %}
-
+{% extends "layouts/content-bootstrap.html" %}
 {% load django_tables2 %}
 
 {% block content %}
@@ -7,8 +6,8 @@
 
 {% render_table myjobs_table %}
 
-<p><a href="{% url dashboard_app.views.mybundlestreams %}">My bundle streams</a></p>
-<p><a href="{% url lava.scheduler.mydevice_list %}">My devices</a></p>
-<p><a href="{% url lava.scheduler.mydevice_type_health_history_log %}">My devices health history</a></p>
+{% endblock %}
 
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
 {% endblock %}

@@ -108,10 +108,10 @@ class WorkerData:
         """
         try:
             localhost = Worker.localhost()
-            if localhost.too_long_since_last_heartbeat():
-                self.populate_minimal_worker_data()
-            elif restart:
+            if restart:
                 self.populate_complete_worker_data()
+            elif localhost.too_long_since_last_heartbeat():
+                self.populate_minimal_worker_data()
             else:
                 return
         except ValueError:
@@ -152,3 +152,14 @@ class WorkerData:
             return
         server = _get_scheduler_rpc()
         server.notify_incomplete_job(job_id)
+
+    def record_master_scheduler_tick(self):
+        """Records the master's last scheduler tick timestamp.
+        """
+        try:
+            worker = Worker.localhost()
+            if worker.on_master():
+                worker.record_last_master_scheduler_tick()
+        except Exception as err:
+            self.logger.error("Unable to record last master scheduler tick.")
+            self.logger.error("Details: %s" % err)

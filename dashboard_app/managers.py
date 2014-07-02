@@ -24,12 +24,12 @@ import logging
 
 class BundleManager(models.Manager):
 
-    @transaction.commit_on_success
     def create_with_content(self, bundle_stream, uploaded_by, content_filename, content):
         logging.debug("Creating bundle object")
         bundle = self.create(
             bundle_stream=bundle_stream,
             uploaded_by=uploaded_by,
+            is_deserialized=False,
             content_filename=content_filename)
         # XXX: this _can_ fail -- if content_sha1 is a duplicate
         logging.debug("Saving bundle object (this is safe so far)")
@@ -40,12 +40,9 @@ class BundleManager(models.Manager):
                                 ContentFile(content))
         except IntegrityError as exc:
             logging.debug("integrity error: %r", exc)
-            # Note: we're not saving the deletion back to the database
-            # because we are going to rollback anyway. In PostgreSQL this
-            # would also always fail because the database is not going to
-            # honor any other operations until we rollback.
-            # See:
-            # http://docs.djangoproject.com/en/1.2/topics/db/transactions/#handling-exceptions-within-postgresql-transactions
+            # https://docs.djangoproject.com/en/dev/topics/db/transactions/#handling-exceptions-within-postgresql-transactions
+            # Explicit handling is relevant only if you're implementing your own transaction management.
+            # This problem cannot occur in Django's default mode and atomic() handles it automatically.
             logging.debug("deleting content file")
             bundle.content.delete(save=False)
             raise

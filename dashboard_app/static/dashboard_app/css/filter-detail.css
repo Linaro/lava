@@ -3,13 +3,13 @@ table.select-compare1 tr.even td {
     background-color: #ccf;
 }
 table.select-compare1 tr.even.hover td {
-    background-color: #77f;
+    background-color: #33f;
 }
 table.select-compare1 tr.odd td {
     background-color: #aaf;
 }
 table.select-compare1 tr.odd.hover td {
-    background-color: #77f;
+    background-color: #33f;
 }
 
 table.select-compare2 td { cursor: pointer; }
@@ -20,19 +20,19 @@ table.select-compare2 tr.odd td {
     background-color: #faa;
 }
 table.select-compare2 tr.selected-1 td {
-    background-color: #77f;
+    background-color: #bbf;
 }
 table.select-compare2 tr.selected-1.hover td {
-    background-color: #77f;
+    background-color: #bbf;
 }
 table.select-compare2 tr.hover td {
     background-color: #f77;
 }
 table.select-compare3 tr.selected-1 td {
-    background-color: #77f;
+    background-color: #bbf;
 }
 table.select-compare3 tr.selected-1.hover td {
-    background-color: #77f;
+    background-color: #bbf;
 }
 table.select-compare3 tr.selected-2 td {
     background-color: #f77;

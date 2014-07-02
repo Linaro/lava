@@ -1,0 +1,46 @@
+#!/bin/sh
+
+set -e
+
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
+#
+#  Copyright: 2010-2013, Linaro Limited
+#
+# This script will need porting to the dumb dispatcher model to get
+# the relevant config values instead of looking for lava-server files.
+
+. /etc/lava-server/instance.conf
+
+if [ -f /etc/lava-server/worker.conf ]; then
+    . /etc/lava-server/worker.conf
+fi
+
+LOCAL_USER=${LAVA_SYS_USER}
+LOCAL_DIR=${LAVA_PREFIX}/default/media
+
+REMOTE_USER=${LAVA_SYS_USER}
+REMOTE_HOST=${LAVA_DB_SERVER}
+REMOTE_DIR=${LAVA_PREFIX}/default/media
+
+# safe to call from the master
+if [ -f $LOCAL_DIR/.mounted ] ; then
+    if [ "" != "--force" ] ; then
+        exit 0
+    fi
+fi
+SSH_OPTS="-o PasswordAuthentication=no -o StrictHostKeyChecking=no -o allow_root -o reconnect"
+umount $LOCAL_DIR 2>/dev/null || true
+sudo -u $LOCAL_USER sshfs $SSH_OPTS $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR $LOCAL_DIR

@@ -1,362 +1,474 @@
-{% extends "lava_scheduler_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 
 {% load django_tables2 %}
 
-{% block extrahead %}
-{{ block.super }}
-<style>
-  details, summary { display: block; padding: 0.2em; }
-  summary { cursor: pointer; }
-  summary:hover, summary:focus { background: #ddd; }
-  .no-details details > * { display: none; }
-  .no-details details.open > * { display: block; }
-  .no-details details summary:before { width: 20px; content: '► '; }
-  .no-details details.open summary:before { content: '▼ '; }
-  .no-details details summary { display: block; }
-  .ui-button { width: 250px }
-</style>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.details.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script> 
+{% block styles %}
+  <style>
+    details, summary { display: block; padding: 0.2em; }
+    summary { cursor: pointer; }
+    summary:hover, summary:focus { background: #ddd; }
+    .no-details details > * { display: none; }
+    .no-details details.open > * { display: block; }
+    .no-details details summary:before { width: 20px; content: '► '; }
+    .no-details details.open summary:before { content: '▼ '; }
+    .no-details details summary { display: block; }
+    .ui-button { width: 250px }
+    dd {padding-left: 1em; padding-right: 1em;}
+    dt {padding-right: 1em;}
+    .oneline { white-space: nowrap; }
+  </style>
 {% endblock %}
 
-
 {% block content %}
+
+{% if device.device_type.owners_only %}
+<div class="alert alert-warning alert-dismissable">
+  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+  <p><strong><i>{{  device.device_type.name }}</i> is a hidden device type.</strong></p>
+  Only owners of one or more devices of type <i>{{ device.device_type }}</i> can see this information.
+</div>
+{% endif %}
+
 {% block device_heading %}{% endblock %}
 
-<table border=0 width="100%">
-<colgroup>
-<col width="15%">
-<col width="20%">
-<col width="20%">
-<col width="20%">
-</colgroup>
-<tr>
-<td style="vertical-align:text-top;text-align:left;">
-    <dt>Hostname:</dt>
-    <dd>{{ device.hostname }}</dd>
-
-    <dt>Device type:</dt>
-    <dd><a href="{{ device.device_type.get_absolute_url }}">{{ device.device_type }}</a></dd>
-
-    <dt>Device version:</dt>
-    <dd>{{ device.device_version|default:"Unknown" }}</dd>
-
-    <dt>Device Tags</dt>
+<div class="row">
+  <div class="col-md-4">
+    <h4 class="modal-header">Device</h4>
+    <dl class="dl-horizontal">
+      <dt>Hostname</dt>
+      <dd>{{ device.hostname }}</dd>
+      <dt>Type</dt>
+      <dd><a href="{{ device.device_type.get_absolute_url }}">{{ device.device_type }}</a></dd>
+      <dt>Description</dt>
+      <dd>{{ device.get_description|default:"<i>None</i>"|truncatewords_html:200|wordwrap:80|linebreaksbr }}</dd>
+      <dt>Tags</dt>
     {% for tag in device.tags.all %}
-    <dd>{{ tag.name }}
-    {% if tag.description %}
-      <abbr title="{{ tag.description }}">(?)</abbr>
-    {% endif %}
-    </dd>
-    {% empty %}
-    <dd><i>None</i></dd>
-    {% endfor %}
-
-{% if not device.temporarydevice %}
-    <dt>Worker Hostname</dt>
-    <dd>
-    {% if device.too_long_since_last_heartbeat %}
-      <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"/>
-    {% else %}
-      <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"/>
-    {% endif %}&nbsp;&nbsp;
-    {% if device.worker_host.is_master %}
-      <b><a href="{{ device.worker_host.get_absolute_url }}">{{ device.worker_host.hostname }}</a></b>
-    {% else %}
-      <a href="{{ device.worker_host.get_absolute_url }}">{{ device.worker_host.hostname }}</a>
-    {% endif %}
-    </dd>
-{% endif %}
-</td>
-<td style="vertical-align:text-top;text-align:left;">
-    <dt>Device Owner:
-        <abbr title="If specified, submissions to {{ device.hostname }} are restricted to this user or group.">(?)</abbr>
-    </dt>
-    <dd>
-        {% if device.user %}
-        <a href="mailto:{{ device.user.email }}">{{ device.user.email }}</a>
-        {% elif device.group %}
-        All users in the <b>{{ device.group }}</b> group.
-        {% else %}
-        Unrestricted
-        {% endif %}
-    </dd>
-    {% if device.device_type.owners_only %}
-        <dt>Hidden device type</dt>
-        <dd>Only owners of one or more devices of type {{ device.device_type }}
-        can see this information.</dd>
-    {% endif %}
-    <dt>User or group with physical access:
-        <abbr title="If known, this is the user or group with physical access to {{ device.hostname }}.">(?)</abbr>
-    </dt>
-    <dd>
-        {% if device.physical_owner %}
-        <a href="mailto:{{ device.physical_owner.email }}">{{ device.physical_owner.email }}</a>
-        {% elif device.physical_group %}
-        <b>{{ device.physical_group }}</b> group.
-        {% else %}
-        Unknown
-        {% endif %}
-    </dd>
-    <dt>Description:
-        <abbr title="Device owners can edit this field">(?)</abbr>
-    </dt>
-    <dd>{{ device.get_description|truncatewords_html:200|wordwrap:80|linebreaksbr }}</dd>
-</td>
-<td style="vertical-align:text-top;text-align:left;">
-    <dt>Status:</dt>
-    <dd>
-      {{ device.get_status_display }}
-      {% if transition %}
-      (reason: <i>{{ transition }}</i>)
+      <dd>{{ tag.name }}
+      {% if tag.description %}
+        <abbr title="{{ tag.description }}">(?)</abbr>
       {% endif %}
-    </dd>
-    <dt>Health Status:</dt>
-    <dd>
-      {{ device.get_health_status_display }}
-    </dd>
-    {% if device.current_job %}
-    <dt>Currently running:</dt>
-    <dd><a href="{{ device.current_job.get_absolute_url }}"
-      >Job {{ device.current_job }}</a></dd>
-    {% endif %}
-</td>
-<td style="vertical-align:text-top;text-align:right;">
+      </dd>
+    {% empty %}
+      <dd><i>None</i></dd>
+    {% endfor %}
+      <dt>Version</dt>
+      <dd>{{ device.device_version|default:"<i>Unknown</i>" }}</dd>
+    </dl>
+  </div>
+  <div class="col-md-4">
+    <h4 class="modal-header">Owners and status</h4>
+    <dl class="dl-horizontal">
+      <dt>Owner <abbr title="If specified, submissions to {{ device.hostname }} are restricted to this user or group.">(?)</abbr></dt>
+      <dd>
+          {% if device.user %}
+          <a href="mailto:{{ device.user.email }}">{{ device.user.email }}</a>
+          {% elif device.group %}
+          Group <em>{{ device.group }}</em>
+          {% else %}
+          <i>Unrestricted</i>
+          {% endif %}
+      </dd>
+      <dt>Physical access <abbr title="If known, this is the user or group with physical access to {{ device.hostname }}.">(?)</abbr></dt>
+      <dd>
+          {% if device.physical_owner %}
+          <a href="mailto:{{ device.physical_owner.email }}">{{ device.physical_owner.email }}</a>
+          {% elif device.physical_group %}
+          Group <em>{{ device.physical_group }}</em>
+          {% else %}
+          <i>Unknown</i>
+          {% endif %}
+      </dd>
+{% if not device.temporarydevice %}
+      <dt>Worker</dt>
+      <dd>
+        {% if device.too_long_since_last_heartbeat %}
+          <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"/>
+        {% else %}
+          <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"/>
+        {% endif %}
+        {% if device.worker_host.is_master %}
+          <b><a href="{{ device.worker_host.get_absolute_url }}">{{ device.worker_host.hostname }}</a></b>
+        {% else %}
+          <a href="{{ device.worker_host.get_absolute_url }}">{{ device.worker_host.hostname }}</a>
+        {% endif %}
+      </dd>
+{% endif %}
+    </dl>
+  </div>
+  <div class="col-md-4">
+    <h4 class="modal-header">Reports</h4>
+    <dl class="dl-horizontal">
+      <dt>Status</dt>
+      <dd>
+        {{ device.get_status_display }}
+        {% if transition %}
+        (reason: <i>{{ transition }}</i>)
+        {% endif %}
+        {% if device.current_job %}
+        (<a href="{{ device.current_job.get_absolute_url }}">Job {{ device.current_job.pk }}</a>)
+        {% endif %}
+      </dd>
+{% if device.device_type.name != 'dynamic-vm' %}
+      <dt>Health</dt>
+      <dd>{{ device.get_health_status_display }}</dd>
+      <dt>Checks/failures</dt>
+      <dd><a href="{% url 'lava.scheduler.device_report' device.pk %}">Graphical reports</a></dd>
+{% endif %}
+    </dl>
+  </div>
+</div>
+<div class="row">
+{% if device.device_type.name != 'dynamic-vm' %}
+  <div class="col-md-6">
+    <h4 class="modal-header">Capabilities{% if capabilities_date %} <small>({{ capabilities_date }})</small>{% endif %}</h4>
+    <dl class="dl-horizontal">
+      <dt>Processor</dt>
+      <dd>{{ processor|default:"<i>unknown</i>" }}</dd>
+      <dt>Model</dt>
+      <dd>{{ models|default:"<i>unknown</i>" }}</dd>
+      <dt>Flags</dt>
+      <dd>{{ flags|default:"<i>unknown</i>" }}</dd>
+      <dt>Cores</dt>
+      <dd>{{ cores|default:"<i>unknown</i>" }}</dd>
+      {% if emulated %}
+      <dt>Emulated</dt>
+      <dd>True</dd>
+      {% endif %}
+    </dl>
+  </div>
+{% endif %}
+
+  <div class="col-md-6">
+    <h4 class="modal-header">Actions</h4>
+    <div class="row">
+      <div class="col-md-6">
 {% if show_maintenance %}
-<form method="POST"
-      action="{% url lava.scheduler.device.maintenance device.pk %}">
-  {% csrf_token %}
-  <button id="maintenance-button">Put into maintenance mode</button>
-</form>
-<form method="POST"
-      action="{% url lava.scheduler.device.maintenance device.pk %}"
-      id="maintenance-dialog" style="display: none">
-  {% csrf_token %}
-  A reason must be specified:
-  <input id="maintenance-reason" name="reason" style="width: 100%"/>
-  {% if device.current_job %}
-  <input type="checkbox" name="notify" value="{{user.email}}">Notify {{ user.email }} when job {{ device.current_job.id }} is complete.
-  {% endif %}
-</form><br/>
+        <div class="btn-group btn-group-justified">
+          <div class="btn-group">
+            <button class="btn btn-primary" data-toggle="modal" data-target="#maintenanceDialog">Maintenance</button>
+            <div class="modal fade" id="maintenanceDialog" tabindex="-1" role="dialog" aria-labelledby="maintenanceDialoglabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="maintenanceDialoglabel">Reason for offlining</h4>
+                  </div>
+                  <div class="modal-body">
+                    <form role="form" method="post" action="{% url 'lava.scheduler.device.maintenance' device.pk %}">
+                      <div id="maintenance-container" class="form-group has-error has-feedback">
+                        <p>a reason must be specified:</p>
+                        <input id="maintenance-reason" name="reason"/>
+                        {% csrf_token %}
+                        <div id="maintenance-feedback">
+                        </div>
+                      </div>
+                      <dl class="dl-horizontal">
+                        {% if device.current_job %}
+                        <div class="form-group">
+                          <input type="checkbox" name="notify" value="{{user.email}}">notify {{ user.email }} when job {{ device.current_job.id }} is complete.
+                        </div>
+                        {% endif %}
+                        <div class="form-group">
+                          <div id="maintenance-submit">
+                          </div>
+                        </div>
+                      </dl>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 {% endif %}
-
 {% if show_online %}
-<form method="POST"
-      action="{% url lava.scheduler.device.online device.pk %}">
-  {% csrf_token %}
-  <button id="online-button">Put online</button>
-</form>
-<form method="POST"
-      action="{% url lava.scheduler.device.online device.pk %}"
-      id="online-dialog" style="display: none">
-  {% csrf_token %}
-  A reason must be specified:
-  <input id="online-reason" name="reason" style="width: 100%"/>
-  <input type="checkbox" name="skiphealthcheck" value="True"/> Skip
-      manual health check <abbr title="An automatic health check may
-      still run if one is already due.">(?)</abbr>
-</form><br/>
-<form method="POST"
-      action="{% url lava.scheduler.device.looping device.pk %}">
-  {% csrf_token %}
-  <button id="looping-button">Put into looping mode</button>
-</form>
-<form method="POST"
-      action="{% url lava.scheduler.device.looping device.pk %}"
-      id="looping-dialog" style="display: none">
-  {% csrf_token %}
-  A reason must be specified:
-  <input id="looping-reason" name="reason" style="width: 100%"/>
-</form>
-<br/>
+        <div class="btn-group btn-group-justified">
+          <div class="btn-group">
+            <button class="btn btn-primary" data-toggle="modal" data-target="#onlineDialog">Put online</button>
+            <div class="modal fade" id="onlineDialog" tabindex="-1" role="dialog" aria-labelledby="onlineDialoglabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="onlineDialoglabel">Reason for onlining</h4>
+                  </div>
+                  <div class="modal-body">
+                    <form role="form" method="post" action="{% url 'lava.scheduler.device.online' device.pk %}">
+                      <div id="online-container" class="form-group has-error has-feedback">
+                        <p>A reason must be specified:</p>
+                        <input id="online-reason" name="reason"/>
+                        {% csrf_token %}
+                        <input type="checkbox" name="skiphealthcheck" value="True"/> Skip manual health check <abbr
+                        title="An automatic health check may still run if one is already due.">(?)</abbr>
+                        <div id="online-feedback">
+                        </div>
+                      </div>
+                      <dl class="dl-horizontal">
+                        <div class="form-group">
+                          <div id="online-submit">
+                          </div>
+                        </div>
+                      </dl>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="btn-group btn-group-justified">
+          <div class="btn-group">
+            <button class="btn btn-warning" data-toggle="modal" data-target="#loopingDialog">Looping mode</button>
+            <div class="modal fade" id="loopingDialog" tabindex="-1" role="dialog" aria-labelledby="loopingDialoglabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="loopingDialoglabel">Reason for looping health checks</h4>
+                  </div>
+                  <div class="modal-body">
+                    <form role="form" method="post" action="{% url 'lava.scheduler.device.looping' device.pk %}">
+                      <div id="looping-container" class="form-group has-error has-feedback">
+                        <p>A reason must be specified:</p>
+                        <input id="looping-reason" name="reason"/>
+                        {% csrf_token %}
+                        <div id="looping-feedback">
+                        </div>
+                      </div>
+                      <dl class="dl-horizontal">
+                        <div class="form-group">
+                          <div id="looping-submit">
+                          </div>
+                        </div>
+                      </dl>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 {% endif %}
-
 {% if show_forcehealthcheck %}
-<form style="..." method="POST"
-      action="{% url lava.scheduler.device.forcehealthcheck device.pk %}">
-  {% csrf_token %}
-  <button id="forcehealthcheck-button">Force Health Check</button>
-</form><br/>
+        <div class="btn-group btn-group-justified">
+          <div class="btn-group">
+            <form role="form" method="POST" action="{% url 'lava.scheduler.device.forcehealthcheck' device.pk %}">
+              {% csrf_token %}
+              <button class="btn btn-info" id="forcehealthcheck-button">Force Health Check</button>
+            </form>
+          </div>
+        </div>
 {% endif %}
+      </div>
 
-</td>
-<td style="vertical-align:text-top;text-align:left;">
+      <div class="col-md-6">
 {% if edit_description %}
-<form method="POST"
-      action="{% url lava.scheduler.device.edit_description device.pk %}">
-  {% csrf_token %}
-  <button id="description-button">Edit the device description</button>
-</form>
-<form method="POST"
-      action="{% url lava.scheduler.device.edit_description device.pk %}"
-      id="description-dialog" style="...">
-  {% csrf_token %}
-    An empty description will clear the existing content.
-    <input id="device-description" name="desc" value="{{ device.get_description }}"/>
-</form><br/>
+        <div class="btn-group btn-group-justified">
+          <div class="btn-group">
+            <button class="btn btn-default" data-toggle="modal" data-target="#descriptionDialog">Edit description</button>
+            <div class="modal fade" id="descriptionDialog" tabindex="-1" role="dialog" aria-labelledby="descriptionDialoglabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="descriptionDialoglabel">Edit device description</h4>
+                  </div>
+                  <div class="modal-body">
+                    <form role="form" method="post" action="{% url 'lava.scheduler.device.edit_description' device.pk %}">
+                      <div id="description-container" class="form-group">
+                        <p>An empty description will clear the existing content</p>
+                        <input id="device-description" name="desc" value="{{ device.get_description }}"/>
+                        {% csrf_token %}
+                      </div>
+                      <dl class="dl-horizontal">
+                        <div class="form-group">
+                          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                          <button type="submit" class="btn btn-success">Set</button>
+                        </div>
+                      </dl>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 {% endif %}
-
 {% if show_restrict %}
-<form method="POST"
-      action="{% url lava.scheduler.device.restrict_device device.pk %}">
-  {% csrf_token %}
-  <button id="restrict-button">Restrict submissions to {{ device.hostname }}</button>
-</form>
-<form method="POST"
-      action="{% url lava.scheduler.device.restrict_device device.pk %}"
-      id="restrict-dialog" style="...">
-  {% csrf_token %}
-  A reason must be specified:
-    <input id="restriction-reason" name="reason" style="width: 100%"/>
-</form><br/>
+        <div class="btn-group btn-group-justified">
+          <div class="btn-group">
+            <button class="btn btn-danger" data-toggle="modal" data-target="#restrictDialog">Restrict submission</button>
+            <div class="modal fade" id="restrictDialog" tabindex="-1" role="dialog" aria-labelledby="restrictDialoglabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="restrictDialoglabel">Reasons for restricting {{ device.hostname }}</h4>
+                  </div>
+                  <div class="modal-body">
+                    <form role="form" method="post" action="{% url 'lava.scheduler.device.restrict_device' device.pk %}">
+                      <div id="restrict-container" class="form-group has-error has-feedback">
+                        <p>A reason must be specified:</p>
+                        <input id="restrict-reason" name="reason"/>
+                        {% csrf_token %}
+                        <div id="restrict-feedback">
+                        </div>
+                      </div>
+                      <dl class="dl-horizontal">
+                        <div class="form-group">
+                          <div id="restrict-submit">
+                          </div>
+                        </div>
+                      </dl>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 {% endif %}
-
 {% if show_pool %}
-<form method="POST"
-      action="{% url lava.scheduler.device.derestrict_device device.pk %}">
-  {% csrf_token %}
-  <button id="derestrict-button">Return {{ device.hostname }} to the pool</button>
-</form>
-<form method="POST"
-      action="{% url lava.scheduler.device.derestrict_device device.pk %}"
-      id="derestrict-dialog" style="...">
-  {% csrf_token %}
-  A reason must be specified:
-    <input id="derestriction-reason" name="reason" style="width: 100%"/>
-</form><br/>
+        <div class="btn-group btn-group-justified">
+          <div class="btn-group">
+            <button class="btn btn-danger" data-toggle="modal" data-target="#poolDialog">Return {{ device.hostname }} to the pool</button>
+            <div class="modal fade" id="poolDialog" tabindex="-1" role="dialog" aria-labelledby="poolDialoglabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="poolDialoglabel">Reasons for returning {{ device.hostname }} to the pool</h4>
+                  </div>
+                  <div class="modal-body">
+                    <form role="form" method="post" action="{% url 'lava.scheduler.device.derestrict_device' device.pk %}">
+                      <div id="derestrict-container" class="form-group has-error has-feedback">
+                        <p>A reason must be specified:</p>
+                        <input id="derestrict-reason" name="reason"/>
+                        {% csrf_token %}
+                        <div id="derestrict-feedback">
+                        </div>
+                      </div>
+                      <dl class="dl-horizontal">
+                      {% if device.current_job %}
+                        <div class="form-group">
+                          <input type="checkbox" name="notify" value="{{user.email}}">Notify {{ user.email }} when job {{ device.current_job.id }} is complete.
+                        </div>
+                        {% endif %}
+                        <div class="form-group">
+                          <div id="derestrict-submit">
+                          </div>
+                        </div>
+                      </dl>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
 
-</td>
-</tr>
-</table>
-<br/>
 {% block content_columns %}
 {% endblock %}
 
-<details>
-  <summary>See status transitions</summary>
+<h3>Status transitions</h3>
   {% render_table transition_table %}
-</details>
+
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.details.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
 
 <script>
-$(document).ready(
-  function() {
-    $('html').addClass($.fn.details.support ? 'details' : 'no-details');
-    $('details').details();
-    $('script').css('visibility', 'hidden');
-{% if edit_description %}
-    $("#description-button").button();
-    $("#description-button").click(function (e) {
-        e.preventDefault();
-        $("#description-dialog").dialog('open');
+  $(document).ready(
+    function() {
+  {% if show_maintenance %}
+      $("#maintenance-feedback").html('<span class="glyphicon glyphicon-remove form-control-feedback"></span>');
+  {% endif %}
+  {% if show_online %}
+      $("#online-feedback").html('<span class="glyphicon glyphicon-remove form-control-feedback"></span>');
+  {% endif %}
+  {% if show_restrict %}
+      $("#restrict-feedback").html('<span class="glyphicon glyphicon-remove form-control-feedback"></span>');
+  {% endif %}
+  {% if show_pool %}
+      $("#derestrict-feedback").html('<span class="glyphicon glyphicon-remove form-control-feedback"></span>');
+  {% endif %}
     });
-    $("#description-dialog").dialog(
-        {
-            autoOpen: false,
-            buttons: {'OK': function () {$("#description-dialog").submit()}},
-            modal: true,
-            title: "Device description"
-        }
-    );
-
-{% endif %}
-{% if show_maintenance %}
-    $("#maintenance-button").button();
-    $("#maintenance-button").click(function (e) {
-        e.preventDefault();
-        $("#maintenance-dialog").dialog('open');
-    });
-    $("#maintenance-dialog").dialog(
-        {
-            autoOpen: false,
-            buttons: {'OK': function () {
-                if (document.getElementById("maintenance-reason").value!=""){
-                    $("#maintenance-dialog").submit()}}},
-            modal: true,
-            title: "Reason for offlining"
-        }
-    );
-{% endif %}
-{% if show_forcehealthcheck %}
-    $("#forcehealthcheck-button").button();
-{% endif %}
-{% if show_online %}
-    $("#online-button").button();
-    $("#online-button").click(function (e) {
-        e.preventDefault();
-        $("#online-dialog").dialog('open');
-    });
-    $("#online-dialog").dialog(
-        {
-            autoOpen: false,
-            buttons: {'OK': function () {
-                if (document.getElementById("online-reason").value!=""){
-                    $("#online-dialog").submit()}}},
-            modal: true,
-            title: "Reason for onlining"
-        }
-    );
-    $("#looping-button").button();
-    $("#looping-button").click(function (e) {
-        e.preventDefault();
-        $("#looping-dialog").dialog('open');
-    });
-    $("#looping-dialog").dialog(
-        {
-            autoOpen: false,
-            buttons: {'OK': function () {
-                if (document.getElementById("looping-reason").value!=""){
-                    $("#looping-dialog").submit()}}},
-            modal: true,
-            title: "Reason for running looping health checks"
-        }
-    );
-{% endif %}
-{% if show_restrict %}
-    $("#restrict-button").button();
-    $("#restrict-button").click(function (e) {
-        e.preventDefault();
-        $("#restrict-dialog").dialog('open');
-    });
-    $("#restrict-dialog").dialog(
-        {
-            autoOpen: false,
-            buttons: {'OK': function () {
-                if (document.getElementById("restriction-reason").value!=""){
-                    $("#restrict-dialog").submit()}}},
-            modal: true,
-            title: "Reason for restricting submissions"
-        }
-    );
-{% endif %}
-{% if show_pool %}
-    $("#derestrict-button").button();
-    $("#derestrict-button").click(function (e) {
-        e.preventDefault();
-        $("#derestrict-dialog").dialog('open');
-    });
-    $("#derestrict-dialog").dialog(
-        {
-            autoOpen: false,
-            buttons: {'OK': function () {
-                if (document.getElementById("derestriction-reason").value!=""){
-                    $("#derestrict-dialog").submit()}}},
-            modal: true,
-            title: "Reason for derestricting submissions"
-        }
-    );
-{% endif %}
-{% if can_admin %}
-    $('.edit_transition').editable('{% url lava.scheduler.edit_transition %}',
-    {
-        indicator  : 'Saving ...',
-        tooltip    : 'Click to edit ...',
-        submit     : 'OK',
-        submitdata : {"csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()}
-    });
-{% endif %}
-  }
-);
+  {% if show_maintenance %}
+      $("#maintenance-container").keydown(
+          function(e) {
+                  if (document.getElementById("maintenance-reason").value!=""){
+                      $("#maintenance-feedback").html('<span class="glyphicon glyphicon-ok form-control-feedback"></span>')
+                      $("#maintenance-submit").html('<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>' +
+                              '<button type="submit" class="btn btn-primary">Put {{ device.hostname }} offline</button>');
+                  } else {
+                      $("#maintenance-feedback").html('<span class="glyphicon glyphicon-remove form-control-feedback"></span>&nbsp;')
+                      $("#maintenance-submit").html('<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>')
+                  }
+            }
+      )
+  {% endif %}
+  {% if show_online %}
+      $("#online-container").keydown(
+          function(e) {
+                  if (document.getElementById("online-reason").value!=""){
+                      $("#online-feedback").html('<span class="glyphicon glyphicon-ok form-control-feedback"></span>')
+                      $("#online-submit").html('<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>' +
+                              '<button type="submit" class="btn btn-primary">Put {{ device.hostname }} online</button>');
+                  } else {
+                      $("#online-feedback").html('<span class="glyphicon glyphicon-remove form-control-feedback"></span>&nbsp;')
+                      $("#online-submit").html('<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>')
+                  }
+            }
+      )
+      $("#looping-container").keydown(
+          function(e) {
+                  if (document.getElementById("looping-reason").value!="") {
+                      $("#looping-feedback").html('<span class="glyphicon glyphicon-ok form-control-feedback"></span>')
+                      $("#looping-submit").html('<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>' +
+                              '<button type="submit" class="btn btn-primary">Put {{ device.hostname }} into looping mode</button>');
+                  } else {
+                      $("#looping-feedback").html('<span class="glyphicon glyphicon-remove form-control-feedback"></span>&nbsp;')
+                      $("#looping-submit").html('<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>')
+                  }
+          }
+      )
+  {% endif %}
+  {% if show_restrict %}
+      $("#restrict-container").keydown(
+          function(e) {
+                  if (document.getElementById("restrict-reason").value!=""){
+                      $("#restrict-feedback").html('<span class="glyphicon glyphicon-ok form-control-feedback"></span>')
+                      $("#restrict-submit").html('<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>' +
+                              '<button type="submit" class="btn btn-primary">Restrict {{ device.hostname }} </button>');
+                  } else {
+                      $("#restrict-feedback").html('<span class="glyphicon glyphicon-remove form-control-feedback"></span>&nbsp;')
+                      $("#restrict-submit").html('<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>')
+                  }
+            }
+      )
+  {% endif %}
+  {% if show_pool %}
+      $("#derestrict-container").keydown(
+          function(e) {
+                  if (document.getElementById("derestrict-reason").value!=""){
+                      $("#derestrict-feedback").html('<span class="glyphicon glyphicon-ok form-control-feedback"></span>')
+                      $("#derestrict-submit").html('<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>' +
+                              '<button type="submit" class="btn btn-primary">Return {{ device.hostname }} to the pool</button>');
+                  } else {
+                      $("#derestrict-feedback").html('<span class="glyphicon glyphicon-remove form-control-feedback"></span>&nbsp;')
+                      $("#derestrict-submit").html('<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>')
+                  }
+            }
+      )
+  {% endif %}
 </script>
 
 {% endblock %}

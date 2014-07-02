@@ -354,7 +354,7 @@ def image_report_group_list(request):
     term = request.GET['term']
     groups = [str(group.name) for group in ImageReportGroup.objects.filter(
         name__istartswith=term)]
-    return HttpResponse(simplejson.dumps(groups), mimetype='application/json')
+    return HttpResponse(simplejson.dumps(groups), content_type='application/json')
 
 
 @login_required
@@ -379,7 +379,7 @@ def image_report_add_group(request, name):
         if not old_group.imagereport_set.count():
             old_group.delete()
 
-    return HttpResponse(group_name, mimetype='application/json')
+    return HttpResponse(group_name, content_type='application/json')
 
 
 @login_required
@@ -402,7 +402,7 @@ def image_chart_settings_update(request, name, id):
     if form.is_valid():
         instance = form.save()
         data = serializers.serialize('json', [instance])
-        return HttpResponse(data, mimetype='application/json')
+        return HttpResponse(data, content_type='application/json')
 
 
 @login_required
@@ -444,7 +444,7 @@ def get_chart_test_data(request):
     data["test_name"] = chart_test.test_name
     data["attributes"] = chart_test.attributes
     data["all_attributes"] = chart_test.get_available_attributes(request.user)
-    return HttpResponse(simplejson.dumps([data]), mimetype='application/json')
+    return HttpResponse(simplejson.dumps([data]), content_type='application/json')
 
 
 @public_filters_or_login_required
@@ -476,7 +476,7 @@ def image_chart_export(request, name, id):
             out.writerow(chart_item)
 
     with open(file_path, 'r') as csv_file:
-        response = HttpResponse(mimetype='text/csv')
+        response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = "attachment; filename=%s.csv" % \
                                           chart.name
         response.write(csv_file.read())
