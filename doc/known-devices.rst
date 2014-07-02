@@ -1,3 +1,5 @@
+.. _adding_known_devices:
+
 Adding known devices using the LAVA admin helpers
 *************************************************
 

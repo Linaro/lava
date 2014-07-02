@@ -133,6 +133,10 @@ about it in two places:
 
 Adding to the dispatcher
 ------------------------
+
+If the board is of a type already known to lava-dispatcher, see
+:ref:`adding_known_devices`.
+
 The lava-dispatcher needs to know about a device and how to connect to it.
 
 Let us take as an example adding a pandaboard. You can
@@ -141,7 +145,7 @@ type of board it is. Let's call ours panda01. First create a file called
 
 ::
 
-    /srv/lava/instances/<YOUR_INST>/etc/lava-dispatcher/devices/panda01.conf
+    /etc/lava-dispatcher/devices/panda01.conf
 
 In here you should put the following lines:
 

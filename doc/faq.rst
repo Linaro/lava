@@ -39,7 +39,6 @@ job is not marked as finished), new jobs will be blocked for that
 device. Use the lava-server management shell to force the device to
 idle in the database. ::
 
-  $ . /srv/lava/instances/development/bin/activate
   $ lava-server manage shell
   >>> from lava_scheduler_app.models import Device
   print Device.objects.get(hostname="qemu01").status
