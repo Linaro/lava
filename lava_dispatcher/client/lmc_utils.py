@@ -102,7 +102,12 @@ def image_partition_mounted(image_file, partno):
     mntdir = mkdtemp()
     image = image_file
     offset = get_partition_offset(image, partno)
+
     available_loops = len(glob.glob('/sys/block/loop*'))
+    if available_loops <= 0:
+        raise RuntimeError("Could not mount the image without loopback devices. "
+                           "Is the 'loop' kernel module activated?")
+
     max_repeat = 10
     allow_repeat = 1
     rc = 1

@@ -25,8 +25,10 @@ import pexpect
 import time
 import traceback
 import hashlib
+import signal
 import simplejson
 import subprocess
+import sys
 from json_schema_validator.schema import Schema
 from json_schema_validator.validator import Validator
 
@@ -263,7 +265,7 @@ class LavaTestJob(object):
     def logging_level(self):
         try:
             return self.job_data['logging_level']
-        except:
+        except KeyError:
             return None
 
     def run(self, transport=None, group_data=None, vm_host_ip=None):
@@ -334,6 +336,12 @@ class LavaTestJob(object):
 #init LMP module
             lmp_init_boards.init(self.job_data['lmp_module'],
                                  self.context.device_config)
+
+        def term_handler(signum, frame):
+            self.context.finish()
+            sys.exit(1)
+
+        signal.signal(signal.SIGTERM, term_handler)
 
         try:
             job_length = len(self.job_data['actions'])
@@ -412,7 +420,7 @@ class LavaTestJob(object):
                     logging.info("CriticalError")
                     raise
                 except (pexpect.TIMEOUT, GeneralError) as err:
-                    logging.warn("pexpect timed out, pass with status %s" % status)
+                    logging.warn("pexpect timed out with status %s" % status)
                     pass
                 except KeyboardInterrupt:
                     logging.info("Cancel operation")
@@ -449,7 +457,7 @@ class LavaTestJob(object):
                         if cmd['command'] == 'lava_test_run':
                             err_msg += "Lava failed on test: %s" % \
                                        params.get('test_name', "Unknown")
-                        if err != "Cancel":
+                        if err and err.message != "Cancel" and err.message != 'Timeout':
                             err_msg = err_msg + traceback.format_exc()
                             self.context.log("ErrorMessage: %s" % unicode(str(err)))
                         self.context.log(err_msg)

@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
+from version import version_tag
+
 
 setup(
     name="lava-dispatcher",
-    version=":versiontools:lava_dispatcher:",
-    url='https://launchpad.net/lava-dispatcher',
+    version=version_tag(),
+    url='http://git.linaro.org/git/lava/lava-dispatcher.git',
     license='GPL v2 or later',
     description="Part of the LAVA framework for dispatching test jobs",
     author='Linaro Validation Team',
@@ -33,6 +35,7 @@ setup(
             'default-config/lava-dispatcher/device-types/*.conf',
             'default-config/lava-dispatcher/devices/*.conf',
             'device/sdmux.sh',
+            'device/dynamic_vm_keys/lava*',
             'lava_test_shell/lava-installed-packages',
             'lava_test_shell/lava-os-build',
             'lava_test_shell/lava-test-case',
@@ -46,20 +49,31 @@ setup(
             'lava_test_shell/distro/android/*',
             'lava_test_shell/distro/ubuntu/*',
         ],
+        'linaro_dashboard_bundle': [
+            'schemas/*',
+            'test_documents/*',
+        ],
     },
     install_requires=[
         'json-schema-validator >= 2.3',
         'lava-tool >= 0.4',
-        'linaro-dashboard-bundle >= 1.10.2',
         'pexpect >= 2.3',
         'configglue',
         'PyYAML',
-        'versiontools >= 1.8',
         'pyserial >= 2.6',
         'pyliblzma >= 0.5.3'
     ],
-    setup_requires=[
-        'versiontools >= 1.8',
+    tests_require=[
+        'pep8 >= 1.4.6',
+        'testscenarios >= 0.4'
+    ],
+    data_files=[
+        ('/etc/default',
+            ['etc/tftpd-hpa']),
+        ('/etc/exports.d',
+            ['etc/lava-dispatcher-nfs.exports']),
+        ('/etc/modprobe.d',
+            ['etc/lava-modules.conf']),
     ],
     scripts=[
         'lava-dispatch'

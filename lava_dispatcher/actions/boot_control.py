@@ -103,6 +103,8 @@ class cmd_boot_linaro_image(BaseAction):
         status = 'pass'
         try:
             client.boot_linaro_image()
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
         except:
             logging.exception("boot_linaro_image failed")
             status = 'fail'

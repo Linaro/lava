@@ -56,6 +56,7 @@ class DeviceSchema(schema.Schema):
     send_char = schema.BoolOption(default=True)
     test_image_prompts = schema.ListOption(default=["\(initramfs\)",
                                                     "linaro-test",
+                                                    "/ #",
                                                     "root@android",
                                                     "root@linaro",
                                                     "root@master",
@@ -236,6 +237,8 @@ class DeviceSchema(schema.Schema):
     jtag_hard_reset_command = schema.StringOption(default=None)
     jtag_hard_reset_sleep = schema.IntOption(default=60)
     # for stmc devices
+    jtag_stmcconfig = schema.StringOption(default=None)
+    jtag_stmc_ip = schema.StringOption(default=None)
     jtag_stmc_boot_script = schema.StringOption(default=None)
     jtag_stmc_boot_options = schema.StringOption(default=None)
     jtag_stmc_kernel_command = schema.StringOption(default=None)
@@ -311,8 +314,6 @@ if "VIRTUAL_ENV" in os.environ:
                                       "etc/lava-dispatcher")
 else:
     system_config_path = "/etc/lava-dispatcher"
-
-deprecated_system_config_path = "/etc/xdg/lava-dispatcher"
 
 default_config_path = os.path.join(os.path.dirname(__file__),
                                    'default-config/lava-dispatcher')

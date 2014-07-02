@@ -179,6 +179,8 @@ class MasterImageTarget(Target):
             try:
                 self._deploy_linaro_rootfs(master, root_url)
                 self._deploy_linaro_bootfs(master, boot_url)
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
             except:
                 logging.exception("Deployment failed")
                 raise CriticalError("Deployment failed")
@@ -276,6 +278,8 @@ class MasterImageTarget(Target):
         try:
             _extract_partition(image_file, self.config.boot_part, boot_tgz)
             _extract_partition(image_file, self.config.root_part, root_tgz)
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
         except:
             logging.exception("Failed to generate tarballs")
             raise

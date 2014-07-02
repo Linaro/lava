@@ -43,6 +43,7 @@ class cmd_lava_command_run(BaseAction):
             'parser': {'type': 'string', 'optional': True},
             'fixupdict': {'type': 'array', 'items': {'type': 'string'},
                           'optional': True},
+            'iterations': {'type': 'integer', 'optional': True},
             'timeout': {'type': 'integer', 'optional': True},
         },
         'additionalProperties': False,
@@ -51,7 +52,7 @@ class cmd_lava_command_run(BaseAction):
     _parser = None
     _fixupdict = {}
 
-    def run(self, commands, parser=None, fixupdict=None, timeout=-1):
+    def run(self, commands, parser=None, iterations=1, fixupdict=None, timeout=-1):
         target = self.client.target_device
         log_dir = tempfile.mkdtemp(dir=target.scratch_dir)
         self._logfile = os.path.join(log_dir, 'stdout.log')
@@ -61,13 +62,15 @@ class cmd_lava_command_run(BaseAction):
             self._fixupdict = fixupdict
         logging.info("lava_command logfile: %s" % self._logfile)
         with self.client.tester_session() as session:
-            for command in commands:
-                logging.info("Executing lava_command_run: %s" % command)
-                try:
-                    session.run(command, timeout=timeout,
-                                log_in_host=self._logfile)
-                except OperationFailed as e:
-                    logging.error(e)
+            for count in range(iterations):
+                logging.info("Executing lava_command_run iteration: %s" % count)
+                for command in commands:
+                    logging.info("Executing lava_command_run: %s" % command)
+                    try:
+                        session.run(command, timeout=timeout,
+                                    log_in_host=self._logfile)
+                    except OperationFailed as e:
+                        logging.error(e)
 
         bundle = self._get_bundle()
         self._write_results_bundle(bundle)

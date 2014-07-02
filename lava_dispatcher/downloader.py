@@ -31,6 +31,7 @@ import traceback
 import urllib2
 import urlparse
 import zlib
+import socket
 
 from tempfile import mkdtemp
 from lava_dispatcher.config import get_config_file
@@ -195,20 +196,31 @@ def download_image(url_string, context, imgdir=None,
                                        '-O', 'raw', orig, fname])
 
             return fname
-        except:
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
+        except (IOError, socket.error, socket.timeout,
+                urllib2.HTTPError, urllib2.URLError) as e:
+            if hasattr(e, 'reason'):
+                if hasattr(e, 'code'):
+                    logging.error("Unable to download '%s': %s %s" % (url_string, e.code, e.reason))
+                else:
+                    logging.error("Unable to download '%s': %s" % (url_string, e.reason))
+            else:
+                logging.error("Unable to download '%s': %s" % (url_string, e))
+            tries += 1
+            if time.time() >= now + timeout:
+                raise RuntimeError(
+                    'downloading %s failed after %d tries: %s' % (url_string, tries, e))
+            else:
+                logging.info('Sleep one minute and retry (%d)' % tries)
+                time.sleep(60)
+        # add other exceptions to the above section and then remove the broad clause
+        except Exception as e:
             logging.warn("unable to download: %r" % traceback.format_exc())
             tries += 1
             if time.time() >= now + timeout:
                 raise RuntimeError(
-                    'downloading %s failed after %d tries' % (url_string, tries))
+                    'downloading %s failed after %d tries: %s' % (url_string, tries, e))
             else:
                 logging.info('Sleep one minute and retry (%d)' % tries)
                 time.sleep(60)
-
-
-def download_with_retry(context, imgdir, url, decompress=True, timeout=300, delete_on_exit=True):
-    """
-    download test result with a retry mechanism and 5 minute default timeout
-    Deprecated function, download_image now has retry support and is called by this function.
-    """
-    return download_image(url, context, imgdir, delete_on_exit, decompress, timeout)

@@ -486,6 +486,8 @@ class URLTestDefinition(object):
             logging.info("Loading handler from %s" % handler_ep.dist)
             handler_cls = handler_ep.load()
             self.handler = handler_cls(self, **hook_data.get('params', {}))
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
         except Exception:
             logging.exception("loading handler failed")
 
@@ -632,7 +634,7 @@ class URLTestDefinition(object):
             except re.error as e:
                 logging.warning("Error parsing regular expression %r: %s" %
                                 (input_pattern, e.message))
-                self.__pattern__ = re.compile(default_pattern, re.M)
+                self.__pattern__ = re.compile(self.default_pattern, re.M)
 
         return self.__pattern__
 
@@ -783,6 +785,7 @@ class cmd_lava_test_shell(BaseAction):
             if target.is_booted():
                 target.reset_boot()
             logging.warn('lava_test_shell has timed out')
+            raise pexpect.TIMEOUT('Timeout')
 
         elif event == SIGNAL:
             name, params = runner._connection.match.groups()
@@ -794,6 +797,8 @@ class cmd_lava_test_shell(BaseAction):
                 self._handle_testcase(params)
             try:
                 signal_director.signal(name, params)
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
             except:
                 logging.exception("on_signal failed")
             runner._connection.sendline('echo LAVA_ACK')
@@ -806,6 +811,8 @@ class cmd_lava_test_shell(BaseAction):
             ret = False
             try:
                 ret = signal_director.signal(name, params)
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
             except:
                 logging.exception("on_signal(Multi_Node) failed")
             return ret
@@ -817,6 +824,8 @@ class cmd_lava_test_shell(BaseAction):
             ret = False
             try:
                 ret = signal_director.signal(name, params)
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
             except:
                 logging.exception("on_signal(LMP) failed")
             return ret

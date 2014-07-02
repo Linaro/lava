@@ -77,8 +77,8 @@ def _get_dashboard(server, token):
     srv = AuthenticatingServerProxy(
         server, allow_none=True, use_datetime=True, auth_backend=auth_backend)
     if server.endswith("xml-rpc/"):
-        logging.warn("Please use RPC2 endpoint instead, xml-rpc is deprecated!!!")
-        dashboard = srv
+        logging.error("Please use RPC2 endpoint instead, xml-rpc is no longer supported")
+        raise OperationFailed("xml-rpc endpoint is not supported.")
     elif server.endswith("RPC2/"):
         #include lava-server/RPC2/
         dashboard = srv.dashboard
@@ -123,6 +123,8 @@ class cmd_submit_results(BaseAction):
                     logging.info('Adding bundle as attachment')
                     attachment = create_attachment(fname, content)
                     self.context.test_data.add_attachments([attachment])
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
             except:
                 msg = 'Unknown error processing bundle' % fname
                 logging.exception(msg)
@@ -141,6 +143,8 @@ class cmd_submit_results(BaseAction):
                 d = tempfile.mkdtemp(dir=self.client.target_device.scratch_dir)
                 files = utils.extract_tar(result_path, d)
                 bundles = self._get_bundles(files)
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
         except GatherResultsError:
             raise
         except:
