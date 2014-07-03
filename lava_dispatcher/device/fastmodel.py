@@ -23,7 +23,6 @@ import contextlib
 import cStringIO
 import logging
 import os
-import stat
 import subprocess
 
 import lava_dispatcher.device.boot_options as boot_options
@@ -350,48 +349,16 @@ class FastModelTarget(Target):
     def _fix_perms(self):
         """ The directory created for the image download/creation gets created
         with tempfile.mkdtemp which grants permission only to the creator of
-        the directory. We need group access because the dispatcher may run
-        the simulator as a different user
+        the directory. Since these are temporary files, we can make them readable
+        by any user on the system.
         """
-        d = os.path.dirname(self._sd_image)
-        os.chmod(d, stat.S_IRWXG | stat.S_IRWXU)
-        os.chmod(self._sd_image, stat.S_IRWXG | stat.S_IRWXU)
-        if self._axf:
-            os.chmod(self._axf, stat.S_IRWXG | stat.S_IRWXU)
-        if self._kernel:
-            os.chmod(self._kernel, stat.S_IRWXG | stat.S_IRWXU)
-        if self._initrd:
-            os.chmod(self._initrd, stat.S_IRWXG | stat.S_IRWXU)
-        if self._dtb:
-            os.chmod(self._dtb, stat.S_IRWXG | stat.S_IRWXU)
-        if self._uefi:
-            os.chmod(self._uefi, stat.S_IRWXG | stat.S_IRWXU)
-        if self._bl1:
-            os.chmod(self._bl1, stat.S_IRWXG | stat.S_IRWXU)
-        if self._bl2:
-            os.chmod(self._bl2, stat.S_IRWXG | stat.S_IRWXU)
-        if self._bl31:
-            os.chmod(self._bl31, stat.S_IRWXG | stat.S_IRWXU)
-
-        #lmc ignores the parent directories group owner
-        st = os.stat(d)
-        os.chown(self._sd_image, st.st_uid, st.st_gid)
-        if self._axf:
-            os.chown(self._axf, st.st_uid, st.st_gid)
-        if self._kernel:
-            os.chown(self._kernel, st.st_uid, st.st_gid)
-        if self._initrd:
-            os.chown(self._initrd, st.st_uid, st.st_gid)
-        if self._dtb:
-            os.chown(self._dtb, st.st_uid, st.st_gid)
-        if self._uefi:
-            os.chown(self._uefi, st.st_uid, st.st_gid)
-        if self._bl1:
-            os.chown(self._bl1, st.st_uid, st.st_gid)
-        if self._bl2:
-            os.chown(self._bl2, st.st_uid, st.st_gid)
-        if self._bl31:
-            os.chown(self._bl31, st.st_uid, st.st_gid)
+        outdir = os.path.dirname(self._sd_image)
+        os.chmod(outdir, 0o777)
+        for root, dirs, files in os.walk(outdir):
+            for d in dirs:
+                os.chmod(os.path.join(root, d), 0o777)
+            for f in files:
+                os.chmod(os.path.join(root, f), 0o777)
 
     def power_off(self, proc):
         super(FastModelTarget, self).power_off(proc)
