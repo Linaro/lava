@@ -41,8 +41,10 @@ var attr_value_completion_url = "{% url 'dashboard_app.views.filters.views.filte
 {% endblock %}
 
 {% block content %}
-{% if form.instance.pk %}
+{% if form.instance.id %}
 <h1>Edit filter &ldquo;{{ form.instance.name }}&rdquo;…</h1>
+{% elif is_copy %}
+<h1>Copy filter &ldquo;{{ filter_name }}&rdquo;…</h1>
 {% else %}
 <h1>Add new filter…</h1>
 {% endif %}

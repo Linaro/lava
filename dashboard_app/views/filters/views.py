@@ -235,13 +235,14 @@ def filter_subscribe(request, username, name):
     )
 
 
-def filter_form(request, bread_crumb_trail, instance=None):
+def filter_form(request, bread_crumb_trail, instance=None, is_copy=False):
     if request.method == 'POST':
         if instance:
             owner = instance.owner
         else:
             owner = request.user
-        form = TestRunFilterForm(owner, request.POST, instance=instance)
+        form = TestRunFilterForm(owner, request.POST, instance=instance,
+                                 is_copy=is_copy)
 
         if form.is_valid():
             if 'save' in request.POST:
@@ -263,12 +264,20 @@ def filter_form(request, bread_crumb_trail, instance=None):
                         'table': table,
                     }, RequestContext(request))
     else:
-        form = TestRunFilterForm(request.user, instance=instance)
+        form = TestRunFilterForm(request.user, instance=instance,
+                                 is_copy=is_copy)
+
+    filter_name = None
+    if is_copy:
+        filter_name = instance.name
+        instance.name = None
 
     return render_to_response(
         'dashboard_app/filter_add.html', {
             'bread_crumb_trail': bread_crumb_trail,
             'form': form,
+            'is_copy': is_copy,
+            'filter_name': filter_name,
         }, RequestContext(request))
 
 
@@ -290,6 +299,20 @@ def filter_edit(request, username, name):
         request,
         BreadCrumbTrail.leading_to(filter_edit, name=name, username=username),
         instance=filter)
+
+
+@BreadCrumb("Copy", parent=filter_detail, needs=['username', 'name'])
+def filter_copy(request, username, name):
+    filter = TestRunFilter.objects.get(owner__username=username, name=name)
+    if not request.user.is_superuser:
+        if not filter.public and filter.owner != request.user:
+            raise PermissionDenied()
+
+    return filter_form(
+        request,
+        BreadCrumbTrail.leading_to(filter_copy, name=name, username=username),
+        instance=filter,
+        is_copy=True)
 
 
 @BreadCrumb("Delete", parent=filter_detail, needs=['name', 'username'])
