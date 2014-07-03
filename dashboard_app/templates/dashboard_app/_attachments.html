@@ -1,6 +1,12 @@
 {% if attachments.all %}
 <ul class="attachments">
   {% for attachment in attachments.all %}
+  {% if attachment.is_archived %}
+  <div class="alert alert-warning" id="archive-warning">
+    <p><strong>An attachment was archived.</strong>
+      Please contact the administrator for the attachment.</p>
+  </div>
+  {% else %}
   <li>
     <b>{{ attachment }}</b> ({{attachment.mime_type}})
     {% if attachment.content %}
@@ -16,6 +22,7 @@
     <a href="{{ attachment.public_url }}">{{ attachment.public_url }}</a>
     {% endif %}
   </li>
+  {% endif %}
   {% endfor %}
 </ul>
 {% else %}

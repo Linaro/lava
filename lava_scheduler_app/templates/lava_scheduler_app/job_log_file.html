@@ -128,10 +128,10 @@
       </div>
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
-        {% if job_file_present %}
+        {% if job_file_present and not job.archived_job_file %}
           <li><a href="{{ job.get_absolute_url }}" class="btn btn-primary">Summary</a></li>
         {% endif %}
-        {% if job.results_link %}
+        {% if job.results_link and not job.archived_bundle %}
           <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
         {% endif %}
         </ul>
@@ -200,6 +200,14 @@
 </div>
 {% endif %}
 
+{% if job.archived_job_file %}
+<div class="alert alert-warning" id="archive-warning">
+<p><strong>Job log file archived.</strong>
+Please contact the administrator for job log file.</p>
+</div>
+{% endif %}
+
+{% if not job.archived_job_file %}
 <h4 class="modal-header" id="top">Dispatcher Log messages (file size = {{ job_file_size|filesizeformat }}) <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h4>
 <a class="btn btn-sm btn-default" href="#bottom">End of log file <span class="glyphicon glyphicon-fast-forward"></span></a>
 
@@ -241,19 +249,20 @@
       </div>
     </div>
   </div>
+{% endif %}
   <div class="col-md-6">
     <div class="row">
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
-        {% if job.results_link %}
+        {% if job.results_link and not job.archived_bundle %}
           <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
         {% else %}
         {% if show_cancel %}
           <li><a href="{% url 'lava.scheduler.job.cancel' job.pk %}" class="btn btn-warning">Cancel</a></li>
         {% endif %}
-        {% if show_resubmit %}
-          <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
         {% endif %}
+        {% if show_resubmit and not job.archived_job_file %}
+          <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
         {% endif %}
         </ul>
       </div>

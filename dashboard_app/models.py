@@ -1250,6 +1250,24 @@ class Attachment(models.Model):
     def is_viewable(self):
         return self.mime_type in ['text/plain']
 
+    def is_archived(self):
+        """Checks if the attachment file was archived.
+        """
+        last_info = os.path.join(settings.ARCHIVE_ROOT, 'attachments',
+                                 'last.info')
+
+        if os.path.exists(last_info):
+            with open(last_info, 'r') as last:
+                last_archived = int(last.read())
+                last.close()
+
+            if self.id <= last_archived:
+                return True
+            else:
+                return False
+
+        return False
+
 
 class TestResult(models.Model):
     """
