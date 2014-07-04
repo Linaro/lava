@@ -74,6 +74,11 @@ def copy_file(src, dest):
     shutil.copy(src, dest)
 
 
+def touch(path):
+    with open(path, 'a'):
+        os.utime(path, None)
+
+
 def rmtree(directory):
     subprocess.call(['rm', '-rf', directory])
 
