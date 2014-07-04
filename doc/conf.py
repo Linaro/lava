@@ -56,7 +56,7 @@ copyright = u'2010-2014, Linaro Limited'
 #
 import subprocess
 # The short X.Y version.
-version = subprocess.Popen(r'./version.py', cwd=r'..', stdout=subprocess.PIPE).stdout.read()
+version = subprocess.Popen(r'./version.py', cwd=r'..', stdout=subprocess.PIPE).stdout.read().rstrip()
 # The full version, including alpha/beta/rc tags.
 release = version
 

@@ -27,11 +27,12 @@ Debian or Ubuntu.
 
 .. _deploy_linaro_image:
 
-Deploying a linaro image
-========================
+Deploying an image to a device
+==============================
 
-Use ``deploy_linaro_image`` to deploy a test image onto a target.
-Typically this is the first command that runs in any LAVA test job::
+Use the ``deploy_linaro_image`` action or the equivalent ``deploy_image``
+action to deploy a test image onto a target. Typically this is the first
+command that runs in any LAVA test job::
 
  {
     "actions": [
@@ -156,7 +157,7 @@ Available parameters
         }
     ]
  }
- 
+
 Example functional test: **model-express-group-multinode**:
 
 http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/neil.williams/fastmodel-vexpress-group.json
@@ -258,11 +259,12 @@ Available parameters
 
 .. _boot_linaro_image:
 
-Booting a Linaro image
-======================
+Booting a test image
+====================
 
-Use ``boot_linaro_image`` to boot a test image that was deployed using
-the ``deploy_linaro_image`` action::
+Use the ``boot_linaro_image`` action or the directly equivalent ``boot_image``
+action to boot a test image that was deployed using the ``deploy_linaro_image``
+or ``deploy_image`` actions::
 
  {
     "actions": [
@@ -279,8 +281,8 @@ the ``deploy_linaro_image`` action::
  }
 
 
-.. note:: It is not necessary to use ``boot_linaro_image`` if the next
-   action in the test is ``lava_test_shell``.
+.. note:: It is not necessary to use ``boot_linaro_image`` or ``boot_image``
+          if the next action in the test is ``lava_test_shell``.
 
 Example functional test: **kvm-kernel-boot**:
 
@@ -564,7 +566,7 @@ Available parameters
    file:///home/user/boot.img
    scp://username@myserver.com:/home/user/boot.img
 
-* ``system``: Android ``system.img`` or ``system.bz2``. Typically 
+* ``system``: Android ``system.img`` or ``system.bz2``. Typically
   this is the system partition. The parameter accepts http, local and
   scp urls::
 

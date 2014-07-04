@@ -65,11 +65,12 @@ Workers
 
   The worker hosts that are connected to this LAVA installation, are
   listed with details such as:
-      - IP Address
-      - Status: whether the worker host is reachable
-      - Is Master?: is this the master node
-      - Host Uptime: how long this worker node is up from last
-        reboot/boot
-      - Architecture: system architecture of the worker host
-      - Last Master Scheduler Tick: when was the scheduler daemon last
-        active in the master node
+
+   - IP Address
+   - Status: whether the worker host is reachable
+   - Is Master?: is this the master node
+   - Host Uptime: how long this worker node is up from last
+     reboot/boot
+   - Architecture: system architecture of the worker host
+   - Last Master Scheduler Tick: when was the scheduler daemon last
+     active in the master node
