@@ -137,8 +137,8 @@
       </div>
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
-        {% if job_file_present and not size_warning %}
-          <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary">Complete log</a></li>
+        {% if job_file_present %}
+          <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary"{% if size_warning %} disabled="disabled"{% endif %}>Complete log</a></li>
         {% endif %}
         {% if job.results_link %}
           <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
