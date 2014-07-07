@@ -62,8 +62,8 @@ The ``lava-dev`` package includes scripts to assist in local developer
 builds directly from local git working copies which allows for builds
 using unreleased code, development code and patches under review.
 
-If in doubt, install the ``production`` release from official
-distribution mirrors.
+If in doubt, install the ``production`` release of ``lava-server``
+from official distribution mirrors.
 
 .. _debian_installation:
 
@@ -121,6 +121,62 @@ Then update to locate the required dependencies::
  $ sudo apt-get install emdebian-archive-keyring
  $ sudo apt-get update
 
+Installing just lava-server
+===========================
+
+The ``lava-server`` package is the main LAVA scheduler and frontend.
+
+To install just the lava-server from the current packages, use::
+
+ $ sudo apt-get install lava-server
+ $ sudo a2dissite 000-default
+ $ sudo a2ensite lava-server.conf
+ $ sudo service apache2 restart
+
+This will install lava-dispatcher and lava-server.
+
+Other packages to consider::
+
+* ``lavapdu-client`` to control a :term:`PDU` to allow LAVA to
+  automatically power cycle a device.
+* ``lavapdu-daemon`` - only one daemon is required to run multiple PDUs.
+* ``ntp`` - some actions within LAVA can be time-sensitive, so ensuring
+  that devices within your lab keep time correctly can be important.
+* linaro-image-tools which provides ``linaro-media-create`` for tests
+  which use hardware packs from Linaro
+
+Installing the full lava set
+============================
+
+Production installs of LAVA will rarely use the full ``lava`` set as
+it includes tools more commonly used by developers and test labs. These
+tools mean that the ``lava`` package brings more dependencies than
+when installing ``lava-server`` to run a production LAVA instance.
+
+The ``lava`` package installs support for:
+
+* ``lava-dev`` - scripts to build developer packages based on your current
+  git tree of ``lava-server`` or ``lava-dispatcher``, including any local changes.
+* linaro-image-tools which provides ``linaro-media-create`` for tests
+  which use hardware packs from Linaro
+* ``vmdebootstrap`` for building your own Debian based KVM images.
+* ``lavapdu-client`` to control a :term:`PDU` to allow LAVA to
+  automatically power cycle a device.
+* ``lavapdu-daemon`` is recommended or you can use a single daemon
+  for multiple PDUs.
+* ``ntp`` - some actions within LAVA can be time-sensitive, so ensuring
+  that devices within your lab keep time correctly can be important.
+
+All of these packages can be installed separately alongside the main
+``lava-server`` package, the ``lava`` package merely collects them into
+one set.
+
+ $ sudo apt-get install postgresql
+ $ sudo apt-get install lava
+ $ sudo a2dissite 000-default
+ $ sudo a2ensite lava-server.conf
+ $ sudo service apache2 restart
+
 Interim builds
 ==============
 
@@ -139,30 +195,13 @@ Update your apt sources to find the LAVA packages::
 
  $ sudo apt-get update
 
-To install all of LAVA on a single machine, use::
-
- $ sudo apt-get install postgresql
- $ sudo apt-get install lava
- $ sudo a2dissite 000-default
- $ sudo a2ensite lava-server.conf
- $ sudo service apache2 restart
-
-To install just the lava-server from the current packages, use::
-
- $ sudo apt-get install lava-server
- $ sudo a2dissite 000-default
- $ sudo a2ensite lava-server.conf
- $ sudo service apache2 restart
-
-This will install lava-dispatcher and lava-server.
-
 .. _linaro_tools_ppa:
 
 Adding the Linaro Tools PPA
 ---------------------------
 
-To add linaro-media-create and other optional packages which come from
-the Linaro PPA, use the apt source::
+To get updated versions of linaro-media-create and other
+optional packages which come from the Linaro PPA, use the apt source::
 
  deb http://ppa.launchpad.net/linaro-maintainers/tools/ubuntu precise main
 
