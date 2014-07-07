@@ -67,8 +67,9 @@ Description: Linaro Automated Validation Architecture metapackage
 Package: lava-dev
 Architecture: all
 Section: devel
-Depends: ca-certificates, devscripts, dpkg-dev, debhelper (>= 8.0.0),
- fakeroot, git, libdistro-info-perl, django-testscenarios,
+Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
+ debhelper (>= 8.0.0), fakeroot, git, libdistro-info-perl,
+ django-testscenarios,
  python | python-all | python-dev | python-all-dev,
  python-sphinx (>= 1.0.7+dfsg) | python3-sphinx, po-debconf,
  python-mocker, python-setuptools, python-versiontools,

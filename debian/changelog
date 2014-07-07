@@ -1,3 +1,14 @@
+lava-server (2014.06.02.17-2) unstable; urgency=medium
+
+  * Drop README.Debian as this information is now in the
+    upstream documentation and has also been updated.
+  * Specify django-testscenarios to fix autopkgtest
+  * Add build-essential to the dependencies of lava-dev
+    to ensure the build scripts can operate.
+  * add directory to support archival of job output files
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 07 Jul 2014 15:35:50 +0100
+
 lava-server (2014.06.02.17-1) unstable; urgency=medium
 
   * New upstream production release
