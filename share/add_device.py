@@ -141,9 +141,16 @@ def main(dt, name, options):
     ]
     default_type = os.path.join("/etc/lava-dispatcher/device-types", "%s%s" % (dt, ".conf"))
     if not os.path.exists(default_type):
-        print ("'%s' is not an existing device-type for this instance." % dt)
-        print ("A default device_type configuration needs to be written as %s" % default_type)
-        exit(1)
+        # FIXME: integrate this into lava CLI to prevent the need
+        # for this hardcoded path.
+        default_type = os.path.join(
+            "/usr/lib/python2.7/dist-packages/lava_dispatcher/",
+            "default-config/lava-dispatcher/device-types/",
+            "%s%s" % (dt, ".conf"))
+        if not os.path.exists(default_type):
+            print ("'%s' is not an existing device-type for this instance." % dt)
+            print ("A default device_type configuration needs to be written as %s" % default_type)
+            exit(1)
     config['device_type'] = dt
     deviceconf = os.path.join("/etc/lava-dispatcher/devices", "%s%s" % (name, ".conf"))
     if os.path.exists(deviceconf):
