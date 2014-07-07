@@ -26,13 +26,24 @@ case "$1" in
       rm -rf /usr/sbin/lava-mount-masterfs
       rm -rf /var/lib/lava-server/home/
       # explicitly not deleting /var/lib/lava-server/default
-      # or dropping the database.
-        if [ "$1" = "purge" ] && [ -e /usr/share/debconf/confmodule ]; then
-            # Source debconf library.
-            . /usr/share/debconf/confmodule
-            # Remove my changes to the db.
-            db_purge
-        fi
+      # unless empty and not a mountpoint (piuparts)
+      # Not dropping the database unless there are no job output files.
+      MEDIADIR="/var/lib/lava-server/default/"
+      if [ -d $MEDIADIR ]; then
+          if [ ! `mountpoint $MEDIADIR >/dev/null; echo $?` ]; then
+            # not an sshfs mountpoint, check for only empty directories.
+            EMPTY=`find $MEDIADIR -type f | grep -v $MEDIADIR/media/.mounted`
+            if [ "$EMPTY" ]; then
+                rm -rf $MEDIADIR
+                sudo su postgres -c "dropdb lavaserver" || true
+                sudo su postgres -c "dropuser lavaserver" || true
+            fi
+          fi
+      fi
+      # Source debconf library.
+      # Remove my changes to the db.
+      . /usr/share/debconf/confmodule
+      db_purge
     ;;
     remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
     ;;
