@@ -164,11 +164,12 @@ XMOD = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH
 INVALID_CHARS = " $&()\"'<>/\\|;`"
 
 
-def _get_testdef_git_repo(testdef_repo, tmpdir, revision):
+def _get_testdef_git_repo(testdef_repo, tmpdir, revision, proxy_env):
     cwd = os.getcwd()
     gitdir = os.path.join(tmpdir, 'gittestrepo')
     try:
-        subprocess.check_call(['git', 'clone', testdef_repo, gitdir])
+        subprocess.check_call(['git', 'clone', testdef_repo, gitdir],
+                              env=proxy_env)
         if revision:
             os.chdir(gitdir)
             subprocess.check_call(['git', 'checkout', revision])
@@ -179,7 +180,7 @@ def _get_testdef_git_repo(testdef_repo, tmpdir, revision):
         os.chdir(cwd)
 
 
-def _get_testdef_bzr_repo(testdef_repo, tmpdir, revision):
+def _get_testdef_bzr_repo(testdef_repo, tmpdir, revision, proxy_env):
     bzrdir = os.path.join(tmpdir, 'bzrtestrepo')
     try:
         # As per bzr revisionspec, '-1' is "The last revision in a
@@ -187,9 +188,10 @@ def _get_testdef_bzr_repo(testdef_repo, tmpdir, revision):
         if revision is None:
             revision = '-1'
 
+        proxy_env.update({'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'})
         subprocess.check_call(
             ['bzr', 'branch', '-r', revision, testdef_repo, bzrdir],
-            env={'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'})
+            env=proxy_env)
         return bzrdir
     except Exception as e:
         logging.error('Unable to get test definition from bzr\n' + str(e))
@@ -329,14 +331,18 @@ class TestDefinitionLoader(object):
         repo = None
         info = None
         if 'git-repo' in testdef_repo:
-            repo = _get_testdef_git_repo(
-                testdef_repo['git-repo'], tmpdir, testdef_repo.get('revision'))
+            repo = _get_testdef_git_repo(testdef_repo['git-repo'], tmpdir,
+                                         testdef_repo.get('revision'),
+                                         {'http_proxy': self.context.config.lava_proxy,
+                                          'https_proxy': self.context.config.lava_proxy})
             name = os.path.splitext(os.path.basename(testdef_repo['git-repo']))[0]
             info = _git_info(testdef_repo['git-repo'], repo, name)
 
         if 'bzr-repo' in testdef_repo:
-            repo = _get_testdef_bzr_repo(
-                testdef_repo['bzr-repo'], tmpdir, testdef_repo.get('revision'))
+            repo = _get_testdef_bzr_repo(testdef_repo['bzr-repo'], tmpdir,
+                                         testdef_repo.get('revision'),
+                                         {'http_proxy': self.context.config.lava_proxy,
+                                          'https_proxy': self.context.config.lava_proxy})
             name = testdef_repo['bzr-repo'].replace('lp:', '').split('/')[-1]
             info = _bzr_info(testdef_repo['bzr-repo'], repo, name)
 
