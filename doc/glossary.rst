@@ -236,3 +236,9 @@ Glossary of terms
     enabled. A device tag can only be created or assigned to a particular
     device by a lab admin. When requesting tags, remember to include a
     description of what the tagged device can provide to a Test Job.
+
+  PDU
+    Power Distribution Unit - a network-controlled set of relays which
+    allow the power to the devices to be turned off and on remotely.
+    Certain PDUs are supported by ``lavapdu-daemon`` to be able to
+    hard reset devices in LAVA.
