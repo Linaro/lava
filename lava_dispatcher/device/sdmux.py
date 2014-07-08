@@ -60,8 +60,9 @@ def _flush_files(mntdir):
         if os.path.exists(f):
             path = os.path.realpath('/proc/self/fd/%s' % f)
             if path.startswith(mntdir):
-                os.fsync(int(f))
-                os.close(int(f))
+                f.flush()
+                os.fsync(f.fileno())
+                os.close(f.fileno())
 
 
 class SDMuxTarget(Target):
@@ -193,7 +194,7 @@ class SDMuxTarget(Target):
     @contextlib.contextmanager
     def file_system(self, partition, directory):
         """
-        This works in cojunction with the "mux_device" function to safely
+        This works in conjunction with the "mux_device" function to safely
         access a partition/directory on the sdmux filesystem
         """
         self.proc.sendline('sync')

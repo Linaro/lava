@@ -740,11 +740,10 @@ def _test_filesystem_writeable(runner, mountpoint):
     m.update(str(current_time))
     md5sum = m.hexdigest()
     logging.debug("writing %s to ddout, md5sum %s" % (current_time, md5sum))
-    write_res = runner.run('echo -n %s | dd oflag=direct of=%s/ddout ' % (current_time, mountpoint), failok=True)
+    write_res = runner.run('echo -n %s | dd oflag=direct,sync of=%s/ddout ' % (current_time, mountpoint), failok=True)
     if write_res > 0:
         raise RuntimeError('Failed to write test data to %s (sd card writeable test)' % mountpoint)
     else:
-        runner.run('sync', failok=True)
         read_res = runner.run('dd if=%s/ddout iflag=direct | md5sum | grep %s' % (mountpoint, md5sum), failok=True)
         if read_res > 0:
             raise RuntimeError('Filesystem %s was not writeable (bad sd card?)' % mountpoint)

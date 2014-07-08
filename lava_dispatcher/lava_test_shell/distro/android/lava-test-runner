@@ -45,9 +45,9 @@ cleanup()
 {
 	# just adds a little handy debugging
 	ls ${RESULTSDIR}
-	echo "${PREFIX} calling sync"
+	echo "${PREFIX} calling sync on device"
 	sync
-	echo "${PREFIX} exiting"
+	echo "${PREFIX} exiting lava-test-runner"
 }
 
 {
