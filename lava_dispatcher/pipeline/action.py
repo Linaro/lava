@@ -68,6 +68,7 @@ class Action(object):
         self.__parameters__ = {}
         self.yaml_line = line
         self.__errors__ = []
+        self.elapsed_time = None
 
     # public actions (i.e. those who can be referenced from a job file) must
     # declare a 'class-type' name so they can be looked up.

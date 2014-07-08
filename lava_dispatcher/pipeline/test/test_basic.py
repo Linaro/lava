@@ -237,6 +237,8 @@ class TestFakeActions(unittest.TestCase):
         pipe.run_actions(None)
         self.assertTrue(self.sub0.ran)
         self.assertTrue(self.sub1.ran)
+        self.assertNotEqual(self.sub0.elapsed_time, False)
+        self.assertNotEqual(self.sub1.elapsed_time, False)
 
     def test_prepare(self):
         class PrepareAction(Action):

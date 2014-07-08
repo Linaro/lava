@@ -1,4 +1,5 @@
 import sys
+import time
 from collections import OrderedDict
 from lava_dispatcher.pipeline.action import *
 from lava_dispatcher.pipeline.serial import *
@@ -75,7 +76,9 @@ class Pipeline(object):
 
     def run_actions(self, connection, args=None):
         for action in self.actions:
+            start_time = time.time()
             new_connection = action.run(connection, args)
+            action.elapsed_time = time.time() - start_time
             if new_connection:
                 connection = new_connection
         return connection
