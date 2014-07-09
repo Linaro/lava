@@ -831,7 +831,8 @@ def link_bug_to_testrun(request):
     bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
     testrun.bug_links.add(bug)
     testrun.save()
-    return HttpResponseRedirect(request.POST['back'])
+    data = serializers.serialize('json', [testrun])
+    return HttpResponse(data, content_type='application/json')
 
 
 @require_POST
@@ -841,7 +842,8 @@ def unlink_bug_and_testrun(request):
     bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
     testrun.bug_links.remove(bug)
     testrun.save()
-    return HttpResponseRedirect(request.POST['back'])
+    data = serializers.serialize('json', [testrun])
+    return HttpResponse(data, content_type='application/json')
 
 
 @require_POST
@@ -852,7 +854,9 @@ def link_bug_to_testresult(request):
     bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
     testresult.bug_links.add(bug)
     testresult.save()
-    return HttpResponseRedirect(request.POST['back'])
+    testresult.id = testrun.analyzer_assigned_uuid
+    data = serializers.serialize('json', [testresult])
+    return HttpResponse(data, content_type='application/json')
 
 
 @require_POST
@@ -863,4 +867,6 @@ def unlink_bug_and_testresult(request):
     bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
     testresult.bug_links.remove(bug)
     testresult.save()
-    return HttpResponseRedirect(request.POST['back'])
+    testresult.id = testrun.analyzer_assigned_uuid
+    data = serializers.serialize('json', [testresult])
+    return HttpResponse(data, content_type='application/json')
