@@ -1,6 +1,12 @@
 Requirements
 ============
 
+See the whitepaper for detailed and updated information:
+https://docs.google.com/a/linaro.org/document/d/17wjThA69fteT85q0D_cmzyGqQjaaH6OCKtN3qXGkvWw/edit#heading=h.9eocfm1tarco
+
+Note that lava_dispatcher/pipeline/test/sample_jobs/basics.yaml is not intended
+as a workable test job but as an outline of all possible layouts.
+
 Functional:
 
 - It should be possible to have multiple simultaneous connections to the
@@ -12,8 +18,8 @@ Functional:
 
 - Support for different types of images:
 
-  - pre-built image
-  - linaro hwpack + rootfs
+  - pre-built and vendor-supplied images
+  - existing media
   - kernel + ramdisk/rootfs
   - tftp
   - nfsroot
@@ -163,3 +169,61 @@ the validation step.
     the code. Runtime errors are bugs in lava-dispatcher code. (It is
     also a bug to use the wrong exception type). Fixes for runtime
     error bugs should always include a unit test.
+
+Gotchas
+-------
+
+The Pipeline design does use LavaContext, however, the context is intended
+for *dynamic* data intended to be passed between actions. This data is
+ephemeral, typically including the location of the scratch directory
+and other data which although it may always exist in all jobs using
+the same submission, will have different data within each submission.
+
+It is entirely possible that the rest of LavaContext will go away or
+that the context variable within the Pipeline design could be replaced
+by an empty dict at the start of each job. Where the code currently pulls
+data out of the LavaContext, this data may need to come from the job
+parameters or be generated within the pipeline.
+
+When storing dynamic data into the context, use the pipeline-specific
+context.pipeline_data dict. Use the action.name or similar as the key
+of the dict and create sub-trees within, where appropriate. The key
+must be predictable by any subsequent action which may be interested.
+
+Actions still need to be able to simulate the run behaviour without
+reference to any context during the validation stage so that subsequent
+actions can validate their own operations by checking for the existence
+of data from previous actions. This validation happens in the submission
+checks, so be sure to only check data, not run actions.
+
+How specific should an Action be?
+---------------------------------
+
+As specific as possible. e.g. there were numerous bugs with the calculation
+of offsets of images when preparing loop back mounts as well as in the
+determination of why the subsequent mount operation may fail. Whenever one
+action can or could cause different errors from within the same run function,
+a separate action should be considered. Whenever an Action could be called from
+multiple places but is too tied to one particular deployment, that action should
+be split to move the generic code to an action which can be re-used and the
+specific code to those particular deployments which need it. e.g. the MountAction
+should not need to know about losetup, that would be the job of a LoopMountAction
+which would set dynamic data about the required offset. The UnmountAction,
+however, does not need to know about offsets of even whether the mount was using
+a loopback device. Yet the error handler for the UnmountAction might need to
+know about it being a LoopMountAction, in case it needs to track whether the
+loopback device has been correctly freed.
+
+Think of it like a shell script - using set -e wraps each line in a check,
+so each line would be a separate action except where that line is just to store
+data in a variable (the context.pipeline_data).
+
+The simulation output of the pipeline should be similar to the output of a shell
+script run under set -x.
+
+If an Action can operate using different methods (e.g. downloader with http
+or file or scp), then those decisions need to be made during the creation
+of the pipeline, using dedicated actions. If appropriate these can inherit
+from the general DownloadAction and call the base class to do the actual
+download, restricting the method based actions to populating the dynamic
+data during the verification step.

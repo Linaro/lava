@@ -18,10 +18,15 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import os
 import sys
-import simplejson
 import types
+import yaml
+import logging
+from collections import OrderedDict
 from contextlib import contextmanager
+from lava_dispatcher.context import LavaContext
+from lava_dispatcher.config import get_device_config
 
 
 class InfrastructureError(Exception):
@@ -57,18 +62,164 @@ class TestError(Exception):
     pass
 
 
+class YamlFilter(logging.Filter):
+    """
+    filters standard logs into structued logs
+    """
+    def filter(self, record):
+        record.msg = yaml.dump(record.msg)
+        return True
+
+
+class Pipeline(object):
+    """
+    Pipelines ensure that actions are run in the correct sequence whilst
+    allowing for retries and other requirements.
+    When an action is added to a pipeline, the level of that action within
+    the overall job is set along with the formatter and output filename
+    of the per-action log handler.
+    """
+    def __init__(self, parent=None, job=None):
+        self.children = {}
+        self.actions = []
+        self.summary = "pipeline"
+        self.parent = None
+        self.job = None
+        self.branch_level = 1  # the level of the last added child
+        if job:  # do not unset if set by outer pipeline
+            self.job = job
+        if not parent:
+            self.children = {self: self.actions}
+        elif not parent.level:
+            raise RuntimeError("Tried to create a pipeline using a parent action with no level set.")
+        else:
+            # parent must be an Action
+            if not isinstance(parent, Action):
+                raise RuntimeError("Internal pipelines need an Action as a parent")
+            self.parent = parent
+            self.branch_level = parent.level
+            if parent.job:
+                self.job = parent.job
+
+    def _check_action(self, action):
+        if not action or not issubclass(type(action), Action):
+            raise RuntimeError("Only actions can be added to a pipeline: %s" % action)
+        if not action:
+            raise RuntimeError("Unable to add empty action to pipeline")
+        if not action.name:
+            raise RuntimeError("Unnamed action!")
+        if ' ' in action.name:
+            raise RuntimeError("Whitespace must not be used in action names, only descriptions or summaries")
+
+    def add_action(self, action):
+        self._check_action(action)
+        self.actions.append(action)
+        action.level = "%s.%s" % (self.branch_level, len(self.actions))
+        if action.job:  # should only be None inside the unit tests
+            self.job = action.job
+        if self.parent:  # action
+            self.children.update({self: self.actions})
+            self.parent.pipeline = self
+        else:
+            action.level = "%s" % (len(self.actions))
+        # create a log handler just for this action.
+        if self.job and self.job.parameters['output_dir']:
+            yaml_filename = os.path.join(
+                self.job.parameters['output_dir'],
+                "%s-%s.log" % (action.level, action.name)
+            )
+            action.log_handler = logging.FileHandler(yaml_filename, mode='a', encoding="utf8")
+            # per action loggers always operate in DEBUG mode - the frontend does the parsing later.
+            action.log_handler.setLevel(logging.DEBUG)
+            # yaml wrapper inside the log handler
+            action.log_handler.setFormatter(logging.Formatter('id: "<LAVA_DISPATCHER>%(asctime)s"\n%(message)s'))
+
+    def _describe(self, structure):
+        # TODO: make the amount of output conditional on a parameter passed to describe
+        for action in self.actions:
+            structure[action.level] = {
+                'description': action.description,
+                'summary': action.summary,
+                'content': action.explode()
+            }
+            if not action.pipeline:
+                continue
+            action.pipeline._describe(structure)
+
+    def describe(self):
+        """
+        Describe the current pipeline, recursing through any
+        internal pipelines.
+        :return: JSON string of the structure
+        """
+        structure = OrderedDict()
+        self._describe(structure)
+        return structure
+
+    @property
+    def errors(self):
+        sub_action_errors = [a.errors for a in self.actions]
+        return reduce(lambda a, b: a + b, sub_action_errors)
+
+    def run_actions(self, connection, args=None):
+        context = None
+        if isinstance(args, LavaContext):
+            context = args
+            # FIXME: single location in the job?
+            yaml_log = logging.getLogger("YAML")  # allows per-action logs in yaml
+            yaml_log.setLevel(logging.DEBUG)  # yaml log is always in debug
+            std_log = logging.getLogger("ASCII")
+        for action in self.actions:
+            # enable the log handler created in this action when it was added to this pipeline
+            # FIXME: determine how this works with internal pipelines & whether any duplication is warranted.
+            if context:
+                yaml_log.addHandler(action.log_handler)
+                yaml_log.debug({'start': {action.level: action.name}})
+            new_connection = action.run(connection, context)
+            if new_connection:
+                connection = new_connection
+            # remove per-action log handler
+            if context:
+                yaml_log.removeHandler(action.log_handler)
+        return connection
+
+    def prepare_actions(self):
+        for action in self.actions:
+            action.prepare()
+
+    def post_process_actions(self):
+        for action in self.actions:
+            action.post_process()
+
+
 class Action(object):
 
-    def __init__(self, line=None):
+    def __init__(self):
+        """
+        Actions get added to pipelines by calling the
+        Pipeline.add_action function. Other Action
+        data comes from the parameters. Actions with
+        internal pipelines push parameters to actions
+        within those pipelines. Parameters are to be
+        treated as inmutable.
+
+        Logs written to the per action log must use the YAML logger.
+        Output for stdout (which is redirected to the oob_file by the
+        scheduler) should use the ASCII logger.
+        yaml_log = logging.getLogger("YAML")
+        std_log = logging.getLogger("ASCII")
+        """
         self.__summary__ = None
         self.__description__ = None
         self.__level__ = None
         self.err = None
         self.pipeline = None
         self.__parameters__ = {}
-        self.yaml_line = line
+        self.yaml_line = None
         self.__errors__ = []
         self.elapsed_time = None
+        self.log_handler = None
+        self.job = None
 
     # public actions (i.e. those who can be referenced from a job file) must
     # declare a 'class-type' name so they can be looked up.
@@ -166,6 +317,9 @@ class Action(object):
 
     def __set_parameters__(self, data):
         self.__parameters__.update(data)
+        if self.pipeline:
+            for action in self.pipeline.actions:
+                action.parameters = self.parameters
 
     @parameters.setter
     def parameters(self, data):
@@ -200,6 +354,38 @@ class Action(object):
             return new_connection
         finally:
             self.cleanup()
+
+    def _run_command(self, command_list):
+        """
+        Single location for all external command operations, without using
+        a shell and with full structured logging.
+        Ensure that output for the YAML logger is a serialisable object
+        and strip embedded newlines / whitespace where practical.
+        """
+        if type(command_list) != list:
+            raise RuntimeError("commands to _run_command need to be a list")
+        yaml_log = logging.getLogger("YAML")
+        std_log = logging.getLogger("ASCII")
+        log = None
+        try:
+            log = subprocess.check_output(command_list, stderr=subprocess.STDOUT)
+        except KeyboardInterrupt:
+            self.cleanup()
+            self.err = "\rCancel"  # Set a useful message.
+        except OSError as e:
+            yaml_log.debug({e.strerror: e.child_traceback.split('\n')})
+        except subprocess.CalledProcessError as e:
+            yaml_log.debug({
+                'command': [i.strip() for i in e.cmd],
+                'message': [i.strip() for i in e.message],
+                'output': e.output.split('\n')})
+        if log:
+            yaml_log.debug({"output": log.split('\n')})
+            std_log.info(log)
+        else:
+            # FIXME: no output may be correct - add a flag to allow RuntimeError if not
+            pass
+        # FIXME: return False on error?
 
     def run(self, connection, args=None):
         """
@@ -276,9 +462,40 @@ class Action(object):
         return data
 
 
+class RetryAction(Action):
+
+    def __init__(self):
+        super(RetryAction, self).__init__()
+        self.retries = 5
+
+    def run(self, connection, args=None):
+        pass
+
+    def __call__(self, connection):
+        while self.retries:
+            try:
+                new_connection = self.run(connection)
+                return new_connection
+            except JobError:
+                self.retries -= 1
+            finally:
+                self.cleanup()
+
+
 class Deployment(object):
+    """
+    Deployment is a  strategy class which aggregates Actions
+    until the request from the YAML can be validated or rejected.
+    Translates the parsed pipeline into Actions and populates
+    each Action with parameters.
+    """
 
     priority = 0
+
+    def __init__(self, parent):
+        self.__parameters__ = {}
+        self.pipeline = parent
+        self.job = parent.job
 
     @contextmanager
     def deploy(self):
@@ -306,26 +523,50 @@ class Deployment(object):
         """
         raise NotImplementedError("extract_results")
 
+    @property
+    def parameters(self):
+        """
+        All data which this action needs to have available for
+        the prepare, run or post_process functions needs to be
+        set as a parameter. The parameters will be validated
+        during pipeline creation.
+        This allows all pipelines to be fully described, including
+        the parameters supplied to each action, as well as supporting
+        tests on each parameter (like 404 or bad formatting) during
+        validation of each action within a pipeline.
+        Parameters are static, internal data within each action
+        copied directly from the YAML. Dynamic data is held in
+        the context available via the parent Pipeline()
+        """
+        return self.__parameters__
+
+    def __set_parameters__(self, data):
+        self.__parameters__.update(data)
+
+    @parameters.setter
+    def parameters(self, data):
+        self.__set_parameters__(data)
+
     @classmethod
-    def accepts(self, device, image):
+    def accepts(cls, device, parameters):
         """
         Returns True if this deployment strategy can be used the the
-        given device and image.
+        given device and details of an image in the parameters.
 
         Must be implemented by subclasses.
         """
         return NotImplementedError("accepts")
 
     @classmethod
-    def select(cls, device, image):
+    def select(cls, device, parameters):
 
         candidates = cls.__subclasses__()
-        willing = [c for c in candidates if c.accepts(device, image)]
+        willing = [c for c in candidates if c.accepts(device, parameters)]
 
         if len(willing) == 0:
             raise NotImplementedError(
-                "No deployment strategy available for the given image "
-                "on the given device.")
+                "No deployment strategy available for the given "
+                "device '%s'." % device.config.hostname)
 
         # higher priority first
         compare = lambda x, y: cmp(y.priority, x.priority)
@@ -334,32 +575,11 @@ class Deployment(object):
         return prioritized[0]
 
 
-class Job(object):
-
-    def __init__(self, pipeline, parameters):
-        self.pipeline = pipeline
-        self.actions = pipeline.children
-        self.parameters = parameters
-
-    def run(self):
-
-        # FIXME how to get rootfs with multiple deployments, and at arbitrary
-        # points in the pipeline?
-        rootfs = None
-        self.action.prepare(rootfs)
-
-        self.action.run(None)
-
-        # FIXME how to know when to extract results with multiple deployment at
-        # arbitrary points?
-        results_dir = None
-        #    self.action.post_process(results_dir)
-
-
 class Image(object):
     """
     Create subclasses for each type of image: prebuilt, hwpack+rootfs,
     kernel+rootfs+dtb+..., dummy, ...
+    TBD: this might not be needed.
     """
 
     @contextmanager
@@ -378,6 +598,12 @@ class Connection(object):
 
 
 class Device(object):
+    """
+    Holds all data about the device for this TestJob including
+    all database parameters and device condfiguration.
+    In the dumb dispatcher model, an instance of Device would
+    be populated directly from the master scheduler.
+    """
 
     def __init__(self, hostname):
         self.config = get_device_config(hostname)

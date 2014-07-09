@@ -1,10 +1,16 @@
+import sys
 import os
 from StringIO import StringIO
 import unittest
 import yaml
 
-from lava_dispatcher.pipeline import *
+from lava_dispatcher.pipeline import Pipeline, Action
 from lava_dispatcher.pipeline.parser import JobParser
+from lava_dispatcher.pipeline.job import Job
+from lava_dispatcher.tests.helper import create_device_config, create_config
+from lava_dispatcher.config import get_config
+from lava_dispatcher.context import LavaContext
+from lava_dispatcher.device.qemu import QEMUTarget
 
 
 class TestAction(unittest.TestCase):
@@ -35,44 +41,48 @@ class TestPipelineInit(unittest.TestCase):
 class TestJobParser(unittest.TestCase):
 
     def setUp(self):
-        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/basics.yaml')
-        self.sample_job_data = open(sample_job_file)
-        self.parser = JobParser()
+        factory = Factory()
+        self.job = factory.create_job('sample_jobs/basics.yaml')
 
     def test_parser_creates_a_job_with_a_pipeline(self):
-        job = self.parser.parse(self.sample_job_data)
-        self.assertIsInstance(job, Job)
-        self.assertIsInstance(job.pipeline, Pipeline)
+        self.assertIsInstance(self.job, Job)
+        self.assertIsInstance(self.job.pipeline, Pipeline)
 
     def test_pipeline_gets_multiple_actions_in_it(self):
-        job = self.parser.parse(self.sample_job_data)
-        self.assertTrue(job.actions > 1)
+        self.assertTrue(self.job.actions > 1)
 
-    @property
-    def boot_from_sata(self):
-        return StringIO({
-            'actions': [
-                {'deploy': {'to': 'sata', 'image': 'file:///path/to/image.img'}},
-            ]
-        })
+# FIXME: disabled as the current parser relies on a real file, not a string.
+# class TestJobSnippet(unittest.TestCase):
 
-    def test_boot_from_sata(self):
-        job = self.parser.parse(self.boot_from_sata)
-        self.assertEquals(1, len(job.actions))
-        self.assertEquals(job.actions[job.pipeline][0].level, "1")
+#    def setUp(self):
+#        factory = Factory()
+#        fake_qemu = os.path.join(os.path.dirname(__file__), '..', '..', 'tests', 'test-config', 'bin', 'fake-qemu')
+#        device = factory.create_kvm_target({'qemu-binary': fake_qemu})
+#        self.parser = JobParser()
+#        self.job = self.parser.parse(self.boot_from_sata, device)
 
-    def test_action_data(self):
-        job = self.parser.parse(self.boot_from_sata)
-        deploy_action = job.actions[job.pipeline][0]
-        self.assertEqual(type(deploy_action), DeployAction)
-        self.assertEquals('sata', deploy_action.parameters['to'])
-        self.assertEquals('file:///path/to/image.img', deploy_action.parameters['image'])
+#    def boot_from_sata(self):
+#        return StringIO({
+#            'actions': [
+#                {'deploy': {'to': 'sata', 'image': 'file:///path/to/image.img'}},
+#            ]
+#        })
 
-    def test_action_class(self):
-        job = self.parser.parse(self.boot_from_sata)
-        deploy_action = job.actions[job.pipeline][0]
+#    def test_boot_from_sata(self):
+#        self.assertEquals(1, len(self.job.actions))
+#        self.assertEquals(self.job.actions[self.job.pipeline][0].level, "1")
 
-        self.assertIsInstance(deploy_action, DeployAction)
+#    def test_action_data(self):
+#        deploy_action = self.job.actions[self.job.pipeline][0]
+#        self.assertEqual(type(deploy_action), DeployAction)
+#        self.assertEquals('sata', deploy_action.parameters['to'])
+#        self.assertEquals('file:///path/to/image.img', deploy_action.parameters['image'])
+
+#    def test_action_class(self):
+#        job = self.parser.parse(self.boot_from_sata)
+#        deploy_action = job.actions[job.pipeline][0]
+#
+#        self.assertIsInstance(deploy_action, DeployAction)
 
 
 class TestValidation(unittest.TestCase):
@@ -88,13 +98,56 @@ class TestValidation(unittest.TestCase):
         sub1 = Action()
         sub1.__errors__ = [1]
         sub2 = Action()
+        sub2.name = "sub2"
         sub2.__errors__ = [2]
 
         pipe = Pipeline()
+        self.assertRaises(RuntimeError, pipe.add_action, sub1)
+        sub1.name = "sub1"
         pipe.add_action(sub1)
         pipe.add_action(sub2)
 
         self.assertEqual([1, 2], pipe.errors)
+
+
+class Factory(object):
+    """
+    Not Model based, this is not a Django factory.
+    Factory objects are dispatcher based classes, independent
+    of any database objects.
+    """
+    def create_kvm_target(self, extra_device_config=None):
+        if not extra_device_config:
+            extra_device_config = {}
+        create_config('lava-dispatcher.conf', {})
+
+        device_config_data = {'device_type': 'kvm'}
+        device_config_data.update(extra_device_config)
+        device_config = create_device_config('fakekvm', device_config_data)  # use a device name unlikely to exist
+
+        dispatcher_config = get_config()
+
+        context = LavaContext('fakekvm', dispatcher_config, None, None, None)
+        return QEMUTarget(context, device_config)
+
+    def create_fake_qemu_job(self):
+        factory = Factory()
+        fake_qemu = os.path.join(os.path.dirname(__file__), '..', '..', 'tests', 'test-config', 'bin', 'fake-qemu')
+        device = factory.create_kvm_target({'qemu-binary': fake_qemu})
+        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/basics.yaml')
+        self.sample_job_data = open(sample_job_file)
+        self.parser = JobParser()
+        job = self.parser.parse(self.sample_job_data, device)
+        return job
+
+    def create_job(self, filename, output_dir=None):
+        device = self.create_kvm_target()
+        kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
+        self.sample_job_data = open(kvm_yaml)
+        self.parser = JobParser()
+        job = self.parser.parse(self.sample_job_data, device, output_dir)
+        job.context = LavaContext(device.config.hostname, get_config(), sys.stderr, job.parameters, '/tmp')
+        return job
 
 
 class TestPipeline(unittest.TestCase):
@@ -103,7 +156,8 @@ class TestPipeline(unittest.TestCase):
 
         def __init__(self):
             self.ran = False
-            super(TestPipeline.FakeAction, self).__init__(None)
+            super(TestPipeline.FakeAction, self).__init__()
+            self.name = "fake-action"
 
         def run(self, connection, args=None):
             self.ran = True
@@ -114,6 +168,7 @@ class TestPipeline(unittest.TestCase):
 
     def test_add_action_to_pipeline(self):
         action = Action()
+        action.name = "test-action"
         action.description = "test action only"
         action.summary = "starter"
         self.assertEqual(action.description, "test action only")
@@ -137,6 +192,7 @@ class TestPipeline(unittest.TestCase):
 
     def test_create_internal_pipeline(self):
         action = Action()
+        action.name = "internal_pipe"
         action.description = "test action only"
         action.summary = "starter"
         pipe = Pipeline()
@@ -144,6 +200,7 @@ class TestPipeline(unittest.TestCase):
         self.assertEqual(len(pipe.children[pipe]), 1)
         self.assertEqual(action.level, "1")
         action = Action()
+        action.name = "child_action"
         action.summary = "child"
         action.description = "action implementing an internal pipe"
         with self.assertRaises(RuntimeError):
@@ -154,6 +211,7 @@ class TestPipeline(unittest.TestCase):
         # a formal RetryAction would contain a pre-built pipeline which can be inserted directly
         retry_pipe = Pipeline(action)
         action = Action()
+        action.name = "inside_action"
         action.description = "action inside the internal pipe"
         action.summary = "child"
         retry_pipe.add_action(action)
@@ -162,12 +220,14 @@ class TestPipeline(unittest.TestCase):
 
     def test_complex_pipeline(self):
         action = Action()
+        action.name = "starter_action"
         action.description = "test action only"
         action.summary = "starter"
         pipe = Pipeline()
         pipe.add_action(action)
         self.assertEqual(action.level, "1")
         action = Action()
+        action.name = "pipe_action"
         action.description = "action implementing an internal pipe"
         action.summary = "child"
         pipe.add_action(action)
@@ -175,33 +235,39 @@ class TestPipeline(unittest.TestCase):
         # a formal RetryAction would contain a pre-built pipeline which can be inserted directly
         retry_pipe = Pipeline(action)
         action = Action()
+        action.name = "child_action"
         action.description = "action inside the internal pipe"
         action.summary = "child"
         retry_pipe.add_action(action)
         self.assertEqual(action.level, "2.1")
         action = Action()
+        action.name = "second-child-action"
         action.description = "second action inside the internal pipe"
         action.summary = "child2"
         retry_pipe.add_action(action)
         self.assertEqual(action.level, "2.2")
         action = Action()
+        action.name = "baby_action"
         action.description = "action implementing an internal pipe"
         action.summary = "baby"
         retry_pipe.add_action(action)
         self.assertEqual(action.level, "2.3")
         inner_pipe = Pipeline(action)
         action = Action()
+        action.name = "single_action"
         action.description = "single line action"
         action.summary = "single"
         inner_pipe.add_action(action)
         self.assertEqual(action.level, "2.3.1")
 
         action = Action()
+        action.name = "step_out"
         action.description = "step out of inner pipe"
         action.summary = "brother"
         retry_pipe.add_action(action)
         self.assertEqual(action.level, "2.4")
         action = Action()
+        action.name = "top-level"
         action.description = "top level"
         action.summary = "action"
         pipe.add_action(action)
@@ -209,10 +275,8 @@ class TestPipeline(unittest.TestCase):
         self.assertEqual(len(pipe.describe().values()), 8)
 
     def test_simulated_action(self):
-        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/basics.yaml')
-        self.sample_job_data = open(sample_job_file)
-        self.parser = JobParser()
-        job = self.parser.parse(self.sample_job_data)
+        factory = Factory()
+        job = factory.create_job('sample_jobs/basics.yaml')
         # uncomment to see the YAML dump of the pipeline.
         # print yaml.dump(job.pipeline.describe())
 
@@ -243,15 +307,16 @@ class TestFakeActions(unittest.TestCase):
     def test_prepare(self):
         class PrepareAction(Action):
 
-            def __init__(self):
+            def __init__(self, pipeline):
                 self.called = False
                 super(PrepareAction, self).__init__()
+                self.name = "prepare"
 
             def prepare(self):
                 self.called = True
 
         pipe = Pipeline()
-        prepare = PrepareAction()
+        prepare = PrepareAction(pipe)
         pipe.add_action(prepare)
         pipe.prepare_actions()
         self.assertTrue(prepare.called)
@@ -260,21 +325,26 @@ class TestFakeActions(unittest.TestCase):
 
         class PostProcess(Action):
 
-            def __init__(self):
+            def __init__(self, pipeline):
                 self.called = False
                 super(PostProcess, self).__init__()
+                self.name = "post-process"
 
             def post_process(self):
                 self.called = True
 
         pipe = Pipeline()
-        post_process = PostProcess()
+        post_process = PostProcess(pipe)
         pipe.add_action(post_process)
         pipe.post_process_actions()
         self.assertTrue(post_process.called)
 
     def test_keep_connection(self):
         class KeepConnection(Action):
+            def __init__(self):
+                super(KeepConnection, self).__init__()
+                self.name = "keep-connection"
+
             def run(self, connection, args=None):
                 pass
 
@@ -285,6 +355,10 @@ class TestFakeActions(unittest.TestCase):
 
     def test_change_connection(self):
         class MakeNewConnection(Action):
+            def __init__(self):
+                super(MakeNewConnection, self).__init__()
+                self.name = "make-new-connection"
+
             def run(self, connection, args=None):
                 new_connection = object()
                 return new_connection
