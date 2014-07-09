@@ -1065,20 +1065,98 @@ $(document).ready(function () {
     add_bug_link = function () {
         var current_bug = [];
 
-        $("#add-bug-dialog").bind('submit', function(e) {
-            var bug_url = $("#add-bug-dialog").find('input[name=bug_link]').val();
+        validate_submit = function() {
+            bug_url = $("#add-bug-dialog").find('input[name=bug_link]').val();
             if (!isValidUrl(bug_url)) {
-                e.preventDefault();
                 alert("'" + bug_url + "' is not a valid url!!");
+                return false;
             }
             if (current_bug.indexOf(bug_url) > -1) {
-                e.preventDefault();
                 alert("'" + bug_url + "' is already linked!!");
+                return false;
             }
-        });
+            return true;
+        }
+
 
         _submit = function () {
-            $(this).submit();
+
+            if (!validate_submit()) {
+                return;
+            }
+
+            var url = $("#add-bug-dialog").attr('url');
+            // Increase or decrease bug number
+            var increase = false;
+            if (url.indexOf("unlink") == -1) {
+                var increase = true;
+            }
+
+            bug_link = $("#add-bug-dialog").find('input[name=bug_link]').val();
+            data = {
+                csrfmiddlewaretoken: csrf_token,
+                bug_link: bug_link,
+                uuid: $("#add-bug-dialog").find('input[name=uuid]').val()
+            }
+
+            var relative_index = null;
+            if($("#add_bug_dialog").find('input[name=relative_index]')) {
+                relative_index = $("#add-bug-dialog").find('input[name=relative_index]').val();
+                data["relative_index"] = relative_index;
+            }
+
+            $.ajax({
+                url: url,
+                async: false,
+                type: "POST",
+                data: data,
+                beforeSend: function () {
+                    $('#loading_dialog').dialog('open');
+                },
+                success: function (data) {
+                    $('#loading_dialog').dialog('close');
+                    if (data[0].fields.analyzer_assigned_uuid) {
+                        uuid = data[0].fields.analyzer_assigned_uuid;
+                    } else {
+                        uuid = data[0].pk;
+                    }
+                    update_bug_dialog(uuid, increase, bug_link, relative_index);
+                    $("#add-bug-dialog").dialog('close');
+                },
+                error: function(data, status, error) {
+                    $('#loading_dialog').dialog('close');
+                    $("#add-bug-dialog").dialog('close');
+                    alert('Operation failed, please try again.');
+                }
+            });
+        }
+
+        update_bug_dialog = function (uuid, increase, bug_link, relative_index) {
+            // Find corresponding td field and change number of bugs in it.
+            if (relative_index) {
+                element = $("td[data-uuid='" + uuid + "'][data-relative_index='" + relative_index + "'] > .bug-link-container > .add-bug-link");
+            } else {
+                element = $("td[data-uuid='" + uuid + "'] > .bug-link-container > .add-bug-link");
+            }
+
+            bug_number = element.html().replace("[", "").replace("]", "");
+
+            if (increase) {
+                $("td[data-uuid='" + uuid + "'] > .bug-links").append(
+                    '<li class="bug-link">' + bug_link + '</li>'
+                );
+                bug_number ++;
+            } else {
+                bug_number --;
+
+                var links_element = $("td[data-uuid='" + uuid + "'] > .bug-links");
+                links_element.children().each(function() {
+                    if ($(this).html().indexOf(bug_link) != -1) {
+                        $(this).remove();
+                    }
+                });
+            }
+            element.html("[" + bug_number + "]");
         }
 
         var add_bug_dialog = $('#add-bug-dialog').dialog(
@@ -1145,20 +1223,18 @@ $(document).ready(function () {
                 var uuid = $(this).closest('td').data('uuid');
                 var rel_idx = $(this).closest('td').data('relative_index');
                 var chart_id = $(this).closest('td').data('chart-id');
-                var back_url = add_bug_dialog.find('input[name=back]').val().split('?')[0] + '?bug_links_chart_id=' + chart_id;
 
                 current_bug = get_linked_bugs($(this));
-                add_bug_dialog.find('input[name=back]').val(back_url);
                 add_bug_dialog.find('input[name=bug_link]').val('');
                 add_bug_dialog.find('input[name=uuid]').val(uuid);
 
                 if (rel_idx) {
                     add_bug_dialog.find('input[name=relative_index]').val(rel_idx);
-                    link_bug_url = testresult_link_bug_url
-                    unlink_bug_url = testresult_unlink_bug_url
+                    link_bug_url = testresult_link_bug_url;
+                    unlink_bug_url = testresult_unlink_bug_url;
                 } else {
-                    link_bug_url = testrun_link_bug_url
-                    unlink_bug_url = testrun_unlink_bug_url
+                    link_bug_url = testrun_link_bug_url;
+                    unlink_bug_url = testrun_unlink_bug_url;
                 }
 
                 if(current_bug.length) {
@@ -1185,9 +1261,9 @@ $(document).ready(function () {
                             if(confirm("Unlink '" + bug + "'")) {
                                 // unlink bug right now, so clear current_bug which is used for checking if the bug is duplicated when adding a bug
                                 current_bug = [];
-                                $('#add-bug-dialog').attr('action', unlink_bug_url);
+                                $('#add-bug-dialog').attr('url', unlink_bug_url);
                                 add_bug_dialog.find('input[name=bug_link]').val(bug);
-                                add_bug_dialog.submit();
+                                _submit();
                             }
                         }
                     );
@@ -1214,9 +1290,9 @@ $(document).ready(function () {
 
                             e.preventDefault();
                             if (confirm("Link '" + bug + "' to the '" + names.testrun + "' run of build" + names.buildnumber)) {
-                                $('#add-bug-dialog').attr('action', link_bug_url);
+                                $('#add-bug-dialog').attr('url', link_bug_url);
                                 add_bug_dialog.find('input[name=bug_link]').val(bug);
-                                add_bug_dialog.submit();
+                                _submit();
                             }
                         });
                 } else {
@@ -1225,21 +1301,37 @@ $(document).ready(function () {
 
                 var title = "Link a bug to the '" + names.testrun +
                     "' run of build " + names.buildnumber;
-                $('#add-bug-dialog').attr('action', link_bug_url);
+                $('#add-bug-dialog').attr('url', link_bug_url);
                 add_bug_dialog.dialog('option', 'title', title);
                 add_bug_dialog.dialog('open');
             }
         );
     }
 
+    init_loading_dialog = function() {
+    // Setup the loading image dialog.
+        $("#main_container").append('<div id="loading_dialog"></div>');
+        $("#loading_dialog").append('<img src="/static/dashboard_app/images/ajax-progress.gif" alt="Loading..." />');
+
+        $('#loading_dialog').dialog({
+            autoOpen: false,
+            title: '',
+            draggable: false,
+            height: 45,
+            width: 250,
+            modal: true,
+            resizable: false,
+            dialogClass: 'loading-dialog'
+        });
+
+        $('.loading-dialog div.ui-dialog-titlebar').hide();
+    }
+    init_loading_dialog();
+
     report = new ImageReport(chart_data);
     report.start();
 
     add_bug_link();
-
-    if (buglinks_chartid.length) {
-        $('#data_table_link_' + buglinks_chartid).click();
-    }
 
     $(window).resize(function () {
         report.redraw();
