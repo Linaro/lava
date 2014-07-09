@@ -157,13 +157,12 @@ class SchedulerAPI(ExposedAPI):
         the user is authenticated with an username and token.
         """
 
-        if not self.user:
-            raise xmlrpclib.Fault(
-                401, "Authentication with user and token required for this "
-                "API.")
-
         try:
             job = get_restricted_job(self.user, job_id)
+        except PermissionDenied:
+            raise xmlrpclib.Fault(
+                401, "Authentication with user and token required for job %s" %
+                job_id)
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
@@ -319,14 +318,13 @@ class SchedulerAPI(ExposedAPI):
         the user is authenticated with an username and token.
         """
 
-        if not self.user:
-            raise xmlrpclib.Fault(
-                401, "Authentication with user and token required for this "
-                "API.")
-
         try:
             job = get_restricted_job(self.user, job_id)
             job.status = job.get_status_display()
+        except PermissionDenied:
+            raise xmlrpclib.Fault(
+                401, "Authentication with user and token required for job %s" %
+                job_id)
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
