@@ -135,7 +135,7 @@ To install just the lava-server from the current packages, use::
 
 This will install lava-dispatcher and lava-server.
 
-Other packages to consider::
+Other packages to consider:
 
 * ``lavapdu-client`` to control a :term:`PDU` to allow LAVA to
   automatically power cycle a device.
