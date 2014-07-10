@@ -1756,7 +1756,7 @@ def send_image_report_notifications(sender, bundle):
         for chart in charts:
             if chart.target_goal:
 
-                chart_filters = [chart_filter.filter for chart_filter in \
+                chart_filters = [chart_filter.filter for chart_filter in
                                  chart.imagechartfilter_set.all()]
                 chart_tests = []
                 for chart_filter in chart.imagechartfilter_set.all():
@@ -1771,7 +1771,6 @@ def send_image_report_notifications(sender, bundle):
                             for test_run in filter_match.test_runs:
                                 if test_run.test in chart_tests:
 
-
                                     denorm = test_run.denormalization
                                     if denorm.count_pass < chart.target_goal:
                                         matches.append(test_run)
@@ -1779,8 +1778,8 @@ def send_image_report_notifications(sender, bundle):
                         else:
                             for test_result in filter_match.specific_results:
                                 if test_result.test_case in chart_tests:
-                                    if test_result.measurement < \
-                                    chart.target_goal:
+                                    if test_result.measurement <\
+                                            chart.target_goal:
                                         matches.append(test_result)
 
                 for chart_user in chart.imagechartuser_set.all():
