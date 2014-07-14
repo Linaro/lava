@@ -114,6 +114,10 @@ data pairs. Sending a message is a non-blocking operation. The message
 is guaranteed to be available to all members of the group, but some of
 them might never retrieve it.
 
+The message-id will be persistent for the lifetime of the target group
+managing the entire multinode test job. Re-sending a different message
+with an existing message-id is not supported.
+
 Usage: ``lava-send <message-id> [key1=val1 [key2=val2] ...]``
 
 Examples will be provided below, together with ``lava-wait`` and
