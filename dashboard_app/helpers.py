@@ -339,6 +339,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                 """
                 INSERT INTO dashboard_app_testresult (
                     test_run_id,
+                    _order,
                     relative_index,
                     timestamp,
                     microseconds,
@@ -349,6 +350,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                     test_case_id,
                     lineno
                 ) SELECT
+                    %s,
                     %s,
                     relative_index,
                     timestamp,
@@ -363,7 +365,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                       WHERE dashboard_app_testcase.test_id = %s
                         AND dashboard_app_testcase.test_case_id
                           = newtestresults.test_case_id
-                """ % (s_test_run.id, s_test_run.test.id))
+                """ % (s_test_run.id, 0, s_test_run.test.id))
 
             cursor.execute(
                 """
