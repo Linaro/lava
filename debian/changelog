@@ -1,3 +1,13 @@
+lava-server (2014.06.14.17-1) unstable; urgency=medium
+
+  * New upstream release
+  * Includes fix for dashboard unit tests and error on
+    submitting result data for the first time.
+  * Recommend Android support tools to communicate with devices using
+    adb
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 14 Jul 2014 19:01:00 +0100
+
 lava-server (2014.06.02.17-2) unstable; urgency=medium
 
   * Drop README.Debian as this information is now in the
