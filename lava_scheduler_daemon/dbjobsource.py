@@ -214,7 +214,12 @@ class DatabaseJobSource(object):
             device = find_device_for_job(job, devices)
             if device:
                 job.actual_device = device
-                job.submit_token = AuthToken.objects.create(user=job.submitter)
+                try:
+                    job.submit_token = AuthToken.objects.filter(
+                        user=job.submitter)[0]
+                except IndexError:
+                    job.submit_token = AuthToken.objects.create(
+                        user=job.submitter)
                 device.current_job = job
                 device.state_transition_to(Device.RESERVED, message="Reserved for job %s" % job.display_id)
                 job.save()
