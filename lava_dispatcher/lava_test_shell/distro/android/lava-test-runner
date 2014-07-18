@@ -1,4 +1,3 @@
-#!/system/bin/mksh
 
 LCK=${LCK-"/lava-test-runner.lck"}
 
