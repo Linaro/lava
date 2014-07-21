@@ -308,6 +308,8 @@ class RecentJobsTable(JobTable):
     id = RestrictedIDLinkColumn(verbose_name="ID", accessor="id")
     device = tables.Column(accessor='device_sort')
     log_level = tables.Column(accessor="definition", verbose_name="Log level")
+    duration = tables.Column(accessor='duration_sort')
+    duration.orderable = False
 
     def __init__(self, *args, **kwargs):
         super(RecentJobsTable, self).__init__(*args, **kwargs)
