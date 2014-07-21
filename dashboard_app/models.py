@@ -2006,6 +2006,7 @@ class ImageReportChart(models.Model):
             chart_data["start_date"] = chart_user.start_date
             chart_data["is_legend_visible"] = chart_user.is_legend_visible
             chart_data["has_subscription"] = chart_user.has_subscription
+            chart_data["toggle_percentage"] = chart_user.toggle_percentage
 
         except ImageChartUser.DoesNotExist:
             # Leave an empty dict.
@@ -2423,3 +2424,7 @@ class ImageChartUser(models.Model):
     has_subscription = models.BooleanField(
         default=False,
         verbose_name='Subscribed to target goal')
+
+    toggle_percentage = models.BooleanField(
+        default=False,
+        verbose_name='Toggle percentage')

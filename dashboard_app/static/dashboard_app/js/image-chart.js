@@ -548,6 +548,11 @@ $(document).ready(function () {
             chart.update_settings();
         });
 
+        $("#is_percentage_"+this.chart_id).change(function() {
+            chart.update_plot();
+            chart.update_settings();
+        });
+
         if (this.chart_data["chart_type"] == "pass/fail") {
             $("#is_percentage_"+this.chart_id).change(function() {
                 chart.update_plot();
@@ -572,6 +577,10 @@ $(document).ready(function () {
                 $("#is_legend_visible_" + this.chart_id).prop("checked",
                                                               false);
             }
+            if (this.chart_data.user.toggle_percentage == true) {
+                $("#is_percentage_" + this.chart_id).prop("checked",
+                                                              true);
+            }
 
             this.set_subscription_link(this.chart_data.user.has_subscription);
         }
@@ -592,6 +601,7 @@ $(document).ready(function () {
                 start_date: $("#start_date_" + this.chart_id).val(),
                 is_legend_visible: $("#is_legend_visible_" + this.chart_id).prop("checked"),
                 has_subscription: $("#has_subscription_" + this.chart_id).val(),
+                toggle_percentage: $("#is_percentage_" + this.chart_id).prop("checked"),
             },
             success: function (data) {
                 chart.set_subscription_link(data[0].fields.has_subscription);
