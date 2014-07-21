@@ -1455,6 +1455,10 @@ def favorite_jobs(request, username=None):
 @BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
 def job_log_file(request, pk):
     job = get_restricted_job(request.user, pk)
+    log_file = job.output_file()
+    if not log_file:
+        raise Http404
+
     with job.output_file() as f:
         f.seek(0, 2)
         job_file_size = f.tell()
@@ -1485,7 +1489,10 @@ def job_log_file(request, pk):
 
 def job_log_file_plain(request, pk):
     job = get_restricted_job(request.user, pk)
-    response = HttpResponse(job.output_file(), content_type='text/plain; charset=utf-8')
+    log_file = job.output_file()
+    if not log_file:
+        raise Http404
+    response = HttpResponse(log_file, content_type='text/plain; charset=utf-8')
     response['Content-Transfer-Encoding'] = 'quoted-printable'
     response['Content-Disposition'] = "attachment; filename=job_%d.log" % job.id
     return response
