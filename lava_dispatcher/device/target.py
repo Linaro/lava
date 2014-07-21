@@ -452,6 +452,7 @@ class Target(object):
         return boot_cmds
 
     def _customize_bootloader(self, connection, boot_cmds):
+        start = time.time()
         delay = self.config.bootloader_serial_delay_ms
         _boot_cmds = self._boot_cmds_preprocessing(boot_cmds)
         for line in _boot_cmds:
@@ -480,6 +481,12 @@ class Target(object):
                                       timeout=300)
                 connection.sendline(line, delay,
                                     send_char=self.config.send_char)
+
+        # Record boot time metadata
+        boottime = "{0:.2f}".format(time.time() - start)
+        boottime_meta = {'bootloader-load-time': boottime}
+        self.context.test_data.add_metadata(boottime_meta)
+        logging.debug("Bootloader load time: %s seconds" % boottime)
 
     def _target_extract(self, runner, tar_file, dest, timeout=-1, busybox=False):
         tmpdir = self.context.config.lava_image_tmpdir

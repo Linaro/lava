@@ -515,6 +515,7 @@ class LavaClient(object):
 
             self.vm_group.wait_for_vms()
 
+            start = time.time()
             try:
                 self._boot_linaro_image()
             except (OperationFailed, pexpect.TIMEOUT) as e:
@@ -530,6 +531,12 @@ class LavaClient(object):
                 logging.info(msg)
                 attempts += 1
                 continue
+
+            # Record boot time metadata
+            boottime = "{0:.2f}".format(time.time() - start)
+            boottime_meta = {'kernel-boot-time': boottime}
+            self.context.test_data.add_metadata(boottime_meta)
+            logging.debug("Kernel boot time: %s seconds" % boottime)
 
             self.setup_proxy(TESTER_PS1_PATTERN)
             logging.info("System is in test image now")
@@ -595,6 +602,7 @@ class LavaClient(object):
             TESTER_PS1_PATTERN = self.target_device.tester_ps1_pattern
             timeout = self.config.android_boot_prompt_timeout
 
+            start = time.time()
             try:
                 self._boot_linaro_android_image()
             except (OperationFailed, pexpect.TIMEOUT) as e:
@@ -610,6 +618,12 @@ class LavaClient(object):
                 logging.info(msg)
                 attempts += 1
                 continue
+
+            # Record boot time metadata
+            boottime = "{0:.2f}".format(time.time() - start)
+            boottime_meta = {'kernel-boot-time': boottime}
+            self.context.test_data.add_metadata(boottime_meta)
+            logging.debug("Kernel boot time: %s seconds" % boottime)
 
             #TODO: set up proxy
 
