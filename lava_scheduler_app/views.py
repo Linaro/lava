@@ -1812,6 +1812,8 @@ class RecentJobsView(JobTableView):
             "submitter",
             "user",
             "group",
+        ).extra(
+            select={'duration_sort': 'end_time - start_time'}
         ).filter(
             actual_device=self.device
         ).order_by(
