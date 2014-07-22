@@ -29,8 +29,9 @@ lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_disp
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-wait-for-vms
 
 # android specific
-lava-dispatcher: wrong-path-for-interpreter usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/android/lava-test-runner (#!/system/bin/mksh != /bin/mksh)
-lava-dispatcher: missing-dep-for-interpreter mksh => mksh (usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/android/lava-test-runner)
+#lava-dispatcher: wrong-path-for-interpreter usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/android/lava-test-runner (#!/system/bin/mksh != /bin/mksh)
+#lava-dispatcher: missing-dep-for-interpreter mksh => mksh (usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/android/lava-test-runner)
+lava-dispatcher: executable-not-elf-or-script usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/android/lava-test-runner
 # Running a VM on a device under test needs a usable SSH private key
 # which is only usable during the test
 lava-dispatcher: non-standard-file-perm usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys/lava 0600 != 0644
