@@ -44,7 +44,7 @@ def version_tag():
         return base.replace("%s-" % name_data, '')
     tag_list = [
         'git', 'for-each-ref', '--sort=taggerdate', '--format',
-        "'%(refname) %(taggerdate)'", 'refs/tags',
+        "'%(refname)'", 'refs/tags',
     ]
     hash_list = ['git', 'log', '-n', '1']
     tag_hash_list = ['git', 'rev-list']
