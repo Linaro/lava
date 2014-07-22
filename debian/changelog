@@ -1,3 +1,9 @@
+lava-server (2014.06.22-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Neil Williams <codehelp@debian.org>  Tue, 22 Jul 2014 16:43:51 +0100
+
 lava-server (2014.06.14.17-1) unstable; urgency=medium
 
   * New upstream release
