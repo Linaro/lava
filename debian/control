@@ -29,7 +29,7 @@ Recommends: ntp, git, htop, tftpd-hpa, openbsd-inetd,
  qemu-system-x86 (>= 2.0.0) [amd64], qemu-system-x86 (>= 2.0.0) [i386],
  qemu-system-arm (>= 2.0.0) [armhf],
  libguestfs-tools [amd64], libguestfs-tools [i386],
- nfs-kernel-server, rpcbind, unzip
+ nfs-kernel-server, rpcbind, u-boot-tools, unzip
 Description: Linaro Automated Validation Architecture dispatcher
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
