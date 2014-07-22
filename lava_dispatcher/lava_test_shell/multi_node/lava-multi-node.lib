@@ -15,13 +15,7 @@ MESSAGE_REPLY_ACK="<${LAVA_MULTI_NODE_API}_COMPLETE_ACK>"
 LAVA_MULTI_NODE_EXIT_ERROR=1
 
 _get_key_value_pattern () {
-	echo $@|awk '/=/{ $1=""; $2=""; print $0}'| \
-		awk -F ' ' '{for(i=1;i<=NF;i++)if($i!~/=$/)f=f?f FS $i:$i;print f;f=""}'
-}
-
-_get_key_values () {
-	echo $@|awk '/=/{ print $0}'| \
-		awk -F ' ' '{for(i=1;i<=NF;i++)if($i!~/=$/)f=f?f FS $i:$i;print f;f=""}'
+	echo $@ | tr ' ' '\n' | grep "..*=..*" | tr '\n' ' '
 }
 
 _lava_multi_node_debug () {
@@ -178,7 +172,7 @@ done
 _DNS_STREAM="dns_1=${_DNS_1_STREAM} dns_2=${_DNS_2_STREAM} \
 dns_3=${_DNS_3_STREAM}"
 
-_get_key_values $_IPV4_STREAM $_IPV6_STREAM $_MAC_STREAM \
+_get_key_value_pattern $_IPV4_STREAM $_IPV6_STREAM $_MAC_STREAM \
 $_HOSTNAME_STREAM $_HOSTNAME_FULL_STREAM $_DEF_GATEWAY_STREAM $_DNS_STREAM
 
 }
