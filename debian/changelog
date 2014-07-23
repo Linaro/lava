@@ -1,3 +1,10 @@
+lava-dispatcher (2014.06.1-2) unstable; urgency=medium
+
+  * Add pep8 to the testsuite dependencies as
+    setup.py lists it upstream. (Closes: #755695)
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 23 Jul 2014 19:27:28 +0100
+
 lava-dispatcher (2014.06.1-1) unstable; urgency=medium
 
   * New upstream release
