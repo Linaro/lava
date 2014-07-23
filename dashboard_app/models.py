@@ -2011,9 +2011,9 @@ class ImageReportChart(models.Model):
 
         for chart_test in selected_chart_tests:
             tests.append({
-                    'test': chart_test.test,
-                    'test_cases': [],
-                    })
+                'test': chart_test.test,
+                'test_cases': [],
+            })
 
         filter_data['tests'] = tests
 
