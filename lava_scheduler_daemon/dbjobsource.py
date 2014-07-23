@@ -417,8 +417,6 @@ class DatabaseJobSource(object):
         else:
             worker = WorkerData()
             worker.notify_on_incomplete(job.id)
-        # need the token for the XMLRPC
-        token.delete()
 
     def jobCompleted(self, board_name, exit_code, kill_reason):
         return self.deferForDB(self.jobCompleted_impl, board_name, exit_code, kill_reason)
