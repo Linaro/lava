@@ -51,9 +51,9 @@ Architecture: all
 Section: metapackages
 Depends: lava-server, lava-server-doc, lava-dispatcher, lava-coordinator,
  lava-dev, lava-tool, lavapdu-client, linaro-image-tools, ntp | ntpdate,
- tftpd-hpa, vmdebootstrap, ${misc:Depends}
-Recommends: android-tools-adb, android-tools-fastboot,
- lavapdu-daemon
+ tftpd-hpa, ${misc:Depends}
+Recommends: lavapdu-daemon
+Suggests: vmdebootstrap, android-tools-adb, android-tools-fastboot
 Description: Linaro Automated Validation Architecture metapackage
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
@@ -63,7 +63,8 @@ Description: Linaro Automated Validation Architecture metapackage
  exported for further analysis.
  .
  Metapackage to bring in all LAVA components on a single
- machine. Some dependencies require the Linaro Tools PPA.
+ machine. Some suggested packages may not be available for all
+ architectures.
 
 Package: lava-dev
 Architecture: all
