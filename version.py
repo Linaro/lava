@@ -68,17 +68,20 @@ def version_tag():
         return tag_name
     else:
         dev_time = datetime.datetime.utcnow()
+        # production hot fixes can change the tag from year.month
+        # which would cause staging builds to be lower than the build
+        # before the tag. Drop the hot fix element of tag names.
+        bits = tag_name.split('.')
+        delayed_tag = "%s.%s" % (bits[0], bits[1])
         # our tags are one month behind, 04 is tagged in 05
         # however, the tag is not necessarily made on the first day of 05
         # so if out by two, allow for an "extended month" to ensure
         # an incremental version
-        bits = tag_name.split('.')
         tag_month = int(bits[1])
         extended = dev_time.day
         if int(dev_time.month) - 1 > tag_month:
             extended = int(dev_time.day) + 31
-        delayed_tag = "%d.%02d" % (dev_time.year, dev_time.month)
-        return "%s.%02d.%02d" % (tag_name, extended, dev_time.hour)
+        return "%s.%02d.%02d" % (delayed_tag, extended, dev_time.hour)
 
 
 def main():
