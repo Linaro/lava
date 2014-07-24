@@ -1,5 +1,6 @@
-lava-dispatcher (2014.06.1-2) unstable; urgency=medium
+lava-dispatcher (2014.06.2-1) unstable; urgency=medium
 
+  * New upstream bug fix release for proxy support.
   * Add pep8 to the testsuite dependencies as
     setup.py lists it upstream. (Closes: #755695)
 
