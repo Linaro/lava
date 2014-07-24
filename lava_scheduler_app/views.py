@@ -755,7 +755,7 @@ def device_type_detail(request, pk):
     dt = get_object_or_404(DeviceType, pk=pk)
     if dt.owners_only:
         visible = filter_device_types(request.user)
-        if not dt.name in visible:
+        if dt.name not in visible:
             raise Http404('No device type matches the given query.')
     daily_complete = TestJob.objects.filter(
         actual_device__in=Device.objects.filter(device_type=dt),
@@ -1908,7 +1908,7 @@ def device_detail(request, pk):
     device = get_object_or_404(Device, pk=pk)
     if device.device_type.owners_only:
         visible = filter_device_types(request.user)
-        if not device.device_type.name in visible:
+        if device.device_type.name not in visible:
             raise Http404('No device matches the given query.')
 
     devices = Device.objects.filter(device_type_id=device.device_type_id).order_by('hostname')

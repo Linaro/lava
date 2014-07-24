@@ -41,7 +41,7 @@ class TestRunDetailView(TestCase):
         self.assertTemplateUsed(response,
                                 "dashboard_app/test_run_detail.html")
 
-    #def testrun_invalid_page_view(self):
+    # def testrun_invalid_page_view(self):
     #    invalid_uuid = "0000000-0000-0000-0000-000000000000"
     #    invalid_test_run_url = reverse("dashboard_app.views.test_run_detail",
     #                                   args=[invalid_uuid])

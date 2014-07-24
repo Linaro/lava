@@ -46,7 +46,7 @@ class BundleTests(TestCase, ObjectFactoryMixIn):
         try:
             self.assertEqual(bundle.bundle_stream, dummy.bundle_stream)
             self.assertEqual(bundle.uploaded_by, dummy.uploaded_by)
-            #self.assertEqual(bundle.uploaded_on, mocked_value_of_time.now)
+            # self.assertEqual(bundle.uploaded_on, mocked_value_of_time.now)
             self.assertEqual(bundle.is_deserialized, False)
             bundle.content.open()
             self.assertEqual(bundle.content.read(), content)
