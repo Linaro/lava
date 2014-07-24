@@ -16,7 +16,6 @@ LAVA Manual
    healthchecks.rst
    multinode-usecases.rst
    vm-groups.rst
-   development.rst
    process.rst
    faq.rst
    glossary.rst
@@ -83,6 +82,7 @@ Developer guides
 .. toctree::
    :maxdepth: 2
 
+   development.rst
    debian.rst
    migration.rst
    schema.rst
