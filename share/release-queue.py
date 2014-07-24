@@ -58,7 +58,7 @@ def main():
     ]
     for change in diff:
         changes.append("https://review.linaro.org/#/q/%s,n,z" % change)
-    os.command(' '.join(changes))
+    os.system(' '.join(changes))
     return 0
 
 if __name__ == '__main__':
