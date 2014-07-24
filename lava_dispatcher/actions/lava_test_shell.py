@@ -180,7 +180,8 @@ def _get_testdef_git_repo(testdef_repo, tmpdir, revision, proxy_env):
             subprocess.check_call(['git', 'checkout', revision])
         return gitdir
     except Exception as e:
-        logging.error('Unable to get test definition from git\n' + str(e))
+        logging.error("Unable to get test definition from git (%s)" %(testdef_repo))
+        raise RuntimeError("Unable to get test definition from git (%s)" % (testdef_repo))
     finally:
         os.chdir(cwd)
 
@@ -199,7 +200,8 @@ def _get_testdef_bzr_repo(testdef_repo, tmpdir, revision, proxy_env):
             env=proxy_env)
         return bzrdir
     except Exception as e:
-        logging.error('Unable to get test definition from bzr\n' + str(e))
+        logging.error("Unable to get test definition from bzr (%s)" %(testdef_repo))
+        raise RuntimeError("Unable to get test definition from bzr (%s)" % (testdef_repo))
 
 
 def _get_testdef_tar_repo(testdef_repo, tmpdir):
