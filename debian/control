@@ -71,7 +71,7 @@ Architecture: all
 Section: devel
 Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
  debhelper (>= 8.0.0), fakeroot, git, libdistro-info-perl,
- django-testscenarios,
+ django-testscenarios, pep8,
  python | python-all | python-dev | python-all-dev,
  python-sphinx (>= 1.0.7+dfsg) | python3-sphinx, po-debconf,
  python-mocker, python-setuptools, python-versiontools,

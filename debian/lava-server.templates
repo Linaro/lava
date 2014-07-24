@@ -8,7 +8,7 @@ _Description: Is this a standalone master instance of LAVA?
  providing (more) devices.
  .
  Configuration of remote dispatchers requires manual intervention,
-so the standalone configuration is recommended.
+ so the standalone configuration is recommended.
 
 Template: lava-server/db-port
 Type: string
