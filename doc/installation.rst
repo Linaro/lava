@@ -209,6 +209,34 @@ The PPA uses this signing key::
 
  http://keyserver.ubuntu.com:11371/pks/lookup?search=0x1DD749B890A6F66D050D985CF1FCBACA7BE1F97B&op=index
 
+Setting up a reverse proxy
+==========================
+
+In order to use lava-server behind a reverse proxy, configure lava-server as
+usual and then setup a reverse proxy using Apache.
+The folowing Apache configuration will work for most setup::
+
+ ProxyPass / http://lava_server_dns:port/
+ ProxyPassReverse / http://lava_server_dns:port/
+ ProxyPreserveHost On
+ RequestHeader set X-Forwarded-Proto "https" env=HTTPS
+
+This configuration will work when proxifying::
+
+  http://example.com/ => http://lava.example.com/
+
+If you want the application to answer on a specific base URL, configure
+lava-server to answer on this base URL and then configure the reverse proxy to
+proxify the same base URL.
+For instance you can have::
+
+  http://example.com/lava => http://lava.example.com/lava
+
+Having two differents base URLs is difficult to setup due to a limitation in
+the Django framework. In this case you will have to also setup Apache modules,
+like `Substitute` to alter the HTML content on the fly. This is obviously not a
+recommended setup.
+
 .. _create_superuser:
 
 Superuser
