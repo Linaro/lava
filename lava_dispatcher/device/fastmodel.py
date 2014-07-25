@@ -97,7 +97,7 @@ class FastModelTarget(Target):
         with image_partition_mounted(self._sd_image, self.SYS_PARTITION) as d:
             with open('%s/etc/mkshrc' % d, 'a') as f:
                 f.write('\n# LAVA CUSTOMIZATIONS\n')
-                #make sure PS1 is what we expect it to be
+                # make sure PS1 is what we expect it to be
                 f.write('PS1="%s"\n' % self.tester_ps1)
                 if not self.config.enable_network_after_boot_android:
                     # fast model usermode networking does not support ping

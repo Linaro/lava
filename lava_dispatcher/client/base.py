@@ -229,15 +229,15 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
         if self.dev_ip is None:
             raise OperationFailed("failed to get board ip address")
         try:
-            ## just disconnect the adb connection in case is remained
-            ## by last action or last job
-            ## that connection should be expired already
+            # just disconnect the adb connection in case is remained
+            # by last action or last job
+            # that connection should be expired already
             self.android_adb_over_tcp_disconnect()
         except KeyboardInterrupt:
             raise KeyboardInterrupt
         except:
-            ## ignore all exception
-            ## this just in case of exception
+            # ignore all exception
+            # this just in case of exception
             pass
         self.android_adb_over_tcp_connect()
         self.wait_until_attached()
@@ -321,7 +321,7 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
     def wait_home_screen(self):
         timeout = self._client.config.android_home_screen_timeout
         activity_pat = self._client.config.android_wait_for_home_screen_activity
-        #waiting for the home screen displayed
+        # waiting for the home screen displayed
         try:
             self.run('logcat -s ActivityManager:I',
                      response=[activity_pat],
@@ -331,9 +331,9 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
             logging.critical(msg)
             raise CriticalError(msg)
         finally:
-            #send ctrl+c to exit the logcat command,
-            #and make the latter command can be run on the normal
-            #command line session, instead of the session of logcat command
+            # send ctrl+c to exit the logcat command,
+            # and make the latter command can be run on the normal
+            # command line session, instead of the session of logcat command
             self._connection.sendcontrol("c")
             self.run('')
 
@@ -625,7 +625,7 @@ class LavaClient(object):
             self.context.test_data.add_metadata(boottime_meta)
             logging.debug("Kernel boot time: %s seconds" % boottime)
 
-            #TODO: set up proxy
+            # TODO: set up proxy
 
             if not self.config.android_adb_over_usb:
                 try:
@@ -671,8 +671,8 @@ class LavaClient(object):
             logging.critical(msg)
             raise CriticalError(msg)
 
-        #check if the adb connection can be created.
-        #by adb connect dev_ip command
+        # check if the adb connection can be created.
+        # by adb connect dev_ip command
         if adb_check:
             try:
                 session = AndroidTesterCommandRunner(self)

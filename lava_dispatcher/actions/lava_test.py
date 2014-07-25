@@ -28,9 +28,9 @@ from lava_dispatcher.utils import generate_bundle_file_name
 
 
 def _install_lava_test(client, session):
-    #install bazaar in tester image
+    # install bazaar in tester image
     session.run('%s update' % client.aptget_cmd)
-    #Install necessary packages for build lava-test
+    # Install necessary packages for build lava-test
     cmd = ('%s -y --force-yes install '
            'bzr usbutils python-apt python-setuptools '
            'python-simplejson lsb-release python-keyring '
@@ -49,7 +49,7 @@ def _install_lava_test(client, session):
         logging.debug("Installing %s with pip" % lava_test_url)
         session.run('pip install -e ' + lava_test_url)
 
-    #Test if lava-test installed
+    # Test if lava-test installed
     session.run('which lava-test', timeout=60)
 
     # cleanup the lava-test - old results, cached files...
@@ -205,11 +205,11 @@ class cmd_add_apt_repository(BaseAction):
     def run(self, arg):
         with self.client.reliable_session() as session:
 
-            #install add-apt-repository
+            # install add-apt-repository
             session.run('%s -y install python-software-properties' %
                         self.client.aptget_cmd)
 
-            #add ppa
+            # add ppa
             for repository in arg:
                 session.run('add-apt-repository %s < /dev/null' % repository)
             session.run('%s update' % self.client.aptget_cmd)

@@ -243,7 +243,7 @@ def _get_testdef_url_repo(testdef_repo, context, tmpdir):
         if not os.path.isdir(urldir):
             logging.info("Creating directory to download the url file into.")
             os.makedirs(urldir)
-        #we will not use 'testdef_file' here, we can get this info from URL
+        # we will not use 'testdef_file' here, we can get this info from URL
         testdef_file = download_image(testdef_repo, context, urldir)
 
     except Exception as e:
@@ -679,19 +679,19 @@ class cmd_lava_test_shell(BaseAction):
                               'items': {'type': 'object',
                                         'properties':
                                         {'git-repo': {'type': 'string',
-                                                'optional': True},
+                                                      'optional': True},
                                          'bzr-repo': {'type': 'string',
-                                                'optional': True},
+                                                      'optional': True},
                                          'tar-repo': {'type': 'string',
-                                                'optional': True},
+                                                      'optional': True},
                                          'url': {'type': 'string',
-                                                'optional': True},
+                                                 'optional': True},
                                          'revision': {'type': 'string',
-                                                'optional': True},
+                                                      'optional': True},
                                          'testdef': {'type': 'string',
-                                                'optional': True},
+                                                     'optional': True},
                                          'parameters': {'type': 'object',
-                                                'optional': True}
+                                                        'optional': True}
                                          },
                                         'additionalProperties': False},
                               'optional': True

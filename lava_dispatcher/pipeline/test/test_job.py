@@ -93,4 +93,4 @@ class TestJob(unittest.TestCase):
         self.assertEqual(action.level, "4")
         self.assertEqual(len(pipe.describe().values()), 8)
         # uncomment to see the YAML dump of the pipeline.
-        #print yaml.dump(pipe.describe())
+        # print yaml.dump(pipe.describe())

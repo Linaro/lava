@@ -28,7 +28,7 @@ import lava_dispatcher.actions.lmp.usb as lmp_usb
 from lava_dispatcher.actions.lmp.board import get_module_serial
 
 
-#for LMP signal process
+# for LMP signal process
 def lsgpio_signal(connection, config, command, module_name):
     message_str = ""
     gpio_value = ""
@@ -110,7 +110,7 @@ def hdmi_signal(connection, config, command, module_name, fakeedid=None):
         elif command == "disconnect":
             lmp_hdmi.disconnect(lmp_hdmi_id)
         elif command == "fakeedid":
-            #FIXME: How to pass the fake edid to target board?
+            # FIXME: How to pass the fake edid to target board?
             lmp_hdmi.fake(lmp_hdmi_id)
         elif command[:3] == "id_":
             lmp_hdmi.set_identify(lmp_hdmi_id, command[-3:])

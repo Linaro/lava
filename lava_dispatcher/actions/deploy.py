@@ -27,26 +27,26 @@ class cmd_deploy_linaro_image(BaseAction):
     # json_schema_validation that means it doesn't work (see
     # https://github.com/zyga/json-schema-validator/pull/6).
 
-    ## parameters_schema = {
-    ##     'type': [
-    ##         {
-    ##             'type': 'object',
-    ##             'properties': {
-    ##                 'image': {'type': 'string'},
-    ##                 },
-    ##             'additionalProperties': False,
-    ##             },
-    ##         {
-    ##             'type': 'object',
-    ##             'properties': {
-    ##                 'hwpack': {'type': 'string'},
-    ##                 'rootfs': {'type': 'string'},
-    ##                 'rootfstype': {'type': 'string', 'optional': True, 'default': 'ext3'},
-    ##                 },
-    ##             'additionalProperties': False,
-    ##             },
-    ##         ],
-    ##     }
+    # parameters_schema = {
+    #     'type': [
+    #         {
+    #             'type': 'object',
+    #             'properties': {
+    #                 'image': {'type': 'string'},
+    #                 },
+    #             'additionalProperties': False,
+    #             },
+    #         {
+    #             'type': 'object',
+    #             'properties': {
+    #                 'hwpack': {'type': 'string'},
+    #                 'rootfs': {'type': 'string'},
+    #                 'rootfstype': {'type': 'string', 'optional': True, 'default': 'ext3'},
+    #                 },
+    #             'additionalProperties': False,
+    #             },
+    #         ],
+    #     }
 
     parameters_schema = {
         'type': 'object',

@@ -59,7 +59,7 @@ def run_legacy_job(job_data, oob_file, config, output_dir, validate):
     json_job_data = json.dumps(job_data)
     job = LavaTestJob(json_job_data, oob_file, config, output_dir)
 
-    #FIXME Return status
+    # FIXME Return status
     if validate:
         try:
             validate_job_data(job.job_data)

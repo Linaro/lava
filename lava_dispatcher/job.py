@@ -333,7 +333,7 @@ class LavaTestJob(object):
         if 'lmp_module' in self.job_data:
             metadata['lmp_module'] = json.dumps(self.job_data['lmp_module'])
             self.context.test_data.add_metadata(metadata)
-#init LMP module
+# init LMP module
             lmp_init_boards.init(self.job_data['lmp_module'],
                                  self.context.device_config)
 
@@ -368,9 +368,9 @@ class LavaTestJob(object):
                         logging.warning(('[ACTION-E] %s failed to create the'
                                          ' adb connection') % (cmd['command']))
 
-                        ## Sometimes the adb problem is caused by the adb
-                        ## command, and as workround we need to kill the adb
-                        ## process to make it work
+                        # Sometimes the adb problem is caused by the adb
+                        # command, and as workround we need to kill the adb
+                        # process to make it work
                         logging.warning(
                             'Now will try to kill the adb process')
                         rc = commands.getstatusoutput('adb devices')[0]
@@ -378,11 +378,11 @@ class LavaTestJob(object):
                             kill_process_with_option(process="adb",
                                                      key_option="fork-server")
 
-                        ## clear the session on the serial and wait a while
-                        ## and not put the following 3 sentences into the
-                        ## boot_linaro_android_image method just for
-                        ## avoiding effects when the method being called
-                        ## in other places
+                        # clear the session on the serial and wait a while
+                        # and not put the following 3 sentences into the
+                        # boot_linaro_android_image method just for
+                        # avoiding effects when the method being called
+                        # in other places
                         logging.warning(
                             'Now will reboot the image to try again')
                         self.context.client.proc.sendcontrol("c")
@@ -390,7 +390,7 @@ class LavaTestJob(object):
                         time.sleep(5)
                         self.context.client.boot_linaro_android_image(
                             adb_check=True)
-                        ## mark it as pass if the second boot works
+                        # mark it as pass if the second boot works
                         status = 'pass'
                 except TimeoutError as err:
                     logging.info("TimeoutError")
@@ -398,15 +398,15 @@ class LavaTestJob(object):
                         logging.warning("[ACTION-E] %s times out." %
                                         (cmd['command']))
                         if job_num == job_length:
-                            ## not reboot the android image for
-                            ## the last test action
+                            # not reboot the android image for
+                            # the last test action
                             pass
                         else:
-                            ## clear the session on the serial and wait a while
-                            ## and not put the following 3 sentences into the
-                            ## boot_linaro_android_image method just for
-                            ## avoiding effects when the method being called
-                            ## in other places
+                            # clear the session on the serial and wait a while
+                            # and not put the following 3 sentences into the
+                            # boot_linaro_android_image method just for
+                            # avoiding effects when the method being called
+                            # in other places
                             logging.warning(
                                 "Now the android image will be rebooted")
                             self.context.client.proc.sendcontrol("c")
@@ -469,7 +469,7 @@ class LavaTestJob(object):
                     self.context.test_data.add_result(
                         action.test_name(**params), status, err_msg)
         except:
-            #Capture all user-defined and non-user-defined critical errors
+            # Capture all user-defined and non-user-defined critical errors
             self.context.test_data.job_status = 'fail'
             raise
         finally:

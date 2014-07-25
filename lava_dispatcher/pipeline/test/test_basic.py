@@ -214,7 +214,7 @@ class TestPipeline(unittest.TestCase):
         self.parser = JobParser()
         job = self.parser.parse(self.sample_job_data)
         # uncomment to see the YAML dump of the pipeline.
-        #print yaml.dump(job.pipeline.describe())
+        # print yaml.dump(job.pipeline.describe())
 
 
 class TestFakeActions(unittest.TestCase):
