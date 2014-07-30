@@ -1,3 +1,23 @@
+# Copyright (C) 2014 Linaro Limited
+#
+# Author: Neil Williams <neil.williams@linaro.org>
+#
+# This file is part of LAVA Dispatcher.
+#
+# LAVA Dispatcher is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# LAVA Dispatcher is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along
+# with this program; if not, see <http://www.gnu.org/licenses>.
+
 import sys
 import os
 from StringIO import StringIO
@@ -301,8 +321,8 @@ class TestFakeActions(unittest.TestCase):
         pipe.run_actions(None)
         self.assertTrue(self.sub0.ran)
         self.assertTrue(self.sub1.ran)
-        self.assertNotEqual(self.sub0.elapsed_time, False)
-        self.assertNotEqual(self.sub1.elapsed_time, False)
+        self.assertNotEqual(self.sub0.elapsed_time, 0)
+        self.assertNotEqual(self.sub1.elapsed_time, 0)
 
     def test_prepare(self):
         class PrepareAction(Action):

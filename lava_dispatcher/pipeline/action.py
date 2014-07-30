@@ -20,13 +20,15 @@
 
 import os
 import sys
+import time
 import types
 import yaml
 import logging
+import subprocess
 from collections import OrderedDict
 from contextlib import contextmanager
-from lava_dispatcher.context import LavaContext
 from lava_dispatcher.config import get_device_config
+from lava_dispatcher.pipeline.job import Job
 
 
 class InfrastructureError(Exception):
@@ -115,8 +117,8 @@ class Pipeline(object):
         self._check_action(action)
         self.actions.append(action)
         action.level = "%s.%s" % (self.branch_level, len(self.actions))
-        if action.job:  # should only be None inside the unit tests
-            self.job = action.job
+        if self.job:  # should only be None inside the unit tests
+            action.job = self.job
         if self.parent:  # action
             self.children.update({self: self.actions})
             self.parent.pipeline = self
@@ -133,6 +135,8 @@ class Pipeline(object):
             action.log_handler.setLevel(logging.DEBUG)
             # yaml wrapper inside the log handler
             action.log_handler.setFormatter(logging.Formatter('id: "<LAVA_DISPATCHER>%(asctime)s"\n%(message)s'))
+        # if the action has an internal pipeline, initialise that here.
+        action.populate()
 
     def _describe(self, structure):
         # TODO: make the amount of output conditional on a parameter passed to describe
@@ -161,25 +165,40 @@ class Pipeline(object):
         sub_action_errors = [a.errors for a in self.actions]
         return reduce(lambda a, b: a + b, sub_action_errors)
 
-    def run_actions(self, connection, args=None):
-        context = None
-        if isinstance(args, LavaContext):
-            context = args
-            # FIXME: single location in the job?
-            yaml_log = logging.getLogger("YAML")  # allows per-action logs in yaml
-            yaml_log.setLevel(logging.DEBUG)  # yaml log is always in debug
-            std_log = logging.getLogger("ASCII")
+    def validate_actions(self):
         for action in self.actions:
-            # enable the log handler created in this action when it was added to this pipeline
-            # FIXME: determine how this works with internal pipelines & whether any duplication is warranted.
-            if context:
+            action.validate()
+
+    def run_actions(self, connection, args=None):
+        for action in self.actions:
+            yaml_log = None
+            std_log = logging.getLogger("ASCII")
+            if not action.log_handler:
+                # FIXME: unit test needed
+                # if no output dir specified in the job
+                std_log.debug("no output-dir, logging %s:%s to stdout" % (action.level, action.name))
+            else:
+                yaml_log = logging.getLogger("YAML")  # allows per-action logs in yaml
+                yaml_log.setLevel(logging.DEBUG)  # yaml log is always in debug
+                # enable the log handler created in this action when it was added to this pipeline
                 yaml_log.addHandler(action.log_handler)
                 yaml_log.debug({'start': {action.level: action.name}})
-            new_connection = action.run(connection, context)
-            if new_connection:
-                connection = new_connection
-            # remove per-action log handler
-            if context:
+            try:
+                new_connection = action.run(connection, args)
+                if new_connection:
+                    connection = new_connection
+            except KeyboardInterrupt:
+                self.cleanup()
+                self.err = "\rCancel"  # Set a useful message.
+                if self.parent:
+                    raise KeyboardInterrupt
+                break
+            except (JobError, InfrastructureError) as e:
+                action.errors = e
+                action.results = {"fail": e}
+            # set results including retries
+            if action.log_handler:
+                # remove per-action log handler
                 yaml_log.removeHandler(action.log_handler)
         return connection
 
@@ -214,12 +233,16 @@ class Action(object):
         self.__level__ = None
         self.err = None
         self.pipeline = None
+        self.internal_pipeline = None
         self.__parameters__ = {}
         self.yaml_line = None
         self.__errors__ = []
         self.elapsed_time = None
         self.log_handler = None
         self.job = None
+        self.max_retries = 0
+        self.retries = 0
+        self.results = None
 
     # public actions (i.e. those who can be referenced from a job file) must
     # declare a 'class-type' name so they can be looked up.
@@ -273,6 +296,11 @@ class Action(object):
     def errors(self):
         return self.__errors__
 
+    @errors.setter
+    def errors(self, error):
+        self._log(error)
+        self.__errors__.append(error)
+
     @property
     def valid(self):
         return len(self.errors) == 0
@@ -317,13 +345,13 @@ class Action(object):
 
     def __set_parameters__(self, data):
         self.__parameters__.update(data)
-        if self.pipeline:
-            for action in self.pipeline.actions:
-                action.parameters = self.parameters
 
     @parameters.setter
     def parameters(self, data):
         self.__set_parameters__(data)
+        if self.pipeline:
+            for action in self.pipeline.actions:
+                action.parameters = self.parameters
 
     def validate(self):
         """
@@ -331,6 +359,14 @@ class Action(object):
         validation that is found, an item should be added to self.errors.
         Validation includes parsing the parameters for this action for
         values not set or values which conflict.
+        """
+        if self.errors:
+            self._log("Validation failed")
+            raise JobError("Invalid job data: %s\n" % '\n'.join(self.errors))
+
+    def populate(self):
+        """
+        This method allows an action to add an internal pipeline
         """
         pass
 
@@ -355,17 +391,25 @@ class Action(object):
         finally:
             self.cleanup()
 
+    def _log(self, message):
+        if not message:
+            return
+        yaml_log = logging.getLogger("YAML")
+        std_log = logging.getLogger("ASCII")
+        yaml_log.debug({"output": message.split('\n')})
+        std_log.info(message)
+
     def _run_command(self, command_list):
         """
-        Single location for all external command operations, without using
-        a shell and with full structured logging.
+        Single location for all external command operations on the
+        dispatcher, without using a shell and with full structured logging.
         Ensure that output for the YAML logger is a serialisable object
         and strip embedded newlines / whitespace where practical.
+        Returns the output of the command (after logging the output)
         """
         if type(command_list) != list:
             raise RuntimeError("commands to _run_command need to be a list")
         yaml_log = logging.getLogger("YAML")
-        std_log = logging.getLogger("ASCII")
         log = None
         try:
             log = subprocess.check_output(command_list, stderr=subprocess.STDOUT)
@@ -375,17 +419,13 @@ class Action(object):
         except OSError as e:
             yaml_log.debug({e.strerror: e.child_traceback.split('\n')})
         except subprocess.CalledProcessError as e:
+            self.errors = e
             yaml_log.debug({
                 'command': [i.strip() for i in e.cmd],
                 'message': [i.strip() for i in e.message],
                 'output': e.output.split('\n')})
-        if log:
-            yaml_log.debug({"output": log.split('\n')})
-            std_log.info(log)
-        else:
-            # FIXME: no output may be correct - add a flag to allow RuntimeError if not
-            pass
-        # FIXME: return False on error?
+        self._log("%s\n%s" % (' '.join(command_list), log))
+        return log
 
     def run(self, connection, args=None):
         """
@@ -452,13 +492,23 @@ class Action(object):
         """
         data = {}
         members = [attr for attr in dir(self) if not callable(attr) and not attr.startswith("__")]
+        members.sort()
         for name in members:
             if name == "pipeline":
                 continue
             content = getattr(self, name)
+            if name == "job" or name == "log_handler" or name == "internal_pipeline":
+                continue
+            if name == 'parameters':
+                # FIXME: implement the handling of parameters to be serialisable
+                if 'deployment_data' in content:
+                    del content['deployment_data']
+                import json
+                content = json.dumps(content)
             if isinstance(content, types.MethodType):
                 continue
-            data[name] = content
+            if content:
+                data[name] = content
         return data
 
 
@@ -466,20 +516,27 @@ class RetryAction(Action):
 
     def __init__(self):
         super(RetryAction, self).__init__()
-        self.retries = 5
+        self.max_retries = 5
+        self.sleep = 1
 
     def run(self, connection, args=None):
-        pass
-
-    def __call__(self, connection):
-        while self.retries:
+        while self.retries <= self.max_retries:
             try:
                 new_connection = self.run(connection)
                 return new_connection
-            except JobError:
-                self.retries -= 1
+            except KeyboardInterrupt:
+                self.cleanup()
+                self.err = "\rCancel"  # Set a useful message.
+            except (JobError, InfrastructureError):
+                self._log("%s failed, trying again" % self.name)
+                self.retries += 1
+                time.sleep(self.sleep)
             finally:
                 self.cleanup()
+        raise JobError("%s retries failed for %s" % (self.retries, self.name))
+
+    def __call__(self, connection):
+        self.run(connection)
 
 
 class Deployment(object):
@@ -535,8 +592,8 @@ class Deployment(object):
         tests on each parameter (like 404 or bad formatting) during
         validation of each action within a pipeline.
         Parameters are static, internal data within each action
-        copied directly from the YAML. Dynamic data is held in
-        the context available via the parent Pipeline()
+        copied directly from the YAML or Device configuration.
+        Dynamic data is held in the context available via the parent Pipeline()
         """
         return self.__parameters__
 

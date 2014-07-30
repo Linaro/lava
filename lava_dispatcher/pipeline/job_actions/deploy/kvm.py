@@ -29,6 +29,7 @@ from lava_dispatcher.pipeline.job_actions.deploy.download import (
 from lava_dispatcher.pipeline.job_actions.deploy.overlay import (
     MountAction,
     CustomisationAction,
+    OverlayAction,
     UnmountAction,
 )
 from lava_dispatcher.pipeline.job_actions.deploy.testdef import TestDefinitionAction
@@ -66,6 +67,9 @@ class DeployKVMAction(DeployAction):
             return False
         return True
 
+    def validate(self):
+        self.pipeline.validate_actions()
+
     def run(self, connection, args=None):
         connection = super(DeployKVMAction, self).run(connection, args)
         self.pipeline.run_actions(connection, args)
@@ -97,13 +101,18 @@ class DeployKVM(Deployment):
         self.action.job = self.job
         parent.add_action(self.action)
 
-        internal_pipeline = Pipeline(self.action)
+        internal_pipeline = Pipeline(parent=self.action, job=self.job)
         internal_pipeline.add_action(DownloaderAction())
         internal_pipeline.add_action(ChecksumAction())
-        internal_pipeline.add_action(MountAction())  # FIXME: RetryAction
+        internal_pipeline.add_action(MountAction())
         internal_pipeline.add_action(CustomisationAction())
-        internal_pipeline.add_action(TestDefinitionAction())  # FIXME: validate needs to check if needed
-        internal_pipeline.add_action(UnmountAction())  # FIXME: RetryAction with sleep
+        for action in self.job.parameters['actions']:
+            if 'test' in action:
+                testdef_action = TestDefinitionAction()
+                testdef_action.parameters = action
+                internal_pipeline.add_action(testdef_action)
+                internal_pipeline.add_action(OverlayAction())
+        internal_pipeline.add_action(UnmountAction())
 
     @contextmanager
     def deploy(self):

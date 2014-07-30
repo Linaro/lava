@@ -30,13 +30,14 @@ actions:
         name: kvm-basic-singlenode  # is not present, use "test $N"
         definitions:
             - repository: git://git.linaro.org/qa/test-definitions.git
+              from: git
               path: ubuntu/smoke-tests-basic.yaml
               # name: if not present, use the name from the YAML. The name can
-              # also be overriden from the actualy commands being run by
+              # also be overriden from the actual commands being run by
               # calling the lava-test-suite-name API call (e.g.
               # `lava-test-suite-name FOO`).
               name: smoke-tests
-            - from: url
+            - from: git
               repository: git://git.linaro.org/people/neilwilliams/multinode-yaml.git
               path: singlenode01.yaml
               name: singlenode-basic

@@ -14,6 +14,7 @@ from lava_dispatcher.config import get_config, get_device_config, list_devices
 from lava_dispatcher.job import LavaTestJob, validate_job_data
 import lava_dispatcher.pipeline.parser
 from lava_dispatcher.context import LavaContext
+from lava_dispatcher.pipeline.action import Device
 
 
 class SetUserConfigDirAction(argparse.Action):
@@ -86,10 +87,8 @@ def get_pipeline_runner(job):
         std_log.addHandler(stdhandler)
 
         try:
-            job.validate()
-            # print "job validation"  # FIXME: use debug log output
+            job.validate(simulate=validate_only)
             if not validate_only:
-                # print "job running"
                 job.run()
         except lava_dispatcher.pipeline.JobError as e:
             print(e)

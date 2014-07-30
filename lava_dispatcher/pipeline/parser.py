@@ -26,6 +26,8 @@ from yaml.constructor import Constructor
 from lava_dispatcher.pipeline import *
 from lava_dispatcher.pipeline.job_actions.deploy.kvm import DeployAction, DeployKVM
 
+from lava_dispatcher import deployment_data
+
 
 class JobParser(object):
 
@@ -55,6 +57,7 @@ class JobParser(object):
         data = self.loader.get_single_data()
 
         job = Job(data)
+        job.device = device
         job.parameters['output_dir'] = output_dir
         pipeline = Pipeline(job=job)
         for action_data in data['actions']:
@@ -64,7 +67,11 @@ class JobParser(object):
                     # allow the classmethod to check the parameters
                     d = Deployment.select(device, action_data[name])(pipeline)
                     d.action.parameters = action_data[name]  # still need to pass the parameters to the instance
+                    if 'test' in data['actions']:
+                        d.action.parameters = action_data['test']
                     d.action.yaml_line = line
+                    device.deployment_data = deployment_data.get(d.action.parameters['os'])
+                    d.action.parameters = {'deployment_data': device.deployment_data}
                 else:
                     action_class = Action.find(name)
                     # select the specific action of this class for this job
