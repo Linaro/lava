@@ -1,27 +1,28 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Translation of lava-server debconf messages to Portuguese
+# Copyright (C) 2014 THE lava-server'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the lava-server package.
 #
-#, fuzzy
+# Américo Monteiro <a_monteiro@gmx.com>, 2014.
 msgid ""
 msgstr ""
-"Project-Id-Version: lava-server\n"
+"Project-Id-Version: lava-server 2014.06.02-17-2\n"
 "Report-Msgid-Bugs-To: lava-server@packages.debian.org\n"
 "POT-Creation-Date: 2014-07-31 20:44+0100\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"PO-Revision-Date: 2014-07-31 01:02+0100\n"
+"Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
+"Language-Team: Portuguese <traduz@debianpt.org>\n"
+"Language: pt\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Lokalize 1.4\n"
 
 #. Type: boolean
 #. Description
 #: ../lava-server.templates:1001
 msgid "Is this a standalone master instance of LAVA?"
-msgstr ""
+msgstr "Esta é uma instância mestre standalone do LAVA?"
 
 #. Type: boolean
 #. Description
@@ -31,6 +32,10 @@ msgid ""
 "instance with attached devices, or in a distributed configuration with a "
 "central master instance and remote dispatchers providing (more) devices."
 msgstr ""
+"O LAVA pode ser configurado em uma de duas maneiras; como uma instância "
+"única mestre standalone com dispositivos anexados, ou numa configuração "
+"distribuída com uma instância mestre central e despachantes remotos a "
+"disponibilizarem (mais) dispositivos."
 
 #. Type: boolean
 #. Description
@@ -39,24 +44,26 @@ msgid ""
 "Configuration of remote dispatchers requires manual intervention, so the "
 "standalone configuration is recommended."
 msgstr ""
+"A configuração de despachantes remotos requer intervenção manual, por isso a "
+"configuração standalone é recomendada."
 
 #. Type: string
 #. Description
 #: ../lava-server.templates:2001
 msgid "Port number of the PostgreSQL database:"
-msgstr ""
+msgstr "Número de porto da base de dados PostgreSQL:"
 
 #. Type: string
 #. Description
 #: ../lava-server.templates:2001
 msgid "Please enter the port number for the PostgreSQL database."
-msgstr ""
+msgstr "Por favor indique o número de porto da base de dados PostgreSQL."
 
 #. Type: note
 #. Description
 #: ../lava-server.templates:3001
 msgid "This install looks like a remote worker"
-msgstr ""
+msgstr "Esta instalação parece um trabalhador remoto"
 
 #. Type: note
 #. Description
@@ -67,6 +74,10 @@ msgid ""
 "back and change your answer or proceed with reconfiguring this system as "
 "specified."
 msgstr ""
+"Você pediu para este sistema ser configurado como instância mestre para uma "
+"configuração distribuída, mas este sistema parece um trabalhador remoto. "
+"Você pode recuar e mudar a sua resposta ou prosseguir com a reconfiguração "
+"deste sistema como especificado."
 
 #. Type: note
 #. Description
@@ -75,12 +86,14 @@ msgid ""
 "Note that you will have to ensure that the lava-coordinator configuration is "
 "correct."
 msgstr ""
+"Note que terá de assegurar que a configuração do lava-coordinator está "
+"correcta."
 
 #. Type: note
 #. Description
 #: ../lava-server.templates:4001
 msgid "This install looks like a master instance"
-msgstr ""
+msgstr "Esta instalação parece uma instância mestre"
 
 #. Type: note
 #. Description
@@ -91,6 +104,10 @@ msgid ""
 "go back and change your answer or proceed with reconfiguring this system as "
 "specified."
 msgstr ""
+"Você pediu para este sistema ser configurado como um trabalhador remoto para "
+"uma configuração distribuída, mas este sistema parece uma instância mestre. "
+"Você pode recuar e mudar a sua resposta ou prosseguir com a reconfiguração "
+"deste sistema como especificado."
 
 #. Type: note
 #. Description
@@ -100,12 +117,15 @@ msgid ""
 "changed to point to the master instance for this remote worker. You can then "
 "remove the lava-coordinator package from the remote worker."
 msgstr ""
+"Note que terá de assegurar que a configuração do lava-coordinator é alterada "
+"para apontar à instância mestre para este trabalhador remoto. Depois você "
+"pode remover o pacote lava-coordinator do trabalhador remoto."
 
 #. Type: string
 #. Description
 #: ../lava-server.templates:5001
 msgid "Name for this LAVA instance:"
-msgstr ""
+msgstr "Nome desta instância do LAVA:"
 
 #. Type: string
 #. Description
@@ -116,12 +136,17 @@ msgid ""
 "instance, specify the instance name here to upgrade the database or use a "
 "different name to start fresh with a new database."
 msgstr ""
+"Os servidores LAVA precisam de ter um nome de instância. Se esta é uma "
+"instância nova, é seguro usar o nome predefinido. Se isto é uma actualização "
+"de uma instância LAVA anterior, especifique aqui o nome da instância para "
+"actualizar a base de dados ou use um nome diferente para arrancar de limpo "
+"com uma base de dados nova."
 
 #. Type: error
 #. Description
 #: ../lava-server.templates:6001
 msgid "Missing LAVA instance name"
-msgstr ""
+msgstr "Falta o nome da instância do LAVA"
 
 #. Type: error
 #. Description
@@ -130,12 +155,14 @@ msgid ""
 "An instance name must be specified for LAVA-server. Using the instance name "
 "\"default\"."
 msgstr ""
+"Tem de ser especificado um nome de instância para o servidor LAVA. A usar o "
+"nome de instância \"default\"."
 
 #. Type: string
 #. Description
 #: ../lava-server.templates:7001
 msgid "Name of the master instance for this worker:"
-msgstr ""
+msgstr "Nome da instância mestre para este trabalhador:"
 
 #. Type: string
 #. Description
@@ -145,12 +172,15 @@ msgid ""
 "the instance name of the master LAVA server which it will poll for new jobs "
 "to run on the devices attached to the worker."
 msgstr ""
+"Os servidores LAVA precisam de ter um nome de instância. A cada trabalhador "
+"remoto deve ser dado o nome de instância do servidor LAVA mestre o qual irá "
+"eleger novos trabalhos a correr nos dispositivos anexados ao trabalhador."
 
 #. Type: string
 #. Description
 #: ../lava-server.templates:8001
 msgid "Master scheduler for this worker:"
-msgstr ""
+msgstr "Agenda mestre para este trabalhador:"
 
 #. Type: string
 #. Description
@@ -160,6 +190,9 @@ msgid ""
 "server. This hostname or IP address will be used to connect to the master "
 "database."
 msgstr ""
+"Cada trabalhador remoto precisa de ligar a uma agenda mestre que corre o "
+"lava-server. Este nome de máquina ou endereço IP será usado para ligar à "
+"base de dados mestre."
 
 #. Type: string
 #. Description
@@ -171,6 +204,11 @@ msgid ""
 "master allows remote access from workers before submitting jobs or health "
 "checks."
 msgstr ""
+"Para trabalhar com nós remotos, o mestre precisa de ser configurado para "
+"permitir que a base de dados escute os trabalhadores. Também é preciso ser "
+"gerada uma chave SSH no trabalhador e adicionada à lista das chaves "
+"autorizadas do mestre. Assegure que o mestre permite acesso remote dos "
+"trabalhadores antes de submeter trabalhos ou verificações de saúde."
 
 #. Type: string
 #. Description
@@ -179,12 +217,14 @@ msgid ""
 "You can continue setting up the worker, as long as remote database access is "
 "enabled before jobs are submitted."
 msgstr ""
+"Você pode continuar a configurar o trabalhador, desde que o acesso à base de "
+"dados remota esteja activo antes dos trabalhos serem submetidos."
 
 #. Type: string
 #. Description
 #: ../lava-server.templates:9001
 msgid "Name of the database on the master:"
-msgstr ""
+msgstr "Nome da base de dados do mestre:"
 
 #. Type: string
 #. Description
@@ -193,12 +233,14 @@ msgid ""
 "Please enter the name of the database on the master scheduler running lava-"
 "server. The worker will use this name to contact the database."
 msgstr ""
+"Por favor indique o nome da base de dados na agenda mestre que corre o lava-"
+"server. O trabalhador irá usar este nome para contactar a base de dados."
 
 #. Type: string
 #. Description
 #: ../lava-server.templates:10001
 msgid "Username for the database on the master:"
-msgstr ""
+msgstr "Nome de utilizador para a base de dados do mestre:"
 
 #. Type: string
 #. Description
@@ -207,12 +249,15 @@ msgid ""
 "Please enter the username for the database on the master scheduler running "
 "lava-server. The worker will use this username to contact the database."
 msgstr ""
+"Por favor indique o nome de utilizador para a base de dados na agenda mestre "
+"que corre o lava-server. O trabalhador irá usar este nome de utilizador para "
+"contactar a base de dados."
 
 #. Type: string
 #. Description
 #: ../lava-server.templates:11001
 msgid "Port number of the database on the master:"
-msgstr ""
+msgstr "Número de porto da base de dados do mestre:"
 
 #. Type: string
 #. Description
@@ -222,12 +267,15 @@ msgid ""
 "scheduler running lava-server. The worker will use this port to contact the "
 "database."
 msgstr ""
+"Por favor indique o número de porto para a base de dados na agenda mestre "
+"que corre o lava-server. O trabalhador irá usar este porto para contactar a "
+"base de dados."
 
 #. Type: string
 #. Description
 #: ../lava-server.templates:12001
 msgid "Password for the database on the master:"
-msgstr ""
+msgstr "Palavra passe para a base de dado do mestre:"
 
 #. Type: string
 #. Description
@@ -236,3 +284,31 @@ msgid ""
 "Please enter the password for the database on the master scheduler running "
 "lava-server. The worker will use this password to contact the database."
 msgstr ""
+"Por favor indique a palavra passe da base de dados na agenda mestre que "
+"corre o lava-server. O trabalhador irá usar esta palavra passe para "
+"contactar a base de dados."
+
+#~ msgid ""
+#~ "You have asked for a master instance install but the current install "
+#~ "looks like a remote worker install. Select back to change this or confirm "
+#~ "to proceed and change to a master instance."
+#~ msgstr ""
+#~ "Você pediu uma instalação de instância mestre mas a instalação actual "
+#~ "parece uma instalação de trabalhador remoto. Seleccione retroceder para "
+#~ "alterar isto ou confirme para prosseguir e alterar para uma instância "
+#~ "mestre."
+
+#~ msgid ""
+#~ "You have asked for a remote worker install but the current install looks "
+#~ "like a master instance. Select back to change this or confirm to proceed "
+#~ "and change to a remote worker."
+#~ msgstr ""
+#~ "Você pediu uma instalação de trabalhador remoto mas a instalação actual "
+#~ "parece uma instância mestre. Seleccione retroceder para alterar isto ou "
+#~ "confirme para prosseguir e alterar para trabalhador remoto."
+
+#~ msgid "Missing server IP address"
+#~ msgstr "Falta o endereço IP do servidor"
+
+#~ msgid "The IP address of the master scheduler must be specified."
+#~ msgstr "O endereço IP da agenda mestre tem de ser especificado."

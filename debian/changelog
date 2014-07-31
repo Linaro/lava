@@ -1,3 +1,12 @@
+lava-server (2014.07-2) UNRELEASED; urgency=medium
+
+  * [INTL:pt] Portuguese translation for debconf messages
+    (Closes: #753907)
+  * [INTL:ru] Russian debconf templates translation
+    (Closes: #756644)
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 31 Jul 2014 20:46:47 +0100
+
 lava-server (2014.07-1) unstable; urgency=medium
 
   * New production release

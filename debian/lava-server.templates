@@ -107,5 +107,5 @@ Template: lava-worker/db-pass
 Type: string
 _Description: Password for the database on the master:
  Please enter the password for the database on the master scheduler
- running lava-server. The worker will use this username to contact
+ running lava-server. The worker will use this password to contact
  the database.
