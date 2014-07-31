@@ -39,12 +39,15 @@ def main():
     master = []
     release = []
     pattern = re.compile("\s+Change-Id: (\w+)")
+    commit_pattern = re.compile("commit (.+)")
+    # Get all commits on master
     subprocess.call(["git", "checkout", "master"])
     lines = subprocess.check_output(["git", "log"])
     for line in lines.split('\n'):
         if "Change-Id" in line:
             m = pattern.match(line)
             master.append(m.group(1))
+    # Get all commits on release
     subprocess.call(["git", "checkout", "release"])
     lines = subprocess.check_output(["git", "log"])
     for line in lines.split('\n'):
@@ -52,13 +55,26 @@ def main():
             m = pattern.match(line)
             release.append(m.group(1))
     diff = list(set(master) - set(release))
-    changes = [
-        "iceweasel",
-        "-new-tab"
-    ]
+    # Go back to master
+    subprocess.call(["git", "checkout", "master"])
+    lines = subprocess.check_output(["git", "log"])
+
+    # Print each missing commit with more information
+    current_hash = ''
     for change in diff:
-        changes.append("https://review.linaro.org/#/q/%s,n,z" % change)
-    os.system(' '.join(changes))
+        for line in lines.split('\n'):
+            # Get the commit hash
+            if "commit " in line:
+                m = commit_pattern.match(line)
+                if m:
+                    current_hash = m.group(1)
+            # Match the Change-id
+            if "Change-Id" in line:
+                m = pattern.match(line)
+                if change == m.group(1):
+                    print "%s => %s" % (change, subprocess.check_output(["git", "show", "--pretty=oneline", current_hash]).split('\n')[0])
+                    break
+
     return 0
 
 if __name__ == '__main__':
