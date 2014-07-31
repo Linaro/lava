@@ -61,7 +61,8 @@ setup(
         'configglue',
         'PyYAML',
         'pyserial >= 2.6',
-        'pyliblzma >= 0.5.3'
+        'pyliblzma >= 0.5.3',
+        'requests'
     ],
     tests_require=[
         'pep8 >= 1.4.6',
