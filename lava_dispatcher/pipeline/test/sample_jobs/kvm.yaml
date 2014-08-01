@@ -5,7 +5,6 @@ device_type: kvm
 job_name: kvm-pipeline
 job_timeout: 15m            # timeout for the whole job (default: ??h)
 action_timeout: 5m         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
-logging_level: DEBUG
 priority: medium
 
 actions:

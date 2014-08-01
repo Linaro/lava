@@ -18,10 +18,13 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import os
+import atexit
 import yaml
-from contextlib import contextmanager
-from lava_dispatcher.context import LavaContext
-from lava_dispatcher.pipeline import *
+import tempfile
+import subprocess
+from collections import OrderedDict
+from lava_dispatcher.utils import rmtree
 
 
 class Job(object):
@@ -42,7 +45,10 @@ class Job(object):
     def __init__(self, parameters):
         self.device = None
         self.parameters = parameters
-        self.context = None
+        self.__context__ = None
+        self.pipeline = None
+        self.actions = None
+        self._scratch_dir = None
 
     def set_pipeline(self, pipeline):
         self.pipeline = pipeline
@@ -60,7 +66,17 @@ class Job(object):
         self.__set_context__(data)
 
     def describe(self):
-        return self.pipeline.describe()
+        structure = OrderedDict()
+        # FIXME: port to the updated Device configuration
+        structure['device'] = {
+            'hostname': self.device.config.hostname,
+            'device_type': str(self.device.config.device_type),
+            'output-dir': self.parameters['output_dir'],
+        }
+        if 'id' in self.parameters:
+            structure['device'].update({'id': self.parameters['id']})
+        structure.update(self.pipeline.describe())
+        return structure
 
     def validate(self, simulate=False):
         """
@@ -71,12 +87,13 @@ class Job(object):
         if simulate:
             # output the content and then any validation errors
             print yaml.dump(self.describe())
+        # FIXME: validate the device config
         # FIXME: pretty output of exception messages needed.
         self.pipeline.validate_actions()
 
     def run(self):
         self.pipeline.validate_actions()
-        self.pipeline.run_actions()
+        self.pipeline.run_actions(None)
         # FIXME how to get rootfs with multiple deployments, and at arbitrary
         # points in the pipeline?
         # rootfs = None
@@ -89,16 +106,20 @@ class Job(object):
         # results_dir = None
         #    self.action.post_process(results_dir)
 
+    def rmtree(self, directory):
+        # FIXME: change to self._run_command
+        subprocess.call(['rm', '-rf', directory])
+
     def mkdtemp(self, basedir='/tmp'):
         """
         returns a temporary directory that's deleted when the process exits
 
         """
         # FIXME move to utils module?
-        d = tempfile.mkdtemp(dir=basedir)
-        atexit.register(rmtree, d)
-        os.chmod(d, 0755)
-        return d
+        tmpdir = tempfile.mkdtemp(dir=basedir)
+        atexit.register(rmtree, tmpdir)
+        os.chmod(tmpdir, 0755)
+        return tmpdir
 
     @property
     def scratch_dir(self):

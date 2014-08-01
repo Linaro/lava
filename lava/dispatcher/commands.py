@@ -12,7 +12,7 @@ from lava.dispatcher.node import NodeDispatcher
 import lava_dispatcher.config
 from lava_dispatcher.config import get_config, get_device_config, list_devices
 from lava_dispatcher.job import LavaTestJob, validate_job_data
-import lava_dispatcher.pipeline.parser
+from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.context import LavaContext
 from lava_dispatcher.pipeline.action import Device
 
@@ -195,8 +195,11 @@ class dispatch(DispatcherCommand):
     def parse_job_file(self, filename, oob_file):
         if filename.lower().endswith('.yaml') or filename.lower().endswith('.yml'):
 
-            parser = lava_dispatcher.pipeline.parser.JobParser()
-            job = parser.parse(open(filename), Device(self.args.target), self.args.output_dir)
+            device = Device(self.args.target)
+            parser = JobParser()
+            # FIXME: use the parsed device_config instead of the old Device class so it can fail before the Pipeline is made.
+            job = parser.parse(open(filename), device, output_dir=self.args.output_dir)
+            # device.check_config(job)
             if 'target_group' in job.parameters:
                 raise RuntimeError("Pipeline dispatcher does not yet support MultiNode")
             # TODO: job.parameters isn't really needed in the call to the context, remove later.

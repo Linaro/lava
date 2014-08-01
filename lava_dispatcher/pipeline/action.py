@@ -28,7 +28,6 @@ import subprocess
 from collections import OrderedDict
 from contextlib import contextmanager
 from lava_dispatcher.config import get_device_config
-from lava_dispatcher.pipeline.job import Job
 
 
 class InfrastructureError(Exception):
@@ -66,8 +65,9 @@ class TestError(Exception):
 
 class YamlFilter(logging.Filter):
     """
-    filters standard logs into structued logs
+    filters standard logs into structured logs
     """
+
     def filter(self, record):
         record.msg = yaml.dump(record.msg)
         return True
@@ -176,7 +176,7 @@ class Pipeline(object):
             if not action.log_handler:
                 # FIXME: unit test needed
                 # if no output dir specified in the job
-                std_log.debug("no output-dir, logging %s:%s to stdout" % (action.level, action.name))
+                std_log.debug("no output-dir, logging %s:%s to stdout", action.level, action.name)
             else:
                 yaml_log = logging.getLogger("YAML")  # allows per-action logs in yaml
                 yaml_log.setLevel(logging.DEBUG)  # yaml log is always in debug
@@ -188,14 +188,14 @@ class Pipeline(object):
                 if new_connection:
                     connection = new_connection
             except KeyboardInterrupt:
-                self.cleanup()
+                action.cleanup()
                 self.err = "\rCancel"  # Set a useful message.
                 if self.parent:
                     raise KeyboardInterrupt
                 break
-            except (JobError, InfrastructureError) as e:
-                action.errors = e
-                action.results = {"fail": e}
+            except (JobError, InfrastructureError) as exc:
+                action.errors = exc.message
+                action.results = {"fail": exc}
             # set results including retries
             if action.log_handler:
                 # remove per-action log handler
@@ -228,6 +228,7 @@ class Action(object):
         yaml_log = logging.getLogger("YAML")
         std_log = logging.getLogger("ASCII")
         """
+        # FIXME: too many?
         self.__summary__ = None
         self.__description__ = None
         self.__level__ = None
@@ -235,14 +236,13 @@ class Action(object):
         self.pipeline = None
         self.internal_pipeline = None
         self.__parameters__ = {}
-        self.yaml_line = None
+        self.yaml_line = None  # FIXME: should always be in parameters
         self.__errors__ = []
-        self.elapsed_time = None
+        self.elapsed_time = None  # FIXME: pipeline_data?
         self.log_handler = None
         self.job = None
-        self.max_retries = 0
-        self.retries = 0
         self.results = None
+        self.env = None  # FIXME make this a parameter which gets default value when first called
 
     # public actions (i.e. those who can be referenced from a job file) must
     # declare a 'class-type' name so they can be looked up.
@@ -285,6 +285,22 @@ class Action(object):
     def __set_summary__(self, summary):
         self.__summary__ = summary
 
+    @property
+    def data(self):
+        """
+        Shortcut to the job.context.pipeline_data
+        """
+        if not self.job:
+            return None
+        return self.job.context.pipeline_data
+
+    @data.setter
+    def data(self, value):
+        """
+        Accepts a dict to be updated in the job.context.pipeline_data
+        """
+        self.job.context.pipeline_data.update(value)
+
     @classmethod
     def find(cls, name):
         for subclass in cls.__subclasses__():
@@ -303,7 +319,7 @@ class Action(object):
 
     @property
     def valid(self):
-        return len(self.errors) == 0
+        return len([x for x in self.errors if x]) == 0
 
     @property
     def level(self):
@@ -399,31 +415,38 @@ class Action(object):
         yaml_log.debug({"output": message.split('\n')})
         std_log.info(message)
 
-    def _run_command(self, command_list):
+    def _run_command(self, command_list, env=None):
         """
         Single location for all external command operations on the
         dispatcher, without using a shell and with full structured logging.
         Ensure that output for the YAML logger is a serialisable object
         and strip embedded newlines / whitespace where practical.
         Returns the output of the command (after logging the output)
+        Includes default support for proxy settings in the environment.
         """
         if type(command_list) != list:
             raise RuntimeError("commands to _run_command need to be a list")
         yaml_log = logging.getLogger("YAML")
         log = None
+        if not self.env:
+            self.env = {'http_proxy': self.job.context.config.lava_proxy,
+                        'https_proxy': self.job.context.config.lava_proxy}
+        if env:
+            self.env.update(env)
+        # FIXME: distinguish between host and target commands and add 'nice' to host
         try:
-            log = subprocess.check_output(command_list, stderr=subprocess.STDOUT)
+            log = subprocess.check_output(command_list, stderr=subprocess.STDOUT, env=self.env)
         except KeyboardInterrupt:
             self.cleanup()
             self.err = "\rCancel"  # Set a useful message.
-        except OSError as e:
-            yaml_log.debug({e.strerror: e.child_traceback.split('\n')})
-        except subprocess.CalledProcessError as e:
-            self.errors = e
+        except OSError as exc:
+            yaml_log.debug({exc.strerror: exc.child_traceback.split('\n')})
+        except subprocess.CalledProcessError as exc:
+            self.errors = exc.message
             yaml_log.debug({
-                'command': [i.strip() for i in e.cmd],
-                'message': [i.strip() for i in e.message],
-                'output': e.output.split('\n')})
+                'command': [i.strip() for i in exc.cmd],
+                'message': [i.strip() for i in exc.message],
+                'output': exc.output.split('\n')})
         self._log("%s\n%s" % (' '.join(command_list), log))
         return log
 
@@ -516,6 +539,7 @@ class RetryAction(Action):
 
     def __init__(self):
         super(RetryAction, self).__init__()
+        self.retries = 0
         self.max_retries = 5
         self.sleep = 1
 

@@ -48,6 +48,7 @@ setup(
             'lava_test_shell/distro/fedora/*',
             'lava_test_shell/distro/android/*',
             'lava_test_shell/distro/ubuntu/*',
+            'lava_test_shell/distro/debian/*',
         ],
         'linaro_dashboard_bundle': [
             'schemas/*',

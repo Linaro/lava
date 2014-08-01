@@ -197,9 +197,9 @@ class DownloaderAction(RetryAction):
     def validate(self):
         self.parse()
         fname, suffix = self._url_to_fname_suffix()  # FIXME: use the context tmpdir
-        self.job.context.pipeline_data[self.name] = {
-            'file': fname,
-        }
+        if self.name not in self.data:
+            self.data[self.name] = {}
+        self.data[self.name]['file'] = fname
 
     def run(self, connection, args=None):
         self.parse()  # FIXME: do this in the deployment strategy
@@ -207,9 +207,6 @@ class DownloaderAction(RetryAction):
         fname, suffix = self._url_to_fname_suffix()  # FIXME: use the context tmpdir
         if os.path.exists(fname):
             self._log("development shortcut")  # TODO: remove
-            self.job.context.pipeline_data[self.name] = {
-                'file': fname,
-            }
             return connection
         # The problem with the entire download method is that it
         # is completely hidden from the logs and the progress indicator.
@@ -233,7 +230,7 @@ class DownloaderAction(RetryAction):
         # FIXME: needs to raise JobError on 404 etc. for retry to operate
         # set the dynamic data into the context:
         # the decompressed filename and path
-        self.job.context.pipeline_data[self.name] = {
+        self.data[self.name] = {
             'file': fname,
             'md5': self.md5.hexdigest(),
             'sha256': self.sha256.hexdigest()
@@ -254,13 +251,13 @@ class ChecksumAction(Action):
         self.summary = "checksum"
 
     def run(self, connection, args=None):
-        if 'download_action' in self.job.context.pipeline_data:
-            if 'md5' in self.job.context.pipeline_data['download_action']:
+        if 'download_action' in self.data:
+            if 'md5' in self.data['download_action']:
                 self._log("md5sum of downloaded content: %s" %
-                          self.job.context.pipeline_data['download_action']['md5'])
-            if 'sha256' in self.job.context.pipeline_data['download_action']:
+                          self.data['download_action']['md5'])
+            if 'sha256' in self.data['download_action']:
                 self._log("sha256sum of downloaded content: %s" %
-                          self.job.context.pipeline_data['download_action']['sha256'])
+                          self.data['download_action']['sha256'])
         return connection
 
 

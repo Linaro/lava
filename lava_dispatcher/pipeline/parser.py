@@ -18,15 +18,19 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import copy
 import yaml
-
 from yaml.composer import Composer
 from yaml.constructor import Constructor
-from lava_dispatcher.pipeline import *
-from lava_dispatcher.pipeline.job_actions.deploy.kvm import DeployAction, DeployKVM
-
+from lava_dispatcher.pipeline.job import Job
+from lava_dispatcher.pipeline.action import (
+    Pipeline,
+    Action,
+    Deployment,
+    JobError
+)
 from lava_dispatcher import deployment_data
+# needed for the Deployment select call, despite what pylint thinks.
+from lava_dispatcher.pipeline.actions.deploy.image import DeployImage
 
 
 class JobParser(object):
@@ -50,13 +54,21 @@ class JobParser(object):
         mapping['yaml_line'] = node.__line__
         return mapping
 
-    def parse(self, io, device, output_dir=None):
-        self.loader = yaml.Loader(io)
+    def parse_check(self, content, device_config):
+        # FIXME: fold into the regular parsing by handling the device_config instead of the old Device class
+        if 'image' not in device_config['actions']['boot']['allow']:
+            raise JobError("Unable to boot job")
+        if 'image' not in device_config['actions']['deploy']['allow']:
+            raise JobError("Unable to deploy job")
+
+    def parse(self, content, device, output_dir=None):
+        self.loader = yaml.Loader(content)
         self.loader.compose_node = self.compose_node
         self.loader.construct_mapping = self.construct_mapping
         data = self.loader.get_single_data()
 
         job = Job(data)
+
         job.device = device
         job.parameters['output_dir'] = output_dir
         pipeline = Pipeline(job=job)
@@ -65,13 +77,13 @@ class JobParser(object):
             for name in action_data:
                 if name == "deploy":
                     # allow the classmethod to check the parameters
-                    d = Deployment.select(device, action_data[name])(pipeline)
-                    d.action.parameters = action_data[name]  # still need to pass the parameters to the instance
+                    deploy = Deployment.select(device, action_data[name])(pipeline)
+                    deploy.action.parameters = action_data[name]  # still need to pass the parameters to the instance
                     if 'test' in data['actions']:
-                        d.action.parameters = action_data['test']
-                    d.action.yaml_line = line
-                    device.deployment_data = deployment_data.get(d.action.parameters['os'])
-                    d.action.parameters = {'deployment_data': device.deployment_data}
+                        deploy.action.parameters = action_data['test']
+                    deploy.action.yaml_line = line
+                    device.deployment_data = deployment_data.get(deploy.action.parameters['os'])
+                    deploy.action.parameters = {'deployment_data': device.deployment_data}
                 else:
                     action_class = Action.find(name)
                     # select the specific action of this class for this job

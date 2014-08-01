@@ -165,7 +165,7 @@ class Factory(object):
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         self.sample_job_data = open(kvm_yaml)
         self.parser = JobParser()
-        job = self.parser.parse(self.sample_job_data, device, output_dir)
+        job = self.parser.parse(self.sample_job_data, device, output_dir=output_dir)
         job.context = LavaContext(device.config.hostname, get_config(), sys.stderr, job.parameters, '/tmp')
         return job
 

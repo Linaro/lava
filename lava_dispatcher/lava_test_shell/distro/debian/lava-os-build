@@ -1,0 +1,20 @@
+#!/bin/sh
+
+if [ -x /usr/bin/lsb_release ]
+then
+    /usr/bin/lsb_release -d | sed -e 's/^Description:\s*//'
+    exit 0
+fi
+
+if [ -f /etc/lsb-release ]
+then
+    . /etc/lsb-release
+    echo $DISTRIB_DESCRIPTION
+    exit 0
+fi
+
+if [ -f /etc/debian_version ]
+then
+    cat /etc/debian_version
+    exit 0
+fi

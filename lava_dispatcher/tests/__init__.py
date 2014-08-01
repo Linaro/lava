@@ -9,6 +9,7 @@ def test_suite():
         'lava_dispatcher.tests.test_job',
         'lava_dispatcher.pipeline.test.test_basic',
         'lava_dispatcher.pipeline.test.test_job',
+        'lava_dispatcher.pipeline.test.test_defs',
     ]
     loader = unittest.TestLoader()
     return loader.loadTestsFromNames(module_names)
