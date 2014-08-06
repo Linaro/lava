@@ -91,7 +91,7 @@ def mkdtemp(basedir='/tmp'):
 def mk_targz(tfname, rootdir, basedir='.', asroot=False):
     """ Similar shutil.make_archive but it doesn't blow up with unicode errors
     """
-    cmd = 'tar -C %s -czf %s %s' % (rootdir, tfname, basedir)
+    cmd = 'tar --selinux -C %s -czf %s %s' % (rootdir, tfname, basedir)
     if asroot:
         cmd = 'nice sudo %s' % cmd
     if logging_system(cmd):
@@ -115,10 +115,10 @@ def extract_tar(tfname, tmpdir):
     issues that python's tarfile seems to have with unicode
     """
     if tfname.endswith('.bz2'):
-        if logging_system('nice tar -C %s -jxf %s' % (tmpdir, tfname)):
+        if logging_system('nice tar --selinux -C %s -jxf %s' % (tmpdir, tfname)):
             raise CriticalError('Unable to extract tarball: %s' % tfname)
     elif tfname.endswith('.gz') or tfname.endswith('.tgz'):
-        if logging_system('nice tar -C %s -xzf %s' % (tmpdir, tfname)):
+        if logging_system('nice tar --selinux -C %s -xzf %s' % (tmpdir, tfname)):
             raise CriticalError('Unable to extract tarball: %s' % tfname)
     else:
         raise CriticalError('Unable to extract tarball: %s' % tfname)
@@ -130,13 +130,13 @@ def extract_rootfs(rootfs, root):
     """ Extracts the contents of a .tar.(bz2, gz, xz, lzma, etc) rootfs to the root.
     """
     logging.warning('Attempting to extract tarball with --strip-components=1')
-    if logging_system('nice tar --strip-components=1 -C %s -xaf %s' % (root, rootfs)):
+    if logging_system('nice tar --selinux --strip-components=1 -C %s -xaf %s' % (root, rootfs)):
         logging.warning('Unable to extract tarball with --strip-components=1')
         logging.warning('Cleaning up temporary directory')
         if logging_system('rm -rf %s/*' % root):
             raise CriticalError('Unable to clean up temporary directory')
         logging.warning('Attempting to extract tarball without --strip-components=1')
-        if logging_system('nice tar -C %s -xaf %s' % (root, rootfs)):
+        if logging_system('nice tar --selinux -C %s -xaf %s' % (root, rootfs)):
             raise CriticalError('Unable to extract tarball: %s' % rootfs)
     if logging_system('rm %s' % rootfs):
         raise CriticalError('Unable to remove tarball: %s' % rootfs)
@@ -146,7 +146,7 @@ def extract_modules(modules, root):
     """ Extracts the contents of a modules .tar.(bz2, gz, xz, lzma, etc) to the filesystem root.
     """
     logging.info('Attempting to install modules onto the filesystem')
-    if logging_system('nice tar -C %s -xaf %s' % (root, modules)):
+    if logging_system('nice tar --selinux -C %s -xaf %s' % (root, modules)):
         raise CriticalError('Unable to extract tarball: %s to %s' % (modules, root))
     if logging_system('rm %s' % modules):
         raise CriticalError('Unable to remove tarball: %s' % modules)

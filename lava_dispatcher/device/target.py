@@ -513,8 +513,8 @@ class Target(object):
         else:
             wget_options = '--no-check-certificate --no-proxy --connect-timeout=30 -S --progress=dot -e dotbytes=2M'
 
-        runner.run('wget %s -O - %s %s | /bin/tar -C %s -xmf -'
-                   % (wget_options, tar_url, decompression_cmd, dest),
+        runner.run('wget %s -O - %s %s | /bin/tar %s -C %s -xmf -'
+                   % (wget_options, tar_url, decompression_cmd, self.context.selinux, dest),
                    timeout=timeout)
 
     @contextlib.contextmanager
@@ -558,7 +558,7 @@ class Target(object):
             tfdir = os.path.join(self.scratch_dir, str(time.time()))
             try:
                 os.mkdir(tfdir)
-                self.context.run_command('nice tar -C %s -xzf %s' % (tfdir, tf))
+                self.context.run_command('nice tar --selinux -C %s -xzf %s' % (tfdir, tf))
                 yield os.path.join(tfdir, target_name)
 
             finally:
