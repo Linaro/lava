@@ -105,6 +105,7 @@ class LavaContext(object):
         self._client = LavaClient(self, self.device_config)
         self.test_data = LavaTestData()
         self.oob_file = oob_file
+        self.selinux = None
         self._host_result_dir = None
         self.any_device_bundles = False
         self.repo_keys = ['git-repo', 'bzr-repo', 'tar-repo']

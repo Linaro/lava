@@ -26,7 +26,7 @@ import time
 import re
 import hashlib
 import pexpect
-
+import subprocess
 from lava_dispatcher import tarballcache
 
 from lava_dispatcher.client.base import (
@@ -295,14 +295,37 @@ class MasterImageTarget(Target):
         else:
             raise RuntimeError('bad file extension: %s' % tar_url)
 
+        # we know that tar is new enough on the dispatcher via the packaging but
+        # also need to look for support for a new enough version of tar in the master
+        # image, without breaking jobs on older master images.
+        if not self.context.selinux:
+            unrecognised = ''
+            remote_connection = runner.get_connection()
+            remote_connection.sendline("LANG=C tar --selinux 2>&1 | grep unrecognized| wc -l")
+            remote_connection.expect(pexpect.TIMEOUT, timeout=3)
+            output = remote_connection.before
+            if len(output.split('\n')) >= 2:
+                unrecognised = output.split('\n')[1].strip()
+            if unrecognised == '1':
+                logging.info("SELinux support disabled in test image. Master image has no selinux support in 'tar'.")
+                self.context.selinux = ''
+            elif unrecognised == '0' or unrecognised == '':
+                logging.debug("Retaining SELinux support in test image.")
+                # store in context for use with the fs.tgz
+                self.context.selinux = "--selinux"
+            else:
+                logging.error("Unable to determine SELinux support.")
+                self.context.selinux = ''
+
+        # handle root.tgz
         while num_retry > 0:
             try:
                 runner.run(
                     'wget --no-check-certificate --no-proxy '
                     '--connect-timeout=30 -S --progress=dot -e dotbytes=2M '
                     '-O- %s | '
-                    'tar --warning=no-timestamp --numeric-owner -C %s -x%sf -'
-                    % (tar_url, dest, decompression_char),
+                    'tar %s --warning=no-timestamp --numeric-owner -C %s -x%sf -'
+                    % (tar_url, self.context.selinux, dest, decompression_char),
                     timeout=timeout)
                 return
             except (OperationFailed, pexpect.TIMEOUT):
