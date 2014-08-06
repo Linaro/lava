@@ -97,7 +97,7 @@ class Poller(object):
                 delay += 2
                 s.close()
                 continue
-            logging.debug("sending message: %s" % msg_str[:42])
+            logging.debug("sending message: %s..." % msg_str[:42])
             # blocking synchronous call
             try:
                 # send the length as 32bit hexadecimal
