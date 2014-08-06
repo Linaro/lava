@@ -329,8 +329,12 @@ def bundle_list_export(request, pathname):
                 bundle_dict["pass"] = 0
                 bundle_dict["fail"] = 0
                 bundle_dict["total"] = 0
-            bundle_dict["uploaded_by_id"] = User.objects.get(
-                pk=bundle.uploaded_by_id).username
+            try:
+                bundle_dict["uploaded_by_id"] = User.objects.get(
+                    pk=bundle.uploaded_by_id).username
+            except User.DoesNotExist:
+                bundle_dict["uploaded_by_id"] = None
+
             out.writerow(bundle_dict)
 
     response = HttpResponse(content_type='text/csv')
