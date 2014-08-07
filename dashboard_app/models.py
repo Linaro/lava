@@ -20,6 +20,7 @@
 Database models of the Dashboard application
 """
 
+import ast
 import datetime
 import errno
 import gzip
@@ -1133,6 +1134,19 @@ class TestRun(models.Model):
             if one_attributes.name == "target.device_type":
                 return one_attributes.value
         return "Target Device"
+
+    def get_test_params(self):
+        """When test_params are available return it as a dict after converting
+        the dict to contain normal strings without unicode notation. If there
+        are no test parameters, then we return None.
+        """
+        for src in self.sources.all():
+            if src.test_params != "":
+                test_params = {}
+                for k, v in ast.literal_eval(src.test_params).items():
+                    test_params[str(k)] = str(v)
+                return test_params
+        return None
 
 
 class TestRunDenormalization(models.Model):

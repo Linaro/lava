@@ -433,8 +433,8 @@ def bundle_export(request, pathname, content_sha1):
             test_run_keys.remove(field)
 
     # Add results columns from denormalization object.
-    test_run_keys[:0] = ["device", "test", "count_pass", "count_fail",
-                         "count_skip", "count_unknown"]
+    test_run_keys[:0] = ["device", "test", "test_params", "count_pass",
+                         "count_fail", "count_skip", "count_unknown"]
 
     # Add bug link
     test_run_keys.append("bug_link")
@@ -451,6 +451,7 @@ def bundle_export(request, pathname, content_sha1):
             test_run_dict = test_run.__dict__.copy()
             test_run_dict.update(test_run_denorm.__dict__)
             test_run_dict["test"] = test_run.test.test_id
+            test_run_dict["test_params"] = test_run.get_test_params()
             test_run_dict["device"] = test_run.show_device()
             test_run_dict["bug_link"] = " ".join([b.bug_link for b in test_run.bug_links.all()])
             out.writerow(test_run_dict)
