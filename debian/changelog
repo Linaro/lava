@@ -1,3 +1,14 @@
+lava-dispatcher (2014.07-1) unstable; urgency=medium
+
+  * New production release
+  * Drop use of sync inside dispatcher code.
+  * Add proxy support for git and bzr clone operations
+  * Raise an error if fetching the test definition fails.
+  * Add bzr and launchpadlib to recommends to support test definitions
+  * Depend on SELinux support from tar
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 07 Aug 2014 11:35:58 +0100
+
 lava-dispatcher (2014.06.2-1) unstable; urgency=medium
 
   * New upstream bug fix release for proxy support.

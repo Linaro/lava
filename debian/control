@@ -19,17 +19,18 @@ Vcs-Browser: https://github.com/Linaro/pkg-lava-dispatcher
 Package: lava-dispatcher
 Architecture: linux-any
 Depends: python-serial (>= 2.6), python-setuptools,
- parted, kpartx, telnet, ser2net, sshfs,
+ parted, kpartx, tar (>= 1.27), telnet, ser2net, sshfs,
  sudo, ${python:Depends}, ${misc:Depends}
 Conflicts: python-linaro-dashboard-bundle
 Provides: python-linaro-dashboard-bundle
 Replaces: python-linaro-dashboard-bundle
 Multi-Arch: foreign
-Recommends: ntp, git, htop, tftpd-hpa, openbsd-inetd,
+Recommends: ntp, bzr, git, htop, tftpd-hpa, openbsd-inetd,
  qemu-system-x86 (>= 2.0.0) [amd64], qemu-system-x86 (>= 2.0.0) [i386],
  qemu-system-arm (>= 2.0.0) [armhf],
  libguestfs-tools [amd64], libguestfs-tools [i386],
- nfs-kernel-server, rpcbind, u-boot-tools, unzip
+ nfs-kernel-server, python-launchpadlib, rpcbind,
+ u-boot-tools, unzip
 Description: Linaro Automated Validation Architecture dispatcher
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.

@@ -4,3 +4,4 @@ lava_utils_interface lava-utils-interface; PEP386
 pexpect python-pexpect
 configglue python-configglue
 pyliblzma python-lzma; PEP386
+requests python-requests; PEP386
