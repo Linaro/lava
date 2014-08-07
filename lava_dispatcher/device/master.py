@@ -350,7 +350,7 @@ class MasterImageTarget(Target):
     @contextlib.contextmanager
     def file_system(self, partition, directory):
         logging.info('attempting to access master filesystem %r:%s' %
-                    (partition, directory))
+                     (partition, directory))
 
         assert directory != '/', "cannot mount entire partition"
 
@@ -476,7 +476,7 @@ class MasterImageTarget(Target):
         data_label = self.userdata_label
         data_path = self.userdata_path
         if not session.has_partition_with_label(data_label):
-            #consider the compatiblity, here use the existed sdcard partition
+            # consider the compatiblity, here use the existed sdcard partition
             data_label = self.sdcard_label
             data_path = self.sdcard_path
         return data_label, data_path
@@ -522,9 +522,9 @@ class MasterImageTarget(Target):
         # another hour to err on the side of caution.
         session._client.target_extract(session, rootfs, '/mnt/root', timeout=18000)
 
-        #DO NOT REMOVE - diverting flash-kernel and linking it to /bin/true
-        #prevents a serious problem where packages getting installed that
-        #call flash-kernel can update the kernel on the master image
+        # DO NOT REMOVE - diverting flash-kernel and linking it to /bin/true
+        # prevents a serious problem where packages getting installed that
+        # call flash-kernel can update the kernel on the master image
         if session.run('chroot /mnt/root which dpkg-divert', failok=True) == 0:
             session.run(
                 'chroot /mnt/root dpkg-divert --local /usr/sbin/flash-kernel')
@@ -740,11 +740,10 @@ def _test_filesystem_writeable(runner, mountpoint):
     m.update(str(current_time))
     md5sum = m.hexdigest()
     logging.debug("writing %s to ddout, md5sum %s" % (current_time, md5sum))
-    write_res = runner.run('echo -n %s | dd oflag=direct of=%s/ddout ' % (current_time, mountpoint), failok=True)
+    write_res = runner.run('echo -n %s | dd oflag=direct,sync of=%s/ddout ' % (current_time, mountpoint), failok=True)
     if write_res > 0:
         raise RuntimeError('Failed to write test data to %s (sd card writeable test)' % mountpoint)
     else:
-        runner.run('sync', failok=True)
         read_res = runner.run('dd if=%s/ddout iflag=direct | md5sum | grep %s' % (mountpoint, md5sum), failok=True)
         if read_res > 0:
             raise RuntimeError('Filesystem %s was not writeable (bad sd card?)' % mountpoint)

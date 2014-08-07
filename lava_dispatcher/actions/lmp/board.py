@@ -126,7 +126,7 @@ class LAVALmpDeviceSerial(object):
 
         logging.debug("LMP: Got %s" % response)
 
-        #return a Python object
+        # return a Python object
         return json.loads(response)
 
     def get_response(self, schema):

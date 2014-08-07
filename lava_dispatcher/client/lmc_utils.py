@@ -135,8 +135,21 @@ def image_partition_mounted(image_file, partno):
     try:
         yield mntdir
     finally:
-        logging_system('sync')
-        logging_system('sudo umount ' + mntdir)
+        # use a retry umount to cover EBUSY from mount itself
+        umount_max = 10
+        umount_tries = umount_max
+        while umount_tries:
+            try:
+                subprocess.check_call(["sudo", "umount", mntdir])
+            except subprocess.CalledProcessError:
+                logging.info("umount '%s' failed, retrying %d of %d" %
+                             (mntdir, umount_tries, umount_max))
+                umount_tries -= 1
+                time.sleep(10)
+                continue
+            break
+        if not umount_tries:
+            raise RuntimeError("Unable to unmount image after %d retries" % umount_max)
         logging_system('rm -rf ' + mntdir)
 
 

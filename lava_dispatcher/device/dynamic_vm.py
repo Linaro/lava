@@ -51,7 +51,7 @@ class DynamicVmTarget(Target):
         super(DynamicVmTarget, self).__init__(context, config)
 
         device_type = config.dynamic_vm_backend_device_type
-        if not device_type in self.supported_backends.keys():
+        if device_type not in self.supported_backends.keys():
             raise CriticalError("%s is not supported as a backend" %
                                 device_type)
 

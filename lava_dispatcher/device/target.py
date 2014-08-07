@@ -433,13 +433,13 @@ class Target(object):
         (1)Delete the redundant element "" at the end of boot_cmds
         (2)(we can add more actions for preprocessing here).
         """
-        #Delete the redundant element "" at the end of boot_cmds
+        # Delete the redundant element "" at the end of boot_cmds
         while True:
             if boot_cmds[-1] == "":
                 del boot_cmds[-1]
             else:
                 break
-        #we can add more actions here
+        # we can add more actions here
         logging.debug('boot_cmds(after preprocessing): %s', boot_cmds)
         return boot_cmds
 
@@ -452,6 +452,7 @@ class Target(object):
         return boot_cmds
 
     def _customize_bootloader(self, connection, boot_cmds):
+        start = time.time()
         delay = self.config.bootloader_serial_delay_ms
         _boot_cmds = self._boot_cmds_preprocessing(boot_cmds)
         for line in _boot_cmds:
@@ -480,6 +481,12 @@ class Target(object):
                                       timeout=300)
                 connection.sendline(line, delay,
                                     send_char=self.config.send_char)
+
+        # Record boot time metadata
+        boottime = "{0:.2f}".format(time.time() - start)
+        boottime_meta = {'bootloader-load-time': boottime}
+        self.context.test_data.add_metadata(boottime_meta)
+        logging.debug("Bootloader load time: %s seconds" % boottime)
 
     def _target_extract(self, runner, tar_file, dest, timeout=-1, busybox=False):
         tmpdir = self.context.config.lava_image_tmpdir
@@ -706,8 +713,8 @@ class Target(object):
 
     def _customize_linux(self):
         # XXX Re-examine what to do here in light of deployment_data import.
-        #perhaps make self.deployment_data = deployment_data({overrides: dict})
-        #and remove the write function completely?
+        # perhaps make self.deployment_data = deployment_data({overrides: dict})
+        # and remove the write function completely?
 
         os_release_id = 'linux'
         mnt = self.mount_info['rootfs']
@@ -788,7 +795,7 @@ class Target(object):
                 if des_tmp[:5] != "boot:" and des_tmp[:7] != "rootfs:" and des_tmp != "delete":
                     logging.error('Customize function only support <boot, rootfs>:<path> as image path, for now!')
                     raise CriticalError("Unrecognized image path %s, Please check your test definition!" % des_tmp)
-                    #temp_dic["des"].remove(des_tmp)
+                    # temp_dic["des"].remove(des_tmp)
             if src[:4] in image_part:
                 if "delete" in temp_dic["des"]:
                     customize_info["delete"].append(src)

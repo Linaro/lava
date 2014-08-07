@@ -370,8 +370,8 @@ class NodeDispatcher(object):
         # of a broken test definition.
         if role:
             return self._send({"request": "lava_wait_all",
-                              "messageID": messageID,
-                              "waitrole": role})
+                               "messageID": messageID,
+                               "waitrole": role})
         else:
             return self._send({"request": "lava_wait_all",
                               "messageID": messageID})

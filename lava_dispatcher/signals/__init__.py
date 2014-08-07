@@ -257,8 +257,8 @@ class SignalDirector(object):
         if reply == "nack":
             message_str = " nack"
         else:
-            #the reply format is like this :
-            #"{target:{key1:value, key2:value2, key3:value3},
+            # the reply format is like this :
+            # "{target:{key1:value, key2:value2, key3:value3},
             #  target2:{key1:value, key2:value2, key3:value3}}"
             for target, messages in reply.items():
                 for key, value in messages.items():
@@ -266,7 +266,7 @@ class SignalDirector(object):
         self.connection.sendline("<LAVA_WAIT_ALL_COMPLETE%s>" % message_str,
                                  self.client.config.test_shell_serial_delay_ms)
 
-#for LMP signal process
+# for LMP signal process
     def _on_LSGPIO(self, command, module_name=None):
         if lmp_signals:
             lmp_signals.lsgpio_signal(self.connection,

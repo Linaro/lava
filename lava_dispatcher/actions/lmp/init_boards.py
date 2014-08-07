@@ -75,7 +75,7 @@ def _validate_lmp_module(lmp_module_data):
     Validator.validate(schema, lmp_module_data)
 
 
-#init LMP module
+# init LMP module
 def init(lmp_module_data, config):
     _validate_lmp_module(lmp_module_data)
     for lmp_module_element in lmp_module_data:

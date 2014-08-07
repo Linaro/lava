@@ -18,6 +18,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+from unittest import TestCase
 from lava_dispatcher.config import get_device_config
 import lava_dispatcher.config
 
@@ -46,15 +47,16 @@ def setup_config_dir():
 
 
 def cleanup_config_dir():
-    os.system('rm -rf %s' % tmp_config_dir)
-
-from unittest import TestCase
+    if os.path.exists(tmp_config_dir):
+        os.system('rm -rf %s' % tmp_config_dir)
 
 
 class LavaDispatcherTestCase(TestCase):
 
     def setUp(self):
+        cleanup_config_dir()  # clean up after a possibly failed test.
         setup_config_dir()
+        self.config_dir = tmp_config_dir
         lava_dispatcher.config.custom_config_path = tmp_config_dir
 
     def tearDown(self):

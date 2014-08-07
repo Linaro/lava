@@ -84,6 +84,9 @@ class cmd_boot_linaro_android_image(BaseAction):
             raise CriticalError("Failed to boot test image.")
 
 
+cmd_boot_android_image = cmd_boot_linaro_android_image
+
+
 class cmd_boot_linaro_image(BaseAction):
     """ Call client code to boot to the test image
     """
@@ -111,6 +114,9 @@ class cmd_boot_linaro_image(BaseAction):
             raise CriticalError("Failed to boot test image.")
         finally:
             self.context.test_data.add_result("boot_image", status)
+
+
+cmd_boot_image = cmd_boot_linaro_image
 
 
 class cmd_boot_master_image(BaseAction):

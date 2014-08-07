@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import sys
+import yaml
 
 from json_schema_validator.errors import ValidationError
 from lava.tool.command import Command
@@ -11,6 +12,8 @@ from lava.dispatcher.node import NodeDispatcher
 import lava_dispatcher.config
 from lava_dispatcher.config import get_config, get_device_config, list_devices
 from lava_dispatcher.job import LavaTestJob, validate_job_data
+import lava_dispatcher.pipeline.parser
+from lava_dispatcher.context import LavaContext
 
 
 class SetUserConfigDirAction(argparse.Action):
@@ -46,6 +49,52 @@ class devices(DispatcherCommand):
     def invoke(self):
         for d in list_devices():
             print d
+
+
+def run_legacy_job(job_data, oob_file, config, output_dir, validate):
+
+    if os.getuid() != 0:
+        logging.error("lava dispatch has to be run as root")
+        exit(1)
+
+    json_job_data = json.dumps(job_data)
+    job = LavaTestJob(json_job_data, oob_file, config, output_dir)
+
+    # FIXME Return status
+    if validate:
+        try:
+            validate_job_data(job.job_data)
+        except ValidationError as e:
+            print e
+    else:
+        job.run()
+
+
+def get_pipeline_runner(job):
+    # additional arguments are now inside the context
+
+    def run_pipeline_job(job_data, oob_file, config, output_dir, validate_only):
+        # pipeline actions will add their own handlers.
+        yaml_log = logging.getLogger("YAML")
+        yaml_log.setLevel(logging.DEBUG)
+        std_log = logging.getLogger("ASCII")
+
+        stdhandler = logging.StreamHandler(oob_file)
+        stdhandler.setLevel(logging.INFO)
+        formatter = logging.Formatter('"%(asctime)s"\n%(message)s')
+        stdhandler.setFormatter(formatter)
+        std_log.addHandler(stdhandler)
+
+        try:
+            job.validate()
+            # print "job validation"  # FIXME: use debug log output
+            if not validate_only:
+                # print "job running"
+                job.run()
+        except lava_dispatcher.pipeline.JobError as e:
+            print(e)
+            sys.exit(2)
+    return run_pipeline_job
 
 
 class dispatch(DispatcherCommand):
@@ -84,12 +133,6 @@ class dispatch(DispatcherCommand):
 
     def invoke(self):
 
-        config = None
-
-        if os.getuid() != 0:
-            logging.error("lava dispatch has to be run as root")
-            exit(1)
-
         if self.args.oob_fd:
             oob_file = os.fdopen(self.args.oob_fd, 'w')
         else:
@@ -105,7 +148,7 @@ class dispatch(DispatcherCommand):
         DATEFMT = '%Y-%m-%d %I:%M:%S %p'
         logging.basicConfig(format=FORMAT, datefmt=DATEFMT)
         try:
-            config = get_config()
+            self.config = get_config()
         except CommandError as e:
             if self.args.output_dir:
                 reporter = os.path.join(self.args.output_dir, "output.txt")
@@ -114,7 +157,7 @@ class dispatch(DispatcherCommand):
             else:
                 print(e)
             exit(1)
-        logging.root.setLevel(config.logging_level)
+        logging.root.setLevel(self.config.logging_level)
 
         # Set process id if job-id was passed to dispatcher
         if self.args.job_id:
@@ -128,38 +171,41 @@ class dispatch(DispatcherCommand):
                 setproctitle("%s [job: %s]" % (
                     getproctitle(), self.args.job_id))
 
-        # Load the scenario file
-        with open(self.args.job_file) as stream:
-            jobdata = stream.read()
-            json_jobdata = json.loads(jobdata)
+        # Load the job file
+        job_runner, job_data = self.parse_job_file(self.args.job_file, oob_file)
 
         # detect multinode and start a NodeDispatcher to work with the LAVA Coordinator.
         if not self.args.validate:
-            if 'target_group' in json_jobdata:
-                node = NodeDispatcher(json_jobdata, oob_file, self.args.output_dir)
+            if 'target_group' in job_data:
+                node = NodeDispatcher(job_data, oob_file, self.args.output_dir)
                 node.run()
                 # the NodeDispatcher has started and closed.
                 exit(0)
         if self.args.target is None:
-            if 'target' not in json_jobdata:
+            if 'target' not in job_data:
                 logging.error("The job file does not specify a target device. "
                               "You must specify one using the --target option.")
                 exit(1)
         else:
-            json_jobdata['target'] = self.args.target
-            jobdata = json.dumps(json_jobdata)
+            job_data['target'] = self.args.target
         if self.args.output_dir and not os.path.isdir(self.args.output_dir):
             os.makedirs(self.args.output_dir)
-        job = LavaTestJob(jobdata, oob_file, config, self.args.output_dir)
 
-        #FIXME Return status
-        if self.args.validate:
-            try:
-                validate_job_data(job.job_data)
-            except ValidationError as e:
-                print e
-        else:
-            job.run()
+        job_runner(job_data, oob_file, self.config, self.args.output_dir, self.args.validate)
+
+    def parse_job_file(self, filename, oob_file):
+        if filename.lower().endswith('.yaml') or filename.lower().endswith('.yml'):
+
+            parser = lava_dispatcher.pipeline.parser.JobParser()
+            job = parser.parse(open(filename), Device(self.args.target), self.args.output_dir)
+            if 'target_group' in job.parameters:
+                raise RuntimeError("Pipeline dispatcher does not yet support MultiNode")
+            # TODO: job.parameters isn't really needed in the call to the context, remove later.
+            job.context = LavaContext(self.args.target, self.config, oob_file, job.parameters, self.args.output_dir)
+            return get_pipeline_runner(job), job.parameters
+
+        # everything else is assumed to be JSON
+        return run_legacy_job, json.load(open(filename))
 
 
 class DeviceCommand(DispatcherCommand):

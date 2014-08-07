@@ -108,6 +108,7 @@ class LavaContext(object):
         self._host_result_dir = None
         self.any_device_bundles = False
         self.repo_keys = ['git-repo', 'bzr-repo', 'tar-repo']
+        self.pipeline_data = {}
 
     @property
     def client(self):

@@ -84,7 +84,7 @@ def _find_commands(module):
     cmds = {}
     for name, cls in module.__dict__.iteritems():
         if name.startswith("cmd_"):
-            cmds[cls.command_name] = cls
+            cmds[name[4:]] = cls
     return cmds
 
 

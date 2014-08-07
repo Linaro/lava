@@ -27,26 +27,26 @@ class cmd_deploy_linaro_image(BaseAction):
     # json_schema_validation that means it doesn't work (see
     # https://github.com/zyga/json-schema-validator/pull/6).
 
-    ## parameters_schema = {
-    ##     'type': [
-    ##         {
-    ##             'type': 'object',
-    ##             'properties': {
-    ##                 'image': {'type': 'string'},
-    ##                 },
-    ##             'additionalProperties': False,
-    ##             },
-    ##         {
-    ##             'type': 'object',
-    ##             'properties': {
-    ##                 'hwpack': {'type': 'string'},
-    ##                 'rootfs': {'type': 'string'},
-    ##                 'rootfstype': {'type': 'string', 'optional': True, 'default': 'ext3'},
-    ##                 },
-    ##             'additionalProperties': False,
-    ##             },
-    ##         ],
-    ##     }
+    # parameters_schema = {
+    #     'type': [
+    #         {
+    #             'type': 'object',
+    #             'properties': {
+    #                 'image': {'type': 'string'},
+    #                 },
+    #             'additionalProperties': False,
+    #             },
+    #         {
+    #             'type': 'object',
+    #             'properties': {
+    #                 'hwpack': {'type': 'string'},
+    #                 'rootfs': {'type': 'string'},
+    #                 'rootfstype': {'type': 'string', 'optional': True, 'default': 'ext3'},
+    #                 },
+    #             'additionalProperties': False,
+    #             },
+    #         ],
+    #     }
 
     parameters_schema = {
         'type': 'object',
@@ -115,6 +115,9 @@ class cmd_deploy_linaro_image(BaseAction):
             rootfstype=rootfstype, bootloadertype=bootloadertype,)
 
 
+cmd_deploy_image = cmd_deploy_linaro_image
+
+
 class cmd_deploy_linaro_android_image(BaseAction):
 
     parameters_schema = {
@@ -174,6 +177,9 @@ class cmd_deploy_linaro_android_image(BaseAction):
                                           rootfstype=rootfstype,
                                           bootloadertype=bootloadertype,
                                           target_type=target_type)
+
+
+cmd_deploy_android_image = cmd_deploy_linaro_android_image
 
 
 class cmd_deploy_linaro_kernel(BaseAction):
@@ -249,6 +255,9 @@ class cmd_deploy_linaro_kernel(BaseAction):
             firmware=firmware, bl1=bl1, bl2=bl2, bl31=bl31,
             rootfstype=rootfstype, bootloadertype=bootloadertype,
             target_type=target_type)
+
+
+cmd_deploy_kernel = cmd_deploy_linaro_kernel
 
 
 class cmd_dummy_deploy(BaseAction):

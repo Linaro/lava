@@ -79,7 +79,7 @@ def _get_cpus(cpuinfo):
 
     cpu_attrs['cpu_type'] = cpu_type
 
-    for i in xrange(cpu_cores):
+    for i in range(cpu_cores):
         x = {
             'device_type': 'device.cpu',
             'description': 'Processor #%d' % i,

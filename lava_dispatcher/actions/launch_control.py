@@ -48,8 +48,8 @@ def _get_dashboard(server, token):
     if not server.endswith("/"):
         server = ''.join([server, "/"])
 
-    #add backward compatible for 'dashboard/'-end URL
-    #Fix it: it's going to be deleted after transition
+    # add backward compatible for 'dashboard/'-end URL
+    # Fix it: it's going to be deleted after transition
     if server.endswith("dashboard/"):
         server = ''.join([server, "xml-rpc/"])
         logging.warn("Please use whole endpoint URL not just end with 'dashboard/', "
@@ -80,7 +80,7 @@ def _get_dashboard(server, token):
         logging.error("Please use RPC2 endpoint instead, xml-rpc is no longer supported")
         raise OperationFailed("xml-rpc endpoint is not supported.")
     elif server.endswith("RPC2/"):
-        #include lava-server/RPC2/
+        # include lava-server/RPC2/
         dashboard = srv.dashboard
     else:
         logging.warn("The url seems not RPC2 or xml-rpc endpoints, please make sure it's a valid one!!!")

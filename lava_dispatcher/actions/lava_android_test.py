@@ -50,7 +50,7 @@ class cmd_lava_android_test_run(AndroidTestAction):
         return super(cmd_lava_android_test_run, self).test_name() + ' (%s)' % test_name
 
     def run(self, test_name, option=None, timeout=-1):
-        #Make sure in test image now
+        # Make sure in test image now
         self.check_lava_android_test_installed()
         with self.client.android_tester_session() as session:
             bundle_name = generate_bundle_file_name(test_name)
@@ -110,7 +110,7 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
         :param parser:  The parser to use for the test
         :param timeout: The timeout to apply.
         """
-        #Make sure in test image now
+        # Make sure in test image now
         self.check_lava_android_test_installed()
         if commands or command_file:
             with self.client.android_tester_session() as session:
@@ -168,7 +168,7 @@ class cmd_lava_android_test_run_monkeyrunner(AndroidTestAction):
         return '%s (url=[%s])' % (super(cmd_lava_android_test_run_monkeyrunner, self).test_name(), url)
 
     def run(self, url=None, timeout=-1):
-        #Make sure in test image now
+        # Make sure in test image now
         self.check_lava_android_test_installed()
         with self.client.android_tester_session() as session:
             bundle_name = generate_bundle_file_name('monkeyrunner')
