@@ -385,3 +385,16 @@ class Settings(object):
         """
         default = 'https://login.ubuntu.com/'
         return self._settings.get("OPENID_SSO_SERVER_URL", default)
+
+    @property
+    def ARCHIVE_ROOT(self):
+        """
+        Bridge for the settings file ARCHIVE_ROOT property.
+
+        By default it produces the string:
+
+            ``"/var/lib/{appname}/archive/"``
+
+        """
+        default = "/var/lib/{appname}/archive/".format(appname=self._appname)
+        return self._settings.get("ARCHIVE_ROOT", default)

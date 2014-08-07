@@ -62,7 +62,7 @@ title="History of health changes"><span class="glyphicon glyphicon-heart"></span
     var ddates= [];
     {% for day in health_day_report %}
       dpass.push([{{forloop.counter0}}, 100*{{day.pass}}{% if day.pass %}/({{day.pass}}+{{day.fail}}){% endif %}]);
-      ddates.push([{{forloop.counter0}}, "<a href='{{day.failure_url}}'>{{day.date}}</a><br/>Pass: {{day.pass}}<br/>Fail: {{day.fail}}"]);
+      ddates.push([{{forloop.counter0}}, '<a href="{{day.failure_url}}">{{day.date}}</a><br/>Pass: {{day.pass}}<br/>Fail: {{day.fail}}']);
     {% endfor %}
 
     var ddata = [
@@ -88,7 +88,7 @@ title="History of health changes"><span class="glyphicon glyphicon-heart"></span
     var wdates= [];
     {% for week in health_week_report %}
       wpass.push([{{forloop.counter0}}, 100*{{week.pass}}{% if week.pass %}/({{week.pass}}+{{week.fail}}){% endif %}]);
-      wdates.push([{{forloop.counter0}}, "<a href='{{week.failure_url}}'>{{week.date}}</a><br/>Pass: {{week.pass}}<br/>Fail: {{week.fail}}"]);
+      wdates.push([{{forloop.counter0}}, '<a href="{{week.failure_url}}">{{week.date}}</a><br/>Pass: {{week.pass}}<br/>Fail: {{week.fail}}']);
     {% endfor %}
 
       var wdata = [
@@ -114,7 +114,7 @@ title="History of health changes"><span class="glyphicon glyphicon-heart"></span
     var jddates= [];
     {% for day in job_day_report %}
       jdpass.push([{{forloop.counter0}}, 100*{{day.pass}}{% if day.pass %}/({{day.pass}}+{{day.fail}}){% endif %}]);
-      jddates.push([{{forloop.counter0}}, "<a href='{{day.failure_url}}'>{{day.date}}</a><br/>Pass: {{day.pass}}<br/>Fail: {{day.fail}}"]);
+      jddates.push([{{forloop.counter0}}, '<a href="{{day.failure_url}}">{{day.date}}</a><br/>Pass: {{day.pass}}<br/>Fail: {{day.fail}}']);
     {% endfor %}
 
       var jddata = [
@@ -140,7 +140,7 @@ title="History of health changes"><span class="glyphicon glyphicon-heart"></span
     var jwdates= [];
     {% for week in job_week_report %}
       jwpass.push([{{forloop.counter0}}, 100*{{week.pass}}{% if week.pass %}/({{week.pass}}+{{week.fail}}){% endif %}]);
-      jwdates.push([{{forloop.counter0}}, "<a href='{{week.failure_url}}'>{{week.date}}</a><br/>Pass: {{week.pass}}<br/>Fail: {{week.fail}}"]);
+      jwdates.push([{{forloop.counter0}}, '<a href="{{week.failure_url}}">{{week.date}}</a><br/>Pass: {{week.pass}}<br/>Fail: {{week.fail}}']);
     {% endfor %}
 
       var jwdata = [

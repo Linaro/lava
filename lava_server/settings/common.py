@@ -152,7 +152,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
 AUTHENTICATION_BACKENDS = (
     # Uncomment CrowdRestBackend and comment OpenIDBackend to enable
     # Atlassian Crowd auth.
-    #'crowdrest.backend.CrowdRestBackend',
+    # 'crowdrest.backend.CrowdRestBackend',
     'django_openid_auth.auth.OpenIDBackend',
     'django.contrib.auth.backends.ModelBackend',
 )

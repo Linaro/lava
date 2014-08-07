@@ -28,6 +28,9 @@ MEDIA_ROOT = distro_settings.MEDIA_ROOT
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
 MEDIA_URL = distro_settings.MEDIA_URL
 
+# Absolute filesystem path to the directory that will hold archived files.
+ARCHIVE_ROOT = distro_settings.ARCHIVE_ROOT
+
 # Absolute filesystem path to the directory that will hold static, read only
 # files collected from all applications.
 STATIC_ROOT = distro_settings.STATIC_ROOT

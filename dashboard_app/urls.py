@@ -34,6 +34,7 @@ urlpatterns = patterns(
     url(r'^filters/\+attribute-value-completion-json$', 'filters.views.filter_attr_value_completion_json'),
     url(r'^filters/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)$', 'filters.views.filter_detail'),
     url(r'^filters/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+edit$', 'filters.views.filter_edit'),
+    url(r'^filters/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+copy$', 'filters.views.filter_copy'),
     url(r'^filters/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+subscribe$', 'filters.views.filter_subscribe'),
     url(r'^filters/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+delete$', 'filters.views.filter_delete'),
     url(r'^filters/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+compare/(?P<tag1>[a-zA-Z0-9-_: .]+)/(?P<tag2>[a-zA-Z0-9-_: .]+)$', 'filters.views.compare_matches'),

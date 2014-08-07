@@ -5,10 +5,14 @@ set -e
 
 pep8 --ignore E501 .
 
-./lava_server/manage.py test dashboard_app
+if [ -n "$1" ]; then
+  VERBOSE=$1
+fi
 
-./lava_server/manage.py test lava_scheduler_app
+./lava_server/manage.py test $VERBOSE dashboard_app
 
-./lava_server/manage.py test lava_scheduler_daemon
+./lava_server/manage.py test $VERBOSE lava_scheduler_app
 
-./lava_server/manage.py test linaro_django_xmlrpc.tests
+./lava_server/manage.py test $VERBOSE lava_scheduler_daemon
+
+./lava_server/manage.py test $VERBOSE linaro_django_xmlrpc.tests

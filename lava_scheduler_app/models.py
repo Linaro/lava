@@ -1077,6 +1077,41 @@ class TestJob(RestrictedResource):
         else:
             return None
 
+    def archived_job_file(self):
+        """Checks if the current job's log output file was archived.
+        """
+        last_info = os.path.join(settings.ARCHIVE_ROOT, 'job-output',
+                                 'last.info')
+
+        if os.path.exists(last_info):
+            with open(last_info, 'r') as last:
+                last_archived_job = int(last.read())
+                last.close()
+
+            if self.id <= last_archived_job:
+                return True
+            else:
+                return False
+
+        return False
+
+    def archived_bundle(self):
+        """Checks if the current bundle file was archived.
+        """
+        last_info = os.path.join(settings.ARCHIVE_ROOT, 'bundles', 'last.info')
+
+        if os.path.exists(last_info):
+            with open(last_info, 'r') as last:
+                last_archived_bundle = int(last.read())
+                last.close()
+
+            if self.id <= last_archived_bundle:
+                return True
+            else:
+                return False
+
+        return False
+
     failure_tags = models.ManyToManyField(
         JobFailureTag, blank=True, related_name='failure_tags')
     failure_comment = models.TextField(null=True, blank=True)

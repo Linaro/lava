@@ -90,6 +90,9 @@ else:
 # Example: "/home/media/media.lawrence.com/"
 MEDIA_ROOT = os.path.join(PROJECT_STATE_DIR, "media", devel_db)
 
+# Absolute filesystem path to the directory that will hold archived files.
+ARCHIVE_ROOT = os.path.join(PROJECT_STATE_DIR, "archive", devel_db)
+
 # Absolute filesystem path to the directory that will hold static, read only
 # files collected from all applications.
 # Example: "/home/media/static.lawrence.com/"

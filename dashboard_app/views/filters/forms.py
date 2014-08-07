@@ -190,6 +190,7 @@ class TestRunFilterForm(forms.ModelForm):
         return data
 
     def __init__(self, user, *args, **kwargs):
+        is_copy = kwargs.pop('is_copy', None)
         super(TestRunFilterForm, self).__init__(*args, **kwargs)
         self.instance.owner = user
         kwargs.pop('instance', None)
@@ -217,6 +218,12 @@ class TestRunFilterForm(forms.ModelForm):
             tests_set_args['initial'] = initial
         tests_set_args['prefix'] = 'tests'
         self.tests_formset = TRFTestsFormSet(*args, **tests_set_args)
+
+        if is_copy:
+            from copy import deepcopy
+            self.instance = deepcopy(self.instance)
+            self.instance.id = None
+            self.instance.pk = None
 
         self.fields['bundle_streams'].queryset = \
             BundleStream.objects.accessible_by_principal(user).order_by('pathname')

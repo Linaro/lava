@@ -123,11 +123,12 @@ be in *Offlining* state until that job completes.
 Put into looping mode
 =====================
 
-Devices in maintenance mode can be put into looping mode where the device
+Devices already in maintenance mode can be put into looping mode where the device
 continually runs the :term:`health check` defined for the :term:`device type`.
-To cancel looping mode, put the device back online - when the last health
-check completes, the device will go into state *Idle* and then be available
-for new and queued submissions.
+To cancel looping mode, either click the *Cancel Looping* button or
+:ref:`maintenance_mode` - when the last health check completes, the device
+will go into state *Offline*, the same as it was before looping mode
+was enabled.
 
 .. _put_online:
 

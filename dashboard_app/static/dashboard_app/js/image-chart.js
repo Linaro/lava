@@ -601,14 +601,16 @@ $(document).ready(function () {
 
     ImageChart.prototype.set_subscription_link = function(subscribed) {
 
-        if (subscribed) {
-            $("#has_subscription_"+this.chart_id).val(true);
-            $("#has_subscription_link_"+this.chart_id).html(
-                "Unsubscribe from target goal");
-        } else {
-            $("#has_subscription_"+this.chart_id).val(false);
-            $("#has_subscription_link_"+this.chart_id).html(
-                "Subscribe to target goal");
+        if (this.chart_data["target_goal"]) {
+            if (subscribed) {
+                $("#has_subscription_"+this.chart_id).val(true);
+                $("#has_subscription_link_"+this.chart_id).html(
+                    "Unsubscribe from target goal");
+            } else {
+                $("#has_subscription_"+this.chart_id).val(false);
+                $("#has_subscription_link_"+this.chart_id).html(
+                    "Subscribe to target goal");
+            }
         }
     }
 

@@ -230,7 +230,7 @@ class JobTable(LavaTable):
         times = {
             'submit_time': 'hours',
             'end_time': 'hours',
-            #'duration': 'minutes' FIXME: needs a function call
+            # 'duration': 'minutes' FIXME: needs a function call
         }
 
 

@@ -38,6 +38,9 @@
         <a href="{% url 'dashboard_app.views.filters.views.filter_subscribe' username=filter.owner.username name=filter.name %}" class="btn btn-info"><span class="glyphicon glyphicon-plus-sign"></span> Subscribe</a>
       </div>
     {% endif %}
+      <div class="btn-group">
+        <a href="{{ filter.get_absolute_url }}/+copy" class="btn btn-default"><span class="glyphicon glyphicon-share"></span> Copy</a>
+      </div>
     </div>
   </div>
 </div>

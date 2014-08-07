@@ -137,10 +137,10 @@
       </div>
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
-        {% if job_file_present and not size_warning %}
-          <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary">Complete log</a></li>
+        {% if job_file_present and not job.archived_job_file %}
+          <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary"{% if size_warning %} disabled="disabled"{% endif %}>Complete log</a></li>
         {% endif %}
-        {% if job.results_link %}
+        {% if job.results_link and not job.archived_bundle %}
           <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
         {% endif %}
         </ul>
@@ -219,8 +219,10 @@
 {% if job.status < job.RUNNING %}
 <h4 class="modal-header">Dispatcher Log messages</h4>
 <i>No log file yet.</i>
+{% elif job.archived_job_file %}
+<i>Job log file archived. Please contact the administrator for job log file.</i>
 {% else %}
-{% if job_file_present %}
+{% if job_file_present and not job.archived_job_file %}
 
 {% for tag in job.failure_tags.all %}
 {% if forloop.first %}
@@ -272,7 +274,7 @@
 {% endif %}
 {% endif %}
 
-{% if job.status >= job.RUNNING and job_file_present and job_file_size > 0 %}
+{% if job.status >= job.RUNNING and job_file_present and job_file_size > 0 and not job.archived_job_file %}
 <a class="btn btn-sm btn-default" id="bottom" href="#top"><span class="glyphicon glyphicon-fast-backward"></span> Start of log file</a>
 <br/><br/>
 <div class="row">

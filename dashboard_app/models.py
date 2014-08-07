@@ -1250,6 +1250,24 @@ class Attachment(models.Model):
     def is_viewable(self):
         return self.mime_type in ['text/plain']
 
+    def is_archived(self):
+        """Checks if the attachment file was archived.
+        """
+        last_info = os.path.join(settings.ARCHIVE_ROOT, 'attachments',
+                                 'last.info')
+
+        if os.path.exists(last_info):
+            with open(last_info, 'r') as last:
+                last_archived = int(last.read())
+                last.close()
+
+            if self.id <= last_archived:
+                return True
+            else:
+                return False
+
+        return False
+
 
 class TestResult(models.Model):
     """
@@ -1746,41 +1764,53 @@ class TestRunFilterSubscription(models.Model):
 
 def send_image_report_notifications(sender, bundle):
     try:
-        chart_users = ImageChartUser.objects.filter(
-            has_subscription=True)
+        matches = []
+        charts = ImageReportChart.objects.filter(
+            imagechartuser__has_subscription=True)
         url_prefix = 'http://%s' % get_domain()
-        for chart_user in chart_users:
-            if chart_user.image_chart.target_goal:
-                matches = []
-                if chart_user.image_chart.chart_type == "pass/fail":
-                    runs = TestRun.objects.filter(
-                        bundle=bundle,
-                        test__imagecharttest__image_chart_filter__image_chart=chart_user.image_chart)
-                    for run in runs:
-                        denorm = run.denormalization
-                        if denorm.count_pass < chart_user.image_chart.target_goal:
-                            matches.append(run)
 
-                else:
-                    results = TestResult.objects.filter(
-                        test_run__bundle=bundle,
-                        test_case__imagecharttestcase__image_chart_filter__image_chart=chart_user.image_chart)
-                    for result in results:
-                        if result.measurement < \
-                                chart_user.image_chart.target_goal:
-                            matches.append(result)
+        filter_matches = TestRunFilter.matches_against_bundle(bundle)
 
-                if matches:
-                    image_chart = chart_user.image_chart
-                    title = "LAVA image report notification: %s" % image_chart.name
-                    template = "dashboard_app/chart_subscription_mail.txt"
-                    data = {'bundle': bundle, 'user': chart_user.user,
-                            'image_report': image_chart.image_report,
-                            'matches': matches, 'url_prefix': url_prefix}
-                    logging.info("sending notification to %s", chart_user.user)
-                    send_notification(title.format(run.test.test_id),
-                                      template, data,
-                                      chart_user.user.email)
+        for chart in charts:
+            if chart.target_goal:
+
+                chart_filters = [chart_filter.filter for chart_filter in
+                                 chart.imagechartfilter_set.all()]
+                chart_tests = []
+                for chart_filter in chart.imagechartfilter_set.all():
+                    chart_tests += chart_filter.chart_tests
+
+                chart_tests = [chart_test.test for chart_test in chart_tests]
+
+                for filter_match in filter_matches:
+
+                    if filter_match.filter in chart_filters:
+                        if chart.chart_type == "pass/fail":
+                            for test_run in filter_match.test_runs:
+                                if test_run.test in chart_tests:
+
+                                    denorm = test_run.denormalization
+                                    if denorm.count_pass < chart.target_goal:
+                                        matches.append(test_run)
+
+                        else:
+                            for test_result in filter_match.specific_results:
+                                if test_result.test_case in chart_tests:
+                                    if test_result.measurement <\
+                                            chart.target_goal:
+                                        matches.append(test_result)
+
+                for chart_user in chart.imagechartuser_set.all():
+                    if matches:
+                        title = "LAVA image report test failure notification: %s" % chart.name
+                        template = "dashboard_app/chart_subscription_mail.txt"
+                        data = {'bundle': bundle, 'user': chart_user.user,
+                                'image_report': chart.image_report,
+                                'matches': matches, 'url_prefix': url_prefix}
+                        logging.info("sending notification to %s",
+                                     chart_user.user)
+                        send_notification(title, template, data,
+                                          chart_user.user.email)
 
     except:
         logging.exception("send_image_report_notifications failed")
@@ -1991,9 +2021,11 @@ class ImageReportChart(models.Model):
         # evaluate_filter call.
         tests = []
 
-        selected_chart_tests = image_chart_filter.imagecharttest_set.all()
+        selected_chart_tests = image_chart_filter.imagecharttest_set.all().prefetch_related('imagecharttestattribute_set')
+
+        # Leave chart_data empty if there are no tests available.
         if not selected_chart_tests:
-            return tests
+            return
 
         for chart_test in selected_chart_tests:
             tests.append({
@@ -2002,7 +2034,9 @@ class ImageReportChart(models.Model):
             })
 
         filter_data['tests'] = tests
-        matches = list(evaluate_filter(user, filter_data)[:50])
+
+        matches = list(evaluate_filter(user, filter_data,
+                                       prefetch_related=['bug_links'])[:50])
         matches.reverse()
 
         # Store metadata changes.
@@ -2016,35 +2050,42 @@ class ImageReportChart(models.Model):
                 bug_links = sorted(
                     [b.bug_link for b in test_run.bug_links.all()])
 
+                metadata_content = {}
+
                 test_id = test_run.test.test_id
-                chart_test = ImageChartTest.objects.get(
-                    image_chart_filter=image_chart_filter,
-                    test=test_run.test)
+
+                # Find corresponding chart_test object.
+                for ch_test in selected_chart_tests:
+                    if ch_test.test == test_run.test:
+                        chart_test = ch_test
+                        break
 
                 if test_id not in metadata.keys():
                     metadata[test_id] = {}
 
-                # Metadata delta content. Contains attribute names as keys and
-                # value is tuple with old and new value.
-                # If specific attribute's value didn't change since the last
-                # test run, do not include that attr.
-                metadata_content = {}
-                for attr in chart_test.attributes:
-                    if attr not in metadata[test_id].keys():
-                        try:
-                            metadata[test_id][attr] = \
-                                test_run.attributes.get(name=attr).value
-                        except NamedAttribute.DoesNotExist:
-                            # Skip this attribute.
-                            pass
-                    else:
-                        old_value = metadata[test_id][attr]
-                        new_value = test_run.attributes.get(name=attr).value
-                        if old_value != new_value:
-                            metadata_content[attr] = (old_value, new_value)
-                        metadata[test_id][attr] = new_value
+                alias = None
+                if chart_test:
+                    # Metadata delta content. Contains attribute names as keys
+                    # and value is tuple with old and new value.
+                    # If specific attribute's value didn't change since the
+                    # last test run, do not include that attr.
+                    for attr in chart_test.attributes:
+                        if attr not in metadata[test_id].keys():
+                            try:
+                                metadata[test_id][attr] = \
+                                    test_run.attributes.get(name=attr).value
+                            except NamedAttribute.DoesNotExist:
+                                # Skip this attribute.
+                                pass
+                        else:
+                            old_value = metadata[test_id][attr]
+                            new_value = test_run.attributes.get(
+                                name=attr).value
+                            if old_value != new_value:
+                                metadata_content[attr] = (old_value, new_value)
+                            metadata[test_id][attr] = new_value
 
-                alias = chart_test.name
+                    alias = chart_test.name
 
                 if not alias:
                     alias = "%s: %s" % (image_chart_filter.filter.name,
@@ -2052,10 +2093,8 @@ class ImageReportChart(models.Model):
 
                 # Add comments flag to indicate whether comments do exist in
                 # any of the test result in this test run.
-                has_comments = False
-                for test_result in test_run.get_results():
-                    if test_result.comments:
-                        has_comments = True
+                has_comments = test_run.test_results.exclude(
+                    comments__isnull=True).count() != 0
 
                 test_filter_id = "%s-%s" % (test_id, image_chart_filter.id)
                 chart_item = {
@@ -2086,8 +2125,11 @@ class ImageReportChart(models.Model):
         test_cases = TestCase.objects.filter(imagecharttestcase__image_chart_filter__image_chart=self).distinct('id')
         tests_all = Test.objects.filter(test_cases__in=test_cases).distinct('id').prefetch_related('test_cases')
 
+        selected_chart_test_cases = image_chart_filter.imagecharttestcase_set.all().prefetch_related('imagecharttestcaseattribute_set')
+
+        # Leave chart_data empty if there are no test cases available.
         if not test_cases:
-            return tests
+            return
 
         for test in tests_all:
             tests.append({
@@ -2096,7 +2138,8 @@ class ImageReportChart(models.Model):
             })
 
         filter_data['tests'] = tests
-        matches = list(evaluate_filter(user, filter_data)[:50])
+        matches = list(evaluate_filter(user, filter_data,
+                                       prefetch_related=['bug_links'])[:50])
         matches.reverse()
 
         # Store metadata changes.
@@ -2114,11 +2157,14 @@ class ImageReportChart(models.Model):
                 if test_case_id not in metadata.keys():
                     metadata[test_case_id] = {}
 
-                try:
-                    chart_test_case = ImageChartTestCase.objects.get(
-                        image_chart_filter=image_chart_filter,
-                        test_case=test_result.test_case)
+                # Find corresponding chart_test object.
+                for ch_test_case in selected_chart_test_cases:
+                    if ch_test_case.test_case == test_result.test_case:
+                        chart_test_case = ch_test_case
+                        break
 
+                alias = None
+                if chart_test_case:
                     # Metadata delta content. Contains attribute names as
                     # keys and value is tuple with old and new value.
                     # If specific attribute's value didn't change since the
@@ -2142,14 +2188,10 @@ class ImageReportChart(models.Model):
 
                     alias = chart_test_case.name
 
-                except ImageChartTestCase.DoesNotExist:
-                    # Set alias to None.
-                    alias = None
-
                 if not alias:
                     alias = "%s: %s: %s" % (
                         image_chart_filter.filter.name,
-                        test_result.test_run.test.test_id,
+                        test_result.test.test_id,
                         test_case_id
                     )
 

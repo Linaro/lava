@@ -3,9 +3,10 @@
 #
 #  add_device.py
 #
-#  Copyright 2014 Neil Williams <codehelp@debian.org>
+#  Copyright 2014 Linaro Limited
+#  Author: Neil Williams <neil.williams@linaro.org>
 #
-#  This rogram is free software; you can redistribute it and/or modify
+#  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 3 of the License, or
 #  (at your option) any later version.
@@ -141,9 +142,16 @@ def main(dt, name, options):
     ]
     default_type = os.path.join("/etc/lava-dispatcher/device-types", "%s%s" % (dt, ".conf"))
     if not os.path.exists(default_type):
-        print ("'%s' is not an existing device-type for this instance." % dt)
-        print ("A default device_type configuration needs to be written as %s" % default_type)
-        exit(1)
+        # FIXME: integrate this into lava CLI to prevent the need
+        # for this hardcoded path.
+        default_type = os.path.join(
+            "/usr/lib/python2.7/dist-packages/lava_dispatcher/",
+            "default-config/lava-dispatcher/device-types/",
+            "%s%s" % (dt, ".conf"))
+        if not os.path.exists(default_type):
+            print ("'%s' is not an existing device-type for this instance." % dt)
+            print ("A default device_type configuration needs to be written as %s" % default_type)
+            exit(1)
     config['device_type'] = dt
     deviceconf = os.path.join("/etc/lava-dispatcher/devices", "%s%s" % (name, ".conf"))
     if os.path.exists(deviceconf):

@@ -36,7 +36,7 @@ class TestClient(Client):
         This is based on Client.login() with a small hack that does not
         require the call to authenticate()
         """
-        if not 'django.contrib.sessions' in settings.INSTALLED_APPS:
+        if 'django.contrib.sessions' not in settings.INSTALLED_APPS:
             raise EnvironmentError("Unable to login without django.contrib.sessions in INSTALLED_APPS")
         user.backend = "%s.%s" % ("django.contrib.auth.backends",
                                   "ModelBackend")
