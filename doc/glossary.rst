@@ -215,3 +215,30 @@ Glossary of terms
     LAVA at ``<server>scheduler/transition/<ID>`` where the ID is a
     sequential integer. If the transition was caused by a job, this view
     will link to that job.
+
+  hidden device type
+    A device type can be hidden by the LAVA administrators. Devices of
+    a :ref:`hidden_device_type` will only be visible to owners of at
+    least once device of this type. Other users will not be able to
+    access the job output, device status transition pages or bundle streams
+    of devices of a hidden type. Devices of a hidden type will be shown
+    as ``Unavailable`` in tables of test jobs and omitted from tables
+    of devices and device types if the user viewing the table does not
+    own any devices of the hidden type.
+
+  device tag
+    A tag is a device specific label which describes specific hardware
+    capabilities of this specific device. Test jobs using tags will fail
+    if no suitable devices exist matching the requested device tag or
+    tags. Tags are typically used when only a proportion of the devices
+    of the specified type have hardware support for a particular feature,
+    possibly because those devices have peripheral hardware connected or
+    enabled. A device tag can only be created or assigned to a particular
+    device by a lab admin. When requesting tags, remember to include a
+    description of what the tagged device can provide to a Test Job.
+
+  PDU
+    Power Distribution Unit - a network-controlled set of relays which
+    allow the power to the devices to be turned off and on remotely.
+    Certain PDUs are supported by ``lavapdu-daemon`` to be able to
+    hard reset devices in LAVA.

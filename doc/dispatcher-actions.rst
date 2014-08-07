@@ -27,11 +27,12 @@ Debian or Ubuntu.
 
 .. _deploy_linaro_image:
 
-Deploying a linaro image
-========================
+Deploying an image to a device
+==============================
 
-Use ``deploy_linaro_image`` to deploy a test image onto a target.
-Typically this is the first command that runs in any LAVA test job::
+Use the ``deploy_linaro_image`` action or the equivalent ``deploy_image``
+action to deploy a test image onto a target. Typically this is the first
+command that runs in any LAVA test job::
 
  {
     "actions": [
@@ -82,9 +83,61 @@ Available parameters
   The parameter accepts any string and is optional.
   The default is ``u_boot``.
 
+* ``login_prompt``: A string that will match a login prompt.
+  The parameter accepts any string and is optional.
+
+* ``username``: A string that represents a username. This will be sent
+  to the login prompt. The parameter accepts any string and is optional.
+
+* ``password_prompt``: A string that will match a password prompt.
+  The parameter accepts any string and is optional.
+
+* ``password``: A string that represents a password. This will be sent
+  to the password prompt. The parameter accepts any string and is optional.
+
+* ``login_commands``: An array of strings that will be sent to the target after login.
+  The parameter accepts any strings and is optional.
+
 * :term:`role`: Determines which devices in a MultiNode group will
   use this action. The parameter accepts any string, the string must
   exactly match one of the roles specified in the :term:`device group`.
+
+* customize: A optional parameter for customizing the prebuilt image or
+  the image made by a hwpack and a rootfs before testing.
+  The formation of this parameter is::
+
+   "customize": {
+       "<source file url>": ["<destination image path 1>", "<destination image path 2>"],
+       "<source image path>": ["<destination image path 1>", "delete"]
+       }
+
+  The <source file url> accepts http, local and scp urls::
+
+   http://myserver.com/myfile
+   file:///home/user/myfile
+   scp://username@myserver.com:/home/user/myfile
+
+  The <source image path> accepts the path of the file/dir in the image,
+  the definition of the path is <partition>:<path>, for example::
+
+   boot:/EFI/BOOT/
+   rootfs:/home/user/myfile
+
+  The <destination image path> is a array, that means we can copy
+  the source file/dir to multidestination. And all the destination paths
+  must be the "image path"(<partition>:<path>), it could be a non-existent
+  file or dir.
+
+  If the <destination image path> is dir name(end up with '/'),
+  the source file/dir will be copied to that dir.
+  If the <destination image path> is file name, the source file will
+  be copied and renamed to that path.
+
+  If you want to delete the file/dir in the original image, you can add
+  a "delete" in the destination path array. It only affects the item
+  which uses <source image path> as the source.
+
+  Please check the example below.
 
 ::
 
@@ -95,25 +148,33 @@ Available parameters
             "parameters": {
                 "rootfs": "http://<server>/<hw_pack>.tar.gz",
                 "hwpack": "http://<server>/<rootfs>.tar.gz",
-                "bootloadertype": "uefi"
+                "bootloadertype": "uefi",
+                "customize": {
+                    "http://myserver.com/myfile": ["boot:/"],
+                    "boot:/img.axf": ["rootfs:/tekkamanninja/", "delete"]
+                }
             }
         }
     ]
  }
- 
+
 Example functional test: **model-express-group-multinode**:
 
 http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/neil.williams/fastmodel-vexpress-group.json
+
+Example functional test: **model-customize-image-singlenode**:
+
+https://git.linaro.org/people/fu.wei/lava-test-job-definition_example.git/blob/refs/heads/master:/LAVA/file_injection_in_deploy_linaro_image.json
 
 .. index:: deploy_linaro_kernel
 
 .. _deploy_linaro_kernel:
 
-Deploying a Linaro kernel with device tree blob
-===============================================
+Deploying a Linaro kernel
+=========================
 
-Use ``deploy_linaro_kernel`` to deploy a kernel which uses on a
-device tree blob::
+Use ``deploy_linaro_kernel`` to deploy a kernel and other bits. To use this
+deployment action the target's boot loader must be capable of network booting.::
 
    {
       "command": "deploy_linaro_kernel",
@@ -135,10 +196,61 @@ http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/single-node
 Available parameters
 --------------------
 
-* ``kernel``:
-* ``ramdisk``:
-* ``dtb``:
-* :term:`rootfs`:
+* ``kernel``: A kernel image. The :term:`boot tag` for this parameter is `{KERNEL}`.
+  The parameter accepts any string and is required.
+
+* ``ramdisk``: A ramdisk image. The :term:`boot tag` for this parameter is `{RAMDISK}`.
+  The parameter accepts any string and is optional.
+
+* ``dtb``: A flattened device tree blob. The :term:`boot tag` for this parameter is `{DTB}`.
+  The parameter accepts any string and is optional.
+
+* :term:`rootfs`: A root filesystem image. This parameter assumes that
+  the target's boot loader can deliver the image to a storage device. The :term:`boot tag`
+  for this parameter is `{ROOTFS}`. The parameter accepts any string and is optional.
+
+* ``nfsrootfs``: A tarball for the root file system. LAVA will extract
+  this tarball and create an NFS mount point dynamically. The :term:`boot tag` for this
+  parameter is `{NFSROOTFS}`. The parameter accepts any string and is optional.
+
+* ``bootloader``: A boot loader image. This parameter assumes that
+  the target's boot loader can deliver the boot loader image to a storage device.
+  The :term:`boot tag` for this parameter is `{BOOTLOADER}`. The parameter accepts
+  any string and is optional.
+
+* ``firmware``: A firmware image. This parameter assumes that
+  the target's boot loader can deliver the firmware image to a storage device.
+  The :term:`boot tag` for this parameter is `{FIRMWARE}`. The parameter accepts
+  any string and is optional.
+
+* ``rootfstype``: This is the filesystem type for the rootfs.
+  (i.e. ext2, ext3, ext4...). The parameter accepts
+  any string and is optional.
+
+* ``bootloadertype``: The type of bootloader a target is using.
+  The parameter accepts any string and is optional.
+  The default is ``u_boot``.
+
+* ``target_type``: The type of distribution a target is using. This is useful
+  when using a ``nfsrootfs`` or a ramdisk that have distribution specific dependencies.
+  The parameter accepts any of the following strings:
+  ``ubuntu`` ``oe`` ``fedora`` or ``android``. The default is ``oe``.
+
+* ``login_prompt``: A string that will match a login prompt.
+  The parameter accepts any string and is optional.
+
+* ``username``: A string that represents a username. This will be sent
+  to the login prompt. The parameter accepts any string and is optional.
+
+* ``password_prompt``: A string that will match a password prompt.
+  The parameter accepts any string and is optional.
+
+* ``password``: A string that represents a password. This will be sent
+  to the password prompt. The parameter accepts any string and is optional.
+
+* ``login_commands``: An array of strings that will be sent to the target after login.
+  The parameter accepts any strings and is optional.
+
 * :term:`role`: Determines which devices in a MultiNode group will
   use this action. The parameter accepts any string, the string must
   exactly match one of the roles specified in the :term:`device group`.
@@ -147,11 +259,12 @@ Available parameters
 
 .. _boot_linaro_image:
 
-Booting a Linaro image
-======================
+Booting a test image
+====================
 
-Use ``boot_linaro_image`` to boot a test image that was deployed using
-the ``deploy_linaro_image`` action::
+Use the ``boot_linaro_image`` action or the directly equivalent ``boot_image``
+action to boot a test image that was deployed using the ``deploy_linaro_image``
+or ``deploy_image`` actions::
 
  {
     "actions": [
@@ -168,8 +281,8 @@ the ``deploy_linaro_image`` action::
  }
 
 
-.. note:: It is not necessary to use ``boot_linaro_image`` if the next
-   action in the test is ``lava_test_shell``.
+.. note:: It is not necessary to use ``boot_linaro_image`` or ``boot_image``
+          if the next action in the test is ``lava_test_shell``.
 
 Example functional test: **kvm-kernel-boot**:
 
@@ -189,8 +302,7 @@ Interactive boot commands
         {
             "command": "boot_linaro_image",
             "parameters": {
-                "interactive_boot_cmds": true,
-                "options": [
+                "boot_cmds": [
                     "setenv autoload no",
                     "setenv pxefile_addr_r '0x50000000'",
                     "setenv kernel_addr_r '0x80200000'",
@@ -198,13 +310,13 @@ Interactive boot commands
                     "setenv fdt_addr_r '0x815f0000'",
                     "setenv initrd_high '0xffffffff'",
                     "setenv fdt_high '0xffffffff'",
-                    "setenv loadkernel 'tftp ${kernel_addr_r} ${lava_kernel}'",
-                    "setenv loadinitrd 'tftp ${initrd_addr_r} ${lava_ramdisk}; setenv initrd_size ${filesize}'",
-                    "setenv loadfdt 'tftp ${fdt_addr_r} ${lava_dtb}'",
+                    "setenv loadkernel 'tftp ${kernel_addr_r} {KERNEL}'",
+                    "setenv loadinitrd 'tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'",
+                    "setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'",
                     "setenv bootargs 'console=ttyO0,115200n8 root=/dev/ram0 ip=:::::eth0:dhcp'",
-                    "setenv bootcmd 'dhcp; setenv serverip ${lava_server_ip}; run loadkernel; run loadinitrd; run loadfdt; bootz ${kernel_addr_r} ${initrd_addr_r} ${fdt_addr_r}'",
+                    "setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; bootz ${kernel_addr_r} ${initrd_addr_r} ${fdt_addr_r}'",
                     "boot"
-                ]
+                    ]
             }
         }
     ]
@@ -223,7 +335,7 @@ Available parameters
   use this action. The parameter accepts any string, the string must
   exactly match one of the roles specified in the :term:`device group`.
 
-.. _lava_test_shell:
+.. _running_lava_test_shell:
 
 Running tests in the test image
 ===============================
@@ -320,6 +432,72 @@ Example functional test: **bootloader-lava-test-shell-multinode**:
 
 http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/bootloader/bootloader-lava-test-shell-multinode.json
 
+Example functional test with skipping installation steps:  **kvm**:
+
+https://git.linaro.org/qa/test-definitions.git/blob/HEAD:/ubuntu/kvm.yaml
+
+To run tests with skipping all installation steps, i.e. neither additional packages nor hackbench will be installed::
+
+ {
+    "actions": [
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
+                        "testdef": "ubuntu/kvm.yaml"
+                    }
+                ],
+                "skip_install": "all",
+                "timeout": 900
+            }
+        }
+    ]
+ }
+
+To run tests with skipping only installation of a hackbench::
+
+ {
+    "actions": [
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
+                        "testdef": "ubuntu/kvm.yaml"
+                    }
+                ],
+                "skip_install": "steps",
+                "timeout": 900
+            }
+        }
+    ]
+ }
+
+To run tests with skipping installation of packages, but with insatallation of a hackbench::
+
+ {
+    "actions": [
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
+                        "testdef": "ubuntu/kvm.yaml"
+                    }
+                ],
+                "skip_install": "deps",
+                "timeout": 900
+            }
+        }
+    ]
+ }
+
+.. _lava_test_shell_parameters:
+
 Available parameters
 --------------------
 
@@ -331,42 +509,19 @@ Available parameters
 * :term:`role`: Determines which devices in a MultiNode group will
   use this action. The parameter accepts any string, the string must
   exactly match one of the roles specified in the :term:`device group`.
+* ``skip_install``: This parameter allows to skip particular install step
+  in the YAML test definition. The parameter accepts any string and is optional.
+  Available options known by the dispatcher are:
 
-Example functional test: **kvm-group-multinode**:
+  ``all``: skip all installation steps
 
-http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/neil.williams/kvm-only-group.json
+  ``deps``: skip installation of packages dependencies, :ref:`handling_dependencies`
 
-To run multiple tests without a reboot in between each test run, extra ``testdef_repos`` can be listed::
+  ``repos``: skip cloning of repositories, :ref:`adding_repositories`
 
-    "actions": [
-        {
-            "command": "lava_test_shell",
-            "parameters": {
-                "testdef_repos": [
-                    {
-                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
-                        "testdef": "ubuntu/smoke-tests-basic.yaml"
-                    },
-                    {
-                        "git-repo": "http://git.linaro.org/lava-team/lava-functional-tests.git",
-                        "testdef": "lava-test-shell/multi-node/multinode02.yaml"
-                    }
-                ],
-                "timeout": 900
-            }
-        },
+  ``steps``: skip running installation steps, :ref:`install_steps`
 
-Example functional test: **model-express-group-multinode**:
-
-http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/neil.williams/fastmodel-vexpress-group.json
-
-To run multiple tests with a reboot in between each test run, add extra ``lava_test_shell``
-actions:
-
-* :term:`stream`: the bundle stream to which the results will be submitted.
-  The user submitting the test must be able to upload to the specified
-  stream.
-* ``server``: The server to which the results will be submitted.
+  The default is None, i.e. nothing is skipped.
 
 .. _android_specific_actions:
 
@@ -410,45 +565,7 @@ Available parameters
    file:///home/user/boot.img
    scp://username@myserver.com:/home/user/boot.img
 
-* ``system``: Android ``system.img`` or ``system.bz2``. Typically 
-  this is the system partition. The parameter accepts http, local and
-  scp urls::
-
-   http://myserver.com/system.img
-   file:///home/user/system.img
-   scp://username@myserver.com:/home/user/system.img
-
-* ``data``: Android ``userdata.img`` or ``userdata.bz2``. Typically
-  this is the data partition. The parameter accepts http, local and
-  scp urls::
-
-   http://myserver.com/userdata.img
-   file:///home/user/userdata.img
-   scp://username@myserver.com:/home/user/userdata.img
-
-* :term:`rootfstype`: This is the filesystem type for the :term:`rootfs`.
-  (i.e. ext2, ext3, ext4...). The parameter accepts any string and is
-  optional. The default is ``ext4``.
-* :term:`role`: Determines which devices in a MultiNode group will
-  use this action. The parameter accepts any string, the string must
-  exactly match one of the roles specified in the :term:`device group`.
-
-Example functional test: **master-lava-android-test-multinode**:
-
-http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/master/master-lava-android-test-multinode.json
-
-Available parameters
---------------------
-
-* ``boot``: Android ``boot.img`` or ``boot.bz2``. Typically this is
-  a kernel image and ramdisk. The parameter accepts http, local and
-  scp urls::
-
-   http://myserver.com/boot.img
-   file:///home/user/boot.img
-   scp://username@myserver.com:/home/user/boot.img
-
-* ``system``: Android ``system.img`` or ``system.bz2``. Typically 
+* ``system``: Android ``system.img`` or ``system.bz2``. Typically
   this is the system partition. The parameter accepts http, local and
   scp urls::
 
@@ -494,10 +611,6 @@ that was deployed using the ``deploy_linaro_android_image`` action::
         }
     ]
  }
-
-Example functional test: **master-job-defined-boot-cmds-android**:
-
-http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/single-node-job/master/master-job-defined-boot-cmds-android.json
 
 Example functional test: **master-job-defined-boot-cmds-android**:
 
@@ -561,21 +674,6 @@ Available parameters
 Example functional test: **master-lava-android-test-multinode**:
 
 http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-job/master/master-lava-android-test-multinode.json
-
-Available parameters
---------------------
-
-* ``test_name``: The name of the test you want to invoke from
-  lava-android-test. Any string is accepted. If an unknown test is
-  specified it will cause an error.
-* ``option``: Allows you to add additional command line parameters to
-  lava-android-test install. Any string is accepted. If an unknown
-  option is specified it will cause an error.
-* ``timeout``: Allows you set a timeout for the action. Any integer
-  value, optional.
-* :term:`role`: Determines which devices in a MultiNode group will
-  use this action. The parameter accepts any string, the string must
-  exactly match one of the roles specified in the :term:`device group`.
 
 .. _lava_android_test_shell:
 

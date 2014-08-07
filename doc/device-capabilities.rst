@@ -32,7 +32,7 @@ Device owner abilities
 **********************
 
 * add free text comments to a :term:`device status transition`
-* initiate a :term:`device state transition` on an owned device
+* initiate a :term:`device status transition` on an owned device
 * cancel any "current" job running on the device.
 * restrict submissions to the device to just the owner for a period of
   time - (when unrestricted, devices remain in the general usage pool.)

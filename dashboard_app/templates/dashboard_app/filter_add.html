@@ -1,14 +1,50 @@
-{% extends "dashboard_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
 
 {% block extrahead %}
+<script src="/static/lava-server/js/jquery-1.11.0.min.js" type="text/javascript"></script>
+<script src="/static/lava-server/js/jquery-ui-1.10.4.custom.min.js" type="text/javascript"></script>
+<script src="/static/lava-server/js/jquery.cookie.js" type="text/javascript"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/jquery.formset.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/filter-edit.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}admin/js/jquery.init.js"></script>
+
+<script>
+function addEvent(elem, event, func ) {
+    if (!!window.attachEvent){
+
+        elem.attachEvent('on' + event, func);
+    }
+    else{
+       elem.addEventListener(event, func, false);
+    }
+}
+</script>
+
 {{ block.super }}
-{{ form.media }}
+
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/filter-edit.css" />
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/wider-filter-horizontal.css" />
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+<script type="text/javascript">
+var test_case_url = "{% url 'dashboard_app.views.filters.views.filter_add_cases_for_test_json' %}?test=";
+var attr_name_completion_url = "{% url 'dashboard_app.views.filters.views.filter_attr_name_completion_json' %}";
+var attr_value_completion_url = "{% url 'dashboard_app.views.filters.views.filter_attr_value_completion_json' %}";
+</script>
+<script type="text/javascript" src="{{ STATIC_URL }}admin/js/SelectBox.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}admin/js/core.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}admin/js/SelectFilter2.js"></script>
+
+
+
 {% endblock %}
 
 {% block content %}
-{% if form.instance.pk %}
+{% if form.instance.id %}
 <h1>Edit filter &ldquo;{{ form.instance.name }}&rdquo;…</h1>
+{% elif is_copy %}
+<h1>Copy filter &ldquo;{{ filter_name }}&rdquo;…</h1>
 {% else %}
 <h1>Add new filter…</h1>
 {% endif %}
@@ -17,9 +53,9 @@
     {% csrf_token %}
     {% include "dashboard_app/filter_form.html" %}
 {% if form.instance.pk %}
-    <input type="submit" value="Preview changes">
+    <input class="btn btn-primary" type="submit" value="Preview changes">
 {% else %}
-    <input type="submit" value="Preview">
+    <input class="btn btn-primary" type="submit" value="Preview">
 {% endif %}
 </form>
 

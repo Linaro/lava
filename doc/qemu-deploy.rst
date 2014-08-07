@@ -24,10 +24,7 @@ Create your *qemu01.conf* file:
 
 ::
 
-    # If the lava-dispatcher directory exists but not the devices directory,
-    # create a directory for the devices.
-    # mkdir /srv/lava/instances/<INST>/etc/lava-dispatcher/devices/
-    # /srv/lava/instances/<INST>/etc/lava-dispatcher/devices/qemu01.conf
+    # /etc/lava-dispatcher/devices/qemu01.conf
     device_type = qemu
 
 You'll need to download an image to test with. The Linaro download servers
@@ -66,7 +63,6 @@ And execute the dispatcher with:
 
 ::
 
-    . /srv/lava/instances/<INST>/bin/activate
     lava-dispatch /tmp/qemu.json
 
 Configure the Scheduler

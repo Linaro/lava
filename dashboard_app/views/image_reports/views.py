@@ -119,7 +119,7 @@ def image_report_list(request):
     terms_data = search_data = discrete_data = {}
     for group in ImageReportGroup.objects.all():
         if group.imagereport_set.count():
-            prefix = "group_%s_" % group.name
+            prefix = "group_%s_" % group.id
             group_view = GroupImageReportView(request, group, model=ImageReportChart, table_class=GroupImageReportTable)
             table = GroupImageReportTable(group_view.get_table_data(prefix), prefix=prefix)
             search_data.update(table.prepare_search_data(group_view))
@@ -297,7 +297,8 @@ def image_report_form(request, bread_crumb_trail, instance=None):
         }, RequestContext(request))
 
 
-@BreadCrumb("Image chart", parent=image_report_detail, needs=['name', 'id'])
+@BreadCrumb("Image chart", parent=image_report_detail,
+            needs=['name', 'id'])
 @ownership_required
 def image_chart_detail(request, name, id):
 
@@ -353,7 +354,7 @@ def image_report_group_list(request):
     term = request.GET['term']
     groups = [str(group.name) for group in ImageReportGroup.objects.filter(
         name__istartswith=term)]
-    return HttpResponse(simplejson.dumps(groups), mimetype='application/json')
+    return HttpResponse(simplejson.dumps(groups), content_type='application/json')
 
 
 @login_required
@@ -378,7 +379,7 @@ def image_report_add_group(request, name):
         if not old_group.imagereport_set.count():
             old_group.delete()
 
-    return HttpResponse(group_name, mimetype='application/json')
+    return HttpResponse(group_name, content_type='application/json')
 
 
 @login_required
@@ -401,7 +402,49 @@ def image_chart_settings_update(request, name, id):
     if form.is_valid():
         instance = form.save()
         data = serializers.serialize('json', [instance])
-        return HttpResponse(data, mimetype='application/json')
+        return HttpResponse(data, content_type='application/json')
+
+
+@login_required
+def image_chart_filter_type_check(request):
+    # Check if current filter has build number comparing to all other filters
+    # already related to this image chart.
+
+    if request.method != 'POST':
+        raise PermissionDenied
+
+    chart_id = request.POST.get("chart_id")
+    filter_id = request.POST.get("filter_id")
+    image_chart = ImageReportChart.objects.get(id=chart_id)
+    filter = TestRunFilter.objects.get(id=filter_id)
+
+    has_build_attribute = True if filter.build_number_attribute else False
+
+    for chart_filter in image_chart.imagechartfilter_set.all():
+        has_attribute_each = False
+        if chart_filter.filter.build_number_attribute:
+            has_attribute_each = True
+
+        if has_attribute_each != has_build_attribute:
+            return HttpResponse(simplejson.dumps({"result": "False"}),
+                                mimetype='application/json')
+
+    return HttpResponse(simplejson.dumps({"result": "True"}),
+                        mimetype='application/json')
+
+
+@login_required
+def get_chart_test_data(request):
+
+    chart_test = _get_image_chart_test(request.GET.get('chart_filter_id'),
+                                       request.GET.get('chart_test_id'))
+
+    data = chart_test.__dict__.copy()
+    data.pop("_state", None)
+    data["test_name"] = chart_test.test_name
+    data["attributes"] = chart_test.attributes
+    data["all_attributes"] = chart_test.get_available_attributes(request.user)
+    return HttpResponse(simplejson.dumps([data]), content_type='application/json')
 
 
 @public_filters_or_login_required
@@ -433,7 +476,7 @@ def image_chart_export(request, name, id):
             out.writerow(chart_item)
 
     with open(file_path, 'r') as csv_file:
-        response = HttpResponse(mimetype='text/csv')
+        response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = "attachment; filename=%s.csv" % \
                                           chart.name
         response.write(csv_file.read())
@@ -473,19 +516,48 @@ def image_chart_filter_add(request, name, id):
         chart_instance=image_chart)
 
 
-@BreadCrumb("Update image chart filter", parent=image_report_list)
+@BreadCrumb("Image chart filter", parent=image_chart_detail,
+            needs=['name', 'id', 'slug'])
+@ownership_required
+def image_chart_filter_detail(request, name, id, slug):
+
+    if request.method == 'POST':
+        # Saving image chart test.
+        chart_test = _get_image_chart_test(
+            slug,
+            request.POST.get('chart_test_id'))
+
+        request.POST.get('attributes')
+        chart_test.name = request.POST.get('alias')
+        chart_test.attributes = request.POST.getlist('attributes')
+        chart_test.save()
+
+    chart_filter = ImageChartFilter.objects.get(id=slug)
+
+    return render_to_response(
+        'dashboard_app/image_chart_filter_detail.html', {
+            'chart_filter': chart_filter,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                image_chart_filter_detail, name=name, id=id, slug=slug),
+        }, RequestContext(request)
+    )
+
+
+@BreadCrumb("Edit", parent=image_chart_filter_detail,
+            needs=['name', 'id', 'slug'])
 @login_required
-def image_chart_filter_edit(request, id):
-    image_chart_filter = ImageChartFilter.objects.get(id=id)
+def image_chart_filter_edit(request, name, id, slug):
+    image_chart_filter = ImageChartFilter.objects.get(id=slug)
     return image_chart_filter_form(
         request,
-        BreadCrumbTrail.leading_to(image_chart_filter_edit, id=id),
+        BreadCrumbTrail.leading_to(image_chart_filter_edit, name=name, id=id,
+                                   slug=slug),
         instance=image_chart_filter)
 
 
-@BreadCrumb("Image chart add filter", parent=image_report_list)
-def image_chart_filter_delete(request, id):
-    image_chart_filter = ImageChartFilter.objects.get(id=id)
+@BreadCrumb("Image chart delete filter", parent=image_report_list)
+def image_chart_filter_delete(request, name, id, slug):
+    image_chart_filter = ImageChartFilter.objects.get(id=slug)
     url = image_chart_filter.image_chart.get_absolute_url()
     image_chart_filter.delete()
     return HttpResponseRedirect(url)
@@ -505,7 +577,6 @@ def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
         if form.is_valid():
 
             chart_filter = form.save()
-            aliases = request.POST.getlist('aliases')
 
             if chart_filter.image_chart.chart_type == 'pass/fail':
 
@@ -514,27 +585,25 @@ def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
 
                 tests = form.cleaned_data['image_chart_tests']
 
-                for index, test in enumerate(tests):
+                for test in tests:
                     if test in image_chart_tests:
                         chart_test = ImageChartTest.objects.get(
                             image_chart_filter=chart_filter, test=test)
-                        chart_test.name = aliases[index]
                         chart_test.save()
                     else:
                         chart_test = ImageChartTest()
                         chart_test.image_chart_filter = chart_filter
                         chart_test.test = test
-                        chart_test.name = aliases[index]
                         chart_test.save()
 
-                for index, chart_test in enumerate(image_chart_tests):
+                for chart_test in image_chart_tests:
                     if chart_test not in tests:
                         ImageChartTest.objects.get(
                             image_chart_filter=chart_filter,
                             test=chart_test).delete()
 
                 return HttpResponseRedirect(
-                    chart_filter.image_chart.get_absolute_url())
+                    chart_filter.get_absolute_url())
 
             else:
 
@@ -544,29 +613,26 @@ def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
 
                 test_cases = form.cleaned_data['image_chart_test_cases']
 
-                for index, test_case in enumerate(test_cases):
+                for test_case in test_cases:
                     if test_case in image_chart_test_cases:
                         chart_test_case = ImageChartTestCase.objects.get(
                             image_chart_filter=chart_filter,
                             test_case=test_case)
-                        chart_test_case.name = aliases[index]
                         chart_test_case.save()
                     else:
                         chart_test_case = ImageChartTestCase()
                         chart_test_case.image_chart_filter = chart_filter
                         chart_test_case.test_case = test_case
-                        chart_test_case.name = aliases[index]
                         chart_test_case.save()
 
-                for index, chart_test_case in enumerate(
-                        image_chart_test_cases):
+                for chart_test_case in image_chart_test_cases:
                     if chart_test_case not in test_cases:
                         ImageChartTestCase.objects.get(
                             image_chart_filter=chart_filter,
                             test_case=chart_test_case).delete()
 
                 return HttpResponseRedirect(
-                    chart_filter.image_chart.get_absolute_url())
+                    chart_filter.get_absolute_url())
 
     else:
         form = ImageChartFilterForm(request.user, instance=instance,
@@ -579,3 +645,18 @@ def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
             'instance': instance,
             'form': form,
         }, RequestContext(request))
+
+
+def _get_image_chart_test(chart_filter_id, chart_test_id):
+    # Returns either ImageChartTest or ImageChartTestCase object.
+    # Raises ImageChartTestCase.DoesNotExist if this chart test does not exist.
+    try:
+        chart_test = ImageChartTest.objects.get(
+            image_chart_filter__id=chart_filter_id,
+            id=chart_test_id)
+    except:
+        chart_test = ImageChartTestCase.objects.get(
+            image_chart_filter__id=chart_filter_id,
+            id=chart_test_id)
+
+    return chart_test

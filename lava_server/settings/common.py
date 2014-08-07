@@ -113,7 +113,6 @@ LOGIN_URL = MOUNT_POINT + "/accounts/login/"
 INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.markup',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.humanize',
@@ -153,13 +152,13 @@ TEMPLATE_CONTEXT_PROCESSORS = [
 AUTHENTICATION_BACKENDS = (
     # Uncomment CrowdRestBackend and comment OpenIDBackend to enable
     # Atlassian Crowd auth.
-    #'crowdrest.backend.CrowdRestBackend',
+    # 'crowdrest.backend.CrowdRestBackend',
     'django_openid_auth.auth.OpenIDBackend',
     'django.contrib.auth.backends.ModelBackend',
 )
 
 OPENID_CREATE_USERS = True
-OPENID_LAUNCHPAD_TEAMS_MAPPING_AUTO = True
+OPENID_LAUNCHPAD_TEAMS_MAPPING_AUTO = False
 OPENID_UPDATE_DETAILS_FROM_SREG = True
 OPENID_SSO_SERVER_URL = 'https://login.ubuntu.com/'
 
@@ -172,12 +171,11 @@ RESTRUCTUREDTEXT_FILTER_SETTINGS = {"initial_header_level": 4}
 # Add google analytics model.
 GOOGLE_ANALYTICS_MODEL = True
 
-# Skip south tests as they seem to break everything else.
-# This is fixed in south 0.7.1, if we upgrade past that it's safe to
-# remove this line.
-SKIP_SOUTH_TESTS = True
-
 ME_PAGE_ACTIONS = [
     ("django.contrib.auth.views.password_change", "Change your password"),
     ("django.contrib.auth.views.logout", "Sign out"),
 ]
+
+ALLOWED_HOSTS = ['*']
+
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'

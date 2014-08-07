@@ -1,3 +1,5 @@
+.. _writing_multinode:
+
 Writing MultiNode tests
 #######################
 
@@ -9,6 +11,14 @@ communicate with each other using the :ref:`multinode_api`.
 The YAML files used in MultiNode tests do not have to differ from
 single node tests, unless the tests need to support communication
 between devices in the same group.
+
+.. note:: when viewing MultiNode log files, the original JSON submitted
+          to start the job is available as the MultiNode Definition and
+          it will be this which is used if you use Resubmit. The other
+          definition is the parsed content which was sent to each node
+          within the MultiNode job to create one log file and one test
+          job for each node. It is not usually useful to submit the
+          definition of one node of a MultiNode job as a separate job.
 
 Writing a MultiNode JSON file
 *****************************
@@ -99,7 +109,7 @@ the server confirms that it is ready.
 
 This is done using the :ref:`multinode_api` and :ref:`lava_wait`. The
 YAML file specified for the role ``client`` causes the device to wait
-until the YAML file specified for the role ``server`` uses 
+until the YAML file specified for the role ``server`` uses
 :ref:`lava_send` to signal that the server is ready.
 
 Each message sent using the MultiNode API uses a :term:`messageID` which
@@ -173,7 +183,7 @@ Helper tools in LAVA
 
 LAVA provides some helper routines for common data transfer tasks and
 more can be added where appropriate. The main MultiNode API calls are
-intended to support all POSIX systems but helper tools like 
+intended to support all POSIX systems but helper tools like
 :ref:`lava_network` may be restricted to particular operating
 systems or compatible shells due to a reliance on operating system
 tools like ``ifconfig``.

@@ -33,6 +33,7 @@ from django.contrib.sites.models import Site
 from django.core import serializers
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.views.decorators.http import require_POST
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
 from django.db.models import Count, Q
@@ -55,14 +56,13 @@ from dashboard_app.models import (
     Attachment,
     Bundle,
     BundleStream,
-    DataReport,
-    DataView,
     Tag,
     Test,
     TestCase,
     TestResult,
     TestRun,
     TestDefinition,
+    BugLink,
 )
 from lava_scheduler_app.models import (
     TestJob
@@ -205,6 +205,28 @@ def bundle_stream_list(request):
     )
 
 
+def bundlestreams_json(request):
+
+    term = request.GET['term']
+    streams = []
+    if request.user.is_superuser:
+        result = BundleStream.objects.filter(
+            pathname__contains=term).order_by('pathname')
+    else:
+        result = BundleStream.objects.accessible_by_principal(
+            request.user).filter(pathname__contains=term).order_by('pathname')
+
+    for stream in result:
+        streams.append(
+            {
+                "id": stream.id,
+                "name": stream.pathname,
+                "label": stream.pathname
+            }
+        )
+    return HttpResponse(json.dumps(streams), content_type='application/json')
+
+
 class BundleView(BundleStreamView):
 
     def __init__(self, request, bundle_stream, **kwargs):
@@ -311,7 +333,7 @@ def bundle_list_export(request, pathname):
                 pk=bundle.uploaded_by_id).username
             out.writerow(bundle_dict)
 
-    response = HttpResponse(mimetype='text/csv')
+    response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = "attachment; filename=%s.csv" % file_name
     with open(file_path, 'r') as csv_file:
         response.write(csv_file.read())
@@ -348,6 +370,14 @@ def bundle_detail(request, pathname, content_sha1):
     """
     bundle_stream = BundleStream.objects.filter(pathname=pathname)
     bundle = Bundle.objects.filter(bundle_stream=bundle_stream, content_sha1=content_sha1)
+    try:
+        next_bundle = Bundle.objects.filter(bundle_stream=bundle_stream, id__lt=bundle[0].id)[0]
+    except IndexError:
+        next_bundle = None
+    try:
+        previous_bundle = Bundle.objects.filter(bundle_stream=bundle_stream, id__gt=bundle[0].id).reverse()[0]
+    except IndexError:
+        previous_bundle = None
     view = BundleDetailView(request, pathname=pathname, content_sha1=content_sha1, model=TestRun, table_class=BundleDetailTable)
     bundle_table = BundleDetailTable(view.get_table_data())
     RequestConfig(request, paginate={"per_page": bundle_table.length}).configure(bundle_table)
@@ -366,6 +396,8 @@ def bundle_detail(request, pathname, content_sha1):
             "site": Site.objects.get_current(),
             "bundle": bundle[0],
             "bundle_stream": bundle_stream[0],
+            "next_bundle": next_bundle,
+            "previous_bundle": previous_bundle,
         },
         RequestContext(request))
 
@@ -400,6 +432,9 @@ def bundle_export(request, pathname, content_sha1):
     test_run_keys[:0] = ["device", "test", "count_pass", "count_fail",
                          "count_skip", "count_unknown"]
 
+    # Add bug link
+    test_run_keys.append("bug_link")
+
     with open(file_path, 'w+') as csv_file:
         out = csv.DictWriter(csv_file, quoting=csv.QUOTE_ALL,
                              extrasaction='ignore',
@@ -413,9 +448,10 @@ def bundle_export(request, pathname, content_sha1):
             test_run_dict.update(test_run_denorm.__dict__)
             test_run_dict["test"] = test_run.test.test_id
             test_run_dict["device"] = test_run.show_device()
+            test_run_dict["bug_link"] = " ".join([b.bug_link for b in test_run.bug_links.all()])
             out.writerow(test_run_dict)
 
-    response = HttpResponse(mimetype='text/csv')
+    response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = "attachment; filename=%s.csv" % file_name
     with open(file_path, 'r') as csv_file:
         response.write(csv_file.read())
@@ -604,6 +640,8 @@ def test_run_export(request, pathname, content_sha1, analyzer_assigned_uuid):
         if field in test_result_keys:
             test_result_keys.remove(field)
 
+    test_result_keys.append('bug_link')
+
     with open(file_path, 'w+') as csv_file:
         out = csv.DictWriter(csv_file, quoting=csv.QUOTE_ALL,
                              extrasaction='ignore',
@@ -614,9 +652,10 @@ def test_run_export(request, pathname, content_sha1, analyzer_assigned_uuid):
             # Update result field to show human readable value.
             test_result_dict["result"] = TestResult.RESULT_MAP[
                 test_result_dict["result"]]
+            test_result_dict["bug_link"] = " ".join([b.bug_link for b in test_result.bug_links.all()])
             out.writerow(test_result_dict)
 
-    response = HttpResponse(mimetype='text/csv')
+    response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = "attachment; filename=%s.csv" % file_name
     with open(file_path, 'r') as csv_file:
         response.write(csv_file.read())
@@ -643,7 +682,9 @@ def test_run_software_context(request, pathname, content_sha1, analyzer_assigned
                 pathname=pathname,
                 content_sha1=content_sha1,
                 analyzer_assigned_uuid=analyzer_assigned_uuid),
-            "test_run": test_run
+            "packages": test_run.packages.all().order_by('name'),
+            "sources": test_run.sources.all(),
+            "half_packages_count": int(test_run.packages.count() / 2.0)
         }, RequestContext(request))
 
 
@@ -711,7 +752,7 @@ def test_result_update_comments(request, pathname, content_sha1,
     test_result.comments = request.POST.get('comments')
     test_result.save()
     data = serializers.serialize('json', [test_result])
-    return HttpResponse(data, mimetype='application/json')
+    return HttpResponse(data, content_type='application/json')
 
 
 def attachment_download(request, pk):
@@ -724,7 +765,7 @@ def attachment_download(request, pk):
     if not attachment.content:
         return HttpResponseBadRequest(
             "Attachment %s not present on dashboard" % pk)
-    response = HttpResponse(mimetype=attachment.mime_type)
+    response = HttpResponse(content_type=attachment.mime_type)
     response['Content-Disposition'] = 'attachment; filename=%s' % (
         attachment.content_filename)
     response.write(attachment.content.read())
@@ -743,60 +784,6 @@ def attachment_view(request, pk):
     return render_to_response(
         "dashboard_app/attachment_view.html", {
             'attachment': attachment,
-        }, RequestContext(request))
-
-
-@BreadCrumb("Reports", parent=index)
-def report_list(request):
-    return render_to_response(
-        "dashboard_app/report_list.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(report_list),
-            "report_list": DataReport.repository.all()
-        }, RequestContext(request))
-
-
-@BreadCrumb("{title}", parent=report_list, needs=['name'])
-def report_detail(request, name):
-    try:
-        report = DataReport.repository.get(name=name)
-    except DataReport.DoesNotExist:
-        raise Http404('No report matches given name.')
-    return render_to_response(
-        "dashboard_app/report_detail.html", {
-            "is_iframe": request.GET.get("iframe") == "yes",
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                report_detail,
-                name=report.name,
-                title=report.title),
-            "report": report,
-        }, RequestContext(request))
-
-
-@BreadCrumb("Data views", parent=index)
-def data_view_list(request):
-    return render_to_response(
-        "dashboard_app/data_view_list.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(data_view_list),
-            "data_view_list": DataView.repository.all(),
-        }, RequestContext(request))
-
-
-@BreadCrumb(
-    "Details of {name}",
-    parent=data_view_list,
-    needs=['name'])
-def data_view_detail(request, name):
-    try:
-        data_view = DataView.repository.get(name=name)
-    except DataView.DoesNotExist:
-        raise Http404('No data view matches the given query.')
-    return render_to_response(
-        "dashboard_app/data_view_detail.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                data_view_detail,
-                name=data_view.name,
-                summary=data_view.summary),
-            "data_view": data_view
         }, RequestContext(request))
 
 
@@ -837,44 +824,43 @@ def redirect_to_bundle(request, content_sha1, trailing=''):
     return redirect_to(request, bundle, trailing)
 
 
-class TestDefinitionView(BundleStreamView):
-
-    def get_queryset(self):
-        return TestDefinition.objects.all()
-
-
-@BreadCrumb("Test Definitions", parent=index)
-def test_definition(request):
-    view = TestDefinitionView(request)
-    table = TestDefinitionTable(view.get_table_data())
-    RequestConfig(request, paginate={"per_page": table.length}).configure(table)
-    return render_to_response(
-        "dashboard_app/test_definition.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(test_definition),
-            "testdefinition_table": table,
-        }, RequestContext(request))
+@require_POST
+def link_bug_to_testrun(request):
+    testrun = get_object_or_404(TestRun, analyzer_assigned_uuid=request.POST['uuid'])
+    bug_link = request.POST['bug_link']
+    bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
+    testrun.bug_links.add(bug)
+    testrun.save()
+    return HttpResponseRedirect(request.POST['back'])
 
 
-class AddTestDefForm(ModelForm):
-    class Meta:
-        model = TestDefinition
-        fields = ('name', 'version', 'description', 'format', 'location',
-                  'url', 'environment', 'target_os', 'target_dev_types',
-                  'content', 'mime_type')
+@require_POST
+def unlink_bug_and_testrun(request):
+    testrun = get_object_or_404(TestRun, analyzer_assigned_uuid=request.POST['uuid'])
+    bug_link = request.POST['bug_link']
+    bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
+    testrun.bug_links.remove(bug)
+    testrun.save()
+    return HttpResponseRedirect(request.POST['back'])
 
 
-@BreadCrumb("Add Test Definition", parent=index)
-def add_test_definition(request):
-    if request.method == 'POST':
-        form = AddTestDefForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return HttpResponseRedirect('/dashboard/test-definition/')
-    else:
-        form = AddTestDefForm()
-    return render_to_response(
-        "dashboard_app/add_test_definition.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                add_test_definition),
-            "form": form,
-        }, RequestContext(request))
+@require_POST
+def link_bug_to_testresult(request):
+    testrun = get_object_or_404(TestRun, analyzer_assigned_uuid=request.POST['uuid'])
+    testresult = get_object_or_404(testrun.test_results, relative_index=request.POST['relative_index'])
+    bug_link = request.POST['bug_link']
+    bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
+    testresult.bug_links.add(bug)
+    testresult.save()
+    return HttpResponseRedirect(request.POST['back'])
+
+
+@require_POST
+def unlink_bug_and_testresult(request):
+    testrun = get_object_or_404(TestRun, analyzer_assigned_uuid=request.POST['uuid'])
+    testresult = get_object_or_404(testrun.test_results, relative_index=request.POST['relative_index'])
+    bug_link = request.POST['bug_link']
+    bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
+    testresult.bug_links.remove(bug)
+    testresult.save()
+    return HttpResponseRedirect(request.POST['back'])

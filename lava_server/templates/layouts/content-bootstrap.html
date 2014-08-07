@@ -1,0 +1,122 @@
+{% extends "layouts/base-bootstrap.html" %}
+{% load i18n %}
+
+{% block title %}{{ bread_crumb_trail|join:" | " }}{% endblock %}
+
+
+{% block body %}
+  {% block header %}
+  <!-- header -->
+  {% block menu %}
+  <!-- menu -->
+  <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand hidden-sm" href="http://www.linaro.org"><img src="{{ STATIC_URL }}lava-server/images/linaro-sprinkles.png" alt="Linaro logo" /> LAVA</a>
+      </div>
+      <div class="navbar-collapse collapse">
+        <ul class="nav navbar-nav">
+          <li><a href="{% url 'lava.home' %}"><span class="glyphicon glyphicon-home"></span> Home</a></li>
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-dashboard"></span> Dashboard <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="{% url 'lava.dashboard.image.report_list' %}">Image Reports</a></li>
+              <li><a href="{% url 'lava.dashboard.image_report.report_list' %}">Image Reports 2.0</a></li>
+              <li><a href="{% url 'lava.dashboard.filters_list' %}">Filters</a></li>
+              <li><a href="{% url 'lava.dashboard.bundle.list' %}">Bundle Streams</a></li>
+            </ul>
+          </li>
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-calendar"></span> Scheduler <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="{% url 'lava.scheduler' %}">Status</a></li>
+              <li><a href="{% url 'lava.scheduler.job.list' %}">Jobs</a></li>
+              <li><a href="{% url 'lava.scheduler.active_devices' %}">Devices</a></li>
+              <li><a href="{% url 'lava.scheduler.queue' %}">Queue</a></li>
+              <li><a href="{% url 'lava.scheduler.reports' %}">Reports</a></li>
+              <li><a href="{% url 'lava.scheduler.job.submit' %}">Submit Job</a></li>
+            </ul>
+          </li>
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-flash"></span> API <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="{% url 'lava.api_help' %}">Available Methods</a></li>
+              <li><a href="{% url 'linaro_django_xmlrpc.views.tokens' %}">Authentication Tokens</a></li>
+            </ul>
+          </li>
+          <li><a href="{{ STATIC_URL }}docs/"><span class="glyphicon glyphicon-question-sign"></span> Help</a></li>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          {% if lava.instance_name %}
+          <li class="hidden-sm"><p class="navbar-text">Instance: {{ lava.instance_name }}</p></li>
+          {% endif %}
+          {% if user.is_authenticated %}
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> {{ user.get_full_name|default:user.username }} <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="{% url 'lava.me' %}"><span class="glyphicon glyphicon-cog"></span> Profile</a></li>
+              <li><a href="{% url 'lava.scheduler.myjobs' %}"><span class="glyphicon glyphicon-tasks"></span> Jobs</a></li>
+              <li><a href="{% url 'lava.scheduler.favorite_jobs' %}"><span class="glyphicon glyphicon-tasks"></span> Favorite Jobs</a></li>
+              <li><a href="{% url 'dashboard_app.views.mybundlestreams' %}"><span class="glyphicon glyphicon-folder-open"></span> Bundle streams</a></li>
+              <li><a href="{% url 'lava.scheduler.mydevice_list' %}"><span class="glyphicon glyphicon-phone"></span> Devices</a></li>
+              <li><a href="{% url 'lava.scheduler.mydevice_type_health_history_log' %}"><span class="glyphicon glyphicon-time"></span> Devices Health History</a></li>
+              {% if user.is_staff %}
+              <li class="divider"></li>
+              <li><a href="{% url 'admin:index' %}"><span class="glyphicon glyphicon-fire"></span> Administration</a></li>
+              {% endif %}
+              <li class="divider"></li>
+              <li><a href="{% url 'django.contrib.auth.views.logout' %}?next={{ MOUNT_POINT }}/"><span class="glyphicon glyphicon-off"></span> Sign out</a></li>
+            </ul>
+          </li>
+          {% else %}
+          <li><p class="navbar-text">
+          {% if request.get_full_path == "/accounts/logout/" %}
+            <a href="{% url 'django.contrib.auth.views.login' %}">{% trans "Sign In" %}</a>
+           {% else %}
+            <a href="{% url 'django.contrib.auth.views.login' %}?next={{request.get_full_path}}">{% trans "Sign In" %}</a>
+           {% endif %}
+          </p></li>
+          {% endif %}
+        </ul>
+
+      </div>
+    </div>
+  </div>
+  {% endblock menu %}
+  {% endblock header %}
+
+<!-- lava-container -->
+<div class="container">
+  {% block breadcrumb_container %}
+    {% if context_help %}
+       <span style="float: right; padding-right: 1em; padding-top: 0.5em"><a
+           href="/static/docs/{{ context_help|join:'-'|slugify }}.html"><b>Help</b></a></span>
+    {% endif %}
+  <ul class="breadcrumb">
+    {% block breadcrumbs %}
+    {% for bread_crumb in bread_crumb_trail %}
+    <li><a href="{{ bread_crumb.get_absolute_url }}">{{ bread_crumb.get_name }}</a></li>
+    {% endfor %}
+    {% endblock breadcrumbs %}
+  </ul>
+  {% endblock breadcrumb_container %}
+
+  {% block before_content %}
+  {% endblock %}
+
+  {% block content %}{% endblock %}
+</div>
+
+<div id="footer">
+  <div class="container">
+    <p class="text-center"><a href="https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework">Report a bug</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="https://git.linaro.org/gitweb?s=lava%2F">Source code</a></p>
+    <p class="text-muted text-center">LAVA Server is free software developed by <a href="http://linaro.org">Linaro</a>. It is distributed under the terms of the <a href="http://www.gnu.org/licenses/agpl-3.0.html" >GNU Affero General Public License version 3</a>.<br /><strong>You have the right to obtain source code of any server side installations of this software that you interact with.</strong></p>
+  </div>
+</div>
+{% endblock body %}

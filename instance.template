@@ -14,7 +14,7 @@ LAVA_BUILDOUT_CFG=''
 
 # System configuration (Unix-level)
 # Could be the same as LAVA_DB_NAME
-LAVA_SYS_USER='lava'
+LAVA_SYS_USER='lavaserver'
 
 # default to yes as we have a dedicated user which lava "owns"
 LAVA_INSTANCE_OWNS_USER='yes'

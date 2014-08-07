@@ -246,7 +246,7 @@ class Extension(ILavaServerExtension):
         pass
 
     def contribute_to_urlpatterns(self, urlpatterns, mount_point):
-        from django.conf.urls.defaults import url, include
+        from django.conf.urls import url, include
         urlpatterns += [
             url(r'^{mount_point}{slug}/'.format(mount_point=mount_point, slug=self.slug),
                 include('{app_name}.urls'.format(app_name=self.app_name)))]

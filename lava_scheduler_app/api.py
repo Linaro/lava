@@ -63,7 +63,7 @@ class SchedulerAPI(ExposedAPI):
         except DevicesUnavailableException as e:
             raise xmlrpclib.Fault(400, str(e))
         if isinstance(job, type(list())):
-            return [j.id for j in job]
+            return [j.sub_id for j in job]
         else:
             return job.id
 
@@ -94,6 +94,8 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(404, "Specified job not found.")
         if job.is_multinode:
             return self.submit_job(job.multinode_definition)
+        elif job.is_vmgroup:
+            return self.submit_job(job.vmgroup_definition)
         else:
             return self.submit_job(job.definition)
 
@@ -127,6 +129,9 @@ class SchedulerAPI(ExposedAPI):
         if job.is_multinode:
             for multinode_job in job.sub_jobs_list:
                 multinode_job.cancel(self.user)
+        elif job.is_vmgroup:
+            for vmgroup_job in job.sub_jobs_list:
+                vmgroup_job.cancel(self.user)
         else:
             job.cancel(self.user)
         return True
@@ -152,13 +157,12 @@ class SchedulerAPI(ExposedAPI):
         the user is authenticated with an username and token.
         """
 
-        if not self.user:
-            raise xmlrpclib.Fault(
-                401, "Authentication with user and token required for this "
-                "API.")
-
         try:
             job = get_restricted_job(self.user, job_id)
+        except PermissionDenied:
+            raise xmlrpclib.Fault(
+                401, "Authentication with user and token required for job %s" %
+                job_id)
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
@@ -186,9 +190,17 @@ class SchedulerAPI(ExposedAPI):
         [['panda01', 'panda', 'running'], ['qemu01', 'qemu', 'idle']]
         """
 
+        dev_list = []
+        for dev in Device.objects.all():
+            if not dev.is_visible_to(self.user):
+                continue
+            if dev.status == Device.RETIRED:
+                continue
+            dev_list.append(dev.hostname)
+
         devices = Device.objects.values_list('hostname',
                                              'device_type__name',
-                                             'status')
+                                             'status').filter(hostname__in=dev_list)
         devices = [list((x[0], x[1], Device.STATUS_CHOICES[x[2]][1].lower()))
                    for x in devices]
 
@@ -219,23 +231,29 @@ class SchedulerAPI(ExposedAPI):
         {'idle': 1, 'busy': 0, 'name': 'qemu', 'offline': 0}]
         """
 
-        device_type_list = []
+        device_type_names = []
+        all_device_types = []
         keys = ['busy', 'name', 'idle', 'offline']
+
+        for dev_type in DeviceType.objects.all():
+            if len(dev_type.devices_visible_to(self.user)) == 0:
+                continue
+            device_type_names.append(dev_type.name)
 
         device_types = DeviceType.objects.filter(display=True).annotate(
             idle=SumIf('device', condition='status=%s' % Device.IDLE),
             offline=SumIf('device', condition='status in (%s,%s)'
                           % (Device.OFFLINE, Device.OFFLINING)),
             busy=SumIf('device', condition='status in (%s,%s)'
-                       % (Device.RUNNING, Device.RESERVED)), ).order_by('name')
+                       % (Device.RUNNING, Device.RESERVED)), ).order_by('name').filter(name__in=device_type_names)
 
         for dev_type in device_types:
             device_type = {}
             for key in keys:
                 device_type[key] = getattr(dev_type, key)
-            device_type_list.append(device_type)
+            all_device_types.append(device_type)
 
-        return device_type_list
+        return all_device_types
 
     def pending_jobs_by_device_type(self):
         """
@@ -301,14 +319,13 @@ class SchedulerAPI(ExposedAPI):
         the user is authenticated with an username and token.
         """
 
-        if not self.user:
-            raise xmlrpclib.Fault(
-                401, "Authentication with user and token required for this "
-                "API.")
-
         try:
             job = get_restricted_job(self.user, job_id)
             job.status = job.get_status_display()
+        except PermissionDenied:
+            raise xmlrpclib.Fault(
+                401, "Authentication with user and token required for job %s" %
+                job_id)
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
 

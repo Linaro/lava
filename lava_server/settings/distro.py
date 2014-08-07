@@ -28,6 +28,9 @@ MEDIA_ROOT = distro_settings.MEDIA_ROOT
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
 MEDIA_URL = distro_settings.MEDIA_URL
 
+# Absolute filesystem path to the directory that will hold archived files.
+ARCHIVE_ROOT = distro_settings.ARCHIVE_ROOT
+
 # Absolute filesystem path to the directory that will hold static, read only
 # files collected from all applications.
 STATIC_ROOT = distro_settings.STATIC_ROOT
@@ -66,11 +69,17 @@ MANAGERS = distro_settings.MANAGERS
 # e-mail.
 SEND_BROKEN_LINK_EMAILS = distro_settings.SEND_BROKEN_LINK_EMAILS
 
+# LOG_SIZE_LIMIT in megabytes
+LOG_SIZE_LIMIT = distro_settings.LOG_SIZE_LIMIT
+
 # URL of the login page
 LOGIN_URL = distro_settings.LOGIN_URL
 
 # URL of the page you get redirected to after logging in
 LOGIN_REDIRECT_URL = distro_settings.LOGIN_REDIRECT_URL
+
+# read which openID provider to use from the settings.conf
+OPENID_SSO_SERVER_URL = distro_settings.OPENID_SSO_SERVER_URL
 
 # The email address that error messages come from, such as those sent to
 # ADMINS and MANAGERS.

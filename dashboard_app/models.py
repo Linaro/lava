@@ -31,21 +31,25 @@ import traceback
 import contextlib
 
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
-from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.exceptions import (
+    ImproperlyConfigured,
+    ValidationError,
+    PermissionDenied
+)
 from django.core.files import locks, File
 from django.core.files.storage import FileSystemStorage
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
-from django.db import models, connection
+from django.db import models, connection, IntegrityError
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.template import Template, Context
-from django.template.defaultfilters import filesizeformat
+from django.template.defaultfilters import filesizeformat, slugify
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
@@ -55,9 +59,6 @@ from linaro_dashboard_bundle.io import DocumentIO
 
 from dashboard_app.helpers import BundleDeserializer
 from dashboard_app.managers import BundleManager, TestRunDenormalizationManager
-from dashboard_app.repositories import RepositoryItem
-from dashboard_app.repositories.data_report import DataReportRepository
-from dashboard_app.repositories.data_view import DataViewRepository
 from dashboard_app.signals import bundle_was_deserialized
 
 
@@ -224,10 +225,80 @@ class BundleStream(RestrictedResource):
         return TestRun.objects.filter(bundle__bundle_stream=self).count()
 
     def clean(self):
+        # default values are None if not specified, assert False.
+        if not self.is_anonymous:
+            self.is_anonymous = False
+        if not self.is_public:
+            self.is_public = False
         if self.is_anonymous and not self.is_public:
             raise ValidationError(
                 'Anonymous streams must be public')
         return super(BundleStream, self).clean()
+
+    @classmethod
+    def create_from_pathname(cls, pathname, user=None, name=None):
+        """
+        Create new bundle stream from pathname.
+
+        Checks for various user/group permissions.
+        Raises ValueError if the pathname is not well formed.
+        Raises PermissionDenied if user cannot create this stream or does not
+        belong to the right group.
+        Raises IntegrityError if bundle stream already exists.
+
+        :param pathname: bundle stream pathname.
+        :param name: optional name of the bundle stream.
+        :param user: user which is trying to create a bundle.
+        """
+        if name is None:
+            name = ""
+
+        try:
+            user_name, group_name, slug, is_public, is_anonymous = BundleStream.parse_pathname(pathname)
+        except ValueError:
+            raise
+
+        # Start with those to simplify the logic below
+        owner = None
+        group = None
+        if is_anonymous is False:
+            if user is not None:
+                if user_name is not None:
+                    if not user.is_superuser:
+                        if user_name != user.username:
+                            raise PermissionDenied("Only user {user!r} could create this stream".format(user=user_name))
+                    owner = user  # map to real user object
+                elif group_name is not None:
+                    try:
+                        if user.is_superuser:
+                            group = Group.objects.get(name=group_name)
+                        else:
+                            group = user.groups.get(name=group_name)
+                    except Group.DoesNotExist:
+                        raise PermissionDenied("Only a member of group {group!r} could create this stream".format(group=group_name))
+            else:
+                raise PermissionDenied(
+                    "Only anonymous streams can be constructed.")
+        else:
+            if user is not None:
+                owner = user
+            else:
+                # Hacky but will suffice for now
+                owner = User.objects.get_or_create(
+                    username="anonymous-owner")[0]
+        try:
+            bundle_stream = BundleStream.objects.create(
+                user=owner,
+                group=group,
+                slug=slug,
+                is_public=is_public,
+                is_anonymous=is_anonymous,
+                name=name)
+
+        except IntegrityError:
+            raise
+        else:
+            return bundle_stream
 
     def save(self, *args, **kwargs):
         """
@@ -470,6 +541,8 @@ class Bundle(models.Model):
         return reverse("dashboard_app.views.redirect_to_bundle", args=[self.content_sha1])
 
     def save(self, *args, **kwargs):
+        if not self.is_deserialized:
+            self.is_deserialized = False
         if self.content:
             try:
                 self.content.open('rb')
@@ -647,7 +720,7 @@ class Test(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ('dashboard_app.views.test_detail', [self.test_id])
+        return self.test_id
 
     def count_results_without_test_case(self):
         return TestResult.objects.filter(
@@ -988,22 +1061,18 @@ class TestRun(models.Model):
         except HardwareDevice.MultipleObjectsReturned:
             pass
 
-    def get_results(self, result=None):
+    def get_results(self):
         """
         Get all results efficiently
         :param result: used for filtering the result which we want.
                        It will return all reaults if the parameter 'result' is not in TestResult.RESULT_MAP.
         """
-        test_results = self.test_results.select_related(
+        return self.test_results.select_related(
             "test_case",  # explicit join on test_case which might be NULL
             "test_run",  # explicit join on test run, needed by all the get_absolute_url() methods
             "test_run__bundle",  # explicit join on bundle
             "test_run__bundle__bundle_stream",  # explicit join on bundle stream
         ).order_by("relative_index")  # sort as they showed up in the bundle
-        if result in TestResult.RESULT_MAP:
-            return test_results.filter(result=result)
-        else:
-            return test_results
 
     def denormalize(self):
         try:
@@ -1156,9 +1225,11 @@ class Attachment(models.Model):
     def bundle(self):
         if self.is_test_result_attachment():
             run = self.test_result.test_run
+            return run.bundle
         elif self.is_test_run_attachment():
             run = self.test_run
-        return run.bundle
+            return run.bundle
+        return None
 
     def get_content_size(self):
         try:
@@ -1178,6 +1249,24 @@ class Attachment(models.Model):
 
     def is_viewable(self):
         return self.mime_type in ['text/plain']
+
+    def is_archived(self):
+        """Checks if the attachment file was archived.
+        """
+        last_info = os.path.join(settings.ARCHIVE_ROOT, 'attachments',
+                                 'last.info')
+
+        if os.path.exists(last_info):
+            with open(last_info, 'r') as last:
+                last_archived = int(last.read())
+                last.close()
+
+            if self.id <= last_archived:
+                return True
+            else:
+                return False
+
+        return False
 
 
 class TestResult(models.Model):
@@ -1355,178 +1444,6 @@ class TestResult(models.Model):
         order_with_respect_to = 'test_run'
 
 
-class DataView(RepositoryItem):
-    """
-    Data view, a container for SQL query and optional arguments
-    """
-
-    repository = DataViewRepository()
-
-    def __init__(self, name, backend_queries, arguments, documentation, summary):
-        self.name = name
-        self.backend_queries = backend_queries
-        self.arguments = arguments
-        self.documentation = documentation
-        self.summary = summary
-
-    def __unicode__(self):
-        return self.name
-
-    def __repr__(self):
-        return "<DataView name=%r>" % (self.name,)
-
-    @models.permalink
-    def get_absolute_url(self):
-        return ("dashboard_app.views.data_view_detail", [self.name])
-
-    def _get_connection_backend_name(self, connection):
-        backend = str(type(connection))
-        if "sqlite" in backend:
-            return "sqlite"
-        elif "postgresql" in backend:
-            return "postgresql"
-        else:
-            return ""
-
-    def get_backend_specific_query(self, connection):
-        """
-        Return BackendSpecificQuery for the specified connection
-        """
-        sql_backend_name = self._get_connection_backend_name(connection)
-        try:
-            return self.backend_queries[sql_backend_name]
-        except KeyError:
-            return self.backend_queries.get(None, None)
-
-    def lookup_argument(self, name):
-        """
-        Return Argument with the specified name
-
-        Raises LookupError if the argument cannot be found
-        """
-        for argument in self.arguments:
-            if argument.name == name:
-                return argument
-        raise LookupError(name)
-
-    @classmethod
-    def get_connection(cls):
-        """
-        Get the appropriate connection for data views
-        """
-        from django.db import connection, connections
-        from django.db.utils import ConnectionDoesNotExist
-        try:
-            return connections['dataview']
-        except ConnectionDoesNotExist:
-            logging.warning("dataview-specific database connection not available, dataview query is NOT sandboxed")
-            return connection  # NOTE: it's connection not connectionS (the default connection)
-
-    def __call__(self, connection, **arguments):
-        # Check if arguments have any bogus names
-        valid_arg_names = frozenset([argument.name for argument in self.arguments])
-        for arg_name in arguments:
-            if arg_name not in valid_arg_names:
-                raise TypeError("Data view %s has no argument %r" % (self.name, arg_name))
-        # Get the SQL template for our database connection
-        query = self.get_backend_specific_query(connection)
-        if query is None:
-            raise LookupError("Specified data view has no SQL implementation "
-                              "for current database")
-        # Replace SQL aruments with django placeholders (connection agnostic)
-        template = query.sql_template
-        template = template.replace("%", "%%")
-        # template = template.replace("{", "{{").replace("}", "}}")
-        sql = template.format(
-            **dict([
-                (arg_name, "%s")
-                for arg_name in query.argument_list]))
-        # Construct argument list using defaults for missing values
-        sql_args = [
-            arguments.get(arg_name, self.lookup_argument(arg_name).default)
-            for arg_name in query.argument_list]
-        with contextlib.closing(connection.cursor()) as cursor:
-            # Execute the query with the specified arguments
-            cursor.execute(sql, sql_args)
-            # Get and return the results
-            rows = cursor.fetchall()
-            columns = cursor.description
-            return rows, columns
-
-
-class DataReport(RepositoryItem):
-    """
-    Data reports are small snippets of xml that define
-    a limited django template.
-    """
-
-    repository = DataReportRepository()
-
-    def __init__(self, **kwargs):
-        self._html = None
-        self._data = kwargs
-
-    def __unicode__(self):
-        return self.title
-
-    def __repr__(self):
-        return "<DataReport name=%r>" % (self.name,)
-
-    @models.permalink
-    def get_absolute_url(self):
-        return ("dashboard_app.views.report_detail", [self.name])
-
-    def _get_raw_html(self):
-        pathname = os.path.join(self.base_path, self.path)
-        try:
-            with open(pathname) as stream:
-                return stream.read()
-        except (IOError, OSError) as ex:
-            logging.error("Unable to load DataReport HTML file from %r: %s", pathname, ex)
-            return ""
-
-    def _get_html_template(self):
-        return Template(self._get_raw_html())
-
-    def _get_html_template_context(self):
-        return Context({
-            "API_URL": '/RPC2',
-            "STATIC_URL": settings.STATIC_URL
-        })
-
-    def get_html(self):
-        DEBUG = getattr(settings, "DEBUG", False)
-        if self._html is None or DEBUG is True:
-            template = self._get_html_template()
-            context = self._get_html_template_context()
-            self._html = template.render(context)
-        return self._html
-
-    @property
-    def title(self):
-        return self._data['title']
-
-    @property
-    def path(self):
-        return self._data['path']
-
-    @property
-    def name(self):
-        return self._data['name']
-
-    @property
-    def bug_report_url(self):
-        return self._data.get('bug_report_url')
-
-    @property
-    def author(self):
-        return self._data.get('author')
-
-    @property
-    def front_page(self):
-        return self._data['front_page']
-
-
 class Tag(models.Model):
     """
     Tag used for marking test runs.
@@ -1574,7 +1491,17 @@ class BugLink(models.Model):
         blank=True,
         help_text=_help_max_length(1024))
 
-    test_runs = models.ManyToManyField(TestRun, related_name='bug_links')
+    test_runs = models.ManyToManyField(
+        TestRun,
+        blank=True,
+        related_name='bug_links'
+    )
+
+    test_result = models.ManyToManyField(
+        TestResult,
+        blank=True,
+        related_name='bug_links'
+    )
 
     def __unicode__(self):
         return unicode(self.bug_link)
@@ -1731,8 +1658,8 @@ class TestRunFilter(models.Model):
         no_test_case_filters = list(
             TestRunFilter.objects.filter(
                 id__in=TestRunFilterTest.objects.filter(
-                    filter__in=attribute_filters, test__in=bundle.test_runs.all().values('test_id')).annotate(
-                    models.Count('cases')).filter(cases__count=0).values('filter__id'),
+                    filter__in=attribute_filters, test__in=bundle.test_runs.all()
+                    .values('test_id')).annotate(models.Count('cases')).filter(cases__count=0).values('filter__id'),
             ))
         tcf = TestRunFilter.objects.filter(
             id__in=TestRunFilterTest.objects.filter(
@@ -1748,8 +1675,8 @@ class TestRunFilter(models.Model):
             pass_count=models.Sum('test_runs__denormalization__count_pass'),
             unknown_count=models.Sum('test_runs__denormalization__count_unknown'),
             skip_count=models.Sum('test_runs__denormalization__count_skip'),
-            fail_count=models.Sum('test_runs__denormalization__count_fail')).get(
-            id=bundle.id)
+            fail_count=models.Sum('test_runs__denormalization__count_fail')
+        ).get(id=bundle.id)
         for filter in filters:
             match = FilterMatch()
             match.filter = filter
@@ -1837,43 +1764,53 @@ class TestRunFilterSubscription(models.Model):
 
 def send_image_report_notifications(sender, bundle):
     try:
-        chart_users = ImageChartUser.objects.filter(
-            has_subscription=True)
+        matches = []
+        charts = ImageReportChart.objects.filter(
+            imagechartuser__has_subscription=True)
         url_prefix = 'http://%s' % get_domain()
-        for chart_user in chart_users:
-            if chart_user.image_chart.target_goal:
-                matches = []
-                if chart_user.image_chart.chart_type == "pass/fail":
-                    runs = TestRun.objects.filter(
-                        bundle=bundle,
-                        imagecharttest__image_chart_filter__image_chart=chart_user.image_chart)
-                    for run in runs:
-                        denorm = runs.denormalization
-                        if denorm.count_pass < target_goal:
-                            matches.append(run)
 
-                else:
-                    results = TestResult.objects.filter(
-                        test_run__bundle=bundle,
-                        imagecharttestcase__image_chart_filter__image_chart=chart_user.image_chart)
-                    for result in results:
-                        if result.measurement < \
-                                chart_user.image_chart.target_goal:
-                            matches.append(result)
+        filter_matches = TestRunFilter.matches_against_bundle(bundle)
 
-                if matches:
-                    image_chart = chart_user.image_chart
-                    filter_names = ', '.join(
-                        match.filter.name for match in matches)
-                    title = "LAVA image report notification: %s" % filter_names
-                    template = "dashboard_app/chart_subscription_mail.txt"
-                    data = {'bundle': bundle, 'user': chart_user.user,
-                            'image_report': image_chart.image_report,
-                            'matches': matches, 'url_prefix': url_prefix}
-                    logging.info("sending notification to %s", chart_user.user)
-                    send_notification(title.format(run.test.test_id),
-                                      template, data,
-                                      chart_user.user.email)
+        for chart in charts:
+            if chart.target_goal:
+
+                chart_filters = [chart_filter.filter for chart_filter in
+                                 chart.imagechartfilter_set.all()]
+                chart_tests = []
+                for chart_filter in chart.imagechartfilter_set.all():
+                    chart_tests += chart_filter.chart_tests
+
+                chart_tests = [chart_test.test for chart_test in chart_tests]
+
+                for filter_match in filter_matches:
+
+                    if filter_match.filter in chart_filters:
+                        if chart.chart_type == "pass/fail":
+                            for test_run in filter_match.test_runs:
+                                if test_run.test in chart_tests:
+
+                                    denorm = test_run.denormalization
+                                    if denorm.count_pass < chart.target_goal:
+                                        matches.append(test_run)
+
+                        else:
+                            for test_result in filter_match.specific_results:
+                                if test_result.test_case in chart_tests:
+                                    if test_result.measurement <\
+                                            chart.target_goal:
+                                        matches.append(test_result)
+
+                for chart_user in chart.imagechartuser_set.all():
+                    if matches:
+                        title = "LAVA image report test failure notification: %s" % chart.name
+                        template = "dashboard_app/chart_subscription_mail.txt"
+                        data = {'bundle': bundle, 'user': chart_user.user,
+                                'image_report': chart.image_report,
+                                'matches': matches, 'url_prefix': url_prefix}
+                        logging.info("sending notification to %s",
+                                     chart_user.user)
+                        send_notification(title, template, data,
+                                          chart_user.user.email)
 
     except:
         logging.exception("send_image_report_notifications failed")
@@ -2084,9 +2021,11 @@ class ImageReportChart(models.Model):
         # evaluate_filter call.
         tests = []
 
-        selected_chart_tests = image_chart_filter.imagecharttest_set.all()
+        selected_chart_tests = image_chart_filter.imagecharttest_set.all().prefetch_related('imagecharttestattribute_set')
+
+        # Leave chart_data empty if there are no tests available.
         if not selected_chart_tests:
-            return tests
+            return
 
         for chart_test in selected_chart_tests:
             tests.append({
@@ -2095,25 +2034,69 @@ class ImageReportChart(models.Model):
             })
 
         filter_data['tests'] = tests
-        matches = evaluate_filter(user, filter_data)[:50]
+
+        matches = list(evaluate_filter(user, filter_data,
+                                       prefetch_related=['bug_links'])[:50])
+        matches.reverse()
+
+        # Store metadata changes.
+        metadata = {}
 
         for match in matches:
             for test_run in match.test_runs:
 
                 denorm = test_run.denormalization
+
                 bug_links = sorted(
                     [b.bug_link for b in test_run.bug_links.all()])
 
-                alias = ImageChartTest.objects.get(
-                    image_chart_filter=image_chart_filter,
-                    test=test_run.test).name
+                metadata_content = {}
+
+                test_id = test_run.test.test_id
+
+                # Find corresponding chart_test object.
+                for ch_test in selected_chart_tests:
+                    if ch_test.test == test_run.test:
+                        chart_test = ch_test
+                        break
+
+                if test_id not in metadata.keys():
+                    metadata[test_id] = {}
+
+                alias = None
+                if chart_test:
+                    # Metadata delta content. Contains attribute names as keys
+                    # and value is tuple with old and new value.
+                    # If specific attribute's value didn't change since the
+                    # last test run, do not include that attr.
+                    for attr in chart_test.attributes:
+                        if attr not in metadata[test_id].keys():
+                            try:
+                                metadata[test_id][attr] = \
+                                    test_run.attributes.get(name=attr).value
+                            except NamedAttribute.DoesNotExist:
+                                # Skip this attribute.
+                                pass
+                        else:
+                            old_value = metadata[test_id][attr]
+                            new_value = test_run.attributes.get(
+                                name=attr).value
+                            if old_value != new_value:
+                                metadata_content[attr] = (old_value, new_value)
+                            metadata[test_id][attr] = new_value
+
+                    alias = chart_test.name
 
                 if not alias:
                     alias = "%s: %s" % (image_chart_filter.filter.name,
-                                        test_run.test.test_id)
+                                        test_id)
 
-                test_filter_id = "%s-%s" % (test_run.test.test_id,
-                                            image_chart_filter.id)
+                # Add comments flag to indicate whether comments do exist in
+                # any of the test result in this test run.
+                has_comments = test_run.test_results.exclude(
+                    comments__isnull=True).count() != 0
+
+                test_filter_id = "%s-%s" % (test_id, image_chart_filter.id)
                 chart_item = {
                     "filter_rep": image_chart_filter.representation,
                     "test_filter_id": test_filter_id,
@@ -2126,6 +2109,8 @@ class ImageReportChart(models.Model):
                     "total": denorm.count_pass + denorm.count_fail,
                     "test_run_uuid": test_run.analyzer_assigned_uuid,
                     "bug_links": bug_links,
+                    "metadata_content": metadata_content,
+                    "comments": has_comments,
                 }
 
                 chart_data["test_data"].append(chart_item)
@@ -2140,8 +2125,11 @@ class ImageReportChart(models.Model):
         test_cases = TestCase.objects.filter(imagecharttestcase__image_chart_filter__image_chart=self).distinct('id')
         tests_all = Test.objects.filter(test_cases__in=test_cases).distinct('id').prefetch_related('test_cases')
 
+        selected_chart_test_cases = image_chart_filter.imagecharttestcase_set.all().prefetch_related('imagecharttestcaseattribute_set')
+
+        # Leave chart_data empty if there are no test cases available.
         if not test_cases:
-            return tests
+            return
 
         for test in tests_all:
             tests.append({
@@ -2150,30 +2138,64 @@ class ImageReportChart(models.Model):
             })
 
         filter_data['tests'] = tests
-        matches = evaluate_filter(user, filter_data)[:50]
+        matches = list(evaluate_filter(user, filter_data,
+                                       prefetch_related=['bug_links'])[:50])
+        matches.reverse()
+
+        # Store metadata changes.
+        metadata = {}
 
         for match in matches:
             for test_result in match.specific_results:
 
                 bug_links = sorted(
-                    [b.bug_link for b in test_result.test_run.bug_links.all()])
+                    [b.bug_link for b in test_result.bug_links.all()])
 
-                try:
-                    alias = ImageChartTestCase.objects.get(
-                        image_chart_filter=image_chart_filter,
-                        test_case=test_result.test_case).name
-                except ImageChartTestCase.DoesNotExist:
-                    # Set alias to None.
-                    alias = None
+                metadata_content = {}
+
+                test_case_id = test_result.test_case.test_case_id
+                if test_case_id not in metadata.keys():
+                    metadata[test_case_id] = {}
+
+                # Find corresponding chart_test object.
+                for ch_test_case in selected_chart_test_cases:
+                    if ch_test_case.test_case == test_result.test_case:
+                        chart_test_case = ch_test_case
+                        break
+
+                alias = None
+                if chart_test_case:
+                    # Metadata delta content. Contains attribute names as
+                    # keys and value is tuple with old and new value.
+                    # If specific attribute's value didn't change since the
+                    # last test result, do not include that attr.
+                    for attr in chart_test_case.attributes:
+                        if attr not in metadata[test_case_id].keys():
+                            try:
+                                metadata[test_case_id][attr] = \
+                                    test_result.test_run.attributes.get(
+                                        name=attr).value
+                            except NamedAttribute.DoesNotExist:
+                                # Skip this attribute.
+                                pass
+                        else:
+                            old_value = metadata[test_case_id][attr]
+                            new_value = test_result.test_run.attributes.get(
+                                name=attr).value
+                            if old_value != new_value:
+                                metadata_content[attr] = (old_value, new_value)
+                                metadata[test_case_id][attr] = new_value
+
+                    alias = chart_test_case.name
 
                 if not alias:
                     alias = "%s: %s: %s" % (
                         image_chart_filter.filter.name,
-                        test_result.test_run.test.test_id,
-                        test_result.test_case.test_case_id
+                        test_result.test.test_id,
+                        test_case_id
                     )
 
-                test_filter_id = "%s-%s" % (test_result.test_case.test_case_id,
+                test_filter_id = "%s-%s" % (test_case_id.replace(" ", ""),
                                             image_chart_filter.id)
                 chart_item = {
                     "filter_rep": image_chart_filter.representation,
@@ -2187,6 +2209,8 @@ class ImageReportChart(models.Model):
                     "date": str(test_result.test_run.bundle.uploaded_on),
                     "test_run_uuid": test_result.test_run.analyzer_assigned_uuid,
                     "bug_links": bug_links,
+                    "metadata_content": metadata_content,
+                    "comments": test_result.comments,
                 }
                 chart_data["test_data"].append(chart_item)
 
@@ -2211,6 +2235,13 @@ class ImageChartFilter(models.Model):
         default="lines",
     )
 
+    @property
+    def chart_tests(self):
+        if self.imagecharttestcase_set.count() > 0:
+            return self.imagecharttestcase_set.all()
+        else:
+            return self.imagecharttest_set.all()
+
     def get_basic_filter_data(self):
         return {
             "owner": self.filter.owner.username,
@@ -2218,11 +2249,15 @@ class ImageChartFilter(models.Model):
             "name": self.filter.name,
         }
 
+    def id_slug(self):
+        return slugify(self.id)
+
     @models.permalink
     def get_absolute_url(self):
         return (
-            "dashboard_app.views.image_reports.views.image_chart_filter_edit",
-            (), dict(id=self.id))
+            "dashboard_app.views.image_reports.views.image_chart_filter_detail",
+            (), dict(name=self.image_chart.image_report.name,
+                     id=self.image_chart.id, slug=self.id))
 
 
 class ImageChartTest(models.Model):
@@ -2242,6 +2277,55 @@ class ImageChartTest(models.Model):
 
     name = models.CharField(max_length=200)
 
+    @property
+    def test_name(self):
+        return self.test.test_id
+
+    def get_attributes(self):
+        return [str(attr.name) for attr in
+                self.imagecharttestattribute_set.all()]
+
+    def set_attributes(self, input):
+        ImageChartTestAttribute.objects.filter(image_chart_test=self).delete()
+        for value in input:
+            attr = ImageChartTestAttribute(image_chart_test=self, name=value)
+            attr.save()
+
+    attributes = property(get_attributes, set_attributes)
+
+    def get_available_attributes(self, user):
+
+        from dashboard_app.filters import evaluate_filter
+
+        content_type_id = ContentType.objects.get_for_model(TestRun).id
+        tests = [{
+            'test': self.test,
+            'test_cases': [],
+        }]
+
+        filter_data = self.image_chart_filter.filter.as_data()
+        filter_data['tests'] = tests
+        matches = list(evaluate_filter(user, filter_data)[:1])
+        test_run_id = matches[0].test_runs[0].id
+
+        result = NamedAttribute.objects.all()
+        result = result.filter(
+            content_type_id=content_type_id,
+            object_id=test_run_id).distinct().order_by('name').values_list('name', flat=True)
+
+        attributes = [str(name) for name in result]
+        return list(set(attributes))
+
+
+class ImageChartTestAttribute(models.Model):
+
+    image_chart_test = models.ForeignKey(
+        ImageChartTest,
+        null=False,
+        on_delete=models.CASCADE)
+
+    name = models.TextField(blank=False, null=False)
+
 
 class ImageChartTestCase(models.Model):
 
@@ -2259,6 +2343,57 @@ class ImageChartTestCase(models.Model):
         on_delete=models.CASCADE)
 
     name = models.CharField(max_length=200)
+
+    @property
+    def test_name(self):
+        return self.test_case.test_case_id
+
+    def get_attributes(self):
+        return [str(attr.name) for attr in
+                self.imagecharttestcaseattribute_set.all()]
+
+    def set_attributes(self, input):
+        ImageChartTestCaseAttribute.objects.filter(
+            image_chart_test_case=self).delete()
+        for value in input:
+            attr = ImageChartTestCaseAttribute(
+                image_chart_test_case=self, name=value)
+            attr.save()
+
+    attributes = property(get_attributes, set_attributes)
+
+    def get_available_attributes(self, user):
+
+        from dashboard_app.filters import evaluate_filter
+
+        content_type_id = ContentType.objects.get_for_model(TestRun).id
+        tests = [{
+            'test': self.test_case.test,
+            'test_cases': [],
+        }]
+
+        filter_data = self.image_chart_filter.filter.as_data()
+        filter_data['tests'] = tests
+        matches = list(evaluate_filter(user, filter_data)[:1])
+        test_run_id = matches[0].test_runs[0].id
+
+        result = NamedAttribute.objects.all()
+        result = result.filter(
+            content_type_id=content_type_id,
+            object_id=test_run_id).distinct().order_by('name').values_list('name', flat=True)
+
+        attributes = [str(name) for name in result]
+        return list(set(attributes))
+
+
+class ImageChartTestCaseAttribute(models.Model):
+
+    image_chart_test_case = models.ForeignKey(
+        ImageChartTestCase,
+        null=False,
+        on_delete=models.CASCADE)
+
+    name = models.TextField(blank=False, null=False)
 
 
 class ImageChartUser(models.Model):

@@ -110,8 +110,6 @@ class manage(Command):
                 instance=self.args.instance)
             os.environ["DJANGO_DEBIAN_SETTINGS_TEMPLATE"] = ddst
         os.environ["DJANGO_SETTINGS_MODULE"] = settings_module
-        settings = __import__(settings_module, fromlist=[''])
-        # Remove deprecated execute_manager (Django 1.4)
         from django.core.management import execute_from_command_line
         execute_from_command_line(['lava-server'] + self.args.command)
 
@@ -130,9 +128,9 @@ def main():
 def legacy_main():
     find_sources()
     settings_module = "lava_server.settings.development"
-    settings = __import__(settings_module, fromlist=[''])
-    from django.core.management import execute_manager
-    execute_manager(settings)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
+    from django.core.management import execute_from_command_line
+    execute_from_command_line(sys.argv)
 
 
 if __name__ == "__main__":

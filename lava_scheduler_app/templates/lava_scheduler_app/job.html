@@ -1,16 +1,228 @@
-{% extends "lava_scheduler_app/job_sidebar.html" %}
+{% extends "layouts/content-bootstrap.html" %}
+{% load utils %}
 
-{% block extrahead %}
-{{ block.super }}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jQuery.Rule.js"></script>
+{% block styles %}
+  <style>
+    code.log {
+      margin: 0px;
+      padding-top: 0px;
+      padding-bottom: 0px;
+      border: 0px;
+      color: black;
+
+      display: block;
+      font-size: 13px;
+      background-color: rgb(245, 245, 245);
+    }
+    code.action {
+      font-style: italic;
+    }
+    code.log.INFO {
+      color: blue;
+    }
+    code.log.WARNING {
+      color: orange;
+    }
+    code.log.ERROR {
+      color: red;
+    }
+    code.log.CRITICAL {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
-<h2>Dispatcher Log Summary</h2>
+{% if job.status >= job.RUNNING %}
+<a class="btn btn-sm btn-default" id="top" href="#bottom">End of log file <span class="glyphicon glyphicon-fast-forward"></span></a><br/><br/>
+{% endif %}
+
+<div class="row">
+  <div class="col-md-4">
+    <h4 class="modal-header">Job information</h4>
+    <dl class="dl-horizontal">
+      <dt>Description</dt>
+      <dd>{{job.description|default:"<i>not set</i>" }}</dd>
+      <dt>Status<dt>
+      <dd>{{ job.get_status_display }}</dd>
+      <dt>Priority</dt>
+      <dd>{{ job.get_priority_display }}</dd>
+      <dt>Submitter</dt>
+      <dd>{{ job.submitter }}</dd>
+    </dl>
+  </div>
+  <div class="col-md-4">
+    <h4 class="modal-header">Device</h4>
+    <dl class="dl-horizontal">
+    {% if job.actual_device %}
+      <dt>Name</dt>
+      <dd><a href="{{ job.actual_device.get_absolute_url }}">{{ job.actual_device.hostname }}</a>{% if not job.is_vmgroup %} <a
+      href="{% url 'lava.scheduler.device_report' job.actual_device.pk %}">(reports)</a>{% endif %}</dd>
+    {% endif %}
+
+    {% if job.requested_device %}
+      <dt>Type</dt>
+      <dd><a href="{{ job.requested_device.device_type.get_absolute_url }}">{{ job.requested_device.device_type }}</a>{% if not job.is_vmgroup %} <a
+      href="{% url 'lava.scheduler.device_type_report' job.requested_device.device_type %}">(reports)</a>{% endif %}</dd>
+    {% elif job.requested_device_type %}
+      <dt>Requested type</dt>
+      <dd><a href="{{ job.requested_device_type.get_absolute_url }}">{{ job.requested_device_type }}</a> <a href="{% url 'lava.scheduler.device_type_report' job.requested_device_type %}">(reports)</a></dd>
+    {% endif %}
+
+    {% for tag in job.tags.all %}
+      {% if forloop.first %}
+      {% if forloop.revcounter > 1 %}
+      <dt>Required Tags</dt>
+      {% else %}
+      <dt>Required Tag</dt>
+      {% endif %}
+      {% endif %}
+      <dd>{{ tag.name }}<abbr title="{{ tag.description }}">(?)</abbr></dd>
+    {% endfor %}
+
+    {% if job.actual_device %}
+      <dt>Owner</dt>
+      <dd>
+      {% if job.actual_device.user %}
+        <a href="mailto:{{ job.actual_device.user.email }}">{{ job.actual_device.user.email }}</a>
+      {% elif job.actual_device.group %}
+        Group <em>{{ job.actual_device.group }}</em>
+      {% else %}
+        <i>Unrestricted</i>
+      {% endif %}
+      </dd>
+      <dt>Physical access</dt>
+      <dd>
+      {% if job.actual_device.physical_owner %}
+        <a href="mailto:{{ job.actual_device.physical_owner.email }}">{{ job.actual_device.physical_owner.email }}</a>
+      {% elif job.actual_device.physical_group %}
+        Group <em>{{ job.actual_device.physical_group }}</em>
+      {% else %}
+        <i>Unknown</i>
+      {% endif %}
+      </dd>
+    {% endif %}
+    </dl>
+  </div>
+  <div class="col-md-4">
+    <h4 class="modal-header">Timing</h4>
+    <dl class="dl-horizontal">
+      <dt>Submitted</dt>
+      <dd title="{{ job.submit_time }}">{{ job.submit_time|timesince }}</dd>
+      <dt>Started</dt>
+      <dd title="{{ job.start_time|default:"not started" }}">{% if job.start_time %}{{ job.start_time|timesince }}{% else %}<i>not started</i>{% endif %}</dd>
+      <dt>Finished</dt>
+      <dd title="{{ job.end_time|default:"not finished" }}">{% if job.end_time %}{{ job.end_time|timesince }}{% else %}<i>not finished</i>{% endif %}</dd>
+      {% if job.start_time and job.end_time %}
+      <dt>Duration</dt>
+      <dd>{{ job.end_time|timeuntil:job.start_time }}</dd>
+      {% endif %}
+    </dl>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-6">
+    <h4 class="modal-header">Logs</h4>
+    <div class="row">
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+          <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition</a></li>
+        {% if job.is_multinode %}
+          <li><a href="{% url 'lava.scheduler.job.multinode_definition' job.pk %}" class="btn btn-info">Multinode Definition</a></li>
+        {% elif job.is_vmgroup %}
+           <li><a href="{% url 'lava.scheduler.job.vmgroup_definition' job.pk %}" class="btn btn-info">VMGroup Definition</a></li>
+        {% endif %}
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+        {% if job_file_present and not job.archived_job_file %}
+          <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary"{% if size_warning %} disabled="disabled"{% endif %}>Complete log</a></li>
+        {% endif %}
+        {% if job.results_link and not job.archived_bundle %}
+          <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
+        {% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <h4 class="modal-header">Actions</h4>
+    <div class="row">
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+        {% if show_cancel %}
+          <li><a href="{% url 'lava.scheduler.job.cancel' job.pk %}" class="btn btn-warning">Cancel</a></li>
+        {% endif %}
+        {% if show_resubmit and not job.is_multinode %}
+          <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
+        {% endif %}
+        {% if user.is_authenticated %}
+        <li><a href="{% url 'lava.scheduler.job.toggle_favorite' job.pk %}"  class="btn btn-info">
+            {% if is_favorite %}
+              Remove from favorites
+            {% else %}
+              Add to favorites
+            {% endif %}
+        </a></li>
+        {% endif %}
+        </ul>
+      </div>
+
+
+
+      <div class="col-md-6">
+        {% if show_failure %}
+        <ul class="nav nav-pills nav-stacked">
+          <li><a href="{% url 'lava.scheduler.job.annotate_failure' job.pk %}" class="btn btn-default">Comment</a></li>
+        </ul>
+        {% endif %}
+        {% if change_priority %}
+        <form method="POST" action="{% url 'lava.scheduler.job.priority' job.pk %}" id="priority-choice">
+          {% csrf_token %}
+          <button id="priority-button" class="btn btn-default">Set priority</button><br />
+          {{ job.priority|get_priority_select }}
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% if job.is_multinode or job.is_vmgroup %}
+<div class="row">
+  <div class="col-md-6">
+    <h4 class="modal-header">Sub jobs</h4>
+    <div class="row">
+    <dl class="dl-horizontal">
+    {% for subjob in job.sub_jobs_list %}
+      <dt><a href="{% url 'lava.scheduler.job.detail' subjob.sub_id %}">{{ subjob.sub_id }}</a>
+        {% if '0' in subjob.sub_id and '0' not in job.sub_id %}
+            <abbr title="view job {{ subjob.sub_id }} to see the result bundle, if any.">(?)</abbr>
+        {% endif %}
+      </dt>
+        <dd>
+    {% if subjob.actual_device.hostname %}
+      on: <a href="{{ subjob.actual_device.get_absolute_url }}">{{ subjob.actual_device.hostname }}</a>
+      as: {{ subjob.device_role }}
+      </dd>
+    {% else %}
+      No device assigned as {{ subjob.device_role }}.</dd>
+    {% endif %}
+    {% endfor %}
+    </dl>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 {% if job.status < job.RUNNING %}
-No log file yet.
+<h4 class="modal-header">Dispatcher Log messages</h4>
+<i>No log file yet.</i>
+{% elif job.archived_job_file %}
+<i>Job log file archived. Please contact the administrator for job log file.</i>
 {% else %}
-{% if job_file_present %}
+{% if job_file_present and not job.archived_job_file %}
 
 {% for tag in job.failure_tags.all %}
 {% if forloop.first %}
@@ -25,87 +237,122 @@ No log file yet.
 {% endfor %}
 
 {% if job.failure_comment %}
-<h2>Job failure comment</h2>
-<div id="dispatcher-error">
-<pre>{{ job.failure_comment }}</pre>
-</div>
+<h4 class="modal-header">Job failure comment</h4>
+<div class="alert alert-danger">{{ job.failure_comment }}</div>
 {% endif %}
 
-<h3 id="top">Dispatcher Log messages (file size = {{ job_file_size|filesizeformat }}) &nbsp;  &nbsp;
-    <a href="{% url lava.scheduler.job.log_file.plain job.pk %}">Download as text file</a>
-</h3>
-<a href="#bottom">Go to end of log file</a><br/><br/>
-<span class="logbuttons">
+{% if size_warning %}
+<div class="alert alert-warning" id="size-warning">
+<p><strong>This log file is too large to view</strong>, (over {{ size_warning|filesizeformat }} bytes).
+    It can only be downloaded.</p>
+</div>
+{% endif %}
+<h4 class="modal-header">Dispatcher Log messages (file size = {{ job_file_size|filesizeformat }}) <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h4>
+<a class="btn btn-sm btn-default" href="#bottom">End of log file <span class="glyphicon glyphicon-fast-forward"></span></a><br/><br/>
+
+<div class="btn-group" data-toggle="buttons" id="logbuttons">
 {% for level in levels %}
 {% if level.1 %}
-  <input type="checkbox" checked="checked" id="{{ level.0 }}"/><label for="{{ level.0 }}">{{ level.0 }}</label>
+  <label class="btn btn-primary" id="{{ level.0 }}_label" for="{{ level.0 }}"><input type="checkbox" id="{{ level.0 }}">{{ level.0 }}</label>
 {% else %}
-  <input type="checkbox" checked="checked" id="{{ level.0 }}" disabled="disabled"/><label for="{{ level.0 }}">{{ level.0 }}</label>
+  <label class="btn btn-primary disabled" id="{{ level.0 }}_label" for="{{ level.0 }}"><input type="checkbox" id="{{ level.0 }}">{{ level.0 }}</label>
 {% endif %}
 {% endfor %}
-</span>
+</div>
+
 <div id="log-messages">
-{% for log in job_log_messages %}
-<pre class="log {{log.0}} {{log.2}}">{{ log.1 }}</pre>
-{% endfor %}
-{% if job.status == job.RUNNING %}
-<img src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-progress.gif"/>
-{% endif %}
+  {% for log in job_log_messages %}
+    <code class="log {{log.0}} {{log.2}}">{{ log.1 }}</code>
+  {% endfor %}
+  {% if job.status == job.RUNNING %}
+  <img src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-progress.gif"/>
+  {% endif %}
 </div>
 {% else %}
-<p>
-Job file missing.
-</p>
+<h4 class="modal-header">Dispatcher Log messages</h4>
+<i>Job file missing.</i>
 {% endif %}
 {% endif %}
 
-</p><script type="text/javascript">
-$('.logbuttons input').button()
-function showHideLogClick () {
-  var rule = rules[$(this).attr('id')];
-  if ($(this).is(':checked')) {
-    rule.css('display', 'block');
-  } else {
-    rule.css('display', 'none');
-  }
-}
-$('.logbuttons input').click(showHideLogClick)
-var rules = {
-{% for level in levels %}
- {{ level.0 }}: $.rule('pre.{{ level.0 }} {}').appendTo('style'),
-{% endfor %}
-'': undefined
-}
+{% if job.status >= job.RUNNING and job_file_present and job_file_size > 0 and not job.archived_job_file %}
+<a class="btn btn-sm btn-default" id="bottom" href="#top"><span class="glyphicon glyphicon-fast-backward"></span> Start of log file</a>
+<br/><br/>
+<div class="row">
+  <div class="col-md-6">
+    <div class="row">
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+          <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition</a></li>
+        {% if job.is_multinode %}
+          <li><a href="{% url 'lava.scheduler.job.multinode_definition' job.pk %}" class="btn btn-info">Multinode Definition</a></li>
+        {% elif job.is_vmgroup %}
+           <li><a href="{% url 'lava.scheduler.job.vmgroup_definition' job.pk %}" class="btn btn-info">VMGroup Definition</a></li>
+        {% endif %}
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+        {% if job_file_present %}
+          <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}#bottom" class="btn btn-primary">Complete log</a></li>
+        {% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="row">
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+        {% if job.results_link %}
+          <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
+        {% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+
+{% block scripts %}
+<script type="text/javascript">
+  $("#logbuttons label").click(function(e) {
+    var label = e.target.htmlFor;
+    var input = $('input#' + label);
+    if (input.is(':checked')) {
+      $('code.log.' + label).css('display', 'block');
+    } else {
+      $('code.log.' + label).css('display', 'none');
+    }
+  });
 
 {% if job.status == job.RUNNING and job_file_present %}
 var pollTimer = null, logLenth = '{{ job_file_size }}';
 
 function poll (start) {
   $.ajax({
-    url: '{% url lava_scheduler_app.views.job_log_incremental pk=job.pk %}?start=' + logLenth,
+    url: '{% url 'lava_scheduler_app.views.job_log_incremental' pk=job.pk %}?start=' + logLenth,
     dataType: 'json',
     global: false,
     success: function (data, success, xhr) {
       var progressNode = $('#log-messages img');
       for (var i = 0; i < data.length; i++) {
           var d = data[i];
-          var node = $('<pre class="log"></pre>');
+          var node = $('<code class="log"></code>');
           node.addClass(d[0]);
           node.text(d[1]);
-          node.insertBefore(progressNode);
-          var toggleButton = $("#" + d[0]);
-          if (toggleButton.length) {
-                          console.log('a');
-              $("#" + d[0]).button('option', 'disabled', false);
-          } else {
-                          console.log('b');
-              var button = $('<input type="checkbox" checked="checked"/>').attr('id', d[0]);
-              var label = $('<label></label>').attr('for', d[0]).text(d[0]);
-              $('.logbuttons').append(button, label);
-              rules[d[0]] = $.rule('pre.'+d[0]+' {}').appendTo('style'),
-              button.button();
-              button.click(showHideLogClick);
+
+          // if the button is checked we should hide the new elements
+          var button = $('input#' + d[0]);
+          if (button.is(':checked')) {
+            node.css('display', 'none');
           }
+          node.insertBefore(progressNode);
+
+          // Activate the label if needed
+          var label = $('label#' + d[0] + '_label');
+          label.removeClass('disabled');
       }
       logLenth = xhr.getResponseHeader('X-Current-Size');
       if (xhr.getResponseHeader('X-Is-Finished')) {
@@ -123,15 +370,4 @@ pollTimer = setTimeout(poll, 1000);
 );
 {% endif %}
 </script>
-[ <a id="bottom" href="#top">Go to start of log file</a> ]
-{% if job_file_present %}
-[ <a href="{% url lava.scheduler.job.log_file job.pk %}">Complete log</a> ]
-{% endif %}
-[ <a href="{% url lava.scheduler.job.definition job.pk %}">Definition</a> ]
-{% if job.is_multinode %}
-[ <a href="{% url lava.scheduler.job.multinode_definition job.pk %}"> Multinode Definition</a> ]
-{% endif %}
-{% if job.results_link %}
-[ <a href="{{ job.results_link }}">Results Bundle</a> ]
-{% endif %}
-{% endblock %}
+{% endblock scripts %}

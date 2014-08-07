@@ -6,14 +6,12 @@ in https://git.linaro.org/gitweb/?s=lava%2F Launchpad is used for bug
 management.
 
 Most of the work is done by the members of the Linaro Validation Team
-(you can learn more about this team, in particular here:
-http://www.linaro.org/linux-on-arm/meet-the-team/lava-team). Having
-said that, the code is free and open source software, we welcome third
+The code is free and open source software, we welcome third
 party contributions and new team members.
 
 Our team is spread geographically around the world, with some members in
 Europe, America, Asia and Oceania. We are usually talking on our IRC channel
-#linaro-lava.
+#linaro-lava on irc.freenode.net.
 
 
 Release process

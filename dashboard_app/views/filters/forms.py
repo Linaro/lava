@@ -44,21 +44,6 @@ class TestRunFilterSubscriptionForm(forms.ModelForm):
         self.instance.filter = filter
         self.instance.user = user
 
-test_run_filter_head = '''
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/filter-edit.css" />
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/wider-filter-horizontal.css" />
-<script type="text/javascript" src="{% url admin:jsi18n %}"></script>
-<script type="text/javascript">
-var django = {};
-django.jQuery = $;
-var test_case_url = "{% url dashboard_app.views.filters.views.filter_add_cases_for_test_json %}?test=";
-var attr_name_completion_url = "{% url dashboard_app.views.filters.views.filter_attr_name_completion_json %}";
-var attr_value_completion_url = "{% url dashboard_app.views.filters.views.filter_attr_value_completion_json %}";
-</script>
-<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/jquery.formset.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/filter-edit.js"></script>
-'''
-
 
 class AttributesForm(forms.Form):
     name = forms.CharField(max_length=1024)
@@ -149,10 +134,7 @@ class TestRunFilterForm(forms.ModelForm):
 
     @property
     def media(self):
-        super_media = str(super(TestRunFilterForm, self).media)
-        return mark_safe(Template(test_run_filter_head).render(
-            Context({'STATIC_URL': settings.STATIC_URL})
-        )) + super_media
+        return str(super(TestRunFilterForm, self).media)
 
     def validate_name(self, value):
         self.instance.name = value
@@ -208,6 +190,7 @@ class TestRunFilterForm(forms.ModelForm):
         return data
 
     def __init__(self, user, *args, **kwargs):
+        is_copy = kwargs.pop('is_copy', None)
         super(TestRunFilterForm, self).__init__(*args, **kwargs)
         self.instance.owner = user
         kwargs.pop('instance', None)
@@ -235,6 +218,12 @@ class TestRunFilterForm(forms.ModelForm):
             tests_set_args['initial'] = initial
         tests_set_args['prefix'] = 'tests'
         self.tests_formset = TRFTestsFormSet(*args, **tests_set_args)
+
+        if is_copy:
+            from copy import deepcopy
+            self.instance = deepcopy(self.instance)
+            self.instance.id = None
+            self.instance.pk = None
 
         self.fields['bundle_streams'].queryset = \
             BundleStream.objects.accessible_by_principal(user).order_by('pathname')

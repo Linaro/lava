@@ -92,7 +92,7 @@ class PublicFiltersView(FilterView):
 
 @BreadCrumb("Filters and Subscriptions", parent=index)
 def filters_list(request):
-    public_view = PublicFiltersView(None, model=TestRunFilter, table_class=PublicFiltersTable)
+    public_view = PublicFiltersView(request, model=TestRunFilter, table_class=PublicFiltersTable)
     prefix = "public_"
     public_filters_table = PublicFiltersTable(
         public_view.get_table_data(prefix),
@@ -143,7 +143,7 @@ def filter_name_list_json(request):
             {"id": filter.id,
              "name": filter.name,
              "label": filter.owner_name})
-    return HttpResponse(json.dumps(filters), mimetype='application/json')
+    return HttpResponse(json.dumps(filters), content_type='application/json')
 
 
 class FilterDetailView(LavaView):
@@ -235,13 +235,14 @@ def filter_subscribe(request, username, name):
     )
 
 
-def filter_form(request, bread_crumb_trail, instance=None):
+def filter_form(request, bread_crumb_trail, instance=None, is_copy=False):
     if request.method == 'POST':
         if instance:
             owner = instance.owner
         else:
             owner = request.user
-        form = TestRunFilterForm(owner, request.POST, instance=instance)
+        form = TestRunFilterForm(owner, request.POST, instance=instance,
+                                 is_copy=is_copy)
 
         if form.is_valid():
             if 'save' in request.POST:
@@ -263,12 +264,20 @@ def filter_form(request, bread_crumb_trail, instance=None):
                         'table': table,
                     }, RequestContext(request))
     else:
-        form = TestRunFilterForm(request.user, instance=instance)
+        form = TestRunFilterForm(request.user, instance=instance,
+                                 is_copy=is_copy)
+
+    filter_name = None
+    if is_copy:
+        filter_name = instance.name
+        instance.name = None
 
     return render_to_response(
         'dashboard_app/filter_add.html', {
             'bread_crumb_trail': bread_crumb_trail,
             'form': form,
+            'is_copy': is_copy,
+            'filter_name': filter_name,
         }, RequestContext(request))
 
 
@@ -280,7 +289,7 @@ def filter_add(request):
         BreadCrumbTrail.leading_to(filter_add))
 
 
-@BreadCrumb("Edit", parent=filter_detail, needs=['name', 'username'])
+@BreadCrumb("Edit", parent=filter_detail, needs=['username', 'name'])
 def filter_edit(request, username, name):
     if not request.user.is_superuser:
         if request.user.username != username:
@@ -290,6 +299,20 @@ def filter_edit(request, username, name):
         request,
         BreadCrumbTrail.leading_to(filter_edit, name=name, username=username),
         instance=filter)
+
+
+@BreadCrumb("Copy", parent=filter_detail, needs=['username', 'name'])
+def filter_copy(request, username, name):
+    filter = TestRunFilter.objects.get(owner__username=username, name=name)
+    if not request.user.is_superuser:
+        if not filter.public and filter.owner != request.user:
+            raise PermissionDenied()
+
+    return filter_form(
+        request,
+        BreadCrumbTrail.leading_to(filter_copy, name=name, username=username),
+        instance=filter,
+        is_copy=True)
 
 
 @BreadCrumb("Delete", parent=filter_detail, needs=['name', 'username'])
@@ -316,7 +339,7 @@ def filter_add_cases_for_test_json(request):
     result = TestCase.objects.filter(test=test).order_by('test_case_id').values('test_case_id', 'id')
     return HttpResponse(
         json.dumps(list(result)),
-        mimetype='application/json')
+        content_type='application/json')
 
 
 def get_tests_json(request):
@@ -325,7 +348,7 @@ def get_tests_json(request):
         test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id']).distinct('test_id').order_by('test_id')
 
     data = serializers.serialize('json', tests)
-    return HttpResponse(data, mimetype='application/json')
+    return HttpResponse(data, content_type='application/json')
 
 
 def get_test_cases_json(request):
@@ -335,7 +358,7 @@ def get_test_cases_json(request):
         test__id=request.GET['test_id']).exclude(units__exact='').distinct('test_case_id').order_by('test_case_id')
 
     data = serializers.serialize('json', test_cases)
-    return HttpResponse(data, mimetype='application/json')
+    return HttpResponse(data, content_type='application/json')
 
 
 def filter_attr_name_completion_json(request):
@@ -346,7 +369,7 @@ def filter_attr_name_completion_json(request):
         content_type_id=content_type_id).distinct().order_by('name').values_list('name', flat=True)
     return HttpResponse(
         json.dumps(list(result)),
-        mimetype='application/json')
+        content_type='application/json')
 
 
 def filter_attr_value_completion_json(request):
@@ -358,7 +381,7 @@ def filter_attr_value_completion_json(request):
         value__startswith=term).distinct().order_by('value').values_list('value', flat=True)
     return HttpResponse(
         json.dumps(list(result)),
-        mimetype='application/json')
+        content_type='application/json')
 
 
 def _iter_matching(seq1, seq2, key):

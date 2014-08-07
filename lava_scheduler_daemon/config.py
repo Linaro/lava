@@ -2,7 +2,7 @@ from ConfigParser import ConfigParser
 import os
 from StringIO import StringIO
 
-#from xdg.BaseDirectory import load_config_paths
+# from xdg.BaseDirectory import load_config_paths
 
 defaults = {
     'logging': StringIO(

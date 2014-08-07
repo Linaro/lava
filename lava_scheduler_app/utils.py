@@ -20,6 +20,7 @@
 import os
 import re
 import copy
+import uuid
 import socket
 import urlparse
 import simplejson
@@ -30,6 +31,7 @@ import datetime
 from collections import OrderedDict
 
 from django.contrib.sites.models import Site
+from django.core.exceptions import ImproperlyConfigured
 
 from lava_server.settings.getsettings import Settings
 from lava_server.settings.config_file import ConfigFile
@@ -139,6 +141,96 @@ def split_multi_job(json_jobdata, target_group):
             if json_jobdata.get("priority", False):
                 node_json[role][c]["priority"] = json_jobdata["priority"]
             node_json[role][c]["device_type"] = clients["device_type"]
+
+    return node_json
+
+
+def split_vm_job(json_jobdata, vm_group):
+    node_json = {}
+    all_nodes = {}
+    node_actions = {}
+    vms_list = []
+
+    # Check if we are operating on vm_group job data. Else return the job
+    # data as it is.
+    if "vm_group" in json_jobdata and vm_group:
+        pass
+    else:
+        raise Exception('Invalid vm_group data')
+
+    # Get the VM host details.
+    device_type = json_jobdata['vm_group']['host']['device_type']
+    role = json_jobdata['vm_group']['host']['role']
+    is_vmhost = True
+    auto_start_vms = None
+    if 'auto_start_vms' in json_jobdata['vm_group']:
+        auto_start_vms = json_jobdata['vm_group']['auto_start_vms']
+    vms_list.append((device_type, role, 1, is_vmhost))  # where 1 is the count
+
+    # Get all other constituting VMs.
+    for vm in json_jobdata['vm_group']['vms']:
+        device_type = vm['device_type']
+        count = int(vm.get('count', 1))
+        role = vm.get('role', None)
+        is_vmhost = False
+        vms_list.append((device_type, role, count, is_vmhost))
+
+    # get all the roles and create node action list for each role.
+    for vm in vms_list:
+        node_actions[vm[1]] = []
+
+    # Take each action and assign it to proper roles. If roles are not
+    # specified for a specific action, then assign it to all the roles.
+    all_actions = json_jobdata["actions"]
+    for role in node_actions.keys():
+        for action in all_actions:
+            new_action = copy.deepcopy(action)
+            if 'parameters' in new_action \
+                    and 'role' in new_action["parameters"]:
+                if new_action["parameters"]["role"] == role:
+                    new_action["parameters"].pop('role', None)
+                    node_actions[role].append(new_action)
+            else:
+                node_actions[role].append(new_action)
+
+    group_count = 0
+    for vm in vms_list:
+        group_count += int(vm[2])
+
+    group_counter = group_count
+    for vm in vms_list:
+        role = vm[1]
+        count = int(vm[2])
+        node_json[role] = []
+        is_vmhost = vm[3]
+        for c in range(0, count):
+            node_json[role].append({})
+            node_json[role][c]["timeout"] = json_jobdata["timeout"]
+            node_json[role][c]["is_vmhost"] = is_vmhost
+            if auto_start_vms is not None:
+                node_json[role][c]["auto_start_vms"] = auto_start_vms
+            if json_jobdata.get("job_name", False):
+                node_json[role][c]["job_name"] = json_jobdata["job_name"]
+            node_json[role][c]["group_size"] = group_count
+            node_json[role][c]["target_group"] = vm_group
+            node_json[role][c]["actions"] = node_actions[role]
+            node_json[role][c]["role"] = role
+            # vm_group node stage 2
+            if json_jobdata.get("logging_level", False):
+                node_json[role][c]["logging_level"] = \
+                    json_jobdata["logging_level"]
+            if json_jobdata.get("priority", False):
+                node_json[role][c]["priority"] = json_jobdata["priority"]
+            if is_vmhost:
+                node_json[role][c]["device_type"] = vm[0]
+            else:
+                node_json[role][c]["device_type"] = "dynamic-vm"
+                node_json[role][c]["config"] = {
+                    "device_type": "dynamic-vm",
+                    "dynamic_vm_backend_device_type": vm[0],
+                }
+                node_json[role][c]["target"] = 'vm%d' % group_counter
+        group_counter -= 1
 
     return node_json
 
@@ -255,6 +347,8 @@ def local_diffstat(prefix):
     diffstat = {}
 
     local_buildout_path = os.path.join(prefix, 'code/current/local')
+    if not os.path.exists(local_buildout_path):
+        return diffstat
     for d in os.listdir(local_buildout_path):
         diffstat_cmd = "cd %s; git diff | diffstat;" % \
             os.path.join(local_buildout_path, d)
@@ -292,3 +386,39 @@ def get_software_info():
         sw_info.update(local_diffstat(prefix))
 
     return simplejson.dumps(format_sw_info_to_html(sw_info))
+
+
+def get_heartbeat_timeout():
+    """Returns the HEARTBEAT_TIMEOUT value specified in worker.conf
+
+    If there is no value found, we return a default timeout value 300.
+    """
+    settings = Settings("lava-server")
+    worker_config_path = settings._get_pathname("worker")
+    try:
+        worker_config = ConfigFile.load(worker_config_path)
+        if worker_config and worker_config.HEARTBEAT_TIMEOUT != '':
+            return int(worker_config.HEARTBEAT_TIMEOUT)
+        else:
+            return 300
+    except (IOError, AttributeError):
+        return 300
+
+
+# Private variable to record scheduler tick, which shouldn't be accessed from
+# other modules, except via the following APIs.
+__last_scheduler_tick = datetime.datetime.utcnow()
+
+
+def record_scheduler_tick():
+    """Records the scheduler tick timestamp in the global variable
+    __last_scheduler_tick
+    """
+    global __last_scheduler_tick
+    __last_scheduler_tick = datetime.datetime.utcnow()
+
+
+def last_scheduler_tick():
+    """Returns datetime.dateime object of last scheduler tick timestamp.
+    """
+    return __last_scheduler_tick

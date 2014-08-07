@@ -1,7 +1,7 @@
 #!/bin/sh
 ### BEGIN INIT INFO
 # Provides:          lava-server
-# Required-Start:    $network $remote_fs
+# Required-Start:    $network $remote_fs postgresql
 # Required-Stop:     $remote_fs
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
@@ -11,8 +11,11 @@
 
 # Author: Neil Williams <codehelp@debian.org>
 
+# example command:
+# /usr/bin/lava-daemon manage --instance-template=/etc/lava-server/{{filename}}.conf --instance=default scheduler --logfile /var/log/lava-server/lava-scheduler.log --loglevel=info
+. /etc/lava-server/instance.conf
 INST_TMPL="--instance-template=/etc/lava-server/{{filename}}.conf"
-INSTANCE="--instance=default"
+INSTANCE="--instance=$LAVA_INSTANCE"
 LOGFILE="--logfile /var/log/lava-server/lava-scheduler.log"
 LOGLEVEL="--loglevel=info"
 
@@ -48,6 +51,8 @@ do_start()
 	#   1 if daemon was already running
 	#   2 if daemon could not be started
 	unset VIRTUAL_ENV
+	# on master, this is a no-op. on a worker, refresh the sshfs mount
+	lava-mount-masterfs || true
 	/sbin/start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --test > /dev/null \
 		|| return 1
 	/sbin/start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON -- \
@@ -97,6 +102,8 @@ do_reload() {
 	# restarting (for example, when it is sent a SIGHUP),
 	# then implement that here.
 	#
+	# on master, this is a no-op. on a worker, refresh the sshfs mount
+	lava-mount-masterfs || true
 	start-stop-daemon --stop --signal 1 --quiet --pidfile $PIDFILE --name $NAME
 	return 0
 }

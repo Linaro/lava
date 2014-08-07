@@ -71,7 +71,7 @@ repository::
 .. note:: Only if the test definition is referred from a URL the
           version parameter should be explicit.
 
-.. _lava_test_shell_setx
+.. _lava_test_shell_setx:
 
 How a lava test shell is run
 ----------------------------
@@ -124,16 +124,20 @@ measurement`_.
 lava-test-case
 --------------
 
-lava-test-case records the results of a single test case.  For example::
+lava-test-case records the results of a single test case. For example::
 
   steps:
     - "lava-test-case simpletestcase --result pass"
+    - "lava-test-case fail-test --shell false"
 
 It has two forms.  One takes arguments to describe the outcome of the
 test case and the other takes the shell command to run -- the exit
 code of this shell command is used to produce the test result.
 
 Both forms take the name of the testcase as the first argument.
+
+Specifying results directly
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The first form takes these additional arguments:
 
@@ -145,34 +149,76 @@ The first form takes these additional arguments:
 
   run:
     steps:
+      - "lava-test-case simpletestcase --result pass"
       - "lava-test-case bottle-count --result pass --measurement 99 --units bottles"
 
-:ref:`custom_scripts` allows preparation of LAVA results from other
-sources, complete with measurements by calling ``lava-test-case``
-from scripts executed in the YAML file::
+If ``--measurement`` is used, ``--units`` must also be specified, even
+if the unit is just a count.
+
+The most useful way to produce output for ``lava-test-case result`` is
+:ref:`custom_scripts` which allow preparation of LAVA results from other
+sources, complete with measurements. This involves calling ``lava-test-case``
+from scripts executed by the YAML file::
 
  #!/usr/bin/env python
 
  from subprocess import call
 
+
+ def test_case():
+     """
+     Calculate something based on a test
+     and return the data
+     """
+     return {"name": "test-rate", "result": "pass",
+         "units": "Mb/s", "measurement": 4.23}
+
+
  def main():
+     data = test_case()
      call(
          ['lava-test-case',
-          'bottle-count',
-          '--result', 'pass',
-          '--measurement', '99',
-          '--units', 'bottles'])
+          data['name'],
+          '--result', data['result'],
+          '--measurement', data['measurement'],
+          '--units', data['units']])
      return 0
 
  if __name__ == '__main__':
      main()
 
-The second form is indicated by the --shell argument, for example::
+The custom scripts themselves can be called from a ``lava-test-case``
+using the ``--shell`` command to test whether failures from the tests
+caused a subsequent failure in the custom script.
+
+Using the exit status of a command
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The second form of ``lava-test-case`` is indicated by the ``--shell``
+argument, for example::
 
   run:
     steps:
       - "lava-test-case fail-test --shell false"
       - "lava-test-case pass-test --shell true"
+
+The result of a ``shell`` call will only be recorded as a pass or fail,
+dependent on the exit code of the command. The output of the command
+can, however, be parsed as a separate result if the command produces
+output suitable for the parser in the YAML::
+
+ run:
+    steps:
+    - lava-test-case echo2 --shell echo "test2b:" "fail"
+ parse:
+    pattern: "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
+
+This example generates **two** test results to indicate that the
+shell command executed correctly but that the result of that
+execution was a fail::
+
+#. **echo2** - pass
+#. **test2b** - fail
 
 The --shell form also sends the start test case and end test case
 signals that are described in `hooks, signals and external
@@ -211,6 +257,7 @@ The arguments are:
  2. (optional) the MIME type of the file (if no MIME type is passed, a
     guess is made based on the filename)
 
+.. _handling_dependencies:
 
 Handling Dependencies (Ubuntu)
 ==============================
@@ -222,6 +269,11 @@ express that in the ``install`` section with::
       deps:
           - linux-libc-dev
           - build-essential
+
+Installation of packages can be skipped by specifying ``"skip_install": "deps"``
+parameter in the JSON job definition :ref:`lava_test_shell_parameters`.
+
+.. _adding_repositories:
 
 Adding Git/BZR Repositories
 ===========================
@@ -242,6 +294,9 @@ data on your behalf with::
 
 This repository information will also be added to resulting bundle's software
 context when the results are submitted to the LAVA dashboard.
+
+Cloning of the repositories can be skipped by specifying ``"skip_install": "repos"``
+parameter in the JSON job definition :ref:`lava_test_shell_parameters`.
 
 default parameters
 ==================
@@ -283,14 +338,14 @@ is not defined in the JSON snippet, so the default would be used.
 
 .. note:: The format of default parameters in yaml file is below, please note that
           there is **not** a hyphen at the start of the line and **not** quotes
-          around either the variable name or the variable value ::
+          around either the variable name or the variable value::
 
-          VARIABLE_NAME_1: value_1
+            VARIABLE_NAME_1: value_1
 
 .. note:: The code which implements this parameter function will put variable
           name and value at the head of test shell script like below::
 
-          VARIABLE_NAME_1='value_1'
+            VARIABLE_NAME_1='value_1'
 
 So please make sure you didn't put any special character(like single quote) into value or
 variable name. But Spaces and double quotes can be included in value.
@@ -303,6 +358,8 @@ Examples:
 http://git.linaro.org/people/neil.williams/temp-functional-tests.git/blob/HEAD:/kvm-parameters.json
 
 http://git.linaro.org/people/neil.williams/temp-functional-tests.git/blob/HEAD:/params.yaml
+
+.. _install_steps:
 
 Install Steps
 =============
@@ -318,6 +375,9 @@ you could do::
       steps:
           - cd lt_ti_lava
           - make
+
+Running installation steps can be skipped by specifying ``"skip_install": "steps"``
+parameter in the JSON job definition :ref:`lava_test_shell_parameters`.
 
 .. note:: The repo steps are done in the dispatcher itself. The install steps
           are run directly on the target.

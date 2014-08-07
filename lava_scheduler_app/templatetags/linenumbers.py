@@ -16,26 +16,17 @@ class LineNumbers(template.Node):
         text = self.text.resolve(context)
         prefix = self.prefix.resolve(context)
         style = self.style.resolve(context)
-        ret = "<table><tr><td>"
-        for i in range(0, len(text.splitlines())):
-            name = "L_%s_%s" % (prefix, i)
-            if (i == 0):
-                display = "Section %s" % (prefix)
-            else:
-                display = "%s.%s" % (prefix, i)
-            ret += "<div class=\"line\"><a name=\"%s\"></a> \
-                <a href=\"#%s\">%s</a></div>" % (name, name, display)
 
-        ret += "</td><td class=\"code\"><div class=\"containter\"> \
-            <pre class=\"log_%s\">" % (style)
-
+        ret = "<div>\n"
         for index, line in enumerate(text.splitlines()):
-            ret += "<div id=\"L_%s_%s\" class=\"line\"> &nbsp;%s</div>" % \
-                (prefix,
-                 index,
+            name = "L_%s_%s" % (prefix, index)
+            display = "%s.%s" % (prefix, index)
+
+            ret += "<code id=\"L_%s_%s\" class=\"line %s\"><a href=\"#%s\">%s</a> &nbsp;%s</code>\n" % \
+                (prefix, index, style, name, display,
                  mark_safe(escape(line).encode('ascii', 'xmlcharrefreplace')))
 
-        ret += "</pre></div></td><tr></table>"
+        ret += "</div>"
 
         return ret
 

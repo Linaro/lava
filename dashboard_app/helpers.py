@@ -339,6 +339,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                 """
                 INSERT INTO dashboard_app_testresult (
                     test_run_id,
+                    _order,
                     relative_index,
                     timestamp,
                     microseconds,
@@ -349,6 +350,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                     test_case_id,
                     lineno
                 ) SELECT
+                    %s,
                     %s,
                     relative_index,
                     timestamp,
@@ -363,7 +365,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                       WHERE dashboard_app_testcase.test_id = %s
                         AND dashboard_app_testcase.test_case_id
                           = newtestresults.test_case_id
-                """ % (s_test_run.id, s_test_run.test.id))
+                """ % (s_test_run.id, 0, s_test_run.test.id))
 
             cursor.execute(
                 """
@@ -395,9 +397,12 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
 
         for index, c_test_result in enumerate(c_test_run.get("test_results", []), 1):
             if c_test_result.get("attributes", {}):
-                s_test_result = TestResult.objects.get(
-                    relative_index=index, test_run=s_test_run)
-                self._import_attributes(c_test_result, s_test_result)
+                try:
+                    s_test_result = TestResult.objects.get(
+                        relative_index=index, test_run=s_test_run)
+                    self._import_attributes(c_test_result, s_test_result)
+                except TestResult.DoesNotExist:
+                    continue
         self._log('test result attributes')
 
     def _import_test_cases_sqlite(self, c_test_results, s_test):
@@ -738,9 +743,12 @@ class BundleFormatImporter_1_5(BundleFormatImporter_1_4):
         super(BundleFormatImporter_1_5, self)._import_test_results(c_test_run, s_test_run)
         for index, c_test_result in enumerate(c_test_run.get("test_results", []), 1):
             if c_test_result.get("attachments", {}):
-                s_test_result = TestResult.objects.get(
-                    relative_index=index, test_run=s_test_run)
-                self._import_test_result_attachments(c_test_result, s_test_result)
+                try:
+                    s_test_result = TestResult.objects.get(
+                        relative_index=index, test_run=s_test_run)
+                    self._import_test_result_attachments(c_test_result, s_test_result)
+                except TestResult.DoesNotExist:
+                    continue
 
 
 class BundleFormatImporter_1_6(BundleFormatImporter_1_5):

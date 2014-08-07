@@ -1,4 +1,4 @@
-{% extends "lava_scheduler_app/job_sidebar.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 
 {% block content %}
 <h2>Annotate Job Failure - {{ job.id }} </h2>
@@ -8,9 +8,20 @@
 {{ form.errors }}
 {% endif %}
 
-<form action="{% url lava.scheduler.job.annotate_failure job.pk %}" method="post">
-{% csrf_token %}
-{{ form.as_p }}
-<input type="submit" value="Submit" />
+<form action="{% url 'lava.scheduler.job.annotate_failure' job.pk %}" method="post" class="form-horizontal">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="id_failure_tags" class="col-sm-2 control-label">Tags</label>
+    <div class="col-sm-10">
+      {{ form.failure_tags }}
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="id_failure_comment" class="col-sm-2 control-label">Comment</label>
+    <div class="col-sm-10">
+      {{ form.failure_comment }}
+    </div>
+  </div>
+  <button type="submit" class="btn btn-success">Submit</button>
 </form>
 {% endblock %}

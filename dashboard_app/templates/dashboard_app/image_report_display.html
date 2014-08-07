@@ -1,47 +1,58 @@
-{% extends "dashboard_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
+
 {% load i18n %}
 {% load keep_spacing %}
 
-{% block extrahead %}
-{{ block.super }}
+{% block styles %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
-<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/image-chart.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.min.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.canvas.min.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.dashes.min.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.axislabels.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.time.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.tooltip.min.js"></script>
-
-<script language="javascript">
-  chart_data = $.parseJSON($('<div/>').html('{{chart_data}}').text());
-  csrf_token = '{{csrf_token}}';
-  image_url = '{{ STATIC_URL }}dashboard_app/images/';
-  del_bug_url = '{% url dashboard_app.views.images.unlink_bug_and_testrun %}';
-  chartid = '{{ bug_links_chart_id }}';
-</script>
 {% endblock %}
 
 {% block content %}
 
 <h1>Image Report {{ image_report.name }}</h1>
 
+{% if image_report.image_report_group %}
+Report Group:&nbsp;&nbsp;<a href="{% url 'dashboard_app.views.image_reports.views.image_report_list' %}#{{ image_report.image_report_group|iriencode }}">{{ image_report.image_report_group }}</a>
+{% endif %}
 {{ image_report.description|keep_spacing|linebreaks }}
 
 <div id="main_container">
 </div>
 
 <form method="POST"
-      action="{% url dashboard_app.views.images.link_bug_to_testrun %}"
+      action="{% url 'dashboard_app.views.link_bug_to_testrun' %}"
       id="add-bug-dialog" style="display: none">
   {% csrf_token %}
   <input type="hidden" name="back" value="{{ request.path }}"/>
   <input type="hidden" name="uuid"/>
+  <input type="hidden" name="relative_index"/>
   <div class="linked" style="display:none"></div>
   <div class="prev" style="display:none">
     XXX
   </div>
   <input name="bug_link" style="width: 100%"/>
 </form>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ STATIC_URL }}dashboard_app/js/image-chart.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.canvas.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.dashes.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.axislabels.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.time.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.labels.js"></script>
+
+<script>
+  chart_data = $.parseJSON($('<div/>').html('{{chart_data}}').text());
+  csrf_token = '{{csrf_token}}';
+  image_url = '{{ STATIC_URL }}dashboard_app/images/';
+  testrun_unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testrun' %}';
+  testrun_link_bug_url = '{% url 'dashboard_app.views.link_bug_to_testrun' %}';
+  testresult_unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testresult' %}';
+  testresult_link_bug_url = '{% url 'dashboard_app.views.link_bug_to_testresult' %}';
+  buglinks_chartid = '{{ bug_links_chart_id }}';
+</script>
 
 {% endblock %}

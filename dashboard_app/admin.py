@@ -51,6 +51,24 @@ from dashboard_app.models import (
 )
 
 
+class AttachmentAdmin(admin.ModelAdmin):
+    def bundle_stream(self, attachment):
+        return attachment.bundle.bundle_stream.pathname
+
+    def uploaded_by(self, attachment):
+        return attachment.bundle.bundle_stream.slug
+
+    list_display = ('content_filename', 'bundle', 'bundle_stream', 'uploaded_by', 'mime_type')
+    list_filter = ('mime_type',)
+    fieldsets = (
+        ('Attachment Properties', {
+            'fields': ('content', 'content_filename', 'mime_type',
+                       'public_url')}),
+        ('Content Type Plumbing', {
+            'fields': ('content_type', 'object_id')}),
+    )
+
+
 class BundleAdmin(admin.ModelAdmin):
 
     def bundle_stream_pathname(self, bundle):
@@ -131,6 +149,7 @@ class BundleStreamAdmin(admin.ModelAdmin):
 class SoftwarePackageAdmin(admin.ModelAdmin):
     list_display = ('name', 'version')
     search_fields = ('name', 'version')
+    ordering = ('name',)
 
 
 class SoftwareSourceAdmin(admin.ModelAdmin):
@@ -152,18 +171,28 @@ class HardwareDeviceAdmin(admin.ModelAdmin):
 class TestCaseAdmin(admin.ModelAdmin):
     list_display = ('test_case_id', 'test',)
     list_filter = ('test',)
+    ordering = ('test_case_id',)
 
 
 class TestAdmin(admin.ModelAdmin):
-    pass
+    ordering = ('test_id',)
 
 
 class TestResultAdmin(admin.ModelAdmin):
     class NamedAttributeInline(generic.GenericTabularInline):
         model = NamedAttribute
-    list_display = ('__unicode__', 'test', 'test_case', 'result', 'measurement')
+    list_display = ('__unicode__', 'test', 'test_case', 'result',
+                    'measurement')
     list_filter = ('test_case', 'result')
     inlines = [NamedAttributeInline]
+    fieldsets = (
+        ('Test Result', {
+            'fields': ('test_run', 'test_case', 'result',
+                       'measurement')}),
+        ('Miscellaneous', {
+            'fields': ('comments', 'filename', 'lineno', 'message',
+                       'microseconds', 'relative_index', 'timestamp')}),
+    )
 
 
 class TestRunAdmin(admin.ModelAdmin):
@@ -177,6 +206,14 @@ class TestRunAdmin(admin.ModelAdmin):
         'analyzer_assigned_date',
         'import_assigned_date')
     inlines = [NamedAttributeInline]
+    fieldsets = (
+        ('Test Run', {
+            'fields': ('bundle', 'test')}),
+        ('Miscellaneous', {
+            'fields': ('analyzer_assigned_date', 'analyzer_assigned_uuid',
+                       'devices', 'microseconds', 'sw_image_desc', 'packages',
+                       'sources', 'tags', 'time_check_performed')}),
+    )
 
 
 class ImageAdmin(admin.ModelAdmin):
@@ -198,6 +235,14 @@ class BugLinkAdmin(admin.ModelAdmin):
 
 class TestRunFilterAdmin(admin.ModelAdmin):
     filter_horizontal = ['bundle_streams']
+    list_display = ('__str__', 'name', 'owner', 'public')
+    list_filter = ('owner',)
+    fieldsets = (
+        ('Test Run Filter', {
+            'fields': ('name', 'bundle_streams', 'owner')}),
+        ('Miscellaneous', {
+            'fields': ('build_number_attribute', 'public', 'uploaded_by')}),
+    )
 
     class TestRunFilterAttributeInline(admin.TabularInline):
         model = TestRunFilterAttribute
@@ -205,10 +250,25 @@ class TestRunFilterAdmin(admin.ModelAdmin):
     save_as = True
 
 
-class TestDefinitionAdmin(admin.ModelAdmin):
-    list_display = ('name', 'version')
+class TestRunFilterSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ('user', 'filter', 'level')
+    list_filter = ('user', 'level')
 
-admin.site.register(Attachment)
+
+class TestDefinitionAdmin(admin.ModelAdmin):
+    list_display = ('name', 'version', 'location')
+    ordering = ('name',)
+    fieldsets = (
+        ('Test Definition Basic Information', {
+            'fields': ('name', 'description', 'format')}),
+        ('Source Information', {
+            'fields': ('location', 'url', 'version')}),
+        ('Metadata', {
+            'fields': ('target_dev_types', 'environment', 'mime_type',
+                       'target_os', 'content')}),
+    )
+
+admin.site.register(Attachment, AttachmentAdmin)
 admin.site.register(Bundle, BundleAdmin)
 admin.site.register(BundleDeserializationError, BundleDeserializationErrorAdmin)
 admin.site.register(BundleStream, BundleStreamAdmin)
@@ -224,6 +284,6 @@ admin.site.register(TestCase, TestCaseAdmin)
 admin.site.register(TestResult, TestResultAdmin)
 admin.site.register(TestRun, TestRunAdmin)
 admin.site.register(TestRunFilter, TestRunFilterAdmin)
-admin.site.register(TestRunFilterSubscription)
+admin.site.register(TestRunFilterSubscription, TestRunFilterSubscriptionAdmin)
 admin.site.register(Tag)
 admin.site.register(TestDefinition, TestDefinitionAdmin)

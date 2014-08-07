@@ -97,14 +97,16 @@ class FilterMatch(object):
     Returned by TestRunFilter.matches_against_bundle and evaluate_filter.
     """
 
-    filter = None  # The model representation of the filter (this is only set
-                  # by matches_against_bundle)
+    # filter is the model representation of the filter (this is only set
+    # by matches_against_bundle)
+    filter = None
     filter_data = None  # The in-memory representation of the filter.
     tag = None  # either a date (bundle__uploaded_on) or a build number
 
-    test_runs = None  # Will be all test runs from the bundle if
-                      # filter_data['tests'] is empty, will just be the test
-                      # runs with matching tests if not.
+    # test_runs will be all test runs from the bundle if
+    # filter_data['tests'] is empty, will just be the test
+    # runs with matching tests if not.
+    test_runs = None
 
     specific_results = None  # Will stay none unless filter specifies a test case
 
@@ -214,7 +216,7 @@ class MatchMakingQuerySet(object):
     """Wrap a QuerySet and construct FilterMatchs from what the wrapped query
     set returns.
 
-    Just enough of the QuerySet API to work with DataTable (i.e. pretend
+    Just enough of the QuerySet API to work with Django Tables (i.e. pretend
     ordering and real slicing)."""
 
     model = TestRun
@@ -262,7 +264,7 @@ class MatchMakingQuerySet(object):
             results_by_id = {}
             for result in TestResult.objects.filter(
                     id__in=list(result_ids)).select_related(
-                    'test', 'test_case', 'test_run__bundle__bundle_stream'):
+                    'test_run__test', 'test_case', 'test_run__bundle__bundle_stream').prefetch_related(*self.prefetch_related):
                 results_by_id[result.id] = result
 
             for tr_id, result_ids in result_ids_by_tr_id.items():
@@ -406,8 +408,8 @@ def evaluate_filter(user, filter_data, prefetch_related=[], descending=True):
             attributes__name=filter_data['build_number_attribute'])\
             .extra(
                 select={'build_number': 'convert_to_integer("dashboard_app_namedattribute"."value")', },
-                where=['convert_to_integer("dashboard_app_namedattribute"."value") IS NOT NULL']
-            ).extra(order_by=ob,).values('build_number').annotate(ArrayAgg('id'))
+                where=['convert_to_integer("dashboard_app_namedattribute"."value") IS NOT NULL'])\
+            .extra(order_by=ob,).values('build_number').annotate(ArrayAgg('id'))
     else:
         if descending:
             ob = '-bundle__uploaded_on'

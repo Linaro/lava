@@ -1,3 +1,7 @@
+beautify_options = {
+    "brace_style": "expand"
+}
+
 $(window).ready(
     function () {
         $("#json-input").linedtextarea();
@@ -25,7 +29,7 @@ validate_input = function(json_input) {
         if (is_url($("#json-input").val().split("\n"))) {
             load_url();
         } else {
-            $("#json-input").val(JSON.stringify(JSON.parse(json_input), null, 4));
+            $("#json-input").val(js_beautify(json_input, beautify_options));
             validate_job_data(json_input);
         }
     }
@@ -44,7 +48,7 @@ load_url = function() {
             success: function(data) {
                 try {
                     $.parseJSON(data);
-                    $("#json-input").val(JSON.stringify(JSON.parse(data), null, 4));
+                    $("#json-input").val(js_beautify(data, beautify_options));
                     validate_job_data(data);
                 } catch (e) {
                     $("#json-valid-container").html("Invalid JSON: " + data);
@@ -75,7 +79,6 @@ validate_job_data = function(data) {
                }
            }, "json");
 }
-
 
 valid_json_css = function(success) {
     // Updates the css of the json validation container with appropriate msg.

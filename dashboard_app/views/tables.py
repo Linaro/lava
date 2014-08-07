@@ -9,14 +9,28 @@ from dashboard_app.models import (
     Attachment,
     Bundle,
     BundleStream,
-    DataReport,
-    DataView,
     Tag,
     Test,
     TestResult,
     TestRun,
     TestDefinition,
 )
+
+
+def pklink(record):
+    return mark_safe(
+        '<a href="%s">%s</a>' % (
+            record.get_absolute_url(),
+            escape(record.pathname)))
+
+
+class BundleLinkColumn(tables.Column):
+
+    def __init__(self, **kw):
+        super(BundleLinkColumn, self).__init__(**kw)
+
+    def render(self, record):
+        return pklink(record)
 
 
 class BundleStreamTable(LavaTable):
@@ -28,18 +42,11 @@ class BundleStreamTable(LavaTable):
         super(BundleStreamTable, self).__init__(*args, **kwargs)
         self.length = 25
 
-    pathname = tables.TemplateColumn(
-        '<a href="{% url dashboard_app.views.bundle_list record.pathname %}">'
-        '<code>{{ record.pathname }}</code></a>')
-    name = tables.TemplateColumn(
-        '{{ record.name|default:"<i>not set</i>" }}')
-    number_of_test_runs = tables.TemplateColumn(
-        '<a href="{% url dashboard_app.views.test_run_list record.pathname %}">'
-        '{{ record.get_test_run_count }}')
+    pathname = BundleLinkColumn()
+    name = tables.TemplateColumn('{{ record.name|default:"<i>not set</i>" }}')
+    number_of_test_runs = tables.TemplateColumn('{{ record.get_test_run_count }}')
     number_of_test_runs.orderable = False
-    number_of_bundles = tables.TemplateColumn(
-        '<a href="{% url dashboard_app.views.bundle_list record.pathname %}">'
-        '{{ record.bundles.count}}</a>')
+    number_of_bundles = tables.TemplateColumn('{{ record.bundles.count}}')
     number_of_bundles.orderable = False
 
     class Meta(LavaTable.Meta):
@@ -105,18 +112,25 @@ class BundleDetailTable(LavaTable):
     uploaded_on.orderable = False
     analyzed_on = tables.TemplateColumn('{{ record.analyzer_assigned_date|date:"Y-m-d H:i:s" }}')
     analyzed_on.orderable = False
+    bug_links = tables.TemplateColumn('''
+        <span data-uuid="{{ record.analyzer_assigned_uuid }}"
+         data-record="{{ record.test }}">
+        <p style="float: right"><a href="#" class="add-bug-link">
+        [{{ record.bug_links.all|length }}]</a></p><span class="bug-links" style="display: none">
+        {% for b in record.bug_links.all %} <li class="bug-link">{{ b }}</li> {% endfor %}</span></span>''')
+    bug_links.orderable = False
 
     def render_device(self, record):
         return record.show_device()
 
     def render_test_run(self, record):
-        return mark_safe('<a href="%s"><code>%s results<code/></a>' % (record.get_absolute_url(), record.test))
+        return mark_safe('<a href="%s"><code>%s results</code></a>' % (record.get_absolute_url(), record.test))
 
     class Meta(LavaTable.Meta):
         model = TestRun
         fields = (
             'device', 'test_run', 'test', 'passes',
-            'fails', 'uploaded_on', 'analyzed_on'
+            'fails', 'uploaded_on', 'analyzed_on', 'bug_links'
         )
         sequence = fields
         searches = {}
@@ -132,7 +146,7 @@ class TestRunTable(LavaTable):
 
     record = tables.TemplateColumn(
         '<a href="{{ record.get_absolute_url }}">'
-        '<code>{{ record.test }} results<code/></a>',
+        '<code>{{ record.test }} results</code></a>',
     )
     record.orderable = False
 
@@ -172,8 +186,7 @@ class TestTable(LavaTable):
         self.length = 25
 
     relative_index = tables.Column(
-        verbose_name="#",
-        attrs={"th": {"style": "width: 1%"}},
+        verbose_name="id",
         default=mark_safe("<em>Not specified</em>"))
 
     test_case = tables.Column()
@@ -188,7 +201,7 @@ class TestTable(LavaTable):
                alt="This result has {{ record.attachments__count }} attachments"
                title="This result has {{ record.attachments__count }} attachments"
                /></a>
-        {% endif %}
+        {% endif %}</a>
         ''')
 
     measurement = tables.TemplateColumn(
@@ -199,15 +212,24 @@ class TestTable(LavaTable):
     {{ record.comments|default_if_none:"Not specified"|truncatewords:7 }}
     ''')
 
+    bug_links = tables.TemplateColumn('''
+        <span data-uuid="{{ record.test_run.analyzer_assigned_uuid }}"
+         data-relative_index="{{ record.relative_index }}"
+         data-record="{{ record.test_case.test_case_id }}">
+        <a href="#" class="add-bug-link pull-right">
+        [{{ record.bug_links.all|length }}]</a><span class="bug-links" style="display: none">
+        {% for b in record.bug_links.all %} <li class="bug-link">{{ b }}</li> {% endfor %}</span></span>''')
+
+    bug_links.orderable = False
+
     class Meta(LavaTable.Meta):
         model = TestResult
         fields = (
             'relative_index', 'test_case', 'result',
-            'measurement', 'comments',
+            'measurement', 'comments', 'bug_links',
         )
         sequence = fields
         searches = {
-            'comments': 'contains',
         }
         queries = {
             'results_query': 'result',

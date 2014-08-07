@@ -16,7 +16,7 @@ from django.db.models import Q
 from django.db.utils import DatabaseError
 
 from linaro_django_xmlrpc.models import AuthToken
-
+from psycopg2.extensions import TransactionRollbackError
 import simplejson
 
 from twisted.internet.threads import deferToThread
@@ -27,7 +27,8 @@ import lava_dispatcher.config as dispatcher_config
 
 from lava_scheduler_app.models import (
     Device,
-    TestJob
+    TestJob,
+    TemporaryDevice,
 )
 from lava_scheduler_app import utils
 from lava_scheduler_daemon.worker import WorkerData
@@ -57,18 +58,36 @@ def find_device_for_job(job, device_list):
     for device in device_list:
         if device == job.requested_device:
             if device.can_submit(job.submitter) and\
-               set(job.tags.all()) & set(device.tags.all()) == set(job.tags.all()):
+                    set(job.tags.all()) & set(device.tags.all()) == set(job.tags.all()):
                 return device
     for device in device_list:
         if device.device_type == job.requested_device_type:
             if device.can_submit(job.submitter) and\
-               set(job.tags.all()) & set(device.tags.all()) == set(job.tags.all()):
+                    set(job.tags.all()) & set(device.tags.all()) == set(job.tags.all()):
                 return device
     return None
 
 
 def get_configured_devices():
-    return [dev.hostname for dev in dispatcher_config.get_devices()]
+    return dispatcher_config.list_devices()
+
+
+def get_temporary_devices(devices):
+    tmp_device_list = set()
+    for dev in devices:
+        try:
+            device = Device.objects.get(hostname=dev)
+            if device.current_job and device.current_job.vm_group:
+                vm_group = device.current_job.vm_group
+                tmp_devices = TemporaryDevice.objects.filter(vm_group=vm_group)
+                for tmp_dev in tmp_devices:
+                    tmp_device_list.add(tmp_dev.hostname)
+        except Device.DoesNotExist:
+            # this will happen when you have configuration files for devices
+            # that are not in the database. You don't want the entire thing to
+            # crash if that is the case.
+            pass
+    return devices + list(tmp_device_list)
 
 
 class DatabaseJobSource(object):
@@ -170,7 +189,8 @@ class DatabaseJobSource(object):
 
         jobs = TestJob.objects.filter(status=TestJob.SUBMITTED)
         jobs = jobs.filter(actual_device=None)
-        jobs = jobs.order_by('-health_check', '-priority', 'submit_time', 'target_group', 'id')
+        jobs = jobs.order_by('-health_check', '-priority', 'submit_time',
+                             'vm_group', 'target_group', 'id')
 
         return jobs
 
@@ -194,7 +214,12 @@ class DatabaseJobSource(object):
             device = find_device_for_job(job, devices)
             if device:
                 job.actual_device = device
-                job.submit_token = AuthToken.objects.create(user=job.submitter)
+                try:
+                    job.submit_token = AuthToken.objects.filter(
+                        user=job.submitter)[0]
+                except IndexError:
+                    job.submit_token = AuthToken.objects.create(
+                        user=job.submitter)
                 device.current_job = job
                 device.state_transition_to(Device.RESERVED, message="Reserved for job %s" % job.display_id)
                 job.save()
@@ -230,10 +255,12 @@ class DatabaseJobSource(object):
             self._submit_health_check_jobs()
             self._assign_jobs()
 
+        my_devices = get_temporary_devices(self.my_devices())
         my_submitted_jobs = TestJob.objects.filter(
             status=TestJob.SUBMITTED,
-            actual_device_id__in=self.my_devices(),
+            actual_device_id__in=my_devices,
         )
+
         my_ready_jobs = filter(lambda job: job.is_ready_to_start, my_submitted_jobs)
 
         transaction.commit()
@@ -300,26 +327,32 @@ class DatabaseJobSource(object):
         device = Device.objects.get(hostname=board_name)
         old_device_status = device.status
         new_device_status = None
-        previous_state = None
+        previous_state = device.previous_state()
         MAX_RETRIES = 3
 
-        previous_transition = device.previous_transition()
-        if previous_transition:
-            previous_state = previous_transition.old_state
-
         if old_device_status == Device.RUNNING:
-            #new_device_status = previous_state
-            new_device_status = Device.IDLE
+            new_device_status = previous_state
         elif old_device_status == Device.OFFLINING:
             new_device_status = Device.OFFLINE
         elif old_device_status == Device.RESERVED:
-            #new_device_status = previous_state
-            new_device_status = Device.IDLE
+            new_device_status = previous_state
         else:
             self.logger.error(
                 "Unexpected device state in jobCompleted: %s" % device.status)
             new_device_status = Device.IDLE
+        if new_device_status is None:
+            new_device_status = Device.IDLE
         job = device.current_job
+
+        # Temporary devices should be marked as RETIRED once the job is
+        # complete or canceled.
+        if job.is_vmgroup:
+            try:
+                if device.temporarydevice:
+                    new_device_status = Device.RETIRED
+            except TemporaryDevice.DoesNotExist:
+                self.logger.debug("%s is not a tmp device" % device.hostname)
+
         device.device_version = _get_device_version(job.results_bundle)
         device.current_job = None
         if job.status == TestJob.RUNNING:
@@ -370,8 +403,8 @@ class DatabaseJobSource(object):
                 transaction.commit()
                 self.logger.debug('%s job completed and status saved' % job.id)
                 break
-            except psycopg2.extensions.TransactionRollbackError as err:
-                self.logger.warn('Retrying %s job completion ...' % job.id)
+            except TransactionRollbackError as err:
+                self.logger.warn('Retrying %s job completion ... %s' % (job.id, err))
                 continue
         if utils.is_master():
             try:
@@ -384,8 +417,6 @@ class DatabaseJobSource(object):
         else:
             worker = WorkerData()
             worker.notify_on_incomplete(job.id)
-        # need the token for the XMLRPC
-        token.delete()
 
     def jobCompleted(self, board_name, exit_code, kill_reason):
         return self.deferForDB(self.jobCompleted_impl, board_name, exit_code, kill_reason)
@@ -413,14 +444,19 @@ class DatabaseJobSource(object):
                     self._kill_canceling(job)
                     device = Device.objects.get(hostname=job.actual_device.hostname)
                     if device.status == Device.RUNNING:
-                        previous_state = Device.IDLE
-                        previous_transition = device.previous_transition()
-                        if previous_transition:
-                            previous_state = previous_transition.old_state
-                        self.logger.debug("Transitioning %s to Idle" % device.hostname)
+                        previous_state = device.previous_state()
+                        if previous_state is None:
+                            previous_state = Device.IDLE
+                        if job.is_vmgroup:
+                            try:
+                                if device.temporarydevice:
+                                    previous_state = Device.RETIRED
+                            except TemporaryDevice.DoesNotExist:
+                                self.logger.debug("%s is not a tmp device" % device.hostname)
+                        self.logger.debug("Transitioning %s to %s" % (device.hostname, previous_state))
                         device.current_job = None
                         msg = "Job %s cancelled" % job.display_id
-                        device.state_transition_to(Device.IDLE, message=msg,
+                        device.state_transition_to(previous_state, message=msg,
                                                    job=job)
                     self.logger.debug('Marking job %s as cancelled on %s' % (job.id, job.actual_device))
                     job.cancel()

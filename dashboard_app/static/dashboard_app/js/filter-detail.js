@@ -12,11 +12,11 @@ function cancelCompare () {
     $("#first-prompt").hide();
     $("#second-prompt").hide();
     $("#third-prompt").hide();
-    $("#compare-button").button({label:"Compare builds"});
+    $("#compare-button").html("Compare builds");
     compareState = 0;
 }
 function startCompare () {
-    $("#compare-button").button({label:"Cancel"});
+    $("#compare-button").html("Cancel");
     $("#filter-detail-table").addClass("select-compare1");
     $("#filter-detail-table tr").click(rowClickHandler);
     $("#filter-detail-table tr").each(insertCheckbox);

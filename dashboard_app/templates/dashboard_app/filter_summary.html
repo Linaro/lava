@@ -1,61 +1,43 @@
-<table>
-  <tr>
-    <th>
-      Bundle streams
-    </th>
-    <td>
+<dl class="dl-horizontal">
+    <dt>Bundle streams</dt>
+    <dd>
     {% for stream in filter_data.bundle_streams %}
         {{stream.pathname}}{% if not forloop.last %}, {% endif %}
     {% endfor %}
-    </td>
-  </tr>
+    </dd>
 {% if filter_data.attributes %}
-  <tr>
-    <th>
-      Attributes
-    </th>
-    <td>
+    <dt>Attributes</dt>
+    <dd>
     {% for a in filter_data.attributes %}
     {{ a.0 }} == {{ a.1 }} <br />
     {% endfor %}
-    </td>
-  </tr>
+    </dd>
 {% endif %}
 {% if filter_data.build_number_attribute %}
-  <tr>
-    <th>
-      Build Number Attribute
-    </th>
-    <td>
-      {{ filter_data.build_number_attribute }}
-    </td>
-  </tr>
+    <dt>Build Number Attribute</dt>
+    <dd>
+    {{ filter_data.build_number_attribute }}
+    </dd>
 {% endif %}
-  <tr>
-    <th>
-      Test cases
-    </th>
-    <td>
-      <table>
-        <tbody>
-          {% for test in filter_data.tests %}
-          <tr>
-            <td>
-              {{ test.test }}
-            </td>
-            <td>
-              {% for test_case in test.test_cases %}
-              {{ test_case }}
-              {% empty %}
-              <i>any</i>
-              {% endfor %}
-            </td>
-          </tr>
-          {% empty %}
-          <i>any</i>
-          {% endfor %}
-        </tbody>
-      </table>
-    </td>
-  </tr>
-</table>
+    <dt>Test cases</dt>
+    <dd>
+    {% if filter_data.tests %}
+        <ul>
+        {% for test in filter_data.tests %}
+            <li>{{ test.test }}
+            {% if test.test_cases %}
+                <ul>
+                {% for test_case in test.test_cases %}
+                    <li>{{ test_case }}</li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <i>any</i>
+            {% endif %}</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <i>any</i>
+    {% endif %}
+    </dd>
+</dl>

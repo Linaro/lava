@@ -1,10 +1,8 @@
-{% extends "layouts/content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 
 {% block extrahead %}
 {{ block.super }}
 {% include "_tablesort.html" %}
-<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/FixedHeader.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery.dataTables.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.flot.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.flot.stack.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>

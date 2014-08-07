@@ -1,7 +1,6 @@
 {% extends "layouts/base.html" %}
 {% load i18n %}
 
-
 {% block title %}
 {{ bread_crumb_trail|join:" | " }}
 {% endblock %}
@@ -76,27 +75,27 @@
       <div class="lava-panel-menu-text">
         {% if user.is_authenticated %}
         <img src="{{ STATIC_URL }}lava-server/images/avatar-default-symbolic.svg" alt="default avatar" width="18" height="18"/>
-        <a href="{% url lava.me %}" class="username">{{user.get_full_name|default:user.username}} &#x25BE;</a>
+        <a href="{% url 'lava.me' %}" class="username">{{user.get_full_name|default:user.username}} &#x25BE;</a>
         {% else %}
           {% if request.get_full_path == "/accounts/logout/" %}
-            <a href="{% url django.contrib.auth.views.login %}"
+            <a href="{% url 'django.contrib.auth.views.login' %}"
                class="username">{% trans "Sign In" %}</a>
           {% else %}
-            <a href="{% url django.contrib.auth.views.login %}?next={{request.get_full_path}}"
+            <a href="{% url 'django.contrib.auth.views.login' %}?next={{request.get_full_path}}"
                class="username">{% trans "Sign In" %}</a>
           {% endif %}
         {% endif %}
       </div>
       {% if user.is_authenticated %}
       <ul class="lava-panel-menu">
-        <li><a href="{% url lava.me %}">My profile</a></li>
-        <li><a href="{% url lava.scheduler.myjobs %}">My jobs</a></li>
-        <li><a href="{% url dashboard_app.views.mybundlestreams %}">My bundle streams</a></li>
-        <li><a href="{% url lava.scheduler.mydevice_list %}">My devices</a></li>
+        <li><a href="{% url 'lava.me' %}">My profile</a></li>
+        <li><a href="{% url 'lava.scheduler.myjobs' %}">My jobs</a></li>
+        <li><a href="{% url 'dashboard_app.views.mybundlestreams' %}">My bundle streams</a></li>
+        <li><a href="{% url 'lava.scheduler.mydevice_list' %}">My devices</a></li>
         {% if user.is_staff %}
-        <li><a href="{% url admin:index %}">Administration</a></li>
+        <li><a href="{% url 'admin:index' %}">Administration</a></li>
         {% endif %}
-        <li><a href="{% url django.contrib.auth.views.logout %}?next={{ MOUNT_POINT }}/">Sign out</a></li>
+        <li><a href="{% url 'django.contrib.auth.views.logout' %}?next={{ MOUNT_POINT }}/">Sign out</a></li>
       </ul>
       {% endif %}
     </div>
@@ -277,7 +276,7 @@
   <div id="lava-footer">
     {% block footer %}
     <ul>
-      <li><a href="https://bugs.launchpad.net/lava-server/+filebug" >Report a bug</a></li>
+      <li><a href="https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework" >Report a bug</a></li>
       <li><a href="https://git.linaro.org/gitweb?s=lava%2F">Source Code</a></li>
     </ul>
     <p>LAVA Server is free software developed by <a

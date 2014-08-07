@@ -1,3 +1,4 @@
+import json
 from django.conf import settings
 from django.template import defaultfilters as filters
 from django.utils.safestring import mark_safe
@@ -39,7 +40,17 @@ class IDLinkColumn(tables.Column):
 class RestrictedIDLinkColumn(IDLinkColumn):
 
     def render(self, record, table=None):
-        if record.is_accessible_by(table.context.get('request').user):
+
+        if record.actual_device:
+            device_type = record.actual_device.device_type
+        elif record.requested_device:
+            device_type = record.requested_device.device_type
+        else:
+            device_type = record.requested_device_type
+
+        if len(device_type.devices_visible_to(table.context.get('request').user)) == 0:
+            return "Unavailable"
+        elif record.is_accessible_by(table.context.get('request').user):
             return pklink(record)
         else:
             return record.pk
@@ -70,13 +81,18 @@ class ExpandedStatusColumn(tables.Column):
                              pklink(record.current_job),
                              record.current_job.description,
                              record.current_job.submitter))
+        elif record.status == Device.RESERVED:
+            return mark_safe("Reserved for job #%s - %s submitted by %s" % (
+                             pklink(record.current_job),
+                             record.current_job.description,
+                             record.current_job.submitter))
         else:
             return Device.STATUS_CHOICES[record.status][1]
 
 
 class RestrictedDeviceColumn(tables.Column):
 
-    def __init__(self, verbose_name="Restrictions", **kw):
+    def __init__(self, verbose_name="Submissions restricted to", **kw):
         kw['verbose_name'] = verbose_name
         super(RestrictedDeviceColumn, self).__init__(**kw)
 
@@ -90,95 +106,13 @@ class RestrictedDeviceColumn(tables.Column):
         label = None
         if record.status == Device.RETIRED:
             return "Retired, no submissions possible."
+        if record.is_public:
+            return ""
         if record.user:
             label = record.user.email
         if record.group:
-            label = "all users in %s group" % record.group
-        if record.is_public:
-            message = "Unrestricted usage" \
-                if label is None else "Unrestricted usage. Device owned by %s." % label
-            return message
-        return "Job submissions restricted to %s" % label
-
-
-class JobTableView(LavaView):
-
-    def __init__(self, request, **kwargs):
-        super(JobTableView, self).__init__(request, **kwargs)
-
-    def device_query(self, term):
-        device = list(Device.objects.filter(hostname__contains=term))
-        return Q(actual_device__in=device)
-
-    def owner_query(self, term):
-        owner = list(User.objects.filter(username__contains=term))
-        return Q(submitter__in=owner)
-
-    def device_type_query(self, term):
-        dt = list(DeviceType.objects.filter(name__contains=term))
-        return Q(device_type__in=dt)
-
-    def job_status_query(self, term):
-        # could use .lower() but that prevents matching Complete discrete from Incomplete
-        matches = [p[0] for p in TestJob.STATUS_CHOICES if term in p[1]]
-        return Q(status__in=matches)
-
-    def device_status_query(self, term):
-        # could use .lower() but that prevents matching Complete discrete from Incomplete
-        matches = [p[0] for p in Device.STATUS_CHOICES if term in p[1]]
-        return Q(status__in=matches)
-
-    def health_status_query(self, term):
-        # could use .lower() but that prevents matching Complete discrete from Incomplete
-        matches = [p[0] for p in Device.HEALTH_CHOICES if term in p[1]]
-        return Q(health_status__in=matches)
-
-    def restriction_query(self, term):
-        """
-        This may turn out to be too much work for search to support.
-        :param term: user submitted string
-        :return: a query for devices which match the rendered restriction text
-        """
-        q = Q()
-
-        query_list = []
-        device_list = []
-        user_list = User.objects.filter(
-            id__in=Device.objects.filter(
-                user__isnull=False).values('user'))
-        for users in user_list:
-            query_list.append(users.id)
-        if len(query_list) > 0:
-            device_list = User.objects.filter(id__in=query_list).filter(email__contains=term)
-        query_list = []
-        for users in device_list:
-            query_list.append(users.id)
-        if len(query_list) > 0:
-            q = q.__or__(Q(user__in=query_list))
-
-        query_list = []
-        device_list = []
-        group_list = Group.objects.filter(
-            id__in=Device.objects.filter(
-                group__isnull=False).values('group'))
-        for groups in group_list:
-            query_list.append(groups.id)
-        if len(query_list) > 0:
-            device_list = Group.objects.filter(id__in=query_list).filter(name__contains=term)
-        query_list = []
-        for groups in device_list:
-            query_list.append(groups.id)
-        if len(query_list) > 0:
-            q = q.__or__(Q(group__in=query_list))
-
-        # if the render function is changed, these will need to change too
-        if term in "all users in group":
-            q = q.__or__(Q(group__isnull=False))
-        if term in "Unrestricted usage" or term in "Device owner by":
-            q = q.__or__(Q(is_public=True))
-        elif term in "Job submissions restricted to %s":
-            q = q.__or__(Q(is_public=False))
-        return q
+            label = "group %s" % record.group
+        return label
 
 
 def all_jobs_with_custom_sort():
@@ -229,11 +163,17 @@ class JobTable(LavaTable):
 
     def render_device(self, record):
         if record.actual_device:
-            return pklink(record.actual_device)
+            device_type = record.actual_device.device_type
+            retval = pklink(record.actual_device)
         elif record.requested_device:
-            return pklink(record.requested_device)
+            device_type = record.requested_device.device_type
+            retval = pklink(record.requested_device)
         else:
-            return mark_safe('<i>%s</i>' % escape(record.requested_device_type.pk))
+            device_type = record.requested_device_type
+            retval = mark_safe('<i>%s</i>' % escape(record.requested_device_type.pk))
+        if len(device_type.devices_visible_to(self.context.get('request').user)) == 0:
+            return "Unavailable"
+        return retval
 
     def render_description(self, value):
         if value:
@@ -290,7 +230,7 @@ class JobTable(LavaTable):
         times = {
             'submit_time': 'hours',
             'end_time': 'hours',
-            #'duration': 'minutes' FIXME: needs a function call
+            # 'duration': 'minutes' FIXME: needs a function call
         }
 
 
@@ -315,44 +255,10 @@ class IndexJobTable(JobTable):
         exclude = ('end_time', 'duration', )
 
 
-def _str_to_bool(string):
-    return string.lower() in ['1', 'true', 'yes']
-
-
 class TagsColumn(tables.Column):
 
     def render(self, value):
         return ', '.join([x.name for x in value.all()])
-
-
-class FailureTableView(JobTableView):
-
-    def get_queryset(self):
-        failures = [TestJob.INCOMPLETE, TestJob.CANCELED, TestJob.CANCELING]
-        jobs = all_jobs_with_custom_sort().filter(status__in=failures)
-
-        health = self.request.GET.get('health_check', None)
-        if health:
-            jobs = jobs.filter(health_check=_str_to_bool(health))
-
-        dt = self.request.GET.get('device_type', None)
-        if dt:
-            jobs = jobs.filter(actual_device__device_type__name=dt)
-
-        device = self.request.GET.get('device', None)
-        if device:
-            jobs = jobs.filter(actual_device__hostname=device)
-
-        start = self.request.GET.get('start', None)
-        if start:
-            now = datetime.now()
-            start = now + timedelta(int(start))
-
-            end = self.request.GET.get('end', None)
-            if end:
-                end = now + timedelta(int(end))
-                jobs = jobs.filter(start_time__range=(start, end))
-        return jobs
 
 
 class FailedJobTable(JobTable):
@@ -401,10 +307,21 @@ class RecentJobsTable(JobTable):
 
     id = RestrictedIDLinkColumn(verbose_name="ID", accessor="id")
     device = tables.Column(accessor='device_sort')
+    log_level = tables.Column(accessor="definition", verbose_name="Log level")
+    duration = tables.Column(accessor='duration_sort')
+    duration.orderable = False
 
     def __init__(self, *args, **kwargs):
         super(RecentJobsTable, self).__init__(*args, **kwargs)
         self.length = 10
+
+    def render_log_level(self, record):
+        data = json.loads(record.definition)
+        try:
+            data['logging_level']
+        except KeyError:
+            return ""
+        return data['logging_level'].lower()
 
     class Meta(JobTable.Meta):
         fields = (
@@ -415,7 +332,7 @@ class RecentJobsTable(JobTable):
         sequence = (
             'id', 'status', 'priority',
             'description', 'submitter', 'submit_time', 'end_time',
-            'duration'
+            'duration', 'log_level'
         )
         exclude = ('device',)
 
@@ -426,10 +343,6 @@ class DeviceHealthTable(LavaTable):
         super(DeviceHealthTable, self).__init__(*args, **kwargs)
         self.length = 25
 
-    def get_queryset(self):
-        return Device.objects.select_related(
-            "hostname", "last_health_report_job")
-
     def render_last_health_report_job(self, record):
         report = record.last_health_report_job
         if report is None:
@@ -438,13 +351,13 @@ class DeviceHealthTable(LavaTable):
             return pklink(report)
 
     hostname = tables.TemplateColumn('''
-    {% if record.too_long_since_last_heartbeat or record.status == record.RETIRED %}
+    {% if record.too_long_since_last_heartbeat or record.status == record.RETIRED or record.status == record.OFFLINE %}
     <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
           alt="{{ offline }}" />
     {% else %}
     <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
           alt="{{ online }}" />
-    {% endif %}&nbsp;&nbsp;
+    {% endif %}
     {% if record.is_master %}
     <b><a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a></b>
     {% else %}
@@ -458,7 +371,7 @@ class DeviceHealthTable(LavaTable):
     {% else %}
     <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
           alt="{{ online }}" />
-    {% endif %}&nbsp;&nbsp;
+    {% endif %}
     {% if record.is_master %}
     <b><a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a></b>
     {% else %}
@@ -491,19 +404,37 @@ class DeviceTypeTable(LavaTable):
         super(DeviceTypeTable, self).__init__(*args, **kwargs)
         self.length = 50
 
-    def render_display(self, record):
-        return "%d idle, %d offline, %d busy, %d restricted" % (record.idle,
-                                                                record.offline,
-                                                                record.busy,
-                                                                record.restricted)
+    def render_idle(self, record):
+        return record.idle if record.idle > 0 else ""
+
+    def render_offline(self, record):
+        return record.offline if record.offline > 0 else ""
+
+    def render_busy(self, record):
+        return record.busy if record.busy > 0 else ""
+
+    def render_restricted(self, record):
+        return record.restricted if record.restricted > 0 else ""
+
+    def render_queue(self, record):
+        count = TestJob.objects.filter(
+            Q(status=TestJob.SUBMITTED),
+            Q(requested_device_type=record.name) |
+            Q(requested_device__in=Device.objects.filter(device_type=record.name))).count()
+        return count if count > 0 else ""
 
     name = IDLinkColumn("name")
-    display = tables.Column()
+    idle = tables.Column()
+    offline = tables.Column()
+    busy = tables.Column()
+    restricted = tables.Column()
+    # sadly, this needs to be not orderable as it would otherwise sort by the accessor.
+    queue = tables.Column(accessor="name", verbose_name="queue", orderable=False)
 
     class Meta(LavaTable.Meta):
         model = DeviceType
         exclude = [
-            'health_check_job'
+            'display', 'health_check_job', 'owners_only'
         ]
         searches = {
             'name': 'contains',
@@ -520,13 +451,13 @@ class DeviceTable(LavaTable):
         return pklink(record.device_type)
 
     hostname = tables.TemplateColumn('''
-    {% if record.too_long_since_last_heartbeat or record.status == record.RETIRED %}
+    {% if record.too_long_since_last_heartbeat or record.status == record.RETIRED or record.status == record.OFFLINE %}
     <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
           alt="{{ offline }}" />
     {% else %}
     <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
           alt="{{ online }}" />
-    {% endif %}&nbsp;&nbsp;
+    {% endif %}
     {% if record.is_master %}
     <b><a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a></b>
     {% else %}
@@ -540,7 +471,7 @@ class DeviceTable(LavaTable):
     {% else %}
     <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
           alt="{{ online }}" />
-    {% endif %}&nbsp;&nbsp;
+    {% endif %}
     {% if record.is_master %}
     <b><a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a></b>
     {% else %}
@@ -551,7 +482,7 @@ class DeviceTable(LavaTable):
     status = ExpandedStatusColumn("status")
     owner = RestrictedDeviceColumn()
     owner.orderable = False
-    health_status = tables.Column()
+    health_status = tables.Column(verbose_name='Health')
 
     class Meta(LavaTable.Meta):
         model = Device
@@ -573,12 +504,6 @@ class DeviceTable(LavaTable):
             'health_status_query': 'health_status',
             'restriction_query': 'restrictions',
         }
-
-
-class DeviceTableView(JobTableView):
-
-    def get_queryset(self):
-        return Device.objects.select_related("device_type").order_by("hostname")
 
 
 class NoDTDeviceTable(DeviceTable):
@@ -612,7 +537,7 @@ class WorkerTable(tables.Table):
     {% else %}
     <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
           alt="{{ online }}" />
-    {% endif %}&nbsp;&nbsp;
+    {% endif %}
     {% if record.is_master %}
     <b><a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a></b>
     {% else %}
@@ -626,6 +551,8 @@ class WorkerTable(tables.Table):
     up
     {% endif %}
         ''')
+    status.orderable = False
+
     is_master = tables.Column()
     uptime = tables.TemplateColumn('''
     {% if record.too_long_since_last_heartbeat %}
@@ -640,7 +567,8 @@ class WorkerTable(tables.Table):
         model = Worker
         exclude = [
             'rpc2_url', 'description', 'hardware_info', 'software_info',
-            'platform', 'last_heartbeat', 'last_complete_info_update'
+            'platform', 'last_heartbeat', 'last_complete_info_update',
+            'display'
         ]
         sequence = [
             'hostname', 'ip_address', 'status', 'is_master', 'uptime', 'arch'
@@ -690,7 +618,7 @@ class DeviceTransitionTable(LavaTable):
             '%s &rarr; %s' % (t.get_old_state_display(), t.get_new_state_display(),))
 
     created_on = tables.Column('when')
-    transition = tables.Column('transition', sortable=False, accessor='old_state')
+    transition = tables.Column('transition', orderable=False, accessor='old_state')
     created_by = tables.Column('by', accessor='created_by')
     message = tables.TemplateColumn('''
     <div class="edit_transition" id="{{ record.id }}" style="width: 100%">{{ record.message }}</div>
@@ -707,3 +635,106 @@ class DeviceTransitionTable(LavaTable):
         searches = {}
         queries = {}
         times = {}
+
+
+class QueueJobsTable(JobTable):
+
+    id = RestrictedIDLinkColumn(accessor="id")
+    device = tables.Column(accessor='device_sort')
+
+    def __init__(self, *args, **kwargs):
+        super(QueueJobsTable, self).__init__(*args, **kwargs)
+        self.length = 50
+
+    class Meta(JobTable.Meta):
+        fields = (
+            'id', 'device', 'description', 'submitter', 'submit_time',
+        )
+        sequence = (
+            'id', 'device', 'description', 'submitter', 'submit_time',
+        )
+        exclude = ('status', 'priority', 'end_time', 'duration')
+
+
+class DeviceTypeTransitionTable(DeviceTransitionTable):
+
+    device = tables.TemplateColumn('''
+    <a href='/scheduler/device/{{ record.device.hostname }}'>{{ record.device.hostname}}</a>
+        ''')
+
+    class Meta(LavaTable.Meta):
+        model = DeviceStateTransition
+        exclude = [
+            'id', 'job', 'old_state', 'new_state'
+        ]
+        sequence = [
+            'device', 'created_on', 'transition', 'created_by', 'message'
+        ]
+        searches = {}
+        queries = {}
+        times = {}
+
+
+class OnlineDeviceTable(DeviceTable):
+
+    def __init__(self, *args, **kwargs):
+        super(OnlineDeviceTable, self).__init__(*args, **kwargs)
+        self.length = 25
+
+    def render_status(self, record):
+        t = DeviceStateTransition.objects.filter(device=record).order_by('-id')
+        status = Device.STATUS_CHOICES[record.status][1]
+        if t:
+            return "%s (reason: %s)" % (status, t[0].message)
+        else:
+            return status
+
+    class Meta(LavaTable.Meta):
+        exclude = [
+            'worker_host', 'user', 'group', 'is_public', 'device_version',
+            'physical_owner', 'physical_group', 'description', 'current_job',
+            'last_health_report_job', 'health_status'
+        ]
+        sequence = [
+            'hostname', 'device_type', 'status', 'owner'
+        ]
+        searches = {
+            'hostname': 'contains',
+        }
+        queries = {
+            'device_type_query': 'device_type',
+            'device_status_query': 'status',
+            'restriction_query': 'restrictions',
+        }
+
+
+class PassingHealthTable(DeviceHealthTable):
+
+    def __init__(self, *args, **kwargs):
+        super(PassingHealthTable, self).__init__(*args, **kwargs)
+        self.length = 25
+
+    def render_device_type(self, record):
+        return pklink(record.device_type)
+
+    def render_last_health_report_job(self, record):
+        report = record.last_health_report_job
+        base = "<a href='/scheduler/job/%s'>%s</a>" % (report.id, report)
+        return mark_safe(base)
+
+    device_type = tables.Column()
+
+    class Meta(LavaTable.Meta):
+        exclude = [
+            'worker_host', 'last_report_time'
+        ]
+        sequence = [
+            'hostname', 'device_type', 'health_status',
+            'last_health_report_job'
+        ]
+        searches = {
+            'hostname': 'contains',
+        }
+        queries = {
+            'health_status_query': 'health_status',
+        }

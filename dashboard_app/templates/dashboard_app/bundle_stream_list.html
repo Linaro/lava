@@ -1,35 +1,43 @@
-{% extends "dashboard_app/_content_with_sidebar.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 
 {% load django_tables2 %}
 {% load i18n %}
-{% load pagination_tags %}
-
 
 {% block content %}
 
+{% if not user.is_authenticated %}
+<div class="alert alert-warning alert-dismissable">
+  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+  {% trans "You must" %} <a href="{% url 'django.contrib.auth.views.login' %}">{% trans "sign in" %}</a> {% trans "to get more access" %}
+</div>
+{% endif %}
+
+<div class="row">
+  <div class="col-md-6">
+  {% blocktrans %}
+    <h4 class="modal-header">Bundle Streams</h4>
+    <p>Streams are containers for bundles and are quite similar to folders or directories on your computer.</p>
+  {% endblocktrans %}
+  </div>
+  <div class="col-md-6">
+    <h4 class="modal-header">Access</h4>
+    <p>{% trans "Currently you have access to:" %}</p>
+    <ul>
+      <li>{% trans "All public streams" %}</li>
+    {% if has_personal_streams %}
+      <li>{% trans "Your personal streams" %}</li>
+    {% endif %}
+    {% if has_team_streams %}
+      <li>{% trans "Team streams that you are a member of" %}</li>
+    {% endif %}
+    </ul>
+  </div>
+</div>
+<hr/>
 {% render_table bundle_stream_table %}
 
 {% endblock %}
 
-
-{% block sidebar %}
-<p>
-  {% blocktrans %}
-  Streams are containers for bundles and are quite similar to folders or
-  directories on your computer.
-  {% endblocktrans %}
-</p>
-<p>{% trans "Currently you have access to:" %}</p>
-<ul>
-  <li>{% trans "All public streams" %}</li>
-  {% if has_personal_streams %}
-  <li>{% trans "Your personal streams" %}</li>
-  {% endif %}
-  {% if has_team_streams %}
-  <li>{% trans "Team streams that you are a member of" %}</li>
-  {% endif %}
-</ul>
-{% if not user.is_authenticated %}
-<p>{% trans "You must" %} <a href="{% url django.contrib.auth.views.login %}">{% trans "sign in" %}</a> {% trans "to get more access" %}</p>
-{% endif %}
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
 {% endblock %}

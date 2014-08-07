@@ -1,15 +1,14 @@
-{% extends "dashboard_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
+
 {% load i18n %}
 
-{% block extrahead %}
-{{ block.super }}
+{% block styles %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
 {% endblock %}
 
 {% block content %}
 
 <h1>Image Chart {{ image_chart.name }}</h1>
-
 
 <div class="fields-container">
   <div class="form-field">
@@ -25,7 +24,6 @@
     Target goal: {{ image_chart.target_goal|floatformat:"-2" }}
   </div>
 </div>
-
 
 <h3>Filters</h3>
 
@@ -43,7 +41,7 @@
       remove
     </a>
     <a style="font-size: 13px;" href="{{ chart_filter.get_absolute_url }}">
-      edit
+      details
     </a>&nbsp;
   </div>
   <div>

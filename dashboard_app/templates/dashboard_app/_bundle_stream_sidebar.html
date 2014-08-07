@@ -1,62 +1,52 @@
 {% load i18n %}
-<h3>{% trans "About" %}</h3>
-<dl>
-  <dt>{% trans "Pathname:" %}</dt>
-  <dd>{{ bundle_stream.pathname }}</dd>
-  <dt>{% trans "Name:" %}</dt>
-  <dd>{{ bundle_stream.name|default:"<i>not set</i>" }}</dd>
-</dl>
 
-<h3>{% trans "Export" %}</h3>
-<p>Export test run data <a href="{% url dashboard_app.views.bundle_list_export bundle_stream.pathname %}">as CSV</a></p>
+<div class="row">
+  <div class="col-md-6">
+    <h3 class="modal-header">{% trans "About this bundle stream" %}</h3>
+    <dl class="dl-horizontal">
+      <dt>{% trans "Pathname:" %}</dt>
+      <dd>{{ bundle_stream.pathname }}</dd>
+      <dt>{% trans "Name:" %}</dt>
+      <dd>{{ bundle_stream.name|default:"<i>not set</i>" }}</dd>
+      <dt>{% trans "Ownership" %}</dt>
+      <dd>
+    {% if bundle_stream.user %}
+    <p>{% trans "This stream is owned by" %} <q>{{ bundle_stream.user }}</q></p>
+    {% else %}
+    <p>{% trans "This stream is owned by group called" %} <q>{{ bundle_stream.group }}</q></p>
+    {% endif %}
+     </dd>
+    <dt>{%  trans "Export" %}</dt>
+    <dd>
+       <p>test run data <a href="{% url 'dashboard_app.views.bundle_list_export' bundle_stream.pathname %}">as CSV</a></p>
+    </dd>
+   </dl>
+  </div>
 
-<h3>{% trans "Ownership" %}</h3>
-{% if bundle_stream.user %}
-<p>{% trans "This stream is owned by" %} <q>{{ bundle_stream.user }}</q></p>
-{% else %}
-<p>{% trans "This stream is owned by group called" %} <q>{{ bundle_stream.group }}</q></p>
-{% endif %}
-<h3>{% trans "Access rights" %}</h3>
-<dl>
+  <div class="col-md-6">
+  <h3 class="modal-header">{% trans "Access rights" %}</h3>
+  <dl class="dl-horizontal">
   <dt>{% trans "Stream type:" %}</dt>
   {% if bundle_stream.is_anonymous %}
-  <dd>
-  Anonymous stream <a href="#" id="what-are-anonymous-streams">(what is this?)</a>
-  <div id="dialog-message" title="{% trans "About anonymous streams" %}">
-    <p>The dashboard has several types of containers for test results. One of the
-    most common and the oldest one is an <em>anonymous stream</em>. Anonymous
-    streams act like public FTP servers. Anyone can download or upload files at
-    will. There are some restrictions, nobody can change or remove existing
-    files</p>
-
-    <p>When a stream is anonymous anonyone can upload new test results and the
-    identity of the uploading user is not recorded in the system. Anonymous
-    streams have to be public (granting read access to everyone)</p>
-
-    <div class="ui-widget">
-      <div class="ui-state-highlight ui-corner-all" style="margin-top: 20px; padding: 0.7em">
-      <span class="ui-icon ui-icon-info" style="float: left; margin-right: 0.3em;"></span>
-      <strong>Note:</strong> A stream can be marked as anonymous in the administration panel
+  <dd>Anonymous stream
+    <button class="btn btn-info btn-xs" data-toggle="modal" data-target="#AnonymousModal">?</button>
+    <div class="modal fade" id="AnonymousModal" tabindex="-1" role="dialog" aria-labelledby="AnonymousModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title" id="AnonymousModalLabel">{% trans "About anonymous streams" %}</h4>
+          </div>
+          <div class="modal-body">
+            <p>The dashboard has several types of containers for test results. One of the
+            most common is an <em>anonymous stream</em> which act like public FTP servers.
+            Anyone can download or upload files although nobody can change or remove existing
+            files. The identity of the uploading user is not recorded. Anonymous
+            streams must also be public (granting read access to everyone).</p>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-  <script type="text/javascript">
-    $(function() {
-        $( "#dialog-message" ).dialog({
-          autoOpen: false,
-          modal: true,
-          minWidth: 500,
-          buttons: {
-            Ok: function() {
-              $( this ).dialog( "close" );
-            }
-          }
-        });
-        $( "#what-are-anonymous-streams" ).click(function(e) {
-          $( "#dialog-message").dialog('open');
-        });
-      });
-  </script>
   </dd>
   <dt>{% trans "Read access:" %}</dt>
   <dd>{% trans "Anyone can download or read test results uploaded here" %}</dd>
@@ -75,4 +65,12 @@
     <dt>{% trans "Write access:" %}</dt>
     <dd>{% trans "Only the owner can upload test results here" %}</dd>
   {% endif %}
-</dl>
+    <div class="alert alert-warning alert-dismissable">
+      <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+      <p><strong><i>Changing stream access</i></strong>
+      A stream can be marked as anonymous or private in the administration panel
+      but note that the pathname of the stream will change.</p>
+    </div>
+  </dl>
+  </div>
+</div>

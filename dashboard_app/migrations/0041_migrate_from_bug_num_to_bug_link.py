@@ -14,13 +14,13 @@ class Migration(DataMigration):
         bugs = db.execute("SELECT * FROM dashboard_app_launchpadbug")
         for key, bug_id in bugs:
             bug_link = "https://bugs.launchpad.net/bugs/" + str(bug_id)
-            db.execute("INSERT INTO dashboard_app_buglink (id, bug_link) VALUES (%d, '%s')" % (key, bug_link))
+            db.execute("INSERT INTO dashboard_app_buglink (bug_link) VALUES ('%s')" % (bug_link))
         db.execute("DELETE FROM dashboard_app_launchpadbug")
 
         # Migrate data from dashboard_app_launchpadbug_test_runs to dashboard_app_buglink_test_runs
         rec = db.execute("SELECT * FROM dashboard_app_launchpadbug_test_runs")
         for key, bug_id, testrun_id in rec:
-            db.execute("INSERT INTO dashboard_app_buglink_test_runs (id, buglink_id, testrun_id) VALUES (%d, %d, %d)" % (key, bug_id, testrun_id))
+            db.execute("INSERT INTO dashboard_app_buglink_test_runs (buglink_id, testrun_id) VALUES (%d, %d)" % (bug_id, testrun_id))
         db.execute("DELETE FROM dashboard_app_launchpadbug_test_runs")
 
     def backwards(self, orm):

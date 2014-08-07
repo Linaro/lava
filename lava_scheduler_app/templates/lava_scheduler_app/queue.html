@@ -1,0 +1,14 @@
+{% extends "layouts/content-bootstrap.html" %}
+{% load django_tables2 %}
+
+{% block content %}
+<h2>Job Queue</h2>
+<h3>TestJobs in state 'submitted'</h3>
+
+{% render_table queue_table %}
+
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
+{% endblock %}

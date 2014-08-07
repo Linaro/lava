@@ -1,0 +1,91 @@
+{% extends "layouts/content-bootstrap.html" %}
+{% load i18n %}
+
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
+{% endblock %}
+
+{% block content %}
+<h1>Chart settings for ~{{ chart_filter.filter.owner }}/{{ chart_filter.filter.name }}</h1>
+
+<div class="fields-container">
+  <div class="form-field">
+    <a href="{{ chart_filter.get_absolute_url }}/+edit">Edit</a> filter settings.
+  </div>
+  <div class="form-field">
+    Representation: {{ chart_filter.representation }}
+  </div>
+</div>
+
+{% ifequal chart_filter.imagecharttest_set.all|length 0 %}
+<h3>Test Cases</h3>
+{% else %}
+<h3>Tests</h3>
+{% endifequal %}
+
+<div class="list-container">
+
+  {% for chart_test in chart_filter.chart_tests %}
+  <div class="chart-title">
+    {% ifequal chart_filter.imagecharttestcase_set.all|length 0 %}
+    {{ chart_test.test.test_id }}
+    {% else %}
+    {{ chart_test.test_case.test_case_id }}
+    {% endifequal %}
+
+    <a style="font-size: 13px;" href="javascript:void(0)" onclick="open_test_edit('{{ chart_filter.id }}', '{{ chart_test.id }}');">
+      edit
+    </a>
+  </div>
+  <div>
+    Alias:&nbsp;
+    {{ chart_test.name }}
+  </div>
+  <div>
+    Metadata attributes:&nbsp;
+    {% for attr in chart_test.attributes %}
+    {{ attr }}&nbsp;
+    {% endfor %}
+  </div>
+  <hr/>
+  {% endfor %}
+
+</div>
+
+<div id="loading_dialog">
+  <img src="{{ STATIC_URL }}dashboard_app/images/ajax-progress.gif" alt="Loading..." />
+</div>
+
+<div id="test_edit_dialog">
+  <form action="" method="post">{% csrf_token %}
+    <div id="dialog_test_name" class="dialog-title">
+    </div>
+    <div class="dialog-field">
+      Name:
+      <input type="text" id="alias" name="alias" class="dialog-input"/>
+      <input type="hidden" id="chart_test_id" name="chart_test_id" />
+    </div>
+    <div class="dialog-field">
+      <span class="dialog-field-title">
+        Attributes:
+      </span>
+      <select multiple id="attributes" name="attributes" class="dialog-select">
+      </select>
+    </div>
+    <div class="dialog-submit">
+      <input type="submit" value="Submit" />
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/image-report-editor.js"></script>
+<script type="text/javascript">
+  $().ready(function () {
+    init_loading_dialog();
+    init_test_edit_dialog();
+  });
+</script>
+{% endblock %}
+

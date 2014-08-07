@@ -28,10 +28,11 @@ of `pre-built master images`_ that you can 'dd' to your sd card. The
 following commands show how to set up a panda image::
 
     DEV=/dev/sdX #X should be something like b
-    wget http://images.validation.linaro.org:8080/panda-master.img
+    wget http://images.validation.linaro.org/lava-masters/panda-master.img.tgz
+    tar -xzf panda-master.img.tgz
     sudo dd bs=4M if=panda-master.img of=${DEV}
 
-.. _pre-built master images: http://images.validation.linaro.org:8080/
+.. _pre-built master images: http://images.validation.linaro.org/lava-masters/
 
 Alternatively you can create your own master image, if you don't find a
 suitable pre-built one. You will need a SD card with at least 4GB.
@@ -133,6 +134,10 @@ about it in two places:
 
 Adding to the dispatcher
 ------------------------
+
+If the board is of a type already known to lava-dispatcher, see
+:ref:`adding_known_devices`.
+
 The lava-dispatcher needs to know about a device and how to connect to it.
 
 Let us take as an example adding a pandaboard. You can
@@ -141,7 +146,7 @@ type of board it is. Let's call ours panda01. First create a file called
 
 ::
 
-    /srv/lava/instances/<YOUR_INST>/etc/lava-dispatcher/devices/panda01.conf
+    /etc/lava-dispatcher/devices/panda01.conf
 
 In here you should put the following lines:
 

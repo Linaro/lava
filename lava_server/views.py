@@ -52,13 +52,9 @@ def index(request):
             parent=index)
 @login_required
 def me(request):
-    actions = []
-    for view, text in settings.ME_PAGE_ACTIONS:
-        actions.append((reverse(view), text))
     data = {
         'bread_crumb_trail': BreadCrumbTrail.leading_to(
             me, you=request.user.get_full_name() or request.user.username),
-        'actions': actions,
     }
     context = RequestContext(request, data)
     template = loader.get_template('me.html')

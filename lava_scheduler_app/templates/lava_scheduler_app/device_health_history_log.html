@@ -1,0 +1,19 @@
+{% extends "layouts/content-bootstrap.html" %}
+
+{% load django_tables2 %}
+{% load i18n %}
+
+{% block content %}
+
+<h2>Health History Log for {{ device.hostname }}</h2>
+
+<div id="device_health_history_log">
+{% render_table healthhistory_table %}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
+{% endblock %}
+

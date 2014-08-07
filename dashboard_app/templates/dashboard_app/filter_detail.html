@@ -1,49 +1,70 @@
-{% extends "dashboard_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
 {% load django_tables2 %}
 
-{% block extrahead %}
-{{ block.super }}
+{% block styles %}
+{% include "_tablesort.html" %}
+
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/dashboard.css"/>
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/filter-detail.css"/>
-<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/filter-detail.js"></script>
 {% endblock %}
 
 {% block content %}
 
 <h1>Filter {{ filter.name }}</h1>
 
-{% include "dashboard_app/filter_summary.html" with filter_data=filter.as_data %}
+<div class="row">
+  <div class="col-md-6">
+    <h4 class="modal-header">Summary</h4>
+    {% include "dashboard_app/filter_summary.html" with filter_data=filter.as_data %}
+  </div>
+  <div class="col-md-6">
+    <h4 class="modal-header">Actions</h4>
+    <div class="btn-group btn-group-justified">
+    {% if filter.owner == request.user or request.user.is_superuser %}
+      <div class="btn-group">
+        <a href="{{ filter.get_absolute_url }}/+edit" class="btn btn-info"><span class="glyphicon glyphicon-pencil"></span> Edit</a>
+      </div>
+      <div class="btn-group">
+        <a href="{{ filter.get_absolute_url }}/+delete" class="btn btn-danger"><span class="glyphicon glyphicon-trash"></span> Delete</a>
+      </div>
+    {% endif %}
+    {% if subscription %}
+      <div class="btn-group">
+        <a href="{% url 'dashboard_app.views.filters.views.filter_subscribe' username=filter.owner.username name=filter.name %}" class="btn btn-info"><span class="glyphicon glyphicon-pencil"></span> Manage subscription</a>
+      </div>
+    {% else %}
+      <div class="btn-group">
+        <a href="{% url 'dashboard_app.views.filters.views.filter_subscribe' username=filter.owner.username name=filter.name %}" class="btn btn-info"><span class="glyphicon glyphicon-plus-sign"></span> Subscribe</a>
+      </div>
+    {% endif %}
+      <div class="btn-group">
+        <a href="{{ filter.get_absolute_url }}/+copy" class="btn btn-default"><span class="glyphicon glyphicon-share"></span> Copy</a>
+      </div>
+    </div>
+  </div>
+</div>
 
-{% if filter.owner == request.user or request.user.is_superuser %}
-<p>
-  You can <a href="{{ filter.get_absolute_url }}/+edit">edit</a>
-  or <a href="{{ filter.get_absolute_url }}/+delete">delete</a> this filter.
-</p>
-{% endif %}
-
-{% if subscription %}
-<p>
-  <a href="{% url dashboard_app.views.filters.views.filter_subscribe username=filter.owner.username name=filter.name %}">Manage</a> your subscription to this filter.
-</p>
-{% else %}
-<p>
-  <a href="{% url dashboard_app.views.filters.views.filter_subscribe username=filter.owner.username name=filter.name %}">Subscribe</a> to this filter.
-</p>
-{% endif %}
+<h3 class="modal-header">Filter matches</h3>
 
 {% render_table filter_table %}
 
 <p>
-  <button id="compare-button">Compare builds</button>
+  <button class="btn btn btn-primary" id="compare-button">Compare builds</button>
   <span id="first-prompt" style="display:none">
     Click a build to compare.
   </span>
   <span id="second-prompt" style="display:none">
-    Click build to compare with build <span id="p2-build">XXX</span>.
+    Click a build to compare with build <span id="p2-build">XXX</span>.
   </span>
   <span id="third-prompt" style="display:none">
-    Click <a href="#">here</a> to compare with build <span id="p3-build-1">XXX</span> with build <span id="p3-build-2">XXX</span>.
+    <a class="btn btn btn-success" href="#">View comparison</a> of <span id="p3-build-1">XXX</span> with build <span id="p3-build-2">XXX</span>.
   </span>
 </p>
 
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/filter-detail.js"></script>
 {% endblock %}

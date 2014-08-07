@@ -1,9 +1,8 @@
-{% extends "dashboard_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
 {% load django_tables2 %}
 
-{% block extrahead %}
-{{ block.super }}
+{% block styles %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
 {% endblock %}
 
@@ -12,26 +11,18 @@
 
 {% if user_image_table %}
 
-<h2>Your Image Reports</h2>
-
-<p style="margin-left: 10px;">
-  <a href="{% url dashboard_app.views.image_reports.views.image_report_add %}">
-    Add new Image Report
-  </a>
-</p>
+<h2>Your Image Reports <small><a href="{% url 'dashboard_app.views.image_reports.views.image_report_add' %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-plus-sign"></span> Create</a></small></h2>
 
 {% render_table user_image_table %}
 
 {% else %}
 
-<p>
-  Please log in to see and manage your image reports.
-</p>
+<p>Please log in to see and manage your image reports.</p>
 
 {% endif %}
 
 {% for name, group_table in group_tables.items %}
-  <h2>{{ name }}</h2>
+  <h2 id="{{ name }}">{{ name }}</h2>
   {% render_table group_table %}
 {% endfor %}
 
@@ -40,4 +31,8 @@
 
 {% render_table other_image_table %}
 
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
 {% endblock %}

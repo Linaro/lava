@@ -1,11 +1,9 @@
-{% extends "dashboard_app/_content.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
 {% load keep_spacing %}
 
-{% block extrahead %}
-{{ block.super }}
+{% block styles %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -43,45 +41,31 @@
   </div>
 
   {% if image_report.is_published %}
-  <div class="form-field" style="font-size: 16px; float: left;">
+  <div class="form-field" style="float: left;">
     Image Report Group:&nbsp;&nbsp;
   </div>
-  <div id="image_report_group" style="font-size: 16px; float: left;">
-{{ image_report.image_report_group|default:"Click here to select"}}</div>
+  <div id="image_report_group" style="float: left;">{{ image_report.image_report_group|default:"Click here to select"}}</div>
+
+  {% if image_report.image_report_group %}
+  <div id="group_link" class="group-link">
+    <a href="{% url 'dashboard_app.views.image_reports.views.image_report_list' %}#{{ image_report.image_report_group|iriencode }}">Group link</a>
+  </div>
+  {% else %}
+  <div id="group_link" class="group-link" style="display: none;">
+    <a href="{% url 'dashboard_app.views.image_reports.views.image_report_list' %}#">Group link</a>
+  </div>
+  {% endif %}
+
   <div style="clear: both;"></div>
 
   {% endif %}
 
 </div>
 
-{% if image_report.is_published %}
-<script type="text/javascript">
-
-  $("#image_report_group").editable(
-  "{% url dashboard_app.views.image_reports.views.image_report_add_group name=image_report.name %}",
-  {
-    onblur: "submit",
-    width: 200,
-    submitdata : {"csrfmiddlewaretoken": '{{csrf_token}}'},
-  });
-
-  $("#image_report_group").focus(function(event) {
-      {% if not image_report.image_report_group %}
-        $(event.target).val("");
-      {% endif %}
-      $(event.target).autocomplete({
-        source: '{% url dashboard_app.views.image_reports.views.image_report_group_list %}',
-        minLength: 2,
-      });
-  });
-
-</script>
-{% endif %}
-
 <h3>Charts</h3>
 
 <div class="fields-container">
-  <a href="{% url dashboard_app.views.image_reports.views.image_chart_add image_report.name %}">
+  <a href="{% url 'dashboard_app.views.image_reports.views.image_chart_add' image_report.name %}">
     Add new chart
   </a>
 </div>
@@ -114,4 +98,40 @@
   {% endfor %}
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script>
+{% if image_report.is_published %}
+<script>
+  $("#image_report_group").editable(
+  "{% url 'dashboard_app.views.image_reports.views.image_report_add_group' name=image_report.name %}",
+  {
+    onblur: "submit",
+    width: 200,
+    submitdata : {"csrfmiddlewaretoken": '{{csrf_token}}'},
+    callback: function(data) {
+      if(data != "") {
+        $("#group_link").show();
+        href = $("#group_link a:first-child").attr("href").split("#")[0] + "#";
+        $("#group_link a:first-child").attr("href", href + data);
+      } else {
+        $("#group_link").hide();
+      }
+    }
+  });
+
+  $("#image_report_group").on("click", function(event) {
+      var field = $(this).find("input");
+      {% if not image_report.image_report_group %}
+        field.val("");
+      {% endif %}
+      field.autocomplete({
+        source: '{% url 'dashboard_app.views.image_reports.views.image_report_group_list' %}',
+        minLength: 2,
+      });
+  });
+
+</script>
+{% endif %}
 {% endblock %}

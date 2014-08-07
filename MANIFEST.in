@@ -5,16 +5,18 @@ include NEWS
 include README 
 recursive-include lava_server *.gif *.png *.js *.css *.svg *.ico
 recursive-include lava_server/templates *.html
+recursive-include lava_server/htdocs/fonts *.woff *.ttf *.svg
 recursive-include lava_projects/templates *.html
 recursive-include lava_markitup/templates *.html
+recursive-include google_analytics/templates *.html
 recursive-include lava_markitup/static *.gif *.png *.js *.css *.html
 include setup-dev-env.sh
 recursive-include dashboard_app/fixtures *.json
 recursive-include dashboard_app/templates *.html *.txt
 recursive-include dashboard_app/tests/regressions *.json
-recursive-include dashboard_app/static *.png *.js *.css
+recursive-include dashboard_app/static *.png *.js *.css *.gif
 recursive-include dashboard_app/templates *.html
-recursive-include examples *.xml *.json *html
+recursive-include examples *.xml *.json *html *.conf
 recursive-include lava_scheduler_app/templates *.html *.txt
 recursive-include lava_scheduler_app/static *.js *.css *.gif *.png
 include entry_points.ini
@@ -38,3 +40,5 @@ include contrib/install.sh
 include contrib/virtualenv-install.sh
 include assets.src/icons.xcf
 include fake-dispatcher
+include version.py
+include share/*

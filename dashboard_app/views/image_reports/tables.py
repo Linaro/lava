@@ -33,13 +33,17 @@ class UserImageReportTable(LavaTable):
 
     is_published = tables.Column()
 
-    description = tables.TemplateColumn('''
-    {{ record.description|truncatewords:10 }}
-    ''')
+    description = tables.Column()
+
+    def render_description(self, value):
+        value = ' '.join(value.split(" ")[:15])
+        return value.split("\n")[0]
 
     user = tables.TemplateColumn('''
     {{ record.user.username }}
     ''')
+
+    image_report_group = tables.Column()
 
     view = tables.TemplateColumn('''
     <a href="{{ record.get_absolute_url }}/+detail">view</a>
@@ -55,7 +59,7 @@ class UserImageReportTable(LavaTable):
         model = ImageReportChart
         fields = (
             'name', 'is_published', 'description',
-            'user', 'view', 'remove'
+            'image_report_group', 'user', 'view', 'remove'
         )
         sequence = fields
         searches = {
@@ -74,13 +78,19 @@ class OtherImageReportTable(UserImageReportTable):
     <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
     ''')
 
+    description = tables.Column()
+
+    def render_description(self, value):
+        value = ' '.join(value.split(" ")[:15])
+        return value.split("\n")[0]
+
     class Meta(UserImageReportTable.Meta):
         fields = (
             'name', 'description', 'user',
         )
         sequence = fields
         exclude = (
-            'is_published', 'view', 'remove'
+            'is_published', 'view', 'remove', 'image_report_group'
         )
 
 
@@ -89,10 +99,17 @@ class GroupImageReportTable(UserImageReportTable):
     def __init__(self, *args, **kwargs):
         super(GroupImageReportTable, self).__init__(*args, **kwargs)
         self.length = 10
+        self.base_columns['image_report_group'].visible = False
 
     name = tables.TemplateColumn('''
     <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
     ''')
+
+    description = tables.Column()
+
+    def render_description(self, value):
+        value = ' '.join(value.split(" ")[:15])
+        return value.split("\n")[0]
 
     class Meta(UserImageReportTable.Meta):
         fields = (

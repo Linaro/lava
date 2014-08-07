@@ -1,189 +1,147 @@
-{% extends "dashboard_app/_content_with_sidebar.html" %}
+{% extends "layouts/content-bootstrap.html" %}
 
 {% load django_tables2 %}
 {% load i18n %}
 {% load humanize %}
 
-
 {% block content %}
-
-<h2>Test run results</h2>
-<div id="master-toolbar-splice" >
-  <span
-    class="length"
-    style="float:left; display:inline-block; text-align:left;"></span>
-
-  <span
-    class="view-as"
-    style="text-align:center; display: inline-block; width:auto">
-    {% trans "filter by result" %}
-    <select id="result_selection">
-        <option value="-1"
-                       {% if result not in result_map %}selected disabled{% endif %}>{% trans "All" %}</option>
-        {% for key, value in result_map.items %}
-        <option value="{{key}}"
-                       {% if result == key %}selected disabled{% endif %}  >
-            {% trans value.title %}
-        </option>
-        {% endfor %}
-    </select>
-  </span>
-
-  <span
-    class="search"
-    style="float:right; display:inline-block; text-align:right"></span>
-</div>
-<script type="text/javascript" charset="utf-8">
-  $(document).ready(function() {
-    // Insane splicing below
-    $("div.dataTables_length").children().appendTo("#master-toolbar-splice span.length");
-    $("div.dataTables_filter").children().appendTo("#master-toolbar-splice span.search");
-    $("#master-toolbar-splice").children().appendTo($("#master-toolbar"));
-    $("div.dataTables_length").remove();
-    $("div.dataTables_filter").remove();
-    $("#master-toolbar-splice").remove();
-    $("#master-toolbar").addClass("ui-widget-header ui-corner-tl ui-corner-tr").css(
-      "padding", "5pt").css("text-align", "center");
-    var oTable = $("#test-table").dataTable();
-    var oSetting = oTable.fnSettings();
-    oSetting.sAjaxSource = oSetting.sAjaxSource + "?result_sel=" + $("#result_selection").val();
-{% if search_str %}
-    $("span.search label input[type=text]").val('{{search_str}}');
-    $("#test-table").dataTable().fnFilter('{{search_str}}');
-{% endif %}
-  });
-
-  $("#result_selection").change(function (event) {
-    location.href=window.location.pathname + "?result_sel=" + $("#result_selection").val()+"&search_str=" + $("span.search label input[type=text]").val();
-  });
-</script>
+<h2 class="modal-header">Test run results</h2>
 {% render_table test_table %}
 
 <h3>Test job attachments</h3>
-
 {% include "dashboard_app/_attachments.html" with attachments=test_run.attachments %}
 
+
+<div class="row">
+  <div class="col-md-6">
+    <h4 class="modal-header">Test run details</h4>
+    <dl class="dl-horizontal">
+{% if bundle.testjob %}
+      <dt>{% trans "Test Name" %} (<abbr title="This is the identifier of the test that was invoked. A test is a collection of test cases. Test is also the smallest piece of code that can be invoked by lava-test.">?</abbr>)</dt>
+      <dd><a href="{{ test_run.test.get_absolute_url }}">{{ test_run.test.test_id }}</a></dd>
+      <dt>{% trans "Test Run UUID" %} (<abbr title="This is a globally unique identifier that was assigned by the log analyzer. Running the same test multiple times results in different values of this identifier.  The dashboard uses this identifier to refer to a particular test run. It is preserved across different LAVA installations, that is, if you pull test results (as bundles) from one system to another this identifier remains intact">?</abbr>)</dt>
+      <dd><small>{{ test_run.analyzer_assigned_uuid }}(<a href="{% url 'dashboard_app.views.redirect_to_test_run' test_run.analyzer_assigned_uuid %}">permalink</a>)</small></dd>
+      <dt>{% trans "Bundle SHA1" %} (<abbr title="This is the SHA1 hash of the bundle that contains this test run.">?</abbr>)</dt>
+      <dd><a href="{{ test_run.bundle.get_absolute_url }}"><small>{{ test_run.bundle.content_sha1 }}</small></a></dd>
+      <dt>{% trans "Tags" %} (<abbr title="LAVA can store tags associated with a particular test run. Tags are simple strings like &quot;project-foo-prerelase-testing&quot; or &quot;linaro-image-2011-09-27&quot;. Tags can be used by the testing effort feature to group results together.">?</abbr>)</dt>
+      <dd>
+    {% if test_run.tags.all %}
+      <ul>
+      {% for tag in test_run.tags.all %}
+        <li><code>{{ tag }}</code></li>
+      {% endfor %}
+      </ul>
+    {% else %}
+      <em>{% trans "No associated tags." %}</em>
+    {% endif %}
+      </dd>
+    {% if bundle.testjob.sub_id %}
+      <dt>Parent job id (<abbr title="MultiNode result bundles are aggregated into the job with the ID which ends in .0 Other jobs in the group are listed in the parent job log file.">?</abbr>)</dt>
+      <dd><a href="{{ bundle.testjob.get_absolute_url }}">{{ bundle.testjob.sub_id }}</a></dd>
+    {% else %}
+      <dt>Test job details</dt>
+      <dd><a href="{{ bundle.testjob.get_absolute_url }}">Job {{ bundle.testjob.id }}</a></dd>
+      <dt>Test job complete log</dt>
+      <dd><a href="{{ bundle.testjob.get_absolute_url }}/log_file">Job logs {{ bundle.testjob.id }}</a></dd>
+    {% endif %}
+      <dt>Test job start time</dt>
+      <dd>{{ bundle.testjob.start_time }}</dd>
+      <dt>Test job end time</dt>
+      <dd>{{ bundle.testjob.end_time }}</dd>
+{% endif %}
+      <dt>Export</dt>
+      <dd>test results data <a href="{% url 'dashboard_app.views.test_run_export' test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}">as CSV</a></dd>
+    </dl>
+  </div>
+
+  <div class="col-md-6">
+    <h4 class="modal-header">Software context</h4>
+    <dl class="dl-horizontal">
+      <dt>{% trans "OS Distribution" %}</dt>
+      <dd>{{ test_run.sw_image_desc|default:"<i>Unspecified</i>" }}</dd>
+      <dt>{% trans "Software packages" %} (<abbr title="LAVA keeps track of all the software packages (such as Debian packages managed with dpkg) that were installed prior to running a test. This information can help you track down errors caused by a particular buggy dependency">?</abbr>)</dt>
+      <dd><a href="{% url 'dashboard_app.views.test_run_software_context' test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}">
+            {{ test_run.packages.all.count }} packages</a></dd>
+      <dt>{% trans "Software sources" %} (<abbr title="LAVA can track more data than just package name and version. You can track precise software information such as the version control system branch or repository, revision or tag name and more.">?</abbr>)</dt>
+      <dd><a href="{% url 'dashboard_app.views.test_run_software_context' test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}#Sources">
+          {{ test_run.sources.all.count }} sources</a></dd>
+    </dl>
+  </div>
+
+  <div class="col-md-6">
+    <h4 class="modal-header">Hardware context</h4>
+    <dl class="dl-horizontal">
+      <dt>{% trans "Board" %}</dt>
+      <dd>{{ test_run.get_board|default_if_none:"There are no boards associated with this test run" }}</dd>
+      <dt>{% trans "Other devices" %} (<abbr title="LAVA keeps track of the hardware that was used for testing. This can help cross-reference benchmarks and identify hardware-specific issues.">?</abbr>)</dt>
+      <dd><a href="{% url 'dashboard_app.views.test_run_hardware_context' test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}">
+            See all {{ test_run.devices.all.count }} devices</a></dd>
+    </dl>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <h4 class="modal-header">Custom attributes (<abbr title="LAVA can store arbitrary key-value attributes associated with each test run (and separately, each test result)">?</abbr>)</h4>
+    {% if test_run.attributes.all %}
+    <dl class="dl-horizontal">
+    {% for attribute in test_run.attributes.all %}
+      <dt>{{ attribute.name }}</dt>
+      <dd>{{ attribute.value }}</dd>
+    {% endfor %}
+    </dl>
+    {% else %}
+      <i>none</i>
+    {% endif %}
+  </div>
+
+  <div class="col-md-6">
+  <h4 class="modal-header">Time stamps (<abbr title="There are three different timestamps associated with each test run. They are explained below.">?</abbr>)</h4>
+    <dl class="dl-horizontal">
+      <dt>{% trans "Log analyzed on" %} (<abbr title="This is the moment this that this test run's artifacts (such as log files and other output) were processed by the log analyzer. Typically the analyzer is a part of lava-test framework and test output is analyzed on right on the device so this time may not be trusted, see below for the description of &quot;accurate&quot;">?</abbr>)</dt>
+      <dd>{{ test_run.analyzer_assigned_date|naturalday }}
+          {{ test_run.analyzer_assigned_date|time }}
+          <small>({{ test_run.analyzer_assigned_date|timesince }} ago)</small>
+      </dd>
+      <dt>{% trans "Data imported on" %} (<abbr title="This is the moment this test run entry was created in the LAVA database. It can differ from upload date if there were any initial deserialization problems and the data was deserialized later.">?</abbr>)</dt>
+      <dd>{{ test_run.import_assigned_date|naturalday }}
+          {{ test_run.import_assigned_date|time }}
+          <small>({{ test_run.import_assigned_date|timesince }} ago)</small>
+      </dd>
+      <dt>{% trans "Data uploaded on" %} (<abbr title="This is the moment this data was first uploaded to LAVA (as a serialized bundle).">?</abbr>)</dt>
+      <dd>{{ test_run.bundle.uploaded_on|naturalday }}
+          {{ test_run.bundle.uploaded_on|time }}
+          <small>({{ test_run.bundle.uploaded_on|timesince }} ago)</small>
+      </dd>
+      <dt>{% trans "Accurate" %} (<abbr title="The value &quot;no&quot; indicates that the log analyzer was not certain that the time and date is accurate.">?</abbr>)</dt>
+      <dd><i>{{ test_run.time_check_performed|yesno }}</i></dd>
+    </dl>
+  </div>
+</div>
+
+<form method="POST"
+      action="{% url 'dashboard_app.views.link_bug_to_testresult' %}"
+      id="add-bug-dialog" style="display: none">
+  {% csrf_token %}
+  <input type="hidden" name="back" value="{{ request.path }}"/>
+  <input type="hidden" name="uuid"/>
+  <input type="hidden" name="relative_index"/>
+  <div class="linked" style="display:none"></div>
+  <input name="bug_link" style="width: 100%"/>
+</form>
 {% endblock %}
 
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/bug-links.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery-ui-1.10.4.custom.min.js"></script>
 
-{% block sidebar %}
-{% if bundle.testjob %}
-<h3>Test run details</h3>
-<dl>
-  <dt>{% trans "Test Name" %} (<abbr title="This is the identifier of the test that was invoked. A test is a collection of test cases. Test is also the smallest piece of code that can be invoked by lava-test.">?</abbr>):</dt>
-  <dd><a href="{{ test_run.test.get_absolute_url }}">{{ test_run.test.test_id }}</a>
-  </dd>
-  <dt>{% trans "Test Run UUID" %} (<abbr title="This is a globally unique identifier that was assigned by the log analyzer. Running the same test multiple times results in different values of this identifier.  The dashboard uses this identifier to refer to a particular test run. It is preserved across different LAVA installations, that is, if you pull test results (as bundles) from one system to another this identifier remains intact">?</abbr>):</dt>
-  <dd><small>{{ test_run.analyzer_assigned_uuid }}
-    (<a href="{% url dashboard_app.views.redirect_to_test_run test_run.analyzer_assigned_uuid %}">permalink</a>)</small>
-  </dd>
-  <dt>{% trans "Bundle SHA1" %} (<abbr title="This is the SHA1 hash of the bundle that contains this test run.">?</abbr>):</dt>
-  <dd><a href="{{ test_run.bundle.get_absolute_url }}"
-    ><small>{{ test_run.bundle.content_sha1 }}</small></a>
-  </dd>
-
-  <dt>{% trans "Tags" %} (<abbr title="LAVA can store tags associated with a particular test run. Tags are simple strings like &quot;project-foo-prerelase-testing&quot; or &quot;linaro-image-2011-09-27&quot;. Tags can be used by the testing effort feature to group results together.">?</abbr>):</dt>
-  <dd>
-  <ul>
-    {% for tag in test_run.tags.all %}
-    <li><code>{{ tag }}</code></li>
-    {% empty %}
-    <em>{% trans "There are no tags associated with this test run." %}</em>
-    {% endfor %}
-  </ul>
-  </dd>
-  {% if bundle.testjob.sub_id %}
-  <dt>Parent job id (<abbr title="MultiNode result bundles are aggregated into the job with the ID which ends in .0 Other jobs in the group are listed in the parent job log file.">?</abbr>)</dt>
-  <dd><a href="{{ bundle.testjob.get_absolute_url }}">{{ bundle.testjob.sub_id }}</a></dd>
-  <dt>Test job for this test run:</dt>
-  <dd>
-  {% for attribute in test_run.attributes.all %}
-  {% if attribute.name == "group_size" %}
-  {% endif %}
-  {% endfor %}
-  {% for attribute in test_run.attributes.all %}
-   {% if attribute.name == "target" %}
-    {% for group_job in job_list %}
-      {% if group_job.actual_device|stringformat:"s" == attribute.value|stringformat:"s" %}
-      <a href="{{ group_job.get_absolute_url }}">{{ group_job.sub_id }}</a> on
-      <a href="{{ group_job.actual_device.get_absolute_url }}">{{ group_job.actual_device|stringformat:"s" }}</a><br/>
-      {% endif %}
-    {% endfor %}
-   {% endif %}
-  {% endfor %}
-      </dd>
-  {% else %}
-  <dt>Test job details</dt>
-  <dd><a href="{{ bundle.testjob.get_absolute_url }}">Job {{ bundle.testjob.id }}</a></dd>
-  <dt>Test job complete log</dt>
-  <dd><a href="{{ bundle.testjob.get_absolute_url }}/log_file">Job logs {{ bundle.testjob.id }}</a></dd>
-    {% endif %}
-  <dt>Test job start time</dt>
-  <dd>{{ bundle.testjob.start_time }}</dd>
-  <dt>Test job end time</dt>
-  <dd>{{ bundle.testjob.end_time }}</dd>
-</dl>
-{% endif %}
-
-<h3>Export</h3>
-<p>Export test results data <a href="{% url dashboard_app.views.test_run_export test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}">as CSV</a></p>
-
-<h3>Software context</h3>
-<dl>
-  <dt>{% trans "OS Distribution:" %}</dt>
-  <dd>{{ test_run.sw_image_desc|default:"<i>Unspecified</i>" }}</dd>
-  <dt>{% trans "Software packages" %} (<abbr title="LAVA keeps track of all the software packages (such as Debian packages managed with dpkg) that were installed prior to running a test. This information can help you track down errors caused by a particular buggy dependency">?</abbr>):</dt>
-  <dd><a href="{% url dashboard_app.views.test_run_software_context test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}"
-    >{{ test_run.packages.all.count }} packages</a>
-  </dd>
-  <dt>{% trans "Software sources" %} (<abbr title="LAVA can track more data than just package name and version. You can track precise software information such as the version control system branch or repository, revision or tag name and more.">?</abbr>):</dt>
-  <dd><a href="{% url dashboard_app.views.test_run_software_context test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}#tab-software-sources"
-    >{{ test_run.sources.all.count }} sources</a>
-  </dd>
-</dl>
-
-<h3>Hardware context</h3>
-<dl>
-  <dt>{% trans "Board:" %}</dt>
-  <dd>{{ test_run.get_board|default_if_none:"There are no boards associated with this test run" }}</dd>
-  <dt>{% trans "Other devices" %} (<abbr title="LAVA keeps track of the hardware that was used for testing. This can help cross-reference benchmarks and identify hardware-specific issues.">?</abbr>):</dt>
-  <dd><a
-    href="{% url dashboard_app.views.test_run_hardware_context test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}"
-    >See all {{ test_run.devices.all.count }} devices</a>
-  </dd>
-</dl>
-
-<h3>Custom attributes (<abbr title="LAVA can store arbitrary key-value attributes associated with each test run (and separately, each test result)">?</abbr>)</h3>
-<ul class="attributes">
-  {% for attribute in test_run.attributes.all %}
-  <li>{{ attribute.name }} = {{ attribute.value }}</li>
-  {% empty %}
-  <i>none</i>
-  {% endfor %}
-</ul>
-
-<h3>Time stamps (<abbr title="There are three different timestamps associated with each test run. They are explained below.">?</abbr>)</h3>
-<dl>
-  <dt>{% trans "Log analyzed on" %} (<abbr title="This is the moment this that this test run's artifacts (such as log files and other output) were processed by the log analyzer. Typically the analyzer is a part of lava-test framework and test output is analyzed on right on the device so this time may not be trusted, see below for the description of &quot;time check performed&quot;">?</abbr>):</dt>
-  <dd>
-  {{ test_run.analyzer_assigned_date|naturalday }}
-  {{ test_run.analyzer_assigned_date|time }}
-  ({{ test_run.analyzer_assigned_date|timesince }} ago)
-  </dd>
-  <dt>{% trans "Time check performed" %} (<abbr title="The value &quot;no&quot; indicates that the log analyzer was not certain that the time and date is accurate.">?</abbr>):</dt>
-  <dd>{{ test_run.time_check_performed|yesno }}
-  </dd>
-  <dt>{% trans "Data imported on" %} (<abbr title="This is the moment this test run entry was created in the LAVA database. It can differ from upload date if there were any initial deserialization problems and the data was deserialized later.">?</abbr>):</dt>
-  <dd>
-  {{ test_run.import_assigned_date|naturalday }}
-  {{ test_run.import_assigned_date|time }}
-  ({{ test_run.import_assigned_date|timesince }} ago)
-  </dd>
-  <dt>{% trans "Data uploaded on" %} (<abbr title="This is the moment this data was first uploaded to LAVA (as a serialized bundle).">?</abbr>):</dt>
-  <dd>
-  {{ test_run.bundle.uploaded_on|naturalday }}
-  {{ test_run.bundle.uploaded_on|time }}
-  ({{ test_run.bundle.uploaded_on|timesince }} ago)
-  </dd>
-</dl>
+<script>
+  image_url = '{{ STATIC_URL }}dashboard_app/images/';
+  unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testresult' %}';
+  link_bug_url = '{% url 'dashboard_app.views.link_bug_to_testresult' %}';
+  $(document).ready(function() {
+    add_bug_link();
+  });
+</script>
 {% endblock %}

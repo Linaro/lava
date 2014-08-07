@@ -1,0 +1,5 @@
+.wizard > .content {
+    display: block;
+    min-height: 40em;
+    position: relative;
+}

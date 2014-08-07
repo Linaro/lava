@@ -1,65 +1,69 @@
-{% extends "lava_scheduler_app/_content.html" %}
-
+{% extends "layouts/content-bootstrap.html" %}
 {% load django_tables2 %}
 
 {% block content %}
-<h2>{{device_type}} Status</h2>
 
-{{running_jobs_num}} jobs running / {{queued_jobs_num}} jobs queued
-
-{% if capabilities_date %}
-<h3>Device capabilities as at {{ capabilities_date }}</h3>
-<table border=0 width="100%">
-<colgroup>
-<col width="20%">
-<col width="20%">
-</colgroup>
-<tr>
-<td style="vertical-align:text-top;text-align:left;">
-
-    {% if processor %}
-<dt>Processor:</dt>
-<dd>{{ processor }}</dd>
+{% if device_type.owners_only %}
+<div class="alert alert-warning alert-dismissable">
+  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+  <p><strong><i>{{ device_type.name }}</i> is a hidden device type.</strong></p>
+  Only owners of one or more devices of type <i>{{ device_type }}</i> can see this information.
+</div>
 {% endif %}
 
-{% if models %}
-<dt>Model:</dt>
-<dd>{{ models }}</dd>
+{% if is_admin and device_type.name != 'dynamic-vm' and device_type.health_check_job == '' %}
+  <div class="alert alert-info">
+  <p><strong>The '{{ device_type }}' device type has no <a
+     href="{{ STATIC_URL }}docs/glossary.html#term-health-check">health check job</a> in the <a
+     href="{{ STATIC_URL }}../admin/lava_scheduler_app/devicetype/{{ device_type.hostname }}">admin interface</a>.</strong>
+      Consider adding a <a href="{{ STATIC_URL }}docs/healthchecks.html#health-checks">health check definition</a>.
+  </p>
+  </div>
 {% endif %}
 
-{% if flags %}
-<dt>Flags:</dt>
-<dd>{{ flags }}</dd>
+<h2><i>{{device_type}}</i> status</h2>
+
+<div class="row">
+    <h4 class="modal-header">Current state</h4>
+  <div class="col-md-6">
+    <dl class="dl-horizontal">
+      <dt>Running jobs</dt>
+      <dd>{{ running_jobs_num }}</dd>
+      <dt>Queued jobs</dt>
+      <dd>{{ queued_jobs_num }}</dd>
+{% if device_type.name != 'dynamic-vm' %}
+      <dt>Checks/failures</dt>
+      <dd><a href="{% url 'lava.scheduler.device_type_report' device_type %}">Graphical reports</a></dd>
 {% endif %}
-
-</td>
-<td style="vertical-align:text-top;text-align:left;">
-
-{% if emulated %}
-<dt>Emulated:</dt>
-<dd>{{ emulated }}</dd>
+    </dl>
+  </div>
+  <div class="col-md-6">
+  <dl class="dl-horizontal">
+      <dt>Idle devices</dt>
+      <dd>{{ idle_num }}</dd>
+      <dt>Offline or going offline</dt>
+      <dd>{{ offline_num }}</dd>
+{% if device_type.name != 'dynamic-vm' %}
+      <dt>Retired</dt>
+      <dd>{{ retired_num }}</dd>
 {% endif %}
+  </dl>
+  </div>
+</div>
 
-{% if cores %}
-<dt>Cores:</dt>
-<dd>{{ cores }}</dd>
-{% endif %}
-
-</td>
-</tr>
-</table>
-{% endif %}
-
-<h3>Health Job Summary</h3>
-{% render_table health_job_summary_table %}
-
-<h3>Reports</h3>
-<a href="{% url lava.scheduler.device_type_report device_type %}">Health check and job failure report</a>
-
-<h3>Devices Overview</h3>
+<h4 class="modal-header">Devices list</h4>
 {% render_table devices_table_no_dt %}
 
-<h3>Jobs for devices of type {{ device_type }}</h3>
+{% if device_type.name != 'dynamic-vm' and device_type.health_check_job != '' %}
+<h4 class="modal-header">Health Job Summary</h4>
+{% render_table health_job_summary_table %}
+{% endif %}
+
+<h4 class="modal-header">Jobs for devices of type {{ device_type }}</h4>
 {% render_table device_type_jobs_table %}
 
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
 {% endblock %}

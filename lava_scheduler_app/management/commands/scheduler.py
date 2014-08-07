@@ -46,6 +46,7 @@ class Command(SchedulerCommand):
         from lava_scheduler_daemon.service import JobQueue
         from lava_scheduler_daemon.worker import WorkerData
         from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
+        import xmlrpclib
 
         daemon_options = self._configure(options)
 
@@ -64,8 +65,7 @@ class Command(SchedulerCommand):
         # on every start/restart of the scheduler daemon.
         worker = WorkerData()
         try:
-            worker.populate_complete_worker_data()
-            worker.put_heartbeat_data()
+            worker.put_heartbeat_data(restart=True)
         except (xmlrpclib.Fault, xmlrpclib.ProtocolError) as err:
             worker.logger.error("Complete heartbeat update failed!")
 

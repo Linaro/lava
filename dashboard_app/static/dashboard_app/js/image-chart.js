@@ -1,95 +1,131 @@
 $(document).ready(function () {
 
-    add_chart = function(chart_id, chart_data) {
+    function ImageReport(chart_data) {
+        this.chart_data = chart_data;
+        this.charts = [];
+    }
 
-        if (chart_data.test_data) {
-            // Add chart container.
-            $("#main_container").append(
-                '<div id="chart_container_'+ chart_id + '"></div>');
-            // Add headline container.
-            $("#chart_container_" + chart_id).append(
-                '<div class="headline-container" id="headline_container_' +
-                    chart_id + '"></div>');
-            // Add filter links used.
-            $("#chart_container_" + chart_id).append(
-                '<div class="filter-links-container" id="filter_links_container_' + chart_id + '"></div>');
-            // Add data table link.
-            $("#filter_links_container_" + chart_id).append(
-                '<span class="table-link-container"' +
-                    'id="table_link_container_' + chart_id + '"></span>');
-            // Add dates/build numbers container.
-            $("#chart_container_" + chart_id).append(
-                '<div class="dates-container" id="dates_container_' +
-                    chart_id + '"></div>');
-            // Add outer plot container.
-            $("#chart_container_" + chart_id).append(
-                '<div class="outer-chart" id="outer_container_' +
-                    chart_id + '"></div>');
-            // Add inner plot container.
-            $("#outer_container_" + chart_id).append(
-                '<div class="inner-chart" id="inner_container_' +
-                    chart_id + '"></div>');
-            // Add legend container.
-            $("#outer_container_" + chart_id).append(
-                '<div class="legend" id="legend_container_' +
-                    chart_id + '"></div>');
-
-            // Add headline and description.
-            update_headline(chart_id, chart_data);
-            // Add dates/build numbers.
-            update_dates(chart_id, chart_data);
-            // Add filter links.
-            update_filter_links(chart_id, chart_data);
-            // Add data tables.
-            update_data_tables(chart_id, chart_data);
-            // Generate chart.
-            update_plot(chart_id, chart_data, null);
-            // Add source for saving charts as images and csv export.
-            update_urls(chart_id, chart_data["report_name"]);
-            // Update events.
-            update_events(chart_id);
+    ImageReport.prototype.start = function() {
+        // Add charts.
+        for (chart_id in this.chart_data) {
+            chart = new ImageChart(chart_id, this.chart_data[chart_id]);
+            chart.add_chart();
+            this.charts.push(chart);
         }
     }
 
-    setup_sortable = function(chart_id, chart_data) {
-
-        $("#legend_container_" + chart_id + " table:first-child tbody").sortable({
-            axis: "y",
-            cursor: "move",
-            helper: fixHelperModified,
-            stop: function(event, ui) {
-                series_order_changed(chart_id, chart_data);
-            },
-            tolerance: "pointer",
-
-        }).disableSelection();
+    ImageReport.prototype.redraw = function() {
+        // Add charts.
+        for (var i in this.charts) {
+            this.charts[i].update_plot();
+        }
     }
 
-    series_order_changed = function(chart_id, chart_data) {
-        ordered_filter_ids = [];
-        $("#legend_container_" + chart_id + " table:first-child tbody tr").each(function() {
-            ordered_filter_ids.push($(this).find("input").val());
+    function ImageChart(chart_id, chart_data) {
+        this.plot = null;
+        this.chart_id = chart_id;
+        this.chart_data = chart_data;
+        this.legend_items = [];
+    }
+
+    ImageChart.prototype.BUILD_NUMBER_ERROR =
+        "End build number must be greater then the start build number.";
+
+    ImageChart.prototype.setup_clickable = function() {
+
+        var chart = this;
+        $("#legend_container_" + this.chart_id + " table:first-child tbody tr").each(function(index) {
+
+            $(this).click(function() {
+
+                if (chart.legend_items[index].show == true) {
+                    chart.legend_items[index].show = false;
+                } else {
+                    chart.legend_items[index].show = true;
+                }
+
+                chart.update_plot();
+            });
         });
-
-        update_plot(chart_id, chart_data, ordered_filter_ids);
     }
 
-    setup_print_menu = function(chart_id) {
-        $("#print_menu_" + chart_id).menu({menus: "div"});
+    ImageChart.prototype.setup_legend_css = function() {
+
+        for (var i in this.legend_items) {
+            if (this.legend_items[i].show == true) {
+                $("#" + this.legend_items[i].dom_id).parent().css("color", "#545454");
+            } else {
+                $("#" + this.legend_items[i].dom_id).parent().css("color", "#999");
+            }
+        }
+    }
+
+    ImageChart.prototype.add_chart = function() {
+
+        if (this.chart_data.test_data) {
+            // Add chart container.
+            $("#main_container").append(
+                '<div id="chart_container_'+ this.chart_id + '"></div>');
+            // Add headline container.
+            $("#chart_container_" + this.chart_id).append(
+                '<div class="headline-container" id="headline_container_' +
+                    this.chart_id + '"></div>');
+            // Add filter links used.
+            $("#chart_container_" + this.chart_id).append(
+                '<div class="filter-links-container"' +
+                    'id="filter_links_container_' + this.chart_id +
+                    '"></div>');
+            // Add data table link.
+            $("#filter_links_container_" + this.chart_id).append(
+                '<span class="table-link-container"' +
+                    'id="table_link_container_' + this.chart_id + '"></span>');
+            // Add dates/build numbers container.
+            $("#chart_container_" + this.chart_id).append(
+                '<div class="dates-container" id="dates_container_' +
+                    this.chart_id + '"></div>');
+            // Add outer plot container.
+            $("#chart_container_" + this.chart_id).append(
+                '<div class="outer-chart" id="outer_container_' +
+                    this.chart_id + '"></div>');
+            // Add inner plot container.
+            $("#outer_container_" + this.chart_id).append(
+                '<div class="inner-chart" id="inner_container_' +
+                    this.chart_id + '"></div>');
+            // Add legend container.
+            $("#outer_container_" + this.chart_id).append(
+                '<div class="legend" id="legend_container_' +
+                    this.chart_id + '"></div>');
+
+            // Add headline and description.
+            this.update_headline();
+            // Add dates/build numbers.
+            this.update_dates();
+            // Add filter links.
+            this.update_filter_links();
+            // Add data tables.
+            this.update_data_tables();
+            // Generate chart.
+            this.update_plot();
+            // Add source for saving charts as images and csv export.
+            this.update_urls();
+            // Update events.
+            this.update_events();
+        }
+    }
+
+    ImageChart.prototype.setup_print_menu = function() {
+        chart_id = this.chart_id;
+        $("#print_menu_" + chart_id).menu();
         $("#print_menu_" + chart_id).hide();
         $("#print_menu_" + chart_id).mouseleave(function() {
             $("#print_menu_" + chart_id).hide();
         });
     }
 
-    toggle_print_menu = function(e, chart_id) {
-        $("#print_menu_" + chart_id).toggle();
-        $("#print_menu_" + chart_id).offset({left: e.pageX, top: e.pageY});
-    }
+    ImageChart.prototype.update_events = function() {
 
-    update_events = function(chart_id) {
         // Bind plotclick event.
-        $("#inner_container_"+chart_id).bind(
+        $("#inner_container_" + this.chart_id).bind(
             "plotclick",
             function (event, pos, item) {
                 if (item) {
@@ -102,7 +138,7 @@ $(document).ready(function () {
                 }
             });
 
-        $("#inner_container_"+chart_id).bind(
+        $("#inner_container_" + this.chart_id).bind(
             "plothover",
             function (event, pos, item) {
                 $("#tooltip").remove();
@@ -116,103 +152,106 @@ $(document).ready(function () {
             });
     }
 
-    showTooltip = function(x, y, contents, pass) {
-        bkg_color = (pass)? '#98c13d' : '#ff7f7f';
-        $('<div id="tooltip">' + contents + '</div>').css({
-            position: 'absolute', display: 'none', top: y + 5, left: x + 5,
-            border: '1px solid #000', padding: '2px',
-            'background-color': bkg_color, opacity: 0.80
-        }).appendTo("body").fadeIn(200);
+
+    ImageChart.prototype.update_headline = function() {
+        $("#headline_container_" + this.chart_id).append(
+            '<span class="chart-headline">' + this.chart_data["name"] +
+                '</span>');
+        $("#headline_container_" + this.chart_id).append(
+            '<span>' + this.chart_data["description"] + '</span>');
     }
 
-    update_headline = function(chart_id, chart_data) {
-        $("#headline_container_" + chart_id).append(
-            '<span class="chart-headline">' + chart_data["name"] + '</span>');
-        $("#headline_container_" + chart_id).append(
-            '<span>' + chart_data["description"] + '</span>');
-    }
+    ImageChart.prototype.update_filter_links = function() {
 
-    update_filter_links = function(chart_id, chart_data) {
-
-        $("#filter_links_container_" + chart_id).append(
-            '<span style="margin-left: 30px;">Filters used:&nbsp;&nbsp;</span>');
+        $("#filter_links_container_" + this.chart_id).append(
+            '<span style="margin-left: 30px;">Filters used:&nbsp;&nbsp;' +
+                '</span>');
         filter_links = [];
-        for (filter_id in chart_data.filters) {
+        for (filter_id in this.chart_data.filters) {
             filter_links.push('<a href="' +
-                              chart_data.filters[filter_id]["link"] + '">~' +
-                              chart_data.filters[filter_id]["owner"] + '/' +
-                              chart_data.filters[filter_id]["name"] +
+                              this.chart_data.filters[filter_id]["link"] +
+                              '">~' +
+                              this.chart_data.filters[filter_id]["owner"] +
+                              '/' +
+                              this.chart_data.filters[filter_id]["name"] +
                               '</a>');
         }
         filter_html = filter_links.join(", ");
-        $("#filter_links_container_" + chart_id).append(
+        $("#filter_links_container_" + this.chart_id).append(
             '<span>' + filter_html + '</span>');
 
-        $("#filter_links_container_" + chart_id).append(
+        $("#filter_links_container_" + this.chart_id).append(
             '<span class="chart-save-img">' +
-                '<a id="chart_menu_' + chart_id + '"' +
-                ' onclick="toggle_print_menu(event, ' + chart_id + ')">' +
+                '<a id="chart_menu_' + this.chart_id + '"' +
+                ' onclick="toggle_print_menu(event, ' + this.chart_id + ')">' +
                 '<img src="' + image_url + 'icon-print.png"></a>' +
                 '</span>');
 
-        $("#filter_links_container_" + chart_id).append(
-            '<div class="print-menu" id="print_menu_' + chart_id + '">' +
-                '<div class="print-menu-item"><a href="#" id="chart_csv_' +
-                chart_id + '">' +
-                'Download as CSV</a></div>' +
-                '<div class="print-menu-item"><a target="_blank" href="#"' +
-                ' id="chart_img_' + chart_id +
-                '">View as image</a></div>' +
-                '</div>');
+        $("#filter_links_container_" + this.chart_id).append(
+            '<ul class="print-menu" id="print_menu_' + this.chart_id + '">' +
+                '<li class="print-menu-item"><a href="#" id="chart_csv_' +
+                this.chart_id + '">' +
+                'Download as CSV</a></li>' +
+                '<li class="print-menu-item"><a target="_blank" href="#"' +
+                ' id="chart_img_' + this.chart_id +
+                '">View as image</a></li>' +
+                '</ul>');
 
-        setup_print_menu(chart_id);
+        this.setup_print_menu();
     }
 
-    update_dates = function(chart_id, chart_data) {
+    ImageChart.prototype.update_dates = function() {
+
         // Add dates(build number) fields and toggle legend checkbox.
-        $("#dates_container_" + chart_id).append(
-            '<span style="margin-left: 30px;">Start build number:&nbsp;&nbsp;</span>');
-        $("#dates_container_" + chart_id).append(
-            '<span><select id="start_date_' + chart_id + '"></select></span>');
-        $("#dates_container_" + chart_id).append(
-            '<span>&nbsp;&nbsp;&nbsp;&nbsp;End build number:&nbsp;&nbsp;</span>');
-        $("#dates_container_" + chart_id).append(
-            '<span><select id="end_date_' + chart_id + '"></select></span>');
+        $("#dates_container_" + this.chart_id).append(
+            '<span style="margin-left: 30px;">Start build number:&nbsp;' +
+                '&nbsp;</span>');
+        $("#dates_container_" + this.chart_id).append(
+            '<span><select id="start_date_' + this.chart_id +
+                '"></select></span>');
+        $("#dates_container_" + this.chart_id).append(
+            '<span>&nbsp;&nbsp;&nbsp;&nbsp;End build number:&nbsp;&nbsp;' +
+                '</span>');
+        $("#dates_container_" + this.chart_id).append(
+            '<span><select id="end_date_' + this.chart_id + '"></select>' +
+                '</span>');
 
         // Add percentages if chart type is pass/fail.
-        if (chart_data["chart_type"] == "pass/fail") {
-            $("#dates_container_" + chart_id).append(
+        if (this.chart_data["chart_type"] == "pass/fail") {
+            $("#dates_container_" + this.chart_id).append(
                 '<span>&nbsp;&nbsp;&nbsp;&nbsp;<label for="is_percentage_' +
-                    chart_id +
+                    this.chart_id +
                     '">Toggle percentage:</label>&nbsp;&nbsp;</span>');
-            $("#dates_container_" + chart_id).append(
-                '<span><input type="checkbox" id="is_percentage_' + chart_id +
-                    '" /></span>');
+            $("#dates_container_" + this.chart_id).append(
+                '<span><input type="checkbox" id="is_percentage_' +
+                    this.chart_id + '" /></span>');
         }
 
-        $("#dates_container_" + chart_id).append(
+        $("#dates_container_" + this.chart_id).append(
             '<span>&nbsp;&nbsp;&nbsp;&nbsp;<label for="is_legend_visible_' +
-                chart_id + '">Toggle legend:</label>&nbsp;&nbsp;</span>');
-        $("#dates_container_" + chart_id).append(
-            '<span><input type="checkbox" id="is_legend_visible_' + chart_id + '" checked="checked"/></span>');
-        $("#dates_container_" + chart_id).append(
+                this.chart_id + '">Toggle legend:</label>&nbsp;&nbsp;</span>');
+        $("#dates_container_" + this.chart_id).append(
+            '<span><input type="checkbox" id="is_legend_visible_' +
+                this.chart_id + '" checked="checked"/></span>');
+        $("#dates_container_" + this.chart_id).append(
             '<span style="float: right;"><input id="has_subscription_' +
-                chart_id + '" type="hidden"/><a id="has_subscription_link_' +
-                chart_id + '" href="javascript:void(0)"></a></span>');
+                this.chart_id +
+                '" type="hidden"/><a id="has_subscription_link_' +
+                this.chart_id + '" href="javascript:void(0)"></a></span>');
 
-        set_dates(chart_id, chart_data);
-        apply_settings(chart_id, chart_data);
-        add_settings_events(chart_id, chart_data);
+        this.set_dates();
+        this.apply_settings();
+        this.add_settings_events();
     }
 
-    update_data_tables = function(chart_id, chart_data) {
+    ImageChart.prototype.update_data_tables = function() {
 
         // Add dialog.
-        $("#main_container").append('<div id="data_table_dialog_' + chart_id +
-                                    '"></div>');
+        $("#main_container").append('<div id="data_table_dialog_' +
+                                    this.chart_id + '"></div>');
 
         // Init dialog.
-        $('#data_table_dialog_' + chart_id).dialog({
+        $('#data_table_dialog_' + this.chart_id).dialog({
             autoOpen: false,
             title: 'View data table',
             draggable: false,
@@ -221,39 +260,45 @@ $(document).ready(function () {
             modal: true,
             resizable: false,
             open: function (event, ui) {
-                $('#data_table_dialog_' + chart_id).css('overflow', 'hidden');
-                $("#scroller").scrollLeft($("#scroller")[0].scrollWidth);
+                $('#data_table_dialog_' + this.chart_id).css('overflow',
+                                                             'hidden');
+
+                $('.scroller').each(function() {
+                    $(this).scrollLeft($(this)[0].scrollWidth);
+                });
             }
         });
 
         // Add skeleton data to dialog.
-        $("#data_table_dialog_" + chart_id).append(
+        $("#data_table_dialog_" + this.chart_id).append(
             '<table id="outer-table"><tr><td>' +
-                '<table id="test-run-names_' + chart_id +
+                '<table id="test-run-names_' + this.chart_id +
                 '" class="inner-table"><thead>' +
                 '<tr><th>Build Number</th></tr>' +
                 '</thead>' +
                 '<tbody></tbody></table></td>' +
-                '<td><div id="scroller">' +
-                '<table id="results-table_' + chart_id +
+                '<td><div class="scroller">' +
+                '<table id="results-table_' + this.chart_id +
                 '" class="inner-table"><thead>' +
                 '</thead><tbody></tbody></table>' +
                 '</div></td></tr></table>');
 
         // Add data.
-        add_table_data(chart_id, chart_data);
+        this.add_table_data();
 
         // Add link.
-        $("#table_link_container_" + chart_id).append(
+        $("#table_link_container_" + this.chart_id).append(
             '<a id="data_table_link_' +
-                chart_id + '" href="javascript:void(0)">View data table</a>');
+                this.chart_id +
+                '" href="javascript:void(0)">View data table</a>');
 
-        $("#data_table_link_" + chart_id).click(function(){
-            $('#data_table_dialog_' + chart_id).dialog("open");
+        var chart = this;
+        $("#data_table_link_" + this.chart_id).click(function(){
+            $('#data_table_dialog_' + chart.chart_id).dialog("open");
         });
     }
 
-    add_table_data = function(chart_id, chart_data) {
+    ImageChart.prototype.add_table_data = function() {
 
         // Create row headlines.
         table_rows = "<tr><td>Date</td></tr>";
@@ -266,9 +311,9 @@ $(document).ready(function () {
         table = {};
 
         // Create inner table with row names.
-        for (iter in chart_data.test_data) {
+        for (iter in this.chart_data.test_data) {
 
-            test_data = chart_data.test_data[iter];
+            test_data = this.chart_data.test_data[iter];
             if ($.inArray(test_data["test_filter_id"], rows) == -1) {
                 // Add unique rows and create row headlines HTML.
 
@@ -278,18 +323,18 @@ $(document).ready(function () {
                 if (test_name.length > 10) {
                     test_name = test_name.substring(0,10) + "...";
                 }
-                table_rows += "<tr><td tooltip='" + test_data["alias"] +
+                table_rows += "<tr><td title='" + test_data["alias"] +
                     "'>" + test_name + "</td></tr>";
             }
         }
-        $("#test-run-names_" + chart_id + " tbody").html(table_rows);
+        $("#test-run-names_" + this.chart_id + " tbody").html(table_rows);
 
         // Create column headlines.
         result_table_head = "<tr>";
 
         // Organize data in the 'table' multi array.
-        for (iter in chart_data.test_data) {
-            test_data = chart_data.test_data[iter];
+        for (iter in this.chart_data.test_data) {
+            test_data = this.chart_data.test_data[iter];
 
             number = test_data["number"].split(' ')[0];
             if (!(number in table)) {
@@ -319,7 +364,7 @@ $(document).ready(function () {
             }
         }
 
-        data_table = '<table id="results_table_' + chart_id +
+        data_table = '<table id="results_table_' + this.chart_id +
             '" class="inner-table">';
 
         table_head = '<thead><tr>';
@@ -367,10 +412,17 @@ $(document).ready(function () {
                         cls = "pass";
                     }
                     uuid = cell["test_run_uuid"];
+                    relative_index_str = "";
+                    if (cell["measurement"]) {
+                        arr = cell["link"].split("/")
+                        relative_index = arr[arr.length-2]
+                        relative_index_str = 'data-relative_index="' + relative_index +'"'
+                    }
 
-                    table_body += '<td class="' + cls + '" data-chart-id="' + chart_id + '" data-uuid="' + uuid + '">';
+                    table_body += '<td class="' + cls + '" data-chart-id="' +
+                        this.chart_id + '" data-uuid="' + uuid + '" ' + relative_index_str + '>';
 
-                    if (chart_data["chart_type"] == "pass/fail") {
+                    if (this.chart_data["chart_type"] == "pass/fail") {
                         table_body += '<a target="_blank" href="' +
                             cell["link"] + '">' + cell["passes"] + '/' +
                             cell["total"] + '</a>';
@@ -379,14 +431,19 @@ $(document).ready(function () {
                             cell["link"] + '">' + cell["measurement"] + '</a>';
                     }
 
-                    table_body += '<span class="bug-link-container"><a href="#" class="add-bug-link"> [' + cell["bug_links"].length + ']</a></span>';
-                    table_body += '<span class="bug-links" style="display: none">';
+                    table_body += '<span class="bug-link-container">' +
+                        '<a href="#" class="add-bug-link"> [' +
+                        cell["bug_links"].length + ']</a></span>';
+                    table_body += '<span class="bug-links" ' +
+                        'style="display: none">';
+
                     for (bug_link in cell["bug_links"]) {
                         bug = cell["bug_links"];
-                        table_body += '<li class="bug-link">' + bug[bug_link] + '</li>';
+                        table_body += '<li class="bug-link">' + bug[bug_link] +
+                            '</li>';
                     }
-                    table_body += '</span>';
 
+                    table_body += '</span>';
                     table_body += "</td>";
                 }
             }
@@ -394,163 +451,185 @@ $(document).ready(function () {
         }
 
         table_body += '</tr></tbody>';
-        $("#results-table_" + chart_id + " tbody").html(table_head +
+        $("#results-table_" + this.chart_id + " tbody").html(table_head +
                                                        table_body);
 
-        update_tooltips(chart_id);
+        this.update_tooltips();
     }
 
-    update_tooltips = function(chart_id) {
+    ImageChart.prototype.update_tooltips = function() {
         // Update tooltips on the remaining td's for the test names.
-        $("td", "#test-run-names_" + chart_id).each(function () {
-            if ($(this).attr('tooltip')) {
-                $(this).tooltip({
-                    bodyHandler: function() {
-                        return $(this).attr('tooltip');
-                    }
-                });
-            }
-        });
+        $(document).tooltip({items: "td"});
     }
 
-    set_dates = function(chart_id, chart_data) {
+    ImageChart.prototype.set_dates = function() {
         // Populate date dropdowns.
         dates = [];
-        for (iter in chart_data.test_data) {
-            item = chart_data.test_data[iter]["number"].split('.')[0];
+        for (iter in this.chart_data.test_data) {
+            item = this.chart_data.test_data[iter]["number"].split('.')[0];
             if (dates.indexOf(item) == -1) {
                 dates.push(item);
             }
         }
 
-        if (chart_data.has_build_numbers) {
+        if (this.chart_data.has_build_numbers) {
             dates.sort(function(x,y) {return x-y;});
         } else {
             dates.sort();
         }
 
         for (i in dates) {
-            $("#start_date_"+chart_id).append($("<option/>", {
+            $("#start_date_" + this.chart_id).append($("<option/>", {
                 value: dates[i],
                 text: dates[i]
             }));
-            $("#end_date_"+chart_id).append($("<option/>", {
+            $("#end_date_" + this.chart_id).append($("<option/>", {
                 value: dates[i],
                 text: dates[i]
             }));
         }
-        $("#end_date_"+chart_id+" option:last").attr("selected", "selected");
+        $("#end_date_" + this.chart_id + " option:last").attr("selected",
+                                                              "selected");
     }
 
-    add_settings_events = function(chart_id, chart_data) {
+    ImageChart.prototype.validate_build_number_selection = function() {
 
-        $("#start_date_"+chart_id).focus(function() {
+        start_number = $("#start_date_" + this.chart_id).val();
+        if (isNumeric(start_number)) {
+	    start_number = parseInt(start_number);
+        }
+        end_number = $("#end_date_" + this.chart_id).val();
+        if (isNumeric(end_number)) {
+	    end_number = parseInt(end_number);
+        }
+
+        if (start_number >= end_number) {
+	    return false;
+        } else {
+            return true;
+        }
+    }
+
+    ImageChart.prototype.add_settings_events = function() {
+
+        $("#start_date_"+this.chart_id).focus(function() {
             $(this).data('lastSelected', $(this).find('option:selected'));
         });
-        $("#end_date_"+chart_id).focus(function() {
+        $("#end_date_"+this.chart_id).focus(function() {
             $(this).data('lastSelected', $(this).find('option:selected'));
         });
 
-        $("#start_date_"+chart_id).change(function() {
-            if (!validate_build_number_selection(chart_id)) {
-                $(this).data('lastSelected').attr("selected", "selected");
-                build_number_validation_alert();
-                return false;
+        var chart = this;
+        $("#start_date_"+this.chart_id).change(
+            function() {
+                if (!chart.validate_build_number_selection()) {
+                    $(this).data("lastSelected").attr("selected", "selected");
+                    validation_alert(chart.BUILD_NUMBER_ERROR);
+                    return false;
+                }
+                chart.update_plot();
+                chart.update_settings();
             }
-            update_plot(chart_id, chart_data, null);
-            update_settings(chart_id, chart_data["report_name"]);
+        );
+
+        $("#end_date_"+this.chart_id).change(
+            function() {
+                if (!chart.validate_build_number_selection()) {
+                    $(this).data("lastSelected").attr("selected", "selected");
+                    validation_alert(chart.BUILD_NUMBER_ERROR);
+                    return false;
+                }
+                chart.update_plot();
+            }
+        );
+
+        $("#is_legend_visible_"+this.chart_id).change(function() {
+            chart.update_plot();
+            chart.update_settings();
         });
 
-        $("#end_date_"+chart_id).change(function() {
-            if (!validate_build_number_selection(chart_id)) {
-                $(this).data("lastSelected").attr("selected", "selected");
-                build_number_validation_alert();
-                return false;
-            }
-            update_plot(chart_id, chart_data, null);
-        });
-
-        if (chart_data["chart_type"] == "pass/fail") {
-            $("#is_legend_visible_"+chart_id).change(function() {
-                update_plot(chart_id, chart_data, null);
+        if (this.chart_data["chart_type"] == "pass/fail") {
+            $("#is_percentage_"+this.chart_id).change(function() {
+                chart.update_plot();
             });
         }
 
-        $("#is_percentage_"+chart_id).change(function() {
-            update_plot(chart_id, chart_data, null);
-            update_settings(chart_id, chart_data["report_name"]);
-        });
-
-        $("#has_subscription_link_"+chart_id).click(function() {
-            $("#has_subscription_" + chart_id).val(
-                $("#has_subscription_" + chart_id).val() != "true");
-            update_settings(chart_id, chart_data["report_name"]);
+        $("#has_subscription_link_"+this.chart_id).click(function() {
+            $("#has_subscription_" + chart.chart_id).val(
+                $("#has_subscription_" + chart.chart_id).val() != "true");
+            chart.update_settings();
         });
     }
 
-    apply_settings = function(chart_id, chart_data) {
+    ImageChart.prototype.apply_settings = function() {
 
-        if (chart_data.user) { // Is authenticated.
-            if (chart_data.user.start_date) {
-                $("#start_date_" + chart_id).val(chart_data.user.start_date);
+        if (this.chart_data.user) { // Is authenticated.
+            if (this.chart_data.user.start_date) {
+                $("#start_date_" + this.chart_id).val(
+                    this.chart_data.user.start_date);
             }
-            if (chart_data.user.is_legend_visible == false) {
-                $("#is_legend_visible_" + chart_id).attr("checked", false);
+            if (this.chart_data.user.is_legend_visible == false) {
+                $("#is_legend_visible_" + this.chart_id).prop("checked",
+                                                              false);
             }
 
-            set_subscription_link(chart_id, chart_data.user.has_subscription);
+            this.set_subscription_link(this.chart_data.user.has_subscription);
         }
     }
 
-    update_settings = function(chart_id, report_name) {
+    ImageChart.prototype.update_settings = function() {
 
-        url = "/dashboard/image-charts/" + report_name + "/" +
-            chart_id + "/+settings-update";
+        url = "/dashboard/image-charts/" + this.chart_data["report_name"] +
+            "/" + this.chart_id + "/+settings-update";
 
+        // Needed for callback function.
+        var chart = this;
         $.ajax({
             url: url,
             type: "POST",
             data: {
                 csrfmiddlewaretoken: csrf_token,
-                start_date: $("#start_date_"+chart_id).val(),
-                is_legend_visible: $("#is_legend_visible_"+chart_id).attr(
-                    "checked"),
-                has_subscription: $("#has_subscription_" + chart_id).val(),
+                start_date: $("#start_date_" + this.chart_id).val(),
+                is_legend_visible: $("#is_legend_visible_" + this.chart_id).prop("checked"),
+                has_subscription: $("#has_subscription_" + this.chart_id).val(),
             },
             success: function (data) {
-                set_subscription_link(chart_id,
-                                      data[0].fields.has_subscription);
+                chart.set_subscription_link(data[0].fields.has_subscription);
             },
         });
     }
 
-    set_subscription_link = function(chart_id, subscribed) {
-        if (subscribed) {
-            $("#has_subscription_"+chart_id).val(true);
-            $("#has_subscription_link_"+chart_id).html(
-                "Unsubscribe from target goal");
-        } else {
-            $("#has_subscription_"+chart_id).val(false);
-            $("#has_subscription_link_"+chart_id).html(
-                "Subscribe to target goal");
+    ImageChart.prototype.set_subscription_link = function(subscribed) {
+
+        if (this.chart_data["target_goal"]) {
+            if (subscribed) {
+                $("#has_subscription_"+this.chart_id).val(true);
+                $("#has_subscription_link_"+this.chart_id).html(
+                    "Unsubscribe from target goal");
+            } else {
+                $("#has_subscription_"+this.chart_id).val(false);
+                $("#has_subscription_link_"+this.chart_id).html(
+                    "Subscribe to target goal");
+            }
         }
     }
 
-    update_urls = function(chart_id, report_name) {
-        canvas = $("#inner_container_" + chart_id + " > .flot-base").get(0);
+    ImageChart.prototype.update_urls = function() {
+        canvas = $("#inner_container_" + this.chart_id + " > .flot-base").get(0);
         var dataURL = canvas.toDataURL();
-        document.getElementById("chart_img_" + chart_id).href = dataURL;
-        export_url = "/dashboard/image-charts/" + report_name + "/" +
-            chart_id + "/+export";
-        document.getElementById("chart_csv_" + chart_id).href = export_url;
+        document.getElementById("chart_img_" + this.chart_id).href = dataURL;
+        export_url = "/dashboard/image-charts/" +
+            this.chart_data["report_name"] + "/" + this.chart_id + "/+export";
+        document.getElementById("chart_csv_" + this.chart_id).href = export_url;
     }
 
-    test_build_number = function(build_number, chart_id, has_build_numbers) {
+    ImageChart.prototype.test_build_number = function(build_number) {
+
         // Test if the build number/date is between specified
         // number/date boundaries.
-        start_number = $("#start_date_" + chart_id).val();
-        end_number = $("#end_date_" + chart_id).val();
-        if (has_build_numbers) {
+        start_number = $("#start_date_" + this.chart_id).val();
+        end_number = $("#end_date_" + this.chart_id).val();
+        if (this.chart_data.has_build_numbers) {
             build_number = parseInt(build_number);
             start_number = parseInt(start_number);
             end_number = parseInt(end_number);
@@ -561,22 +640,22 @@ $(document).ready(function () {
         return false;
     }
 
-
-    update_plot = function(chart_id, chart_data, ordered_filter_ids) {
+    ImageChart.prototype.update_plot = function() {
 
         // Init plot data.
         plot_data = {};
 
-        for (iter in chart_data.test_data) {
+        for (iter in this.chart_data.test_data) {
 
-	    row = chart_data.test_data[iter];
+	    row = this.chart_data.test_data[iter];
 	    test_filter_id = row["test_filter_id"];
             if (!(test_filter_id in plot_data)) {
                 plot_data[test_filter_id] = {
                     "alias": row["alias"],
                     "representation": row["filter_rep"],
                     "data": [],
-                    "meta": []
+                    "meta": [],
+                    "labels": []
                 };
             }
         }
@@ -586,26 +665,25 @@ $(document).ready(function () {
         // Store all build numbers
         build_numbers = [];
 
-        for (iter in chart_data.test_data) {
+        for (iter in this.chart_data.test_data) {
 
-	    row = chart_data.test_data[iter];
+	    row = this.chart_data.test_data[iter];
             build_number = row["number"].split(".")[0];
 
             // If some of the filters have build_number_attribute, ignore
             // others which don't.
-            if (chart_data.has_build_numbers && !isNumeric(build_number)) {
+            if (this.chart_data.has_build_numbers && !isNumeric(build_number)) {
                 continue;
             }
 
             test_filter_id = row["test_filter_id"];
-            if (test_build_number(build_number, chart_id,
-                                  chart_data.has_build_numbers)) {
+            if (this.test_build_number(build_number)) {
 
                 // Current iterator for plot_data[iter][data].
                 iter = plot_data[test_filter_id]["data"].length;
 
-                if (chart_data["chart_type"] == "pass/fail") {
-                    if ($("#is_percentage_" + chart_id).attr("checked") == true) {
+                if (this.chart_data["chart_type"] == "pass/fail") {
+                    if ($("#is_percentage_" + this.chart_id).prop("checked") == true) {
                         value = parseFloat(row["passes"]/row["total"]).toFixed(4) * 100;
                         tooltip = "Pass rate: " + value + "%";
                     } else {
@@ -619,14 +697,42 @@ $(document).ready(function () {
                     tooltip = "Value: " + value;
                 }
 
+                tooltip += "<br>";
+                label = "";
+
+                // Support metadata content with image and tooltip text.
+                if (!$.isEmptyObject(row["metadata_content"])) {
+                    label = "/static/dashboard_app/images/metadata.png";
+                    for (key in row["metadata_content"]) {
+                        tooltip += key + " changed to " +
+                            row["metadata_content"][key][1] + "<br>";
+                    }
+                }
+
+                // Support test result comments. Metadata display will have
+                // priority over comments.
+                if (row["comments"]) {
+                    if (label == "") {
+                        label = "/static/dashboard_app/images/icon-info.png";
+                    }
+                    if (this.chart_data["chart_type"] == "pass/fail") {
+                        tooltip += "Has comments<br>";
+                    } else {
+                        tooltip += row["comments"] + "<br>";
+                    }
+                }
+
                 meta_item = {
                     "link": row["link"],
                     "pass": row["pass"],
                     "tooltip": tooltip,
                 };
-                if (chart_data.has_build_numbers) {
-                    insert_data_item([build_number, value],
+
+                if (this.chart_data.has_build_numbers) {
+                    insert_data_item(build_number, [build_number, value],
                                      plot_data[test_filter_id]["data"]);
+                    insert_data_item(build_number, label,
+                                     plot_data[test_filter_id]["labels"]);
                     meta_key = build_number + "_" +  value;
                     plot_data[test_filter_id]["meta"][meta_key] = meta_item;
                     build_numbers.push(build_number);
@@ -637,6 +743,7 @@ $(document).ready(function () {
                     dates.push(key);
                     data_item = [key, value];
                     plot_data[test_filter_id]["data"].push(data_item);
+                    plot_data[test_filter_id]["labels"].push(label);
                     // Make meta keys are made unique by concatination.
                     plot_data[test_filter_id]["meta"][data_item.join("_")] =
                         meta_item;
@@ -650,45 +757,109 @@ $(document).ready(function () {
         bar_alignement = ["left", "center", "right"];
         alignement_counter = 0;
 
-        if (!ordered_filter_ids) {
-            ordered_filter_ids = Object.keys(plot_data);
-        }
-        for (var i in ordered_filter_ids) {
-            test_filter_id = ordered_filter_ids[i];
-            if (plot_data[test_filter_id]["representation"] == "bars") {
-                if (alignement_counter++ > 2) {
-                    alignement_counter = 0;
+        filter_ids = Object.keys(plot_data);
+
+        // Sort filters by alias.
+        sorted_filter_ids = [];
+        for (var i=0; i<filter_ids.length; i++) {
+            filter_id = filter_ids[i];
+            if (sorted_filter_ids.length == 0) {
+                sorted_filter_ids.push(filter_id);
+                continue;
+            }
+            for (var j=0; j<sorted_filter_ids.length; j++) {
+                sorted_filter_id = sorted_filter_ids[j];
+
+                if (plot_data[filter_id]["alias"] < plot_data[sorted_filter_id]["alias"]) {
+                    sorted_filter_ids.splice(0, 0, filter_id);
+                    break;
                 }
-                bars_options = {
+
+                if (sorted_filter_ids[j+1] == null) {
+                    sorted_filter_ids.push(filter_id);
+                    break;
+                } else {
+                    next_sorted_filter_id = sorted_filter_ids[j+1];
+                }
+
+                if (plot_data[filter_id]["alias"] > plot_data[sorted_filter_id]["alias"] && plot_data[filter_id]["alias"] <= plot_data[next_sorted_filter_id]["alias"]) {
+                    sorted_filter_ids.splice(j+1, 0, filter_id);
+                    break;
+                }
+            }
+        }
+
+        // Grid maximum and minimum values for y axis.
+        var y_max = - Number.MAX_VALUE;
+        var y_min = Number.MAX_VALUE;
+
+        // Pack data in series for plot display.
+        for (var i in sorted_filter_ids) {
+            test_filter_id = sorted_filter_ids[i];
+
+            if (this.legend_items.length != sorted_filter_ids.length) {
+                this.legend_items.push({
+                    filter_id: test_filter_id,
+                    dom_id: "legend_" + test_filter_id,
                     show: true,
-                    align: bar_alignement[alignement_counter]
-                };
-                lines_options = {show: false};
-            } else {
+                });
+            }
+
+            if (this.legend_items[i].show == false) {
                 bars_options = {show: false};
-                lines_options = {show: true};
+                lines_options = {show: false};
+	        points_options = {show: false};
+                plot_data[test_filter_id]["labels"] = [];
+            } else {
+                points_options = {show: true};
+                if (plot_data[test_filter_id]["representation"] == "bars") {
+                    if (alignement_counter++ > 2) {
+                        alignement_counter = 0;
+                    }
+                    bars_options = {
+                        show: true,
+                        align: bar_alignement[alignement_counter]
+                    };
+                    lines_options = {show: false};
+                } else {
+                    bars_options = {show: false};
+                    lines_options = {show: true};
+                }
+
+                for (var i in plot_data[test_filter_id]["data"]) {
+                    if (plot_data[test_filter_id]["data"][i][1] > y_max) {
+                        y_max = plot_data[test_filter_id]["data"][i][1];
+                    }
+                    if (plot_data[test_filter_id]["data"][i][1] < y_min) {
+                        y_min = plot_data[test_filter_id]["data"][i][1];
+                    }
+                }
             }
 
             data.push({
                 label: plot_data[test_filter_id]["alias"],
+                showLabels: true,
+                labels: plot_data[test_filter_id]["labels"],
+                labelPlacement: "above",
+                canvasRender: true,
                 data: plot_data[test_filter_id]["data"],
                 meta: plot_data[test_filter_id]["meta"],
                 bars: bars_options,
                 lines: lines_options,
+                points: points_options,
                 test_filter_id: test_filter_id,
             });
         }
 
         // Get all build numbers to be used as tick labels.
         build_numbers = [];
-        for (iter in chart_data.test_data) {
+        for (iter in this.chart_data.test_data) {
 
-	    row = chart_data.test_data[iter];
+	    row = this.chart_data.test_data[iter];
 
 	    build_number = row["number"].split('.')[0];
 
-            if (test_build_number(build_number, chart_id,
-                                  chart_data.has_build_numbers)) {
+            if (this.test_build_number(build_number)) {
 
 	        if (!isNumeric(build_number)) {
 	            build_number = format_date(build_number);
@@ -700,59 +871,66 @@ $(document).ready(function () {
         }
 
         // Add target goal dashed line to the plot.
-        if (chart_data["target_goal"]) {
+        if (this.chart_data["target_goal"]) {
 	    goal_data = [];
 
-            if (chart_data.has_build_numbers) {
+            if (this.chart_data.has_build_numbers) {
 	        for (var i in build_numbers) {
 	            goal_data.push([build_numbers[i],
-                                    chart_data["target_goal"]]);
+                                    this.chart_data["target_goal"]]);
 	        }
             } else {
 	        for (key in dates) {
-	            goal_data.push([dates[key], chart_data["target_goal"]]);
+	            goal_data.push([dates[key], this.chart_data["target_goal"]]);
 	        }
             }
 
 	    data.push({
                 data: goal_data, dashes: {show: true},
-                lines: {show: false}, color: "#999999"
+                lines: {show: false}, points: { show: false }, color: "#999999"
             });
         }
 
-        chart_width = $("#inner_container_" + chart_id).width();
+        chart_width = $("#inner_container_" + this.chart_id).width();
 
         show_legend = true;
-        if ($("#is_legend_visible_" + chart_id).attr("checked") == false) {
-            $("#legend_container_" + chart_id).html("");
-            $("#legend_container_" + chart_id).css("width", "0");
-            $("#inner_container_" + chart_id).css("width", "98%");
-            $("#dates_container_" + chart_id).css("width", "95%");
-            $("#filter_links_container_" + chart_id).css("width", "95%");
+        if ($("#is_legend_visible_" + this.chart_id).prop("checked") == false) {
+            $("#legend_container_" + this.chart_id).html("");
+            $("#legend_container_" + this.chart_id).css("width", "0");
+            $("#inner_container_" + this.chart_id).css("width", "98%");
+            $("#dates_container_" + this.chart_id).css("width", "95%");
+            $("#filter_links_container_" + this.chart_id).css("width", "95%");
             show_legend = false;
         } else {
-            $("#legend_container_" + chart_id).css("width", "15%");
-            $("#inner_container_" + chart_id).css("width", "82%");
-            $("#dates_container_" + chart_id).css("width", "80%");
-            $("#filter_links_container_" + chart_id).css("width", "80%");
+            $("#legend_container_" + this.chart_id).css("width", "15%");
+            $("#inner_container_" + this.chart_id).css("width", "82%");
+            $("#dates_container_" + this.chart_id).css("width", "80%");
+            $("#filter_links_container_" + this.chart_id).css("width", "80%");
         }
 
         y_label = "Pass/Fail";
-        if (chart_data["chart_type"] != "pass/fail") {
-            y_label = chart_data.test_data[0].units;
+        if (this.chart_data["chart_type"] != "pass/fail") {
+            if (this.chart_data.test_data[0]) {
+                y_label = this.chart_data.test_data[0].units;
+            } else {
+                y_label = "units";
+            }
         }
 
+        if (this.chart_data.has_build_numbers) {
 
-        if (chart_data.has_build_numbers) {
-            xaxis = {
-                tickDecimals: 0,
-                tickFormatter: function (val, axis) {
+            chart_data = this.chart_data;
+            tick_formatter = function(val, axis) {
                     if (chart_data.has_build_numbers) {
                         return val;
                     } else {
                         return build_numbers[val];
                     }
-                },
+            }
+
+            xaxis = {
+                tickDecimals: 0,
+                tickFormatter: tick_formatter,
             };
 
         } else {
@@ -762,11 +940,10 @@ $(document).ready(function () {
             };
         }
 
-
         var options = {
 	    series: {
 	        lines: { show: true },
-	        points: { show: false },
+	        points: { show: true },
                 bars: { barWidth: 0.5 },
 	    },
             grid: {
@@ -777,17 +954,17 @@ $(document).ready(function () {
 	        show: show_legend,
 	        position: "nw",
                 //            margin: [chart_width-40, 0],
-	        container: "#legend_container_" + chart_id,
+	        container: "#legend_container_" + this.chart_id,
 	        labelFormatter: function(label, series) {
-                    label_hidden = "<input type='hidden' value='" +
-                        series.test_filter_id + "'/>";
+                    label_hidden = "<input type='hidden' " +
+                        "id='legend_" + series.test_filter_id + "' " +
+                        "value='" + series.test_filter_id + "'/>";
 		    return label + label_hidden;
 	        },
 	    },
             xaxis: xaxis,
 	    yaxis: {
 	        tickDecimals: 0,
-                labelWidth: 25,
                 axisLabel: y_label,
                 axisLabelUseCanvas: true,
                 axisLabelFontFamily: "Verdana",
@@ -795,15 +972,25 @@ $(document).ready(function () {
             canvas: true,
         };
 
-        if ($("#is_percentage_" + chart_id).attr("checked") == true) {
+        // We cannot apply autoscaleMargin for y axis since y_max and y_min
+        // are explicitely set. Therefore we will manually increase/decrease
+        // the limits.
+        y_max *= 1.1;
+        y_min *= 0.9;
+
+        if ($("#is_percentage_" + this.chart_id).prop("checked") == true) {
             options["yaxis"]["max"] = 105;
             options["yaxis"]["min"] = 0;
+        } else {
+            options["yaxis"]["max"] = y_max;
+            options["yaxis"]["min"] = y_min;
         }
 
-        $.plot($("#outer_container_" + chart_id + " #inner_container_" + chart_id), data, options);
+        this.plot = $.plot($("#outer_container_" + this.chart_id + " #inner_container_" + this.chart_id), data, options);
 
-        // Setup sortable legend.
-        setup_sortable(chart_id, chart_data);
+        // Setup click events and css in the legend.
+        this.setup_clickable();
+        this.setup_legend_css();
     }
 
     isNumeric = function(n) {
@@ -814,21 +1001,21 @@ $(document).ready(function () {
         return url.match(/^https?:\/\/[a-z0-9-\.]+\.[a-z]{2,4}\/?([^\s<>\#%"\,\{\}\\|\\\^\[\]`]+)?$/);
     }
 
-    insert_data_item = function(item, data) {
+    insert_data_item = function(key, value, data) {
         // Insert item at the sorted position in the data.
         // data represents list of two-value lists.
-        if (data.length == 0 || parseInt(item[0]) <= parseInt(data[0][0])) {
-            data.splice(0, 0, item);
+        if (data.length == 0 || parseInt(key) <= parseInt(data[0][0])) {
+            data.splice(0, 0, value);
             return;
         }
         for (var i=0; i < data.length-1; i++) {
-            if (parseInt(item[0]) > parseInt(data[i][0]) &&
-                parseInt(item[0]) <= parseInt(data[i+1][0])) {
-                data.splice(i+1, 0, item);
+            if (parseInt(key) > parseInt(data[i][0]) &&
+                parseInt(key) <= parseInt(data[i+1][0])) {
+                data.splice(i+1, 0, value);
                 return;
             }
         }
-        data.splice(data.length, 0, item);
+        data.splice(data.length, 0, value);
     }
 
     format_date = function(date_string) {
@@ -847,26 +1034,22 @@ $(document).ready(function () {
         return $helper;
     };
 
-    validate_build_number_selection = function(chart_id) {
-
-        start_number = $("#start_date_" + chart_id).val();
-        if (isNumeric(start_number)) {
-	    start_number = parseInt(start_number);
-        }
-        end_number = $("#end_date_" + chart_id).val();
-        if (isNumeric(end_number)) {
-	    end_number = parseInt(end_number);
-        }
-
-        if (start_number >= end_number) {
-	    return false;
-        } else {
-            return true;
-        }
+    validation_alert = function(message) {
+        alert(message);
     }
 
-    build_number_validation_alert = function() {
-        alert("End build number must be greater then the start build number.");
+    showTooltip = function(x, y, contents, pass) {
+        bkg_color = (pass)? '#98c13d' : '#ff7f7f';
+        $('<div id="tooltip">' + contents + '</div>').css({
+            position: 'absolute', display: 'none', top: y + 5, left: x + 5,
+            border: '1px solid #000', padding: '2px',
+            'background-color': bkg_color, opacity: 0.80
+        }).appendTo("body").fadeIn(200);
+    }
+
+    toggle_print_menu = function(e, chart_id) {
+        $("#print_menu_" + chart_id).show();
+        $("#print_menu_" + chart_id).offset({left: e.pageX, top: e.pageY});
     }
 
     add_bug_link = function () {
@@ -950,12 +1133,23 @@ $(document).ready(function () {
                 var linked_div = add_bug_dialog.find('div.linked');
                 var names = get_testrun_and_buildnumber($(this));
                 var uuid = $(this).closest('td').data('uuid');
+                var rel_idx = $(this).closest('td').data('relative_index');
                 var chart_id = $(this).closest('td').data('chart-id');
                 var back_url = add_bug_dialog.find('input[name=back]').val().split('?')[0] + '?bug_links_chart_id=' + chart_id;
 
                 current_bug = get_linked_bugs($(this));
                 add_bug_dialog.find('input[name=back]').val(back_url);
                 add_bug_dialog.find('input[name=bug_link]').val('');
+                add_bug_dialog.find('input[name=uuid]').val(uuid);
+
+                if (rel_idx) {
+                    add_bug_dialog.find('input[name=relative_index]').val(rel_idx);
+                    link_bug_url = testresult_link_bug_url
+                    unlink_bug_url = testresult_unlink_bug_url
+                } else {
+                    link_bug_url = testrun_link_bug_url
+                    unlink_bug_url = testrun_unlink_bug_url
+                }
 
                 if(current_bug.length) {
                     var html = '<b>Bug(s) linked to ' + names.testrun + ':</b><table width="95%" border="0">';
@@ -981,9 +1175,8 @@ $(document).ready(function () {
                             if(confirm("Unlink '" + bug + "'")) {
                                 // unlink bug right now, so clear current_bug which is used for checking if the bug is duplicated when adding a bug
                                 current_bug = [];
-                                $('#add-bug-dialog').attr('action', del_bug_url);
+                                $('#add-bug-dialog').attr('action', unlink_bug_url);
                                 add_bug_dialog.find('input[name=bug_link]').val(bug);
-                                add_bug_dialog.find('input[name=uuid]').val(uuid);
                                 add_bug_dialog.submit();
                             }
                         }
@@ -1011,6 +1204,7 @@ $(document).ready(function () {
 
                             e.preventDefault();
                             if (confirm("Link '" + bug + "' to the '" + names.testrun + "' run of build" + names.buildnumber)) {
+                                $('#add-bug-dialog').attr('action', link_bug_url);
                                 add_bug_dialog.find('input[name=bug_link]').val(bug);
                                 add_bug_dialog.submit();
                             }
@@ -1021,28 +1215,24 @@ $(document).ready(function () {
 
                 var title = "Link a bug to the '" + names.testrun +
                     "' run of build " + names.buildnumber;
-                add_bug_dialog.find('input[name=uuid]').val(uuid);
+                $('#add-bug-dialog').attr('action', link_bug_url);
                 add_bug_dialog.dialog('option', 'title', title);
                 add_bug_dialog.dialog('open');
             }
         );
     }
 
-    // Add charts.
-    for (chart_id in chart_data) {
-        add_chart(chart_id, chart_data[chart_id]);
-    }
-    
+    report = new ImageReport(chart_data);
+    report.start();
+
     add_bug_link();
 
-    $(window).resize(function () {
-        for (chart_id in chart_data) {
-            update_plot(chart_id, chart_data[chart_id]);
-        }
-    });
-
-    if (chartid.length) {
-        $('#data_table_link_' + chartid).click();
+    if (buglinks_chartid.length) {
+        $('#data_table_link_' + buglinks_chartid).click();
     }
+
+    $(window).resize(function () {
+        report.redraw();
+    });
 
 });

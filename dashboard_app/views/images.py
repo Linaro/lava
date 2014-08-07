@@ -49,9 +49,14 @@ def image_report_list(request):
             # images that have not been migrated to filters for now.
             if image.filter:
                 filter_data = image.filter.as_data()
+                is_accessible = True
+                for stream in image.filter.bundle_streams.all():
+                    if not stream.is_accessible_by(request.user):
+                        is_accessible = False
+                        break
                 image_data = {
                     'name': image.name,
-                    'bundle_count': evaluate_filter(request.user, filter_data).count(),
+                    'is_accessible': is_accessible,
                     'link': image.name,
                 }
                 images_data.append(image_data)
@@ -142,23 +147,3 @@ def image_report_detail(request, name):
             'test_names': json.dumps(test_run_names),
             'columns': json.dumps(cols),
         }, RequestContext(request))
-
-
-@require_POST
-def link_bug_to_testrun(request):
-    testrun = get_object_or_404(TestRun, analyzer_assigned_uuid=request.POST['uuid'])
-    bug_link = request.POST['bug_link']
-    bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
-    testrun.bug_links.add(bug)
-    testrun.save()
-    return HttpResponseRedirect(request.POST['back'])
-
-
-@require_POST
-def unlink_bug_and_testrun(request):
-    testrun = get_object_or_404(TestRun, analyzer_assigned_uuid=request.POST['uuid'])
-    bug_link = request.POST['bug_link']
-    bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
-    testrun.bug_links.remove(bug)
-    testrun.save()
-    return HttpResponseRedirect(request.POST['back'])

@@ -1,4 +1,5 @@
 from collections import defaultdict
+import copy
 import logging
 import os
 import simplejson
@@ -6,7 +7,6 @@ import StringIO
 import datetime
 import urllib2
 from dateutil.relativedelta import relativedelta
-
 from django import forms
 
 from django.core.exceptions import PermissionDenied
@@ -14,6 +14,7 @@ from django.core.urlresolvers import reverse
 from django.db.models import Count
 from django.http import (
     HttpResponse,
+    Http404,
     HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseNotAllowed,
@@ -53,24 +54,42 @@ from lava_scheduler_app.models import (
     DeviceType,
     DeviceStateTransition,
     TestJob,
+    TestJobUser,
     JSONDataError,
     validate_job_json,
     DevicesUnavailableException,
     Worker,
 )
+from dashboard_app.models import BundleStream
+
+from lava.utils.lavatable import LavaTable, LavaView
+
+from lava_scheduler_app.template_helper import expand_template
+from lava_scheduler_app.job_templates import (
+    DEFAULT_TEMPLATE,
+    DEPLOY_IMAGE,
+    DEPLOY_IMAGE_HWPACK,
+    DEPLOY_IMAGE_KERNEL,
+    LAVA_TEST_SHELL_REPO,
+    LAVA_TEST_SHELL_URL,
+    ACTIONS_LINARO,
+    ACTIONS_LINARO_BOOT,
+    ACTIONS_LINARO_ANDROID_IMAGE,
+    COMMAND_SUBMIT_RESULTS,
+    COMMAND_TEST_SHELL
+)
+
+from django.contrib.auth.models import User, Group
 from lava_scheduler_app.tables import (
     JobTable,
     DateColumn,
     IDLinkColumn,
     RestrictedIDLinkColumn,
     pklink,
-    JobTableView,
     all_jobs_with_custom_sort,
     IndexJobTable,
     FailedJobTable,
-    FailureTableView,
     DeviceTable,
-    DeviceTableView,
     NoDTDeviceTable,
     RecentJobsTable,
     DeviceHealthTable,
@@ -80,6 +99,10 @@ from lava_scheduler_app.tables import (
     DeviceTransitionTable,
     OverviewJobsTable,
     NoWorkerDeviceTable,
+    QueueJobsTable,
+    DeviceTypeTransitionTable,
+    OnlineDeviceTable,
+    PassingHealthTable,
 )
 
 # The only functions which need to go in this file are those directly
@@ -94,17 +117,133 @@ def post_only(func):
     return decorated
 
 
+def _str_to_bool(string):
+    return string.lower() in ['1', 'true', 'yes']
+
+
+class JobTableView(LavaView):
+
+    def __init__(self, request, **kwargs):
+        super(JobTableView, self).__init__(request, **kwargs)
+
+    def device_query(self, term):
+        visible = filter_device_types(self.request.user)
+        device = list(Device.objects.filter(hostname__contains=term, device_type__in=visible))
+        return Q(actual_device__in=device)
+
+    def owner_query(self, term):
+        owner = list(User.objects.filter(username__contains=term))
+        return Q(submitter__in=owner)
+
+    def device_type_query(self, term):
+        visible = filter_device_types(self.request.user)
+        dt = list(DeviceType.objects.filter(name__contains=term, name__in=visible))
+        return Q(device_type__in=dt)
+
+    def job_status_query(self, term):
+        # could use .lower() but that prevents matching Complete discrete from Incomplete
+        matches = [p[0] for p in TestJob.STATUS_CHOICES if term in p[1]]
+        return Q(status__in=matches)
+
+    def device_status_query(self, term):
+        # could use .lower() but that prevents matching Complete discrete from Incomplete
+        matches = [p[0] for p in Device.STATUS_CHOICES if term in p[1]]
+        return Q(status__in=matches)
+
+    def health_status_query(self, term):
+        # could use .lower() but that prevents matching Complete discrete from Incomplete
+        matches = [p[0] for p in Device.HEALTH_CHOICES if term in p[1]]
+        return Q(health_status__in=matches)
+
+    def restriction_query(self, term):
+        """
+        This may turn out to be too much work for search to support.
+        :param term: user submitted string
+        :return: a query for devices which match the rendered restriction text
+        """
+        q = Q()
+
+        query_list = []
+        device_list = []
+        user_list = User.objects.filter(
+            id__in=Device.objects.filter(
+                user__isnull=False).values('user'))
+        for users in user_list:
+            query_list.append(users.id)
+        if len(query_list) > 0:
+            device_list = User.objects.filter(id__in=query_list).filter(email__contains=term)
+        query_list = []
+        for users in device_list:
+            query_list.append(users.id)
+        if len(query_list) > 0:
+            q = q.__or__(Q(user__in=query_list))
+
+        query_list = []
+        device_list = []
+        group_list = Group.objects.filter(
+            id__in=Device.objects.filter(
+                group__isnull=False).values('group'))
+        for groups in group_list:
+            query_list.append(groups.id)
+        if len(query_list) > 0:
+            device_list = Group.objects.filter(id__in=query_list).filter(name__contains=term)
+        query_list = []
+        for groups in device_list:
+            query_list.append(groups.id)
+        if len(query_list) > 0:
+            q = q.__or__(Q(group__in=query_list))
+
+        # if the render function is changed, these will need to change too
+        if term in "all users in group":
+            q = q.__or__(Q(group__isnull=False))
+        if term in "Unrestricted usage" or term in "Device owner by":
+            q = q.__or__(Q(is_public=True))
+        elif term in "Job submissions restricted to %s":
+            q = q.__or__(Q(is_public=False))
+        return q
+
+
+class FailureTableView(JobTableView):
+
+    def get_queryset(self):
+        failures = [TestJob.INCOMPLETE, TestJob.CANCELED, TestJob.CANCELING]
+        jobs = all_jobs_with_custom_sort().filter(status__in=failures)
+
+        health = self.request.GET.get('health_check', None)
+        if health:
+            jobs = jobs.filter(health_check=_str_to_bool(health))
+
+        dt = self.request.GET.get('device_type', None)
+        if dt:
+            jobs = jobs.filter(actual_device__device_type__name=dt)
+
+        device = self.request.GET.get('device', None)
+        if device:
+            jobs = jobs.filter(actual_device__hostname=device)
+
+        start = self.request.GET.get('start', None)
+        if start:
+            now = datetime.datetime.now()
+            start = now + datetime.timedelta(int(start))
+
+            end = self.request.GET.get('end', None)
+            if end:
+                end = now + datetime.timedelta(int(end))
+                jobs = jobs.filter(start_time__range=(start, end))
+        return jobs
+
+
 class WorkerView(JobTableView):
 
     def get_queryset(self):
-        return Worker.objects.all().order_by('hostname')
+        return Worker.objects.filter(display=True).order_by('hostname')
 
 
 def health_jobs_in_hr(hr=-24):
-    return TestJob.objects.filter(health_check=True,
-                                  start_time__gte=(datetime.datetime.now() +
-                                                   relativedelta(hours=hr)))\
-        .exclude(status__in=[TestJob.SUBMITTED, TestJob.RUNNING])
+    return TestJob.objects.values('actual_device').filter(
+        health_check=True, start_time__gte=(datetime.datetime.now() +
+                                            relativedelta(hours=hr))).\
+        exclude(status__in=[TestJob.SUBMITTED, TestJob.RUNNING]).distinct()
 
 
 def _online_total():
@@ -125,6 +264,15 @@ class IndexTableView(JobTableView):
     def get_queryset(self):
         return all_jobs_with_custom_sort()\
             .filter(status__in=[TestJob.SUBMITTED, TestJob.RUNNING])
+
+
+class DeviceTableView(JobTableView):
+
+    def get_queryset(self):
+        visible = filter_device_types(self.request.user)
+        return Device.objects.select_related("device_type").order_by(
+            "hostname").filter(temporarydevice=None,
+                               device_type__in=visible)
 
 
 @BreadCrumb("Scheduler", parent=lava_index)
@@ -168,14 +316,18 @@ def index(request):
     discrete_data = index_table.prepare_discrete_data(index_data)
     discrete_data.update(dt_overview_table.prepare_discrete_data(dt_overview_data))
 
+    (num_online, num_not_retired) = _online_total()
+    health_check_completed = health_jobs_in_hr().filter(status=TestJob.COMPLETE).count()
+    health_check_total = health_jobs_in_hr().count()
     return render(
         request,
         "lava_scheduler_app/index.html",
         {
             'device_status': "%d/%d" % _online_total(),
-            'health_check_status': "%s/%s" % (
-                health_jobs_in_hr().filter(status=TestJob.COMPLETE).count(),
-                health_jobs_in_hr().count()),
+            'num_online': num_online,
+            'num_not_retired': num_not_retired,
+            'hc_completed': health_check_completed,
+            'hc_total': health_check_total,
             'device_type_table': dt_overview_table,
             'worker_table': worker_table,
             'active_jobs_table': index_table,
@@ -335,10 +487,54 @@ def active_device_list(request):
         RequestContext(request))
 
 
+class OnlineDeviceView(DeviceTableView):
+
+    def get_queryset(self):
+        visible = filter_device_types(self.request.user)
+        return Device.objects.filter(device_type__in=visible)\
+            .exclude(status=Device.RETIRED).order_by("status")
+
+
+@BreadCrumb("Online Devices", parent=index)
+def online_device_list(request):
+    data = OnlineDeviceView(request, model=Device, table_class=OnlineDeviceTable)
+    ptable = OnlineDeviceTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    return render_to_response(
+        "lava_scheduler_app/onlinedevices.html",
+        {
+            'online_devices_table': ptable,
+            "length": ptable.length,
+            "terms_data": ptable.prepare_terms_data(data),
+            "search_data": ptable.prepare_search_data(data),
+            "discrete_data": ptable.prepare_discrete_data(data),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(online_device_list),
+        },
+        RequestContext(request))
+
+
+@BreadCrumb("Passing Health Checks", parent=index)
+def passing_health_checks(request):
+    data = DeviceTableView(request, model=Device, table_class=PassingHealthTable)
+    ptable = PassingHealthTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    return render_to_response(
+        "lava_scheduler_app/passinghealthchecks.html",
+        {
+            'passing_health_checks_table': ptable,
+            "length": ptable.length,
+            "terms_data": ptable.prepare_terms_data(data),
+            "search_data": ptable.prepare_search_data(data),
+            "discrete_data": ptable.prepare_discrete_data(data),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(passing_health_checks),
+        },
+        RequestContext(request))
+
+
 class MyDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        return Device.objects.owned_by_principal(self.request.user)
+        return Device.objects.owned_by_principal(self.request.user).order_by('hostname')
 
 
 @BreadCrumb("My Devices", parent=index)
@@ -360,15 +556,61 @@ def mydevice_list(request):
         RequestContext(request))
 
 
+@BreadCrumb("My Device Type Health History", parent=index)
+def mydevice_type_health_history_log(request):
+    prefix = "mydthealthhistory_"
+    mydthhistory_data = MyDTHealthHistoryView(request,
+                                              model=DeviceStateTransition,
+                                              table_class=DeviceTypeTransitionTable)
+    mydthhistory_table = DeviceTypeTransitionTable(
+        mydthhistory_data.get_table_data(prefix),
+        prefix=prefix,
+    )
+    config = RequestConfig(request,
+                           paginate={"per_page": mydthhistory_table.length})
+    config.configure(mydthhistory_table)
+
+    return render_to_response(
+        "lava_scheduler_app/mydevice_type_health_history_log.html",
+        {
+            'mydthealthhistory_table': mydthhistory_table,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(mydevice_type_health_history_log),
+        },
+        RequestContext(request))
+
+
 def get_restricted_job(user, pk):
     """Returns JOB which is a TestJob object after checking for USER
     accessibility to the object.
     """
     job = TestJob.get_by_job_number(pk)
-
+    if job.actual_device:
+        device_type = job.actual_device.device_type
+    elif job.requested_device:
+        device_type = job.requested_device.device_type
+    else:
+        device_type = job.requested_device_type
+    if len(device_type.devices_visible_to(user)) == 0:
+            raise Http404()
     if not job.is_accessible_by(user) and not user.is_superuser:
         raise PermissionDenied()
     return job
+
+
+def filter_device_types(user):
+
+    """
+    Filters the available DeviceType names to exclude DeviceTypes
+    which are hidden from this user.
+    :param user: User to check
+    :return: A list of DeviceType.name which all contain
+    at least one device this user can see.
+    """
+    visible = []
+    for device_type in DeviceType.objects.filter(display=True):
+        if len(device_type.devices_visible_to(user)) > 0:
+            visible.append(device_type.name)
+    return visible
 
 
 class SumIfSQL(models.sql.aggregates.Aggregate):
@@ -381,25 +623,23 @@ class SumIf(models.Aggregate):
     name = 'SumIf'
 
     def add_to_query(self, query, alias, col, source, is_summary):
-        aggregate = SumIfSQL(col,
-                             source=source, is_summary=is_summary, **self.extra)
+        aggregate = SumIfSQL(col, source=source, is_summary=is_summary, **self.extra)
         query.aggregates[alias] = aggregate
 
 
 class ActiveDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        return Device.objects.exclude(status=Device.RETIRED).order_by("hostname")
+        visible = filter_device_types(self.request.user)
+        return Device.objects.filter(device_type__in=visible)\
+            .exclude(status=Device.RETIRED).order_by("hostname")
 
 
 class DeviceTypeOverView(JobTableView):
 
-    name = IDLinkColumn("name")
-    # columns must match fields which actually exist in the relevant table.
-    display = Column()
-
     def get_queryset(self):
-        return DeviceType.objects.filter(display=True)\
+        visible = filter_device_types(self.request.user)
+        devices = DeviceType.objects.filter(name__in=visible)\
             .annotate(idle=SumIf('device', condition='status=%s' % Device.IDLE),
                       offline=SumIf('device', condition='status in (%s,%s)' %
                                                         (Device.OFFLINE, Device.OFFLINING)),
@@ -408,15 +648,18 @@ class DeviceTypeOverView(JobTableView):
                       restricted=SumIf('device', condition='is_public is False and status not in (%s)' %
                                                            Device.RETIRED),
                       ).order_by('name')
+        return devices
 
 
 class NoDTDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        return Device.objects.all()
+        return Device.objects.filter(Q(temporarydevice=None) and
+                                     ~Q(status__in=[Device.RETIRED])
+                                     ).order_by('hostname')
 
 
-def populate_capabilities(dt):
+def populate_capabilities(device_name):
     """
     device capabilities data retrieved from health checks
     param dt: a device type to check for capabilities.
@@ -434,13 +677,14 @@ def populate_capabilities(dt):
     }
     hardware_flags = []
     hardware_cpu_models = []
-    use_health_job = dt.health_check_job != ""
+    device = Device.objects.get(hostname=device_name)
+    use_health_job = device.device_type.health_check_job != ""
     try:
         health_job = TestJob.objects.filter(
-            actual_device__in=Device.objects.filter(device_type=dt),
+            actual_device=device,
             health_check=use_health_job,
-            status=TestJob.COMPLETE).order_by('submit_time').reverse()[0]
-    except IndexError:
+            status=TestJob.COMPLETE).latest('submit_time')
+    except TestJob.DoesNotExist:
         return capability
     if not health_job:
         return capability
@@ -462,10 +706,12 @@ def populate_capabilities(dt):
     for device in devices:
         # multiple core cpus have multiple device.cpu entries, each with attributes.
         if device['device_type'] == 'device.cpu':
-            if device['attributes']['cpu_type'] == '?':
-                model = device['attributes']['model name']
-            else:
+            if 'cpu_type' in device['attributes']:
                 model = device['attributes']['cpu_type']
+            if 'cpu type' in device['attributes']:
+                    model = device['attributes']['cpu type']
+            if 'model name' in device['attributes']:
+                model = device['attributes']['model name']
             if 'cpu_part' in device['attributes']:
                 cpu_part = int(device['attributes']['cpu_part'], 16)
             elif 'CPU part' in device['attributes']:
@@ -488,6 +734,8 @@ def populate_capabilities(dt):
                 hardware_flags.append(device['attributes']['Features'])
             elif 'flags' in device['attributes']:
                 hardware_flags.append(device['attributes']['flags'])
+            elif 'cpu flags' in device['attributes']:
+                hardware_flags.append(device['attributes']['cpu flags'])
             if device['attributes']['cpu_type'].startswith("QEMU"):
                 capability['emulated'] = True
             capability['cores'] += 1
@@ -505,6 +753,10 @@ def populate_capabilities(dt):
 @BreadCrumb("Device Type {pk}", parent=index, needs=['pk'])
 def device_type_detail(request, pk):
     dt = get_object_or_404(DeviceType, pk=pk)
+    if dt.owners_only:
+        visible = filter_device_types(request.user)
+        if dt.name not in visible:
+            raise Http404('No device type matches the given query.')
     daily_complete = TestJob.objects.filter(
         actual_device__in=Device.objects.filter(device_type=dt),
         health_check=True,
@@ -554,8 +806,6 @@ def device_type_detail(request, pk):
         "Failed": monthly_failed,
         }
     ]
-    #  device capabilities data retrieved from health checks
-    capabilities = populate_capabilities(dt)
 
     prefix = 'no_dt_'
     no_dt_data = NoDTDeviceView(request, model=Device, table_class=NoDTDeviceTable)
@@ -606,23 +856,46 @@ def device_type_detail(request, pk):
             "discrete_data": discrete_data,
             'terms_data': terms_data,
             'times_data': times_data,
-            'capabilities_date': capabilities['capabilities_date'],
-            'processor': capabilities['processor'],
-            'models': capabilities['models'],
-            'cores': capabilities['cores'],
-            'emulated': capabilities['emulated'],
-            'flags': capabilities['flags'],
             'running_jobs_num': TestJob.objects.filter(
                 actual_device__in=Device.objects.filter(device_type=dt),
                 status=TestJob.RUNNING).count(),
             'queued_jobs_num': TestJob.objects.filter(
                 Q(status=TestJob.SUBMITTED), Q(requested_device_type=dt)
                 | Q(requested_device__in=Device.objects.filter(device_type=dt))).count(),
+            'idle_num': Device.objects.filter(device_type=dt, status=Device.IDLE).count(),
+            'offline_num': Device.objects.filter(device_type=dt, status__in=[Device.OFFLINE, Device.OFFLINING]).count(),
+            'retired_num': Device.objects.filter(device_type=dt, status=Device.RETIRED).count(),
+            'is_admin': request.user.has_perm('lava_scheduler_app.change_devicetype'),
             'health_job_summary_table': health_table,
             'device_type_jobs_table': dt_jobs_ptable,
             'devices_table_no_dt': no_dt_ptable,  # NoDTDeviceTable('devices' kwargs=dict(pk=pk)), params=(dt,)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_detail, pk=pk),
             'context_help': BreadCrumbTrail.leading_to(device_type_detail, pk='help'),
+        },
+        RequestContext(request))
+
+
+@BreadCrumb("{pk} device type health history", parent=device_type_detail, needs=['pk'])
+def device_type_health_history_log(request, pk):
+    device_type = get_object_or_404(DeviceType, pk=pk)
+    prefix = "dthealthhistory_"
+    dthhistory_data = DTHealthHistoryView(request, device_type,
+                                          model=DeviceStateTransition,
+                                          table_class=DeviceTypeTransitionTable)
+    dthhistory_table = DeviceTypeTransitionTable(
+        dthhistory_data.get_table_data(prefix),
+        prefix=prefix,
+    )
+    config = RequestConfig(request,
+                           paginate={"per_page": dthhistory_table.length})
+    config.configure(dthhistory_table)
+
+    return render_to_response(
+        "lava_scheduler_app/device_type_health_history_log.html",
+        {
+            'device_type': device_type,
+            'dthealthhistory_table': dthhistory_table,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_health_history_log, pk=pk),
         },
         RequestContext(request))
 
@@ -682,7 +955,7 @@ def lab_health(request):
 def health_job_list(request, pk):
     device = get_object_or_404(Device, pk=pk)
     trans_data = TransitionView(request, device)
-    trans_table = DeviceTransitionTable(data.get_table_data())
+    trans_table = DeviceTransitionTable(trans_data.get_table_data())
     config = RequestConfig(request, paginate={"per_page": trans_table.length})
     config.configure(trans_table)
 
@@ -738,6 +1011,24 @@ class MyJobsView(JobTableView):
         return jobs.order_by('-submit_time')
 
 
+class FavoriteJobsView(JobTableView):
+
+    def get_queryset(self):
+
+        user = self.user
+        if not user:
+            user = self.request.user
+
+        jobs = TestJob.objects.select_related("actual_device", "requested_device",
+                                              "requested_device_type", "group")\
+            .extra(select={'device_sort': 'coalesce(actual_device_id, '
+                                          'requested_device_id, requested_device_type_id)',
+                           'duration_sort': 'end_time - start_time'}).all()\
+            .filter(testjobuser__user=user,
+                    testjobuser__is_favorite=True)
+        return jobs.order_by('-submit_time')
+
+
 class AllJobsView(JobTableView):
 
     def get_queryset(self):
@@ -779,13 +1070,31 @@ def job_submit(request):
     }
 
     if request.method == "POST" and is_authorized:
+
+        use_wizard = request.POST.get("wizard", None)
+
         if request.is_ajax():
             try:
                 validate_job_json(request.POST.get("json-input"))
                 return HttpResponse(simplejson.dumps("success"))
             except Exception as e:
                 return HttpResponse(simplejson.dumps(str(e)),
-                                    mimetype="application/json")
+                                    content_type="application/json")
+
+        elif use_wizard:
+            try:
+                if request.POST.get("create_stream"):
+                    BundleStream.create_from_pathname(
+                        request.POST.get("submit_stream"), request.user)
+            except Exception as e:
+                response_data["error"] = str(e)
+
+            job_definition = _prepare_template(request)
+            response_data["json_input"] = str(job_definition).replace("'", '"')
+
+            return render_to_response(
+                "lava_scheduler_app/job_submit.html",
+                response_data, RequestContext(request))
 
         else:
             try:
@@ -793,9 +1102,17 @@ def job_submit(request):
                 job = TestJob.from_json_and_user(json_data, request.user)
 
                 if isinstance(job, type(list())):
-                    response_data["job_list"] = [j.id for j in job]
+                    response_data["job_list"] = [j.sub_id for j in job]
                 else:
                     response_data["job_id"] = job.id
+
+                is_favorite = request.POST.get("is_favorite")
+                if is_favorite:
+                    testjob_user, _ = TestJobUser.objects.get_or_create(
+                        user=request.user, test_job=job)
+                    testjob_user.is_favorite = True
+                    testjob_user.save()
+
                 return render_to_response(
                     "lava_scheduler_app/job_submit.html",
                     response_data, RequestContext(request))
@@ -805,6 +1122,7 @@ def job_submit(request):
                 response_data["error"] = str(e)
                 response_data["context_help"] = "lava scheduler submit job",
                 response_data["json_input"] = request.POST.get("json-input")
+                response_data["is_favorite"] = request.POST.get("is_favorite")
                 return render_to_response(
                     "lava_scheduler_app/job_submit.html",
                     response_data, RequestContext(request))
@@ -815,9 +1133,151 @@ def job_submit(request):
             response_data, RequestContext(request))
 
 
+@BreadCrumb("Submit Job", parent=index)
+def job_submit_wizard(request):
+
+    is_authorized = False
+    if request.user and request.user.has_perm(
+            'lava_scheduler_app.add_testjob'):
+        is_authorized = True
+
+    response_data = {
+        'is_authorized': is_authorized,
+        'bread_crumb_trail': BreadCrumbTrail.leading_to(job_submit),
+        'device_types': filter_device_types(request.user),
+    }
+
+    return render_to_response(
+        "lava_scheduler_app/job_wizard.html",
+        response_data, RequestContext(request))
+
+
+def _prepare_template(request):
+
+    boot_type = request.POST.get("boot_type")
+
+    if boot_type == "android_image":
+        action_template = copy.deepcopy(ACTIONS_LINARO_ANDROID_IMAGE)
+        action_config = {
+            "BOOT_IMAGE_PARAMETER": str(request.POST.get("android_boot")),
+            "DATA_IMAGE_PARAMETER": str(request.POST.get("android_data")),
+            "SYSTEM_IMAGE_PARAMETER": str(request.POST.get("android_system")),
+            "TESTS_PARAMETER": [str(request.POST.get("test_name"))],
+            "TEST_NAME_PARAMETER": str(request.POST.get("test_name")),
+            "ANDROID_BOOT_OPTIONS_PARAMETER": [x for x in str(request.POST.get("boot_options")).split("\n")]
+        }
+    else:
+        if boot_type == "linaro_image":
+            image_template = copy.deepcopy(DEPLOY_IMAGE)
+            deploy_command = "deploy_linaro_image"
+            image_config = {
+                "PREBUILT_IMAGE_PARAMETER": str(request.POST.get("image_url"))
+            }
+        elif boot_type == "linaro_hwpack":
+            image_template = copy.deepcopy(DEPLOY_IMAGE_HWPACK)
+            deploy_command = "deploy_linaro_image"
+            image_config = {
+                "HWPACK_PARAMETER": str(request.POST.get("hwpack_url")),
+                "ROOTFS_PARAMETER": str(request.POST.get("rootfs_url"))
+            }
+        elif boot_type == "linaro_kernel":
+            image_template = copy.deepcopy(DEPLOY_IMAGE_KERNEL)
+            deploy_command = "deploy_linaro_kernel"
+            image_config = {
+                "KERNEL_PARAMETER": str(request.POST.get("kernel")),
+                "RAMDISK_PARAMETER": str(request.POST.get("ramdisk")),
+                "DTB_PARAMETER": str(request.POST.get("dtb")),
+                "ROOTFS_PARAMETER": str(request.POST.get("kernel_rootfs"))
+            }
+
+        expand_template(image_template, image_config)
+
+        command_test_shell = None
+        if request.POST.get("repo") or request.POST.get("testdef_url"):
+
+            if request.POST.get("testdef_type") == "repo":
+                test_shell_template = copy.deepcopy(LAVA_TEST_SHELL_REPO)
+                test_shell_config = {
+                    "REPO_PARAMETER": str(request.POST.get("repo")),
+                    "TESTDEF_PARAMETER": str(request.POST.get("testdef"))
+                }
+            else:
+                test_shell_template = copy.deepcopy(LAVA_TEST_SHELL_URL)
+                test_shell_config = {
+                    "TESTDEF_URLS_PARAMETER": [str(request.POST.get("testdef_url"))]
+                }
+
+            expand_template(test_shell_template, test_shell_config)
+
+            command_test_shell = copy.deepcopy(COMMAND_TEST_SHELL)
+            command_test_shell_config = {
+                "TEST_SHELL_PARAMETER": test_shell_template
+            }
+            expand_template(command_test_shell, command_test_shell_config)
+
+        if request.POST.get("boot_options") != "":
+            action_template = copy.deepcopy(ACTIONS_LINARO_BOOT)
+            action_config = {
+                "DEPLOY_COMMAND_PARAMETER": deploy_command,
+                "DEPLOY_PARAMETER": image_template,
+                "INTERACTIVE_BOOT_CMDS_PARAMETER": str(request.POST.get("interactive_commands")),
+                "BOOT_OPTIONS_PARAMETER": [x for x in str(request.POST.get("boot_options")).split("\n")],
+                "COMMAND_TEST_SHELL": command_test_shell
+            }
+
+        else:
+            action_template = copy.deepcopy(ACTIONS_LINARO)
+            action_config = {
+                "DEPLOY_COMMAND_PARAMETER": deploy_command,
+                "DEPLOY_PARAMETER": image_template,
+                "COMMAND_TEST_SHELL": command_test_shell
+            }
+
+    command_submit = None
+    if request.POST.get("submit_stream"):
+        command_submit = copy.deepcopy(COMMAND_SUBMIT_RESULTS)
+        command_submit_config = {
+            "BUNDLE_STREAM": str(request.POST.get("submit_stream"))
+        }
+        expand_template(command_submit, command_submit_config)
+
+    action_config["COMMAND_SUBMIT_RESULTS"] = command_submit
+
+    print action_config
+    expand_template(action_template, action_config)
+    print "1231231231312"
+
+    notify = None
+    if request.POST.get("notify"):
+        notify = ["%s" % str(x.strip()) for x in request.POST.get("notify").split(",")]
+    device_tags = None
+    if request.POST.get("device_tags"):
+        device_tags = ["%s" % str(x.strip()) for x in request.POST.get("device_tags").split(",")]
+
+    job_template = copy.deepcopy(DEFAULT_TEMPLATE)
+    default_config = {
+        "JOBNAME_PARAMETER": str(request.POST.get("job_name")),
+        "TIMEOUT_PARAMETER": int(request.POST.get("timeout")),
+        "DEVICE_TYPE_PARAMETER": str(request.POST.get("device_type")),
+        "NOTIFY_ON_INCOMPLETE_PARAMETER": notify,
+        "ACTIONS_PARAMETER": action_template,
+        "TAGS_PARAMETER": device_tags,
+    }
+
+    expand_template(job_template, default_config)
+
+    return job_template
+
+
 @BreadCrumb("Job", parent=index, needs=['pk'])
 def job_detail(request, pk):
     job = get_restricted_job(request.user, pk)
+
+    is_favorite = False
+    if request.user.is_authenticated():
+        testjob_user, _ = TestJobUser.objects.get_or_create(user=request.user,
+                                                            test_job=job)
+        is_favorite = testjob_user.is_favorite
 
     data = {
         'job': job,
@@ -828,11 +1288,26 @@ def job_detail(request, pk):
         'show_reload_page': job.status <= TestJob.RUNNING,
         'change_priority': job.can_change_priority(request.user),
         'context_help': BreadCrumbTrail.leading_to(job_detail, pk='detail'),
+        'is_favorite': is_favorite,
     }
 
     log_file = job.output_file()
-
     if log_file:
+        with job.output_file() as f:
+            f.seek(0, 2)
+            job_file_size = f.tell()
+
+        if job_file_size >= job.size_limit:
+            data.update({
+                'job_file_present': True,
+                'job_log_messages': None,
+                'levels': None,
+                'size_warning': job.size_limit,
+                'job_file_size': job_file_size,
+            })
+            return render_to_response(
+                "lava_scheduler_app/job.html", data, RequestContext(request))
+
         if not job.failure_comment:
             job_errors = getDispatcherErrors(job.output_file())
             if len(job_errors) > 0:
@@ -848,9 +1323,6 @@ def job_detail(request, pk):
         for level, msg, _ in job_log_messages:
             levels[level] += 1
         levels = sorted(levels.items(), key=lambda (k, v): logging._levelNames.get(k))
-        with job.output_file() as f:
-            f.seek(0, 2)
-            job_file_size = f.tell()
         data.update({
             'job_file_present': True,
             'job_log_messages': job_log_messages,
@@ -866,6 +1338,7 @@ def job_detail(request, pk):
         "lava_scheduler_app/job.html", data, RequestContext(request))
 
 
+@BreadCrumb("Definition", parent=job_detail, needs=['pk'])
 def job_definition(request, pk):
     job = get_restricted_job(request.user, pk)
     log_file = job.output_file()
@@ -874,6 +1347,8 @@ def job_definition(request, pk):
         {
             'job': job,
             'job_file_present': bool(log_file),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_definition, pk=pk),
+            'show_cancel': job.can_cancel(request.user),
             'show_resubmit': job.can_resubmit(request.user),
         },
         RequestContext(request))
@@ -881,12 +1356,13 @@ def job_definition(request, pk):
 
 def job_definition_plain(request, pk):
     job = get_restricted_job(request.user, pk)
-    response = HttpResponse(job.display_definition, mimetype='text/plain')
+    response = HttpResponse(job.display_definition, content_type='text/plain')
     response['Content-Disposition'] = "attachment; filename=job_%d.json" % \
         job.id
     return response
 
 
+@BreadCrumb("Multinode definition", parent=job_detail, needs=['pk'])
 def multinode_job_definition(request, pk):
     job = get_restricted_job(request.user, pk)
     log_file = job.output_file()
@@ -895,15 +1371,42 @@ def multinode_job_definition(request, pk):
         {
             'job': job,
             'job_file_present': bool(log_file),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(multinode_job_definition, pk=pk),
+            'show_cancel': job.can_cancel(request.user),
+            'show_resubmit': job.can_resubmit(request.user),
         },
         RequestContext(request))
 
 
 def multinode_job_definition_plain(request, pk):
     job = get_restricted_job(request.user, pk)
-    response = HttpResponse(job.multinode_definition, mimetype='text/plain')
+    response = HttpResponse(job.multinode_definition, content_type='text/plain')
     response['Content-Disposition'] = \
         "attachment; filename=multinode_job_%d.json" % job.id
+    return response
+
+
+@BreadCrumb("VMGroup definition", parent=job_detail, needs=['pk'])
+def vmgroup_job_definition(request, pk):
+    job = get_restricted_job(request.user, pk)
+    log_file = job.output_file()
+    return render_to_response(
+        "lava_scheduler_app/vmgroup_job_definition.html",
+        {
+            'job': job,
+            'job_file_present': bool(log_file),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(vmgroup_job_definition, pk=pk),
+            'show_cancel': job.can_cancel(request.user),
+            'show_resubmit': job.can_resubmit(request.user),
+        },
+        RequestContext(request))
+
+
+def vmgroup_job_definition_plain(request, pk):
+    job = get_restricted_job(request.user, pk)
+    response = HttpResponse(job.vmgroup_definition, content_type='text/plain')
+    response['Content-Disposition'] = \
+        "attachment; filename=vmgroup_job_%d.json" % job.id
     return response
 
 
@@ -925,27 +1428,72 @@ def myjobs(request):
         RequestContext(request))
 
 
+@BreadCrumb("Favorite Jobs", parent=index)
+def favorite_jobs(request, username=None):
+
+    if not username:
+        username = request.user.username
+    user = User.objects.get(username=username)
+    data = FavoriteJobsView(request, model=TestJob,
+                            table_class=JobTable, user=user)
+    ptable = JobTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    return render_to_response(
+        "lava_scheduler_app/favorite_jobs.html",
+        {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(favorite_jobs),
+            'favoritejobs_table': ptable,
+            'username': username,
+            "terms_data": ptable.prepare_terms_data(data),
+            "search_data": ptable.prepare_search_data(data),
+            "discrete_data": ptable.prepare_discrete_data(data),
+            "times_data": ptable.prepare_times_data(data),
+        },
+        RequestContext(request))
+
+
 @BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
 def job_log_file(request, pk):
     job = get_restricted_job(request.user, pk)
-    content = formatLogFile(job.output_file())
+    log_file = job.output_file()
+    if not log_file:
+        raise Http404
+
     with job.output_file() as f:
         f.seek(0, 2)
         job_file_size = f.tell()
+
+    size_warning = 0
+    if job_file_size >= job.size_limit:
+        size_warning = job.size_limit
+        content = None
+    else:
+        content = formatLogFile(job.output_file())
+
     return render_to_response(
         "lava_scheduler_app/job_log_file.html",
         {
+            'show_cancel': job.can_cancel(request.user),
+            'show_resubmit': job.can_resubmit(request.user),
             'job': TestJob.objects.get(pk=pk),
             'job_file_present': bool(job.output_file()),
             'sections': content,
+            'size_warning': size_warning,
             'job_file_size': job_file_size,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_log_file, pk=pk),
+            'show_failure': job.can_annotate(request.user),
+            'context_help': BreadCrumbTrail.leading_to(job_detail, pk='detail'),
         },
         RequestContext(request))
 
 
 def job_log_file_plain(request, pk):
     job = get_restricted_job(request.user, pk)
-    response = HttpResponse(job.output_file(), mimetype='text/plain')
+    log_file = job.output_file()
+    if not log_file:
+        raise Http404
+    response = HttpResponse(log_file, content_type='text/plain; charset=utf-8')
+    response['Content-Transfer-Encoding'] = 'quoted-printable'
     response['Content-Disposition'] = "attachment; filename=job_%d.log" % job.id
     return response
 
@@ -1021,7 +1569,6 @@ def job_output(request, pk):
     return response
 
 
-@post_only
 def job_cancel(request, pk):
     job = get_restricted_job(request.user, pk)
     if job.can_cancel(request.user):
@@ -1030,6 +1577,11 @@ def job_cancel(request, pk):
                 target_group=job.target_group)
             for multinode_job in multinode_jobs:
                 multinode_job.cancel(request.user)
+        elif job.is_vmgroup:
+            vmgroup_jobs = TestJob.objects.all().filter(
+                vm_group=job.vm_group)
+            for vmgroup_job in vmgroup_jobs:
+                vmgroup_job.cancel(request.user)
         else:
             job.cancel(request.user)
         return redirect(job)
@@ -1038,7 +1590,6 @@ def job_cancel(request, pk):
             "you cannot cancel this job", content_type="text/plain")
 
 
-@post_only
 def job_resubmit(request, pk):
 
     is_resubmit = request.POST.get("is_resubmit", False)
@@ -1058,7 +1609,7 @@ def job_resubmit(request, pk):
                     request.POST.get("json-input"), request.user)
 
                 if isinstance(job, type(list())):
-                    response_data["job_list"] = [j.id for j in job]
+                    response_data["job_list"] = [j.sub_id for j in job]
                 else:
                     response_data["job_id"] = job.id
                 return render_to_response(
@@ -1079,11 +1630,34 @@ def job_resubmit(request, pk):
                     return HttpResponse(simplejson.dumps("success"))
                 except Exception as e:
                     return HttpResponse(simplejson.dumps(str(e)),
-                                        mimetype="application/json")
+                                        content_type="application/json")
             if job.is_multinode:
                 definition = job.multinode_definition
+            elif job.is_vmgroup:
+                definition = job.vmgroup_definition
             else:
                 definition = job.display_definition
+
+            if request.user != job.owner and not request.user.is_superuser:
+                obj = simplejson.loads(definition)
+
+                # Iterate through the objects in the JSON and pop (remove)
+                # the bundle stream path in submit_results action once we find it.
+                for key in obj:
+                    if key == "actions":
+                        for i in xrange(len(obj[key])):
+                            if obj[key][i]["command"] == \
+                                    "submit_results_on_host" or \
+                                    obj[key][i]["command"] == "submit_results":
+                                for key1 in obj[key][i]:
+                                    if key1 == "parameters":
+                                        for key2 in obj[key][i][key1]:
+                                            if key2 == "stream":
+                                                obj[key][i][key1][key2] = ""
+                                                break
+                definition = simplejson.dumps(obj, sort_keys=True, indent=4, separators=(',', ': '))
+                response_data["resubmit_warning"] = \
+                    "Since you were not the submitter of the original job,\\nthe bundle stream was removed, please provide a bundle stream."
 
             try:
                 response_data["json_input"] = definition
@@ -1119,6 +1693,20 @@ def job_change_priority(request, pk):
     if job.priority != requested_priority:
         job.priority = requested_priority
         job.save()
+    return redirect(job)
+
+
+def job_toggle_favorite(request, pk):
+
+    if not request.user.is_authenticated():
+        raise PermissionDenied()
+
+    job = TestJob.objects.get(pk=pk)
+    testjob_user, _ = TestJobUser.objects.get_or_create(user=request.user,
+                                                        test_job=job)
+
+    testjob_user.is_favorite = not testjob_user.is_favorite
+    testjob_user.save()
     return redirect(job)
 
 
@@ -1169,7 +1757,7 @@ def get_remote_json(request):
         simplejson.loads(data)
     except Exception as e:
         return HttpResponse(simplejson.dumps(str(e)),
-                            mimetype="application/json")
+                            content_type="application/json")
 
     return HttpResponse(data)
 
@@ -1192,6 +1780,9 @@ def edit_transition(request):
 @BreadCrumb("Transition {pk}", parent=index, needs=['pk'])
 def transition_detail(request, pk):
     transition = get_object_or_404(DeviceStateTransition, id=pk)
+    device_type = transition.device.device_type
+    if len(device_type.devices_visible_to(request.user)) == 0:
+        raise Http404()
     trans_data = TransitionView(request, transition.device, model=DeviceStateTransition, table_class=DeviceTransitionTable)
     trans_table = DeviceTransitionTable(trans_data.get_table_data())
     config = RequestConfig(request, paginate={"per_page": trans_table.length})
@@ -1228,6 +1819,8 @@ class RecentJobsView(JobTableView):
             "submitter",
             "user",
             "group",
+        ).extra(
+            select={'duration_sort': 'end_time - start_time'}
         ).filter(
             actual_device=self.device
         ).order_by(
@@ -1251,9 +1844,84 @@ class TransitionView(JobTableView):
         )
 
 
+class DeviceHealthHistoryView(JobTableView):
+
+    def __init__(self, request, device, **kwargs):
+        super(DeviceHealthHistoryView, self).__init__(request, **kwargs)
+        self.device = device
+
+    def get_queryset(self):
+        states = [Device.OFFLINE, Device.OFFLINING, Device.RETIRED]
+
+        return DeviceStateTransition.objects.select_related(
+            'created_by'
+        ).filter(
+            (Q(old_state__in=states) | Q(new_state__in=states)),
+            device=self.device
+        ).order_by(
+            '-created_on'
+        )
+
+
+class DTHealthHistoryView(JobTableView):
+
+    def __init__(self, request, device_type, **kwargs):
+        super(DTHealthHistoryView, self).__init__(request, **kwargs)
+        self.device_type = device_type
+
+    def get_queryset(self):
+        states = [Device.OFFLINE, Device.OFFLINING, Device.RETIRED]
+
+        return DeviceStateTransition.objects.select_related(
+            'device__hostname', 'created_by'
+        ).filter(
+            (Q(old_state__in=states) | Q(new_state__in=states)),
+            device__device_type=self.device_type
+        ).order_by(
+            'device__hostname',
+            '-created_on'
+        )
+
+
+class MyDTHealthHistoryView(JobTableView):
+
+    def __init__(self, request, **kwargs):
+        super(MyDTHealthHistoryView, self).__init__(request, **kwargs)
+
+    def get_queryset(self):
+        states = [Device.OFFLINE, Device.OFFLINING, Device.RETIRED]
+
+        return DeviceStateTransition.objects.select_related(
+            'device__hostname', 'created_by'
+        ).filter(
+            (Q(old_state__in=states) | Q(new_state__in=states)),
+            created_by=self.request.user
+        ).order_by(
+            'device__device_type',
+            'device__hostname',
+            '-created_on'
+        )
+
+
 @BreadCrumb("Device {pk}", parent=index, needs=['pk'])
 def device_detail(request, pk):
     device = get_object_or_404(Device, pk=pk)
+    if device.device_type.owners_only:
+        visible = filter_device_types(request.user)
+        if device.device_type.name not in visible:
+            raise Http404('No device matches the given query.')
+
+    devices = Device.objects.filter(device_type_id=device.device_type_id).order_by('hostname')
+    devices_list = [dev[0] for dev in devices.values_list('hostname')]
+    try:
+        next_device = devices_list[devices_list.index(device.hostname) + 1]
+    except IndexError:
+        next_device = None
+    try:
+        previous_device = devices_list[:devices_list.index(device.hostname)].pop()
+    except IndexError:
+        previous_device = None
+
     if device.status in [Device.OFFLINE, Device.OFFLINING]:
         try:
             transition = device.transitions.filter(message__isnull=False).latest('created_on').message
@@ -1292,6 +1960,11 @@ def device_detail(request, pk):
     times_data = recent_ptable.prepare_times_data(recent_data)
     times_data.update(trans_table.prepare_times_data(trans_data))
 
+    visible = filter_device_types(request.user)
+
+    #  device capabilities data retrieved from health checks
+    capabilities = populate_capabilities(device.hostname)
+
     return render_to_response(
         "lava_scheduler_app/device.html",
         {
@@ -1314,9 +1987,19 @@ def device_detail(request, pk):
             'show_restrict': (device.is_public and device.can_admin(request.user)
                               and device.status not in [Device.RETIRED]),
             'show_pool': (not device.is_public and device.can_admin(request.user)
-                          and device.status not in [Device.RETIRED]),
+                          and device.status not in [Device.RETIRED]
+                          and not device.device_type.owners_only),
+            'cancel_looping': device.health_status == Device.HEALTH_LOOPING,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_detail, pk=pk),
             'context_help': BreadCrumbTrail.show_help(device_detail, pk="help"),
+            'next_device': next_device,
+            'previous_device': previous_device,
+            'capabilities_date': capabilities['capabilities_date'],
+            'processor': capabilities['processor'],
+            'models': capabilities['models'],
+            'cores': capabilities['cores'],
+            'emulated': capabilities['emulated'],
+            'flags': capabilities['flags'],
         },
         RequestContext(request))
 
@@ -1443,6 +2126,31 @@ def device_derestrict_device(request, pk):
             "you cannot derestrict submissions to this device", content_type="text/plain")
 
 
+@BreadCrumb("{pk} device health history", parent=device_detail, needs=['pk'])
+def device_health_history_log(request, pk):
+    device = get_object_or_404(Device, pk=pk)
+    prefix = "healthhistory_"
+    hhistory_data = DeviceHealthHistoryView(request, device,
+                                            model=DeviceStateTransition,
+                                            table_class=DeviceTransitionTable)
+    hhistory_table = DeviceTransitionTable(
+        hhistory_data.get_table_data(prefix),
+        prefix=prefix,
+    )
+    config = RequestConfig(request,
+                           paginate={"per_page": hhistory_table.length})
+    config.configure(hhistory_table)
+
+    return render_to_response(
+        "lava_scheduler_app/device_health_history_log.html",
+        {
+            'device': device,
+            'healthhistory_table': hhistory_table,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(device_health_history_log, pk=pk),
+        },
+        RequestContext(request))
+
+
 @BreadCrumb("Worker: {pk}", parent=index, needs=['pk'])
 def worker_detail(request, pk):
     worker = get_object_or_404(Worker, pk=pk)
@@ -1479,3 +2187,43 @@ def edit_worker_desc(request):
     else:
         return HttpResponseForbidden("Permission denied.",
                                      content_type="text/plain")
+
+
+def username_list_json(request):
+
+    term = request.GET['term']
+    users = []
+    for user in User.objects.filter(Q(username__istartswith=term)):
+        users.append(
+            {"id": user.id,
+             "name": user.username,
+             "label": user.username})
+    return HttpResponse(simplejson.dumps(users), mimetype='application/json')
+
+
+class QueueJobsView(JobTableView):
+
+    def get_queryset(self):
+        return all_jobs_with_custom_sort().filter(status=TestJob.SUBMITTED)
+
+
+@BreadCrumb("Queue", parent=index)
+def queue(request):
+    queue_data = QueueJobsView(request, model=TestJob, table_class=QueueJobsTable)
+    queue_ptable = QueueJobsTable(
+        queue_data.get_table_data(),
+    )
+    config = RequestConfig(request, paginate={"per_page": queue_ptable.length})
+    config.configure(queue_ptable)
+
+    return render_to_response(
+        "lava_scheduler_app/queue.html",
+        {
+            "times_data": queue_ptable.prepare_times_data(queue_data),
+            "terms_data": queue_ptable.prepare_terms_data(queue_data),
+            "search_data": queue_ptable.prepare_search_data(queue_data),
+            "discrete_data": queue_ptable.prepare_discrete_data(queue_data),
+            'queue_table': queue_ptable,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(queue),
+        },
+        RequestContext(request))
