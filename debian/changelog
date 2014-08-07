@@ -1,3 +1,10 @@
+lava-server (2014.07-1) unstable; urgency=medium
+
+  * New production release
+  * Includes optimised Image Reports 2.0 and bug fixes
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 07 Aug 2014 11:32:36 +0100
+
 lava-server (2014.06.24-1) unstable; urgency=medium
 
   * New upstream bug fix release.
