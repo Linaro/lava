@@ -72,6 +72,7 @@ class stmc(BaseDriver):
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
                              bootloader, firmware, bl1, bl2, bl31, rootfstype,
                              bootloadertype, target_type, scratch_dir):
+        kernel_url = kernel
         # At a minimum we must have a kernel
         if kernel is None:
             raise CriticalError("No kernel image to boot")
@@ -125,6 +126,15 @@ class stmc(BaseDriver):
         # Add suffix for boot commands
         self._stmc_command = stmc_command + ' --'
 
+        if self.context.test_data.metadata['is_slave']:
+            logging.info("Booting in the master/slave mode, as *slave*")
+            logging.info("Sending the kernel, dtb, nfsrootfs urls")
+            self.context.transport.request_send('lava_ms_slave_data',
+                                                {'kernel': kernel_url,
+                                                 'nfs_rootfs': lava_nfsrootfs,
+                                                 'nfs_server_ip': self.context.config.lava_server_ip,
+                                                 'stmc_ip': self.config.jtag_stmc_ip})
+
         return self._boot_tags, self._default_boot_cmds
 
     def stmc_status_ok(self):
@@ -152,52 +162,66 @@ class stmc(BaseDriver):
         return True
 
     def connect(self, boot_cmds):
-        boot_cmds.insert(0, self._stmc_command)
-        jtag_command = ' '.join(boot_cmds)
+        if self.context.test_data.metadata['is_slave']:
+            # Wait for the STMC2 to be ready
+            self.context.transport.request_wait('lava_ms_ready')
 
-        # jtag_stmcconfig is required
-        if not self.config.jtag_stmcconfig:
-            raise CriticalError("STMC config command should be present")
+            # Connect to the STMC serial relay
+            logging.info("Connecting to STMC serial relay")
+            proc = connect_to_serial(self.context)
 
-        # Check the STMC status command
-        logging.info("Checking STMC status")
-        if not self.stmc_status_ok():
-            logging.info("Hard resetting STMC")
-            # JTAG hard reset is required
-            if not self.config.jtag_hard_reset_command:
-                raise CriticalError("STMC is not working and 'jtag_hard_reset_command' is not set")
+            # Ask the master to deliver the image
+            self.context.transport.request_send('lava_ms_boot', None)
 
-            self.context.run_command(self.config.jtag_hard_reset_command)
-            logging.info("Waiting for STMC to initialize")
-            success = False
-            for loop_index in range(1, 5):
-                logging.info("  checking STMC status (%d)" % (loop_index))
-                if self.stmc_status_ok():
-                    success = True
-                    break
-                time.sleep(5)
-
-            if not success:
-                raise CriticalError("The STMC fails to reboot after hard reset")
-
-            # Setup the serial-relay
-            if not self.stmc_serial_relay():
-                raise CriticalError("Unable to setup the serial relay. The STMC is not working properly")
-
-        # Hard reset platform
-        if self.config.hard_reset_command:
-            logging.info("Hard resetting platform")
-            self.context.run_command(self.config.hard_reset_command)
+            proc.expect(self.config.image_boot_msg, timeout=300)
+            return proc
         else:
-            raise CriticalError("Must have a hard_reset_command defined")
+            boot_cmds.insert(0, self._stmc_command)
+            jtag_command = ' '.join(boot_cmds)
 
-        # Connect to the STMC serial relay
-        logging.info("Connecting to STMC serial relay")
-        proc = connect_to_serial(self.context)
+            # jtag_stmcconfig is required
+            if not self.config.jtag_stmcconfig:
+                raise CriticalError("STMC config command should be present")
 
-        # Deliver images with STMC
-        logging.info("Delivering images with STMC")
-        self.context.run_command(jtag_command, failok=False)
+            # Check the STMC status command
+            logging.info("Checking STMC status")
+            if not self.stmc_status_ok():
+                logging.info("Hard resetting STMC")
+                # JTAG hard reset is required
+                if not self.config.jtag_hard_reset_command:
+                    raise CriticalError("STMC is not working and 'jtag_hard_reset_command' is not set")
 
-        proc.expect(self.config.image_boot_msg, timeout=300)
-        return proc
+                self.context.run_command(self.config.jtag_hard_reset_command)
+                logging.info("Waiting for STMC to initialize")
+                success = False
+                for loop_index in range(1, 5):
+                    logging.info("  checking STMC status (%d)" % (loop_index))
+                    if self.stmc_status_ok():
+                        success = True
+                        break
+                    time.sleep(5)
+
+                if not success:
+                    raise CriticalError("The STMC fails to reboot after hard reset")
+
+                # Setup the serial-relay
+                if not self.stmc_serial_relay():
+                    raise CriticalError("Unable to setup the serial relay. The STMC is not working properly")
+
+            # Hard reset platform
+            if self.config.hard_reset_command:
+                logging.info("Hard resetting platform")
+                self.context.run_command(self.config.hard_reset_command)
+            else:
+                raise CriticalError("Must have a hard_reset_command defined")
+
+            # Connect to the STMC serial relay
+            logging.info("Connecting to STMC serial relay")
+            proc = connect_to_serial(self.context)
+
+            # Deliver images with STMC
+            logging.info("Delivering images with STMC")
+            self.context.run_command(jtag_command, failok=False)
+
+            proc.expect(self.config.image_boot_msg, timeout=300)
+            return proc
