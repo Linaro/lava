@@ -1,0 +1,284 @@
+# Danish translation lava-server.
+# Copyright (C) 2014 the lava-server team.
+# This file is distributed under the same license as the lava-server package.
+# Joe Hansen <joedalton2@yahoo.dk>, 2014.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: lava-server\n"
+"Report-Msgid-Bugs-To: lava-server@packages.debian.org\n"
+"POT-Creation-Date: 2014-07-30 18:26+0200\n"
+"PO-Revision-Date: 2014-08-10 22:21+0100\n"
+"Last-Translator: Joe Hansen <joedalton2@yahoo.dk>\n"
+"Language-Team: Danish <debian-l10n-danish@lists.debian.org>\n"
+"Language: da\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:2001
+msgid "Is this a standalone master instance of LAVA?"
+msgstr "Er dette en uafhængig master-instans af LAVA?"
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:2001
+msgid ""
+"LAVA can be set up in either of two ways: as a single standalone master "
+"instance with attached devices, or in a distributed configuration with a "
+"central master instance and remote dispatchers providing (more) devices."
+msgstr ""
+"LAVA kan opsættes på en af to måder: som en enkel uafhængig master-"
+"instans med tilkoblede enheder eller en distribueret konfiguration med "
+"en central master-instans og eksterne afsendere, der tilbyder (flere) "
+"enheder." 
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:2001
+msgid ""
+"Configuration of remote dispatchers requires manual intervention, so the "
+"standalone configuration is recommended."
+msgstr ""
+"Konfiguration af eksterne afsendere kræver manuel intervention, så den "
+"uafhængige konfiguration anbefales."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:3001
+msgid "Port number of the PostgreSQL database:"
+msgstr "Portnummer for PostgreSQL-databasen:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:3001
+msgid "Please enter the port number for the PostgreSQL database."
+msgstr "Indtast venligst portnummeret for PostgreSQL-databasen."
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:4001
+msgid "This install looks like a remote worker"
+msgstr "Denne installation ligner en ekstern arbejder"
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:4001
+msgid ""
+"You asked for this system to be set up as master instance for a distributed "
+"configuration, but this system looks like a remote worker. You can either go "
+"back and change your answer or proceed with reconfiguring this system as "
+"specified."
+msgstr ""
+"Du anmodte om, at dette system blev sat op som en master-instans for en "
+"distribueret konfiguration, men dette system ligner en ekstern arbejder. Du "
+"kan enten gå tilbage og ændre dit svar eller fortsætte med at omkonfigurere "
+"dette system som angivet."
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:4001
+msgid ""
+"Note that you will have to ensure that the lava-coordinator configuration is "
+"correct."
+msgstr ""
+"Bemærk at du skal sikre, at konfigurationen for lava-coordinator er korrekt."
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:5001
+msgid "This install looks like a master instance"
+msgstr "Denne installation ligner en master-instans"
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:5001
+msgid ""
+"You asked for this system to be set up as a remote worker for a distributed "
+"configuration, but this system looks like a master instance. You can either "
+"go back and change your answer or proceed with reconfiguring this system as "
+"specified."
+msgstr ""
+"Du anmodte om, at dette system skulle opsættes som en ekstern arbejder for en "
+"distriburet konfiguration, men dette sytem liger en master-instans. Du kan "
+"enten gå tilbage og ændre dit svar eller fortsætte med at omkonfigurere "
+"dette system som angivet."
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:5001
+msgid ""
+"Note that you will have to ensure that the lava-coordinator configuration is "
+"changed to point to the master instance for this remote worker. You can then "
+"remove the lava-coordinator package from the remote worker."
+msgstr ""
+"Bemærk at du skal sikre, at konfigurationen for lava-coordinator er ændret til "
+"at pege mod master-instansen for denne eksterne arbejder. Du kan så fjerne "
+"pakken lava-coordinator fra den eksterne arbejder."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:6001
+msgid "Name for this LAVA instance:"
+msgstr "Navn på denne LAVA-instans:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:6001
+msgid ""
+"LAVA servers need to have an instance name. If this is a new instance, you "
+"can safely use the default name. If this is an upgrade of a previous LAVA "
+"instance, specify the instance name here to upgrade the database or use a "
+"different name to start fresh with a new database."
+msgstr ""
+"LAVA-servere skal bruge et instansnavn. Hvis dette er en ny instans, så "
+"kan du bruge standardnavnet. Hvis dette er en opgradering af en tidligere "
+"LAVA-instans, så angiv instansnavnet her for at opgradere databasen eller "
+"brug et andet navn for at starte med en ny database."
+
+#. Type: error
+#. Description
+#: ../lava-server.templates:7001
+msgid "Missing LAVA instance name"
+msgstr "Manglende LAVA-instansnavn"
+
+#. Type: error
+#. Description
+#: ../lava-server.templates:7001
+msgid ""
+"An instance name must be specified for LAVA-server. Using the instance name "
+"\"default\"."
+msgstr ""
+"Et instansnavn skal angives for LAVA-server. Bruger instansnavnet »default«."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:8001
+msgid "Name of the master instance for this worker:"
+msgstr "Navn på master-instansen for denne arbejder:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:8001
+msgid ""
+"LAVA servers need to have an instance name. Each remote worker must be given "
+"the instance name of the master LAVA server which it will poll for new jobs "
+"to run on the devices attached to the worker."
+msgstr ""
+"LAVA-servere skal have et instansnavn. Hver ekstern arbejder skal have "
+"instansnavnet for master-LAVA-serveren, som den vil hente for nye job, der "
+"skal køres på enheder tilkoblet arbejderen."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:9001
+msgid "Master scheduler for this worker:"
+msgstr "Masterplanlægger for denne arbejder:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:9001
+msgid ""
+"Each remote worker needs to connect to a master scheduler running lava-"
+"server. This hostname or IP address will be used to connect to the master "
+"database."
+msgstr ""
+"Hver ekstern arbejder skal forbinde til en master-scheduler, der kører "
+"lava-server. Dette værtsnavn eller denne IP-adresse vil blive brugt til at "
+"forbinde til master-databasen."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:9001
+msgid ""
+"To work with remote nodes, the master needs to be configured to allow the "
+"database to listen to the workers. An SSH key also needs to be generated on "
+"the worker and added to the master list of authorized_keys. Ensure that the "
+"master allows remote access from workers before submitting jobs or health "
+"checks."
+msgstr ""
+"For at arbejde med eksterne knuder, skal masteren konfigureres til at tillade "
+"at databasen lytter på arbejderne. En SSH-nøgle skal også oprettes på arbejderen "
+"og tilføjes til masterlisten over authorized_keys. Sikr dig, at masteren "
+"tillader ekstern adgang fra arbejdere før job indsendes eller der udføres "
+"helbredstjek."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:9001
+msgid ""
+"You can continue setting up the worker, as long as remote database access is "
+"enabled before jobs are submitted."
+msgstr ""
+"Du kan fortsætte med at opsætte arbejderen, så længe ekstern databaseadgang er "
+"aktiveret før job indsendes."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:10001
+msgid "Name of the database on the master:"
+msgstr "Databasens navn for masteren:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:10001
+msgid ""
+"Please enter the name of the database on the master scheduler running lava-"
+"server. The worker will use this name to contact the database."
+msgstr ""
+"Indtast venligt databasens navn for masterplanlæggeren, der kører lava-"
+"server. Arbejderen vil bruge dette navn til at kontakte databasen."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:11001
+msgid "Username for the database on the master:"
+msgstr "Brugernavn for databasen på masteren:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:11001
+msgid ""
+"Please enter the username for the database on the master scheduler running "
+"lava-server. The worker will use this username to contact the database."
+msgstr ""
+"Indtast venligst brugernavnet for databasen på masterplanlæggeren, der kører "
+"lava-server. Arbejderen vil bruge dette brugernavn til at kontakte databasen."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:12001
+msgid "Port number of the database on the master:"
+msgstr "Portnummer for databasen på masteren:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:12001
+msgid ""
+"Please enter the database port number for the database on the master "
+"scheduler running lava-server. The worker will use this port to contact the "
+"database."
+msgstr ""
+"Indtast venligst databasens portnummer for databasen på masterplanlæggeren, "
+"der kører lava-server. Arbejderen vil bruge denne port til at kontakte "
+"databasen."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:13001
+msgid "Password for the database on the master:"
+msgstr "Adgangskode for databasen på masteren:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:13001
+msgid ""
+"Please enter the password for the database on the master scheduler running "
+"lava-server. The worker will use this password to contact the database."
+msgstr ""
+"Indtast venligst adgangskoden for databasen på masterplanlæggeren, der "
+"kører lava-server. Arbejderen vil bruge denne adgangskode til at kontakte "
+"databasen."
+
