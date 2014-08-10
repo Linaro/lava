@@ -6,6 +6,8 @@ lava-server (2014.07-2) unstable; urgency=medium
     (Closes: #756644)
   * [INTL:de] Initial German debconf translation
     (Closes: #757519)
+  * [INTL:da] Danish translation of the debconf templates lava-
+    server (Closes: #757651)
 
  -- Neil Williams <codehelp@debian.org>  Sat, 09 Aug 2014 12:15:28 +0100
 
