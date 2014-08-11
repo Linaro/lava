@@ -2,6 +2,7 @@
 
 {% load i18n %}
 {% load keep_spacing %}
+{% load make_safe %}
 
 {% block styles %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
@@ -41,7 +42,7 @@ Report Group:&nbsp;&nbsp;<a href="{% url 'dashboard_app.views.image_reports.view
 <script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.labels.js"></script>
 
 <script>
-  chart_data = $.parseJSON($('<div/>').html('{{chart_data}}').text());
+  chart_data = $.parseJSON($('<div/>').html('{{chart_data|make_jquery_safe|escapejs}}').text());
   csrf_token = '{{csrf_token}}';
   image_url = '{{ STATIC_URL }}dashboard_app/images/';
   testrun_unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testrun' %}';

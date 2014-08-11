@@ -110,7 +110,7 @@
       {% for imagecharttestcase in instance.imagecharttestcase_set.all %}
         $('#chosen_tests').append($('<option>', {
           value: {{ imagecharttestcase.test_case.id }},
-          text: '{{ imagecharttestcase.test_case.test_case_id }}'
+          text: '{{ imagecharttestcase.test_case.test_case_id|escapejs }}'
         }));
       {% endfor %}
       }

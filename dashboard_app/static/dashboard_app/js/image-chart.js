@@ -169,7 +169,7 @@ $(document).ready(function () {
         filter_links = [];
         for (filter_id in this.chart_data.filters) {
             filter_links.push('<a href="' +
-                              this.chart_data.filters[filter_id]["link"] +
+                              this.chart_data.filters[filter_id]["link"].replace(/\\/g , "") +
                               '">~' +
                               this.chart_data.filters[filter_id]["owner"] +
                               '/' +
@@ -319,11 +319,11 @@ $(document).ready(function () {
 
                 rows.push(test_data["test_filter_id"]);
 
-                test_name = test_data["alias"];
+                test_name = test_data["alias"].replace(/\\/g , "");
                 if (test_name.length > 10) {
                     test_name = test_name.substring(0,10) + "...";
                 }
-                table_rows += "<tr><td title='" + test_data["alias"] +
+                table_rows += "<tr><td title='" + test_data["alias"].replace(/\\/g , "") +
                     "'>" + test_name + "</td></tr>";
             }
         }
@@ -651,7 +651,7 @@ $(document).ready(function () {
 	    test_filter_id = row["test_filter_id"];
             if (!(test_filter_id in plot_data)) {
                 plot_data[test_filter_id] = {
-                    "alias": row["alias"],
+                    "alias": row["alias"].replace(/\\/g , ""),
                     "representation": row["filter_rep"],
                     "data": [],
                     "meta": [],
