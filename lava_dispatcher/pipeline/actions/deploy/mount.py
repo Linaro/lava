@@ -102,7 +102,10 @@ class LoopCheckAction(DeployAction):
         self.data['download_action']['available_loops'] = available_loops
 
     def run(self, connection, args=None):
-        args = ['sudo', '/sbin/losetup', '-a']  # sudo allows validate to be used in unit tests
+        if 'available_loops' not in self.data['download_action']:
+            # FIXME: why is this data being cleared? Should we re-check anyway?
+            self.validate()
+        args = ['/sbin/losetup', '-a']
         pro = self._run_command(args)
         mounted_loops = len(pro.strip().split("\n")) if pro else 0
         available_loops = self.data['download_action']['available_loops']
@@ -146,7 +149,6 @@ class LoopMountAction(RetryAction):
             raise RuntimeError("Offset action failed")
         self.data[self.name]['mntdir'] = self.job.mkdtemp()
         mount_cmd = [
-            'sudo',
             'mount',
             '-o',
             'loop,offset=%s' % self.data['download_action']['offset'],
@@ -211,7 +213,7 @@ class UnmountAction(RetryAction):  # FIXME: contextmanager to ensure umounted on
 
     def run(self, connection, args=None):
         self._log("umounting %s" % self.data['loop_mount']['mntdir'])
-        self._run_command(['sudo', 'umount', self.data['loop_mount']['mntdir']])
+        self._run_command(['umount', self.data['loop_mount']['mntdir']])
         # FIXME: is the rm -rf a separate action or a cleanup of this action?
         self._run_command(['rm', '-rf', self.data['loop_mount']['mntdir']])
         return connection

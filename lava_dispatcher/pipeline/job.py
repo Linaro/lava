@@ -49,6 +49,7 @@ class Job(object):
         self.pipeline = None
         self.actions = None
         self._scratch_dir = None
+        self.connection = None
 
     def set_pipeline(self, pipeline):
         self.pipeline = pipeline
@@ -74,6 +75,7 @@ class Job(object):
         structure['job'] = {
             'parameters': self.parameters
         }
+        # FIXME: output the deployment data here and remove from the Actions
         structure.update(self.pipeline.describe())
         return structure
 
@@ -91,8 +93,7 @@ class Job(object):
         self.pipeline.validate_actions()
 
     def run(self):
-        self.pipeline.validate_actions()
-        self.pipeline.run_actions(None)
+        self.pipeline.run_actions(self.connection)  # FIXME: some Deployment methods may need to set a Connection.
         # FIXME how to get rootfs with multiple deployments, and at arbitrary
         # points in the pipeline?
         # rootfs = None

@@ -37,6 +37,7 @@ from lava_dispatcher.pipeline.actions.deploy.mount import (
 )
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction, CustomisationAction
 from lava_dispatcher.pipeline.actions.deploy.testdef import TestDefinitionAction
+from lava_dispatcher.pipeline.actions.boot.kvm import BootAction
 
 
 class TestBasicJob(LavaDispatcherTestCase):
@@ -158,7 +159,7 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
         overlay = None
         unmount = None
         self.assertTrue(os.path.exists(self.job.parameters['output_dir']))
-        self.assertEqual(len(self.job.pipeline.describe().values()), 16)
+        self.assertEqual(len(self.job.pipeline.describe().values()), 18)  # this will keep changing until KVM is complete.
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
                 # check parser has created a suitable deployment
@@ -277,7 +278,7 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
 
     def test_kvm_basic_boot(self):
         for action in self.job.pipeline.actions:
-            if action.name == 'boot':
+            if isinstance(action, BootAction):
                 # get the action & populate it
                 self.assertEqual(action.parameters['method'], 'kvm')
 

@@ -26,11 +26,15 @@ from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,
     Deployment,
+    Boot,
+    FinalizeAction,
+    LavaTest,
     JobError
 )
 from lava_dispatcher import deployment_data
 # needed for the Deployment select call, despite what pylint thinks.
-from lava_dispatcher.pipeline.actions.deploy.image import DeployImage
+from lava_dispatcher.pipeline.actions.deploy.image import DeployImage  # pylint: disable=unused-import
+from lava_dispatcher.pipeline.actions.boot.kvm import BootKVM  # pylint: disable=unused-import
 
 
 class JobParser(object):
@@ -84,7 +88,16 @@ class JobParser(object):
                     deploy.action.yaml_line = line
                     device.deployment_data = deployment_data.get(deploy.action.parameters['os'])
                     deploy.action.parameters = {'deployment_data': device.deployment_data}
+                elif name == "boot":
+                    boot = Boot.select(device, action_data[name])(pipeline)
+                    boot.action.parameters = action_data[name]
+                    boot.action.yaml_line = line
+#                elif name == "test":
+#                    lavatest = LavaTest.select(device, action_data[name])(pipeline)
+#                    lavatest.action.parameters = action_data[name]
+#                    lavatest.action.yaml_line = line
                 else:
+                    # May only end up being used for submit as other actions all need strategy method objects
                     action_class = Action.find(name)
                     # select the specific action of this class for this job
                     action = action_class()
@@ -102,6 +115,8 @@ class JobParser(object):
                 # uncomment for debug
                 # print action.parameters
 
+        # there's always going to need to be a finalize_process action
+        pipeline.add_action(FinalizeAction())
         # the only parameters sent to the job are job parameters
         # like job_name, logging_level or target_group.
         data.pop('actions')

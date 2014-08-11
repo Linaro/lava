@@ -35,3 +35,12 @@ class BootAction(Action):
     """
 
     name = 'boot'
+
+
+class AutoLoginAction(Action):
+
+    def __init__(self):
+        super(AutoLoginAction, self).__init__()
+        self.name = 'auto-login-action'
+        self.description = "automatically login after boot using job parameters"
+        self.summary = "Auto-login after boot"

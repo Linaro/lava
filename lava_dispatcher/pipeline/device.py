@@ -45,6 +45,31 @@ class DeviceTypeParser(object):
         return data
 
 
+class NewDeviceDefaults(object):
+    """
+    Placeholder for an eventual schema based on the current device config schema
+    but adapted to the new device parameter structure.
+    Ideally, use an external file as the schema
+    """
+
+    def __init__(self):
+        test_image_prompts = [r"\(initramfs\)",  # check if the r prefix breaks matching later & remove \.
+                              "linaro-test",
+                              "/ #",
+                              "root@android",
+                              "root@linaro",
+                              "root@master",
+                              "root@debian",
+                              "root@linaro-nano:~#",
+                              "root@linaro-developer:~#",
+                              "root@linaro-server:~#",
+                              "root@genericarmv7a:~#",
+                              "root@genericarmv8:~#"]
+        self.parameters = {
+            'test_image_prompts': test_image_prompts
+        }
+
+
 class NewDevice(object):
     # FIXME: replace the current Device class with this one.
 
@@ -59,10 +84,12 @@ class NewDevice(object):
         if not os.path.exists(os.path.join(default_config_path, 'devices', "%s.conf" % target)):
             raise RuntimeError("Unable to use new devices: %s" % default_config_path)
 
+        defaults = NewDeviceDefaults()
         # parameters dict will update if new settings are found, so repeat for customisation files when those exist
-        self.parameters = dev_parser.parse(open(os.path.join(default_config_path, 'devices', "%s.conf" % target)))
-        self.parameters = dev_parser.parse(open(os.path.join(default_config_path, 'device_types', "%s.conf" % self.parameters['device_type'])))
-        self.parameters['hostname'] = target  # FIXME: is this a valid assumption?
+        self.__parameters__.update(defaults.parameters)
+        self.__parameters__.update(dev_parser.parse(open(os.path.join(default_config_path, 'devices', "%s.conf" % target))))
+        self.__parameters__.update(dev_parser.parse(open(os.path.join(default_config_path, 'device_types', "%s.conf" % self.parameters['device_type']))))
+        self.__parameters__['hostname'] = target  # FIXME: is this a valid assumption?
 
     @property
     def parameters(self):

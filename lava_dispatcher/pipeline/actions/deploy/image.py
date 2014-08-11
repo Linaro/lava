@@ -129,8 +129,12 @@ class DeployImage(Deployment):
         which can use instance data.
         """
         # FIXME: read the device_types/*.conf and match against the job & support methods
-        if device.context.device_config.device_type != 'kvm':
-            return False
+        if hasattr(device, 'config'):
+            if device.config.device_type != 'kvm':
+                return False
+        else:
+            if device.parameters['device_type'] != 'kvm':
+                return False
         # FIXME: only enable once all deployment strategies in basics.yaml are defined!
 #        if 'image' not in parameters:
 #            print parameters
