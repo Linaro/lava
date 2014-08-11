@@ -1416,9 +1416,19 @@ class TestJob(RestrictedResource):
                         target_group=target_group)
                     job.save()
                     job_list.append(job)
-                    for tag in Tag.objects.filter(name__in=taglist):
-                        job.tags.add(tag)
                     child_id += 1
+            # as many jobs as there are in the count of that role,
+            # assign each one any and all tags assigned to that role.
+            # The daemon can choose which devices match.
+            # job_data is multinode data
+            for device_group in job_data['device_group']:
+                # get the tags for this group
+                taglist = _get_tag_list(device_group.get('tags', []))
+                if len(taglist) > 0:
+                    for item in range(0, device_group['count']):
+                        for tag in Tag.objects.filter(name__in=taglist):
+                            job_list[item].tags.add(tag)
+                        job_list[item].save()
             return job_list
 
         elif 'vm_group' in job_data:
