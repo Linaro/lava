@@ -127,6 +127,7 @@ def split_multi_job(json_jobdata, target_group):
                 node_json[role][c]["job_name"] = json_jobdata["job_name"]
             if clients.get("tags", False):
                 node_json[role][c]["tags"] = clients["tags"]
+            node_json[role][c]["is_slave"] = clients.get("is_slave", False)
             node_json[role][c]["group_size"] = group_count
             node_json[role][c]["target_group"] = target_group
             node_json[role][c]["actions"] = node_actions[role]
