@@ -18,8 +18,10 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-
+import os
 import yaml
+from yaml.composer import Composer
+from yaml.constructor import Constructor
 
 
 class DeviceTypeParser(object):
@@ -40,18 +42,27 @@ class DeviceTypeParser(object):
         self.loader.compose_node = self.compose_node
         self.loader.construct_mapping = self.construct_mapping
         data = self.loader.get_single_data()
-        device = Device(data)
-        return device
+        return data
 
 
-class Device(object):
+class NewDevice(object):
+    # FIXME: replace the current Device class with this one.
 
     def __init__(self, target):
         self.target = target
-        self.__parameters__ = None
+        self.__parameters__ = {}
         dev_parser = DeviceTypeParser()
-        self.parameters = dev_parser.parse(open("./lava_dispatcher/pipeline/devices/%s.conf" % target))
-        self.parameters = dev_parser.parse(open("./lava_dispatcher/pipeline/device_types/%s.conf" % dev_parser['device_type']))
+        # FIXME: development paths need to be finalised
+        # system_config_path = "/etc/lava-dispatcher"
+        # FIXME: change to default-config once the old files are converted.
+        default_config_path = os.path.join(os.path.dirname(__file__))
+        if not os.path.exists(os.path.join(default_config_path, 'devices', "%s.conf" % target)):
+            raise RuntimeError("Unable to use new devices: %s" % default_config_path)
+
+        # parameters dict will update if new settings are found, so repeat for customisation files when those exist
+        self.parameters = dev_parser.parse(open(os.path.join(default_config_path, 'devices', "%s.conf" % target)))
+        self.parameters = dev_parser.parse(open(os.path.join(default_config_path, 'device_types', "%s.conf" % self.parameters['device_type'])))
+        self.parameters['hostname'] = target  # FIXME: is this a valid assumption?
 
     @property
     def parameters(self):

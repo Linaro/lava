@@ -49,7 +49,7 @@ class RepoAction(RetryAction):
     def run(self, connection, args=None):
         # FIXME: determine why deployment_data is not available at validation stage
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        prefix = lava_test_results_dir % self.job.device.config.hostname
+        prefix = lava_test_results_dir % self.job.device.parameters['hostname']
         self.runner = ('%s/tests/%s\n' % (prefix, self.parameters['test_name']))
         # mntdir is a temporary directory, not available at validate stage.
         self.tmpdir = self.data['mount_action']['mntdir']

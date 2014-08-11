@@ -69,12 +69,11 @@ class Job(object):
         structure = OrderedDict()
         # FIXME: port to the updated Device configuration
         structure['device'] = {
-            'hostname': self.device.config.hostname,
-            'device_type': str(self.device.config.device_type),
-            'output-dir': self.parameters['output_dir'],
+            'parameters': self.device.parameters
         }
-        if 'id' in self.parameters:
-            structure['device'].update({'id': self.parameters['id']})
+        structure['job'] = {
+            'parameters': self.parameters
+        }
         structure.update(self.pipeline.describe())
         return structure
 

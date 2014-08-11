@@ -72,10 +72,7 @@ class OffsetAction(DeployAction):
         if not part_data:
             raise JobError("Unable to identify offset")
         # FIXME: identify the partitions from the image, not from the device configuration
-        partno = getattr(
-            self.job.device.config,
-            self.parameters['deployment_data']['lava_test_results_part_attr']
-        )
+        partno = self.job.device.parameters[self.parameters['deployment_data']['lava_test_results_part_attr']]
         pattern = re.compile('%d:([0-9]+)B:' % partno)
         for line in part_data.splitlines():
             found = re.match(pattern, line)
@@ -144,7 +141,7 @@ class LoopMountAction(RetryAction):
     def run(self, connection, args=None):
         # FIXME: figure out why deployment_data isn't available during validation.
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.device.config.hostname
+        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.device.parameters['hostname']
         if 'offset' not in self.data['download_action']:
             raise RuntimeError("Offset action failed")
         self.data[self.name]['mntdir'] = self.job.mkdtemp()

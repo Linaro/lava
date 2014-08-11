@@ -15,6 +15,7 @@ from lava_dispatcher.job import LavaTestJob, validate_job_data
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.context import LavaContext
 from lava_dispatcher.pipeline.action import Device
+from lava_dispatcher.pipeline.device import NewDevice
 
 
 class SetUserConfigDirAction(argparse.Action):
@@ -195,7 +196,10 @@ class dispatch(DispatcherCommand):
     def parse_job_file(self, filename, oob_file):
         if filename.lower().endswith('.yaml') or filename.lower().endswith('.yml'):
 
-            device = Device(self.args.target)
+            device = NewDevice(self.args.target)
+            # FIXME: paths not standardised, so can't work from the command line yet.
+            if not device.parameters:
+                device = Device(self.args.target)
             parser = JobParser()
             # FIXME: use the parsed device_config instead of the old Device class so it can fail before the Pipeline is made.
             job = parser.parse(open(filename), device, output_dir=self.args.output_dir)
