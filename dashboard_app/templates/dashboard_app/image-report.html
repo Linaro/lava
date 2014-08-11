@@ -117,7 +117,7 @@
 
 <script>
   csrf_token = '{{csrf_token}}';
-  chart_data = $.parseJSON($('<div/>').html("{{chart_data}}").text());
+  chart_data = $.parseJSON($('<div/>').html("{{chart_data|escapejs}}").text());
   test_names = $.parseJSON($('<div/>').html("{{test_names}}").text());
   columns = $.parseJSON($('<div/>').html("{{columns}}").text());
   image_url = '{{ STATIC_URL }}dashboard_app/images/';
