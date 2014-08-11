@@ -302,6 +302,7 @@ def filter_edit(request, username, name):
 
 
 @BreadCrumb("Copy", parent=filter_detail, needs=['username', 'name'])
+@login_required
 def filter_copy(request, username, name):
     filter = TestRunFilter.objects.get(owner__username=username, name=name)
     if not request.user.is_superuser:
