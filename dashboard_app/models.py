@@ -2056,6 +2056,7 @@ class ImageReportChart(models.Model):
                 test_id = test_run.test.test_id
 
                 # Find corresponding chart_test object.
+                chart_test = None
                 for ch_test in selected_chart_tests:
                     if ch_test.test == test_run.test:
                         chart_test = ch_test
@@ -2158,7 +2159,8 @@ class ImageReportChart(models.Model):
                 if test_case_id not in metadata.keys():
                     metadata[test_case_id] = {}
 
-                # Find corresponding chart_test object.
+                # Find corresponding chart_test_case object.
+                chart_test_case = None
                 for ch_test_case in selected_chart_test_cases:
                     if ch_test_case.test_case == test_result.test_case:
                         chart_test_case = ch_test_case
