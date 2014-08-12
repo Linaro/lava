@@ -222,6 +222,8 @@ class DatabaseJobSource(object):
                         user=job.submitter)
                 device.current_job = job
                 device.state_transition_to(Device.RESERVED, message="Reserved for job %s" % job.display_id)
+                self.logger.info('%s reserved for job %s' % (device.hostname,
+                                                             job.id))
                 job.save()
                 device.save()
                 if device in devices:
@@ -312,6 +314,8 @@ class DatabaseJobSource(object):
         if device.status == Device.RESERVED:
             msg = "Started running job %s" % job.display_id
             device.state_transition_to(Device.RUNNING, message=msg, job=job)
+            self.logger.info('%s started running job %s' % (device.hostname,
+                                                            job.id))
         device.save()
         job.start_time = datetime.datetime.utcnow()
         shutil.rmtree(job.output_dir, ignore_errors=True)
@@ -369,6 +373,7 @@ class DatabaseJobSource(object):
 
         msg = "Job %s completed" % job.display_id
         device.state_transition_to(new_device_status, message=msg, job=job)
+        self.logger.info('job %s completed on %s' % (job.id, device.hostname))
 
         if job.health_check:
             device.last_health_report_job = job
@@ -458,7 +463,7 @@ class DatabaseJobSource(object):
                         msg = "Job %s cancelled" % job.display_id
                         device.state_transition_to(previous_state, message=msg,
                                                    job=job)
-                    self.logger.debug('Marking job %s as cancelled on %s' % (job.id, job.actual_device))
+                    self.logger.info('job %s cancelled on %s' % (job.id, job.actual_device))
                     job.cancel()
                     transaction.commit()
 
