@@ -2378,6 +2378,11 @@ class ImageChartTestCase(models.Model):
         filter_data = self.image_chart_filter.filter.as_data()
         filter_data['tests'] = tests
         matches = list(evaluate_filter(user, filter_data)[:1])
+
+        # If no matches are found, return empty list.
+        if len(matches) == 0:
+            return list()
+
         test_run_id = matches[0].test_runs[0].id
 
         result = NamedAttribute.objects.all()
