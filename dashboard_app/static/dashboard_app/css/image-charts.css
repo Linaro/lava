@@ -311,3 +311,17 @@ div.selector .selector-chosen select {
     margin: 0 0 0 10px;
     float: left;
 }
+
+.zoom-out-button {
+    position: absolute;
+    font-size: smaller;
+    color: #999;
+    background-color: #eee;
+    padding: 3px;
+    width: 55px;
+    height: 20px;
+    margin-top: 13px;
+    z-index: 1;
+    cursor: pointer;
+    display: inline;
+}

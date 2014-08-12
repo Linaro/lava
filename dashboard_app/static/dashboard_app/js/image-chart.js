@@ -31,33 +31,6 @@ $(document).ready(function () {
     ImageChart.prototype.BUILD_NUMBER_ERROR =
         "End build number must be greater then the start build number.";
 
-    ImageChart.prototype.setup_clickable = function() {
-
-        var chart = this;
-        $("#legend_container_" + this.chart_id + " table:first-child tbody tr").each(function(index) {
-
-            $(this).click(function() {
-
-                var show = chart.legend_items[index].show;
-                chart.legend_items[index].show = !show;
-
-                chart.update_settings(chart.legend_items[index].chart_test_id);
-                chart.update_plot();
-            });
-        });
-    }
-
-    ImageChart.prototype.setup_legend_css = function() {
-
-        for (var i in this.legend_items) {
-            if (this.legend_items[i].show == true) {
-                $("#" + this.legend_items[i].dom_id).parent().css("color", "#545454");
-            } else {
-                $("#" + this.legend_items[i].dom_id).parent().css("color", "#999");
-            }
-        }
-    }
-
     ImageChart.prototype.add_chart = function() {
 
         if (this.chart_data.test_data) {
@@ -999,6 +972,12 @@ $(document).ready(function () {
                 axisLabelFontFamily: "Verdana",
             },
             canvas: true,
+            zoom: {
+                interactive: true
+            },
+            pan: {
+                interactive: true
+            },
         };
 
         // We cannot apply autoscaleMargin for y axis since y_max and y_min
@@ -1017,9 +996,55 @@ $(document).ready(function () {
 
         this.plot = $.plot($("#outer_container_" + this.chart_id + " #inner_container_" + this.chart_id), data, options);
 
-        // Setup click events and css in the legend.
-        this.setup_clickable();
-        this.setup_legend_css();
+        // Setup hooks, events and css in the legend.
+        add_zoom_out(this);
+        setup_clickable(this);
+        setup_legend_css(this);
+
+        // Setup chart object reference.
+        this.plot.chart = this;
+        // Setup draw hook for plot.
+        this.plot.hooks.draw.push(function(plot, canvascontext) {
+            setup_clickable(plot.chart);
+            setup_legend_css(plot.chart);
+        });
+
+    }
+
+    setup_clickable = function(chart) {
+
+        $("#legend_container_" + chart.chart_id + " table:first-child tbody tr").each(function(index) {
+
+            $(this).click(function(e) {
+
+                var show = chart.legend_items[index].show;
+                chart.legend_items[index].show = !show;
+
+                chart.update_settings(chart.legend_items[index].chart_test_id);
+                chart.update_plot();
+            });
+        });
+    }
+
+    setup_legend_css = function(chart) {
+
+        for (var i in chart.legend_items) {
+            if (chart.legend_items[i].show == true) {
+                $("#" + chart.legend_items[i].dom_id).parent().css("color", "#545454");
+            } else {
+                $("#" + chart.legend_items[i].dom_id).parent().css("color", "#999");
+            }
+        }
+    }
+
+    add_zoom_out = function(chart) {
+
+        $('<div class="zoom-out-button">zoom out</div>').click(
+            function () {
+                chart.plot.zoomOut();
+            }).appendTo("#inner_container_" + chart.chart_id).css(
+                "margin-left",
+                parseInt($("#inner_container_" + chart.chart_id).children().first().css("width")) - 90 + "px");
     }
 
     isNumeric = function(n) {

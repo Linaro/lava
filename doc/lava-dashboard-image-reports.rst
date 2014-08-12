@@ -154,6 +154,13 @@ the chart type. This tooltip will also contain information if there are any
 comments added to the test results and also metadata changes as well, where
 applicable(see :ref:`image-reports-metadata`).
 
+Image reports also have the ability of zooming in/out and panning. You can
+zoom in the report by double-clicking anywhere on the report and panning is
+available with mouse dragging. In the top right corner there is a small button
+for zooming out to previous setting. By doing any of the operation like test
+selection through legend(see :ref:`legend`) or date selection or percentage
+toggle, the report zooming/panning will be reset.
+
 Filters List
 ^^^^^^^^^^^^
 
@@ -202,6 +209,8 @@ target.hostname.
 .. image:: ./images/image-reports-metadata.png
     :width: 700
     :height: 180
+
+.. _legend:
 
 Legend
 ^^^^^^
