@@ -10,6 +10,8 @@ lava-server (2014.07-2) unstable; urgency=medium
     server (Closes: #757651)
   * [INTL:fr] French debconf templates translation
     (Closes: #757709)
+  * [INTL:es] Spanish translation of debconf messages
+    (Closes: #757894)
 
  -- Neil Williams <codehelp@debian.org>  Sat, 09 Aug 2014 12:15:28 +0100
 
