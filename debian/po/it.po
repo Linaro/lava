@@ -1,0 +1,303 @@
+# Italian translation of lava-server debconf messages
+# Copyright (C) 2014, lava-server package copyright holder
+# This file is distributed under the same license as the lava-server package.
+# Beatrice Torracca <beatricet@libero.it>, 2014.
+msgid ""
+msgstr ""
+"Project-Id-Version: lava-server\n"
+"Report-Msgid-Bugs-To: lava-server@packages.debian.org\n"
+"POT-Creation-Date: 2014-07-30 18:26+0200\n"
+"PO-Revision-Date: 2014-08-13 15:49+0200\n"
+"Last-Translator: Beatrice Torracca <beatricet@libero.it>\n"
+"Language-Team: Italian <debian-l10n-italian@lists.debian.org>\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Virtaal 0.7.1\n"
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:2001
+msgid "Is this a standalone master instance of LAVA?"
+msgstr "Questa è un'installazione master autonoma di LAVA?"
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:2001
+msgid ""
+"LAVA can be set up in either of two ways: as a single standalone master "
+"instance with attached devices, or in a distributed configuration with a "
+"central master instance and remote dispatchers providing (more) devices."
+msgstr ""
+"LAVA può essere configurato in uno di due modi: come istanza master unica "
+"autonoma con dispositivi collegati o in una configurazione distribuita con "
+"un'istanza master centrale e dispatcher remoti che forniscono (altri) "
+"dispositivi."
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:2001
+msgid ""
+"Configuration of remote dispatchers requires manual intervention, so the "
+"standalone configuration is recommended."
+msgstr ""
+"La configurazione dei dispatcher remoti richiede l'intervento manuale perciò "
+"è raccomandata la configurazione autonoma."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:3001
+msgid "Port number of the PostgreSQL database:"
+msgstr "Numero di porta del database PostgreSQL:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:3001
+msgid "Please enter the port number for the PostgreSQL database."
+msgstr "Inserire il numero di porta per il database PostgreSQL."
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:4001
+msgid "This install looks like a remote worker"
+msgstr "Questa installazione sembra un'installazione di lavoro remota"
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:4001
+msgid ""
+"You asked for this system to be set up as master instance for a distributed "
+"configuration, but this system looks like a remote worker. You can either go "
+"back and change your answer or proceed with reconfiguring this system as "
+"specified."
+msgstr ""
+"È stato chiesto di impostare questo sistema come istanza master per una "
+"configurazione distribuita, ma questo sistema sembra un'installazione remota "
+"di lavoro. Si può tornare indietro e cambiare la propria scelta o procedere "
+"per riconfigurare il sistema come specificato."
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:4001
+msgid ""
+"Note that you will have to ensure that the lava-coordinator configuration is "
+"correct."
+msgstr ""
+"Notare che ci si dovrà assicurare che la configurazione del lava-coordinator "
+"sia corretta."
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:5001
+msgid "This install looks like a master instance"
+msgstr "Questa installazione sembra un'istanza master"
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:5001
+msgid ""
+"You asked for this system to be set up as a remote worker for a distributed "
+"configuration, but this system looks like a master instance. You can either "
+"go back and change your answer or proceed with reconfiguring this system as "
+"specified."
+msgstr ""
+"È stato chiesto di impostare questo sistema come installazione di lavoro "
+"remota per una configurazione distribuita, ma questo sistema sembra "
+"un'istanza master. Si può tornare indietro e cambiare la propria scelta o "
+"procedere per riconfigurare il sistema come specificato."
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:5001
+msgid ""
+"Note that you will have to ensure that the lava-coordinator configuration is "
+"changed to point to the master instance for this remote worker. You can then "
+"remove the lava-coordinator package from the remote worker."
+msgstr ""
+"Notare che ci si dovrà assicurare che la configurazione del lava-coordinator "
+"venga modificata per puntare all'istanza master per questa installazione di "
+"lavoro remota. Si può rimuovere il pacchetto lava-coordinator dalla macchina "
+"di lavoro remota."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:6001
+msgid "Name for this LAVA instance:"
+msgstr "Nome per questa istanza di LAVA:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:6001
+msgid ""
+"LAVA servers need to have an instance name. If this is a new instance, you "
+"can safely use the default name. If this is an upgrade of a previous LAVA "
+"instance, specify the instance name here to upgrade the database or use a "
+"different name to start fresh with a new database."
+msgstr ""
+"I server LAVA devono avere un nome per l'istanza. Se questa è un'istanza "
+"nuova, si può usare senza problemi il nome predefinito. Se questo è "
+"l'aggiornamento di un'istanza LAVA precedente, specificare qui il nome "
+"dell'istanza per aggiornare il database oppure usare un nuovo nome per "
+"partire da zero con un nuovo database."
+
+#. Type: error
+#. Description
+#: ../lava-server.templates:7001
+msgid "Missing LAVA instance name"
+msgstr "Nome dell'istanza LAVA mancante"
+
+#. Type: error
+#. Description
+#: ../lava-server.templates:7001
+msgid ""
+"An instance name must be specified for LAVA-server. Using the instance name "
+"\"default\"."
+msgstr ""
+"Un nome di istanza deve essere specificato per il server LAVA. Verrà usato "
+"il nome «default» per l'istanza."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:8001
+msgid "Name of the master instance for this worker:"
+msgstr "Nome dell'istanza master per questa installazione di lavoro:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:8001
+msgid ""
+"LAVA servers need to have an instance name. Each remote worker must be given "
+"the instance name of the master LAVA server which it will poll for new jobs "
+"to run on the devices attached to the worker."
+msgstr ""
+"I server LAVA devono avere un nome per l'istanza. Ogni installazione di "
+"lavoro remota deve ricevere il nome dell'istanza del server LAVA master, da "
+"cui recupererà i nuovi compiti da eseguire sui dispositivi collegati "
+"all'installazione di lavoro."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:9001
+msgid "Master scheduler for this worker:"
+msgstr "Schedulatore master per questa installazione di lavoro:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:9001
+msgid ""
+"Each remote worker needs to connect to a master scheduler running lava-"
+"server. This hostname or IP address will be used to connect to the master "
+"database."
+msgstr ""
+"Ogni installazione di lavoro remota deve connettersi a uno schedulatore "
+"master che esegue lava-server. Questo nome di host o indirizzo IP verrà "
+"usato per connettersi al database master."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:9001
+msgid ""
+"To work with remote nodes, the master needs to be configured to allow the "
+"database to listen to the workers. An SSH key also needs to be generated on "
+"the worker and added to the master list of authorized_keys. Ensure that the "
+"master allows remote access from workers before submitting jobs or health "
+"checks."
+msgstr ""
+"Per lavorare con i nodi remoti, il master deve essere configurato per "
+"permettere al database di restare in ascolto delle installazioni di lavoro. "
+"Sulla installazione deve anche essere generata una chiave SSH e poi aggiunta "
+"all'elenco delle chiavi autorizzate del master. Assicurarsi che il master "
+"permetta l'accesso remoto dalle installazioni di lavoro prima di sottoporre "
+"compiti o controlli di sanità."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:9001
+msgid ""
+"You can continue setting up the worker, as long as remote database access is "
+"enabled before jobs are submitted."
+msgstr ""
+"È possibile continuare a configurare l'installazione di lavoro, a patto che "
+"l'accesso remoto al database sia abilitato prima di sottoporre compiti."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:10001
+msgid "Name of the database on the master:"
+msgstr "Nome del database sul master:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:10001
+msgid ""
+"Please enter the name of the database on the master scheduler running lava-"
+"server. The worker will use this name to contact the database."
+msgstr ""
+"Inserire il nome del database sullo schedulatore master che esegue lava-"
+"server. L'installazione di lavoro userà questo nome per contattare il "
+"database."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:11001
+msgid "Username for the database on the master:"
+msgstr "Nome utente per il database sul master:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:11001
+msgid ""
+"Please enter the username for the database on the master scheduler running "
+"lava-server. The worker will use this username to contact the database."
+msgstr ""
+"Inserire il nome utente per il database sullo schedulatore master che esegue "
+"lava-server. L'installazione di lavoro userà questo nome utente per "
+"contattare il database."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:12001
+msgid "Port number of the database on the master:"
+msgstr "Numero di porta del database sul master:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:12001
+msgid ""
+"Please enter the database port number for the database on the master "
+"scheduler running lava-server. The worker will use this port to contact the "
+"database."
+msgstr ""
+"Inserire il numero di porta per il database sullo schedulatore master che "
+"esegue lava-server. L'installazione di lavoro userà questa porta per "
+"contattare il database."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:13001
+msgid "Password for the database on the master:"
+msgstr "Password per il database sul master:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:13001
+msgid ""
+"Please enter the password for the database on the master scheduler running "
+"lava-server. The worker will use this password to contact the database."
+msgstr ""
+"Inserire la password per il database sullo schedulatore master che esegue "
+"lava-server. L'installazione di lavoro userà questa password per contattare "
+"il database."
+
+#~ msgid "Configuration of remote dispatchers requires manual intervention,"
+#~ msgstr "La configurazione dei dispatcher remoti richiede un intervento manuale."
+
+#~ msgid ""
+#~ "Please enter the password for the database on the master scheduler running "
+#~ "lava-server. The worker will use this username to contact the database."
+#~ msgstr ""
+#~ "Inserire la password per il database sullo schedulatore master che esegue "
+#~ "lava-server. L'installazione di lavoro userà questa password per contattare "
+#~ "il database."
