@@ -5,6 +5,7 @@ include .testr.conf
 include .gitreview
 include COPYING
 include lava_dispatcher/default-config/lava-dispatcher/README
+include lava_dispatcher/pipeline/test/sample_jobs/*
 include lava_dispatcher/tests/test-config/bin/*
 include lava_dispatcher/tests/test-config/devices/*
 include lava_dispatcher/tests/test-config/*
