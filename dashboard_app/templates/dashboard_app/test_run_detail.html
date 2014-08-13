@@ -45,9 +45,13 @@
       <dd><a href="{{ bundle.testjob.get_absolute_url }}/log_file">Job logs {{ bundle.testjob.id }}</a></dd>
     {% endif %}
       <dt>Test job start time</dt>
-      <dd>{{ bundle.testjob.start_time }}</dd>
+      <dd>{{ bundle.testjob.start_time }}
+          <small>({{ bundle.testjob.start_time|timesince }} ago)</small>
+      </dd>
       <dt>Test job end time</dt>
-      <dd>{{ bundle.testjob.end_time }}</dd>
+      <dd>{{ bundle.testjob.end_time }}
+          <small>({{ bundle.testjob.end_time|timesince }} ago)</small>
+      </dd>
 {% endif %}
       <dt>Export</dt>
       <dd>test results data <a href="{% url 'dashboard_app.views.test_run_export' test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}">as CSV</a></dd>

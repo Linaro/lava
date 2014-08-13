@@ -251,7 +251,7 @@ def get_uptime():
     """Return the system uptime string.
     """
     with open('/proc/uptime', 'r') as f:
-        uptime_seconds = float(f.readline().split()[0])
+        uptime_seconds = int(float(f.readline().split()[0]))
         uptime = str(datetime.timedelta(seconds=uptime_seconds))
         return uptime
 
