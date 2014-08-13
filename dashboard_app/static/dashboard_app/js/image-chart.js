@@ -695,6 +695,10 @@ $(document).ready(function () {
                 if (this.chart_data["chart_type"] == "pass/fail") {
                     if ($("#is_percentage_" + this.chart_id).prop("checked") == true) {
                         value = parseFloat(row["passes"]/row["total"]).toFixed(4) * 100;
+                        // Happens when total is 0.
+                        if (isNaN(value)) {
+                            value = 0;
+                        }
                         tooltip = "Pass rate: " + value + "%";
                     } else {
                         value = row["passes"];
