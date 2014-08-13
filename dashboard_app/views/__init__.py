@@ -769,6 +769,9 @@ def attachment_download(request, pk):
     if not attachment.content:
         return HttpResponseBadRequest(
             "Attachment %s not present on dashboard" % pk)
+    if not os.path.exists(attachment.content.path):
+        raise Http404("Unable to find the attachment")
+
     response = HttpResponse(content_type=attachment.mime_type)
     response['Content-Disposition'] = 'attachment; filename=%s' % (
         attachment.content_filename)
@@ -785,6 +788,9 @@ def attachment_view(request, pk):
     )
     if not attachment.content or not attachment.is_viewable():
         return HttpResponseBadRequest("Attachment %s not viewable" % pk)
+    if not os.path.exists(attachment.content.path):
+        raise Http404("Unable to find the attachment")
+
     return render_to_response(
         "dashboard_app/attachment_view.html", {
             'attachment': attachment,
