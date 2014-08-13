@@ -1,0 +1,282 @@
+# Czech PO debconf template translation of lava-server.
+# Copyright (C) 2014 Michal Simunek <michal.simunek@gmail.com>
+# This file is distributed under the same license as the lava-server package.
+# Michal Simunek <michal.simunek@gmail.com>, 2014.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: lava-server 2014.06.02.17-2\n"
+"Report-Msgid-Bugs-To: lava-server@packages.debian.org\n"
+"POT-Creation-Date: 2014-07-30 18:26+0200\n"
+"PO-Revision-Date: 2014-08-13 09:15+0200\n"
+"Last-Translator: Michal Simunek <michal.simunek@gmail.com>\n"
+"Language-Team: Czech <debian-l10n-czech@lists.debian.org>\n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:2001
+msgid "Is this a standalone master instance of LAVA?"
+msgstr "Je toto samostatná hlavní LAVA instance?"
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:2001
+msgid ""
+"LAVA can be set up in either of two ways: as a single standalone master "
+"instance with attached devices, or in a distributed configuration with a "
+"central master instance and remote dispatchers providing (more) devices."
+msgstr ""
+"LAVA lze nastavit na jeden ze dvou způsobů: jako jednu samostatnou hlavní instanci "
+"s připojenými zařízeními, nebo na distribuovanou konfiguraci s centrální "
+"hlavní instancí a vzdálenými dispečery, kteří poskytují (vícero) zařízení."
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:2001
+msgid ""
+"Configuration of remote dispatchers requires manual intervention, so the "
+"standalone configuration is recommended."
+msgstr ""
+"Konfigurace vzdálených dispečerů vyžaduje ruční zásah, takže se doporučuje "
+"zvolit nastavení samostatné instance."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:3001
+msgid "Port number of the PostgreSQL database:"
+msgstr "Číslo portu databáze PostgreSQL:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:3001
+msgid "Please enter the port number for the PostgreSQL database."
+msgstr "Zadejte prosím číslo portu databáze PostgreSQL."
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:4001
+msgid "This install looks like a remote worker"
+msgstr "Tato instalace vypadá jako vzdálený pracovník"
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:4001
+msgid ""
+"You asked for this system to be set up as master instance for a distributed "
+"configuration, but this system looks like a remote worker. You can either go "
+"back and change your answer or proceed with reconfiguring this system as "
+"specified."
+msgstr ""
+"Odpověděli jste, že má být tento systém nastaven jako hlavní instance pro "
+"distribuovanou konfiguraci, tento systém však vypadá jako vzdálený pracovník. "
+"Můžete se buď vrátit a svou odpověď změnit, nebo pokračovat s přenastavováním "
+"systému, jak je uvedeno."
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:4001
+msgid ""
+"Note that you will have to ensure that the lava-coordinator configuration is "
+"correct."
+msgstr ""
+"Berte na vědomí, že budete muset zajistit, že bude nastavení lava-coordinator "
+"správné."
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:5001
+msgid "This install looks like a master instance"
+msgstr "Tato instalace vypadá jako hlavní instance"
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:5001
+msgid ""
+"You asked for this system to be set up as a remote worker for a distributed "
+"configuration, but this system looks like a master instance. You can either "
+"go back and change your answer or proceed with reconfiguring this system as "
+"specified."
+msgstr ""
+"Odpověděli jste, že má být tento systém nastaven jako vzdálený pracovník pro "
+"distribuovanou konfiguraci, tento systém však vypadá jako hlavní instance. "
+"Můžete se buď vrátit a svou odpověď změnit, nebo pokračovat s přenastavováním "
+"systému, jak je uvedeno."
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:5001
+msgid ""
+"Note that you will have to ensure that the lava-coordinator configuration is "
+"changed to point to the master instance for this remote worker. You can then "
+"remove the lava-coordinator package from the remote worker."
+msgstr ""
+"Berte na vědomí, že budete muset zajistit, že nastavení lava-coordinator bude "
+"změněno tak, aby odkazovalo na hlavní instanci pro tohoto vzdáleného pracovníka. "
+"Po té budete moci ze vzdáleného pracovníka odstranit balíček lava-coordinator."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:6001
+msgid "Name for this LAVA instance:"
+msgstr "Název pro tuto LAVA instanci:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:6001
+msgid ""
+"LAVA servers need to have an instance name. If this is a new instance, you "
+"can safely use the default name. If this is an upgrade of a previous LAVA "
+"instance, specify the instance name here to upgrade the database or use a "
+"different name to start fresh with a new database."
+msgstr ""
+"Servery LAVA musí mít název instance. Pokud je toto nová instance, můžete "
+"bez obav použít výchozí název. Je-li toto aktualizace předchozí LAVA "
+"instance, zadejte zde název této instance pro aktualizaci databáze, nebo "
+"pro začátek s novou databází použijte jiný název."
+
+#. Type: error
+#. Description
+#: ../lava-server.templates:7001
+msgid "Missing LAVA instance name"
+msgstr "Chybí název LAVA instance"
+
+#. Type: error
+#. Description
+#: ../lava-server.templates:7001
+msgid ""
+"An instance name must be specified for LAVA-server. Using the instance name "
+"\"default\"."
+msgstr ""
+"Pro LAVA-server musí být uveden název instance. Jako název instance se "
+"použije \"default\"."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:8001
+msgid "Name of the master instance for this worker:"
+msgstr "Název hlavní instance pro tohoto pracovníka:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:8001
+msgid ""
+"LAVA servers need to have an instance name. Each remote worker must be given "
+"the instance name of the master LAVA server which it will poll for new jobs "
+"to run on the devices attached to the worker."
+msgstr ""
+"Servery LAVA musí mít název instance. Každému vzdálenému pracovníkovi musí být "
+"přiřazen název instance hlavního LAVA serveru, který se bude dotazovat na nové "
+"úlohy ke spuštění na zařízeních připojených k tomuto pracovníkovi."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:9001
+msgid "Master scheduler for this worker:"
+msgstr "Hlavní plánovač pro tohoto pracovníka:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:9001
+msgid ""
+"Each remote worker needs to connect to a master scheduler running lava-"
+"server. This hostname or IP address will be used to connect to the master "
+"database."
+msgstr ""
+"Každý vzdálený pracovník musí být připojen k hlavnímu plánovači běžícím na "
+"lava-server. Název tohoto hostitele nebo IP adresa se bude používat pro "
+"připojení k hlavní databázi."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:9001
+msgid ""
+"To work with remote nodes, the master needs to be configured to allow the "
+"database to listen to the workers. An SSH key also needs to be generated on "
+"the worker and added to the master list of authorized_keys. Ensure that the "
+"master allows remote access from workers before submitting jobs or health "
+"checks."
+msgstr ""
+"Pro práci se vzdálenými uzly musí být hlavní plánovač nastaven tak, aby "
+"pracovníkům umožňoval připojování k databázi. Na pracovníkovi musí být také "
+"vygenerován SSH klíč a přidán na hlavní seznam autorizovaných klíčů "
+"authorized_keys. Před odesláním úlohy nebo kontrolami funkčnosti se ujistěte, "
+"že hlavní plánovač umožňuje vzdálený přístup z pracovníků."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:9001
+msgid ""
+"You can continue setting up the worker, as long as remote database access is "
+"enabled before jobs are submitted."
+msgstr ""
+"V nastavování tohoto pracovníka můžete pokračovat až po povolení vzdáleného "
+"přístupu k databázi a před odesláním úloh."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:10001
+msgid "Name of the database on the master:"
+msgstr "Název databáze na hlavním plánovači:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:10001
+msgid ""
+"Please enter the name of the database on the master scheduler running lava-"
+"server. The worker will use this name to contact the database."
+msgstr ""
+"Zadejte prosím název databáze na hlavním plánovači běžícího na lava-server. "
+"Pracovník bude tento název používat při připojování k databázi."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:11001
+msgid "Username for the database on the master:"
+msgstr "Uživatelské jméno pro databázi na hlavním plánovači:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:11001
+msgid ""
+"Please enter the username for the database on the master scheduler running "
+"lava-server. The worker will use this username to contact the database."
+msgstr ""
+"Zadejte prosím uživatelské jméno pro databázi na hlavním plánovači běžícího na "
+"lava-server. Pracovník bude toto uživatelské jméno používat při připojování k databázi."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:12001
+msgid "Port number of the database on the master:"
+msgstr "Číslo portu databáze na hlavním plánovači:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:12001
+msgid ""
+"Please enter the database port number for the database on the master "
+"scheduler running lava-server. The worker will use this port to contact the "
+"database."
+msgstr ""
+"Zadejte prosím číslo portu databáze na hlavním plánovači běžícího na "
+"lava-server. Pracovník bude tento port používat při připojování k databázi."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:13001
+msgid "Password for the database on the master:"
+msgstr "Heslo pro databázi na hlavním plánovači:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:13001
+msgid ""
+"Please enter the password for the database on the master scheduler running "
+"lava-server. The worker will use this password to contact the database."
+msgstr ""
+"Zadejte prosím heslo pro databázi na hlavním plánovači běžícího na lava-server. "
+"Pracovník bude toto heslo používat při připojování k databázi."
