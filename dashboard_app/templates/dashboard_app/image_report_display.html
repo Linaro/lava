@@ -2,6 +2,7 @@
 
 {% load i18n %}
 {% load keep_spacing %}
+{% load make_safe %}
 
 {% block styles %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
@@ -19,11 +20,7 @@ Report Group:&nbsp;&nbsp;<a href="{% url 'dashboard_app.views.image_reports.view
 <div id="main_container">
 </div>
 
-<form method="POST"
-      action="{% url 'dashboard_app.views.link_bug_to_testrun' %}"
-      id="add-bug-dialog" style="display: none">
-  {% csrf_token %}
-  <input type="hidden" name="back" value="{{ request.path }}"/>
+<div id="add-bug-dialog" style="display: none">
   <input type="hidden" name="uuid"/>
   <input type="hidden" name="relative_index"/>
   <div class="linked" style="display:none"></div>
@@ -31,7 +28,7 @@ Report Group:&nbsp;&nbsp;<a href="{% url 'dashboard_app.views.image_reports.view
     XXX
   </div>
   <input name="bug_link" style="width: 100%"/>
-</form>
+</div>
 
 {% endblock %}
 
@@ -45,14 +42,13 @@ Report Group:&nbsp;&nbsp;<a href="{% url 'dashboard_app.views.image_reports.view
 <script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.labels.js"></script>
 
 <script>
-  chart_data = $.parseJSON($('<div/>').html('{{chart_data}}').text());
+  chart_data = $.parseJSON($('<div/>').html('{{chart_data|make_jquery_safe|escapejs}}').text());
   csrf_token = '{{csrf_token}}';
   image_url = '{{ STATIC_URL }}dashboard_app/images/';
   testrun_unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testrun' %}';
   testrun_link_bug_url = '{% url 'dashboard_app.views.link_bug_to_testrun' %}';
   testresult_unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testresult' %}';
   testresult_link_bug_url = '{% url 'dashboard_app.views.link_bug_to_testresult' %}';
-  buglinks_chartid = '{{ bug_links_chart_id }}';
 </script>
 
 {% endblock %}

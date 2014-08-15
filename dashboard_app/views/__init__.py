@@ -329,8 +329,12 @@ def bundle_list_export(request, pathname):
                 bundle_dict["pass"] = 0
                 bundle_dict["fail"] = 0
                 bundle_dict["total"] = 0
-            bundle_dict["uploaded_by_id"] = User.objects.get(
-                pk=bundle.uploaded_by_id).username
+            try:
+                bundle_dict["uploaded_by_id"] = User.objects.get(
+                    pk=bundle.uploaded_by_id).username
+            except User.DoesNotExist:
+                bundle_dict["uploaded_by_id"] = None
+
             out.writerow(bundle_dict)
 
     response = HttpResponse(content_type='text/csv')
@@ -831,7 +835,8 @@ def link_bug_to_testrun(request):
     bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
     testrun.bug_links.add(bug)
     testrun.save()
-    return HttpResponseRedirect(request.POST['back'])
+    data = serializers.serialize('json', [testrun])
+    return HttpResponse(data, content_type='application/json')
 
 
 @require_POST
@@ -841,7 +846,8 @@ def unlink_bug_and_testrun(request):
     bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
     testrun.bug_links.remove(bug)
     testrun.save()
-    return HttpResponseRedirect(request.POST['back'])
+    data = serializers.serialize('json', [testrun])
+    return HttpResponse(data, content_type='application/json')
 
 
 @require_POST
@@ -852,7 +858,9 @@ def link_bug_to_testresult(request):
     bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
     testresult.bug_links.add(bug)
     testresult.save()
-    return HttpResponseRedirect(request.POST['back'])
+    testresult.id = testrun.analyzer_assigned_uuid
+    data = serializers.serialize('json', [testresult])
+    return HttpResponse(data, content_type='application/json')
 
 
 @require_POST
@@ -863,4 +871,6 @@ def unlink_bug_and_testresult(request):
     bug = BugLink.objects.get_or_create(bug_link=bug_link)[0]
     testresult.bug_links.remove(bug)
     testresult.save()
-    return HttpResponseRedirect(request.POST['back'])
+    testresult.id = testrun.analyzer_assigned_uuid
+    data = serializers.serialize('json', [testresult])
+    return HttpResponse(data, content_type='application/json')

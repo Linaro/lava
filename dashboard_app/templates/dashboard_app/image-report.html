@@ -97,18 +97,14 @@
   </tr>
 </table>
 
-<form method="POST"
-      action="{% url 'dashboard_app.views.link_bug_to_testrun' %}"
-      id="add-bug-dialog" style="display: none">
-  {% csrf_token %}
-  <input type="hidden" name="back" value="{{ request.path }}"/>
+<div id="add-bug-dialog" style="display: none">
   <input type="hidden" name="uuid"/>
   <div class="linked" style="display:none"></div>
   <div class="prev" style="display:none">
     XXX
   </div>
   <input name="bug_link" style="width: 100%"/>
-</form>
+</div>
 {% endblock %}
 
 
@@ -120,23 +116,14 @@
 <script src="{{ STATIC_URL }}dashboard_app/js/jstorage.min.js"></script>
 
 <script>
-  chart_data = $.parseJSON($('<div/>').html("{{chart_data}}").text());
+  csrf_token = '{{csrf_token}}';
+  chart_data = $.parseJSON($('<div/>').html("{{chart_data|escapejs}}").text());
   test_names = $.parseJSON($('<div/>').html("{{test_names}}").text());
   columns = $.parseJSON($('<div/>').html("{{columns}}").text());
   image_url = '{{ STATIC_URL }}dashboard_app/images/';
   del_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testrun' %}';
+  link_bug_url = '{% url 'dashboard_app.views.link_bug_to_testrun' %}';
 
 var current_bug = [];
-$("#add-bug-dialog").bind('submit', function(e) {
-    var bug_url = $("#add-bug-dialog").find('input[name=bug_link]').val();
-    if (!isValidUrl(bug_url)) {
-        e.preventDefault();
-        alert("'" + bug_url + "' is not a valid url!!");
-    }
-    if (current_bug.indexOf(bug_url) > -1) {
-        e.preventDefault();
-        alert("'" + bug_url + "' is already linked!!");
-    }
-});
 </script>
 {% endblock %}
