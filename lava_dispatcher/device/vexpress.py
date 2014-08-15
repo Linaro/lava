@@ -152,6 +152,8 @@ class VexpressTarget(MasterImageTarget):
 
     def _umount_usbmsd(self, mount_point):
         self.context.run_command_with_retries('umount %s' % mount_point)
+        self.proc.sendline("USB_OFF")
+        self.proc.expect(['Cmd>'])
 
     def _leave_mcc(self):
         self.proc.sendline("reboot")
