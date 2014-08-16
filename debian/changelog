@@ -16,6 +16,8 @@ lava-server (2014.07-2) unstable; urgency=medium
     lava-server (Closes: #758018)
   * [INTL:it] Italian translation of debconf messages
     (Closes: #758028)
+  * [INTL:pt_BR] Brazilian Portuguese debconf templates
+    translation (Closes: #757728)
 
  -- Neil Williams <codehelp@debian.org>  Sat, 09 Aug 2014 12:15:28 +0100
 
