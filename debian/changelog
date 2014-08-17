@@ -1,3 +1,13 @@
+lava-dispatcher (2014.07.1-1) unstable; urgency=medium
+
+  * New upstream bug fix release, including support files
+    for lava-dispatcher unit tests(Closes: #758012), support
+    for retaining SELinux support in test images and tarballs
+    and enable ramdisk booting for cubieboard3.
+  * Adapt lintian overrides for new support files
+
+ -- Neil Williams <codehelp@debian.org>  Sun, 17 Aug 2014 11:23:02 +0100
+
 lava-dispatcher (2014.07-1) unstable; urgency=medium
 
   * New production release
