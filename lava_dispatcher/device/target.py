@@ -316,22 +316,21 @@ class Target(object):
             return True
 
     def _image_has_selinux_support(self, connection, timeout):
-        if not self.context.selinux:
-            unrecognised = ''
-            connection.sendline("LANG=C tar --selinux 2>&1 | grep unrecognized| wc -l")
-            connection.expect(pexpect.TIMEOUT, timeout=timeout)
-            output = connection.before
-            if len(output.split('\n')) >= 2:
-                unrecognised = output.split('\n')[1].strip()
-            if unrecognised == '1':
-                logging.info("SELinux support disabled in test image. The current image has no selinux support in 'tar'.")
-                return False
-            elif unrecognised == '0' or unrecognised == '':
-                logging.debug("Retaining SELinux support in the current image.")
-                return True
-            else:
-                logging.error("Unable to determine SELinux support.")
-                return False
+        unrecognised = ''
+        connection.sendline("LANG=C tar --selinux 2>&1 | grep unrecognized| wc -l")
+        connection.expect(pexpect.TIMEOUT, timeout=timeout)
+        output = connection.before
+        if len(output.split('\n')) >= 2:
+            unrecognised = output.split('\n')[1].strip()
+        if unrecognised == '1':
+            logging.info("SELinux support disabled in test image. The current image has no selinux support in 'tar'.")
+            return False
+        elif unrecognised == '0' or unrecognised == '':
+            logging.debug("Retaining SELinux support in the current image.")
+            return True
+        else:
+            logging.error("Unable to determine SELinux support.")
+            return False
 
     def _auto_login(self, connection):
         if self.config.login_prompt is not None:
