@@ -298,24 +298,11 @@ class MasterImageTarget(Target):
         # we know that tar is new enough on the dispatcher via the packaging but
         # also need to look for support for a new enough version of tar in the master
         # image, without breaking jobs on older master images.
-        if not self.context.selinux:
-            unrecognised = ''
-            remote_connection = runner.get_connection()
-            remote_connection.sendline("LANG=C tar --selinux 2>&1 | grep unrecognized| wc -l")
-            remote_connection.expect(pexpect.TIMEOUT, timeout=3)
-            output = remote_connection.before
-            if len(output.split('\n')) >= 2:
-                unrecognised = output.split('\n')[1].strip()
-            if unrecognised == '1':
-                logging.info("SELinux support disabled in test image. Master image has no selinux support in 'tar'.")
-                self.context.selinux = ''
-            elif unrecognised == '0' or unrecognised == '':
-                logging.debug("Retaining SELinux support in test image.")
-                # store in context for use with the fs.tgz
-                self.context.selinux = "--selinux"
-            else:
-                logging.error("Unable to determine SELinux support.")
-                self.context.selinux = ''
+        remote_connection = runner.get_connection()
+        if self._image_has_selinux_support(remote_connection, 3):
+            self.context.selinux = '--selinux'
+        else:
+            self.context.selinux = ''
 
         # handle root.tgz
         while num_retry > 0:
