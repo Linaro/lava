@@ -38,12 +38,10 @@ $(document).ready(function () {
 
             $(this).click(function() {
 
-                if (chart.legend_items[index].show == true) {
-                    chart.legend_items[index].show = false;
-                } else {
-                    chart.legend_items[index].show = true;
-                }
+                var show = chart.legend_items[index].show;
+                chart.legend_items[index].show = !show;
 
+                chart.update_settings(chart.legend_items[index].chart_test_id);
                 chart.update_plot();
             });
         });
@@ -586,7 +584,11 @@ $(document).ready(function () {
         }
     }
 
-    ImageChart.prototype.update_settings = function() {
+    ImageChart.prototype.update_settings = function(visible_chart_test_id) {
+
+        if (typeof(visible_chart_test_id) === 'undefined') {
+            visible_chart_test_id = 0;
+        }
 
         url = "/dashboard/image-charts/" + this.chart_data["report_name"] +
             "/" + this.chart_id + "/+settings-update";
@@ -602,6 +604,7 @@ $(document).ready(function () {
                 is_legend_visible: $("#is_legend_visible_" + this.chart_id).prop("checked"),
                 has_subscription: $("#has_subscription_" + this.chart_id).val(),
                 toggle_percentage: $("#is_percentage_" + this.chart_id).prop("checked"),
+                visible_chart_test_id: visible_chart_test_id,
             },
             success: function (data) {
                 chart.set_subscription_link(data[0].fields.has_subscription);
@@ -742,6 +745,10 @@ $(document).ready(function () {
                     "tooltip": tooltip,
                 };
 
+                // Add chart test/test case id.
+                plot_data[test_filter_id]["chart_test_id"] = row["chart_test_id"];
+
+                // Add the data.
                 if (this.chart_data.has_build_numbers) {
                     insert_data_item(build_number, [build_number, value],
                                      plot_data[test_filter_id]["data"]);
@@ -812,10 +819,17 @@ $(document).ready(function () {
             test_filter_id = sorted_filter_ids[i];
 
             if (this.legend_items.length != sorted_filter_ids.length) {
+
+                // Load hidden tests data.
+                var show = true;
+                if (this.chart_data.user["hidden_tests"].indexOf(plot_data[test_filter_id]["chart_test_id"]) != -1 ) {
+                    show = false;
+                }
+
                 this.legend_items.push({
-                    filter_id: test_filter_id,
-                    dom_id: "legend_" + test_filter_id,
-                    show: true,
+                    chart_test_id: plot_data[test_filter_id]["chart_test_id"],
+                    dom_id: "legend_" + plot_data[test_filter_id]["chart_test_id"],
+                    show: show,
                 });
             }
 
@@ -862,6 +876,7 @@ $(document).ready(function () {
                 lines: lines_options,
                 points: points_options,
                 test_filter_id: test_filter_id,
+                chart_test_id: plot_data[test_filter_id]["chart_test_id"]
             });
         }
 
@@ -971,8 +986,8 @@ $(document).ready(function () {
 	        container: "#legend_container_" + this.chart_id,
 	        labelFormatter: function(label, series) {
                     label_hidden = "<input type='hidden' " +
-                        "id='legend_" + series.test_filter_id + "' " +
-                        "value='" + series.test_filter_id + "'/>";
+                        "id='legend_" + series.chart_test_id + "' " +
+                        "value='" + series.chart_test_id + "'/>";
 		    return label + label_hidden;
 	        },
 	    },

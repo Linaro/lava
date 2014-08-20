@@ -107,6 +107,11 @@ div.selector .selector-chosen select {
     white-space: nowrap;
 }
 
+.legendLabel {
+    text-decoration: underline;
+    padding-left: 2px;
+}
+
 .legend tr {
     cursor: pointer;
 }

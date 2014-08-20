@@ -2026,6 +2026,24 @@ class ImageReportChart(models.Model):
             # Leave an empty dict.
             pass
 
+        chart_data["hidden_tests"] = []
+        if self.chart_type == "pass/fail":
+
+            chart_test_users = ImageChartTestUser.objects.filter(
+                image_chart_test__image_chart_filter__image_chart=self)
+
+            for chart_test_user in chart_test_users:
+                if chart_test_user.is_visible == False:
+                    chart_data["hidden_tests"].append(
+                        chart_test_user.image_chart_test.id)
+        else:
+            chart_test_case_users = ImageChartTestCaseUser.objects.filter(
+                image_chart_test_case__image_chart_filter__image_chart=self)
+            for chart_test_case_user in chart_test_case_users:
+                if chart_test_case_user.is_visible == False:
+                    chart_data["hidden_tests"].append(
+                        chart_test_case_user.image_chart_test_case.id)
+
         return chart_data
 
     def get_chart_test_data(self, user, image_chart_filter, filter_data,
@@ -2080,7 +2098,9 @@ class ImageReportChart(models.Model):
                     metadata[test_id] = {}
 
                 alias = None
+                chart_test_id = None
                 if chart_test:
+                    chart_test_id = chart_test.id
                     # Metadata delta content. Contains attribute names as keys
                     # and value is tuple with old and new value.
                     # If specific attribute's value didn't change since the
@@ -2116,6 +2136,7 @@ class ImageReportChart(models.Model):
                 chart_item = {
                     "filter_rep": image_chart_filter.representation,
                     "test_filter_id": test_filter_id,
+                    "chart_test_id": chart_test_id,
                     "link": test_run.get_absolute_url(),
                     "alias": alias,
                     "number": str(match.tag),
@@ -2181,7 +2202,9 @@ class ImageReportChart(models.Model):
                         break
 
                 alias = None
+                chart_test_id = None
                 if chart_test_case:
+                    chart_test_id = chart_test_case.id
                     # Metadata delta content. Contains attribute names as
                     # keys and value is tuple with old and new value.
                     # If specific attribute's value didn't change since the
@@ -2218,6 +2241,7 @@ class ImageReportChart(models.Model):
                     "filter_rep": image_chart_filter.representation,
                     "alias": alias,
                     "test_filter_id": test_filter_id,
+                    "chart_test_id": chart_test_id,
                     "units": test_result.units,
                     "measurement": test_result.measurement,
                     "link": test_result.get_absolute_url(),
@@ -2449,3 +2473,49 @@ class ImageChartUser(models.Model):
     toggle_percentage = models.BooleanField(
         default=False,
         verbose_name='Toggle percentage')
+
+
+class ImageChartTestUser(models.Model):
+    """
+    Stores information which tests user has hidden in the image chart.
+    """
+
+    class Meta:
+        unique_together = ("image_chart_test", "user")
+
+    image_chart_test = models.ForeignKey(
+        ImageChartTest,
+        null=False,
+        on_delete=models.CASCADE)
+
+    user = models.ForeignKey(
+        User,
+        null=False,
+        on_delete=models.CASCADE)
+
+    is_visible = models.BooleanField(
+        default=True,
+        verbose_name='Visible')
+
+
+class ImageChartTestCaseUser(models.Model):
+    """
+    Stores information which test cases user has hidden in the image chart.
+    """
+
+    class Meta:
+        unique_together = ("image_chart_test_case", "user")
+
+    image_chart_test_case = models.ForeignKey(
+        ImageChartTestCase,
+        null=False,
+        on_delete=models.CASCADE)
+
+    user = models.ForeignKey(
+        User,
+        null=False,
+        on_delete=models.CASCADE)
+
+    is_visible = models.BooleanField(
+        default=True,
+        verbose_name='Visible')

@@ -56,6 +56,8 @@ from dashboard_app.models import (
     ImageChartTest,
     ImageChartTestCase,
     ImageChartUser,
+    ImageChartTestUser,
+    ImageChartTestCaseUser,
     Test,
     TestCase,
     TestRunFilter,
@@ -393,6 +395,37 @@ def image_chart_settings_update(request, name, id):
         instance = ImageChartUser()
         instance.image_chart_id = id
         instance.user = request.user
+
+
+    # Update the chart test/test case user table with hidden test ids.
+    try:
+        chart = ImageReportChart.objects.get(id=id)
+        if chart.chart_type == "pass/fail":
+
+            chart_test = ImageChartTest.objects.get(
+                id=request.POST["visible_chart_test_id"])
+
+            chart_test_user = ImageChartTestUser.objects.get_or_create(
+                user=request.user,
+                image_chart_test=chart_test)[0]
+
+            chart_test_user.is_visible = not chart_test_user.is_visible
+            chart_test_user.save()
+
+        else:
+            chart_test_case = ImageChartTestCase.objects.get(
+                id=request.POST["visible_chart_test_id"])
+
+            chart_test_user = ImageChartTestCaseUser.objects.get_or_create(
+                user=request.user,
+                image_chart_test_case=chart_test_case)[0]
+
+            chart_test_user.is_visible = not chart_test_user.is_visible
+            chart_test_user.save()
+
+    except Exception as e:
+        # Don't update the chart test/test case user table.
+        pass
 
     form = ImageChartUserForm(request.user, request.POST,
                               instance=instance)
