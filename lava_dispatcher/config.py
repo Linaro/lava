@@ -235,7 +235,6 @@ class DeviceSchema(schema.Schema):
     # for jtag devices
     jtag_driver = schema.StringOption(default=None)
     jtag_hard_reset_command = schema.StringOption(default=None)
-    jtag_hard_reset_sleep = schema.IntOption(default=60)
     # for stmc devices
     jtag_stmcconfig = schema.StringOption(default=None)
     jtag_stmc_ip = schema.StringOption(default=None)
