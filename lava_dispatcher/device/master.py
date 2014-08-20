@@ -89,6 +89,15 @@ class MasterImageTarget(Target):
         self.userdata_label = self.config.master_userdata_label
         self.userdata_path = '%s%s' % (self.userdata_dir, self.userdata_label)
 
+        self.master_kernel = None
+        self.master_ramdisk = None
+        self.master_modules = None
+        self.master_dtb = None
+        self.master_firmware = None
+        self.master_nfsrootfs = None
+        self.master_base_tmpdir, self.master_tmpdir = self._setup_tmpdir()
+        self.master_boot_tags = {}
+
         if config.pre_connect_command:
             self.context.run_command(config.pre_connect_command)
 
@@ -372,11 +381,38 @@ class MasterImageTarget(Target):
 
     def _wait_for_master_boot(self):
         if self.config.boot_cmds_master:
+            # Break the boot sequence
             self._enter_bootloader(self.proc)
-            boot_cmds = self._load_boot_cmds(default='boot_cmds_master')
+            # Configure dynamic master image boot
+            if self.config.master_kernel and self.master_kernel is None:
+                # Set the server IP (Dispatcher)
+                self.master_boot_tags['{SERVER_IP}'] = self.context.config.lava_server_ip
+                self.master_kernel = download_image(self.config.master_kernel, self.context,
+                                    self.master_tmpdir, decompress=False)
+                self.master_boot_tags['{KERNEL}'] = self._get_rel_path(self.master_kernel, self.master_base_tmpdir)
+                if self.config.master_ramdisk:
+                    self.master_ramdisk = download_image(self.config.master_ramdisk, self.context,
+                                         self.master_tmpdir,
+                                         decompress=False)
+                    self.master_boot_tags['{RAMDISK}'] = self._get_rel_path(self.master_ramdisk, self.master_base_tmpdir)
+                if self.config.master_dtb:
+                    self.master_dtb = download_image(self.config.master_dtb, self.context,
+                                     self.master_tmpdir, decompress=False)
+                    self.master_boot_tags['{DTB}'] = self._get_rel_path(self.master_dtb, self.master_base_tmpdir)
+                if self.config.master_firmware:
+                    self.master_firmware = download_image(self.config.master_firmware, self.context,
+                                     self.master_tmpdir, decompress=False)
+                    self.master_boot_tags['{FIRMWARE}'] = self._get_rel_path(self.master_firmware, self.master_base_tmpdir)
+                if self.config.master_nfsrootfs:
+                    self.master_nfsrootfs = download_image(self.config.master_nfsrootfs, self.context,
+                                           self.master_tmpdir,
+                                           decompress=False)
+                    self.master_boot_tags['{NFSROOTFS}'] = self._setup_nfs(self.master_nfsrootfs, self.master_tmpdir)
+            boot_cmds = self._load_boot_cmds(default='boot_cmds_master',
+                                             boot_tags=self.master_boot_tags)
             self._customize_bootloader(self.proc, boot_cmds)
         self.proc.expect(self.config.image_boot_msg, timeout=300)
-        self._auto_login(self.proc)
+        self._auto_login(self.proc, is_master=True)
         self._wait_for_prompt(self.proc, self.config.master_str, timeout=300)
 
     def boot_master_image(self):

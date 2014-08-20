@@ -45,7 +45,6 @@ class DeviceSchema(schema.Schema):
     boot_cmds = schema.StringOption(fatal=True)  # Can do better here
     boot_cmds_android = schema.StringOption(fatal=True)  # And here
     boot_cmds_oe = schema.StringOption(fatal=True)  # And here?
-    boot_cmds_master = schema.StringOption()  # Optional
     read_boot_cmds_from_image = schema.BoolOption(default=True)
     boot_options = schema.ListOption()
     boot_linaro_timeout = schema.IntOption(default=300)
@@ -225,6 +224,20 @@ class DeviceSchema(schema.Schema):
     ecmeip = schema.StringOption()
     ipmi_power_sleep = schema.IntOption(default=1)
     ipmi_power_retries = schema.IntOption(default=10)
+
+    # for master devices
+    boot_cmds_master = schema.StringOption()
+    master_kernel = schema.StringOption()
+    master_ramdisk = schema.StringOption()
+    master_dtb = schema.StringOption()
+    master_firmware = schema.StringOption()
+    master_nfsrootfs = schema.StringOption()
+    # for master auto login
+    master_login_prompt = schema.StringOption(default=None)
+    master_password_prompt = schema.StringOption(default=None)
+    master_username = schema.StringOption(default=None)
+    master_password = schema.StringOption(default=None)
+    master_login_commands = schema.ListOption(default=None)
 
     # for dummy devices
     dummy_driver = schema.StringOption(default=None)
