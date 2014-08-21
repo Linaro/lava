@@ -697,6 +697,8 @@ class cmd_lava_test_shell(BaseAction):
             'timeout': {'type': 'integer', 'optional': True},
             'role': {'type': 'string', 'optional': True},
             'skip_install': {'type': 'string', 'optional': True},
+            'lava_test_dir': {'type': 'string', 'optional': True},
+            'lava_test_results_dir': {'type': 'string', 'optional': True},
         },
         'additionalProperties': False,
     }
@@ -712,10 +714,13 @@ class cmd_lava_test_shell(BaseAction):
             'format': 'Dashboard Bundle Format 1.7',
         }
 
-    def run(self, testdef_urls=None, testdef_repos=None, timeout=-1, skip_install=None):
+    def run(self, testdef_urls=None, testdef_repos=None, timeout=-1, skip_install=None,
+            lava_test_dir=None, lava_test_results_dir=None):
         target = self.client.target_device
 
         delay = target.config.test_shell_serial_delay_ms
+
+        self._amend_test_execution_paths(target, lava_test_dir, lava_test_results_dir)
 
         testdef_objs = self._configure_target(target, testdef_urls,
                                               testdef_repos, skip_install)
@@ -1052,3 +1057,34 @@ class cmd_lava_test_shell(BaseAction):
         test_result = parse_testcase_result(data,
                                             self._current_testdef.fixupdict)
         self._current_test_run['test_results'].append(test_result)
+
+    def _amend_test_execution_paths(self, target, lava_test_dir, lava_test_results_dir):
+        if lava_test_dir is not None:
+            # Preserve the default configuration value
+            if target.config.lava_test_dir_backup is None:
+                target.config.lava_test_dir_backup = target.lava_test_dir
+                logging.info("Preserving default test directory: %s" % target.config.lava_test_dir_backup)
+            # Set the user specified value
+            logging.info("Using user specified test directory: %s" % lava_test_dir)
+            target.config.lava_test_dir = lava_test_dir
+        else:
+            if target.config.lava_test_dir_backup is not None:
+                # Restore the default configuration value
+                target.config.lava_test_dir = target.config.lava_test_dir_backup
+                logging.info("Restoring default test directory: %s" % target.config.lava_test_dir_backup)
+                target.config.lava_test_dir_backup = None
+
+        if lava_test_results_dir is not None:
+            # Preserve the default configuration value
+            if target.config.lava_test_results_dir_backup is None:
+                target.config.lava_test_results_dir_backup = target.lava_test_results_dir
+                logging.info("Preserving default test results directory: %s" % target.config.lava_test_results_dir_backup)
+            # Set the user specified value
+            logging.info("Using user specified test results directory: %s" % lava_test_results_dir)
+            target.config.lava_test_results_dir = lava_test_results_dir
+        else:
+            if target.config.lava_test_results_dir_backup is not None:
+                # Reset the default configuration value
+                target.config.lava_test_results_dir = target.config.lava_test_results_dir_backup
+                logging.info("Restoring default test results directory: %s" % target.config.lava_test_results_dir_backup)
+                target.config.lava_test_results_dir_backup = None
