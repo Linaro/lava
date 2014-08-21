@@ -206,8 +206,7 @@ class SDMuxTarget(Target):
         sdmux.host_usda(self.config.sdmux_id)
 
         mntdir = os.path.join(self.scratch_dir, 'sdmux_mnt')
-        if not os.path.exists(mntdir):
-            os.mkdir(mntdir)
+        ensure_directory(mntdir)
 
         device = self.mux_device()
         device = '%s%s' % (device, partition)

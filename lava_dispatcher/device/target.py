@@ -579,7 +579,7 @@ class Target(object):
 
             tfdir = os.path.join(self.scratch_dir, str(time.time()))
             try:
-                os.mkdir(tfdir)
+                utils.ensure_directory(tfdir)
                 self.context.run_command('nice tar --selinux -C %s -xzf %s' % (tfdir, tf))
                 yield os.path.join(tfdir, target_name)
 
@@ -635,7 +635,7 @@ class Target(object):
             tfdir = os.path.join(self.scratch_dir, str(time.time()))
 
             try:
-                os.mkdir(tfdir)
+                utils.ensure_directory(tfdir)
                 self.context.run_command('/bin/tar -C %s -xzf %s'
                                          % (tfdir, tf))
                 yield os.path.join(tfdir, target_name)

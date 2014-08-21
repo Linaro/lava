@@ -127,7 +127,6 @@ import tarfile
 import tempfile
 import time
 from uuid import uuid4
-import sys
 
 import yaml
 
@@ -140,7 +139,6 @@ from lava_dispatcher.signals import SignalDirector
 from lava_dispatcher import utils
 
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.device.target import Target
 from lava_dispatcher.downloader import download_image
 from lava_dispatcher.errors import GeneralError, CriticalError
 
@@ -987,7 +985,7 @@ class cmd_lava_test_shell(BaseAction):
                 # lava/results-XXXXXXXXXX for post-mortem analysis
                 timestamp = datetime.now().strftime("%s")
                 os.rename(results_dir, results_dir + '-' + timestamp)
-                os.mkdir(results_dir)
+                utils.ensure_directory(results_dir)
         except Exception as e:
             if filesystem_access_failure:
                 # a failure when accessing the filesystem means the device
