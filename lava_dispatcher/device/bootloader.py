@@ -254,9 +254,10 @@ class BootloaderTarget(MasterImageTarget):
                                           self._tmpdir,
                                           decompress=False)
                 self._boot_tags['{FIRMWARE}'] = self._get_rel_path(firmware)
-            self._boot_tags['{BOOTX}'] = self._get_uboot_boot_command(kernel,
-                                                                      ramdisk,
-                                                                      dtb)
+            if self._is_uboot():
+                self._boot_tags['{BOOTX}'] = self._get_uboot_boot_command(kernel,
+                                                                          ramdisk,
+                                                                          dtb)
         elif self._is_ipxe():
             # We have been passed kernel image
             kernel = download_image(kernel, self.context,
