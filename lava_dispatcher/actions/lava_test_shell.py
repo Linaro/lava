@@ -540,6 +540,22 @@ class URLTestDefinition(object):
             f.write('set -ex\n')
             f.write('cd %s\n' % targetdir)
 
+            if self.skip_install != 'keys':
+                distro = self.context.client.target_device.deployment_data[
+                    'distro']
+                sources = self.testdef['install'].get('keys', [])
+                for src in sources:
+                    f.write('lava-add-keys %s' % src)
+                    f.write('\n')
+
+            if self.skip_install != 'sources':
+                distro = self.context.client.target_device.deployment_data[
+                    'distro']
+                sources = self.testdef['install'].get('sources', [])
+                for src in sources:
+                    f.write('lava-add-sources %s' % src)
+                    f.write('\n')
+
             if self.skip_install != 'deps':
                 distro = self.context.client.target_device.deployment_data['distro']
 

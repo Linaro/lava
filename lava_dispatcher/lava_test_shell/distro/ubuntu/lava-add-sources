@@ -1,0 +1,20 @@
+#!/bin/sh
+
+which add-apt-repository >/dev/null
+ret=$?
+if [ $ret -ne 0 ]; then
+    DEBIAN_FRONTEND=noninteractive apt-get update
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -q "software-properties-common"
+fi
+
+DEBIAN_FRONTEND=noninteractive add-apt-repository -y "$@"
+# Ideally we should run 'apt-get update' after adding a new source, but this
+# is redundant here, since 'lava-install-packages' script which will follow
+# this will once again run 'apt-get update', which is going to waste time.
+#
+# CAUTION: When a new source is added and there are no 'deps' in the 'install'
+#          of 'lava-test-shell' YAML test definition file, then it is the users
+#          responsibility to run 'apt-get update' before attempting an
+#          'apt-get *' operation, elsewhere in the test definition.
+
+exit 0
