@@ -545,9 +545,9 @@ class Target(object):
         error_detected = False
         try:
             if mounted:
-                targetdir = os.path.join('/mnt/%s' % directory)
+                targetdir = os.path.abspath(os.path.join('/mnt/%s' % directory))
             else:
-                targetdir = os.path.join('/', directory)
+                targetdir = os.path.abspath(os.path.join('/', directory))
 
             runner.run('mkdir -p %s' % targetdir)
 
@@ -607,9 +607,9 @@ class Target(object):
         error_detected = False
         try:
             if mounted:
-                targetdir = os.path.join('/mnt/%s' % directory)
+                targetdir = os.path.abspath(os.path.join('/mnt/%s' % directory))
             else:
-                targetdir = os.path.join('/', directory)
+                targetdir = os.path.abspath(os.path.join('/', directory))
 
             runner.run('mkdir -p %s' % targetdir)
 
