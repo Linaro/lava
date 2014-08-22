@@ -237,7 +237,8 @@ def image_report_delete(request, name):
 
     image_report = ImageReport.objects.get(name=name)
     image_report.delete()
-    return HttpResponseRedirect(reverse('image_report_list'))
+    return HttpResponseRedirect(reverse(
+            'lava.dashboard.image_report.report_list'))
 
 
 @login_required
