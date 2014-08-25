@@ -76,7 +76,9 @@ from lava_scheduler_app.job_templates import (
     ACTIONS_LINARO_BOOT,
     ACTIONS_LINARO_ANDROID_IMAGE,
     COMMAND_SUBMIT_RESULTS,
-    COMMAND_TEST_SHELL
+    COMMAND_TEST_SHELL,
+    ANDROID_BOOT_NO_CMDS,
+    ANDROID_BOOT_WITH_CMDS
 )
 
 from django.contrib.auth.models import User, Group
@@ -513,9 +515,20 @@ def online_device_list(request):
         RequestContext(request))
 
 
+class PassingHealthTableView(JobTableView):
+
+    def get_queryset(self):
+        visible = filter_device_types(self.request.user)
+        return Device.objects.select_related("device_type")\
+            .order_by("-health_status", "device_type", "hostname")\
+            .filter(temporarydevice=None, device_type__in=visible)\
+            .exclude(status=Device.RETIRED)
+
+
 @BreadCrumb("Passing Health Checks", parent=index)
 def passing_health_checks(request):
-    data = DeviceTableView(request, model=Device, table_class=PassingHealthTable)
+    data = PassingHealthTableView(request, model=Device,
+                                  table_class=PassingHealthTable)
     ptable = PassingHealthTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
     return render_to_response(
@@ -1158,14 +1171,29 @@ def _prepare_template(request):
 
     if boot_type == "android_image":
         action_template = copy.deepcopy(ACTIONS_LINARO_ANDROID_IMAGE)
+
         action_config = {
             "BOOT_IMAGE_PARAMETER": str(request.POST.get("android_boot")),
             "DATA_IMAGE_PARAMETER": str(request.POST.get("android_data")),
             "SYSTEM_IMAGE_PARAMETER": str(request.POST.get("android_system")),
             "TESTS_PARAMETER": [str(request.POST.get("test_name"))],
             "TEST_NAME_PARAMETER": str(request.POST.get("test_name")),
-            "ANDROID_BOOT_OPTIONS_PARAMETER": [x for x in str(request.POST.get("boot_options")).split("\n")]
         }
+
+        if request.POST.get("boot_options") != "":
+            android_boot_template = copy.deepcopy(ANDROID_BOOT_WITH_CMDS)
+            boot_cmds = request.POST.get("boot_options").replace("\r", "")
+            android_boot_config = {
+                "ANDROID_BOOT_OPTIONS_PARAMETER":
+                    [str(x) for x in boot_cmds.split("\n")]
+            }
+        else:
+            android_boot_template = copy.deepcopy(ANDROID_BOOT_NO_CMDS)
+            android_boot_config = {}
+
+        expand_template(android_boot_template, android_boot_config)
+        action_config["ANDROID_BOOT"] = android_boot_template
+
     else:
         if boot_type == "linaro_image":
             image_template = copy.deepcopy(DEPLOY_IMAGE)
@@ -1217,11 +1245,11 @@ def _prepare_template(request):
 
         if request.POST.get("boot_options") != "":
             action_template = copy.deepcopy(ACTIONS_LINARO_BOOT)
+            boot_cmds = request.POST.get("boot_options").replace("\r", "")
             action_config = {
                 "DEPLOY_COMMAND_PARAMETER": deploy_command,
                 "DEPLOY_PARAMETER": image_template,
-                "INTERACTIVE_BOOT_CMDS_PARAMETER": str(request.POST.get("interactive_commands")),
-                "BOOT_OPTIONS_PARAMETER": [x for x in str(request.POST.get("boot_options")).split("\n")],
+                "BOOT_OPTIONS_PARAMETER": [str(x) for x in boot_cmds.split("\n")],
                 "COMMAND_TEST_SHELL": command_test_shell
             }
 
@@ -1243,9 +1271,7 @@ def _prepare_template(request):
 
     action_config["COMMAND_SUBMIT_RESULTS"] = command_submit
 
-    print action_config
     expand_template(action_template, action_config)
-    print "1231231231312"
 
     notify = None
     if request.POST.get("notify"):

@@ -641,6 +641,10 @@ class QueueJobsTable(JobTable):
 
     id = RestrictedIDLinkColumn(accessor="id")
     device = tables.Column(accessor='device_sort')
+    in_queue = tables.TemplateColumn('''
+    for {{ record.submit_time|timesince }}
+    ''')
+    in_queue.orderable = False
 
     def __init__(self, *args, **kwargs):
         super(QueueJobsTable, self).__init__(*args, **kwargs)
@@ -649,9 +653,11 @@ class QueueJobsTable(JobTable):
     class Meta(JobTable.Meta):
         fields = (
             'id', 'device', 'description', 'submitter', 'submit_time',
+            'in_queue'
         )
         sequence = (
             'id', 'device', 'description', 'submitter', 'submit_time',
+            'in_queue'
         )
         exclude = ('status', 'priority', 'end_time', 'duration')
 

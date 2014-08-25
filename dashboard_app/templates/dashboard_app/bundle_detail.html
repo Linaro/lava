@@ -87,9 +87,13 @@
       <dd><a href="{{ bundle.testjob.get_absolute_url }}">{{ bundle.testjob.id }}</a></dd>
       {% endif %}
       <dt>Start time</dt>
-      <dd>{{ bundle.testjob.start_time }}</dd>
+      <dd>{{ bundle.testjob.start_time }}
+          <small>({{ bundle.testjob.start_time|timesince }} ago)</small>
+      </dd>
       <dt>End time</dt>
-      <dd>{{ bundle.testjob.end_time }}</dd>
+      <dd>{{ bundle.testjob.end_time }}
+          <small>({{ bundle.testjob.end_time|timesince }} ago)</small>
+      </dd>
     </dl>
   {% endif %}
   </div>

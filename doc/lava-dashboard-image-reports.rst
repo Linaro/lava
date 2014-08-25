@@ -9,16 +9,18 @@ possibility of adding multiple charts per report.
 
 Each LAVA user can create his own image reports and update/remove those reports
 he(and only he) owns. Image reports can be published/unpublished, making them
-visible/non-visible to all the users accross the system.
+visible/non-visible to all the users accross the system. Image reports can be
+assigned to image report groups which will be clearly distinguished on the
+image report list page.
 
-Image report list page will show table with reports user owns and one
-additional with published reports.
+Image report list page will show table with reports user owns, table for each
+image report group and one additional non-grouped published image reports.
 
 Example:
 
 .. image:: ./images/image-reports-list.png
     :width: 800
-    :height: 344
+    :height: 450
 
 Each report can contain multiple charts and each of those chart can combine
 results from multiple filters whether they be pass/fail results or measurement
@@ -32,11 +34,11 @@ After clicking on Add new report link and entering the name and the description
 for the Image report, you will be presented with the following page:
 
 .. image:: ./images/image-report-detail.png
-    :width: 600
-    :height: 320
+    :width: 800
+    :height: 450
 
 From there you can edit, preview or publish the image report. Furthermore, you
-can add charts from this page.
+can review, add and remove charts for this image report from this page.
 
 Once image report is published, you can assign it to a image report group:
 
@@ -87,16 +89,20 @@ Adding filters to Image report charts
 
 .. image:: ./images/image-report-filter-select.png
     :width: 800
-    :height: 480
+    :height: 280
 
 
-Selecting filter from the filter list will result in having two select boxes,
-one with available and one with chosen tests (or test cases when chart type is
-measurement). User creating the report should keep in mind at this stage that
-users with no access to the specific chosen filters will not be able to see the
-report which includes those filters at all.
+Selecting filter includes autocomplete input field with search by either
+username or filter name.
+Once specific filter is selected user will have two select boxes, one with
+available and one with chosen tests (in case of measurement chart, user will
+first be able to select from which test you wish to select test cases from and
+then chose specific test cases for your chart).
+User creating the report should keep in mind at this stage that users with no
+access to the specific chosen filters will not be able to see the report
+which includes those filters at all.
 
-You can also select the representation for this filter in the chart
+User can also select the representation for this filter in the chart
 with the options being either 'lines' or 'bars'.
 
 .. image:: ./images/image-report-filter.png
@@ -104,16 +110,27 @@ with the options being either 'lines' or 'bars'.
     :height: 320
 
 
-Once user has chosen the tests(test cases) he would like to have on this chart,
-he can also set the aliases for each of those tests(test cases). This alias
-will be displayed in the legend of the chart for each plot line, default
-value being filter_name:test_name in case of Pass/fail chart type and
+Once user has chosen the tests(test cases) he would like to have on this chart
+and saved the changes to the filter, he will see the list of those tests and
+will be able to change alias and metadata(see :ref:`image-reports-metadata`)
+for each of those tests by clicking the edit button next to that specific test.
+This alias will be displayed in the legend of the chart for each plot line,
+default value being filter_name:test_name in case of Pass/fail chart type and
 filter_name:test_name:test_case_name in case of measurement chart.
 
+Filter list in charts:
 
-.. image:: ./images/image-report-filter-alias.png
+.. image:: ./images/image-report-filter-test-list.png
     :width: 600
-    :height: 320
+    :height: 280
+
+
+Editing filter alias and metadata(see :ref:`image-reports-metadata`):
+
+.. image:: ./images/image-report-filter-test-edit.png
+    :width: 600
+    :height: 300
+
 
 
 Image Reports 2.0 display page
@@ -123,7 +140,7 @@ See below for description of each specific feature of the display page.
 
 .. image:: ./images/image-report-display.png
     :width: 800
-    :height: 480
+    :height: 380
 
 Interactive charts
 ^^^^^^^^^^^^^^^^^^
@@ -133,7 +150,16 @@ that particular test run/test result.
 
 If mouse is hovered over the any of the indices on the chart, a tooltip will
 appear with either pass/fail number of tests or measurement value depending on
-the chart type.
+the chart type. This tooltip will also contain information if there are any
+comments added to the test results and also metadata changes as well, where
+applicable(see :ref:`image-reports-metadata`).
+
+Image reports also have the ability of zooming in/out and panning. You can
+zoom in the report by double-clicking anywhere on the report and panning is
+available with mouse dragging. In the top right corner there is a small button
+for zooming out to previous setting. By doing any of the operation like test
+selection through legend(see :ref:`legend`) or date selection or percentage
+toggle, the report zooming/panning will be reset.
 
 Filters List
 ^^^^^^^^^^^^
@@ -162,6 +188,29 @@ You can subscribe to the target goal set by the report owner. If you are
 subscribe, you will get an email any time the report value drops below the
 target goal (value can be either number of passed tests, in case of pass/fail
 charts, or measurement value in case of measurement charts).
+
+.. _image-reports-metadata:
+
+Metadata for Image reports 2.0
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Metadata is a feature in image reports 2.0 that tracks changes in the custom
+attributes of the test runs/results.
+
+Whenever user adds custom attributes field in the metadata as described in
+creating image chart filter section(see :ref:`adding-filter`), for each plot
+point in the chart a small letter 'M' will appear if there were any changes
+in the custom attributes since the previous test run. Also, in the mouse hover
+tooltip, a new value for all custom attributes which changed will appear.
+
+In the example picture below, custom attributes which is tracked is
+target.hostname.
+
+.. image:: ./images/image-reports-metadata.png
+    :width: 700
+    :height: 180
+
+.. _legend:
 
 Legend
 ^^^^^^

@@ -20,6 +20,7 @@
 Database models of the Dashboard application
 """
 
+import ast
 import datetime
 import errno
 import gzip
@@ -1134,6 +1135,19 @@ class TestRun(models.Model):
                 return one_attributes.value
         return "Target Device"
 
+    def get_test_params(self):
+        """When test_params are available return it as a dict after converting
+        the dict to contain normal strings without unicode notation. If there
+        are no test parameters, then we return None.
+        """
+        for src in self.sources.all():
+            if src.test_params != "":
+                test_params = {}
+                for k, v in ast.literal_eval(src.test_params).items():
+                    test_params[str(k)] = str(v)
+                return test_params
+        return None
+
 
 class TestRunDenormalization(models.Model):
     """
@@ -2006,10 +2020,29 @@ class ImageReportChart(models.Model):
             chart_data["start_date"] = chart_user.start_date
             chart_data["is_legend_visible"] = chart_user.is_legend_visible
             chart_data["has_subscription"] = chart_user.has_subscription
+            chart_data["toggle_percentage"] = chart_user.toggle_percentage
 
         except ImageChartUser.DoesNotExist:
             # Leave an empty dict.
             pass
+
+        chart_data["hidden_tests"] = []
+        if self.chart_type == "pass/fail":
+
+            chart_test_users = ImageChartTestUser.objects.filter(
+                image_chart_test__image_chart_filter__image_chart=self)
+
+            for chart_test_user in chart_test_users:
+                if chart_test_user.is_visible == False:
+                    chart_data["hidden_tests"].append(
+                        chart_test_user.image_chart_test.id)
+        else:
+            chart_test_case_users = ImageChartTestCaseUser.objects.filter(
+                image_chart_test_case__image_chart_filter__image_chart=self)
+            for chart_test_case_user in chart_test_case_users:
+                if chart_test_case_user.is_visible == False:
+                    chart_data["hidden_tests"].append(
+                        chart_test_case_user.image_chart_test_case.id)
 
         return chart_data
 
@@ -2065,7 +2098,9 @@ class ImageReportChart(models.Model):
                     metadata[test_id] = {}
 
                 alias = None
+                chart_test_id = None
                 if chart_test:
+                    chart_test_id = chart_test.id
                     # Metadata delta content. Contains attribute names as keys
                     # and value is tuple with old and new value.
                     # If specific attribute's value didn't change since the
@@ -2101,6 +2136,7 @@ class ImageReportChart(models.Model):
                 chart_item = {
                     "filter_rep": image_chart_filter.representation,
                     "test_filter_id": test_filter_id,
+                    "chart_test_id": chart_test_id,
                     "link": test_run.get_absolute_url(),
                     "alias": alias,
                     "number": str(match.tag),
@@ -2166,7 +2202,9 @@ class ImageReportChart(models.Model):
                         break
 
                 alias = None
+                chart_test_id = None
                 if chart_test_case:
+                    chart_test_id = chart_test_case.id
                     # Metadata delta content. Contains attribute names as
                     # keys and value is tuple with old and new value.
                     # If specific attribute's value didn't change since the
@@ -2203,6 +2241,7 @@ class ImageReportChart(models.Model):
                     "filter_rep": image_chart_filter.representation,
                     "alias": alias,
                     "test_filter_id": test_filter_id,
+                    "chart_test_id": chart_test_id,
                     "units": test_result.units,
                     "measurement": test_result.measurement,
                     "link": test_result.get_absolute_url(),
@@ -2377,6 +2416,11 @@ class ImageChartTestCase(models.Model):
         filter_data = self.image_chart_filter.filter.as_data()
         filter_data['tests'] = tests
         matches = list(evaluate_filter(user, filter_data)[:1])
+
+        # If no matches are found, return empty list.
+        if len(matches) == 0:
+            return list()
+
         test_run_id = matches[0].test_runs[0].id
 
         result = NamedAttribute.objects.all()
@@ -2425,3 +2469,53 @@ class ImageChartUser(models.Model):
     has_subscription = models.BooleanField(
         default=False,
         verbose_name='Subscribed to target goal')
+
+    toggle_percentage = models.BooleanField(
+        default=False,
+        verbose_name='Toggle percentage')
+
+
+class ImageChartTestUser(models.Model):
+    """
+    Stores information which tests user has hidden in the image chart.
+    """
+
+    class Meta:
+        unique_together = ("image_chart_test", "user")
+
+    image_chart_test = models.ForeignKey(
+        ImageChartTest,
+        null=False,
+        on_delete=models.CASCADE)
+
+    user = models.ForeignKey(
+        User,
+        null=False,
+        on_delete=models.CASCADE)
+
+    is_visible = models.BooleanField(
+        default=True,
+        verbose_name='Visible')
+
+
+class ImageChartTestCaseUser(models.Model):
+    """
+    Stores information which test cases user has hidden in the image chart.
+    """
+
+    class Meta:
+        unique_together = ("image_chart_test_case", "user")
+
+    image_chart_test_case = models.ForeignKey(
+        ImageChartTestCase,
+        null=False,
+        on_delete=models.CASCADE)
+
+    user = models.ForeignKey(
+        User,
+        null=False,
+        on_delete=models.CASCADE)
+
+    is_visible = models.BooleanField(
+        default=True,
+        verbose_name='Visible')

@@ -27,8 +27,7 @@ ACTIONS_LINARO_BOOT = [
     {
         "command": "boot_linaro_image",
         "parameters": {
-            "interactive_boot_cmds": "INTERACTIVE_BOOT_CMDS_PARAMETER",
-            "options": "BOOT_OPTIONS_PARAMETER",
+            "boot_cmds": "BOOT_OPTIONS_PARAMETER",
         }
     },
     "COMMAND_TEST_SHELL",
@@ -89,12 +88,7 @@ ACTIONS_LINARO_ANDROID_IMAGE = [
     {
         "command": "android_install_binaries"
     },
-    {
-        "command": "boot_linaro_android_image",
-        "parameters": {
-            "options": "ANDROID_BOOT_OPTIONS_PARAMETER"
-        }
-    },
+    "ANDROID_BOOT",
     {
         "command": "lava_android_test_install",
         "parameters": {
@@ -109,3 +103,14 @@ ACTIONS_LINARO_ANDROID_IMAGE = [
     },
     "COMMAND_SUBMIT_RESULTS"
 ]
+
+ANDROID_BOOT_NO_CMDS = {
+    "command": "boot_linaro_android_image",
+}
+
+ANDROID_BOOT_WITH_CMDS = {
+    "command": "boot_linaro_android_image",
+    "parameters": {
+        "boot_cmds": "ANDROID_BOOT_OPTIONS_PARAMETER"
+    }
+}

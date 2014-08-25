@@ -433,8 +433,8 @@ def bundle_export(request, pathname, content_sha1):
             test_run_keys.remove(field)
 
     # Add results columns from denormalization object.
-    test_run_keys[:0] = ["device", "test", "count_pass", "count_fail",
-                         "count_skip", "count_unknown"]
+    test_run_keys[:0] = ["device", "test", "test_params", "count_pass",
+                         "count_fail", "count_skip", "count_unknown"]
 
     # Add bug link
     test_run_keys.append("bug_link")
@@ -451,6 +451,7 @@ def bundle_export(request, pathname, content_sha1):
             test_run_dict = test_run.__dict__.copy()
             test_run_dict.update(test_run_denorm.__dict__)
             test_run_dict["test"] = test_run.test.test_id
+            test_run_dict["test_params"] = test_run.get_test_params()
             test_run_dict["device"] = test_run.show_device()
             test_run_dict["bug_link"] = " ".join([b.bug_link for b in test_run.bug_links.all()])
             out.writerow(test_run_dict)
@@ -769,6 +770,9 @@ def attachment_download(request, pk):
     if not attachment.content:
         return HttpResponseBadRequest(
             "Attachment %s not present on dashboard" % pk)
+    if not os.path.exists(attachment.content.path):
+        raise Http404("Unable to find the attachment")
+
     response = HttpResponse(content_type=attachment.mime_type)
     response['Content-Disposition'] = 'attachment; filename=%s' % (
         attachment.content_filename)
@@ -785,6 +789,9 @@ def attachment_view(request, pk):
     )
     if not attachment.content or not attachment.is_viewable():
         return HttpResponseBadRequest("Attachment %s not viewable" % pk)
+    if not os.path.exists(attachment.content.path):
+        raise Http404("Unable to find the attachment")
+
     return render_to_response(
         "dashboard_app/attachment_view.html", {
             'attachment': attachment,

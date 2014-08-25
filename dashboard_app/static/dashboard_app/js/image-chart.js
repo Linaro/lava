@@ -31,35 +31,6 @@ $(document).ready(function () {
     ImageChart.prototype.BUILD_NUMBER_ERROR =
         "End build number must be greater then the start build number.";
 
-    ImageChart.prototype.setup_clickable = function() {
-
-        var chart = this;
-        $("#legend_container_" + this.chart_id + " table:first-child tbody tr").each(function(index) {
-
-            $(this).click(function() {
-
-                if (chart.legend_items[index].show == true) {
-                    chart.legend_items[index].show = false;
-                } else {
-                    chart.legend_items[index].show = true;
-                }
-
-                chart.update_plot();
-            });
-        });
-    }
-
-    ImageChart.prototype.setup_legend_css = function() {
-
-        for (var i in this.legend_items) {
-            if (this.legend_items[i].show == true) {
-                $("#" + this.legend_items[i].dom_id).parent().css("color", "#545454");
-            } else {
-                $("#" + this.legend_items[i].dom_id).parent().css("color", "#999");
-            }
-        }
-    }
-
     ImageChart.prototype.add_chart = function() {
 
         if (this.chart_data.test_data) {
@@ -548,6 +519,11 @@ $(document).ready(function () {
             chart.update_settings();
         });
 
+        $("#is_percentage_"+this.chart_id).change(function() {
+            chart.update_plot();
+            chart.update_settings();
+        });
+
         if (this.chart_data["chart_type"] == "pass/fail") {
             $("#is_percentage_"+this.chart_id).change(function() {
                 chart.update_plot();
@@ -572,12 +548,20 @@ $(document).ready(function () {
                 $("#is_legend_visible_" + this.chart_id).prop("checked",
                                                               false);
             }
+            if (this.chart_data.user.toggle_percentage == true) {
+                $("#is_percentage_" + this.chart_id).prop("checked",
+                                                              true);
+            }
 
             this.set_subscription_link(this.chart_data.user.has_subscription);
         }
     }
 
-    ImageChart.prototype.update_settings = function() {
+    ImageChart.prototype.update_settings = function(visible_chart_test_id) {
+
+        if (typeof(visible_chart_test_id) === 'undefined') {
+            visible_chart_test_id = 0;
+        }
 
         url = "/dashboard/image-charts/" + this.chart_data["report_name"] +
             "/" + this.chart_id + "/+settings-update";
@@ -592,6 +576,8 @@ $(document).ready(function () {
                 start_date: $("#start_date_" + this.chart_id).val(),
                 is_legend_visible: $("#is_legend_visible_" + this.chart_id).prop("checked"),
                 has_subscription: $("#has_subscription_" + this.chart_id).val(),
+                toggle_percentage: $("#is_percentage_" + this.chart_id).prop("checked"),
+                visible_chart_test_id: visible_chart_test_id,
             },
             success: function (data) {
                 chart.set_subscription_link(data[0].fields.has_subscription);
@@ -601,7 +587,7 @@ $(document).ready(function () {
 
     ImageChart.prototype.set_subscription_link = function(subscribed) {
 
-        if (this.chart_data["target_goal"]) {
+        if (this.chart_data["target_goal"] != null) {
             if (subscribed) {
                 $("#has_subscription_"+this.chart_id).val(true);
                 $("#has_subscription_link_"+this.chart_id).html(
@@ -685,6 +671,10 @@ $(document).ready(function () {
                 if (this.chart_data["chart_type"] == "pass/fail") {
                     if ($("#is_percentage_" + this.chart_id).prop("checked") == true) {
                         value = parseFloat(row["passes"]/row["total"]).toFixed(4) * 100;
+                        // Happens when total is 0.
+                        if (isNaN(value)) {
+                            value = 0;
+                        }
                         tooltip = "Pass rate: " + value + "%";
                     } else {
                         value = row["passes"];
@@ -728,6 +718,10 @@ $(document).ready(function () {
                     "tooltip": tooltip,
                 };
 
+                // Add chart test/test case id.
+                plot_data[test_filter_id]["chart_test_id"] = row["chart_test_id"];
+
+                // Add the data.
                 if (this.chart_data.has_build_numbers) {
                     insert_data_item(build_number, [build_number, value],
                                      plot_data[test_filter_id]["data"]);
@@ -798,10 +792,17 @@ $(document).ready(function () {
             test_filter_id = sorted_filter_ids[i];
 
             if (this.legend_items.length != sorted_filter_ids.length) {
+
+                // Load hidden tests data.
+                var show = true;
+                if (this.chart_data.user["hidden_tests"].indexOf(plot_data[test_filter_id]["chart_test_id"]) != -1 ) {
+                    show = false;
+                }
+
                 this.legend_items.push({
-                    filter_id: test_filter_id,
-                    dom_id: "legend_" + test_filter_id,
-                    show: true,
+                    chart_test_id: plot_data[test_filter_id]["chart_test_id"],
+                    dom_id: "legend_" + plot_data[test_filter_id]["chart_test_id"],
+                    show: show,
                 });
             }
 
@@ -848,6 +849,7 @@ $(document).ready(function () {
                 lines: lines_options,
                 points: points_options,
                 test_filter_id: test_filter_id,
+                chart_test_id: plot_data[test_filter_id]["chart_test_id"]
             });
         }
 
@@ -871,7 +873,7 @@ $(document).ready(function () {
         }
 
         // Add target goal dashed line to the plot.
-        if (this.chart_data["target_goal"]) {
+        if (this.chart_data["target_goal"] != null) {
 	    goal_data = [];
 
             if (this.chart_data.has_build_numbers) {
@@ -957,8 +959,8 @@ $(document).ready(function () {
 	        container: "#legend_container_" + this.chart_id,
 	        labelFormatter: function(label, series) {
                     label_hidden = "<input type='hidden' " +
-                        "id='legend_" + series.test_filter_id + "' " +
-                        "value='" + series.test_filter_id + "'/>";
+                        "id='legend_" + series.chart_test_id + "' " +
+                        "value='" + series.chart_test_id + "'/>";
 		    return label + label_hidden;
 	        },
 	    },
@@ -970,6 +972,12 @@ $(document).ready(function () {
                 axisLabelFontFamily: "Verdana",
             },
             canvas: true,
+            zoom: {
+                interactive: true
+            },
+            pan: {
+                interactive: true
+            },
         };
 
         // We cannot apply autoscaleMargin for y axis since y_max and y_min
@@ -988,9 +996,55 @@ $(document).ready(function () {
 
         this.plot = $.plot($("#outer_container_" + this.chart_id + " #inner_container_" + this.chart_id), data, options);
 
-        // Setup click events and css in the legend.
-        this.setup_clickable();
-        this.setup_legend_css();
+        // Setup hooks, events and css in the legend.
+        add_zoom_out(this);
+        setup_clickable(this);
+        setup_legend_css(this);
+
+        // Setup chart object reference.
+        this.plot.chart = this;
+        // Setup draw hook for plot.
+        this.plot.hooks.draw.push(function(plot, canvascontext) {
+            setup_clickable(plot.chart);
+            setup_legend_css(plot.chart);
+        });
+
+    }
+
+    setup_clickable = function(chart) {
+
+        $("#legend_container_" + chart.chart_id + " table:first-child tbody tr").each(function(index) {
+
+            $(this).click(function(e) {
+
+                var show = chart.legend_items[index].show;
+                chart.legend_items[index].show = !show;
+
+                chart.update_settings(chart.legend_items[index].chart_test_id);
+                chart.update_plot();
+            });
+        });
+    }
+
+    setup_legend_css = function(chart) {
+
+        for (var i in chart.legend_items) {
+            if (chart.legend_items[i].show == true) {
+                $("#" + chart.legend_items[i].dom_id).parent().css("color", "#545454");
+            } else {
+                $("#" + chart.legend_items[i].dom_id).parent().css("color", "#999");
+            }
+        }
+    }
+
+    add_zoom_out = function(chart) {
+
+        $('<div class="zoom-out-button">zoom out</div>').click(
+            function () {
+                chart.plot.zoomOut();
+            }).appendTo("#inner_container_" + chart.chart_id).css(
+                "margin-left",
+                parseInt($("#inner_container_" + chart.chart_id).children().first().css("width")) - 90 + "px");
     }
 
     isNumeric = function(n) {

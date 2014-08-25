@@ -18,6 +18,10 @@ have the same ``device_type``. Each role can be assigned device ``tags``.
 Once roles are defined, actions (including test images and test definitions) can be marked
 as applying to specific roles (if no role is specified, all roles use the action).
 
+A role can be marked as `slave` (thanks to the ``is_slave`` argument). A
+slave role will not be booted by LAVA directly but by another device within the
+MultiNode group.
+
 If insufficient boards exist to meet the combined requirements of all the roles specified
 in the job, the job will be rejected.
 
@@ -259,6 +263,26 @@ Wrapper scripts make it easier to test your definitions before submitting to LAV
 The wrapper lives in a VCS repository which is specified as one of the testdef_repos and will be
 available in the same directory structure as the original repository. A wrapper script also
 helps the tests to fail early instead of trying to do the rest of the tests.
+
+
+Booting a slave device
+**********************
+
+If one of the device is marked as ``slave``, one device in the MultiNode group
+will have to boot this device itself.
+In order to synchronize the slave and the master, the MultiNode API is
+used to send the following messages::
+
+ * @slave sends "lava_ms_slave_data" with the needed boot information
+ * @master sends "lava_ms_ready" when it's ready to boot the slave
+ * @slave sends "lava_ms_boot" when he is ready to be booted
+
+The master device is responsible for booting the slave device correctly. Once
+booted, LAVA will take care of the slave device by running the tests on it.
+
+This feature can be used to boot devices that requires specific pieces of
+software in the boot process.
+The boot process is then described in a test definition, running on the master device.
 
 MultiNode Result Bundles
 ************************

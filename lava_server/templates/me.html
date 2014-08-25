@@ -14,6 +14,9 @@
       <dd>{{ user.username }}</dd>
       <dt>Email</dt>
       <dd>{{ user.email }}</dd>
+      <dt>Joined</dt>
+      <dd><span title="{{ user.date_joined }}">
+          {{user.date_joined|timesince }} ago</span></dd>
       <dt>Password</dt>
       <dd><a href="{% url 'django.contrib.auth.views.password_change' %}"><span class="glyphicon glyphicon-lock"></span> Update</a></dd>
     </dl>

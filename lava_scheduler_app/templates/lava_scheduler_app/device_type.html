@@ -13,11 +13,11 @@
 
 {% if is_admin and device_type.name != 'dynamic-vm' and device_type.health_check_job == '' %}
   <div class="alert alert-info">
-  <p><strong>The '{{ device_type }}' device type has no <a
-     href="{{ STATIC_URL }}docs/glossary.html#term-health-check">health check job</a> in the <a
-     href="{{ STATIC_URL }}../admin/lava_scheduler_app/devicetype/{{ device_type.hostname }}">admin interface</a>.</strong>
-      Consider adding a <a href="{{ STATIC_URL }}docs/healthchecks.html#health-checks">health check definition</a>.
-  </p>
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <strong>The '{{ device_type }}' device type has no
+      <a href="{{ STATIC_URL }}docs/glossary.html#term-health-check">health check job</a> in the
+      <a href="{{ STATIC_URL }}../admin/lava_scheduler_app/devicetype/{{ device_type.hostname }}">admin interface</a>.</strong>
+    Consider adding a <a href="{{ STATIC_URL }}docs/healthchecks.html#health-checks">health check definition</a>.
   </div>
 {% endif %}
 
