@@ -206,16 +206,16 @@ class stmc(BaseDriver):
                 if not success:
                     raise CriticalError("The STMC fails to reboot after hard reset")
 
-                # Setup the serial-relay
-                if not self.stmc_serial_relay():
-                    raise CriticalError("Unable to setup the serial relay. The STMC is not working properly")
-
             # Hard reset platform
             if self.config.hard_reset_command:
                 logging.info("Hard resetting platform")
                 self.context.run_command(self.config.hard_reset_command)
             else:
                 raise CriticalError("Must have a hard_reset_command defined")
+
+            # Setup the serial-relay
+            if not self.stmc_serial_relay():
+                raise CriticalError("Unable to setup the serial relay. The STMC is not working properly")
 
             # Connect to the STMC serial relay
             logging.info("Connecting to STMC serial relay")
