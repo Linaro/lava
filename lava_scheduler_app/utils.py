@@ -212,6 +212,7 @@ def split_vm_job(json_jobdata, vm_group):
                 node_json[role][c]["auto_start_vms"] = auto_start_vms
             if json_jobdata.get("job_name", False):
                 node_json[role][c]["job_name"] = json_jobdata["job_name"]
+            node_json[role][c]["is_slave"] = json_jobdata.get("is_slave", False)
             node_json[role][c]["group_size"] = group_count
             node_json[role][c]["target_group"] = vm_group
             node_json[role][c]["actions"] = node_actions[role]
