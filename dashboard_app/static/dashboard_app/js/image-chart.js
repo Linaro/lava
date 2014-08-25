@@ -614,7 +614,7 @@ $(document).ready(function () {
 
     ImageChart.prototype.set_subscription_link = function(subscribed) {
 
-        if (this.chart_data["target_goal"]) {
+        if (this.chart_data["target_goal"] != null) {
             if (subscribed) {
                 $("#has_subscription_"+this.chart_id).val(true);
                 $("#has_subscription_link_"+this.chart_id).html(
@@ -900,7 +900,7 @@ $(document).ready(function () {
         }
 
         // Add target goal dashed line to the plot.
-        if (this.chart_data["target_goal"]) {
+        if (this.chart_data["target_goal"] != null) {
 	    goal_data = [];
 
             if (this.chart_data.has_build_numbers) {
