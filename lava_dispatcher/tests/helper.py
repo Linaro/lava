@@ -18,6 +18,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+from lava_dispatcher import utils
 from unittest import TestCase
 from lava_dispatcher.config import get_device_config
 import lava_dispatcher.config
@@ -29,7 +30,7 @@ tmp_config_dir = os.path.join(tmp_dir, 'lava-dispatcher-config')
 def create_config(name, data):
     filename = os.path.join(tmp_config_dir, name)
     if not os.path.exists(os.path.dirname(filename)):
-        os.mkdir(os.path.dirname(filename))
+        utils.ensure_directory(os.path.dirname(filename))
     with open(filename, 'w') as f:
         for key in data.keys():
             f.write("%s = %s\n" % (key, data[key]))
@@ -43,7 +44,7 @@ def create_device_config(name, data):
 
 
 def setup_config_dir():
-    os.mkdir(tmp_config_dir)
+    utils.ensure_directory(tmp_config_dir)
 
 
 def cleanup_config_dir():

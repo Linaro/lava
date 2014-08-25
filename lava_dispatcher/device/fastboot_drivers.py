@@ -325,6 +325,34 @@ class capri(fastboot_serial):
         self.fastboot('reboot')
 
 
+class pxa1928dkb(fastboot_serial):
+
+    def __init__(self, device):
+        super(pxa1928dkb, self).__init__(device)
+
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
+                             bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
+                             target_type, scratch_dir):
+        raise CriticalError('This platform does not support kernel deployment!')
+
+    def connect(self):
+        if self.config.connection_command:
+            proc = connect_to_serial(self.context)
+        else:
+            raise CriticalError('The connection_command is not defined!')
+
+        return proc
+
+    def erase_boot(self):
+        pass
+
+    def boot(self, boot_cmds=None):
+        self.fastboot.flash('boot', self.__boot_image__)
+        self.fastboot('reboot')
+
+        if self.target_type == 'android':
+            self._adb('wait-for-device')
+
 class k3v2(fastboot_serial):
 
     def __init__(self, device):

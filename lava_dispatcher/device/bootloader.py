@@ -20,7 +20,6 @@
 
 import logging
 import contextlib
-import os
 import subprocess
 
 from lava_dispatcher.device.master import (
@@ -30,8 +29,6 @@ from lava_dispatcher.client.base import (
     NetworkCommandRunner,
 )
 from lava_dispatcher.utils import (
-    mkdtemp,
-    extract_rootfs,
     extract_modules,
     extract_ramdisk,
     create_ramdisk,
@@ -60,28 +57,9 @@ class BootloaderTarget(MasterImageTarget):
         self._boot_tags = {}
         self._base_tmpdir, self._tmpdir = self._setup_tmpdir()
 
-    def _setup_tmpdir(self):
-        if not self.config.use_lava_tmpdir:
-            if self.config.alternative_dir is None:
-                logging.error("You have specified not to use the LAVA temporary \
-                              directory. However, you have not defined an \
-                              alternate temporary directory. Falling back to \
-                              use the LAVA temporary directory.")
-                return self.context.config.lava_image_tmpdir, self.scratch_dir
-            else:
-                if self.config.alternative_create_tmpdir:
-                    return self.config.alternative_dir, mkdtemp(self.config.alternative_dir)
-                else:
-                    return self.config.alternative_dir, self.config.alternative_dir
-        else:
-            return self.context.config.lava_image_tmpdir, self.scratch_dir
-
-    def _get_rel_path(self, path):
-        return os.path.relpath(path, self._base_tmpdir)
-
     def _get_http_url(self, path):
         prefix = self.context.config.lava_image_url
-        return prefix + '/' + self._get_rel_path(path)
+        return prefix + '/' + self._get_rel_path(path, self._base_tmpdir)
 
     def _set_load_addresses(self, bootz):
         if not bootz and self.config.u_load_addrs and len(self.config.u_load_addrs) == 3:
@@ -128,11 +106,6 @@ class BootloaderTarget(MasterImageTarget):
         self._set_load_addresses(bootz)
 
         return ' '.join(bootx)
-
-    def _setup_nfs(self, nfsrootfs):
-        self._lava_nfsrootfs = mkdtemp(basedir=self._tmpdir)
-        extract_rootfs(nfsrootfs, self._lava_nfsrootfs)
-        self._default_boot_cmds = 'boot_cmds_nfs'
 
     def _is_uboot(self):
         if self._uboot_boot:
@@ -187,13 +160,13 @@ class BootloaderTarget(MasterImageTarget):
         # At a minimum we must have a kernel
         if kernel is None:
             raise CriticalError("No kernel image to boot")
-        if self._is_uboot():
+        if self._is_uboot() or self._is_uefi():
             # Set the server IP (Dispatcher)
             self._boot_tags['{SERVER_IP}'] = self.context.config.lava_server_ip
             # We have been passed kernel image
             kernel = download_image(kernel, self.context,
                                     self._tmpdir, decompress=False)
-            self._boot_tags['{KERNEL}'] = self._get_rel_path(kernel)
+            self._boot_tags['{KERNEL}'] = self._get_rel_path(kernel, self._base_tmpdir)
             if ramdisk is not None:
                 # We have been passed a ramdisk
                 ramdisk = download_image(ramdisk, self.context,
@@ -207,34 +180,36 @@ class BootloaderTarget(MasterImageTarget):
                                                   is_uboot=self._is_uboot_ramdisk(ramdisk))
                     extract_modules(modules, ramdisk_dir)
                     ramdisk = create_ramdisk(ramdisk_dir, self._tmpdir)
-                # Ensure ramdisk has u-boot header
-                if not self._is_uboot_ramdisk(ramdisk):
-                    ramdisk_uboot = ramdisk + ".uboot"
-                    logging.info("RAMdisk needs u-boot header.  Adding.")
-                    cmd = "mkimage -A arm -T ramdisk -C none -d %s %s > /dev/null" \
-                        % (ramdisk, ramdisk_uboot)
-                    r = subprocess.call(cmd, shell=True)
-                    if r == 0:
-                        ramdisk = ramdisk_uboot
-                    else:
-                        logging.warn("Unable to add u-boot header to ramdisk.  Tried %s" % cmd)
-                self._boot_tags['{RAMDISK}'] = self._get_rel_path(ramdisk)
+                if self._is_uboot():
+                    # Ensure ramdisk has u-boot header
+                    if not self._is_uboot_ramdisk(ramdisk):
+                        ramdisk_uboot = ramdisk + ".uboot"
+                        logging.info("RAMdisk needs u-boot header.  Adding.")
+                        cmd = "mkimage -A arm -T ramdisk -C none -d %s %s > /dev/null" \
+                            % (ramdisk, ramdisk_uboot)
+                        r = subprocess.call(cmd, shell=True)
+                        if r == 0:
+                            ramdisk = ramdisk_uboot
+                        else:
+                            logging.warn("Unable to add u-boot header to ramdisk.  Tried %s" % cmd)
+                self._boot_tags['{RAMDISK}'] = self._get_rel_path(ramdisk, self._base_tmpdir)
             if dtb is not None:
                 # We have been passed a device tree blob
                 dtb = download_image(dtb, self.context,
                                      self._tmpdir, decompress=False)
-                self._boot_tags['{DTB}'] = self._get_rel_path(dtb)
+                self._boot_tags['{DTB}'] = self._get_rel_path(dtb, self._base_tmpdir)
             if rootfs is not None:
                 # We have been passed a rootfs
                 rootfs = download_image(rootfs, self.context,
                                         self._tmpdir, decompress=False)
-                self._boot_tags['{ROOTFS}'] = self._get_rel_path(rootfs)
+                self._boot_tags['{ROOTFS}'] = self._get_rel_path(rootfs, self._base_tmpdir)
             if nfsrootfs is not None:
                 # Extract rootfs into nfsrootfs directory
                 nfsrootfs = download_image(nfsrootfs, self.context,
                                            self._tmpdir,
                                            decompress=False)
-                self._setup_nfs(nfsrootfs)
+                self._lava_nfsrootfs = self._setup_nfs(nfsrootfs, self._tmpdir)
+                self._default_boot_cmds = 'boot_cmds_nfs'
                 self._boot_tags['{NFSROOTFS}'] = self._lava_nfsrootfs
                 if modules is not None and ramdisk is None:
                     modules = download_image(modules, self.context,
@@ -246,16 +221,19 @@ class BootloaderTarget(MasterImageTarget):
                 bootloader = download_image(bootloader, self.context,
                                             self._tmpdir,
                                             decompress=False)
-                self._boot_tags['{BOOTLOADER}'] = self._get_rel_path(bootloader)
+                self._boot_tags['{BOOTLOADER}'] = self._get_rel_path(bootloader, self._base_tmpdir)
             if firmware is not None:
                 # We have been passed firmware
                 firmware = download_image(firmware, self.context,
                                           self._tmpdir,
                                           decompress=False)
-                self._boot_tags['{FIRMWARE}'] = self._get_rel_path(firmware)
-            self._boot_tags['{BOOTX}'] = self._get_uboot_boot_command(kernel,
-                                                                      ramdisk,
-                                                                      dtb)
+
+                self._boot_tags['{FIRMWARE}'] = self._get_rel_path(firmware, self._base_tmpdir)
+            if self._is_uboot():
+                self._boot_tags['{BOOTX}'] = self._get_uboot_boot_command(kernel,
+                                                                          ramdisk,
+                                                                          dtb)
+
         elif self._is_ipxe():
             # We have been passed kernel image
             kernel = download_image(kernel, self.context,
@@ -284,61 +262,6 @@ class BootloaderTarget(MasterImageTarget):
                                         self._tmpdir, decompress=False)
                 rootfs_url = self._get_http_url(rootfs)
                 self._boot_tags['{ROOTFS}'] = rootfs_url
-        elif self._is_uefi():
-            # Set the server IP (Dispatcher)
-            self._boot_tags['{SERVER_IP}'] = self.context.config.lava_server_ip
-            # We have been passed kernel image
-            kernel = download_image(kernel, self.context,
-                                    self._tmpdir, decompress=False)
-            self._boot_tags['{KERNEL}'] = self._get_rel_path(kernel)
-            if ramdisk is not None:
-                # We have been passed a ramdisk
-                ramdisk = download_image(ramdisk, self.context,
-                                         self._tmpdir,
-                                         decompress=False)
-                if modules is not None:
-                    modules = download_image(modules, self.context,
-                                             self._tmpdir,
-                                             decompress=False)
-                    ramdisk_dir = extract_ramdisk(ramdisk, self._tmpdir,
-                                                  is_uboot=self._is_uboot_ramdisk(ramdisk))
-                    extract_modules(modules, ramdisk_dir)
-                    ramdisk = create_ramdisk(ramdisk_dir, self._tmpdir)
-                self._boot_tags['{RAMDISK}'] = self._get_rel_path(ramdisk)
-            if dtb is not None:
-                # We have been passed a device tree blob
-                dtb = download_image(dtb, self.context,
-                                     self._tmpdir, decompress=False)
-                self._boot_tags['{DTB}'] = self._get_rel_path(dtb)
-            if rootfs is not None:
-                # We have been passed a rootfs
-                rootfs = download_image(rootfs, self.context,
-                                        self._tmpdir, decompress=False)
-                self._boot_tags['{ROOTFS}'] = self._get_rel_path(rootfs)
-            if nfsrootfs is not None:
-                # Extract rootfs into nfsrootfs directory
-                nfsrootfs = download_image(nfsrootfs, self.context,
-                                           self._tmpdir,
-                                           decompress=False)
-                self._setup_nfs(nfsrootfs)
-                self._boot_tags['{NFSROOTFS}'] = self._lava_nfsrootfs
-                if modules is not None and ramdisk is None:
-                    modules = download_image(modules, self.context,
-                                             self._tmpdir,
-                                             decompress=False)
-                    self._setup_modules(modules, self._lava_nfsrootfs)
-            if bootloader is not None:
-                # We have been passed a bootloader
-                bootloader = download_image(bootloader, self.context,
-                                            self._tmpdir,
-                                            decompress=False)
-                self._boot_tags['{BOOTLOADER}'] = self._get_rel_path(bootloader)
-            if firmware is not None:
-                # We have been passed firmware
-                firmware = download_image(firmware, self.context,
-                                          self._tmpdir,
-                                          decompress=False)
-                self._boot_tags['{FIRMWARE}'] = self._get_rel_path(firmware)
 
     def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootloadertype):
         self._uboot_boot = False
@@ -386,7 +309,7 @@ class BootloaderTarget(MasterImageTarget):
     def _boot_linaro_image(self):
         self.proc.empty_buffer()
         if self._is_bootloader() and not self._booted:
-            if self.config.hard_reset_command:
+            if self.config.hard_reset_command or self.config.hard_reset_command == "":
                 self._hard_reboot(self.proc)
                 self._run_boot()
             else:

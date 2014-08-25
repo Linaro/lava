@@ -332,18 +332,31 @@ class Target(object):
             logging.error("Unable to determine SELinux support.")
             return False
 
-    def _auto_login(self, connection):
-        if self.config.login_prompt is not None:
-            self._wait_for_prompt(connection,
-                                  self.config.login_prompt, timeout=300)
-            connection.sendline(self.config.username)
-        if self.config.password_prompt is not None:
-            self._wait_for_prompt(connection,
-                                  self.config.password_prompt, timeout=300)
-            connection.sendline(self.config.password)
-        if self.config.login_commands is not None:
-            for command in self.config.login_commands:
-                connection.sendline(command)
+    def _auto_login(self, connection, is_master=False):
+        if is_master:
+            if self.config.master_login_prompt is not None:
+                self._wait_for_prompt(connection,
+                                      self.config.master_login_prompt, timeout=300)
+                connection.sendline(self.config.master_username)
+            if self.config.master_password_prompt is not None:
+                self._wait_for_prompt(connection,
+                                      self.config.master_password_prompt, timeout=300)
+                connection.sendline(self.config.master_password)
+            if self.config.master_login_commands is not None:
+                for command in self.config.master_login_commands:
+                    connection.sendline(command)
+        else:
+            if self.config.login_prompt is not None:
+                self._wait_for_prompt(connection,
+                                      self.config.login_prompt, timeout=300)
+                connection.sendline(self.config.username)
+            if self.config.password_prompt is not None:
+                self._wait_for_prompt(connection,
+                                      self.config.password_prompt, timeout=300)
+                connection.sendline(self.config.password)
+            if self.config.login_commands is not None:
+                for command in self.config.login_commands:
+                    connection.sendline(command)
 
     def _is_uboot_ramdisk(self, ramdisk):
         try:
@@ -359,6 +372,30 @@ class Target(object):
                 return True
 
         return False
+
+    def _get_rel_path(self, path, base):
+        return os.path.relpath(path, base)
+
+    def _setup_nfs(self, nfsrootfs, tmpdir):
+        lava_nfsrootfs = utils.mkdtemp(basedir=tmpdir)
+        utils.extract_rootfs(nfsrootfs, lava_nfsrootfs)
+        return lava_nfsrootfs
+
+    def _setup_tmpdir(self):
+        if not self.config.use_lava_tmpdir:
+            if self.config.alternative_dir is None:
+                logging.error("You have specified not to use the LAVA temporary \
+                              directory. However, you have not defined an \
+                              alternate temporary directory. Falling back to \
+                              use the LAVA temporary directory.")
+                return self.context.config.lava_image_tmpdir, self.scratch_dir
+            else:
+                if self.config.alternative_create_tmpdir:
+                    return self.config.alternative_dir, utils.mkdtemp(self.config.alternative_dir)
+                else:
+                    return self.config.alternative_dir, self.config.alternative_dir
+        else:
+            return self.context.config.lava_image_tmpdir, self.scratch_dir
 
     def _load_boot_cmds(self, default=None, boot_cmds_dynamic=None,
                         boot_tags=None):
@@ -545,9 +582,9 @@ class Target(object):
         error_detected = False
         try:
             if mounted:
-                targetdir = os.path.join('/mnt/%s' % directory)
+                targetdir = os.path.abspath(os.path.join('/mnt/%s' % directory))
             else:
-                targetdir = os.path.join('/', directory)
+                targetdir = os.path.abspath(os.path.join('/', directory))
 
             runner.run('mkdir -p %s' % targetdir)
 
@@ -579,7 +616,7 @@ class Target(object):
 
             tfdir = os.path.join(self.scratch_dir, str(time.time()))
             try:
-                os.mkdir(tfdir)
+                utils.ensure_directory(tfdir)
                 self.context.run_command('nice tar --selinux -C %s -xzf %s' % (tfdir, tf))
                 yield os.path.join(tfdir, target_name)
 
@@ -607,9 +644,9 @@ class Target(object):
         error_detected = False
         try:
             if mounted:
-                targetdir = os.path.join('/mnt/%s' % directory)
+                targetdir = os.path.abspath(os.path.join('/mnt/%s' % directory))
             else:
-                targetdir = os.path.join('/', directory)
+                targetdir = os.path.abspath(os.path.join('/', directory))
 
             runner.run('mkdir -p %s' % targetdir)
 
@@ -635,7 +672,7 @@ class Target(object):
             tfdir = os.path.join(self.scratch_dir, str(time.time()))
 
             try:
-                os.mkdir(tfdir)
+                utils.ensure_directory(tfdir)
                 self.context.run_command('/bin/tar -C %s -xzf %s'
                                          % (tfdir, tf))
                 yield os.path.join(tfdir, target_name)

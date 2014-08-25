@@ -22,11 +22,10 @@ import sys
 import os
 import json
 import uuid
+import lava_dispatcher.config
+from lava_dispatcher import utils
 from shutil import rmtree
 from tempfile import mkdtemp
-from unittest import TestCase
-import lava_dispatcher.config
-from lava_dispatcher.device.target import Target
 from lava_dispatcher.device.qemu import QEMUTarget
 from lava_dispatcher.device.dynamic_vm import DynamicVmTarget
 from lava_dispatcher.context import LavaContext
@@ -50,7 +49,7 @@ def get_config():
     config = lava_dispatcher.config.get_config()
     config.lava_image_tmpdir = os.path.join(tmpdir, 'images')
     if not os.path.exists(config.lava_image_tmpdir):
-        os.mkdir(config.lava_image_tmpdir)
+        utils.ensure_directory(config.lava_image_tmpdir)
     return config
 
 

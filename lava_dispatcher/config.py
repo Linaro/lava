@@ -45,7 +45,6 @@ class DeviceSchema(schema.Schema):
     boot_cmds = schema.StringOption(fatal=True)  # Can do better here
     boot_cmds_android = schema.StringOption(fatal=True)  # And here
     boot_cmds_oe = schema.StringOption(fatal=True)  # And here?
-    boot_cmds_master = schema.StringOption()  # Optional
     read_boot_cmds_from_image = schema.BoolOption(default=True)
     boot_options = schema.ListOption()
     boot_linaro_timeout = schema.IntOption(default=300)
@@ -114,6 +113,8 @@ class DeviceSchema(schema.Schema):
     tester_rc_cmd = schema.StringOption(null=True)
     lava_test_dir = schema.StringOption(null=True)
     lava_test_results_dir = schema.StringOption(null=True)
+    lava_test_dir_backup = schema.StringOption(default=None)
+    lava_test_results_dir_backup = schema.StringOption(default=None)
     val = schema.StringOption()
     sdcard_mountpoint_path = schema.StringOption(default="/storage/sdcard0")
     possible_partitions_files = schema.ListOption(default=["init.partitions.rc",
@@ -224,6 +225,20 @@ class DeviceSchema(schema.Schema):
     ipmi_power_sleep = schema.IntOption(default=1)
     ipmi_power_retries = schema.IntOption(default=10)
 
+    # for master devices
+    boot_cmds_master = schema.StringOption()
+    master_kernel = schema.StringOption()
+    master_ramdisk = schema.StringOption()
+    master_dtb = schema.StringOption()
+    master_firmware = schema.StringOption()
+    master_nfsrootfs = schema.StringOption()
+    # for master auto login
+    master_login_prompt = schema.StringOption(default=None)
+    master_password_prompt = schema.StringOption(default=None)
+    master_username = schema.StringOption(default=None)
+    master_password = schema.StringOption(default=None)
+    master_login_commands = schema.ListOption(default=None)
+
     # for dummy devices
     dummy_driver = schema.StringOption(default=None)
     dummy_schroot_chroot = schema.StringOption(default="default")
@@ -235,7 +250,6 @@ class DeviceSchema(schema.Schema):
     # for jtag devices
     jtag_driver = schema.StringOption(default=None)
     jtag_hard_reset_command = schema.StringOption(default=None)
-    jtag_hard_reset_sleep = schema.IntOption(default=60)
     # for stmc devices
     jtag_stmcconfig = schema.StringOption(default=None)
     jtag_stmc_ip = schema.StringOption(default=None)
@@ -251,6 +265,7 @@ class DeviceSchema(schema.Schema):
     fastboot_command = schema.StringOption()
     fastboot_kernel_load_addr = schema.StringOption()
     rootfs_partition = schema.StringOption(default='userdata')
+    start_fastboot_command = schema.StringOption(default='fastboot')
     shared_working_directory = schema.StringOption(default=None)
 
     # for bootloader devices
