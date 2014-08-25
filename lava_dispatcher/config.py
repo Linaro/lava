@@ -123,6 +123,7 @@ class DeviceSchema(schema.Schema):
     boot_files = schema.ListOption(default=['boot.txt', 'uEnv.txt'])
     boot_device = schema.IntOption(fatal=True)
     testboot_offset = schema.IntOption(fatal=True)
+    testboot_partition = schema.StringOption(default=None)
     # see doc/sdmux.rst for details
 
     lmp_default_id = schema.StringOption(default="13060000")
