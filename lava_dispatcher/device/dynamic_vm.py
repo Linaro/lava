@@ -113,6 +113,7 @@ class kvm_adapter(object):
         self.local_sd_image = None
         self.__host__ = None
         self.vm_images_dir = '/lava-vm-images/%s' % device.config.hostname
+        self.qemu_binary = device.config.qemu_binary
 
     @property
     def host(self):
@@ -150,8 +151,6 @@ class kvm_adapter(object):
         image = os.path.basename(local_image)
         logging.info("Copying %s to the host device" % image)
 
-        device = self.device
-
         vm_images_dir = self.vm_images_dir
         remote_image = '%s/%s' % (vm_images_dir, os.path.basename(local_image))
         self.scp_to_host(local_image, remote_image)
@@ -161,7 +160,7 @@ class kvm_adapter(object):
     def amend_config(self):
         device = self.device
         ssh = self.ssh + ' root@' + self.host + ' -i ' + self.identity_file
-        device.config.qemu_binary = '%s -- %s' % (ssh, device.config.qemu_binary)
+        device.config.qemu_binary = '%s -- %s' % (ssh, self.qemu_binary)
 
     @contextlib.contextmanager
     def mount(self, partition):
