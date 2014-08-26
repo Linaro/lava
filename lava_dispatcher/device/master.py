@@ -201,7 +201,10 @@ class MasterImageTarget(Target):
         boot_device = str(self.config.boot_device)
         testboot_offset = self.config.testboot_offset
         partition = int(matchobj.group('partition')) + testboot_offset
-        return ' ' + boot_device + ':' + str(partition) + ' '
+        if self.config.testboot_partition is not None:
+            return ' ' + boot_device + ':' + self.config.testboot_partition + ' '
+        else:
+            return ' ' + boot_device + ':' + str(partition) + ' '
 
     def _rewrite_rootfs_partition_number(self, matchobj):
         """ Returns the rootfs partition number after rewriting it to
