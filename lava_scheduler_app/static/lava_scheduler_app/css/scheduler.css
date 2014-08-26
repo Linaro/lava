@@ -75,3 +75,13 @@ pre.action {
     font-weight: bold;
     color: red;
 }
+
+#busyIndicator {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: url(/static/lava_scheduler_app/images/ajax-loader.gif) scroll no-repeat 50% 50% transparent;
+    width: 100%;
+    height: 100%;
+}
