@@ -41,6 +41,7 @@ class cmd_lava_android_test_run(AndroidTestAction):
         'properties': {
             'test_name': {'type': 'string'},
             'option': {'type': 'string', 'optional': True},
+            'role': {'type': 'string', 'optional': True},
             'timeout': {'type': 'integer', 'optional': True},
         },
         'additionalProperties': False,
@@ -88,6 +89,7 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
                          'optional': True},
             'command_file': {'type': 'string', 'optional': True},
             'parser': {'type': 'string', 'optional': True},
+            'role': {'type': 'string', 'optional': True},
             'timeout': {'type': 'integer', 'optional': True},
         },
         'additionalProperties': False,
@@ -159,6 +161,7 @@ class cmd_lava_android_test_run_monkeyrunner(AndroidTestAction):
         'type': 'object',
         'properties': {
             'url': {'type': 'string'},
+            'role': {'type': 'string', 'optional': True},
             'timeout': {'type': 'integer', 'optional': True},
         },
         'additionalProperties': False,
@@ -200,6 +203,7 @@ class cmd_lava_android_test_install(AndroidTestAction):
         'properties': {
             'tests': {'type': 'array', 'items': {'type': 'string'}},
             'option': {'type': 'string', 'optional': True},
+            'role': {'type': 'string', 'optional': True},
             'timeout': {'type': 'integer', 'optional': True},
         },
         'additionalProperties': False,

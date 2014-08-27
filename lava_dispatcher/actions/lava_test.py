@@ -63,6 +63,7 @@ class cmd_lava_test_run(BaseAction):
         'properties': {
             'test_name': {'type': 'string'},
             'test_options': {'type': 'string', 'optional': True},
+            'role': {'type': 'string', 'optional': True},
             'timeout': {'type': 'integer', 'optional': True},
         },
         'additionalProperties': False,
@@ -129,6 +130,7 @@ class cmd_lava_test_install(BaseAction):
                 'type': 'array', 'items': {'type': 'string'}, 'optional': True
             },
             'timeout': {'type': 'integer', 'optional': True},
+            'role': {'type': 'string', 'optional': True},
             'install_lava_test': {'type': 'boolean', 'optional': True, 'default': True}
         },
         'additionalProperties': False,
