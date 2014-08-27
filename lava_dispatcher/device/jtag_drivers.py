@@ -154,7 +154,7 @@ class stmc(BaseDriver):
             Return True if the serial relay is working. False overwise
         """
         command = "%s --ip %s --serial-relay" % (self.config.jtag_stmcconfig, self.config.jtag_stmc_ip)
-        stmc_serial_relay = self.context.spawn(command, timeout=5)
+        stmc_serial_relay = self.context.spawn(command, timeout=10)
         try:
             stmc_serial_relay.expect("Starting serial relay : ip: %s port: 5331" % (self.config.jtag_stmc_ip))
         except Exception:
