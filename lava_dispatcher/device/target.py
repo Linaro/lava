@@ -577,7 +577,7 @@ class Target(object):
                    timeout=timeout)
 
     @contextlib.contextmanager
-    def _python_file_system(self, runner, directory, mounted=False):
+    def _python_file_system(self, runner, directory, prompt_pattern, mounted=False):
         connection = runner.get_connection()
         error_detected = False
         try:
@@ -626,6 +626,9 @@ class Target(object):
                 utils.rmtree(tfdir)
 
                 connection.sendcontrol('c')  # kill SimpleHTTPServer
+                self._wait_for_prompt(connection,
+                                      prompt_pattern,
+                                      timeout=30)
 
                 # get the last 2 parts of tf, ie "scratchdir/tf.tgz"
                 tf = '/'.join(tf.split('/')[-2:])
@@ -636,6 +639,9 @@ class Target(object):
             if not error_detected:
                 # kill SimpleHTTPServer
                 connection.sendcontrol('c')
+                self._wait_for_prompt(connection,
+                                      prompt_pattern,
+                                      timeout=30)
             if mounted:
                 runner.run('umount /mnt')
 
