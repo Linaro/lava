@@ -77,7 +77,7 @@ def image_report_list(request):
 @BreadCrumb("{name}", parent=image_report_list, needs=['name'])
 def image_report_detail(request, name):
 
-    image = Image.objects.get(name=name)
+    image = get_object_or_404(Image, name=name)
     filter_data = image.filter.as_data()
     matches = evaluate_filter(request.user, filter_data, prefetch_related=['bug_links', 'test_results'])[:50]
 
