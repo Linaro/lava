@@ -151,7 +151,7 @@ class FastbootTarget(Target):
                 pat = self.tester_ps1_pattern
                 incrc = self.tester_ps1_includes_rc
                 runner = NetworkCommandRunner(self, pat, incrc)
-                with self._busybox_file_system(runner, directory) as root:
+                with self._busybox_file_system(runner, directory, pat) as root:
                     logging.debug("Accessing the file system at %s" % root)
                     yield(root)
 

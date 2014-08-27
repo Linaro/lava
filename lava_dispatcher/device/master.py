@@ -334,6 +334,9 @@ class MasterImageTarget(Target):
             if num_retry > 1:
                 # send CTRL C in case wget still hasn't exited.
                 self.proc.sendcontrol("c")
+                self._wait_for_prompt(self.proc,
+                                      self.MASTER_PS1_PATTERN,
+                                      timeout=30)
                 self.proc.sendline(
                     "echo 'retry left %s time(s)'" % (num_retry - 1))
                 # And wait a little while.
@@ -379,7 +382,7 @@ class MasterImageTarget(Target):
         with self._as_master() as runner:
             partition = self.get_partition(runner, partition)
             runner.run('mount %s /mnt' % partition)
-            with self._python_file_system(runner, directory, mounted=True) as root:
+            with self._python_file_system(runner, directory, self.MASTER_PS1_PATTERN, mounted=True) as root:
                 yield root
 
     def _wait_for_master_boot(self):
