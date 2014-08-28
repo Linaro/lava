@@ -82,9 +82,9 @@
       <dt>Worker</dt>
       <dd>
         {% if device.too_long_since_last_heartbeat %}
-          <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"/>
+          <span class="glyphicon glyphicon-thumbs-down text-danger"></span>
         {% else %}
-          <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"/>
+          <span class="glyphicon glyphicon-thumbs-up text-success"></span>
         {% endif %}
         {% if device.worker_host.is_master %}
           <b><a href="{{ device.worker_host.get_absolute_url }}">{{ device.worker_host.hostname }}</a></b>
