@@ -132,9 +132,9 @@ def sata_signal(connection, config, command, module_name):
     else:
         logging.debug("Handling signal <LAVA_SATA %s>" % command)
         if command == "passthru":
-            lmp_sata.dutPassthru(lmp_sata_id)
+            lmp_sata.passthru(lmp_sata_id)
         elif command == "disconnect":
-            lmp_sata.dutDisconnect(lmp_sata_id)
+            lmp_sata.disconnect(lmp_sata_id)
         elif command[:3] == "id_":
             lmp_sata.set_identify(lmp_sata_id, command[-3:])
         elif command == "reset":
