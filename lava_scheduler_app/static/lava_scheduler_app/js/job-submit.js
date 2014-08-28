@@ -2,6 +2,18 @@ beautify_options = {
     "brace_style": "expand"
 }
 
+$("#validate").click(function(){
+    $("#busyIndicator").show(); 
+    validate_input($("#json-input").val());
+    $("#busyIndicator").hide(); 
+});
+
+$(document).ajaxStart(function () {
+    $('#busyIndicator').show();
+}).ajaxStop(function () {
+    $('#busyIndicator').hide();
+});
+
 $(window).ready(
     function () {
         $("#json-input").linedtextarea();
