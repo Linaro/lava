@@ -1,0 +1,13 @@
+#!/bin/sh
+
+echo "######################################################"
+echo
+echo "I: unsupported distro, cannot add sources:"
+for src in $@; do
+    echo "- $src"
+done
+echo ''
+echo 
+echo "######################################################"
+
+exit 0

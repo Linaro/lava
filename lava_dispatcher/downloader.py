@@ -112,7 +112,7 @@ def _decompressor_stream(url, imgdir, decompress):
         yield (write, fname)
     finally:
         if fd:
-            fd.close
+            fd.close()
 
 
 def _url_to_fname_suffix(url, path='/tmp'):
