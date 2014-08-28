@@ -60,7 +60,7 @@ class DummyTarget(Target):
             dest = root + directory
             if not os.path.exists(dest):
                 os.makedirs(dest)
-            yield(dest)
+            yield dest
 
 
 target_class = DummyTarget
