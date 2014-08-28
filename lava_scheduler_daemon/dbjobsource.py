@@ -36,6 +36,9 @@ from lava_scheduler_daemon.jobsource import IJobSource
 import signal
 import platform
 
+MAX_RETRIES = 3
+
+
 try:
     from psycopg2 import InterfaceError, OperationalError
 except ImportError:
@@ -145,6 +148,16 @@ class DatabaseJobSource(object):
                 transaction.leave_transaction_management()
         return self.deferToThread(wrapper, *args, **kw)
 
+    def _commit_transaction(self, src=None):
+        for retry in range(MAX_RETRIES):
+            try:
+                transaction.commit()
+                self.logger.debug('%s transaction committed' % src)
+                break
+            except TransactionRollbackError as err:
+                self.logger.warn('retrying transaction %s' % err)
+                continue
+
     def _submit_health_check_jobs(self):
         """
         Checks which devices need a health check job and submits the needed
@@ -222,6 +235,7 @@ class DatabaseJobSource(object):
                         user=job.submitter)
                 device.current_job = job
                 device.state_transition_to(Device.RESERVED, message="Reserved for job %s" % job.display_id)
+                self._commit_transaction(src='%s state' % device.hostname)
                 self.logger.info('%s reserved for job %s' % (device.hostname,
                                                              job.id))
                 job.save()
@@ -265,7 +279,7 @@ class DatabaseJobSource(object):
 
         my_ready_jobs = filter(lambda job: job.is_ready_to_start, my_submitted_jobs)
 
-        transaction.commit()
+        self._commit_transaction(src='getJobList_impl')
         return my_ready_jobs
 
     def getJobList(self):
@@ -314,6 +328,7 @@ class DatabaseJobSource(object):
         if device.status == Device.RESERVED:
             msg = "Started running job %s" % job.display_id
             device.state_transition_to(Device.RUNNING, message=msg, job=job)
+            self._commit_transaction(src='%s state' % device.hostname)
             self.logger.info('%s started running job %s' % (device.hostname,
                                                             job.id))
         device.save()
@@ -321,7 +336,7 @@ class DatabaseJobSource(object):
         shutil.rmtree(job.output_dir, ignore_errors=True)
         job.log_file.save('job-%s.log' % job.id, ContentFile(''), save=False)
         job.save()
-        transaction.commit()
+        self._commit_transaction(src='jobStarted_impl')
 
     def jobStarted(self, job):
         return self.deferForDB(self.jobStarted_impl, job)
@@ -332,7 +347,6 @@ class DatabaseJobSource(object):
         old_device_status = device.status
         new_device_status = None
         previous_state = device.previous_state()
-        MAX_RETRIES = 3
 
         if old_device_status == Device.RUNNING:
             new_device_status = previous_state
@@ -373,6 +387,7 @@ class DatabaseJobSource(object):
 
         msg = "Job %s completed" % job.display_id
         device.state_transition_to(new_device_status, message=msg, job=job)
+        self._commit_transaction(src='%s state' % device.hostname)
         self.logger.info('job %s completed on %s' % (job.id, device.hostname))
 
         if job.health_check:
@@ -402,15 +417,7 @@ class DatabaseJobSource(object):
         job.submit_token = None
         device.save()
         job.save()
-        # notification needs to have the correct status in the database
-        for retry in range(MAX_RETRIES):
-            try:
-                transaction.commit()
-                self.logger.debug('%s job completed and status saved' % job.id)
-                break
-            except TransactionRollbackError as err:
-                self.logger.warn('Retrying %s job completion ... %s' % (job.id, err))
-                continue
+        self._commit_transaction(src='jobCompleted_impl')
         if utils.is_master():
             try:
                 job.send_summary_mails()
@@ -463,9 +470,10 @@ class DatabaseJobSource(object):
                         msg = "Job %s cancelled" % job.display_id
                         device.state_transition_to(previous_state, message=msg,
                                                    job=job)
+                        self._commit_transaction(src='%s state' % device.hostname)
                     self.logger.info('job %s cancelled on %s' % (job.id, job.actual_device))
                     job.cancel()
-                    transaction.commit()
+                    self._commit_transaction(src='_handle_cancelling_jobs')
 
 
 def _get_device_version(bundle):

@@ -41,15 +41,15 @@ $(document).ready(function () {
             $("#chart_container_" + this.chart_id).append(
                 '<div class="headline-container" id="headline_container_' +
                     this.chart_id + '"></div>');
+            // Add data table link.
+            $("#chart_container_" + this.chart_id).append(
+                '<div class="table-link-container"' +
+                    'id="table_link_container_' + this.chart_id + '"></div>');
             // Add filter links used.
             $("#chart_container_" + this.chart_id).append(
                 '<div class="filter-links-container"' +
                     'id="filter_links_container_' + this.chart_id +
                     '"></div>');
-            // Add data table link.
-            $("#filter_links_container_" + this.chart_id).append(
-                '<span class="table-link-container"' +
-                    'id="table_link_container_' + this.chart_id + '"></span>');
             // Add dates/build numbers container.
             $("#chart_container_" + this.chart_id).append(
                 '<div class="dates-container" id="dates_container_' +
@@ -69,10 +69,10 @@ $(document).ready(function () {
 
             // Add headline and description.
             this.update_headline();
-            // Add dates/build numbers.
-            this.update_dates();
             // Add filter links.
             this.update_filter_links();
+            // Add dates/build numbers.
+            this.update_dates();
             // Add data tables.
             this.update_data_tables();
             // Generate chart.
@@ -123,7 +123,6 @@ $(document).ready(function () {
             });
     }
 
-
     ImageChart.prototype.update_headline = function() {
         $("#headline_container_" + this.chart_id).append(
             '<span class="chart-headline">' + this.chart_data["name"] +
@@ -135,21 +134,68 @@ $(document).ready(function () {
     ImageChart.prototype.update_filter_links = function() {
 
         $("#filter_links_container_" + this.chart_id).append(
-            '<span style="margin-left: 30px;">Filters used:&nbsp;&nbsp;' +
-                '</span>');
+            '<span style="margin-left: 30px;"><a id="filter_link_' +
+                this.chart_id + '"' +
+                ' href="javascript:void(0)">Filters used</a></span>');
+
+        // Add dialog.
+        $("#main_container").append('<div id="filter_links_dialog_' +
+                                    this.chart_id + '"></div>');
+
+        // Init dialog.
+        $('#filter_links_dialog_' + this.chart_id).dialog({
+            autoOpen: false,
+            title: 'Filters used',
+            draggable: false,
+            height: 480,
+            width: 450,
+            modal: true,
+            resizable: false,
+        });
+
+        var chart = this;
+        $('#filter_link_' + this.chart_id).click(function() {
+            $('#filter_links_dialog_' + chart.chart_id).dialog("open");
+        });
+
+
         filter_links = [];
+        height = 80;
         for (filter_id in this.chart_data.filters) {
-            filter_links.push('<a href="' +
+            filter_links.push('<a target="_blank" href="' +
                               this.chart_data.filters[filter_id]["link"].replace(/\\/g , "") +
                               '">~' +
                               this.chart_data.filters[filter_id]["owner"] +
                               '/' +
                               this.chart_data.filters[filter_id]["name"] +
                               '</a>');
+            height += 30;
         }
-        filter_html = filter_links.join(", ");
+        filter_html = filter_links.join("<br>");
+
+        $("#filter_links_dialog_" + this.chart_id).append('<div>' + filter_html + '</div>');
+        $("#filter_links_dialog_" + this.chart_id).dialog("option",
+                                                          "height", height );
+
+        // Add percentages if chart type is pass/fail.
+        if (this.chart_data["chart_type"] == "pass/fail") {
+            $("#filter_links_container_" + this.chart_id).append(
+                '<span class="toggle-percentage"><label for="is_percentage_' +
+                    this.chart_id +
+                    '">Toggle percentage</label></span>');
+            $("#filter_links_container_" + this.chart_id).append(
+                '<span class="toggle-checkbox"><input type="checkbox" ' +
+                    'id="is_percentage_' + this.chart_id + '" /></span>');
+        }
+
+        // Add legend toggle checkbox.
         $("#filter_links_container_" + this.chart_id).append(
-            '<span>' + filter_html + '</span>');
+            '<span class="toggle-legend"><label for="is_legend_visible_' +
+                this.chart_id + '">Toggle legend</label></span>');
+        $("#filter_links_container_" + this.chart_id).append(
+            '<span class="toggle-checkbox"><input type="checkbox" ' +
+                'id="is_legend_visible_' + this.chart_id +
+                '" checked="checked"/></span>');
 
         $("#filter_links_container_" + this.chart_id).append(
             '<span class="chart-save-img">' +
@@ -186,24 +232,6 @@ $(document).ready(function () {
         $("#dates_container_" + this.chart_id).append(
             '<span><select id="end_date_' + this.chart_id + '"></select>' +
                 '</span>');
-
-        // Add percentages if chart type is pass/fail.
-        if (this.chart_data["chart_type"] == "pass/fail") {
-            $("#dates_container_" + this.chart_id).append(
-                '<span>&nbsp;&nbsp;&nbsp;&nbsp;<label for="is_percentage_' +
-                    this.chart_id +
-                    '">Toggle percentage:</label>&nbsp;&nbsp;</span>');
-            $("#dates_container_" + this.chart_id).append(
-                '<span><input type="checkbox" id="is_percentage_' +
-                    this.chart_id + '" /></span>');
-        }
-
-        $("#dates_container_" + this.chart_id).append(
-            '<span>&nbsp;&nbsp;&nbsp;&nbsp;<label for="is_legend_visible_' +
-                this.chart_id + '">Toggle legend:</label>&nbsp;&nbsp;</span>');
-        $("#dates_container_" + this.chart_id).append(
-            '<span><input type="checkbox" id="is_legend_visible_' +
-                this.chart_id + '" checked="checked"/></span>');
         $("#dates_container_" + this.chart_id).append(
             '<span style="float: right;"><input id="has_subscription_' +
                 this.chart_id +
@@ -224,10 +252,10 @@ $(document).ready(function () {
         // Init dialog.
         $('#data_table_dialog_' + this.chart_id).dialog({
             autoOpen: false,
-            title: 'View data table',
+            title: 'Results table',
             draggable: false,
             height: 280,
-            width: 950,
+            width: 970,
             modal: true,
             resizable: false,
             open: function (event, ui) {
@@ -244,7 +272,7 @@ $(document).ready(function () {
         $("#data_table_dialog_" + this.chart_id).append(
             '<table id="outer-table"><tr><td>' +
                 '<table id="test-run-names_' + this.chart_id +
-                '" class="inner-table"><thead>' +
+                '" class="inner-table-names"><thead>' +
                 '<tr><th>Build Number</th></tr>' +
                 '</thead>' +
                 '<tbody></tbody></table></td>' +
@@ -261,7 +289,7 @@ $(document).ready(function () {
         $("#table_link_container_" + this.chart_id).append(
             '<a id="data_table_link_' +
                 this.chart_id +
-                '" href="javascript:void(0)">View data table</a>');
+                '" href="javascript:void(0)">Results table</a>');
 
         var chart = this;
         $("#data_table_link_" + this.chart_id).click(function(){

@@ -12,7 +12,6 @@ filters_callback = function(chart_id, filter_id, name) {
 
     $.ajax({
         url: url,
-        async: false,
         type: "POST",
         data: {
             csrfmiddlewaretoken: csrf_token,
@@ -44,7 +43,6 @@ filters_callback = function(chart_id, filter_id, name) {
 
     $.ajax({
         url: url,
-        async: false,
         data: {"id": filter_id},
         beforeSend: function () {
             $('#filter-container').remove();
@@ -191,7 +189,6 @@ test_changed = function(filter_id, test_id) {
 
         $.ajax({
             url: url,
-            async: false,
             data: {"id": filter_id, "test_id": test_id},
             beforeSend: function () {
                 $('#loading_dialog').dialog('open');
@@ -249,7 +246,6 @@ open_test_edit = function(chart_filter_id, chart_test_id) {
 
     $.ajax({
         url: url,
-        async: false,
         data: {
             chart_filter_id: chart_filter_id,
             chart_test_id: chart_test_id},
