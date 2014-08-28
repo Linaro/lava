@@ -56,7 +56,7 @@ class DummyTarget(Target):
     @contextlib.contextmanager
     def file_system(self, partition, directory):
         with self.driver.root() as root:
-            logging.debug("Accessing the file system at %s" % root)
+            logging.debug("Accessing the file system at %s", root)
             dest = root + directory
             if not os.path.exists(dest):
                 os.makedirs(dest)

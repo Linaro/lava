@@ -181,8 +181,8 @@ class SDMuxTarget(Target):
             retrycount += 1
 
         if deventry != "":
-            logging.debug('found sdmux device %s: Waiting %ds for any mounts to complete'
-                          % (deventry, self.config.sdmux_mount_wait_seconds))
+            logging.debug('found sdmux device %s: Waiting %ds for any mounts to complete',
+                          deventry, self.config.sdmux_mount_wait_seconds)
             time.sleep(self.config.sdmux_mount_wait_seconds)
             logging.debug("Unmounting %s*", deventry)
             os.system("umount %s*" % deventry)

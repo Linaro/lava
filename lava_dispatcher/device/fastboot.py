@@ -145,7 +145,7 @@ class FastbootTarget(Target):
                     yield(root)
             else:
                 with self.driver.adb_file_system(partition, directory) as root:
-                    logging.debug("Accessing the file system at %s" % root)
+                    logging.debug("Accessing the file system at %s", root)
                     yield(root)
         else:
                 pat = self.tester_ps1_pattern

@@ -111,7 +111,7 @@ class QEMUTarget(Target):
             yield path
 
     def extract_tarball(self, tarball_url, partition, directory='/'):
-        logging.info('extracting %s to target' % tarball_url)
+        logging.info('extracting %s to target', tarball_url)
 
         with image_partition_mounted(self._sd_image, partition) as mntdir:
             tb = download_image(tarball_url, self.context, decompress=False)
@@ -144,7 +144,7 @@ class QEMUTarget(Target):
 
         qemu_cmd = '%s %s %s' % (self.config.qemu_binary, self.config.qemu_options, qemu_options)
         qemu_cmd = qemu_cmd.format(DISK_IMAGE=self._sd_image)
-        logging.info('launching qemu with command %r' % qemu_cmd)
+        logging.info('launching qemu with command %r', qemu_cmd)
         self.proc = self.context.spawn(qemu_cmd, timeout=1200)
         self._auto_login(self.proc)
         return self.proc

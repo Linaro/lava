@@ -161,12 +161,12 @@ class IpmiPxeTarget(Target):
             elif parttype == 'brtfs':
                 logging.warning("resize of btrfs partition not supported")
             else:
-                logging.warning("unknown partition type for resize: %s" % parttype)
+                logging.warning("unknown partition type for resize: %s", parttype)
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
-        logging.info('attempting to access master filesystem %r:%s' %
-                     (partition, directory))
+        logging.info('attempting to access master filesystem %r:%s',
+                     partition, directory)
 
         assert directory != '/', "cannot mount entire partition"
 

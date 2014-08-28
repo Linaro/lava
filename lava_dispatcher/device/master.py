@@ -328,8 +328,8 @@ class MasterImageTarget(Target):
                     timeout=timeout)
                 return
             except (OperationFailed, pexpect.TIMEOUT):
-                logging.warning(("transfering %s failed. %d retry left."
-                                 % (tar_url, num_retry - 1)))
+                logging.warning("transfering %s failed. %d retry left.",
+                                tar_url, num_retry - 1)
 
             if num_retry > 1:
                 # send CTRL C in case wget still hasn't exited.
@@ -341,7 +341,7 @@ class MasterImageTarget(Target):
                     "echo 'retry left %s time(s)'" % (num_retry - 1))
                 # And wait a little while.
                 sleep_time = 60
-                logging.info("Wait %d second before retry" % sleep_time)
+                logging.info("Wait %d second before retry", sleep_time)
                 time.sleep(sleep_time)
             num_retry -= 1
 
@@ -362,7 +362,7 @@ class MasterImageTarget(Target):
         return partition
 
     def extract_tarball(self, tarball_url, partition, directory='/'):
-        logging.info('extracting %s to target' % tarball_url)
+        logging.info('extracting %s to target', tarball_url)
 
         with self._as_master() as runner:
             partition = self.get_partition(runner, partition)
@@ -374,8 +374,8 @@ class MasterImageTarget(Target):
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
-        logging.info('attempting to access master filesystem %r:%s' %
-                     (partition, directory))
+        logging.info('attempting to access master filesystem %r:%s',
+                     partition, directory)
 
         assert directory != '/', "cannot mount entire partition"
 
@@ -431,8 +431,8 @@ class MasterImageTarget(Target):
         attempts = 0
         in_master_image = False
         while (attempts < boot_attempts) and (not in_master_image):
-            logging.info("Booting the system master image. Attempt: %d" %
-                         (attempts + 1))
+            logging.info("Booting the system master image. Attempt: %d",
+                         attempts + 1)
             try:
                 self.master_ip = None
                 if self.config.hard_reset_command:
@@ -667,7 +667,7 @@ class MasterCommandRunner(NetworkCommandRunner):
         device_version = None
         if self.match_id == 0:
             device_version = self.match.group(1)
-            logging.debug('Master image version (hwpack/rootfs) is %s' % device_version)
+            logging.debug('Master image version (hwpack/rootfs) is %s', device_version)
         else:
             logging.warning('Could not determine image version!')
 
@@ -786,12 +786,12 @@ def _recreate_ramdisk(session, target):
 
 
 def _test_filesystem_writeable(runner, mountpoint):
-    logging.debug("Checking if filesystem %s is writeable" % mountpoint)
+    logging.debug("Checking if filesystem %s is writeable", mountpoint)
     current_time = int(time.time())
     m = hashlib.md5()
     m.update(str(current_time))
     md5sum = m.hexdigest()
-    logging.debug("writing %s to ddout, md5sum %s" % (current_time, md5sum))
+    logging.debug("writing %s to ddout, md5sum %s", current_time, md5sum)
     write_res = runner.run('echo -n %s | dd oflag=direct,sync of=%s/ddout ' % (current_time, mountpoint), failok=True)
     if write_res > 0:
         raise RuntimeError('Failed to write test data to %s (sd card writeable test)' % mountpoint)

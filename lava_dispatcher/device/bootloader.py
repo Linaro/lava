@@ -191,7 +191,7 @@ class BootloaderTarget(MasterImageTarget):
                         if r == 0:
                             ramdisk = ramdisk_uboot
                         else:
-                            logging.warn("Unable to add u-boot header to ramdisk.  Tried %s" % cmd)
+                            logging.warn("Unable to add u-boot header to ramdisk.  Tried %s", cmd)
                 self._boot_tags['{RAMDISK}'] = self._get_rel_path(ramdisk, self._base_tmpdir)
             if dtb is not None:
                 # We have been passed a device tree blob

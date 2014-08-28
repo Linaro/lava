@@ -40,7 +40,7 @@ def lsgpio_signal(connection, config, command, module_name):
         logging.error("No lmp_lsgpio_id available for lsgpio_signal")
         message_str = " invalid_id"
     else:
-        logging.debug("Handling signal <LAVA_LSGPIO %s>" % command)
+        logging.debug("Handling signal <LAVA_LSGPIO %s>", command)
         if command == "a_in":
             lmp_lsgpio.a_dir_in(lmp_lsgpio_id)
         elif command == "a_out":
@@ -81,7 +81,7 @@ def eth_signal(connection, config, command, module_name):
         logging.error("No lmp_eth_id available for eth_signal")
         message_str = " invalid_id"
     else:
-        logging.debug("Handling signal <LAVA_ETH %s>" % command)
+        logging.debug("Handling signal <LAVA_ETH %s>", command)
         if command == "passthru":
             lmp_eth.passthru(lmp_eth_id)
         elif command == "disconnect":
@@ -104,7 +104,7 @@ def hdmi_signal(connection, config, command, module_name, fakeedid=None):
         logging.error("No lmp_hdmi_id available for hdmi_signal")
         message_str = " invalid_id"
     else:
-        logging.debug("Handling signal <LAVA_HDMI %s>" % command)
+        logging.debug("Handling signal <LAVA_HDMI %s>", command)
         if command == "passthru":
             lmp_hdmi.passthru(lmp_hdmi_id)
         elif command == "disconnect":
@@ -130,7 +130,7 @@ def sata_signal(connection, config, command, module_name):
         logging.error("No lmp_sata_id available for _on_SATA")
         message_str = " invalid_id"
     else:
-        logging.debug("Handling signal <LAVA_SATA %s>" % command)
+        logging.debug("Handling signal <LAVA_SATA %s>", command)
         if command == "passthru":
             lmp_sata.passthru(lmp_sata_id)
         elif command == "disconnect":
@@ -153,7 +153,7 @@ def usb_signal(connection, config, command, module_name):
         logging.error("No lmp_usb_id available for usb_signal")
         message_str = " invalid_id"
     else:
-        logging.debug("Handling signal <LAVA_USB %s>" % command)
+        logging.debug("Handling signal <LAVA_USB %s>", command)
         if command == "device":
             lmp_usb.device(lmp_usb_id)
         elif command == "host":

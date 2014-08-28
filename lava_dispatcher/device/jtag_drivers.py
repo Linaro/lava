@@ -195,7 +195,7 @@ class stmc(BaseDriver):
                 logging.info("Waiting for STMC to initialize")
                 success = False
                 for loop_index in range(1, 5):
-                    logging.info("  checking STMC status (%d)" % (loop_index))
+                    logging.info("  checking STMC status (%d)", loop_index)
                     if self.stmc_status_ok():
                         success = True
                         break
