@@ -92,13 +92,13 @@ class stmc(BaseDriver):
                                      scratch_dir,
                                      decompress=False)
             if modules is not None:
-                    modules = download_image(modules, self.context,
-                                             scratch_dir,
-                                             decompress=False)
-                    ramdisk_dir = extract_ramdisk(ramdisk, scratch_dir,
-                                                  is_uboot=False)
-                    extract_modules(modules, ramdisk_dir)
-                    ramdisk = create_ramdisk(ramdisk_dir, scratch_dir)
+                modules = download_image(modules, self.context,
+                                         scratch_dir,
+                                         decompress=False)
+                ramdisk_dir = extract_ramdisk(ramdisk, scratch_dir,
+                                              is_uboot=False)
+                extract_modules(modules, ramdisk_dir)
+                ramdisk = create_ramdisk(ramdisk_dir, scratch_dir)
             stmc_command = ' '.join([stmc_command,
                                     self.config.jtag_stmc_ramdisk_command.format(RAMDISK=ramdisk)])
         if dtb is not None:
@@ -118,10 +118,10 @@ class stmc(BaseDriver):
             self._boot_tags['{NFSROOTFS}'] = lava_nfsrootfs
             self._default_boot_cmds = 'boot_cmds_nfs'
             if modules is not None and ramdisk is None:
-                    modules = download_image(modules, self.context,
-                                             scratch_dir,
-                                             decompress=False)
-                    extract_modules(modules, lava_nfsrootfs)
+                modules = download_image(modules, self.context,
+                                         scratch_dir,
+                                         decompress=False)
+                extract_modules(modules, lava_nfsrootfs)
 
         # Add suffix for boot commands
         self._stmc_command = stmc_command + ' --'

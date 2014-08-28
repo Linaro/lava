@@ -76,13 +76,13 @@ class QEMUTarget(Target):
         if ramdisk is not None:
             ramdisk = download_image(ramdisk, self.context)
             if modules is not None:
-                    modules = download_image(modules, self.context,
-                                             self._scratch_dir,
-                                             decompress=False)
-                    ramdisk_dir = extract_ramdisk(ramdisk, self._scratch_dir,
-                                                  is_uboot=self._is_uboot_ramdisk(ramdisk))
-                    extract_modules(modules, ramdisk_dir)
-                    ramdisk = create_ramdisk(ramdisk_dir, self._scratch_dir)
+                modules = download_image(modules, self.context,
+                                         self._scratch_dir,
+                                         decompress=False)
+                ramdisk_dir = extract_ramdisk(ramdisk, self._scratch_dir,
+                                              is_uboot=self._is_uboot_ramdisk(ramdisk))
+                extract_modules(modules, ramdisk_dir)
+                ramdisk = create_ramdisk(ramdisk_dir, self._scratch_dir)
             self._ramdisk = ramdisk
 
         if dtb is not None:
