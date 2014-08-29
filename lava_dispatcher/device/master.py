@@ -393,26 +393,29 @@ class MasterImageTarget(Target):
             if self.config.master_kernel and self.master_kernel is None:
                 # Set the server IP (Dispatcher)
                 self.master_boot_tags['{SERVER_IP}'] = self.context.config.lava_server_ip
-                self.master_kernel = download_image(self.config.master_kernel, self.context,
-                                    self.master_tmpdir, decompress=False)
+                self.master_kernel = download_image(
+                    self.config.master_kernel, self.context,
+                    self.master_tmpdir, decompress=False)
                 self.master_boot_tags['{KERNEL}'] = self._get_rel_path(self.master_kernel, self.master_base_tmpdir)
                 if self.config.master_ramdisk:
-                    self.master_ramdisk = download_image(self.config.master_ramdisk, self.context,
-                                         self.master_tmpdir,
-                                         decompress=False)
+                    self.master_ramdisk = download_image(
+                        self.config.master_ramdisk, self.context,
+                        self.master_tmpdir, decompress=False)
                     self.master_boot_tags['{RAMDISK}'] = self._get_rel_path(self.master_ramdisk, self.master_base_tmpdir)
                 if self.config.master_dtb:
-                    self.master_dtb = download_image(self.config.master_dtb, self.context,
-                                     self.master_tmpdir, decompress=False)
+                    self.master_dtb = download_image(
+                        self.config.master_dtb, self.context,
+                        self.master_tmpdir, decompress=False)
                     self.master_boot_tags['{DTB}'] = self._get_rel_path(self.master_dtb, self.master_base_tmpdir)
                 if self.config.master_firmware:
-                    self.master_firmware = download_image(self.config.master_firmware, self.context,
-                                     self.master_tmpdir, decompress=False)
+                    self.master_firmware = download_image(
+                        self.config.master_firmware, self.context,
+                        self.master_tmpdir, decompress=False)
                     self.master_boot_tags['{FIRMWARE}'] = self._get_rel_path(self.master_firmware, self.master_base_tmpdir)
                 if self.config.master_nfsrootfs:
-                    self.master_nfsrootfs = download_image(self.config.master_nfsrootfs, self.context,
-                                           self.master_tmpdir,
-                                           decompress=False)
+                    self.master_nfsrootfs = download_image(
+                        self.config.master_nfsrootfs, self.context,
+                        self.master_tmpdir, decompress=False)
                     self.master_boot_tags['{NFSROOTFS}'] = self._setup_nfs(self.master_nfsrootfs, self.master_tmpdir)
             boot_cmds = self._load_boot_cmds(default='boot_cmds_master',
                                              boot_tags=self.master_boot_tags)

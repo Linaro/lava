@@ -353,6 +353,7 @@ class pxa1928dkb(fastboot_serial):
         if self.target_type == 'android':
             self._adb('wait-for-device')
 
+
 class k3v2(fastboot_serial):
 
     def __init__(self, device):
