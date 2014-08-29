@@ -90,7 +90,7 @@ class ImagePathHandle(object):
                 else:
                     des_name = self.file_name
                 des_path = os.path.join(local_path, des_name)
-            logging.debug("Copying dir from #%s:%s(%s) to %s!" % (self.part, self.path, src_path, des_path))
+            logging.debug("Copying dir from #%s:%s(%s) to %s!", self.part, self.path, src_path, des_path)
             shutil.copytree(src_path, des_path)
         elif os.path.isfile(src_path):
             if not os.path.exists(local_path):
@@ -108,7 +108,7 @@ class ImagePathHandle(object):
                     des_path = os.path.join(local_path, des_name)
                 else:
                     des_path = local_path
-            logging.debug("Copying file from #%s:%s(%s) to %s!" % (self.part, self.path, src_path, des_path))
+            logging.debug("Copying file from #%s:%s(%s) to %s!", self.part, self.path, src_path, des_path)
             shutil.copyfile(src_path, des_path)
         else:
             raise CriticalError('Please check the source file type, we only support file and dir!')
@@ -129,7 +129,7 @@ class ImagePathHandle(object):
                 else:
                     des_name = os.path.basename(src_path)
                 des_path = os.path.join(des_path, des_name)
-            logging.debug("Copying dir from %s to #%s:%s(%s)!" % (des_path, self.part, self.path, src_path))
+            logging.debug("Copying dir from %s to #%s:%s(%s)!", des_path, self.part, self.path, src_path)
             shutil.copytree(src_path, des_path)
         elif os.path.isfile(src_path):
             des_path = '%s/%s' % (self.part_mntdir, self.path)
@@ -145,7 +145,7 @@ class ImagePathHandle(object):
                 if os.path.isdir(des_path):
                     des_name = os.path.basename(src_path)
                     des_path = os.path.join(des_path, des_name)
-            logging.debug("Copying file from %s to #%s:%s(%s)!" % (des_path, self.part, self.path, src_path))
+            logging.debug("Copying file from %s to #%s:%s(%s)!", des_path, self.part, self.path, src_path)
             shutil.copyfile(src_path, des_path)
         else:
             raise CriticalError('Please check the source file type, we only support file and dir!')
@@ -156,13 +156,13 @@ class ImagePathHandle(object):
         # delete the file/dir from Image
         des_path = '%s/%s' % (self.part_mntdir, self.path)
         if os.path.isdir(des_path):
-            logging.debug("Removing dir(%s) %s from #%s partition of image!" % (des_path, self.path, self.part))
+            logging.debug("Removing dir(%s) %s from #%s partition of image!", des_path, self.path, self.part)
             shutil.rmtree(des_path)
         elif os.path.isfile(des_path):
-            logging.debug("Removing file(%s) %s from #%s partition of image!" % (des_path, self.path, self.part))
+            logging.debug("Removing file(%s) %s from #%s partition of image!", des_path, self.path, self.part)
             os.remove(des_path)
         else:
-            logging.warning('Unrecognized file type or file/dir doesn\'t exist(%s)! Skipped' % des_path)
+            logging.warning('Unrecognized file type or file/dir doesn\'t exist(%s)! Skipped', des_path)
 
 
 def get_target(context, device_config):
@@ -287,7 +287,7 @@ class Target(object):
             for file_name in files:
                 if re.match(pattern, file_name):
                     src = os.path.join(root, file_name)
-                    logging.info('Loading file: %s' % src)
+                    logging.info('Loading file: %s', src)
                     if name is not None:
                         dest = os.path.join(odir, name)
                         new_src = os.path.join(root, name)
@@ -430,7 +430,7 @@ class Target(object):
         elif boot_cmds_boot_options:
             logging.info('Overriding boot_cmds from boot_options')
             boot_cmds = options['boot_cmds'].value
-            logging.info('boot_option=%s' % boot_cmds)
+            logging.info('boot_option=%s', boot_cmds)
             boot_cmds = self.config.cp.get('__main__', boot_cmds)
             boot_cmds = utils.string_to_list(boot_cmds.encode('ascii'))
         # No interactive or boot_option overrides are present,
@@ -489,7 +489,7 @@ class Target(object):
         """
         # Delete the redundant element "" at the end of boot_cmds
         while True:
-            if boot_cmds[-1] == "":
+            if boot_cmds and boot_cmds[-1] == "":
                 del boot_cmds[-1]
             else:
                 break
@@ -540,7 +540,7 @@ class Target(object):
         boottime = "{0:.2f}".format(time.time() - start)
         boottime_meta = {'bootloader-load-time': boottime}
         self.context.test_data.add_metadata(boottime_meta)
-        logging.debug("Bootloader load time: %s seconds" % boottime)
+        logging.debug("Bootloader load time: %s seconds", boottime)
 
     def _target_extract(self, runner, tar_file, dest, timeout=-1, busybox=False):
         tmpdir = self.context.config.lava_image_tmpdir
@@ -671,7 +671,7 @@ class Target(object):
             url_base = self._start_busybox_http_server(runner, ip)
 
             url = url_base + '/fs.tgz'
-            logging.info("Fetching url: %s" % url)
+            logging.info("Fetching url: %s", url)
             tf = download_image(url, self.context, self.scratch_dir,
                                 decompress=False)
 
@@ -868,11 +868,11 @@ class Target(object):
                 customize_info["image"].append(temp_dic)
             else:
                 if "delete" in temp_dic["des"]:
-                    logging.warning("Do not try to delete the remote file %s" % temp_dic["src"])
+                    logging.warning("Do not try to delete the remote file %s", temp_dic["src"])
                     temp_dic["des"].remove("delete")
                 customize_info["remote"].append(temp_dic)
 
-        logging.debug("Do customizing image with %s" % customize_info)
+        logging.debug("Do customizing image with %s", customize_info)
 
         return customize_info
 
@@ -905,8 +905,8 @@ class Target(object):
                     def_item = ImagePathHandle(image, des_image_path, self.config, self.mount_info)
                     def_item.copy_from(customize_object["src"])
         else:
-            logging.debug("Skip customizing temp image %s !" % image)
-            logging.debug("Customize object is %s !" % self.config.customize)
+            logging.debug("Skip customizing temp image %s !", image)
+            logging.debug("Customize object is %s !", self.config.customize)
 
     def customize_image(self, image=None):
         if self.config.boot_part != self.config.root_part:

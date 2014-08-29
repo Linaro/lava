@@ -170,13 +170,13 @@ class BaseDriver(object):
         if ramdisk is not None:
             self._ramdisk = self._get_image(ramdisk)
             if modules is not None:
-                    modules = download_image(modules, self.context,
-                                             self._working_dir,
-                                             decompress=False)
-                    ramdisk_dir = extract_ramdisk(self._ramdisk, self.working_dir,
-                                                  is_uboot=False)
-                    extract_modules(modules, ramdisk_dir)
-                    self._ramdisk = create_ramdisk(ramdisk_dir, self._working_dir)
+                modules = download_image(modules, self.context,
+                                         self._working_dir,
+                                         decompress=False)
+                ramdisk_dir = extract_ramdisk(self._ramdisk, self.working_dir,
+                                              is_uboot=False)
+                extract_modules(modules, ramdisk_dir)
+                self._ramdisk = create_ramdisk(ramdisk_dir, self._working_dir)
         if rootfs is not None:
             self._default_boot_cmds = 'boot_cmds_rootfs'
             rootfs = self._get_image(rootfs)
@@ -352,6 +352,7 @@ class pxa1928dkb(fastboot_serial):
 
         if self.target_type == 'android':
             self._adb('wait-for-device')
+
 
 class k3v2(fastboot_serial):
 

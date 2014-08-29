@@ -92,13 +92,13 @@ class stmc(BaseDriver):
                                      scratch_dir,
                                      decompress=False)
             if modules is not None:
-                    modules = download_image(modules, self.context,
-                                             scratch_dir,
-                                             decompress=False)
-                    ramdisk_dir = extract_ramdisk(ramdisk, scratch_dir,
-                                                  is_uboot=False)
-                    extract_modules(modules, ramdisk_dir)
-                    ramdisk = create_ramdisk(ramdisk_dir, scratch_dir)
+                modules = download_image(modules, self.context,
+                                         scratch_dir,
+                                         decompress=False)
+                ramdisk_dir = extract_ramdisk(ramdisk, scratch_dir,
+                                              is_uboot=False)
+                extract_modules(modules, ramdisk_dir)
+                ramdisk = create_ramdisk(ramdisk_dir, scratch_dir)
             stmc_command = ' '.join([stmc_command,
                                     self.config.jtag_stmc_ramdisk_command.format(RAMDISK=ramdisk)])
         if dtb is not None:
@@ -118,15 +118,15 @@ class stmc(BaseDriver):
             self._boot_tags['{NFSROOTFS}'] = lava_nfsrootfs
             self._default_boot_cmds = 'boot_cmds_nfs'
             if modules is not None and ramdisk is None:
-                    modules = download_image(modules, self.context,
-                                             scratch_dir,
-                                             decompress=False)
-                    extract_modules(modules, lava_nfsrootfs)
+                modules = download_image(modules, self.context,
+                                         scratch_dir,
+                                         decompress=False)
+                extract_modules(modules, lava_nfsrootfs)
 
         # Add suffix for boot commands
         self._stmc_command = stmc_command + ' --'
 
-        if self.context.test_data.metadata.get('is_slave', False):
+        if self.context.test_data.metadata.get('is_slave', 'false') == 'true':
             logging.info("Booting in the master/slave mode, as *slave*")
             logging.info("Sending the kernel, dtb, nfsrootfs urls")
             self.context.transport.request_send('lava_ms_slave_data',
@@ -162,7 +162,7 @@ class stmc(BaseDriver):
         return True
 
     def connect(self, boot_cmds):
-        if self.context.test_data.metadata.get('is_slave', False):
+        if self.context.test_data.metadata.get('is_slave', 'false') == 'true':
             # Wait for the STMC2 to be ready
             self.context.transport.request_wait('lava_ms_ready')
 
@@ -195,7 +195,7 @@ class stmc(BaseDriver):
                 logging.info("Waiting for STMC to initialize")
                 success = False
                 for loop_index in range(1, 5):
-                    logging.info("  checking STMC status (%d)" % (loop_index))
+                    logging.info("  checking STMC status (%d)", loop_index)
                     if self.stmc_status_ok():
                         success = True
                         break

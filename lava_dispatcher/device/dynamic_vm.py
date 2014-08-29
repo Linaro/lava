@@ -149,7 +149,7 @@ class kvm_adapter(object):
             return None
 
         image = os.path.basename(local_image)
-        logging.info("Copying %s to the host device" % image)
+        logging.info("Copying %s to the host device", image)
 
         vm_images_dir = self.vm_images_dir
         remote_image = '%s/%s' % (vm_images_dir, os.path.basename(local_image))

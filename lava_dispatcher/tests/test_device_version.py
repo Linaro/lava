@@ -60,3 +60,24 @@ class TestDeviceVersion(LavaDispatcherTestCase):
         target = _create_qemu_target({'qemu_binary': fake_qemu})
         device_version = target.get_device_version()
         assert(re.search('^[0-9.]+', device_version))
+
+
+class TestDevice(LavaDispatcherTestCase):
+
+    def setUp(self):
+        super(TestDevice, self).setUp()
+        self.target = Target(None, None)
+
+    def test_boot_cmds_preprocessing_empty_list(self):
+        boot_cmds = []
+        expexted = []
+
+        return_value = self.target._boot_cmds_preprocessing(boot_cmds)
+        self.assertEqual(return_value, expexted)
+
+    def test_boot_cmds_preprocessing(self):
+        boot_cmds = ["foo", "bar", ""]
+        expected = ["foo", "bar"]
+
+        return_value = self.target._boot_cmds_preprocessing(boot_cmds)
+        self.assertEqual(return_value, expected)

@@ -190,26 +190,26 @@ class FastModelTarget(Target):
                                self.config.simulator_kernel_files)
         # Initrd is needed only for b.L models
         if self._initrd is None and self.config.simulator_initrd_files:
-            logging.warning('No INITRD found, %r' %
+            logging.warning('No INITRD found, %r',
                             self.config.simulator_initrd_files)
         # DTB is needed only for b.L models
         if self._dtb is None and self.config.simulator_dtb_files:
-            logging.warning('No DTB found, %r' %
+            logging.warning('No DTB found, %r',
                             self.config.simulator_dtb_files)
         # SECURE FLASHLOADERs are needed only for base and cortex models
         if self._bl1 is None and self.config.simulator_bl1_files:
             raise RuntimeError('No SECURE FLASHLOADER found, %r' %
                                self.config.simulator_bl1_files)
         if self._bl2 is None and self.config.simulator_bl2_files:
-            logging.warning('No SECURE FLASHLOADER found, %r' %
+            logging.warning('No SECURE FLASHLOADER found, %r',
                             self.config.simulator_bl2_files)
         if self._bl31 is None and self.config.simulator_bl31_files:
-            logging.warning('No SECURE FLASHLOADER found, %r' %
+            logging.warning('No SECURE FLASHLOADER found, %r',
                             self.config.simulator_bl31_files)
 
     def deploy_android(self, boot, system, data, rootfstype, bootloadertype,
                        target_type):
-        logging.info("Deploying Android on %s" % self.config.hostname)
+        logging.info("Deploying Android on %s", self.config.hostname)
 
         self._bootloadertype = bootloadertype
 
@@ -340,7 +340,7 @@ class FastModelTarget(Target):
                 yield path
 
     def extract_tarball(self, tarball_url, partition, directory='/'):
-        logging.info('extracting %s to target' % tarball_url)
+        logging.info('extracting %s to target', tarball_url)
 
         with image_partition_mounted(self._sd_image, partition) as mntdir:
             tb = download_image(tarball_url, self.context, decompress=False)
@@ -407,7 +407,7 @@ class FastModelTarget(Target):
 
         # the simulator proc only has stdout/stderr about the simulator
         # we hook up into a telnet port which emulates a serial console
-        logging.info('launching fastmodel with command %r' % sim_cmd)
+        logging.info('launching fastmodel with command %r', sim_cmd)
         # The base and cortex models must be invoked from the output directory
         # to ensure that the secure firmware can chainload one another.
         # bl1 -> bl2 -> bl3.
@@ -415,7 +415,7 @@ class FastModelTarget(Target):
         self._sim_proc = self.context.spawn(sim_cmd, cwd=odir, timeout=1200)
         self._sim_proc.expect(self.PORT_PATTERN, timeout=300)
         self._serial_port = self._sim_proc.match.groups()[0]
-        logging.info('serial console port on: %s' % self._serial_port)
+        logging.info('serial console port on: %s', self._serial_port)
 
         match = self._sim_proc.expect(["ERROR: License check failed!",
                                        "Simulation is started"])

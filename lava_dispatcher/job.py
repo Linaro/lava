@@ -98,6 +98,10 @@ job_schema = {
                         'items': {'type': 'string'},
                         'optional': True,
                     },
+                    'is_slave': {
+                        'optional': True,
+                        'type': 'boolean',
+                    },
                 },
             },
         },
@@ -137,10 +141,6 @@ job_schema = {
                             'role': {
                                 'optional': False,
                                 'type': 'string',
-                            },
-                            'is_slave': {
-                                'optional': True,
-                                'type': 'boolean',
                             },
                             'device_type': {
                                 'optional': False,
@@ -323,7 +323,8 @@ class LavaTestJob(object):
 
         if 'target_group' in self.job_data:
             metadata['target_group'] = self.job_data['target_group']
-            metadata['is_slave'] = self.job_data['is_slave']
+            if 'is_slave' in self.job_data:
+                metadata['is_slave'] = 'true' if self.job_data.get('is_slave') else 'false'
             self.context.test_data.add_metadata(metadata)
 
             if 'role' in self.job_data:
