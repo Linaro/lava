@@ -489,7 +489,7 @@ class Target(object):
         """
         # Delete the redundant element "" at the end of boot_cmds
         while True:
-            if boot_cmds[-1] == "":
+            if boot_cmds and boot_cmds[-1] == "":
                 del boot_cmds[-1]
             else:
                 break
