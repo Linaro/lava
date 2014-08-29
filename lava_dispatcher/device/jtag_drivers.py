@@ -126,7 +126,7 @@ class stmc(BaseDriver):
         # Add suffix for boot commands
         self._stmc_command = stmc_command + ' --'
 
-        if self.context.test_data.metadata.get('is_slave', False):
+        if self.context.test_data.metadata.get('is_slave', 'false') == 'true':
             logging.info("Booting in the master/slave mode, as *slave*")
             logging.info("Sending the kernel, dtb, nfsrootfs urls")
             self.context.transport.request_send('lava_ms_slave_data',
@@ -162,7 +162,7 @@ class stmc(BaseDriver):
         return True
 
     def connect(self, boot_cmds):
-        if self.context.test_data.metadata.get('is_slave', False):
+        if self.context.test_data.metadata.get('is_slave', 'false') == 'true':
             # Wait for the STMC2 to be ready
             self.context.transport.request_wait('lava_ms_ready')
 
