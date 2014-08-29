@@ -98,6 +98,10 @@ job_schema = {
                         'items': {'type': 'string'},
                         'optional': True,
                     },
+                    'is_slave': {
+                        'optional': True,
+                        'type': 'boolean',
+                    },
                 },
             },
         },
@@ -137,10 +141,6 @@ job_schema = {
                             'role': {
                                 'optional': False,
                                 'type': 'string',
-                            },
-                            'is_slave': {
-                                'optional': True,
-                                'type': 'boolean',
                             },
                             'device_type': {
                                 'optional': False,
