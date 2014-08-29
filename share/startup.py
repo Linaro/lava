@@ -37,6 +37,8 @@ from django.db import transaction
 transaction.enter_transaction_management()
 
 print(" - creating rollback function")
+
+
 def rollback():
     transaction.rollback()
 print("=============================")

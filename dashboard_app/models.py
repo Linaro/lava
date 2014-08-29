@@ -2033,14 +2033,14 @@ class ImageReportChart(models.Model):
                 image_chart_test__image_chart_filter__image_chart=self)
 
             for chart_test_user in chart_test_users:
-                if chart_test_user.is_visible == False:
+                if not chart_test_user.is_visible:
                     chart_data["hidden_tests"].append(
                         chart_test_user.image_chart_test.id)
         else:
             chart_test_case_users = ImageChartTestCaseUser.objects.filter(
                 image_chart_test_case__image_chart_filter__image_chart=self)
             for chart_test_case_user in chart_test_case_users:
-                if chart_test_case_user.is_visible == False:
+                if not chart_test_case_user.is_visible:
                     chart_data["hidden_tests"].append(
                         chart_test_case_user.image_chart_test_case.id)
 

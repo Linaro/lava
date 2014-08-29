@@ -127,7 +127,8 @@ def split_multi_job(json_jobdata, target_group):
                 node_json[role][c]["job_name"] = json_jobdata["job_name"]
             if clients.get("tags", False):
                 node_json[role][c]["tags"] = clients["tags"]
-            node_json[role][c]["is_slave"] = clients.get("is_slave", False)
+            if "is_slave" in clients:
+                node_json[role][c]["is_slave"] = clients["is_slave"]
             node_json[role][c]["group_size"] = group_count
             node_json[role][c]["target_group"] = target_group
             node_json[role][c]["actions"] = node_actions[role]
@@ -212,7 +213,8 @@ def split_vm_job(json_jobdata, vm_group):
                 node_json[role][c]["auto_start_vms"] = auto_start_vms
             if json_jobdata.get("job_name", False):
                 node_json[role][c]["job_name"] = json_jobdata["job_name"]
-            node_json[role][c]["is_slave"] = json_jobdata.get("is_slave", False)
+            if "is_slave" in json_jobdata:
+                node_json[role][c]["is_slave"] = json_jobdata["is_slave"]
             node_json[role][c]["group_size"] = group_count
             node_json[role][c]["target_group"] = vm_group
             node_json[role][c]["actions"] = node_actions[role]

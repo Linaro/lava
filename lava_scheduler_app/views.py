@@ -1185,7 +1185,7 @@ def _prepare_template(request):
             boot_cmds = request.POST.get("boot_options").replace("\r", "")
             android_boot_config = {
                 "ANDROID_BOOT_OPTIONS_PARAMETER":
-                    [str(x) for x in boot_cmds.split("\n")]
+                [str(x) for x in boot_cmds.split("\n")]
             }
         else:
             android_boot_template = copy.deepcopy(ANDROID_BOOT_NO_CMDS)

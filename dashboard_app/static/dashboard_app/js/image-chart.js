@@ -823,8 +823,10 @@ $(document).ready(function () {
 
                 // Load hidden tests data.
                 var show = true;
-                if (this.chart_data.user["hidden_tests"].indexOf(plot_data[test_filter_id]["chart_test_id"]) != -1 ) {
-                    show = false;
+                if (this.chart_data.user) { // Is authenticated.
+                    if (this.chart_data.user["hidden_tests"].indexOf(plot_data[test_filter_id]["chart_test_id"]) != -1 ) {
+                        show = false;
+                    }
                 }
 
                 this.legend_items.push({
