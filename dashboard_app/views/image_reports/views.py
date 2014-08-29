@@ -238,7 +238,7 @@ def image_report_delete(request, name):
     image_report = get_object_or_404(ImageReport, name=name)
     image_report.delete()
     return HttpResponseRedirect(reverse(
-            'lava.dashboard.image_report.report_list'))
+        'lava.dashboard.image_report.report_list'))
 
 
 @login_required
@@ -396,7 +396,6 @@ def image_chart_settings_update(request, name, id):
         instance = ImageChartUser()
         instance.image_chart_id = id
         instance.user = request.user
-
 
     # Update the chart test/test case user table with hidden test ids.
     try:

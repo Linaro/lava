@@ -32,7 +32,6 @@ class Migration(SchemaMigration):
         # Adding unique constraint on 'ImageChartTestUser', fields ['image_chart_test', 'user']
         db.create_unique(u'dashboard_app_imagecharttestuser', ['image_chart_test_id', 'user_id'])
 
-
     def backwards(self, orm):
         # Removing unique constraint on 'ImageChartTestUser', fields ['image_chart_test', 'user']
         db.delete_unique(u'dashboard_app_imagecharttestuser', ['image_chart_test_id', 'user_id'])
@@ -45,7 +44,6 @@ class Migration(SchemaMigration):
 
         # Deleting model 'ImageChartTestUser'
         db.delete_table(u'dashboard_app_imagecharttestuser')
-
 
     models = {
         u'auth.group': {
