@@ -1141,10 +1141,12 @@ class TestRun(models.Model):
         are no test parameters, then we return None.
         """
         for src in self.sources.all():
-            if src.test_params != "":
-                test_params = {}
-                for k, v in ast.literal_eval(src.test_params).items():
-                    test_params[str(k)] = str(v)
+            if src.test_params:
+                test_struct = ast.literal_eval(src.test_params)
+                if type(test_struct) == dict:
+                    test_params = {}
+                    for k, v in test_struct.items():
+                        test_params[str(k)] = str(v)
                 return test_params
         return None
 
