@@ -237,7 +237,7 @@ class DatabaseJobSource(object):
                 device.state_transition_to(Device.RESERVED, message="Reserved for job %s" % job.display_id)
                 self._commit_transaction(src='%s state' % device.hostname)
                 self.logger.info('%s reserved for job %s', device.hostname,
-                                                           job.id)
+                                 job.id)
                 job.save()
                 device.save()
                 if device in devices:
@@ -330,7 +330,7 @@ class DatabaseJobSource(object):
             device.state_transition_to(Device.RUNNING, message=msg, job=job)
             self._commit_transaction(src='%s state' % device.hostname)
             self.logger.info('%s started running job %s', device.hostname,
-                                                          job.id)
+                             job.id)
         device.save()
         job.start_time = datetime.datetime.utcnow()
         shutil.rmtree(job.output_dir, ignore_errors=True)
