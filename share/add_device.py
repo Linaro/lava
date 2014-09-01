@@ -196,14 +196,14 @@ def main(dt, name, options):
                 print "%s = %s" % (key, config[key])
         print simplejson.dumps(template, indent=4)
         return 0
-    with open(deviceconf, 'wt') as f:
+    with open(deviceconf, 'w') as f:
         for key in sequence:
             if key in config:
                 f.write("%s = %s\n" % (key, config[key]))
     fd, json = tempfile.mkstemp(suffix=".json", text=True)
     if options.bundlestream:
         template.append(template_bundle_stream())
-    with open(json, 'wt') as f:
+    with open(json, 'w') as f:
         simplejson.dump(template, f, indent=4)
         f.write("\n")
     # sadly, lava-server manage loaddata exits 0 even if no data was loaded
