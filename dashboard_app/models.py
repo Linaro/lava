@@ -63,11 +63,6 @@ from dashboard_app.managers import BundleManager, TestRunDenormalizationManager
 from dashboard_app.signals import bundle_was_deserialized
 
 
-# Fix some django issues we ran into
-from dashboard_app.patches import patch
-patch()
-
-
 def _help_max_length(max_length):
     return ungettext(
         u"Maximum length: {0} character",
