@@ -105,7 +105,7 @@ class Job(object):
             self.logger.warning("self._signals is empty!")
             signame = 'SIGKILL'
         self.logger.info(
-            'attempting to kill job with signal %s' % signame)
+            'attempting to kill job with signal %s', signame)
         try:
             self._protocol.transport.signalProcess(getattr(signal, signame))
         except ProcessExitedAlready:
