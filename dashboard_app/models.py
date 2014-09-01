@@ -1147,7 +1147,7 @@ class TestRun(models.Model):
                     test_params = {}
                     for k, v in test_struct.items():
                         test_params[str(k)] = str(v)
-                return test_params
+                    return test_params
         return None
 
 
