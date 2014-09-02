@@ -115,7 +115,7 @@ class WorkerData:
             else:
                 return
         except ValueError:
-            self.logger.debug("Worker %s unavailable" % utils.get_fqdn())
+            self.logger.debug("Worker %s unavailable", utils.get_fqdn())
             self.populate_complete_worker_data()
 
         MAX_RETRIES = 3
@@ -128,16 +128,16 @@ class WorkerData:
                 self.logger.debug("Heartbeat updated")
                 return
             except (CommandError, URLError, IOError) as err:
-                self.logger.debug("Error message: %s" % str(err))
+                self.logger.debug("Error message: %s", str(err))
             except xmlrpclib.Fault as err:
                 time.sleep(1)
-                self.logger.debug("Retrying heartbeat update (%d) ..." % retry)
+                self.logger.debug("Retrying heartbeat update (%d) ...", retry)
             except xmlrpclib.ProtocolError as err:
                 self.logger.error("Protocol error occured")
-                self.logger.error("URL: %s" % err.url)
-                self.logger.error("HTTP/HTTPS headers: %s" % err.headers)
-                self.logger.error("Error code: %d" % err.errcode)
-                self.logger.error("Error message: %s" % err.errmsg)
+                self.logger.error("URL: %s", err.url)
+                self.logger.error("HTTP/HTTPS headers: %s", err.headers)
+                self.logger.error("Error code: %d", err.errcode)
+                self.logger.error("Error message: %s", err.errmsg)
                 raise err
         self.logger.error("Unable to update the Heartbeat, trying later")
 
@@ -162,4 +162,4 @@ class WorkerData:
                 worker.record_last_master_scheduler_tick()
         except Exception as err:
             self.logger.error("Unable to record last master scheduler tick.")
-            self.logger.error("Details: %s" % err)
+            self.logger.error("Details: %s", err)

@@ -63,11 +63,6 @@ from dashboard_app.managers import BundleManager, TestRunDenormalizationManager
 from dashboard_app.signals import bundle_was_deserialized
 
 
-# Fix some django issues we ran into
-from dashboard_app.patches import patch
-patch()
-
-
 def _help_max_length(max_length):
     return ungettext(
         u"Maximum length: {0} character",
@@ -1141,11 +1136,13 @@ class TestRun(models.Model):
         are no test parameters, then we return None.
         """
         for src in self.sources.all():
-            if src.test_params != "":
-                test_params = {}
-                for k, v in ast.literal_eval(src.test_params).items():
-                    test_params[str(k)] = str(v)
-                return test_params
+            if src.test_params:
+                test_struct = ast.literal_eval(src.test_params)
+                if type(test_struct) == dict:
+                    test_params = {}
+                    for k, v in test_struct.items():
+                        test_params[str(k)] = str(v)
+                    return test_params
         return None
 
 

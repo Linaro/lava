@@ -63,7 +63,7 @@ class JobQueue(Service):
         for job in jobs:
             new_job = JobRunner(self.source, job, self.dispatcher,
                                 self.reactor, self.daemon_options)
-            self.logger.info("Starting Job: %d " % job.id)
+            self.logger.info("Starting Job: %d ", job.id)
 
             new_job.start()
 

@@ -19,7 +19,6 @@
 """
 Unit tests for Dashboard API (XML-RPC interface)
 """
-import contextlib
 import xmlrpclib
 
 from django.core.urlresolvers import reverse
@@ -131,10 +130,8 @@ class DashboardAPIBundlesTests(DashboardXMLRPCViewsTestCase):
         Make a bunch of bundles (all in a public branch) and check that
         they are returned by the XML-RPC request.
         """
-        with contextlib.nested(
-            fixtures.created_bundle_streams(self.bundle_streams),
-            fixtures.created_bundles(self.bundles)
-        ):
+        with fixtures.created_bundle_streams(self.bundle_streams),\
+             fixtures.created_bundles(self.bundles):
             results = self.xml_rpc_call('bundles', self.query)
             self.assertEqual(len(results), len(self.expected_results))
             with fixtures.test_loop(zip(results, self.expected_results)) as loop_items:
@@ -324,11 +321,9 @@ class DashboardAPIPutFailureTests(DashboardXMLRPCViewsTestCase):
     ]
 
     def test_put_failure(self):
-        with contextlib.nested(
-            fixtures.created_bundle_streams(
-                [] if getattr(self, 'do_not_create', False) else [self.pathname]),
-            fixtures.created_bundles(getattr(self, 'bundles', []))
-        ):
+        with fixtures.created_bundle_streams([] if getattr(
+                self, 'do_not_create', False) else [self.pathname]),\
+            fixtures.created_bundles(getattr(self, 'bundles', [])):
             try:
                 self.xml_rpc_call(
                     "put", self.content, self.content_filename, self.pathname)

@@ -26,9 +26,10 @@ $(window).ready(
             },100);
         });
 
-        $("#json-input").blur(function() {
-            validate_input($("#json-input").val());
-        });
+        $("#json-input").keypress(function() {
+            $("#submit").attr("disabled", "disabled");
+            $("#json-valid-container").hide();
+         });
 
         $("#submit").attr("disabled", "disabled");
 

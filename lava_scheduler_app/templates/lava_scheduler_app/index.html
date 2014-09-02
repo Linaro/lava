@@ -54,10 +54,10 @@
 
 {% render_table worker_table %}
 
-<img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
-     alt="{{ up }}" />&nbsp; indicates the worker is <b>up</b>,
-<img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
-     alt="{{ down }}" />&nbsp; indicates the worker is <b>down</b>.
+<span class="glyphicon glyphicon-thumbs-up text-success"></span>
+indicates the worker is <b>up</b>,
+<span class="glyphicon glyphicon-thumbs-down text-danger"></span>
+indicates the worker is <b>down</b>.
 
 {% endblock %}
 
