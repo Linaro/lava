@@ -2130,24 +2130,42 @@ class ImageReportChart(models.Model):
                     comments__isnull=True).count() != 0
 
                 test_filter_id = "%s-%s" % (test_id, image_chart_filter.id)
-                chart_item = {
-                    "filter_rep": image_chart_filter.representation,
-                    "test_filter_id": test_filter_id,
-                    "chart_test_id": chart_test_id,
-                    "link": test_run.get_absolute_url(),
-                    "alias": alias,
-                    "number": str(match.tag),
-                    "date": str(test_run.bundle.uploaded_on),
-                    "pass": denorm.count_fail == 0,
-                    "passes": denorm.count_pass,
-                    "total": denorm.count_pass + denorm.count_fail,
-                    "test_run_uuid": test_run.analyzer_assigned_uuid,
-                    "bug_links": bug_links,
-                    "metadata_content": metadata_content,
-                    "comments": has_comments,
-                }
 
-                chart_data["test_data"].append(chart_item)
+                # Find already existing chart item (this happens if we're
+                # dealing with parametrized tests) and add the values instead
+                # of creating new chart item.
+                found = False
+                for chart_item in chart_data["test_data"]:
+                    if chart_item["test_filter_id"] == test_filter_id and \
+                            chart_item["number"] == str(match.tag):
+                        chart_item["passes"] += denorm.count_pass
+                        chart_item["total"] += denorm.count_pass + \
+                            denorm.count_fail
+                        chart_item["link"] = test_run.bundle.get_absolute_url()
+                        chart_item["pass"] &= denorm.count_fail == 0
+                        found = True
+
+                # If no existing chart item was found, create a new one.
+                if not found:
+                    chart_item = {
+                        "filter_rep": image_chart_filter.representation,
+                        "test_filter_id": test_filter_id,
+                        "chart_test_id": chart_test_id,
+                        "link": test_run.get_absolute_url(),
+                        "bundle_link": test_run.bundle.get_absolute_url(),
+                        "alias": alias,
+                        "number": str(match.tag),
+                        "date": str(test_run.bundle.uploaded_on),
+                        "pass": denorm.count_fail == 0,
+                        "passes": denorm.count_pass,
+                        "total": denorm.count_pass + denorm.count_fail,
+                        "test_run_uuid": test_run.analyzer_assigned_uuid,
+                        "bug_links": bug_links,
+                        "metadata_content": metadata_content,
+                        "comments": has_comments,
+                        }
+
+                    chart_data["test_data"].append(chart_item)
 
     def get_chart_test_case_data(self, user, image_chart_filter, filter_data,
                                  chart_data):
