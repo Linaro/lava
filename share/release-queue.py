@@ -76,6 +76,8 @@ def main():
     parser = argparse.ArgumentParser(description='Show the missing commits in release branch')
     parser.add_argument('-c', '--changelog', dest='changelog', action='store_true',
                         default=False, help='Print the changelog')
+    parser.add_argument('-b', '--branch', dest='branch',
+                        default='release', help='branch to compare with master')
     args = parser.parse_args()
 
     # Check the current working directory
@@ -87,7 +89,7 @@ def main():
 
     # Get all change ids in master and release
     master = get_change_ids('master')
-    release = get_change_ids('release')
+    release = get_change_ids(args.branch)
 
     diff = list(set(master) - set(release))
 
