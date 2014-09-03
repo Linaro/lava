@@ -70,7 +70,7 @@ class schroot(BaseDriver):
                                                   '--chroot',
                                                   chroot]).strip()
             self.__session__ = 'session:' + session_id
-            logging.info("schroot session created with id %s" %
+            logging.info("schroot session created with id %s",
                          self.__session__)
 
         return self.__session__
@@ -82,16 +82,16 @@ class schroot(BaseDriver):
                                                      '--chroot',
                                                      self.session]).strip()
 
-        yield(self.__root__)
+        yield self.__root__
 
     def connect(self):
-        logging.info("Running schroot session %s" % self.session)
+        logging.info("Running schroot session %s", self.session)
         cmd = 'schroot --run-session --chroot %s' % self.session
         proc = self.context.spawn(cmd, timeout=1200)
         return proc
 
     def finalize(self, proc):
-        logging.info("Finalizing schroot session %s" % self.session)
+        logging.info("Finalizing schroot session %s", self.session)
         subprocess.check_call(['schroot', '--end-session', '--chroot',
                                self.session])
 
@@ -100,7 +100,7 @@ class host(BaseDriver):
 
     @contextmanager
     def root(self):
-        yield('/')
+        yield '/'
 
     def connect(self):
         return self.context.spawn('bash')
@@ -134,7 +134,7 @@ class ssh(BaseDriver):
             '-F', self.ssh_config,
         ])
         try:
-            yield(mount_point)
+            yield mount_point
         finally:
             subprocess.check_call(['fusermount', '-u', mount_point])
 

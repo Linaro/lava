@@ -170,13 +170,13 @@ class BaseDriver(object):
         if ramdisk is not None:
             self._ramdisk = self._get_image(ramdisk)
             if modules is not None:
-                    modules = download_image(modules, self.context,
-                                             self._working_dir,
-                                             decompress=False)
-                    ramdisk_dir = extract_ramdisk(self._ramdisk, self.working_dir,
-                                                  is_uboot=False)
-                    extract_modules(modules, ramdisk_dir)
-                    self._ramdisk = create_ramdisk(ramdisk_dir, self._working_dir)
+                modules = download_image(modules, self.context,
+                                         self._working_dir,
+                                         decompress=False)
+                ramdisk_dir = extract_ramdisk(self._ramdisk, self.working_dir,
+                                              is_uboot=False)
+                extract_modules(modules, ramdisk_dir)
+                self._ramdisk = create_ramdisk(ramdisk_dir, self._working_dir)
         if rootfs is not None:
             self._default_boot_cmds = 'boot_cmds_rootfs'
             rootfs = self._get_image(rootfs)
@@ -323,6 +323,35 @@ class capri(fastboot_serial):
     def boot(self, boot_cmds=None):
         self.fastboot.flash('boot', self.__boot_image__)
         self.fastboot('reboot')
+
+
+class pxa1928dkb(fastboot_serial):
+
+    def __init__(self, device):
+        super(pxa1928dkb, self).__init__(device)
+
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
+                             bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
+                             target_type, scratch_dir):
+        raise CriticalError('This platform does not support kernel deployment!')
+
+    def connect(self):
+        if self.config.connection_command:
+            proc = connect_to_serial(self.context)
+        else:
+            raise CriticalError('The connection_command is not defined!')
+
+        return proc
+
+    def erase_boot(self):
+        pass
+
+    def boot(self, boot_cmds=None):
+        self.fastboot.flash('boot', self.__boot_image__)
+        self.fastboot('reboot')
+
+        if self.target_type == 'android':
+            self._adb('wait-for-device')
 
 
 class k3v2(fastboot_serial):

@@ -1,17 +1,42 @@
-import os
-from StringIO import StringIO
-import unittest
-import yaml
-import simplejson
+# Copyright (C) 2014 Linaro Limited
+#
+# Author: Neil Williams <neil.williams@linaro.org>
+#
+# This file is part of LAVA Dispatcher.
+#
+# LAVA Dispatcher is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# LAVA Dispatcher is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along
+# with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.pipeline import *
-from lava_dispatcher.pipeline.job_actions.deploy.kvm import DeployAction, DeployKVM
-from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.config import get_device_config
-from contextlib import GeneratorContextManager
+import os
+import logging
+import glob
+
+from lava_dispatcher.pipeline.action import Pipeline, Action, RetryAction, JobError
 from lava_dispatcher.pipeline.test.test_basic import Factory
 from lava_dispatcher.tests.helper import LavaDispatcherTestCase
-from lava_dispatcher.pipeline.job_actions.deploy.download import DownloaderAction
+from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
+from lava_dispatcher.pipeline.job import Job
+from lava_dispatcher.pipeline.actions.deploy import DeployAction
+from lava_dispatcher.pipeline.actions.deploy.mount import (
+    MountAction,
+    LoopCheckAction,
+    LoopMountAction,
+    UnmountAction,
+    OffsetAction
+)
+from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction, CustomisationAction
+from lava_dispatcher.pipeline.actions.deploy.testdef import TestDefinitionAction
 
 
 class TestBasicJob(LavaDispatcherTestCase):
@@ -130,9 +155,10 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
         checksum = None
         customise = None
         testdef = None
+        overlay = None
         unmount = None
         self.assertTrue(os.path.exists(self.job.parameters['output_dir']))
-        self.assertEqual(len(self.job.pipeline.describe().values()), 10)
+        self.assertEqual(len(self.job.pipeline.describe().values()), 16)
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
                 # check parser has created a suitable deployment
@@ -141,15 +167,18 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
                 checksum = action.pipeline.children[action.pipeline][1]
                 self.assertEqual(checksum.name, "checksum_action")
                 mount = action.pipeline.children[action.pipeline][2]
+                self.assertIsInstance(mount.internal_pipeline, Pipeline)
                 self.assertEqual(mount.name, "mount_action")
                 customise = action.pipeline.children[action.pipeline][3]
                 self.assertEqual(customise.name, "customise")
                 testdef = action.pipeline.children[action.pipeline][4]
                 self.assertEqual(testdef.name, "test-definition")
-                unmount = action.pipeline.children[action.pipeline][5]
+                overlay = action.pipeline.children[action.pipeline][5]
+                self.assertEqual(overlay.name, "lava-overlay")
+                unmount = action.pipeline.children[action.pipeline][6]
                 self.assertEqual(unmount.name, "umount")
                 with self.assertRaises(IndexError):
-                    type(action.pipeline.children[action.pipeline][6])
+                    type(action.pipeline.children[action.pipeline][7])
                 # FIXME: deployment includes overlaying the test definitions
                 # deploy needs to download with retry
                 self.assertTrue(isinstance(action.pipeline.children[action.pipeline][0], RetryAction))
@@ -175,7 +204,76 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
         self.assertIsInstance(mount.log_handler, logging.FileHandler)
         self.assertIsInstance(customise.log_handler, logging.FileHandler)
         self.assertIsInstance(testdef.log_handler, logging.FileHandler)
+        self.assertIsInstance(overlay.log_handler, logging.FileHandler)
         self.assertIsInstance(unmount.log_handler, logging.FileHandler)
+        self.assertIsInstance(unmount, RetryAction)
+
+    def test_kvm_validate(self):
+        try:
+            self.job.pipeline.validate_actions()
+        except JobError as exc:
+            self.fail(exc)
+        for action in self.job.pipeline.actions:
+            self.assertTrue(action.valid)
+
+    def test_download_actions(self):
+        """
+        Once the download module is converted to requests and
+        individual actions, complete this placeholder
+        """
+        pass
+
+    def test_kvm_basic_mount(self):
+        mount = None
+        for action in self.job.pipeline.actions:
+            if isinstance(action, DeployAction):
+                # check parser has created a suitable deployment
+                mount = action.pipeline.children[action.pipeline][2]
+                self.assertIsInstance(mount.internal_pipeline, Pipeline)
+                self.assertIsInstance(mount, MountAction)
+                customise = action.pipeline.children[action.pipeline][3]
+                self.assertIsInstance(customise, CustomisationAction)
+                testdef = action.pipeline.children[action.pipeline][4]
+                self.assertIsInstance(testdef, TestDefinitionAction)
+                overlay = action.pipeline.children[action.pipeline][5]
+                self.assertIsInstance(overlay, OverlayAction)
+                unmount = action.pipeline.children[action.pipeline][6]
+                self.assertIsInstance(unmount, UnmountAction)
+        self.assertTrue(mount.valid)
+        self.assertEqual(len(mount.internal_pipeline.actions), 3)
+        self.assertIsInstance(mount.internal_pipeline.actions[0], OffsetAction)
+        self.assertIsInstance(mount.internal_pipeline.actions[1], LoopCheckAction)
+        self.assertIsInstance(mount.internal_pipeline.actions[2], LoopMountAction)
+
+    def test_kvm_basic_overlay(self):
+        overlay = None
+        for action in self.job.pipeline.actions:
+            self.assertIsNotNone(action.name)
+            if isinstance(action, DeployAction):
+                overlay = action.pipeline.children[action.pipeline][5]
+        self.assertIsNotNone(overlay)
+        # these tests require that lava-dispatcher itself is installed, not just running tests from a git clone
+        self.assertTrue(os.path.exists(overlay.lava_test_dir))
+        self.assertIsNot(overlay.lava_test_dir, '/')
+        self.assertNotIn('lava_multi_node_test_dir', dir(overlay))
+        self.assertNotIn('lava_multi_node_cache_file', dir(overlay))
+        self.assertNotIn('lava_lmp_test_dir', dir(overlay))
+        self.assertNotIn('lava_lmp_cache_file', dir(overlay))
+        self.assertEqual(overlay.default_pattern,
+                         "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))")
+        self.assertEqual(overlay.default_fixupdict,
+                         {'PASS': 'pass', 'FAIL': 'fail', 'SKIP': 'skip',
+                          'UNKNOWN': 'unknown'})
+        self.assertIsNotNone(overlay.parameters['deployment_data']['lava_test_results_dir'])
+        self.assertIsNotNone(overlay.parameters['deployment_data']['lava_test_sh_cmd'])
+        self.assertEqual(overlay.parameters['deployment_data']['distro'], 'debian')
+        self.assertIsNotNone(overlay.parameters['deployment_data']['lava_test_results_part_attr'])
+        # look up the root_part element of the device config and ensure it is not None
+        self.assertIsNotNone(getattr(overlay.job.device.config,
+                                     overlay.parameters['deployment_data']['lava_test_results_part_attr']))
+        self.assertIsNotNone(getattr(overlay.job.device.config,
+                                     overlay.parameters['deployment_data']['lava_test_results_part_attr']))
+        self.assertIsNotNone(glob.glob(os.path.join(overlay.lava_test_dir, 'lava-*')))
 
     def test_kvm_basic_boot(self):
         for action in self.job.pipeline.actions:

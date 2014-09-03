@@ -189,7 +189,7 @@ def ensure_directory(path):
     """ ensures the path exists, if it doesn't it will be created
     """
     if not os.path.exists(path):
-        os.mkdir(path)
+        os.makedirs(path)
 
 
 def ensure_directory_empty(path):
@@ -198,7 +198,7 @@ def ensure_directory_empty(path):
     """
     if os.path.exists(path):
         rmtree(path)
-    os.mkdir(path)
+    os.makedirs(path)
 
 
 def url_to_cache(url, cachedir):

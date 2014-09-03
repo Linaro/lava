@@ -4,11 +4,11 @@ import shutil
 import subprocess
 import os
 import tempfile
+import lava_dispatcher.utils as utils
 
 from lava_dispatcher.utils import read_content
 from lava_dispatcher.signals import SignalHandler
 from lava_dispatcher.test_data import create_attachment
-from lava_dispatcher.utils import mkdtemp
 
 
 class ShellHooks(SignalHandler):
@@ -19,9 +19,9 @@ class ShellHooks(SignalHandler):
         if not handlers:
             handlers = {}
         SignalHandler.__init__(self, testdef_obj)
-        self.result_dir = mkdtemp()
+        self.result_dir = utils.mkdtemp()
         self.handlers = handlers
-        self.scratch_dir = mkdtemp()
+        self.scratch_dir = utils.mkdtemp()
         self.code_dir = os.path.join(self.scratch_dir, 'code')
         shutil.copytree(testdef_obj.repo, self.code_dir)
         device_config = testdef_obj.context.client.target_device.config
@@ -57,7 +57,7 @@ class ShellHooks(SignalHandler):
 
     def start_testcase(self, test_case_id):
         case_dir = os.path.join(self.result_dir, test_case_id)
-        os.mkdir(case_dir)
+        utils.ensure_directory(case_dir)
         case_data = {'case_dir': case_dir}
         case_data['start_testcase_output'] = self._invoke_hook(
             'start_testcase', case_dir)

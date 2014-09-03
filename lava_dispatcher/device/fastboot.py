@@ -140,28 +140,29 @@ class FastbootTarget(Target):
                 pat = self.tester_ps1_pattern
                 incrc = self.tester_ps1_includes_rc
                 runner = NetworkCommandRunner(self, pat, incrc)
-                with self._python_file_system(runner, directory) as root:
+                with self._python_file_system(runner, directory, pat) as root:
                     logging.debug("Accessing the file system at %s" % root)
-                    yield(root)
+                    yield root
             else:
                 with self.driver.adb_file_system(partition, directory) as root:
-                    logging.debug("Accessing the file system at %s" % root)
-                    yield(root)
+                    logging.debug("Accessing the file system at %s", root)
+                    yield root
         else:
                 pat = self.tester_ps1_pattern
                 incrc = self.tester_ps1_includes_rc
                 runner = NetworkCommandRunner(self, pat, incrc)
                 with self._busybox_file_system(runner, directory) as root:
                     logging.debug("Accessing the file system at %s" % root)
-                    yield(root)
+                    yield root
 
     def _enter_fastboot(self):
         # Device needs to be forced into fastboot mode
         if not self.driver.in_fastboot():
-            if self.config.fastboot_driver == 'capri':
+            if self.config.fastboot_driver == 'capri' or \
+               self.config.fastboot_driver == 'pxa1928dkb':
                 # Connect to serial
                 self.proc = self.driver.connect()
-                # Hard reset the Capri
+                # Hard reset the platform
                 if self.config.hard_reset_command:
                     self._hard_reboot(self.proc)
                 else:
@@ -169,7 +170,7 @@ class FastbootTarget(Target):
                 # Enter u-boot
                 self._enter_bootloader(self.proc)
                 # Enter fastboot mode
-                self.proc.sendline("fastboot")
+                self.proc.sendline(self.config.start_fastboot_command)
             else:
                 # Enter fastboot mode
                 self.driver.enter_fastboot()

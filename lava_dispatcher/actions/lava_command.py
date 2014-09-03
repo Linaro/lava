@@ -44,6 +44,7 @@ class cmd_lava_command_run(BaseAction):
             'fixupdict': {'type': 'array', 'items': {'type': 'string'},
                           'optional': True},
             'iterations': {'type': 'integer', 'optional': True},
+            'role': {'type': 'string', 'optional': True},
             'timeout': {'type': 'integer', 'optional': True},
         },
         'additionalProperties': False,

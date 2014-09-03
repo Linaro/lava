@@ -112,7 +112,7 @@ def _decompressor_stream(url, imgdir, decompress):
         yield (write, fname)
     finally:
         if fd:
-            fd.close
+            fd.close()
 
 
 def _url_to_fname_suffix(url, path='/tmp'):
@@ -148,12 +148,12 @@ def download_image(url_string, context, imgdir=None,
     optionally decompresses it on the file to the cache directory
     will retry if the download fails, default five minute timeout
     """
-    logging.debug("About to download %s to the host" % url_string)
+    logging.debug("About to download %s to the host", url_string)
     now = time.time()
     tries = 0
     while True:
         try:
-            logging.info("Downloading image: %s" % url_string)
+            logging.info("Downloading image: %s", url_string)
             if not imgdir:
                 imgdir = mkdtemp(dir=context.config.lava_image_tmpdir)
                 if delete_on_exit:
@@ -185,8 +185,8 @@ def download_image(url_string, context, imgdir=None,
                         buff = r.read(bsize)
                         md5.update(buff)
                         sha256.update(buff)
-            logging.info("md5sum of downloaded content: %s" % md5.hexdigest())
-            logging.debug("sha256sum of downloaded content: %s" % sha256.hexdigest())
+            logging.info("md5sum of downloaded content: %s", md5.hexdigest())
+            logging.debug("sha256sum of downloaded content: %s", sha256.hexdigest())
 
             if fname.endswith('.qcow2'):
                 orig = fname
@@ -202,25 +202,25 @@ def download_image(url_string, context, imgdir=None,
                 urllib2.HTTPError, urllib2.URLError) as e:
             if hasattr(e, 'reason'):
                 if hasattr(e, 'code'):
-                    logging.error("Unable to download '%s': %s %s" % (url_string, e.code, e.reason))
+                    logging.error("Unable to download '%s': %s %s", url_string, e.code, e.reason)
                 else:
-                    logging.error("Unable to download '%s': %s" % (url_string, e.reason))
+                    logging.error("Unable to download '%s': %s", url_string, e.reason)
             else:
-                logging.error("Unable to download '%s': %s" % (url_string, e))
+                logging.error("Unable to download '%s': %s", url_string, e)
             tries += 1
             if time.time() >= now + timeout:
                 raise RuntimeError(
                     'downloading %s failed after %d tries: %s' % (url_string, tries, e))
             else:
-                logging.info('Sleep one minute and retry (%d)' % tries)
+                logging.info('Sleep one minute and retry (%d)', tries)
                 time.sleep(60)
         # add other exceptions to the above section and then remove the broad clause
         except Exception as e:
-            logging.warn("unable to download: %r" % traceback.format_exc())
+            logging.warn("unable to download: %r", traceback.format_exc())
             tries += 1
             if time.time() >= now + timeout:
                 raise RuntimeError(
                     'downloading %s failed after %d tries: %s' % (url_string, tries, e))
             else:
-                logging.info('Sleep one minute and retry (%d)' % tries)
+                logging.info('Sleep one minute and retry (%d)', tries)
                 time.sleep(60)

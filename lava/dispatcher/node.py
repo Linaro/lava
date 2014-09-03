@@ -88,7 +88,8 @@ class Poller(object):
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
                 s.connect((self.json_data['host'], self.json_data['port']))
-                logging.debug("Connecting to LAVA Coordinator on %s:%s" % (self.json_data['host'], self.json_data['port']))
+                logging.debug("Connecting to LAVA Coordinator on %s:%s",
+                              self.json_data['host'], self.json_data['port'])
                 delay = self.poll_delay
             except socket.error as e:
                 logging.warn("socket error on connect: %d %s %s" %
@@ -97,7 +98,7 @@ class Poller(object):
                 delay += 2
                 s.close()
                 continue
-            logging.debug("sending message: %s" % msg_str[:42])
+            logging.debug("sending message: %s...", msg_str[:42])
             # blocking synchronous call
             try:
                 # send the length as 32bit hexadecimal
@@ -110,7 +111,7 @@ class Poller(object):
                     logging.debug("zero bytes sent for message - connection closed?")
                     continue
             except socket.error as e:
-                logging.warn("socket error '%d' on send" % e.message)
+                logging.warn("socket error '%d' on send", e.message)
                 s.close()
                 continue
             s.shutdown(socket.SHUT_WR)
@@ -126,7 +127,7 @@ class Poller(object):
                     response += s.recv(self.blocks)
                     recv_count += self.blocks
             except socket.error as e:
-                logging.warn("socket error '%d' on response" % e.errno)
+                logging.warn("socket error '%d' on response", e.errno)
                 s.close()
                 continue
             s.close()
@@ -138,13 +139,13 @@ class Poller(object):
             try:
                 json_data = json.loads(response)
             except ValueError:
-                logging.error("response starting '%s' was not JSON" % response[:42])
+                logging.error("response starting '%s' was not JSON", response[:42])
                 break
             if json_data['response'] != 'wait':
                 break
             else:
                 if not (c % int(10 * self.poll_delay)):
-                    logging.info("Waiting ... %d of %d secs" % (c, self.timeout))
+                    logging.info("Waiting ... %d of %d secs", c, self.timeout)
                 time.sleep(delay)
             # apply the default timeout to each poll operation.
             if c > self.timeout:
@@ -219,7 +220,7 @@ class NodeDispatcher(object):
             json_data['sub_id'] = None
         if 'port' in json_data:
             # lava-coordinator provides a conffile for the port and blocksize.
-            logging.debug("Port is no longer supported in the incoming JSON. Using %d" % settings["port"])
+            logging.debug("Port is no longer supported in the incoming JSON. Using %d", settings["port"])
         if 'role' in json_data:
             self.role = json_data['role']
         # look for a vm temporary device - vm_host is managed in boot_linaro_image.
@@ -228,8 +229,8 @@ class NodeDispatcher(object):
         # hostname of the server for the connection.
         if 'hostname' in json_data:
             # lava-coordinator provides a conffile for the group_hostname
-            logging.debug("Coordinator hostname is no longer supported in the incoming JSON. Using %s"
-                          % settings['coordinator_hostname'])
+            logging.debug("Coordinator hostname is no longer supported in the incoming JSON. Using %s",
+                          settings['coordinator_hostname'])
         self.base_msg = {"port": settings['port'],
                          "blocksize": settings['blocksize'],
                          "poll_delay": settings["poll_delay"],
@@ -256,10 +257,10 @@ class NodeDispatcher(object):
         """
         init_msg = {"request": "group_data", "group_size": self.group_size}
         init_msg.update(self.base_msg)
-        logging.info("Starting Multi-Node communications for group '%s'" % self.group_name)
-        logging.debug("init_msg %s" % json.dumps(init_msg))
+        logging.info("Starting Multi-Node communications for group '%s'", self.group_name)
+        logging.debug("init_msg %s", json.dumps(init_msg))
         response = json.loads(self.poller.poll(json.dumps(init_msg)))
-        logging.info("Starting the test run for %s in group %s" % (self.client_name, self.group_name))
+        logging.info("Starting the test run for %s in group %s", self.client_name, self.group_name)
 
         # if this is a temporary device, wait for lava_vm_start from host
         # before starting job
@@ -267,16 +268,16 @@ class NodeDispatcher(object):
             logging.info("Waiting for host IP address ...")
             host_info = self.request_wait("lava_vm_start")  # blocking call
             host_data = json.loads(host_info)["message"]
-            logging.info("Host data: %r" % host_data)
+            logging.info("Host data: %r", host_data)
             for host in host_data:
                 self.vm_host_ip = host_data[host]['host_ip']
-                logging.info("Host %s has IP address %s" % (host, self.vm_host_ip))
+                logging.info("Host %s has IP address %s", host, self.vm_host_ip)
 
         self.run_tests(self.json_data, response)
         # send a message to the GroupDispatcher to close the group (when all nodes have sent fin_msg)
         fin_msg = {"request": "clear_group", "group_size": self.group_size}
         fin_msg.update(self.base_msg)
-        logging.debug("fin_msg %s" % json.dumps(fin_msg))
+        logging.debug("fin_msg %s", json.dumps(fin_msg))
         self.poller.poll(json.dumps(fin_msg))
 
     def __call__(self, args):
@@ -290,7 +291,7 @@ class NodeDispatcher(object):
         try:
             return self._select(json.loads(args))
         except KeyError:
-            logging.warn("Unable to handle request for: %s" % args)
+            logging.warn("Unable to handle request for: %s", args)
 
     def _select(self, json_data):
         """ Determines which API call has been requested, makes the call, blocks and returns the reply.
@@ -309,20 +310,20 @@ class NodeDispatcher(object):
             return self._aggregation(json_data)
         messageID = json_data['messageID']
         if json_data['request'] == "lava_sync":
-            logging.info("requesting lava_sync '%s'" % messageID)
+            logging.info("requesting lava_sync '%s'", messageID)
             reply_str = self.request_sync(messageID)
         elif json_data['request'] == 'lava_wait':
-            logging.info("requesting lava_wait '%s'" % messageID)
+            logging.info("requesting lava_wait '%s'", messageID)
             reply_str = self.request_wait(messageID)
         elif json_data['request'] == 'lava_wait_all':
             if 'role' in json_data and json_data['role'] is not None:
                 reply_str = self.request_wait_all(messageID, json_data['role'])
-                logging.info("requesting lava_wait_all '%s' '%s'" % (messageID, json_data['role']))
+                logging.info("requesting lava_wait_all '%s' '%s'", messageID, json_data['role'])
             else:
-                logging.info("requesting lava_wait_all '%s'" % messageID)
+                logging.info("requesting lava_wait_all '%s'", messageID)
                 reply_str = self.request_wait_all(messageID)
         elif json_data['request'] == "lava_send":
-            logging.info("requesting lava_send %s" % messageID)
+            logging.info("requesting lava_send %s", messageID)
             reply_str = self.request_send(messageID, json_data['message'])
         reply = json.loads(str(reply_str))
         if 'message' in reply:
@@ -356,7 +357,7 @@ class NodeDispatcher(object):
         if 'bundle' in new_msg:
             logging.debug("sending result bundle")
         else:
-            logging.debug("sending Message %s" % json.dumps(new_msg))
+            logging.debug("sending Message %s", json.dumps(new_msg))
         return self.poller.poll(json.dumps(new_msg))
 
     def request_wait_all(self, messageID, role=None):

@@ -18,9 +18,13 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from contextlib import contextmanager
-from lava_dispatcher.context import LavaContext
-from lava_dispatcher.pipeline import *
+import os
+import atexit
+import yaml
+import tempfile
+import subprocess
+from collections import OrderedDict
+from lava_dispatcher.utils import rmtree
 
 
 class Job(object):
@@ -35,11 +39,16 @@ class Job(object):
         yaml_line
         logging_level
         job_timeout
+    Job also provides the primary access to the Device.
     """
 
     def __init__(self, parameters):
+        self.device = None
         self.parameters = parameters
-        self.context = None
+        self.__context__ = None
+        self.pipeline = None
+        self.actions = None
+        self._scratch_dir = None
 
     def set_pipeline(self, pipeline):
         self.pipeline = pipeline
@@ -47,7 +56,7 @@ class Job(object):
 
     @property
     def context(self):
-        return self.context
+        return self.__context__
 
     def __set_context__(self, data):
         self.__context__ = data
@@ -57,21 +66,33 @@ class Job(object):
         self.__set_context__(data)
 
     def describe(self):
-        return self.pipeline.describe()
+        structure = OrderedDict()
+        # FIXME: port to the updated Device configuration
+        structure['device'] = {
+            'parameters': self.device.parameters
+        }
+        structure['job'] = {
+            'parameters': self.parameters
+        }
+        structure.update(self.pipeline.describe())
+        return structure
 
-    def validate(self):
+    def validate(self, simulate=False):
         """
         Needs to validate the parameters
         Then needs to validate the context
         Finally expose the context so that actions can see it.
         """
-        try:
-            print yaml.dump(self.describe())  # FIXME: actually needs to validate
-        except Exception as e:
-            raise RuntimeError(e)
+        if simulate:
+            # output the content and then any validation errors
+            print yaml.dump(self.describe())
+        # FIXME: validate the device config
+        # FIXME: pretty output of exception messages needed.
+        self.pipeline.validate_actions()
 
     def run(self):
-        self.pipeline.run_actions(None, args=None)
+        self.pipeline.validate_actions()
+        self.pipeline.run_actions(None)
         # FIXME how to get rootfs with multiple deployments, and at arbitrary
         # points in the pipeline?
         # rootfs = None
@@ -84,16 +105,20 @@ class Job(object):
         # results_dir = None
         #    self.action.post_process(results_dir)
 
+    def rmtree(self, directory):
+        # FIXME: change to self._run_command
+        subprocess.call(['rm', '-rf', directory])
+
     def mkdtemp(self, basedir='/tmp'):
         """
         returns a temporary directory that's deleted when the process exits
 
         """
         # FIXME move to utils module?
-        d = tempfile.mkdtemp(dir=basedir)
-        atexit.register(rmtree, d)
-        os.chmod(d, 0755)
-        return d
+        tmpdir = tempfile.mkdtemp(dir=basedir)
+        atexit.register(rmtree, tmpdir)
+        os.chmod(tmpdir, 0755)
+        return tmpdir
 
     @property
     def scratch_dir(self):

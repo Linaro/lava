@@ -1,4 +1,4 @@
 [gerrit]
-host=git.linaro.org
+host=review.linaro.org
 port=29418
 project=lava/lava-dispatcher

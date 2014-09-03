@@ -4,9 +4,9 @@ from lava_dispatcher.pipeline.ssh import *
 from lava_dispatcher.pipeline.shell import *
 from lava_dispatcher.pipeline.run import *
 from lava_dispatcher.pipeline.job import *
-from lava_dispatcher.pipeline.job_actions.boot import *
-from lava_dispatcher.pipeline.job_actions.commands import *
-from lava_dispatcher.pipeline.job_actions.deploy import *
-from lava_dispatcher.pipeline.job_actions.logic import *
-from lava_dispatcher.pipeline.job_actions.submit import *
-from lava_dispatcher.pipeline.job_actions.test import *
+from lava_dispatcher.pipeline.actions.boot import *
+from lava_dispatcher.pipeline.actions.commands import *
+from lava_dispatcher.pipeline.actions.deploy import *
+from lava_dispatcher.pipeline.actions.logic import *
+from lava_dispatcher.pipeline.actions.submit import *
+from lava_dispatcher.pipeline.actions.test import *

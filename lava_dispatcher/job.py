@@ -98,6 +98,10 @@ job_schema = {
                         'items': {'type': 'string'},
                         'optional': True,
                     },
+                    'is_slave': {
+                        'optional': True,
+                        'type': 'boolean',
+                    },
                 },
             },
         },
@@ -188,6 +192,10 @@ job_schema = {
         },
         'role': {
             'type': 'string',
+            'optional': True,
+        },
+        'is_slave': {
+            'type': 'boolean',
             'optional': True,
         },
         'lmp_module': {
@@ -315,6 +323,8 @@ class LavaTestJob(object):
 
         if 'target_group' in self.job_data:
             metadata['target_group'] = self.job_data['target_group']
+            if 'is_slave' in self.job_data:
+                metadata['is_slave'] = 'true' if self.job_data.get('is_slave') else 'false'
             self.context.test_data.add_metadata(metadata)
 
             if 'role' in self.job_data:
@@ -333,7 +343,7 @@ class LavaTestJob(object):
         if 'lmp_module' in self.job_data:
             metadata['lmp_module'] = json.dumps(self.job_data['lmp_module'])
             self.context.test_data.add_metadata(metadata)
-# init LMP module
+            # init LMP module
             lmp_init_boards.init(self.job_data['lmp_module'],
                                  self.context.device_config)
 

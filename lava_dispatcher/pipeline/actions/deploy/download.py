@@ -1,11 +1,30 @@
+# Copyright (C) 2014 Linaro Limited
+#
+# Author: Neil Williams <neil.williams@linaro.org>
+#
+# This file is part of LAVA Dispatcher.
+#
+# LAVA Dispatcher is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# LAVA Dispatcher is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along
+# with this program; if not, see <http://www.gnu.org/licenses>.
+
 import os
 import urlparse
-import urllib2  # FIXME: use requests?
+import urllib2  # FIXME: use requests
 import hashlib
-import subprocess
+import subprocess  # FIXME: should not need this
 import bz2
 import contextlib
-import logging
 import lzma
 import zlib
 from lava_dispatcher.pipeline.action import (
@@ -29,6 +48,7 @@ class ScpDownloadAction(Action):
         process = None
         url = self.parameters['image']
         try:
+            # FIXME: adapt with code from self.run_command() for logging
             process = subprocess.Popen(
                 ['nice', 'ssh', url.netloc, 'cat', url.path],
                 shell=False,
@@ -163,6 +183,7 @@ class DownloaderAction(RetryAction):
         Move to being part of the Deployment strategy
         so that only the correct action is added to the pipeline.
         """
+        # FIXME use actions? check behaviour with contextmanager
         self.url = urlparse.urlparse(self.parameters['image'])
         if self.url.scheme == 'scp':
             self.reader = self._scp_stream
@@ -171,19 +192,30 @@ class DownloaderAction(RetryAction):
         elif self.url.scheme == 'file':
             self.reader = self._file_stream
         else:
-            raise RuntimeError("Unsupported url protocol scheme: %s" % url.scheme)
+            raise JobError("Unsupported url protocol scheme: %s" % url.scheme)
+
+    def validate(self):
+        self.parse()
+        fname, suffix = self._url_to_fname_suffix()  # FIXME: use the context tmpdir
+        if self.name not in self.data:
+            self.data[self.name] = {}
+        self.data[self.name]['file'] = fname
 
     def run(self, connection, args=None):
-        # return connection  # temporary
-        if not args:
-            raise RuntimeError("%s called without context as argument" % self.name)
-        if isinstance(args, LavaContext):
-            self.context = args
         self.parse()  # FIXME: do this in the deployment strategy
-        self.cookies = self.context.config.lava_cookies
+        self.cookies = self.job.context.config.lava_cookies
+        fname, suffix = self._url_to_fname_suffix()  # FIXME: use the context tmpdir
+        if os.path.exists(fname):
+            self._log("development shortcut")  # TODO: remove
+            return connection
+        # The problem with the entire download method is that it
+        # is completely hidden from the logs and the progress indicator.
+        # Needs to switch to requests and give useful progress output.
+        # if not, wget can do the right thing for http, https and file
+        # and scp has progress built in too.
         with self.reader() as r:
             with self._decompressor_stream() as (writer, fname):
-                logging.info("downloading and decompressing %s as %s" % (self.parameters['image'], fname))
+                self._log("downloading and decompressing %s as %s" % (self.parameters['image'], fname))
                 self.md5 = hashlib.md5()
                 self.sha256 = hashlib.sha256()
                 bsize = 32768
@@ -198,7 +230,7 @@ class DownloaderAction(RetryAction):
         # FIXME: needs to raise JobError on 404 etc. for retry to operate
         # set the dynamic data into the context:
         # the decompressed filename and path
-        self.context.pipeline_data[self.name] = {
+        self.data[self.name] = {
             'file': fname,
             'md5': self.md5.hexdigest(),
             'sha256': self.sha256.hexdigest()
@@ -219,19 +251,13 @@ class ChecksumAction(Action):
         self.summary = "checksum"
 
     def run(self, connection, args=None):
-        # FIXME: make this part of the base class?
-        if not args:
-            raise RuntimeError("%s called without context as argument" % self.name)
-        if isinstance(args, LavaContext):
-            self.context = args
-        if 'download_action' in self.context.pipeline_data:
-            if 'md5' in self.context.pipeline_data['download_action']:
-                # FIXME: the logging structure still needs work to be easily cut&paste.
-                logging.info("md5sum of downloaded content: %s" %
-                             self.context.pipeline_data['download_action']['md5'])
-            if 'sha256' in self.context.pipeline_data['download_action']:
-                logging.debug("sha256sum of downloaded content: %s" %
-                              self.context.pipeline_data['download_action']['sha256'])
+        if 'download_action' in self.data:
+            if 'md5' in self.data['download_action']:
+                self._log("md5sum of downloaded content: %s" %
+                          self.data['download_action']['md5'])
+            if 'sha256' in self.data['download_action']:
+                self._log("sha256sum of downloaded content: %s" %
+                          self.data['download_action']['sha256'])
         return connection
 
 
@@ -248,9 +274,10 @@ class QCowConversionAction(Action):
         self.summary = "qcow conversion"
 
     def run(self, connection, args=None):
-        if fname.endswith('.qcow2'):
-            orig = fname
-            fname = re.sub('\.qcow2$', '.img', fname)
-            logging.warning("Converting downloaded image from qcow2 to raw")
-            subprocess.check_call(['qemu-img', 'convert', '-f', 'qcow2',
-                                   '-O', 'raw', orig, fname])
+        pass
+#        if fname.endswith('.qcow2'):
+#            orig = fname
+#            fname = re.sub('\.qcow2$', '.img', fname)
+#            logging.warning("Converting downloaded image from qcow2 to raw")
+#            subprocess.check_call(['qemu-img', 'convert', '-f', 'qcow2',
+#                                   '-O', 'raw', orig, fname])

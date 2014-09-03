@@ -1,4 +1,4 @@
-from lava_dispatcher.pipeline import *
+from lava_dispatcher.pipeline.action import Connection, Action
 from lava_dispatcher.client.base import CommandRunner
 
 
@@ -29,7 +29,10 @@ class ShellSession(Connection):
 
 class ExpectShellSession(Action):
 
-    def run(self, connection):
+    def __init__(self):
+        super(ExpectShellSession, self).__init__()
+
+    def run(self, connection, args=None):
         shell = ShellSession(connection.device, connection.raw_connection)
         shell.wait()
         return shell

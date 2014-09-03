@@ -89,6 +89,15 @@ class MasterImageTarget(Target):
         self.userdata_label = self.config.master_userdata_label
         self.userdata_path = '%s%s' % (self.userdata_dir, self.userdata_label)
 
+        self.master_kernel = None
+        self.master_ramdisk = None
+        self.master_modules = None
+        self.master_dtb = None
+        self.master_firmware = None
+        self.master_nfsrootfs = None
+        self.master_base_tmpdir, self.master_tmpdir = self._setup_tmpdir()
+        self.master_boot_tags = {}
+
         if config.pre_connect_command:
             self.context.run_command(config.pre_connect_command)
 
@@ -192,7 +201,10 @@ class MasterImageTarget(Target):
         boot_device = str(self.config.boot_device)
         testboot_offset = self.config.testboot_offset
         partition = int(matchobj.group('partition')) + testboot_offset
-        return ' ' + boot_device + ':' + str(partition) + ' '
+        if self.config.testboot_partition is not None:
+            return ' ' + boot_device + ':' + self.config.testboot_partition + ' '
+        else:
+            return ' ' + boot_device + ':' + str(partition) + ' '
 
     def _rewrite_rootfs_partition_number(self, matchobj):
         """ Returns the rootfs partition number after rewriting it to
@@ -316,17 +328,20 @@ class MasterImageTarget(Target):
                     timeout=timeout)
                 return
             except (OperationFailed, pexpect.TIMEOUT):
-                logging.warning(("transfering %s failed. %d retry left."
-                                 % (tar_url, num_retry - 1)))
+                logging.warning("transfering %s failed. %d retry left.",
+                                tar_url, num_retry - 1)
 
             if num_retry > 1:
                 # send CTRL C in case wget still hasn't exited.
                 self.proc.sendcontrol("c")
+                self._wait_for_prompt(self.proc,
+                                      self.MASTER_PS1_PATTERN,
+                                      timeout=30)
                 self.proc.sendline(
                     "echo 'retry left %s time(s)'" % (num_retry - 1))
                 # And wait a little while.
                 sleep_time = 60
-                logging.info("Wait %d second before retry" % sleep_time)
+                logging.info("Wait %d second before retry", sleep_time)
                 time.sleep(sleep_time)
             num_retry -= 1
 
@@ -347,7 +362,7 @@ class MasterImageTarget(Target):
         return partition
 
     def extract_tarball(self, tarball_url, partition, directory='/'):
-        logging.info('extracting %s to target' % tarball_url)
+        logging.info('extracting %s to target', tarball_url)
 
         with self._as_master() as runner:
             partition = self.get_partition(runner, partition)
@@ -359,24 +374,54 @@ class MasterImageTarget(Target):
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
-        logging.info('attempting to access master filesystem %r:%s' %
-                     (partition, directory))
+        logging.info('attempting to access master filesystem %r:%s',
+                     partition, directory)
 
         assert directory != '/', "cannot mount entire partition"
 
         with self._as_master() as runner:
             partition = self.get_partition(runner, partition)
             runner.run('mount %s /mnt' % partition)
-            with self._python_file_system(runner, directory, mounted=True) as root:
+            with self._python_file_system(runner, directory, self.MASTER_PS1_PATTERN, mounted=True) as root:
                 yield root
 
     def _wait_for_master_boot(self):
         if self.config.boot_cmds_master:
+            # Break the boot sequence
             self._enter_bootloader(self.proc)
-            boot_cmds = self._load_boot_cmds(default='boot_cmds_master')
+            # Configure dynamic master image boot
+            if self.config.master_kernel and self.master_kernel is None:
+                # Set the server IP (Dispatcher)
+                self.master_boot_tags['{SERVER_IP}'] = self.context.config.lava_server_ip
+                self.master_kernel = download_image(
+                    self.config.master_kernel, self.context,
+                    self.master_tmpdir, decompress=False)
+                self.master_boot_tags['{KERNEL}'] = self._get_rel_path(self.master_kernel, self.master_base_tmpdir)
+                if self.config.master_ramdisk:
+                    self.master_ramdisk = download_image(
+                        self.config.master_ramdisk, self.context,
+                        self.master_tmpdir, decompress=False)
+                    self.master_boot_tags['{RAMDISK}'] = self._get_rel_path(self.master_ramdisk, self.master_base_tmpdir)
+                if self.config.master_dtb:
+                    self.master_dtb = download_image(
+                        self.config.master_dtb, self.context,
+                        self.master_tmpdir, decompress=False)
+                    self.master_boot_tags['{DTB}'] = self._get_rel_path(self.master_dtb, self.master_base_tmpdir)
+                if self.config.master_firmware:
+                    self.master_firmware = download_image(
+                        self.config.master_firmware, self.context,
+                        self.master_tmpdir, decompress=False)
+                    self.master_boot_tags['{FIRMWARE}'] = self._get_rel_path(self.master_firmware, self.master_base_tmpdir)
+                if self.config.master_nfsrootfs:
+                    self.master_nfsrootfs = download_image(
+                        self.config.master_nfsrootfs, self.context,
+                        self.master_tmpdir, decompress=False)
+                    self.master_boot_tags['{NFSROOTFS}'] = self._setup_nfs(self.master_nfsrootfs, self.master_tmpdir)
+            boot_cmds = self._load_boot_cmds(default='boot_cmds_master',
+                                             boot_tags=self.master_boot_tags)
             self._customize_bootloader(self.proc, boot_cmds)
         self.proc.expect(self.config.image_boot_msg, timeout=300)
-        self._auto_login(self.proc)
+        self._auto_login(self.proc, is_master=True)
         self._wait_for_prompt(self.proc, self.config.master_str, timeout=300)
 
     def boot_master_image(self):
@@ -389,8 +434,8 @@ class MasterImageTarget(Target):
         attempts = 0
         in_master_image = False
         while (attempts < boot_attempts) and (not in_master_image):
-            logging.info("Booting the system master image. Attempt: %d" %
-                         (attempts + 1))
+            logging.info("Booting the system master image. Attempt: %d",
+                         attempts + 1)
             try:
                 self.master_ip = None
                 if self.config.hard_reset_command:
@@ -625,7 +670,7 @@ class MasterCommandRunner(NetworkCommandRunner):
         device_version = None
         if self.match_id == 0:
             device_version = self.match.group(1)
-            logging.debug('Master image version (hwpack/rootfs) is %s' % device_version)
+            logging.debug('Master image version (hwpack/rootfs) is %s', device_version)
         else:
             logging.warning('Could not determine image version!')
 
@@ -744,12 +789,12 @@ def _recreate_ramdisk(session, target):
 
 
 def _test_filesystem_writeable(runner, mountpoint):
-    logging.debug("Checking if filesystem %s is writeable" % mountpoint)
+    logging.debug("Checking if filesystem %s is writeable", mountpoint)
     current_time = int(time.time())
     m = hashlib.md5()
     m.update(str(current_time))
     md5sum = m.hexdigest()
-    logging.debug("writing %s to ddout, md5sum %s" % (current_time, md5sum))
+    logging.debug("writing %s to ddout, md5sum %s", current_time, md5sum)
     write_res = runner.run('echo -n %s | dd oflag=direct,sync of=%s/ddout ' % (current_time, mountpoint), failok=True)
     if write_res > 0:
         raise RuntimeError('Failed to write test data to %s (sd card writeable test)' % mountpoint)

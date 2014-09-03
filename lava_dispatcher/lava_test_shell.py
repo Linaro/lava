@@ -216,26 +216,26 @@ def parse_testcase_result(data, fixupdict={}):
             try:
                 res[key] = decimal.Decimal(res[key])
             except decimal.InvalidOperation:
-                logging.warning("Invalid measurement %s" % (
-                    res['measurement']))
+                logging.warning("Invalid measurement %s",
+                                res['measurement'])
                 del res['measurement']
 
         elif key == 'result':
             if res['result'] in fixupdict:
                 res['result'] = fixupdict[res['result']]
             if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
-                logging.error('Bad test result: %s' % res['result'])
+                logging.error('Bad test result: %s', res['result'])
                 res['result'] = 'unknown'
 
     if 'test_case_id' not in res:
         logging.warning(
             """Test case results without test_case_id (probably a sign of an """
-            """incorrect parsing pattern being used): %s""" % res)
+            """incorrect parsing pattern being used): %s""", res)
 
     if 'result' not in res:
         logging.warning(
             """Test case results without result (probably a sign of an """
-            """incorrect parsing pattern being used): %s""" % res)
+            """incorrect parsing pattern being used): %s""", res)
         logging.warning('Setting result to "unknown"')
         res['result'] = 'unknown'
 
@@ -420,7 +420,7 @@ def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdef_objs, err_log
     if testdef_obj:
         sw_sources = testdef_obj._sw_sources
     else:
-        logging.warning("no software sources found for run with uuid %s" % uuid)
+        logging.warning("no software sources found for run with uuid %s", uuid)
         sw_sources = []
     swcontext = _get_sw_context(build, pkginfo, sw_sources)
 
@@ -467,6 +467,6 @@ def get_bundle(results_dir, testdef_objs, err_log):
             except KeyboardInterrupt:
                 raise KeyboardInterrupt
             except:
-                logging.exception('error processing results for: %s' % test_run_name)
+                logging.exception('error processing results for: %s', test_run_name)
 
     return {'test_runs': testruns, 'format': 'Dashboard Bundle Format 1.7'}

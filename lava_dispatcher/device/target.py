@@ -90,7 +90,7 @@ class ImagePathHandle(object):
                 else:
                     des_name = self.file_name
                 des_path = os.path.join(local_path, des_name)
-            logging.debug("Copying dir from #%s:%s(%s) to %s!" % (self.part, self.path, src_path, des_path))
+            logging.debug("Copying dir from #%s:%s(%s) to %s!", self.part, self.path, src_path, des_path)
             shutil.copytree(src_path, des_path)
         elif os.path.isfile(src_path):
             if not os.path.exists(local_path):
@@ -108,7 +108,7 @@ class ImagePathHandle(object):
                     des_path = os.path.join(local_path, des_name)
                 else:
                     des_path = local_path
-            logging.debug("Copying file from #%s:%s(%s) to %s!" % (self.part, self.path, src_path, des_path))
+            logging.debug("Copying file from #%s:%s(%s) to %s!", self.part, self.path, src_path, des_path)
             shutil.copyfile(src_path, des_path)
         else:
             raise CriticalError('Please check the source file type, we only support file and dir!')
@@ -129,7 +129,7 @@ class ImagePathHandle(object):
                 else:
                     des_name = os.path.basename(src_path)
                 des_path = os.path.join(des_path, des_name)
-            logging.debug("Copying dir from %s to #%s:%s(%s)!" % (des_path, self.part, self.path, src_path))
+            logging.debug("Copying dir from %s to #%s:%s(%s)!", des_path, self.part, self.path, src_path)
             shutil.copytree(src_path, des_path)
         elif os.path.isfile(src_path):
             des_path = '%s/%s' % (self.part_mntdir, self.path)
@@ -145,7 +145,7 @@ class ImagePathHandle(object):
                 if os.path.isdir(des_path):
                     des_name = os.path.basename(src_path)
                     des_path = os.path.join(des_path, des_name)
-            logging.debug("Copying file from %s to #%s:%s(%s)!" % (des_path, self.part, self.path, src_path))
+            logging.debug("Copying file from %s to #%s:%s(%s)!", des_path, self.part, self.path, src_path)
             shutil.copyfile(src_path, des_path)
         else:
             raise CriticalError('Please check the source file type, we only support file and dir!')
@@ -156,13 +156,13 @@ class ImagePathHandle(object):
         # delete the file/dir from Image
         des_path = '%s/%s' % (self.part_mntdir, self.path)
         if os.path.isdir(des_path):
-            logging.debug("Removing dir(%s) %s from #%s partition of image!" % (des_path, self.path, self.part))
+            logging.debug("Removing dir(%s) %s from #%s partition of image!", des_path, self.path, self.part)
             shutil.rmtree(des_path)
         elif os.path.isfile(des_path):
-            logging.debug("Removing file(%s) %s from #%s partition of image!" % (des_path, self.path, self.part))
+            logging.debug("Removing file(%s) %s from #%s partition of image!", des_path, self.path, self.part)
             os.remove(des_path)
         else:
-            logging.warning('Unrecognized file type or file/dir doesn\'t exist(%s)! Skipped' % des_path)
+            logging.warning('Unrecognized file type or file/dir doesn\'t exist(%s)! Skipped', des_path)
 
 
 def get_target(context, device_config):
@@ -287,7 +287,7 @@ class Target(object):
             for file_name in files:
                 if re.match(pattern, file_name):
                     src = os.path.join(root, file_name)
-                    logging.info('Loading file: %s' % src)
+                    logging.info('Loading file: %s', src)
                     if name is not None:
                         dest = os.path.join(odir, name)
                         new_src = os.path.join(root, name)
@@ -316,35 +316,47 @@ class Target(object):
             return True
 
     def _image_has_selinux_support(self, connection, timeout):
-        if not self.context.selinux:
-            unrecognised = ''
-            connection.sendline("LANG=C tar --selinux 2>&1 | grep unrecognized| wc -l")
-            connection.expect(pexpect.TIMEOUT, timeout=timeout)
-            output = connection.before
-            if len(output.split('\n')) >= 2:
-                unrecognised = output.split('\n')[1].strip()
-            if unrecognised == '1':
-                logging.info("SELinux support disabled in test image. The current image has no selinux support in 'tar'.")
-                return False
-            elif unrecognised == '0' or unrecognised == '':
-                logging.debug("Retaining SELinux support in the current image.")
-                return True
-            else:
-                logging.error("Unable to determine SELinux support.")
-                return False
+        unrecognised = ''
+        connection.sendline("LANG=C tar --selinux 2>&1 | grep unrecognized| wc -l")
+        connection.expect(pexpect.TIMEOUT, timeout=timeout)
+        output = connection.before
+        if len(output.split('\n')) >= 2:
+            unrecognised = output.split('\n')[1].strip()
+        if unrecognised == '1':
+            logging.info("SELinux support disabled in test image. The current image has no selinux support in 'tar'.")
+            return False
+        elif unrecognised == '0' or unrecognised == '':
+            logging.debug("Retaining SELinux support in the current image.")
+            return True
+        else:
+            logging.error("Unable to determine SELinux support.")
+            return False
 
-    def _auto_login(self, connection):
-        if self.config.login_prompt is not None:
-            self._wait_for_prompt(connection,
-                                  self.config.login_prompt, timeout=300)
-            connection.sendline(self.config.username)
-        if self.config.password_prompt is not None:
-            self._wait_for_prompt(connection,
-                                  self.config.password_prompt, timeout=300)
-            connection.sendline(self.config.password)
-        if self.config.login_commands is not None:
-            for command in self.config.login_commands:
-                connection.sendline(command)
+    def _auto_login(self, connection, is_master=False):
+        if is_master:
+            if self.config.master_login_prompt is not None:
+                self._wait_for_prompt(connection,
+                                      self.config.master_login_prompt, timeout=300)
+                connection.sendline(self.config.master_username)
+            if self.config.master_password_prompt is not None:
+                self._wait_for_prompt(connection,
+                                      self.config.master_password_prompt, timeout=300)
+                connection.sendline(self.config.master_password)
+            if self.config.master_login_commands is not None:
+                for command in self.config.master_login_commands:
+                    connection.sendline(command)
+        else:
+            if self.config.login_prompt is not None:
+                self._wait_for_prompt(connection,
+                                      self.config.login_prompt, timeout=300)
+                connection.sendline(self.config.username)
+            if self.config.password_prompt is not None:
+                self._wait_for_prompt(connection,
+                                      self.config.password_prompt, timeout=300)
+                connection.sendline(self.config.password)
+            if self.config.login_commands is not None:
+                for command in self.config.login_commands:
+                    connection.sendline(command)
 
     def _is_uboot_ramdisk(self, ramdisk):
         try:
@@ -360,6 +372,30 @@ class Target(object):
                 return True
 
         return False
+
+    def _get_rel_path(self, path, base):
+        return os.path.relpath(path, base)
+
+    def _setup_nfs(self, nfsrootfs, tmpdir):
+        lava_nfsrootfs = utils.mkdtemp(basedir=tmpdir)
+        utils.extract_rootfs(nfsrootfs, lava_nfsrootfs)
+        return lava_nfsrootfs
+
+    def _setup_tmpdir(self):
+        if not self.config.use_lava_tmpdir:
+            if self.config.alternative_dir is None:
+                logging.error("You have specified not to use the LAVA temporary \
+                              directory. However, you have not defined an \
+                              alternate temporary directory. Falling back to \
+                              use the LAVA temporary directory.")
+                return self.context.config.lava_image_tmpdir, self.scratch_dir
+            else:
+                if self.config.alternative_create_tmpdir:
+                    return self.config.alternative_dir, utils.mkdtemp(self.config.alternative_dir)
+                else:
+                    return self.config.alternative_dir, self.config.alternative_dir
+        else:
+            return self.context.config.lava_image_tmpdir, self.scratch_dir
 
     def _load_boot_cmds(self, default=None, boot_cmds_dynamic=None,
                         boot_tags=None):
@@ -394,7 +430,7 @@ class Target(object):
         elif boot_cmds_boot_options:
             logging.info('Overriding boot_cmds from boot_options')
             boot_cmds = options['boot_cmds'].value
-            logging.info('boot_option=%s' % boot_cmds)
+            logging.info('boot_option=%s', boot_cmds)
             boot_cmds = self.config.cp.get('__main__', boot_cmds)
             boot_cmds = utils.string_to_list(boot_cmds.encode('ascii'))
         # No interactive or boot_option overrides are present,
@@ -453,7 +489,7 @@ class Target(object):
         """
         # Delete the redundant element "" at the end of boot_cmds
         while True:
-            if boot_cmds[-1] == "":
+            if boot_cmds and boot_cmds[-1] == "":
                 del boot_cmds[-1]
             else:
                 break
@@ -504,7 +540,7 @@ class Target(object):
         boottime = "{0:.2f}".format(time.time() - start)
         boottime_meta = {'bootloader-load-time': boottime}
         self.context.test_data.add_metadata(boottime_meta)
-        logging.debug("Bootloader load time: %s seconds" % boottime)
+        logging.debug("Bootloader load time: %s seconds", boottime)
 
     def _target_extract(self, runner, tar_file, dest, timeout=-1, busybox=False):
         tmpdir = self.context.config.lava_image_tmpdir
@@ -541,14 +577,14 @@ class Target(object):
                    timeout=timeout)
 
     @contextlib.contextmanager
-    def _python_file_system(self, runner, directory, mounted=False):
+    def _python_file_system(self, runner, directory, prompt_pattern, mounted=False):
         connection = runner.get_connection()
         error_detected = False
         try:
             if mounted:
-                targetdir = os.path.join('/mnt/%s' % directory)
+                targetdir = os.path.abspath(os.path.join('/mnt/%s' % directory))
             else:
-                targetdir = os.path.join('/', directory)
+                targetdir = os.path.abspath(os.path.join('/', directory))
 
             runner.run('mkdir -p %s' % targetdir)
 
@@ -580,7 +616,7 @@ class Target(object):
 
             tfdir = os.path.join(self.scratch_dir, str(time.time()))
             try:
-                os.mkdir(tfdir)
+                utils.ensure_directory(tfdir)
                 self.context.run_command('nice tar --selinux -C %s -xzf %s' % (tfdir, tf))
                 yield os.path.join(tfdir, target_name)
 
@@ -590,6 +626,9 @@ class Target(object):
                 utils.rmtree(tfdir)
 
                 connection.sendcontrol('c')  # kill SimpleHTTPServer
+                self._wait_for_prompt(connection,
+                                      prompt_pattern,
+                                      timeout=30)
 
                 # get the last 2 parts of tf, ie "scratchdir/tf.tgz"
                 tf = '/'.join(tf.split('/')[-2:])
@@ -600,6 +639,9 @@ class Target(object):
             if not error_detected:
                 # kill SimpleHTTPServer
                 connection.sendcontrol('c')
+                self._wait_for_prompt(connection,
+                                      prompt_pattern,
+                                      timeout=30)
             if mounted:
                 runner.run('umount /mnt')
 
@@ -608,9 +650,9 @@ class Target(object):
         error_detected = False
         try:
             if mounted:
-                targetdir = os.path.join('/mnt/%s' % directory)
+                targetdir = os.path.abspath(os.path.join('/mnt/%s' % directory))
             else:
-                targetdir = os.path.join('/', directory)
+                targetdir = os.path.abspath(os.path.join('/', directory))
 
             runner.run('mkdir -p %s' % targetdir)
 
@@ -629,14 +671,14 @@ class Target(object):
             url_base = self._start_busybox_http_server(runner, ip)
 
             url = url_base + '/fs.tgz'
-            logging.info("Fetching url: %s" % url)
+            logging.info("Fetching url: %s", url)
             tf = download_image(url, self.context, self.scratch_dir,
                                 decompress=False)
 
             tfdir = os.path.join(self.scratch_dir, str(time.time()))
 
             try:
-                os.mkdir(tfdir)
+                utils.ensure_directory(tfdir)
                 self.context.run_command('/bin/tar -C %s -xzf %s'
                                          % (tfdir, tf))
                 yield os.path.join(tfdir, target_name)
@@ -826,11 +868,11 @@ class Target(object):
                 customize_info["image"].append(temp_dic)
             else:
                 if "delete" in temp_dic["des"]:
-                    logging.warning("Do not try to delete the remote file %s" % temp_dic["src"])
+                    logging.warning("Do not try to delete the remote file %s", temp_dic["src"])
                     temp_dic["des"].remove("delete")
                 customize_info["remote"].append(temp_dic)
 
-        logging.debug("Do customizing image with %s" % customize_info)
+        logging.debug("Do customizing image with %s", customize_info)
 
         return customize_info
 
@@ -863,8 +905,8 @@ class Target(object):
                     def_item = ImagePathHandle(image, des_image_path, self.config, self.mount_info)
                     def_item.copy_from(customize_object["src"])
         else:
-            logging.debug("Skip customizing temp image %s !" % image)
-            logging.debug("Customize object is %s !" % self.config.customize)
+            logging.debug("Skip customizing temp image %s !", image)
+            logging.debug("Customize object is %s !", self.config.customize)
 
     def customize_image(self, image=None):
         if self.config.boot_part != self.config.root_part:
