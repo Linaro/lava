@@ -118,7 +118,7 @@ class Settings(object):
         """
         pathname = self._get_pathname("settings")
         if os.path.exists(pathname):
-            with open(pathname, "rt") as stream:
+            with open(pathname, "r") as stream:
                 return json.load(stream)
         else:
             return {}

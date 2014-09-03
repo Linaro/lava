@@ -127,6 +127,8 @@ def split_multi_job(json_jobdata, target_group):
                 node_json[role][c]["job_name"] = json_jobdata["job_name"]
             if clients.get("tags", False):
                 node_json[role][c]["tags"] = clients["tags"]
+            if "is_slave" in clients:
+                node_json[role][c]["is_slave"] = clients["is_slave"]
             node_json[role][c]["group_size"] = group_count
             node_json[role][c]["target_group"] = target_group
             node_json[role][c]["actions"] = node_actions[role]
@@ -211,6 +213,8 @@ def split_vm_job(json_jobdata, vm_group):
                 node_json[role][c]["auto_start_vms"] = auto_start_vms
             if json_jobdata.get("job_name", False):
                 node_json[role][c]["job_name"] = json_jobdata["job_name"]
+            if "is_slave" in json_jobdata:
+                node_json[role][c]["is_slave"] = json_jobdata["is_slave"]
             node_json[role][c]["group_size"] = group_count
             node_json[role][c]["target_group"] = vm_group
             node_json[role][c]["actions"] = node_actions[role]
@@ -250,7 +254,7 @@ def get_uptime():
     """Return the system uptime string.
     """
     with open('/proc/uptime', 'r') as f:
-        uptime_seconds = float(f.readline().split()[0])
+        uptime_seconds = int(float(f.readline().split()[0]))
         uptime = str(datetime.timedelta(seconds=uptime_seconds))
         return uptime
 

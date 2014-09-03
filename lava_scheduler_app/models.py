@@ -1605,7 +1605,8 @@ class TestJob(RestrictedResource):
     def _get_notification_recipients(self):
         job_data = simplejson.loads(self.definition)
         recipients = job_data.get('notify', [])
-        recipients.extend(self.admin_notifications)
+        recipients.extend([self.admin_notifications])  # Bug 170
+        recipients = filter(None, recipients)
         if self.status != self.COMPLETE:
             recipients.extend(job_data.get('notify_on_incomplete', []))
         return recipients

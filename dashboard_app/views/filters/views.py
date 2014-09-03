@@ -25,7 +25,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render_to_response
+from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
@@ -168,7 +168,7 @@ class FilterDetailView(LavaView):
 
 @BreadCrumb("Filter ~{username}/{name}", parent=filters_list, needs=['username', 'name'])
 def filter_detail(request, username, name):
-    qfilter = TestRunFilter.objects.get(owner__username=username, name=name)
+    qfilter = get_object_or_404(TestRunFilter, owner__username=username, name=name)
     if not request.user.is_superuser:
         if not qfilter.public and qfilter.owner != request.user:
             raise PermissionDenied()
@@ -203,7 +203,7 @@ def filter_detail(request, username, name):
 @BreadCrumb("Manage Subscription", parent=filter_detail, needs=['name', 'username'])
 @login_required
 def filter_subscribe(request, username, name):
-    filter = TestRunFilter.objects.get(owner__username=username, name=name)
+    filter = get_object_or_404(TestRunFilter, owner__username=username, name=name)
     if not request.user.is_superuser:
         if not filter.public and filter.owner != request.user:
             raise PermissionDenied()
@@ -294,7 +294,7 @@ def filter_edit(request, username, name):
     if not request.user.is_superuser:
         if request.user.username != username:
             raise PermissionDenied()
-    filter = TestRunFilter.objects.get(owner__username=username, name=name)
+    filter = get_object_or_404(TestRunFilter, owner__username=username, name=name)
     return filter_form(
         request,
         BreadCrumbTrail.leading_to(filter_edit, name=name, username=username),
@@ -302,8 +302,9 @@ def filter_edit(request, username, name):
 
 
 @BreadCrumb("Copy", parent=filter_detail, needs=['username', 'name'])
+@login_required
 def filter_copy(request, username, name):
-    filter = TestRunFilter.objects.get(owner__username=username, name=name)
+    filter = get_object_or_404(TestRunFilter, owner__username=username, name=name)
     if not request.user.is_superuser:
         if not filter.public and filter.owner != request.user:
             raise PermissionDenied()
@@ -320,7 +321,7 @@ def filter_delete(request, username, name):
     if not request.user.is_superuser:
         if request.user.username != username:
             raise PermissionDenied()
-    filter = TestRunFilter.objects.get(owner__username=username, name=name)
+    filter = get_object_or_404(TestRunFilter, owner__username=username, name=name)
     if request.method == "POST":
         if 'yes' in request.POST:
             filter.delete()
@@ -335,7 +336,10 @@ def filter_delete(request, username, name):
 
 
 def filter_add_cases_for_test_json(request):
-    test = Test.objects.get(test_id=request.GET['test'])
+    if not request.GET.get('test', None):
+        raise Http404
+
+    test = get_object_or_404(Test, test_id=request.GET['test'])
     result = TestCase.objects.filter(test=test).order_by('test_case_id').values('test_case_id', 'id')
     return HttpResponse(
         json.dumps(list(result)),
@@ -343,6 +347,8 @@ def filter_add_cases_for_test_json(request):
 
 
 def get_tests_json(request):
+    if not request.GET.get('id', None):
+        raise Http404
 
     tests = Test.objects.filter(
         test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id']).distinct('test_id').order_by('test_id')
@@ -352,6 +358,8 @@ def get_tests_json(request):
 
 
 def get_test_cases_json(request):
+    if not request.GET.get('test_id', None) or not request.GET.get('id', None):
+        raise Http404
 
     test_cases = TestCase.objects.filter(
         test__test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id'],
@@ -518,10 +526,7 @@ def compare_filter_matches(request, filter_data, tag1, tag2):
     parent=filter_detail,
     needs=['username', 'name', 'tag1', 'tag2'])
 def compare_matches(request, username, name, tag1, tag2):
-    try:
-        filter = TestRunFilter.objects.get(owner__username=username, name=name)
-    except TestRunFilter.DoesNotExist:
-        raise Http404("Filter ~%s/%s not found." % (username, name))
+    filter = get_object_or_404(TestRunFilter, owner__username=username, name=name)
     if not request.user.is_superuser:
         if not filter.public and filter.owner != request.user:
             raise PermissionDenied()

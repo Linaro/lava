@@ -103,7 +103,15 @@ class BundleDetailTable(LavaTable):
     device.orderable = False
     test_run = tables.Column(accessor='test_id')
     test_run.orderable = False
-    test = tables.Column()
+    test = tables.TemplateColumn('''
+    {% if record.get_test_params %}
+      <span title="{{ record.get_test_params|cut:"{"|cut:"}" }}">
+        {{ record.test }}</br>
+        {{ record.get_test_params|truncatechars:48|cut:"{"|cut:"}" }}
+      </span>
+    {% else %}
+      {{ record.test }}
+    {% endif %}''')
     passes = tables.TemplateColumn('{{ record.get_summary_results.pass|default:"0" }}')
     passes.orderable = False
     fails = tables.TemplateColumn('{{ record.get_summary_results.fail|default:"0" }}')

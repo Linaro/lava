@@ -14,6 +14,9 @@
       <dd>{{ user.username }}</dd>
       <dt>Email</dt>
       <dd>{{ user.email }}</dd>
+      <dt>Joined</dt>
+      <dd><span title="{{ user.date_joined }}">
+          {{user.date_joined|timesince }} ago</span></dd>
       <dt>Password</dt>
       <dd><a href="{% url 'django.contrib.auth.views.password_change' %}"><span class="glyphicon glyphicon-lock"></span> Update</a></dd>
     </dl>
@@ -23,22 +26,32 @@
     <h4 class="modal-header">Groups</h4>
     {% if user.groups.all %}
     <p>You are member of the following LAVA groups:</p>
-    <ul>
-    {% for g in user.groups.all %}
-      {% if g.user_set.all|length > 1 %}
-      <li><b>{{ g.name }}</b> group:
-      <ul>
-          {% for u in g.user_set.all %}
-              {% if u != user %}
-                <li>{{ u.username }}</li>
-              {% endif %}
-          {% endfor %}
-      </ul>
-      {% else %}
-      <li><b>{{ g.name }}</b> group.</li>
-      {% endif %}
-      </li>
+    <div class="panel-group" id="accordion">
+    {% for group in user.groups.all %}
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h4 class="panel-title">
+            {% if group.user_set.count > 1 %}
+              <a data-toggle="collapse" data-parent="#accordion" href="#collapse{{ group.name }}">{{ group.name }} <span class="badge pull-right">{{ group.user_set.count|add:"-1" }}</span></a>
+            {% else %}
+              {{ group.name }} <span class="badge pull-right">0</span>
+            {% endif %}
+          </h4>
+        </div>
+        {% if group.user_set.count > 1 %}
+        <div id="collapse{{ group.name }}" class="panel-collapse collapse">
+          <div class="panel-body">
+            <ul>
+            {% for group_user in group.user_set.all %}
+              {% if group_user != user %}<li>{{ group_user }}</li>{% endif %}
+            {% endfor %}
+            </ul>
+          </div>
+        </div>
+        {% endif %}
+      </div>
     {% endfor %}
+    </div>
     {% else %}
     <p>You are not member of any group.</p>
     {% endif %}

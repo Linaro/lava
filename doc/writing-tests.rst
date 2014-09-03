@@ -244,6 +244,45 @@ Ubuntu or Debian)::
           raise a network interface manually as a run step and install
           or build the components directly.
 
+When an external PPA or package repository (specific to debian based
+distros) is required for installation of packages, it could be
+added in the `install` section as follows::
+
+  install:
+      keys:
+          - emdebian-archive-keyring
+          - 6CCD4038
+      sources:
+          - http://security.debian.org
+          - ppa:linaro-maintainers/tools
+      deps:
+          - curl
+          - ntpdate
+          - lava-tool
+
+`keys` refer to the gpg keys that needs to be imported in order to
+trust a repository that is getting added in the `sources`
+section. `keys` could be either debian keyring packages or gpg security
+keys (the key server used for importing is `pgp.mit.edu`) For PPAs
+(referred from `launchpad.net`) the keys are automatically imported.
+
+See `Debian apt source addition
+<https://git.linaro.org/people/senthil.kumaran/test-definitions.git/blob_plain/92406804035c450fd7f3b0ab305ab9d2c0bf94fe:/debian/ppa.yaml>`_
+and `Ubuntu PPA addition <https://git.linaro.org/people/senthil.kumaran/test-definitions.git/blob_plain/92406804035c450fd7f3b0ab305ab9d2c0bf94fe:/ubuntu/ppa.yaml>`_
+
+.. note:: When a new source is added and there are no 'deps' in the
+          'install' section, then it is the users responsibility to
+          run 'apt-get update' before attempting an 'apt-get \*'
+          operation, elsewhere in the test definition.
+
+.. note:: When `keys` are not added for an apt source repository
+          referred in `sources` section the packages may fail to
+          install, if the repository is not trusted. We do not
+          `--force-yes` during `apt-get` operation though we pass `-y`
+          option to `apt-get`. Hence the user must add the appropriate
+          `keys` in order to trust the new apt source repository that is
+          added.
+
 The principle purpose of the YAML is to run commands on the device
 and these are specified in the run steps::
 

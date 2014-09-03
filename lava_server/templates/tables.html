@@ -9,6 +9,9 @@
   <div class="col-md-6">
   <form class="form-inline" id="{{ table.prefix }}search_form" action="{% querystring %}#{{ table.prefix|default:"table" }}" method="GET" role="form">
     <input type="hidden" name="{{ table.prefix }}search" value="{{ request.GET.search }}">
+    {% if request.GET.end %}<input type="hidden" name="{{ table.prefix }}end" value="{{ request.GET.end }}">{% endif %}
+    {% if request.GET.start %}<input type="hidden" name="{{ table.prefix }}start" value="{{ request.GET.start }}">{% endif %}
+    {% if request.GET.health_check %}<input type="hidden" name="{{ table.prefix }}health_check" value="{{ request.GET.health_check }}">{% endif %}
     <div class="form-group">
       Show <select class="form-control input-sm" id="{{ table.prefix }}length" name="{{ table.prefix }}length" onchange="submit_search_form('{{ table.prefix }}');">
         {{ table|get_length_select:request.GET }}

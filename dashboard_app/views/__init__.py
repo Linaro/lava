@@ -357,10 +357,10 @@ class BundleDetailView(BundleStreamView):
         self.content_sha1 = content_sha1
 
     def get_queryset(self):
-        bundle_stream = BundleStream.objects.filter(pathname=self.pathname)
-        if not bundle_stream[0].is_accessible_by(self.request.user):
+        bundle_stream = get_object_or_404(BundleStream, pathname=self.pathname)
+        if not bundle_stream.is_accessible_by(self.request.user):
             raise PermissionDenied
-        bundle = Bundle.objects.filter(bundle_stream=bundle_stream, content_sha1=self.content_sha1)[:1][0]
+        bundle = get_object_or_404(Bundle, bundle_stream=bundle_stream, content_sha1=self.content_sha1)
         return bundle.test_runs.all().order_by('test')
 
 
@@ -372,14 +372,14 @@ def bundle_detail(request, pathname, content_sha1):
     """
     Detail about a bundle from a particular stream
     """
-    bundle_stream = BundleStream.objects.filter(pathname=pathname)
-    bundle = Bundle.objects.filter(bundle_stream=bundle_stream, content_sha1=content_sha1)
+    bundle_stream = get_object_or_404(BundleStream, pathname=pathname)
+    bundle = get_object_or_404(Bundle, bundle_stream=bundle_stream, content_sha1=content_sha1)
     try:
-        next_bundle = Bundle.objects.filter(bundle_stream=bundle_stream, id__lt=bundle[0].id)[0]
+        next_bundle = Bundle.objects.filter(bundle_stream=bundle_stream, id__lt=bundle.id)[0]
     except IndexError:
         next_bundle = None
     try:
-        previous_bundle = Bundle.objects.filter(bundle_stream=bundle_stream, id__gt=bundle[0].id).reverse()[0]
+        previous_bundle = Bundle.objects.filter(bundle_stream=bundle_stream, id__gt=bundle.id).reverse()[0]
     except IndexError:
         previous_bundle = None
     view = BundleDetailView(request, pathname=pathname, content_sha1=content_sha1, model=TestRun, table_class=BundleDetailTable)
@@ -398,8 +398,8 @@ def bundle_detail(request, pathname, content_sha1):
             "discrete_data": bundle_table.prepare_discrete_data(view),
             "times_data": bundle_table.prepare_times_data(view),
             "site": Site.objects.get_current(),
-            "bundle": bundle[0],
-            "bundle_stream": bundle_stream[0],
+            "bundle": bundle,
+            "bundle_stream": bundle_stream,
             "next_bundle": next_bundle,
             "previous_bundle": previous_bundle,
         },
@@ -433,8 +433,8 @@ def bundle_export(request, pathname, content_sha1):
             test_run_keys.remove(field)
 
     # Add results columns from denormalization object.
-    test_run_keys[:0] = ["device", "test", "count_pass", "count_fail",
-                         "count_skip", "count_unknown"]
+    test_run_keys[:0] = ["device", "test", "test_params", "count_pass",
+                         "count_fail", "count_skip", "count_unknown"]
 
     # Add bug link
     test_run_keys.append("bug_link")
@@ -451,6 +451,7 @@ def bundle_export(request, pathname, content_sha1):
             test_run_dict = test_run.__dict__.copy()
             test_run_dict.update(test_run_denorm.__dict__)
             test_run_dict["test"] = test_run.test.test_id
+            test_run_dict["test_params"] = test_run.get_test_params()
             test_run_dict["device"] = test_run.show_device()
             test_run_dict["bug_link"] = " ".join([b.bug_link for b in test_run.bug_links.all()])
             out.writerow(test_run_dict)
@@ -471,7 +472,7 @@ def bundle_json(request, pathname, content_sha1):
         request.user,
         pathname=pathname
     )
-    bundle = bundle_stream.bundles.get(content_sha1=content_sha1)
+    bundle = get_object_or_404(Bundle, bundle_stream=bundle_stream, content_sha1=content_sha1)
     test_runs = []
     for test_run in bundle.test_runs.all():
         results = test_run.get_summary_results()
@@ -725,7 +726,10 @@ def test_result_detail(request, pathname, content_sha1, analyzer_assigned_uuid, 
         request.user,
         analyzer_assigned_uuid=analyzer_assigned_uuid
     )
-    test_result = test_run.test_results.select_related('fig').get(relative_index=relative_index)
+    try:
+        test_result = test_run.test_results.select_related('fig').get(relative_index=relative_index)
+    except TestResult.DoesNotExist:
+        raise Http404
     return render_to_response(
         "dashboard_app/test_result_detail.html", {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
@@ -751,8 +755,11 @@ def test_result_update_comments(request, pathname, content_sha1,
         request.user,
         analyzer_assigned_uuid=analyzer_assigned_uuid
     )
-    test_result = test_run.test_results.select_related('fig').get(
-        relative_index=relative_index)
+    try:
+        test_result = test_run.test_results.select_related('fig').get(
+            relative_index=relative_index)
+    except TestResult.DoesNotExist:
+        raise Http404
     test_result.comments = request.POST.get('comments')
     test_result.save()
     data = serializers.serialize('json', [test_result])
@@ -769,6 +776,9 @@ def attachment_download(request, pk):
     if not attachment.content:
         return HttpResponseBadRequest(
             "Attachment %s not present on dashboard" % pk)
+    if not os.path.exists(attachment.content.path):
+        raise Http404("Unable to find the attachment")
+
     response = HttpResponse(content_type=attachment.mime_type)
     response['Content-Disposition'] = 'attachment; filename=%s' % (
         attachment.content_filename)
@@ -785,6 +795,9 @@ def attachment_view(request, pk):
     )
     if not attachment.content or not attachment.is_viewable():
         return HttpResponseBadRequest("Attachment %s not viewable" % pk)
+    if not os.path.exists(attachment.content.path):
+        raise Http404("Unable to find the attachment")
+
     return render_to_response(
         "dashboard_app/attachment_view.html", {
             'attachment': attachment,

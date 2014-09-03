@@ -352,33 +352,24 @@ class DeviceHealthTable(LavaTable):
 
     hostname = tables.TemplateColumn('''
     {% if record.too_long_since_last_heartbeat or record.status == record.RETIRED or record.status == record.OFFLINE %}
-    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
-          alt="{{ offline }}" />
+    <span class="glyphicon glyphicon-thumbs-down text-danger"></span>
     {% else %}
-    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
-          alt="{{ online }}" />
+    <span class="glyphicon glyphicon-thumbs-up text-success"></span>
     {% endif %}
-    {% if record.is_master %}
-    <b><a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a></b>
-    {% else %}
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
-    {% endif %}
-        ''')
+    ''')
     worker_host = tables.TemplateColumn('''
     {% if record.too_long_since_last_heartbeat %}
-    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
-          alt="{{ offline }}" />
+    <span class="glyphicon glyphicon-thumbs-down text-danger"></span>
     {% else %}
-    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
-          alt="{{ online }}" />
+    <span class="glyphicon glyphicon-thumbs-up text-success"></span>
     {% endif %}
     {% if record.is_master %}
     <b><a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a></b>
     {% else %}
     <a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a>
     {% endif %}
-        ''')
-
+    ''')
     health_status = tables.Column()
     last_report_time = DateColumn(
         verbose_name="last report time",
@@ -452,32 +443,24 @@ class DeviceTable(LavaTable):
 
     hostname = tables.TemplateColumn('''
     {% if record.too_long_since_last_heartbeat or record.status == record.RETIRED or record.status == record.OFFLINE %}
-    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
-          alt="{{ offline }}" />
+    <span class="glyphicon glyphicon-thumbs-down text-danger"></span>
     {% else %}
-    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
-          alt="{{ online }}" />
+    <span class="glyphicon glyphicon-thumbs-up text-success"></span>
     {% endif %}
-    {% if record.is_master %}
-    <b><a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a></b>
-    {% else %}
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
-    {% endif %}
-        ''')
+    ''')
     worker_host = tables.TemplateColumn('''
     {% if record.too_long_since_last_heartbeat %}
-    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
-          alt="{{ offline }}" />
+    <span class="glyphicon glyphicon-thumbs-down text-danger"></span>
     {% else %}
-    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
-          alt="{{ online }}" />
+    <span class="glyphicon glyphicon-thumbs-up text-success"></span>
     {% endif %}
     {% if record.is_master %}
     <b><a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a></b>
     {% else %}
     <a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a>
     {% endif %}
-        ''')
+    ''')
     device_type = tables.Column()
     status = ExpandedStatusColumn("status")
     owner = RestrictedDeviceColumn()
@@ -529,21 +512,20 @@ class WorkerTable(tables.Table):
     def __init__(self, *args, **kwargs):
         super(WorkerTable, self).__init__(*args, **kwargs)
         self.length = 10
+        self.show_help = True
 
     hostname = tables.TemplateColumn('''
     {% if record.too_long_since_last_heartbeat %}
-    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
-          alt="{{ offline }}" />
+    <span class="glyphicon glyphicon-thumbs-down text-danger"></span>
     {% else %}
-    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
-          alt="{{ online }}" />
+    <span class="glyphicon glyphicon-thumbs-up text-success"></span>
     {% endif %}
     {% if record.is_master %}
     <b><a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a></b>
     {% else %}
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
     {% endif %}
-        ''')
+    ''')
     status = tables.TemplateColumn('''
     {% if record.too_long_since_last_heartbeat %}
     down
@@ -641,6 +623,10 @@ class QueueJobsTable(JobTable):
 
     id = RestrictedIDLinkColumn(accessor="id")
     device = tables.Column(accessor='device_sort')
+    in_queue = tables.TemplateColumn('''
+    for {{ record.submit_time|timesince }}
+    ''')
+    in_queue.orderable = False
 
     def __init__(self, *args, **kwargs):
         super(QueueJobsTable, self).__init__(*args, **kwargs)
@@ -649,9 +635,11 @@ class QueueJobsTable(JobTable):
     class Meta(JobTable.Meta):
         fields = (
             'id', 'device', 'description', 'submitter', 'submit_time',
+            'in_queue'
         )
         sequence = (
             'id', 'device', 'description', 'submitter', 'submit_time',
+            'in_queue'
         )
         exclude = ('status', 'priority', 'end_time', 'duration')
 

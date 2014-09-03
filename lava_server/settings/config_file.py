@@ -53,7 +53,7 @@ class ConfigFile(object):
         """
         Parse the contents of pathname and return key-value pairs
         """
-        with open(pathname, "rt") as stream:
+        with open(pathname, "r") as stream:
             for lineno, line in enumerate(stream, start=1):
                 match = cls._pattern.match(line)
                 if match:

@@ -107,6 +107,11 @@ div.selector .selector-chosen select {
     white-space: nowrap;
 }
 
+.legendLabel {
+    text-decoration: underline;
+    padding-left: 2px;
+}
+
 .legend tr {
     cursor: pointer;
 }
@@ -128,10 +133,11 @@ div.selector .selector-chosen select {
 
 .table-link-container {
     margin-left: 30px;
+    font-size: 16px;
 }
 
 .filter-links-container {
-    margin: 20px 0 10px 0px;
+    margin: 10px 0 10px 0px;
     width: 80%;
 }
 
@@ -142,11 +148,24 @@ div.selector .selector-chosen select {
     margin-top: 3px;
 }
 
+.toggle-percentage {
+    margin-left: 50px;
+}
+
+.toggle-legend {
+    margin-left: 30px;
+}
+
+.toggle-checkbox {
+    vertical-align: top;
+    margin-left: 5px;
+}
+
 .chart-headline {
-    font-size: 16px;
+    font-size: 17px;
     font-weight: bold;
-    color: #98c13d;
-    margin-right: 20px;
+    color: #000;
+    margin-right: 10px;
 }
 
 .sortable-placeholder {
@@ -201,6 +220,12 @@ div.selector .selector-chosen select {
 
 #outer-table th {
     text-align: left;
+}
+
+.inner-table-names td, .inner-table-names th {
+    min-width: 140px;
+    padding: 3px 4px;
+    border: thin solid black;
 }
 
 .inner-table td, .inner-table th {
@@ -305,4 +330,18 @@ div.selector .selector-chosen select {
 .group-link {
     margin: 0 0 0 10px;
     float: left;
+}
+
+.zoom-out-button {
+    position: absolute;
+    font-size: smaller;
+    color: #999;
+    background-color: #eee;
+    padding: 3px;
+    width: 57px;
+    height: 20px;
+    margin-top: 13px;
+    z-index: 1;
+    cursor: pointer;
+    display: inline;
 }

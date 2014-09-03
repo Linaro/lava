@@ -7,7 +7,7 @@ Packages for LAVA are available for:
 
 ======================== =============================
 Debian                    Ubuntu
-Debian Jessie (testing)   Ubuntu Trusty Tahr 10.04LTS
+Debian Jessie (testing)   Ubuntu Trusty Tahr 14.04LTS
 Debian Sid (unstable)     Ubuntu Utopic Unicorn
 ======================== =============================
 

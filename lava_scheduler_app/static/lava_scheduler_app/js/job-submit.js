@@ -2,6 +2,18 @@ beautify_options = {
     "brace_style": "expand"
 }
 
+$("#validate").click(function(){
+    $("#busyIndicator").show(); 
+    validate_input($("#json-input").val());
+    $("#busyIndicator").hide(); 
+});
+
+$(document).ajaxStart(function () {
+    $('#busyIndicator').show();
+}).ajaxStop(function () {
+    $('#busyIndicator').hide();
+});
+
 $(window).ready(
     function () {
         $("#json-input").linedtextarea();
@@ -14,9 +26,10 @@ $(window).ready(
             },100);
         });
 
-        $("#json-input").blur(function() {
-            validate_input($("#json-input").val());
-        });
+        $("#json-input").keypress(function() {
+            $("#submit").attr("disabled", "disabled");
+            $("#json-valid-container").hide();
+         });
 
         $("#submit").attr("disabled", "disabled");
 

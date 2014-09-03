@@ -26,7 +26,7 @@ from django.core import serializers
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render_to_response
+from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 from django.utils.safestring import mark_safe
 
@@ -56,6 +56,8 @@ from dashboard_app.models import (
     ImageChartTest,
     ImageChartTestCase,
     ImageChartUser,
+    ImageChartTestUser,
+    ImageChartTestCaseUser,
     Test,
     TestCase,
     TestRunFilter,
@@ -168,7 +170,7 @@ def image_report_list(request):
 @public_filters_or_login_required
 def image_report_display(request, name):
 
-    image_report = ImageReport.objects.get(name=name)
+    image_report = get_object_or_404(ImageReport, name=name)
 
     if not request.user.is_superuser:
         if not image_report.is_published and image_report.user != request.user:
@@ -193,7 +195,7 @@ def image_report_display(request, name):
 @ownership_required
 def image_report_detail(request, name):
 
-    image_report = ImageReport.objects.get(name=name)
+    image_report = get_object_or_404(ImageReport, name=name)
 
     return render_to_response(
         'dashboard_app/image_report_detail.html', {
@@ -220,7 +222,7 @@ def image_report_add(request):
 @ownership_required
 def image_report_edit(request, name):
 
-    image_report = ImageReport.objects.get(name=name)
+    image_report = get_object_or_404(ImageReport, name=name)
 
     return image_report_form(
         request,
@@ -233,16 +235,17 @@ def image_report_edit(request, name):
 @ownership_required
 def image_report_delete(request, name):
 
-    image_report = ImageReport.objects.get(name=name)
+    image_report = get_object_or_404(ImageReport, name=name)
     image_report.delete()
-    return HttpResponseRedirect(reverse('image_report_list'))
+    return HttpResponseRedirect(reverse(
+        'lava.dashboard.image_report.report_list'))
 
 
 @login_required
 @ownership_required
 def image_report_publish(request, name):
 
-    image_report = ImageReport.objects.get(name=name)
+    image_report = get_object_or_404(ImageReport, name=name)
     image_report.is_published = True
     image_report.save()
 
@@ -259,7 +262,7 @@ def image_report_publish(request, name):
 @ownership_required
 def image_report_unpublish(request, name):
 
-    image_report = ImageReport.objects.get(name=name)
+    image_report = get_object_or_404(ImageReport, name=name)
     image_report.is_published = False
     image_report.save()
 
@@ -299,7 +302,7 @@ def image_report_form(request, bread_crumb_trail, instance=None):
 @ownership_required
 def image_chart_detail(request, name, id):
 
-    image_chart = ImageReportChart.objects.get(id=id)
+    image_chart = get_object_or_404(ImageReportChart, id=id)
 
     return render_to_response(
         'dashboard_app/image_report_chart_detail.html', {
@@ -315,7 +318,7 @@ def image_chart_detail(request, name, id):
 @ownership_required
 def image_chart_add(request, name):
 
-    image_report = ImageReport.objects.get(name=name)
+    image_report = get_object_or_404(ImageReport, name=name)
     return image_chart_form(
         request,
         BreadCrumbTrail.leading_to(image_chart_add, name=name),
@@ -327,7 +330,7 @@ def image_chart_add(request, name):
 @ownership_required
 def image_chart_edit(request, name, id):
 
-    image_chart = ImageReportChart.objects.get(id=id)
+    image_chart = get_object_or_404(ImageReportChart, id=id)
     return image_chart_form(
         request,
         BreadCrumbTrail.leading_to(image_chart_edit, name=name, id=id),
@@ -338,7 +341,7 @@ def image_chart_edit(request, name, id):
 @ownership_required
 def image_chart_delete(request, name, id):
 
-    image_chart = ImageReportChart.objects.get(id=id)
+    image_chart = get_object_or_404(ImageReportChart, id=id)
     image_chart.delete()
     return HttpResponseRedirect(
         reverse('image_report_detail',
@@ -361,7 +364,7 @@ def image_report_add_group(request, name):
         raise PermissionDenied
 
     group_name = request.POST.get("value")
-    image_report = ImageReport.objects.get(name=name)
+    image_report = get_object_or_404(ImageReport, name=name)
     old_group = image_report.image_report_group
 
     if not group_name:
@@ -394,6 +397,36 @@ def image_chart_settings_update(request, name, id):
         instance.image_chart_id = id
         instance.user = request.user
 
+    # Update the chart test/test case user table with hidden test ids.
+    try:
+        chart = ImageReportChart.objects.get(id=id)
+        if chart.chart_type == "pass/fail":
+
+            chart_test = ImageChartTest.objects.get(
+                id=request.POST["visible_chart_test_id"])
+
+            chart_test_user = ImageChartTestUser.objects.get_or_create(
+                user=request.user,
+                image_chart_test=chart_test)[0]
+
+            chart_test_user.is_visible = not chart_test_user.is_visible
+            chart_test_user.save()
+
+        else:
+            chart_test_case = ImageChartTestCase.objects.get(
+                id=request.POST["visible_chart_test_id"])
+
+            chart_test_user = ImageChartTestCaseUser.objects.get_or_create(
+                user=request.user,
+                image_chart_test_case=chart_test_case)[0]
+
+            chart_test_user.is_visible = not chart_test_user.is_visible
+            chart_test_user.save()
+
+    except Exception as e:
+        # Don't update the chart test/test case user table.
+        pass
+
     form = ImageChartUserForm(request.user, request.POST,
                               instance=instance)
     if form.is_valid():
@@ -412,8 +445,8 @@ def image_chart_filter_type_check(request):
 
     chart_id = request.POST.get("chart_id")
     filter_id = request.POST.get("filter_id")
-    image_chart = ImageReportChart.objects.get(id=chart_id)
-    filter = TestRunFilter.objects.get(id=filter_id)
+    image_chart = get_object_or_404(ImageReportChart, id=chart_id)
+    filter = get_object_or_404(TestRunFilter, id=filter_id)
 
     has_build_attribute = True if filter.build_number_attribute else False
 
@@ -448,7 +481,7 @@ def get_chart_test_data(request):
 def image_chart_export(request, name, id):
     # Create and serve the CSV file.
 
-    chart = ImageReportChart.objects.get(id=id)
+    chart = get_object_or_404(ImageReportChart, id=id)
     chart_data = chart.get_chart_data(request.user)
 
     tmp_dir = tempfile.mkdtemp()
@@ -506,7 +539,7 @@ def image_chart_form(request, bread_crumb_trail, instance=None,
 @BreadCrumb("Add filter", parent=image_chart_detail,
             needs=['name', 'id'])
 def image_chart_filter_add(request, name, id):
-    image_chart = ImageReportChart.objects.get(id=id)
+    image_chart = get_object_or_404(ImageReportChart, id=id)
     return image_chart_filter_form(
         request,
         BreadCrumbTrail.leading_to(image_chart_filter_add, name=name, id=id),
@@ -529,7 +562,7 @@ def image_chart_filter_detail(request, name, id, slug):
         chart_test.attributes = request.POST.getlist('attributes')
         chart_test.save()
 
-    chart_filter = ImageChartFilter.objects.get(id=slug)
+    chart_filter = get_object_or_404(ImageChartFilter, id=slug)
 
     return render_to_response(
         'dashboard_app/image_chart_filter_detail.html', {
@@ -544,7 +577,7 @@ def image_chart_filter_detail(request, name, id, slug):
             needs=['name', 'id', 'slug'])
 @login_required
 def image_chart_filter_edit(request, name, id, slug):
-    image_chart_filter = ImageChartFilter.objects.get(id=slug)
+    image_chart_filter = get_object_or_404(ImageChartFilter, id=slug)
     return image_chart_filter_form(
         request,
         BreadCrumbTrail.leading_to(image_chart_filter_edit, name=name, id=id,
@@ -554,7 +587,7 @@ def image_chart_filter_edit(request, name, id, slug):
 
 @BreadCrumb("Image chart delete filter", parent=image_report_list)
 def image_chart_filter_delete(request, name, id, slug):
-    image_chart_filter = ImageChartFilter.objects.get(id=slug)
+    image_chart_filter = get_object_or_404(ImageChartFilter, id=slug)
     url = image_chart_filter.image_chart.get_absolute_url()
     image_chart_filter.delete()
     return HttpResponseRedirect(url)

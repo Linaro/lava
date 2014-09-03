@@ -31,35 +31,6 @@ $(document).ready(function () {
     ImageChart.prototype.BUILD_NUMBER_ERROR =
         "End build number must be greater then the start build number.";
 
-    ImageChart.prototype.setup_clickable = function() {
-
-        var chart = this;
-        $("#legend_container_" + this.chart_id + " table:first-child tbody tr").each(function(index) {
-
-            $(this).click(function() {
-
-                if (chart.legend_items[index].show == true) {
-                    chart.legend_items[index].show = false;
-                } else {
-                    chart.legend_items[index].show = true;
-                }
-
-                chart.update_plot();
-            });
-        });
-    }
-
-    ImageChart.prototype.setup_legend_css = function() {
-
-        for (var i in this.legend_items) {
-            if (this.legend_items[i].show == true) {
-                $("#" + this.legend_items[i].dom_id).parent().css("color", "#545454");
-            } else {
-                $("#" + this.legend_items[i].dom_id).parent().css("color", "#999");
-            }
-        }
-    }
-
     ImageChart.prototype.add_chart = function() {
 
         if (this.chart_data.test_data) {
@@ -70,15 +41,15 @@ $(document).ready(function () {
             $("#chart_container_" + this.chart_id).append(
                 '<div class="headline-container" id="headline_container_' +
                     this.chart_id + '"></div>');
+            // Add data table link.
+            $("#chart_container_" + this.chart_id).append(
+                '<div class="table-link-container"' +
+                    'id="table_link_container_' + this.chart_id + '"></div>');
             // Add filter links used.
             $("#chart_container_" + this.chart_id).append(
                 '<div class="filter-links-container"' +
                     'id="filter_links_container_' + this.chart_id +
                     '"></div>');
-            // Add data table link.
-            $("#filter_links_container_" + this.chart_id).append(
-                '<span class="table-link-container"' +
-                    'id="table_link_container_' + this.chart_id + '"></span>');
             // Add dates/build numbers container.
             $("#chart_container_" + this.chart_id).append(
                 '<div class="dates-container" id="dates_container_' +
@@ -98,10 +69,10 @@ $(document).ready(function () {
 
             // Add headline and description.
             this.update_headline();
-            // Add dates/build numbers.
-            this.update_dates();
             // Add filter links.
             this.update_filter_links();
+            // Add dates/build numbers.
+            this.update_dates();
             // Add data tables.
             this.update_data_tables();
             // Generate chart.
@@ -152,7 +123,6 @@ $(document).ready(function () {
             });
     }
 
-
     ImageChart.prototype.update_headline = function() {
         $("#headline_container_" + this.chart_id).append(
             '<span class="chart-headline">' + this.chart_data["name"] +
@@ -164,21 +134,68 @@ $(document).ready(function () {
     ImageChart.prototype.update_filter_links = function() {
 
         $("#filter_links_container_" + this.chart_id).append(
-            '<span style="margin-left: 30px;">Filters used:&nbsp;&nbsp;' +
-                '</span>');
+            '<span style="margin-left: 30px;"><a id="filter_link_' +
+                this.chart_id + '"' +
+                ' href="javascript:void(0)">Filters used</a></span>');
+
+        // Add dialog.
+        $("#main_container").append('<div id="filter_links_dialog_' +
+                                    this.chart_id + '"></div>');
+
+        // Init dialog.
+        $('#filter_links_dialog_' + this.chart_id).dialog({
+            autoOpen: false,
+            title: 'Filters used',
+            draggable: false,
+            height: 480,
+            width: 450,
+            modal: true,
+            resizable: false,
+        });
+
+        var chart = this;
+        $('#filter_link_' + this.chart_id).click(function() {
+            $('#filter_links_dialog_' + chart.chart_id).dialog("open");
+        });
+
+
         filter_links = [];
+        height = 80;
         for (filter_id in this.chart_data.filters) {
-            filter_links.push('<a href="' +
+            filter_links.push('<a target="_blank" href="' +
                               this.chart_data.filters[filter_id]["link"].replace(/\\/g , "") +
                               '">~' +
                               this.chart_data.filters[filter_id]["owner"] +
                               '/' +
                               this.chart_data.filters[filter_id]["name"] +
                               '</a>');
+            height += 30;
         }
-        filter_html = filter_links.join(", ");
+        filter_html = filter_links.join("<br>");
+
+        $("#filter_links_dialog_" + this.chart_id).append('<div>' + filter_html + '</div>');
+        $("#filter_links_dialog_" + this.chart_id).dialog("option",
+                                                          "height", height );
+
+        // Add percentages if chart type is pass/fail.
+        if (this.chart_data["chart_type"] == "pass/fail") {
+            $("#filter_links_container_" + this.chart_id).append(
+                '<span class="toggle-percentage"><label for="is_percentage_' +
+                    this.chart_id +
+                    '">Toggle percentage</label></span>');
+            $("#filter_links_container_" + this.chart_id).append(
+                '<span class="toggle-checkbox"><input type="checkbox" ' +
+                    'id="is_percentage_' + this.chart_id + '" /></span>');
+        }
+
+        // Add legend toggle checkbox.
         $("#filter_links_container_" + this.chart_id).append(
-            '<span>' + filter_html + '</span>');
+            '<span class="toggle-legend"><label for="is_legend_visible_' +
+                this.chart_id + '">Toggle legend</label></span>');
+        $("#filter_links_container_" + this.chart_id).append(
+            '<span class="toggle-checkbox"><input type="checkbox" ' +
+                'id="is_legend_visible_' + this.chart_id +
+                '" checked="checked"/></span>');
 
         $("#filter_links_container_" + this.chart_id).append(
             '<span class="chart-save-img">' +
@@ -215,24 +232,6 @@ $(document).ready(function () {
         $("#dates_container_" + this.chart_id).append(
             '<span><select id="end_date_' + this.chart_id + '"></select>' +
                 '</span>');
-
-        // Add percentages if chart type is pass/fail.
-        if (this.chart_data["chart_type"] == "pass/fail") {
-            $("#dates_container_" + this.chart_id).append(
-                '<span>&nbsp;&nbsp;&nbsp;&nbsp;<label for="is_percentage_' +
-                    this.chart_id +
-                    '">Toggle percentage:</label>&nbsp;&nbsp;</span>');
-            $("#dates_container_" + this.chart_id).append(
-                '<span><input type="checkbox" id="is_percentage_' +
-                    this.chart_id + '" /></span>');
-        }
-
-        $("#dates_container_" + this.chart_id).append(
-            '<span>&nbsp;&nbsp;&nbsp;&nbsp;<label for="is_legend_visible_' +
-                this.chart_id + '">Toggle legend:</label>&nbsp;&nbsp;</span>');
-        $("#dates_container_" + this.chart_id).append(
-            '<span><input type="checkbox" id="is_legend_visible_' +
-                this.chart_id + '" checked="checked"/></span>');
         $("#dates_container_" + this.chart_id).append(
             '<span style="float: right;"><input id="has_subscription_' +
                 this.chart_id +
@@ -253,10 +252,10 @@ $(document).ready(function () {
         // Init dialog.
         $('#data_table_dialog_' + this.chart_id).dialog({
             autoOpen: false,
-            title: 'View data table',
+            title: 'Results table',
             draggable: false,
             height: 280,
-            width: 950,
+            width: 970,
             modal: true,
             resizable: false,
             open: function (event, ui) {
@@ -273,7 +272,7 @@ $(document).ready(function () {
         $("#data_table_dialog_" + this.chart_id).append(
             '<table id="outer-table"><tr><td>' +
                 '<table id="test-run-names_' + this.chart_id +
-                '" class="inner-table"><thead>' +
+                '" class="inner-table-names"><thead>' +
                 '<tr><th>Build Number</th></tr>' +
                 '</thead>' +
                 '<tbody></tbody></table></td>' +
@@ -290,7 +289,7 @@ $(document).ready(function () {
         $("#table_link_container_" + this.chart_id).append(
             '<a id="data_table_link_' +
                 this.chart_id +
-                '" href="javascript:void(0)">View data table</a>');
+                '" href="javascript:void(0)">Results table</a>');
 
         var chart = this;
         $("#data_table_link_" + this.chart_id).click(function(){
@@ -548,6 +547,11 @@ $(document).ready(function () {
             chart.update_settings();
         });
 
+        $("#is_percentage_"+this.chart_id).change(function() {
+            chart.update_plot();
+            chart.update_settings();
+        });
+
         if (this.chart_data["chart_type"] == "pass/fail") {
             $("#is_percentage_"+this.chart_id).change(function() {
                 chart.update_plot();
@@ -572,12 +576,20 @@ $(document).ready(function () {
                 $("#is_legend_visible_" + this.chart_id).prop("checked",
                                                               false);
             }
+            if (this.chart_data.user.toggle_percentage == true) {
+                $("#is_percentage_" + this.chart_id).prop("checked",
+                                                              true);
+            }
 
             this.set_subscription_link(this.chart_data.user.has_subscription);
         }
     }
 
-    ImageChart.prototype.update_settings = function() {
+    ImageChart.prototype.update_settings = function(visible_chart_test_id) {
+
+        if (typeof(visible_chart_test_id) === 'undefined') {
+            visible_chart_test_id = 0;
+        }
 
         url = "/dashboard/image-charts/" + this.chart_data["report_name"] +
             "/" + this.chart_id + "/+settings-update";
@@ -592,6 +604,8 @@ $(document).ready(function () {
                 start_date: $("#start_date_" + this.chart_id).val(),
                 is_legend_visible: $("#is_legend_visible_" + this.chart_id).prop("checked"),
                 has_subscription: $("#has_subscription_" + this.chart_id).val(),
+                toggle_percentage: $("#is_percentage_" + this.chart_id).prop("checked"),
+                visible_chart_test_id: visible_chart_test_id,
             },
             success: function (data) {
                 chart.set_subscription_link(data[0].fields.has_subscription);
@@ -601,7 +615,7 @@ $(document).ready(function () {
 
     ImageChart.prototype.set_subscription_link = function(subscribed) {
 
-        if (this.chart_data["target_goal"]) {
+        if (this.chart_data["target_goal"] != null) {
             if (subscribed) {
                 $("#has_subscription_"+this.chart_id).val(true);
                 $("#has_subscription_link_"+this.chart_id).html(
@@ -685,6 +699,10 @@ $(document).ready(function () {
                 if (this.chart_data["chart_type"] == "pass/fail") {
                     if ($("#is_percentage_" + this.chart_id).prop("checked") == true) {
                         value = parseFloat(row["passes"]/row["total"]).toFixed(4) * 100;
+                        // Happens when total is 0.
+                        if (isNaN(value)) {
+                            value = 0;
+                        }
                         tooltip = "Pass rate: " + value + "%";
                     } else {
                         value = row["passes"];
@@ -728,6 +746,10 @@ $(document).ready(function () {
                     "tooltip": tooltip,
                 };
 
+                // Add chart test/test case id.
+                plot_data[test_filter_id]["chart_test_id"] = row["chart_test_id"];
+
+                // Add the data.
                 if (this.chart_data.has_build_numbers) {
                     insert_data_item(build_number, [build_number, value],
                                      plot_data[test_filter_id]["data"]);
@@ -798,10 +820,19 @@ $(document).ready(function () {
             test_filter_id = sorted_filter_ids[i];
 
             if (this.legend_items.length != sorted_filter_ids.length) {
+
+                // Load hidden tests data.
+                var show = true;
+                if (this.chart_data.user) { // Is authenticated.
+                    if (this.chart_data.user["hidden_tests"].indexOf(plot_data[test_filter_id]["chart_test_id"]) != -1 ) {
+                        show = false;
+                    }
+                }
+
                 this.legend_items.push({
-                    filter_id: test_filter_id,
-                    dom_id: "legend_" + test_filter_id,
-                    show: true,
+                    chart_test_id: plot_data[test_filter_id]["chart_test_id"],
+                    dom_id: "legend_" + plot_data[test_filter_id]["chart_test_id"],
+                    show: show,
                 });
             }
 
@@ -848,6 +879,7 @@ $(document).ready(function () {
                 lines: lines_options,
                 points: points_options,
                 test_filter_id: test_filter_id,
+                chart_test_id: plot_data[test_filter_id]["chart_test_id"]
             });
         }
 
@@ -871,7 +903,7 @@ $(document).ready(function () {
         }
 
         // Add target goal dashed line to the plot.
-        if (this.chart_data["target_goal"]) {
+        if (this.chart_data["target_goal"] != null) {
 	    goal_data = [];
 
             if (this.chart_data.has_build_numbers) {
@@ -957,8 +989,8 @@ $(document).ready(function () {
 	        container: "#legend_container_" + this.chart_id,
 	        labelFormatter: function(label, series) {
                     label_hidden = "<input type='hidden' " +
-                        "id='legend_" + series.test_filter_id + "' " +
-                        "value='" + series.test_filter_id + "'/>";
+                        "id='legend_" + series.chart_test_id + "' " +
+                        "value='" + series.chart_test_id + "'/>";
 		    return label + label_hidden;
 	        },
 	    },
@@ -970,6 +1002,12 @@ $(document).ready(function () {
                 axisLabelFontFamily: "Verdana",
             },
             canvas: true,
+            zoom: {
+                interactive: true
+            },
+            pan: {
+                interactive: true
+            },
         };
 
         // We cannot apply autoscaleMargin for y axis since y_max and y_min
@@ -988,9 +1026,55 @@ $(document).ready(function () {
 
         this.plot = $.plot($("#outer_container_" + this.chart_id + " #inner_container_" + this.chart_id), data, options);
 
-        // Setup click events and css in the legend.
-        this.setup_clickable();
-        this.setup_legend_css();
+        // Setup hooks, events and css in the legend.
+        add_zoom_out(this);
+        setup_clickable(this);
+        setup_legend_css(this);
+
+        // Setup chart object reference.
+        this.plot.chart = this;
+        // Setup draw hook for plot.
+        this.plot.hooks.draw.push(function(plot, canvascontext) {
+            setup_clickable(plot.chart);
+            setup_legend_css(plot.chart);
+        });
+
+    }
+
+    setup_clickable = function(chart) {
+
+        $("#legend_container_" + chart.chart_id + " table:first-child tbody tr").each(function(index) {
+
+            $(this).click(function(e) {
+
+                var show = chart.legend_items[index].show;
+                chart.legend_items[index].show = !show;
+
+                chart.update_settings(chart.legend_items[index].chart_test_id);
+                chart.update_plot();
+            });
+        });
+    }
+
+    setup_legend_css = function(chart) {
+
+        for (var i in chart.legend_items) {
+            if (chart.legend_items[i].show == true) {
+                $("#" + chart.legend_items[i].dom_id).parent().css("color", "#545454");
+            } else {
+                $("#" + chart.legend_items[i].dom_id).parent().css("color", "#999");
+            }
+        }
+    }
+
+    add_zoom_out = function(chart) {
+
+        $('<div class="zoom-out-button">zoom out</div>').click(
+            function () {
+                chart.plot.zoomOut();
+            }).appendTo("#inner_container_" + chart.chart_id).css(
+                "margin-left",
+                parseInt($("#inner_container_" + chart.chart_id).children().first().css("width")) - 90 + "px");
     }
 
     isNumeric = function(n) {

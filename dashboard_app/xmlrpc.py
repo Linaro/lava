@@ -328,7 +328,7 @@ class DashboardAPI(ExposedAPI):
                 grp_file.write("%s\n" % content)
             return hexdigest
         except Exception as e:
-            logging.debug("Dashboard pending submission caused an exception: %s" % e)
+            logging.debug("Dashboard pending submission caused an exception: %s", e)
 
     def put_group(self, content, content_filename, pathname, group_name):
         """
@@ -416,16 +416,16 @@ class DashboardAPI(ExposedAPI):
         try:
             bundle_set[group_name].append(json_data)
         except Exception as e:
-            logging.debug("appending JSON caused exception %s" % e)
+            logging.debug("appending JSON caused exception %s", e)
         try:
             for bundle_list in bundle_set[group_name]:
                 for test_run in bundle_list['test_runs']:
                     group_tests.append(test_run)
         except Exception as e:
-            logging.debug("aggregating bundles caused exception %s" % e)
+            logging.debug("aggregating bundles caused exception %s", e)
         group_content = json.dumps({"test_runs": group_tests, "format": json_data['format']})
         bundle = self._put(group_content, content_filename, pathname)
-        logging.debug("Returning permalink to aggregated bundle for %s" % group_name)
+        logging.debug("Returning permalink to aggregated bundle for %s", group_name)
         permalink = self._context.request.build_absolute_uri(
             reverse('dashboard_app.views.redirect_to_bundle',
                     kwargs={'content_sha1': bundle.content_sha1}))
