@@ -2139,8 +2139,8 @@ class ImageReportChart(models.Model):
                     if chart_item["test_filter_id"] == test_filter_id and \
                             chart_item["number"] == str(match.tag):
                         chart_item["passes"] += denorm.count_pass
-                        chart_item["total"] += denorm.count_pass + \
-                            denorm.count_fail
+                        chart_item["skip"] += denorm.count_skip
+                        chart_item["total"] += denorm.count_all()
                         chart_item["link"] = test_run.bundle.get_absolute_url()
                         chart_item["pass"] &= denorm.count_fail == 0
                         found = True
@@ -2158,7 +2158,8 @@ class ImageReportChart(models.Model):
                         "date": str(test_run.bundle.uploaded_on),
                         "pass": denorm.count_fail == 0,
                         "passes": denorm.count_pass,
-                        "total": denorm.count_pass + denorm.count_fail,
+                        "skip": denorm.count_skip,
+                        "total": denorm.count_all(),
                         "test_run_uuid": test_run.analyzer_assigned_uuid,
                         "bug_links": bug_links,
                         "metadata_content": metadata_content,
