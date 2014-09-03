@@ -346,6 +346,7 @@ $(document).ready(function () {
 
             table[number][test_data["test_filter_id"]].push({
                 "passes": test_data["passes"],
+                "skip": test_data["skip"],
                 "total": test_data["total"],
                 "measurement": test_data["measurement"],
                 "link": test_data["link"],
@@ -707,7 +708,7 @@ $(document).ready(function () {
                     } else {
                         value = row["passes"];
                         tooltip = "Pass: " + value + ", Total: " +
-                            row["total"];
+                            row["total"] + ", Skip: " + row["skip"];
                     }
 
                 } else {
