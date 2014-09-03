@@ -704,6 +704,11 @@ $(document).ready(function () {
         // Store all build numbers
         build_numbers = [];
 
+        // Grid maximum and minimum values for y axis.
+        var y_max = - Number.MAX_VALUE;
+        var y_max_pass = - Number.MAX_VALUE;
+        var y_min = Number.MAX_VALUE;
+
         for (iter in this.chart_data.test_data) {
 
 	    row = this.chart_data.test_data[iter];
@@ -747,6 +752,11 @@ $(document).ready(function () {
 
                 tooltip += "<br>";
                 label = "";
+
+                // Calculate maximum passes.
+                if (row["passes"] > y_max_pass) {
+                    y_max_pass = row["passes"];
+                }
 
                 // Support metadata content with image and tooltip text.
                 if (!$.isEmptyObject(row["metadata_content"])) {
@@ -850,10 +860,6 @@ $(document).ready(function () {
             }
         }
 
-        // Grid maximum and minimum values for y axis.
-        var y_max = - Number.MAX_VALUE;
-        var y_min = Number.MAX_VALUE;
-
         // Pack data in series for plot display.
         for (var i in sorted_filter_ids) {
             test_filter_id = sorted_filter_ids[i];
@@ -945,16 +951,21 @@ $(document).ready(function () {
 
         // Add target goal dashed line to the plot.
         if (this.chart_data["target_goal"] != null) {
+            if ($("#is_percentage_" + this.chart_id).prop("checked") == true) {
+                target_goal = parseFloat(this.chart_data["target_goal"]/y_max_pass).toFixed(4) * 100;
+            } else {
+                target_goal = this.chart_data["target_goal"];
+            }
+
 	    goal_data = [];
 
             if (this.chart_data.has_build_numbers) {
 	        for (var i in build_numbers) {
-	            goal_data.push([build_numbers[i],
-                                    this.chart_data["target_goal"]]);
+	            goal_data.push([build_numbers[i], target_goal]);
 	        }
             } else {
 	        for (key in dates) {
-	            goal_data.push([dates[key], this.chart_data["target_goal"]]);
+	            goal_data.push([dates[key], target_goal]);
 	        }
             }
 
