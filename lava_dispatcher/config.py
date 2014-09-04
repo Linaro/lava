@@ -194,6 +194,7 @@ class DeviceSchema(schema.Schema):
     android_lava_block_device = schema.StringOption(default="mmcblk0")
     partition_padding_string_org = schema.StringOption(default="p")
     partition_padding_string_android = schema.StringOption(default="p")
+    android_serialno_patterns = schema.ListOption(default=['[0-9A-Fa-f]{16}'])
 
     arm_probe_binary = schema.StringOption(default='/usr/local/bin/arm-probe')
     arm_probe_config = schema.StringOption(default='/usr/local/etc/arm-probe-config')
