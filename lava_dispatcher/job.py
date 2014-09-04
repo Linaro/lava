@@ -282,6 +282,7 @@ class LavaTestJob(object):
         validate_job_data(self.job_data)
         self._set_logging_level()
         lava_commands = get_all_cmds()
+        lmp_init_data = []
 
         if self.job_data['actions'][-1]['command'].startswith(
                 "submit_results"):
@@ -340,12 +341,16 @@ class LavaTestJob(object):
         else:
             logging.debug("[ACTION-B] Single node test!")
 
+        # get LMP init data, if it exists.
         if 'lmp_module' in self.job_data:
-            metadata['lmp_module'] = json.dumps(self.job_data['lmp_module'])
+            lmp_init_data = self.job_data['lmp_module']
+            metadata['lmp_module'] = json.dumps(lmp_init_data)
             self.context.test_data.add_metadata(metadata)
-            # init LMP module
-            lmp_init_boards.init(self.job_data['lmp_module'],
-                                 self.context.device_config)
+        # integrate LMP init data to LMP default config
+        lmp_init_data = lmp_init_boards.data_integrate(lmp_init_data, self.context.device_config)
+        # init LMP module, if necessary
+        if lmp_init_data is not []:
+            lmp_init_boards.init(lmp_init_data, self.context.device_config)
 
         def term_handler(signum, frame):
             self.context.finish()

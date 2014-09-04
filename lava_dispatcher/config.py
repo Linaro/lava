@@ -137,22 +137,28 @@ class DeviceSchema(schema.Schema):
 
     # for the HDMI module of LMP
     lmp_hdmi_id = schema.DictOption()
+    lmp_hdmi_defconf = schema.DictOption(default=None)
     lmp_hdmi_version = schema.StringOption(default="unknown")
 
     # for the SATA module of LMP
     lmp_sata_id = schema.DictOption()
+    lmp_sata_defconf = schema.DictOption(default=None)
     lmp_sata_version = schema.StringOption(default="unknown")
 
     # for the ETH module of LMP
     lmp_eth_id = schema.DictOption()
+    lmp_eth_defconf = schema.DictOption(default=None)
     lmp_eth_version = schema.StringOption(default="unknown")
 
     # for the LSGPIO module of LMP
     lmp_lsgpio_id = schema.DictOption()
+    lmp_lsgpio_defconf = schema.DictOption(default=None)
+    lmp_audio_defconf = schema.DictOption(default=None)
     lmp_lsgpio_version = schema.StringOption(default="unknown")
 
     # for the USB module of LMP
     lmp_usb_id = schema.DictOption()
+    lmp_usb_defconf = schema.DictOption(default=None)
     lmp_usb_version = schema.StringOption(default="unknown")
 
     # auto image login
