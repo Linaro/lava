@@ -31,6 +31,7 @@ import json
 from lava_dispatcher.device.target import (
     get_target,
 )
+from lava_dispatcher.downloader import download_image
 from lava_dispatcher.utils import (
     mkdtemp,
     mk_targz,
@@ -657,6 +658,15 @@ class LavaClient(object):
                     attempts += 1
                     continue
 
+            if self.config.android_boot_uiautomator_jar is not None:
+                try:
+                    self._run_uiautomator_commands()
+                except (OperationFailed, pexpect.TIMEOUT, CriticalError) as e:
+                    msg = "Failed running first boot ui jar: %s" % e
+                    logging.info(msg)
+                    attempts += 1
+                    continue
+
             if self.config.enable_network_after_boot_android:
                 time.sleep(1)
                 try:
@@ -691,6 +701,20 @@ class LavaClient(object):
                 session.connect()
             finally:
                 session.disconnect()
+
+    def _run_uiautomator_commands(self):
+        """ run uiautomator commands"""
+        jar = self.config.android_boot_uiautomator_jar
+        commands = self.config.android_boot_uiautomator_commands
+        session = AndroidTesterCommandRunner(self)
+        jar = download_image(jar, self.context, decompress=False)
+        jar_file = os.path.basename(jar)
+        self.target_device.driver.adb('push %s /data/local/tmp/' % jar)
+        if commands is not None:
+            for command in commands:
+                session.run('uiautomator runtest %s %s' % (jar_file, command))
+        else:
+            session.run('uiautomator runtest %s' % jar_file)
 
     def _disable_suspend(self):
         """ disable the suspend of images.

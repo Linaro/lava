@@ -59,7 +59,7 @@ class FastBoot(object):
     def enter(self):
         try:
             # First we try a gentle reset
-            self.device._adb(self.device.config.soft_boot_cmd)
+            self.device.adb(self.device.config.soft_boot_cmd)
         except subprocess.CalledProcessError:
             # Now a more brute force attempt. In this case the device is
             # probably hung.
@@ -214,6 +214,13 @@ class BaseDriver(object):
 
         self.__boot_image__ = boot
 
+    def adb(self, args, ignore_failure=False, spawn=False, timeout=600):
+        cmd = self.config.adb_command + ' ' + args
+        if spawn:
+            return self.context.spawn(cmd, timeout=60)
+        else:
+            _call(self.context, cmd, ignore_failure, timeout)
+
     @property
     def working_dir(self):
         if self.config.shared_working_directory is None or \
@@ -233,11 +240,11 @@ class BaseDriver(object):
         target_dir = '%s/%s' % (mount_point, directory)
 
         subprocess.check_call(['mkdir', '-p', host_dir])
-        self._adb('pull %s %s' % (target_dir, host_dir), ignore_failure=True)
+        self.adb('pull %s %s' % (target_dir, host_dir), ignore_failure=True)
 
         yield host_dir
 
-        self._adb('push %s %s' % (host_dir, target_dir))
+        self.adb('push %s %s' % (host_dir, target_dir))
 
     # Private Methods
 
@@ -252,14 +259,6 @@ class BaseDriver(object):
             self.config.sys_part_android_org: '/system',
         }
         return lookup[partition]
-
-    def _adb(self, args, ignore_failure=False, spawn=False, timeout=600):
-        cmd = self.config.adb_command + ' ' + args
-        if spawn:
-            return self.context.spawn(cmd, timeout=60)
-        else:
-            _call(self.context, cmd, ignore_failure, timeout)
-
 
 class fastboot(BaseDriver):
 
@@ -276,8 +275,8 @@ class fastboot(BaseDriver):
 
     def connect(self):
         if self.target_type == 'android':
-            self._adb('wait-for-device')
-            proc = self._adb('shell', spawn=True)
+            self.adb('wait-for-device')
+            proc = self.adb('shell', spawn=True)
         else:
             raise CriticalError('This device only supports Android!')
 
@@ -314,7 +313,7 @@ class fastboot_serial(BaseDriver):
             raise CriticalError('The connection_command is not defined!')
 
         if self.target_type == 'android':
-            self._adb('wait-for-device')
+            self.adb('wait-for-device')
 
         return proc
 
@@ -363,7 +362,7 @@ class pxa1928dkb(fastboot_serial):
         self.fastboot('reboot')
 
         if self.target_type == 'android':
-            self._adb('wait-for-device')
+            self.adb('wait-for-device')
 
 
 class k3v2(fastboot_serial):
