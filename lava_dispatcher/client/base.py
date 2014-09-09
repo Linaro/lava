@@ -243,7 +243,9 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
         self.wait_until_attached()
 
     def _setup_adb_over_usb(self):
-        self.run('getprop ro.serialno', response=['[0-9A-Fa-f]{16}'])
+        self.run(
+            'getprop ro.serialno',
+            response=self._client.target_device.config.android_serialno_patterns)
         self.dev_name = self.match.group(0)
 
     def disconnect(self):
