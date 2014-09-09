@@ -1415,20 +1415,20 @@ class TestJob(RestrictedResource):
                         priority=TestJob.MEDIUM,  # multinode jobs have fixed priority
                         target_group=target_group)
                     job.save()
+
+                    # Add tags as defined per role for each job.
+                    taglist = _get_tag_list(node_json[role][c].get("tags", []))
+                    if taglist:
+                        for tag in Tag.objects.filter(name__in=taglist):
+                            job.tags.add(tag)
+                    # This save is important though we have one few lines
+                    # above, because, in order to add to the tags table we need
+                    # a foreign key reference from the jobs table which happens
+                    # with the previous job.save(). The following job.save()
+                    # ensures the tags are saved properly with references.
+                    job.save()
                     job_list.append(job)
                     child_id += 1
-            # as many jobs as there are in the count of that role,
-            # assign each one any and all tags assigned to that role.
-            # The daemon can choose which devices match.
-            # job_data is multinode data
-            for device_group in job_data['device_group']:
-                # get the tags for this group
-                taglist = _get_tag_list(device_group.get('tags', []))
-                if len(taglist) > 0:
-                    for item in range(0, device_group['count']):
-                        for tag in Tag.objects.filter(name__in=taglist):
-                            job_list[item].tags.add(tag)
-                        job_list[item].save()
             return job_list
 
         elif 'vm_group' in job_data:
