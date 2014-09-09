@@ -521,6 +521,46 @@ in September 2014 in preference for OAuth2.
 Restart ``lava-server`` and ``apache2`` services for the change to
 take effect.
 
+Using Lightweight Directory Access Protocol (LDAP)
+--------------------------------------------------
+
+LAVA server could be configured to authenticate via Lightweight
+Directory Access Protocol ie., LDAP. LAVA uses `django_auth_ldap`_
+backend for LDAP authentication.
+
+.. _`django_auth_ldap`: http://www.pythonhosted.org/django-auth-ldap/
+
+Your chosen LDAP server is configured using the following parameters
+in ``/etc/lava-server/settings.conf`` (JSON syntax)::
+
+  "AUTH_LDAP_SERVER_URI": "ldap://ldap.example.com",
+  "AUTH_LDAP_BIND_DN": "",
+  "AUTH_LDAP_BIND_PASSWORD": "",
+  "AUTH_LDAP_USER_DN_TEMPLATE": "uid=%(user)s,ou=users,dc=example,dc=com",
+  "AUTH_LDAP_USER_ATTR_MAP": {
+    "first_name": "givenName",
+    "email": "mail"
+  },
+  "DISABLE_OPENID_AUTH": true
+
+.. note:: ``DISABLE_OPENID_AUTH`` should be set in order to remove
+          OpenID based authentication support in the login page.
+
+Other supported parameters are::
+
+  "AUTH_LDAP_GROUP_SEARCH": "ou=groups,dc=example,dc=com",
+  "AUTH_LDAP_USER_FLAGS_BY_GROUP": {
+    "is_active": "cn=active,ou=django,ou=groups,dc=example,dc=com",
+    "is_staff": "cn=staff,ou=django,ou=groups,dc=example,dc=com",
+    "is_superuser": "cn=superuser,ou=django,ou=groups,dc=example,dc=com"
+  }
+
+.. note:: Apart from the above supported parameters, in order to do
+          more advanced configuration, make changes to
+          ``/usr/lib/python2.7/dist-packages/lava_server/settings/common.py``
+
+Restart ``lava-server`` and ``apache2`` services if this is changed.
+
 LAVA Dispatcher network configuration
 =====================================
 

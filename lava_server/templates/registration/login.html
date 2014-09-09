@@ -25,6 +25,37 @@
     <a class="btn btn-success" href="{% url 'django_openid_auth.views.login_begin' %}?next={{next|escape}}">{% blocktrans %}Sign in with {{ openid_provider }}{% endblocktrans %}</a>
   </div>
   {% endif %}
+  {% if ldap_available %}
+  <div class="col-md-6">
+    <h4 class="modal-header">LDAP Login</h4>
+    <form class="form-horizontal" method="post" action="{% url 'django.contrib.auth.views.login' %}">
+      {% csrf_token %}
+      <div class="form-group{% if form.errors %} has-error{% endif %}">
+        <label class="col-md-2 control-label" for="id_username">{% trans "Username" %}</label>
+        <div class="col-md-4">
+          {{ form.username }}
+          {% for error in form.username.errors %}
+          <p class="help-block">{{ error }}</p>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="form-group{% if form.errors %} has-error{% endif %}">
+        <label class="col-md-2 control-label" for="id_password">{% trans "Password" %}</label>
+        <div class="col-md-4">
+          {{ form.password }}
+          {% for error in form.password.errors %}
+          <p class="help-block">{{ error }}</p>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="col-md-6 col-md-offset-2">
+          <button class="btn btn-success" type="submit">{% trans "Login" %}</button>
+        </div>
+      </div>
+    </form>
+  </div>
+  {% endif %}
   <div class="col-md-6">
     <h4 class="modal-header">Local account</h4>
     <form class="form-horizontal" method="post" action="{% url 'login' %}">
