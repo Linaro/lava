@@ -125,10 +125,6 @@ class FastbootTarget(Target):
             if self._booted and self._target_type != 'android':
                 self._setup_prompt()
                 return self.proc
-            if self.proc is not None:
-                logging.warning('device already powered on, powering off first')
-                self.power_off(self.proc)
-                self.proc = None
             self._enter_fastboot()
             if self._use_boot_cmds:
                 boot_cmds = ''.join(self._load_boot_cmds(default=self.driver.get_default_boot_cmds()))
@@ -185,6 +181,10 @@ class FastbootTarget(Target):
                     yield root
 
     def _enter_fastboot(self):
+        if self.proc is not None:
+            logging.warning('Device already powered on, powering off first')
+            self.power_off(self.proc)
+            self.proc = None
         # Device needs to be forced into fastboot mode
         if not self.driver.in_fastboot():
             if self.config.fastboot_driver == 'capri' or \
