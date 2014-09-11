@@ -65,8 +65,7 @@ setup(
         'PyYAML',
         'pyserial >= 2.6',
         'pyliblzma >= 0.5.3',
-        'requests',
-        'timelimit'
+        'requests'
     ],
     tests_require=[
         'pep8 >= 1.4.6',
