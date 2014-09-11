@@ -140,10 +140,13 @@ class LavaContext(object):
         if not msg.endswith('\n'):
             self.logfile_read.write('\n')
 
-    def run_command(self, command, failok=True):
+    def run_command(self, command, failok=True, sigterm_timeout=0, sigkill_timeout=10):
+        timeout_parts = []
         """run command 'command' with output going to output-dir if specified"""
+        if sigterm_timeout > 0:
+            timeout_parts = ['timelimit','-p','-t%i' % sigterm_timeout,'-T%i' % sigkill_timeout]
         if isinstance(command, (str, unicode)):
-            command = ['nice', 'sh', '-c', command]
+            command = timeout_parts + ['nice', 'sh', '-c', command]
         logging.debug("Executing on host : '%r'" % command)
         output_args = {
             'stdout': self.logfile_read,
@@ -155,7 +158,7 @@ class LavaContext(object):
             rc = subprocess.check_call(command, **output_args)
         return rc
 
-    def run_command_with_retries(self, command):
+    def run_command_with_retries(self, command, sigterm_timeout=0, sigkill_timeout=10):
         retries = 0
         successful = False
         error = None
@@ -163,7 +166,7 @@ class LavaContext(object):
 
         while (retries < num_retries) and (not successful):
             try:
-                self.run_command(command, failok=False)
+                self.run_command(command, failok=False, sigterm_timeout, sigkill_timeout)
             except CalledProcessError as e:
                 error = e
                 retries += 1
