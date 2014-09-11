@@ -187,28 +187,7 @@ class DeviceSchema(schema.Schema):
     arm_probe_config = schema.StringOption(default='/usr/local/etc/arm-probe-config')
     arm_probe_channels = schema.ListOption(default=['VDD_VCORE1'])
 
-    uefi_image_filename = schema.StringOption(default=None)
     customize = schema.DictOption(default=None)
-    vexpress_uefi_path = schema.StringOption(default=None)
-    vexpress_uefi_backup_path = schema.StringOption(default=None)
-    vexpress_stop_autoboot_prompt = schema.StringOption(
-        default='Press Enter to stop auto boot...')
-    vexpress_usb_mass_storage_device = schema.StringOption(default=None)
-
-    bl1_image_files = schema.ListOption(default=None)
-    bl1_image_filename = schema.StringOption(default="bl1.bin")
-    fip_image_files = schema.ListOption(default=None)
-    fip_image_filename = schema.StringOption(default="fip.bin")
-
-    wg_bl1_path = schema.StringOption(default="SOFTWARE/bl1.bin")
-    wg_fip_path = schema.StringOption(default="SOFTWARE/fip.bin")
-
-    wg_bl1_backup_path = schema.StringOption(default="SOFTWARE/backup-bl1.bin")
-    wg_fip_backup_path = schema.StringOption(default="SOFTWARE/backup-fip.bin")
-
-    wg_usb_mass_storage_device = schema.StringOption(default="/dev/disk/by-label/WG")
-    wg_stop_autoboot_prompt = schema.StringOption(
-        default='Press Enter to stop auto boot...')
 
     ecmeip = schema.StringOption()
     ipmi_power_sleep = schema.IntOption(default=1)
@@ -292,6 +271,21 @@ class DeviceSchema(schema.Schema):
     # for dynamic_vm devices
     dynamic_vm_backend_device_type = schema.StringOption(default='kvm')
     dynamic_vm_host = schema.StringOption(default=None)
+
+    # for vexpress devices
+    vexpress_uefi_default = schema.StringOption(default=None)
+    vexpress_bl1_default = schema.StringOption(default=None)
+    vexpress_uefi_path = schema.StringOption(default=None)
+    vexpress_uefi_image_files = schema.ListOption(default=None)
+    vexpress_uefi_image_filename = schema.StringOption(default="fip.bin")
+    vexpress_uefi_backup_path = schema.StringOption(default=None)
+    vexpress_bl1_path = schema.StringOption(default=None)
+    vexpress_bl1_image_files = schema.ListOption(default=None)
+    vexpress_bl1_image_filename = schema.StringOption(default="bl1.bin")
+    vexpress_bl1_backup_path = schema.StringOption(default=None)
+    vexpress_stop_autoboot_prompt = schema.StringOption(default='Press Enter to stop auto boot...')
+    vexpress_usb_mass_storage_device = schema.StringOption(default=None)
+    vexpress_requires_trusted_firmware = schema.BoolOption(default=False)
 
 
 class OptionDescriptor(object):

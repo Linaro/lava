@@ -304,6 +304,7 @@ class BootloaderTarget(MasterImageTarget):
                                                                  bootloadertype)
 
     def _run_boot(self):
+        self._load_test_firmware()
         self._enter_bootloader(self.proc)
         boot_cmds = self._load_boot_cmds(default=self._default_boot_cmds,
                                          boot_tags=self._boot_tags)
