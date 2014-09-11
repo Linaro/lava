@@ -185,9 +185,9 @@ class SchedulerAPI(ExposedAPI):
         Return value
         ------------
         This function returns an XML-RPC array in which each item is a list of
-        device hostname, device type and device state. For example:
+        device hostname, device type, device state and current running job id. For example:
 
-        [['panda01', 'panda', 'running'], ['qemu01', 'qemu', 'idle']]
+        [['panda01', 'panda', 'running', 164], ['qemu01', 'qemu', 'idle', None]]
         """
 
         dev_list = []
@@ -198,11 +198,9 @@ class SchedulerAPI(ExposedAPI):
                 continue
             dev_list.append(dev.hostname)
 
-        devices = Device.objects.values_list('hostname',
-                                             'device_type__name',
-                                             'status').filter(hostname__in=dev_list)
-        devices = [list((x[0], x[1], Device.STATUS_CHOICES[x[2]][1].lower()))
-                   for x in devices]
+        devices = Device.objects.filter(hostname__in=dev_list)
+        devices = [list((dev.hostname, dev.device_type.name, Device.STATUS_CHOICES[dev.status][1].lower(), dev.current_job.pk if dev.current_job else None))
+                   for dev in devices]
 
         return devices
 
@@ -444,3 +442,36 @@ class SchedulerAPI(ExposedAPI):
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "TestJob with id '%s' was not found." % job_id)
         job.send_summary_mails()
+
+    def all_jobs(self):
+        """
+        Name
+        ----
+        `all_jobs` ()
+
+        Description
+        -----------
+        Get submitted or running jobs.
+
+        Arguments
+        ---------
+        None
+
+        Return value
+        ------------
+        This function returns a XML-RPC array of submitted and running jobs with their status and
+        actual device for running jobs and requested device or device type for submitted jobs and
+        job sub_id for multinode jobs.
+        For example:
+
+        [[73, 'multinode-job', 'submitted', None, None, 'kvm', '72.1'],
+        [72, 'multinode-job', 'submitted', None, None, 'kvm', '72.0'],
+        [71, 'test-job', 'running', 'kvm01', None, None, None]]
+        """
+
+        jobs = TestJob.objects.filter(status__in=[TestJob.SUBMITTED, TestJob.RUNNING])\
+            .order_by('-id')
+        jobs_list = [list((job.id, job.description, TestJob.STATUS_CHOICES[job.status][1].lower(), job.actual_device, job.requested_device, job.requested_device_type, job.sub_id))
+                     for job in jobs]
+
+        return jobs_list
