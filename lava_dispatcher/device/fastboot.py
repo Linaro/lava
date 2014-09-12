@@ -32,6 +32,7 @@ from lava_dispatcher.client.base import (
 )
 from lava_dispatcher.errors import (
     CriticalError,
+    OperationFailed,
 )
 
 
@@ -66,20 +67,44 @@ class FastbootTarget(Target):
         else:
             self._ramdisk_deployment = True
         self.deployment_data = deployment_data.get(self._target_type)
-        self._enter_fastboot()
-        self.driver.deploy_linaro_kernel(kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
-                                         bootloader, firmware, bl1, bl2, bl31, rootfstype,
-                                         bootloadertype, self._target_type, self.scratch_dir)
+        deploy_attempts = self.config.boot_retries
+        attempts = 0
+        deployed = False
+        while (attempts < deploy_attempts) and (not deployed):
+            logging.info("Deploying test image. Attempt: %d" % (attempts + 1))
+            try:
+                self._enter_fastboot()
+                self.driver.deploy_linaro_kernel(kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
+                                                 bootloader, firmware, bl1, bl2, bl31, rootfstype,
+                                                 bootloadertype, self._target_type, self.scratch_dir)
+                deployed = True
+            except subprocess.CalledProcessError as e:
+                msg = "Deployment failed: %s" % e
+                logging.error(msg)
+                attempts += 1
+                continue
 
     def deploy_android(self, boot, system, userdata, rootfstype,
                        bootloadertype, target_type):
         self._target_type = target_type
         self._image_deployment = True
         self.deployment_data = deployment_data.get(self._target_type)
-        self._enter_fastboot()
-        self.driver.deploy_android(boot, system, userdata, rootfstype,
-                                   bootloadertype, self._target_type,
-                                   self.scratch_dir)
+        deploy_attempts = self.config.boot_retries
+        attempts = 0
+        deployed = False
+        while (attempts < deploy_attempts) and (not deployed):
+            logging.info("Deploying test image. Attempt: %d" % (attempts + 1))
+            try:
+                self._enter_fastboot()
+                self.driver.deploy_android(boot, system, userdata, rootfstype,
+                                           bootloadertype, self._target_type,
+                                           self.scratch_dir)
+                deployed = True
+            except subprocess.CalledProcessError as e:
+                msg = "Deployment failed: %s" % e
+                logging.error(msg)
+                attempts += 1
+                continue
 
     def get_device_version(self):
         # this is tricky, because fastboot does not have a visible version
@@ -96,27 +121,27 @@ class FastbootTarget(Target):
         self._reset_boot = True
 
     def power_on(self):
-        if self._booted and self._target_type != 'android':
+        try:
+            if self._booted and self._target_type != 'android':
+                self._setup_prompt()
+                return self.proc
+            self._enter_fastboot()
+            if self._use_boot_cmds:
+                boot_cmds = ''.join(self._load_boot_cmds(default=self.driver.get_default_boot_cmds()))
+                self.driver.boot(boot_cmds)
+            else:
+                self.driver.boot()
+            if self.proc is None:
+                self.proc = self.driver.connect()
+            self._auto_login(self.proc)
+            self._wait_for_prompt(self.proc, self.config.test_image_prompts,
+                                  self.config.boot_linaro_timeout)
             self._setup_prompt()
+            self._booted = True
             return self.proc
-        if self.proc is not None:
-            logging.warning('device already powered on, powering off first')
-            self.power_off(self.proc)
-            self.proc = None
-        self._enter_fastboot()
-        if self._use_boot_cmds:
-            boot_cmds = ''.join(self._load_boot_cmds(default=self.driver.get_default_boot_cmds()))
-            self.driver.boot(boot_cmds)
-        else:
-            self.driver.boot()
-        if self.proc is None:
-            self.proc = self.driver.connect()
-        self._auto_login(self.proc)
-        self._wait_for_prompt(self.proc, self.config.test_image_prompts,
-                              self.config.boot_linaro_timeout)
-        self._setup_prompt()
-        self._booted = True
-        return self.proc
+        except subprocess.CalledProcessError:
+            msg = 'Fastboot boot failed'
+            raise OperationFailed(msg)
 
     def power_off(self, proc):
         super(FastbootTarget, self).power_off(proc)
@@ -156,6 +181,10 @@ class FastbootTarget(Target):
                     yield root
 
     def _enter_fastboot(self):
+        if self.proc is not None:
+            logging.warning('Device already powered on, powering off first')
+            self.power_off(self.proc)
+            self.proc = None
         # Device needs to be forced into fastboot mode
         if not self.driver.in_fastboot():
             if self.config.fastboot_driver == 'capri' or \

@@ -73,6 +73,7 @@ class stmc(BaseDriver):
                              bootloader, firmware, bl1, bl2, bl31, rootfstype,
                              bootloadertype, target_type, scratch_dir):
         kernel_url = kernel
+        dtb_url = dtb
         # At a minimum we must have a kernel
         if kernel is None:
             raise CriticalError("No kernel image to boot")
@@ -131,6 +132,7 @@ class stmc(BaseDriver):
             logging.info("Sending the kernel, dtb, nfsrootfs urls")
             self.context.transport.request_send('lava_ms_slave_data',
                                                 {'kernel': kernel_url,
+                                                 'dtb': dtb_url if dtb_url else '',
                                                  'nfs_rootfs': lava_nfsrootfs,
                                                  'nfs_server_ip': self.context.config.lava_server_ip,
                                                  'stmc_ip': self.config.jtag_stmc_ip})

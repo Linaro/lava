@@ -310,8 +310,7 @@ class MasterImageTarget(Target):
         # we know that tar is new enough on the dispatcher via the packaging but
         # also need to look for support for a new enough version of tar in the master
         # image, without breaking jobs on older master images.
-        remote_connection = runner.get_connection()
-        if self._image_has_selinux_support(remote_connection, 3):
+        if self._image_has_selinux_support(runner, 3):
             self.context.selinux = '--selinux'
         else:
             self.context.selinux = ''
