@@ -136,7 +136,7 @@ ID. This call will block until such message is sent.
 Usage: ``lava-wait <message-id>``
 
 If there was data passed in the message, the key-value pairs will be
-printed in the cache file(/tmp/lava_multi_node_cache.txt in default),
+printed in the cache file (/tmp/lava_multi_node_cache.txt in default),
 each in one line. If no key values were passed, nothing is printed.
 
 The message ID data is persistent for the life of the MultiNode group.
@@ -161,7 +161,7 @@ with that given role send a message.
 ``lava-wait-all <message-id> [<role>]``
 
 If data was sent by the other devices with the message, the key-value
-pairs will be printed in the cache file(/tmp/lava_multi_node_cache.txt
+pairs will be printed in the cache file (/tmp/lava_multi_node_cache.txt
 in default),each in one line, prefixed with the target name and
 a colon.
 
@@ -216,6 +216,10 @@ can be asked to broadcast this information to the rest of the group. At a later
 stage of the test, before the IP details of the group need to be used, call
 ``lava-network collect`` to receive the same information about the rest of
 the group.
+
+The key-value pairs will be printed in the cache
+file (/tmp/lava_multi_node_network_cache.txt in default),
+each in one line, prefixed with the target name and a colon.
 
 The information broadcast about each interface is:
 

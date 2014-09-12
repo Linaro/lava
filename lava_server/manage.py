@@ -34,8 +34,8 @@ class LAVAServerDispatcher(LavaDispatcher):
     LAVA Application Server
     """
     epilog = """
-    Please report all bugs using the Launchpad bug tracker:
-    http://bugs.launchpad.net/lava-server/+filebug
+    Please report all bugs using the Linaro bug tracker:
+    https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework
     """
 
     def __init__(self):

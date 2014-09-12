@@ -170,6 +170,7 @@ The ``lava`` package installs support for:
 All of these packages can be installed separately alongside the main
 ``lava-server`` package, the ``lava`` package merely collects them into
 one set.
+::
 
  $ sudo apt-get install postgresql
  $ sudo apt-get install lava
