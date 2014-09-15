@@ -7,6 +7,7 @@ from django.db.utils import IntegrityError
 import uuid
 import datetime
 
+
 def forwards_func(apps, schema_editor):
     User = apps.get_model("auth", "User")
     db_alias = schema_editor.connection.alias
@@ -28,11 +29,13 @@ def forwards_func(apps, schema_editor):
         else:
             print "lava-health user exists, leaving it intact ..."
 
+
 def backwards_func(apps, schema_editor):
     User = apps.get_model("auth", "User")
     db_alias = schema_editor.connection.alias
     lava_health = User.objects.using(db_alias).filter(username='lava-health')
     lava_health.delete()
+
 
 class Migration(migrations.Migration):
 
