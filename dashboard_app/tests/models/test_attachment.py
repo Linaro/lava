@@ -44,12 +44,12 @@ class ModelWithAttachments(models.Model):
         # such as any tests that depended on the existence of this model.
 
         # As a workaround we artificially "stick" this model into the only
-        # application that we can count on to exist _and_ not use south as well
-        # -- that is south itself.
+        # application that we can count on to exist _and_ that does not use
+        # database migration.
 
-        # This way the test model gets synchronized when south is synchronized
+        # This way the test model gets synchronized when the app is synchronized
         # and all the test code below works as expected.
-        app_label = "south"
+        app_label = "linaro_django_xmlrpc"
 
 
 class AttachmentTestCase(TestCase):
