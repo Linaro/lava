@@ -25,6 +25,7 @@
 # All comments below are strictly for development usage and
 # reference.
 
+import django
 
 # Administrator contact, used for sending
 # emergency email when something breaks
@@ -76,8 +77,6 @@ STATICFILES_MEDIA_DIRNAMES = (
     "media",
     "static",
 )
-
-import django
 
 STATICFILES_PREPEND_LABEL_APPS = [
 ]
