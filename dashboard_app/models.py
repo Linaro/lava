@@ -714,10 +714,6 @@ class Test(models.Model):
     def __unicode__(self):
         return self.name or self.test_id
 
-    @models.permalink
-    def get_absolute_url(self):
-        return self.test_id
-
     def count_results_without_test_case(self):
         return TestResult.objects.filter(
             test_run__test=self,
@@ -763,10 +759,6 @@ class TestCase(models.Model):
 
     def __unicode__(self):
         return self.name or self.test_case_id
-
-    @models.permalink
-    def get_absolute_url(self):
-        return ("dashboard_app.test_case.details", [self.test.test_id, self.test_case_id])
 
     def count_failures(self):
         return self.test_results.filter(result=TestResult.RESULT_FAIL).count()
