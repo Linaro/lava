@@ -127,9 +127,12 @@ INSTALLED_APPS = [
     'longerusername',
     'linaro_django_xmlrpc',
     'lava_markitup',  # Support app for MarkItUp in LAVA
-    'south',
     'google_analytics',
 ]
+
+if django.VERSION < (1, 7):
+    # Django 1.7 has built-in migration suppport
+    INSTALLED_APPS += ['south']
 
 try:
     import devserver
