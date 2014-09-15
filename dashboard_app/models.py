@@ -2164,7 +2164,7 @@ class ImageReportChart(models.Model):
                         "bug_links": bug_links,
                         "metadata_content": metadata_content,
                         "comments": has_comments,
-                        }
+                    }
 
                     chart_data["test_data"].append(chart_item)
 
