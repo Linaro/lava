@@ -8,8 +8,6 @@ import smtplib
 import socket
 
 from django.conf import settings
-from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User, Group
 from django.contrib.sites.models import Site
 from django.utils.safestring import mark_safe
@@ -116,22 +114,6 @@ class DefaultDeviceOwner(models.Model):
         unique=True,
         default=False
     )
-
-
-class DefaultOwnerInline(admin.StackedInline):
-    """
-    Exposes the default owner override class
-    in the Django admin interface
-    """
-    model = DefaultDeviceOwner
-    can_delete = False
-
-
-class UserAdmin(UserAdmin):
-    """
-    Defines the override class for DefaultOwnerInline
-    """
-    inlines = (DefaultOwnerInline, )
 
 
 class Worker(models.Model):

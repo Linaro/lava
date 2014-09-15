@@ -1,8 +1,25 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 from lava_scheduler_app.models import (
     Device, DeviceStateTransition, DeviceType, TestJob, Tag, JobFailureTag,
-    UserAdmin, User, Worker
+    User, Worker, DefaultDeviceOwner
 )
+
+class DefaultOwnerInline(admin.StackedInline):
+    """
+    Exposes the default owner override class
+    in the Django admin interface
+    """
+    model = DefaultDeviceOwner
+    can_delete = False
+
+
+class UserAdmin(UserAdmin):
+    """
+    Defines the override class for DefaultOwnerInline
+    """
+    inlines = (DefaultOwnerInline, )
+
 
 #  Setup the override in the django admin interface at startup.
 admin.site.unregister(User)
