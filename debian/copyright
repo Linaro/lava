@@ -33,7 +33,12 @@ License: LGPL-3.0
 Files:
  lava_server/htdocs/js/jquery.watermark.js
 Copyright: 2009-2011 Todd Northrop
-License: MIT or GPL-2
+License: MIT
+
+Files:
+ lava_server/htdocs/js/jquery.watermark.js
+Copyright: 2009-2011 Todd Northrop
+License: GPL-2
 
 License: GPL-2
  This program is free software; you can redistribute it and/or modify
@@ -64,7 +69,23 @@ Copyright: 2009 Brandon Aaron (http://brandonaaron.net)
            2004-2010 Alex Gorbatchev
            2010 Klaus Hartl (stilbuero.de)
            2007-2011 Jay Salvat
-License: MIT or GPL-3.0+
+License: MIT
+
+Files:
+ dashboard_app/static/dashboard_app/js/jquery.flot.navigate.js
+ dashboard_app/static/dashboard_app/js/jquery.tooltip.js
+ lava_scheduler_app/static/lava_scheduler_app/js/shCore.js
+ lava_server/htdocs/js/jquery.cookie.js
+ lava_markitup/static/lava_markitup/jquery.markitup.js
+ lava_scheduler_app/static/lava_scheduler_app/js/shBrushJScript.js
+ lava_scheduler_app/static/lava_scheduler_app/css/shCore.css
+ lava_scheduler_app/static/lava_scheduler_app/css/shThemeDefault.css
+Copyright: 2009 Brandon Aaron (http://brandonaaron.net)
+           2006 - 2008 Jörn Zaefferer
+           2004-2010 Alex Gorbatchev
+           2010 Klaus Hartl (stilbuero.de)
+           2007-2011 Jay Salvat
+License: GPL-3.0+
 
 Files: dashboard_app/static/dashboard_app/js/ lava_server/lava-server/js/
  lava_scheduler_app/static/lava_scheulder_app/js/
@@ -112,7 +133,7 @@ Files: doc/_static/default.css
        dashboard_app/static/dashboard_app/js/jquery.formset.js
 Copyright: 2009, Stanislaus Madueke
            2007-2011 by the Sphinx team
-License: BSD
+License: BSD-3-clause
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions are met:
  .
@@ -158,7 +179,7 @@ License: GPL-3.0+
 
 Files: *
 Copyright: 2010-2013, Linaro Limited
-License: AGPL 3.0
+License: AGPL-3.0
  This package is free software: you can redistribute it and/or modify it
  under the terms of the GNU Affero General Public License version 3 as
  published by the Free Software Foundation
