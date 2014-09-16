@@ -5,6 +5,7 @@ from lava_scheduler_app.models import (
     User, Worker, DefaultDeviceOwner
 )
 
+
 class DefaultOwnerInline(admin.StackedInline):
     """
     Exposes the default owner override class
