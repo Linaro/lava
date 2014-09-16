@@ -22,7 +22,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseServerError, HttpResponseForbidden
 from django.template import Context, loader, RequestContext
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.csrf import requires_csrf_token
 
 from lava_server.bread_crumbs import (

@@ -52,8 +52,8 @@ from django.dispatch import receiver
 from django.template import Template, Context
 from django.template.defaultfilters import filesizeformat, slugify
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _
-from django.utils.translation import ungettext
+from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ungettext_lazy
 from django.db.utils import DatabaseError
 from django_restricted_resource.models import RestrictedResource
 from linaro_dashboard_bundle.io import DocumentIO
@@ -64,7 +64,7 @@ from dashboard_app.signals import bundle_was_deserialized
 
 
 def _help_max_length(max_length):
-    return ungettext(
+    return ungettext_lazy(
         u"Maximum length: {0} character",
         u"Maximum length: {0} characters",
         max_length).format(max_length)

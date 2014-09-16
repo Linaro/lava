@@ -21,7 +21,7 @@ from django.core.mail import send_mail
 from django.core.validators import validate_email
 from django.db import models
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
 
 from django_restricted_resource.models import RestrictedResource
