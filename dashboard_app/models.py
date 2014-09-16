@@ -208,7 +208,7 @@ class BundleStream(RestrictedResource):
         unique=True,
     )
 
-    is_anonymous = models.BooleanField()
+    is_anonymous = models.BooleanField(default=False)
 
     def __unicode__(self):
         return self.pathname
@@ -479,7 +479,8 @@ class Bundle(models.Model):
         verbose_name=_(u"Is deserialized"),
         help_text=_(u"Set when document has been analyzed and loaded"
                     " into the database"),
-        editable=False)
+        editable=False,
+        default=False)
 
     _raw_content = models.FileField(
         verbose_name=_(u"Content"),
@@ -970,8 +971,8 @@ class TestRun(models.Model):
                     "internet time servers.<br/>"
                     "This field allows us to track tests results that "
                     "<em>certainly</em> have correct time if we ever end up "
-                    "with lots of tests results from 1972")
-    )
+                    "with lots of tests results from 1972"),
+        default=False)
 
     microseconds = models.BigIntegerField(
         blank=True,
