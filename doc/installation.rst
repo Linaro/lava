@@ -178,6 +178,15 @@ one set.
  $ sudo a2ensite lava-server.conf
  $ sudo service apache2 restart
 
+Upgrading after the Jessie release
+----------------------------------
+
+Debian Jessie is due to go into a release freeze in November 2014. At this
+point, it will not be possible to update the version of lava packages
+in the Jessie release. (A separate repository will be made available at that
+time.) Once Jessie is released, future updates of LAVA packages can be
+backported to Jessie.
+
 Interim builds
 ==============
 
@@ -209,6 +218,47 @@ optional packages which come from the Linaro PPA, use the apt source::
 The PPA uses this signing key::
 
  http://keyserver.ubuntu.com:11371/pks/lookup?search=0x1DD749B890A6F66D050D985CF1FCBACA7BE1F97B&op=index
+
+.. _ubuntu_install:
+
+Installing on Ubuntu
+====================
+
+LAVA recommends the use of Debian - Ubuntu installs are possible but
+may not receive updates of the LAVA packages. See :ref:`lava_on_debian`
+for information on building LAVA packages of your own.
+
+Installing on Ubuntu Utopic Unicorn
+-----------------------------------
+
+Ubuntu Unicorn (which is due to be released as 14.10) has received
+updates from Debian up to the 2014.07 release. Future production
+releases of LAVA will migrate into the next Ubuntu codename after
+Unicorn. Installing on Unicorn is the same as :ref:`install_debian_jessie`.
+The full set of architectures are supported, just as with Debian Jessie.
+
+See also :ref:`lava_on_debian` for information on building LAVA packages
+of your own as LAVA will not be making backports to Unicorn.
+
+Installing on Ubuntu Trusty Tahr 14.04 LTS
+------------------------------------------
+
+.. note:: Only 64bit installations are supported for Ubuntu Trusty
+          and not all production hot fixes may actually get uploaded
+          to the repository.
+
+Various package dependencies are needed on Trusty. These can be installed
+from people.linaro.org but newer versions also exist in Ubuntu Unicorn.
+
+::
+
+ deb http://people.linaro.org/~neil.williams/lava jessie main
+
+This repository contains an old version of LAVA but once this version
+is installed, updated versions of lava-server and lava-dispatcher can
+be obtained from::
+
+ deb [arch=amd64] http://images.validation.linaro.org/trusty-repo trusty main
 
 Setting up a reverse proxy
 ==========================
