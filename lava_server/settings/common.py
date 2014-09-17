@@ -132,6 +132,8 @@ INSTALLED_APPS = [
 if django.VERSION < (1, 7):
     # Django 1.7 has built-in migration suppport
     INSTALLED_APPS += ['south']
+else:
+    TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 try:
     import devserver
