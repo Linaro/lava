@@ -1,11 +1,12 @@
 import os
+from django.core.wsgi import get_wsgi_application
 
 
 def handler(settings, ddst):
     import django.core.handlers.wsgi
     os.environ['DJANGO_SETTINGS_MODULE'] = settings
     os.environ['DJANGO_DEBIAN_SETTINGS_TEMPLATE'] = ddst
-    return django.core.handlers.wsgi.WSGIHandler()
+    return get_wsgi_application()
 
 
 class WSGIRecipe(object):

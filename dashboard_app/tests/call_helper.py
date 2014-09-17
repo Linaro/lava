@@ -23,6 +23,8 @@ construct objects or call functions without any arguments by looking up
 the required arguments from a helper object or from the class itself.
 """
 
+import unittest
+import doctest
 from contextlib import contextmanager
 
 
@@ -411,6 +413,6 @@ class ObjectFactoryMixIn(object):
         return dummy, obj
 
 
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod()
+def load_tests(loader, tests, ignore):
+    tests.addTests(doctest.DocTestSuite(ObjectFactoryMixin))
+    return tests

@@ -200,7 +200,7 @@ def filter_detail(request, username, name):
     )
 
 
-@BreadCrumb("Manage Subscription", parent=filter_detail, needs=['name', 'username'])
+@BreadCrumb("Manage Subscription", parent=filter_detail, needs=['username', 'name'])
 @login_required
 def filter_subscribe(request, username, name):
     filter = get_object_or_404(TestRunFilter, owner__username=username, name=name)
@@ -316,7 +316,7 @@ def filter_copy(request, username, name):
         is_copy=True)
 
 
-@BreadCrumb("Delete", parent=filter_detail, needs=['name', 'username'])
+@BreadCrumb("Delete", parent=filter_detail, needs=['username', 'name'])
 def filter_delete(request, username, name):
     if not request.user.is_superuser:
         if request.user.username != username:

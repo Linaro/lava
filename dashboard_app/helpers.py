@@ -95,14 +95,14 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                     analyzer_assigned_uuid=analyzer_assigned_uuid).exists():
                 raise ValueError("A test with UUID {0} already exists".format(analyzer_assigned_uuid))
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def _import_document_with_transaction(self, s_bundle, doc):
         """
-        Note: This function uses commit_on_success to ensure the database is in
-        a consistent state after IntegrityErrors that would clog the
-        transaction on pgsql. Since transactions will not rollback any files we
-        created in the meantime there is a helper that cleans attachments in
-        case something goes wrong
+        Note: This function uses atomic to ensure the database is in a
+        consistent state after IntegrityErrors that would clog the transaction
+        on pgsql. Since transactions will not rollback any files we created in
+        the meantime there is a helper that cleans attachments in case
+        something goes wrong.
         """
         self._import_document(s_bundle, doc)
 

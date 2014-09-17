@@ -68,7 +68,8 @@ class SchedulerExtension(LavaServerExtension):
 
     def contribute_to_settings(self, settings_module):
         super(SchedulerExtension, self).contribute_to_settings(settings_module)
-        settings_module['INSTALLED_APPS'].append('django_tables2')
+        if 'django_tables2' not in settings_module['INSTALLED_APPS']:
+            settings_module['INSTALLED_APPS'].append('django_tables2')
         from_module = settings_module.get('SCHEDULER_DAEMON_OPTIONS', {})
         settings_module['SCHEDULER_DAEMON_OPTIONS'] = {
             'LOG_FILE_PATH': None,

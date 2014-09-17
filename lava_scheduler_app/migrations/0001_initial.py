@@ -1,112 +1,246 @@
-# encoding: utf-8
-from south.db import db
-from south.v2 import SchemaMigration
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
+from django.db import models, migrations
+import django.db.models.deletion
+from django.conf import settings
+import lava_scheduler_app.models
 
 
-class Migration(SchemaMigration):
+class Migration(migrations.Migration):
 
-    def forwards(self, orm):
+    dependencies = [
+        ('auth', '0001_initial'),
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+        ('linaro_django_xmlrpc', '__first__'),
+        ('dashboard_app', '__first__'),
+    ]
 
-        # Adding model 'DeviceType'
-        db.create_table('lava_scheduler_app_devicetype', (
-            ('name', self.gf('django.db.models.fields.SlugField')(max_length=50, primary_key=True, db_index=True)),
-        ))
-        db.send_create_signal('lava_scheduler_app', ['DeviceType'])
-
-        # Adding model 'Device'
-        db.create_table('lava_scheduler_app_device', (
-            ('hostname', self.gf('django.db.models.fields.CharField')(max_length=200, primary_key=True)),
-            ('device_type', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['lava_scheduler_app.DeviceType'])),
-            ('current_job', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['lava_scheduler_app.TestJob'], unique=True, null=True, blank=True)),
-            ('status', self.gf('django.db.models.fields.IntegerField')(default=1)),
-        ))
-        db.send_create_signal('lava_scheduler_app', ['Device'])
-
-        # Adding model 'TestJob'
-        db.create_table('lava_scheduler_app_testjob', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('submitter', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'])),
-            ('target', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['lava_scheduler_app.Device'], null=True)),
-            ('device_type', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['lava_scheduler_app.DeviceType'])),
-            ('submit_time', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('start_time', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
-            ('end_time', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
-            ('status', self.gf('django.db.models.fields.IntegerField')(default=0)),
-            ('definition', self.gf('django.db.models.fields.TextField')()),
-        ))
-        db.send_create_signal('lava_scheduler_app', ['TestJob'])
-
-    def backwards(self, orm):
-
-        # Deleting model 'DeviceType'
-        db.delete_table('lava_scheduler_app_devicetype')
-
-        # Deleting model 'Device'
-        db.delete_table('lava_scheduler_app_device')
-
-        # Deleting model 'TestJob'
-        db.delete_table('lava_scheduler_app_testjob')
-
-    models = {
-        'auth.group': {
-            'Meta': {'object_name': 'Group'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '80'}),
-            'permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['auth.Permission']", 'symmetrical': 'False', 'blank': 'True'})
-        },
-        'auth.permission': {
-            'Meta': {'ordering': "('content_type__app_label', 'content_type__model', 'codename')", 'unique_together': "(('content_type', 'codename'),)", 'object_name': 'Permission'},
-            'codename': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['contenttypes.ContentType']"}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '50'})
-        },
-        'auth.user': {
-            'Meta': {'object_name': 'User'},
-            'date_joined': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
-            'email': ('django.db.models.fields.EmailField', [], {'max_length': '75', 'blank': 'True'}),
-            'first_name': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
-            'groups': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['auth.Group']", 'symmetrical': 'False', 'blank': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'is_staff': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'is_superuser': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'last_login': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
-            'last_name': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
-            'password': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
-            'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['auth.Permission']", 'symmetrical': 'False', 'blank': 'True'}),
-            'username': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '30'})
-        },
-        'contenttypes.contenttype': {
-            'Meta': {'ordering': "('name',)", 'unique_together': "(('app_label', 'model'),)", 'object_name': 'ContentType', 'db_table': "'django_content_type'"},
-            'app_label': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'model': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
-        },
-        'lava_scheduler_app.device': {
-            'Meta': {'object_name': 'Device'},
-            'current_job': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['lava_scheduler_app.TestJob']", 'unique': 'True', 'null': 'True', 'blank': 'True'}),
-            'device_type': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['lava_scheduler_app.DeviceType']"}),
-            'hostname': ('django.db.models.fields.CharField', [], {'max_length': '200', 'primary_key': 'True'}),
-            'status': ('django.db.models.fields.IntegerField', [], {'default': '1'})
-        },
-        'lava_scheduler_app.devicetype': {
-            'Meta': {'object_name': 'DeviceType'},
-            'name': ('django.db.models.fields.SlugField', [], {'max_length': '50', 'primary_key': 'True', 'db_index': 'True'})
-        },
-        'lava_scheduler_app.testjob': {
-            'Meta': {'object_name': 'TestJob'},
-            'definition': ('django.db.models.fields.TextField', [], {}),
-            'device_type': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['lava_scheduler_app.DeviceType']"}),
-            'end_time': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'start_time': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
-            'status': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
-            'submit_time': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'submitter': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"}),
-            'target': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['lava_scheduler_app.Device']", 'null': 'True'})
-        }
-    }
-
-    complete_apps = ['lava_scheduler_app']
+    operations = [
+        migrations.CreateModel(
+            name='DefaultDeviceOwner',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('default_owner', models.BooleanField(default=False, unique=True, verbose_name=b'Default owner of unrestricted devices')),
+                ('user', models.OneToOneField(to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='Device',
+            fields=[
+                ('is_public', models.BooleanField(default=False)),
+                ('hostname', models.CharField(max_length=200, serialize=False, verbose_name='Hostname', primary_key=True)),
+                ('device_version', models.CharField(default=None, max_length=200, null=True, verbose_name='Device Version', blank=True)),
+                ('description', models.TextField(default=None, max_length=200, null=True, verbose_name='Device Description', blank=True)),
+                ('status', models.IntegerField(default=1, verbose_name='Device status', choices=[(0, b'Offline'), (1, b'Idle'), (2, b'Running'), (3, b'Going offline'), (4, b'Retired'), (5, b'Reserved')])),
+                ('health_status', models.IntegerField(default=0, verbose_name='Device Health', choices=[(0, b'Unknown'), (1, b'Pass'), (2, b'Fail'), (3, b'Looping')])),
+            ],
+            options={
+                'abstract': False,
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='DeviceStateTransition',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('created_on', models.DateTimeField(auto_now_add=True)),
+                ('old_state', models.IntegerField(choices=[(0, b'Offline'), (1, b'Idle'), (2, b'Running'), (3, b'Going offline'), (4, b'Retired'), (5, b'Reserved')])),
+                ('new_state', models.IntegerField(choices=[(0, b'Offline'), (1, b'Idle'), (2, b'Running'), (3, b'Going offline'), (4, b'Retired'), (5, b'Reserved')])),
+                ('message', models.TextField(null=True, blank=True)),
+                ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.SET_NULL, blank=True, to=settings.AUTH_USER_MODEL, null=True)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='DeviceType',
+            fields=[
+                ('name', models.SlugField(serialize=False, primary_key=True)),
+                ('health_check_job', models.TextField(default=None, null=True, blank=True, validators=[lava_scheduler_app.models.validate_job_json])),
+                ('display', models.BooleanField(default=True, help_text=b"Should this be displayed in the GUI or not. This can be useful if you are removing all devices of this type but don't want to loose the test results generated by the devices.")),
+                ('owners_only', models.BooleanField(default=False, help_text=b'Hide this device type for all users except owners of devices of this type.')),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='JobFailureTag',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('name', models.CharField(unique=True, max_length=256)),
+                ('description', models.TextField(null=True, blank=True)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='Tag',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('name', models.SlugField(unique=True)),
+                ('description', models.TextField(null=True, blank=True)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='TemporaryDevice',
+            fields=[
+                ('device_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='lava_scheduler_app.Device')),
+                ('vm_group', models.CharField(default=None, max_length=64, null=True, verbose_name='VM Group', blank=True)),
+            ],
+            options={
+            },
+            bases=('lava_scheduler_app.device',),
+        ),
+        migrations.CreateModel(
+            name='TestJob',
+            fields=[
+                ('is_public', models.BooleanField(default=False)),
+                ('id', models.AutoField(serialize=False, primary_key=True)),
+                ('sub_id', models.CharField(max_length=200, verbose_name='Sub ID', blank=True)),
+                ('target_group', models.CharField(default=None, max_length=64, null=True, verbose_name='Target Group', blank=True)),
+                ('vm_group', models.CharField(default=None, max_length=64, null=True, verbose_name='VM Group', blank=True)),
+                ('description', models.CharField(default=None, max_length=200, null=True, verbose_name='Description', blank=True)),
+                ('health_check', models.BooleanField(default=False)),
+                ('submit_time', models.DateTimeField(auto_now_add=True, verbose_name='Submit time')),
+                ('start_time', models.DateTimeField(verbose_name='Start time', null=True, editable=False, blank=True)),
+                ('end_time', models.DateTimeField(verbose_name='End time', null=True, editable=False, blank=True)),
+                ('status', models.IntegerField(default=0, verbose_name='Status', choices=[(0, b'Submitted'), (1, b'Running'), (2, b'Complete'), (3, b'Incomplete'), (4, b'Canceled'), (5, b'Canceling')])),
+                ('priority', models.IntegerField(default=50, verbose_name='Priority', choices=[(0, b'Low'), (50, b'Medium'), (100, b'High')])),
+                ('definition', models.TextField(editable=False)),
+                ('original_definition', models.TextField(editable=False, blank=True)),
+                ('multinode_definition', models.TextField(editable=False, blank=True)),
+                ('vmgroup_definition', models.TextField(editable=False, blank=True)),
+                ('admin_notifications', models.TextField(editable=False, blank=True)),
+                ('log_file', models.FileField(default=None, null=True, upload_to=b'lava-logs', blank=True)),
+                ('failure_comment', models.TextField(null=True, blank=True)),
+                ('_results_link', models.CharField(default=None, max_length=400, null=True, db_column=b'results_link', blank=True)),
+                ('_results_bundle', models.OneToOneField(null=True, on_delete=django.db.models.deletion.SET_NULL, db_column=b'results_bundle_id', blank=True, to='dashboard_app.Bundle')),
+                ('actual_device', models.ForeignKey(related_name=b'+', default=None, blank=True, to='lava_scheduler_app.Device', null=True)),
+                ('failure_tags', models.ManyToManyField(related_name=b'failure_tags', to='lava_scheduler_app.JobFailureTag', blank=True)),
+                ('group', models.ForeignKey(blank=True, to='auth.Group', null=True)),
+                ('requested_device', models.ForeignKey(related_name=b'+', default=None, blank=True, to='lava_scheduler_app.Device', null=True)),
+                ('requested_device_type', models.ForeignKey(related_name=b'+', default=None, blank=True, to='lava_scheduler_app.DeviceType', null=True)),
+                ('submit_token', models.ForeignKey(on_delete=django.db.models.deletion.SET_NULL, blank=True, to='linaro_django_xmlrpc.AuthToken', null=True)),
+                ('submitter', models.ForeignKey(related_name=b'+', verbose_name='Submitter', to=settings.AUTH_USER_MODEL)),
+                ('tags', models.ManyToManyField(to='lava_scheduler_app.Tag', blank=True)),
+                ('user', models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, null=True)),
+            ],
+            options={
+                'abstract': False,
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='TestJobUser',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('is_favorite', models.BooleanField(default=False, verbose_name=b'Favorite job')),
+                ('test_job', models.ForeignKey(to='lava_scheduler_app.TestJob')),
+                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='Worker',
+            fields=[
+                ('hostname', models.CharField(primary_key=True, default=None, serialize=False, editable=False, max_length=200, verbose_name='Hostname')),
+                ('rpc2_url', models.CharField(default=None, max_length=200, blank=True, help_text=b"Corresponds to the master node's RPC2 url. Does not have any impact when set on a worker node.", null=True, verbose_name='Master RPC2 URL')),
+                ('display', models.BooleanField(default=True, help_text=b'Should this be displayed in the GUI or not. This will be useful when a worker needs to be removed but still linked device status transitions and devices should be intact.')),
+                ('ip_address', models.CharField(default=None, editable=False, max_length=20, blank=True, null=True, verbose_name='IP Address')),
+                ('is_master', models.BooleanField(default=False, verbose_name='Is Master?')),
+                ('description', models.TextField(default=None, max_length=200, null=True, verbose_name='Worker Description', blank=True)),
+                ('uptime', models.CharField(default=None, editable=False, max_length=200, blank=True, null=True, verbose_name='Host Uptime')),
+                ('arch', models.CharField(default=None, editable=False, max_length=200, blank=True, null=True, verbose_name='Architecture')),
+                ('platform', models.CharField(default=None, editable=False, max_length=200, blank=True, null=True, verbose_name='Platform')),
+                ('hardware_info', models.TextField(verbose_name='Complete Hardware Information', editable=False, blank=True)),
+                ('software_info', models.TextField(verbose_name='Complete Software Information', editable=False, blank=True)),
+                ('last_heartbeat', models.DateTimeField(verbose_name='Last Heartbeat', null=True, editable=False, blank=True)),
+                ('last_master_scheduler_tick', models.DateTimeField(help_text=b"Corresponds to the master node's last scheduler tick. Does not have any impact when set on a worker node.", verbose_name='Last Master Scheduler Tick', null=True, editable=False, blank=True)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.AlterUniqueTogether(
+            name='testjobuser',
+            unique_together=set([('test_job', 'user')]),
+        ),
+        migrations.AddField(
+            model_name='devicestatetransition',
+            name='device',
+            field=models.ForeignKey(related_name=b'transitions', to='lava_scheduler_app.Device'),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='devicestatetransition',
+            name='job',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.SET_NULL, blank=True, to='lava_scheduler_app.TestJob', null=True),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='device',
+            name='current_job',
+            field=models.ForeignKey(related_name=b'+', null=True, on_delete=django.db.models.deletion.SET_NULL, blank=True, to='lava_scheduler_app.TestJob', unique=True),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='device',
+            name='device_type',
+            field=models.ForeignKey(verbose_name='Device type', to='lava_scheduler_app.DeviceType'),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='device',
+            name='group',
+            field=models.ForeignKey(blank=True, to='auth.Group', null=True),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='device',
+            name='last_health_report_job',
+            field=models.ForeignKey(related_name=b'+', null=True, on_delete=django.db.models.deletion.SET_NULL, blank=True, to='lava_scheduler_app.TestJob', unique=True),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='device',
+            name='physical_group',
+            field=models.ForeignKey(related_name=b'physical-group', default=None, blank=True, to='auth.Group', null=True, verbose_name='Group with physical access'),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='device',
+            name='physical_owner',
+            field=models.ForeignKey(related_name=b'physical-owner', default=None, blank=True, to=settings.AUTH_USER_MODEL, null=True, verbose_name='User with physical access'),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='device',
+            name='tags',
+            field=models.ManyToManyField(to='lava_scheduler_app.Tag', blank=True),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='device',
+            name='user',
+            field=models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, null=True),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='device',
+            name='worker_host',
+            field=models.ForeignKey(default=None, blank=True, to='lava_scheduler_app.Worker', null=True, verbose_name='Worker Host'),
+            preserve_default=True,
+        ),
+    ]
