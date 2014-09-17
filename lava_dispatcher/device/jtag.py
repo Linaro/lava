@@ -92,7 +92,7 @@ class JtagTarget(Target):
     def file_system(self, partition, directory):
 
         # If we are using NFS
-        if self._boot_tags['{NFSROOTFS}']:
+        if '{NFSROOTFS}' in self._boot_tags:
             path = self._boot_tags['{NFSROOTFS}'] + directory
             logging.info("NFSROOTFS=%s", path)
             ensure_directory(path)
