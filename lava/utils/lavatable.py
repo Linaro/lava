@@ -69,9 +69,9 @@ class LavaView(tables.SingleTableView):
                 field = self.model._meta.get_field_by_name(key)[0]
                 column = self.table_class.base_columns.get(key)
                 if column and hasattr(column, 'verbose_name') and column.verbose_name is not None:
-                    self.times.append("%s (%s)" % (column.verbose_name, value))
-                elif field and hasattr(field, 'verbose_name'):
-                    self.times.append("%s (%s)" % (field.verbose_name, value))
+                    self.times.append("%s (%s)" % (unicode(column.verbose_name), value))
+                elif field and hasattr(field, 'verbose_name') and field.verbose_name is not None:
+                    self.times.append("%s (%s)" % (unicode(field.verbose_name), value))
                 else:
                     self.times.append("%s (%s)" % (key, value))
             self.times.sort()
