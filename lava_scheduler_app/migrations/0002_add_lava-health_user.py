@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
-from django.db.utils import IntegrityError
+from django.db import (
+    models,
+    migrations,
+    transaction,
+    IntegrityError,
+)
 
 import uuid
 import datetime
@@ -14,12 +18,13 @@ def forwards_func(apps, schema_editor):
     now = datetime.datetime.utcnow()
     password = uuid.uuid4().hex
     try:
-        new_user = User.objects.using(db_alias).create(
-            username='lava-health', email='lava@lava.invalid', is_staff=False,
-            is_active=True, is_superuser=False, last_login=now,
-            date_joined=now)
-        new_user.password = password
-        new_user.save()
+        with transaction.atomic():
+            new_user = User.objects.using(db_alias).create(
+                username='lava-health', email='lava@lava.invalid', is_staff=False,
+                is_active=True, is_superuser=False, last_login=now,
+                date_joined=now)
+            new_user.password = password
+            new_user.save()
     except IntegrityError:
         new_user = User.objects.using(db_alias).get(username='lava-health')
         if new_user.password == '!':
