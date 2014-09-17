@@ -23,6 +23,7 @@
 import contextlib
 import logging
 import subprocess
+import pexpect
 
 from lava_dispatcher.device.target import Target
 import lava_dispatcher.device.fastboot_drivers as drivers
@@ -78,7 +79,7 @@ class FastbootTarget(Target):
                                                  bootloader, firmware, bl1, bl2, bl31, rootfstype,
                                                  bootloadertype, self._target_type, self.scratch_dir)
                 deployed = True
-            except subprocess.CalledProcessError as e:
+            except (subprocess.CalledProcessError, pexpect.TIMEOUT) as e:
                 msg = "Deployment failed: %s" % e
                 logging.error(msg)
                 attempts += 1
@@ -100,7 +101,7 @@ class FastbootTarget(Target):
                                            bootloadertype, self._target_type,
                                            self.scratch_dir)
                 deployed = True
-            except subprocess.CalledProcessError as e:
+            except (subprocess.CalledProcessError, pexpect.TIMEOUT) as e:
                 msg = "Deployment failed: %s" % e
                 logging.error(msg)
                 attempts += 1

@@ -69,17 +69,20 @@ class JtagTarget(Target):
     def power_on(self):
         self._boot_cmds = self._load_boot_cmds(default=self._default_boot_cmds,
                                                boot_tags=self._boot_tags)
-        proc = self.driver.connect(self._boot_cmds)
-        self._auto_login(proc)
-        self._wait_for_prompt(proc, self.config.test_image_prompts,
+        if self.proc is not None:
+            logging.warning('Device already powered on, powering off first')
+            self.power_off(self.proc)
+            self.proc = None
+        self.proc = self.driver.connect(self._boot_cmds)
+        self._auto_login(self.proc)
+        self._wait_for_prompt(self.proc, self.config.test_image_prompts,
                               self.config.boot_linaro_timeout)
-        proc.sendline("")
-        proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
+        self.proc.sendline("")
+        self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
                       send_char=self.config.send_char)
-        proc.sendline('export PS1="%s"' % self.tester_ps1,
+        self.proc.sendline('export PS1="%s"' % self.tester_ps1,
                       send_char=self.config.send_char)
         self._booted = True
-        self.proc = proc
         return self.proc
 
     def power_off(self, proc):
@@ -92,7 +95,7 @@ class JtagTarget(Target):
     def file_system(self, partition, directory):
 
         # If we are using NFS
-        if self._boot_tags['{NFSROOTFS}']:
+        if '{NFSROOTFS}' in self._boot_tags:
             path = self._boot_tags['{NFSROOTFS}'] + directory
             logging.info("NFSROOTFS=%s", path)
             ensure_directory(path)
