@@ -457,10 +457,10 @@ def image_chart_filter_type_check(request):
 
         if has_attribute_each != has_build_attribute:
             return HttpResponse(simplejson.dumps({"result": "False"}),
-                                mimetype='application/json')
+                                content_type='application/json')
 
     return HttpResponse(simplejson.dumps({"result": "True"}),
-                        mimetype='application/json')
+                        content_type='application/json')
 
 
 @login_required
