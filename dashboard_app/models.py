@@ -626,6 +626,8 @@ class Bundle(models.Model):
             try:
                 fmt, doc = DocumentIO.load(self.content)
                 return fmt
+            except Exception:
+                return "unknown"
             finally:
                 self.content.close()
 
