@@ -98,6 +98,7 @@ class BundleDeserializationErrorAdmin(admin.ModelAdmin):
 class BundleStreamAdminForm(forms.ModelForm):
     class Meta:
         model = BundleStream
+        fields = '__all__'
 
     def clean(self):
         cleaned_data = self.cleaned_data
