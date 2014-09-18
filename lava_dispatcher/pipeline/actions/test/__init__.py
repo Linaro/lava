@@ -42,11 +42,14 @@ class TestAction(Action):
             Add LMPSignalDirector, if required
         work out how to do _keep_running with separate classes for multinode & lmp
         """
-        self._log("Executing test definitions")
+        if not connection:
+            self._log("No connection!")
+        self._log("Executing test definitions using %s" % connection.name)
         # internal actions:
         # setup SignalDirector
         # set proxy
-        connection.sendline(
+        # connection.run_command("ls -r %s" % self.data['lava_test_results_dir'])
+        connection.run_command(
             "%s/bin/lava-test-runner %s" % (
                 self.data['lava_test_results_dir'],
                 self.data['lava_test_results_dir']),

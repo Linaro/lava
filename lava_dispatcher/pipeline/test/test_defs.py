@@ -21,7 +21,11 @@
 from lava_dispatcher.pipeline.test.test_basic import Factory
 from lava_dispatcher.tests.helper import LavaDispatcherTestCase
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
-from lava_dispatcher.pipeline.actions.deploy.testdef import TestDefinitionAction, GitRepoAction
+from lava_dispatcher.pipeline.actions.deploy.testdef import (
+    TestDefinitionAction,
+    GitRepoAction,
+    TestOverlayAction
+)
 
 # Test the loading of test definitions within the deploy stage
 
@@ -39,12 +43,14 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):
             self.assertIsNotNone(action.name)
             if isinstance(action, DeployAction):
                 testdef = action.pipeline.children[action.pipeline][4]
-        self.assertEqual(len(testdef.internal_pipeline.actions), 2)
+        self.assertEqual(len(testdef.internal_pipeline.actions), 3)
         self.assertIsInstance(testdef, TestDefinitionAction)
         testdef.validate()
         self.assertTrue(testdef.valid)
         for repo_action in testdef.internal_pipeline.actions:
-            self.assertIsInstance(repo_action, GitRepoAction)
+            if not isinstance(repo_action, GitRepoAction) and not\
+                    isinstance(repo_action, TestOverlayAction):
+                self.fail("%s does not match GitRepoAction or TestOverlayAction" % type(repo_action))
             repo_action.validate()
             self.assertTrue(repo_action.valid)
             # FIXME: needs deployment_data to be visible during validation

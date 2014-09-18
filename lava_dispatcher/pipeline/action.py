@@ -139,7 +139,8 @@ class Pipeline(object):
             # per action loggers always operate in DEBUG mode - the frontend does the parsing later.
             action.log_handler.setLevel(logging.DEBUG)
             # yaml wrapper inside the log handler
-            action.log_handler.setFormatter(logging.Formatter('id: "<LAVA_DISPATCHER>%(asctime)s"\n%(message)s'))
+            pattern = ' - id: "<LAVA_DISPATCHER>%(asctime)s"\n%(message)s'
+            action.log_handler.setFormatter(logging.Formatter(pattern))
         # if the action has an internal pipeline, initialise that here.
         action.populate()
 
@@ -433,7 +434,11 @@ class Action(object):
         # logger per action si easier to use. Calling it YAML.%(action_name)s
         yaml_log = logging.getLogger("YAML")
         std_log = logging.getLogger("ASCII")
-        yaml_log.debug({"output": message.split('\n')})
+        if type(message) is dict:
+            for key, value in message.iteritems():
+                yaml_log.debug("   %s: %s" % (key, value))
+        else:
+            yaml_log.debug("   log: \"%s\"" % message)
         std_log.info(message)
 
     def _run_command(self, command_list, env=None):
