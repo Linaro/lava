@@ -76,7 +76,7 @@ def _validate_lmp_module(lmp_module_data):
 
 
 def data_integrate(lmp_module_data, config):
-    #convert config date to lmp_module_data format
+    # convert config date to lmp_module_data format
     lmp_module_data_integrated = []
     if config.lmp_hdmi_defconf is not None:
         for module_name, module_defconf in config.lmp_hdmi_defconf.items():
@@ -105,7 +105,7 @@ def data_integrate(lmp_module_data, config):
 
     logging.debug("lmp modules default init data is %s" % lmp_module_data_integrated.__str__())
 
-    #overlay lmp_module_data onto default config data
+    # overlay lmp_module_data onto default config data
     for lmp_module_element in lmp_module_data:
         # get module_name first
         if 'parameters' in lmp_module_element and\
@@ -132,7 +132,7 @@ def data_integrate(lmp_module_data, config):
 
     logging.debug("lmp modules final init data is %s" % lmp_module_data_integrated.__str__())
 
-     # return
+    # return
     return lmp_module_data_integrated
 
 

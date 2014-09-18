@@ -48,7 +48,7 @@ class TestAction(Action):
         # set proxy
         connection.sendline(
             "%s/bin/lava-test-runner %s" % (
-            self.data['lava_test_results_dir'],
-            self.data['lava_test_results_dir']),
+                self.data['lava_test_results_dir'],
+                self.data['lava_test_results_dir']),
         )
         return connection
