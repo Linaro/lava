@@ -222,7 +222,7 @@ class DeviceSchema(schema.Schema):
     master_password = schema.StringOption(default=None)
     master_login_commands = schema.ListOption(default=None)
 
-     # for fastmodel devices
+    # for fastmodel devices
     simulator_version_command = schema.StringOption()
     simulator_command = schema.StringOption()
     simulator_command_flag = schema.StringOption(default=" -C ")
