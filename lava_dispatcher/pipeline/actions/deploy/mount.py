@@ -109,6 +109,8 @@ class LoopCheckAction(DeployAction):
         pro = self._run_command(args)
         mounted_loops = len(pro.strip().split("\n")) if pro else 0
         available_loops = self.data['download_action']['available_loops']
+        # FIXME: we should retry as this can happen and be fixed automatically
+        # when one is unmounted
         if mounted_loops >= available_loops:
             raise InfrastructureError("Insufficient loopback devices?")
         self._log("available loops: %s" % available_loops)
@@ -145,6 +147,7 @@ class LoopMountAction(RetryAction):
         # FIXME: figure out why deployment_data isn't available during validation.
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
         self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.device.parameters['hostname']
+        # FIXME: this should not happen !!
         if 'offset' not in self.data['download_action']:
             raise RuntimeError("Offset action failed")
         self.data[self.name]['mntdir'] = self.job.mkdtemp()
@@ -192,6 +195,7 @@ class MountAction(DeployAction):
         # FIXME: not all mount operations will need these actions
         self.internal_pipeline = Pipeline(parent=self, job=self.job)
         self.internal_pipeline.add_action(OffsetAction())
+        # FIXME: LoopCheckAction and LoopMountAction should be in only one Action
         self.internal_pipeline.add_action(LoopCheckAction())
         self.internal_pipeline.add_action(LoopMountAction())
 
@@ -199,6 +203,7 @@ class MountAction(DeployAction):
         if self.internal_pipeline:
             connection = self.internal_pipeline.run_actions(connection, args)
         else:
+            # FIXME: this is a bug that should not happen (using assert?)
             raise RuntimeError("Deployment failed to generate a mount pipeline.")
         return connection
 

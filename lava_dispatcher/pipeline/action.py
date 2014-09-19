@@ -105,6 +105,7 @@ class Pipeline(object):
                 self.job = parent.job
 
     def _check_action(self, action):
+        # FIXME: this should be a method from the Action class
         if not action or not issubclass(type(action), Action):
             raise RuntimeError("Only actions can be added to a pipeline: %s" % action)
         if not action:
@@ -118,6 +119,7 @@ class Pipeline(object):
         self._check_action(action)
         self.actions.append(action)
         action.level = "%s.%s" % (self.branch_level, len(self.actions))
+        # FIXME: if this is only happening in unit test, this has to be fixed later on
         if self.job:  # should only be None inside the unit tests
             action.job = self.job
         if self.parent:  # action
@@ -174,8 +176,13 @@ class Pipeline(object):
 
     def run_actions(self, connection, args=None):
         for action in self.actions:
+            # TODO: moving all logger.getLogger at the top of each file (at
+            # import time). Isn't it better to have one logger per action and
+            # to create these loggers at creation time.
             yaml_log = None
             std_log = logging.getLogger("ASCII")
+            # FIXME: this is not related to the log_handler. It's a side effect
+            # that the log_handkler does create the output directory.
             if not action.log_handler:
                 # FIXME: unit test needed
                 # if no output dir specified in the job
@@ -248,6 +255,7 @@ class Action(object):
         self.log_handler = None
         self.job = None
         self.results = None
+        # FIXME: what about {} for default value?
         self.env = None  # FIXME make this a parameter which gets default value when first called
         self.timeout = None  # Timeout class instance, if needed.
 
@@ -271,6 +279,7 @@ class Action(object):
     def description(self, description):
         self.__set_desc__(description)
 
+    # FIXME: dwhy do you need this function?
     def __set_desc__(self, desc):
         self.__description__ = desc
 
@@ -289,6 +298,7 @@ class Action(object):
     def summary(self, summary):
         self.__set_summary__(summary)
 
+    # FIXME: dwhy do you need this function?
     def __set_summary__(self, summary):
         self.__summary__ = summary
 
@@ -308,6 +318,7 @@ class Action(object):
         """
         self.job.context.pipeline_data.update(value)
 
+    # FIXME: has to be called select to be consistent with Deployment
     @classmethod
     def find(cls, name):
         for subclass in cls.__subclasses__():
@@ -346,6 +357,7 @@ class Action(object):
     def level(self, value):
         self.__set_level__(value)
 
+    # FIXME: dwhy do you need this function?
     def __set_level__(self, value):
         self.__level__ = value
 
@@ -417,6 +429,8 @@ class Action(object):
     def _log(self, message):
         if not message:
             return
+        # FIXME: why are we recreating the loggers everytime? Maybe having one
+        # logger per action si easier to use. Calling it YAML.%(action_name)s
         yaml_log = logging.getLogger("YAML")
         std_log = logging.getLogger("ASCII")
         yaml_log.debug({"output": message.split('\n')})
@@ -434,6 +448,7 @@ class Action(object):
         """
         if type(command_list) != list:
             raise RuntimeError("commands to _run_command need to be a list")
+        # FIXME: see logger
         yaml_log = logging.getLogger("YAML")
         log = None
         if not self.env:
@@ -488,9 +503,11 @@ class Action(object):
             if self.err:
                 print self.err
         """
+        # FIXME: should be "raise NotImplementedError"
         pass
 
     def cleanup(self):
+        # FIXME: perform() does not exist, is it run()?
         """
         This method *will* be called after perform(), no matter whether
         perform() raises an exception or not. It should cleanup any resources
@@ -501,6 +518,7 @@ class Action(object):
             - error codes
             - etc
         """
+        # FIXME: should be "raise NotImplementedError"
         try:
             raise
         except:  # pylint: disable=bare-except
@@ -515,6 +533,7 @@ class Action(object):
         In this classs this method does nothing. It must be implemented by
         subclasses
         """
+        # FIXME: should be "raise NotImplementedError"
         pass
 
     def explode(self):
@@ -557,6 +576,8 @@ class RetryAction(Action):
     def __init__(self):
         super(RetryAction, self).__init__()
         self.retries = 0
+        # FIXME: have better dafault values. Should be seen somewhere in the
+        # configuration or a constant in the code.
         self.max_retries = 5
         self.sleep = 1
 
@@ -566,12 +587,16 @@ class RetryAction(Action):
                 new_connection = self.run(connection)
                 return new_connection
             except KeyboardInterrupt:
+                # FIXME: calling cleanup two times!
+                self.cleanup()
                 self.err = "\rCancel"  # Set a useful message.
             except (JobError, InfrastructureError):
+                # FIXME: print the retry cont like %(current_retry)d/%(max_retry)d
                 self._log("%s failed, trying again" % self.name)
                 self.retries += 1
                 time.sleep(self.sleep)
             finally:
+                # QUESTION: is it the right time to cleanup?
                 self.cleanup()
         raise JobError("%s retries failed for %s" % (self.retries, self.name))
 

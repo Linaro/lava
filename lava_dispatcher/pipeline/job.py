@@ -59,6 +59,7 @@ class Job(object):
     def context(self):
         return self.__context__
 
+    # FIXME: remove this function
     def __set_context__(self, data):
         self.__context__ = data
 
@@ -79,6 +80,8 @@ class Job(object):
         structure.update(self.pipeline.describe())
         return structure
 
+    # FIXME: what about having one base class for all the classes that have
+    # (prepare, validate, run, cleanup)?
     def validate(self, simulate=False):
         """
         Needs to validate the parameters
@@ -106,10 +109,12 @@ class Job(object):
         # results_dir = None
         #    self.action.post_process(results_dir)
 
+    # FIXME: should be moved to a specific helper module
     def rmtree(self, directory):
         # FIXME: change to self._run_command
         subprocess.call(['rm', '-rf', directory])
 
+    # FIXME: should be moved to a specific helper module
     def mkdtemp(self, basedir='/tmp'):
         """
         returns a temporary directory that's deleted when the process exits

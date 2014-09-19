@@ -98,9 +98,8 @@ class JobParser(object):
 #                    lavatest.action.yaml_line = line
                 else:
                     # May only end up being used for submit as other actions all need strategy method objects
-                    action_class = Action.find(name)
                     # select the specific action of this class for this job
-                    action = action_class()
+                    action = Action.find(name)()
                     # put parameters (like rootfs_type, results_dir) into the actions.
                     if type(action_data[name]) == dict:
                         action.parameters = action_data[name]

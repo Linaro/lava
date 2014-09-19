@@ -52,6 +52,7 @@ class NewDeviceDefaults(object):
     Ideally, use an external file as the schema
     """
 
+    # TODO! this should be a YAML file on the filesystem
     def __init__(self):
         test_image_prompts = [r"\(initramfs\)",  # check if the r prefix breaks matching later & remove \.
                               "linaro-test",
@@ -95,6 +96,7 @@ class NewDevice(object):
     def parameters(self):
         return self.__parameters__
 
+    # FIXME: why having one function for that?
     def __set_parameters__(self, data):
         self.__parameters__.update(data)
 
@@ -107,4 +109,5 @@ class NewDevice(object):
         Validates the combination of the job and the device
         *before* the Deployment actions are initialised.
         """
+        # FIXME: shoudl be raise NotImplementedError
         pass

@@ -41,6 +41,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
             self, command, timeout=lava_timeout.duration, cwd=cwd, logfile=sys.stdout)
 
         # serial can be slow, races do funny things, so increase delay
+        # FIXME: this as to be a constant, written somewhere with all constants
         self.delaybeforesend = 0.05
         self.lava_timeout = lava_timeout
         yaml_log = logging.getLogger("YAML")
@@ -64,6 +65,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         self.send(os.linesep, delay)
 
     def sendcontrol(self, char):
+        # FIXME: the getLogger should be done only once
         yaml_log = logging.getLogger("YAML")
         yaml_log.debug("sending control character: %s", char)
         return super(ShellCommand, self).sendcontrol(char)
@@ -72,6 +74,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         """
         Extends pexpect.send to support extra arguments, delay and send by character flags.
         """
+        # FIXME: the getLogger should be done only once
         yaml_log = logging.getLogger("YAML")
         yaml_log.debug("send (delay_ms=%s): %s ", delay, string)
         sent = 0
@@ -85,6 +88,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         return sent
 
     def expect(self, *args, **kw):
+        # FIXME: the getLogger should be done only once
         yaml_log = logging.getLogger("YAML")
         std_log = logging.getLogger("ASCII")
 
