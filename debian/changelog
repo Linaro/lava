@@ -1,3 +1,15 @@
+lava-server (2014.08.2-1) unstable; urgency=medium
+
+  * New production release includes fixes for multinode tagging,
+    multinode slave capability and documentation, fixup time
+    display in various places to be more human readable,
+    make test selection on image reports persistent and add
+    skipped and unknown test count to totals in image reports.
+  * Migrate to Django 1.7 support (Closes: #755610)
+  * Fix machine-readable sections of copyright lines
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 17 Sep 2014 10:24:09 -0700
+
 lava-server (2014.07.1-1) unstable; urgency=medium
 
   * New upstream bug fix release, including fixes for
