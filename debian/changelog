@@ -1,3 +1,13 @@
+lava-dispatcher (2014.08.2-1) unstable; urgency=medium
+
+  * New production release, including fixes to enable kernel dhcp for
+    ramdisk booting, SELinux support for test images an tarballs used
+    by master images, add support for dynamic master images, add QEMU
+    device types for arm, mips, ppc and aarch64, add support for slave
+    device and add role parameter to all remaining JSON schema.
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 17 Sep 2014 10:28:21 -0700
+
 lava-dispatcher (2014.07.1-1) unstable; urgency=medium
 
   * New upstream bug fix release, including support files
