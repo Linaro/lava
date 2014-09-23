@@ -20,7 +20,6 @@ from django.conf import settings
 from django.conf.urls import (
     handler404, include, patterns, url)
 from django.contrib import admin
-from longerusername.forms import AuthenticationForm
 from linaro_django_xmlrpc import urls as api_urls
 
 from lava_server.extension import loader
@@ -44,29 +43,8 @@ urlpatterns = patterns(
         me,
         name='lava.me'),
 
-    # We need to override for login action to support longer usernames.
-    # Then we have different code trying to access other actions,
-    # so we have little choice than to import them here too, as
-    # include('django.contrib.auth.urls') doesn't work due to login
-    # override above.
-    url(r'^{mount_point}accounts/login/$'.format(mount_point=settings.MOUNT_POINT),
-        'django.contrib.auth.views.login', {'authentication_form': AuthenticationForm}, name='login'),
-    url(r'^{mount_point}accounts/logout/$'.format(mount_point=settings.MOUNT_POINT),
-        'django.contrib.auth.views.logout'),
-    url(r'^{mount_point}password_change/done/$'.format(mount_point=settings.MOUNT_POINT),
-        'django.contrib.auth.views.password_change_done', name='password_change_done'),
-    url(r'^{mount_point}password_change/$'.format(mount_point=settings.MOUNT_POINT),
-        'django.contrib.auth.views.password_change'),
-    url(r'^{mount_point}password_reset/done/$'.format(mount_point=settings.MOUNT_POINT),
-        'django.contrib.auth.views.password_reset_done', name='password_reset_done'),
-    url(r'^{mount_point}password_reset/$'.format(mount_point=settings.MOUNT_POINT),
-        'django.contrib.auth.views.password_reset', name='password_reset'),
-    url(r'^{mount_point}admin_password_reset/$'.format(mount_point=settings.MOUNT_POINT),
-        'django.contrib.auth.views.password_reset', dict(is_admin_site=True)),
-    url(r'^%sreset/(?P<uidb36>[0-9A-Za-z]{1,13})-(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$' % settings.MOUNT_POINT,
-        'django.contrib.auth.views.password_reset_confirm'),
-    url(r'^{mount_point}reset/done/$'.format(mount_point=settings.MOUNT_POINT),
-        'django.contrib.auth.views.password_reset_complete'),
+    url(r'^{mount_point}accounts/'.format(mount_point=settings.MOUNT_POINT),
+        include('django.contrib.auth.urls')),
 
     url(r'^admin/jsi18n', 'django.views.i18n.javascript_catalog'),
     url(r'^{mount_point}admin/'.format(mount_point=settings.MOUNT_POINT),
