@@ -25,6 +25,7 @@
 # All comments below are strictly for development usage and
 # reference.
 
+import django
 
 # Administrator contact, used for sending
 # emergency email when something breaks
@@ -77,8 +78,6 @@ STATICFILES_MEDIA_DIRNAMES = (
     "static",
 )
 
-import django
-
 STATICFILES_PREPEND_LABEL_APPS = [
 ]
 
@@ -124,12 +123,17 @@ INSTALLED_APPS = [
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     # Admin docs disabled due to: https://code.djangoproject.com/ticket/6681
-    'longerusername',
+    # 'longerusername',
     'linaro_django_xmlrpc',
     'lava_markitup',  # Support app for MarkItUp in LAVA
-    'south',
     'google_analytics',
 ]
+
+if django.VERSION < (1, 7):
+    # Django 1.7 has built-in migration suppport
+    INSTALLED_APPS += ['south']
+else:
+    TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 try:
     import devserver

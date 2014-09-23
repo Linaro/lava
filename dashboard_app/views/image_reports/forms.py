@@ -48,6 +48,7 @@ class ImageReportEditorForm(forms.ModelForm):
 class ImageReportChartForm(forms.ModelForm):
     class Meta:
         model = ImageReportChart
+        fields = '__all__'
         widgets = {'image_report': forms.HiddenInput}
 
     def __init__(self, user, *args, **kwargs):
@@ -75,6 +76,7 @@ class ImageChartFilterForm(forms.ModelForm):
 
     class Meta:
         model = ImageChartFilter
+        fields = '__all__'
         widgets = {'filter': forms.HiddenInput,
                    'image_chart': forms.HiddenInput}
 

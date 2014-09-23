@@ -20,41 +20,39 @@ Install the *qemu-system* package on the server::
 Configure the Dispatcher
 ------------------------
 
-Create your *qemu01.conf* file:
+Create your *qemu-arm01.conf* file:
 
 ::
 
-    # /etc/lava-dispatcher/devices/qemu01.conf
-    device_type = qemu
-
-You'll need to download an image to test with. The Linaro download servers
-have some click-through licensing logic that makes downloading from the
-dispatcher difficult, so its easiest to first download an image locally
-using your browser. You can download a QEMU image `here`_ to your /tmp
-directory.
-
-.. _here: http://releases.linaro.org/images/12.03/oneiric/nano/beagle-nano.img.gz
+    # /etc/lava-dispatcher/devices/qemu-arm01.conf
+    device_type = qemu-arm
 
 At this point the dispatcher should work. You can test it locally by creating
 a minimal job file:
 
 ::
 
-    # /tmp/qemu.json
+    # /tmp/qemu-arm.json
     {
       "timeout": 18000,
-      "job_name": "qemu-test",
-      "device_type": "qemu",
-      "target": "qemu01",
+      "job_name": "qemu-arm-test",
+      "device_type": "qemu-arm",
+      "target": "qemu-arm01",
       "actions": [
         {
-          "command": "deploy_linaro_image",
-          "parameters": {
-            "image": "file:///tmp/beagle-nano.img.gz"
+            "command": "deploy_linaro_kernel",
+            "parameters": {
+                "kernel": "http://images.validation.linaro.org/functional-test-images/qemu-arm/zImage-qemuarm.bin",
+                "login_prompt": "login:",
+                "rootfs": "http://images.validation.linaro.org/functional-test-images/qemu-arm/core-image-minimal-qemuarm.ext3",
+                "username": "root"
             }
         },
         {
-          "command": "boot_linaro_image"
+            "command": "boot_linaro_image",
+            "parameters": {
+                "test_image_prompt": "root@qemu-system-arm:~#"
+            }
         }
       ]
     }
@@ -72,17 +70,17 @@ Now that the dispatcher understand the QEMU device and can work with it, we
 need to inform the LAVA scheduler about it. This is done from the admin panel
 in the LAVA web app.
 
-You'll first add a "qemu" device type by going to a URL like::
+You'll first add a "qemu-arm" device type by going to a URL like::
 
  http://localhost/admin/lava_scheduler_app/devicetype/
 
 That page will give you an option to add a device type. From the add device
-type page, you need to give the name "qemu". Don't touch any of the other
+type page, you need to give the name "qemu-arm". Don't touch any of the other
 options for now.
 
 After adding a device type you can add a device. From this page you'll want
 to set the hostname to the same value you set for 'target' in the dispatch
-config. Then select "qemu" from the device type list.
+config. Then select "qemu-arm" from the device type list.
 
 Now when you view::
 

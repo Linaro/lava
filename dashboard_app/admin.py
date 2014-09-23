@@ -24,7 +24,7 @@ from django import forms
 from django.contrib import admin
 from django.contrib.admin.actions import delete_selected
 from django.contrib.contenttypes import generic
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 from dashboard_app.models import (
     Attachment,
@@ -98,6 +98,7 @@ class BundleDeserializationErrorAdmin(admin.ModelAdmin):
 class BundleStreamAdminForm(forms.ModelForm):
     class Meta:
         model = BundleStream
+        fields = '__all__'
 
     def clean(self):
         cleaned_data = self.cleaned_data
