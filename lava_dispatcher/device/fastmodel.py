@@ -24,6 +24,8 @@ import cStringIO
 import logging
 import os
 import subprocess
+import signal
+import pexpect
 
 import lava_dispatcher.device.boot_options as boot_options
 
@@ -55,6 +57,7 @@ from lava_dispatcher.utils import (
     extract_ramdisk,
     create_ramdisk,
     ensure_directory,
+    touch,
 )
 from lava_dispatcher import deployment_data
 
@@ -75,6 +78,7 @@ class FastModelTarget(Target):
         self._dtb = None
         self._initrd = None
         self._uefi = None
+        self._uefi_vars = None
         self._bl1 = None
         self._bl2 = None
         self._bl31 = None
@@ -122,6 +126,10 @@ class FastModelTarget(Target):
                 self._uefi = \
                     self._copy_first_find_from_list(subdir, odir,
                                                     self.config.simulator_uefi_files)
+                if self.config.simulator_uefi_vars and self._uefi_vars is None:
+                    # Create file for flashloader1
+                    self._uefi_vars = os.path.join(odir, self.config.simulator_uefi_vars)
+                    touch(self._uefi_vars)
 
         # These are common to both AXF and UEFI
         # Extract the kernel from the image
@@ -179,6 +187,8 @@ class FastModelTarget(Target):
             if self._uefi is None and self.config.simulator_uefi_files:
                 raise RuntimeError('No UEFI binary found, %r' %
                                    self.config.simulator_uefi_files)
+            if self._uefi_vars is None:
+                logging.warning('No uefi-vars.fd found')
 
         # These are common to both AXF and UEFI
         if self._sd_image is None:
@@ -361,6 +371,12 @@ class FastModelTarget(Target):
                 os.chmod(os.path.join(root, f), 0o777)
 
     def power_off(self, proc):
+        try:
+            logging.info('Requesting graceful shutdown')
+            self._sim_proc.kill(signal.SIGTERM)
+            self._sim_proc.expect('FlashLoader: Saved', timeout=10)
+        except pexpect.TIMEOUT:
+            logging.info('Unable to gracefully shutdown')
         super(FastModelTarget, self).power_off(proc)
         finalize_process(self._sim_proc)
         self._sim_proc = None
@@ -403,7 +419,8 @@ class FastModelTarget(Target):
         sim_cmd = '%s %s' % (self.config.simulator_command, options)
         sim_cmd = sim_cmd.format(
             AXF=self._axf, IMG=self._sd_image, KERNEL=self._kernel,
-            DTB=self._dtb, INITRD=self._initrd, UEFI=self._uefi, BL1=self._bl1)
+            DTB=self._dtb, INITRD=self._initrd, UEFI=self._uefi, BL1=self._bl1,
+            UEFI_VARS=self._uefi_vars)
 
         # the simulator proc only has stdout/stderr about the simulator
         # we hook up into a telnet port which emulates a serial console

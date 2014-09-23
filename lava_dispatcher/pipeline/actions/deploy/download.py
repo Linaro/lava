@@ -121,7 +121,7 @@ class DownloaderAction(RetryAction):
         opener = urllib2.build_opener(*handlers)
 
         if self.cookies:
-            opener.addheaders.append(('Cookie', cookies))
+            opener.addheaders.append(('Cookie', self.cookies))
 
         try:
             url = urllib2.quote(self.url.geturl(), safe=":/")
@@ -135,7 +135,7 @@ class DownloaderAction(RetryAction):
     def _file_stream(self):
         fd = None
         try:
-            fd = open(url.path, 'rb')
+            fd = open(self.url.path, 'rb')
             yield fd
         finally:
             if fd:
@@ -187,7 +187,7 @@ class DownloaderAction(RetryAction):
         self.url = urlparse.urlparse(self.parameters['image'])
         if self.url.scheme == 'scp':
             self.reader = self._scp_stream
-        elif self.url.scheme == 'http' or url.scheme == 'https':
+        elif self.url.scheme == 'http' or self.url.scheme == 'https':
             self.reader = self._http_stream
         elif self.url.scheme == 'file':
             self.reader = self._file_stream
