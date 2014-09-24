@@ -20,6 +20,7 @@
 
 import sys
 import os
+import time
 from StringIO import StringIO
 import unittest
 import yaml
@@ -180,6 +181,7 @@ class TestPipeline(unittest.TestCase):
             self.name = "fake-action"
 
         def run(self, connection, args=None):
+            time.sleep(1)
             self.ran = True
 
     def test_create_empty_pipeline(self):

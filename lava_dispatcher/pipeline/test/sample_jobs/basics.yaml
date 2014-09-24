@@ -1,4 +1,4 @@
-# Sample JOB defitinition for LAVA dispatcher
+# Sample JOB definition for LAVA dispatcher
 
 device_type: whatever
 

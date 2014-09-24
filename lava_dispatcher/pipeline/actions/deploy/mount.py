@@ -102,10 +102,15 @@ class LoopCheckAction(DeployAction):
         self.data['download_action']['available_loops'] = available_loops
 
     def run(self, connection, args=None):
-        args = ['sudo', '/sbin/losetup', '-a']  # sudo allows validate to be used in unit tests
+        if 'available_loops' not in self.data['download_action']:
+            # FIXME: why is this data being cleared? Should we re-check anyway?
+            self.validate()
+        args = ['/sbin/losetup', '-a']
         pro = self._run_command(args)
         mounted_loops = len(pro.strip().split("\n")) if pro else 0
         available_loops = self.data['download_action']['available_loops']
+        # FIXME: we should retry as this can happen and be fixed automatically
+        # when one is unmounted
         if mounted_loops >= available_loops:
             raise InfrastructureError("Insufficient loopback devices?")
         self._log("available loops: %s" % available_loops)
@@ -142,11 +147,11 @@ class LoopMountAction(RetryAction):
         # FIXME: figure out why deployment_data isn't available during validation.
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
         self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.device.parameters['hostname']
+        # FIXME: this should not happen !!
         if 'offset' not in self.data['download_action']:
             raise RuntimeError("Offset action failed")
         self.data[self.name]['mntdir'] = self.job.mkdtemp()
         mount_cmd = [
-            'sudo',
             'mount',
             '-o',
             'loop,offset=%s' % self.data['download_action']['offset'],
@@ -190,6 +195,7 @@ class MountAction(DeployAction):
         # FIXME: not all mount operations will need these actions
         self.internal_pipeline = Pipeline(parent=self, job=self.job)
         self.internal_pipeline.add_action(OffsetAction())
+        # FIXME: LoopCheckAction and LoopMountAction should be in only one Action
         self.internal_pipeline.add_action(LoopCheckAction())
         self.internal_pipeline.add_action(LoopMountAction())
 
@@ -197,6 +203,7 @@ class MountAction(DeployAction):
         if self.internal_pipeline:
             connection = self.internal_pipeline.run_actions(connection, args)
         else:
+            # FIXME: this is a bug that should not happen (using assert?)
             raise RuntimeError("Deployment failed to generate a mount pipeline.")
         return connection
 
@@ -211,7 +218,7 @@ class UnmountAction(RetryAction):  # FIXME: contextmanager to ensure umounted on
 
     def run(self, connection, args=None):
         self._log("umounting %s" % self.data['loop_mount']['mntdir'])
-        self._run_command(['sudo', 'umount', self.data['loop_mount']['mntdir']])
+        self._run_command(['umount', self.data['loop_mount']['mntdir']])
         # FIXME: is the rm -rf a separate action or a cleanup of this action?
         self._run_command(['rm', '-rf', self.data['loop_mount']['mntdir']])
         return connection

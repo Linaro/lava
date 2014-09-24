@@ -49,6 +49,7 @@ class Job(object):
         self.pipeline = None
         self.actions = None
         self._scratch_dir = None
+        self.connection = None
 
     def set_pipeline(self, pipeline):
         self.pipeline = pipeline
@@ -58,6 +59,7 @@ class Job(object):
     def context(self):
         return self.__context__
 
+    # FIXME: remove this function
     def __set_context__(self, data):
         self.__context__ = data
 
@@ -74,9 +76,12 @@ class Job(object):
         structure['job'] = {
             'parameters': self.parameters
         }
+        # FIXME: output the deployment data here and remove from the Actions
         structure.update(self.pipeline.describe())
         return structure
 
+    # FIXME: what about having one base class for all the classes that have
+    # (prepare, validate, run, cleanup)?
     def validate(self, simulate=False):
         """
         Needs to validate the parameters
@@ -91,8 +96,7 @@ class Job(object):
         self.pipeline.validate_actions()
 
     def run(self):
-        self.pipeline.validate_actions()
-        self.pipeline.run_actions(None)
+        self.pipeline.run_actions(self.connection)  # FIXME: some Deployment methods may need to set a Connection.
         # FIXME how to get rootfs with multiple deployments, and at arbitrary
         # points in the pipeline?
         # rootfs = None
@@ -105,10 +109,12 @@ class Job(object):
         # results_dir = None
         #    self.action.post_process(results_dir)
 
+    # FIXME: should be moved to a specific helper module
     def rmtree(self, directory):
         # FIXME: change to self._run_command
         subprocess.call(['rm', '-rf', directory])
 
+    # FIXME: should be moved to a specific helper module
     def mkdtemp(self, basedir='/tmp'):
         """
         returns a temporary directory that's deleted when the process exits

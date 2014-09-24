@@ -75,6 +75,67 @@ def _validate_lmp_module(lmp_module_data):
     Validator.validate(schema, lmp_module_data)
 
 
+def data_integrate(lmp_module_data, config):
+    # convert config date to lmp_module_data format
+    lmp_module_data_integrated = []
+    if config.lmp_hdmi_defconf is not None:
+        for module_name, module_defconf in config.lmp_hdmi_defconf.items():
+            module_init_item = {'hdmi': module_defconf, 'parameters': {'name': module_name}}
+            lmp_module_data_integrated.append(module_init_item)
+    if config.lmp_sata_defconf is not None:
+        for module_name, module_defconf in config.lmp_sata_defconf.items():
+            module_init_item = {'sata': module_defconf, 'parameters': {'name': module_name}}
+            lmp_module_data_integrated.append(module_init_item)
+    if config.lmp_eth_defconf is not None:
+        for module_name, module_defconf in config.lmp_eth_defconf.items():
+            module_init_item = {'eth': module_defconf, 'parameters': {'name': module_name}}
+            lmp_module_data_integrated.append(module_init_item)
+    if config.lmp_lsgpio_defconf is not None:
+        for module_name, module_defconf in config.lmp_lsgpio_defconf.items():
+            module_init_item = {'lsgpio': module_defconf, 'parameters': {'name': module_name}}
+            lmp_module_data_integrated.append(module_init_item)
+    if config.lmp_audio_defconf is not None:
+        for module_name, module_defconf in config.lmp_audio_defconf.items():
+            module_init_item = {'audio': module_defconf, 'parameters': {'name': module_name}}
+            lmp_module_data_integrated.append(module_init_item)
+    if config.lmp_usb_defconf is not None:
+        for module_name, module_defconf in config.lmp_usb_defconf.items():
+            module_init_item = {'usb': module_defconf, 'parameters': {'name': module_name}}
+            lmp_module_data_integrated.append(module_init_item)
+
+    logging.debug("lmp modules default init data is %s" % lmp_module_data_integrated.__str__())
+
+    # overlay lmp_module_data onto default config data
+    for lmp_module_element in lmp_module_data:
+        # get module_name first
+        if 'parameters' in lmp_module_element and\
+           'name' in lmp_module_element['parameters']:
+            module_name = lmp_module_element['parameters']['name']
+        else:
+            module_name = config.lmp_default_name
+        # get module_type
+        for key_string in lmp_module_element.keys():
+            if key_string in ['hdmi', 'sata', 'eth', 'lsgpio', 'audio', 'usb']:
+                module_type = key_string
+                module_defconf = lmp_module_element[module_type]
+        logging.debug("lmp %s module %s init data is %s"
+                      % (module_type, module_name, module_defconf))
+        # poll the default config data of LMP, overlay the default config by initial data in the job definition
+        for lmp_module_data_integrated_item in lmp_module_data_integrated:
+            if module_type in lmp_module_data_integrated_item:
+                logging.debug("__match lmp %s module type__" % module_type)
+                if lmp_module_data_integrated_item['parameters']['name'] == module_name:
+                    logging.debug("init lmp %s module %s as %s(overlay %s)"
+                                  % (module_type, module_name, module_defconf,
+                                     lmp_module_data_integrated_item[module_type]))
+                    lmp_module_data_integrated_item[module_type] = module_defconf
+
+    logging.debug("lmp modules final init data is %s" % lmp_module_data_integrated.__str__())
+
+    # return
+    return lmp_module_data_integrated
+
+
 # init LMP module
 def init(lmp_module_data, config):
     _validate_lmp_module(lmp_module_data)
