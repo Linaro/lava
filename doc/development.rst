@@ -75,6 +75,49 @@ Upstream uses Debian_, see :ref:`lava_on_debian` for more information.
 
 .. _Debian: http://www.debian.org/
 
+Community contributions
+=======================
+
+Contributing via your distribution
+----------------------------------
+
+You are welcome to use the bug tracker of your chosen distribution.
+The maintainer for the packages in that distribution should :ref:`register`
+with Linaro (or already be part of Linaro) to be able to
+forward bug reports and patches into the upstream LAVA systems.
+
+.. _register:
+
+Register with Linaro as a Community contributor
+------------------------------------------------
+
+If you, or anyone on your team, would like to register with Linaro directly,
+this will allow you to file an upstream bug, submit code for review by
+the LAVA team, etc. Register at the following url:
+
+https://register.linaro.org/
+
+If you are considering large changes, it is best to register and also
+to subscribe to the `Linaro Validation mailing list`_ and talk
+to us on IRC::
+
+ irc.oftc.net
+ #linaro-lava
+
+.. _Linaro Validation mailing list: http://lists.linaro.org/mailman/listinfo/linaro-validation
+
+Contributing via GitHub
+-----------------------
+
+You can use GitHub to fork the LAVA packages and make pull requests.
+
+https://github.com/Linaro
+
+It is worth sending an email to the Linaro Validation mailing list, so
+that someone can migrate the pull request to a review:
+
+linaro-validation@lists.linaro.org
+
 Patch Submissions and workflow
 ==============================
 
@@ -83,15 +126,14 @@ uses the gerrit_ code review system to review changes.
 
 .. _gerrit: http://review.linaro.org/
 
+If you do not already have a Linaro account, you will first need to
+:ref:`register`.
+
 So the first step will be logging in to gerrit_ and uploading you SSH
 public key there.
 
-If you do not have access to gerrit and it is a small change, you could
-use another git hosting service, push the LAVA code and point us at
-commits which could be cherry picked.
-
 Obtaining the repository
-^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------
 
 There are two main components to LAVA, ``lava-server`` and
 ``lava-dispatcher``.
@@ -106,14 +148,14 @@ There are two main components to LAVA, ``lava-server`` and
 
 
 Setting up git-review
-^^^^^^^^^^^^^^^^^^^^^
+---------------------
 
 ::
 
     git review -s
 
 Create a topic branch
-^^^^^^^^^^^^^^^^^^^^^
+---------------------
 
 We recommend never working off the master branch (unless you are a git
 expert and really know what you are doing). You should create a topic
@@ -129,7 +171,7 @@ Now create your topic branch off master::
     git checkout -b my-change master
 
 Run the unit tests
-^^^^^^^^^^^^^^^^^^
+------------------
 
 Extra dependencies are required to run the tests. On Debian based distributions,
 you can install ``lava-dev``. (If you only need to run the ``lava-dispatcher``
@@ -140,7 +182,7 @@ To run the tests, use the ``ci-run`` script::
  $ ./ci-run
 
 Functional testing
-^^^^^^^^^^^^^^^^^^
+------------------
 
 Unit tests cannot replicate all tests required on LAVA code, some tests will need
 to be run with real devices under test. On Debian based distributions,
@@ -148,7 +190,7 @@ see :ref:`dev_builds`. See :ref:`writing_tests` for information on writing
 LAVA test jobs to test particular device functionality.
 
 Make your changes
-^^^^^^^^^^^^^^^^^
+-----------------
 
 * Follow PEP8 style for Python code.
 * Make one commit per logical change.
@@ -165,7 +207,7 @@ Make your changes
 .. _`5 useful tips for a better commit message`: http://robots.thoughtbot.com/post/48933156625/5-useful-tips-for-a-better-commit-message
 
 Re-run the unit tests
-^^^^^^^^^^^^^^^^^^^^^
+---------------------
 
 Make sure that your changes do not cause any failures in the unit tests::
 
@@ -174,7 +216,7 @@ Make sure that your changes do not cause any failures in the unit tests::
 Wherever possible, always add new unit tests for new code.
 
 Send your commits for review
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------
 
 From each topic branch, just run::
 
@@ -188,7 +230,7 @@ approved and the one before it is not, the later commit will not be
 merged until the earlier one is approved.
 
 Submitting a new version of a change
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------------
 
 When reviewers make comments on your change, you should amend the
 original commit to address the comments, and **not** submit a new change
@@ -251,7 +293,7 @@ still contains the same ``Change-Id``, gerrit will know it is a new version
 of a previously submitted change.
 
 Handling your local branches
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------
 
 After placing a few reviews, there will be a number of local branches.
 To keep the list of local branches under control, the local branches can
@@ -274,7 +316,7 @@ if the review of this branch was abandoned, use the `-D` option
 instead of `-d` and repeat the command.
 
 Reviewing changes in clean branches
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 If you haven't got a clone handy on the instance to be used for the
 review, prepare a clone as usual.
