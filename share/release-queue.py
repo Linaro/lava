@@ -30,6 +30,7 @@ change_id_pattern = re.compile("\s+Change-Id: (\w+)")
 commit_pattern = re.compile("commit (.+)")
 author_pattern = re.compile("author ([^>]+>) (\w+) ((\+|-)\w\w\w\w)")
 
+
 class Commit(object):
     def __init__(self, commit_id, change_id):
         self.commit_id = commit_id
