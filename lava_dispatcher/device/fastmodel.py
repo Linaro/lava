@@ -371,12 +371,13 @@ class FastModelTarget(Target):
                 os.chmod(os.path.join(root, f), 0o777)
 
     def power_off(self, proc):
-        try:
-            logging.info('Requesting graceful shutdown')
-            self._sim_proc.kill(signal.SIGTERM)
-            self._sim_proc.expect('FlashLoader: Saved', timeout=10)
-        except pexpect.TIMEOUT:
-            logging.info('Unable to gracefully shutdown')
+        if self._uefi_vars is not None:
+            try:
+                logging.info('Requesting graceful shutdown')
+                self._sim_proc.kill(signal.SIGTERM)
+                self._sim_proc.expect('FlashLoader: Saved', timeout=10)
+            except pexpect.TIMEOUT:
+                logging.info('Unable to gracefully shutdown')
         super(FastModelTarget, self).power_off(proc)
         finalize_process(self._sim_proc)
         self._sim_proc = None
