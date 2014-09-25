@@ -19,10 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import yaml
 import stat
 import glob
-import lava_dispatcher.utils as utils
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 
 
@@ -36,6 +34,7 @@ class CustomisationAction(DeployAction):
 
     def run(self, connection, args=None):
         self._log("Customising image...")
+        # FIXME: implement
         return connection
 
 
@@ -51,7 +50,6 @@ class OverlayAction(DeployAction):
     of the content of the test definitions themselves. Other
     overlays are handled by TestDefinitionAction.
     """
-    # FIXME: remove redundant functions copied in from old code
     # FIXME: is this ImageOverlayAction or can it work the same way for all deployments?
 
     def __init__(self):
@@ -61,46 +59,11 @@ class OverlayAction(DeployAction):
         self.summary = "overlay the lava support scripts"
         self.lava_test_dir = os.path.realpath(
             '%s/../../../lava_test_shell' % os.path.dirname(__file__))
-        self.default_pattern = "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))"
-        self.default_fixupdict = {'PASS': 'pass', 'FAIL': 'fail', 'SKIP': 'skip',
-                                  'UNKNOWN': 'unknown'}
-        self.runner_dirs = ['bin', 'tests', 'results']
         # 755 file permissions
         self.xmod = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH
 
-    def _create_target_install(self, hostdir, targetdir):  # FIXME: needs a dedicated Action
-        """
-        Use the 'distro' element of the deployment-data to determine which
-        install helper to add to the overlay.
-        """
-        with open('%s/install.sh' % hostdir, 'w') as f:
-            self._inject_testdef_parameters(f)
-            f.write('set -ex\n')
-            f.write('cd %s\n' % targetdir)
-
-            if self.skip_install != 'deps':
-                distro = self.parameters['deployment_data']['distro']
-
-                # generic dependencies - must be named the same across all distros
-                # supported by the testdef
-                deps = self.testdef['install'].get('deps', [])
-
-                # distro-specific dependencies
-                deps = deps + self.testdef['install'].get('deps-' + distro, [])
-
-                if deps:
-                    f.write('lava-install-packages ')
-                    for dep in deps:
-                        f.write('%s ' % dep)
-                    f.write('\n')
-
-            if self.skip_install != 'steps':
-                steps = self.testdef['install'].get('steps', [])
-                if steps:
-                    for cmd in steps:
-                        f.write('%s\n' % cmd)
-
     def _copy_runner(self, mntdir):
+        self._log("copy_runner %s" % mntdir)
         shell = self.parameters['deployment_data']['lava_test_sh_cmd']
 
         # Generic scripts
@@ -127,21 +90,17 @@ class OverlayAction(DeployAction):
         * create test runner directories
         * copy runners into test runner directories
         """
-        lava_test_results_dir = self.data['lava_test_results_dir']
         if not os.path.ismount(self.data['loop_mount']['mntdir']):
             raise RuntimeError("Overlay requested but %s is not a mountpoint" %
                                self.data['loop_mount']['mntdir'])
-        lava_path = os.path.abspath("%s/%s" % (self.data['loop_mount']['mntdir'], lava_test_results_dir))
-        for runner_dir in self.runner_dirs:
+        lava_path = os.path.abspath("%s/%s" % (self.data['loop_mount']['mntdir'], self.data['lava_test_results_dir']))
+        self._log("lava_path=%s" % lava_path)
+        for runner_dir in ['bin', 'tests', 'results']:
             # avoid os.path.join as lava_test_results_dir startswith / so mntdir is *dropped* by join.
             path = os.path.abspath("%s/%s" % (lava_path, runner_dir))
             if not os.path.exists(path):
                 os.makedirs(path)
         self._copy_runner(lava_path)
-        # load test definitions is done by TestDefinitionAction, so we're finished
-        # debug: log the overlay directory contents
-        # self._run_command(["cat", os.path.join(lava_path, 'lava-test-runner.conf')])
-        # self._run_command(["ls", "-lR", os.path.join(lava_path, 'tests')])
         return connection
 
 

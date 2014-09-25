@@ -92,7 +92,7 @@ def get_pipeline_runner(job):
             if not validate_only:
                 job.run()
         except lava_dispatcher.pipeline.JobError as e:
-            print(e)
+            yaml_log.debug("   %s", e)
             sys.exit(2)
     return run_pipeline_job
 

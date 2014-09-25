@@ -18,10 +18,10 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.pipeline.action import Action
+from lava_dispatcher.pipeline.action import Action, RetryAction
 
 
-class BootAction(Action):
+class BootAction(RetryAction):
     """
     Base class for all actions which control power-on
     and boot behaviour of a device under test.
@@ -32,6 +32,9 @@ class BootAction(Action):
     reliably selected for the correct job and not
     selected for an invalid job or a job
     accepted by a different subclass.
+
+    Boot and Test are closely related - a fail error in Boot
+    will cause subsequent Test actions to be skipped.
     """
 
     name = 'boot'

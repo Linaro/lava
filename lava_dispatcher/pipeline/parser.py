@@ -92,10 +92,12 @@ class JobParser(object):
                     boot = Boot.select(device, action_data[name])(pipeline)
                     boot.action.parameters = action_data[name]
                     boot.action.yaml_line = line
-#                elif name == "test":
-#                    lavatest = LavaTest.select(device, action_data[name])(pipeline)
-#                    lavatest.action.parameters = action_data[name]
-#                    lavatest.action.yaml_line = line
+                # elif name == "test":
+                    # one TestAction per definition
+                    # for testaction in action_data[name]['definitions']:
+                    #    lavatest = LavaTest(pipeline)
+                    #    lavatest.action.parameters = testaction
+                    #    lavatest.action.yaml_line = line
                 else:
                     # May only end up being used for submit as other actions all need strategy method objects
                     # select the specific action of this class for this job

@@ -59,13 +59,9 @@ class Job(object):
     def context(self):
         return self.__context__
 
-    # FIXME: remove this function
-    def __set_context__(self, data):
-        self.__context__ = data
-
     @context.setter
     def context(self, data):
-        self.__set_context__(data)
+        self.__context__ = data
 
     def describe(self):
         structure = OrderedDict()
@@ -123,7 +119,7 @@ class Job(object):
         # FIXME move to utils module?
         tmpdir = tempfile.mkdtemp(dir=basedir)
         atexit.register(rmtree, tmpdir)
-        os.chmod(tmpdir, 0755)
+        os.chmod(tmpdir, 0o755)
         return tmpdir
 
     @property

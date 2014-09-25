@@ -18,7 +18,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.pipeline import Action, Connection, Timeout
+from lava_dispatcher.pipeline import Action, Timeout
+from lava_dispatcher.pipeline.connection import Connection
 from lava_dispatcher.pipeline.shell import ShellCommand
 
 
@@ -37,4 +38,4 @@ class ConnectToSerial(Action):
 
     def run(self, connection, args=None):
         telnet = ShellCommand(self.job.device.parameters['connection_command'], self.timeout)
-        return Connection(self.job.device, telnet)
+        return Connection(self.job, telnet)

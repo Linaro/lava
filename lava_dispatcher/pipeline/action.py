@@ -21,11 +21,13 @@
 import os
 import sys
 import time
-import signal
 import types
 import yaml
 import logging
+import datetime
 import subprocess
+import collections
+from functools import reduce
 from collections import OrderedDict
 from contextlib import contextmanager
 from lava_dispatcher.config import get_device_config
@@ -199,6 +201,8 @@ class Pipeline(object):
                 new_connection = action.run(connection, args)
                 action.elapsed_time = time.time() - start
                 action._log("duration: %.02f" % action.elapsed_time)
+                if action.results:
+                    action._log({"results": action.results})
                 if new_connection:
                     connection = new_connection
             except KeyboardInterrupt:
@@ -210,6 +214,7 @@ class Pipeline(object):
             except (JobError, InfrastructureError) as exc:
                 action.errors = exc.message
                 action.results = {"fail": exc}
+                raise exc
             # set results including retries
             if action.log_handler:
                 # remove per-action log handler
@@ -255,7 +260,7 @@ class Action(object):
         self.elapsed_time = None  # FIXME: pipeline_data?
         self.log_handler = None
         self.job = None
-        self.results = None
+        self.__results__ = {}
         # FIXME: what about {} for default value?
         self.env = None  # FIXME make this a parameter which gets default value when first called
         self.timeout = None  # Timeout class instance, if needed.
@@ -278,11 +283,7 @@ class Action(object):
 
     @description.setter
     def description(self, description):
-        self.__set_desc__(description)
-
-    # FIXME: dwhy do you need this function?
-    def __set_desc__(self, desc):
-        self.__description__ = desc
+        self.__description__ = description
 
     @property
     def summary(self):
@@ -297,10 +298,6 @@ class Action(object):
 
     @summary.setter
     def summary(self, summary):
-        self.__set_summary__(summary)
-
-    # FIXME: dwhy do you need this function?
-    def __set_summary__(self, summary):
         self.__summary__ = summary
 
     @property
@@ -356,10 +353,6 @@ class Action(object):
 
     @level.setter
     def level(self, value):
-        self.__set_level__(value)
-
-    # FIXME: dwhy do you need this function?
-    def __set_level__(self, value):
         self.__level__ = value
 
     @property
@@ -380,7 +373,27 @@ class Action(object):
         return self.__parameters__
 
     def __set_parameters__(self, data):
-        self.__parameters__.update(data)
+        try:
+            self.__parameters__.update(data)
+        except ValueError:
+            raise RuntimeError("Action parameters need to be a dictionary")
+        self.timeout = Timeout('default')
+        if 'timeout' in self.parameters:
+            # FIXME: a top level timeout should cover all actions within the pipeline, not each action have the same timeout.
+            time_str = self.parameters['timeout'][:-1]
+            time_int = 0
+            try:
+                time_int = int(time_str)
+            except ValueError:
+                self.errors = "%s - Could not convert timeout: %s to an integer" % (self.name, time_str)
+            if time_int:
+                # FIXME: use a standard timeparsing module instead of inventing another confusing syntax.
+                if self.parameters['timeout'].endswith('m'):
+                    self.timeout = Timeout(self.name, datetime.timedelta(minutes=time_int).total_seconds())
+                elif self.parameters['timeout'].endswith('h'):
+                    self.timeout = Timeout(self.name, datetime.timedelta(hours=time_int).total_seconds())
+                elif self.parameters['timeout'].endswith('s'):
+                    self.timeout = Timeout(self.name, time_int)
 
     @parameters.setter
     def parameters(self, data):
@@ -389,6 +402,20 @@ class Action(object):
             for action in self.pipeline.actions:
                 action.parameters = self.parameters
 
+    @property
+    def results(self):
+        """
+        Updated dictionary of results for this action.
+        """
+        return self.__results__
+
+    @results.setter
+    def results(self, data):
+        try:
+            self.__results__.update(data)
+        except ValueError:
+            raise RuntimeError("Action results need to be a dictionary")
+
     def validate(self):
         """
         This method needs to validate the parameters to the action. For each
@@ -396,6 +423,7 @@ class Action(object):
         Validation includes parsing the parameters for this action for
         values not set or values which conflict.
         """
+
         if self.errors:
             self._log("Validation failed")
             raise JobError("Invalid job data: %s\n" % '\n'.join(self.errors))
@@ -435,7 +463,7 @@ class Action(object):
         yaml_log = logging.getLogger("YAML")
         std_log = logging.getLogger("ASCII")
         if type(message) is dict:
-            for key, value in message.iteritems():
+            for key, value in list(message.items()):
                 yaml_log.debug("   %s: %s", key, value)
         else:
             yaml_log.debug("   log: \"%s\"", message)
@@ -540,7 +568,8 @@ class Action(object):
         serialisation support
         """
         data = {}
-        members = [attr for attr in dir(self) if not callable(attr) and not attr.startswith("__")]
+        members = [attr for attr in dir(self)
+                   if not isinstance(attr, collections.Callable) and not attr.startswith("__")]
         members.sort()
         for name in members:
             if name == "pipeline":
@@ -581,23 +610,21 @@ class RetryAction(Action):
         self.sleep = 1
 
     def run(self, connection, args=None):
-        while self.retries <= self.max_retries:
+        while self.retries < self.max_retries:
             try:
-                new_connection = self.run(connection)
+                new_connection = self.pipeline.run_actions(connection)
                 return new_connection
             except KeyboardInterrupt:
-                # FIXME: calling cleanup two times!
-                self.cleanup()
                 self.err = "\rCancel"  # Set a useful message.
             except (JobError, InfrastructureError):
-                # FIXME: print the retry cont like %(current_retry)d/%(max_retry)d
-                self._log("%s failed, trying again" % self.name)
                 self.retries += 1
+                self._log("%s failed: %d of %d attempts." % (self.name, self.retries, self.max_retries))
                 time.sleep(self.sleep)
             finally:
-                # QUESTION: is it the right time to cleanup?
+                # TODO: QUESTION: is it the right time to cleanup?
                 self.cleanup()
-        raise JobError("%s retries failed for %s" % (self.retries, self.name))
+        self.errors = "%s retries failed for %s" % (self.retries, self.name)
+        self._log("%s retries failed for %s" % (self.retries, self.name))
 
     def __call__(self, connection):
         self.run(connection)
@@ -606,6 +633,11 @@ class RetryAction(Action):
 class FinalizeAction(Action):
 
     def __init__(self):
+        """
+        The FinalizeAction is always added as the last Action in the top level pipeline by the parser.
+        The tasks include finalising the connection (whatever is the last connection in the pipeline)
+        and writing out the final pipeline structure containing the results as a logfile.
+        """
         super(FinalizeAction, self).__init__()
         self.name = "finalize"
         self.summary = "finalize the job"
@@ -618,6 +650,14 @@ class FinalizeAction(Action):
         """
         if connection:
             connection.finalise()
+        self.results = {'status': "Complete"}
+        # FIXME: just write out a file, not put to stdout via logger.
+        yaml_log = logging.getLogger("YAML")
+        yaml_log.debug(yaml.dump(self.job.pipeline.describe()))
+        if self.job.pipeline.errors:
+            self.results = {'status': "Incomplete"}
+            yaml_log.debug("Status: Incomplete")
+            yaml_log.debug(self.job.pipeline.errors)
 
 
 class Deployment(object):  # pylint: disable=abstract-class-not-used
@@ -760,6 +800,8 @@ class LavaTest(object):  # pylint: disable=abstract-class-not-used
     Allows selection of the boot method for this job within the parser.
     """
 
+    # TODO: this class might not be needed as the top level TestAction
+    # has to hand over control to the Connection. Keep in case subsequent device types need it.
     priority = 0
 
     def __init__(self, parent):
@@ -844,37 +886,6 @@ class Timeout(object):
             raise JobError("Trying to modify a protected timeout: %s.", self.name)
         clamp = lambda n, minn, maxn: max(min(maxn, n), minn)
         self.duration = clamp(duration, 1, 300)
-
-
-class Connection(object):
-    """
-    A raw_connection is an arbitrary instance of a standard Python (or added LAVA) class
-    designed to implement an interactive connection onto the device. The raw_connection
-    needs to be able to send commands, use a timeout, handle errors, log the output,
-    match on regular expressions for the output, report the pid of the spawned process
-    and cause the spawned process to close/terminate.
-    The current implementation uses a pexpect.spawn wrapper. For a standard Shell
-    connection, that is the ShellCommand class.
-    Each different wrapper of pexpect.spawn (and any other wrappers later designed)
-    needs to be a separate class supported by another class inheriting from Connection.
-    """
-    def __init__(self, device, raw_connection):
-        self.device = device
-        self.raw_connection = raw_connection
-
-    def sendline(self, line):
-        self.raw_connection.sendline(line)
-
-    def finalise(self):
-        if self.raw_connection:
-            yaml_log = logging.getLogger("YAML")
-            try:
-                os.killpg(self.raw_connection.pid, signal.SIGKILL)
-                yaml_log.debug("Finalizing child process group with PID %d", self.raw_connection.pid)
-            except OSError:
-                self.raw_connection.kill(9)
-                yaml_log.debug("Finalizing child process with PID %d", self.raw_connection.pid)
-            self.raw_connection.close()
 
 
 class Device(object):

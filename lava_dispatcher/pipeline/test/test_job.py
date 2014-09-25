@@ -159,7 +159,7 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
         overlay = None
         unmount = None
         self.assertTrue(os.path.exists(self.job.parameters['output_dir']))
-        self.assertEqual(len(self.job.pipeline.describe().values()), 19)  # this will keep changing until KVM is complete.
+        self.assertEqual(len(self.job.pipeline.describe().values()), 24)  # this will keep changing until KVM is complete.
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
                 # check parser has created a suitable deployment
@@ -260,11 +260,6 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
         self.assertNotIn('lava_multi_node_cache_file', dir(overlay))
         self.assertNotIn('lava_lmp_test_dir', dir(overlay))
         self.assertNotIn('lava_lmp_cache_file', dir(overlay))
-        self.assertEqual(overlay.default_pattern,
-                         "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))")
-        self.assertEqual(overlay.default_fixupdict,
-                         {'PASS': 'pass', 'FAIL': 'fail', 'SKIP': 'skip',
-                          'UNKNOWN': 'unknown'})
         self.assertIsNotNone(overlay.parameters['deployment_data']['lava_test_results_dir'])
         self.assertIsNotNone(overlay.parameters['deployment_data']['lava_test_sh_cmd'])
         self.assertEqual(overlay.parameters['deployment_data']['distro'], 'debian')

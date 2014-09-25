@@ -73,7 +73,6 @@ class BootQEMUImageAction(BootAction):
         self.summary = "boot QEMU image"
         self.overrides = None
         self.command = []
-        self.timeout = Timeout(self.name)  # FIXME: decide on a duration for the boot QEMU Image timeout
 
     # FIXME: move into a new utils module?
     def _find(self, path, match=os.path.isfile):
@@ -88,6 +87,7 @@ class BootQEMUImageAction(BootAction):
         raise InfrastructureError("Cannot find file %s" % path)
 
     def validate(self):
+        super(BootQEMUImageAction, self).validate()
         if not hasattr(self.job.device, 'config'):  # FIXME: new devices only
             try:
                 # FIXME: need a schema and do this inside the NewDevice with a QemuDevice class? (just for parsing)
@@ -107,13 +107,15 @@ class BootQEMUImageAction(BootAction):
                     self.command.extend(["-net", net_opt])
                 for opt in params['parameters']['qemu_options']:
                     self.command.extend([opt])
-            except (KeyError, TypeError) as exc:
-                raise RuntimeError(exc)
+            except (KeyError, TypeError):
+                self.errors = "Invalid parameters"
 
     def run(self, connection, args=None):
         self._log("Boot command: %s" % ' '.join(self.command))
         # initialise the first Connection object, a command line shell into the running QEMU.
         # ShellCommand wraps pexpect.spawn.
+        self.max_retries = self.parameters.get('failure_retry', 5)  # FIXME: needs a constant
+        self._log("timeout %s %s" % (self.timeout.name, self.timeout.duration))
         shell = ShellCommand(' '.join(self.command), self.timeout)
         if shell.exitstatus:
             raise JobError("%s command exited %d: %s" % (self.command, shell.exitstatus, shell.readlines()))
@@ -126,6 +128,14 @@ class BootQEMUImageAction(BootAction):
         # turns the ShellCommand into a runner which the ShellSession uses via ShellSession.run()
         # to run commands issued *after* the device has booted.
         # pexpect.spawn is one of the raw_connection objects for a Connection class.
-        shell_connection = ShellSession(self.job.device, shell)
-        self.pipeline.run_actions(shell_connection)
+        shell_connection = ShellSession(self.job, shell)
+        # shell_connection.signal_director._cur_handler
+        # self.pipeline.run_actions(shell_connection)
+        # FIXME: this does not retry the connection initiation - to do that, create a new action in the internel pipeline.
+        super(BootQEMUImageAction, self).run(shell_connection)
+        if self.errors:
+            # FIXME: tests with multiple boots need to be handled too.
+            self.data.update({
+                'boot-result': "failed"
+            })
         return shell_connection
