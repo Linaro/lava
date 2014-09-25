@@ -190,6 +190,55 @@ def create_ramdisk(ramdisk_dir, tmpdir):
     return os.path.join(tmpdir, 'ramdisk.cpio.gz')
 
 
+def is_uimage(kernel, context):
+    uimage = ['u-boot', 'uImage']
+
+    # Detect if zImage or uImage is used.
+    cmd = 'file ' + kernel
+    output = context.run_command_get_output(cmd)
+    if any(x in output for x in uimage):
+        return True
+    else:
+        return False
+
+
+def create_uimage(kernel, load_addr, tmp_dir, xip, arch='arm'):
+    load_addr = int(load_addr, 16)
+    uimage_path = '%s/uImage' % tmp_dir
+    if xip:
+        entry_addr = load_addr + 64
+    else:
+        entry_addr = load_addr
+    cmd = 'mkimage -A %s -O linux -T kernel \
+           -C none -a 0x%x -e 0x%x \
+            -d %s %s' % (arch, load_addr,
+                         entry_addr, kernel,
+                         uimage_path)
+
+    logging.info('Creating uImage')
+    logging.debug(cmd)
+    r = subprocess.call(cmd, shell=True)
+
+    if r == 0:
+        return uimage_path
+    else:
+        raise CriticalError("uImage creation failed")
+
+
+def append_dtb(kernel, dtb, tmp_dir):
+    uimage_path = '%s/uImage-dtb' % tmp_dir
+    cmd = 'cat %s %s > %s' % (kernel, dtb, uimage_path)
+
+    logging.info('Appending dtb to kernel image')
+    logging.debug(cmd)
+    r = subprocess.call(cmd, shell=True)
+
+    if r == 0:
+        return uimage_path
+    else:
+        raise CriticalError("Appending dtb to kernel image failed")
+
+
 def ensure_directory(path):
     """ ensures the path exists, if it doesn't it will be created
     """
