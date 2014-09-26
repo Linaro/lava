@@ -46,7 +46,10 @@ class OverlayAction(DeployAction):
     will need to insert an instance of this class into the
     Deploy pipeline, between mount and umount.
     The overlay uses the 'mntdir' set by the MountAction
-    in the job data
+    in the job data.
+    This class handles parts of the overlay which are independent
+    of the content of the test definitions themselves. Other
+    overlays are handled by TestDefinitionAction.
     """
     # FIXME: remove redundant functions copied in from old code
     # FIXME: is this ImageOverlayAction or can it work the same way for all deployments?
@@ -65,29 +68,18 @@ class OverlayAction(DeployAction):
         # 755 file permissions
         self.xmod = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH
 
-    def _inject_testdef_parameters(self, fout):  # FIXME: needs a separate action
-        # inject default parameters that were defined in yaml first
-        fout.write('###default parameters from yaml###\n')
-        if 'params' in self.testdef:
-            for def_param_name, def_param_value in self.testdef['params'].items():
-                fout.write('%s=\'%s\'\n' % (def_param_name, def_param_value))
-        fout.write('######\n')
-        # inject the parameters that was set in json
-        fout.write('###test parameters from json###\n')
-        if self._sw_sources and 'test_params' in self._sw_sources[0] and self._sw_sources[0]['test_params'] != '':
-            _test_params_temp = eval(self._sw_sources[0]['test_params'])
-            for param_name, param_value in _test_params_temp.items():
-                fout.write('%s=\'%s\'\n' % (param_name, param_value))
-        fout.write('######\n')
-
     def _create_target_install(self, hostdir, targetdir):  # FIXME: needs a dedicated Action
+        """
+        Use the 'distro' element of the deployment-data to determine which
+        install helper to add to the overlay.
+        """
         with open('%s/install.sh' % hostdir, 'w') as f:
             self._inject_testdef_parameters(f)
             f.write('set -ex\n')
             f.write('cd %s\n' % targetdir)
 
             if self.skip_install != 'deps':
-                distro = self.context.client.target_device.deployment_data['distro']
+                distro = self.parameters['deployment_data']['distro']
 
                 # generic dependencies - must be named the same across all distros
                 # supported by the testdef
@@ -107,46 +99,6 @@ class OverlayAction(DeployAction):
                 if steps:
                     for cmd in steps:
                         f.write('%s\n' % cmd)
-
-    def copy_test(self, hostdir, targetdir):  # FIXME: needs a dedicated Action
-        """Copy the files needed to run this test to the device.
-
-        :param hostdir: The location on the device filesystem to copy too.
-        :param targetdir: The location `hostdir` will have when the device
-            boots.
-        """
-        utils.ensure_directory(hostdir)
-        with open('%s/testdef.yaml' % hostdir, 'w') as f:
-            f.write(yaml.dump(self.testdef))
-
-        with open('%s/uuid' % hostdir, 'w') as f:
-            f.write(self.uuid)
-
-        with open('%s/testdef_metadata' % hostdir, 'w') as f:
-            f.write(yaml.safe_dump(self.testdef_metadata))
-
-        if self.skip_install != "all":
-            if 'install' in self.testdef:
-                if self.skip_install != 'repos':
-                    self._create_repos(hostdir)
-                self._create_target_install(hostdir, targetdir)
-
-        with open('%s/run.sh' % hostdir, 'w') as f:
-            self._inject_testdef_parameters(f)
-            f.write('set -e\n')
-            f.write('export TESTRUN_ID=%s\n' % self.test_id)
-            f.write('cd %s\n' % targetdir)
-            f.write('UUID=`cat uuid`\n')
-            f.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')
-            f.write('#wait for an ack from the dispatcher\n')
-            f.write('read\n')
-            steps = self.testdef['run'].get('steps', [])
-            if steps:
-                for cmd in steps:
-                    f.write('%s\n' % cmd)
-            f.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n')
-            f.write('#wait for an ack from the dispatcher\n')
-            f.write('read\n')
 
     def _copy_runner(self, mntdir):
         shell = self.parameters['deployment_data']['lava_test_sh_cmd']
@@ -188,10 +140,8 @@ class OverlayAction(DeployAction):
         self._copy_runner(lava_path)
         # load test definitions is done by TestDefinitionAction, so we're finished
         # debug: log the overlay directory contents
-        self._run_command(["ls", "-l", lava_path])
-        self._run_command(["cat", os.path.join(lava_path, 'lava-test-runner.conf')])
-        self._run_command(["ls", "-l", os.path.join(lava_path, 'bin')])
-        self._run_command(["ls", "-l", os.path.join(lava_path, 'tests')])
+        # self._run_command(["cat", os.path.join(lava_path, 'lava-test-runner.conf')])
+        # self._run_command(["ls", "-lR", os.path.join(lava_path, 'tests')])
         return connection
 
 

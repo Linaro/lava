@@ -35,6 +35,7 @@ from lava_dispatcher.utils import (
     extract_ramdisk,
     extract_modules,
     create_ramdisk,
+    append_dtb,
 )
 
 
@@ -177,6 +178,11 @@ class BaseDriver(object):
                                               is_uboot=False)
                 extract_modules(modules, ramdisk_dir)
                 self._ramdisk = create_ramdisk(ramdisk_dir, self._working_dir)
+        if dtb is not None:
+            dtb = self._get_image(dtb)
+            if self.config.append_dtb:
+                self._kernel = append_dtb(kernel, dtb, self._working_dir)
+                logging.info('Appended dtb to kernel image successfully')
         if rootfs is not None:
             self._default_boot_cmds = 'boot_cmds_rootfs'
             rootfs = self._get_image(rootfs)

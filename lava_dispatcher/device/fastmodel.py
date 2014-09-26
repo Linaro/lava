@@ -372,12 +372,9 @@ class FastModelTarget(Target):
 
     def power_off(self, proc):
         if self._uefi_vars is not None:
-            try:
-                logging.info('Requesting graceful shutdown')
-                self._sim_proc.kill(signal.SIGTERM)
-                self._sim_proc.expect('FlashLoader: Saved', timeout=10)
-            except pexpect.TIMEOUT:
-                logging.info('Unable to gracefully shutdown')
+            logging.info('Requesting graceful shutdown')
+            self._sim_proc.kill(signal.SIGTERM)
+            self._sim_proc.wait()
         super(FastModelTarget, self).power_off(proc)
         finalize_process(self._sim_proc)
         self._sim_proc = None

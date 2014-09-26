@@ -39,7 +39,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
     def __init__(self, command, lava_timeout, cwd=None):
         pexpect.spawn.__init__(
             self, command, timeout=lava_timeout.duration, cwd=cwd, logfile=sys.stdout)
-
+        self.name = "ShellCommand"
         # serial can be slow, races do funny things, so increase delay
         # FIXME: this as to be a constant, written somewhere with all constants
         self.delaybeforesend = 0.05
@@ -104,6 +104,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
             raise JobError("command timed out.")
         except pexpect.EOF:
             raise RuntimeError(" ".join(self.before.split('\r\n')))
+        yaml_log.debug("Prompt matched.")
         return proc
 
     def empty_buffer(self):
@@ -118,6 +119,7 @@ class ShellSession(Connection):
     def __init__(self, device, shell_command):
         super(ShellSession, self).__init__(device, shell_command)
         self.__runner__ = None
+        self.name = "ShellSession"
 
     @property
     def runner(self):

@@ -49,6 +49,7 @@ class DeployImageAction(DeployAction):
         self.summary = "deploy image"
 
     def prepare(self):
+        # FIXME: move to validate or into DownloadAction?
         # mktemp dir
         req = requests.head(self.parameters['image'])  # just check the headers, do not download.
         if req.status_code != req.codes.ok:
