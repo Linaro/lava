@@ -226,7 +226,7 @@ def create_uimage(kernel, load_addr, tmp_dir, xip, arch='arm'):
 
 
 def append_dtb(kernel, dtb, tmp_dir):
-    uimage_path = '%s/uImage-dtb' % tmp_dir
+    uimage_path = '%s/kernel-dtb' % tmp_dir
     cmd = 'cat %s %s > %s' % (kernel, dtb, uimage_path)
 
     logging.info('Appending dtb to kernel image')
