@@ -359,14 +359,7 @@ def get_tests_json(request):
     tests = Test.objects.filter(
         test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id']).distinct('test_id').order_by('test_id').prefetch_related('test_cases')
 
-    valid_tests = []
-    for test in tests:
-        for test_case in test.test_cases.all():
-            if test_case.units != '':
-                valid_tests.append(test)
-                break
-
-    data = serializers.serialize('json', valid_tests)
+    data = serializers.serialize('json', tests)
     return HttpResponse(data, content_type='application/json')
 
 

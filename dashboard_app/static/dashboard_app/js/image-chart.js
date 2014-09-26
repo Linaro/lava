@@ -360,6 +360,7 @@ $(document).ready(function () {
                 "skip": test_data["skip"],
                 "total": test_data["total"],
                 "measurement": test_data["measurement"],
+                "attr_value": test_data["attr_value"],
                 "link": test_data["link"],
                 "test_run_uuid": test_data["test_run_uuid"],
                 "bug_links": test_data["bug_links"]
@@ -437,9 +438,12 @@ $(document).ready(function () {
                         table_body += '<a target="_blank" href="' +
                             cell["link"] + '">' + cell["passes"] + '/' +
                             cell["total"] + '</a>';
-                    } else {
+                    } else if (this.chart_data["chart_type"] == "measurement") {
                         table_body += '<a target="_blank" href="' +
                             cell["link"] + '">' + cell["measurement"] + '</a>';
+                    } else if (this.chart_data["chart_type"] == "attributes") {
+                        table_body += '<a target="_blank" href="' +
+                            cell["link"] + '">' + cell["attr_value"] + '</a>';
                     }
 
                     table_body += '<span class="bug-link-container">' +
@@ -597,10 +601,15 @@ $(document).ready(function () {
         }
     }
 
-    ImageChart.prototype.update_settings = function(visible_chart_test_id) {
+    ImageChart.prototype.update_settings = function(visible_chart_test_id,
+                                                    attr_name) {
 
         if (typeof(visible_chart_test_id) === 'undefined') {
             visible_chart_test_id = 0;
+        }
+
+        if (typeof(attr_name) === 'undefined') {
+            attr_name = "";
         }
 
         url = "/dashboard/image-charts/" + this.chart_data["report_name"] +
@@ -618,6 +627,7 @@ $(document).ready(function () {
                 has_subscription: $("#has_subscription_" + this.chart_id).val(),
                 toggle_percentage: $("#is_percentage_" + this.chart_id).prop("checked"),
                 visible_chart_test_id: visible_chart_test_id,
+                visible_attribute_name: attr_name,
             },
             success: function (data) {
                 chart.set_subscription_link(data[0].fields.has_subscription);
@@ -725,10 +735,15 @@ $(document).ready(function () {
                             row["total"] + ", Skip: " + row["skip"];
                     }
 
-                } else {
+                } else if (this.chart_data["chart_type"] == "measurement") {
                     value = row["measurement"];
                     tooltip = "Value: " + value;
+
+                } else if (this.chart_data["chart_type"] == "attributes") {
+                    value = row["attr_value"];
+                    tooltip = "Value: " + value;
                 }
+
 
                 tooltip += "<br>";
                 label = "";
@@ -842,7 +857,6 @@ $(document).ready(function () {
         // Pack data in series for plot display.
         for (var i in sorted_filter_ids) {
             test_filter_id = sorted_filter_ids[i];
-
             if (this.legend_items.length != sorted_filter_ids.length) {
 
                 // Load hidden tests data.
@@ -967,8 +981,10 @@ $(document).ready(function () {
             $("#filter_links_container_" + this.chart_id).css("width", "80%");
         }
 
-        y_label = "Pass/Fail";
-        if (this.chart_data["chart_type"] != "pass/fail") {
+        y_label = "";
+        if (this.chart_data["chart_type"] == "measurement") {
+            y_label = "Pass/Fail";
+        } else if (this.chart_data["chart_type"] == "measurement") {
             if (this.chart_data.test_data[0]) {
                 y_label = this.chart_data.test_data[0].units;
             } else {
@@ -1103,7 +1119,15 @@ $(document).ready(function () {
                 var show = chart.legend_items[index].show;
                 chart.legend_items[index].show = !show;
 
-                chart.update_settings(chart.legend_items[index].chart_test_id);
+                if (chart.chart_data["chart_type"] == "attributes") {
+                    // Chart id - attribute name combination.
+                    id_arr = chart.legend_items[index].chart_test_id.split("-");
+                    attr_array = [id_arr.shift(), id_arr.join("-")];
+                    chart.update_settings(attr_array[0], attr_array[1]);
+                } else {
+                    chart.update_settings(
+                        chart.legend_items[index].chart_test_id);
+                }
                 chart.update_plot();
             });
         });

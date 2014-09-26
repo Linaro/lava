@@ -13,6 +13,7 @@ filters_callback = function(chart_id, filter_id, name) {
     $.ajax({
         url: url,
         type: "POST",
+        async: false,
         data: {
             csrfmiddlewaretoken: csrf_token,
             chart_id: chart_id,
@@ -43,6 +44,7 @@ filters_callback = function(chart_id, filter_id, name) {
 
     $.ajax({
         url: url,
+        async: false,
         data: {"id": filter_id},
         beforeSend: function () {
             $('#filter-container').remove();
@@ -66,7 +68,7 @@ add_filter_container = function(data, filter_id, title) {
 
     content = '<hr><div class="filter-title">' + title + '</div>';
 
-    if ($('#id_chart_type').val() == "pass/fail") {
+    if ($('#id_chart_type').val() != "measurement") {
         test_label = "Tests";
     } else {
         test_label = "Test Cases";
@@ -94,7 +96,7 @@ add_filter_container = function(data, filter_id, title) {
 
     content += '<select id="available_tests" multiple class="filtered">';
 
-    if ($('#id_chart_type').val() == "pass/fail") {
+    if ($('#id_chart_type').val() != "measurement") {
         content += generate_test_options(data, "pass/fail");
     }
 
@@ -129,7 +131,7 @@ generate_test_options = function(data, chart_type) {
 
     content = "";
     for (i in data) {
-        if (chart_type == "pass/fail") {
+        if (chart_type != "measurement") {
             content += '<option value="' + data[i].pk + '">' +
                 data[i].fields.test_id + '</option>';
         } else {
@@ -193,7 +195,7 @@ add_selected_options = function() {
     // Adds options from chosen tests select box as hidden fields.
 
     $('#chosen_tests option').each(function() {
-        if ($('#id_chart_type').val() == "pass/fail") {
+        if ($('#id_chart_type').val() != "measurement") {
             field_name = "image_chart_tests";
         } else {
             field_name = "image_chart_test_cases";
@@ -237,8 +239,8 @@ init_loading_dialog = function() {
         autoOpen: false,
         title: '',
         draggable: false,
-        height: 35,
-        width: 250,
+        height: 45,
+        width: 260,
         modal: true,
         resizable: false,
         dialogClass: 'loading-dialog'
