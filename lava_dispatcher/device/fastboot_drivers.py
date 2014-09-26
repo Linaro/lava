@@ -181,7 +181,7 @@ class BaseDriver(object):
         if dtb is not None:
             dtb = self._get_image(dtb)
             if self.config.append_dtb:
-                self._kernel = append_dtb(kernel, dtb, self.working_dir)
+                self._kernel = append_dtb(self._kernel, dtb, self.working_dir)
                 logging.info('Appended dtb to kernel image successfully')
         if rootfs is not None:
             self._default_boot_cmds = 'boot_cmds_rootfs'
