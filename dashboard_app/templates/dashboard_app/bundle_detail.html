@@ -158,6 +158,7 @@
   image_url = '{{ STATIC_URL }}dashboard_app/images/';
   unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testrun' %}';
   link_bug_url = '{% url 'dashboard_app.views.link_bug_to_testrun' %}';
+  csrf_token = '{{csrf_token}}';
 
 $(document).ready(function() {
     add_bug_link();

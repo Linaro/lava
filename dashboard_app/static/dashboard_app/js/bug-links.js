@@ -2,7 +2,90 @@ add_bug_link = function () {
     var current_bug = [];
 
     _submit = function () {
-        $(this).submit();
+
+        if (!validate_submit()) {
+            return;
+        }
+
+        var url = $("#add-bug-dialog").attr('url');
+        // Increase or decrease bug number
+        var increase = false;
+        if (url.indexOf("unlink") == -1) {
+            var increase = true;
+        }
+
+        bug_link = $("#add-bug-dialog").find('input[name=bug_link]').val();
+        data = {
+            csrfmiddlewaretoken: csrf_token,
+            bug_link: bug_link,
+            uuid: $("#add-bug-dialog").find('input[name=uuid]').val()
+        }
+
+        var relative_index = null;
+        if($("#add_bug_dialog").find('input[name=relative_index]')) {
+            relative_index = $("#add-bug-dialog").find('input[name=relative_index]').val();
+            data["relative_index"] = relative_index;
+        }
+
+        $.ajax({
+            url: url,
+            async: false,
+            type: "POST",
+            data: data,
+            beforeSend: function () {
+                $('#loading_dialog').dialog('open');
+            },
+            success: function (data) {
+                $('#loading_dialog').dialog('close');
+                if (data[0].fields.analyzer_assigned_uuid) {
+                    uuid = data[0].fields.analyzer_assigned_uuid;
+                } else {
+                    uuid = data[0].pk;
+                }
+                update_bug_dialog(uuid, increase, bug_link, relative_index);
+                $("#add-bug-dialog").dialog('close');
+            },
+            error: function(data, status, error) {
+                $('#loading_dialog').dialog('close');
+                $("#add-bug-dialog").dialog('close');
+                alert('Operation failed, please try again.');
+            }
+        });
+    }
+
+    update_bug_dialog = function (uuid, increase, bug_link, relative_index) {
+
+        // Find corresponding td field and change number of bugs in it.
+        if (relative_index) {
+            element = $("span[data-uuid='" + uuid + "'][data-relative_index='" + relative_index + "'] > .add-bug-link");
+        } else {
+            element = $("span[data-uuid='" + uuid + "'] > p > .add-bug-link");
+        }
+
+        bug_number = element.html().replace("[", "").replace("]", "");
+
+
+        if (relative_index) {
+            bug_links_element = $("span[data-uuid='" + uuid + "'][data-relative_index='" + relative_index + "'] > .bug-links");
+        } else {
+            bug_links_element = $("span[data-uuid='" + uuid + "'] > .bug-links");
+        }
+
+
+        if (increase) {
+            bug_links_element.append(
+                '<li class="bug-link">' + bug_link + '</li>'
+            );
+            bug_number ++;
+        } else {
+            bug_number --;
+            bug_links_element.children().each(function() {
+                if ($(this).html().indexOf(bug_link) != -1) {
+                    $(this).remove();
+                }
+            });
+        }
+        element.html("[" + bug_number + "]");
     }
 
     var add_bug_dialog = $('#add-bug-dialog').dialog(
@@ -13,17 +96,18 @@ add_bug_link = function () {
             title: "Link bug to XXX"
         });
 
-    $("#add-bug-dialog").bind('submit', function(e) {
-        var bug_url = $("#add-bug-dialog").find('input[name=bug_link]').val();
+    validate_submit = function() {
+        bug_url = $("#add-bug-dialog").find('input[name=bug_link]').val();
         if (!isValidUrl(bug_url)) {
-            e.preventDefault();
             alert("'" + bug_url + "' is not a valid url!!");
+            return false;
         }
         if (current_bug.indexOf(bug_url) > -1) {
-            e.preventDefault();
             alert("'" + bug_url + "' is already linked!!");
+            return false;
         }
-    });
+        return true;
+    }
 
     isValidUrl = function(url) {
         return url.match(/^https?:\/\/[a-z0-9-\.]+\.[a-z]{2,4}\/?([^\s<>\#%"\,\{\}\\|\\\^\[\]`]+)?$/);
@@ -84,9 +168,9 @@ add_bug_link = function () {
                         if(confirm("Unlink '" + bug + "'")) {
                             // unlink bug right now, so clear current_bug which is used for checking if the bug is duplicated when adding a bug
                             current_bug = [];
-                            $('#add-bug-dialog').attr('action', unlink_bug_url);
+                            $('#add-bug-dialog').attr('url', unlink_bug_url);
                             add_bug_dialog.find('input[name=bug_link]').val(bug);
-                            add_bug_dialog.submit();
+                            _submit();
                         }
                     }
                 );
@@ -95,7 +179,7 @@ add_bug_link = function () {
             }
 
             var title = "Link a bug to '" + record + "'";
-            $('#add-bug-dialog').attr('action', link_bug_url);
+            $('#add-bug-dialog').attr('url', link_bug_url);
             add_bug_dialog.dialog('option', 'title', title);
             add_bug_dialog.dialog('open');
         }
