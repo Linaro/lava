@@ -26,6 +26,7 @@ $(document).ready(function () {
         this.chart_id = chart_id;
         this.chart_data = chart_data;
         this.legend_items = [];
+        this.update_alias();
     }
 
     ImageChart.prototype.BUILD_NUMBER_ERROR =
@@ -83,6 +84,18 @@ $(document).ready(function () {
             this.update_events();
         }
     }
+
+
+    ImageChart.prototype.update_alias = function() {
+        if (Object.keys(this.chart_data.filters).length == 1) {
+            for (iter in this.chart_data.test_data) {
+                test_data = this.chart_data.test_data[iter];
+                test_data["alias"] =
+                    test_data["alias"].split(": ").slice(1).join(": ");
+            }
+        }
+    }
+
 
     ImageChart.prototype.setup_print_menu = function() {
         chart_id = this.chart_id;
@@ -255,7 +268,7 @@ $(document).ready(function () {
             title: 'Results table',
             draggable: false,
             height: 280,
-            width: 970,
+            width: 1050,
             modal: true,
             resizable: false,
             open: function (event, ui) {
@@ -319,9 +332,6 @@ $(document).ready(function () {
                 rows.push(test_data["test_filter_id"]);
 
                 test_name = test_data["alias"].replace(/\\/g , "");
-                if (test_name.length > 10) {
-                    test_name = test_name.substring(0,10) + "...";
-                }
                 table_rows += "<tr><td title='" + test_data["alias"].replace(/\\/g , "") +
                     "'>" + test_name + "</td></tr>";
             }
