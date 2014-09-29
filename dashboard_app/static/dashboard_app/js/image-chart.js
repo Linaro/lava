@@ -1067,6 +1067,18 @@ $(document).ready(function () {
             setup_legend_css(plot.chart);
         });
 
+        this.plot.hooks.drawSeries.unshift(function(plot, canvascontext, series) {
+            reset_images(series);
+        });
+
+    }
+
+    reset_images = function(series) {
+        for (i = 0; i < series.data.length; i++) {
+            if (series.hasImage && series.hasImage[i]) {
+                series.hasImage[i] = null;
+            }
+        }
     }
 
     setup_legend_tooltips = function(chart) {
