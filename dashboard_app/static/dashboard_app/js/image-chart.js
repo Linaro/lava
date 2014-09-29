@@ -356,6 +356,7 @@ $(document).ready(function () {
 
             table[number][test_data["test_filter_id"]].push({
                 "passes": test_data["passes"],
+                "pass": test_data["pass"],
                 "skip": test_data["skip"],
                 "total": test_data["total"],
                 "measurement": test_data["measurement"],
@@ -416,10 +417,10 @@ $(document).ready(function () {
 
                     // Calculate td class.
                     cell = table[number][filter_id][cnt];
-                    if (cell["passes"] < cell["total"]) {
-                        cls = "fail";
-                    } else {
+                    if (cell["pass"]) {
                         cls = "pass";
+                    } else {
+                        cls = "fail";
                     }
                     uuid = cell["test_run_uuid"];
                     relative_index_str = "";
