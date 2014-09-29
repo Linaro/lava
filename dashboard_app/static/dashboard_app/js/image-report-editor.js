@@ -83,6 +83,15 @@ add_filter_container = function(data, filter_id, title) {
     content += '<div class="selector"><div class="selector-available"><h2>' +
         'Select ' + test_label + '</h2>';
 
+
+    content += '<p id="tests_filter" class="selector-filter">' +
+        '<label for="tests_input">' +
+        '<img class="help-tooltip"' +
+        'src="/static/admin/img/selector-search.gif" alt=""></img>' +
+        '</label>' +
+        '<input id="tests_input" type="text"' +
+        'placeholder="Filter"></input></p>';
+
     content += '<select id="available_tests" multiple class="filtered">';
 
     if ($('#id_chart_type').val() == "pass/fail") {
@@ -158,6 +167,20 @@ update_events = function(filter_id) {
     $('#test_select').change(function() {
        test_changed(filter_id, $(this).val());
     });
+
+    $('#tests_input').keyup(function() {
+       filter_available_tests($(this).val());
+    });
+}
+
+filter_available_tests = function(text) {
+    if (text != '') {
+        $('#available_tests option').filter(function() {
+            return $(this).text().toLowerCase().indexOf(text) != 0;
+        }).css("display", "none");
+    } else {
+        $('#available_tests option').css("display", "block");
+    }
 }
 
 move_options = function(from_element, to_element) {
