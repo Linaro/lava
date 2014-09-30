@@ -275,10 +275,6 @@ class FastModelTarget(Target):
             raise CriticalError("A ramdisk image is required")
         elif dtb is None:
             raise CriticalError("A dtb is required")
-        elif bootloader is None:
-            raise CriticalError("UEFI image is required")
-        elif bootloader is None:
-            raise CriticalError("BL1 firmware is required")
 
         if rootfs is not None or nfsrootfs is not None or firmware is not None:
             logging.warn("This platform only suports ramdisk booting, ignoring other parameters")
@@ -302,18 +298,39 @@ class FastModelTarget(Target):
         self._dtb = download_image(dtb, self.context, self._scratch_dir,
                                    decompress=False)
         self._boot_tags['{DTB}'] = os.path.relpath(self._dtb, self._scratch_dir)
-        self._uefi = download_image(bootloader, self.context, self._scratch_dir,
-                                    decompress=False)
-        self._bl1 = download_image(bl1, self.context, self._scratch_dir,
-                                   decompress=False)
 
         # Optional
+        if bootloader is None:
+            if self.config.simulator_uefi_default is None:
+                raise CriticalError("UEFI image is required")
+            else:
+                self._uefi = download_image(self.config.simulator_uefi_default, self.context,
+                                            self._scratch_dir, decompress=False)
+        else:
+            self._uefi = download_image(bootloader, self.context,
+                                        self._scratch_dir, decompress=False)
+
+        if bl1 is None:
+            if self.config.simulator_bl1_default is None:
+                raise CriticalError("BL1 firmware is required")
+            else:
+                self._bl1 = download_image(self.config.simulator_bl1_default, self.context,
+                                           self._scratch_dir, decompress=False)
+        else:
+            self._bl1 = download_image(bl1, self.context,
+                                       self._scratch_dir, decompress=False)
+
         if bl2 is not None:
             self._bl2 = download_image(bl2, self.context, self._scratch_dir,
                                        decompress=False)
         if bl31 is not None:
             self._bl31 = download_image(bl31, self.context, self._scratch_dir,
                                         decompress=False)
+
+        if self.config.simulator_uefi_vars and self._uefi_vars is None:
+            # Create file for flashloader1
+            self._uefi_vars = os.path.join(self._scratch_dir, self.config.simulator_uefi_vars)
+            touch(self._uefi_vars)
 
         # Get deployment data
         self.deployment_data = deployment_data.get(target_type)
