@@ -680,7 +680,10 @@ $(document).ready(function () {
                     "representation": row["filter_rep"],
                     "data": [],
                     "meta": [],
-                    "labels": []
+                    "labels": [],
+                    "max": - Number.MAX_VALUE,
+                    "min": Number.MAX_VALUE,
+                    "sum": 0
                 };
             }
         }
@@ -781,6 +784,15 @@ $(document).ready(function () {
                     plot_data[test_filter_id]["meta"][data_item.join("_")] =
                         meta_item;
                 }
+
+                // Calculate max, min and avg for statistics.
+                if (value < plot_data[test_filter_id]["min"]) {
+                    plot_data[test_filter_id]["min"] = value;
+                }
+                if (value > plot_data[test_filter_id]["max"]) {
+                    plot_data[test_filter_id]["max"] = value;
+                }
+                plot_data[test_filter_id]["sum"] = plot_data[test_filter_id]["sum"] + value;
             }
         }
 
@@ -844,6 +856,9 @@ $(document).ready(function () {
                     chart_test_id: plot_data[test_filter_id]["chart_test_id"],
                     dom_id: "legend_" + plot_data[test_filter_id]["chart_test_id"],
                     show: show,
+                    min: plot_data[test_filter_id]["min"],
+                    max: plot_data[test_filter_id]["max"],
+                    avg: (plot_data[test_filter_id]["sum"] / plot_data[test_filter_id]["data"].length).toFixed(2),
                 });
             }
 
@@ -1037,9 +1052,10 @@ $(document).ready(function () {
 
         this.plot = $.plot($("#outer_container_" + this.chart_id + " #inner_container_" + this.chart_id), data, options);
 
-        // Setup hooks, events and css in the legend.
+        // Setup hooks, events, tooltips and css in the legend.
         add_zoom_out(this);
         setup_clickable(this);
+        setup_legend_tooltips(this);
         setup_legend_css(this);
 
         // Setup chart object reference.
@@ -1047,9 +1063,22 @@ $(document).ready(function () {
         // Setup draw hook for plot.
         this.plot.hooks.draw.push(function(plot, canvascontext) {
             setup_clickable(plot.chart);
+            setup_legend_tooltips(plot.chart);
             setup_legend_css(plot.chart);
         });
 
+    }
+
+    setup_legend_tooltips = function(chart) {
+        $("#legend_container_" + chart.chart_id + " td:last-child").each(function(index) {
+            $(this).attr("data-toggle", "tooltip");
+            $(this).attr("data-placement", "right");
+            var title =
+                "Min: " + chart.legend_items[index].min +
+                ", Max: " + chart.legend_items[index].max +
+                ", Avg: " + chart.legend_items[index].avg;
+            $(this).attr("title", title);
+        });
     }
 
     setup_clickable = function(chart) {
