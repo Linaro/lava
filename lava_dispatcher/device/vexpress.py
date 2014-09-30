@@ -47,14 +47,14 @@ class VexpressTarget(BootloaderTarget):
 
         if self.config.vexpress_requires_trusted_firmware:
             if (self.config.vexpress_bl1_image_filename is None or
-                self.config.vexpress_bl1_image_files is None or
-                self.config.vexpress_uefi_image_filename is None or
-                self.config.vexpress_uefi_image_files is None or
-                self.config.vexpress_bl1_path is None or
-                self.config.vexpress_bl1_backup_path is None or
-                self.config.vexpress_uefi_path is None or
-                self.config.vexpress_uefi_backup_path is None or
-                self.config.vexpress_usb_mass_storage_device is None):
+                    self.config.vexpress_bl1_image_files is None or
+                    self.config.vexpress_uefi_image_filename is None or
+                    self.config.vexpress_uefi_image_files is None or
+                    self.config.vexpress_bl1_path is None or
+                    self.config.vexpress_bl1_backup_path is None or
+                    self.config.vexpress_uefi_path is None or
+                    self.config.vexpress_uefi_backup_path is None or
+                    self.config.vexpress_usb_mass_storage_device is None):
 
                 raise CriticalError(
                     "Versatile Express devices that use "
@@ -67,10 +67,10 @@ class VexpressTarget(BootloaderTarget):
                     "vexpress_usb_mass_storage_device")
         else:
             if (self.config.vexpress_uefi_image_filename is None or
-                self.config.vexpress_uefi_image_files is None or
-                self.config.vexpress_uefi_path is None or
-                self.config.vexpress_uefi_backup_path is None or
-                self.config.vexpress_usb_mass_storage_device is None):
+                    self.config.vexpress_uefi_image_files is None or
+                    self.config.vexpress_uefi_path is None or
+                    self.config.vexpress_uefi_backup_path is None or
+                    self.config.vexpress_usb_mass_storage_device is None):
 
                 raise CriticalError(
                     "Versatile Express devices must specify all "
