@@ -67,6 +67,12 @@ override_dh_auto_install:
 	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.time.min.js
 	ln -s /usr/share/javascript/jquery-flot/jquery.flot.time.min.js \
 		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.time.min.js
+	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/excanvas.js
+	ln -s /usr/share/javascript/excanvas/excanvas.js \
+		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/excanvas.js
+	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/excanvas.min.js
+	ln -s /usr/share/javascript/excanvas/excanvas.min.js \
+		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/excanvas.min.js
 
 override_dh_auto_clean:
 	dh_auto_clean
