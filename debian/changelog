@@ -1,3 +1,13 @@
+lava-server (2014.09-1) unstable; urgency=medium
+
+  * New upstream production release
+  * Fix upgrade issue with parallel migrations. (Closes: #763310)
+  * Use ilibjs-excanvas package as a dependency.
+  * Includes fix to trailing calls to python-django-longerusername.
+    (Closes: #763319)
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 01 Oct 2014 14:13:30 +0100
+
 lava-server (2014.08.2-1) unstable; urgency=medium
 
   * New production release includes fixes for multinode tagging,
