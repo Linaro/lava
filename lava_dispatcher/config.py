@@ -227,6 +227,8 @@ class DeviceSchema(schema.Schema):
     simulator_bl31_files = schema.ListOption(default=None)
     simulator_bl31 = schema.StringOption(default=None)
     simulator_boot_wrapper = schema.StringOption(default=None)
+    simulator_uefi_default = schema.StringOption(default=None)
+    simulator_bl1_default = schema.StringOption(default=None)
 
     # for dummy devices
     dummy_driver = schema.StringOption(default=None)
