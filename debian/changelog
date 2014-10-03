@@ -6,6 +6,7 @@ lava-server (2014.08.2-2) unstable; urgency=medium
   * Includes fix to trailing calls to python-django-longerusername.
     (Closes: #763319)
   * Add option to use LDAP authentication
+  * Update standards version, no changes
 
  -- Neil Williams <codehelp@debian.org>  Wed, 01 Oct 2014 14:13:30 +0100
 
