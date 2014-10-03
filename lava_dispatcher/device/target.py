@@ -468,7 +468,7 @@ class Target(object):
 
     def _enter_bootloader(self, connection):
         if connection.expect(self.config.interrupt_boot_prompt,
-                             self.config.bootloader_timeout) != 0:
+                             timeout=self.config.bootloader_timeout) != 0:
             raise Exception("Failed to enter bootloader")
         if self.config.interrupt_boot_control_character:
             connection.sendcontrol(self.config.interrupt_boot_control_character)

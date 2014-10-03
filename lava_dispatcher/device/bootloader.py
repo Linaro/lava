@@ -313,7 +313,8 @@ class BootloaderTarget(MasterImageTarget):
             self.proc.sendline(self.config.pre_boot_cmd,
                                send_char=self.config.send_char)
         self._customize_bootloader(self.proc, boot_cmds)
-        self.proc.expect(self.config.image_boot_msg, self.config.image_boot_msg_timeout)
+        self.proc.expect(self.config.image_boot_msg,
+                         timeout=self.config.image_boot_msg_timeout)
         self._auto_login(self.proc)
         self._wait_for_prompt(self.proc, self.config.test_image_prompts,
                               self.config.boot_linaro_timeout)
