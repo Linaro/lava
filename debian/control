@@ -23,7 +23,8 @@ Conflicts: lava-scheduler, lava-dashboard, linaro-django-xmlrpc
 Replaces: lava-scheduler, lava-dashboard, linaro-django-xmlrpc
 Depends: apache2, adduser, diffstat, fuse, iproute2,
  libapache2-mod-uwsgi, libapache2-mod-wsgi, lshw,
- python-daemon, python-dateutil, python-django-auth-openid (>= 0.5-2),
+ python-daemon, python-dateutil,
+ python-django-auth-ldap | python-django-auth-openid (>= 0.5-2),
  python-setuptools, libjs-excanvas,
  libjs-jquery-cookie, libjs-jquery-flot (>= 0.8.2), openssh-client,
  postgresql, postgresql-client, postgresql-common,
