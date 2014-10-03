@@ -1635,15 +1635,7 @@ class TestRunFilter(models.Model):
     #         or filter.test_case in select test_case from bundle.test_runs.test_results.test_cases)
 
     @classmethod
-    def matches_against_bundle(self, bundle):
-        cursor = connection.cursor()
-        try:
-            cursor.execute("select id from dashboard_app_testrunfilterattribute where (name,value) not in ("
-                           "select name, value from dashboard_app_namedattribute where content_type_id = ("
-                           "select django_content_type.id from django_content_type "
-                           "where app_label = 'dashboard_app' and model='testrun'));")
-        except DatabaseError:
-            return []
+    def matches_against_bundle(cls, bundle):
         from dashboard_app.filters import FilterMatch
         bundle_filters = bundle.bundle_stream.testrunfilter_set.all()
         attribute_filters = bundle_filters.extra(
