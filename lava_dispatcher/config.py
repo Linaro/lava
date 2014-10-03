@@ -52,6 +52,8 @@ class DeviceSchema(schema.Schema):
     boot_part_android_org = schema.IntOption()
     boot_retries = schema.IntOption(default=3)
     bootloader_prompt = schema.StringOption()
+    bootloader_timeout = schema.IntOption(default=120)
+    image_boot_msg_timeout = schema.IntOption(default=120)
     send_char = schema.BoolOption(default=True)
     test_image_prompts = schema.ListOption(default=["\(initramfs\)",
                                                     "linaro-test",

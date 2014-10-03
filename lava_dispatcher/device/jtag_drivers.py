@@ -175,7 +175,7 @@ class stmc(BaseDriver):
             # Ask the master to deliver the image
             self.context.transport.request_send('lava_ms_boot', None)
 
-            proc.expect(self.config.image_boot_msg, timeout=300)
+            proc.expect(self.config.image_boot_msg, self.config.image_boot_msg_timeout)
             return proc
         else:
             boot_cmds.insert(0, self._stmc_command)
@@ -225,5 +225,5 @@ class stmc(BaseDriver):
             logging.info("Delivering images with STMC")
             self.context.run_command(jtag_command, failok=False)
 
-            proc.expect(self.config.image_boot_msg, timeout=300)
+            proc.expect(self.config.image_boot_msg, self.config.image_boot_msg_timeout)
             return proc
