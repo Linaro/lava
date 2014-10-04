@@ -835,16 +835,17 @@ def _get_device_type(user, name):
     the user is an owner of at least one of those devices.
     :param user: the user submitting the TestJob
     """
+    logger = logging.getLogger(__name__)
     try:
         device_type = DeviceType.objects.get(name=name)
     except (ObjectDoesNotExist, MultipleObjectsReturned) as e:
-        raise DevicesUnavailableException(
-            "Device type '%s' is unavailable. %s" %
-            (name, e))
+        msg = "Device type '%s' is unavailable. %s" % (name, e)
+        logger.error(msg)
+        raise DevicesUnavailableException(msg)
     if len(device_type.devices_visible_to(user)) == 0:
-        raise DevicesUnavailableException(
-            "Device type '%s' is unavailable to user '%s'" %
-            (name, user.username))
+        msg = "Device type '%s' is unavailable to user '%s'" % (name, user.username)
+        logger.error(msg)
+        raise DevicesUnavailableException(msg)
     return device_type
 
 
@@ -1164,6 +1165,7 @@ class TestJob(RestrictedResource):
         """
         job_data = simplejson.loads(json_data)
         validate_job_data(job_data)
+        logger = logging.getLogger(__name__)
 
         # Validate job, for parameters, specific to multinode that has been
         # input by the user. These parameters are reserved by LAVA and
@@ -1186,6 +1188,7 @@ class TestJob(RestrictedResource):
                     ~models.Q(status=Device.RETIRED))\
                     .get(hostname=job_data['target'])
             except Device.DoesNotExist:
+                logger.debug("Requested device %s is unavailable." % job_data['target'])
                 raise DevicesUnavailableException(
                     "Requested device %s is unavailable." % job_data['target'])
             _check_submit_to_device([target], user)

@@ -203,3 +203,50 @@ ME_PAGE_ACTIONS = [
 ALLOWED_HOSTS = ['*']
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
+
+# Logging
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse'
+        }
+    },
+    'formatters': {
+        'lava': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(message)s'
+        }
+    },
+    'handlers': {
+        'logfile': {
+            'class': 'logging.handlers.WatchedFileHandler',
+            'filename': '/var/log/lava-server/django.log',
+            'formatter': 'lava'
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['logfile'],
+            # DEBUG outputs all SQL statements
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'django_auth_ldap': {
+            'handlers': ['logfile'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'dashboard_app': {
+            'handlers': ['logfile'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'lava_scheduler_app': {
+            'handlers': ['logfile'],
+            'level': 'INFO',
+            'propagate': True,
+        }
+    }
+}
