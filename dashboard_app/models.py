@@ -2200,7 +2200,8 @@ class ImageReportChart(models.Model):
                         chart_item["passes"] += denorm.count_pass
                         chart_item["skip"] += denorm.count_skip
                         chart_item["total"] += denorm.count_all()
-                        chart_item["link"] = test_run.bundle.get_absolute_url()
+                        chart_item["link"] = image_chart_filter.filter.\
+                                             get_absolute_url()
                         chart_item["pass"] &= denorm.count_fail == 0
                         found = True
 
