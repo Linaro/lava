@@ -233,6 +233,8 @@ relevant package, in the ``debian/<PACKAGE>.templates`` file.
 * http://www.debian-administration.org/articles/394
 * http://www.fifi.org/doc/debconf-doc/tutorial.html
 
+.. _user_authentication:
+
 User authentication
 ===================
 
@@ -256,6 +258,8 @@ Support for `OAuth2`_ is under investigation in LAVA.
 
 .. _OAuth2: http://oauth.net/2/
 
+.. _launchpad_openid:
+
 Using Launchpad OpenID
 ----------------------
 
@@ -272,6 +276,8 @@ To use Launchpad even if the LAVA default changes, use::
 
 Restart ``lava-server`` and ``apache2`` services if this is changed.
 
+.. _google_openid:
+
 Using Google+ OpenID
 --------------------
 
@@ -286,6 +292,8 @@ in September 2014 in preference for OAuth2.
 
 Restart ``lava-server`` and ``apache2`` services for the change to
 take effect.
+
+.. _ldap_authentication:
 
 Using Lightweight Directory Access Protocol (LDAP)
 --------------------------------------------------

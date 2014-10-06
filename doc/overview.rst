@@ -37,20 +37,26 @@ and a few servers.
 
 .. note:: This overview document explains LAVA using
           http://validation.linaro.org/ which is the official
-          production instance of LAVA hosted by Linaro.
+          production instance of LAVA hosted by Linaro. Where examples
+          reference ``validation.linaro.org``, replace with the fully
+          qualified domain name of your LAVA instance.
 
 .. index:: login
 
 Logging In
 ==========
 
-The validation lab in Cambridge is accessible via
-http://validation.linaro.org/ which is the official production
-instance of LAVA.
+Each LAVA instance offers a :ref:`local_user` and can also be configured
+to offer an alternative authentication method:
 
-.. image:: ./images/lava-scheduler-page.png
+* :ref:`launchpad_openid`
+* :ref:`google_openid`
+* :ref:`ldap_authentication`
 
-There are different ways in which you can access LAVA as given below:
+Whichever authentication method is used, there is no difference in how
+users interact with LAVA, once logged in.
+
+.. _local_user:
 
 Local User Account
 ------------------
@@ -61,20 +67,28 @@ look like the following. In order to login with an username and
 password enter your credentials in the provided text boxes and click
 "Sign in with username and password" button
 
+Local user accounts can be particularly useful for automated users like
+build systems or continuous integration scripts using the XMLRPC API.
+The local admin can create the user with a secure password, login as
+that user to create a token and then supply the token to the scripts.
+
 .. image:: ./images/local-user-login.png
 
-OpenID User Account
--------------------
+Logging into the validation lab in Cambridge
+--------------------------------------------
 
-Alternatively your Launchpad login could be used via OpenID in order to
-login to LAVA. In order to login with Launchpad click on "Sign in with OpenID"
+The validation lab in Cambridge is accessible via
+http://validation.linaro.org/ which is the official production
+instance of LAVA.
+
+.. image:: ./images/lava-scheduler-page.png
+
+The validation lab in Cambridge is currently accessed using Launchpad
+OpenID. In order to login with Launchpad click on "Sign in with OpenID"
 button, which will take you a Launchpad login screen in order to confirm
 that you want to allow LAVA to use your Launchpad profile to authenticate.
 
 A successful authentication will redirect you to http://validation.linaro.org/
-
-.. note:: Google+ can be used for OpenID on some LAVA installations,
-          instead of Launchpad.
 
 .. index:: token
 
@@ -87,9 +101,16 @@ In order to securely access LAVA resources via XML-RPC APIs using
 lava-tool or XML-RPC clients, an Authentication token should be
 created by the user.
 
-Once the user is logged in to http://validation.linaro.org/ click on
-"API" link which will bring up a drop down menu on which click on
-"Authentication Tokens" link. The following page will appear
+.. _note: An authentication token and a username are sufficient to allow
+          any remote user to use that account in LAVA. Take care when sharing
+          scripts that the token and username are not disclosed. If a
+          token becomes compromised, login to that LAVA instance and
+          delete the token before creating a new one.
+
+Once the user is logged in to a LAVA instance
+(e.g. http://validation.linaro.org/) click on the "API" link which will
+bring up a drop down menu on which click on "Authentication Tokens" link.
+The following page will appear
 
 .. image:: ./images/authentication-tokens-page.png
 
@@ -120,24 +141,34 @@ authenticate as You in the system.
 lava-tool overview
 ==================
 
-lava-tool is the command-line tool for interacting with the various
-services offered by LAVA via XML-RPC APIs.
+``lava-tool`` is the command-line tool for interacting with the various
+services offered by LAVA via XML-RPC APIs. The full list of API calls
+is visible on the **Available methods** link from the API menu::
+
+ http://localhost/api/help
+
+``lava-tool`` is primarily designed to assist users and uses desktop
+integration hooks provided by ``python-keyring`` and ``gnome-keyring``.
+When scripts need to interact with LAVA, the XMLRPC API calls should be
+used directly so that the scripts do not need to prompt for a password
+to the local user keyring. Scripts used by build servers and continuous
+integration tools should use a dedicated user created by the
+administrator of a particular instance),
+
+The API help page includes an example python script to connect to the
+local instance. To add token support, use the syntax *username:token*::
+
+ server = xlrpclib.ServerProxy("http://%s:%s@localhost/RPC2" % (username, token))
 
 Installing lava-tool
 --------------------
 
-The latest version of lava-tool is available in the linaro-maintainers
-PPA repository. The following explains installation of lava-tool from
-linaro-maintainers PPA in ubuntu::
-
-  $ sudo apt-get install python-software-properties
-  $ sudo add-apt-repository ppa:linaro-maintainers/tools
-
-Import the "Launchpad Linaro Overlay PPA" public key::
-
-  $ sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys F1FCBACA7BE1F97B
-
-Now update your packages and install lava-tool::
+``lava-tool`` is installed alongside LAVA by default, when the top
+level ``lava`` package is installed on a :ref:`debian_installation`.
+``lava-tool`` can also be installed on any remote machine running a
+Debian-based distribution, without needing the rest of LAVA, to allow
+a remote user to interact with any LAVA instance on which the user has
+an account.::
 
   $ sudo apt-get update
   $ sudo apt-get install lava-tool
@@ -147,9 +178,7 @@ Using lava-tool
 
 Once the token is created add it to lava-tool as follows. Click on
 "display the token" link on the "Authentication Tokens" page and copy
-the token.
-
-::
+the token. e.g. if your token was created on validation.linaro.org::
 
   $ lava-tool auth-add http://<username>@validation.linaro.org/RPC2/
   Paste token for http://<username>@validation.linaro.org/RPC2/:
