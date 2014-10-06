@@ -13,7 +13,7 @@
       <dt>Username</dt>
       <dd>{{ user.username }}</dd>
       <dt>Email</dt>
-      <dd>{{ user.email }}</dd>
+      <dd>{{ user.email|default:"??" }}</dd>
       <dt>Joined</dt>
       <dd><span title="{{ user.date_joined }}">
           {{user.date_joined|timesince }} ago</span></dd>

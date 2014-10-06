@@ -56,3 +56,8 @@ def openid_available(request):
     else:
         provider = "OpenID"
     return {"openid_available": openid_enabled, "openid_provider": provider}
+
+
+def ldap_available(request):
+    ldap_enabled = "django_auth_ldap.backend.LDAPBackend" in settings.AUTHENTICATION_BACKENDS
+    return {"ldap_available": ldap_enabled}

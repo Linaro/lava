@@ -112,6 +112,45 @@ if AUTH_CROWD_SERVER_REST_URI:
     if distro_settings.get_setting("AUTH_CROWD_GROUP_MAP"):
         AUTH_CROWD_GROUP_MAP = distro_settings.get_setting("AUTH_CROWD_GROUP_MAP")
 
+# LDAP authentication config
+AUTH_LDAP_SERVER_URI = distro_settings.get_setting("AUTH_LDAP_SERVER_URI")
+if AUTH_LDAP_SERVER_URI:
+    INSTALLED_APPS.append('ldap')
+    INSTALLED_APPS.append('django_auth_ldap')
+    AUTHENTICATION_BACKENDS = ['django_auth_ldap.backend.LDAPBackend',
+                               'django.contrib.auth.backends.ModelBackend'] + \
+        [x for x in AUTHENTICATION_BACKENDS]
+
+    DISABLE_OPENID_AUTH = distro_settings.get_setting("DISABLE_OPENID_AUTH")
+    if DISABLE_OPENID_AUTH:
+        AUTHENTICATION_BACKENDS = [
+            'django_auth_ldap.backend.LDAPBackend',
+            'django.contrib.auth.backends.ModelBackend'] + \
+            [x for x in AUTHENTICATION_BACKENDS if "OpenID" not in x]
+
+    # Load credentials
+    AUTH_LDAP_BIND_DN = distro_settings.get_setting("AUTH_LDAP_BIND_DN")
+    AUTH_LDAP_BIND_PASSWORD = distro_settings.get_setting(
+        "AUTH_LDAP_BIND_PASSWORD")
+    AUTH_LDAP_USER_DN_TEMPLATE = distro_settings.get_setting(
+        "AUTH_LDAP_USER_DN_TEMPLATE")
+    AUTH_LDAP_USER_ATTR_MAP = distro_settings.get_setting(
+        "AUTH_LDAP_USER_ATTR_MAP")
+
+    if distro_settings.get_setting("AUTH_LDAP_GROUP_SEARCH"):
+        AUTH_LDAP_GROUP_SEARCH = distro_settings.get_setting(
+            "AUTH_LDAP_GROUP_SEARCH")
+
+    if distro_settings.get_setting("AUTH_LDAP_USER_FLAGS_BY_GROUP"):
+        AUTH_LDAP_USER_FLAGS_BY_GROUP = distro_settings.get_setting(
+            "AUTH_LDAP_USER_FLAGS_BY_GROUP")
+
+    # Enable logging for LDAP auth
+    import logging
+    logger = logging.getLogger('django_auth_ldap')
+    logger.addHandler(logging.StreamHandler())
+    logger.setLevel(logging.DEBUG)
+
 # Load extensions
 loader.contribute_to_settings(locals(), distro_settings)
 

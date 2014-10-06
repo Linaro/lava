@@ -184,7 +184,7 @@ Licensed under the MIT License ~ http://threedubmedia.googlecode.com/files/MIT-L
             var o = plot.getOptions();
             if (o.zoom.interactive) {
                 eventHolder[o.zoom.trigger](onZoomClick);
-                eventHolder.mousewheel(onMouseWheel);
+                //eventHolder.mousewheel(onMouseWheel);
             }
 
             if (o.pan.interactive) {
@@ -325,7 +325,7 @@ Licensed under the MIT License ~ http://threedubmedia.googlecode.com/files/MIT-L
 
         function shutdown(plot, eventHolder) {
             eventHolder.unbind(plot.getOptions().zoom.trigger, onZoomClick);
-            eventHolder.unbind("mousewheel", onMouseWheel);
+            //eventHolder.unbind("mousewheel", onMouseWheel);
             eventHolder.unbind("dragstart", onDragStart);
             eventHolder.unbind("drag", onDrag);
             eventHolder.unbind("dragend", onDragEnd);

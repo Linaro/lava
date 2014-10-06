@@ -347,11 +347,17 @@ def filter_add_cases_for_test_json(request):
 
 
 def get_tests_json(request):
+    """Return all tests which are included in the filter.
+
+    Filter id is passed through request. Returns only tests which include
+    test cases with measurements.
+    """
+
     if not request.GET.get('id', None):
         raise Http404
 
     tests = Test.objects.filter(
-        test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id']).distinct('test_id').order_by('test_id')
+        test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id']).distinct('test_id').order_by('test_id').prefetch_related('test_cases')
 
     data = serializers.serialize('json', tests)
     return HttpResponse(data, content_type='application/json')

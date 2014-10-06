@@ -216,7 +216,7 @@ Please contact the administrator for job log file.</p>
 {% for section in sections %}
   <a href="#L_{{ forloop.counter0 }}" id="L_{{ forloop.counter0 }}">Section {{ forloop.counter0 }}</a>
   {% if section.0 == 'console' and section.1 > 20 and not forloop.last %}
-    <a href="#entry{{ forloop.counter }}">skip {{ section.1 }} lines to next log entry &rarr;</a>
+    <a href="#L_{{ forloop.counter }}">skip {{ section.1 }} lines to next log entry &rarr;</a>
   {% endif %}
   {% linenumbers section.2 forloop.counter0 section.0 %}
 {% endfor %}

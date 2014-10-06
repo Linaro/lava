@@ -67,14 +67,24 @@ Adding Image Report charts
     :height: 320
 
 Chart type represents the type of information chart will be collecting from the
-filters and currently options 'Pass/fail' and 'Measurement' are supported.
-Pass/fail charts will collect number of passed test results from each test run
-you selected while creating chart(see :ref:`adding-filter`) compared to total
-number of test results from each test run. Each plot line in chart will
+filters and currently options 'Pass/fail', 'Measurement' and 'Attributes' are
+supported.
+
+**Pass/fail** charts will collect number of passed test results from each test
+run you selected while creating chart(see :ref:`adding-filter`) compared to
+total number of test results from each test run. Each plot line in chart will
 represent one test.
-Measurement charts will let you select which of the test cases he would like
-to monitor and collect the measurement value from each of the corresponding
-test results. Each plot line in chart will represent one test case.
+
+**Measurement** charts will let you select which of the test cases he would
+like to monitor and collect the measurement value from each of the
+corresponding test results. Each plot line in chart will represent one test
+case.
+
+**Attributes** chart will let you select one or more of the custom attributes
+for each selected test and the chart will display that particular custom
+attribute value for each test run/build. Each plot line in chart will represent
+one attribute value over time. Attributes are added to the chart in the same
+way metadata is(see :ref:`image-reports-metadata`).
 
 Target goal is a fixed number and it will be diplayed in the chart as the
 straight dotted line. All the users subscribed to the target goal will

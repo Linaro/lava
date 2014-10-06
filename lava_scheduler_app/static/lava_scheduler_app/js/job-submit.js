@@ -29,9 +29,11 @@ $(window).ready(
         $("#json-input").keypress(function() {
             $("#submit").attr("disabled", "disabled");
             $("#json-valid-container").hide();
+            $("#validation_note").show();
          });
 
         $("#submit").attr("disabled", "disabled");
+        $("#validation_note").hide();
 
         validate_input($("#json-input").val());
     });
@@ -67,6 +69,7 @@ load_url = function() {
                     $("#json-valid-container").html("Invalid JSON: " + data);
                     valid_json_css(false);
                     $("#submit").attr("disabled", "disabled");
+                    $("#validation_note").show();
                 }
             }});
     }
@@ -81,6 +84,7 @@ validate_job_data = function(data) {
                    $("#json-valid-container").html("Valid JSON.");
                    valid_json_css(true);
                    $("#submit").removeAttr("disabled");
+                   $("#validation_note").hide();
                    unselect_error_line();
                } else {
                    $("#json-valid-container").html(
@@ -88,6 +92,7 @@ validate_job_data = function(data) {
                            replace('[u"', "").replace('"]', ""));
                    valid_json_css(false);
                    $("#submit").attr("disabled", "disabled");
+                   $("#validation_note").show();
                    select_error_line(data);
                }
            }, "json");

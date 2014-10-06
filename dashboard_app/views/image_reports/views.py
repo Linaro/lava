@@ -54,10 +54,12 @@ from dashboard_app.models import (
     ImageReportChart,
     ImageChartFilter,
     ImageChartTest,
+    ImageChartTestAttribute,
     ImageChartTestCase,
     ImageChartUser,
     ImageChartTestUser,
     ImageChartTestCaseUser,
+    ImageChartTestAttributeUser,
     Test,
     TestCase,
     TestRunFilter,
@@ -412,7 +414,7 @@ def image_chart_settings_update(request, name, id):
             chart_test_user.is_visible = not chart_test_user.is_visible
             chart_test_user.save()
 
-        else:
+        elif chart.chart_type == "measurement":
             chart_test_case = ImageChartTestCase.objects.get(
                 id=request.POST["visible_chart_test_id"])
 
@@ -422,6 +424,23 @@ def image_chart_settings_update(request, name, id):
 
             chart_test_user.is_visible = not chart_test_user.is_visible
             chart_test_user.save()
+
+        elif chart.chart_type == "attributes":
+
+            chart_test = ImageChartTest.objects.get(
+                id=request.POST["visible_chart_test_id"])
+
+            chart_test_attribute = ImageChartTestAttribute.objects.get(
+                image_chart_test=chart_test,
+                name=request.POST["visible_attribute_name"]
+            )
+
+            attribute_user = ImageChartTestAttributeUser.objects.get_or_create(
+                user=request.user,
+                image_chart_test_attribute=chart_test_attribute)[0]
+
+            attribute_user.is_visible = not attribute_user.is_visible
+            attribute_user.save()
 
     except Exception as e:
         # Don't update the chart test/test case user table.
@@ -608,7 +627,7 @@ def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
 
             chart_filter = form.save()
 
-            if chart_filter.image_chart.chart_type == 'pass/fail':
+            if chart_filter.image_chart.chart_type != 'measurement':
 
                 image_chart_tests = Test.objects.filter(
                     imagecharttest__image_chart_filter=chart_filter).order_by('id')
