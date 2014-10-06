@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import models, migrations, transaction
 from lava_scheduler_app import utils
 
 
@@ -26,7 +26,7 @@ def forwards_func(apps, schema_editor):
     try:
         with transaction.atomic():
             worker, created = Worker.objects.using(db_alias).get_or_create(
-                hostname=hostname)
+                hostname=localhost)
             worker.is_master = is_master
             worker.ip_address = ipaddr
             worker.rpc2_url = rpc2_url
