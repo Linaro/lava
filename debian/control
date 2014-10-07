@@ -11,14 +11,14 @@ Build-Depends: debhelper (>= 8.0.0),
  python-setuptools (>= 3)
 X-Python-Version: 2.7
 XS-Testsuite: autopkgtest
-Standards-Version: 3.9.5
+Standards-Version: 3.9.6
 Homepage: http://www.linaro.org/projects/test-validation/
 Vcs-Git: https://github.com/Linaro/pkg-lava-dispatcher.git
 Vcs-Browser: https://github.com/Linaro/pkg-lava-dispatcher
 
 Package: lava-dispatcher
 Architecture: linux-any
-Depends: python-serial (>= 2.6), python-setuptools,
+Depends: file, python-serial (>= 2.6), python-setuptools,
  parted, kpartx, tar (>= 1.27), telnet, ser2net, sshfs,
  sudo, ${python:Depends}, ${misc:Depends}
 Conflicts: python-linaro-dashboard-bundle

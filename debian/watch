@@ -1,4 +1,6 @@
 # Compulsory line, this is a version 3 file
 version=3
 
-http://releases.linaro.org/latest/components/lava/lava-dispatcher_(.*).tar.gz
+#http://releases.linaro.org/latest/components/lava/lava-dispatcher_(\d+.\d+.\d?)\d*.*.tar.gz
+
+https://git.linaro.org/lava/lava-dispatcher.git/tags /lava/lava-dispatcher.git/log/refs/tags/(.*)

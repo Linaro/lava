@@ -1,3 +1,24 @@
+lava-dispatcher (2014.09.1-1) unstable; urgency=medium
+
+  * New hotfix release cherry-picking upstream fixes,
+    reviews 3326, 3349 and 3328.
+  * Update standards version, no changes
+  * Add file to dependencies for use in preparing test overlays.
+  * Fix watch file to use upstream git tags
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 20 Oct 2014 18:03:23 +0100
+
+lava-dispatcher (2014.09-1) unstable; urgency=low
+
+  * New upstream release
+  * Add git to autopkgtest dependencies
+  * Includes support for download urls containing a username &
+    password. Patch from Sjoerd Simons. (Closes: #762572)
+  * Recreate ext4 filesystems on the DUT in master mode
+    (Closes: #762534)
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 03 Oct 2014 15:31:38 +0100
+
 lava-dispatcher (2014.08.2-1) unstable; urgency=medium
 
   * New production release, including fixes to enable kernel dhcp for
