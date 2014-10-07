@@ -33,6 +33,9 @@ from lava_dispatcher.utils import (
     extract_ramdisk,
     create_ramdisk,
     ensure_directory,
+    append_dtb,
+    create_uimage,
+    is_uimage,
 )
 from lava_dispatcher.errors import (
     CriticalError,
@@ -78,13 +81,8 @@ class BootloaderTarget(MasterImageTarget):
     def _get_uboot_boot_command(self, kernel, ramdisk, dtb):
         bootz = False
         bootx = []
-        uimage = ['u-boot', 'uImage']
 
-        # Detect if zImage or uImage is used.
-        # Raw ELF images are not supported by u-boot.
-        cmd = 'file ' + kernel
-        output = self.context.run_command_get_output(cmd)
-        if any(x in output for x in uimage):
+        if is_uimage(kernel, self.context):
             logging.info('Attempting to set boot command as bootm')
             bootx.append('bootm')
         else:
@@ -166,6 +164,14 @@ class BootloaderTarget(MasterImageTarget):
             # We have been passed kernel image
             kernel = download_image(kernel, self.context,
                                     self._tmpdir, decompress=False)
+            if self.config.uimage_only and not is_uimage(kernel, self.context):
+                if len(self.config.u_load_addrs) == 3:
+                    kernel = create_uimage(kernel, self.config.u_load_addrs[0],
+                                           self._tmpdir, self.config.uimage_xip)
+                    logging.info('uImage created successfully')
+                else:
+                    logging.error('Undefined u_load_addrs, aborting uImage creation')
+
             self._boot_tags['{KERNEL}'] = self._get_rel_path(kernel, self._base_tmpdir)
             if ramdisk is not None:
                 # We have been passed a ramdisk
@@ -197,7 +203,12 @@ class BootloaderTarget(MasterImageTarget):
                 # We have been passed a device tree blob
                 dtb = download_image(dtb, self.context,
                                      self._tmpdir, decompress=False)
-                self._boot_tags['{DTB}'] = self._get_rel_path(dtb, self._base_tmpdir)
+                if self.config.append_dtb:
+                    kernel = append_dtb(kernel, dtb, self._tmpdir)
+                    logging.info('Appended dtb to kernel image successfully')
+                    self._boot_tags['{KERNEL}'] = self._get_rel_path(kernel, self._base_tmpdir)
+                else:
+                    self._boot_tags['{DTB}'] = self._get_rel_path(dtb, self._base_tmpdir)
             if rootfs is not None:
                 # We have been passed a rootfs
                 rootfs = download_image(rootfs, self.context,
@@ -293,6 +304,7 @@ class BootloaderTarget(MasterImageTarget):
                                                                  bootloadertype)
 
     def _run_boot(self):
+        self._load_test_firmware()
         self._enter_bootloader(self.proc)
         boot_cmds = self._load_boot_cmds(default=self._default_boot_cmds,
                                          boot_tags=self._boot_tags)
@@ -301,7 +313,8 @@ class BootloaderTarget(MasterImageTarget):
             self.proc.sendline(self.config.pre_boot_cmd,
                                send_char=self.config.send_char)
         self._customize_bootloader(self.proc, boot_cmds)
-        self.proc.expect(self.config.image_boot_msg, timeout=300)
+        self.proc.expect(self.config.image_boot_msg,
+                         timeout=self.config.image_boot_msg_timeout)
         self._auto_login(self.proc)
         self._wait_for_prompt(self.proc, self.config.test_image_prompts,
                               self.config.boot_linaro_timeout)

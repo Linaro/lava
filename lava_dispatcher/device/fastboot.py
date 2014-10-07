@@ -85,6 +85,11 @@ class FastbootTarget(Target):
                 attempts += 1
                 continue
 
+        if not deployed:
+            msg = "Deployment Failed"
+            logging.critical(msg)
+            raise CriticalError(msg)
+
     def deploy_android(self, boot, system, userdata, rootfstype,
                        bootloadertype, target_type):
         self._target_type = target_type
@@ -106,6 +111,11 @@ class FastbootTarget(Target):
                 logging.error(msg)
                 attempts += 1
                 continue
+
+        if not deployed:
+            msg = "Deployment Failed"
+            logging.critical(msg)
+            raise CriticalError(msg)
 
     def get_device_version(self):
         # this is tricky, because fastboot does not have a visible version

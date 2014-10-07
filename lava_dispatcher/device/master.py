@@ -274,11 +274,16 @@ class MasterImageTarget(Target):
             logging.debug("Unable to read boot commands dynamically.")
 
     def _format_testpartition(self, runner, fstype):
+        force = ""
         logging.info("Format testboot and testrootfs partitions")
+        if fstype.startswith("ext"):
+            force = "-F"
+        elif fstype == "btrfs":
+            force = "-f"
 
         runner.run('umount %s' % self.testrootfs_path, failok=True)
-        runner.run('nice mkfs -t %s -q %s -L %s'
-                   % (fstype, self.testrootfs_path, self.testrootfs_label), timeout=1800)
+        runner.run('nice mkfs %s -t %s -q %s -L %s'
+                   % (force, fstype, self.testrootfs_path, self.testrootfs_label), timeout=1800)
         runner.run('umount %s' % self.testboot_path, failok=True)
         runner.run('nice mkfs.vfat %s -n %s' % (self.testboot_path, self.testboot_label))
 
@@ -419,7 +424,8 @@ class MasterImageTarget(Target):
             boot_cmds = self._load_boot_cmds(default='boot_cmds_master',
                                              boot_tags=self.master_boot_tags)
             self._customize_bootloader(self.proc, boot_cmds)
-        self.proc.expect(self.config.image_boot_msg, timeout=300)
+        self.proc.expect(self.config.image_boot_msg,
+                         timeout=self.config.image_boot_msg_timeout)
         self._auto_login(self.proc, is_master=True)
         self._wait_for_prompt(self.proc, self.config.master_str, timeout=300)
 
@@ -538,7 +544,7 @@ class MasterImageTarget(Target):
     def _deploy_linaro_android_data(self, session, datatbz2):
         data_label, data_path = self._android_data_label(session)
         session.run('umount %s' % data_path, failok=True)
-        session.run('nice mkfs.ext4 -q %s -L %s' %
+        session.run('nice mkfs.ext4 -F -q %s -L %s' %
                     (data_path, data_label))
         session.run('udevadm trigger')
         session.run('mkdir -p /mnt/lava/data')

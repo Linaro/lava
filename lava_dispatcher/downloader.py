@@ -60,14 +60,31 @@ def _http_stream(url, proxy=None, cookies=None):
     handlers = []
     if proxy:
         handlers = [urllib2.ProxyHandler({'http': '%s' % proxy})]
+
+    if url.username is not None and url.password is not None:
+        # HACK, urllib2 doesn't like urls with username and pass
+        # fix this in the refactoring with requests support.
+        url_string = urlparse.urlunparse([
+            url.scheme,
+            url.netloc.partition("@")[2],
+            url.path,
+            url.params,
+            url.query,
+            url.fragment])
+        passmgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        passmgr.add_password(None, url_string, url.username, url.password)
+        handlers.append(urllib2.HTTPBasicAuthHandler(passmgr))
+    else:
+        url_string = url.geturl()
+
     opener = urllib2.build_opener(*handlers)
 
     if cookies:
         opener.addheaders.append(('Cookie', cookies))
 
     try:
-        url = urllib2.quote(url.geturl(), safe=":/")
-        resp = opener.open(url, timeout=30)
+        url_quoted = urllib2.quote(url_string, safe=":/")
+        resp = opener.open(url_quoted, timeout=30)
         yield resp
     finally:
         if resp:

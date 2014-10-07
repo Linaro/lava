@@ -1,4 +1,4 @@
-# Sample JOB defitinition for a KVM
+# Sample JOB definition for a KVM
 
 device_type: kvm
 
