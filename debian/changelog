@@ -1,3 +1,14 @@
+lava-dispatcher (2014.09-1) unstable; urgency=low
+
+  * New upstream release
+  * Add git to autopkgtest dependencies
+  * Includes support for download urls containing a username &
+    password. Patch from Sjoerd Simons. (Closes: #762572)
+  * Recreate ext4 filesystems on the DUT in master mode
+    (Closes: #762534)
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 03 Oct 2014 15:31:38 +0100
+
 lava-dispatcher (2014.08.2-1) unstable; urgency=medium
 
   * New production release, including fixes to enable kernel dhcp for
