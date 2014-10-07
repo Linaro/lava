@@ -1635,15 +1635,7 @@ class TestRunFilter(models.Model):
     #         or filter.test_case in select test_case from bundle.test_runs.test_results.test_cases)
 
     @classmethod
-    def matches_against_bundle(self, bundle):
-        cursor = connection.cursor()
-        try:
-            cursor.execute("select id from dashboard_app_testrunfilterattribute where (name,value) not in ("
-                           "select name, value from dashboard_app_namedattribute where content_type_id = ("
-                           "select django_content_type.id from django_content_type "
-                           "where app_label = 'dashboard_app' and model='testrun'));")
-        except DatabaseError:
-            return []
+    def matches_against_bundle(cls, bundle):
         from dashboard_app.filters import FilterMatch
         bundle_filters = bundle.bundle_stream.testrunfilter_set.all()
         attribute_filters = bundle_filters.extra(
@@ -1799,12 +1791,28 @@ def send_image_report_notifications(sender, bundle):
                                     if denorm.count_pass < chart.target_goal:
                                         matches.append(test_run)
 
-                        else:
+                        elif chart.chart_type == "measurement":
                             for test_result in filter_match.specific_results:
                                 if test_result.test_case in chart_tests:
                                     if test_result.measurement <\
                                             chart.target_goal:
                                         matches.append(test_result)
+
+                        elif chart.chart_type == "attributes":
+                            for test_run in filter_match.test_runs:
+                                if test_run.test in chart_tests:
+                                    for attr in chart_test.attributes:
+                                        try:
+                                            value = float(
+                                                test_run.attributes.get(
+                                                    name=attr).value)
+                                        except ValueError:
+                                            # Do not user attributes which are
+                                            # not numbers.
+                                            continue
+                                        if value < chart.target_goal:
+                                            if test_run not in matches:
+                                                matches.append(test_run)
 
                 for chart_user in chart.imagechartuser_set.all():
                     if matches:
@@ -1907,7 +1915,8 @@ class ImageReport(models.Model):
 
 # Chart types
 CHART_TYPES = ((r'pass/fail', 'Pass/Fail'),
-               (r'measurement', 'Measurement'))
+               (r'measurement', 'Measurement'),
+               (r'attributes', 'Attributes'))
 # Chart representation
 REPRESENTATION_TYPES = ((r'lines', 'Lines'),
                         (r'bars', 'Bars'))
@@ -1981,9 +1990,13 @@ class ImageReportChart(models.Model):
                 self.get_chart_test_data(user, image_chart_filter, filter_data,
                                          chart_data)
 
-            else:
+            elif self.chart_type == "measurement":
                 self.get_chart_test_case_data(user, image_chart_filter,
                                               filter_data, chart_data)
+
+            elif self.chart_type == "attributes":
+                self.get_chart_attributes_data(user, image_chart_filter,
+                                               filter_data, chart_data)
 
         return chart_data
 
@@ -2028,13 +2041,24 @@ class ImageReportChart(models.Model):
                 if not chart_test_user.is_visible:
                     chart_data["hidden_tests"].append(
                         chart_test_user.image_chart_test.id)
-        else:
+        elif self.chart_type == "measurement":
             chart_test_case_users = ImageChartTestCaseUser.objects.filter(
                 image_chart_test_case__image_chart_filter__image_chart=self)
             for chart_test_case_user in chart_test_case_users:
                 if not chart_test_case_user.is_visible:
                     chart_data["hidden_tests"].append(
                         chart_test_case_user.image_chart_test_case.id)
+        elif self.chart_type == "attributes":
+            chart_users = ImageChartTestAttributeUser.objects.filter(
+                image_chart_test_attribute__image_chart_test__image_chart_filter__image_chart=self)
+
+            for chart_user in chart_users:
+                if not chart_user.is_visible:
+                    test_id = chart_user.image_chart_test_attribute.\
+                        image_chart_test.id
+                    chart_data["hidden_tests"].append(
+                        "%s-%s" % (test_id,
+                                   chart_user.image_chart_test_attribute.name))
 
         return chart_data
 
@@ -2266,6 +2290,88 @@ class ImageReportChart(models.Model):
                 }
                 chart_data["test_data"].append(chart_item)
 
+    def get_chart_attributes_data(self, user, image_chart_filter, filter_data,
+                                  chart_data):
+        from dashboard_app.filters import evaluate_filter
+
+        # Prepare to filter the tests and test cases for the
+        # evaluate_filter call.
+        tests = []
+
+        selected_chart_tests = image_chart_filter.imagecharttest_set.all().prefetch_related('imagecharttestattribute_set')
+
+        # Leave chart_data empty if there are no tests available.
+        if not selected_chart_tests:
+            return
+
+        for chart_test in selected_chart_tests:
+            tests.append({
+                'test': chart_test.test,
+                'test_cases': [],
+            })
+
+        filter_data['tests'] = tests
+
+        matches = list(evaluate_filter(user, filter_data,
+                                       prefetch_related=['bug_links'])[:50])
+        matches.reverse()
+
+        for match in matches:
+            for test_run in match.test_runs:
+
+                denorm = test_run.denormalization
+
+                bug_links = sorted(
+                    [b.bug_link for b in test_run.bug_links.all()])
+
+                test_id = test_run.test.test_id
+
+                # Find corresponding chart_test object.
+                chart_test = None
+                for ch_test in selected_chart_tests:
+                    if ch_test.test == test_run.test:
+                        chart_test = ch_test
+                        break
+
+                alias = None
+                chart_test_id = None
+                if chart_test:
+                    chart_test_id = chart_test.id
+                    for attr in chart_test.attributes:
+                        try:
+                            value = float(
+                                test_run.attributes.get(name=attr).value)
+                        except (NamedAttribute.DoesNotExist, ValueError):
+                            # Skip this attribute.
+                            continue
+
+                        if chart_test.name:
+                            test_name = chart_test.name
+                        else:
+                            test_name = test_id
+
+                        alias = "%s: %s" % (test_name,
+                                            attr.replace(" ", ""))
+
+                        test_filter_id = "%s-%s-%s" % (test_id,
+                                                       image_chart_filter.id,
+                                                       attr.replace(" ", ""))
+                        chart_item = {
+                            "filter_rep": image_chart_filter.representation,
+                            "test_filter_id": test_filter_id,
+                            "chart_test_id": "%s-%s" % (chart_test_id, attr),
+                            "link": test_run.get_absolute_url(),
+                            "alias": alias,
+                            "number": str(match.tag),
+                            "date": str(test_run.bundle.uploaded_on),
+                            "pass": denorm.count_fail == 0,
+                            "attr_value": value,
+                            "test_run_uuid": test_run.analyzer_assigned_uuid,
+                            "bug_links": bug_links,
+                        }
+
+                        chart_data["test_data"].append(chart_item)
+
 
 class ImageChartFilter(models.Model):
 
@@ -2358,6 +2464,8 @@ class ImageChartTest(models.Model):
         filter_data = self.image_chart_filter.filter.as_data()
         filter_data['tests'] = tests
         matches = list(evaluate_filter(user, filter_data)[:1])
+        if not matches or not matches[0].test_runs:
+            return list()
         test_run_id = matches[0].test_runs[0].id
 
         result = NamedAttribute.objects.all()
@@ -2519,6 +2627,29 @@ class ImageChartTestCaseUser(models.Model):
 
     image_chart_test_case = models.ForeignKey(
         ImageChartTestCase,
+        null=False,
+        on_delete=models.CASCADE)
+
+    user = models.ForeignKey(
+        User,
+        null=False,
+        on_delete=models.CASCADE)
+
+    is_visible = models.BooleanField(
+        default=True,
+        verbose_name='Visible')
+
+
+class ImageChartTestAttributeUser(models.Model):
+    """
+    Stores information which attributes are hidden in the image chart.
+    """
+
+    class Meta:
+        unique_together = ("image_chart_test_attribute", "user")
+
+    image_chart_test_attribute = models.ForeignKey(
+        ImageChartTestAttribute,
         null=False,
         on_delete=models.CASCADE)
 

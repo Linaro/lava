@@ -116,6 +116,10 @@ class BundleDetailTable(LavaTable):
     passes.orderable = False
     fails = tables.TemplateColumn('{{ record.get_summary_results.fail|default:"0" }}')
     fails.orderable = False
+    skipped = tables.TemplateColumn('{{ record.get_summary_results.skip|default:"0" }}')
+    skipped.orderable = False
+    unknown = tables.TemplateColumn('{{ record.get_summary_results.unknown|default:"0" }}')
+    unknown.orderable = False
     uploaded_on = tables.TemplateColumn('{{ record.bundle.uploaded_on|date:"Y-m-d H:i:s"}}')
     uploaded_on.orderable = False
     analyzed_on = tables.TemplateColumn('{{ record.analyzer_assigned_date|date:"Y-m-d H:i:s" }}')
@@ -138,7 +142,8 @@ class BundleDetailTable(LavaTable):
         model = TestRun
         fields = (
             'device', 'test_run', 'test', 'passes',
-            'fails', 'uploaded_on', 'analyzed_on', 'bug_links'
+            'fails', 'skipped', 'unknown', 'uploaded_on',
+            'analyzed_on', 'bug_links'
         )
         sequence = fields
         searches = {}

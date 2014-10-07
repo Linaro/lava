@@ -95,3 +95,110 @@ templates/\*/\*.html     next browser refresh (F5/Ctrl-R)
 \*_app/\*.py             ``$ sudo apache2ctl restart``
 \*_daemon/\*.py          ``$ sudo service lava-server restart``
 ==================== ==============================================
+
+Migrating postgresql versions
+#############################
+
+LAVA installs the ``postgresql`` package which installs the current
+default version of postgresql. When this default changes in Debian,
+a second package will be added to your system which will start with
+no actual data.
+
+Debian gives a notice similar to this when a new version of postgres
+is installed::
+
+ Default clusters and upgrading
+ ------------------------------
+ When installing a postgresql-X.Y package from scratch, a default
+ cluster 'main' will automatically be created. This operation is
+ equivalent to doing 'pg_createcluster X.Y main --start'.
+
+ Due to this default cluster, an immediate attempt to upgrade an
+ earlier 'main' cluster to a new version will fail and you need to
+ remove the newer default cluster first. E. g., if you have
+ postgresql-8.2 installed and want to upgrade to 8.3, you first install
+ postgresql-8.3:
+
+  apt-get install postgresql-8.3
+
+ Then drop the default 8.3 cluster:
+
+  pg_dropcluster 8.3 main --stop
+
+ And then upgrade the 8.2 cluster to 8.3:
+
+  pg_upgradecluster 8.2 main
+
+See also
+http://askubuntu.com/questions/66194/how-do-i-migrate-my-postgres-data-from-8-4-to-9-1
+
+Check your existing clusters::
+
+ $ sudo pg_lsclusters
+
+Stop postgresql (stops both versions)::
+
+ $ sudo service postgresql stop
+
+Drop the **main** cluster of the **NEW** postgres as this is empty::
+
+ $ sudo pg_dropcluster 9.4 main --stop
+
+Postgresql knows which version is the current default, so just tell
+postgresql which is the old version to migrate the data into the (empty)
+new one::
+
+ $ sudo pg_upgradecluster 9.3 main
+ Disabling connections to the old cluster during upgrade...
+ Restarting old cluster with restricted connections...
+ Creating new cluster 9.4/main ...
+  config /etc/postgresql/9.4/main
+  data   /var/lib/postgresql/9.4/main
+  locale en_GB.UTF-8
+  port   5433
+ Disabling connections to the new cluster during upgrade...
+ Roles, databases, schemas, ACLs...
+ Fixing hardcoded library paths for stored procedures...
+ Upgrading database postgres...
+ Analyzing database postgres...
+ Fixing hardcoded library paths for stored procedures...
+ Upgrading database lavapdu...
+ Analyzing database lavapdu...
+ Fixing hardcoded library paths for stored procedures...
+ Upgrading database lavaserver...
+ Analyzing database lavaserver...
+ Fixing hardcoded library paths for stored procedures...
+ Upgrading database devel...
+ Analyzing database devel...
+ Fixing hardcoded library paths for stored procedures...
+ Upgrading database template1...
+ Analyzing database template1...
+ Re-enabling connections to the old cluster...
+ Re-enabling connections to the new cluster...
+ Copying old configuration files...
+ Copying old start.conf...
+ Copying old pg_ctl.conf...
+ Stopping target cluster...
+ Stopping old cluster...
+ Disabling automatic startup of old cluster...
+ Configuring old cluster to use a different port (5433)...
+ Starting target cluster on the original port...
+ Success. Please check that the upgraded cluster works. If it does,
+ you can remove the old cluster with
+
+  pg_dropcluster 9.3 main
+
+Check that the instance is still running. Note that the port of the
+new postgresql server will have been upgraded to the port used for the
+old postgresql server automatically. Check that this is the case::
+
+ $ grep port /etc/postgresql/9.4/main/postgresql.conf
+ port = 5432
+
+Drop the old cluster::
+
+ $ sudo pg_dropcluster 9.3 main
+
+Now the old database package can be removed::
+
+ $ sudo apt-get remove postgresql9.3

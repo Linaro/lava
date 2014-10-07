@@ -45,7 +45,7 @@
     </a>&nbsp;
   </div>
   <div>
-    {% if image_chart.chart_type == "pass/fail" %}
+    {% if image_chart.chart_type != "measurement" %}
       Tests:&nbsp;
       {% for chart_test in chart_filter.imagecharttest_set.all %}
         {% if forloop.last %}

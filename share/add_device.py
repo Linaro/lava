@@ -95,7 +95,7 @@ def template_device():
     template['fields']['last_health_report_job'] = None
     template['fields']['device_version'] = ''
     template['fields']['health_status'] = 0  # unknown
-    template['fields']['worker_host'] = ''
+    template['fields']['worker_host'] = None
     template['fields']['user'] = None
     template['fields']['device_type'] = "DEVICE_TYPE"
     template['fields']['physical_group'] = None

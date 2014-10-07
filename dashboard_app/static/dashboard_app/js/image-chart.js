@@ -26,6 +26,7 @@ $(document).ready(function () {
         this.chart_id = chart_id;
         this.chart_data = chart_data;
         this.legend_items = [];
+        this.update_alias();
     }
 
     ImageChart.prototype.BUILD_NUMBER_ERROR =
@@ -83,6 +84,18 @@ $(document).ready(function () {
             this.update_events();
         }
     }
+
+
+    ImageChart.prototype.update_alias = function() {
+        if (Object.keys(this.chart_data.filters).length == 1) {
+            for (iter in this.chart_data.test_data) {
+                test_data = this.chart_data.test_data[iter];
+                test_data["alias"] =
+                    test_data["alias"].split(": ").slice(1).join(": ");
+            }
+        }
+    }
+
 
     ImageChart.prototype.setup_print_menu = function() {
         chart_id = this.chart_id;
@@ -255,7 +268,7 @@ $(document).ready(function () {
             title: 'Results table',
             draggable: false,
             height: 280,
-            width: 970,
+            width: 1050,
             modal: true,
             resizable: false,
             open: function (event, ui) {
@@ -319,9 +332,6 @@ $(document).ready(function () {
                 rows.push(test_data["test_filter_id"]);
 
                 test_name = test_data["alias"].replace(/\\/g , "");
-                if (test_name.length > 10) {
-                    test_name = test_name.substring(0,10) + "...";
-                }
                 table_rows += "<tr><td title='" + test_data["alias"].replace(/\\/g , "") +
                     "'>" + test_name + "</td></tr>";
             }
@@ -346,9 +356,11 @@ $(document).ready(function () {
 
             table[number][test_data["test_filter_id"]].push({
                 "passes": test_data["passes"],
+                "pass": test_data["pass"],
                 "skip": test_data["skip"],
                 "total": test_data["total"],
                 "measurement": test_data["measurement"],
+                "attr_value": test_data["attr_value"],
                 "link": test_data["link"],
                 "test_run_uuid": test_data["test_run_uuid"],
                 "bug_links": test_data["bug_links"]
@@ -406,10 +418,10 @@ $(document).ready(function () {
 
                     // Calculate td class.
                     cell = table[number][filter_id][cnt];
-                    if (cell["passes"] < cell["total"]) {
-                        cls = "fail";
-                    } else {
+                    if (cell["pass"]) {
                         cls = "pass";
+                    } else {
+                        cls = "fail";
                     }
                     uuid = cell["test_run_uuid"];
                     relative_index_str = "";
@@ -426,9 +438,12 @@ $(document).ready(function () {
                         table_body += '<a target="_blank" href="' +
                             cell["link"] + '">' + cell["passes"] + '/' +
                             cell["total"] + '</a>';
-                    } else {
+                    } else if (this.chart_data["chart_type"] == "measurement") {
                         table_body += '<a target="_blank" href="' +
                             cell["link"] + '">' + cell["measurement"] + '</a>';
+                    } else if (this.chart_data["chart_type"] == "attributes") {
+                        table_body += '<a target="_blank" href="' +
+                            cell["link"] + '">' + cell["attr_value"] + '</a>';
                     }
 
                     table_body += '<span class="bug-link-container">' +
@@ -586,10 +601,15 @@ $(document).ready(function () {
         }
     }
 
-    ImageChart.prototype.update_settings = function(visible_chart_test_id) {
+    ImageChart.prototype.update_settings = function(visible_chart_test_id,
+                                                    attr_name) {
 
         if (typeof(visible_chart_test_id) === 'undefined') {
             visible_chart_test_id = 0;
+        }
+
+        if (typeof(attr_name) === 'undefined') {
+            attr_name = "";
         }
 
         url = "/dashboard/image-charts/" + this.chart_data["report_name"] +
@@ -607,6 +627,7 @@ $(document).ready(function () {
                 has_subscription: $("#has_subscription_" + this.chart_id).val(),
                 toggle_percentage: $("#is_percentage_" + this.chart_id).prop("checked"),
                 visible_chart_test_id: visible_chart_test_id,
+                visible_attribute_name: attr_name,
             },
             success: function (data) {
                 chart.set_subscription_link(data[0].fields.has_subscription);
@@ -670,7 +691,10 @@ $(document).ready(function () {
                     "representation": row["filter_rep"],
                     "data": [],
                     "meta": [],
-                    "labels": []
+                    "labels": [],
+                    "max": - Number.MAX_VALUE,
+                    "min": Number.MAX_VALUE,
+                    "sum": 0
                 };
             }
         }
@@ -679,6 +703,11 @@ $(document).ready(function () {
         dates = [];
         // Store all build numbers
         build_numbers = [];
+
+        // Grid maximum and minimum values for y axis.
+        var y_max = - Number.MAX_VALUE;
+        var y_max_pass = - Number.MAX_VALUE;
+        var y_min = Number.MAX_VALUE;
 
         for (iter in this.chart_data.test_data) {
 
@@ -711,13 +740,23 @@ $(document).ready(function () {
                             row["total"] + ", Skip: " + row["skip"];
                     }
 
-                } else {
+                } else if (this.chart_data["chart_type"] == "measurement") {
                     value = row["measurement"];
+                    tooltip = "Value: " + value;
+
+                } else if (this.chart_data["chart_type"] == "attributes") {
+                    value = row["attr_value"];
                     tooltip = "Value: " + value;
                 }
 
+
                 tooltip += "<br>";
                 label = "";
+
+                // Calculate maximum passes.
+                if (row["passes"] > y_max_pass) {
+                    y_max_pass = row["passes"];
+                }
 
                 // Support metadata content with image and tooltip text.
                 if (!$.isEmptyObject(row["metadata_content"])) {
@@ -771,6 +810,15 @@ $(document).ready(function () {
                     plot_data[test_filter_id]["meta"][data_item.join("_")] =
                         meta_item;
                 }
+
+                // Calculate max, min and avg for statistics.
+                if (value < plot_data[test_filter_id]["min"]) {
+                    plot_data[test_filter_id]["min"] = value;
+                }
+                if (value > plot_data[test_filter_id]["max"]) {
+                    plot_data[test_filter_id]["max"] = value;
+                }
+                plot_data[test_filter_id]["sum"] = plot_data[test_filter_id]["sum"] + value;
             }
         }
 
@@ -812,14 +860,9 @@ $(document).ready(function () {
             }
         }
 
-        // Grid maximum and minimum values for y axis.
-        var y_max = - Number.MAX_VALUE;
-        var y_min = Number.MAX_VALUE;
-
         // Pack data in series for plot display.
         for (var i in sorted_filter_ids) {
             test_filter_id = sorted_filter_ids[i];
-
             if (this.legend_items.length != sorted_filter_ids.length) {
 
                 // Load hidden tests data.
@@ -834,6 +877,9 @@ $(document).ready(function () {
                     chart_test_id: plot_data[test_filter_id]["chart_test_id"],
                     dom_id: "legend_" + plot_data[test_filter_id]["chart_test_id"],
                     show: show,
+                    min: plot_data[test_filter_id]["min"],
+                    max: plot_data[test_filter_id]["max"],
+                    avg: (plot_data[test_filter_id]["sum"] / plot_data[test_filter_id]["data"].length).toFixed(2),
                 });
             }
 
@@ -905,16 +951,21 @@ $(document).ready(function () {
 
         // Add target goal dashed line to the plot.
         if (this.chart_data["target_goal"] != null) {
+            if ($("#is_percentage_" + this.chart_id).prop("checked") == true) {
+                target_goal = parseFloat(this.chart_data["target_goal"]/y_max_pass).toFixed(4) * 100;
+            } else {
+                target_goal = this.chart_data["target_goal"];
+            }
+
 	    goal_data = [];
 
             if (this.chart_data.has_build_numbers) {
 	        for (var i in build_numbers) {
-	            goal_data.push([build_numbers[i],
-                                    this.chart_data["target_goal"]]);
+	            goal_data.push([build_numbers[i], target_goal]);
 	        }
             } else {
 	        for (key in dates) {
-	            goal_data.push([dates[key], this.chart_data["target_goal"]]);
+	            goal_data.push([dates[key], target_goal]);
 	        }
             }
 
@@ -941,8 +992,10 @@ $(document).ready(function () {
             $("#filter_links_container_" + this.chart_id).css("width", "80%");
         }
 
-        y_label = "Pass/Fail";
-        if (this.chart_data["chart_type"] != "pass/fail") {
+        y_label = "";
+        if (this.chart_data["chart_type"] == "measurement") {
+            y_label = "Pass/Fail";
+        } else if (this.chart_data["chart_type"] == "measurement") {
             if (this.chart_data.test_data[0]) {
                 y_label = this.chart_data.test_data[0].units;
             } else {
@@ -1027,9 +1080,10 @@ $(document).ready(function () {
 
         this.plot = $.plot($("#outer_container_" + this.chart_id + " #inner_container_" + this.chart_id), data, options);
 
-        // Setup hooks, events and css in the legend.
+        // Setup hooks, events, tooltips and css in the legend.
         add_zoom_out(this);
         setup_clickable(this);
+        setup_legend_tooltips(this);
         setup_legend_css(this);
 
         // Setup chart object reference.
@@ -1037,9 +1091,34 @@ $(document).ready(function () {
         // Setup draw hook for plot.
         this.plot.hooks.draw.push(function(plot, canvascontext) {
             setup_clickable(plot.chart);
+            setup_legend_tooltips(plot.chart);
             setup_legend_css(plot.chart);
         });
 
+        this.plot.hooks.drawSeries.unshift(function(plot, canvascontext, series) {
+            reset_images(series);
+        });
+
+    }
+
+    reset_images = function(series) {
+        for (i = 0; i < series.data.length; i++) {
+            if (series.hasImage && series.hasImage[i]) {
+                series.hasImage[i] = null;
+            }
+        }
+    }
+
+    setup_legend_tooltips = function(chart) {
+        $("#legend_container_" + chart.chart_id + " td:last-child").each(function(index) {
+            $(this).attr("data-toggle", "tooltip");
+            $(this).attr("data-placement", "right");
+            var title =
+                "Min: " + chart.legend_items[index].min +
+                ", Max: " + chart.legend_items[index].max +
+                ", Avg: " + chart.legend_items[index].avg;
+            $(this).attr("title", title);
+        });
     }
 
     setup_clickable = function(chart) {
@@ -1051,7 +1130,15 @@ $(document).ready(function () {
                 var show = chart.legend_items[index].show;
                 chart.legend_items[index].show = !show;
 
-                chart.update_settings(chart.legend_items[index].chart_test_id);
+                if (chart.chart_data["chart_type"] == "attributes") {
+                    // Chart id - attribute name combination.
+                    id_arr = chart.legend_items[index].chart_test_id.split("-");
+                    attr_array = [id_arr.shift(), id_arr.join("-")];
+                    chart.update_settings(attr_array[0], attr_array[1]);
+                } else {
+                    chart.update_settings(
+                        chart.legend_items[index].chart_test_id);
+                }
                 chart.update_plot();
             });
         });

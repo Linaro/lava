@@ -101,7 +101,7 @@
                        '{{ instance.filter.id }}',
                        '{{ instance.filter.name }}');
 
-      if ($('#id_chart_type').val() == "pass/fail") {
+      if ($('#id_chart_type').val() != "measurement") {
       {% for test in instance.imagecharttest_set.all %}
         $('#available_tests option[value="{{ test.test_id }}"]').attr('selected', 'selected');
       {% endfor %}

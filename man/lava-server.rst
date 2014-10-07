@@ -580,3 +580,33 @@ staticfiles
         --nostatic            Tells Django to NOT automatically serve static files
                         at STATIC_URL.
         --insecure            Allows serving static files even if DEBUG is False.
+
+Bugs
+####
+
+If your bug relates to a specific type of device, please include all
+configuration details for that device type as well as the job submission
+JSON and as much of the LAVA test job log file as you can (e.g. as a compressed
+file attached to the bug report).
+
+If your device type is not one found on existing LAVA instances, please
+supply as much information as you can on the board itself.
+
+Contributing Upstream
+#####################
+
+If you, or anyone on your team, would like to register with Linaro directly,
+this will allow you to file an upstream bug, submit code for review by
+the LAVA team, etc. Register at the following url:
+
+https://register.linaro.org/
+
+If you are considering large changes, it is best to register and also
+to subscribe to the Linaro Validation mailing list at:
+
+http://lists.linaro.org/mailman/listinfo/linaro-validation
+
+Also talk to us on IRC::
+
+ irc.oftc.net
+ #linaro-lava
