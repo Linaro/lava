@@ -235,9 +235,12 @@ case "$1" in
             mkdir $LAVA_SYS_HOME
             chown -R $LAVA_SYS_USER:$LAVA_SYS_USER $LAVA_SYS_HOME
         fi
+        # Allow lavaserver to write to all the log files
+        chmod u+rXs /var/log/lava-server/
         # Allow users in the adm group to read the scheduler logs
-        chown -R $LAVA_SYS_USER:adm /var/log/lava-server/
-        chmod -R g+rXs /var/log/lava-server/
+        touch /var/log/lava-server/lava-scheduler.log
+        chgrp adm /var/log/lava-server/lava-scheduler.log
+        chmod g+rXs /var/log/lava-server/
         # Allow lava user to write the secret key
         touch /etc/lava-server/secret_key.conf
         chown $LAVA_SYS_USER:$LAVA_SYS_USER /etc/lava-server/secret_key.conf
@@ -255,6 +258,8 @@ case "$1" in
         else
             # install database only on the master
             install_database
+            # Allow lavaserver to write to all the log files
+            chown $LAVA_SYS_USER:adm /var/log/lava-server/django.log
         fi
 
         # allow reinstalls when the user has not been removed.
