@@ -191,7 +191,7 @@ http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-
 
 **qemu-kernel-boot**:
 
-http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/single-node-job/qemu/qemu-kernel-boot.json
+http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/single-node-job/qemu/qemu-arm-kernel-boot.json
 
 Available parameters
 --------------------
