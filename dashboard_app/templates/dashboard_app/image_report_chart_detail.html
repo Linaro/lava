@@ -21,6 +21,9 @@
     Chart type: {{ image_chart.chart_type }}
   </div>
   <div class="form-field">
+    Delta reporting: {{ image_chart.is_delta|yesno:"Yes,No" }}
+  </div>
+  <div class="form-field">
     Target goal: {{ image_chart.target_goal|floatformat:"-2" }}
   </div>
 </div>

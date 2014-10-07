@@ -751,7 +751,6 @@ $(document).ready(function () {
                     tooltip = "Value: " + value;
                 }
 
-
                 tooltip += "<br>";
                 label = "";
 
@@ -865,6 +864,48 @@ $(document).ready(function () {
         // Pack data in series for plot display.
         for (var i in sorted_filter_ids) {
             test_filter_id = sorted_filter_ids[i];
+
+            // Delta reporting, calculate diferences.
+            if (this.chart_data["is_delta"]) {
+                var new_data = [];
+                var new_meta_keys = [];
+                var tooltips = [];
+                for (j in plot_data[test_filter_id]["data"]) {
+                    if (j == 0) { //first element is auto-set to 0.
+                        new_value = 0;
+                        new_data.push(
+                            plot_data[test_filter_id]["data"][j].slice());
+                        new_data[0][1] = new_value;
+
+                    } else {
+                        new_value = +parseFloat(plot_data[test_filter_id]["data"][j][1] -
+                                     plot_data[test_filter_id]["data"][j-1][1]).toFixed(2);
+                        new_data.push(
+                            [plot_data[test_filter_id]["data"][j][0],
+                             new_value]);
+
+                    }
+                    // Set metadata key for first element.
+                    var meta_key = plot_data[test_filter_id]["data"][j][0]
+                        + "_" + plot_data[test_filter_id]["data"][j][1];
+                    new_meta_keys[meta_key] = new_data[j][0] + "_" +
+                        new_data[j][1];
+                    tooltips[meta_key] =
+                        plot_data[test_filter_id]["meta"][meta_key]["tooltip"] + "Delta: " + new_value + "<br>";
+                }
+                plot_data[test_filter_id]["data"] = new_data;
+
+                // Need to update metadata keys as well.
+                var new_metadata = [];
+                for (j in plot_data[test_filter_id]["meta"]) {
+                    plot_data[test_filter_id]["meta"][j]["tooltip"] =
+                        tooltips[j];
+                    new_metadata[new_meta_keys[j]] =
+                        plot_data[test_filter_id]["meta"][j];
+                }
+                plot_data[test_filter_id]["meta"] = new_metadata;
+            }
+
             if (this.legend_items.length != sorted_filter_ids.length) {
 
                 // Load hidden tests data.
@@ -1069,8 +1110,8 @@ $(document).ready(function () {
         // We cannot apply autoscaleMargin for y axis since y_max and y_min
         // are explicitely set. Therefore we will manually increase/decrease
         // the limits.
-        y_max *= 1.1;
-        y_min *= 0.9;
+        y_max += (0.1 * Math.abs(y_max));
+        y_min -= (0.1 * Math.abs(y_min));
 
         if ($("#is_percentage_" + this.chart_id).prop("checked") == true) {
             options["yaxis"]["max"] = 105;

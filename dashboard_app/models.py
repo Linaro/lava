@@ -1960,6 +1960,10 @@ class ImageReportChart(models.Model):
         default=False,
         verbose_name='Data table visible')
 
+    is_delta = models.BooleanField(
+        default=False,
+        verbose_name='Delta reporting')
+
     def __unicode__(self):
         return self.name
 
@@ -2008,6 +2012,7 @@ class ImageReportChart(models.Model):
             chart_data[field] = getattr(self, field)
 
         chart_data["report_name"] = self.image_report.name
+        chart_data["is_delta"] = self.is_delta
 
         chart_data["has_build_numbers"] = False
         for image_chart_filter in self.imagechartfilter_set.all():
