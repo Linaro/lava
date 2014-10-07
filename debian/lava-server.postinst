@@ -258,7 +258,7 @@ case "$1" in
             # install database only on the master
             install_database
             # Allow lavaserver to write to all the log files
-            touch /var/log/lava-server/lava-scheduler.log
+            touch /var/log/lava-server/django.log
             chown $LAVA_SYS_USER:adm /var/log/lava-server/django.log
         fi
 
