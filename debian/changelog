@@ -1,4 +1,4 @@
-lava-server (2014.08.2-2) unstable; urgency=medium
+lava-server (2014.09-1) unstable; urgency=medium
 
   * New upstream production release
   * Fix upgrade issue with parallel migrations. (Closes: #763310)
