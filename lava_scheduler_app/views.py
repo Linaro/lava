@@ -204,6 +204,12 @@ class JobTableView(LavaView):
             q = q.__or__(Q(is_public=False))
         return q
 
+    def include_health_check_query(self, term):
+        if not _str_to_bool(term):
+            return Q(health_check=False)
+        else:
+            return Q()
+
 
 class FailureTableView(JobTableView):
 
