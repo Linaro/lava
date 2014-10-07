@@ -25,6 +25,7 @@ case "$1" in
       rm -f /etc/lava-server/worker.conf
       rm -rf /usr/sbin/lava-mount-masterfs
       rm -rf /var/lib/lava-server/home/
+      rm -rf /var/log/lava-server/
       # explicitly not deleting /var/lib/lava-server/default
       # unless empty and not a mountpoint (piuparts)
       # Not dropping the database unless there are no job output files.
