@@ -89,6 +89,7 @@ class FastModelTarget(Target):
         self._bootloadertype = 'u_boot'
         self._boot_tags = {}
         self._scratch_dir = self.scratch_dir
+        self._interface_name = None
 
     def _customize_android(self):
         self.deployment_data = deployment_data.android
@@ -392,8 +393,8 @@ class FastModelTarget(Target):
             logging.info('Requesting graceful shutdown')
             self._sim_proc.kill(signal.SIGTERM)
             self._sim_proc.wait()
-        super(FastModelTarget, self).power_off(proc)
         finalize_process(self._sim_proc)
+        super(FastModelTarget, self).power_off(proc)
         self._sim_proc = None
 
     def _create_rtsm_ostream(self, ofile):
@@ -411,6 +412,10 @@ class FastModelTarget(Target):
         DrainConsoleOutput(proc=self._sim_proc).start()
 
     def power_on(self):
+        if self.config.bridged_networking:
+            self._interface_name = os.path.basename(self._scratch_dir)
+            if not self._bridge_configured:
+                self._config_network_bridge(self.config.bridge_interface, self._interface_name)
         if self._ramdisk_boot and self._booted:
             self.proc.sendline('export PS1="%s"'
                                % self.tester_ps1,
@@ -435,7 +440,7 @@ class FastModelTarget(Target):
         sim_cmd = sim_cmd.format(
             AXF=self._axf, IMG=self._sd_image, KERNEL=self._kernel,
             DTB=self._dtb, INITRD=self._initrd, UEFI=self._uefi, BL1=self._bl1,
-            UEFI_VARS=self._uefi_vars)
+            UEFI_VARS=self._uefi_vars, INTERFACE=self._interface_name)
 
         # the simulator proc only has stdout/stderr about the simulator
         # we hook up into a telnet port which emulates a serial console
