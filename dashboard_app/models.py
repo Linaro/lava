@@ -45,6 +45,10 @@ from django.core.files import locks, File
 from django.core.files.storage import FileSystemStorage
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
+from django.core.validators import (
+    MaxValueValidator,
+    MinValueValidator
+)
 from django.db import models, connection, IntegrityError
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.signals import post_delete
@@ -1952,6 +1956,14 @@ class ImageReportChart(models.Model):
         null=True,
         verbose_name='Target goal')
 
+    chart_height = models.PositiveIntegerField(
+        default=200,
+        validators=[
+            MinValueValidator(200),
+            MaxValueValidator(400)
+        ],
+        verbose_name='Chart height')
+
     is_interactive = models.BooleanField(
         default=False,
         verbose_name='Interactive')
@@ -2006,7 +2018,8 @@ class ImageReportChart(models.Model):
 
     def get_basic_chart_data(self):
         chart_data = {}
-        fields = ["name", "chart_type", "description", "target_goal"]
+        fields = ["name", "chart_type", "description", "target_goal",
+                  "chart_height"]
 
         for field in fields:
             chart_data[field] = getattr(self, field)

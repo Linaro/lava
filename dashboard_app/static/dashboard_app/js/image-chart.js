@@ -68,6 +68,11 @@ $(document).ready(function () {
                 '<div class="legend" id="legend_container_' +
                     this.chart_id + '"></div>');
 
+            // Set chart height.
+            $("#inner_container_" + this.chart_id).height(
+                this.chart_data["chart_height"]
+            );
+
             // Add headline and description.
             this.update_headline();
             // Add filter links.
