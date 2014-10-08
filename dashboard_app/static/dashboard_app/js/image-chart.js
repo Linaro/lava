@@ -90,8 +90,10 @@ $(document).ready(function () {
         if (Object.keys(this.chart_data.filters).length == 1) {
             for (iter in this.chart_data.test_data) {
                 test_data = this.chart_data.test_data[iter];
-                test_data["alias"] =
-                    test_data["alias"].split(": ").slice(1).join(": ");
+                if (test_data["alias"].split(": ").length > 1) {
+                    test_data["alias"] =
+                        test_data["alias"].split(": ").slice(1).join(": ");
+                }
             }
         }
     }
