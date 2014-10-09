@@ -1976,6 +1976,11 @@ class ImageReportChart(models.Model):
         default=False,
         verbose_name='Delta reporting')
 
+    is_percentage = models.BooleanField(
+        default=False,
+        verbose_name='Percentage')
+
+
     def __unicode__(self):
         return self.name
 
@@ -2019,7 +2024,7 @@ class ImageReportChart(models.Model):
     def get_basic_chart_data(self):
         chart_data = {}
         fields = ["name", "chart_type", "description", "target_goal",
-                  "chart_height"]
+                  "chart_height", "is_percentage"]
 
         for field in fields:
             chart_data[field] = getattr(self, field)
@@ -2043,7 +2048,6 @@ class ImageReportChart(models.Model):
             chart_data["start_date"] = chart_user.start_date
             chart_data["is_legend_visible"] = chart_user.is_legend_visible
             chart_data["has_subscription"] = chart_user.has_subscription
-            chart_data["toggle_percentage"] = chart_user.toggle_percentage
 
         except ImageChartUser.DoesNotExist:
             # Leave an empty dict.
@@ -2168,6 +2172,13 @@ class ImageReportChart(models.Model):
 
                 test_filter_id = "%s-%s" % (test_id, image_chart_filter.id)
 
+                # Calculate percentages.
+                percentage = 0
+                if self.is_percentage:
+                    if denorm.count_all() != 0:
+                        percentage = round(100 * float(denorm.count_pass) / \
+                                           denorm.count_all(), 2)
+
                 # Find already existing chart item (this happens if we're
                 # dealing with parametrized tests) and add the values instead
                 # of creating new chart item.
@@ -2195,6 +2206,7 @@ class ImageReportChart(models.Model):
                         "date": str(test_run.bundle.uploaded_on),
                         "pass": denorm.count_fail == 0,
                         "passes": denorm.count_pass,
+                        "percentage": percentage,
                         "skip": denorm.count_skip,
                         "total": denorm.count_all(),
                         "test_run_uuid": test_run.analyzer_assigned_uuid,
@@ -2606,10 +2618,6 @@ class ImageChartUser(models.Model):
     has_subscription = models.BooleanField(
         default=False,
         verbose_name='Subscribed to target goal')
-
-    toggle_percentage = models.BooleanField(
-        default=False,
-        verbose_name='Toggle percentage')
 
 
 class ImageChartTestUser(models.Model):

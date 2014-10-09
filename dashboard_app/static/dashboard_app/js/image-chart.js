@@ -197,17 +197,6 @@ $(document).ready(function () {
         $("#filter_links_dialog_" + this.chart_id).dialog("option",
                                                           "height", height );
 
-        // Add percentages if chart type is pass/fail.
-        if (this.chart_data["chart_type"] == "pass/fail") {
-            $("#filter_links_container_" + this.chart_id).append(
-                '<span class="toggle-percentage"><label for="is_percentage_' +
-                    this.chart_id +
-                    '">Toggle percentage</label></span>');
-            $("#filter_links_container_" + this.chart_id).append(
-                '<span class="toggle-checkbox"><input type="checkbox" ' +
-                    'id="is_percentage_' + this.chart_id + '" /></span>');
-        }
-
         // Add legend toggle checkbox.
         $("#filter_links_container_" + this.chart_id).append(
             '<span class="toggle-legend"><label for="is_legend_visible_' +
@@ -570,17 +559,6 @@ $(document).ready(function () {
             chart.update_settings();
         });
 
-        $("#is_percentage_"+this.chart_id).change(function() {
-            chart.update_plot();
-            chart.update_settings();
-        });
-
-        if (this.chart_data["chart_type"] == "pass/fail") {
-            $("#is_percentage_"+this.chart_id).change(function() {
-                chart.update_plot();
-            });
-        }
-
         $("#has_subscription_link_"+this.chart_id).click(function() {
             $("#has_subscription_" + chart.chart_id).val(
                 $("#has_subscription_" + chart.chart_id).val() != "true");
@@ -598,10 +576,6 @@ $(document).ready(function () {
             if (this.chart_data.user.is_legend_visible == false) {
                 $("#is_legend_visible_" + this.chart_id).prop("checked",
                                                               false);
-            }
-            if (this.chart_data.user.toggle_percentage == true) {
-                $("#is_percentage_" + this.chart_id).prop("checked",
-                                                              true);
             }
 
             this.set_subscription_link(this.chart_data.user.has_subscription);
@@ -632,7 +606,6 @@ $(document).ready(function () {
                 start_date: $("#start_date_" + this.chart_id).val(),
                 is_legend_visible: $("#is_legend_visible_" + this.chart_id).prop("checked"),
                 has_subscription: $("#has_subscription_" + this.chart_id).val(),
-                toggle_percentage: $("#is_percentage_" + this.chart_id).prop("checked"),
                 visible_chart_test_id: visible_chart_test_id,
                 visible_attribute_name: attr_name,
             },
@@ -734,12 +707,8 @@ $(document).ready(function () {
                 iter = plot_data[test_filter_id]["data"].length;
 
                 if (this.chart_data["chart_type"] == "pass/fail") {
-                    if ($("#is_percentage_" + this.chart_id).prop("checked") == true) {
-                        value = parseFloat(row["passes"]/row["total"]).toFixed(4) * 100;
-                        // Happens when total is 0.
-                        if (isNaN(value)) {
-                            value = 0;
-                        }
+                    if (this.chart_data["is_percentage"] == true) {
+                        value = row["percentage"];
                         tooltip = "Pass rate: " + value + "%";
                     } else {
                         value = row["passes"];
@@ -999,7 +968,7 @@ $(document).ready(function () {
 
         // Add target goal dashed line to the plot.
         if (this.chart_data["target_goal"] != null) {
-            if ($("#is_percentage_" + this.chart_id).prop("checked") == true) {
+            if (this.chart_data["is_percentage"] == true) {
                 target_goal = parseFloat(this.chart_data["target_goal"]/y_max_pass).toFixed(4) * 100;
             } else {
                 target_goal = this.chart_data["target_goal"];
@@ -1118,8 +1087,8 @@ $(document).ready(function () {
         y_max += (0.1 * Math.abs(y_max));
         y_min -= (0.1 * Math.abs(y_min));
 
-        if ($("#is_percentage_" + this.chart_id).prop("checked") == true) {
-            options["yaxis"]["max"] = 105;
+        if (this.chart_data["is_percentage"] == true) {
+            options["yaxis"]["max"] = 110;
             options["yaxis"]["min"] = 0;
         } else {
             options["yaxis"]["max"] = y_max;

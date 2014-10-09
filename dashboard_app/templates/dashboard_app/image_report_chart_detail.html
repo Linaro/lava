@@ -20,6 +20,11 @@
   <div class="form-field">
     Chart type: {{ image_chart.chart_type }}
   </div>
+  {% if image_chart.chart_type == "pass/fail" %}
+  <div class="form-field">
+    Percentage: {{ image_chart.is_percentage|yesno:"Yes,No" }}
+  </div>
+  {% endif %}
   <div class="form-field">
     Delta reporting: {{ image_chart.is_delta|yesno:"Yes,No" }}
   </div>
