@@ -180,6 +180,9 @@ filter_available_tests = function(text) {
         $('#available_tests option').filter(function() {
             return $(this).text().toLowerCase().indexOf(text) != 0;
         }).css("display", "none");
+        $('#available_tests option').filter(function() {
+            return $(this).text().toLowerCase().indexOf(text) == 0;
+        }).css("display", "block");
     } else {
         $('#available_tests option').css("display", "block");
     }
