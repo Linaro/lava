@@ -27,6 +27,7 @@ import simplejson
 import models
 import subprocess
 import datetime
+import netifaces
 
 from collections import OrderedDict
 
@@ -276,9 +277,21 @@ def get_fqdn():
 
 
 def get_ip_address():
-    """Returns the IP address.
+    """Returns the IP address of the default interface, if found.
     """
-    return socket.gethostbyname_ex(socket.getfqdn())[2][0]
+    ip = '0.0.0.0'
+    gateways = netifaces.gateways()
+    if gateways:
+        default_gateway = gateways.get('default')
+        if default_gateway:
+            default_interface = default_gateway.get(netifaces.AF_INET)[1]
+            if default_interface:
+                default_interface_values = netifaces.ifaddresses(
+                    default_interface)
+                if default_interface_values:
+                    ip = default_interface_values.get(
+                        netifaces.AF_INET)[0].get('addr')
+    return ip
 
 
 def format_sw_info_to_html(data_dict):
