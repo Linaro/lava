@@ -1924,6 +1924,10 @@ CHART_TYPES = ((r'pass/fail', 'Pass/Fail'),
 # Chart representation
 REPRESENTATION_TYPES = ((r'lines', 'Lines'),
                         (r'bars', 'Bars'))
+# Chart visibility
+CHART_VISIBILITY = ((r'chart', 'Chart only'),
+                    (r'table', 'Result table only'),
+                    (r'both', 'Both'))
 
 
 class ImageReportChart(models.Model):
@@ -1980,6 +1984,14 @@ class ImageReportChart(models.Model):
         default=False,
         verbose_name='Percentage')
 
+    chart_visibility = models.CharField(
+        max_length=20,
+        choices=CHART_VISIBILITY,
+        verbose_name='Chart visibility',
+        blank=False,
+        default="chart",
+    )
+
 
     def __unicode__(self):
         return self.name
@@ -2024,7 +2036,7 @@ class ImageReportChart(models.Model):
     def get_basic_chart_data(self):
         chart_data = {}
         fields = ["name", "chart_type", "description", "target_goal",
-                  "chart_height", "is_percentage"]
+                  "chart_height", "is_percentage", "chart_visibility"]
 
         for field in fields:
             chart_data[field] = getattr(self, field)

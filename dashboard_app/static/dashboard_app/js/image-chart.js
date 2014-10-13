@@ -87,6 +87,8 @@ $(document).ready(function () {
             this.update_urls();
             // Update events.
             this.update_events();
+            // Update chart/table visibility.
+            this.update_visibility();
         }
     }
 
@@ -252,12 +254,8 @@ $(document).ready(function () {
         this.add_settings_events();
     }
 
-    ImageChart.prototype.update_data_tables = function() {
 
-        // Add dialog.
-        $("#main_container").append('<div id="data_table_dialog_' +
-                                    this.chart_id + '"></div>');
-
+    ImageChart.prototype.result_table_as_dialog = function() {
         // Init dialog.
         $('#data_table_dialog_' + this.chart_id).dialog({
             autoOpen: false,
@@ -268,14 +266,34 @@ $(document).ready(function () {
             modal: true,
             resizable: false,
             open: function (event, ui) {
-                $('#data_table_dialog_' + this.chart_id).css('overflow',
-                                                             'hidden');
-
                 $('.scroller').each(function() {
                     $(this).scrollLeft($(this)[0].scrollWidth);
                 });
             }
         });
+
+    }
+
+    ImageChart.prototype.update_visibility = function() {
+        if (this.chart_data.chart_visibility == 'table') {
+            $("#outer_container_" + this.chart_id).hide();
+            $("#table_link_container_" + this.chart_id).hide();
+            $("#filter_links_container_" + this.chart_id).hide();
+            $("#dates_container_" + this.chart_id).hide();
+        } else if (this.chart_data.chart_visibility == 'both') {
+            $("#table_link_container_" + this.chart_id).hide();
+        }
+    }
+
+    ImageChart.prototype.update_data_tables = function() {
+
+        // Add dialog.
+        $("#chart_container_" + this.chart_id).append(
+            '<div id="data_table_dialog_' + this.chart_id + '"></div>');
+
+        if (this.chart_data.chart_visibility == 'chart') {
+            this.result_table_as_dialog();
+        }
 
         // Add skeleton data to dialog.
         $("#data_table_dialog_" + this.chart_id).append(
@@ -299,6 +317,12 @@ $(document).ready(function () {
             '<a id="data_table_link_' +
                 this.chart_id +
                 '" href="javascript:void(0)">Results table</a>');
+
+        $('#data_table_dialog_' + this.chart_id).css('overflow', 'hidden');
+
+        $('.scroller').each(function() {
+            $(this).scrollLeft($(this)[0].scrollWidth);
+        });
 
         var chart = this;
         $("#data_table_link_" + this.chart_id).click(function(){
@@ -450,8 +474,8 @@ $(document).ready(function () {
 
                     for (bug_link in cell["bug_links"]) {
                         bug = cell["bug_links"];
-                        table_body += '<li class="bug-link">' + bug[bug_link] +
-                            '</li>';
+                        table_body += '<li class="bug-link">' +
+                            bug[bug_link].replace(/\\\\\\/g, "") + '</li>';
                     }
 
                     table_body += '</span>';
@@ -1412,6 +1436,7 @@ $(document).ready(function () {
                     link_bug_url = testresult_link_bug_url;
                     unlink_bug_url = testresult_unlink_bug_url;
                 } else {
+                    add_bug_dialog.find('input[name=relative_index]').val("");
                     link_bug_url = testrun_link_bug_url;
                     unlink_bug_url = testrun_unlink_bug_url;
                 }

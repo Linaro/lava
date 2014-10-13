@@ -210,6 +210,15 @@ div.selector .selector-chosen select {
 
 #outer-table, .inner-table {
     border-collapse: collapse;
+    color: black;
+}
+
+.inner-table > tbody > tbody > tr > td > a {
+    color: black;
+}
+
+.inner-table > tbody > tbody > tr > td > span > a {
+    color: black;
 }
 
 #outer-table > tbody > tr > td {
