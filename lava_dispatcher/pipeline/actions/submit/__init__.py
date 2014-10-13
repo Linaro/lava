@@ -24,3 +24,9 @@ from lava_dispatcher.pipeline import Action
 class SubmitResultsAction(Action):
 
     name = 'submit_results'
+
+    def run(self, connection, args=None):
+        return connection
+
+    def cleanup(self):
+        pass

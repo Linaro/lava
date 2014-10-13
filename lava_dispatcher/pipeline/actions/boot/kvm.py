@@ -23,9 +23,10 @@ import sys
 from lava_dispatcher.pipeline.action import (
     Boot,
     Pipeline,
+    Action,
     InfrastructureError,
-    Timeout,
-    JobError
+    JobError,
+    Timeout
 )
 from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
 from lava_dispatcher.pipeline.shell import ExpectShellSession, ShellCommand, ShellSession
@@ -47,10 +48,7 @@ class BootKVM(Boot):
         self.action.job = self.job
         parent.add_action(self.action)
 
-        internal_pipeline = Pipeline(parent=self.action, job=self.job)
-        if 'auto_login' in self.action.parameters:
-            internal_pipeline.add_action(AutoLoginAction())
-        internal_pipeline.add_action(ExpectShellSession())
+        # internal_pipeline = Pipeline(parent=self.action, job=self.job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -68,6 +66,26 @@ class BootQEMUImageAction(BootAction):
 
     def __init__(self):
         super(BootQEMUImageAction, self).__init__()
+        self.name = 'boot_image_retry'
+        self.description = "boot image with retry"
+        self.summary = "boot with retry"
+
+    def populate(self):
+        self.internal_pipeline = Pipeline(parent=self, job=self.job)
+        self.internal_pipeline.add_action(BootQemuRetry())
+        if 'auto_login' in self.parameters:
+            self.internal_pipeline.add_action(AutoLoginAction())
+        self.internal_pipeline.add_action(ExpectShellSession())
+
+    def cleanup(self):
+        # FIXME: anything useful to do?
+        pass
+
+
+class BootQemuRetry(Action):
+
+    def __init__(self):
+        super(BootQemuRetry, self).__init__()
         self.name = 'boot_qemu_image'
         self.description = "boot image using QEMU command line"
         self.summary = "boot QEMU image"
@@ -87,7 +105,7 @@ class BootQEMUImageAction(BootAction):
         raise InfrastructureError("Cannot find file %s" % path)
 
     def validate(self):
-        super(BootQEMUImageAction, self).validate()
+        super(BootQemuRetry, self).validate()
         if not hasattr(self.job.device, 'config'):  # FIXME: new devices only
             try:
                 # FIXME: need a schema and do this inside the NewDevice with a QemuDevice class? (just for parsing)
@@ -99,8 +117,8 @@ class BootQEMUImageAction(BootAction):
                     qemu_binary,
                     "-machine",
                     params['parameters']['machine'],
-                    "-hda",
-                    self.data['download_action']['file'],
+                    # "-hda",
+                    # self.data['download_action']['file'],
                 ]
                 # these options are lists
                 for net_opt in params['parameters']['net']:
@@ -111,10 +129,16 @@ class BootQEMUImageAction(BootAction):
                 self.errors = "Invalid parameters"
 
     def run(self, connection, args=None):
+        if 'download_action' not in self.data:
+            raise RuntimeError("Value for download_action is missing from %s" % self.name)
+        self.command.extend(["-hda", self.data['download_action']['file']])
         self._log("Boot command: %s" % ' '.join(self.command))
         # initialise the first Connection object, a command line shell into the running QEMU.
         # ShellCommand wraps pexpect.spawn.
         self.max_retries = self.parameters.get('failure_retry', 5)  # FIXME: needs a constant
+        if not self.timeout:
+            self._log("No timeout specified for %s, using action_timeout from job." % self.name)
+            self.timeout = Timeout("default", self.job.parameters['action_timeout'])
         self._log("timeout %s %s" % (self.timeout.name, self.timeout.duration))
         shell = ShellCommand(' '.join(self.command), self.timeout)
         if shell.exitstatus:
@@ -128,11 +152,8 @@ class BootQEMUImageAction(BootAction):
         # turns the ShellCommand into a runner which the ShellSession uses via ShellSession.run()
         # to run commands issued *after* the device has booted.
         # pexpect.spawn is one of the raw_connection objects for a Connection class.
+
         shell_connection = ShellSession(self.job, shell)
-        # shell_connection.signal_director._cur_handler
-        # self.pipeline.run_actions(shell_connection)
-        # FIXME: this does not retry the connection initiation - to do that, create a new action in the internel pipeline.
-        super(BootQEMUImageAction, self).run(shell_connection)
         if self.errors:
             # FIXME: tests with multiple boots need to be handled too.
             self.data.update({

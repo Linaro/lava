@@ -21,7 +21,7 @@
 import datetime
 from lava_dispatcher.pipeline.test.test_basic import Factory
 from lava_dispatcher.tests.helper import LavaDispatcherTestCase
-from lava_dispatcher.pipeline.actions.test import TestAction
+from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry, TestShellAction
 
 
 class TestDefinitionHandlers(LavaDispatcherTestCase):  # pylint: disable=too-many-public-methods
@@ -35,10 +35,10 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):  # pylint: disable=too-man
         testshell = None
         for action in self.job.pipeline.actions:
             self.assertIsNotNone(action.name)
-            if isinstance(action, TestAction):
-                testshell = action
+            if isinstance(action, TestShellRetry):
+                testshell = action.pipeline.children[action.pipeline][0]
                 break
-        self.assertIsInstance(testshell, TestAction)
+        self.assertIsInstance(testshell, TestShellAction)
         self.assertNotIn('boot-result', testshell.data)
         self.assertTrue(testshell.valid)
 
@@ -53,8 +53,8 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):  # pylint: disable=too-man
         testshell = None
         for action in self.job.pipeline.actions:
             self.assertIsNotNone(action.name)
-            if isinstance(action, TestAction):
-                testshell = action
+            if isinstance(action, TestShellRetry):
+                testshell = action.pipeline.children[action.pipeline][0]
                 break
         self.assertTrue(testshell.valid)
         self.assertFalse(testshell.check_patterns('exit', None))

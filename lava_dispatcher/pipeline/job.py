@@ -25,6 +25,7 @@ import tempfile
 import subprocess
 from collections import OrderedDict
 from lava_dispatcher.utils import rmtree
+from lava_dispatcher.pipeline.diagnostics import DiagnoseNetwork
 
 
 class Job(object):
@@ -50,6 +51,10 @@ class Job(object):
         self.actions = None
         self._scratch_dir = None
         self.connection = None
+        self.triggers = []  # actions can add trigger strings to the run a diagnostic
+        self.diagnostics = [
+            DiagnoseNetwork,
+        ]
 
     def set_pipeline(self, pipeline):
         self.pipeline = pipeline
@@ -62,6 +67,17 @@ class Job(object):
     @context.setter
     def context(self, data):
         self.__context__ = data
+
+    def diagnose(self, trigger):
+        """
+        Looks up the class to execute to diagnose the problem described by the
+         specified trigger.
+        """
+        trigger_tuples = [(cls.trigger(), cls) for cls in self.diagnostics]
+        for diagnostic in trigger_tuples:
+            if trigger is diagnostic[0]:
+                return diagnostic[1]()
+        return None
 
     def describe(self):
         structure = OrderedDict()

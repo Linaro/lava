@@ -27,10 +27,12 @@ import logging
 import datetime
 import subprocess
 import collections
-from functools import reduce
 from collections import OrderedDict
 from contextlib import contextmanager
-from lava_dispatcher.config import get_device_config
+from lava_dispatcher.config import get_device_config  # FIXME: remove
+
+if sys.version > '3':
+    from functools import reduce  # pylint: disable=redefined-builtin
 
 
 class InfrastructureError(Exception):
@@ -110,6 +112,8 @@ class Pipeline(object):
         # FIXME: this should be a method from the Action class
         if not action or not issubclass(type(action), Action):
             raise RuntimeError("Only actions can be added to a pipeline: %s" % action)
+        if isinstance(action, DiagnosticAction):
+            raise RuntimeError("Diagnostic actions need to be triggered, not added to a pipeline.")
         if not action:
             raise RuntimeError("Unable to add empty action to pipeline")
         if not action.name:
@@ -146,17 +150,30 @@ class Pipeline(object):
         # if the action has an internal pipeline, initialise that here.
         action.populate()
 
+    def _generate(self, actions_list):
+        actions = iter(actions_list)
+        while actions:
+            action = actions.next()
+            # yield the action containing the pipeline
+            yield {
+                action.level: {
+                    'description': action.description,
+                    'summary': action.summary,
+                    'content': action.explode()
+                }
+            }
+            # now yield the pipeline to add the nested actions after the containing action.
+            if action.pipeline:
+                yield action.pipeline
+
     def _describe(self, structure):
         # TODO: make the amount of output conditional on a parameter passed to describe
-        for action in self.actions:
-            structure[action.level] = {
-                'description': action.description,
-                'summary': action.summary,
-                'content': action.explode()
-            }
-            if not action.pipeline:
-                continue
-            action.pipeline._describe(structure)
+
+        for data in self._generate(self.actions):
+            if isinstance(data, Pipeline):  # recursion into sublevels
+                data._describe(structure)
+            else:
+                structure.update(data)
 
     def describe(self):
         """
@@ -166,6 +183,8 @@ class Pipeline(object):
         """
         structure = OrderedDict()
         self._describe(structure)
+        # from meliae import scanner
+        # scanner.dump_all_objects('/tmp/lava-describe.json')
         return structure
 
     @property
@@ -176,6 +195,29 @@ class Pipeline(object):
     def validate_actions(self):
         for action in self.actions:
             action.validate()
+
+    def _diagnose(self, connection):
+        """
+        Pipeline Jobs have a number of Diagnostic classes registered - all
+        supported DiagnosticAction classes should be registered with the Job.
+        If an Action.run() function reports a JobError or InfrastructureError,
+        the Pipeline calls Job.diagnose(). The job iterates through the DiagnosticAction
+        classes declared in the diagnostics list, checking if the trigger classmethod
+        matches the requested complaint. Matching diagnostics are run using the current Connection.
+        Actions generate a complaint by appending the return of the trigger classmethod
+        to the triggers list of the Job. This can be done at any point prior to the
+        exception being raised in the run function.
+        The trigger list is cleared after each diagnostic operation is complete.
+        """
+        for complaint in self.job.triggers:
+            diagnose = self.job.diagnose(complaint)
+            if diagnose:
+                connection = diagnose.run(connection, None)
+            else:
+                raise RuntimeError("No diagnosis for trigger %s" % complaint)
+        self.job.triggers = []
+        # Diagnosis is not allowed to alter the connection, do not use the return value.
+        return None
 
     def run_actions(self, connection, args=None):
         for action in self.actions:
@@ -214,6 +256,7 @@ class Pipeline(object):
             except (JobError, InfrastructureError) as exc:
                 action.errors = exc.message
                 action.results = {"fail": exc}
+                self._diagnose(connection)
                 raise exc
             # set results including retries
             if action.log_handler:
@@ -264,6 +307,8 @@ class Action(object):
         # FIXME: what about {} for default value?
         self.env = None  # FIXME make this a parameter which gets default value when first called
         self.timeout = None  # Timeout class instance, if needed.
+        self.max_retries = 1  # unless the strategy or the job parameters change this, do not retry
+        self.diagnostics = []
 
     # public actions (i.e. those who can be referenced from a job file) must
     # declare a 'class-type' name so they can be looked up.
@@ -394,6 +439,8 @@ class Action(object):
                     self.timeout = Timeout(self.name, datetime.timedelta(hours=time_int).total_seconds())
                 elif self.parameters['timeout'].endswith('s'):
                     self.timeout = Timeout(self.name, time_int)
+        if 'failure_retry' in self.parameters:
+            self.max_retries = self.parameters['failure_retry']
 
     @parameters.setter
     def parameters(self, data):
@@ -423,7 +470,8 @@ class Action(object):
         Validation includes parsing the parameters for this action for
         values not set or values which conflict.
         """
-
+        if self.internal_pipeline:
+            self.internal_pipeline.validate_actions()
         if self.errors:
             self._log("Validation failed")
             raise JobError("Invalid job data: %s\n" % '\n'.join(self.errors))
@@ -536,7 +584,7 @@ class Action(object):
             if self.err:
                 print self.err
         """
-        raise NotImplementedError("run")
+        raise NotImplementedError("run %s" % self.name)
 
     def cleanup(self):
         # FIXME: perform() does not exist, is it run()?
@@ -550,7 +598,7 @@ class Action(object):
             - error codes
             - etc
         """
-        raise NotImplementedError("cleanup")
+        raise NotImplementedError("cleanup %s" % self.name)
 
     def post_process(self):
         """
@@ -561,12 +609,13 @@ class Action(object):
         In this classs this method does nothing. It must be implemented by
         subclasses
         """
-        raise NotImplementedError("post_process")
+        raise NotImplementedError("post_process %s" % self.name)
 
     def explode(self):
         """
         serialisation support
         """
+        # FIXME: convert to generators for each particular handler
         data = {}
         members = [attr for attr in dir(self)
                    if not isinstance(attr, collections.Callable) and not attr.startswith("__")]
@@ -604,21 +653,30 @@ class RetryAction(Action):
     def __init__(self):
         super(RetryAction, self).__init__()
         self.retries = 0
-        # FIXME: have better dafault values. Should be seen somewhere in the
-        # configuration or a constant in the code.
-        self.max_retries = 5
         self.sleep = 1
+
+    def validate(self):
+        """
+        The reasoning here is that the RetryAction should be in charge of an internal pipeline
+        so that the retry logic only occurs once and applies equally to the entire pipeline
+        of the retry.
+        """
+        super(RetryAction, self).validate()
+        if not self.internal_pipeline:
+            raise RuntimeError("Retry action %s needs to implement an internal pipeline" % self.name)
 
     def run(self, connection, args=None):
         while self.retries < self.max_retries:
             try:
-                new_connection = self.pipeline.run_actions(connection)
+                new_connection = self.internal_pipeline.run_actions(connection)
                 return new_connection
             except KeyboardInterrupt:
                 self.err = "\rCancel"  # Set a useful message.
             except (JobError, InfrastructureError):
                 self.retries += 1
-                self._log("%s failed: %d of %d attempts." % (self.name, self.retries, self.max_retries))
+                msg = "%s failed: %d of %d attempts." % (self.name, self.retries, self.max_retries)
+                self.errors = msg
+                self._log(msg)
                 time.sleep(self.sleep)
             finally:
                 # TODO: QUESTION: is it the right time to cleanup?
@@ -628,6 +686,31 @@ class RetryAction(Action):
 
     def __call__(self, connection):
         self.run(connection)
+
+
+class DiagnosticAction(Action):  # pylint: disable=abstract-class-not-used
+
+    def __init__(self):
+        """
+        Base class for actions which are run only if a failure is detected.
+        Diagnostics have no level and are not intended to be added to Pipeline.
+        """
+        super(DiagnosticAction, self).__init__()
+        self.name = "diagnose"
+        self.summary = "diagnose action failure"
+        self.description = "action-specific diagnostics in case of failure"
+
+    @classmethod
+    def trigger(cls):
+        raise NotImplementedError("Define in the subclass: %s" % self.name)
+
+    def run(self, connection, args=None):
+        """
+        Log the requested diagnostic.
+        Raises NotImplementedError if subclass has omitted a trigger classmethod.
+        """
+        self._log("%s diagnostic triggered." % self.trigger())
+        return connection
 
 
 class FinalizeAction(Action):
@@ -691,7 +774,7 @@ class Deployment(object):  # pylint: disable=abstract-class-not-used
 
         This method must be implemented by subclasses.
         """
-        raise NotImplementedError("deploy")
+        raise NotImplementedError("deploy %s" % self.name)
 
     @contextmanager
     def extract_results(self):
@@ -702,7 +785,7 @@ class Deployment(object):  # pylint: disable=abstract-class-not-used
 
         Must be implemented by subclasses.
         """
-        raise NotImplementedError("extract_results")
+        raise NotImplementedError("extract_results %s" % self.name)
 
     @property
     def parameters(self):
@@ -736,7 +819,7 @@ class Deployment(object):  # pylint: disable=abstract-class-not-used
 
         Must be implemented by subclasses.
         """
-        return NotImplementedError("accepts")
+        return NotImplementedError("accepts %s" % self.name)
 
     @classmethod
     def select(cls, device, parameters):
@@ -747,7 +830,7 @@ class Deployment(object):  # pylint: disable=abstract-class-not-used
         if len(willing) == 0:
             raise NotImplementedError(
                 "No deployment strategy available for the given "
-                "device '%s'." % device.parameters['hostname'])
+                "device '%s'. %s" % (device.parameters['hostname'], self.name))
 
         # higher priority first
         compare = lambda x, y: cmp(y.priority, x.priority)
@@ -776,7 +859,7 @@ class Boot(object):
 
         Must be implemented by subclasses.
         """
-        return NotImplementedError("accepts")
+        return NotImplementedError("accepts %s" % self.name)
 
     @classmethod
     def select(cls, device, parameters):
@@ -785,7 +868,7 @@ class Boot(object):
         if len(willing) == 0:
             raise NotImplementedError(
                 "No boot strategy available for the device "
-                "'%s' with the specified job parameters" % device.parameters['hostname']
+                "'%s' with the specified job parameters. %s" % (device.parameters['hostname'], self.name)
             )
 
         # higher priority first
@@ -797,12 +880,10 @@ class Boot(object):
 
 class LavaTest(object):  # pylint: disable=abstract-class-not-used
     """
-    Allows selection of the boot method for this job within the parser.
+    Allows selection of the LAVA test method for this job within the parser.
     """
 
-    # TODO: this class might not be needed as the top level TestAction
-    # has to hand over control to the Connection. Keep in case subsequent device types need it.
-    priority = 0
+    priority = 1
 
     def __init__(self, parent):
         self.__parameters__ = {}
@@ -810,31 +891,33 @@ class LavaTest(object):  # pylint: disable=abstract-class-not-used
         self.job = parent.job
 
     @contextmanager
-    def boot(self):
+    def test(self):
         """
         This method must be implemented by subclasses.
         """
-        raise NotImplementedError("test")
+        raise NotImplementedError("test %s" % self.name)
 
     @classmethod
     def accepts(cls, device, parameters):  # pylint: disable=unused-argument
         """
-        Returns True if this deployment strategy can be used the the
+        Returns True if this Lava test strategy can be used on the
         given device and details of an image in the parameters.
 
         Must be implemented by subclasses.
         """
-        return NotImplementedError("accepts")
+        return NotImplementedError("accepts %s" % self.name)
 
     @classmethod
     def select(cls, device, parameters):
         candidates = cls.__subclasses__()
         willing = [c for c in candidates if c.accepts(device, parameters)]
         if len(willing) == 0:
-            raise NotImplementedError(
-                "No test strategy available for the device "
-                "'%s' with the specified job parameters" % device.parameters['hostname']
-            )
+            if hasattr(device, 'parameters'):
+                msg = "No test strategy available for the device "\
+                      "'%s' with the specified job parameters. %s" % (device.parameters['hostname'], self.name)
+            else:
+                msg = "No test strategy available for the device. %s" % self.name
+            raise NotImplementedError(msg)
 
         # higher priority first
         compare = lambda x, y: cmp(y.priority, x.priority)
@@ -855,7 +938,7 @@ class Image(object):  # pylint: disable=abstract-class-not-used
         """
         Subclasses must implement this method
         """
-        raise NotImplementedError("mount_rootfs")
+        raise NotImplementedError("mount_rootfs %s" % self.name)
 
 
 class Timeout(object):

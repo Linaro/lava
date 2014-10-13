@@ -27,6 +27,7 @@ import tarfile
 from uuid import uuid4
 from lava_dispatcher.pipeline.action import (
     Pipeline,
+    Action,
     RetryAction,
     JobError,
     Timeout,
@@ -34,7 +35,7 @@ from lava_dispatcher.pipeline.action import (
 from lava_dispatcher.pipeline.actions.test import TestAction
 
 
-class RepoAction(RetryAction):
+class RepoAction(Action):
 
     def __init__(self):
         super(RepoAction, self).__init__()

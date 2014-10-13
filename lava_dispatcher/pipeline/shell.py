@@ -182,7 +182,7 @@ class ShellSession(Connection):
             raise JobError("wait for prompt timed out")
 
 
-class ExpectShellSession(RetryAction):
+class ExpectShellSession(Action):
     """
     Waits for a shell connection to the device for the current job.
     """

@@ -32,7 +32,6 @@ from lava_dispatcher.pipeline.action import (
     Pipeline,
     RetryAction,
 )
-from lava_dispatcher.context import LavaContext
 
 
 class ScpDownloadAction(Action):
@@ -80,6 +79,25 @@ class FileDownloadAction(Action):
 
 class DownloaderAction(RetryAction):
     """
+    The retry pipeline for downloads.
+    """
+    def __init__(self):
+        super(DownloaderAction, self).__init__()
+        self.name = "download_retry"
+        self.description = "download with retry"
+        self.summary = "download-retry"
+
+    def populate(self):
+        self.internal_pipeline = Pipeline(parent=self, job=self.job)
+        self.internal_pipeline.add_action(DownloadHandler())
+
+    def cleanup(self):
+        # FIXME: define a cleanup
+        pass
+
+
+class DownloadHandler(Action):
+    """
     The identification of which downloader and whether to
     decompress needs to be done in the validation stage,
     with the ScpAction or HttpAction or FileAction being
@@ -90,10 +108,10 @@ class DownloaderAction(RetryAction):
     """
 
     def __init__(self):
-        super(DownloaderAction, self).__init__()
+        super(DownloadHandler, self).__init__()
         self.name = "download_action"
-        self.description = "download with retry"
-        self.summary = "download-retry"
+        self.description = "download action"
+        self.summary = "download-action"
         self.proxy = None
         self.url = None
 
@@ -195,6 +213,7 @@ class DownloaderAction(RetryAction):
             raise JobError("Unsupported url protocol scheme: %s" % url.scheme)
 
     def validate(self):
+        super(DownloadHandler, self).validate()
         self.parse()
         fname, suffix = self._url_to_fname_suffix()  # FIXME: use the context tmpdir
         if self.name not in self.data:
@@ -238,10 +257,9 @@ class DownloaderAction(RetryAction):
         return connection
 
 
-class ChecksumAction(Action):
+class ChecksumAction(Action):  # FIXME: fold into the DownloadHandler
     """
     retrieves the checksums from the dynamic data
-    *this may be folded into download*
     """
 
     def __init__(self):

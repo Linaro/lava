@@ -25,7 +25,7 @@ import glob
 from lava_dispatcher.pipeline.action import Pipeline, Action, RetryAction, JobError
 from lava_dispatcher.pipeline.test.test_basic import Factory
 from lava_dispatcher.tests.helper import LavaDispatcherTestCase
-from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
+from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction, DownloadHandler
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.mount import (
@@ -144,6 +144,8 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
         self.job = factory.create_job('sample_jobs/kvm.yaml', self.config_dir)
 
     def test_deploy_job(self):
+        # from meliae import scanner
+        # scanner.dump_all_objects('/tmp/lava-unittest.json')
         self.assertEqual(self.job.parameters['output_dir'], self.config_dir)
         self.assertEqual(self.job.pipeline.job, self.job)
         for action in self.job.pipeline.actions:
@@ -159,11 +161,12 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
         overlay = None
         unmount = None
         self.assertTrue(os.path.exists(self.job.parameters['output_dir']))
-        self.assertEqual(len(self.job.pipeline.describe().values()), 24)  # this will keep changing until KVM is complete.
+        self.assertEqual(len(self.job.pipeline.describe().values()), 28)  # this will keep changing until KVM is complete.
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
                 # check parser has created a suitable deployment
-                download = action.pipeline.children[action.pipeline][0]
+                download_retry = action.pipeline.children[action.pipeline][0]
+                download = download_retry.pipeline.children[download_retry.pipeline][0]
                 self.assertEqual(download.name, "download_action")
                 checksum = action.pipeline.children[action.pipeline][1]
                 self.assertEqual(checksum.name, "checksum_action")
@@ -177,7 +180,7 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
                 overlay = action.pipeline.children[action.pipeline][5]
                 self.assertEqual(overlay.name, "lava-overlay")
                 unmount = action.pipeline.children[action.pipeline][6]
-                self.assertEqual(unmount.name, "umount")
+                self.assertEqual(unmount.name, "umount-retry")
                 with self.assertRaises(IndexError):
                     type(action.pipeline.children[action.pipeline][7])
                 # FIXME: deployment includes overlaying the test definitions
@@ -199,7 +202,7 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
                 self.fail("No deploy action found")
         download.parse()
         self.assertEqual(download.reader, download._http_stream)
-        self.assertIsInstance(download, DownloaderAction)
+        self.assertIsInstance(download, DownloadHandler)
         self.assertIsInstance(download.log_handler, logging.FileHandler)
         self.assertIsInstance(checksum.log_handler, logging.FileHandler)
         self.assertIsInstance(mount.log_handler, logging.FileHandler)

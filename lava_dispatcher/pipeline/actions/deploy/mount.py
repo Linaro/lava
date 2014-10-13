@@ -25,6 +25,7 @@ from lava_dispatcher.pipeline.action import (
     JobError,
     InfrastructureError,
     RetryAction,
+    Action,
     Pipeline
 )
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
@@ -47,8 +48,8 @@ class OffsetAction(DeployAction):
 
     def validate(self):
         if 'download_action' not in self.data:
-            raise RuntimeError("missing download_action in parameters")
-        if 'file' not in self.data['download_action']:
+            self.errors = "missing download_action in parameters"
+        elif 'file' not in self.data['download_action']:
             self.errors = "no file specified to calculate offset"
 
     def run(self, connection, args=None):
@@ -79,7 +80,6 @@ class OffsetAction(DeployAction):
             if found:
                 self.data['download_action']['offset'] = found.group(1)
         if 'offset' not in self.data['download_action']:
-            # more reliable than checking if offset exists as offset can be zero
             raise JobError(  # FIXME: JobError needs a unit test
                 "Unable to determine offset for %s" % image
             )
@@ -95,6 +95,9 @@ class LoopCheckAction(DeployAction):
         self.summary = "check available loop back support"
 
     def validate(self):
+        if 'download_action' not in self.data:
+            raise RuntimeError("download_action:%s:102" % self.name)
+            # return  # already failed elsewhere
         if len(glob.glob('/sys/block/loop*')) <= 0:
             raise InfrastructureError("Could not mount the image without loopback devices. "
                                       "Is the 'loop' kernel module activated?")
@@ -139,7 +142,8 @@ class LoopMountAction(RetryAction):
         if 'mount_action' not in self.data:
             self.data['mount_action'] = {}
         if 'download_action' not in self.data:
-            raise RuntimeError("missing download_action in parameters")
+            raise RuntimeError("download-action:%s:148" % self.name)
+            # return
         if 'file' not in self.data['download_action']:
             self.errors = "no file specified to mount"
 
@@ -201,7 +205,10 @@ class MountAction(DeployAction):
 
     def run(self, connection, args=None):
         if self.internal_pipeline:
-            connection = self.internal_pipeline.run_actions(connection, args)
+            try:
+                connection = self.internal_pipeline.run_actions(connection, args)
+            except JobError:
+                diagnose = self.job.diagnostics()
         else:
             # FIXME: this is a bug that should not happen (using assert?)
             raise RuntimeError("Deployment failed to generate a mount pipeline.")
@@ -212,6 +219,23 @@ class UnmountAction(RetryAction):  # FIXME: contextmanager to ensure umounted on
 
     def __init__(self):
         super(UnmountAction, self).__init__()
+        self.name = "umount-retry"
+        self.description = "retry support for umount"
+        self.summary = "retry umount "
+
+    def populate(self):
+        self.internal_pipeline = Pipeline(parent=self, job=self.job)
+        self.internal_pipeline.add_action(Unmount())
+
+    def cleanup(self):
+        # FIXME: define a cleanup
+        pass
+
+
+class Unmount(Action):
+
+    def __init__(self):
+        super(Unmount, self).__init__()
         self.name = "umount"
         self.description = "unmount the test image at end of deployment"
         self.summary = "unmount image"

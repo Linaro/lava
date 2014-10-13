@@ -35,6 +35,7 @@ from lava_dispatcher import deployment_data
 # needed for the Deployment select call, despite what pylint thinks.
 from lava_dispatcher.pipeline.actions.deploy.image import DeployImage  # pylint: disable=unused-import
 from lava_dispatcher.pipeline.actions.boot.kvm import BootKVM  # pylint: disable=unused-import
+from lava_dispatcher.pipeline.actions.test.shell import TestShell  # pylint: disable=unused-import
 
 
 class JobParser(object):
@@ -92,12 +93,10 @@ class JobParser(object):
                     boot = Boot.select(device, action_data[name])(pipeline)
                     boot.action.parameters = action_data[name]
                     boot.action.yaml_line = line
-                # elif name == "test":
-                    # one TestAction per definition
-                    # for testaction in action_data[name]['definitions']:
-                    #    lavatest = LavaTest(pipeline)
-                    #    lavatest.action.parameters = testaction
-                    #    lavatest.action.yaml_line = line
+                elif name == "test":
+                    # allow for multiple base tests, e.g. Android
+                    test_method = LavaTest.select(device, action_data[name])(pipeline)
+                    test_method.action.parameters = action_data[name]
                 else:
                     # May only end up being used for submit as other actions all need strategy method objects
                     # select the specific action of this class for this job

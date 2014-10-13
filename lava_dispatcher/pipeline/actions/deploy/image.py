@@ -60,13 +60,36 @@ class DeployImageAction(DeployAction):
     def validate(self):
         self.pipeline.validate_actions()
 
+    def populate(self):
+        self.internal_pipeline = Pipeline(parent=self, job=self.job)
+        download = DownloaderAction()
+        download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
+        self.internal_pipeline.add_action(download)
+        self.internal_pipeline.add_action(ChecksumAction())
+        self.internal_pipeline.add_action(MountAction())
+        self.internal_pipeline.add_action(CustomisationAction())
+        for action_params in self.job.parameters['actions']:
+            if 'test' in action_params:
+                # FIXME: does it matter if testdef_action runs before overlay?
+                testdef_action = TestDefinitionAction()
+                testdef_action.parameters = action_params
+                self.internal_pipeline.add_action(testdef_action)
+                if 'target_group' in self.job.parameters:
+                    self.internal_pipeline.add_action(MultinodeOverlayAction())
+                if 'lmp_module' in self.job.parameters:
+                    self.internal_pipeline.add_action(LMPOverlayAction())
+                self.internal_pipeline.add_action(OverlayAction())
+        self.internal_pipeline.add_action(UnmountAction())
+
     def run(self, connection, args=None):
-        connection = super(DeployImageAction, self).run(connection, args)
-        self.pipeline.run_actions(connection, args)
+        print self.internal_pipeline.actions
+        connection = self.internal_pipeline.run_actions(connection, args)
+        return connection
 
     def cleanup(self):
         # rm temp dir
-        super(DeployImageAction, self).cleanup()
+        # super(DeployImageAction, self).cleanup()
+        pass
 
 
 class DeployImage(Deployment):
@@ -91,23 +114,7 @@ class DeployImage(Deployment):
         self.action.job = self.job
         parent.add_action(self.action)
 
-        internal_pipeline = Pipeline(parent=self.action, job=self.job)
-        internal_pipeline.add_action(DownloaderAction())
-        internal_pipeline.add_action(ChecksumAction())
-        internal_pipeline.add_action(MountAction())
-        internal_pipeline.add_action(CustomisationAction())
-        for action_params in self.job.parameters['actions']:
-            if 'test' in action_params:
-                # FIXME: does it matter if testdef_action runs before overlay?
-                testdef_action = TestDefinitionAction()
-                testdef_action.parameters = action_params
-                internal_pipeline.add_action(testdef_action)
-                if 'target_group' in self.job.parameters:
-                    internal_pipeline.add_action(MultinodeOverlayAction())
-                if 'lmp_module' in self.job.parameters:
-                    internal_pipeline.add_action(LMPOverlayAction())
-                internal_pipeline.add_action(OverlayAction())
-        internal_pipeline.add_action(UnmountAction())
+        # internal_pipeline = Pipeline(parent=self.action, job=self.job)
 
     @contextmanager
     def deploy(self):
