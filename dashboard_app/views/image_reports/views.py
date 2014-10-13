@@ -25,7 +25,7 @@ from django.contrib.auth.decorators import login_required
 from django.core import serializers
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 from django.utils.safestring import mark_safe
@@ -452,6 +452,8 @@ def image_chart_settings_update(request, name, id):
         instance = form.save()
         data = serializers.serialize('json', [instance])
         return HttpResponse(data, content_type='application/json')
+    else:
+        return HttpResponseBadRequest()
 
 
 @login_required
