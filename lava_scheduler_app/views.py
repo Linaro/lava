@@ -2231,7 +2231,7 @@ def username_list_json(request):
             {"id": user.id,
              "name": user.username,
              "label": user.username})
-    return HttpResponse(simplejson.dumps(users), mimetype='application/json')
+    return HttpResponse(simplejson.dumps(users), content_type='application/json')
 
 
 class QueueJobsView(JobTableView):
