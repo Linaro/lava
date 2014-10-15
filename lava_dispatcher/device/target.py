@@ -917,14 +917,12 @@ class Target(object):
         logging.debug("Creating tap interface: %s" % ifname)
         self.context.run_command("ip tuntap add dev %s mode tap user lavaserver" % ifname)
         self.context.run_command("ifconfig %s 0.0.0.0 promisc up" % ifname)
-        self.context.run_command("brctl addif %s %s" % (bridge,ifname))
+        self.context.run_command("brctl addif %s %s" % (bridge, ifname))
         self._bridge_configured = True
 
     def _teardown_network_bridge(self, bridge, ifname):
         logging.debug("Destroying tap interface: %s" % ifname)
-        self.context.run_command("brctl delif %s %s" % (bridge,ifname))
+        self.context.run_command("brctl delif %s %s" % (bridge, ifname))
         self.context.run_command("ifconfig %s down" % ifname)
         self.context.run_command("ip tuntap del dev %s mode tap" % ifname)
         self._bridge_configured = False
-
-
