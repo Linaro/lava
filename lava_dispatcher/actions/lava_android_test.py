@@ -43,14 +43,16 @@ class cmd_lava_android_test_run(AndroidTestAction):
             'option': {'type': 'string', 'optional': True},
             'role': {'type': 'string', 'optional': True},
             'timeout': {'type': 'integer', 'optional': True},
-        },
+            'repeat': {'type': 'integer', 'optional': True},
+            'repeat_count': {'type': 'integer', 'optional': True},
+         },
         'additionalProperties': False,
     }
 
     def test_name(self, test_name, option=None, timeout=-1):
         return super(cmd_lava_android_test_run, self).test_name() + ' (%s)' % test_name
 
-    def run(self, test_name, option=None, timeout=-1):
+    def run(self, test_name, option=None, timeout=-1, repeat_count=0):
         # Make sure in test image now
         self.check_lava_android_test_installed()
         with self.client.android_tester_session() as session:
@@ -91,7 +93,9 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
             'parser': {'type': 'string', 'optional': True},
             'role': {'type': 'string', 'optional': True},
             'timeout': {'type': 'integer', 'optional': True},
-        },
+            'repeat': {'type': 'integer', 'optional': True},
+            'repeat_count': {'type': 'integer', 'optional': True},
+         },
         'additionalProperties': False,
     }
 
@@ -105,7 +109,7 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
             return '%s (command-file=%s)' % (
                 super(cmd_lava_android_test_run_custom, self).test_name(), command_file)
 
-    def run(self, commands=None, command_file=None, parser=None, timeout=-1):
+    def run(self, commands=None, command_file=None, parser=None, timeout=-1, repeat_count=0):
         """
         :param commands: a list of commands
         :param command_file: a file containing commands
@@ -163,14 +167,16 @@ class cmd_lava_android_test_run_monkeyrunner(AndroidTestAction):
             'url': {'type': 'string'},
             'role': {'type': 'string', 'optional': True},
             'timeout': {'type': 'integer', 'optional': True},
-        },
+            'repeat': {'type': 'integer', 'optional': True},
+            'repeat_count': {'type': 'integer', 'optional': True},
+         },
         'additionalProperties': False,
     }
 
     def test_name(self, url=None, timeout=-1):
         return '%s (url=[%s])' % (super(cmd_lava_android_test_run_monkeyrunner, self).test_name(), url)
 
-    def run(self, url=None, timeout=-1):
+    def run(self, url=None, timeout=-1, repeat_count=0):
         # Make sure in test image now
         self.check_lava_android_test_installed()
         with self.client.android_tester_session() as session:

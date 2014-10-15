@@ -162,6 +162,7 @@ XMOD = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH
 
 INVALID_CHARS = " $&()\"'<>/\\|;`"
 
+repeat_cnt = 0
 
 def _get_lava_proxy(context):
     return {'http_proxy': context.config.lava_proxy,
@@ -579,6 +580,7 @@ class URLTestDefinition(object):
             self.all_params.update(_test_params_temp)
 
     def _inject_testdef_parameters(self, fout):
+        global repeat_cnt
         # inject default parameters that was defined in yaml first
         fout.write('###default parameters from yaml###\n')
         if 'params' in self.testdef:
@@ -599,6 +601,7 @@ class URLTestDefinition(object):
         fout.write('%s=\'%s\'\n' % ('LAVA_SERVER_IP',
                                     self.context.config.lava_server_ip))
         fout.write('%s=\'%s\'\n' % ('TARGET_TYPE', target_type))
+        fout.write('%s=\'%s\'\n' % ('REPEAT_COUNT', repeat_cnt))
         fout.write('######\n')
 
     def _create_target_install(self, hostdir, targetdir):
@@ -783,6 +786,8 @@ class cmd_lava_test_shell(BaseAction):
             'skip_install': {'type': 'string', 'optional': True},
             'lava_test_dir': {'type': 'string', 'optional': True},
             'lava_test_results_dir': {'type': 'string', 'optional': True},
+            'repeat': {'type': 'integer', 'optional': True},
+            'repeat_count': {'type': 'integer', 'optional': True},
         },
         'additionalProperties': False,
     }
@@ -799,8 +804,10 @@ class cmd_lava_test_shell(BaseAction):
         }
 
     def run(self, testdef_urls=None, testdef_repos=None, timeout=-1, skip_install=None,
-            lava_test_dir=None, lava_test_results_dir=None):
+            lava_test_dir=None, lava_test_results_dir=None, repeat_count=0):
         target = self.client.target_device
+        global repeat_cnt
+        repeat_cnt = repeat_count
 
         delay = target.config.test_shell_serial_delay_ms
 
