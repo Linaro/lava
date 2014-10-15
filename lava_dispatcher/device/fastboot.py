@@ -72,7 +72,7 @@ class FastbootTarget(Target):
         attempts = 0
         deployed = False
         while (attempts < deploy_attempts) and (not deployed):
-            logging.info("Deploying test image. Attempt: %d" % (attempts + 1))
+            logging.info("Deploying test image. Attempt: %d", attempts + 1)
             try:
                 self._enter_fastboot()
                 self.driver.deploy_linaro_kernel(kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
@@ -99,7 +99,7 @@ class FastbootTarget(Target):
         attempts = 0
         deployed = False
         while (attempts < deploy_attempts) and (not deployed):
-            logging.info("Deploying test image. Attempt: %d" % (attempts + 1))
+            logging.info("Deploying test image. Attempt: %d", attempts + 1)
             try:
                 self._enter_fastboot()
                 self.driver.deploy_android(boot, system, userdata, rootfstype,

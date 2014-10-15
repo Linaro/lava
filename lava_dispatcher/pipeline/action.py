@@ -436,9 +436,9 @@ class Action(object):
         std_log = logging.getLogger("ASCII")
         if type(message) is dict:
             for key, value in message.iteritems():
-                yaml_log.debug("   %s: %s" % (key, value))
+                yaml_log.debug("   %s: %s", key, value)
         else:
-            yaml_log.debug("   log: \"%s\"" % message)
+            yaml_log.debug("   log: \"%s\"", message)
         std_log.info(message)
 
     def _run_command(self, command_list, env=None):
@@ -870,10 +870,10 @@ class Connection(object):
             yaml_log = logging.getLogger("YAML")
             try:
                 os.killpg(self.raw_connection.pid, signal.SIGKILL)
-                yaml_log.debug("Finalizing child process group with PID %d" % self.raw_connection.pid)
+                yaml_log.debug("Finalizing child process group with PID %d", self.raw_connection.pid)
             except OSError:
                 connection.kill(9)
-                yaml_log.debug("Finalizing child process with PID %d" % self.raw_connection.pid)
+                yaml_log.debug("Finalizing child process with PID %d", self.raw_connection.pid)
             self.raw_connection.close()
 
 
