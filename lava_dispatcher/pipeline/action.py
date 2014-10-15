@@ -508,8 +508,7 @@ class Action(object):
             if self.err:
                 print self.err
         """
-        # FIXME: should be "raise NotImplementedError"
-        pass
+        raise NotImplementedError("run")
 
     def cleanup(self):
         # FIXME: perform() does not exist, is it run()?
@@ -523,11 +522,7 @@ class Action(object):
             - error codes
             - etc
         """
-        # FIXME: should be "raise NotImplementedError"
-        try:
-            raise
-        except:  # pylint: disable=bare-except
-            sys.exc_clear()
+        raise NotImplementedError("cleanup")
 
     def post_process(self):
         """
@@ -538,8 +533,7 @@ class Action(object):
         In this classs this method does nothing. It must be implemented by
         subclasses
         """
-        # FIXME: should be "raise NotImplementedError"
-        pass
+        raise NotImplementedError("post_process")
 
     def explode(self):
         """

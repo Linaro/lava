@@ -109,5 +109,4 @@ class NewDevice(object):
         Validates the combination of the job and the device
         *before* the Deployment actions are initialised.
         """
-        # FIXME: shoudl be raise NotImplementedError
-        pass
+        raise NotImplementedError("check_config")
