@@ -152,9 +152,8 @@ class Factory(object):
         return QEMUTarget(context, device_config)
 
     def create_fake_qemu_job(self):
-        factory = Factory()
         fake_qemu = os.path.join(os.path.dirname(__file__), '..', '..', 'tests', 'test-config', 'bin', 'fake-qemu')
-        device = factory.create_kvm_target({'qemu-binary': fake_qemu})
+        device = self.create_kvm_target({'qemu-binary': fake_qemu})
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/basics.yaml')
         self.sample_job_data = open(sample_job_file)
         self.parser = JobParser()
