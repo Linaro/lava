@@ -433,7 +433,7 @@ Adding support for new devices
 to LAVA - Board addition howto?
 Requirements for a device in LAVA
 
-What do I need to create atest image for LAVA?
+What do I need to create a test image for LAVA?
 What do I need to create a master image for LAVA?
 * 8GB SD Card
 

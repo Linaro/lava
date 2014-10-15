@@ -181,6 +181,50 @@ Pipeline construction and flow
 #. Job ends, check for errors
 #. Completed pipeline is available.
 
+Using strategy classes
+----------------------
+
+Strategies are ways of meeting the requirements of the submitted job within
+the limits of available devices and code support.
+
+If an internal pipeline would need to allow for optional actions, those
+actions still need to be idempotent. Therefore, the pipeline can include
+all actions, with each action being responsible for checking whether
+anything actually needs to be done. The populate function should avoid
+using conditionals. An explicit select function can be used instead.
+
+Whenever there is a need for a particular job to use a different Action
+based solely on job parameters or device configuration, that decision
+should occur in the Strategy selection using classmethod support.
+
+Where a class is used in lots of different strategies, identify whether
+there is a match between particular strategies always needing particular
+options within the class. At this point, the class can be split and
+particular strategies use a specialised class implementing the optional
+behaviour and calling down to the base class for the rest.
+
+If there is no clear match, for example in ``testdef.py`` where any
+particular job could use a different VCS or URL without actually being
+a different strategy, a select function is preferable. A select handler
+allows the pipeline to contain only classes supporting git repositories
+when only git repositories are in use for that job.
+
+This results in more classes but a cleaner (and more predictable)
+pipeline construction.
+
+Lava test shell overlays
+========================
+
+The overlay is a standard addition to a LAVA test and is handled as a
+single unit. Using idempotent actions, the overlay can support LMP or
+MultiNode or other custom requirements without requiring this support
+to be added to all overlays. The overlay is created during the deploy
+strategy and specific deployments can override the ``ApplyOverlayAction``
+to unpack the overlay tarball into the test during the deployment phase.
+The tarball itself remains in the output directory and becomes part of
+the test records. The checksum of the overlay is added to the test job
+log.
+
 Pipeline error handling
 =======================
 
@@ -693,6 +737,33 @@ over the connection. This role is taken on by the internal SignalDirector
 within each Connection. Unlike the old model, Connections have their
 own directors which takes the multinode and LMP workload out of the
 singlenode operations.
+
+Using connections
+-----------------
+
+Construct your pipeline to use Actions in the order:
+
+* Prepare any overlays or commands or context data required later
+* Start a new connection
+* Issue the command which changes device state
+* Wait for the specified prompt on the new connection
+* Issue the commands desired over the new connection
+
+.. note:: There may be several Retry actions necessary within these
+          steps.
+
+So, for a UBoot operation, this results in a pipeline like:
+
+* UBootCommandOverlay - substitutes dynamic and device-specific data
+  into the UBoot command list specified in the device configuration.
+* ConnectDevice - establishes a serial connection to the device, as
+  specified by the device configuration
+* UBootRetry - wraps the subsequent actions in a retry
+
+ * UBootInterrupt - sets the ``Hit any key`` prompt in a new connection
+ * ResetDevice - sends the reboot command to the device
+ * ExpectShellSession - waits for the specified prompt to match
+ * UBootCommandsAction - issues the commands to UBoot
 
 Using debug logs
 ================
