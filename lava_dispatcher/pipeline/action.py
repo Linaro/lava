@@ -872,7 +872,7 @@ class Connection(object):
                 os.killpg(self.raw_connection.pid, signal.SIGKILL)
                 yaml_log.debug("Finalizing child process group with PID %d", self.raw_connection.pid)
             except OSError:
-                connection.kill(9)
+                self.raw_connection.kill(9)
                 yaml_log.debug("Finalizing child process with PID %d", self.raw_connection.pid)
             self.raw_connection.close()
 
