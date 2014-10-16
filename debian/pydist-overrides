@@ -16,4 +16,4 @@ psycopg2 python-psycopg2; PEP386
 simplejson python-simplejson; PEP386
 twisted python-twisted; PEP386
 dateutil python-dateutil; PEP386
-
+netifaces python-netifaces; PEP386
