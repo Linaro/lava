@@ -171,14 +171,21 @@ def _get_testdef_git_repo(testdef_repo, tmpdir, revision, proxy_env):
     cwd = os.getcwd()
     gitdir = os.path.join(tmpdir, 'gittestrepo')
     try:
-        subprocess.check_call(['git', 'clone', testdef_repo, gitdir],
-                              env=proxy_env)
+        subprocess.check_output(['git', 'clone', testdef_repo, gitdir],
+                                env=proxy_env, stderr=subprocess.STDOUT)
         if revision:
             os.chdir(gitdir)
-            subprocess.check_call(['git', 'checkout', revision])
+            subprocess.check_output(['git', 'checkout', revision],
+                                    stderr=subprocess.STDOUT)
         return gitdir
-    except Exception as e:
-        logging.error("Unable to get test definition from git (%s)" % (testdef_repo))
+    except subprocess.CalledProcessError as e:
+        logging.error("Unable to get test definition from git (%s)", (testdef_repo))
+        for line in e.output.split('\n'):
+            if line:
+                logging.debug("  | %s", line)
+        raise RuntimeError("Unable to get test definition from git (%s)" % (testdef_repo))
+    except Exception:
+        logging.error("Unable to get test definition from git (%s)", (testdef_repo))
         raise RuntimeError("Unable to get test definition from git (%s)" % (testdef_repo))
     finally:
         os.chdir(cwd)
@@ -193,13 +200,19 @@ def _get_testdef_bzr_repo(testdef_repo, tmpdir, revision, proxy_env):
             revision = '-1'
 
         proxy_env.update({'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'})
-        subprocess.check_call(
-            ['bzr', 'branch', '-r', revision, testdef_repo, bzrdir],
-            env=proxy_env)
+        subprocess.check_output(['bzr', 'branch', '-r', revision, testdef_repo,
+                                 bzrdir], env=proxy_env)
         return bzrdir
+    except subprocess.CalledProcessError as e:
+        logging.error("Unable to get test definition from bzr (%s)", (testdef_repo))
+        for line in e.output.split('\n'):
+            if line:
+                logging.debug("  | %s", line)
+        raise RuntimeError("Unable to get test definition from bzr (%s)", (testdef_repo))
+
     except Exception as e:
-        logging.error("Unable to get test definition from bzr (%s)" % (testdef_repo))
-        raise RuntimeError("Unable to get test definition from bzr (%s)" % (testdef_repo))
+        logging.error("Unable to get test definition from bzr (%s)", (testdef_repo))
+        raise RuntimeError("Unable to get test definition from bzr (%s)", (testdef_repo))
 
 
 def _get_testdef_tar_repo(testdef_repo, tmpdir):
