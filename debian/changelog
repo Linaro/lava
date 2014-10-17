@@ -1,3 +1,13 @@
+lava-server (2014.09.1-1) unstable; urgency=medium
+
+  * New hotfix release cherry-picking upstream fixes,
+    reviews 3346, 3345, 3347, 3348 and 3331.
+    Includes fixes for django-tables2 update on filter
+    tables, multinode scheduling and a regression in
+    filter charts.
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 20 Oct 2014 18:00:39 +0100
+
 lava-server (2014.09-1) unstable; urgency=medium
 
   * New upstream production release

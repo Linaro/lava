@@ -1,5 +1,6 @@
 # Compulsory line, this is a version 3 file
 version=3
 
-http://releases.linaro.org/latest/components/lava/lava-server_(.*).tar.gz
+#http://releases.linaro.org/latest/components/lava/lava-server_(.*).tar.gz
 
+https://git.linaro.org/lava/lava-server.git/tags /lava/lava-server.git/log/refs/tags/(.*)
