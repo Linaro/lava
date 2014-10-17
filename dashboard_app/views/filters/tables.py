@@ -18,7 +18,7 @@
 
 import datetime
 import operator
-
+from collections import OrderedDict
 from django.conf import settings
 from django.template import defaultfilters
 from django.utils.html import escape
@@ -226,21 +226,10 @@ class BundleColumn(tables.Column):
                          + escape(record.bundle.content_filename) + '</a>')
 
 
-def insert_column(columns, index, key, value):
-    if key in columns.keyOrder:
-        n = columns.keyOrder.index(key)
-        del columns.keyOrder[n]
-        if n < index:
-            index -= 1
-        columns.keyOrder.insert(index, key)
-    columns.__setitem__(key, value)
-
-
 class FilterPassTable(LavaTable):
 
-    tag = tables.Column()
-
     def __init__(self, data, match_maker, *args, **kwargs):
+        self.base_columns['tag'] = tables.Column()
         self.base_columns['tag'].verbose_name = match_maker.key_name
         tag_col = self.base_columns.pop('tag')
         tag_col.accessor = match_maker.key
@@ -251,12 +240,12 @@ class FilterPassTable(LavaTable):
         for i, t in enumerate(reversed(match_maker.filter_data['tests'])):
             if len(t['test_cases']) == 0:
                 col = TestRunColumn(mark_safe(t['test'].test_id))
-                insert_column(self.base_columns, 0, 'test_run_%s' % i, col)
+                self.base_columns['test_run_%s' % i] = col
             elif len(t['test_cases']) == 1:
                 tc = t['test_cases'][0]
                 n = t['test'].test_id + ':' + tc.test_case_id
                 col = SpecificCaseColumn(tc, match_maker=match_maker, verbose_name=n)
-                insert_column(self.base_columns, 0, 'test_run_%s_case' % i, col)
+                self.base_columns['test_run_%s_case' % i] = col
             else:
                 col0 = SpecificCaseColumn(t['test_cases'][0], match_maker=match_maker)
                 col0.in_group = True
@@ -264,13 +253,13 @@ class FilterPassTable(LavaTable):
                 col0.group_length = len(t['test_cases'])
                 col0.group_name = mark_safe(t['test'].test_id)
                 self.complex_header = True
-                insert_column(self.base_columns, 0, 'test_run_%s_case_%s' % (i, 0), col0)
+                self.base_columns['test_run_%s_case_%s' % (i, 0)] = col0
                 for j, tc in enumerate(t['test_cases'][1:], 1):
                     col = SpecificCaseColumn(tc, match_maker=match_maker)
                     col.in_group = True
                     col.first_in_group = False
-                    insert_column(self.base_columns, j, 'test_run_%s_case_%s' % (i, j), col)
-        insert_column(self.base_columns, 0, 'tag', tag_col)
+                    self.base_columns['test_run_%s_case_%s' % (i, j)] = col
+        self.base_columns['tag'] = tag_col
         super(FilterPassTable, self).__init__(data, *args, **kwargs)
         self.length = 25
         self.template = 'dashboard_app/filter_results_table.html'
@@ -291,20 +280,19 @@ class FilterPassTable(LavaTable):
 
 class FilterSummaryTable(LavaTable):
 
-    tag = tables.Column()
-
     def __init__(self, data, match_maker, *args, **kwargs):
+        self.base_columns['tag'] = tables.Column()
         self.base_columns['tag'].verbose_name = match_maker.key_name
         tag_col = self.base_columns.pop('tag')
         tag_col.accessor = match_maker.key
         self.complex_header = False
-        total = TestSummaryColumn(total=True)
-        insert_column(self.base_columns, 0, 'total', total)
-        passes = TestSummaryColumn()
-        insert_column(self.base_columns, 0, 'passes', passes)
         bundle_col = BundleTestColumn(verbose_name=mark_safe("Bundle(s)"))
-        insert_column(self.base_columns, 0, 'bundle', bundle_col)
-        insert_column(self.base_columns, 0, 'tag', tag_col)
+        self.base_columns['bundle'] = bundle_col
+        total = TestSummaryColumn(total=True)
+        self.base_columns['total'] = total
+        passes = TestSummaryColumn()
+        self.base_columns['passes'] = passes
+        self.base_columns['tag'] = tag_col
         super(FilterSummaryTable, self).__init__(data, *args, **kwargs)
         self.length = 25
         self.template = 'dashboard_app/filter_results_table.html'
