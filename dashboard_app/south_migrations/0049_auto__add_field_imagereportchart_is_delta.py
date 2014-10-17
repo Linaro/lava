@@ -13,11 +13,9 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
 
-
     def backwards(self, orm):
         # Deleting field 'ImageReportChart.is_delta'
         db.delete_column(u'dashboard_app_imagereportchart', 'is_delta')
-
 
     models = {
         u'auth.group': {
