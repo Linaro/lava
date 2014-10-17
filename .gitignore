@@ -9,3 +9,4 @@ versiontools-*egg
 *.pyc
 doc/_build
 lava_server/precious
+django.log
