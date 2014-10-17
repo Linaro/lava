@@ -238,6 +238,7 @@ case "$1" in
         # Allow lavaserver to write to all the log files
         chmod u+rXs /var/log/lava-server/
         # Allow users in the adm group to read the scheduler logs
+        touch /var/log/lava-server/lava-scheduler.log
         chgrp adm /var/log/lava-server/lava-scheduler.log
         chmod g+rXs /var/log/lava-server/
         # Allow lava user to write the secret key
