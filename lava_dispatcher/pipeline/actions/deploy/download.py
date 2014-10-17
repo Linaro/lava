@@ -91,10 +91,6 @@ class DownloaderAction(RetryAction):
         self.internal_pipeline = Pipeline(parent=self, job=self.job)
         self.internal_pipeline.add_action(DownloadHandler())
 
-    def cleanup(self):
-        # FIXME: define a cleanup
-        pass
-
 
 class DownloadHandler(Action):
     """
@@ -138,8 +134,8 @@ class DownloadHandler(Action):
             handlers = [urllib2.ProxyHandler({'http': '%s' % self.proxy})]
         opener = urllib2.build_opener(*handlers)
 
-        if self.cookies:
-            opener.addheaders.append(('Cookie', self.cookies))
+        # if self.cookies:
+        #    opener.addheaders.append(('Cookie', self.cookies))
 
         try:
             url = urllib2.quote(self.url.geturl(), safe=":/")
@@ -222,7 +218,7 @@ class DownloadHandler(Action):
 
     def run(self, connection, args=None):
         self.parse()  # FIXME: do this in the deployment strategy
-        self.cookies = self.job.context.config.lava_cookies
+        # self.cookies = self.job.context.config.lava_cookies  # FIXME: work out how to restore
         fname, suffix = self._url_to_fname_suffix()  # FIXME: use the context tmpdir
         if os.path.exists(fname):
             self._log("development shortcut")  # TODO: remove

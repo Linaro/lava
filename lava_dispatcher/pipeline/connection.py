@@ -19,10 +19,12 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+import time
+import pexpect
 import signal
 import logging
 import decimal
-from lava_dispatcher.pipeline.action import JobError
+from lava_dispatcher.pipeline.action import TestError
 
 
 class BaseSignalHandler(object):
@@ -58,10 +60,8 @@ class BaseSignalHandler(object):
 
 class SignalMatch(object):
 
-    def __init__(self, logger):
-        self.logger = logger
-
     def match(self, data, fixupdict=None):
+        yaml_log = logging.getLogger("YAML")
         if not fixupdict:
             fixupdict = {}
 
@@ -75,27 +75,25 @@ class SignalMatch(object):
                 except decimal.InvalidOperation:
                     ret = res['measurement']
                     del res['measurement']
-                    raise JobError("Invalid measurement %s", ret)
+                    raise TestError("Invalid measurement %s", ret)
 
             elif key == 'result':
                 if res['result'] in fixupdict:
                     res['result'] = fixupdict[res['result']]
                 if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
                     res['result'] = 'unknown'
-                    self.logger.warning('Setting result to "unknown"')
-                    raise JobError('Bad test result: %s', res['result'])
+                    yaml_log.debug('Setting result to "unknown"')
+                    raise TestError('Bad test result: %s', res['result'])
 
         if 'test_case_id' not in res:
-            raise JobError(
-                """Test case results without test_case_id (probably a sign of an """
-                """incorrect parsing pattern being used): %s""", res)
+            raise TestError("Test case results without test_case_id (probably a sign of an "
+                            "incorrect parsing pattern being used): %s", res)
 
         if 'result' not in res:
-            self.logger.warning('Setting result to "unknown"')
+            yaml_log.debug('Setting result to "unknown"')
             res['result'] = 'unknown'
-            raise JobError(
-                """Test case results without result (probably a sign of an """
-                """incorrect parsing pattern being used): %s""", res)
+            raise TestError("Test case results without result (probably a sign of an "
+                            "incorrect parsing pattern being used): %s", res)
 
         return res
 
@@ -122,7 +120,7 @@ class Connection(object):
         self.device = job.device
         self.job = job
         # provide access to the context data of the running job
-        self.data = self.job.context.pipeline_data
+        self.data = self.job.context
         self.raw_connection = raw_connection
         self.results = {}
         self.match = None
@@ -140,3 +138,112 @@ class Connection(object):
                 self.raw_connection.kill(9)
                 yaml_log.debug("Finalizing child process with PID %d", self.raw_connection.pid)
             self.raw_connection.close()
+
+
+# FIXME: move to utils
+def wait_for_prompt(connection, prompt_pattern, timeout):
+    # One of the challenges we face is that kernel log messages can appear
+    # half way through a shell prompt.  So, if things are taking a while,
+    # we send a newline along to maybe provoke a new prompt.  We wait for
+    # half the timeout period and then wait for one tenth of the timeout
+    # 6 times (so we wait for 1.1 times the timeout period overall).
+    prompt_wait_count = 0
+    if timeout == -1:
+        timeout = connection.timeout
+    partial_timeout = timeout / 2.0
+    yaml_log = logging.getLogger("YAML")
+    while True:
+        try:
+            connection.expect(prompt_pattern, timeout=partial_timeout)
+        except pexpect.TIMEOUT:
+            if prompt_wait_count < 6:
+                yaml_log.debug('Sending newline in case of corruption.')
+                prompt_wait_count += 1
+                partial_timeout = timeout / 10
+                connection.sendline('')
+                continue
+            else:
+                raise
+        else:
+            break
+
+
+class CommandRunner(object):
+    """
+    A convenient way to run a shell command and wait for a shell prompt.
+
+    Higher level functions must be done elsewhere, e.g. using Diagnostics
+    """
+
+    def __init__(self, connection, prompt_str, prompt_str_includes_rc):
+        """
+
+        :param connection: A pexpect.spawn-like object.
+        :param prompt_str: The shell prompt to wait for.
+        :param prompt_str_includes_rc: Whether prompt_str includes a pattern
+            matching the return code of the command.
+        """
+        self._connection = connection
+        self._prompt_str = prompt_str
+        self._prompt_str_includes_rc = prompt_str_includes_rc
+        self.match_id = None
+        self.match = None
+
+    def wait_for_prompt(self, timeout=-1):
+        wait_for_prompt(self._connection, self._prompt_str, timeout)
+
+    def get_connection(self):
+        return self._connection
+
+    def run(self, cmd, response=None, timeout=-1,
+            failok=False, wait_prompt=True, log_in_host=None):
+        """Run `cmd` and wait for a shell response.
+
+        :param cmd: The command to execute.
+        :param response: A pattern or sequences of patterns to pass to
+            .expect().
+        :param timeout: How long to wait for 'response' (if specified) and the
+            shell prompt, defaulting to forever.
+        :param failok: The command can fail or not, if it is set False and
+            command fail, an OperationFail exception will raise
+        :param log_in_host: If set, the input and output of the command will be
+            logged in it
+        :return: The exit value of the command, if wait_for_rc not explicitly
+            set to False during construction.
+        """
+        self._connection.empty_buffer()
+        if log_in_host is not None:
+            self._connection.logfile = open(log_in_host, "a")
+        self._connection.sendline(cmd)
+        start = time.time()
+        if response is not None:
+            self.match_id = self._connection.expect(response, timeout=timeout)
+            self.match = self._connection.match
+            if self.match == pexpect.TIMEOUT:
+                return None
+            # If a non-trivial timeout was specified, it is held to apply to
+            # the whole invocation, so now reduce the time we'll wait for the
+            # shell prompt.
+            if timeout > 0:
+                timeout -= time.time() - start
+                # But not too much; give at least a little time for the shell
+                # prompt to appear.
+                if timeout < 1:
+                    timeout = 1
+        else:
+            self.match_id = None
+            self.match = None
+
+        if wait_prompt:
+            self.wait_for_prompt(timeout)
+
+            if self._prompt_str_includes_rc:
+                return_code = int(self._connection.match.group(1))
+                if return_code != 0 and not failok:
+                    raise TestError("executing %r failed with code %s" % (cmd, return_code))
+            else:
+                return_code = None
+        else:
+            return_code = None
+
+        return return_code

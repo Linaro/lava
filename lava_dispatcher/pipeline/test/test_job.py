@@ -267,11 +267,6 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
         self.assertIsNotNone(overlay.parameters['deployment_data']['lava_test_sh_cmd'])
         self.assertEqual(overlay.parameters['deployment_data']['distro'], 'debian')
         self.assertIsNotNone(overlay.parameters['deployment_data']['lava_test_results_part_attr'])
-        # look up the root_part element of the device config and ensure it is not None
-        self.assertIsNotNone(getattr(overlay.job.device.config,
-                                     overlay.parameters['deployment_data']['lava_test_results_part_attr']))
-        self.assertIsNotNone(getattr(overlay.job.device.config,
-                                     overlay.parameters['deployment_data']['lava_test_results_part_attr']))
         self.assertIsNotNone(glob.glob(os.path.join(overlay.lava_test_dir, 'lava-*')))
 
     def test_kvm_basic_boot(self):

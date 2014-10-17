@@ -188,8 +188,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(deploy.action.max_retries, 3)
         fakepipeline.add_action(deploy.action)
         self.assertIsNone(fakepipeline.validate_actions())
-        with self.assertRaises(NotImplementedError):
-            fakepipeline.run_actions(None, None)
+        fakepipeline.run_actions(None, None)
         self.assertIsNotNone(fakepipeline.errors)
 
     def test_internal_retry(self):

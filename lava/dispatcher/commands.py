@@ -3,7 +3,6 @@ import json
 import logging
 import os
 import sys
-import yaml
 
 from json_schema_validator.errors import ValidationError
 from lava.tool.command import Command
@@ -13,8 +12,7 @@ import lava_dispatcher.config
 from lava_dispatcher.config import get_config, get_device_config, list_devices
 from lava_dispatcher.job import LavaTestJob, validate_job_data
 from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.context import LavaContext
-from lava_dispatcher.pipeline.action import Device
+from lava_dispatcher.pipeline.action import PipelineContext
 from lava_dispatcher.pipeline.device import NewDevice
 
 
@@ -73,8 +71,13 @@ def run_legacy_job(job_data, oob_file, config, output_dir, validate):
 
 
 def get_pipeline_runner(job):
+    """
+    Accepts a Pipeline job created by the pipeline parser which will have
+    parameters populated by the parser.
+    """
     # additional arguments are now inside the context
 
+    # FIXME: drop outdated arguments, job_data, config and output_dir
     def run_pipeline_job(job_data, oob_file, config, output_dir, validate_only):
         # pipeline actions will add their own handlers.
         yaml_log = logging.getLogger("YAML")
@@ -87,6 +90,7 @@ def get_pipeline_runner(job):
         stdhandler.setFormatter(formatter)
         std_log.addHandler(stdhandler)
 
+        # always validate every pipeline before attempting to run.
         try:
             job.validate(simulate=validate_only)
             if not validate_only:
@@ -95,6 +99,13 @@ def get_pipeline_runner(job):
             yaml_log.debug("   %s", e)
             sys.exit(2)
     return run_pipeline_job
+
+
+def is_pipeline_job(filename):
+    # FIXME: use the schema once it is available
+    if filename.lower().endswith('.yaml') or filename.lower().endswith('.yml'):
+        return True
+    return False
 
 
 class dispatch(DispatcherCommand):
@@ -132,6 +143,9 @@ class dispatch(DispatcherCommand):
         )
 
     def invoke(self):
+        """
+        Entry point for lava dispatch, after the arguments have been parsed.
+        """
 
         if self.args.oob_fd:
             oob_file = os.fdopen(self.args.oob_fd, 'w')
@@ -147,17 +161,24 @@ class dispatch(DispatcherCommand):
         FORMAT = '<LAVA_DISPATCHER>%(asctime)s %(levelname)s: %(message)s'
         DATEFMT = '%Y-%m-%d %I:%M:%S %p'
         logging.basicConfig(format=FORMAT, datefmt=DATEFMT)
-        try:
-            self.config = get_config()
-        except CommandError as e:
-            if self.args.output_dir:
-                reporter = os.path.join(self.args.output_dir, "output.txt")
-                with open(reporter, 'a') as f:
-                    f.write("Configuration error: %s\n" % e)
-            else:
-                print(e)
-            exit(1)
-        logging.root.setLevel(self.config.logging_level)
+        if is_pipeline_job(self.args.job_file):
+            # Branch point for the pipeline code - currently reliant on a simple filename
+            # extension match.
+            self.config = None  # external config is loaded on-demand by the pipeline
+            # pipeline *always* logs at debug level, so do not set from config.
+        else:
+            try:
+                self.config = get_config()
+            except CommandError as e:
+                if self.args.output_dir:
+                    reporter = os.path.join(self.args.output_dir, "output.txt")
+                    with open(reporter, 'a') as f:
+                        f.write("Configuration error: %s\n" % e)
+                else:
+                    print e
+                exit(1)
+            # pipeline *always* logs at debug level
+            logging.root.setLevel(self.config.logging_level)
 
         # Set process id if job-id was passed to dispatcher
         if self.args.job_id:
@@ -194,20 +215,24 @@ class dispatch(DispatcherCommand):
         job_runner(job_data, oob_file, self.config, self.args.output_dir, self.args.validate)
 
     def parse_job_file(self, filename, oob_file):
-        if filename.lower().endswith('.yaml') or filename.lower().endswith('.yml'):
+        """
+        Uses the parsed device_config instead of the old Device class
+        so it can fail before the Pipeline is made.
+        Avoids loading all configuration for all supported devices for every job.
+        """
+        if is_pipeline_job(filename):
+            # Prepare the pipeline from the file using the parser.
 
-            device = NewDevice(self.args.target)
-            # FIXME: paths not standardised, so can't work from the command line yet.
+            device = NewDevice(self.args.target)  # DeviceParser
+            # FIXME: system paths are not standardised, so needs local clone to work on the command line
             if not device.parameters:
-                device = Device(self.args.target)
+                raise RuntimeError("Pipeline does not support %s" % self.args.target)
             parser = JobParser()
-            # FIXME: use the parsed device_config instead of the old Device class so it can fail before the Pipeline is made.
             job = parser.parse(open(filename), device, output_dir=self.args.output_dir)
+            # FIXME: NewDevice schema needs a validation parser
             # device.check_config(job)
             if 'target_group' in job.parameters:
                 raise RuntimeError("Pipeline dispatcher does not yet support MultiNode")
-            # TODO: job.parameters isn't really needed in the call to the context, remove later.
-            job.context = LavaContext(self.args.target, self.config, oob_file, job.parameters, self.args.output_dir)
             return get_pipeline_runner(job), job.parameters
 
         # everything else is assumed to be JSON

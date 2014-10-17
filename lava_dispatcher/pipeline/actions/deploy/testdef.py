@@ -28,9 +28,7 @@ from uuid import uuid4
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,
-    RetryAction,
     JobError,
-    Timeout,
 )
 from lava_dispatcher.pipeline.actions.test import TestAction
 
@@ -275,7 +273,7 @@ class BzrRepoAction(RepoAction):
             self.testdef = yaml.safe_load(test_file)
 
         # set testdef metadata in base class
-        self.store_testdef(testdef, revision)
+        self.store_testdef(self.testdef, revision)
 
         return connection
 

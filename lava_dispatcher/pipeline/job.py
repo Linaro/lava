@@ -26,13 +26,14 @@ import subprocess
 from collections import OrderedDict
 from lava_dispatcher.utils import rmtree
 from lava_dispatcher.pipeline.diagnostics import DiagnoseNetwork
+from lava_dispatcher.pipeline.action import PipelineContext
 
 
 class Job(object):
     """
     Populated by the parser, the Job contains all of the
     Actions and their pipelines.
-    parameters provides:
+    parameters provides the immutable data about this job:
         action_timeout
         job_name
         priority
@@ -41,15 +42,16 @@ class Job(object):
         logging_level
         job_timeout
     Job also provides the primary access to the Device.
+    The NewDevice class only loads the specific configuration of the
+    device for this job - one job, one device.
     """
 
     def __init__(self, parameters):
         self.device = None
         self.parameters = parameters
-        self.__context__ = None
+        self.__context__ = PipelineContext()
         self.pipeline = None
         self.actions = None
-        self._scratch_dir = None
         self.connection = None
         self.triggers = []  # actions can add trigger strings to the run a diagnostic
         self.diagnostics = [
@@ -62,11 +64,11 @@ class Job(object):
 
     @property
     def context(self):
-        return self.__context__
+        return self.__context__.pipeline_data
 
     @context.setter
     def context(self, data):
-        self.__context__ = data
+        self.__context__.pipeline_data.update(data)
 
     def diagnose(self, trigger):
         """
@@ -81,7 +83,6 @@ class Job(object):
 
     def describe(self):
         structure = OrderedDict()
-        # FIXME: port to the updated Device configuration
         structure['device'] = {
             'parameters': self.device.parameters
         }
@@ -92,8 +93,6 @@ class Job(object):
         structure.update(self.pipeline.describe())
         return structure
 
-    # FIXME: what about having one base class for all the classes that have
-    # (prepare, validate, run, cleanup)?
     def validate(self, simulate=False):
         """
         Needs to validate the parameters
@@ -108,6 +107,9 @@ class Job(object):
         self.pipeline.validate_actions()
 
     def run(self):
+        """
+        Top level routine for the entire life of the Job.
+        """
         self.pipeline.run_actions(self.connection)  # FIXME: some Deployment methods may need to set a Connection.
         # FIXME how to get rootfs with multiple deployments, and at arbitrary
         # points in the pipeline?
@@ -137,10 +139,3 @@ class Job(object):
         atexit.register(rmtree, tmpdir)
         os.chmod(tmpdir, 0o755)
         return tmpdir
-
-    @property
-    def scratch_dir(self):
-        if self._scratch_dir is None:
-            self._scratch_dir = self.mkdtemp(
-                self.context.config.lava_image_tmpdir)
-        return self._scratch_dir

@@ -18,23 +18,17 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import sys
 import os
 import time
-from StringIO import StringIO
 import unittest
-import yaml
 
-from lava_dispatcher.pipeline import Pipeline, Action
+from lava_dispatcher.pipeline.action import Pipeline, Action
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.job import Job
-from lava_dispatcher.tests.helper import create_device_config, create_config
-from lava_dispatcher.config import get_config
-from lava_dispatcher.context import LavaContext
-from lava_dispatcher.device.qemu import QEMUTarget
+from lava_dispatcher.pipeline.device import NewDevice
 
 
-class TestAction(unittest.TestCase):
+class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def test_references_a_device(self):
         device = object()
@@ -43,23 +37,30 @@ class TestAction(unittest.TestCase):
         self.assertIs(cmd.device, device)
 
 
-class TestPipelineInit(unittest.TestCase):
+class TestPipelineInit(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     class FakeAction(Action):
 
         def __init__(self):
             self.ran = False
-            super(FakeAction, self).__init__(None)
+            super(TestPipelineInit.FakeAction, self).__init__()
 
         def run(self, connection, args=None):
             self.ran = True
+
+        def post_process(self):
+            raise NotImplementedError("invalid")
 
     def setUp(self):
         self.sub0 = TestPipelineInit.FakeAction()
         self.sub1 = TestPipelineInit.FakeAction()
 
+    def test_pipeline_init(self):
+        self.assertIsNotNone(self.sub0)
+        self.assertIsNotNone(self.sub1)
 
-class TestJobParser(unittest.TestCase):
+
+class TestJobParser(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         factory = Factory()
@@ -106,7 +107,7 @@ class TestJobParser(unittest.TestCase):
 #        self.assertIsInstance(deploy_action, DeployAction)
 
 
-class TestValidation(unittest.TestCase):
+class TestValidation(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def test_action_is_valid_if_there_are_not_errors(self):
         action = Action()
@@ -137,36 +138,20 @@ class Factory(object):
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
-    def create_kvm_target(self, extra_device_config=None):
-        if not extra_device_config:
-            extra_device_config = {}
-        create_config('lava-dispatcher.conf', {})
-
-        device_config_data = {'device_type': 'kvm'}
-        device_config_data.update(extra_device_config)
-        device_config = create_device_config('fakekvm', device_config_data)  # use a device name unlikely to exist
-
-        dispatcher_config = get_config()
-
-        context = LavaContext('fakekvm', dispatcher_config, None, None, None)
-        return QEMUTarget(context, device_config)
-
     def create_fake_qemu_job(self):
-        fake_qemu = os.path.join(os.path.dirname(__file__), '..', '..', 'tests', 'test-config', 'bin', 'fake-qemu')
-        device = self.create_kvm_target({'qemu-binary': fake_qemu})
+        device = NewDevice('kvm01')
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/basics.yaml')
-        self.sample_job_data = open(sample_job_file)
-        self.parser = JobParser()
-        job = self.parser.parse(self.sample_job_data, device)
+        sample_job_data = open(sample_job_file)
+        parser = JobParser()
+        job = parser.parse(sample_job_data, device)
         return job
 
     def create_job(self, filename, output_dir=None):
-        device = self.create_kvm_target()
+        device = NewDevice('kvm01')
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
-        self.sample_job_data = open(kvm_yaml)
-        self.parser = JobParser()
-        job = self.parser.parse(self.sample_job_data, device, output_dir=output_dir)
-        job.context = LavaContext(device.config.hostname, get_config(), sys.stderr, job.parameters, '/tmp')
+        sample_job_data = open(kvm_yaml)
+        parser = JobParser()
+        job = parser.parse(sample_job_data, device, output_dir=output_dir)
         return job
 
 
@@ -298,6 +283,7 @@ class TestPipeline(unittest.TestCase):
     def test_simulated_action(self):
         factory = Factory()
         job = factory.create_job('sample_jobs/basics.yaml')
+        self.assertIsNotNone(job)
         # uncomment to see the YAML dump of the pipeline.
         # print yaml.dump(job.pipeline.describe())
 
@@ -350,6 +336,7 @@ class TestFakeActions(unittest.TestCase):
                 self.called = False
                 super(PostProcess, self).__init__()
                 self.name = "post-process"
+                # FIXME: process the pipeline argument
 
             def post_process(self):
                 self.called = True
@@ -361,6 +348,7 @@ class TestFakeActions(unittest.TestCase):
         self.assertTrue(post_process.called)
 
     def test_keep_connection(self):
+
         class KeepConnection(Action):
             def __init__(self):
                 super(KeepConnection, self).__init__()
@@ -368,6 +356,9 @@ class TestFakeActions(unittest.TestCase):
 
             def run(self, connection, args=None):
                 pass
+
+            def post_process(self):
+                raise NotImplementedError("invalid")
 
         pipe = Pipeline()
         pipe.add_action(KeepConnection())

@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import sys
 from lava_dispatcher.pipeline.action import (
     Boot,
     Pipeline,
@@ -48,8 +47,6 @@ class BootKVM(Boot):
         self.action.job = self.job
         parent.add_action(self.action)
 
-        # internal_pipeline = Pipeline(parent=self.action, job=self.job)
-
     @classmethod
     def accepts(cls, device, parameters):
         # FIXME: needs to do more work with job parameters before accepting
@@ -77,11 +74,8 @@ class BootQEMUImageAction(BootAction):
             self.internal_pipeline.add_action(AutoLoginAction())
         self.internal_pipeline.add_action(ExpectShellSession())
 
-    def cleanup(self):
-        # FIXME: anything useful to do?
-        pass
 
-
+# FIXME: make this a RetryAction
 class BootQemuRetry(Action):
 
     def __init__(self):
@@ -98,7 +92,7 @@ class BootQemuRetry(Action):
         Simple replacement for the `which` command found on
         Debian based systems.
         """
-        for dirname in sys.path:
+        for dirname in os.environ['PATH'].split(':'):
             candidate = os.path.join(dirname, path)
             if match(candidate):
                 return candidate
@@ -129,6 +123,7 @@ class BootQemuRetry(Action):
                 self.errors = "Invalid parameters"
 
     def run(self, connection, args=None):
+        # FIXME: this avoids the base class Retry functionality.
         if 'download_action' not in self.data:
             raise RuntimeError("Value for download_action is missing from %s" % self.name)
         self.command.extend(["-hda", self.data['download_action']['file']])

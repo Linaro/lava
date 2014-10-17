@@ -30,8 +30,7 @@ from lava_dispatcher.pipeline.action import (
     RetryAction,
     Timeout,
 )
-from lava_dispatcher.pipeline.connection import Connection, SignalMatch
-from lava_dispatcher.client.base import CommandRunner
+from lava_dispatcher.pipeline.connection import Connection, CommandRunner
 
 
 class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
@@ -147,7 +146,7 @@ class ShellSession(Connection):
             prompt_str = device.parameters['test_image_prompts']
             prompt_str_includes_rc = True  # FIXME
 #            prompt_str_includes_rc = device.config.tester_ps1_includes_rc
-            # FIXME: although CommandRunner can be used, NetworkRunner and others need to be rewritten for logging & timeout support.
+            # FIXME: although CommandRunner has been ported, NetworkRunner and others need to be rewritten for logging & timeout support.
             # The Connection for a CommandRunner in the pipeline needs to be a ShellCommand, not logging_spawn
             self.__runner__ = CommandRunner(spawned_shell, prompt_str, prompt_str_includes_rc)
         return self.__runner__
@@ -166,7 +165,7 @@ class ShellSession(Connection):
             prompt_str = device.parameters['test_image_prompts']
             prompt_str_includes_rc = True  # FIXME
 #            prompt_str_includes_rc = device.config.tester_ps1_includes_rc
-            # FIXME: although CommandRunner can be used, NetworkRunner and others need to be rewritten for logging & timeout support.
+            # FIXME: although CommandRunner has been ported, NetworkRunner and others need to be rewritten for logging & timeout support.
             # The Connection for a CommandRunner in the pipeline needs to be a ShellCommand, not logging_spawn
             self.__runner__ = CommandRunner(spawned_shell, prompt_str,
                                             prompt_str_includes_rc)

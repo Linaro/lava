@@ -205,10 +205,8 @@ class MountAction(DeployAction):
 
     def run(self, connection, args=None):
         if self.internal_pipeline:
-            try:
-                connection = self.internal_pipeline.run_actions(connection, args)
-            except JobError:
-                diagnose = self.job.diagnostics()
+            # Pipeline.run_actions handles running diagnose() after internal JobError
+            connection = self.internal_pipeline.run_actions(connection, args)
         else:
             # FIXME: this is a bug that should not happen (using assert?)
             raise RuntimeError("Deployment failed to generate a mount pipeline.")

@@ -76,7 +76,7 @@ class TestShellAction(TestAction):
         self.name = "lava-test-shell"
         self.signal_director = self.SignalDirector()
         self.patterns = {}
-        self.match = SignalMatch(None)
+        self.match = SignalMatch()
 
     def validate(self):
         if 'definitions' in self.parameters:
@@ -108,7 +108,7 @@ class TestShellAction(TestAction):
             return connection
         self._log("Executing test definitions using %s" % connection.name)
 
-        self.match = SignalMatch(logging.getLogger("YAML"))
+        self.match = SignalMatch()
 
         # FIXME: a predictable UID could be calculated from existing data here.
         # instead, uuid is read from the params to set _current_handler

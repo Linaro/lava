@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import requests
-from contextlib import contextmanager
 from lava_dispatcher.pipeline.action import Deployment
 from lava_dispatcher.pipeline import Pipeline
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
@@ -48,17 +47,13 @@ class DeployImageAction(DeployAction):
         self.description = "deploy image using loopback mounts"
         self.summary = "deploy image"
 
-    def prepare(self):
-        # FIXME: move to validate or into DownloadAction?
-        # mktemp dir
-        req = requests.head(self.parameters['image'])  # just check the headers, do not download.
-        if req.status_code != req.codes.ok:
-            # FIXME: this needs to use pipeline error handling
-            return False
-        return True
-
     def validate(self):
-        self.pipeline.validate_actions()
+        super(DeployImageAction, self).validate()
+        # FIXME: requires a working internet connection when running tests or validation.
+        req = requests.head(self.parameters['image'])  # just check the headers, do not download.
+        # pylint gets confused here.
+        if req.status_code != requests.codes.ok:  # pylint: disable=no-member
+            self.errors = "%s returned http code %s" % (self.parameters['image'], req.status_code)
 
     def populate(self):
         self.internal_pipeline = Pipeline(parent=self, job=self.job)
@@ -81,19 +76,11 @@ class DeployImageAction(DeployAction):
                 self.internal_pipeline.add_action(OverlayAction())
         self.internal_pipeline.add_action(UnmountAction())
 
-    def run(self, connection, args=None):
-        print self.internal_pipeline.actions
-        connection = self.internal_pipeline.run_actions(connection, args)
-        return connection
 
-    def cleanup(self):
-        # rm temp dir
-        # super(DeployImageAction, self).cleanup()
-        pass
-
-
+# FIXME: may need to be renamed if it can only deal with KVM image deployment
 class DeployImage(Deployment):
     """
+    Strategy class for an Image based Deployment.
     Accepts parameters to deploy a KVM
     Uses existing Actions to download and checksum
     as well as copying test files.
@@ -114,20 +101,6 @@ class DeployImage(Deployment):
         self.action.job = self.job
         parent.add_action(self.action)
 
-        # internal_pipeline = Pipeline(parent=self.action, job=self.job)
-
-    @contextmanager
-    def deploy(self):
-        """
-        As a Deployment Strategy, this simply selects the
-        correct deploy action and allows it to be added to the
-        default Pipeline.
-        """
-        pass
-#        if not self.check_image_url():
-#            # FIXME: this needs to use pipeline error handling
-#            raise JobError
-
     @classmethod
     def accepts(cls, device, parameters):
         """
@@ -136,18 +109,11 @@ class DeployImage(Deployment):
         This is *not* the same as validation of the action
         which can use instance data.
         """
-        # FIXME: read the device_types/*.conf and match against the job & support methods
+        # FIXME: the device object has the device_types/*.conf - match against the job & support methods
         if hasattr(device, 'config'):
             if device.config.device_type != 'kvm':
                 return False
         else:
             if device.parameters['device_type'] != 'kvm':
                 return False
-        # FIXME: only enable once all deployment strategies in basics.yaml are defined!
-#        if 'image' not in parameters:
-#            print parameters
-#            return False
         return True
-
-    def extract_results(self):
-        pass

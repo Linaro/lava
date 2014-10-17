@@ -29,7 +29,6 @@ import subprocess
 import collections
 from collections import OrderedDict
 from contextlib import contextmanager
-from lava_dispatcher.config import get_device_config  # FIXME: remove
 
 if sys.version > '3':
     from functools import reduce  # pylint: disable=redefined-builtin
@@ -63,8 +62,10 @@ class JobError(Exception):
 
 class TestError(Exception):
     """
-    An error in the operation of the test definition.
+    An error in the operation of the test definition, e.g.
+    in parsing measurements or commands which fail.
     """
+    # FIXME: ensure TestError is caught, logged and cleared. It is not fatal.
     pass
 
 
@@ -109,13 +110,13 @@ class Pipeline(object):
                 self.job = parent.job
 
     def _check_action(self, action):
-        # FIXME: this should be a method from the Action class
         if not action or not issubclass(type(action), Action):
             raise RuntimeError("Only actions can be added to a pipeline: %s" % action)
         if isinstance(action, DiagnosticAction):
             raise RuntimeError("Diagnostic actions need to be triggered, not added to a pipeline.")
         if not action:
             raise RuntimeError("Unable to add empty action to pipeline")
+        # FIXME: these should be part of the validate from the base Action class
         if not action.name:
             raise RuntimeError("Unnamed action!")
         if ' ' in action.name:
@@ -352,14 +353,14 @@ class Action(object):
         """
         if not self.job:
             return None
-        return self.job.context.pipeline_data
+        return self.job.context
 
     @data.setter
     def data(self, value):
         """
         Accepts a dict to be updated in the job.context.pipeline_data
         """
-        self.job.context.pipeline_data.update(value)
+        self.job.context.update(value)
 
     # FIXME: has to be called select to be consistent with Deployment
     @classmethod
@@ -470,6 +471,10 @@ class Action(object):
         Validation includes parsing the parameters for this action for
         values not set or values which conflict.
         """
+        if not self.name:
+            self.errors = "%s action has no name set" % self
+        if ' ' in self.name:
+            self.errors = "Whitespace must not be used in action names, only descriptions or summaries: %s" % self.name
         if self.internal_pipeline:
             self.internal_pipeline.validate_actions()
         if self.errors:
@@ -494,9 +499,11 @@ class Action(object):
         In this classs this method does nothing. It must be implemented by
         subclasses
         """
+        # FIXME: is this still relevant?
         pass
 
     def __call__(self, connection):
+        # FIXME: necessary?
         try:
             new_connection = self.run(connection)
             return new_connection
@@ -532,9 +539,10 @@ class Action(object):
         # FIXME: see logger
         yaml_log = logging.getLogger("YAML")
         log = None
-        if not self.env:
-            self.env = {'http_proxy': self.job.context.config.lava_proxy,
-                        'https_proxy': self.job.context.config.lava_proxy}
+        # FIXME: define a method of configuring the proxy for the pipeline.
+        # if not self.env:
+        #     self.env = {'http_proxy': self.job.context.config.lava_proxy,
+        #                 'https_proxy': self.job.context.config.lava_proxy}
         if env:
             self.env.update(env)
         # FIXME: distinguish between host and target commands and add 'nice' to host
@@ -584,13 +592,14 @@ class Action(object):
             if self.err:
                 print self.err
         """
+        if self.internal_pipeline:
+            return self.internal_pipeline.run_actions(connection, args)
         raise NotImplementedError("run %s" % self.name)
 
     def cleanup(self):
-        # FIXME: perform() does not exist, is it run()?
         """
-        This method *will* be called after perform(), no matter whether
-        perform() raises an exception or not. It should cleanup any resources
+        This method *will* be called after run(), no matter whether
+        run() raises an exception or not. It should cleanup any resources
         that may be left open by perform, such as, but not limited to:
 
             - open file descriptors
@@ -598,7 +607,7 @@ class Action(object):
             - error codes
             - etc
         """
-        raise NotImplementedError("cleanup %s" % self.name)
+        pass
 
     def post_process(self):
         """
@@ -606,10 +615,12 @@ class Action(object):
         extracted, and passed to this method so that the action can
         inspect/extract its results.
 
+        Most Actions except TestAction will not have anything to do here.
         In this classs this method does nothing. It must be implemented by
         subclasses
         """
-        raise NotImplementedError("post_process %s" % self.name)
+        # FIXME: with the results inside the pipeline already, is this needed?
+        pass
 
     def explode(self):
         """
@@ -702,7 +713,7 @@ class DiagnosticAction(Action):  # pylint: disable=abstract-class-not-used
 
     @classmethod
     def trigger(cls):
-        raise NotImplementedError("Define in the subclass: %s" % self.name)
+        raise NotImplementedError("Define in the subclass: %s" % cls)
 
     def run(self, connection, args=None):
         """
@@ -741,6 +752,8 @@ class FinalizeAction(Action):
             self.results = {'status': "Incomplete"}
             yaml_log.debug("Status: Incomplete")
             yaml_log.debug(self.job.pipeline.errors)
+        # from meliae import scanner
+        # scanner.dump_all_objects('filename.json')
 
 
 class Deployment(object):  # pylint: disable=abstract-class-not-used
@@ -760,32 +773,6 @@ class Deployment(object):  # pylint: disable=abstract-class-not-used
         self.__parameters__ = {}
         self.pipeline = parent
         self.job = parent.job
-
-    @contextmanager
-    def deploy(self):
-        """
-        This method first mounts the image locally, exposing its root
-        filesystem in a local directory which will be yielded to the
-        caller, which has the chance to modify the contents of the root
-        filesystem.
-
-        Then, the root filesystem will be unmounted and the image will
-        be deployed to the device.
-
-        This method must be implemented by subclasses.
-        """
-        raise NotImplementedError("deploy %s" % self.name)
-
-    @contextmanager
-    def extract_results(self):
-        """
-        This method will extract the results directory from the root filesystem
-        in the device. After copying that directory locally, the local copy
-        will be yielded to the caller, who can read data from it.
-
-        Must be implemented by subclasses.
-        """
-        raise NotImplementedError("extract_results %s" % self.name)
 
     @property
     def parameters(self):
@@ -819,7 +806,7 @@ class Deployment(object):  # pylint: disable=abstract-class-not-used
 
         Must be implemented by subclasses.
         """
-        return NotImplementedError("accepts %s" % self.name)
+        return NotImplementedError("accepts %s" % cls)
 
     @classmethod
     def select(cls, device, parameters):
@@ -830,7 +817,7 @@ class Deployment(object):  # pylint: disable=abstract-class-not-used
         if len(willing) == 0:
             raise NotImplementedError(
                 "No deployment strategy available for the given "
-                "device '%s'. %s" % (device.parameters['hostname'], self.name))
+                "device '%s'. %s" % (device.parameters['hostname'], cls))
 
         # higher priority first
         compare = lambda x, y: cmp(y.priority, x.priority)
@@ -859,7 +846,7 @@ class Boot(object):
 
         Must be implemented by subclasses.
         """
-        return NotImplementedError("accepts %s" % self.name)
+        return NotImplementedError("accepts %s" % cls)
 
     @classmethod
     def select(cls, device, parameters):
@@ -868,7 +855,7 @@ class Boot(object):
         if len(willing) == 0:
             raise NotImplementedError(
                 "No boot strategy available for the device "
-                "'%s' with the specified job parameters. %s" % (device.parameters['hostname'], self.name)
+                "'%s' with the specified job parameters. %s" % (device.parameters['hostname'], cls)
             )
 
         # higher priority first
@@ -895,7 +882,7 @@ class LavaTest(object):  # pylint: disable=abstract-class-not-used
         """
         This method must be implemented by subclasses.
         """
-        raise NotImplementedError("test %s" % self.name)
+        raise NotImplementedError("test %s" % self)
 
     @classmethod
     def accepts(cls, device, parameters):  # pylint: disable=unused-argument
@@ -905,7 +892,7 @@ class LavaTest(object):  # pylint: disable=abstract-class-not-used
 
         Must be implemented by subclasses.
         """
-        return NotImplementedError("accepts %s" % self.name)
+        return NotImplementedError("accepts %s" % cls)
 
     @classmethod
     def select(cls, device, parameters):
@@ -914,9 +901,9 @@ class LavaTest(object):  # pylint: disable=abstract-class-not-used
         if len(willing) == 0:
             if hasattr(device, 'parameters'):
                 msg = "No test strategy available for the device "\
-                      "'%s' with the specified job parameters. %s" % (device.parameters['hostname'], self.name)
+                      "'%s' with the specified job parameters. %s" % (device.parameters['hostname'], cls)
             else:
-                msg = "No test strategy available for the device. %s" % self.name
+                msg = "No test strategy available for the device. %s" % cls
             raise NotImplementedError(msg)
 
         # higher priority first
@@ -926,19 +913,28 @@ class LavaTest(object):  # pylint: disable=abstract-class-not-used
         return prioritized[0]
 
 
-class Image(object):  # pylint: disable=abstract-class-not-used
+class PipelineContext(object):
     """
-    Create subclasses for each type of image: prebuilt, hwpack+rootfs,
-    kernel+rootfs+dtb+..., dummy, ...
-    TBD: this might not be needed.
+    Replacement for the LavaContext which only holds data for the device for the
+    current pipeline.
+
+    The PipelineContext is the home for dynamic data generated by action run steps
+    where that data is required by a later step. e.g. the mountpoint used by the
+    loopback mount action will be needed by the umount action later.
+
+    Data which does not change for the lifetime of the job must be kept as a
+    parameter of the job, e.g. output_dir and target.
+
+    Do NOT store data here which is not relevant to ALL pipelines, this is NOT
+    the place for any configuration relating to devices or device types. The
+    NewDevice class loads only the configuration required for the one device.
+
+    Keep the memory footprint of this class as low as practical.
     """
 
-    @contextmanager
-    def mount_rootfs(self):
-        """
-        Subclasses must implement this method
-        """
-        raise NotImplementedError("mount_rootfs %s" % self.name)
+    # FIXME: needs to pick up minimal general purpose config, e.g. proxy or cookies
+    def __init__(self):
+        self.pipeline_data = {}
 
 
 class Timeout(object):
@@ -969,15 +965,3 @@ class Timeout(object):
             raise JobError("Trying to modify a protected timeout: %s.", self.name)
         clamp = lambda n, minn, maxn: max(min(maxn, n), minn)
         self.duration = clamp(duration, 1, 300)
-
-
-class Device(object):
-    """
-    Holds all data about the device for this TestJob including
-    all database parameters and device condfiguration.
-    In the dumb dispatcher model, an instance of Device would
-    be populated directly from the master scheduler.
-    """
-
-    def __init__(self, hostname):
-        self.config = get_device_config(hostname)

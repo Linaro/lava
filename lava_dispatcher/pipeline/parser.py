@@ -29,9 +29,8 @@ from lava_dispatcher.pipeline.action import (
     Boot,
     FinalizeAction,
     LavaTest,
-    JobError
 )
-from lava_dispatcher import deployment_data
+from lava_dispatcher.pipeline.deployment_data import get_deployment_data
 # needed for the Deployment select call, despite what pylint thinks.
 from lava_dispatcher.pipeline.actions.deploy.image import DeployImage  # pylint: disable=unused-import
 from lava_dispatcher.pipeline.actions.boot.kvm import BootKVM  # pylint: disable=unused-import
@@ -39,6 +38,25 @@ from lava_dispatcher.pipeline.actions.test.shell import TestShell  # pylint: dis
 
 
 class JobParser(object):
+    """
+    Creates a Job object from the Device and the job YAML by selecting the
+    Strategy class with the highest priority for the parameters of the job.
+
+    Adding new behaviour is a two step process:
+     - always add a new Action, usually with an internal pipeline, to implement the new behaviour
+     - add a new Strategy class which creates a suitable pipeline to use that Action.
+
+    Re-use existing Action classes wherever these can be used without changes.
+
+    If two or more Action classes have very similar behaviour, re-factor to make a
+    new base class for the common behaviour and retain the specialised classes.
+
+    Strategy selection via select() must only ever rely on the device and the
+    job parameters. Add new parameters to the job to distinguish strategies, e.g.
+    the boot method or deployment method.
+    """
+
+    # FIXME: needs a Schema and a check routine
 
     loader = None
 
@@ -58,13 +76,6 @@ class JobParser(object):
         mapping = Constructor.construct_mapping(self.loader, node, deep=deep)
         mapping['yaml_line'] = node.__line__
         return mapping
-
-    def parse_check(self, content, device_config):
-        # FIXME: fold into the regular parsing by handling the device_config instead of the old Device class
-        if 'image' not in device_config['actions']['boot']['allow']:
-            raise JobError("Unable to boot job")
-        if 'image' not in device_config['actions']['deploy']['allow']:
-            raise JobError("Unable to deploy job")
 
     def parse(self, content, device, output_dir=None):
         self.loader = yaml.Loader(content)
@@ -87,8 +98,7 @@ class JobParser(object):
                     if 'test' in data['actions']:
                         deploy.action.parameters = action_data['test']
                     deploy.action.yaml_line = line
-                    device.deployment_data = deployment_data.get(deploy.action.parameters['os'])
-                    deploy.action.parameters = {'deployment_data': device.deployment_data}
+                    deploy.action.parameters = {'deployment_data': get_deployment_data(deploy.action.parameters['os'])}
                 elif name == "boot":
                     boot = Boot.select(device, action_data[name])(pipeline)
                     boot.action.parameters = action_data[name]
