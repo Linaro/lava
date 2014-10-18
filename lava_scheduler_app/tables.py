@@ -154,7 +154,6 @@ class JobTable(LavaTable):
     def __init__(self, *args, **kwargs):
         super(JobTable, self).__init__(*args, **kwargs)
         self.length = 25
-        self.includehealthcheck = True
 
     id = RestrictedIDLinkColumn(verbose_name="ID", accessor="id")
     device = tables.Column(accessor='device_sort')
@@ -221,7 +220,6 @@ class JobTable(LavaTable):
             'device_query': "device",  # active_device
             'owner_query': "submitter",  # submitter
             'job_status_query': 'status',
-            'include_health_check_query': 'includehealthcheck',
         }
         # fields which can be searched with default __contains queries
         # note the enums cannot be searched this way.

@@ -62,17 +62,3 @@ def get_length_select(table, string):
     for option in val:
         select += "<option selected>%d</option>" % option if option == num else "<option>%d</option>" % option
     return mark_safe(select)
-
-
-@register.filter
-def get_health_job_toggle_select(table, string):
-    select = ""
-    val = ["yes", "no"]
-    name = "%s%s" % (table.prefix, "includehealthcheck")
-    if name in string:
-        selection = string[name]
-    else:
-        selection = table.includehealthcheck
-    for option in val:
-        select += "<option selected>%s</option>" % option if option == selection else "<option>%s</option>" % option
-    return mark_safe(select)
