@@ -15,6 +15,11 @@
   <div class="form-field">
     Representation: {{ chart_filter.representation }}
   </div>
+  {% ifequal chart_filter.image_chart.chart_type "pass/fail" %}
+  <div class="form-field">
+    All tests included: {{ chart_filter.is_all_tests_included|yesno:"Yes,No" }}
+  </div>
+  {% endifequal %}
 </div>
 
 {% ifequal chart_filter.imagecharttest_set.all|length 0 %}

@@ -1853,8 +1853,6 @@ def send_bundle_notifications(sender, bundle, **kwargs):
             title = "LAVA result notification: %s" % filter_names
             send_notification(title, template, data, user.email)
 
-        send_image_report_notifications(sender, bundle)
-
     except:
         logging.exception("send_bundle_notifications failed")
         raise
@@ -1871,7 +1869,25 @@ def get_domain():
 
     return domain
 
-bundle_was_deserialized.connect(send_bundle_notifications)
+
+def bundle_deserialization_callback(sender, bundle, **kwargs):
+    send_bundle_notifications(sender, bundle, **kwargs)
+    send_image_report_notifications(sender, bundle)
+    update_image_charts(bundle)
+
+
+def update_image_charts(bundle):
+
+    filter_matches = TestRunFilter.matches_against_bundle(bundle)
+
+    for filter in filter_matches:
+        chart_filters = ImageChartFilter.objects.filter(
+            image_chart_filter=filter)
+        for chart_filter in chart_filters:
+            chart_filter.save()
+
+
+bundle_was_deserialized.connect(bundle_deserialization_callback)
 
 
 class PMQABundleStream(models.Model):
@@ -2435,9 +2451,14 @@ class ImageChartFilter(models.Model):
         default="lines",
     )
 
+    is_all_tests_included = models.BooleanField(
+        default=False,
+        verbose_name='Include all tests from this filter'
+    )
+
     @property
     def chart_tests(self):
-        if self.imagecharttestcase_set.count() > 0:
+        if self.image_chart.chart_type == "measurement":
             return self.imagecharttestcase_set.all()
         else:
             return self.imagecharttest_set.all()
@@ -2459,6 +2480,25 @@ class ImageChartFilter(models.Model):
             (), dict(name=self.image_chart.image_report.name,
                      id=self.image_chart.id, slug=self.id))
 
+    def save(self, *args, **kwargs):
+        """
+        Save this instance.
+
+        Add all tests to the image report filter if is_all_tests_included
+        flag is set.
+        """
+        result = super(ImageChartFilter, self).save(*args, **kwargs)
+        if self.image_chart.chart_type == "pass/fail":
+            tests = [chart_test.test.test_id for chart_test in self.chart_tests]
+            all_filter_tests = Test.objects.filter(
+                test_runs__bundle__bundle_stream__testrunfilter__id=self.filter.id).distinct('test_id')
+            for test in all_filter_tests:
+                if test.test_id not in tests:
+                    chart_test = ImageChartTest(image_chart_filter=self,
+                                                test=test)
+                    chart_test.save()
+
+        return result
 
 class ImageChartTest(models.Model):
 

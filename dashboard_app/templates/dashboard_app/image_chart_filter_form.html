@@ -48,6 +48,12 @@
       {{ form.representation.label_tag }}
       {{ form.representation }}
     </div>
+    {% ifequal instance.image_chart.chart_type "pass/fail" %}
+    <div>
+      {{ form.is_all_tests_included.label_tag }}
+      {{ form.is_all_tests_included }}
+    </div>
+    {% endifequal %}
   </div>
 
   <div class="submit-button">
@@ -88,6 +94,10 @@
               filter_select_callback(ui.item, '{{ image_chart.id }}');
             }
         });
+    });
+
+    $("#id_is_all_tests_included").on("click", function() {
+      $("#filter-container").toggle();
     });
 
     init_loading_dialog();
