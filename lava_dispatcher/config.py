@@ -290,6 +290,8 @@ class DeviceSchema(schema.Schema):
     vexpress_stop_autoboot_prompt = schema.StringOption(default='Press Enter to stop auto boot...')
     vexpress_usb_mass_storage_device = schema.StringOption(default=None)
     vexpress_requires_trusted_firmware = schema.BoolOption(default=False)
+    bridged_networking = schema.BoolOption(default=False)
+    bridge_interface = schema.StringOption(default="br0")
 
 
 class OptionDescriptor(object):

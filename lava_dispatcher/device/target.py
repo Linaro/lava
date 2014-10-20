@@ -183,6 +183,7 @@ class Target(object):
         self._scratch_dir = None
         self.__deployment_data__ = None
         self.mount_info = {'boot': None, 'rootfs': None}
+        self._bridge_configured = False
 
     @property
     def deployment_data(self):
@@ -227,6 +228,8 @@ class Target(object):
     def power_off(self, proc):
         if proc is not None:
             proc.close()
+        if self.config.bridged_networking and self._bridge_configured:
+            self._teardown_network_bridge(self.config.bridge_interface, self._interface_name)
 
     def is_booted(self):
         # By default we pass
@@ -909,3 +912,17 @@ class Target(object):
         else:
             with image_partition_mounted(image, self.config.boot_part) as boot_mnt:
                 self._customize_image(image, boot_mnt, boot_mnt)
+
+    def _config_network_bridge(self, bridge, ifname):
+        logging.debug("Creating tap interface: %s" % ifname)
+        self.context.run_command("ip tuntap add dev %s mode tap user lavaserver" % ifname)
+        self.context.run_command("ifconfig %s 0.0.0.0 promisc up" % ifname)
+        self.context.run_command("brctl addif %s %s" % (bridge, ifname))
+        self._bridge_configured = True
+
+    def _teardown_network_bridge(self, bridge, ifname):
+        logging.debug("Destroying tap interface: %s" % ifname)
+        self.context.run_command("brctl delif %s %s" % (bridge, ifname))
+        self.context.run_command("ifconfig %s down" % ifname)
+        self.context.run_command("ip tuntap del dev %s mode tap" % ifname)
+        self._bridge_configured = False
