@@ -283,7 +283,8 @@ class JobRunner(object):
         d = self.running_job.run()
         if d:
             d.addCallbacks(self._cbJobFinished, self._ebJobFinished)
-        self.logger.info("Job failed to start")
+        else:
+            self.logger.info("Job failed to start")
 
     def _ebStartJob(self, result):
         self.logger.error(
