@@ -15,7 +15,15 @@ own network configuration, access and download methods and do the transfer in th
 lava-self
 ---------
 
-Prints the name of the current device.
+Prints the hostname of the current device.
+
+.. note:: The LAVA hostname of a device is the name of the device within
+           LAVA - as visible via the web frontend. The same name is used
+           whether the device itself has a network connection or not.
+           There is no requirement that the LAVA hostname matches anything
+           related to any network connection or network service. This
+           means that the LAVA hostname is always available via
+           ``lava-group`` and ``lava-self``.
 
 Usage: ``lava-self``
 
@@ -268,7 +276,7 @@ broadcast)::
 
 ``lava-network hosts`` can be used to output the list of all boards in the group
 which have returned a fully qualified domain name in a format suitable for
-``/etc/hosts``, appending to the specified file.
+``/etc/hosts``, appending to the specified file::
 
  10.1.1.2	staging-kvm01
  10.1.1.6	staging-kvm02.localdomain
@@ -289,6 +297,11 @@ Usage:
 ``lava-network hosts`` support to use the role of each device in the
 group as an alias in the output. See :ref:`role_aliases` for more
 information on the limitations of using roles as aliases.
+
+The ``hostname`` used in a query of ``lava-network`` is the LAVA hostname
+which may differ from the network hostname of the device (which is why
+``lava-network`` supports querying the LAVA hostname to return the
+network hostname). See the note under :ref:`lava_self`.
 
 Example 1: simple client-server multi-node test
 -----------------------------------------------
