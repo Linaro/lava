@@ -315,7 +315,9 @@ class DatabaseJobSource(object):
     def getOutputDirForJobOnBoard_impl(self, board_name):
         device = Device.objects.get(hostname=board_name)
         job = device.current_job
-        return job.output_dir
+        if job:
+            return job.output_dir
+        return None
 
     def getOutputDirForJobOnBoard(self, board_name):
         return self.deferForDB(self.getOutputDirForJobOnBoard_impl, board_name)
