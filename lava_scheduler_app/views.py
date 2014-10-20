@@ -204,12 +204,6 @@ class JobTableView(LavaView):
             q = q.__or__(Q(is_public=False))
         return q
 
-    def include_health_check_query(self, term):
-        if not _str_to_bool(term):
-            return Q(health_check=False)
-        else:
-            return Q()
-
 
 class FailureTableView(JobTableView):
 
@@ -2231,7 +2225,7 @@ def username_list_json(request):
             {"id": user.id,
              "name": user.username,
              "label": user.username})
-    return HttpResponse(simplejson.dumps(users), mimetype='application/json')
+    return HttpResponse(simplejson.dumps(users), content_type='application/json')
 
 
 class QueueJobsView(JobTableView):
