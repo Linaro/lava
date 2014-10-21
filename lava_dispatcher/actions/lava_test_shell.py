@@ -114,6 +114,7 @@
 
 from datetime import datetime
 from glob import glob
+import ast
 import base64
 import logging
 import os
@@ -475,6 +476,7 @@ class URLTestDefinition(object):
         self.__pattern__ = None
         self.__fixupdict__ = None
         self.skip_install = None
+        self.all_params = {}
 
     def load_signal_handler(self):
         hook_data = self.testdef.get('handler')
@@ -523,14 +525,58 @@ class URLTestDefinition(object):
                 self._sw_sources.append(_bzr_info(repo, name, name))
 
             for repo in self.testdef['install'].get('git-repos', []):
-                logging.info("git clone %s" % repo)
-                subprocess.check_output(['git', 'clone', repo],
-                                        env=_get_lava_proxy(self.context),
-                                        stderr=subprocess.STDOUT)
-                name = os.path.splitext(os.path.basename(repo))[0]
-                self._sw_sources.append(_git_info(repo, name, name))
+                if isinstance(repo, str):
+                    logging.info("git clone %s" % repo)
+                    subprocess.check_output(['git', 'clone', repo],
+                                            env=_get_lava_proxy(self.context),
+                                            stderr=subprocess.STDOUT)
+                    name = gitdir = os.path.splitext(os.path.basename(repo))[0]
+                    self._sw_sources.append(_git_info(repo, gitdir, name))
+                if isinstance(repo, dict):
+                    cmd = ['git', 'clone']
+                    # Check if this repository should be skipped.
+                    skip_by_default = repo.get('skip_by_default', False)
+                    if skip_by_default in self.all_params:
+                        if ast.literal_eval(self.all_params[skip_by_default]):
+                            continue
+
+                    url = repo.get('url', None)
+                    branch = repo.get('branch', None)
+                    if branch in self.all_params:
+                        branch = self.all_params[branch]
+                    destination = repo.get('destination', None)
+                    if destination in self.all_params:
+                        destination = self.all_params[destination]
+
+                    # Form the command list
+                    cmd = ['git', 'clone']
+                    if branch:
+                        cmd.append('-b')
+                        cmd.append(branch)
+                    if url:
+                        cmd.append(url)
+                    if destination:
+                        cmd.append(destination)
+
+                    logging.info("git clone %s" % url)
+                    subprocess.check_output(cmd,
+                                            env=_get_lava_proxy(self.context),
+                                            stderr=subprocess.STDOUT)
+                    name = os.path.splitext(os.path.basename(url))[0]
+                    gitdir = destination if destination else name
+                    self._sw_sources.append(_git_info(url, gitdir, name))
         finally:
             os.chdir(cwd)
+
+    def _fetch_all_parameters(self):
+        # default parameters that was defined in yaml
+        if 'params' in self.testdef:
+            self.all_params.update(self.testdef['params'])
+
+        # parameters that was set in json
+        if self._sw_sources and 'test_params' in self._sw_sources[0] and self._sw_sources[0]['test_params'] != '':
+            _test_params_temp = eval(self._sw_sources[0]['test_params'])
+            self.all_params.update(_test_params_temp)
 
     def _inject_testdef_parameters(self, fout):
         # inject default parameters that was defined in yaml first
@@ -599,6 +645,7 @@ class URLTestDefinition(object):
             boots.
         """
         utils.ensure_directory(hostdir)
+        self._fetch_all_parameters()
         with open('%s/testdef.yaml' % hostdir, 'w') as f:
             f.write(yaml.dump(self.testdef))
 
