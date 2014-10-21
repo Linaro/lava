@@ -367,7 +367,14 @@ installed automatically.
 Example config (in /etc/ser2net.conf)::
 
  #port:connectiontype:idle_timeout:serial_device:baudrate databit parity stopbit
- 7001:telnet:36000:/dev/serial_port1:115200 8DATABITS NONE 1STOPBIT
+ 7001:telnet:0:/dev/serial_port1:115200 8DATABITS NONE 1STOPBIT
+
+.. note:: In the above example we have the idle_timeout as 0 which
+          specifies a infinite idle_timeout value. 0 is the
+          recommended value. If the user prefers to give a positive
+          finite idle_timeout value, then there is a possibility that
+          long running jobs may terminate due to inactivity on the
+          serial connection.
 
 StarTech rackmount usb
 ----------------------
