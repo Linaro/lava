@@ -190,19 +190,16 @@ class SchedulerAPI(ExposedAPI):
         [['panda01', 'panda', 'running', 164], ['qemu01', 'qemu', 'idle', None]]
         """
 
-        dev_list = []
+        devices_list = []
         for dev in Device.objects.all():
             if not dev.is_visible_to(self.user):
                 continue
             if dev.status == Device.RETIRED:
                 continue
-            dev_list.append(dev.hostname)
+            devices_list.append(dev)
 
-        devices = Device.objects.filter(hostname__in=dev_list)
-        devices = [list((dev.hostname, dev.device_type.name, Device.STATUS_CHOICES[dev.status][1].lower(), dev.current_job.pk if dev.current_job else None))
-                   for dev in devices]
-
-        return devices
+        return [list((dev.hostname, dev.device_type.name, Device.STATUS_CHOICES[dev.status][1].lower(), dev.current_job.pk if dev.current_job else None))
+                for dev in devices_list]
 
     def all_device_types(self):
         """
