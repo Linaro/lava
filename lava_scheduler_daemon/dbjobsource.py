@@ -444,7 +444,7 @@ class DatabaseJobSource(object):
         return self.deferForDB(self.jobCheckForCancellation_impl, board_name)
 
     def _handle_cancelling_jobs(self):
-        cancel_list = TestJob.objects.all().filter(status=TestJob.CANCELING)
+        cancel_list = TestJob.objects.filter(status=TestJob.CANCELING)
         # Pick up TestJob objects in Canceling and ensure that the cancel completes.
         # call _kill_canceling to terminate any lava-dispatch calls
         # Explicitly set a DeviceStatusTransition as jobs which are stuck in Canceling

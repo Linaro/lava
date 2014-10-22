@@ -1600,12 +1600,12 @@ def job_cancel(request, pk):
     job = get_restricted_job(request.user, pk)
     if job.can_cancel(request.user):
         if job.is_multinode:
-            multinode_jobs = TestJob.objects.all().filter(
+            multinode_jobs = TestJob.objects.filter(
                 target_group=job.target_group)
             for multinode_job in multinode_jobs:
                 multinode_job.cancel(request.user)
         elif job.is_vmgroup:
-            vmgroup_jobs = TestJob.objects.all().filter(
+            vmgroup_jobs = TestJob.objects.filter(
                 vm_group=job.vm_group)
             for vmgroup_job in vmgroup_jobs:
                 vmgroup_job.cancel(request.user)
