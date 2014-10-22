@@ -20,6 +20,7 @@
 
 import pexpect
 import logging
+from collections import OrderedDict
 from contextlib import contextmanager
 from lava_dispatcher.pipeline.actions.test import handle_testcase, TestAction
 from lava_dispatcher.pipeline.action import (
@@ -103,7 +104,7 @@ class TestShellAction(TestAction):
             self._log("No boot action result found")  # FIXME: this could be a missing deployment for some actions
         elif self.data['boot-result'] != 'success':
             self._log("Skipping test definitions - previous boot attempt was not successful.")
-            self.results = {self.name: 'skipped'}
+            self.results.update({self.name: 'skipped'})
             # FIXME: with predictable UID, could set each test definition metadata to "skipped"
             return connection
         self._log("Executing test definitions using %s" % connection.name)
@@ -122,12 +123,16 @@ class TestShellAction(TestAction):
             })
 
         with connection.test_connection() as test_connection:
-            # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
-            test_connection.sendline(
-                "%s/bin/lava-test-runner %s" % (
-                    self.data['lava_test_results_dir'],
-                    self.data['lava_test_results_dir']),
-            )
+            try:
+                # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
+                test_connection.sendline(
+                    "%s/bin/lava-test-runner %s" % (
+                        self.data['lava_test_results_dir'],
+                        self.data['lava_test_results_dir']),
+                )
+            except KeyboardInterrupt:
+                self.errors = "Cancelled"
+                return connection
 
             if self.timeout:
                 test_connection.timeout = self.timeout.duration
@@ -145,24 +150,25 @@ class TestShellAction(TestAction):
         """
         yaml_log = logging.getLogger("YAML")
         if event == 'exit':
-            yaml_log.debug('lava_test_shell seems to have completed')
+            yaml_log.debug('   ok: lava_test_shell seems to have completed')
             return False
 
         elif event == 'eof':
-            yaml_log.debug('lava_test_shell connection dropped')
+            yaml_log.debug('   err: lava_test_shell connection dropped')
             self.errors = 'lava_test_shell connection dropped'
             return False
 
         elif event == 'timeout':
             # if target.is_booted():
             #    target.reset_boot()
-            yaml_log.debug('lava_test_shell has timed out')
+            yaml_log.debug('   err: lava_test_shell has timed out')
             self.errors = 'lava_test_shell has timed out'
             return False
 
         elif event == 'signal':
             name, params = test_connection.match.groups()
-            yaml_log.debug("Received signal <%s> %s", name, params)
+            # YAML formatting log message
+            yaml_log.debug("   Received signal: <%s> %s", name, params)
             params = params.split()
             if name == 'STARTRUN':
                 self.signal_director.test_uuid = params[1]
@@ -170,9 +176,9 @@ class TestShellAction(TestAction):
             if name == 'TESTCASE':
                 data = handle_testcase(params)
                 res = self.match.match(data)  # FIXME: rename!
-                yaml_log.debug({'result': res})
+                yaml_log.debug('   result:', res)
                 if 'results' not in self.data['test'][self.signal_director.test_uuid]:
-                    self.data['test'][self.signal_director.test_uuid]['results'] = {}
+                    self.data['test'][self.signal_director.test_uuid]['results'] = OrderedDict()
                 # prevent losing data in the update
                 # FIXME: support parameters and retries
                 if res['test_case_id'] in self.data['test'][self.signal_director.test_uuid]['results']:
@@ -187,7 +193,8 @@ class TestShellAction(TestAction):
                 raise KeyboardInterrupt
             # except:
             #     logging.exception("on_signal failed")
-            test_connection.sendline('echo LAVA_ACK')
+            # force output in case there was none but minimal content to increase speed.
+            test_connection.sendline('#')
             return True
 
         elif event == 'test_case':
@@ -195,17 +202,15 @@ class TestShellAction(TestAction):
             if match is pexpect.TIMEOUT:
                 # if target.is_booted():
                 #    target.reset_boot()
-                yaml_log.debug('lava_test_shell has timed out (test_case)')
+                yaml_log.debug('   err: lava_test_shell has timed out (test_case)')
             else:
                 res = self.match.match(match.groupdict())  # FIXME: rename!
-                yaml_log.debug({'result': res})
+                yaml_log.debug('   result:', res)
                 if 'results' not in self.data['test'][self.signal_director.test_uuid]:
                     self.data['test'][self.signal_director.test_uuid]['results'] = {}
                 self.data['test'][self.signal_director.test_uuid]['results'].update({
                     {res['test_case_id']: res}
                 })
-                # FIXME: needs access to the job context - via the Action
-                # self._handle_parsed_testcase(match.groupdict())
                 return True
 
         return False
@@ -214,6 +219,8 @@ class TestShellAction(TestAction):
         pass
 
     def _keep_running(self, test_connection, timeout):
+        yaml_log = logging.getLogger("YAML")
+        yaml_log.debug("   expect timeout: %d", timeout)
         retval = test_connection.expect(list(self.patterns.values()), timeout=timeout)
         return self.check_patterns(list(self.patterns.keys())[retval], test_connection)
 
@@ -248,7 +255,7 @@ class TestShellAction(TestAction):
                 except KeyboardInterrupt:
                     raise KeyboardInterrupt
                 except JobError:
-                    yaml_log.debug("handling signal %s failed", name)
+                    yaml_log.debug("    err: handling signal %s failed", name)
                     return False
                 return True
 

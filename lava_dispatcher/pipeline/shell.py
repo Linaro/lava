@@ -27,6 +27,7 @@ import contextlib
 from lava_dispatcher.pipeline.action import (
     Action,
     JobError,
+    TestError,
     RetryAction,
     Timeout,
 )
@@ -52,12 +53,11 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         # FIXME: this as to be a constant, written somewhere with all constants
         self.delaybeforesend = 0.05
         self.lava_timeout = lava_timeout
-        yaml_log = logging.getLogger("YAML")
-        yaml_log.debug({'spawn': {
+        self.yaml_log = logging.getLogger("YAML")
+        self.yaml_log.debug('   spawn:', {
             lava_timeout.name: lava_timeout.duration,
             'command': self.command
-        }})
-        # FIXME: consider a logginghandler as with standard actions or use the handler of the calling Action?
+        })
 
     def sendline(self, s='', delay=0, send_char=True):  # pylint: disable=arguments-differ
         """
@@ -73,18 +73,15 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         self.send(os.linesep, delay)
 
     def sendcontrol(self, char):
-        # FIXME: the getLogger should be done only once
-        yaml_log = logging.getLogger("YAML")
-        yaml_log.debug("sending control character: %s", char)
+        self.yaml_log.debug("   sending control character: %s", char)
         return super(ShellCommand, self).sendcontrol(char)
 
     def send(self, string, delay=0, send_char=True):  # pylint: disable=arguments-differ
         """
         Extends pexpect.send to support extra arguments, delay and send by character flags.
         """
-        # FIXME: the getLogger should be done only once
-        yaml_log = logging.getLogger("YAML")
-        yaml_log.debug("send (delay_ms=%s): %s ", delay, string)
+        # YAML formatting
+        self.yaml_log.debug("   send (delay_ms=%s): %s ", delay, string)
         sent = 0
         delay = float(delay) / 1000
         if send_char:
@@ -96,23 +93,16 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         return sent
 
     def expect(self, *args, **kw):
-        # FIXME: the getLogger should be done only once
-        yaml_log = logging.getLogger("YAML")
-        std_log = logging.getLogger("ASCII")
-
-        # FIXME: this produces the most ugly log output of any part of the dispatcher.
-        if len(args) == 1:
-            yaml_log.debug("expect (%d): '%s'", self.lava_timeout.duration, args[0])
-        else:
-            yaml_log.debug("expect (%d): '%s'", self.lava_timeout.duration, str(args))
-
+        """
+        No point doing explicit logging here, the SignalDirector can help
+        the TestShellAction make much more useful reports of what was matched
+        """
         try:
             proc = super(ShellCommand, self).expect(*args, **kw)
-#        except pexpect.TIMEOUT:
-#            raise JobError("command timed out.")
+        except pexpect.TIMEOUT:
+            raise TestError("command timed out.")
         except pexpect.EOF:
             raise RuntimeError(" ".join(self.before.split('\r\n')))
-        yaml_log.debug("Prompt matched.")
         return proc
 
     def empty_buffer(self):
@@ -132,6 +122,9 @@ class ShellSession(Connection):
         Each result generates an item in the data context with an ID. This ID can be used later to
         look up each individial testcase result.
         TODO: ensure the stdout for each testcase result is captured and tagged with this ID.
+
+        A ShellSession uses a CommandRunner. Other connections would need to add their own
+        support.
         """
         super(ShellSession, self).__init__(job, shell_command)
         self.__runner__ = None
@@ -144,9 +137,8 @@ class ShellSession(Connection):
             device = self.device
             spawned_shell = self.raw_connection  # ShellCommand(pexpect.spawn)
             prompt_str = device.parameters['test_image_prompts']
-            prompt_str_includes_rc = True  # FIXME
+            prompt_str_includes_rc = True  # FIXME - do we need this?
 #            prompt_str_includes_rc = device.config.tester_ps1_includes_rc
-            # FIXME: although CommandRunner has been ported, NetworkRunner and others need to be rewritten for logging & timeout support.
             # The Connection for a CommandRunner in the pipeline needs to be a ShellCommand, not logging_spawn
             self.__runner__ = CommandRunner(spawned_shell, prompt_str, prompt_str_includes_rc)
         return self.__runner__
@@ -163,9 +155,8 @@ class ShellSession(Connection):
             device = self.device
             spawned_shell = self.raw_connection  # ShellCommand(pexpect.spawn)
             prompt_str = device.parameters['test_image_prompts']
-            prompt_str_includes_rc = True  # FIXME
+            prompt_str_includes_rc = True  # FIXME - do we need this?
 #            prompt_str_includes_rc = device.config.tester_ps1_includes_rc
-            # FIXME: although CommandRunner has been ported, NetworkRunner and others need to be rewritten for logging & timeout support.
             # The Connection for a CommandRunner in the pipeline needs to be a ShellCommand, not logging_spawn
             self.__runner__ = CommandRunner(spawned_shell, prompt_str,
                                             prompt_str_includes_rc)
@@ -173,7 +164,7 @@ class ShellSession(Connection):
 
     def wait(self):
         yaml_log = logging.getLogger("YAML")
-        yaml_log.debug("sending new line. Waiting for prompt")
+        yaml_log.debug("   wait: sending new line. Waiting for prompt")
         self.raw_connection.sendline("")
         try:
             self.runner.wait_for_prompt()

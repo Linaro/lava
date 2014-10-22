@@ -238,7 +238,7 @@ class Pipeline(object):
                 yaml_log.setLevel(logging.DEBUG)  # yaml log is always in debug
                 # enable the log handler created in this action when it was added to this pipeline
                 yaml_log.addHandler(action.log_handler)
-                yaml_log.debug({'start': {action.level: action.name}})
+                yaml_log.debug('   start:', {action.level: action.name})
             try:
                 start = time.time()
                 new_connection = action.run(connection, args)
@@ -304,7 +304,7 @@ class Action(object):
         self.elapsed_time = None  # FIXME: pipeline_data?
         self.log_handler = None
         self.job = None
-        self.__results__ = {}
+        self.__results__ = OrderedDict()
         # FIXME: what about {} for default value?
         self.env = None  # FIXME make this a parameter which gets default value when first called
         self.timeout = None  # Timeout class instance, if needed.
@@ -551,6 +551,8 @@ class Action(object):
         except KeyboardInterrupt:
             self.cleanup()
             self.err = "\rCancel"  # Set a useful message.
+            yaml_log.debug("Cancelled")
+            return None
         except OSError as exc:
             yaml_log.debug({exc.strerror: exc.child_traceback.split('\n')})
         except subprocess.CalledProcessError as exc:
@@ -683,7 +685,9 @@ class RetryAction(Action):
                 return new_connection
             except KeyboardInterrupt:
                 self.err = "\rCancel"  # Set a useful message.
-            except (JobError, InfrastructureError):
+                self.errors = "Cancelled"
+                return connection
+            except (JobError, InfrastructureError, TestError):
                 self.retries += 1
                 msg = "%s failed: %d of %d attempts." % (self.name, self.retries, self.max_retries)
                 self.errors = msg
@@ -748,6 +752,7 @@ class FinalizeAction(Action):
         # FIXME: just write out a file, not put to stdout via logger.
         yaml_log = logging.getLogger("YAML")
         yaml_log.debug(yaml.dump(self.job.pipeline.describe()))
+        # FIXME: detect a Cancel and set status as Cancel
         if self.job.pipeline.errors:
             self.results = {'status': "Incomplete"}
             yaml_log.debug("Status: Incomplete")

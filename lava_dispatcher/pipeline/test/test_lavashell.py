@@ -18,7 +18,10 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import unittest
 import datetime
+from lava_dispatcher.pipeline.action import Action, Pipeline, JobError
+from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.test.test_basic import Factory
 from lava_dispatcher.tests.helper import LavaDispatcherTestCase
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry, TestShellAction
@@ -60,3 +63,43 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):  # pylint: disable=too-man
         self.assertFalse(testshell.check_patterns('exit', None))
         self.assertFalse(testshell.check_patterns('eof', None))
         self.assertFalse(testshell.check_patterns('timeout', None))
+
+
+class TestShellResults(unittest.TestCase):   # pylint: disable=too-many-public-methods
+
+    class FakeJob(Job):
+
+        def __init__(self, parameters):
+            super(TestShellResults.FakeJob, self).__init__(parameters)
+
+    class FakeDeploy(object):
+        """
+        Derived from object, *not* Deployment as this confuses python -m unittest discover
+        - leads to the FakeDeploy being called instead.
+        """
+        def __init__(self, parent):
+            self.__parameters__ = {}
+            self.pipeline = parent
+            self.job = parent.job
+            self.action = TestShellResults.FakeAction()
+
+    class FakePipeline(Pipeline):
+
+        def __init__(self, parent=None, job=None):
+            super(TestShellResults.FakePipeline, self).__init__(parent, job)
+
+    class FakeAction(Action):
+        """
+        Isolated Action which can be used to generate artificial exceptions.
+        """
+
+        def __init__(self):
+            super(TestShellResults.FakeAction, self).__init__()
+            self.count = 1
+            self.name = "fake-action"
+            self.summary = "fake action for unit tests"
+            self.description = "fake, do not use outside unit tests"
+
+        def run(self, connection, args=None):
+            self.count += 1
+            raise JobError("fake error")
