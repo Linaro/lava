@@ -18,18 +18,17 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
 from lava_dispatcher.pipeline.action import (
     Boot,
     Pipeline,
     Action,
-    InfrastructureError,
     JobError,
     Timeout
 )
-from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
+from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.shell import ExpectShellSession, ShellCommand, ShellSession
 from lava_dispatcher.pipeline.utils.shell import which
+from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 
 
 class BootKVM(Boot):
@@ -115,7 +114,7 @@ class BootQemuRetry(Action):
         # FIXME: this avoids the base class Retry functionality.
         if 'download_action' not in self.data:
             raise RuntimeError("Value for download_action is missing from %s" % self.name)
-        self.command.extend(["-hda", self.data['download_action']['file']])
+        self.command.extend(["-hda", self.data['download_action']['image']['file']])  # FIXME: validate ['image']
         self._log("Boot command: %s" % ' '.join(self.command))
         # initialise the first Connection object, a command line shell into the running QEMU.
         # ShellCommand wraps pexpect.spawn.
@@ -138,6 +137,7 @@ class BootQemuRetry(Action):
         # pexpect.spawn is one of the raw_connection objects for a Connection class.
 
         shell_connection = ShellSession(self.job, shell)
+        shell_connection.prompt_str = self.job.device.parameters['test_image_prompts']
         if self.errors:
             # FIXME: tests with multiple boots need to be handled too.
             self.data.update({

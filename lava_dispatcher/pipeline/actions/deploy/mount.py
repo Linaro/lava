@@ -50,7 +50,7 @@ class OffsetAction(DeployAction):
     def validate(self):
         if 'download_action' not in self.data:
             self.errors = "missing download_action in parameters"
-        elif 'file' not in self.data['download_action']:
+        elif 'file' not in self.data['download_action']['image']:
             self.errors = "no file specified to calculate offset"
 
     def run(self, connection, args=None):
@@ -59,7 +59,7 @@ class OffsetAction(DeployAction):
         if 'offset' in self.data['download_action']:
             # idempotency
             return connection
-        image = self.data['download_action']['file']
+        image = self.data['download_action']['image']['file']
         if not os.path.exists(image):
             raise RuntimeError("Not able to mount %s: file does not exist" % image)
         part_data = self._run_command([
@@ -97,7 +97,7 @@ class LoopCheckAction(DeployAction):
 
     def validate(self):
         if 'download_action' not in self.data:
-            raise RuntimeError("download_action:%s:102" % self.name)
+            raise RuntimeError("download_action not found %s" % self.name)
             # return  # already failed elsewhere
         if len(glob.glob('/sys/block/loop*')) <= 0:
             raise InfrastructureError("Could not mount the image without loopback devices. "
@@ -142,9 +142,9 @@ class LoopMountAction(RetryAction):
         self.data[self.name] = {}
         self.data.setdefault('mount_action', {})
         if 'download_action' not in self.data:
-            raise RuntimeError("download-action:%s:148" % self.name)
+            raise RuntimeError("download-action missing: %s" % self.name)
             # return
-        if 'file' not in self.data['download_action']:
+        if 'file' not in self.data['download_action']['image']:
             self.errors = "no file specified to mount"
 
     def run(self, connection, args=None):
@@ -159,7 +159,7 @@ class LoopMountAction(RetryAction):
             'mount',
             '-o',
             'loop,offset=%s' % self.data['download_action']['offset'],
-            self.data['download_action']['file'],
+            self.data['download_action']['image']['file'],
             self.data[self.name]['mntdir']
         ]
         command_output = self._run_command(mount_cmd)

@@ -98,13 +98,20 @@ class NewDevice(object):
         defaults = NewDeviceDefaults()
         # parameters dict will update if new settings are found, so repeat for customisation files when those exist
         self.parameters = defaults.parameters
-        self.parameters = dev_parser.parse(open(os.path.join(default_config_path, 'devices', "%s.conf" % target)))
-        self.parameters = dev_parser.parse(
-            open(
-                os.path.join(
-                    default_config_path, 'device_types', "%s.conf" % self.parameters['device_type'])
-            )
-        )
+        device_file = os.path.join(default_config_path, 'devices', "%s.conf" % target)
+        if not os.path.exists(device_file):
+            raise RuntimeError("Could not find %s" % device_file)
+        try:
+            self.parameters = dev_parser.parse(open(device_file))
+        except TypeError:
+            raise RuntimeError("%s could not be parsed" % device_file)
+        type_file = os.path.join(default_config_path, 'device_types', "%s.conf" % self.parameters['device_type'])
+        if not os.path.exists(type_file):
+            raise RuntimeError("Could not find %s" % type_file)
+        try:
+            self.parameters = dev_parser.parse(open(type_file))
+        except TypeError:
+            raise RuntimeError("%s could not be parsed" % type_file)
         self.parameters = {'hostname': target}  # FIXME: is this needed?
 
     @property

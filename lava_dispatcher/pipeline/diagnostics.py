@@ -58,3 +58,23 @@ class DiagnoseTargetNetwork(DiagnosticAction):
     def run(self, connection, args=None):
         connection = super(DiagnoseTargetNetwork, self).run(connection, args)
         return connection
+
+
+class DiagnoseUBoot(DiagnosticAction):
+    """
+    Report the UBoot environment
+    """
+    def __init__(self):
+        super(DiagnoseUBoot, self).__init__()
+        self.name = "uboot_environment"
+        self.summary = "run printenv"
+        self.description = "report the uboot environment"
+
+    @classmethod
+    def trigger(cls):
+        return "uboot-printenv"
+
+    def run(self, connection, args=None):
+        connection = super(DiagnoseUBoot, self).run(connection, args)
+        # FIXME: write the support for reset, including running PDU command
+        return connection

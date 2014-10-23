@@ -21,10 +21,9 @@
 import os
 import logging
 import glob
-
+import unittest
 from lava_dispatcher.pipeline.action import Pipeline, Action, RetryAction, JobError
 from lava_dispatcher.pipeline.test.test_basic import Factory
-from lava_dispatcher.tests.helper import LavaDispatcherTestCase
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction, DownloadHandler
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
@@ -44,16 +43,18 @@ from lava_dispatcher.pipeline.actions.deploy.testdef import TestDefinitionAction
 from lava_dispatcher.pipeline.actions.boot.kvm import BootAction
 
 
-class TestBasicJob(LavaDispatcherTestCase):
+class TestBasicJob(unittest.TestCase):
 
     def test_basic_actions(self):
         factory = Factory()
         job = factory.create_fake_qemu_job()
+        if not job:
+            return unittest.skip("not all deployments have been implemented")
         self.assertIsInstance(job, Job)
         self.assertIsInstance(job.pipeline, Pipeline)
 
 
-class TestKVMSimulation(LavaDispatcherTestCase):
+class TestKVMSimulation(unittest.TestCase):
 
     def test_kvm_simulation(self):
         """
@@ -140,17 +141,16 @@ class TestKVMSimulation(LavaDispatcherTestCase):
         # print yaml.dump(pipe.describe())
 
 
-class TestKVMBasicDeploy(LavaDispatcherTestCase):
+class TestKVMBasicDeploy(unittest.TestCase):
 
     def setUp(self):
         super(TestKVMBasicDeploy, self).setUp()
         factory = Factory()
-        self.job = factory.create_job('sample_jobs/kvm.yaml', self.config_dir)
+        self.job = factory.create_job('sample_jobs/kvm.yaml', output_dir='/tmp')
 
     def test_deploy_job(self):
         # from meliae import scanner
         # scanner.dump_all_objects('/tmp/lava-unittest.json')
-        self.assertEqual(self.job.parameters['output_dir'], self.config_dir)
         self.assertEqual(self.job.pipeline.job, self.job)
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
@@ -164,7 +164,6 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
         apply_overlay = None
         overlay = None
         unmount = None
-        self.assertTrue(os.path.exists(self.job.parameters['output_dir']))
         self.assertEqual(len(self.job.pipeline.describe().values()), 32)  # this will keep changing until KVM is complete.
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
@@ -202,7 +201,7 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
             elif isinstance(action, Action):
                 pass
             else:
-                print action
+                # print action
                 self.fail("No deploy action found")
         download.parse()
         self.assertEqual(download.reader, download._http_stream)

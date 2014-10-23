@@ -31,10 +31,30 @@ from lava_dispatcher.pipeline.action import (
     LavaTest,
 )
 from lava_dispatcher.pipeline.deployment_data import get_deployment_data
-# needed for the Deployment select call, despite what pylint thinks.
-from lava_dispatcher.pipeline.actions.deploy.image import DeployImage  # pylint: disable=unused-import
-from lava_dispatcher.pipeline.actions.boot.kvm import BootKVM  # pylint: disable=unused-import
-from lava_dispatcher.pipeline.actions.test.shell import TestShell  # pylint: disable=unused-import
+# Bring in the strategy subclass lists, ignore pylint warnings.
+import lava_dispatcher.pipeline.actions.deploy.strategies  # pylint: disable=unused-import
+import lava_dispatcher.pipeline.actions.boot.strategies  # pylint: disable=unused-import
+import lava_dispatcher.pipeline.actions.test.strategies  # pylint: disable=unused-import
+
+
+def handle_device_parameters(name, parameters, count):
+    """
+    Parses the action specific parameters from the device configuration
+    to be added to the matching action parameters.
+    name refers to the action name in the YAML.
+    count refers to the number of times this action exists in the YAML file.
+    Depending on the YAML structure, some methods can be a list of strings,
+    some can be a list of dict objects.
+    """
+    if 'actions' not in parameters:
+        return {}
+    if name not in parameters['actions']:
+        return {}
+    if type(parameters['actions'][name]['methods'][count]) == str:
+        return parameters['actions'][name]
+    if type(parameters['actions'][name]['methods'][count]) == dict:
+        return parameters['actions'][name]['methods'][count]
+    return {}
 
 
 class JobParser(object):
@@ -77,31 +97,44 @@ class JobParser(object):
         mapping['yaml_line'] = node.__line__
         return mapping
 
-    def parse(self, content, device, output_dir=None):
+    # FIXME: add a validate() function which checks against a Schema as a completely separate step.
+    def parse(self, content, device, output_dir=None):  # pylint: disable=too-many-locals
         self.loader = yaml.Loader(content)
         self.loader.compose_node = self.compose_node
         self.loader.construct_mapping = self.construct_mapping
         data = self.loader.get_single_data()
 
         job = Job(data)
-
+        counts = {}
         job.device = device
         job.parameters['output_dir'] = output_dir
         pipeline = Pipeline(job=job)
         for action_data in data['actions']:
             line = action_data.pop('yaml_line', None)
             for name in action_data:
+                count = counts.setdefault(name, 0)
+                counts.update({name: count})
                 if name == "deploy":
+                    # set parameters specified in the device configuration, allow job to override.
+                    parameters = handle_device_parameters(name, device.parameters, counts[name])
+                    parameters.update(action_data[name])  # pass the job parameters to the instance
+                    if 'os' in parameters:
+                        parameters.update({'deployment_data': get_deployment_data(parameters['os'])})
+                    else:
+                        parameters.update({'deployment_data': get_deployment_data('oe')})
                     # allow the classmethod to check the parameters
-                    deploy = Deployment.select(device, action_data[name])(pipeline, action_data[name])
+                    deploy = Deployment.select(device, action_data[name])(pipeline, parameters)
                     deploy.action.yaml_line = line
-                    deploy.action.parameters = {'deployment_data': get_deployment_data(deploy.action.parameters['os'])}
                 elif name == "boot":
-                    boot = Boot.select(device, action_data[name])(pipeline, action_data[name])
+                    parameters = handle_device_parameters(name, device.parameters, counts[name])
+                    parameters.update(action_data[name])
+                    boot = Boot.select(device, action_data[name])(pipeline, parameters)
                     boot.action.yaml_line = line
                 elif name == "test":
                     # allow for multiple base tests, e.g. Android
-                    test_method = LavaTest.select(device, action_data[name])(pipeline, action_data[name])
+                    parameters = handle_device_parameters(name, device.parameters, counts[name])
+                    parameters.update(action_data[name])
+                    test_method = LavaTest.select(device, action_data[name])(pipeline, parameters)
                 else:
                     # May only end up being used for submit as other actions all need strategy method objects
                     # select the specific action of this class for this job

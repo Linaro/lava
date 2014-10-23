@@ -324,7 +324,7 @@ class Action(object):
         self.__results__ = OrderedDict()
         # FIXME: what about {} for default value?
         self.env = None  # FIXME make this a parameter which gets default value when first called
-        self.timeout = None  # Timeout class instance, if needed.
+        self.timeout = Timeout('default')  # Timeout class instance, if needed.
         self.max_retries = 1  # unless the strategy or the job parameters change this, do not retry
         self.diagnostics = []
 
@@ -440,7 +440,6 @@ class Action(object):
             self.__parameters__.update(data)
         except ValueError:
             raise RuntimeError("Action parameters need to be a dictionary")
-        self.timeout = Timeout('default')
         if 'timeout' in self.parameters:
             # FIXME: a top level timeout should cover all actions within the pipeline, not each action have the same timeout.
             time_int = 0
@@ -586,6 +585,8 @@ class Action(object):
                 'message': [i.strip() for i in exc.message],
                 'output': exc.output.split('\n')})
         self._log("%s\n%s" % (' '.join(command_list), log))
+        if not log:
+            log = True  # allow for commands which return no output
         return log
 
     def run(self, connection, args=None):

@@ -189,6 +189,9 @@ class CommandRunner(object):
         self.match_id = None
         self.match = None
 
+    def change_prompt(self, string):
+        self._prompt_str = string
+
     def wait_for_prompt(self, timeout=-1):
         wait_for_prompt(self._connection, self._prompt_str, timeout)
 

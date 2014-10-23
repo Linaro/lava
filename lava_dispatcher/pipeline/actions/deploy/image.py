@@ -61,7 +61,7 @@ class DeployImageAction(DeployAction):
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        download = DownloaderAction()
+        download = DownloaderAction('image')
         download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
         self.internal_pipeline.add_action(download)
         if parameters.get('format', '') == 'qcow2':
@@ -113,4 +113,8 @@ class DeployImage(Deployment):
         else:
             if device.parameters['device_type'] != 'kvm':
                 return False
+        # lookup if the job parameters match the available device methods
+        if 'image' not in parameters:
+            print "Parameters %s have not been implemented yet." % parameters.keys()
+            return False
         return True

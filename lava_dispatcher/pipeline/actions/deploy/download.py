@@ -18,6 +18,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+# This class is used for all downloads, including images and individual files for tftp.
+
 import os
 import urlparse
 import urllib2  # FIXME: use requests
@@ -32,6 +34,9 @@ from lava_dispatcher.pipeline.action import (
     Pipeline,
     RetryAction,
 )
+
+# FIXME: separate download actions for decompressed and uncompressed downloads
+# so that the logic can be held in the Strategy class, not the Action.
 
 
 class ScpDownloadAction(Action):
@@ -81,15 +86,17 @@ class DownloaderAction(RetryAction):
     """
     The retry pipeline for downloads.
     """
-    def __init__(self):
+    def __init__(self, key, path="/tmp"):
         super(DownloaderAction, self).__init__()
         self.name = "download_retry"
         self.description = "download with retry"
         self.summary = "download-retry"
+        self.key = key  # the key in the parameters of what to download
+        self.path = path  # where to download
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.internal_pipeline.add_action(DownloadHandler())
+        self.internal_pipeline.add_action(DownloadHandler(self.key, self.path))
 
 
 class DownloadHandler(Action):
@@ -103,18 +110,21 @@ class DownloadHandler(Action):
     as possible.
     """
 
-    def __init__(self):
+    # FIXME: ensure that a useful progress indicator is used for all downloads., e.g. every 5%
+    def __init__(self, key, path):
         super(DownloadHandler, self).__init__()
         self.name = "download_action"
         self.description = "download action"
         self.summary = "download-action"
         self.proxy = None
         self.url = None
+        self.key = key
+        self.path = path
 
     @contextlib.contextmanager
     def _scp_stream(self):
         process = None
-        url = self.parameters['image']
+        url = self.parameters[self.key]
         try:
             process = subprocess.Popen(
                 ['nice', 'ssh', url.netloc, 'cat', url.path],
@@ -155,20 +165,26 @@ class DownloadHandler(Action):
             if fd:
                 fd.close()
 
-    def _url_to_fname_suffix(self, path='/tmp'):
+    def _url_to_fname_suffix(self, path):
         filename = os.path.basename(self.url.path)
         parts = filename.split('.')
         suffix = parts[-1]
-        filename = os.path.join(path, '.'.join(parts[:-1]))
+        if len(parts) == 1:  # handle files without suffixes, e.g. kernel images
+            filename = os.path.join(path, ''.join(parts[-1]))
+        else:
+            filename = os.path.join(path, '.'.join(parts[:-1]))
         return filename, suffix
 
     @contextlib.contextmanager
     def _decompressor_stream(self):
+        # FIXME: should decompression be a different DownloadAction?
         fd = None
         decompressor = None
-        decompress = True  # FIXME: get from job.parameters
+        decompress = False
+        if self.key == 'image':
+            decompress = True  # FIXME: get from job.parameters
 
-        fname, suffix = self._url_to_fname_suffix()  # FIXME: use the context tmpdir
+        fname, suffix = self._url_to_fname_suffix(self.path)  # FIXME: use the context tmpdir
 
         if suffix == 'gz' and decompress:
             decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
@@ -198,7 +214,8 @@ class DownloadHandler(Action):
         so that only the correct action is added to the pipeline.
         """
         # FIXME use actions? check behaviour with contextmanager
-        self.url = urlparse.urlparse(self.parameters['image'])
+        # print self.parameters, self.name, self.key, self.job.device.parameters
+        self.url = urlparse.urlparse(self.parameters[self.key])
         if self.url.scheme == 'scp':
             self.reader = self._scp_stream
         elif self.url.scheme == 'http' or self.url.scheme == 'https':
@@ -211,15 +228,14 @@ class DownloadHandler(Action):
     def validate(self):
         super(DownloadHandler, self).validate()
         self.parse()
-        fname, suffix = self._url_to_fname_suffix()  # FIXME: use the context tmpdir
-        if self.name not in self.data:
-            self.data[self.name] = {}
-        self.data[self.name]['file'] = fname
+        fname, suffix = self._url_to_fname_suffix(self.path)  # FIXME: use the context tmpdir
+        self.data.setdefault(self.name, {self.key: {}})
+        self.data[self.name].update({self.key: {'file': fname}})
 
     def run(self, connection, args=None):
         self.parse()  # FIXME: do this in the deployment strategy
         # self.cookies = self.job.context.config.lava_cookies  # FIXME: work out how to restore
-        fname, suffix = self._url_to_fname_suffix()  # FIXME: use the context tmpdir
+        fname, suffix = self._url_to_fname_suffix(self.path)  # FIXME: use the context tmpdir
         if os.path.exists(fname):
             self._log("development shortcut")  # TODO: remove
             return connection
@@ -230,7 +246,7 @@ class DownloadHandler(Action):
         # and scp has progress built in too.
         with self.reader() as r:
             with self._decompressor_stream() as (writer, fname):
-                self._log("downloading and decompressing %s as %s" % (self.parameters['image'], fname))
+                self._log("downloading and decompressing %s as %s" % (self.parameters[self.key], fname))
                 self.md5 = hashlib.md5()
                 self.sha256 = hashlib.sha256()
                 bsize = 32768
@@ -245,7 +261,7 @@ class DownloadHandler(Action):
         # FIXME: needs to raise JobError on 404 etc. for retry to operate
         # set the dynamic data into the context:
         # the decompressed filename and path
-        self.data[self.name] = {
+        self.data[self.name][self.key] = {
             'file': fname,
             'md5': self.md5.hexdigest(),
             'sha256': self.sha256.hexdigest()
