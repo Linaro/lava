@@ -592,6 +592,14 @@ class URLTestDefinition(object):
             for param_name, param_value in _test_params_temp.items():
                 fout.write('%s=\'%s\'\n' % (param_name, param_value))
         fout.write('######\n')
+        # inject other parameters
+        target_type = self.context.client.target_device.deployment_data.get(
+            'distro')
+        fout.write('###other parameters###\n')
+        fout.write('%s=\'%s\'\n' % ('LAVA_SERVER_IP',
+                                    self.context.config.lava_server_ip))
+        fout.write('%s=\'%s\'\n' % ('TARGET_TYPE', target_type))
+        fout.write('######\n')
 
     def _create_target_install(self, hostdir, targetdir):
         with open('%s/install.sh' % hostdir, 'w') as f:
