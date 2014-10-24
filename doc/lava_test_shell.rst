@@ -361,6 +361,20 @@ http://git.linaro.org/people/neil.williams/temp-functional-tests.git/blob/HEAD:/
 
 .. _install_steps:
 
+other parameters
+================
+
+LAVA adds other parameters which could be accessed within the
+lava-test-shell test definition. Currently the following params are
+available automatically::
+
+* LAVA_SERVER_ID
+* TARGET_TYPE
+
+Example:
+
+https://git.linaro.org/people/senthil.kumaran/test-definitions.git/blob/HEAD:/debian/other-params.yaml
+
 Install Steps
 =============
 
