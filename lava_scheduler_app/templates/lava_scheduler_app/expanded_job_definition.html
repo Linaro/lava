@@ -1,0 +1,128 @@
+{% extends "layouts/content-bootstrap.html" %}
+
+{% block styles %}
+  <link href="{{ STATIC_URL }}lava_scheduler_app/css/shCore.css" rel="stylesheet" type="text/css" />
+  <link href="{{ STATIC_URL }}lava_scheduler_app/css/shThemeDefault.css" rel="stylesheet" type="text/css" />
+  <link href="{{ STATIC_URL }}lava_scheduler_app/css/shThemeLAVA.css" rel="stylesheet" type="text/css" />
+{% endblock styles %}
+
+{% block content %}
+<h2>Expanded job definition file - {% if job.is_multinode %}{{ job.sub_id }}{% else %}{{ job.id }}{% endif %}
+ <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.definition.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h2>
+This job has repeated actions. Resubmit action will use Original Definition.
+
+<div class="row">
+  <div class="col-md-4">
+    <h4 class="modal-header">Device</h4>
+    <dl class="dl-horizontal">
+    {% if job.actual_device %}
+      <dt>Name</dt>
+      <dd><a href="{{ job.actual_device.get_absolute_url }}">{{ job.actual_device.hostname }}</a>{% if not job.is_vmgroup %} <a
+      href="{% url 'lava.scheduler.device_report' job.actual_device.pk %}">(reports)</a>{% endif %}</dd>
+    {% endif %}
+
+    {% if job.requested_device %}
+      <dt>Type</dt>
+      <dd><a href="{{ job.requested_device.device_type.get_absolute_url }}">{{ job.requested_device.device_type }}</a>{% if not job.is_vmgroup %} <a
+      href="{% url 'lava.scheduler.device_type_report' job.requested_device.device_type %}">(reports)</a>{% endif %}</dd>
+    {% elif job.requested_device_type %}
+      <dt>Requested type</dt>
+      <dd><a href="{{ job.requested_device_type.get_absolute_url }}">{{ job.requested_device_type }}</a> <a href="{% url 'lava.scheduler.device_type_report' job.requested_device_type %}">(reports)</a></dd>
+    {% endif %}
+    </dl>
+  </div>
+  <div class="col-md-4">
+    <h4 class="modal-header">Logs</h4>
+    <div class="row">
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+        {% if job_file_present %}
+          <li><a href="{{ job.get_absolute_url }}" class="btn btn-primary">Summary</a></li>
+        {% endif %}
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+        {% if job_file_present %}
+          <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary">Complete log</a></li>
+        {% endif %}
+        {% if job.results_link %}
+          <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
+        {% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <h4 class="modal-header">Actions</h4>
+    <div class="row">
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+        {% if show_resubmit and not job.is_multinode and not job.is_vmgroup %}
+          <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
+        {% endif %}
+        {% if user.is_authenticated %}
+        <li><a href="{% url 'lava.scheduler.job.toggle_favorite' job.pk %}"  class="btn btn-info">
+            {% if is_favorite %}
+              Remove from favorites
+            {% else %}
+              Add to favorites
+            {% endif %}
+        </a></li>
+        {% endif %}
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+          <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Original Definition</a></li>
+        {% if job.is_multinode %}
+          <li><a href="{% url 'lava.scheduler.job.multinode_definition' job.pk %}" class="btn btn-info">Multinode Definition</a></li>
+        {% elif job.is_vmgroup %}
+           <li><a href="{% url 'lava.scheduler.job.vmgroup_definition' job.pk %}" class="btn btn-info">VMGroup Definition</a></li>
+        {% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% if job.is_multinode or job.is_vmgroup %}
+<div class="row">
+  <div class="col-md-6">
+    <h4 class="modal-header">Sub jobs</h4>
+    <dl class="dl-horizontal">
+    {% for subjob in job.sub_jobs_list %}
+      <dt><a href="{% url 'lava.scheduler.job.detail' subjob.sub_id %}">{{ subjob.sub_id }}</a>
+        {% if '0' in subjob.sub_id and '0' not in job.sub_id %}
+            <abbr title="view job {{ subjob.sub_id }} to see the result bundle, if any.">(?)</abbr>
+        {% endif %}
+      </dt>
+      <dd>
+    {% if subjob.actual_device.hostname %}
+      on: <a href="{{ subjob.actual_device.get_absolute_url }}">{{ subjob.actual_device.hostname }}</a>
+      as: {{ subjob.device_role }}&nbsp;
+    {% else %}
+      No device assigned as {{ subjob.device_role }}.</dd>
+    {% endif %}
+      </dd>
+    {% endfor %}
+    </dl>
+  </div>
+</div>
+{% endif %}
+
+
+<h4 class="modal-header">Definition</h4>
+<pre class="brush: js">{{ job.definition }}</pre>
+
+{% endblock content %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/shCore.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/shBrushJScript.js"></script>
+
+<script type="text/javascript">
+  $(function() {
+     SyntaxHighlighter.all();
+  });
+</script>
+{% endblock scripts %}

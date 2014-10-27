@@ -1360,6 +1360,10 @@ def job_detail(request, pk):
             'job_file_present': False,
         })
 
+    if "repeat_count" in job.definition:
+        data.update({
+            'expand': True,
+        })
     return render_to_response(
         "lava_scheduler_app/job.html", data, RequestContext(request))
 
@@ -1383,6 +1387,30 @@ def job_definition(request, pk):
 def job_definition_plain(request, pk):
     job = get_restricted_job(request.user, pk)
     response = HttpResponse(job.display_definition, content_type='text/plain')
+    response['Content-Disposition'] = "attachment; filename=job_%d.json" % \
+        job.id
+    return response
+
+
+@BreadCrumb("Expanded Definition", parent=job_detail, needs=['pk'])
+def expanded_job_definition(request, pk):
+    job = get_restricted_job(request.user, pk)
+    log_file = job.output_file()
+    return render_to_response(
+        "lava_scheduler_app/expanded_job_definition.html",
+        {
+            'job': job,
+            'job_file_present': bool(log_file),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(expanded_job_definition, pk=pk),
+            'show_cancel': job.can_cancel(request.user),
+            'show_resubmit': job.can_resubmit(request.user),
+        },
+        RequestContext(request))
+
+
+def expanded_job_definition_plain(request, pk):
+    job = get_restricted_job(request.user, pk)
+    response = HttpResponse(job.definition, content_type='text/plain')
     response['Content-Disposition'] = "attachment; filename=job_%d.json" % \
         job.id
     return response

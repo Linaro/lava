@@ -1343,6 +1343,8 @@ class TestJob(RestrictedResource):
         # MultiNode processing - tally allowed devices with the
         # device_types requested per role.
         allowed_devices = {}
+        orig_job_data = job_data
+        job_data = utils.process_repeat_parameter(job_data)
         if 'device_group' in job_data:
             device_count = {}
             target = None  # prevent multinode jobs reserving devices which are currently running.
@@ -1484,8 +1486,10 @@ class TestJob(RestrictedResource):
         else:
             job_data = simplejson.dumps(job_data, sort_keys=True,
                                         indent=4 * ' ')
+            orig_job_data = simplejson.dumps(orig_job_data, sort_keys=True,
+                                        indent=4 * ' ')
             job = TestJob(
-                definition=job_data, original_definition=job_data,
+                definition=job_data, original_definition=orig_job_data,
                 submitter=submitter, requested_device=target,
                 requested_device_type=device_type, description=job_name,
                 health_check=health_check, user=user, group=group,

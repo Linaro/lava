@@ -507,6 +507,117 @@ class TestTestJob(TestCaseWithFactory):
         self.assertEqual(definition_data['timeout'], job_data['timeout'])
         self.assertEqual(definition_data['health_check'], job_data['health_check'])
 
+    def test_from_json_and_user_repeat_parameter_expansion(self):
+        device_type = self.factory.make_device_type('base')
+        device = self.factory.make_device(device_type=device_type, hostname="generic")
+        repeat = 5
+        job_data = {
+            'timeout': 1,
+            'target': device.hostname,
+            'actions': [
+                {
+                    'command': 'lava_test_shell',
+                    'parameters': {
+                        'repeat': repeat,
+                        'testdef_repos': [
+                            {
+                                'git-repo': 'git://server/test.git',
+                                'testdef': 'testdef.yaml'
+                            }
+                        ],
+                    }
+                }
+            ],
+        }
+        job_json = simplejson.dumps(job_data, sort_keys=True, indent=4 * ' ')
+        job = TestJob.from_json_and_user(job_json, self.factory.make_user())
+        definition_data = simplejson.loads(job.definition)
+        self.assertEqual(len(definition_data['actions']), repeat)
+        self.assertEqual(job.status, TestJob.SUBMITTED)
+
+    def test_from_json_and_user_repeat_parameter_replace_with_repeat_count(self):
+        device_type = self.factory.make_device_type('base')
+        device = self.factory.make_device(device_type=device_type, hostname="generic")
+        repeat = 5
+        job_data = {
+            'timeout': 1,
+            'target': device.hostname,
+            'actions': [
+                {
+                    'command': 'lava_test_shell',
+                    'parameters': {
+                        'repeat': repeat,
+                        'testdef_repos': [
+                            {
+                                'git-repo': 'git://server/test.git',
+                                'testdef': 'testdef.yaml'
+                            }
+                        ],
+                    }
+                }
+            ],
+        }
+        job_json = simplejson.dumps(job_data, sort_keys=True, indent=4 * ' ')
+        job = TestJob.from_json_and_user(job_json, self.factory.make_user())
+        definition_data = simplejson.loads(job.definition)
+        self.assertEqual(len(definition_data['actions']), repeat)
+        for i in range(repeat):
+            self.assertEqual(definition_data['actions'][i]['parameters']['repeat_count'], i)
+            self.assertNotIn('repeat', definition_data['actions'][i]['parameters'])
+        self.assertEqual(job.status, TestJob.SUBMITTED)
+
+    def test_from_json_and_user_repeat_parameter_zero(self):
+        device_type = self.factory.make_device_type('base')
+        device = self.factory.make_device(device_type=device_type, hostname="generic")
+        repeat = 0
+        job_data = {
+            'timeout': 1,
+            'target': device.hostname,
+            'actions': [
+                {
+                    'command': 'lava_test_shell',
+                    'parameters': {
+                        'repeat': repeat,
+                        'testdef_repos': [
+                            {
+                                'git-repo': 'git://server/test.git',
+                                'testdef': 'testdef.yaml'
+                            }
+                        ],
+                    }
+                }
+            ],
+        }
+        job_json = simplejson.dumps(job_data, sort_keys=True, indent=4 * ' ')
+        job = TestJob.from_json_and_user(job_json, self.factory.make_user())
+        definition_data = simplejson.loads(job.definition)
+        self.assertEqual(len(definition_data['actions']), 1)
+        self.assertNotIn('repeat_count', definition_data['actions'][0]['parameters'])
+        self.assertNotIn('repeat', definition_data['actions'][0]['parameters'])
+        self.assertEqual(job.status, TestJob.SUBMITTED)
+
+    def test_from_json_and_user_repeat_parameter_not_supported(self):
+        device_type = self.factory.make_device_type('base')
+        device = self.factory.make_device(device_type=device_type, hostname="generic")
+        repeat = 1
+        job_data = {
+            'timeout': 1,
+            'target': device.hostname,
+            'actions': [
+                {
+                    'command': 'deploy_linaro_image',
+                    'parameters': {
+                        'repeat': repeat,
+                        'image': 'file:///pathto/image.img.gz'
+                    }
+                }
+            ],
+        }
+        job_json = simplejson.dumps(job_data, sort_keys=True, indent=4 * ' ')
+        self.assertRaises(
+            ValueError, TestJob.from_json_and_user, job_json,
+            self.factory.make_user())
+
 
 class TestHiddenTestJob(TestCaseWithFactory):
 
