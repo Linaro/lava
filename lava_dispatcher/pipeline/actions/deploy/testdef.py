@@ -31,6 +31,7 @@ from lava_dispatcher.pipeline.action import (
     JobError,
 )
 from lava_dispatcher.pipeline.actions.test import TestAction
+from lava_dispatcher.pipeline.utils.strings import indices
 
 
 class RepoAction(Action):
@@ -153,11 +154,6 @@ class RepoAction(Action):
                 'pattern': pattern,
             }
         })
-
-
-def indices(string, char):
-    # FIXME: move to utils
-    return [i for i, c in enumerate(string) if c == char]
 
 
 class GitRepoAction(RepoAction):

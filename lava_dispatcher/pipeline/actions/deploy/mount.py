@@ -29,6 +29,7 @@ from lava_dispatcher.pipeline.action import (
     Pipeline
 )
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 
 
 class OffsetAction(DeployAction):
@@ -154,7 +155,7 @@ class LoopMountAction(RetryAction):
         # FIXME: this should not happen !!
         if 'offset' not in self.data['download_action']:
             raise RuntimeError("Offset action failed")
-        self.data[self.name]['mntdir'] = self.job.mkdtemp()
+        self.data[self.name]['mntdir'] = mkdtemp(autoremove=False)
         mount_cmd = [
             'mount',
             '-o',

@@ -29,6 +29,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
 from lava_dispatcher.pipeline.shell import ExpectShellSession, ShellCommand, ShellSession
+from lava_dispatcher.pipeline.utils.shell import which
 
 
 class BootKVM(Boot):
@@ -86,18 +87,6 @@ class BootQemuRetry(Action):
         self.overrides = None
         self.command = []
 
-    # FIXME: move into a new utils module?
-    def _find(self, path, match=os.path.isfile):
-        """
-        Simple replacement for the `which` command found on
-        Debian based systems.
-        """
-        for dirname in os.environ['PATH'].split(':'):
-            candidate = os.path.join(dirname, path)
-            if match(candidate):
-                return candidate
-        raise InfrastructureError("Cannot find file %s" % path)
-
     def validate(self):
         super(BootQemuRetry, self).validate()
         if not hasattr(self.job.device, 'config'):  # FIXME: new devices only
@@ -105,7 +94,7 @@ class BootQemuRetry(Action):
                 # FIXME: need a schema and do this inside the NewDevice with a QemuDevice class? (just for parsing)
                 params = self.job.device.parameters['actions']['boot']
                 arch = self.job.device.parameters['architecture']
-                qemu_binary = self._find(params['command'][arch]['qemu_binary'])
+                qemu_binary = which(params['command'][arch]['qemu_binary'])
                 self.overrides = params['overrides']  # FIXME: resolve how to allow overrides in the schema
                 self.command = [
                     qemu_binary,

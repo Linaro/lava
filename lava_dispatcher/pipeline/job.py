@@ -19,14 +19,12 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import atexit
 import yaml
-import tempfile
 import subprocess
 from collections import OrderedDict
-from lava_dispatcher.utils import rmtree
-from lava_dispatcher.pipeline.diagnostics import DiagnoseNetwork
+
 from lava_dispatcher.pipeline.action import PipelineContext
+from lava_dispatcher.pipeline.diagnostics import DiagnoseNetwork
 
 
 class Job(object):
@@ -122,20 +120,3 @@ class Job(object):
         # arbitrary points?
         # results_dir = None
         #    self.action.post_process(results_dir)
-
-    # FIXME: should be moved to a specific helper module
-    def rmtree(self, directory):
-        # FIXME: change to self._run_command
-        subprocess.call(['rm', '-rf', directory])
-
-    # FIXME: should be moved to a specific helper module
-    def mkdtemp(self, basedir='/tmp'):
-        """
-        returns a temporary directory that's deleted when the process exits
-
-        """
-        # FIXME move to utils module?
-        tmpdir = tempfile.mkdtemp(dir=basedir)
-        atexit.register(rmtree, tmpdir)
-        os.chmod(tmpdir, 0o755)
-        return tmpdir
