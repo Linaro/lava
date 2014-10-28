@@ -109,6 +109,6 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):  # pylint: disable=too-man
         for script in glob.glob(os.path.join(distro_support_dir, 'lava-*')):
             scripts_to_copy.append(script)
         check_list = [os.path.basename(scr) for scr in scripts_to_copy]
-        self.assertEqual(check_list, script_list)
 
+        self.assertItemsEqual(check_list, script_list)
         self.assertEqual(overlay.xmod, stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH)
