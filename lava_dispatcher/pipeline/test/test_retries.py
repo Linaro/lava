@@ -22,6 +22,7 @@
 import unittest
 from lava_dispatcher.pipeline.action import (
     Action,
+    AdjuvantAction,
     Pipeline,
     RetryAction,
     DiagnosticAction,
@@ -221,3 +222,181 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.assertIsNone(fakepipeline.validate_actions())
         with self.assertRaises(JobError):
             fakepipeline.run_actions(None, None)
+
+
+class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-methods
+
+    class FakeJob(Job):
+
+        def __init__(self, parameters):
+            super(TestAdjuvant.FakeJob, self).__init__(parameters)
+
+        def validate(self, simulate=False):
+            self.pipeline.validate_actions()
+
+    class FakeDeploy(object):
+        """
+        Derived from object, *not* Deployment as this confuses python -m unittest discover
+        - leads to the FakeDeploy being called instead.
+        """
+        def __init__(self, parent):
+            self.__parameters__ = {}
+            self.pipeline = parent
+            self.job = parent.job
+            self.action = TestAdjuvant.FakeAction()
+
+    class FakeConnection(object):
+        def __init__(self):
+            self.name = "fake-connect"
+
+    class FakeDevice(object):
+        def __init__(self):
+            self.parameters = {}
+
+    class FakePipeline(Pipeline):
+
+        def __init__(self, parent=None, job=None):
+            super(TestAdjuvant.FakePipeline, self).__init__(parent, job)
+
+    class FailingAdjuvant(AdjuvantAction):
+        """
+        Added to the pipeline but only runs if FakeAction sets a suitable key.
+        """
+        def __init__(self):
+            super(TestAdjuvant.FailingAdjuvant, self).__init__()
+            self.name = "fake-adjuvant"
+            self.summary = "fake helper"
+            self.description = "fake adjuvant helper"
+
+    class FakeAdjuvant(AdjuvantAction):
+        """
+        Added to the pipeline but only runs if FakeAction sets a suitable key.
+        """
+        def __init__(self):
+            super(TestAdjuvant.FakeAdjuvant, self).__init__()
+            self.name = "fake-adjuvant"
+            self.summary = "fake helper"
+            self.description = "fake adjuvant helper"
+
+        @classmethod
+        def key(cls):
+            return "fake-key"
+
+        def run(self, connection, args=None):
+            connection = super(TestAdjuvant.FakeAdjuvant, self).run(connection, args)
+            if not self.valid:
+                raise RuntimeError("fakeadjuvant should be valid")
+            if self.data[self.key()]:
+                self.data[self.key()] = 'triggered'
+            if self.adjuvant:
+                self.data[self.key()] = 'base class trigger'
+            return connection
+
+    class FakeAction(Action):
+        """
+        Isolated Action which can be used to generate artificial exceptions.
+        """
+
+        def __init__(self):
+            super(TestAdjuvant.FakeAction, self).__init__()
+            self.count = 1
+            self.name = "fake-action"
+            self.summary = "fake action for unit tests"
+            self.description = "fake, do not use outside unit tests"
+
+        def populate(self, parameters):
+            self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+            self.internal_pipeline.add_action(TestAdjuvant.FakeAdjuvant())
+
+        def run(self, connection, args=None):
+            if connection:
+                raise RuntimeError("Fake action not meant to have a real connection")
+            connection = TestAdjuvant.FakeConnection()
+            self.count += 1
+            self.results = {'status': "failed"}
+            self.data[TestAdjuvant.FakeAdjuvant.key()] = True
+            return connection
+
+    class SafeAction(Action):
+        """
+        Isolated test action which does not trigger the adjuvant
+        """
+        def __init__(self):
+            super(TestAdjuvant.SafeAction, self).__init__()
+            self.name = "passing-action"
+            self.summary = "fake action without adjuvant"
+            self.description = "fake action runs without calling adjuvant"
+
+        def populate(self, parameters):
+            self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+            self.internal_pipeline.add_action(TestAdjuvant.FakeAdjuvant())
+
+        def run(self, connection, args=None):
+            if connection:
+                raise RuntimeError("Fake action not meant to have a real connection")
+            connection = TestAdjuvant.FakeConnection()
+            self.results = {'status': "passed"}
+            self.data[TestAdjuvant.FakeAdjuvant.key()] = False
+            return connection
+
+    def setUp(self):
+        self.parameters = {
+            "job_name": "fakejob",
+            'output_dir': ".",
+            "actions": [
+                {
+                    'deploy': {
+                        'failure_retry': 3
+                    },
+                    'boot': {
+                        'failure_retry': 4
+                    },
+                    'test': {
+                        'failure_retry': 5
+                    }
+                }
+            ]
+        }
+        self.fakejob = TestAdjuvant.FakeJob(self.parameters)
+
+    def test_adjuvant_key(self):
+        pipeline = TestAction.FakePipeline(job=self.fakejob)
+        pipeline.add_action(TestAdjuvant.FakeAction())
+        pipeline.add_action(TestAdjuvant.FailingAdjuvant())
+        self.fakejob.set_pipeline(pipeline)
+        self.fakejob.device = TestAdjuvant.FakeDevice()
+        with self.assertRaises(JobError):
+            self.fakejob.validate()
+
+    def test_adjuvant(self):
+        pipeline = TestAction.FakePipeline(job=self.fakejob)
+        pipeline.add_action(TestAdjuvant.FakeAction())
+        pipeline.add_action(TestAdjuvant.FakeAdjuvant())
+        self.fakejob.set_pipeline(pipeline)
+        self.fakejob.device = TestAdjuvant.FakeDevice()
+        actions = []
+        for action in self.fakejob.pipeline.actions:
+            actions.append(action.name)
+        self.assertIn('fake-action', actions)
+        self.assertIn('fake-adjuvant', actions)
+        self.assertEqual(self.fakejob.pipeline.actions[1].key(), TestAdjuvant.FakeAdjuvant.key())
+
+    def test_run_adjuvant_action(self):
+        pipeline = TestAction.FakePipeline(job=self.fakejob)
+        pipeline.add_action(TestAdjuvant.FakeAction())
+        pipeline.add_action(TestAdjuvant.FakeAdjuvant())
+        self.fakejob.set_pipeline(pipeline)
+        self.fakejob.device = TestAdjuvant.FakeDevice()
+        self.fakejob.run()
+        self.assertEqual(self.fakejob.context, {'fake-key': 'base class trigger'})
+
+    def test_run_action(self):
+        pipeline = TestAction.FakePipeline(job=self.fakejob)
+        pipeline.add_action(TestAdjuvant.SafeAction())
+        pipeline.add_action(TestAdjuvant.FakeAdjuvant())
+        self.fakejob.set_pipeline(pipeline)
+        self.fakejob.device = TestAdjuvant.FakeDevice()
+        self.fakejob.run()
+        self.assertNotEqual(self.fakejob.context, {'fake-key': 'triggered'})
+        self.assertNotEqual(self.fakejob.context, {'fake-key': 'base class trigger'})
+        self.assertEqual(self.fakejob.context, {'fake-key': False})

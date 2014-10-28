@@ -26,9 +26,14 @@ from lava_dispatcher.pipeline.action import InfrastructureError
 def which(path, match=os.path.isfile):
     """
     Simple replacement for the `which` command found on
-    Debian based systems.
+    Debian based systems. Allows ordinary users to query
+    the PATH used at runtime.
     """
-    for dirname in os.environ['PATH'].split(':'):
+    paths = os.environ['PATH'].split(':')
+    if os.getuid() != 0:
+        # avoid sudo - it may ask for a password on developer systems.
+        paths.extend(['/usr/local/sbin', '/usr/sbin', '/sbin'])
+    for dirname in paths:
         candidate = os.path.join(dirname, path)
         if match(candidate):
             return candidate

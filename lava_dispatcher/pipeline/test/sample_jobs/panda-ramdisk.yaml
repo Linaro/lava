@@ -1,0 +1,42 @@
+# Sample JOB definition for a u-boot job
+
+device_type: panda
+
+job_name: uboot-pipeline
+job_timeout: 15m            # timeout for the whole job (default: ??h)
+action_timeout: 5m         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+priority: medium
+
+actions:
+
+  # needs to be a list of hashes to retain the order
+  - deploy:
+     timeout: 2m
+     to: tftp
+     kernel: http://images.validation.linaro.org/functional-test-images/panda/uImage
+     ramdisk: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
+     ramdisk-type: u-boot
+     dtb: http://images.validation.linaro.org/functional-test-images/panda/omap4-panda-es.dtb
+
+  - boot:
+     method: u-boot
+     commands: ramdisk
+     type: bootm
+
+  - test:
+     failure_retry: 3
+     name: kvm-basic-singlenode  # is not present, use "test $N"
+     # only s, m & h are supported.
+     timeout: 5m # uses install:deps, so takes longer than singlenode01
+     definitions:
+         - repository: git://git.linaro.org/qa/test-definitions.git
+           from: git
+           path: ubuntu/smoke-tests-basic.yaml
+           name: smoke-tests
+         - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+           from: git
+           path: lava-test-shell/single-node/singlenode02.yaml
+           name: singlenode-intermediate
+
+  - submit_results:
+        stream: /anonymous/codehelp/

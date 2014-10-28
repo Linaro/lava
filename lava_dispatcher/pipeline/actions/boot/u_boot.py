@@ -34,7 +34,7 @@ from lava_dispatcher.pipeline.shell import (
     ConnectDevice,
     ExpectShellSession,
 )
-from lava_dispatcher.pipeline.actions.boot.reset import ResetDevice
+from lava_dispatcher.pipeline.power import ResetDevice
 from lava_dispatcher.pipeline.utils.constants import (
     UBOOT_AUTOBOOT_PROMPT,
     UBOOT_DEFAULT_CMD_TIMEOUT,

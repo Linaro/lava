@@ -22,7 +22,7 @@ import os
 import glob
 import stat
 import unittest
-from lava_dispatcher.pipeline.action import FinalizeAction
+from lava_dispatcher.pipeline.power import FinalizeAction
 from lava_dispatcher.pipeline.actions.submit import SubmitResultsAction
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry
 from lava_dispatcher.pipeline.test.test_basic import Factory
