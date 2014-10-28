@@ -13,11 +13,9 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.PositiveIntegerField')(default=200),
                       keep_default=False)
 
-
     def backwards(self, orm):
         # Deleting field 'ImageReportChart.chart_height'
         db.delete_column(u'dashboard_app_imagereportchart', 'chart_height')
-
 
     models = {
         u'auth.group': {
