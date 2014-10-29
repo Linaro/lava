@@ -129,7 +129,7 @@ class ShellSession(Connection):
         super(ShellSession, self).__init__(job, shell_command)
         self.__runner__ = None
         self.name = "ShellSession"
-        self.data = job.context.pipeline_data
+        self.data = job.context
 
     @property
     def runner(self):
