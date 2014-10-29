@@ -65,16 +65,29 @@ class BootloaderTarget(MasterImageTarget):
         return prefix + '/' + self._get_rel_path(path, self._base_tmpdir)
 
     def _set_load_addresses(self, bootz):
+        meta = {}
         if not bootz and self.config.u_load_addrs and len(self.config.u_load_addrs) == 3:
             logging.info("Attempting to set uImage Load Addresses")
             self._boot_tags['{KERNEL_ADDR}'] = self.config.u_load_addrs[0]
             self._boot_tags['{RAMDISK_ADDR}'] = self.config.u_load_addrs[1]
             self._boot_tags['{DTB_ADDR}'] = self.config.u_load_addrs[2]
+            # Set boot metadata
+            meta['kernel-image'] = 'uImage'
+            meta['kernel-addr'] = self.config.u_load_addrs[0]
+            meta['initrd-addr'] = self.config.u_load_addrs[1]
+            meta['dtb-addr'] = self.config.u_load_addrs[2]
+            self.context.test_data.add_metadata(meta)
         elif bootz and self.config.z_load_addrs and len(self.config.z_load_addrs) == 3:
             logging.info("Attempting to set zImage Load Addresses")
             self._boot_tags['{KERNEL_ADDR}'] = self.config.z_load_addrs[0]
             self._boot_tags['{RAMDISK_ADDR}'] = self.config.z_load_addrs[1]
             self._boot_tags['{DTB_ADDR}'] = self.config.z_load_addrs[2]
+            # Set boot metadata
+            meta['kernel-image'] = 'zImage'
+            meta['kernel-addr'] = self.config.z_load_addrs[0]
+            meta['initrd-addr'] = self.config.z_load_addrs[1]
+            meta['dtb-addr'] = self.config.z_load_addrs[2]
+            self.context.test_data.add_metadata(meta)
         else:
             logging.debug("Undefined u_load_addrs or z_load_addrs. Three values required!")
 
