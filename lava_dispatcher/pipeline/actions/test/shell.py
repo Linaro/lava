@@ -177,8 +177,8 @@ class TestShellAction(TestAction):
                 data = handle_testcase(params)
                 res = self.match.match(data)  # FIXME: rename!
                 yaml_log.debug('   result:', res)
-                if 'results' not in self.data['test'][self.signal_director.test_uuid]:
-                    self.data['test'][self.signal_director.test_uuid]['results'] = OrderedDict()
+                self.data['test'][self.signal_director.test_uuid].setdefault('results', OrderedDict())
+
                 # prevent losing data in the update
                 # FIXME: support parameters and retries
                 if res['test_case_id'] in self.data['test'][self.signal_director.test_uuid]['results']:
@@ -206,8 +206,7 @@ class TestShellAction(TestAction):
             else:
                 res = self.match.match(match.groupdict())  # FIXME: rename!
                 yaml_log.debug('   result:', res)
-                if 'results' not in self.data['test'][self.signal_director.test_uuid]:
-                    self.data['test'][self.signal_director.test_uuid]['results'] = {}
+                self.data['test'][self.signal_director.test_uuid].setdefault('results', {})
                 self.data['test'][self.signal_director.test_uuid]['results'].update({
                     {res['test_case_id']: res}
                 })

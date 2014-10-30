@@ -85,14 +85,10 @@ class RepoAction(Action):
         Better approach will be to create the entire overlay without mounting and then
         unpack an overlay.tgz after mounting.
         """
-        if 'test' not in self.data:
-            self.data['test'] = {}
-        if self.uuid not in self.data['test']:
-            self.data['test'][self.uuid] = {}
-        if 'runner_path' not in self.data['test'][self.uuid]:
-            self.data['test'][self.uuid]['runner_path'] = {}
-        if 'overlay_path' not in self.data['test'][self.uuid]:
-            self.data['test'][self.uuid]['overlay_path'] = {}
+        self.data.setdefault('test', {})
+        self.data['test'].setdefault(self.uuid, {})
+        self.data['test'][self.uuid].setdefault('runner_path', {})
+        self.data['test'][self.uuid].setdefault('overlay_path', {})
 
         if not args or 'test_name' not in args:
             raise RuntimeError("RepoAction run called via super without parameters as arguments")
@@ -591,8 +587,7 @@ class TestInstallAction(TestOverlayAction):
             self.results = {'skipped': self.test_uuid}
             return
 
-        if 'skip_install' not in testdef:
-            testdef['skip_install'] = ''
+        testdef.setdefault('skip_install', '')
 
         # hostdir = self.data['test'][self.test_uuid]['overlay_path'][self.parameters['test_name']]
         filename = '%s/install.sh' % runner_path

@@ -140,8 +140,7 @@ class LoopMountAction(RetryAction):
 
     def validate(self):
         self.data[self.name] = {}
-        if 'mount_action' not in self.data:
-            self.data['mount_action'] = {}
+        self.data.setdefault('mount_action', {})
         if 'download_action' not in self.data:
             raise RuntimeError("download-action:%s:148" % self.name)
             # return
