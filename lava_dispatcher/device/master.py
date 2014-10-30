@@ -187,7 +187,7 @@ class MasterImageTarget(Target):
         with self._as_master() as master:
             self._format_testpartition(master, rootfstype)
             try:
-                self._deploy_linaro_rootfs(master, root_url)
+                self._deploy_linaro_rootfs(master, root_url, rootfstype)
                 self._deploy_linaro_bootfs(master, boot_url)
             except KeyboardInterrupt:
                 raise KeyboardInterrupt
@@ -576,7 +576,7 @@ class MasterImageTarget(Target):
         _recreate_ramdisk(session, target)
         session.run('umount /mnt/lava/boot')
 
-    def _deploy_linaro_rootfs(self, session, rootfs):
+    def _deploy_linaro_rootfs(self, session, rootfs, rootfstype):
         logging.info("Deploying linaro image")
         session.run('udevadm trigger')
         session.run('mkdir -p /mnt/root')
@@ -595,6 +595,16 @@ class MasterImageTarget(Target):
                 'chroot /mnt/root dpkg-divert --local /usr/sbin/flash-kernel')
             session.run(
                 'chroot /mnt/root ln -sf /bin/true /usr/sbin/flash-kernel')
+        # Rewrite fstab file if it exists in test image with the labeled
+        # boot/rootfs partitions.
+        if session.is_file_exist('/mnt/root/etc/fstab'):
+            logging.info("Rewriting /etc/fstab in test image")
+            session.run(
+                'echo "LABEL=%s /boot vfat defaults 0 0" > /mnt/root/etc/fstab' %
+                self.testboot_label)
+            session.run(
+                'echo "LABEL=%s / %s defaults 0 1" >> /mnt/root/etc/fstab' %
+                (self.testrootfs_label, rootfstype))
 
         session.run('umount /mnt/root')
 
