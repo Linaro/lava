@@ -37,11 +37,11 @@ class TestShell(LavaTest):
     """
     LavaTestShell Strategy object
     """
-    def __init__(self, parent):
+    def __init__(self, parent, parameters):
         super(TestShell, self).__init__(parent)
         self.action = TestShellRetry()
         self.action.job = self.job
-        parent.add_action(self.action)
+        parent.add_action(self.action, parameters)
 
     @contextmanager
     def test(self):
@@ -60,8 +60,8 @@ class TestShellRetry(RetryAction):
         self.summary = "Retry support for Lava Test Shell"
         self.name = "lava-test-retry"
 
-    def populate(self):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job)
+    def populate(self, parameters):
+        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(TestShellAction())
 
     def cleanup(self):

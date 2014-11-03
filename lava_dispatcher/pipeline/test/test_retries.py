@@ -110,9 +110,9 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
             self.summary = "internal retry action for unit tests"
             self.description = "internal, do not use outside unit tests"
 
-        def populate(self):
+        def populate(self, parameters):
             self.internal_pipeline = Pipeline(parent=self, job=self.job)
-            self.internal_pipeline.add_action(TestAction.FakeAction())
+            self.internal_pipeline.add_action(TestAction.FakeAction(), parameters)
 
     class CleanupRetryAction(RetryAction):
 
@@ -122,9 +122,9 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
             self.summary = "internal retry action for unit tests"
             self.description = "internal, do not use outside unit tests"
 
-        def populate(self):
+        def populate(self, parameters):
             self.internal_pipeline = Pipeline(parent=self, job=self.job)
-            self.internal_pipeline.add_action(TestAction.FakeAction())
+            self.internal_pipeline.add_action(TestAction.FakeAction(), parameters)
 
         def cleanup(self):
             pass

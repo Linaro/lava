@@ -42,11 +42,11 @@ class BootKVM(Boot):
     hand this pexpect wrapper to subsequent actions as a shell connection.
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent, parameters):
         super(BootKVM, self).__init__(parent)
         self.action = BootQEMUImageAction()
         self.action.job = self.job
-        parent.add_action(self.action)
+        parent.add_action(self.action, parameters)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -68,10 +68,10 @@ class BootQEMUImageAction(BootAction):
         self.description = "boot image with retry"
         self.summary = "boot with retry"
 
-    def populate(self):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job)
+    def populate(self, parameters):
+        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(BootQemuRetry())
-        if 'auto_login' in self.parameters:
+        if 'auto_login' in parameters:
             self.internal_pipeline.add_action(AutoLoginAction())
         self.internal_pipeline.add_action(ExpectShellSession())
 

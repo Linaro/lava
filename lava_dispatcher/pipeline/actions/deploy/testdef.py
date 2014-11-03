@@ -390,7 +390,7 @@ class TestDefinitionAction(TestAction):
         self.description = "load test definitions into image"
         self.summary = "loading test definitions"
 
-    def populate(self):
+    def populate(self, parameters):
         """
         Each time a test definition is processed by a handler, a new set of
         overlay files are needed, based on that test definition. Basic overlay
@@ -398,7 +398,7 @@ class TestDefinitionAction(TestAction):
         install:deps script and the main run script have custom Actions.
         """
         index = {}
-        self.internal_pipeline = Pipeline(parent=self, job=self.job)
+        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         for testdef in self.parameters['test']['definitions']:
             handler = RepoAction.select(testdef['from'])()
 

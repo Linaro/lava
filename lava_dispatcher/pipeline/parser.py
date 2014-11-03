@@ -93,20 +93,17 @@ class JobParser(object):
             for name in action_data:
                 if name == "deploy":
                     # allow the classmethod to check the parameters
-                    deploy = Deployment.select(device, action_data[name])(pipeline)
-                    deploy.action.parameters = action_data[name]  # still need to pass the parameters to the instance
+                    deploy = Deployment.select(device, action_data[name])(pipeline, action_data[name])
                     if 'test' in data['actions']:
                         deploy.action.parameters = action_data['test']
                     deploy.action.yaml_line = line
                     deploy.action.parameters = {'deployment_data': get_deployment_data(deploy.action.parameters['os'])}
                 elif name == "boot":
-                    boot = Boot.select(device, action_data[name])(pipeline)
-                    boot.action.parameters = action_data[name]
+                    boot = Boot.select(device, action_data[name])(pipeline, action_data[name])
                     boot.action.yaml_line = line
                 elif name == "test":
                     # allow for multiple base tests, e.g. Android
-                    test_method = LavaTest.select(device, action_data[name])(pipeline)
-                    test_method.action.parameters = action_data[name]
+                    test_method = LavaTest.select(device, action_data[name])(pipeline, action_data[name])
                 else:
                     # May only end up being used for submit as other actions all need strategy method objects
                     # select the specific action of this class for this job

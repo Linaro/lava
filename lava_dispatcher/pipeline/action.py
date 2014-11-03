@@ -87,11 +87,14 @@ class Pipeline(object):
     the overall job is set along with the formatter and output filename
     of the per-action log handler.
     """
-    def __init__(self, parent=None, job=None):
+    def __init__(self, parent=None, job=None, parameters=None):
         self.children = {}
         self.actions = []
         self.summary = "pipeline"
         self.parent = None
+        if parameters is None:
+            parameters = {}
+        self.parameters = parameters
         self.job = None
         self.branch_level = 1  # the level of the last added child
         if job:  # do not unset if set by outer pipeline
@@ -122,7 +125,7 @@ class Pipeline(object):
         if ' ' in action.name:
             raise RuntimeError("Whitespace must not be used in action names, only descriptions or summaries")
 
-    def add_action(self, action):
+    def add_action(self, action, parameters=None):
         self._check_action(action)
         self.actions.append(action)
         action.level = "%s.%s" % (self.branch_level, len(self.actions))
@@ -148,8 +151,16 @@ class Pipeline(object):
             # yaml wrapper inside the log handler
             pattern = ' - id: "<LAVA_DISPATCHER>%(asctime)s"\n%(message)s'
             action.log_handler.setFormatter(logging.Formatter(pattern))
+
+        # Use the pipeline parameters if the function was walled without
+        # parameters.
+        if parameters is None:
+            parameters = self.parameters
         # if the action has an internal pipeline, initialise that here.
-        action.populate()
+        action.populate(parameters)
+        # Set the parameters after populate so the sub-actions are also
+        # getting the parameters.
+        action.parameters = parameters
 
     def _generate(self, actions_list):
         actions = iter(actions_list)
@@ -351,7 +362,7 @@ class Action(object):
     @property
     def data(self):
         """
-        Shortcut to the job.context.pipeline_data
+        Shortcut to the job.context
         """
         if not self.job:
             return None
@@ -360,7 +371,7 @@ class Action(object):
     @data.setter
     def data(self, value):
         """
-        Accepts a dict to be updated in the job.context.pipeline_data
+        Accepts a dict to be updated in the job.context
         """
         self.job.context.update(value)
 
@@ -483,9 +494,11 @@ class Action(object):
             self._log("Validation failed")
             raise JobError("Invalid job data: %s\n" % '\n'.join(self.errors))
 
-    def populate(self):
+    def populate(self, parameters):
         """
-        This method allows an action to add an internal pipeline
+        This method allows an action to add an internal pipeline.
+        The parameters are used to configure the internal pipeline on the
+        fly.
         """
         pass
 

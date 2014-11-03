@@ -87,8 +87,8 @@ class DownloaderAction(RetryAction):
         self.description = "download with retry"
         self.summary = "download-retry"
 
-    def populate(self):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job)
+    def populate(self, parameters):
+        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(DownloadHandler())
 
 

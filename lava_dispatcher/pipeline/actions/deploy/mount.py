@@ -188,7 +188,7 @@ class MountAction(DeployAction):
             raise RuntimeError("No job object supplied to action")
         self.internal_pipeline.validate_actions()
 
-    def populate(self):
+    def populate(self, parameters):
         """
         Needs to take account of the deployment type / image type etc.
         to determine which actions need to be added to the internal pipeline
@@ -197,7 +197,7 @@ class MountAction(DeployAction):
         if not self.job:
             raise RuntimeError("No job object supplied to action")
         # FIXME: not all mount operations will need these actions
-        self.internal_pipeline = Pipeline(parent=self, job=self.job)
+        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(OffsetAction())
         # FIXME: LoopCheckAction and LoopMountAction should be in only one Action
         self.internal_pipeline.add_action(LoopCheckAction())
@@ -221,8 +221,8 @@ class UnmountAction(RetryAction):  # FIXME: contextmanager to ensure umounted on
         self.description = "retry support for umount"
         self.summary = "retry umount "
 
-    def populate(self):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job)
+    def populate(self, parameters):
+        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(Unmount())
 
     def cleanup(self):

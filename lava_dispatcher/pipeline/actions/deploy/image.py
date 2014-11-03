@@ -55,8 +55,8 @@ class DeployImageAction(DeployAction):
         if req.status_code != requests.codes.ok:  # pylint: disable=no-member
             self.errors = "%s returned http code %s" % (self.parameters['image'], req.status_code)
 
-    def populate(self):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job)
+    def populate(self, parameters):
+        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         download = DownloaderAction()
         download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
         self.internal_pipeline.add_action(download)
@@ -95,11 +95,11 @@ class DeployImage(Deployment):
         umount action
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent, parameters):
         super(DeployImage, self).__init__(parent)
         self.action = DeployImageAction()
         self.action.job = self.job
-        parent.add_action(self.action)
+        parent.add_action(self.action, parameters)
 
     @classmethod
     def accepts(cls, device, parameters):
