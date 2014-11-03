@@ -798,12 +798,9 @@ class Deployment(object):  # pylint: disable=abstract-class-not-used
         """
         return self.__parameters__
 
-    def __set_parameters__(self, data):
-        self.__parameters__.update(data)
-
     @parameters.setter
     def parameters(self, data):
-        self.__set_parameters__(data)
+        self.__parameters__.update(data)
 
     @classmethod
     def accepts(cls, device, parameters):  # pylint: disable=unused-argument
