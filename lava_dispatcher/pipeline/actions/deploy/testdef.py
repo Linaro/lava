@@ -449,6 +449,8 @@ class TestDefinitionAction(TestAction):
                 self.errors = "missing 'from' field in test definition %s" % testdef
             if testdef['from'] is 'git':
                 repository = str(testdef['repository'])
+                # FIXME: this is not a reliable method as some git repository
+                #        does not end with '.git'
                 if not repository.endswith('.git'):
                     self.errors = "git specified but repository does not look like git"
 

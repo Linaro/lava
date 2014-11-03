@@ -272,6 +272,7 @@ class ChecksumAction(Action):  # FIXME: fold into the DownloadHandler
             if 'sha256' in self.data['download_action']:
                 self._log("sha256sum of downloaded content: %s" %
                           self.data['download_action']['sha256'])
+        # TODO: if the checksums are not present, compute them now
         return connection
 
 

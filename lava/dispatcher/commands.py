@@ -98,6 +98,7 @@ def get_pipeline_runner(job):
         except lava_dispatcher.pipeline.JobError as e:
             yaml_log.debug("   %s", e)
             sys.exit(2)
+        # FIXME: should we call the cleanup function in the finally block?
     return run_pipeline_job
 
 

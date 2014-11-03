@@ -242,5 +242,6 @@ class Unmount(Action):
         self._log("umounting %s" % self.data['loop_mount']['mntdir'])
         self._run_command(['umount', self.data['loop_mount']['mntdir']])
         # FIXME: is the rm -rf a separate action or a cleanup of this action?
+        # FIXME: use the utils module
         self._run_command(['rm', '-rf', self.data['loop_mount']['mntdir']])
         return connection

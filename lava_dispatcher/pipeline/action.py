@@ -259,6 +259,8 @@ class Pipeline(object):
                 action.results = {"fail": exc}
                 self._diagnose(connection)
                 raise exc
+            # FIXME: should we call the cleanup function here? Only the
+            #        KeyboardInterrupt case does run cleanup.
             # set results including retries
             if action.log_handler:
                 # remove per-action log handler
