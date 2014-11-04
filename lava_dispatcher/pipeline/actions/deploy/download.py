@@ -289,10 +289,20 @@ class QCowConversionAction(Action):
         self.summary = "qcow conversion"
 
     def run(self, connection, args=None):
-        pass
-#        if fname.endswith('.qcow2'):
-#            orig = fname
-#            fname = re.sub('\.qcow2$', '.img', fname)
-#            logging.warning("Converting downloaded image from qcow2 to raw")
-#            subprocess.check_call(['qemu-img', 'convert', '-f', 'qcow2',
-#                                   '-O', 'raw', orig, fname])
+        if 'file' not in self.data['download_action']:
+            raise RuntimeError("'download_action.file' missing in the context")
+
+        fname = self.data['download_action']['file']
+        origin = fname
+        # Change the extension only if the file ends with '.qcow2'
+        if fname.endswith('.qcow2'):
+            fname = fname[:-5] + "img"
+        else:
+            fname = fname + ".img"
+
+        self._log("Converting downloaded image from qcow2 to raw")
+        subprocess.check_call(['qemu-img', 'convert', '-f', 'qcow2',
+                               '-O', 'raw', origin, fname])
+        self.data['download_action']['file'] = fname
+
+        return connection

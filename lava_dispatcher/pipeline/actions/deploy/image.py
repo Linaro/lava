@@ -23,8 +23,9 @@ from lava_dispatcher.pipeline.action import Deployment
 from lava_dispatcher.pipeline import Pipeline
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.download import (
-    DownloaderAction,
     ChecksumAction,
+    DownloaderAction,
+    QCowConversionAction,
 )
 from lava_dispatcher.pipeline.actions.deploy.mount import (
     MountAction,
@@ -60,6 +61,8 @@ class DeployImageAction(DeployAction):
         download = DownloaderAction()
         download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
         self.internal_pipeline.add_action(download)
+        if parameters.get('format', '') == 'qcow2':
+            self.internal_pipeline.add_action(QCowConversionAction())
         self.internal_pipeline.add_action(ChecksumAction())
         self.internal_pipeline.add_action(MountAction())
         self.internal_pipeline.add_action(CustomisationAction())
