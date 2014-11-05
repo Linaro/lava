@@ -36,6 +36,7 @@ from lava_dispatcher.utils import (
     extract_modules,
     create_ramdisk,
     append_dtb,
+    prepend_blob,
 )
 
 
@@ -166,6 +167,11 @@ class BaseDriver(object):
         self.scratch_dir = scratch_dir
         if kernel is not None:
             self._kernel = self._get_image(kernel)
+            if self.config.prepend_blob:
+                blob = self._get_image(self.config.prepend_blob)
+                self._kernel = prepend_blob(self._kernel,
+                                            blob,
+                                            self.working_dir)
         else:
             raise CriticalError('A kernel image is required!')
         if ramdisk is not None:
