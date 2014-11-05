@@ -208,6 +208,10 @@ class Pipeline(object):
         for action in self.actions:
             action.validate()
 
+        # If this is the root pipeline, raise the errors
+        if self.parent is None and self.errors:
+            raise JobError("Invalid job data: %s\n" % '\n'.join(self.errors))
+
     def _diagnose(self, connection):
         """
         Pipeline Jobs have a number of Diagnostic classes registered - all
@@ -484,15 +488,16 @@ class Action(object):
         Validation includes parsing the parameters for this action for
         values not set or values which conflict.
         """
+        # Basic checks
         if not self.name:
             self.errors = "%s action has no name set" % self
         if ' ' in self.name:
             self.errors = "Whitespace must not be used in action names, only descriptions or summaries: %s" % self.name
+
+        # Collect errors from internal pipeline actions
         if self.internal_pipeline:
             self.internal_pipeline.validate_actions()
-        if self.errors:
-            self._log("Validation failed")
-            raise JobError("Invalid job data: %s\n" % '\n'.join(self.errors))
+            self.errors.extend(self.internal_pipeline.errors)
 
     def populate(self, parameters):
         """
