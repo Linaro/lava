@@ -21,36 +21,43 @@
 import os
 import glob
 import stat
+import unittest
+from lava_dispatcher.pipeline.action import FinalizeAction
+from lava_dispatcher.pipeline.actions.submit import SubmitResultsAction
+from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry
 from lava_dispatcher.pipeline.test.test_basic import Factory
-from lava_dispatcher.tests.helper import LavaDispatcherTestCase
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.testdef import (
     TestDefinitionAction,
     GitRepoAction,
     TestOverlayAction
 )
+from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
 
 
 # Test the loading of test definitions within the deploy stage
 
 
-class TestDefinitionHandlers(LavaDispatcherTestCase):  # pylint: disable=too-many-public-methods
+class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestDefinitionHandlers, self).setUp()
         factory = Factory()
-        self.job = factory.create_job('sample_jobs/kvm.yaml', self.config_dir)
+        self.job = factory.create_job('sample_jobs/kvm.yaml')
 
     def test_testdef(self):
-        testdef = None
+        testdef = overlay = None
         for action in self.job.pipeline.actions:
             self.assertIsNotNone(action.name)
             if isinstance(action, DeployAction):
-                testdef = action.pipeline.children[action.pipeline][4]
-        self.assertEqual(len(testdef.internal_pipeline.actions), 8)
+                overlay = action.pipeline.children[action.pipeline][4]
+                testdef = overlay.internal_pipeline.actions[2]
+        self.assertEqual(len(overlay.internal_pipeline.actions), 4)
         self.assertIsInstance(testdef, TestDefinitionAction)
         testdef.validate()
+        if not testdef.valid:
+            print testdef.errors
         self.assertTrue(testdef.valid)
         for repo_action in testdef.internal_pipeline.actions:
             if isinstance(repo_action, GitRepoAction):
@@ -112,3 +119,59 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):  # pylint: disable=too-man
 
         self.assertItemsEqual(check_list, script_list)
         self.assertEqual(overlay.xmod, stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH)
+
+
+class TestDefinitionSimple(unittest.TestCase):  # pylint: disable=too-many-public-methods
+
+    def setUp(self):
+        super(TestDefinitionSimple, self).setUp()
+        factory = Factory()
+        self.job = factory.create_job('sample_jobs/kvm-notest.yaml')
+
+    def test_job_without_tests(self):
+        deploy = boot = submit = finalize = None
+        for action in self.job.pipeline.actions:
+            self.assertNotIsInstance(action, TestDefinitionAction)
+            self.assertNotIsInstance(action, OverlayAction)
+            deploy = self.job.pipeline.actions[0]
+            boot = self.job.pipeline.actions[1]
+            submit = self.job.pipeline.actions[2]
+            finalize = self.job.pipeline.actions[3]
+        self.assertIsInstance(deploy, DeployAction)
+        self.assertIsInstance(boot, BootAction)
+        self.assertIsInstance(submit, SubmitResultsAction)
+        self.assertIsInstance(finalize, FinalizeAction)
+        self.assertEqual(len(self.job.pipeline.actions), 4)  # deploy, boot, submit, finalize
+
+
+class TestDefinitionRepeat(unittest.TestCase):  # pylint: disable=too-many-public-methods
+
+    def setUp(self):
+        super(TestDefinitionRepeat, self).setUp()
+        factory = Factory()
+        self.job = factory.create_job("sample_jobs/kvm-multi.yaml")
+
+    def test_multiple_tests(self):
+        deploy = []
+        boot = []
+        submit = []
+        shell = []
+        finalize = []
+        for action in self.job.pipeline.actions:
+            if isinstance(action, DeployAction):
+                deploy.append(action)
+            elif isinstance(action, BootAction):
+                boot.append(action)
+            elif isinstance(action, SubmitResultsAction):
+                submit.append(action)
+            elif isinstance(action, TestShellRetry):
+                shell.append(action)
+            elif isinstance(action, FinalizeAction):
+                finalize.append(action)
+            else:
+                self.fail(action.name)
+        self.assertEqual(len(deploy), 1)
+        self.assertEqual(len(boot), 2)
+        self.assertEqual(len(submit), 1)
+        self.assertEqual(len(shell), 2)
+        self.assertEqual(len(finalize), 1)

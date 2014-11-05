@@ -70,8 +70,8 @@ class RepoAction(Action):
 
     def validate(self):
         # FIXME: this should work but test_basic.py needs to be migrated to the new Device configuration first
-        # if 'hostname' not in self.job.device.parameters:
-        #     raise InfrastructureError("Invalid device configuration")
+        if 'hostname' not in self.job.device.parameters:
+            raise InfrastructureError("Invalid device configuration")
         if 'test_name' not in self.parameters:
             raise JobError("Unable to determine test_name")
         if self.vcs_binary and not os.path.exists(self.vcs_binary):
@@ -92,6 +92,10 @@ class RepoAction(Action):
 
         if not args or 'test_name' not in args:
             raise RuntimeError("RepoAction run called via super without parameters as arguments")
+        if 'location' not in self.data['lava-overlay']:
+            raise RuntimeError("Missing lava overlay location")
+        if not os.path.exists(self.data['lava-overlay']['location']):
+            raise RuntimeError("Overlay location does not exist")
 
         # runner_path is the path to read and execute from to run the tests after boot
         self.data['test'][self.uuid]['runner_path'][args['test_name']] = os.path.join(
@@ -102,9 +106,8 @@ class RepoAction(Action):
         # the location written into the lava-test-runner.conf (needs a line ending)
         self.runner = "%s\n" % self.data['test'][self.uuid]['runner_path'][args['test_name']]
 
-        # overlay_path is the location of the files before boot
         self.data['test'][self.uuid]['overlay_path'][args['test_name']] = os.path.join(
-            self.data['mount_action']['mntdir'],
+            self.data['test-definition']['overlay_dir'],
             'tests',
             args['test_name']
         )
@@ -245,7 +248,7 @@ class BzrRepoAction(RepoAction):
 
     def run(self, connection, args=None):
         super(BzrRepoAction, self).run(connection, args)
-        runner_path = os.path.join(self.data['mount_action']['mntdir'], 'tests', self.parameters['test_name'])
+        runner_path = os.path.join(self.data['test-definition']['overlay_dir'], 'tests', self.parameters['test_name'])
         # As per bzr revisionspec, '-1' is "The last revision in a branch".
         revision = '-1'
         if 'revision' in self.parameters:
@@ -292,8 +295,8 @@ class TarRepoAction(RepoAction):
         Extracts the provided encoded tar archive into tmpdir.
         """
         super(TarRepoAction, self).run(connection, args)
-        runner_path = os.path.join(self.data['mount_action']['mntdir'], 'tests', self.parameters['test_name'])
-        temp_tar = os.path.join(self.data['mount_action']['mntdir'], "tar-repo.tar")
+        runner_path = os.path.join(self.data['test-definition']['overlay_dir'], 'tests', self.parameters['test_name'])
+        temp_tar = os.path.join(self.data['test-definition']['overlay_dir'], "tar-repo.tar")
 
         try:
             if not os.path.isdir(runner_path):
@@ -342,7 +345,7 @@ class UrlRepoAction(RepoAction):
     def run(self, connection, args=None):
         """Download the provided test definition file into tmpdir."""
         super(UrlRepoAction, self).run(connection, args)
-        runner_path = os.path.join(self.data['mount_action']['mntdir'], 'tests', self.parameters['test_name'])
+        runner_path = os.path.join(self.data['test-definition']['overlay_dir'], 'tests', self.parameters['test_name'])
 
         try:
             if not os.path.isdir(runner_path):
@@ -399,7 +402,12 @@ class TestDefinitionAction(TestAction):
         """
         index = {}
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        for testdef in self.parameters['test']['definitions']:
+        # FIXME: check the effect of the parameter review
+        test_list = [action['test']['definitions'] for action in self.job.parameters['actions'] if 'test' in action.keys()]
+        if not test_list:
+            self._log("No test action defined.")
+            return
+        for testdef in test_list[0]:
             handler = RepoAction.select(testdef['from'])()
 
             # set the full set of job YAML parameters for this handler as handler parameters.
@@ -437,6 +445,9 @@ class TestDefinitionAction(TestAction):
 
     def validate(self):
         super(TestDefinitionAction, self).validate()
+        if 'actions' not in self.job.parameters:
+            # FIXME: is this the result of parameter issues or skipping?
+            return
         if not self.job:
             self.errors = "missing job object"
         if 'test' not in self.parameters:
@@ -464,12 +475,18 @@ class TestDefinitionAction(TestAction):
         :param args: Not used.
         :return: the received Connection.
         """
+        if 'location' not in self.data['lava-overlay']:
+            raise RuntimeError("Missing lava overlay location")
         self._log("Loading test definitions")
+
+        # overlay_path is the location of the files before boot
+        self.data[self.name]['overlay_dir'] = os.path.abspath(
+            "%s/%s" % (self.data['lava-overlay']['location'], self.data['lava_test_results_dir']))
 
         connection = self.internal_pipeline.run_actions(connection)
 
         self._log("lava-test-runner.conf")
-        with open('%s/lava-test-runner.conf' % self.data['mount_action']['mntdir'], 'a') as runner_conf:
+        with open('%s/lava-test-runner.conf' % self.data['test-definition']['overlay_dir'], 'a') as runner_conf:
             for handler in self.internal_pipeline.actions:
                 if isinstance(handler, RepoAction):
                     runner_conf.write(handler.runner)

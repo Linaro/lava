@@ -94,8 +94,6 @@ class JobParser(object):
                 if name == "deploy":
                     # allow the classmethod to check the parameters
                     deploy = Deployment.select(device, action_data[name])(pipeline, action_data[name])
-                    if 'test' in data['actions']:
-                        deploy.action.parameters = action_data['test']
                     deploy.action.yaml_line = line
                     deploy.action.parameters = {'deployment_data': get_deployment_data(deploy.action.parameters['os'])}
                 elif name == "boot":

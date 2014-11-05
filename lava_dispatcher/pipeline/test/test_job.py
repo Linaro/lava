@@ -35,7 +35,11 @@ from lava_dispatcher.pipeline.actions.deploy.mount import (
     UnmountAction,
     OffsetAction
 )
-from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction, CustomisationAction
+from lava_dispatcher.pipeline.actions.deploy.overlay import (
+    OverlayAction,
+    CustomisationAction,
+    ApplyOverlayAction,
+)
 from lava_dispatcher.pipeline.actions.deploy.testdef import TestDefinitionAction
 from lava_dispatcher.pipeline.actions.boot.kvm import BootAction
 
@@ -157,11 +161,11 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
         mount = None
         checksum = None
         customise = None
-        testdef = None
+        apply_overlay = None
         overlay = None
         unmount = None
         self.assertTrue(os.path.exists(self.job.parameters['output_dir']))
-        self.assertEqual(len(self.job.pipeline.describe().values()), 28)  # this will keep changing until KVM is complete.
+        self.assertEqual(len(self.job.pipeline.describe().values()), 32)  # this will keep changing until KVM is complete.
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
                 # check parser has created a suitable deployment
@@ -175,10 +179,10 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
                 self.assertEqual(mount.name, "mount_action")
                 customise = action.pipeline.children[action.pipeline][3]
                 self.assertEqual(customise.name, "customise")
-                testdef = action.pipeline.children[action.pipeline][4]
-                self.assertEqual(testdef.name, "test-definition")
-                overlay = action.pipeline.children[action.pipeline][5]
+                overlay = action.pipeline.children[action.pipeline][4]
                 self.assertEqual(overlay.name, "lava-overlay")
+                apply_overlay = action.pipeline.children[action.pipeline][5]
+                self.assertEqual(apply_overlay.name, "apply-overlay-image")
                 unmount = action.pipeline.children[action.pipeline][6]
                 self.assertEqual(unmount.name, "umount-retry")
                 with self.assertRaises(IndexError):
@@ -207,8 +211,8 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
         self.assertIsInstance(checksum.log_handler, logging.FileHandler)
         self.assertIsInstance(mount.log_handler, logging.FileHandler)
         self.assertIsInstance(customise.log_handler, logging.FileHandler)
-        self.assertIsInstance(testdef.log_handler, logging.FileHandler)
         self.assertIsInstance(overlay.log_handler, logging.FileHandler)
+        self.assertIsInstance(apply_overlay.log_handler, logging.FileHandler)
         self.assertIsInstance(unmount.log_handler, logging.FileHandler)
         self.assertIsInstance(unmount, RetryAction)
 
@@ -218,6 +222,8 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
         except JobError as exc:
             self.fail(exc)
         for action in self.job.pipeline.actions:
+            if action.errors:
+                print action.errors
             self.assertTrue(action.valid)
 
     def test_download_actions(self):
@@ -237,9 +243,9 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
                 self.assertIsInstance(mount, MountAction)
                 customise = action.pipeline.children[action.pipeline][3]
                 self.assertIsInstance(customise, CustomisationAction)
-                testdef = action.pipeline.children[action.pipeline][4]
-                self.assertIsInstance(testdef, TestDefinitionAction)
-                overlay = action.pipeline.children[action.pipeline][5]
+                apply_overlay = action.pipeline.children[action.pipeline][5]
+                self.assertIsInstance(apply_overlay, ApplyOverlayAction)
+                overlay = action.pipeline.children[action.pipeline][4]
                 self.assertIsInstance(overlay, OverlayAction)
                 unmount = action.pipeline.children[action.pipeline][6]
                 self.assertIsInstance(unmount, UnmountAction)
@@ -254,7 +260,7 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
         for action in self.job.pipeline.actions:
             self.assertIsNotNone(action.name)
             if isinstance(action, DeployAction):
-                overlay = action.pipeline.children[action.pipeline][5]
+                overlay = action.pipeline.children[action.pipeline][4]
         self.assertIsNotNone(overlay)
         # these tests require that lava-dispatcher itself is installed, not just running tests from a git clone
         self.assertTrue(os.path.exists(overlay.lava_test_dir))

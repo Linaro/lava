@@ -253,7 +253,7 @@ class Pipeline(object):
                 yaml_log.setLevel(logging.DEBUG)  # yaml log is always in debug
                 # enable the log handler created in this action when it was added to this pipeline
                 yaml_log.addHandler(action.log_handler)
-                yaml_log.debug('   start:', {action.level: action.name})
+                yaml_log.debug('   start: %s %s', action.level, action.name)
             try:
                 start = time.time()
                 new_connection = action.run(connection, args)
@@ -443,12 +443,15 @@ class Action(object):
         self.timeout = Timeout('default')
         if 'timeout' in self.parameters:
             # FIXME: a top level timeout should cover all actions within the pipeline, not each action have the same timeout.
-            time_str = self.parameters['timeout'][:-1]
             time_int = 0
+            # allow integers but convert directly to seconds.
+            if type(self.parameters['timeout']) == int:
+                self.parameters['timeout'] = "%ss" % self.parameters['timeout']
+            time_str = self.parameters['timeout'][:-1]
             try:
                 time_int = int(time_str)
             except ValueError:
-                self.errors = "%s - Could not convert timeout: %s to an integer" % (self.name, time_str)
+                self.errors = "%s - Could not convert timeout: %s to an integer. %s" % (self.name, time_str, type(self.parameters['timeout']))
             if time_int:
                 # FIXME: use a standard timeparsing module instead of inventing another confusing syntax.
                 if self.parameters['timeout'].endswith('m'):
@@ -495,6 +498,7 @@ class Action(object):
             self.errors = "Whitespace must not be used in action names, only descriptions or summaries: %s" % self.name
 
         # Collect errors from internal pipeline actions
+        self.job.context.setdefault(self.name, {})
         if self.internal_pipeline:
             self.internal_pipeline.validate_actions()
             self.errors.extend(self.internal_pipeline.errors)

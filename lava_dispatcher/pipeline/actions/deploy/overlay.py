@@ -21,7 +21,11 @@
 import os
 import stat
 import glob
+import tarfile
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
+from lava_dispatcher.pipeline.action import Action, Pipeline
+from lava_dispatcher.pipeline.actions.deploy.testdef import TestDefinitionAction
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 
 
 class CustomisationAction(DeployAction):
@@ -40,17 +44,24 @@ class CustomisationAction(DeployAction):
 
 class OverlayAction(DeployAction):
     """
-    Applies the lava test shell scripts.
-    Deployments which are for a job containing a 'test' action
-    will need to insert an instance of this class into the
-    Deploy pipeline, between mount and umount.
-    The overlay uses the 'mntdir' set by the MountAction
-    in the job data.
+    Creates a temporary location into which the lava test shell scripts are installed.
+    The location remains available for the testdef actions to populate
+    Multinode and LMP actions also populate the one location.
+    CreateOverlay then creates a tarball of that location in the output directory
+    of the job and removes the temporary location.
+    ApplyOverlay extracts that tarball onto the image.
+
+    Deployments which are for a job containing a 'test' action will have
+    a TestDefinitionAction added to the job pipeline by this Action.
+
+    The resulting overlay needs to be applied separately and custom classes
+    exist for particular deployments, so that the overlay can be applied
+    whilst the image is still mounted etc.
+
     This class handles parts of the overlay which are independent
     of the content of the test definitions themselves. Other
     overlays are handled by TestDefinitionAction.
     """
-    # FIXME: is this ImageOverlayAction or can it work the same way for all deployments?
 
     def __init__(self):
         super(OverlayAction, self).__init__()
@@ -62,8 +73,22 @@ class OverlayAction(DeployAction):
         # 755 file permissions
         self.xmod = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH
 
-    def _copy_runner(self, mntdir):
-        self._log("copy_runner %s" % mntdir)
+    def validate(self):
+        super(OverlayAction, self).validate()
+        if 'actions' not in self.job.parameters:
+            # FIXME: is this the result of parameter issues or skipping?
+            return
+        if 'lava_test_results_dir' not in self.data:
+            pass  # could be an error, depending on other tests
+
+    def populate(self, parameters):
+        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline.add_action(MultinodeOverlayAction())
+        self.internal_pipeline.add_action(LMPOverlayAction())
+        self.internal_pipeline.add_action(TestDefinitionAction())
+        self.internal_pipeline.add_action(CompressOverlay())
+
+    def _copy_runner(self, location):
         shell = self.parameters['deployment_data']['lava_test_sh_cmd']
 
         # Generic scripts
@@ -78,33 +103,30 @@ class OverlayAction(DeployAction):
         for fname in scripts_to_copy:
             with open(fname, 'r') as fin:
                 foutname = os.path.basename(fname)
-                with open('%s/bin/%s' % (mntdir, foutname), 'w') as fout:
+                with open('%s/bin/%s' % (location, foutname), 'w') as fout:
                     fout.write("#!%s\n\n" % shell)
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), self.xmod)
 
     def run(self, connection, args=None):
         """
-        A lava-test-shell has been requested, implement the overlay
-        * check that the filesystem we need is actually mounted.
-        * create test runner directories
+        Check if a lava-test-shell has been requested, implement the overlay
+        * create test runner directories beneath the temporary location
         * copy runners into test runner directories
         """
-        if not os.path.ismount(self.data['loop_mount']['mntdir']):
-            raise RuntimeError("Overlay requested but %s is not a mountpoint" %
-                               self.data['loop_mount']['mntdir'])
-        lava_path = os.path.abspath("%s/%s" % (self.data['loop_mount']['mntdir'], self.data['lava_test_results_dir']))
-        self._log("lava_path=%s" % lava_path)
+        self.data[self.name].setdefault('location', mkdtemp())
+        lava_path = os.path.abspath("%s/%s" % (self.data[self.name]['location'], self.data['lava_test_results_dir']))
         for runner_dir in ['bin', 'tests', 'results']:
-            # avoid os.path.join as lava_test_results_dir startswith / so mntdir is *dropped* by join.
+            # avoid os.path.join as lava_test_results_dir startswith / so location is *dropped* by join.
             path = os.path.abspath("%s/%s" % (lava_path, runner_dir))
             if not os.path.exists(path):
                 os.makedirs(path)
         self._copy_runner(lava_path)
+        connection = super(OverlayAction, self).run(connection, args)
         return connection
 
 
-class MultinodeOverlayAction(OverlayAction):  # FIXME: inject function needs to become a run step
+class MultinodeOverlayAction(OverlayAction):
 
     def __init__(self):
         super(MultinodeOverlayAction, self).__init__()
@@ -115,12 +137,28 @@ class MultinodeOverlayAction(OverlayAction):  # FIXME: inject function needs to 
         # Multinode-only
         self.lava_multi_node_test_dir = os.path.realpath(
             '%s/../../../lava_test_shell/multi_node' % os.path.dirname(__file__))
-        self.lava_group_file = 'lava-group'
-        self.lava_role_file = 'lava-role'
-        self.lava_self_file = 'lava-self'
         self.lava_multi_node_cache_file = '/tmp/lava_multi_node_cache.txt'
 
-    def _inject_multi_node_api(self, mntdir):
+    def populate(self, parameters):
+        pass
+
+    def validate(self):
+        super(MultinodeOverlayAction, self).validate()
+        # idempotency
+        if 'actions' not in self.job.parameters:
+            return
+        if 'target_group' not in self.job.parameters:
+            return
+
+    def run(self, connection, args=None):
+        if 'target_group' not in self.job.parameters:
+            self._log("skipped %s - no target group" % self.name)
+            return connection
+        if 'location' not in self.data['lava-overlay']:
+            raise RuntimeError("Missing lava overlay location")
+        if not os.path.exists(self.data['lava-overlay']['location']):
+            raise RuntimeError("Unable to find overlay location")
+        location = self.data['lava-overlay']['location']
         shell = self.parameters['deployment_data']['lava_test_sh_cmd']
 
         # Generic scripts
@@ -129,10 +167,10 @@ class MultinodeOverlayAction(OverlayAction):  # FIXME: inject function needs to 
         for fname in scripts_to_copy:
             with open(fname, 'r') as fin:
                 foutname = os.path.basename(fname)
-                with open('%s/bin/%s' % (mntdir, foutname), 'w') as fout:
+                with open('%s/bin/%s' % (location, foutname), 'w') as fout:
                     fout.write("#!%s\n\n" % shell)
                     # Target-specific scripts (add ENV to the generic ones)
-                    if foutname == self.lava_group_file:
+                    if foutname == 'lava-group':
                         fout.write('LAVA_GROUP="\n')
                         if 'roles' in self.job.parameters:
                             for client_name in self.job.parameters['roles']:
@@ -140,9 +178,9 @@ class MultinodeOverlayAction(OverlayAction):  # FIXME: inject function needs to 
                         else:
                             self._log("group data MISSING")
                         fout.write('"\n')
-                    elif foutname == self.lava_role_file:
+                    elif foutname == 'lava-role':
                         fout.write("TARGET_ROLE='%s'\n" % self.job.parameters['role'])
-                    elif foutname == self.lava_self_file:
+                    elif foutname == 'lava-self':
                         fout.write("LAVA_HOSTNAME='%s'\n" % self.job.device.config.hostname)
                     else:
                         fout.write("LAVA_TEST_BIN='%s/bin'\n" % self.lava_test_dir)
@@ -151,9 +189,10 @@ class MultinodeOverlayAction(OverlayAction):  # FIXME: inject function needs to 
                         fout.write("LAVA_MULTI_NODE_DEBUG='yes'\n")
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), self.xmod)
+        return connection
 
 
-class LMPOverlayAction(OverlayAction):  # FIXME: inject function needs to become a run step
+class LMPOverlayAction(OverlayAction):
 
     def __init__(self):
         super(LMPOverlayAction, self).__init__()
@@ -166,7 +205,29 @@ class LMPOverlayAction(OverlayAction):  # FIXME: inject function needs to become
         self.lava_lmp_test_dir = os.path.realpath(
             '%s/../../../lava_test_shell/lmp' % os.path.dirname(__file__))
 
-    def _inject_lmp_api(self, mntdir):
+    def populate(self, parameters):
+        pass
+
+    def validate(self):
+        super(LMPOverlayAction, self).validate()
+        # idempotency
+        if self.job.parameters.get('overlay'):
+            return
+        if 'lmp_module' not in self.job.parameters:
+            return
+        # if there is nothing else to do, omit function.
+
+    def run(self, connection, args=None):
+        self._log("job parameters %s" % self.job.parameters)
+        if 'lmp_module' not in self.job.parameters:
+            self._log("Skipped %s - no lmp_module setting" % self.name)
+            return connection
+        if 'location' not in self.data['lava-overlay']:
+            raise RuntimeError("Missing lava overlay location")
+        if not os.path.exists(self.data['lava-overlay']['location']):
+            raise RuntimeError("Unable to find overlay location")
+        location = self.data['lava-overlay']['location']
+
         shell = self.parameters['deployment_data']['lava_test_sh_cmd']
 
         # Generic scripts
@@ -175,7 +236,7 @@ class LMPOverlayAction(OverlayAction):  # FIXME: inject function needs to become
         for fname in scripts_to_copy:
             with open(fname, 'r') as fin:
                 foutname = os.path.basename(fname)
-                with open('%s/bin/%s' % (mntdir, foutname), 'w') as fout:
+                with open('%s/bin/%s' % (location, foutname), 'w') as fout:
                     fout.write("#!%s\n\n" % shell)
                     # Target-specific scripts (add ENV to the generic ones)
                     fout.write("LAVA_TEST_BIN='%s/bin'\n" %
@@ -185,3 +246,99 @@ class LMPOverlayAction(OverlayAction):  # FIXME: inject function needs to become
                     fout.write("LAVA_LMP_DEBUG='yes'\n")
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), self.xmod)
+        return connection
+
+
+class CompressOverlay(Action):
+    """
+    Makes a tarball of the finished overlay and declares filename of the tarball
+    """
+    def __init__(self):
+        super(CompressOverlay, self).__init__()
+        self.name = "compress-overlay"
+        self.summary = "Compress the lava overlay files"
+        self.description = "Create a lava overlay tarball and store alongside the job"
+
+    def run(self, connection, args=None):
+        if 'location' not in self.data['lava-overlay']:
+            raise RuntimeError("Missing lava overlay location")
+        if not os.path.exists(self.data['lava-overlay']['location']):
+            raise RuntimeError("Unable to find overlay location")
+        if not self.valid:
+            self._log(self.errors)
+            return connection
+        location = self.data['lava-overlay']['location']
+        output = os.path.join(self.job.parameters['output_dir'], 'overlay.tar.gz')
+        cur_dir = os.getcwd()
+        try:
+            with tarfile.open(output, "w:gz") as tar:
+                os.chdir(location)
+                tar.add(".%s" % self.data['lava_test_results_dir'])
+        except tarfile.TarError as exc:
+            self.errors = "Unable to create lava overlay tarball: %s" % exc
+            raise RuntimeError("Unable to create lava overlay tarball: %s" % exc)
+        os.chdir(cur_dir)
+        self.data[self.name]['output'] = output
+        return connection
+
+
+class ApplyOverlayAction(Action):
+    """
+    Base class for applying the overlay tarball
+    Will generate errors if added to a deployment directly.
+    SELinux support would need a separate class using external tar
+    """
+    def __init__(self):
+        super(ApplyOverlayAction, self).__init__()
+        # unnamed base class action
+
+    def validate(self):
+        super(ApplyOverlayAction, self).validate()
+
+    def run(self, connection, args=None):
+        raise NotImplementedError("base class")
+
+
+class ApplyOverlayImage(ApplyOverlayAction):
+    """
+    Applies the overlay to an image using mntdir
+    * checks that the filesystem we need is actually mounted.
+    """
+    def __init__(self):
+        super(ApplyOverlayImage, self).__init__()
+        self.name = "apply-overlay-image"
+        self.summary = "unpack overlay onto image"
+        self.description = "unpack overlay onto image mountpoint"
+
+    def run(self, connection, args=None):
+        if not self.data['compress-overlay'].get('output'):
+            raise RuntimeError("Unable to find the overlay")
+        if not os.path.ismount(self.data['loop_mount']['mntdir']):
+            raise RuntimeError("Image overlay requested to be applied but %s is not a mountpoint" %
+                               self.data['loop_mount']['mntdir'])
+        # use tarfile module - no SELinux support here yet
+        try:
+            tar = tarfile.open(self.data['compress-overlay'].get('output'))
+            tar.extractall(self.data['loop_mount']['mntdir'])
+            tar.close()
+        except tarfile.TarError as exc:
+            raise RuntimeError("Unable to unpack overlay: %s" % exc)
+        self._log("that might have worked.... %s" % self.data['loop_mount']['mntdir'])
+        return connection
+
+
+# FIXME: needs the UBoot classes in place and code to open the initrd etc.
+class ApplyOverlayTftp(ApplyOverlayAction):
+    """
+    Unpacks the overlay on top of the ramdisk or rootfs
+    """
+    def __init__(self):
+        super(ApplyOverlayTftp, self).__init__()
+        self.name = "apply-overlay-tftp"
+        self.summary = "apply lava overlay test files"
+        self.description = "unpack the overlay into the rootfs or ramdisk"
+
+    def run(self, connection, args=None):
+        if not self.data['compress-overlay'].get('output'):
+            raise RuntimeError("Unable to apply overlay, not output file")
+        return connection

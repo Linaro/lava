@@ -33,11 +33,9 @@ from lava_dispatcher.pipeline.actions.deploy.mount import (
 )
 from lava_dispatcher.pipeline.actions.deploy.overlay import (
     CustomisationAction,
-    LMPOverlayAction,
-    MultinodeOverlayAction,
     OverlayAction,
+    ApplyOverlayImage,
 )
-from lava_dispatcher.pipeline.actions.deploy.testdef import TestDefinitionAction
 
 
 class DeployImageAction(DeployAction):
@@ -51,10 +49,15 @@ class DeployImageAction(DeployAction):
     def validate(self):
         super(DeployImageAction, self).validate()
         # FIXME: requires a working internet connection when running tests or validation.
-        req = requests.head(self.parameters['image'])  # just check the headers, do not download.
-        # pylint gets confused here.
-        if req.status_code != requests.codes.ok:  # pylint: disable=no-member
-            self.errors = "%s returned http code %s" % (self.parameters['image'], req.status_code)
+        try:
+            req = requests.head(self.parameters['image'], timeout=15)  # just check the headers, do not download.
+            # pylint gets confused here.
+            if req.status_code not in [200, 302]:
+                self.errors = "%s returned http code %s" % (self.parameters['image'], req.status_code)
+        except requests.Timeout:
+            self.errors = "%s timed out" % self.parameters['image']
+        except requests.RequestException as exc:
+            self.errors = exc
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -66,17 +69,8 @@ class DeployImageAction(DeployAction):
         self.internal_pipeline.add_action(ChecksumAction())
         self.internal_pipeline.add_action(MountAction())
         self.internal_pipeline.add_action(CustomisationAction())
-        for action_params in self.job.parameters['actions']:
-            if 'test' in action_params:
-                # FIXME: does it matter if testdef_action runs before overlay?
-                testdef_action = TestDefinitionAction()
-                testdef_action.parameters = action_params
-                self.internal_pipeline.add_action(testdef_action)
-                if 'target_group' in self.job.parameters:
-                    self.internal_pipeline.add_action(MultinodeOverlayAction())
-                if 'lmp_module' in self.job.parameters:
-                    self.internal_pipeline.add_action(LMPOverlayAction())
-                self.internal_pipeline.add_action(OverlayAction())
+        self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
+        self.internal_pipeline.add_action(ApplyOverlayImage())  # specific to image deployments
         self.internal_pipeline.add_action(UnmountAction())
 
 
