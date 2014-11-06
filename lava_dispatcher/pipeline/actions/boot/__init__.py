@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.pipeline.action import Action, RetryAction
+from lava_dispatcher.pipeline.connection import wait_for_prompt
 
 
 class BootAction(RetryAction):
@@ -47,3 +48,36 @@ class AutoLoginAction(Action):
         self.name = 'auto-login-action'
         self.description = "automatically login after boot using job parameters"
         self.summary = "Auto-login after boot"
+
+    def validate(self):
+        super(AutoLoginAction, self).validate()
+        if 'auto_login' not in self.parameters:
+            self.errors = "no 'auto_login' parameter"
+
+        params = self.parameters['auto_login']
+        if not isinstance(params, dict):
+            self.errors = "'auto_login' should be a dictionary"
+            return
+
+        if 'login_prompt' not in params:
+            self.errors = "'login_prompt' is mandatory for auto_login"
+        if 'username' not in params:
+            self.errors = "'username' is mandatory for auto_login"
+
+        if 'password_prompt' in params:
+            if 'password' not in params:
+                self.errors = "'password' is mandatory if 'password_prompt' is used in auto_login"
+
+    def run(self, connection, args=None):
+        # Parameters for auto login
+        params = self.parameters['auto_login']
+
+        self._log("Waiting for the login prompt")
+        wait_for_prompt(connection.raw_connection, params['login_prompt'], self.timeout.duration)
+        connection.sendline(params['username'])
+
+        if 'password_prompt' in params:
+            self._log("Waiting for password prompt")
+            wait_for_prompt(connection.raw_connection, params['password_prompt'], self.timeout.duration)
+            connection.sendline(params['password'])
+        return connection
