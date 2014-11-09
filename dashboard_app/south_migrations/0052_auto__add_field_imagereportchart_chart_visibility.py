@@ -13,11 +13,9 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.CharField')(default='chart', max_length=20),
                       keep_default=False)
 
-
     def backwards(self, orm):
         # Deleting field 'ImageReportChart.chart_visibility'
         db.delete_column(u'dashboard_app_imagereportchart', 'chart_visibility')
-
 
     models = {
         u'auth.group': {

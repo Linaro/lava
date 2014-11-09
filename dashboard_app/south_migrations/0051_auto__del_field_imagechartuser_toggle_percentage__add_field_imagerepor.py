@@ -16,7 +16,6 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
 
-
     def backwards(self, orm):
         # Adding field 'ImageChartUser.toggle_percentage'
         db.add_column(u'dashboard_app_imagechartuser', 'toggle_percentage',
@@ -25,7 +24,6 @@ class Migration(SchemaMigration):
 
         # Deleting field 'ImageReportChart.is_percentage'
         db.delete_column(u'dashboard_app_imagereportchart', 'is_percentage')
-
 
     models = {
         u'auth.group': {

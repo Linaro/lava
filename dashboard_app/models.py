@@ -1992,7 +1992,6 @@ class ImageReportChart(models.Model):
         default="chart",
     )
 
-
     def __unicode__(self):
         return self.name
 
@@ -2188,7 +2187,7 @@ class ImageReportChart(models.Model):
                 percentage = 0
                 if self.is_percentage:
                     if denorm.count_all() != 0:
-                        percentage = round(100 * float(denorm.count_pass) / \
+                        percentage = round(100 * float(denorm.count_pass) /
                                            denorm.count_all(), 2)
 
                 # Find already existing chart item (this happens if we're
