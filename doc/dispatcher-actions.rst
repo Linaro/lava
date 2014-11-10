@@ -262,7 +262,7 @@ Available parameters
 Booting a test image
 ====================
 
-Use the ``boot_linaro_image`` action or the directly equivalent ``boot_image``
+Use the ``boot_linaro_image`` action or the direct equivalent ``boot_image``
 action to boot a test image that was deployed using the ``deploy_linaro_image``
 or ``deploy_image`` actions::
 
