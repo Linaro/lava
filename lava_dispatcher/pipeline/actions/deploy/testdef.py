@@ -515,8 +515,6 @@ class TestOverlayAction(TestAction):
             # inject the parameters that were set in job submission.
             runsh.write('###test parameters from json###\n')
             if 'test_params' in self.parameters and self.parameters['test_params'] != '':
-                # FIXME: <security> use ast.literal_eval and check support - test_params is tainted user-input.
-                # _test_params_temp = eval(self._sw_sources[0]['test_params'])
                 _test_params_temp = ast.literal_eval(self.parameters['test_params'])
                 for param_name, param_value in list(_test_params_temp.items()):
                     runsh.write('%s=\'%s\'\n' % (param_name, param_value))
