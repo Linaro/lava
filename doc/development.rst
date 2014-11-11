@@ -63,6 +63,19 @@ Also, you will need git_.
 
 .. _git: http://www.git-scm.org/
 
+Update online document
+**********************
+
+LAVA online document is written with RST_ format. You can use the command
+below to generate html format files.::
+
+ $ cd lava-server/
+ $ make -C doc html
+ $ iceweasel doc/_build/html/index.html
+ (or whatever browser you prefer)
+
+.. _RST: http://sphinx-doc.org/rest.html
+
 Contributing Upstream
 *********************
 
