@@ -136,14 +136,14 @@ class BaseDriver(object):
                 if self.config.fastboot_kernel_load_addr:
                     self.fastboot('boot -c "%s" -b %s %s %s' % (boot_cmds,
                                                                 self.config.fastboot_kernel_load_addr,
-                                                                self._kernel, self._ramdisk))
+                                                                self._kernel, self._ramdisk), timeout=10)
                 else:
                     raise CriticalError('Kernel load address not defined!')
             else:
                 if self.config.fastboot_kernel_load_addr:
                     self.fastboot('boot -c "%s" -b %s %s' % (boot_cmds,
                                                              self.config.fastboot_kernel_load_addr,
-                                                             self._kernel))
+                                                             self._kernel), timeout=10)
                 else:
                     raise CriticalError('Kernel load address not defined!')
         else:
