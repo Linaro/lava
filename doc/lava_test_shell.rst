@@ -400,7 +400,7 @@ LAVA adds other parameters which could be accessed within the
 lava-test-shell test definition. Currently the following params are
 available automatically::
 
-* LAVA_SERVER_ID
+* LAVA_SERVER_IP
 * TARGET_TYPE
 
 Example:
