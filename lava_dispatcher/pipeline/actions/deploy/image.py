@@ -47,17 +47,8 @@ class DeployImageAction(DeployAction):
         self.summary = "deploy image"
 
     def validate(self):
+        # Nothing to do at this stage. Everything is done by internal actions
         super(DeployImageAction, self).validate()
-        # FIXME: requires a working internet connection when running tests or validation.
-        try:
-            req = requests.head(self.parameters['image'], timeout=15)  # just check the headers, do not download.
-            # pylint gets confused here.
-            if req.status_code not in [200, 302]:
-                self.errors = "%s returned http code %s" % (self.parameters['image'], req.status_code)
-        except requests.Timeout:
-            self.errors = "%s timed out" % self.parameters['image']
-        except requests.RequestException as exc:
-            self.errors = exc
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -65,7 +56,7 @@ class DeployImageAction(DeployAction):
         download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
         self.internal_pipeline.add_action(download)
         if parameters.get('format', '') == 'qcow2':
-            self.internal_pipeline.add_action(QCowConversionAction())
+            self.internal_pipeline.add_action(QCowConversionAction('image'))
         self.internal_pipeline.add_action(ChecksumAction())
         self.internal_pipeline.add_action(MountAction())
         self.internal_pipeline.add_action(CustomisationAction())

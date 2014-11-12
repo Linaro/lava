@@ -24,7 +24,7 @@ import glob
 import unittest
 from lava_dispatcher.pipeline.action import Pipeline, Action, RetryAction, JobError
 from lava_dispatcher.pipeline.test.test_basic import Factory
-from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction, DownloadHandler
+from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction, DownloadHandler, HttpDownloadAction
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.mount import (
@@ -170,7 +170,7 @@ class TestKVMBasicDeploy(unittest.TestCase):
                 # check parser has created a suitable deployment
                 download_retry = action.pipeline.children[action.pipeline][0]
                 download = download_retry.pipeline.children[download_retry.pipeline][0]
-                self.assertEqual(download.name, "download_action")
+                self.assertEqual(download.name, "http_download")
                 checksum = action.pipeline.children[action.pipeline][1]
                 self.assertEqual(checksum.name, "checksum_action")
                 mount = action.pipeline.children[action.pipeline][2]
@@ -203,9 +203,8 @@ class TestKVMBasicDeploy(unittest.TestCase):
             else:
                 # print action
                 self.fail("No deploy action found")
-        download.parse()
-        self.assertEqual(download.reader, download._http_stream)
         self.assertIsInstance(download, DownloadHandler)
+        self.assertIsInstance(download, HttpDownloadAction)
         self.assertIsInstance(download.log_handler, logging.FileHandler)
         self.assertIsInstance(checksum.log_handler, logging.FileHandler)
         self.assertIsInstance(mount.log_handler, logging.FileHandler)

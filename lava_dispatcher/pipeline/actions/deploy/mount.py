@@ -41,11 +41,12 @@ class OffsetAction(DeployAction):
     The calculated offset is dynamic data, stored in the context.
     """
 
-    def __init__(self):
+    def __init__(self, key):
         super(OffsetAction, self).__init__()
         self.name = "offset_action"
         self.description = "calculate offset of the image"
         self.summary = "offset calculation"
+        self.key = key
 
     def validate(self):
         if 'download_action' not in self.data:
@@ -59,7 +60,7 @@ class OffsetAction(DeployAction):
         if 'offset' in self.data['download_action']:
             # idempotency
             return connection
-        image = self.data['download_action']['image']['file']
+        image = self.data['download_action'][self.key]['file']
         if not os.path.exists(image):
             raise RuntimeError("Not able to mount %s: file does not exist" % image)
         part_data = self._run_command([
@@ -198,7 +199,7 @@ class MountAction(DeployAction):
             raise RuntimeError("No job object supplied to action")
         # FIXME: not all mount operations will need these actions
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.internal_pipeline.add_action(OffsetAction())
+        self.internal_pipeline.add_action(OffsetAction('image'))
         # FIXME: LoopCheckAction and LoopMountAction should be in only one Action
         self.internal_pipeline.add_action(LoopCheckAction())
         self.internal_pipeline.add_action(LoopMountAction())

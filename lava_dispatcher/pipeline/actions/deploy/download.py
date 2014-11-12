@@ -22,8 +22,8 @@
 
 import os
 import urlparse
-import urllib2  # FIXME: use requests
 import hashlib
+import requests
 import subprocess  # FIXME: should not need this
 import bz2
 import contextlib
@@ -31,55 +31,13 @@ import lzma
 import zlib
 from lava_dispatcher.pipeline.action import (
     Action,
+    JobError,
     Pipeline,
     RetryAction,
 )
 
 # FIXME: separate download actions for decompressed and uncompressed downloads
 # so that the logic can be held in the Strategy class, not the Action.
-
-
-class ScpDownloadAction(Action):
-
-    def __init__(self):
-        super(ScpDownloadAction, self).__init__()
-        self.name = "scp_download"
-        self.description = "Use scp to copy the file"
-        self.summary = "scp download"
-
-    @contextlib.contextmanager
-    def run(self, connection, args=None):
-        process = None
-        url = self.parameters['image']
-        try:
-            # FIXME: adapt with code from self.run_command() for logging
-            process = subprocess.Popen(
-                ['nice', 'ssh', url.netloc, 'cat', url.path],
-                shell=False,
-                stdout=subprocess.PIPE
-            )
-            yield process.stdout
-        finally:
-            if process:
-                process.kill()
-
-
-class HttpDownloadAction(Action):
-
-    def __init__(self):
-        super(HttpDownloadAction, self).__init__()
-        self.name = "http_download"
-        self.description = "use http to download the file"
-        self.summary = "http download"
-
-
-class FileDownloadAction(Action):
-
-    def __init__(self):
-        super(FileDownloadAction, self).__init__()
-        self.name = "file_download"
-        self.description = "copy a local file"
-        self.summary = "local file copy"
 
 
 class DownloaderAction(RetryAction):
@@ -96,7 +54,18 @@ class DownloaderAction(RetryAction):
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.internal_pipeline.add_action(DownloadHandler(self.key, self.path))
+
+        # Find the right action according to the url
+        url = urlparse.urlparse(parameters[self.key])
+        if url.scheme == 'scp':
+            action = ScpDownloadAction(self.key, self.path, url)
+        elif url.scheme == 'http' or url.scheme == 'https':
+            action = HttpDownloadAction(self.key, self.path, url)
+        elif url.scheme == 'file':
+            action = FileDownloadAction(self.key, self.path, url)
+        else:
+            raise JobError("Unsupported url protocol scheme: %s" % url.scheme)
+        self.internal_pipeline.add_action(action)
 
 
 class DownloadHandler(Action):
@@ -111,16 +80,17 @@ class DownloadHandler(Action):
     """
 
     # FIXME: ensure that a useful progress indicator is used for all downloads., e.g. every 5%
-    def __init__(self, key, path):
+    def __init__(self, key, path, url):
         super(DownloadHandler, self).__init__()
         self.name = "download_action"
         self.description = "download action"
         self.summary = "download-action"
         self.proxy = None
-        self.url = None
+        self.url = url
         self.key = key
         self.path = path
 
+# FIXME: replace by utils.download
     @contextlib.contextmanager
     def _scp_stream(self):
         process = None
@@ -135,35 +105,6 @@ class DownloadHandler(Action):
         finally:
             if process:
                 process.kill()
-
-    @contextlib.contextmanager
-    def _http_stream(self):
-        resp = None
-        handlers = []
-        if self.proxy:  # FIXME: allow for this to be set from parameters
-            handlers = [urllib2.ProxyHandler({'http': '%s' % self.proxy})]
-        opener = urllib2.build_opener(*handlers)
-
-        # if self.cookies:
-        #    opener.addheaders.append(('Cookie', self.cookies))
-
-        try:
-            url = urllib2.quote(self.url.geturl(), safe=":/")
-            resp = opener.open(url, timeout=30)
-            yield resp
-        finally:
-            if resp:
-                resp.close()
-
-    @contextlib.contextmanager
-    def _file_stream(self):
-        fd = None
-        try:
-            fd = open(self.url.path, 'rb')
-            yield fd
-        finally:
-            if fd:
-                fd.close()
 
     def _url_to_fname_suffix(self, path):
         filename = os.path.basename(self.url.path)
@@ -208,65 +149,127 @@ class DownloadHandler(Action):
             if fd:
                 fd.close()
 
-    def parse(self):
-        """
-        Move to being part of the Deployment strategy
-        so that only the correct action is added to the pipeline.
-        """
-        # FIXME use actions? check behaviour with contextmanager
-        # print self.parameters, self.name, self.key, self.job.device.parameters
-        self.url = urlparse.urlparse(self.parameters[self.key])
-        if self.url.scheme == 'scp':
-            self.reader = self._scp_stream
-        elif self.url.scheme == 'http' or self.url.scheme == 'https':
-            self.reader = self._http_stream
-        elif self.url.scheme == 'file':
-            self.reader = self._file_stream
-        else:
-            raise JobError("Unsupported url protocol scheme: %s" % url.scheme)
-
     def validate(self):
         super(DownloadHandler, self).validate()
-        self.parse()
+        self.url = urlparse.urlparse(self.parameters[self.key])
         fname, suffix = self._url_to_fname_suffix(self.path)  # FIXME: use the context tmpdir
-        self.data.setdefault(self.name, {self.key: {}})
-        self.data[self.name].update({self.key: {'file': fname}})
+
+        self.data.setdefault('download_action', {self.key: {}})
+        self.data['download_action'].update({self.key: {'file': fname}})
 
     def run(self, connection, args=None):
-        self.parse()  # FIXME: do this in the deployment strategy
         # self.cookies = self.job.context.config.lava_cookies  # FIXME: work out how to restore
-        fname, suffix = self._url_to_fname_suffix(self.path)  # FIXME: use the context tmpdir
-        if os.path.exists(fname):
-            self._log("development shortcut")  # TODO: remove
-            return connection
-        # The problem with the entire download method is that it
-        # is completely hidden from the logs and the progress indicator.
-        # Needs to switch to requests and give useful progress output.
-        # if not, wget can do the right thing for http, https and file
-        # and scp has progress built in too.
-        with self.reader() as r:
-            with self._decompressor_stream() as (writer, fname):
-                self._log("downloading and decompressing %s as %s" % (self.parameters[self.key], fname))
-                self.md5 = hashlib.md5()
-                self.sha256 = hashlib.sha256()
-                bsize = 32768
-                buff = r.read(bsize)
-                self.md5.update(buff)
-                self.sha256.update(buff)
-                while buff:
-                    writer(buff)
-                    buff = r.read(bsize)
-                    self.md5.update(buff)
-                    self.sha256.update(buff)
-        # FIXME: needs to raise JobError on 404 etc. for retry to operate
-        # set the dynamic data into the context:
-        # the decompressed filename and path
-        self.data[self.name][self.key] = {
+        md5 = hashlib.md5()
+        sha256 = hashlib.sha256()
+        with self._decompressor_stream() as (writer, fname):
+            self._log("downloading and decompressing %s as %s" % (self.parameters[self.key], fname))
+
+            # TODO: print the progress in the logs
+            for buff in self.reader():
+                md5.update(buff)
+                sha256.update(buff)
+                writer(buff)
+        # set the dynamic data into the context
+        self.data['download_action'][self.key] = {
             'file': fname,
-            'md5': self.md5.hexdigest(),
-            'sha256': self.sha256.hexdigest()
+            'md5': md5.hexdigest(),
+            'sha256': sha256.hexdigest()
         }
         return connection
+
+
+class FileDownloadAction(DownloadHandler):
+
+    def __init__(self, key, path, url):
+        super(FileDownloadAction, self).__init__(key, path, url)
+        self.name = "file_download"
+        self.description = "copy a local file"
+        self.summary = "local file copy"
+
+    def validate(self):
+        super(FileDownloadAction, self).validate()
+        if not os.path.isfile(self.url.path):
+            self.errors = "Image file '%s' does not exists" % (self.url.path)
+
+    def reader(self):
+        try:
+            fd = open(self.url.path, 'rb')
+            buff = fd.read(32768)
+            while buff:
+                yield buff
+                buff = fd.read(32768)
+        except IOError as exc:
+            # TODO: improve error message
+            raise JobError(exc)
+        finally:
+            if fd:
+                fd.close()
+
+
+class HttpDownloadAction(DownloadHandler):
+
+    def __init__(self, key, path, url):
+        super(HttpDownloadAction, self).__init__(key, path, url)
+        self.name = "http_download"
+        self.description = "use http to download the file"
+        self.summary = "http download"
+
+    def validate(self):
+        super(HttpDownloadAction, self).validate()
+        try:
+            # TODO: move the constant in a specific module
+            res = requests.head(self.url.geturl(), allow_redirects=True, timeout=15)
+            if res.status_code != requests.codes.OK:
+                self.errors = "Resources not available at '%s'" % (self.url.geturl())
+        except requests.Timeout:
+            self.errors = "'%s' timed out" % (self.url.geturl())
+        except requests.RequestException as exc:
+            # TODO: find a better way to report the error
+            self.errors = exc
+
+    def reader(self):
+        try:
+            res = requests.get(self.url.geturl(), allow_redirects=True, stream=True, timeout=15)
+            if res.status_code != requests.codes.OK:
+                raise JobError("Unable to download '%s'" % (self.url.geturl()))
+            for buff in res.iter_content(32768):
+                yield buff
+        except requests.RequestException as exc:
+            # TODO: improve error reporting
+            raise JobError(exc)
+        finally:
+            res.close()
+
+
+class ScpDownloadAction(DownloadHandler):
+
+    def __init__(self, key, path, url):
+        super(ScpDownloadAction, self).__init__(key, path, url)
+        self.name = "scp_download"
+        self.description = "Use scp to copy the file"
+        self.summary = "scp download"
+
+    def validate(self):
+        raise NotImplementedError()
+
+    def reader(self):
+        raise NotImplementedError()
+
+    @contextlib.contextmanager
+    def run(self, connection, args=None):
+        process = None
+        url = self.parameters['image']
+        try:
+            # FIXME: adapt with code from self.run_command() for logging
+            process = subprocess.Popen(
+                ['nice', 'ssh', url.netloc, 'cat', url.path],
+                shell=False,
+                stdout=subprocess.PIPE
+            )
+            yield process.stdout
+        finally:
+            if process:
+                process.kill()
 
 
 class ChecksumAction(Action):  # FIXME: fold into the DownloadHandler
@@ -298,17 +301,18 @@ class QCowConversionAction(Action):
     on filename suffix
     """
 
-    def __init__(self):
+    def __init__(self, key):
         super(QCowConversionAction, self).__init__()
         self.name = "qcow2"
         self.description = "convert qcow image using qemu-img"
         self.summary = "qcow conversion"
+        self.key = key
 
     def run(self, connection, args=None):
-        if 'file' not in self.data['download_action']:
-            raise RuntimeError("'download_action.file' missing in the context")
+        if self.key not in self.data['download_action']:
+            raise RuntimeError("'download_action.%s' missing in the context" % (self.key))
 
-        fname = self.data['download_action']['file']
+        fname = self.data['download_action'][self.key]['file']
         origin = fname
         # Change the extension only if the file ends with '.qcow2'
         if fname.endswith('.qcow2'):
@@ -319,6 +323,6 @@ class QCowConversionAction(Action):
         self._log("Converting downloaded image from qcow2 to raw")
         subprocess.check_call(['qemu-img', 'convert', '-f', 'qcow2',
                                '-O', 'raw', origin, fname])
-        self.data['download_action']['file'] = fname
+        self.data['download_action'][self.key]['file'] = fname
 
         return connection
