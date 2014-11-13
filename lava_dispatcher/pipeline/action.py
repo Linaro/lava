@@ -586,7 +586,7 @@ class Action(object):
                 'output': exc.output.split('\n')})
         self._log("%s\n%s" % (' '.join(command_list), log))
         if not log:
-            log = True  # allow for commands which return no output
+            return ''  # allow for commands which return no output
         return log
 
     def run(self, connection, args=None):

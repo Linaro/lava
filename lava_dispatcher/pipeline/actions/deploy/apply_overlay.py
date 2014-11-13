@@ -201,7 +201,7 @@ class ExtractRamdisk(Action):
             os.rename(ramdisk, ramdisk_compressed_data)
         self._log(os.system("file %s" % ramdisk_compressed_data))
         cmd = ('gzip -d -f %s' % ramdisk_compressed_data).split(' ')
-        if not self._run_command(cmd):
+        if self._run_command(cmd) is not '':
             raise RuntimeError('Unable to uncompress: %s' % ramdisk_compressed_data)
         # filename has been changed by gzip
         ramdisk_data = os.path.join(ramdisk_dir, 'ramdisk.cpio')
@@ -255,7 +255,7 @@ class CompressRamdisk(Action):
             raise RuntimeError('Unable to create cpio filesystem: %s' % exc)
         self._log("%s\n%s" % (cmd, log))
         os.chdir(os.path.dirname(ramdisk_data))
-        if not self._run_command(("gzip %s" % ramdisk_data).split(' ')):
+        if self._run_command(("gzip %s" % ramdisk_data).split(' ')) is not '':
             raise RuntimeError('Unable to compress cpio filesystem')
         os.chdir(pwd)
         final_file = os.path.join(os.path.dirname(ramdisk_data), 'ramdisk.cpio.gz')
