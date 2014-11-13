@@ -112,6 +112,7 @@ class DownloadHandler(Action):
         suffix = parts[-1]
         if len(parts) == 1:  # handle files without suffixes, e.g. kernel images
             filename = os.path.join(path, ''.join(parts[-1]))
+            suffix = None
         else:
             filename = os.path.join(path, '.'.join(parts[:-1]))
         return filename, suffix
@@ -133,7 +134,7 @@ class DownloadHandler(Action):
             decompressor = bz2.BZ2Decompressor()
         elif suffix == 'xz' and decompress:
             decompressor = lzma.LZMADecompressor()
-        else:
+        elif suffix is not None:
             # don't remove the file's real suffix
             fname = '%s.%s' % (fname, suffix)
 
