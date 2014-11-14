@@ -51,14 +51,18 @@ class BzrHelper(VCSHelper):
 
         try:
             if revision:
-                subprocess.check_output([self.vcs, 'branch', '-r', str(revision), self.url, dest_path],
+                subprocess.check_output([self.vcs, 'branch', '-r',
+                                         str(revision), self.url,
+                                         dest_path],
                                         stderr=subprocess.STDOUT, env=env)
                 commit_id = str(revision)
             else:
-                subprocess.check_output([self.vcs, 'branch', self.url, dest_path],
+                subprocess.check_output([self.vcs, 'branch', self.url,
+                                         dest_path],
                                         stderr=subprocess.STDOUT, env=env)
                 os.chdir(dest_path)
-                commit_id = subprocess.check_output(['bzr', 'revno'], env=env).strip()
+                commit_id = subprocess.check_output(['bzr', 'revno'],
+                                                    env=env).strip()
 
         except subprocess.CalledProcessError as exc:
             yaml_log = logging.getLogger("YAML")
@@ -66,7 +70,8 @@ class BzrHelper(VCSHelper):
                 'command': [i.strip() for i in exc.cmd],
                 'message': [i.strip() for i in exc.message],
                 'output': exc.output.split('\n')})
-            raise InfrastructureError("Unable to fetch bzr repository '%s'" % (self.url))
+            raise InfrastructureError("Unable to fetch bzr repository '%s'"
+                                      % (self.url))
         finally:
             os.chdir(cwd)
 
@@ -103,14 +108,16 @@ class GitHelper(VCSHelper):
             commit_id = subprocess.check_output([self.vcs, '--git-dir',
                                                  os.path.join(dest_path, '.git'),
                                                  'log', '-1', '--pretty=%H'],
-                                                stderr=subprocess.STDOUT, env=env).strip()
+                                                stderr=subprocess.STDOUT,
+                                                env=env).strip()
         except subprocess.CalledProcessError as exc:
             yaml_log = logging.getLogger("YAML")
             yaml_log.debug({
                 'command': [i.strip() for i in exc.cmd],
                 'message': [i.strip() for i in exc.message],
                 'output': exc.output.split('\n')})
-            raise InfrastructureError("Unable to fetch git repository '%s'" % (self.url))
+            raise InfrastructureError("Unable to fetch git repository '%s'"
+                                      % (self.url))
 
         return commit_id
 
@@ -119,7 +126,7 @@ class TarHelper(VCSHelper):
     # TODO: implement TarHelper
 
     def __init__(self, url):
-        super(BzrHelper, self).__init__(url)
+        super(TarHelper, self).__init__(url)
         self.vcs = ''
 
 
@@ -127,5 +134,5 @@ class URLHelper(VCSHelper):
     # TODO: implement URLHelper
 
     def __init__(self, url):
-        super(BzrHelper, self).__init__(url)
+        super(URLHelper, self).__init__(url)
         self.vcs = ''

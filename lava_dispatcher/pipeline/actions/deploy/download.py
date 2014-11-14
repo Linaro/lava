@@ -91,6 +91,9 @@ class DownloadHandler(Action):
         self.key = key
         self.path = path
 
+    def reader(self):
+        raise NotImplementedError
+
     def _url_to_fname_suffix(self, path):
         filename = os.path.basename(self.url.path)
         parts = filename.split('.')

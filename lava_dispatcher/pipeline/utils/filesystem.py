@@ -26,13 +26,15 @@ import tempfile
 
 def rmtree(directory):
     """
-    Wrapper around shutil.rmtree to remove a directory tree while ignoring most errors.
+    Wrapper around shutil.rmtree to remove a directory tree while ignoring most
+    errors.
     If called on a symbolic link, this function will raise a RuntimeError.
     """
     try:
         shutil.rmtree(directory)
     except OSError as exc:
-        raise RuntimeError("Error when trying to remove '%s': %s" % (directory, exc))
+        raise RuntimeError("Error when trying to remove '%s': %s"
+                           % (directory, exc))
 
 
 def mkdtemp(autoremove=True, basedir='/tmp'):
