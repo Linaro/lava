@@ -26,9 +26,10 @@ import base64
 import tarfile
 from uuid import uuid4
 from lava_dispatcher.pipeline.action import (
-    Pipeline,
     Action,
+    InfrastructureError,
     JobError,
+    Pipeline,
 )
 from lava_dispatcher.pipeline.actions.test import TestAction
 from lava_dispatcher.pipeline.utils.strings import indices
