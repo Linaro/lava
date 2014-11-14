@@ -178,6 +178,7 @@ class FileDownloadAction(DownloadHandler):
             self.errors = "Image file '%s' does not exists" % (self.url.path)
 
     def reader(self):
+        fd = None
         try:
             fd = open(self.url.path, 'rb')
             buff = fd.read(32768)
@@ -188,7 +189,7 @@ class FileDownloadAction(DownloadHandler):
             # TODO: improve error message
             raise JobError(exc)
         finally:
-            if fd:
+            if fd is not None:
                 fd.close()
 
 
@@ -211,9 +212,10 @@ class HttpDownloadAction(DownloadHandler):
             self.errors = "'%s' timed out" % (self.url.geturl())
         except requests.RequestException as exc:
             # TODO: find a better way to report the error
-            self.errors = exc
+            self.errors = str(exc)
 
     def reader(self):
+        res = None
         try:
             res = requests.get(self.url.geturl(), allow_redirects=True, stream=True, timeout=15)
             if res.status_code != requests.codes.OK:
@@ -224,7 +226,8 @@ class HttpDownloadAction(DownloadHandler):
             # TODO: improve error reporting
             raise JobError(exc)
         finally:
-            res.close()
+            if res is not None:
+                res.close()
 
 
 class ScpDownloadAction(DownloadHandler):
