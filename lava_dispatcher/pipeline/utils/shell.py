@@ -20,6 +20,8 @@
 
 import os
 
+from lava_dispatcher.pipeline.action import InfrastructureError
+
 
 def which(path, match=os.path.isfile):
     """
@@ -30,4 +32,4 @@ def which(path, match=os.path.isfile):
         candidate = os.path.join(dirname, path)
         if match(candidate):
             return candidate
-    raise InfrastructureError("Cannot find file %s" % path)
+    raise InfrastructureError("Cannot find command '%s' in $PATH" % path)
