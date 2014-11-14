@@ -23,8 +23,11 @@ import os
 import unittest
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.actions.boot.u_boot import UBootAction
+from lava_dispatcher.pipeline.actions.boot.u_boot import UBootAction, UBootCommandOverlay
 from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
+from lava_dispatcher.pipeline.job import Job
+from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError
+from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 
 
 class Factory(object):  # pylint: disable=too-few-public-methods
@@ -46,14 +49,14 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
 
     def test_simulated_action(self):
         factory = Factory()
-        job = factory.create_job('sample_jobs/uboot.yaml')
+        job = factory.create_job('sample_jobs/uboot-ramdisk.yaml')
         self.assertIsNotNone(job)
         self.assertIsNone(job.validate())
         self.assertEqual(job.device.parameters['device_type'], 'beaglebone-black')
 
     def test_tftp_pipeline(self):
         factory = Factory()
-        job = factory.create_job('sample_jobs/uboot.yaml')
+        job = factory.create_job('sample_jobs/uboot-ramdisk.yaml')
         self.assertEqual(
             [action.name for action in job.pipeline.actions],
             ['tftp-deploy', 'uboot-action', 'lava-test-retry', 'submit_results', 'finalize']
@@ -87,7 +90,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
 
     def test_uboot_action(self):
         factory = Factory()
-        job = factory.create_job('sample_jobs/uboot.yaml')
+        job = factory.create_job('sample_jobs/uboot-ramdisk.yaml')
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn('u-boot', [item.keys() for item in job.device.parameters['actions']['boot']['methods']][0])
@@ -114,13 +117,65 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
                 # print items[command]
             else:
                 self.assertIsNone(items.get(command, None))
-        for line in job.context['u-boot']['commands']:
-            # check substitutions have taken place
-            self.assertNotIn('{SERVER_IP}', line)
-            self.assertNotIn('{KERNEL_ADDR}', line)
-            self.assertNotIn('{DTB_ADDR}', line)
-            self.assertNotIn('{RAMDISK_ADDR}', line)
-            self.assertNotIn('{BOOTX}', line)
+
+    def test_overlay_action(self):
+        parameters = {
+            'device_type': 'beaglebone-black',
+            'job_name': 'uboot-pipeline',
+            'job_timeout': '15m',
+            'action_timeout': '5m',
+            'priority': 'medium',
+            'output_dir': '/tmp',
+            'actions': {
+                'boot': {
+                    'method': 'u-boot',
+                    'commands': 'ramdisk',
+                    'type': 'bootz'
+                },
+                'deploy': {
+                    'ramdisk': 'initrd.gz',
+                    'kernel': 'zImage',
+                    'dtb': 'broken.dtb'
+                }
+            }
+        }
+        device = NewDevice('bbb-01')
+        job = Job(parameters)
+        job.device = device
+        pipeline = Pipeline(job=job, parameters=parameters['actions']['boot'])
+        job.set_pipeline(pipeline)
+        overlay = UBootCommandOverlay()
+        pipeline.add_action(overlay)
+        try:
+            ip_addr = dispatcher_ip()
+        except InfrastructureError as exc:
+            raise RuntimeError("Unable to get dispatcher IP address: %s" % exc)
+        parsed = []
+        suffix = ''
+        kernel_addr = job.device.parameters['parameters'][overlay.parameters['type']]['ramdisk']
+        ramdisk_addr = job.device.parameters['parameters'][overlay.parameters['type']]['ramdisk']
+        dtb_addr = job.device.parameters['parameters'][overlay.parameters['type']]['dtb']
+        kernel = parameters['actions']['deploy']['kernel']
+        ramdisk = parameters['actions']['deploy']['ramdisk']
+        dtb = parameters['actions']['deploy']['dtb']
+        for line in device.parameters['actions']['boot']['methods'][0]['u-boot']['ramdisk']['commands']:
+            line = line.replace('{SERVER_IP}', ip_addr)
+            # the addresses need to be hexadecimal
+            line = line.replace('{KERNEL_ADDR}', kernel_addr)
+            line = line.replace('{DTB_ADDR}', dtb_addr)
+            line = line.replace('{RAMDISK_ADDR}', ramdisk_addr)
+            line = line.replace('{BOOTX}', "%s %s %s %s" % (
+                overlay.parameters['type'], kernel_addr, ramdisk_addr, dtb_addr))
+            line = line.replace('{RAMDISK}', ramdisk)
+            line = line.replace('{KERNEL}', kernel)
+            line = line.replace('{DTB}', dtb)
+            parsed.append(line)
+        self.assertIn("setenv loadkernel 'tftp ${kernel_addr_r} zImage'", parsed)
+        self.assertIn("setenv loadinitrd 'tftp ${initrd_addr_r} initrd.gz; setenv initrd_size ${filesize}'", parsed)
+        self.assertIn("setenv loadfdt 'tftp ${fdt_addr_r} broken.dtb'", parsed)
+        self.assertNotIn("setenv kernel_addr_r '{KERNEL_ADDR}'", parsed)
+        self.assertNotIn("setenv initrd_addr_r '{RAMDISK_ADDR}'", parsed)
+        self.assertNotIn("setenv fdt_addr_r '{DTB_ADDR}'", parsed)
 
     def test_download_action(self):
         factory = Factory()
@@ -130,6 +185,3 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
             self.assertTrue(action.valid)
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
-        self.assertIsNotNone(job.context['download_action']['kernel']['file'])
-        self.assertIsNotNone(job.context['download_action']['ramdisk']['file'])
-        self.assertIsNotNone(job.context['download_action']['dtb']['file'])

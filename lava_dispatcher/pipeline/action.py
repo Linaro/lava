@@ -30,6 +30,7 @@ import collections
 from collections import OrderedDict
 from contextlib import contextmanager
 
+from lava_dispatcher.pipeline.utils.constants import OVERRIDE_CLAMP_DURATION
 from lava_dispatcher.pipeline.log import YamlLogger, get_yaml_handler
 
 if sys.version > '3':
@@ -668,11 +669,13 @@ class RetryAction(Action):
                 self.err = "\rCancel"  # Set a useful message.
                 self.errors = "Cancelled"
                 return connection
-            except (JobError, InfrastructureError, TestError):
+            except (JobError, InfrastructureError, TestError) as exc:
                 self.retries += 1
-                msg = "%s failed: %d of %d attempts." % (self.name, self.retries, self.max_retries)
+                msg = "%s failed: %d of %d attempts. '%s'" % (self.name, self.retries, self.max_retries, exc)
                 self.errors = msg
                 self.logger.debug(msg)
+                if self.timeout:
+                    self.logger.debug("timeout: %s %s" % (self.timeout.name, self.timeout.duration))
                 time.sleep(self.sleep)
             finally:
                 # TODO: QUESTION: is it the right time to cleanup?
@@ -947,4 +950,4 @@ class Timeout(object):
         if self.protected:
             raise JobError("Trying to modify a protected timeout: %s.", self.name)
         clamp = lambda n, minn, maxn: max(min(maxn, n), minn)
-        self.duration = clamp(duration, 1, 300)
+        self.duration = clamp(duration, 1, OVERRIDE_CLAMP_DURATION)  # FIXME: needs support in /etc/

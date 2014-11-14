@@ -103,7 +103,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         except pexpect.TIMEOUT:
             raise TestError("command timed out.")
         except pexpect.EOF:
-            raise RuntimeError("ShellCommand EOF: ".join(self.before.split('\r\n')))
+            raise RuntimeError(" ".join(self.before.split('\r\n')))
         return proc
 
     def empty_buffer(self):

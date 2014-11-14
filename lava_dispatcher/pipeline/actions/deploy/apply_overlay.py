@@ -21,7 +21,12 @@
 import os
 import tarfile
 import subprocess
-from lava_dispatcher.pipeline.action import Action, Pipeline, InfrastructureError
+from lava_dispatcher.pipeline.action import (
+    Action,
+    Pipeline,
+    InfrastructureError,
+    JobError
+)
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.pipeline.utils.constants import (
     RAMDISK_COMPRESSED_FNAME,
@@ -60,78 +65,103 @@ class ApplyOverlayImage(Action):
 
 class PrepareOverlayTftp(Action):
     """
-    Extracts the ramdisk or rootfs in preparation for the lava overlay
+    Extracts the ramdisk or nfsrootfs in preparation for the lava overlay
     """
     def __init__(self):
         super(PrepareOverlayTftp, self).__init__()
         self.name = "prepare-tftp-overlay"
-        self.summary = "extract ramdisk or rootfs"
-        self.description = "extract ramdisk or rootfs in preparation for lava overlay"
+        self.summary = "extract ramdisk or nfsrootfs"
+        self.description = "extract ramdisk or nfsrootfs in preparation for lava overlay"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline.add_action(ExtractNfsRootfs())  # idempotent, checks for nfsrootfs parameter
         self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
-        self.internal_pipeline.add_action(ExtractRootfs())
-        self.internal_pipeline.add_action(ExtractRamdisk())
-        self.internal_pipeline.add_action(ExtractModules())
+        self.internal_pipeline.add_action(ExtractRamdisk())  # idempotent, checks for a ramdisk parameter
+        self.internal_pipeline.add_action(ExtractModules())  # idempotent, checks for a modules parameter
         self.internal_pipeline.add_action(ApplyOverlayTftp())
-        self.internal_pipeline.add_action(CompressRamdisk())  # FIXME: needs a rootfs action
+        self.internal_pipeline.add_action(CompressRamdisk())  # idempotent, checks for a ramdisk parameter
 
     def run(self, connection, args=None):
         connection = self.internal_pipeline.run_actions(connection, args)
         ramdisk = self.data['compress-ramdisk'].get('ramdisk', None)
-        if not ramdisk:  # FIXME: needs a conditional to allow for rootfs
-            raise RuntimeError("Unable to apply overlay, not output file")
+        if ramdisk:  # nothing else to do
+            return connection
         return connection
 
 
 class ApplyOverlayTftp(Action):
     """
-    Unpacks the overlay on top of the ramdisk or rootfs
+    Unpacks the overlay on top of the ramdisk or nfsrootfs
     """
     def __init__(self):
         super(ApplyOverlayTftp, self).__init__()
         self.name = "apply-overlay-tftp"
         self.summary = "apply lava overlay test files"
-        self.description = "unpack the overlay into the rootfs or ramdisk"
+        self.description = "unpack the overlay into the nfsrootfs or ramdisk"
 
     def run(self, connection, args=None):
+        overlay_type = ''
+        overlay_file = None
+        directory = None
+        if self.parameters.get('ramdisk', None):
+            overlay_type = 'ramdisk'
+            overlay_file = self.data['compress-overlay'].get('output')
+            directory = self.data['extract-overlay-ramdisk']['extracted_ramdisk']
+        elif self.parameters.get('nfsrootfs', None):
+            overlay_type = 'nfsrootfs'
+            overlay_file = self.data['compress-overlay'].get('output')
+            directory = self.data['extract-nfsrootfs'].get('nfsroot')
         try:
-            tar = tarfile.open(self.data['compress-overlay'].get('output'))
-            tar.extractall(self.data['extract-overlay-ramdisk']['extracted_ramdisk'])
+            tar = tarfile.open(overlay_file)
+            tar.extractall(directory)
             tar.close()
         except tarfile.TarError as exc:
-            raise RuntimeError("Unable to unpack overlay: %s" % exc)
+            raise RuntimeError("Unable to unpack %s overlay: %s" % (overlay_type, exc))
         return connection
 
 
-# FIXME: Not implemented yet
-class ExtractRootfs(Action):
+class ExtractNfsRootfs(Action):
     """
-    Unpacks the rootfs and applies the overlay to it
+    Unpacks the nfsrootfs and applies the overlay to it
     """
     def __init__(self):
-        super(ExtractRootfs, self).__init__()
-        self.name = "extract-rootfs"
-        self.description = "unpack rootfs"
-        self.summary = "unpack rootfs, ready to apply lava overlay"
+        super(ExtractNfsRootfs, self).__init__()
+        self.name = "extract-nfsrootfs"
+        self.description = "unpack nfsrootfs"
+        self.summary = "unpack nfsrootfs, ready to apply lava overlay"
 
     def validate(self):
-        super(ExtractRootfs, self).validate()
-        if not self.parameters.get('rootfs', None):  # idempotency
+        super(ExtractNfsRootfs, self).validate()
+        if not self.parameters.get('nfsrootfs', None):  # idempotency
             return
-        raise NotImplementedError("No rootfs support yet")
+        if 'download_action' not in self.data:
+            self.errors = "missing download_action in parameters"
+        elif 'file' not in self.data['download_action']['nfsrootfs']:
+            self.errors = "no file specified extract as nfsrootfs"
+        if not os.path.exists('/usr/sbin/exportfs'):
+            raise InfrastructureError("NFS job requested but nfs-kernel-server not installed.")
 
     def run(self, connection, args=None):
-        if not self.parameters.get('rootfs', None):  # idempotency
+        if not self.parameters.get('nfsrootfs', None):  # idempotency
             return connection
+        nfsroot = self.data['download_action']['nfsrootfs']['file']
+        nfsroot_dir = mkdtemp(basedir="/var/lib/lava/dispatcher/tmp")  # FIXME: constant to get from a YAML file in /etc/
+        try:
+            tar = tarfile.open(nfsroot)
+            tar.extractall(nfsroot_dir)
+            tar.close()
+        except tarfile.TarError as exc:
+            raise JobError("Unable to unpack nfsroot: '%s' - %s" % (os.path.basename(nfsroot), exc))
+        self.data[self.name].setdefault('nfsroot', nfsroot_dir)
+        self.logger.debug("Extracted nfs root to %s" % nfsroot_dir)
         return connection
 
 
 class ExtractModules(Action):
     """
     If modules are specified in the deploy parameters, unpack the modules
-    whilst the rootfs or ramdisk are unpacked.
+    whilst the nfsrootfs or ramdisk are unpacked.
     """
     def __init__(self):
         super(ExtractModules, self).__init__()
@@ -148,16 +178,19 @@ class ExtractModules(Action):
         if not self.parameters.get('modules', None):  # idempotency
             return connection
         if not self.parameters.get('ramdisk', None):
-            if not self.parameters.get('rootfs', None):
+            if not self.parameters.get('nfsrootfs', None):
                 raise RuntimeError("Unable to identify unpack location")
             else:
-                raise NotImplementedError("rootfs extraction needed")  # FIXME
+                root = self.data['extract-nfsrootfs']['nfsroot']
         else:
             root = self.data['extract-overlay-ramdisk']['extracted_ramdisk']
 
         modules = self.data['download_action']['modules']['file']
-        cmd = ('tar --selinux -C %s -xaf %s' % (root, modules)).split(' ')
-        if not self._run_command(cmd):
+        try:
+            tar = tarfile.open(modules)
+            tar.extractall(root)
+            tar.close()
+        except tarfile.TarError:
             raise RuntimeError('Unable to extract tarball: %s to %s' % (modules, root))
         try:
             os.unlink(modules)

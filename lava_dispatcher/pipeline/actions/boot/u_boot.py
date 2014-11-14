@@ -29,7 +29,7 @@ from lava_dispatcher.pipeline.action import (
     Timeout,
     InfrastructureError,
 )
-from lava_dispatcher.pipeline.actions.boot import BootAction
+from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
 from lava_dispatcher.pipeline.shell import (
     ConnectDevice,
     ExpectShellSession,
@@ -38,6 +38,7 @@ from lava_dispatcher.pipeline.actions.boot.reset import ResetDevice
 from lava_dispatcher.pipeline.utils.constants import (
     UBOOT_AUTOBOOT_PROMPT,
     UBOOT_DEFAULT_CMD_TIMEOUT,
+    AUTOLOGIN_DEFAULT_TIMEOUT,
 )
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 
@@ -120,6 +121,18 @@ class UBootRetry(BootAction):
         self.internal_pipeline.add_action(ExpectShellSession())  # wait
         # and set prompt to the uboot prompt
         self.internal_pipeline.add_action(UBootCommandsAction())
+        if 'auto_login' in parameters:
+            auto_login = AutoLoginAction()
+            auto_login.timeout = Timeout(self.name, AUTOLOGIN_DEFAULT_TIMEOUT)
+            self.internal_pipeline.add_action(auto_login)
+
+    def run(self, connection, args=None):
+        super(UBootRetry, self).run(connection, args)
+        if self.errors:
+            # FIXME: tests with multiple boots need to be handled too.
+            self.data.update({
+                'boot-result': "failed"
+            })
 
 
 class UBootInterrupt(Action):
@@ -134,7 +147,6 @@ class UBootInterrupt(Action):
 
     def validate(self):
         super(UBootInterrupt, self).validate()
-        # FIXME: old-style direct lookups, add shorthand calls into self.parameters
         command_list = self.job.device.parameters['commands']
         # to enable power to a device, either power_on or hard_reset are needed.
         # power_on assumes that the power state is known. hard_reset does not.
@@ -175,6 +187,15 @@ class UBootCommandOverlay(Action):
         self.summary = "replace placeholders with job data"
         self.description = "substitute job data into uboot command list"
 
+    def substitute(self, command_list, dictionary):
+        parsed = []
+        for line in command_list:
+            for key, value in dictionary.items():
+                line = line.replace(key, value)
+            parsed.append(line)
+        self.data['u-boot']['commands'] = parsed
+        self.logger.debug("Parsed boot commands: %s" % '; '.join(parsed))
+
     def validate(self):
         super(UBootCommandOverlay, self).validate()
         if 'method' not in self.parameters:
@@ -189,49 +210,57 @@ class UBootCommandOverlay(Action):
         # download_action will set ['dtb'] as tftp_path, tmpdir & filename later, in the run step.
         self.data.setdefault('u-boot', {})
         self.data['u-boot'].setdefault('commands', [])
-        ip_addr = None
-        try:
-            ip_addr = dispatcher_ip()
-        except InfrastructureError as exc:
-            raise RuntimeError("Unable to get dispatcher IP address: %s" % exc)
         if 'type' not in self.parameters:
             self.errors = "No boot type specified in device parameters."
         else:
             if self.parameters['type'] not in self.job.device.parameters['parameters']:
                 self.errors = "Unable to match specified boot type with device parameters"
-        parsed = []
-        kernel_addr = self.job.device.parameters['parameters'][self.parameters['type']]['kernel']
-        ramdisk_addr = self.job.device.parameters['parameters'][self.parameters['type']]['ramdisk']
-        dtb_addr = self.job.device.parameters['parameters'][self.parameters['type']]['dtb']
-        # FIXME: split out into a general purpose utility function / class
-        for line in commands:
-            line = line.replace('{SERVER_IP}', ip_addr)
-            # the addresses need to be hexadecimal
-            line = line.replace('{KERNEL_ADDR}', kernel_addr)
-            line = line.replace('{DTB_ADDR}', dtb_addr)
-            line = line.replace('{RAMDISK_ADDR}', ramdisk_addr)
-            line = line.replace('{BOOTX}', "%s %s %s %s" % (
-                self.parameters['type'], kernel_addr, ramdisk_addr, dtb_addr))
-            parsed.append(line)
-        self.data['u-boot']['commands'] = parsed
-        # FIXME: report the parsed results in the pipeline description
+        self.data['u-boot']['commands'] = commands
 
     def run(self, connection, args=None):
-        # read data from the download action and replace in context
-        parsed = []
+        """
+        Read data from the download action and replace in context
+        """
+        try:
+            ip_addr = dispatcher_ip()
+        except InfrastructureError as exc:
+            raise RuntimeError("Unable to get dispatcher IP address: %s" % exc)
+        substitutions = {
+            '{SERVER_IP}': ip_addr
+        }
+
+        kernel_addr = self.job.device.parameters['parameters'][self.parameters['type']]['kernel']
+        dtb_addr = self.job.device.parameters['parameters'][self.parameters['type']]['dtb']
+        ramdisk_addr = self.job.device.parameters['parameters'][self.parameters['type']]['ramdisk']
+
+        substitutions['{KERNEL_ADDR}'] = kernel_addr
+        substitutions['{DTB_ADDR}'] = dtb_addr
+        substitutions['{RAMDISK_ADDR}'] = ramdisk_addr
+        substitutions['{BOOTX}'] = "%s %s %s %s" % (
+            self.parameters['type'], kernel_addr, ramdisk_addr, dtb_addr)
+
         suffix = self.data['tftp-deploy'].get('suffix', '')
-        kernel = os.path.join(suffix, os.path.basename(self.data['download_action']['kernel']['file']))
         if self.data['compress-ramdisk'].get('ramdisk', None):
-            ramdisk = os.path.join(suffix, os.path.basename(self.data['compress-ramdisk']['ramdisk']))
+            substitutions['{RAMDISK}'] = os.path.join(
+                suffix, os.path.basename(self.data['compress-ramdisk']['ramdisk'])
+            )
         else:
-            ramdisk = os.path.join(suffix, os.path.basename(self.data['download_action']['ramdisk']['file']))
-        dtb = os.path.join(suffix, os.path.basename(self.data['download_action']['dtb']['file']))
-        for line in self.data['u-boot']['commands']:
-            line = line.replace('{RAMDISK}', "%s/%s" % (suffix, ramdisk))
-            line = line.replace('{KERNEL}', "%s/%s" % (suffix, kernel))
-            line = line.replace('{DTB}', "%s/%s" % (suffix, dtb))
-            parsed.append(line)
-        self.data['u-boot']['commands'] = parsed
+            substitutions['{BOOTX}'] = "%s %s - %s" % (
+                self.parameters['type'], kernel_addr, dtb_addr)
+
+        substitutions['{KERNEL}'] = os.path.join(
+            suffix, os.path.basename(self.data['download_action']['kernel']['file'])
+        )
+        substitutions['{DTB}'] = os.path.join(
+            suffix, os.path.basename(self.data['download_action']['dtb']['file'])
+        )
+
+        if 'nfsrootfs' in self.data['download_action']:
+            # FIXME: resolve issues around colon inside YAML dict strings or build string from components
+            substitutions['&#58;'] = ':'
+            substitutions['{NFSROOTFS}'] = self.data['extract-nfsrootfs'].get('nfsroot')
+
+        self.substitute(self.data['u-boot']['commands'], substitutions)
         return connection
 
 
@@ -260,13 +289,10 @@ class UBootCommandsAction(Action):
     def run(self, connection, args=None):
         if not connection:
             self.errors = "%s started without a connection already in use" % self.name
+        connection.timeout = self.timeout
         self.logger.debug("Changing prompt to %s" % self.prompt)
         for line in self.data['u-boot']['commands']:
             connection.wait()
             connection.sendline(line)
-        self.logger.debug("Changing prompt to test shell defaults")
-        connection.prompt_str = self.job.device.parameters['test_image_prompts']
-        self.logger.debug("Changing timeout to %s" % self.timeout.duration)
-        connection.timeout = self.timeout
-        connection.wait()
+        # allow for auto_login
         return connection

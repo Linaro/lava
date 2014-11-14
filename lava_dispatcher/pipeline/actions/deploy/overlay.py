@@ -70,16 +70,20 @@ class OverlayAction(DeployAction):
         self.summary = "overlay the lava support scripts"
         self.lava_test_dir = os.path.realpath(
             '%s/../../../lava_test_shell' % os.path.dirname(__file__))
+        self.scripts_to_copy = []
         # 755 file permissions
         self.xmod = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH
 
     def validate(self):
         super(OverlayAction, self).validate()
-        if 'actions' not in self.job.parameters:
-            # FIXME: is this the result of parameter issues or skipping?
-            return
-        if 'lava_test_results_dir' not in self.data:
-            pass  # could be an error, depending on other tests
+        self.scripts_to_copy = glob.glob(os.path.join(self.lava_test_dir, 'lava-*'))
+        # Distro-specific scripts override the generic ones
+        distro = self.parameters['deployment_data']['distro']
+        distro_support_dir = '%s/distro/%s' % (self.lava_test_dir, distro)
+        for script in glob.glob(os.path.join(distro_support_dir, 'lava-*')):
+            self.scripts_to_copy.append(script)
+        if not self.scripts_to_copy:
+            self.errors = "Unable to locate lava_test_shell support scripts."
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -88,26 +92,6 @@ class OverlayAction(DeployAction):
         self.internal_pipeline.add_action(TestDefinitionAction())
         self.internal_pipeline.add_action(CompressOverlay())
 
-    def _copy_runner(self, location):
-        shell = self.parameters['deployment_data']['lava_test_sh_cmd']
-
-        # Generic scripts
-        scripts_to_copy = glob.glob(os.path.join(self.lava_test_dir, 'lava-*'))
-
-        # Distro-specific scripts override the generic ones
-        distro = self.parameters['deployment_data']['distro']
-        distro_support_dir = '%s/distro/%s' % (self.lava_test_dir, distro)
-        for script in glob.glob(os.path.join(distro_support_dir, 'lava-*')):
-            scripts_to_copy.append(script)
-
-        for fname in scripts_to_copy:
-            with open(fname, 'r') as fin:
-                foutname = os.path.basename(fname)
-                with open('%s/bin/%s' % (location, foutname), 'w') as fout:
-                    fout.write("#!%s\n\n" % shell)
-                    fout.write(fin.read())
-                    os.fchmod(fout.fileno(), self.xmod)
-
     def run(self, connection, args=None):
         """
         Check if a lava-test-shell has been requested, implement the overlay
@@ -115,13 +99,23 @@ class OverlayAction(DeployAction):
         * copy runners into test runner directories
         """
         self.data[self.name].setdefault('location', mkdtemp())
+        self.validate()
         lava_path = os.path.abspath("%s/%s" % (self.data[self.name]['location'], self.data['lava_test_results_dir']))
+        self.logger.debug("lava_path:%s scripts:%s" % (lava_path, self.scripts_to_copy))
         for runner_dir in ['bin', 'tests', 'results']:
             # avoid os.path.join as lava_test_results_dir startswith / so location is *dropped* by join.
             path = os.path.abspath("%s/%s" % (lava_path, runner_dir))
+            self.logger.debug(path)
             if not os.path.exists(path):
                 os.makedirs(path)
-        self._copy_runner(lava_path)
+        for fname in self.scripts_to_copy:
+            self.logger.debug("copying %s" % fname)
+            with open(fname, 'r') as fin:
+                foutname = os.path.basename(fname)
+                with open('%s/bin/%s' % (lava_path, foutname), 'w') as fout:
+                    fout.write("#!%s\n\n" % self.parameters['deployment_data']['lava_test_sh_cmd'])
+                    fout.write(fin.read())
+                    os.fchmod(fout.fileno(), self.xmod)
         connection = super(OverlayAction, self).run(connection, args)
         return connection
 

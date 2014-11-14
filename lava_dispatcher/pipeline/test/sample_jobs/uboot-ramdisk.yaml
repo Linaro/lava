@@ -16,12 +16,13 @@ actions:
      timeout: 2m
      to: tftp
      kernel: http://images.validation.linaro.org/functional-test-images/bbb/zImage
-     nfsrootfs: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
+     ramdisk: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
+     ramdisk-type: u-boot
      dtb: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 
   - boot:
      method: u-boot
-     commands: nfs
+     commands: ramdisk
      type: bootz
 
   - test:

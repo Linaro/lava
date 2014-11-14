@@ -23,7 +23,7 @@
 SHELL_SEND_DELAY = 0.05
 
 # Default timeout for shell operations
-SHELL_DEFAULT_TIMEOUT = 30
+SHELL_DEFAULT_TIMEOUT = 60
 
 # Default timeout when downloading over http/https
 HTTP_DOWNLOAD_TIMEOUT = 15
@@ -49,3 +49,9 @@ HTTP_DOWNLOAD_CHUNK_SIZE = 32768
 
 # Size of the chunks when downloading over scp
 SCP_DOWNLOAD_CHUNK_SIZE = 32768
+
+# Clamp on the maximum timeout allowed for overrides
+OVERRIDE_CLAMP_DURATION = 300
+
+# Auto-login prompt timeout default
+AUTOLOGIN_DEFAULT_TIMEOUT = 120

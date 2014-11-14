@@ -160,7 +160,7 @@ class DownloadHandler(Action):
         md5 = hashlib.md5()
         sha256 = hashlib.sha256()
         with self._decompressor_stream() as (writer, fname):
-            self.logger.debug("downloading and decompressing %s as %s" % (self.parameters[self.key], fname))
+            self.logger.debug("downloading %s as %s" % (self.parameters[self.key], fname))
 
             # TODO: print the progress in the logs
             for buff in self.reader():
