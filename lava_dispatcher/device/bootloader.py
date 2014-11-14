@@ -29,6 +29,8 @@ from lava_dispatcher.client.base import (
     NetworkCommandRunner,
 )
 from lava_dispatcher.utils import (
+    finalize_process,
+    connect_to_serial,
     extract_modules,
     extract_ramdisk,
     create_ramdisk,
@@ -333,7 +335,10 @@ class BootloaderTarget(MasterImageTarget):
                               self.config.boot_linaro_timeout)
 
     def _boot_linaro_image(self):
-        self.proc.empty_buffer()
+        if self.proc:
+            finalize_process(self.proc)
+            self.proc = None
+        self.proc = connect_to_serial(self.context)
         if self._is_bootloader() and not self._booted:
             if self.config.hard_reset_command or self.config.hard_reset_command == "":
                 self._hard_reboot(self.proc)
