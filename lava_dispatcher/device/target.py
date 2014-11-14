@@ -331,11 +331,12 @@ class Target(object):
         if is_master:
             if self.config.master_login_prompt is not None:
                 self._wait_for_prompt(connection,
-                                      self.config.master_login_prompt, timeout=300)
+                                      self.config.master_login_prompt,
+                                      timeout=self.config.boot_linaro_timeout)
                 connection.sendline(self.config.master_username)
             if self.config.master_password_prompt is not None:
                 self._wait_for_prompt(connection,
-                                      self.config.master_password_prompt, timeout=300)
+                                      self.config.master_password_prompt, timeout=10)
                 connection.sendline(self.config.master_password)
             if self.config.master_login_commands is not None:
                 for command in self.config.master_login_commands:
@@ -343,11 +344,12 @@ class Target(object):
         else:
             if self.config.login_prompt is not None:
                 self._wait_for_prompt(connection,
-                                      self.config.login_prompt, timeout=300)
+                                      self.config.login_prompt,
+                                      timeout=self.config.boot_linaro_timeout)
                 connection.sendline(self.config.username)
             if self.config.password_prompt is not None:
                 self._wait_for_prompt(connection,
-                                      self.config.password_prompt, timeout=300)
+                                      self.config.password_prompt, timeout=10)
                 connection.sendline(self.config.password)
             if self.config.login_commands is not None:
                 for command in self.config.login_commands:
@@ -524,11 +526,11 @@ class Target(object):
                     connection.sendcontrol(command)
                 elif action == "expect":
                     command = re.escape(command)
-                    connection.expect(command, timeout=300)
+                    connection.expect(command, timeout=20)
             else:
                 self._wait_for_prompt(connection,
                                       self.config.bootloader_prompt,
-                                      timeout=300)
+                                      timeout=10)
                 connection.sendline(line, delay,
                                     send_char=self.config.send_char)
 
