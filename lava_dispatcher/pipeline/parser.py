@@ -30,11 +30,13 @@ from lava_dispatcher.pipeline.action import (
     FinalizeAction,
     LavaTest,
 )
+from lava_dispatcher.pipeline.actions.commands import CommandsAction  # pylint: disable=unused-import
 from lava_dispatcher.pipeline.deployment_data import get_deployment_data
 # Bring in the strategy subclass lists, ignore pylint warnings.
 import lava_dispatcher.pipeline.actions.deploy.strategies  # pylint: disable=unused-import
 import lava_dispatcher.pipeline.actions.boot.strategies  # pylint: disable=unused-import
 import lava_dispatcher.pipeline.actions.test.strategies  # pylint: disable=unused-import
+from lava_dispatcher.pipeline.actions.submit import SubmitResultsAction
 
 
 def handle_device_parameters(name, parameters, count):
@@ -134,7 +136,7 @@ class JobParser(object):
                     # allow for multiple base tests, e.g. Android
                     parameters = handle_device_parameters(name, device.parameters, counts[name])
                     parameters.update(action_data[name])
-                    test_method = LavaTest.select(device, action_data[name])(pipeline, parameters)
+                    LavaTest.select(device, action_data[name])(pipeline, parameters)
                 else:
                     # May only end up being used for submit as other actions all need strategy method objects
                     # select the specific action of this class for this job

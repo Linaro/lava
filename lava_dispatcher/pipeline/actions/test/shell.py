@@ -26,7 +26,6 @@ from lava_dispatcher.pipeline.actions.test import handle_testcase, TestAction
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     RetryAction,
-    Action,
     JobError,
     LavaTest
 )
@@ -176,7 +175,7 @@ class TestShellAction(TestAction):
             if name == 'TESTCASE':
                 data = handle_testcase(params)
                 res = self.match.match(data)  # FIXME: rename!
-                yaml_log.debug('   result:', res)
+                yaml_log.debug('   result: %s', res)
                 self.data['test'][self.signal_director.test_uuid].setdefault('results', OrderedDict())
 
                 # prevent losing data in the update
@@ -205,7 +204,7 @@ class TestShellAction(TestAction):
                 yaml_log.debug('   err: lava_test_shell has timed out (test_case)')
             else:
                 res = self.match.match(match.groupdict())  # FIXME: rename!
-                yaml_log.debug('   result:', res)
+                yaml_log.debug('   result: %s', res)
                 self.data['test'][self.signal_director.test_uuid].setdefault('results', {})
                 self.data['test'][self.signal_director.test_uuid]['results'].update({
                     {res['test_case_id']: res}
@@ -261,6 +260,7 @@ class TestShellAction(TestAction):
         def postprocess_bundle(self, bundle):
             pass
 
+        # FIXME: remove unused arguments
         def _on_startrun(self, test_run_id, uuid):
             self._cur_handler = None
             # FIXME: adapt old code to work for more than a single test definition

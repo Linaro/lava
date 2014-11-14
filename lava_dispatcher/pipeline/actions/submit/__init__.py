@@ -18,7 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.pipeline import Action
+from lava_dispatcher.pipeline.action import Action
 
 
 class SubmitResultsAction(Action):

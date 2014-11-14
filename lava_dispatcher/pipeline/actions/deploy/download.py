@@ -114,7 +114,7 @@ class DownloadHandler(Action):
 
     @contextlib.contextmanager
     def _decompressor_stream(self):
-        fd = None
+        dwnld_file = None
         fname, _ = self._url_to_fname_suffix(self.path)  # FIXME: use the context tmpdir
 
         decompressor = None
@@ -130,14 +130,14 @@ class DownloadHandler(Action):
         def write(buff):
             if decompressor:
                 buff = decompressor.decompress(buff)
-            fd.write(buff)
+            dwnld_file.write(buff)
 
         try:
-            fd = open(fname, 'wb')
+            dwnld_file = open(fname, 'wb')
             yield (write, fname)
         finally:
-            if fd:
-                fd.close()
+            if dwnld_file:
+                dwnld_file.close()
 
     def validate(self):
         super(DownloadHandler, self).validate()
@@ -190,19 +190,19 @@ class FileDownloadAction(DownloadHandler):
             self.errors = "Image file '%s' does not exists" % (self.url.path)
 
     def reader(self):
-        fd = None
+        reader = None
         try:
-            fd = open(self.url.path, 'rb')
-            buff = fd.read(FILE_DOWNLOAD_CHUNK_SIZE)
+            reader = open(self.url.path, 'rb')
+            buff = reader.read(FILE_DOWNLOAD_CHUNK_SIZE)
             while buff:
                 yield buff
-                buff = fd.read(FILE_DOWNLOAD_CHUNK_SIZE)
+                buff = reader.read(FILE_DOWNLOAD_CHUNK_SIZE)
         except IOError as exc:
             # TODO: improve error message
             raise JobError(exc)
         finally:
-            if fd is not None:
-                fd.close()
+            if reader is not None:
+                reader.close()
 
 
 class HttpDownloadAction(DownloadHandler):
@@ -220,7 +220,7 @@ class HttpDownloadAction(DownloadHandler):
         super(HttpDownloadAction, self).validate()
         try:
             res = requests.head(self.url.geturl(), allow_redirects=True, timeout=HTTP_DOWNLOAD_TIMEOUT)
-            if res.status_code != requests.codes.OK:
+            if res.status_code != requests.codes.OK:  # pylint: disable=no-member
                 self.errors = "Resources not available at '%s'" % (self.url.geturl())
         except requests.Timeout:
             self.errors = "'%s' timed out" % (self.url.geturl())
@@ -232,7 +232,8 @@ class HttpDownloadAction(DownloadHandler):
         res = None
         try:
             res = requests.get(self.url.geturl(), allow_redirects=True, stream=True, timeout=HTTP_DOWNLOAD_TIMEOUT)
-            if res.status_code != requests.codes.OK:
+            # FIXME: allow for 302 as well (https)
+            if res.status_code != requests.codes.OK:  # pylint: disable=no-member
                 raise JobError("Unable to download '%s'" % (self.url.geturl()))
             for buff in res.iter_content(HTTP_DOWNLOAD_CHUNK_SIZE):
                 yield buff

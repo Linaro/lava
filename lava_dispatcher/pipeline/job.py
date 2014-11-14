@@ -25,7 +25,7 @@ from lava_dispatcher.pipeline.action import PipelineContext
 from lava_dispatcher.pipeline.diagnostics import DiagnoseNetwork
 
 
-class Job(object):
+class Job(object):  # pylint: disable=too-many-instance-attributes
     """
     Populated by the parser, the Job contains all of the
     Actions and their pipelines.
@@ -96,8 +96,8 @@ class Job(object):
         Finally expose the context so that actions can see it.
         """
         if simulate:
-            # output the content and then any validation errors
-            print(yaml.dump(self.describe()))
+            # output the content and then any validation errors (python3 compatible)
+            print(yaml.dump(self.describe()))  # pylint: disable=superfluous-parens
         # FIXME: validate the device config
         # FIXME: pretty output of exception messages needed.
         self.pipeline.validate_actions()

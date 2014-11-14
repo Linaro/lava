@@ -57,7 +57,8 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
         self.assertIsInstance(testdef, TestDefinitionAction)
         testdef.validate()
         if not testdef.valid:
-            print(testdef.errors)
+            # python3 compatible
+            print(testdef.errors)  # pylint: disable=superfluous-parens
         self.assertTrue(testdef.valid)
         for repo_action in testdef.internal_pipeline.actions:
             if isinstance(repo_action, GitRepoAction):

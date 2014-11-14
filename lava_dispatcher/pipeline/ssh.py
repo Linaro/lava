@@ -1,8 +1,12 @@
-from lava_dispatcher.pipeline import Action
+from lava_dispatcher.pipeline.action import Action
 from lava_dispatcher.pipeline.connection import Connection
 
 
 class ConnectViaSSH(Action):
+
+    def __init__(self):
+        super(ConnectViaSSH, self).__init__()
+        # invalid action, no self.name yet.
 
     def run(self, connection, args=None):
         ssh = self._run_command(

@@ -25,7 +25,7 @@ from lava_dispatcher.pipeline.device import DeviceTypeParser, NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.boot import BootAction
-from lava_dispatcher.pipeline.actions.boot.u_boot import UBootRetry, UBootInterrupt, UBootAction
+from lava_dispatcher.pipeline.actions.boot.u_boot import UBootInterrupt, UBootAction
 
 # Test the loading of test definitions within the deploy stage
 
@@ -87,9 +87,7 @@ class TestJobDeviceParameters(unittest.TestCase):  # pylint: disable=too-many-pu
                         action.parameters['method']][
                             action.parameters['commands']]['commands']
                 )
-                for line in action.parameters[
-                    action.parameters['method']][
-                        action.parameters['commands']]['commands']:
+                for line in action.parameters[action.parameters['method']][action.parameters['commands']]['commands']:
                     self.assertIsNotNone(line)
                 self.assertIsInstance(action, UBootAction)
                 uboot_action = action

@@ -29,7 +29,7 @@ from lava_dispatcher.pipeline.action import InfrastructureError
 from lava_dispatcher.pipeline.utils import vcs
 
 
-class TestGit(unittest.TestCase):
+class TestGit(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         self.cwd = os.getcwd()
@@ -41,8 +41,8 @@ class TestGit(unittest.TestCase):
         # Create a Git repository with two commits
         subprocess.check_output(['git', 'init', 'git'])
         os.chdir('git')
-        with open('test.txt', 'w') as f:
-            f.write("Some data")
+        with open('test.txt', 'w') as testfile:
+            testfile.write("Some data")
         subprocess.check_output(['git', 'add', 'test.txt'])
         subprocess.check_output(['git', 'commit', 'test.txt', '-m', 'First commit'],
                                 env={'GIT_COMMITTER_DATE': 'Fri Oct 24 14:40:36 CEST 2014',
@@ -51,8 +51,8 @@ class TestGit(unittest.TestCase):
                                      'GIT_AUTHOR_EMAIL': 'foo@example.com',
                                      'GIT_COMMITTER_NAME': 'Foo Bar',
                                      'GIT_COMMITTER_EMAIL': 'foo@example.com'})
-        with open('second.txt', 'w') as f:
-            f.write("Some more data")
+        with open('second.txt', 'w') as datafile:
+            datafile.write("Some more data")
         subprocess.check_output(['git', 'add', 'second.txt'])
         subprocess.check_output(['git', 'commit', 'second.txt', '-m', 'Second commit'],
                                 env={'GIT_COMMITTER_DATE': 'Fri Oct 24 14:40:38 CEST 2014',
@@ -100,7 +100,7 @@ class TestGit(unittest.TestCase):
         self.assertRaises(InfrastructureError, git.clone, 'foo.bar', 'badhash')
 
 
-class TestBzr(unittest.TestCase):
+class TestBzr(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         self.cwd = os.getcwd()
@@ -113,13 +113,13 @@ class TestBzr(unittest.TestCase):
         # Create a Git repository with two commits
         subprocess.check_output(['bzr', 'init', 'repo'], env=self.env, stderr=subprocess.STDOUT)
         os.chdir('repo')
-        with open('test.txt', 'w') as f:
-            f.write("Some data")
+        with open('test.txt', 'w') as datafile:
+            datafile.write("Some data")
         subprocess.check_output(['bzr', 'add', 'test.txt'], env=self.env, stderr=subprocess.STDOUT)
         subprocess.check_output(['bzr', 'commit', 'test.txt', '-m', 'First commit'],
                                 env=self.env, stderr=subprocess.STDOUT)
-        with open('second.txt', 'w') as f:
-            f.write("Some more data")
+        with open('second.txt', 'w') as datafile:
+            datafile.write("Some more data")
         subprocess.check_output(['bzr', 'add', 'second.txt'], stderr=subprocess.STDOUT)
         subprocess.check_output(['bzr', 'commit', 'second.txt', '-m', 'Second commit'],
                                 env=self.env, stderr=subprocess.STDOUT)

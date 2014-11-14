@@ -24,7 +24,7 @@ import glob
 import unittest
 from lava_dispatcher.pipeline.action import Pipeline, Action, RetryAction, JobError
 from lava_dispatcher.pipeline.test.test_basic import Factory
-from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction, DownloadHandler, HttpDownloadAction
+from lava_dispatcher.pipeline.actions.deploy.download import DownloadHandler, HttpDownloadAction
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ApplyOverlayImage
@@ -39,7 +39,6 @@ from lava_dispatcher.pipeline.actions.deploy.overlay import (
     OverlayAction,
     CustomisationAction,
 )
-from lava_dispatcher.pipeline.actions.deploy.testdef import TestDefinitionAction
 from lava_dispatcher.pipeline.actions.boot.kvm import BootAction
 
 
@@ -221,7 +220,8 @@ class TestKVMBasicDeploy(unittest.TestCase):
             self.fail(exc)
         for action in self.job.pipeline.actions:
             if action.errors:
-                print(action.errors)
+                # python3
+                print(action.errors)  # pylint: disable=superfluous-parens
             self.assertTrue(action.valid)
 
     def test_download_actions(self):

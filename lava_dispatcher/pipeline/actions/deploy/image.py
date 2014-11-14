@@ -18,8 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.pipeline.action import Deployment
-from lava_dispatcher.pipeline import Pipeline
+from lava_dispatcher.pipeline.action import Deployment, Pipeline
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.download import (
     ChecksumAction,
@@ -105,6 +104,7 @@ class DeployImage(Deployment):
                 return False
         # lookup if the job parameters match the available device methods
         if 'image' not in parameters:
-            print("Parameters %s have not been implemented yet." % parameters.keys())
+            # python3 compatible
+            print("Parameters %s have not been implemented yet." % parameters.keys())  # pylint: disable=superfluous-parens
             return False
         return True

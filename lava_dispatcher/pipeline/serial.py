@@ -18,7 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.pipeline import Action, Timeout
+from lava_dispatcher.pipeline.action import Action, Timeout
 from lava_dispatcher.pipeline.connection import Connection
 from lava_dispatcher.pipeline.shell import ShellCommand
 

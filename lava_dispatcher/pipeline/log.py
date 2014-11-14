@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import logging
+import yaml
 
 
 class YamlLogger(object):
@@ -70,7 +71,7 @@ def get_yaml_handler(filename=None, mode='a', encoding='utf-8'):
     return handler
 
 
-class YamlFilter(logging.Filter):
+class YamlFilter(logging.Filter):  # pylint: disable=too-few-public-methods
     """
     filters standard logs into structured logs
     """
@@ -80,7 +81,7 @@ class YamlFilter(logging.Filter):
         return True
 
 
-class StdLogger(object):
+class StdLogger(object):  # pylint: disable=too-few-public-methods
 
     def __init__(self, name):
         """

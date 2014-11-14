@@ -12,7 +12,7 @@ import lava_dispatcher.config
 from lava_dispatcher.config import get_config, get_device_config, list_devices
 from lava_dispatcher.job import LavaTestJob, validate_job_data
 from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.action import PipelineContext
+from lava_dispatcher.pipeline.action import PipelineContext, JobError
 from lava_dispatcher.pipeline.device import NewDevice
 
 
@@ -95,7 +95,7 @@ def get_pipeline_runner(job):
             job.validate(simulate=validate_only)
             if not validate_only:
                 job.run()
-        except lava_dispatcher.pipeline.JobError as e:
+        except JobError as e:
             yaml_log.debug("   %s", e)
             sys.exit(2)
         # FIXME: should we call the cleanup function in the finally block?
