@@ -164,6 +164,7 @@ INVALID_CHARS = " $&()\"'<>/\\|;`"
 
 repeat_cnt = 0
 
+
 def _get_lava_proxy(context):
     return {'http_proxy': context.config.lava_proxy,
             'https_proxy': context.config.lava_proxy}

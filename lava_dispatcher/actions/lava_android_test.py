@@ -45,7 +45,7 @@ class cmd_lava_android_test_run(AndroidTestAction):
             'timeout': {'type': 'integer', 'optional': True},
             'repeat': {'type': 'integer', 'optional': True},
             'repeat_count': {'type': 'integer', 'optional': True},
-         },
+        },
         'additionalProperties': False,
     }
 
@@ -95,7 +95,7 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
             'timeout': {'type': 'integer', 'optional': True},
             'repeat': {'type': 'integer', 'optional': True},
             'repeat_count': {'type': 'integer', 'optional': True},
-         },
+        },
         'additionalProperties': False,
     }
 
@@ -169,7 +169,7 @@ class cmd_lava_android_test_run_monkeyrunner(AndroidTestAction):
             'timeout': {'type': 'integer', 'optional': True},
             'repeat': {'type': 'integer', 'optional': True},
             'repeat_count': {'type': 'integer', 'optional': True},
-         },
+        },
         'additionalProperties': False,
     }
 
