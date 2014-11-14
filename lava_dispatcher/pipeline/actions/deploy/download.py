@@ -36,6 +36,7 @@ from lava_dispatcher.pipeline.action import (
     RetryAction,
 )
 
+
 # FIXME: separate download actions for decompressed and uncompressed downloads
 # so that the logic can be held in the Strategy class, not the Action.
 
@@ -89,22 +90,6 @@ class DownloadHandler(Action):
         self.url = url
         self.key = key
         self.path = path
-
-# FIXME: replace by utils.download
-    @contextlib.contextmanager
-    def _scp_stream(self):
-        process = None
-        url = self.parameters[self.key]
-        try:
-            process = subprocess.Popen(
-                ['nice', 'ssh', url.netloc, 'cat', url.path],
-                shell=False,
-                stdout=subprocess.PIPE
-            )
-            yield process.stdout
-        finally:
-            if process:
-                process.kill()
 
     def _url_to_fname_suffix(self, path):
         filename = os.path.basename(self.url.path)
@@ -251,26 +236,34 @@ class ScpDownloadAction(DownloadHandler):
         self.summary = "scp download"
 
     def validate(self):
-        raise NotImplementedError()
+        super(ScpDownloadAction, self).validate()
+        try:
+            output = subprocess.check_output(['nice', 'ssh', self.url.netloc,
+                                              'ls', self.url.path],
+                                             stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as exc:
+            self.errors = str(exc)
 
     def reader(self):
-        raise NotImplementedError()
-
-    @contextlib.contextmanager
-    def run(self, connection, args=None):
         process = None
-        url = self.parameters['image']
         try:
-            # FIXME: adapt with code from self.run_command() for logging
             process = subprocess.Popen(
-                ['nice', 'ssh', url.netloc, 'cat', url.path],
-                shell=False,
+                ['nice', 'ssh', self.url.netloc, 'cat', self.url.path],
                 stdout=subprocess.PIPE
             )
-            yield process.stdout
+            buff = process.stdout.read(32768)
+            while buff:
+                yield buff
+                buff = process.stdout.read(32768)
+            if process.wait() != 0:
+                raise JobError("Dowloading '%s' failed with message '%s'"
+                               % (self.url.geturl(), process.stderr.read()))
         finally:
-            if process:
-                process.kill()
+            if process is not None:
+                try:
+                    process.kill()
+                except OSError:
+                    pass
 
 
 class ChecksumAction(Action):  # FIXME: fold into the DownloadHandler
