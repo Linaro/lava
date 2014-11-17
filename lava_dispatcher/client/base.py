@@ -630,6 +630,10 @@ class LavaClient(object):
             self.context.test_data.add_metadata(boottime_meta)
             logging.debug("Kernel boot time: %s seconds" % boottime)
 
+            # Gain root access
+            self.proc.sendline('su')
+            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
+
             # TODO: set up proxy
 
             if not self.config.android_adb_over_usb:
