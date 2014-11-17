@@ -708,7 +708,6 @@ class LavaClient(object):
 
     def _enable_network(self):
         session = AndroidTesterCommandRunner(self)
-        session.run("su", timeout=20)
         session.run("netcfg", timeout=20)
         session.run("netcfg %s up" % self.config.default_network_interface, timeout=20)
         session.run("netcfg %s dhcp" % self.config.default_network_interface, timeout=300)
