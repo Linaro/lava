@@ -1487,7 +1487,7 @@ class TestJob(RestrictedResource):
             job_data = simplejson.dumps(job_data, sort_keys=True,
                                         indent=4 * ' ')
             orig_job_data = simplejson.dumps(orig_job_data, sort_keys=True,
-                                        indent=4 * ' ')
+                                             indent=4 * ' ')
             job = TestJob(
                 definition=job_data, original_definition=orig_job_data,
                 submitter=submitter, requested_device=target,
