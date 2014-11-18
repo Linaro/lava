@@ -2027,6 +2027,16 @@ class ImageReportChart(models.Model):
         default="chart",
     )
 
+    is_build_number = models.BooleanField(
+        default=False,
+        verbose_name='Use build number')
+
+    xaxis_attribute = models.CharField(
+        blank=True,
+        null=True,
+        max_length=20,
+        verbose_name='X-axis attribute')
+
     def __unicode__(self):
         return self.name
 
@@ -2070,18 +2080,14 @@ class ImageReportChart(models.Model):
     def get_basic_chart_data(self):
         chart_data = {}
         fields = ["name", "chart_type", "description", "target_goal",
-                  "chart_height", "is_percentage", "chart_visibility"]
+                  "chart_height", "is_percentage", "chart_visibility",
+                  "xaxis_attribute"]
 
         for field in fields:
             chart_data[field] = getattr(self, field)
 
         chart_data["report_name"] = self.image_report.name
         chart_data["is_delta"] = self.is_delta
-
-        chart_data["has_build_numbers"] = False
-        for image_chart_filter in self.imagechartfilter_set.all():
-            if image_chart_filter.filter.build_number_attribute:
-                chart_data["has_build_numbers"] = True
 
         chart_data["test_data"] = []
         return chart_data
@@ -2240,6 +2246,20 @@ class ImageReportChart(models.Model):
                         chart_item["pass"] &= denorm.count_fail == 0
                         found = True
 
+                # Use dates or build numbers.
+                build_number = str(test_run.bundle.uploaded_on)
+                if self.is_build_number:
+                    build_number = str(match.tag)
+
+                # Set attribute based on xaxis_attribute.
+                attribute = None
+                if self.xaxis_attribute:
+                    try:
+                        attribute = test_run.attributes.get(
+                            name=self.xaxis_attribute).value
+                    except:
+                        pass
+
                 # If no existing chart item was found, create a new one.
                 if not found:
                     chart_item = {
@@ -2249,8 +2269,9 @@ class ImageReportChart(models.Model):
                         "link": test_run.get_absolute_url(),
                         "bundle_link": test_run.bundle.get_absolute_url(),
                         "alias": alias,
-                        "number": str(match.tag),
+                        "number": build_number,
                         "date": str(test_run.bundle.uploaded_on),
+                        "attribute": attribute,
                         "pass": denorm.count_fail == 0,
                         "passes": denorm.count_pass,
                         "percentage": percentage,
@@ -2349,6 +2370,18 @@ class ImageReportChart(models.Model):
 
                 test_filter_id = "%s-%s" % (test_case_id.replace(" ", ""),
                                             image_chart_filter.id)
+
+                # Use dates or build numbers.
+                build_number = str(test_result.test_run.bundle.uploaded_on)
+                if self.is_build_number:
+                    build_number = str(match.tag)
+
+                # Set attribute based on xaxis_attribute.
+                attribute = None
+                if self.xaxis_attribute:
+                    attribute = test_run.attributes.get(
+                        name=self.xaxis_attribute).value
+
                 chart_item = {
                     "filter_rep": image_chart_filter.representation,
                     "alias": alias,
@@ -2358,8 +2391,9 @@ class ImageReportChart(models.Model):
                     "measurement": test_result.measurement,
                     "link": test_result.get_absolute_url(),
                     "pass": test_result.result == 0,
-                    "number": str(match.tag),
+                    "number": build_number,
                     "date": str(test_result.test_run.bundle.uploaded_on),
+                    "attribute": attribute,
                     "test_run_uuid": test_result.test_run.analyzer_assigned_uuid,
                     "bug_links": bug_links,
                     "metadata_content": metadata_content,
@@ -2433,13 +2467,19 @@ class ImageReportChart(models.Model):
                         test_filter_id = "%s-%s-%s" % (test_id,
                                                        image_chart_filter.id,
                                                        attr.replace(" ", ""))
+
+                        # Use dates or build numbers.
+                        build_number = str(test_run.bundle.uploaded_on)
+                        if self.is_build_number:
+                            build_number = str(match.tag)
+
                         chart_item = {
                             "filter_rep": image_chart_filter.representation,
                             "test_filter_id": test_filter_id,
                             "chart_test_id": "%s-%s" % (chart_test_id, attr),
                             "link": test_run.get_absolute_url(),
                             "alias": alias,
-                            "number": str(match.tag),
+                            "number": build_number,
                             "date": str(test_run.bundle.uploaded_on),
                             "pass": denorm.count_fail == 0,
                             "attr_value": value,
@@ -2448,6 +2488,23 @@ class ImageReportChart(models.Model):
                         }
 
                         chart_data["test_data"].append(chart_item)
+
+    def get_supported_attributes(self, user):
+
+        # Get all attributes which appear in all the tests included
+        # in all filters in this particular chart.
+        custom_attrs = None
+        for chart_filter in self.imagechartfilter_set.all():
+            for chart_test in chart_filter.imagecharttest_set.all():
+                if not custom_attrs:
+                    custom_attrs = chart_test.get_available_attributes(user)
+                else:
+                    custom_attrs = list(
+                        set(chart_test.get_available_attributes(user)) &
+                        set(custom_attrs)
+                    )
+
+        return custom_attrs
 
 
 class ImageChartFilter(models.Model):

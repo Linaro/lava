@@ -61,6 +61,14 @@
     {{ form.chart_visibility.label_tag }}
     {{ form.chart_visibility }}
   </div>
+  <div class="form-field">
+    {{ form.is_build_number.label_tag }}
+    {{ form.is_build_number }}
+  </div>
+  <div class="form-field" id="xaxis_attribute_container">
+    {{ form.xaxis_attribute.label_tag }}
+    {{ form.xaxis_attribute }}
+  </div>
 
   <div class="submit-button">
     <input type="submit" value="Save" />
@@ -73,15 +81,21 @@
 
 {% block scripts %}
 <script>
-  function toggle_percentage() {
+  function toggle_chart_type() {
     if ($("#id_chart_type").val() == "pass/fail") {
       $("#is_percentage_container").show();
     } else {
       $("#is_percentage_container").hide();
       $("#id_is_percentage").prop("checked", false);
     }
+
+    if ($("#id_chart_type").val() != "attributes") {
+      $("#xaxis_attribute_container").show();
+    } else {
+      $("#xaxis_attribute_container").hide();
+    }
   }
-  $("#id_chart_type").change(toggle_percentage);
-  toggle_percentage();
+  $("#id_chart_type").change(toggle_chart_type);
+  toggle_chart_type();
 </script>
 {% endblock %}

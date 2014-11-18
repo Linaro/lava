@@ -324,9 +324,19 @@ def image_chart_detail(request, name, id):
 
     image_chart = get_object_or_404(ImageReportChart, id=id)
 
+    xaxis_attribute_changed = False
+    supported_attrs = image_chart.get_supported_attributes(request.user)
+    if image_chart.xaxis_attribute:
+        if not supported_attrs or \
+           image_chart.xaxis_attribute not in supported_attrs:
+            image_chart.xaxis_attribute = None
+            image_chart.save()
+            xaxis_attribute_changed = True
+
     return render_to_response(
         'dashboard_app/image_report_chart_detail.html', {
             'image_chart': image_chart,
+            'xaxis_attribute_changed': xaxis_attribute_changed,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 image_chart_detail, name=name, id=id),
         }, RequestContext(request)
@@ -603,9 +613,20 @@ def image_chart_filter_detail(request, name, id, slug):
 
     chart_filter = get_object_or_404(ImageChartFilter, id=slug)
 
+    image_chart = chart_filter.image_chart
+    xaxis_attribute_changed = False
+    supported_attrs = image_chart.get_supported_attributes(request.user)
+    if image_chart.xaxis_attribute:
+        if not supported_attrs or \
+           image_chart.xaxis_attribute not in supported_attrs:
+            image_chart.xaxis_attribute = None
+            image_chart.save()
+            xaxis_attribute_changed = True
+
     return render_to_response(
         'dashboard_app/image_chart_filter_detail.html', {
             'chart_filter': chart_filter,
+            'xaxis_attribute_changed': xaxis_attribute_changed,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 image_chart_filter_detail, name=name, id=id, slug=slug),
         }, RequestContext(request)

@@ -37,6 +37,13 @@
   <div class="form-field">
     Chart visibility: {{ image_chart.chart_visibility }}
   </div>
+  <div class="form-field">
+    Use build number: {{ image_chart.is_build_number|yesno:"Yes,No" }}
+  </div>
+  <div>
+    X-axis attribute: {{ image_chart.xaxis_attribute|default:"Not set" }}
+  </div>
+
 </div>
 
 <h3>Filters</h3>
@@ -92,4 +99,15 @@
 </div>
 
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+  $().ready(function () {
+    {% if xaxis_attribute_changed %}
+    alert("Xaxis attribute not consistant for parent image chart with " +
+      "recent filter changes. It's value has been reset.");
+    {% endif %}
+  });
+</script>
 {% endblock %}
