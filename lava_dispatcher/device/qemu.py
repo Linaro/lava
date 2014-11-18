@@ -23,6 +23,7 @@ import logging
 import subprocess
 import re
 
+from lava_dispatcher import deployment_data
 from lava_dispatcher.device.target import (
     Target
 )
@@ -63,13 +64,14 @@ class QEMUTarget(Target):
                              bootloader, firmware, bl1, bl2, bl31, rootfstype,
                              bootloadertype, target_type):
         # Check for errors
-        if rootfs is None:
-            raise CriticalError("You must specify a QEMU file system image")
+        if rootfs is None and ramdisk is None:
+            raise CriticalError("You must specify a QEMU file system image or ramdisk")
         if kernel is None:
             raise CriticalError("No kernel images to boot")
 
-        self._sd_image = download_image(rootfs, self.context)
-        self.customize_image(self._sd_image)
+        if rootfs:
+            self._sd_image = download_image(rootfs, self.context)
+            self.customize_image(self._sd_image)
 
         self._kernel = download_image(kernel, self.context)
 
@@ -84,6 +86,9 @@ class QEMUTarget(Target):
                 extract_modules(modules, ramdisk_dir)
                 ramdisk = create_ramdisk(ramdisk_dir, self._scratch_dir)
             self._ramdisk = ramdisk
+            if rootfs is None:
+                logging.debug("Attempting to set deployment data")
+                self.deployment_data = deployment_data.get(target_type)
 
         if dtb is not None:
             dtb = download_image(dtb, self.context)
@@ -126,7 +131,10 @@ class QEMUTarget(Target):
 
         if self._kernel:
             qemu_options += ' -kernel %s' % self._kernel
-            kernel_args = ' '.join(self._load_boot_cmds(default='boot_cmds'))
+            if self._sd_image is None:
+                kernel_args = ' '.join(self._load_boot_cmds(default='boot_cmds_ramdisk'))
+            else:
+                kernel_args = ' '.join(self._load_boot_cmds(default='boot_cmds'))
             qemu_options += ' -append "%s"' % kernel_args
 
         if self._ramdisk:
@@ -138,15 +146,26 @@ class QEMUTarget(Target):
         if self._firmware:
             qemu_options += ' -bios %s' % self._firmware
 
+        if self._sd_image:
+            qemu_options += ' ' + self.config.qemu_drive_interface
+            qemu_options = qemu_options.format(DISK_IMAGE=self._sd_image)
+
         # workaround for quoting issues with `ssh -- qemu-system-??? ...`
         if self.config.qemu_binary.startswith('ssh'):
             qemu_options = re.sub('"', '\\"', qemu_options)
 
         qemu_cmd = '%s %s %s' % (self.config.qemu_binary, self.config.qemu_options, qemu_options)
-        qemu_cmd = qemu_cmd.format(DISK_IMAGE=self._sd_image)
         logging.info('launching qemu with command %r', qemu_cmd)
         self.proc = self.context.spawn(qemu_cmd, timeout=1200)
         self._auto_login(self.proc)
+        if self._ramdisk and self._sd_image is None:
+            self._wait_for_prompt(self.proc, self.config.test_image_prompts,
+                                  self.config.boot_linaro_timeout)
+            self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
+                               send_char=self.config.send_char)
+            self.proc.sendline('export PS1="%s"'
+                               % self.tester_ps1,
+                               send_char=self.config.send_char)
         return self.proc
 
     def power_off(self, proc):

@@ -89,10 +89,6 @@ class DeviceSchema(schema.Schema):
     lmc_dev_arg = schema.StringOption()
     master_str = schema.StringOption(default="root@master")
     pre_connect_command = schema.StringOption()
-    qemu_binary = schema.StringOption(default="qemu-system-arm")
-    qemu_options = schema.StringOption()
-    qemu_drive_interface = schema.StringOption()
-    qemu_machine_type = schema.StringOption()
     power_on_cmd = schema.StringOption()  # for sdmux
     power_off_cmd = schema.StringOption()  # for sdmux
     reset_port_command = schema.StringOption()
@@ -239,6 +235,12 @@ class DeviceSchema(schema.Schema):
     dummy_ssh_port = schema.IntOption(default=22)
     dummy_ssh_username = schema.StringOption(default='root')
     dummy_ssh_identity_file = schema.StringOption(default=None)
+
+    # for qemu devices
+    qemu_binary = schema.StringOption(default="qemu-system-arm")
+    qemu_options = schema.StringOption()
+    qemu_drive_interface = schema.StringOption()
+    qemu_machine_type = schema.StringOption()
 
     # for jtag devices
     jtag_driver = schema.StringOption(default=None)
