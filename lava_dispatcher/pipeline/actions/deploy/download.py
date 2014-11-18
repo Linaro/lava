@@ -1,6 +1,7 @@
 # Copyright (C) 2014 Linaro Limited
 #
 # Author: Neil Williams <neil.williams@linaro.org>
+#         Remi Duraffort <remi.duraffort@linaro.org>
 #
 # This file is part of LAVA Dispatcher.
 #
@@ -135,7 +136,7 @@ class DownloadHandler(Action):
     def validate(self):
         super(DownloadHandler, self).validate()
         self.url = urlparse.urlparse(self.parameters[self.key])
-        fname, suffix = self._url_to_fname_suffix(self.path)  # FIXME: use the context tmpdir
+        fname, _ = self._url_to_fname_suffix(self.path)  # FIXME: use the context tmpdir
 
         self.data.setdefault('download_action', {self.key: {}})
         self.data['download_action'].update({self.key: {'file': fname}})
@@ -167,6 +168,9 @@ class DownloadHandler(Action):
 
 
 class FileDownloadAction(DownloadHandler):
+    """
+    Download a resource from file (copy)
+    """
 
     def __init__(self, key, path, url):
         super(FileDownloadAction, self).__init__(key, path, url)
@@ -196,6 +200,9 @@ class FileDownloadAction(DownloadHandler):
 
 
 class HttpDownloadAction(DownloadHandler):
+    """
+    Download a resource over http or https using requests module
+    """
 
     def __init__(self, key, path, url):
         super(HttpDownloadAction, self).__init__(key, path, url)
@@ -233,6 +240,9 @@ class HttpDownloadAction(DownloadHandler):
 
 
 class ScpDownloadAction(DownloadHandler):
+    """
+    Download a resource over scp
+    """
 
     def __init__(self, key, path, url):
         super(ScpDownloadAction, self).__init__(key, path, url)
@@ -243,9 +253,9 @@ class ScpDownloadAction(DownloadHandler):
     def validate(self):
         super(ScpDownloadAction, self).validate()
         try:
-            output = subprocess.check_output(['nice', 'ssh', self.url.netloc,
-                                              'ls', self.url.path],
-                                             stderr=subprocess.STDOUT)
+            _ = subprocess.check_output(['nice', 'ssh', self.url.netloc,
+                                         'ls', self.url.path],
+                                        stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as exc:
             self.errors = str(exc)
 
