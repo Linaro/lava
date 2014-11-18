@@ -32,6 +32,10 @@ from lava_dispatcher.pipeline.action import (
     Timeout,
 )
 from lava_dispatcher.pipeline.connection import Connection, CommandRunner
+from lava_dispatcher.pipeline.utils.constants import (
+    SHELL_DEFAULT_TIMEOUT,
+    SHELL_SEND_DELAY,
+)
 from lava_dispatcher.pipeline.utils.shell import which
 
 
@@ -51,8 +55,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
             self, command, timeout=lava_timeout.duration, cwd=cwd, logfile=sys.stdout)
         self.name = "ShellCommand"
         # serial can be slow, races do funny things, so increase delay
-        # FIXME: this as to be a constant, written somewhere with all constants
-        self.delaybeforesend = 0.05
+        self.delaybeforesend = SHELL_SEND_DELAY
         self.lava_timeout = lava_timeout
 
     def sendline(self, s='', delay=0, send_char=True):  # pylint: disable=arguments-differ
@@ -129,7 +132,7 @@ class ShellSession(Connection):
         self.name = "ShellSession"
         self.data = job.context
         self.__prompt_str__ = None
-        self.timeout = Timeout('default', 30)  # FIXME: configurable option
+        self.timeout = Timeout('default', SHELL_DEFAULT_TIMEOUT)
 
     @property
     def prompt_str(self):

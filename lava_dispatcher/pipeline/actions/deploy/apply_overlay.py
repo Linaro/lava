@@ -23,6 +23,10 @@ import tarfile
 import subprocess
 from lava_dispatcher.pipeline.action import Action, Pipeline, InfrastructureError
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
+from lava_dispatcher.pipeline.utils.constants import (
+    RAMDISK_COMPRESSED_FNAME,
+    RAMDISK_FNAME,
+)
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.utils.shell import which
 
@@ -188,7 +192,7 @@ class ExtractRamdisk(Action):
         ramdisk_dir = mkdtemp()
         extracted_ramdisk = os.path.join(ramdisk_dir, 'ramdisk')
         os.mkdir(extracted_ramdisk)
-        ramdisk_compressed_data = os.path.join(ramdisk_dir, 'ramdisk.cpio.gz')  # FIXME: constant
+        ramdisk_compressed_data = os.path.join(ramdisk_dir, RAMDISK_COMPRESSED_FNAME)
         if self.parameters.get('ramdisk-type', None) == 'u-boot':
             # TODO: 64 bytes is empirical - may need to be configurable in the future
             cmd = ('dd if=%s of=%s ibs=64 skip=1' % (ramdisk, ramdisk_compressed_data)).split(' ')
@@ -204,7 +208,7 @@ class ExtractRamdisk(Action):
         if self._run_command(cmd) is not '':
             raise RuntimeError('Unable to uncompress: %s' % ramdisk_compressed_data)
         # filename has been changed by gzip
-        ramdisk_data = os.path.join(ramdisk_dir, 'ramdisk.cpio')
+        ramdisk_data = os.path.join(ramdisk_dir, RAMDISK_FNAME)
         pwd = os.getcwd()
         os.chdir(extracted_ramdisk)
         cmd = ('cpio -i -F %s' % ramdisk_data).split(' ')

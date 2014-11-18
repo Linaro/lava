@@ -36,6 +36,12 @@ from lava_dispatcher.pipeline.action import (
     Pipeline,
     RetryAction,
 )
+from lava_dispatcher.pipeline.utils.constants import (
+    FILE_DOWNLOAD_CHUNK_SIZE,
+    HTTP_DOWNLOAD_CHUNK_SIZE,
+    HTTP_DOWNLOAD_TIMEOUT,
+    SCP_DOWNLOAD_CHUNK_SIZE,
+)
 
 
 # FIXME: separate download actions for decompressed and uncompressed downloads
@@ -187,10 +193,10 @@ class FileDownloadAction(DownloadHandler):
         fd = None
         try:
             fd = open(self.url.path, 'rb')
-            buff = fd.read(32768)
+            buff = fd.read(FILE_DOWNLOAD_CHUNK_SIZE)
             while buff:
                 yield buff
-                buff = fd.read(32768)
+                buff = fd.read(FILE_DOWNLOAD_CHUNK_SIZE)
         except IOError as exc:
             # TODO: improve error message
             raise JobError(exc)
@@ -213,8 +219,7 @@ class HttpDownloadAction(DownloadHandler):
     def validate(self):
         super(HttpDownloadAction, self).validate()
         try:
-            # TODO: move the constant in a specific module
-            res = requests.head(self.url.geturl(), allow_redirects=True, timeout=15)
+            res = requests.head(self.url.geturl(), allow_redirects=True, timeout=HTTP_DOWNLOAD_TIMEOUT)
             if res.status_code != requests.codes.OK:
                 self.errors = "Resources not available at '%s'" % (self.url.geturl())
         except requests.Timeout:
@@ -226,10 +231,10 @@ class HttpDownloadAction(DownloadHandler):
     def reader(self):
         res = None
         try:
-            res = requests.get(self.url.geturl(), allow_redirects=True, stream=True, timeout=15)
+            res = requests.get(self.url.geturl(), allow_redirects=True, stream=True, timeout=HTTP_DOWNLOAD_TIMEOUT)
             if res.status_code != requests.codes.OK:
                 raise JobError("Unable to download '%s'" % (self.url.geturl()))
-            for buff in res.iter_content(32768):
+            for buff in res.iter_content(HTTP_DOWNLOAD_CHUNK_SIZE):
                 yield buff
         except requests.RequestException as exc:
             # TODO: improve error reporting
@@ -266,10 +271,10 @@ class ScpDownloadAction(DownloadHandler):
                 ['nice', 'ssh', self.url.netloc, 'cat', self.url.path],
                 stdout=subprocess.PIPE
             )
-            buff = process.stdout.read(32768)
+            buff = process.stdout.read(SCP_DOWNLOAD_CHUNK_SIZE)
             while buff:
                 yield buff
-                buff = process.stdout.read(32768)
+                buff = process.stdout.read(SCP_DOWNLOAD_CHUNK_SIZE)
             if process.wait() != 0:
                 raise JobError("Dowloading '%s' failed with message '%s'"
                                % (self.url.geturl(), process.stderr.read()))

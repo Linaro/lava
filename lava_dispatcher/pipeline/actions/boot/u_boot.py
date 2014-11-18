@@ -35,6 +35,10 @@ from lava_dispatcher.pipeline.shell import (
     ExpectShellSession,
 )
 from lava_dispatcher.pipeline.actions.boot.reset import ResetDevice
+from lava_dispatcher.pipeline.utils.constants import (
+    UBOOT_AUTOBOOT_PROMPT,
+    UBOOT_DEFAULT_CMD_TIMEOUT,
+)
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 
 
@@ -145,7 +149,7 @@ class UBootInterrupt(Action):
         self._log("Changing prompt to 'Hit any key to stop autoboot'")
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
         # FIXME: pull in the prompt from configuration - check if constant or device-type specific.
-        connection.prompt_str = "Hit any key to stop autoboot"
+        connection.prompt_str = UBOOT_AUTOBOOT_PROMPT
         # command = self.job.device.parameters['commands'].get('interrupt', '\n')
         connection.wait()
         connection.sendline(' \n')
@@ -242,7 +246,7 @@ class UBootCommandsAction(Action):
         self.summary = "interactive u-boot"
         self.prompt = None
         # FIXME: the default timeout needs to be configurable.
-        self.timeout = Timeout(self.name, 90)
+        self.timeout = Timeout(self.name, UBOOT_DEFAULT_CMD_TIMEOUT)
 
     def validate(self):
         super(UBootCommandsAction, self).validate()

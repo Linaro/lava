@@ -27,6 +27,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.shell import ExpectShellSession, ShellCommand, ShellSession
+from lava_dispatcher.pipeline.utils.constants import MAX_RETRY
 from lava_dispatcher.pipeline.utils.shell import which
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 
@@ -118,7 +119,7 @@ class BootQemuRetry(Action):
         self._log("Boot command: %s" % ' '.join(self.command))
         # initialise the first Connection object, a command line shell into the running QEMU.
         # ShellCommand wraps pexpect.spawn.
-        self.max_retries = self.parameters.get('failure_retry', 5)  # FIXME: needs a constant
+        self.max_retries = self.parameters.get('failure_retry', MAX_RETRY)
         if not self.timeout:
             self._log("No timeout specified for %s, using action_timeout from job." % self.name)
             self.timeout = Timeout("default", self.job.parameters['action_timeout'])
