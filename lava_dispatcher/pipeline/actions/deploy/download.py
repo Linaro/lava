@@ -107,24 +107,18 @@ class DownloadHandler(Action):
 
     @contextlib.contextmanager
     def _decompressor_stream(self):
-        # FIXME: should decompression be a different DownloadAction?
         fd = None
+        fname, _ = self._url_to_fname_suffix(self.path)  # FIXME: use the context tmpdir
+
         decompressor = None
-        decompress = False
-        if self.key == 'image':
-            decompress = True  # FIXME: get from job.parameters
-
-        fname, suffix = self._url_to_fname_suffix(self.path)  # FIXME: use the context tmpdir
-
-        if suffix == 'gz' and decompress:
-            decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
-        elif suffix == 'bz2' and decompress:
-            decompressor = bz2.BZ2Decompressor()
-        elif suffix == 'xz' and decompress:
-            decompressor = lzma.LZMADecompressor()
-        elif suffix is not None:
-            # don't remove the file's real suffix
-            fname = '%s.%s' % (fname, suffix)
+        compression = self.parameters.get('compression', None)
+        if compression is not None:
+            if compression == 'gz':
+                decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
+            elif compression == 'bz2':
+                decompressor = bz2.BZ2Decompressor()
+            elif compression == 'xz':
+                decompressor = lzma.LZMADecompressor()
 
         def write(buff):
             if decompressor:
@@ -145,6 +139,11 @@ class DownloadHandler(Action):
 
         self.data.setdefault('download_action', {self.key: {}})
         self.data['download_action'].update({self.key: {'file': fname}})
+
+        compression = self.parameters.get('compression', None)
+        if compression is not None:
+            if compression not in ['gz', 'bz2', 'xz']:
+                self.errors = "Unknown 'compression' format '%s'" % (compression)
 
     def run(self, connection, args=None):
         # self.cookies = self.job.context.config.lava_cookies  # FIXME: work out how to restore

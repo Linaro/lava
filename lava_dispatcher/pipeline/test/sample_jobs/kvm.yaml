@@ -13,6 +13,7 @@ actions:
         timeout: 20m
         to: tmpfs
         image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        compression: gz
         os: debian
         # if root_partition partition is not present:
         # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
