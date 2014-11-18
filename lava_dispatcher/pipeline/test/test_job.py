@@ -221,7 +221,7 @@ class TestKVMBasicDeploy(unittest.TestCase):
             self.fail(exc)
         for action in self.job.pipeline.actions:
             if action.errors:
-                print action.errors
+                print(action.errors)
             self.assertTrue(action.valid)
 
     def test_download_actions(self):

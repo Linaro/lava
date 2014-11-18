@@ -97,7 +97,7 @@ class Job(object):
         """
         if simulate:
             # output the content and then any validation errors
-            print yaml.dump(self.describe())
+            print(yaml.dump(self.describe()))
         # FIXME: validate the device config
         # FIXME: pretty output of exception messages needed.
         self.pipeline.validate_actions()

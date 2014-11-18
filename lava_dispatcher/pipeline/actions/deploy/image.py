@@ -105,6 +105,6 @@ class DeployImage(Deployment):
                 return False
         # lookup if the job parameters match the available device methods
         if 'image' not in parameters:
-            print "Parameters %s have not been implemented yet." % parameters.keys()
+            print("Parameters %s have not been implemented yet." % parameters.keys())
             return False
         return True
