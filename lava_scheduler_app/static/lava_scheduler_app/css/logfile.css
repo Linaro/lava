@@ -26,6 +26,8 @@
 
 .line 
 {
+    padding-top: 50px;
+    margin-top: -50px;
     line-height: 18px;
     white-space: nowrap;
 }
