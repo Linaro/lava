@@ -98,16 +98,16 @@ class TestShellAction(TestAction):
         Common run function for subclasses which define custom patterns
         """
         if not connection:
-            self._log("No connection!")
+            self.logger.debug("No connection!")
 
         if 'boot-result' not in self.data:
-            self._log("No boot action result found")  # FIXME: this could be a missing deployment for some actions
+            self.logger.debug("No boot action result found")  # FIXME: this could be a missing deployment for some actions
         elif self.data['boot-result'] != 'success':
-            self._log("Skipping test definitions - previous boot attempt was not successful.")
+            self.logger.debug("Skipping test definitions - previous boot attempt was not successful.")
             self.results.update({self.name: 'skipped'})
             # FIXME: with predictable UID, could set each test definition metadata to "skipped"
             return connection
-        self._log("Executing test definitions using %s" % connection.name)
+        self.logger.debug("Executing test definitions using %s" % connection.name)
 
         self.match = SignalMatch()
 

@@ -203,7 +203,7 @@ class ExtractRamdisk(Action):
         else:
             # give the file a predictable name
             os.rename(ramdisk, ramdisk_compressed_data)
-        self._log(os.system("file %s" % ramdisk_compressed_data))
+        self.logger.debug(os.system("file %s" % ramdisk_compressed_data))
         cmd = ('gzip -d -f %s' % ramdisk_compressed_data).split(' ')
         if self._run_command(cmd) is not '':
             raise RuntimeError('Unable to uncompress: %s' % ramdisk_compressed_data)
@@ -257,7 +257,7 @@ class CompressRamdisk(Action):
             log = subprocess.check_output(cmd, shell=True)
         except OSError as exc:
             raise RuntimeError('Unable to create cpio filesystem: %s' % exc)
-        self._log("%s\n%s" % (cmd, log))
+        self.logger.debug("%s\n%s" % (cmd, log))
         os.chdir(os.path.dirname(ramdisk_data))
         if self._run_command(("gzip %s" % ramdisk_data).split(' ')) is not '':
             raise RuntimeError('Unable to compress cpio filesystem')
@@ -267,7 +267,7 @@ class CompressRamdisk(Action):
 
         if self.parameters.get('ramdisk-type', None) == 'u-boot':
             ramdisk_uboot = final_file + ".uboot"
-            self._log("Adding RAMdisk u-boot header.")
+            self.logger.debug("Adding RAMdisk u-boot header.")
             # FIXME: hidden architecture assumption
             cmd = ("mkimage -A arm -T ramdisk -C none -d %s %s" % (final_file, ramdisk_uboot)).split(' ')
             if not self._run_command(cmd):

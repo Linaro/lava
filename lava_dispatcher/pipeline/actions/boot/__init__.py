@@ -72,12 +72,12 @@ class AutoLoginAction(Action):
         # Parameters for auto login
         params = self.parameters['auto_login']
 
-        self._log("Waiting for the login prompt")
+        self.logger.debug("Waiting for the login prompt")
         wait_for_prompt(connection.raw_connection, params['login_prompt'], self.timeout.duration)
         connection.sendline(params['username'])
 
         if 'password_prompt' in params:
-            self._log("Waiting for password prompt")
+            self.logger.debug("Waiting for password prompt")
             wait_for_prompt(connection.raw_connection, params['password_prompt'], self.timeout.duration)
             connection.sendline(params['password'])
         return connection

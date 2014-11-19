@@ -146,7 +146,7 @@ class UBootInterrupt(Action):
     def run(self, connection, args=None):
         if not connection:
             raise RuntimeError("%s started without a connection already in use" % self.name)
-        self._log("Changing prompt to 'Hit any key to stop autoboot'")
+        self.logger.debug("Changing prompt to 'Hit any key to stop autoboot'")
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
         # FIXME: pull in the prompt from configuration - check if constant or device-type specific.
         connection.prompt_str = UBOOT_AUTOBOOT_PROMPT
@@ -260,13 +260,13 @@ class UBootCommandsAction(Action):
     def run(self, connection, args=None):
         if not connection:
             self.errors = "%s started without a connection already in use" % self.name
-        self._log("Changing prompt to %s" % self.prompt)
+        self.logger.debug("Changing prompt to %s" % self.prompt)
         for line in self.data['u-boot']['commands']:
             connection.wait()
             connection.sendline(line)
-        self._log("Changing prompt to test shell defaults")
+        self.logger.debug("Changing prompt to test shell defaults")
         connection.prompt_str = self.job.device.parameters['test_image_prompts']
-        self._log("Changing timeout to %s" % self.timeout.duration)
+        self.logger.debug("Changing timeout to %s" % self.timeout.duration)
         connection.timeout = self.timeout
         connection.wait()
         return connection

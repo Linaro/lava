@@ -118,8 +118,8 @@ class LoopCheckAction(DeployAction):
         # when one is unmounted
         if mounted_loops >= available_loops:
             raise InfrastructureError("Insufficient loopback devices?")
-        self._log("available loops: %s" % available_loops)
-        self._log("mounted_loops: %s" % mounted_loops)
+        self.logger.debug("available loops: %s" % available_loops)
+        self.logger.debug("mounted_loops: %s" % mounted_loops)
         return connection
 
 
@@ -240,7 +240,7 @@ class Unmount(Action):
         self.summary = "unmount image"
 
     def run(self, connection, args=None):
-        self._log("umounting %s" % self.data['loop_mount']['mntdir'])
+        self.logger.debug("umounting %s" % self.data['loop_mount']['mntdir'])
         self._run_command(['umount', self.data['loop_mount']['mntdir']])
         # FIXME: is the rm -rf a separate action or a cleanup of this action?
         # FIXME: use the utils module

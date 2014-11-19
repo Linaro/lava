@@ -30,6 +30,8 @@ import collections
 from collections import OrderedDict
 from contextlib import contextmanager
 
+from lava_dispatcher.pipeline.log import YamlLogger, get_yaml_handler
+
 if sys.version > '3':
     from functools import reduce  # pylint: disable=redefined-builtin
 
@@ -67,16 +69,6 @@ class TestError(Exception):
     """
     # FIXME: ensure TestError is caught, logged and cleared. It is not fatal.
     pass
-
-
-class YamlFilter(logging.Filter):
-    """
-    filters standard logs into structured logs
-    """
-
-    def filter(self, record):
-        record.msg = yaml.dump(record.msg)
-        return True
 
 
 class Pipeline(object):
@@ -145,12 +137,7 @@ class Pipeline(object):
             )
             if not os.path.exists(os.path.dirname(yaml_filename)):
                 os.makedirs(os.path.dirname(yaml_filename))
-            action.log_handler = logging.FileHandler(yaml_filename, mode='a', encoding="utf8")
-            # per action loggers always operate in DEBUG mode - the frontend does the parsing later.
-            action.log_handler.setLevel(logging.DEBUG)
-            # yaml wrapper inside the log handler
-            pattern = ' - id: "<LAVA_DISPATCHER>%(asctime)s"\n%(message)s'
-            action.log_handler.setFormatter(logging.Formatter(pattern))
+            action.log_handler = get_yaml_handler(yaml_filename)
 
         # Use the pipeline parameters if the function was walled without
         # parameters.
@@ -237,30 +224,19 @@ class Pipeline(object):
 
     def run_actions(self, connection, args=None):
         for action in self.actions:
-            # TODO: moving all logger.getLogger at the top of each file (at
-            # import time). Isn't it better to have one logger per action and
-            # to create these loggers at creation time.
-            yaml_log = None
-            std_log = logging.getLogger("ASCII")
-            # FIXME: this is not related to the log_handler. It's a side effect
-            # that the log_handkler does create the output directory.
-            if not action.log_handler:
-                # FIXME: unit test needed
-                # if no output dir specified in the job
-                std_log.debug("no output-dir, logging %s:%s to stdout", action.level, action.name)
+            action.logger = YamlLogger(action.name)
+            if action.log_handler:
+                action.logger.set_handler(action.log_handler)
             else:
-                yaml_log = logging.getLogger("YAML")  # allows per-action logs in yaml
-                yaml_log.setLevel(logging.DEBUG)  # yaml log is always in debug
-                # enable the log handler created in this action when it was added to this pipeline
-                yaml_log.addHandler(action.log_handler)
-                yaml_log.debug('   start: %s %s', action.level, action.name)
+                action.logger.set_handler()
+            action.logger.debug('   start: %s %s' % (action.level, action.name))
             try:
                 start = time.time()
                 new_connection = action.run(connection, args)
                 action.elapsed_time = time.time() - start
-                action._log("duration: %.02f" % action.elapsed_time)
+                action.logger.debug("duration: %.02f" % action.elapsed_time)
                 if action.results:
-                    action._log({"results": action.results})
+                    action.logger.debug({"results": action.results})
                 if new_connection:
                     connection = new_connection
             except KeyboardInterrupt:
@@ -277,9 +253,8 @@ class Pipeline(object):
             # FIXME: should we call the cleanup function here? Only the
             #        KeyboardInterrupt case does run cleanup.
             # set results including retries
-            if action.log_handler:
-                # remove per-action log handler
-                yaml_log.removeHandler(action.log_handler)
+            if action.logger.handler:
+                action.logger.remove_handler()
         return connection
 
     def prepare_actions(self):
@@ -301,12 +276,6 @@ class Action(object):
         internal pipelines push parameters to actions
         within those pipelines. Parameters are to be
         treated as inmutable.
-
-        Logs written to the per action log must use the YAML logger.
-        Output for stdout (which is redirected to the oob_file by the
-        scheduler) should use the ASCII logger.
-        yaml_log = logging.getLogger("YAML")
-        std_log = logging.getLogger("ASCII")
         """
         # FIXME: too many?
         self.__summary__ = None
@@ -319,6 +288,7 @@ class Action(object):
         self.yaml_line = None  # FIXME: should always be in parameters
         self.__errors__ = []
         self.elapsed_time = None  # FIXME: pipeline_data?
+        self.logger = YamlLogger("root")
         self.log_handler = None
         self.job = None
         self.__results__ = OrderedDict()
@@ -393,7 +363,7 @@ class Action(object):
 
     @errors.setter
     def errors(self, error):
-        self._log(error)
+        self.logger.debug(error)
         self.__errors__.append(error)
 
     @property
@@ -533,20 +503,6 @@ class Action(object):
         finally:
             self.cleanup()
 
-    def _log(self, message):
-        if not message:
-            return
-        # FIXME: why are we recreating the loggers everytime? Maybe having one
-        # logger per action si easier to use. Calling it YAML.%(action_name)s
-        yaml_log = logging.getLogger("YAML")
-        std_log = logging.getLogger("ASCII")
-        if type(message) is dict:
-            for key, value in list(message.items()):
-                yaml_log.debug("   %s: %s", key, value)
-        else:
-            yaml_log.debug("   log: \"%s\"", message)
-        std_log.info(message)
-
     def _run_command(self, command_list, env=None):
         """
         Single location for all external command operations on the
@@ -584,7 +540,7 @@ class Action(object):
                 'command': [i.strip() for i in exc.cmd],
                 'message': [i.strip() for i in exc.message],
                 'output': exc.output.split('\n')})
-        self._log("%s\n%s" % (' '.join(command_list), log))
+        self.logger.debug("%s\n%s" % (' '.join(command_list), log))
         if not log:
             return ''  # allow for commands which return no output
         return log
@@ -662,7 +618,7 @@ class Action(object):
             if name == "pipeline":
                 continue
             content = getattr(self, name)
-            if name == "job" or name == "log_handler" or name == "internal_pipeline":
+            if name == "job" or name == "_log" or name == "internal_pipeline":
                 continue
             if name == "timeout":
                 if content and not getattr(content, 'protected'):
@@ -716,13 +672,13 @@ class RetryAction(Action):
                 self.retries += 1
                 msg = "%s failed: %d of %d attempts." % (self.name, self.retries, self.max_retries)
                 self.errors = msg
-                self._log(msg)
+                self.logger.debug(msg)
                 time.sleep(self.sleep)
             finally:
                 # TODO: QUESTION: is it the right time to cleanup?
                 self.cleanup()
         self.errors = "%s retries failed for %s" % (self.retries, self.name)
-        self._log("%s retries failed for %s" % (self.retries, self.name))
+        self.logger.debug("%s retries failed for %s" % (self.retries, self.name))
 
     def __call__(self, connection):
         self.run(connection)
@@ -749,7 +705,7 @@ class DiagnosticAction(Action):  # pylint: disable=abstract-class-not-used
         Log the requested diagnostic.
         Raises NotImplementedError if subclass has omitted a trigger classmethod.
         """
-        self._log("%s diagnostic triggered." % self.trigger())
+        self.logger.debug("%s diagnostic triggered." % self.trigger())
         return connection
 
 

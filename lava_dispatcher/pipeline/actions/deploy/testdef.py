@@ -301,7 +301,7 @@ class TarRepoAction(RepoAction):
 
         try:
             if not os.path.isdir(runner_path):
-                self._log("Creating directory to extract the tar archive into.")
+                self.logger.debug("Creating directory to extract the tar archive into.")
                 os.makedirs(runner_path)
 
             encoded_in = io.StringIO(self.parameters['repository'])
@@ -350,7 +350,7 @@ class UrlRepoAction(RepoAction):
 
         try:
             if not os.path.isdir(runner_path):
-                self._log("Creating directory to download the url file into.")
+                self.logger.debug("Creating directory to download the url file into.")
                 os.makedirs(runner_path)
             # we will not use 'testdef_file' here, we can get this info from URL
             # testdef_file = download_image(testdef_repo, context, urldir)
@@ -359,7 +359,7 @@ class UrlRepoAction(RepoAction):
         except OSError as exc:
             raise JobError('Unable to get test definition from url\n' + str(exc))
         finally:
-            self._log("Downloaded test definition file to %s." % runner_path)
+            self.logger.debug("Downloaded test definition file to %s." % runner_path)
 
         i = []
         for elem in " $&()\"'<>/\\|;`":
@@ -406,7 +406,7 @@ class TestDefinitionAction(TestAction):
         # FIXME: check the effect of the parameter review
         test_list = [action['test']['definitions'] for action in self.job.parameters['actions'] if 'test' in action.keys()]
         if not test_list:
-            self._log("No test action defined.")
+            self.logger.debug("No test action defined.")
             return
         for testdef in test_list[0]:
             handler = RepoAction.select(testdef['from'])()
@@ -478,7 +478,7 @@ class TestDefinitionAction(TestAction):
         """
         if 'location' not in self.data['lava-overlay']:
             raise RuntimeError("Missing lava overlay location")
-        self._log("Loading test definitions")
+        self.logger.debug("Loading test definitions")
 
         # overlay_path is the location of the files before boot
         self.data[self.name]['overlay_dir'] = os.path.abspath(
@@ -486,7 +486,7 @@ class TestDefinitionAction(TestAction):
 
         connection = self.internal_pipeline.run_actions(connection)
 
-        self._log("lava-test-runner.conf")
+        self.logger.debug("lava-test-runner.conf")
         with open('%s/lava-test-runner.conf' % self.data['test-definition']['overlay_dir'], 'a') as runner_conf:
             for handler in self.internal_pipeline.actions:
                 if isinstance(handler, RepoAction):

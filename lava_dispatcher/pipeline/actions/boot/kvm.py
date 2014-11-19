@@ -116,18 +116,18 @@ class BootQemuRetry(Action):
         if 'download_action' not in self.data:
             raise RuntimeError("Value for download_action is missing from %s" % self.name)
         self.command.extend(["-hda", self.data['download_action']['image']['file']])  # FIXME: validate ['image']
-        self._log("Boot command: %s" % ' '.join(self.command))
+        self.logger.debug("Boot command: %s" % ' '.join(self.command))
         # initialise the first Connection object, a command line shell into the running QEMU.
         # ShellCommand wraps pexpect.spawn.
         self.max_retries = self.parameters.get('failure_retry', MAX_RETRY)
         if not self.timeout:
-            self._log("No timeout specified for %s, using action_timeout from job." % self.name)
+            self.logger.debug("No timeout specified for %s, using action_timeout from job." % self.name)
             self.timeout = Timeout("default", self.job.parameters['action_timeout'])
-        self._log("timeout %s %s" % (self.timeout.name, self.timeout.duration))
+        self.logger.debug("timeout %s %s" % (self.timeout.name, self.timeout.duration))
         shell = ShellCommand(' '.join(self.command), self.timeout)
         if shell.exitstatus:
             raise JobError("%s command exited %d: %s" % (self.command, shell.exitstatus, shell.readlines()))
-        self._log("started a shell command")
+        self.logger.debug("started a shell command")
         # CommandRunner expects a pexpect.spawn connection which is the return value
         # of target.device.power_on executed by boot in the old dispatcher.
         #

@@ -157,7 +157,7 @@ class DownloadHandler(Action):
         md5 = hashlib.md5()
         sha256 = hashlib.sha256()
         with self._decompressor_stream() as (writer, fname):
-            self._log("downloading and decompressing %s as %s" % (self.parameters[self.key], fname))
+            self.logger.debug("downloading and decompressing %s as %s" % (self.parameters[self.key], fname))
 
             # TODO: print the progress in the logs
             for buff in self.reader():
@@ -300,11 +300,11 @@ class ChecksumAction(Action):  # FIXME: fold into the DownloadHandler
     def run(self, connection, args=None):
         if 'download_action' in self.data:
             if 'md5' in self.data['download_action']:
-                self._log("md5sum of downloaded content: %s" %
-                          self.data['download_action']['md5'])
+                self.logger.debug("md5sum of downloaded content: %s" %
+                                  self.data['download_action']['md5'])
             if 'sha256' in self.data['download_action']:
-                self._log("sha256sum of downloaded content: %s" %
-                          self.data['download_action']['sha256'])
+                self.logger.debug("sha256sum of downloaded content: %s" %
+                                  self.data['download_action']['sha256'])
         # TODO: if the checksums are not present, compute them now
         return connection
 
@@ -334,7 +334,7 @@ class QCowConversionAction(Action):
         else:
             fname = fname + ".img"
 
-        self._log("Converting downloaded image from qcow2 to raw")
+        self.logger.debug("Converting downloaded image from qcow2 to raw")
         subprocess.check_call(['qemu-img', 'convert', '-f', 'qcow2',
                                '-O', 'raw', origin, fname])
         self.data['download_action'][self.key]['file'] = fname

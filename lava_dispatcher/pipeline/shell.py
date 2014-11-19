@@ -197,7 +197,7 @@ class ExpectShellSession(Action):
         self.description = "Wait for a shell"
 
     def run(self, connection, args=None):
-        self._log("%s: Waiting for prompt" % self.name)
+        self.logger.debug("%s: Waiting for prompt" % self.name)
         connection.wait()  # FIXME: should this be a regular RetryAction operation?
         return connection
 
@@ -239,12 +239,12 @@ class ConnectDevice(Action):
         # if connection:
         #     raise RuntimeError("A connection already exists")
         command = self.job.device.parameters['commands']['connect']
-        self._log("   connecting to device using '%s'" % command)
+        self.logger.debug("   connecting to device using '%s'" % command)
         shell = ShellCommand("%s\n" % command, self.timeout)
         if shell.exitstatus:
             raise JobError("%s command exited %d: %s" % (command, shell.exitstatus, shell.readlines()))
         connection = ShellSession(self.job, shell)
         connection.prompt_str = self.job.device.parameters['test_image_prompts']
         connection.wait()
-        self._log("matched %s" % connection.match)
+        self.logger.debug("matched %s" % connection.match)
         return connection

@@ -37,7 +37,7 @@ class CustomisationAction(DeployAction):
         self.summary = "customise image"
 
     def run(self, connection, args=None):
-        self._log("Customising image...")
+        self.logger.debug("Customising image...")
         # FIXME: implement
         return connection
 
@@ -152,7 +152,7 @@ class MultinodeOverlayAction(OverlayAction):
 
     def run(self, connection, args=None):
         if 'target_group' not in self.job.parameters:
-            self._log("skipped %s - no target group" % self.name)
+            self.logger.debug("skipped %s - no target group" % self.name)
             return connection
         if 'location' not in self.data['lava-overlay']:
             raise RuntimeError("Missing lava overlay location")
@@ -176,7 +176,7 @@ class MultinodeOverlayAction(OverlayAction):
                             for client_name in self.job.parameters['roles']:
                                 fout.write(r"\t%s\t%s\n" % (client_name, self.job.parameters['roles'][client_name]))
                         else:
-                            self._log("group data MISSING")
+                            self.logger.debug("group data MISSING")
                         fout.write('"\n')
                     elif foutname == 'lava-role':
                         fout.write("TARGET_ROLE='%s'\n" % self.job.parameters['role'])
@@ -218,9 +218,9 @@ class LMPOverlayAction(OverlayAction):
         # if there is nothing else to do, omit function.
 
     def run(self, connection, args=None):
-        self._log("job parameters %s" % self.job.parameters)
+        self.logger.debug("job parameters %s" % self.job.parameters)
         if 'lmp_module' not in self.job.parameters:
-            self._log("Skipped %s - no lmp_module setting" % self.name)
+            self.logger.debug("Skipped %s - no lmp_module setting" % self.name)
             return connection
         if 'location' not in self.data['lava-overlay']:
             raise RuntimeError("Missing lava overlay location")
@@ -265,7 +265,7 @@ class CompressOverlay(Action):
         if not os.path.exists(self.data['lava-overlay']['location']):
             raise RuntimeError("Unable to find overlay location")
         if not self.valid:
-            self._log(self.errors)
+            self.logger.debug(self.errors)
             return connection
         location = self.data['lava-overlay']['location']
         output = os.path.join(self.job.parameters['output_dir'], 'overlay.tar.gz')
