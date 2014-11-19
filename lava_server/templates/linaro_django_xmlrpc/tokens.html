@@ -28,7 +28,7 @@ securely access LAVA resources. You can create and use any number of tokens simu
 is compromised you can quickly remove it. Anyone using that token will no longer be able to authenticate as You
 in the system.</p>
 
-          <button class="btn btn-xs btn-primary" data-toggle="modal" data-target="#newTokenModal" title="supprimer">new&nbsp;<span
+          <button class="btn btn-xs btn-primary" data-toggle="modal" data-target="#newTokenModal" title="Create new token">new&nbsp;<span
                   class="glyphicon glyphicon-plus-sign"></span></button>
           <div class="modal fade" id="newTokenModal" tabindex="-1" role="dialog" aria-labelledby="newTokenModalLabel" aria-hidden="true">
             <div class="modal-dialog">
@@ -88,7 +88,7 @@ in the system.</p>
           {% else %}
           <td><em>It was not used yet</em></td>
           {% endif %}
-          <td><button class="btn btn-xs btn-success" data-toggle="modal" data-target="#hashModal{{ token.pk }}"><span class="glyphicon glyphicon-eye-open"></span></button>
+          <td><button class="btn btn-xs btn-success" data-toggle="modal" data-target="#hashModal{{ token.pk }}" title="View token hash"><span class="glyphicon glyphicon-eye-open"></span></button>
           <div class="modal fade" id="hashModal{{ token.pk }}" tabindex="-1" role="dialog" aria-labelledby="hashModal{{ token.pk }}Label" aria-hidden="true">
             <div class="modal-dialog modal-lg">
               <div class="modal-content">
@@ -105,7 +105,7 @@ in the system.</p>
           </div>
 
           <div class="btn-group">
-            <button class="btn btn-xs btn-primary" data-toggle="modal" data-target="#editTokenModal{{ token.pk }}"><span class="glyphicon glyphicon-pencil"></span></button>
+            <button class="btn btn-xs btn-primary" data-toggle="modal" data-target="#editTokenModal{{ token.pk }}" title="Edit token description"><span class="glyphicon glyphicon-pencil"></span></button>
             <div class="modal fade" id="editTokenModal{{ token.pk }}" tabindex="-1" role="dialog" aria-labelledby="editTokenModal{{ token.pk }}label" aria-hidden="true">
               <div class="modal-dialog">
                 <div class="modal-content">
@@ -133,7 +133,7 @@ in the system.</p>
             </div>
           </div>
 
-          <button class="btn btn-xs btn-danger" data-toggle="modal" data-target="#deleteTokenModal{{ token.pk }}" title="supprimer"><span class="glyphicon glyphicon-trash"></span></button>
+          <button class="btn btn-xs btn-danger" data-toggle="modal" data-target="#deleteTokenModal{{ token.pk }}" title="Delete token"><span class="glyphicon glyphicon-trash"></span></button>
           <div class="modal fade" id="deleteTokenModal{{ token.pk }}" tabindex="-1" role="dialog" aria-labelledby="deleteTokenModal{{ token.pk }}Label" aria-hidden="true">
             <div class="modal-dialog">
               <div class="modal-content">
