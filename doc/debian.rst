@@ -201,4 +201,4 @@ Drop the old cluster::
 
 Now the old database package can be removed::
 
- $ sudo apt-get remove postgresql9.3
+ $ sudo apt-get remove postgresql-9.3

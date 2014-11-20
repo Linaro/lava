@@ -45,6 +45,10 @@ from django.core.files import locks, File
 from django.core.files.storage import FileSystemStorage
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
+from django.core.validators import (
+    MaxValueValidator,
+    MinValueValidator
+)
 from django.db import models, connection, IntegrityError
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.signals import post_delete
@@ -1920,6 +1924,10 @@ CHART_TYPES = ((r'pass/fail', 'Pass/Fail'),
 # Chart representation
 REPRESENTATION_TYPES = ((r'lines', 'Lines'),
                         (r'bars', 'Bars'))
+# Chart visibility
+CHART_VISIBILITY = ((r'chart', 'Chart only'),
+                    (r'table', 'Result table only'),
+                    (r'both', 'Both'))
 
 
 class ImageReportChart(models.Model):
@@ -1952,6 +1960,14 @@ class ImageReportChart(models.Model):
         null=True,
         verbose_name='Target goal')
 
+    chart_height = models.PositiveIntegerField(
+        default=200,
+        validators=[
+            MinValueValidator(200),
+            MaxValueValidator(400)
+        ],
+        verbose_name='Chart height')
+
     is_interactive = models.BooleanField(
         default=False,
         verbose_name='Interactive')
@@ -1959,6 +1975,22 @@ class ImageReportChart(models.Model):
     is_data_table_visible = models.BooleanField(
         default=False,
         verbose_name='Data table visible')
+
+    is_delta = models.BooleanField(
+        default=False,
+        verbose_name='Delta reporting')
+
+    is_percentage = models.BooleanField(
+        default=False,
+        verbose_name='Percentage')
+
+    chart_visibility = models.CharField(
+        max_length=20,
+        choices=CHART_VISIBILITY,
+        verbose_name='Chart visibility',
+        blank=False,
+        default="chart",
+    )
 
     def __unicode__(self):
         return self.name
@@ -2002,12 +2034,14 @@ class ImageReportChart(models.Model):
 
     def get_basic_chart_data(self):
         chart_data = {}
-        fields = ["name", "chart_type", "description", "target_goal"]
+        fields = ["name", "chart_type", "description", "target_goal",
+                  "chart_height", "is_percentage", "chart_visibility"]
 
         for field in fields:
             chart_data[field] = getattr(self, field)
 
         chart_data["report_name"] = self.image_report.name
+        chart_data["is_delta"] = self.is_delta
 
         chart_data["has_build_numbers"] = False
         for image_chart_filter in self.imagechartfilter_set.all():
@@ -2025,7 +2059,6 @@ class ImageReportChart(models.Model):
             chart_data["start_date"] = chart_user.start_date
             chart_data["is_legend_visible"] = chart_user.is_legend_visible
             chart_data["has_subscription"] = chart_user.has_subscription
-            chart_data["toggle_percentage"] = chart_user.toggle_percentage
 
         except ImageChartUser.DoesNotExist:
             # Leave an empty dict.
@@ -2150,6 +2183,13 @@ class ImageReportChart(models.Model):
 
                 test_filter_id = "%s-%s" % (test_id, image_chart_filter.id)
 
+                # Calculate percentages.
+                percentage = 0
+                if self.is_percentage:
+                    if denorm.count_all() != 0:
+                        percentage = round(100 * float(denorm.count_pass) /
+                                           denorm.count_all(), 2)
+
                 # Find already existing chart item (this happens if we're
                 # dealing with parametrized tests) and add the values instead
                 # of creating new chart item.
@@ -2177,6 +2217,7 @@ class ImageReportChart(models.Model):
                         "date": str(test_run.bundle.uploaded_on),
                         "pass": denorm.count_fail == 0,
                         "passes": denorm.count_pass,
+                        "percentage": percentage,
                         "skip": denorm.count_skip,
                         "total": denorm.count_all(),
                         "test_run_uuid": test_run.analyzer_assigned_uuid,
@@ -2588,10 +2629,6 @@ class ImageChartUser(models.Model):
     has_subscription = models.BooleanField(
         default=False,
         verbose_name='Subscribed to target goal')
-
-    toggle_percentage = models.BooleanField(
-        default=False,
-        verbose_name='Toggle percentage')
 
 
 class ImageChartTestUser(models.Model):

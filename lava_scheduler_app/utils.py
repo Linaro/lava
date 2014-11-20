@@ -27,6 +27,7 @@ import simplejson
 import models
 import subprocess
 import datetime
+import netifaces
 
 from collections import OrderedDict
 
@@ -276,9 +277,21 @@ def get_fqdn():
 
 
 def get_ip_address():
-    """Returns the IP address.
+    """Returns the IP address of the default interface, if found.
     """
-    return socket.gethostbyname_ex(socket.getfqdn())[2][0]
+    ip = '0.0.0.0'
+    gateways = netifaces.gateways()
+    if gateways:
+        default_gateway = gateways.get('default')
+        if default_gateway:
+            default_interface = default_gateway.get(netifaces.AF_INET)[1]
+            if default_interface:
+                default_interface_values = netifaces.ifaddresses(
+                    default_interface)
+                if default_interface_values:
+                    ip = default_interface_values.get(
+                        netifaces.AF_INET)[0].get('addr')
+    return ip
 
 
 def format_sw_info_to_html(data_dict):
@@ -426,3 +439,54 @@ def last_scheduler_tick():
     """Returns datetime.dateime object of last scheduler tick timestamp.
     """
     return __last_scheduler_tick
+
+
+def process_repeat_parameter(json_jobdata):
+    new_json = {}
+    new_actions = []
+    allowed_actions = ["delpoy_linaro_image", "deploy_image",
+                       "boot_linaro_image", "boot_linaro_android_image",
+                       "lava_test_shell", "lava_android_test_run",
+                       "lava_android_test_run_custom", "lava_android_test_run_monkeyrunner"]
+
+    # Take each action and expand it if repeat parameter is specified.
+    all_actions = json_jobdata["actions"]
+    for action in all_actions:
+        new_action = copy.deepcopy(action)
+        if 'parameters' in new_action \
+           and 'repeat' in new_action["parameters"]:
+            if new_action["command"] not in allowed_actions:
+                raise ValueError("Action '%s' can't be repeated" % new_action["command"])
+            repeat = new_action["parameters"]["repeat"]
+            new_action["parameters"].pop('repeat', None)
+            if repeat > 1:
+                for i in range(repeat):
+                    new_action["parameters"]["repeat_count"] = i
+                    new_actions.append(copy.deepcopy(new_action))
+            else:
+                new_actions.append(copy.deepcopy(new_action))
+        else:
+            new_actions.append(new_action)
+
+    new_json["timeout"] = json_jobdata["timeout"]
+    if json_jobdata.get("device_type", False):
+        new_json["device_type"] = json_jobdata["device_type"]
+    if json_jobdata.get("target", False):
+        new_json["target"] = json_jobdata["target"]
+    if json_jobdata.get("job_name", False):
+        new_json["job_name"] = json_jobdata["job_name"]
+    if json_jobdata.get("logging_level", False):
+        new_json["logging_level"] = json_jobdata["logging_level"]
+    if json_jobdata.get("priority", False):
+        new_json["priority"] = json_jobdata["priority"]
+    if json_jobdata.get("tags", False):
+        new_json["tags"] = json_jobdata["tags"]
+    if "health_check" in json_jobdata:
+        new_json["health_check"] = json_jobdata.get("health_check")
+    if "device_group" in json_jobdata:
+        new_json["device_group"] = json_jobdata.get("device_group")
+    if "vm_group" in json_jobdata:
+        new_json["vm_group"] = json_jobdata.get("vm_group")
+    new_json["actions"] = new_actions
+
+    return new_json

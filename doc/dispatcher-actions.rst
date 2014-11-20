@@ -262,7 +262,7 @@ Available parameters
 Booting a test image
 ====================
 
-Use the ``boot_linaro_image`` action or the directly equivalent ``boot_image``
+Use the ``boot_linaro_image`` action or the direct equivalent ``boot_image``
 action to boot a test image that was deployed using the ``deploy_linaro_image``
 or ``deploy_image`` actions::
 
@@ -287,6 +287,12 @@ or ``deploy_image`` actions::
 Example functional test: **kvm-kernel-boot**:
 
 http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/single-node-job/qemu/kvm-kernel-boot.json
+
+Available parameters
+--------------------
+
+* ``repeat``: number, defaults to 1. This parameter specifies how many times to repeat boot action.
+  It is equivalent to specifying the same boot action 'repeat' times one after another.
 
 .. index:: interactive boot commands
 
@@ -522,6 +528,8 @@ Available parameters
   ``steps``: skip running installation steps, :ref:`install_steps`
 
   The default is None, i.e. nothing is skipped.
+* ``repeat``: number, default 1. Specifies how many times lava_test_shell will be repeated.
+  It is equivalent to specifying the same lava_test_shell action 'repeat' times one after another.
 
 .. _android_specific_actions:
 
@@ -616,6 +624,12 @@ Example functional test: **master-job-defined-boot-cmds-android**:
 
 http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/single-node-job/master/master-job-defined-boot-cmds-android.json
 
+Available parameters
+--------------------
+
+* ``repeat``: number, defaults to 1. This parameter specifies how many times to repeat android boot action.
+  It is equivalent to specifying the same android boot action 'repeat' times one after another.
+
 .. _lava_android_test_install:
 
 Installing Android tests in a deployed Android image
@@ -670,6 +684,8 @@ Available parameters
 * :term:`role`: Determines which devices in a MultiNode group will
   use this action. The parameter accepts any string, the string must
   exactly match one of the roles specified in the :term:`device group`.
+* ``repeat``: number, default 1. Specifies how many times lava_android_test_run will be repeated.
+  It is equivalent to specifying the same lava_android_test_run action 'repeat' times one after another.
 
 Example functional test: **master-lava-android-test-multinode**:
 

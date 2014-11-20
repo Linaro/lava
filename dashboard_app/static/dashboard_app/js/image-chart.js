@@ -68,6 +68,11 @@ $(document).ready(function () {
                 '<div class="legend" id="legend_container_' +
                     this.chart_id + '"></div>');
 
+            // Set chart height.
+            $("#inner_container_" + this.chart_id).height(
+                this.chart_data["chart_height"]
+            );
+
             // Add headline and description.
             this.update_headline();
             // Add filter links.
@@ -82,6 +87,8 @@ $(document).ready(function () {
             this.update_urls();
             // Update events.
             this.update_events();
+            // Update chart/table visibility.
+            this.update_visibility();
         }
     }
 
@@ -192,17 +199,6 @@ $(document).ready(function () {
         $("#filter_links_dialog_" + this.chart_id).dialog("option",
                                                           "height", height );
 
-        // Add percentages if chart type is pass/fail.
-        if (this.chart_data["chart_type"] == "pass/fail") {
-            $("#filter_links_container_" + this.chart_id).append(
-                '<span class="toggle-percentage"><label for="is_percentage_' +
-                    this.chart_id +
-                    '">Toggle percentage</label></span>');
-            $("#filter_links_container_" + this.chart_id).append(
-                '<span class="toggle-checkbox"><input type="checkbox" ' +
-                    'id="is_percentage_' + this.chart_id + '" /></span>');
-        }
-
         // Add legend toggle checkbox.
         $("#filter_links_container_" + this.chart_id).append(
             '<span class="toggle-legend"><label for="is_legend_visible_' +
@@ -258,12 +254,8 @@ $(document).ready(function () {
         this.add_settings_events();
     }
 
-    ImageChart.prototype.update_data_tables = function() {
 
-        // Add dialog.
-        $("#main_container").append('<div id="data_table_dialog_' +
-                                    this.chart_id + '"></div>');
-
+    ImageChart.prototype.result_table_as_dialog = function() {
         // Init dialog.
         $('#data_table_dialog_' + this.chart_id).dialog({
             autoOpen: false,
@@ -274,14 +266,34 @@ $(document).ready(function () {
             modal: true,
             resizable: false,
             open: function (event, ui) {
-                $('#data_table_dialog_' + this.chart_id).css('overflow',
-                                                             'hidden');
-
                 $('.scroller').each(function() {
                     $(this).scrollLeft($(this)[0].scrollWidth);
                 });
             }
         });
+
+    }
+
+    ImageChart.prototype.update_visibility = function() {
+        if (this.chart_data.chart_visibility == 'table') {
+            $("#outer_container_" + this.chart_id).hide();
+            $("#table_link_container_" + this.chart_id).hide();
+            $("#filter_links_container_" + this.chart_id).hide();
+            $("#dates_container_" + this.chart_id).hide();
+        } else if (this.chart_data.chart_visibility == 'both') {
+            $("#table_link_container_" + this.chart_id).hide();
+        }
+    }
+
+    ImageChart.prototype.update_data_tables = function() {
+
+        // Add dialog.
+        $("#chart_container_" + this.chart_id).append(
+            '<div id="data_table_dialog_' + this.chart_id + '"></div>');
+
+        if (this.chart_data.chart_visibility == 'chart') {
+            this.result_table_as_dialog();
+        }
 
         // Add skeleton data to dialog.
         $("#data_table_dialog_" + this.chart_id).append(
@@ -305,6 +317,12 @@ $(document).ready(function () {
             '<a id="data_table_link_' +
                 this.chart_id +
                 '" href="javascript:void(0)">Results table</a>');
+
+        $('#data_table_dialog_' + this.chart_id).css('overflow', 'hidden');
+
+        $('.scroller').each(function() {
+            $(this).scrollLeft($(this)[0].scrollWidth);
+        });
 
         var chart = this;
         $("#data_table_link_" + this.chart_id).click(function(){
@@ -456,8 +474,8 @@ $(document).ready(function () {
 
                     for (bug_link in cell["bug_links"]) {
                         bug = cell["bug_links"];
-                        table_body += '<li class="bug-link">' + bug[bug_link] +
-                            '</li>';
+                        table_body += '<li class="bug-link">' +
+                            bug[bug_link].replace(/\\\\\\/g, "") + '</li>';
                     }
 
                     table_body += '</span>';
@@ -565,17 +583,6 @@ $(document).ready(function () {
             chart.update_settings();
         });
 
-        $("#is_percentage_"+this.chart_id).change(function() {
-            chart.update_plot();
-            chart.update_settings();
-        });
-
-        if (this.chart_data["chart_type"] == "pass/fail") {
-            $("#is_percentage_"+this.chart_id).change(function() {
-                chart.update_plot();
-            });
-        }
-
         $("#has_subscription_link_"+this.chart_id).click(function() {
             $("#has_subscription_" + chart.chart_id).val(
                 $("#has_subscription_" + chart.chart_id).val() != "true");
@@ -593,10 +600,6 @@ $(document).ready(function () {
             if (this.chart_data.user.is_legend_visible == false) {
                 $("#is_legend_visible_" + this.chart_id).prop("checked",
                                                               false);
-            }
-            if (this.chart_data.user.toggle_percentage == true) {
-                $("#is_percentage_" + this.chart_id).prop("checked",
-                                                              true);
             }
 
             this.set_subscription_link(this.chart_data.user.has_subscription);
@@ -627,7 +630,6 @@ $(document).ready(function () {
                 start_date: $("#start_date_" + this.chart_id).val(),
                 is_legend_visible: $("#is_legend_visible_" + this.chart_id).prop("checked"),
                 has_subscription: $("#has_subscription_" + this.chart_id).val(),
-                toggle_percentage: $("#is_percentage_" + this.chart_id).prop("checked"),
                 visible_chart_test_id: visible_chart_test_id,
                 visible_attribute_name: attr_name,
             },
@@ -729,12 +731,8 @@ $(document).ready(function () {
                 iter = plot_data[test_filter_id]["data"].length;
 
                 if (this.chart_data["chart_type"] == "pass/fail") {
-                    if ($("#is_percentage_" + this.chart_id).prop("checked") == true) {
-                        value = parseFloat(row["passes"]/row["total"]).toFixed(4) * 100;
-                        // Happens when total is 0.
-                        if (isNaN(value)) {
-                            value = 0;
-                        }
+                    if (this.chart_data["is_percentage"] == true) {
+                        value = row["percentage"];
                         tooltip = "Pass rate: " + value + "%";
                     } else {
                         value = row["passes"];
@@ -750,7 +748,6 @@ $(document).ready(function () {
                     value = row["attr_value"];
                     tooltip = "Value: " + value;
                 }
-
 
                 tooltip += "<br>";
                 label = "";
@@ -865,6 +862,48 @@ $(document).ready(function () {
         // Pack data in series for plot display.
         for (var i in sorted_filter_ids) {
             test_filter_id = sorted_filter_ids[i];
+
+            // Delta reporting, calculate diferences.
+            if (this.chart_data["is_delta"]) {
+                var new_data = [];
+                var new_meta_keys = [];
+                var tooltips = [];
+                for (j in plot_data[test_filter_id]["data"]) {
+                    if (j == 0) { //first element is auto-set to 0.
+                        new_value = 0;
+                        new_data.push(
+                            plot_data[test_filter_id]["data"][j].slice());
+                        new_data[0][1] = new_value;
+
+                    } else {
+                        new_value = +parseFloat(plot_data[test_filter_id]["data"][j][1] -
+                                     plot_data[test_filter_id]["data"][j-1][1]).toFixed(2);
+                        new_data.push(
+                            [plot_data[test_filter_id]["data"][j][0],
+                             new_value]);
+
+                    }
+                    // Set metadata key for first element.
+                    var meta_key = plot_data[test_filter_id]["data"][j][0]
+                        + "_" + plot_data[test_filter_id]["data"][j][1];
+                    new_meta_keys[meta_key] = new_data[j][0] + "_" +
+                        new_data[j][1];
+                    tooltips[meta_key] =
+                        plot_data[test_filter_id]["meta"][meta_key]["tooltip"] + "Delta: " + new_value + "<br>";
+                }
+                plot_data[test_filter_id]["data"] = new_data;
+
+                // Need to update metadata keys as well.
+                var new_metadata = [];
+                for (j in plot_data[test_filter_id]["meta"]) {
+                    plot_data[test_filter_id]["meta"][j]["tooltip"] =
+                        tooltips[j];
+                    new_metadata[new_meta_keys[j]] =
+                        plot_data[test_filter_id]["meta"][j];
+                }
+                plot_data[test_filter_id]["meta"] = new_metadata;
+            }
+
             if (this.legend_items.length != sorted_filter_ids.length) {
 
                 // Load hidden tests data.
@@ -953,7 +992,7 @@ $(document).ready(function () {
 
         // Add target goal dashed line to the plot.
         if (this.chart_data["target_goal"] != null) {
-            if ($("#is_percentage_" + this.chart_id).prop("checked") == true) {
+            if (this.chart_data["is_percentage"] == true) {
                 target_goal = parseFloat(this.chart_data["target_goal"]/y_max_pass).toFixed(4) * 100;
             } else {
                 target_goal = this.chart_data["target_goal"];
@@ -1069,11 +1108,11 @@ $(document).ready(function () {
         // We cannot apply autoscaleMargin for y axis since y_max and y_min
         // are explicitely set. Therefore we will manually increase/decrease
         // the limits.
-        y_max *= 1.1;
-        y_min *= 0.9;
+        y_max += (0.1 * Math.abs(y_max));
+        y_min -= (0.1 * Math.abs(y_min));
 
-        if ($("#is_percentage_" + this.chart_id).prop("checked") == true) {
-            options["yaxis"]["max"] = 105;
+        if (this.chart_data["is_percentage"] == true) {
+            options["yaxis"]["max"] = 110;
             options["yaxis"]["min"] = 0;
         } else {
             options["yaxis"]["max"] = y_max;
@@ -1397,6 +1436,7 @@ $(document).ready(function () {
                     link_bug_url = testresult_link_bug_url;
                     unlink_bug_url = testresult_unlink_bug_url;
                 } else {
+                    add_bug_dialog.find('input[name=relative_index]').val("");
                     link_bug_url = testrun_link_bug_url;
                     unlink_bug_url = testrun_unlink_bug_url;
                 }

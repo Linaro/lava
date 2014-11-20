@@ -24,7 +24,11 @@ if [ -n "$2" ]; then
 fi
 PWD=`pwd`
 NAME=${1}
-VERSION=`python ./version.py`
+if [ -x ./version.py ]; then
+  VERSION=`python ./version.py`
+else
+  VERSION=`python setup.py --version`
+fi
 if [ -d './dist/' ]; then
 	rm -f ./dist/*
 fi

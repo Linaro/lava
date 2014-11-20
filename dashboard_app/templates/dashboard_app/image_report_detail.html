@@ -90,6 +90,11 @@
   <div>
     Target goal: {{ image_chart.target_goal|floatformat:"-2" }}
   </div>
+  {% if image_chart.chart_type == "pass/fail" %}
+  <div>
+    Percentage: {{ image_chart.is_percentage|yesno:"Yes,No" }}
+  </div>
+  {% endif %}
   <hr/>
   {% empty %}
   <div>
