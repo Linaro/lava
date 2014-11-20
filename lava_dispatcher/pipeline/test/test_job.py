@@ -34,6 +34,7 @@ from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.log import YamlLogger
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ApplyOverlayImage
+from lava_dispatcher.pipeline.actions.deploy.image import QCowConversionAction
 from lava_dispatcher.pipeline.actions.deploy.mount import (
     MountAction,
     LoopCheckAction,
@@ -336,3 +337,134 @@ class TestKVMBasicDeploy(unittest.TestCase):
             if action.name == "submit_results":
                 # get the action & populate it
                 self.assertEqual(action.parameters['stream'], "/anonymous/codehelp/")
+
+
+class TestKVMQcow2Deploy(unittest.TestCase):
+
+    def setUp(self):
+        super(TestKVMQcow2Deploy, self).setUp()
+        factory = Factory()
+        self.job = factory.create_job('sample_jobs/kvm-qcow2.yaml', output_dir='/tmp')
+
+    def test_deploy_job(self):
+        # from meliae import scanner
+        # scanner.dump_all_objects('/tmp/lava-unittest.json')
+        self.assertEqual(self.job.pipeline.job, self.job)
+        for action in self.job.pipeline.actions:
+            if isinstance(action, DeployAction):
+                self.assertEqual(action.job, self.job)
+
+    def test_kvm_basic_deploy(self):
+        download = None
+        mount = None
+        checksum = None
+        customise = None
+        apply_overlay = None
+        overlay = None
+        unmount = None
+        self.assertEqual(len(self.job.pipeline.describe().values()), 33)  # this will keep changing until KVM is complete.
+        for action in self.job.pipeline.actions:
+            if isinstance(action, DeployAction):
+                self.assertEqual(len(action.pipeline.children[action.pipeline]), 8)
+                # check parser has created a suitable deployment
+                download_retry = action.pipeline.children[action.pipeline][0]
+                self.assertIsInstance(download_retry, DownloaderAction)
+                self.assertIsInstance(download_retry, RetryAction)
+                self.assertEqual(len(download_retry.pipeline.children), 1)
+                self.assertIsInstance(download_retry.log_handler, logging.FileHandler)
+                self.assertIsInstance(download_retry.logger, YamlLogger)
+
+                download = download_retry.pipeline.children[download_retry.pipeline][0]
+                self.assertEqual(download.name, "http_download")
+                self.assertIsInstance(download, DownloadHandler)
+                self.assertIsInstance(download, HttpDownloadAction)
+                self.assertIsInstance(download.log_handler, logging.FileHandler)
+                self.assertIsInstance(download.logger, YamlLogger)
+
+                convert = action.pipeline.children[action.pipeline][1]
+                self.assertEqual(convert.name, "qcow2_convert")
+                self.assertIsInstance(convert, QCowConversionAction)
+                self.assertIsInstance(convert.log_handler, logging.FileHandler)
+                self.assertIsInstance(convert.logger, YamlLogger)
+
+                checksum = action.pipeline.children[action.pipeline][2]
+                self.assertEqual(checksum.name, "checksum_action")
+                self.assertIsInstance(checksum, ChecksumAction)
+                self.assertIsInstance(checksum.log_handler, logging.FileHandler)
+                self.assertIsInstance(checksum.logger, YamlLogger)
+
+                mount = action.pipeline.children[action.pipeline][3]
+                self.assertIsInstance(mount.internal_pipeline, Pipeline)
+                self.assertEqual(mount.name, "mount_action")
+                self.assertIsInstance(mount, MountAction)
+                self.assertIsInstance(mount.log_handler, logging.FileHandler)
+                self.assertIsInstance(mount.logger, YamlLogger)
+
+                # Check internal Mount pipeline
+                self.assertEqual(len(mount.internal_pipeline.actions), 3)
+                offset = mount.internal_pipeline.actions[0]
+                self.assertEqual(offset.name, "offset_action")
+                self.assertIsInstance(offset, OffsetAction)
+                self.assertIsInstance(offset.log_handler, logging.FileHandler)
+                self.assertIsInstance(offset.logger, YamlLogger)
+
+                loop_check = mount.internal_pipeline.actions[1]
+                self.assertEqual(loop_check.name, "loop_check")
+                self.assertIsInstance(loop_check, LoopCheckAction)
+                self.assertIsInstance(loop_check.log_handler, logging.FileHandler)
+                self.assertIsInstance(loop_check.logger, YamlLogger)
+
+                loop_mount = mount.internal_pipeline.actions[2]
+                self.assertEqual(loop_mount.name, "loop_mount")
+                self.assertIsInstance(loop_mount, LoopMountAction)
+                self.assertIsInstance(loop_mount, RetryAction)
+                self.assertIsInstance(loop_mount.log_handler, logging.FileHandler)
+                self.assertIsInstance(loop_mount.logger, YamlLogger)
+
+                customise = action.pipeline.children[action.pipeline][4]
+                self.assertEqual(customise.name, "customise")
+                self.assertIsInstance(customise, CustomisationAction)
+                self.assertIsInstance(customise.log_handler, logging.FileHandler)
+                self.assertIsInstance(customise.logger, YamlLogger)
+
+                overlay = action.pipeline.children[action.pipeline][5]
+                self.assertEqual(overlay.name, "lava-overlay")
+                self.assertIsInstance(overlay, OverlayAction)
+                self.assertIsInstance(overlay.log_handler, logging.FileHandler)
+                self.assertIsInstance(overlay.logger, YamlLogger)
+
+                apply_overlay = action.pipeline.children[action.pipeline][6]
+                self.assertEqual(apply_overlay.name, "apply-overlay-image")
+                self.assertIsInstance(apply_overlay, ApplyOverlayImage)
+                self.assertIsInstance(apply_overlay.log_handler, logging.FileHandler)
+                self.assertIsInstance(apply_overlay.logger, YamlLogger)
+
+                unmount = action.pipeline.children[action.pipeline][7]
+                self.assertEqual(unmount.name, "umount-retry")
+                self.assertIsInstance(unmount, UnmountAction)
+                self.assertIsInstance(unmount, RetryAction)
+                self.assertIsInstance(unmount.log_handler, logging.FileHandler)
+                self.assertIsInstance(unmount.logger, YamlLogger)
+
+                # FIXME: deployment includes overlaying the test definitions
+                # check for customisation (TBD later)
+                # FIXME: ensure next step happens without needing to umount & remount!
+                # ensure the test definition action is inside the mount pipeline
+                # load test definitions into the image
+                # umount
+            elif isinstance(action, Action):
+                pass
+            else:
+                # print action
+                self.fail("No deploy action found")
+
+    def test_kvm_validate(self):
+        try:
+            self.job.pipeline.validate_actions()
+        except JobError as exc:
+            self.fail(exc)
+        for action in self.job.pipeline.actions:
+            if action.errors:
+                # python3
+                print(action.errors)  # pylint: disable=superfluous-parens
+            self.assertTrue(action.valid)

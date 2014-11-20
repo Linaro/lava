@@ -321,7 +321,7 @@ class QCowConversionAction(Action):
 
     def __init__(self, key):
         super(QCowConversionAction, self).__init__()
-        self.name = "qcow2"
+        self.name = "qcow2_convert"
         self.description = "convert qcow image using qemu-img"
         self.summary = "qcow conversion"
         self.key = key
