@@ -126,6 +126,9 @@ class DownloadHandler(Action):
                 decompressor = bz2.BZ2Decompressor()
             elif compression == 'xz':
                 decompressor = lzma.LZMADecompressor()
+            self.logger.debug("Using %s decompression" % compression)
+        else:
+            self.logger.debug("No compression specified.")
 
         def write(buff):
             if decompressor:
