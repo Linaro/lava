@@ -36,6 +36,10 @@ from dashboard_app.models import (
 
 class UserFiltersTable(LavaTable):
 
+    def __init__(self, user, *args, **kwargs):
+        super(UserFiltersTable, self).__init__(*args, **kwargs)
+        self.user = user
+
     name = tables.TemplateColumn('''
     <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
     ''')
@@ -81,15 +85,15 @@ class UserFiltersTable(LavaTable):
     ''')
     test.orderable = False
 
-    subscription = tables.Column()
+    subscription = tables.TemplateColumn('''{{}}''')
     subscription.orderable = False
 
     def render_subscription(self, record):
         try:
             sub = TestRunFilterSubscription.objects.get(
                 user=self.user, filter=record)
-        except TestRunFilterSubscription.DoesNotExist:
-            return "None"
+        except (TypeError, TestRunFilterSubscription.DoesNotExist):
+            return None
         else:
             return sub.get_level_display()
 
@@ -114,8 +118,8 @@ class PublicFiltersTable(UserFiltersTable):
     <a href="{{ record.get_absolute_url }}">~{{ record.owner.username }}/{{ record.name }}</a>
     ''')
 
-    def __init__(self, *args, **kw):
-        super(PublicFiltersTable, self).__init__(*args, **kw)
+    def __init__(self, user, *args, **kw):
+        super(PublicFiltersTable, self).__init__(user, *args, **kw)
 
     class Meta(LavaTable.Meta):
         exclude = (
