@@ -30,10 +30,10 @@ from lava_dispatcher.pipeline.actions.deploy.mount import (
     MountAction,
     UnmountAction,
 )
+from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ApplyOverlayImage
 from lava_dispatcher.pipeline.actions.deploy.overlay import (
     CustomisationAction,
     OverlayAction,
-    ApplyOverlayImage,
 )
 
 

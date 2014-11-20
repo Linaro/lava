@@ -27,6 +27,7 @@ from lava_dispatcher.pipeline.test.test_basic import Factory
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction, DownloadHandler, HttpDownloadAction
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
+from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ApplyOverlayImage
 from lava_dispatcher.pipeline.actions.deploy.mount import (
     MountAction,
     LoopCheckAction,
@@ -37,7 +38,6 @@ from lava_dispatcher.pipeline.actions.deploy.mount import (
 from lava_dispatcher.pipeline.actions.deploy.overlay import (
     OverlayAction,
     CustomisationAction,
-    ApplyOverlayAction,
 )
 from lava_dispatcher.pipeline.actions.deploy.testdef import TestDefinitionAction
 from lava_dispatcher.pipeline.actions.boot.kvm import BootAction
@@ -242,7 +242,7 @@ class TestKVMBasicDeploy(unittest.TestCase):
                 customise = action.pipeline.children[action.pipeline][3]
                 self.assertIsInstance(customise, CustomisationAction)
                 apply_overlay = action.pipeline.children[action.pipeline][5]
-                self.assertIsInstance(apply_overlay, ApplyOverlayAction)
+                self.assertIsInstance(apply_overlay, ApplyOverlayImage)
                 overlay = action.pipeline.children[action.pipeline][4]
                 self.assertIsInstance(overlay, OverlayAction)
                 unmount = action.pipeline.children[action.pipeline][6]
