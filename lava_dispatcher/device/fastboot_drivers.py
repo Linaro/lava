@@ -36,6 +36,7 @@ from lava_dispatcher.utils import (
     extract_modules,
     create_ramdisk,
     append_dtb,
+    prepend_blob,
 )
 
 
@@ -136,14 +137,14 @@ class BaseDriver(object):
                 if self.config.fastboot_kernel_load_addr:
                     self.fastboot('boot -c "%s" -b %s %s %s' % (boot_cmds,
                                                                 self.config.fastboot_kernel_load_addr,
-                                                                self._kernel, self._ramdisk))
+                                                                self._kernel, self._ramdisk), timeout=10)
                 else:
                     raise CriticalError('Kernel load address not defined!')
             else:
                 if self.config.fastboot_kernel_load_addr:
                     self.fastboot('boot -c "%s" -b %s %s' % (boot_cmds,
                                                              self.config.fastboot_kernel_load_addr,
-                                                             self._kernel))
+                                                             self._kernel), timeout=10)
                 else:
                     raise CriticalError('Kernel load address not defined!')
         else:
@@ -166,6 +167,11 @@ class BaseDriver(object):
         self.scratch_dir = scratch_dir
         if kernel is not None:
             self._kernel = self._get_image(kernel)
+            if self.config.prepend_blob:
+                blob = self._get_image(self.config.prepend_blob)
+                self._kernel = prepend_blob(self._kernel,
+                                            blob,
+                                            self.working_dir)
         else:
             raise CriticalError('A kernel image is required!')
         if ramdisk is not None:

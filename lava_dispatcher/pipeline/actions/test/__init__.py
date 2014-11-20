@@ -18,40 +18,42 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.pipeline import Action
+import logging
+from lava_dispatcher.pipeline.action import (
+    RetryAction,
+    Action,
+    JobError,
+    LavaTest,
+)
+
+
+def handle_testcase(params):
+
+    # FIXME: move to utils
+    data = {}
+    for param in params:
+        parts = param.split('=')
+        if len(parts) == 2:
+            key, value = parts
+            key = key.lower()
+            data[key] = value
+        else:
+            raise JobError(
+                "Ignoring malformed parameter for signal: \"%s\". " % param)
+    return data
 
 
 class TestAction(Action):
+    """
+    Base class for all actions which run lava test
+    cases on a device under test.
+    The subclass selected to do the work will be the
+    subclass returning True in the accepts(device, image)
+    function.
+    Each new subclass needs a unit test to ensure it is
+    reliably selected for the correct deployment and not
+    selected for an invalid deployment or a deployment
+    accepted by a different subclass.
+    """
 
     name = 'test'
-
-    def __init__(self):
-        super(TestAction, self).__init__()
-
-    def validate(self):
-        if 'definitions' in self.parameters:
-            for testdef in self.parameters['definitions']:
-                if 'repository' not in testdef:
-                    self.errors = "Repository missing from test definition"
-
-    def run(self, connection, args=None):
-        """
-        Needs internal actions defined, depending on the job
-        setup SignalDirector
-            Add MultiNodeSignalDirector, if required
-            Add LMPSignalDirector, if required
-        work out how to do _keep_running with separate classes for multinode & lmp
-        """
-        if not connection:
-            self._log("No connection!")
-        self._log("Executing test definitions using %s" % connection.name)
-        # internal actions:
-        # setup SignalDirector
-        # set proxy
-        # connection.run_command("ls -r %s" % self.data['lava_test_results_dir'])
-        connection.run_command(
-            "%s/bin/lava-test-runner %s" % (
-                self.data['lava_test_results_dir'],
-                self.data['lava_test_results_dir']),
-        )
-        return connection

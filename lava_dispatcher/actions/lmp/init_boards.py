@@ -103,7 +103,7 @@ def data_integrate(lmp_module_data, config):
             module_init_item = {'usb': module_defconf, 'parameters': {'name': module_name}}
             lmp_module_data_integrated.append(module_init_item)
 
-    logging.debug("lmp modules default init data is %s" % lmp_module_data_integrated.__str__())
+    logging.debug("lmp modules default init data is %s", lmp_module_data_integrated.__str__())
 
     # overlay lmp_module_data onto default config data
     for lmp_module_element in lmp_module_data:
@@ -118,19 +118,19 @@ def data_integrate(lmp_module_data, config):
             if key_string in ['hdmi', 'sata', 'eth', 'lsgpio', 'audio', 'usb']:
                 module_type = key_string
                 module_defconf = lmp_module_element[module_type]
-        logging.debug("lmp %s module %s init data is %s"
-                      % (module_type, module_name, module_defconf))
+        logging.debug("lmp %s module %s init data is %s",
+                      module_type, module_name, module_defconf)
         # poll the default config data of LMP, overlay the default config by initial data in the job definition
         for lmp_module_data_integrated_item in lmp_module_data_integrated:
             if module_type in lmp_module_data_integrated_item:
-                logging.debug("__match lmp %s module type__" % module_type)
+                logging.debug("__match lmp %s module type__", module_type)
                 if lmp_module_data_integrated_item['parameters']['name'] == module_name:
-                    logging.debug("init lmp %s module %s as %s(overlay %s)"
-                                  % (module_type, module_name, module_defconf,
-                                     lmp_module_data_integrated_item[module_type]))
+                    logging.debug("init lmp %s module %s as %s(overlay %s)",
+                                  module_type, module_name, module_defconf,
+                                  lmp_module_data_integrated_item[module_type])
                     lmp_module_data_integrated_item[module_type] = module_defconf
 
-    logging.debug("lmp modules final init data is %s" % lmp_module_data_integrated.__str__())
+    logging.debug("lmp modules final init data is %s", lmp_module_data_integrated.__str__())
 
     # return
     return lmp_module_data_integrated

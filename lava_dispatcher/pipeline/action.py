@@ -21,14 +21,19 @@
 import os
 import sys
 import time
-import signal
 import types
 import yaml
 import logging
+import datetime
 import subprocess
+import collections
 from collections import OrderedDict
 from contextlib import contextmanager
-from lava_dispatcher.config import get_device_config
+
+from lava_dispatcher.pipeline.log import YamlLogger, get_yaml_handler
+
+if sys.version > '3':
+    from functools import reduce  # pylint: disable=redefined-builtin
 
 
 class InfrastructureError(Exception):
@@ -59,19 +64,11 @@ class JobError(Exception):
 
 class TestError(Exception):
     """
-    An error in the operation of the test definition.
+    An error in the operation of the test definition, e.g.
+    in parsing measurements or commands which fail.
     """
+    # FIXME: ensure TestError is caught, logged and cleared. It is not fatal.
     pass
-
-
-class YamlFilter(logging.Filter):
-    """
-    filters standard logs into structured logs
-    """
-
-    def filter(self, record):
-        record.msg = yaml.dump(record.msg)
-        return True
 
 
 class Pipeline(object):
@@ -82,11 +79,14 @@ class Pipeline(object):
     the overall job is set along with the formatter and output filename
     of the per-action log handler.
     """
-    def __init__(self, parent=None, job=None):
+    def __init__(self, parent=None, job=None, parameters=None):
         self.children = {}
         self.actions = []
         self.summary = "pipeline"
         self.parent = None
+        if parameters is None:
+            parameters = {}
+        self.parameters = parameters
         self.job = None
         self.branch_level = 1  # the level of the last added child
         if job:  # do not unset if set by outer pipeline
@@ -105,17 +105,19 @@ class Pipeline(object):
                 self.job = parent.job
 
     def _check_action(self, action):
-        # FIXME: this should be a method from the Action class
         if not action or not issubclass(type(action), Action):
             raise RuntimeError("Only actions can be added to a pipeline: %s" % action)
+        if isinstance(action, DiagnosticAction):
+            raise RuntimeError("Diagnostic actions need to be triggered, not added to a pipeline.")
         if not action:
             raise RuntimeError("Unable to add empty action to pipeline")
+        # FIXME: these should be part of the validate from the base Action class
         if not action.name:
             raise RuntimeError("Unnamed action!")
         if ' ' in action.name:
             raise RuntimeError("Whitespace must not be used in action names, only descriptions or summaries")
 
-    def add_action(self, action):
+    def add_action(self, action, parameters=None):
         self._check_action(action)
         self.actions.append(action)
         action.level = "%s.%s" % (self.branch_level, len(self.actions))
@@ -135,26 +137,42 @@ class Pipeline(object):
             )
             if not os.path.exists(os.path.dirname(yaml_filename)):
                 os.makedirs(os.path.dirname(yaml_filename))
-            action.log_handler = logging.FileHandler(yaml_filename, mode='a', encoding="utf8")
-            # per action loggers always operate in DEBUG mode - the frontend does the parsing later.
-            action.log_handler.setLevel(logging.DEBUG)
-            # yaml wrapper inside the log handler
-            pattern = ' - id: "<LAVA_DISPATCHER>%(asctime)s"\n%(message)s'
-            action.log_handler.setFormatter(logging.Formatter(pattern))
+            action.log_handler = get_yaml_handler(yaml_filename)
+
+        # Use the pipeline parameters if the function was walled without
+        # parameters.
+        if parameters is None:
+            parameters = self.parameters
         # if the action has an internal pipeline, initialise that here.
-        action.populate()
+        action.populate(parameters)
+        # Set the parameters after populate so the sub-actions are also
+        # getting the parameters.
+        action.parameters = parameters
+
+    def _generate(self, actions_list):
+        actions = iter(actions_list)
+        while actions:
+            action = actions.next()
+            # yield the action containing the pipeline
+            yield {
+                action.level: {
+                    'description': action.description,
+                    'summary': action.summary,
+                    'content': action.explode()
+                }
+            }
+            # now yield the pipeline to add the nested actions after the containing action.
+            if action.pipeline:
+                yield action.pipeline
 
     def _describe(self, structure):
         # TODO: make the amount of output conditional on a parameter passed to describe
-        for action in self.actions:
-            structure[action.level] = {
-                'description': action.description,
-                'summary': action.summary,
-                'content': action.explode()
-            }
-            if not action.pipeline:
-                continue
-            action.pipeline._describe(structure)
+
+        for data in self._generate(self.actions):
+            if isinstance(data, Pipeline):  # recursion into sublevels
+                data._describe(structure)
+            else:
+                structure.update(data)
 
     def describe(self):
         """
@@ -164,6 +182,8 @@ class Pipeline(object):
         """
         structure = OrderedDict()
         self._describe(structure)
+        # from meliae import scanner
+        # scanner.dump_all_objects('/tmp/lava-describe.json')
         return structure
 
     @property
@@ -175,30 +195,48 @@ class Pipeline(object):
         for action in self.actions:
             action.validate()
 
+        # If this is the root pipeline, raise the errors
+        if self.parent is None and self.errors:
+            raise JobError("Invalid job data: %s\n" % '\n'.join(self.errors))
+
+    def _diagnose(self, connection):
+        """
+        Pipeline Jobs have a number of Diagnostic classes registered - all
+        supported DiagnosticAction classes should be registered with the Job.
+        If an Action.run() function reports a JobError or InfrastructureError,
+        the Pipeline calls Job.diagnose(). The job iterates through the DiagnosticAction
+        classes declared in the diagnostics list, checking if the trigger classmethod
+        matches the requested complaint. Matching diagnostics are run using the current Connection.
+        Actions generate a complaint by appending the return of the trigger classmethod
+        to the triggers list of the Job. This can be done at any point prior to the
+        exception being raised in the run function.
+        The trigger list is cleared after each diagnostic operation is complete.
+        """
+        for complaint in self.job.triggers:
+            diagnose = self.job.diagnose(complaint)
+            if diagnose:
+                connection = diagnose.run(connection, None)
+            else:
+                raise RuntimeError("No diagnosis for trigger %s" % complaint)
+        self.job.triggers = []
+        # Diagnosis is not allowed to alter the connection, do not use the return value.
+        return None
+
     def run_actions(self, connection, args=None):
         for action in self.actions:
-            # TODO: moving all logger.getLogger at the top of each file (at
-            # import time). Isn't it better to have one logger per action and
-            # to create these loggers at creation time.
-            yaml_log = None
-            std_log = logging.getLogger("ASCII")
-            # FIXME: this is not related to the log_handler. It's a side effect
-            # that the log_handkler does create the output directory.
-            if not action.log_handler:
-                # FIXME: unit test needed
-                # if no output dir specified in the job
-                std_log.debug("no output-dir, logging %s:%s to stdout", action.level, action.name)
+            action.logger = YamlLogger(action.name)
+            if action.log_handler:
+                action.logger.set_handler(action.log_handler)
             else:
-                yaml_log = logging.getLogger("YAML")  # allows per-action logs in yaml
-                yaml_log.setLevel(logging.DEBUG)  # yaml log is always in debug
-                # enable the log handler created in this action when it was added to this pipeline
-                yaml_log.addHandler(action.log_handler)
-                yaml_log.debug({'start': {action.level: action.name}})
+                action.logger.set_handler()
+            action.logger.debug('   start: %s %s' % (action.level, action.name))
             try:
                 start = time.time()
                 new_connection = action.run(connection, args)
                 action.elapsed_time = time.time() - start
-                action._log("duration: %.02f" % action.elapsed_time)
+                action.logger.debug("duration: %.02f" % action.elapsed_time)
+                if action.results:
+                    action.logger.debug({"results": action.results})
                 if new_connection:
                     connection = new_connection
             except KeyboardInterrupt:
@@ -210,10 +248,13 @@ class Pipeline(object):
             except (JobError, InfrastructureError) as exc:
                 action.errors = exc.message
                 action.results = {"fail": exc}
+                self._diagnose(connection)
+                raise exc
+            # FIXME: should we call the cleanup function here? Only the
+            #        KeyboardInterrupt case does run cleanup.
             # set results including retries
-            if action.log_handler:
-                # remove per-action log handler
-                yaml_log.removeHandler(action.log_handler)
+            if action.logger.handler:
+                action.logger.remove_handler()
         return connection
 
     def prepare_actions(self):
@@ -235,12 +276,6 @@ class Action(object):
         internal pipelines push parameters to actions
         within those pipelines. Parameters are to be
         treated as inmutable.
-
-        Logs written to the per action log must use the YAML logger.
-        Output for stdout (which is redirected to the oob_file by the
-        scheduler) should use the ASCII logger.
-        yaml_log = logging.getLogger("YAML")
-        std_log = logging.getLogger("ASCII")
         """
         # FIXME: too many?
         self.__summary__ = None
@@ -253,12 +288,15 @@ class Action(object):
         self.yaml_line = None  # FIXME: should always be in parameters
         self.__errors__ = []
         self.elapsed_time = None  # FIXME: pipeline_data?
+        self.logger = YamlLogger("root")
         self.log_handler = None
         self.job = None
-        self.results = None
+        self.__results__ = OrderedDict()
         # FIXME: what about {} for default value?
         self.env = None  # FIXME make this a parameter which gets default value when first called
-        self.timeout = None  # Timeout class instance, if needed.
+        self.timeout = Timeout('default')  # Timeout class instance, if needed.
+        self.max_retries = 1  # unless the strategy or the job parameters change this, do not retry
+        self.diagnostics = []
 
     # public actions (i.e. those who can be referenced from a job file) must
     # declare a 'class-type' name so they can be looked up.
@@ -278,11 +316,7 @@ class Action(object):
 
     @description.setter
     def description(self, description):
-        self.__set_desc__(description)
-
-    # FIXME: dwhy do you need this function?
-    def __set_desc__(self, desc):
-        self.__description__ = desc
+        self.__description__ = description
 
     @property
     def summary(self):
@@ -297,27 +331,23 @@ class Action(object):
 
     @summary.setter
     def summary(self, summary):
-        self.__set_summary__(summary)
-
-    # FIXME: dwhy do you need this function?
-    def __set_summary__(self, summary):
         self.__summary__ = summary
 
     @property
     def data(self):
         """
-        Shortcut to the job.context.pipeline_data
+        Shortcut to the job.context
         """
         if not self.job:
             return None
-        return self.job.context.pipeline_data
+        return self.job.context
 
     @data.setter
     def data(self, value):
         """
-        Accepts a dict to be updated in the job.context.pipeline_data
+        Accepts a dict to be updated in the job.context
         """
-        self.job.context.pipeline_data.update(value)
+        self.job.context.update(value)
 
     # FIXME: has to be called select to be consistent with Deployment
     @classmethod
@@ -333,7 +363,7 @@ class Action(object):
 
     @errors.setter
     def errors(self, error):
-        self._log(error)
+        self.logger.debug(error)
         self.__errors__.append(error)
 
     @property
@@ -356,10 +386,6 @@ class Action(object):
 
     @level.setter
     def level(self, value):
-        self.__set_level__(value)
-
-    # FIXME: dwhy do you need this function?
-    def __set_level__(self, value):
         self.__level__ = value
 
     @property
@@ -380,7 +406,31 @@ class Action(object):
         return self.__parameters__
 
     def __set_parameters__(self, data):
-        self.__parameters__.update(data)
+        try:
+            self.__parameters__.update(data)
+        except ValueError:
+            raise RuntimeError("Action parameters need to be a dictionary")
+        if 'timeout' in self.parameters:
+            # FIXME: a top level timeout should cover all actions within the pipeline, not each action have the same timeout.
+            time_int = 0
+            # allow integers but convert directly to seconds.
+            if type(self.parameters['timeout']) == int:
+                self.parameters['timeout'] = "%ss" % self.parameters['timeout']
+            time_str = self.parameters['timeout'][:-1]
+            try:
+                time_int = int(time_str)
+            except ValueError:
+                self.errors = "%s - Could not convert timeout: %s to an integer. %s" % (self.name, time_str, type(self.parameters['timeout']))
+            if time_int:
+                # FIXME: use a standard timeparsing module instead of inventing another confusing syntax.
+                if self.parameters['timeout'].endswith('m'):
+                    self.timeout = Timeout(self.name, datetime.timedelta(minutes=time_int).total_seconds())
+                elif self.parameters['timeout'].endswith('h'):
+                    self.timeout = Timeout(self.name, datetime.timedelta(hours=time_int).total_seconds())
+                elif self.parameters['timeout'].endswith('s'):
+                    self.timeout = Timeout(self.name, time_int)
+        if 'failure_retry' in self.parameters:
+            self.max_retries = self.parameters['failure_retry']
 
     @parameters.setter
     def parameters(self, data):
@@ -389,6 +439,20 @@ class Action(object):
             for action in self.pipeline.actions:
                 action.parameters = self.parameters
 
+    @property
+    def results(self):
+        """
+        Updated dictionary of results for this action.
+        """
+        return self.__results__
+
+    @results.setter
+    def results(self, data):
+        try:
+            self.__results__.update(data)
+        except ValueError:
+            raise RuntimeError("Action results need to be a dictionary")
+
     def validate(self):
         """
         This method needs to validate the parameters to the action. For each
@@ -396,13 +460,23 @@ class Action(object):
         Validation includes parsing the parameters for this action for
         values not set or values which conflict.
         """
-        if self.errors:
-            self._log("Validation failed")
-            raise JobError("Invalid job data: %s\n" % '\n'.join(self.errors))
+        # Basic checks
+        if not self.name:
+            self.errors = "%s action has no name set" % self
+        if ' ' in self.name:
+            self.errors = "Whitespace must not be used in action names, only descriptions or summaries: %s" % self.name
 
-    def populate(self):
+        # Collect errors from internal pipeline actions
+        self.job.context.setdefault(self.name, {})
+        if self.internal_pipeline:
+            self.internal_pipeline.validate_actions()
+            self.errors.extend(self.internal_pipeline.errors)
+
+    def populate(self, parameters):
         """
-        This method allows an action to add an internal pipeline
+        This method allows an action to add an internal pipeline.
+        The parameters are used to configure the internal pipeline on the
+        fly.
         """
         pass
 
@@ -418,28 +492,16 @@ class Action(object):
         In this classs this method does nothing. It must be implemented by
         subclasses
         """
+        # FIXME: is this still relevant?
         pass
 
     def __call__(self, connection):
+        # FIXME: necessary?
         try:
             new_connection = self.run(connection)
             return new_connection
         finally:
             self.cleanup()
-
-    def _log(self, message):
-        if not message:
-            return
-        # FIXME: why are we recreating the loggers everytime? Maybe having one
-        # logger per action si easier to use. Calling it YAML.%(action_name)s
-        yaml_log = logging.getLogger("YAML")
-        std_log = logging.getLogger("ASCII")
-        if type(message) is dict:
-            for key, value in message.iteritems():
-                yaml_log.debug("   %s: %s" % (key, value))
-        else:
-            yaml_log.debug("   log: \"%s\"" % message)
-        std_log.info(message)
 
     def _run_command(self, command_list, env=None):
         """
@@ -456,9 +518,10 @@ class Action(object):
         # FIXME: see logger
         yaml_log = logging.getLogger("YAML")
         log = None
-        if not self.env:
-            self.env = {'http_proxy': self.job.context.config.lava_proxy,
-                        'https_proxy': self.job.context.config.lava_proxy}
+        # FIXME: define a method of configuring the proxy for the pipeline.
+        # if not self.env:
+        #     self.env = {'http_proxy': self.job.context.config.lava_proxy,
+        #                 'https_proxy': self.job.context.config.lava_proxy}
         if env:
             self.env.update(env)
         # FIXME: distinguish between host and target commands and add 'nice' to host
@@ -467,6 +530,8 @@ class Action(object):
         except KeyboardInterrupt:
             self.cleanup()
             self.err = "\rCancel"  # Set a useful message.
+            yaml_log.debug("Cancelled")
+            return None
         except OSError as exc:
             yaml_log.debug({exc.strerror: exc.child_traceback.split('\n')})
         except subprocess.CalledProcessError as exc:
@@ -475,7 +540,9 @@ class Action(object):
                 'command': [i.strip() for i in exc.cmd],
                 'message': [i.strip() for i in exc.message],
                 'output': exc.output.split('\n')})
-        self._log("%s\n%s" % (' '.join(command_list), log))
+        self.logger.debug("%s\n%s" % (' '.join(command_list), log))
+        if not log:
+            return ''  # allow for commands which return no output
         return log
 
     def run(self, connection, args=None):
@@ -508,14 +575,14 @@ class Action(object):
             if self.err:
                 print self.err
         """
-        # FIXME: should be "raise NotImplementedError"
-        pass
+        if self.internal_pipeline:
+            return self.internal_pipeline.run_actions(connection, args)
+        raise NotImplementedError("run %s" % self.name)
 
     def cleanup(self):
-        # FIXME: perform() does not exist, is it run()?
         """
-        This method *will* be called after perform(), no matter whether
-        perform() raises an exception or not. It should cleanup any resources
+        This method *will* be called after run(), no matter whether
+        run() raises an exception or not. It should cleanup any resources
         that may be left open by perform, such as, but not limited to:
 
             - open file descriptors
@@ -523,11 +590,7 @@ class Action(object):
             - error codes
             - etc
         """
-        # FIXME: should be "raise NotImplementedError"
-        try:
-            raise
-        except:  # pylint: disable=bare-except
-            sys.exc_clear()
+        pass
 
     def post_process(self):
         """
@@ -535,24 +598,27 @@ class Action(object):
         extracted, and passed to this method so that the action can
         inspect/extract its results.
 
+        Most Actions except TestAction will not have anything to do here.
         In this classs this method does nothing. It must be implemented by
         subclasses
         """
-        # FIXME: should be "raise NotImplementedError"
+        # FIXME: with the results inside the pipeline already, is this needed?
         pass
 
     def explode(self):
         """
         serialisation support
         """
+        # FIXME: convert to generators for each particular handler
         data = {}
-        members = [attr for attr in dir(self) if not callable(attr) and not attr.startswith("__")]
+        members = [attr for attr in dir(self)
+                   if not isinstance(attr, collections.Callable) and not attr.startswith("__")]
         members.sort()
         for name in members:
             if name == "pipeline":
                 continue
             content = getattr(self, name)
-            if name == "job" or name == "log_handler" or name == "internal_pipeline":
+            if name == "job" or name == "_log" or name == "internal_pipeline":
                 continue
             if name == "timeout":
                 if content and not getattr(content, 'protected'):
@@ -581,37 +647,76 @@ class RetryAction(Action):
     def __init__(self):
         super(RetryAction, self).__init__()
         self.retries = 0
-        # FIXME: have better dafault values. Should be seen somewhere in the
-        # configuration or a constant in the code.
-        self.max_retries = 5
         self.sleep = 1
 
+    def validate(self):
+        """
+        The reasoning here is that the RetryAction should be in charge of an internal pipeline
+        so that the retry logic only occurs once and applies equally to the entire pipeline
+        of the retry.
+        """
+        super(RetryAction, self).validate()
+        if not self.internal_pipeline:
+            raise RuntimeError("Retry action %s needs to implement an internal pipeline" % self.name)
+
     def run(self, connection, args=None):
-        while self.retries <= self.max_retries:
+        while self.retries < self.max_retries:
             try:
-                new_connection = self.run(connection)
+                new_connection = self.internal_pipeline.run_actions(connection)
                 return new_connection
             except KeyboardInterrupt:
-                # FIXME: calling cleanup two times!
-                self.cleanup()
                 self.err = "\rCancel"  # Set a useful message.
-            except (JobError, InfrastructureError):
-                # FIXME: print the retry cont like %(current_retry)d/%(max_retry)d
-                self._log("%s failed, trying again" % self.name)
+                self.errors = "Cancelled"
+                return connection
+            except (JobError, InfrastructureError, TestError):
                 self.retries += 1
+                msg = "%s failed: %d of %d attempts." % (self.name, self.retries, self.max_retries)
+                self.errors = msg
+                self.logger.debug(msg)
                 time.sleep(self.sleep)
             finally:
-                # QUESTION: is it the right time to cleanup?
+                # TODO: QUESTION: is it the right time to cleanup?
                 self.cleanup()
-        raise JobError("%s retries failed for %s" % (self.retries, self.name))
+        self.errors = "%s retries failed for %s" % (self.retries, self.name)
+        self.logger.debug("%s retries failed for %s" % (self.retries, self.name))
 
     def __call__(self, connection):
         self.run(connection)
 
 
+class DiagnosticAction(Action):  # pylint: disable=abstract-class-not-used
+
+    def __init__(self):
+        """
+        Base class for actions which are run only if a failure is detected.
+        Diagnostics have no level and are not intended to be added to Pipeline.
+        """
+        super(DiagnosticAction, self).__init__()
+        self.name = "diagnose"
+        self.summary = "diagnose action failure"
+        self.description = "action-specific diagnostics in case of failure"
+
+    @classmethod
+    def trigger(cls):
+        raise NotImplementedError("Define in the subclass: %s" % cls)
+
+    def run(self, connection, args=None):
+        """
+        Log the requested diagnostic.
+        Raises NotImplementedError if subclass has omitted a trigger classmethod.
+        """
+        self.logger.debug("%s diagnostic triggered." % self.trigger())
+        return connection
+
+
 class FinalizeAction(Action):
 
     def __init__(self):
+        """
+        The FinalizeAction is always added as the last Action in the top level pipeline by the parser.
+        The tasks include finalising the connection (whatever is the last connection in the pipeline)
+        and writing out the final pipeline structure containing the results as a logfile.
+        """
         super(FinalizeAction, self).__init__()
         self.name = "finalize"
         self.summary = "finalize the job"
@@ -624,6 +729,17 @@ class FinalizeAction(Action):
         """
         if connection:
             connection.finalise()
+        self.results = {'status': "Complete"}
+        # FIXME: just write out a file, not put to stdout via logger.
+        yaml_log = logging.getLogger("YAML")
+        yaml_log.debug(yaml.dump(self.job.pipeline.describe()))
+        # FIXME: detect a Cancel and set status as Cancel
+        if self.job.pipeline.errors:
+            self.results = {'status': "Incomplete"}
+            yaml_log.debug("Status: Incomplete")
+            yaml_log.debug(self.job.pipeline.errors)
+        # from meliae import scanner
+        # scanner.dump_all_objects('filename.json')
 
 
 class Deployment(object):  # pylint: disable=abstract-class-not-used
@@ -644,32 +760,6 @@ class Deployment(object):  # pylint: disable=abstract-class-not-used
         self.pipeline = parent
         self.job = parent.job
 
-    @contextmanager
-    def deploy(self):
-        """
-        This method first mounts the image locally, exposing its root
-        filesystem in a local directory which will be yielded to the
-        caller, which has the chance to modify the contents of the root
-        filesystem.
-
-        Then, the root filesystem will be unmounted and the image will
-        be deployed to the device.
-
-        This method must be implemented by subclasses.
-        """
-        raise NotImplementedError("deploy")
-
-    @contextmanager
-    def extract_results(self):
-        """
-        This method will extract the results directory from the root filesystem
-        in the device. After copying that directory locally, the local copy
-        will be yielded to the caller, who can read data from it.
-
-        Must be implemented by subclasses.
-        """
-        raise NotImplementedError("extract_results")
-
     @property
     def parameters(self):
         """
@@ -687,12 +777,9 @@ class Deployment(object):  # pylint: disable=abstract-class-not-used
         """
         return self.__parameters__
 
-    def __set_parameters__(self, data):
-        self.__parameters__.update(data)
-
     @parameters.setter
     def parameters(self, data):
-        self.__set_parameters__(data)
+        self.__parameters__.update(data)
 
     @classmethod
     def accepts(cls, device, parameters):  # pylint: disable=unused-argument
@@ -702,7 +789,7 @@ class Deployment(object):  # pylint: disable=abstract-class-not-used
 
         Must be implemented by subclasses.
         """
-        return NotImplementedError("accepts")
+        return NotImplementedError("accepts %s" % cls)
 
     @classmethod
     def select(cls, device, parameters):
@@ -713,7 +800,7 @@ class Deployment(object):  # pylint: disable=abstract-class-not-used
         if len(willing) == 0:
             raise NotImplementedError(
                 "No deployment strategy available for the given "
-                "device '%s'." % device.parameters['hostname'])
+                "device '%s'. %s" % (device.parameters['hostname'], cls))
 
         # higher priority first
         compare = lambda x, y: cmp(y.priority, x.priority)
@@ -742,7 +829,7 @@ class Boot(object):
 
         Must be implemented by subclasses.
         """
-        return NotImplementedError("accepts")
+        return NotImplementedError("accepts %s" % cls)
 
     @classmethod
     def select(cls, device, parameters):
@@ -751,7 +838,7 @@ class Boot(object):
         if len(willing) == 0:
             raise NotImplementedError(
                 "No boot strategy available for the device "
-                "'%s' with the specified job parameters" % device.parameters['hostname']
+                "'%s' with the specified job parameters. %s" % (device.parameters['hostname'], cls)
             )
 
         # higher priority first
@@ -763,10 +850,10 @@ class Boot(object):
 
 class LavaTest(object):  # pylint: disable=abstract-class-not-used
     """
-    Allows selection of the boot method for this job within the parser.
+    Allows selection of the LAVA test method for this job within the parser.
     """
 
-    priority = 0
+    priority = 1
 
     def __init__(self, parent):
         self.__parameters__ = {}
@@ -774,31 +861,33 @@ class LavaTest(object):  # pylint: disable=abstract-class-not-used
         self.job = parent.job
 
     @contextmanager
-    def boot(self):
+    def test(self):
         """
         This method must be implemented by subclasses.
         """
-        raise NotImplementedError("test")
+        raise NotImplementedError("test %s" % self)
 
     @classmethod
     def accepts(cls, device, parameters):  # pylint: disable=unused-argument
         """
-        Returns True if this deployment strategy can be used the the
+        Returns True if this Lava test strategy can be used on the
         given device and details of an image in the parameters.
 
         Must be implemented by subclasses.
         """
-        return NotImplementedError("accepts")
+        return NotImplementedError("accepts %s" % cls)
 
     @classmethod
     def select(cls, device, parameters):
         candidates = cls.__subclasses__()
         willing = [c for c in candidates if c.accepts(device, parameters)]
         if len(willing) == 0:
-            raise NotImplementedError(
-                "No test strategy available for the device "
-                "'%s' with the specified job parameters" % device.parameters['hostname']
-            )
+            if hasattr(device, 'parameters'):
+                msg = "No test strategy available for the device "\
+                      "'%s' with the specified job parameters. %s" % (device.parameters['hostname'], cls)
+            else:
+                msg = "No test strategy available for the device. %s" % cls
+            raise NotImplementedError(msg)
 
         # higher priority first
         compare = lambda x, y: cmp(y.priority, x.priority)
@@ -807,19 +896,28 @@ class LavaTest(object):  # pylint: disable=abstract-class-not-used
         return prioritized[0]
 
 
-class Image(object):  # pylint: disable=abstract-class-not-used
+class PipelineContext(object):
     """
-    Create subclasses for each type of image: prebuilt, hwpack+rootfs,
-    kernel+rootfs+dtb+..., dummy, ...
-    TBD: this might not be needed.
+    Replacement for the LavaContext which only holds data for the device for the
+    current pipeline.
+
+    The PipelineContext is the home for dynamic data generated by action run steps
+    where that data is required by a later step. e.g. the mountpoint used by the
+    loopback mount action will be needed by the umount action later.
+
+    Data which does not change for the lifetime of the job must be kept as a
+    parameter of the job, e.g. output_dir and target.
+
+    Do NOT store data here which is not relevant to ALL pipelines, this is NOT
+    the place for any configuration relating to devices or device types. The
+    NewDevice class loads only the configuration required for the one device.
+
+    Keep the memory footprint of this class as low as practical.
     """
 
-    @contextmanager
-    def mount_rootfs(self):
-        """
-        Subclasses must implement this method
-        """
-        raise NotImplementedError("mount_rootfs")
+    # FIXME: needs to pick up minimal general purpose config, e.g. proxy or cookies
+    def __init__(self):
+        self.pipeline_data = {}
 
 
 class Timeout(object):
@@ -850,46 +948,3 @@ class Timeout(object):
             raise JobError("Trying to modify a protected timeout: %s.", self.name)
         clamp = lambda n, minn, maxn: max(min(maxn, n), minn)
         self.duration = clamp(duration, 1, 300)
-
-
-class Connection(object):
-    """
-    A raw_connection is an arbitrary instance of a standard Python (or added LAVA) class
-    designed to implement an interactive connection onto the device. The raw_connection
-    needs to be able to send commands, use a timeout, handle errors, log the output,
-    match on regular expressions for the output, report the pid of the spawned process
-    and cause the spawned process to close/terminate.
-    The current implementation uses a pexpect.spawn wrapper. For a standard Shell
-    connection, that is the ShellCommand class.
-    Each different wrapper of pexpect.spawn (and any other wrappers later designed)
-    needs to be a separate class supported by another class inheriting from Connection.
-    """
-    def __init__(self, device, raw_connection):
-        self.device = device
-        self.raw_connection = raw_connection
-
-    def sendline(self, line):
-        self.raw_connection.sendline(line)
-
-    def finalise(self):
-        if self.raw_connection:
-            yaml_log = logging.getLogger("YAML")
-            try:
-                os.killpg(self.raw_connection.pid, signal.SIGKILL)
-                yaml_log.debug("Finalizing child process group with PID %d" % self.raw_connection.pid)
-            except OSError:
-                connection.kill(9)
-                yaml_log.debug("Finalizing child process with PID %d" % self.raw_connection.pid)
-            self.raw_connection.close()
-
-
-class Device(object):
-    """
-    Holds all data about the device for this TestJob including
-    all database parameters and device condfiguration.
-    In the dumb dispatcher model, an instance of Device would
-    be populated directly from the master scheduler.
-    """
-
-    def __init__(self, hostname):
-        self.config = get_device_config(hostname)

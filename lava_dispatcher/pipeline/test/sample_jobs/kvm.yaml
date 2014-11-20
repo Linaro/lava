@@ -13,6 +13,7 @@ actions:
         timeout: 20m
         to: tmpfs
         image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        compression: gz
         os: debian
         # if root_partition partition is not present:
         # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
@@ -27,6 +28,8 @@ actions:
     - test:
         failure_retry: 3
         name: kvm-basic-singlenode  # is not present, use "test $N"
+        # only s, m & h are supported.
+        timeout: 5m # uses install:deps, so takes longer than singlenode01
         definitions:
             - repository: git://git.linaro.org/qa/test-definitions.git
               from: git
@@ -36,10 +39,10 @@ actions:
               # calling the lava-test-suite-name API call (e.g.
               # `lava-test-suite-name FOO`).
               name: smoke-tests
-            - from: git
-              repository: git://git.linaro.org/people/neilwilliams/multinode-yaml.git
-              path: singlenode01.yaml
-              name: singlenode-basic
+            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+              from: git
+              path: lava-test-shell/single-node/singlenode03.yaml
+              name: singlenode-advanced
 
     - submit_results:
         stream: /anonymous/codehelp/

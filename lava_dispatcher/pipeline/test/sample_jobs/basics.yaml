@@ -1,6 +1,6 @@
 # Sample JOB definition for LAVA dispatcher
 
-device_type: whatever
+device_type: kvm
 
 job_name: sample
 job_timeout: 8h             # timeout for the whole job (default: ??h)

@@ -536,7 +536,10 @@ class LavaClient(object):
 
             # Record boot time metadata
             boottime = "{0:.2f}".format(time.time() - start)
-            boottime_meta = {'kernel-boot-time': boottime}
+            boottime_meta = {}
+            boottime_meta['kernel-boot-time'] = boottime
+            boottime_meta['boot-retries'] = str(attempts)
+            boottime_meta['dtb-append'] = str(self.config.append_dtb)
             self.context.test_data.add_metadata(boottime_meta)
             logging.debug("Kernel boot time: %s seconds" % boottime)
 
@@ -626,6 +629,10 @@ class LavaClient(object):
             boottime_meta = {'kernel-boot-time': boottime}
             self.context.test_data.add_metadata(boottime_meta)
             logging.debug("Kernel boot time: %s seconds" % boottime)
+
+            # Gain root access
+            self.proc.sendline('su')
+            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
 
             # TODO: set up proxy
 

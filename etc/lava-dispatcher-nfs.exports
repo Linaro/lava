@@ -9,5 +9,5 @@
 # /srv/nfs4/homes  gss/krb5i(rw,sync,no_subtree_check)
 #
 
-/var/lib/lava/dispatcher/tmp *(rw,no_root_squash,no_all_squash,sync,no_subtree_check)
+/var/lib/lava/dispatcher/tmp *(rw,no_root_squash,no_all_squash,async,no_subtree_check)
 
