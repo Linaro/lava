@@ -28,6 +28,7 @@ from lava_dispatcher.pipeline.actions.deploy.download import (
     ChecksumAction,
     DownloaderAction,
     DownloadHandler,
+    FileDownloadAction,
     HttpDownloadAction,
 )
 from lava_dispatcher.pipeline.job import Job
@@ -468,3 +469,111 @@ class TestKVMQcow2Deploy(unittest.TestCase):
                 # python3
                 print(action.errors)  # pylint: disable=superfluous-parens
             self.assertTrue(action.valid)
+
+
+class TestKVMDownloadLocalDeploy(unittest.TestCase):
+
+    def setUp(self):
+        super(TestKVMDownloadLocalDeploy, self).setUp()
+        factory = Factory()
+        self.job = factory.create_job('sample_jobs/kvm-local.yaml', output_dir='/tmp')
+
+    def test_deploy_job(self):
+        # from meliae import scanner
+        # scanner.dump_all_objects('/tmp/lava-unittest.json')
+        self.assertEqual(self.job.pipeline.job, self.job)
+        for action in self.job.pipeline.actions:
+            if isinstance(action, DeployAction):
+                self.assertEqual(action.job, self.job)
+
+    def test_kvm_basic_deploy(self):
+        download = None
+        mount = None
+        checksum = None
+        customise = None
+        apply_overlay = None
+        overlay = None
+        unmount = None
+        self.assertEqual(len(self.job.pipeline.describe().values()), 32)  # this will keep changing until KVM is complete.
+        for action in self.job.pipeline.actions:
+            if isinstance(action, DeployAction):
+                self.assertEqual(len(action.pipeline.children[action.pipeline]), 7)
+                # check parser has created a suitable deployment
+                download_retry = action.pipeline.children[action.pipeline][0]
+                self.assertIsInstance(download_retry, DownloaderAction)
+                self.assertIsInstance(download_retry, RetryAction)
+                self.assertEqual(len(download_retry.pipeline.children), 1)
+                self.assertIsInstance(download_retry.log_handler, logging.FileHandler)
+                self.assertIsInstance(download_retry.logger, YamlLogger)
+
+                download = download_retry.pipeline.children[download_retry.pipeline][0]
+                self.assertEqual(download.name, "file_download")
+                self.assertIsInstance(download, DownloadHandler)
+                self.assertIsInstance(download, FileDownloadAction)
+                self.assertIsInstance(download.log_handler, logging.FileHandler)
+                self.assertIsInstance(download.logger, YamlLogger)
+
+                checksum = action.pipeline.children[action.pipeline][1]
+                self.assertEqual(checksum.name, "checksum_action")
+                self.assertIsInstance(checksum, ChecksumAction)
+                self.assertIsInstance(checksum.log_handler, logging.FileHandler)
+                self.assertIsInstance(checksum.logger, YamlLogger)
+
+                mount = action.pipeline.children[action.pipeline][2]
+                self.assertIsInstance(mount.internal_pipeline, Pipeline)
+                self.assertEqual(mount.name, "mount_action")
+                self.assertIsInstance(mount, MountAction)
+                self.assertIsInstance(mount.log_handler, logging.FileHandler)
+                self.assertIsInstance(mount.logger, YamlLogger)
+
+                # Check internal Mount pipeline
+                self.assertEqual(len(mount.internal_pipeline.actions), 3)
+                offset = mount.internal_pipeline.actions[0]
+                self.assertEqual(offset.name, "offset_action")
+                self.assertIsInstance(offset, OffsetAction)
+                self.assertIsInstance(offset.log_handler, logging.FileHandler)
+                self.assertIsInstance(offset.logger, YamlLogger)
+
+                loop_check = mount.internal_pipeline.actions[1]
+                self.assertEqual(loop_check.name, "loop_check")
+                self.assertIsInstance(loop_check, LoopCheckAction)
+                self.assertIsInstance(loop_check.log_handler, logging.FileHandler)
+                self.assertIsInstance(loop_check.logger, YamlLogger)
+
+                loop_mount = mount.internal_pipeline.actions[2]
+                self.assertEqual(loop_mount.name, "loop_mount")
+                self.assertIsInstance(loop_mount, LoopMountAction)
+                self.assertIsInstance(loop_mount, RetryAction)
+                self.assertIsInstance(loop_mount.log_handler, logging.FileHandler)
+                self.assertIsInstance(loop_mount.logger, YamlLogger)
+
+                customise = action.pipeline.children[action.pipeline][3]
+                self.assertEqual(customise.name, "customise")
+                self.assertIsInstance(customise, CustomisationAction)
+                self.assertIsInstance(customise.log_handler, logging.FileHandler)
+                self.assertIsInstance(customise.logger, YamlLogger)
+
+                overlay = action.pipeline.children[action.pipeline][4]
+                self.assertEqual(overlay.name, "lava-overlay")
+                self.assertIsInstance(overlay, OverlayAction)
+                self.assertIsInstance(overlay.log_handler, logging.FileHandler)
+                self.assertIsInstance(overlay.logger, YamlLogger)
+
+                apply_overlay = action.pipeline.children[action.pipeline][5]
+                self.assertEqual(apply_overlay.name, "apply-overlay-image")
+                self.assertIsInstance(apply_overlay, ApplyOverlayImage)
+                self.assertIsInstance(apply_overlay.log_handler, logging.FileHandler)
+                self.assertIsInstance(apply_overlay.logger, YamlLogger)
+
+                unmount = action.pipeline.children[action.pipeline][6]
+                self.assertEqual(unmount.name, "umount-retry")
+                self.assertIsInstance(unmount, UnmountAction)
+                self.assertIsInstance(unmount, RetryAction)
+                self.assertIsInstance(unmount.log_handler, logging.FileHandler)
+                self.assertIsInstance(unmount.logger, YamlLogger)
+
+            elif isinstance(action, Action):
+                pass
+            else:
+                # print action
+                self.fail("No deploy action found")
