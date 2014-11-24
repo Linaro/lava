@@ -716,6 +716,10 @@ class Target(object):
             f.write('%s\n' % self.config.hostname)
 
     @property
+    def target_distro(self):
+        return self.deployment_data['distro']
+
+    @property
     def tester_ps1(self):
         return self._get_from_config_or_deployment_data('tester_ps1')
 
