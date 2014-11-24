@@ -132,7 +132,8 @@ class PowerOn(Action):
         self.description = "supply power to device"
 
     def run(self, connection, args=None):
-        if 'power_on' in self.job.device.parameters['commands']:
+        if 'commands' in self.job.device.parameters and \
+           'power_on' in self.job.device.parameters['commands']:
             command = self.job.device.parameters['commands']['power_on']
             if not self._run_command(command.split(' ')):
                 raise InfrastructureError("%s command failed" % command)
@@ -150,7 +151,8 @@ class PowerOff(Action):
         self.description = "discontinue power to device"
 
     def run(self, connection, args=None):
-        if 'power_off' in self.job.device.parameters['commands']:
+        if 'commands' in self.job.device.parameters and \
+           'power_off' in self.job.device.parameters['commands']:
             command = self.job.device.parameters['commands']['power_off']
             if not self._run_command(command.split(' ')):
                 raise InfrastructureError("%s command failed" % command)
