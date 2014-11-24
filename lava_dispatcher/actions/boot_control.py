@@ -74,6 +74,7 @@ class cmd_boot_linaro_android_image(BaseAction):
             client.config.test_image_prompts.append(test_image_prompt)
         client.target_device.boot_options = options
         client.config.android_wait_for_home_screen = wait_for_home_screen
+        client.target_device.reset_boot(in_test_shell=False)
         try:
             client.boot_linaro_android_image(
                 adb_check=adb_check)
@@ -105,6 +106,7 @@ class cmd_boot_linaro_image(BaseAction):
         if test_image_prompt is not None:
             client.config.test_image_prompts.append(test_image_prompt)
         client.target_device.boot_options = options
+        client.target_device.reset_boot(in_test_shell=False)
         status = 'pass'
         try:
             client.boot_linaro_image()

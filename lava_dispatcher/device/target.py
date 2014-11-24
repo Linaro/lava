@@ -235,7 +235,7 @@ class Target(object):
         # By default we pass
         pass
 
-    def reset_boot(self):
+    def reset_boot(self, in_test_shell=True):
         # By default we pass
         pass
 
