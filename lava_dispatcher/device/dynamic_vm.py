@@ -187,9 +187,13 @@ class kvm_adapter(object):
             run('fusermount -u %s' % dir_mount_point, failok=False)
 
     def cleanup(self):
-        image = self.device._sd_image
-        self.run_on_host(
-            'pkill -f "qemu-system-arm.*%s"' % image)
+        if self.device._sd_image:
+            image = self.device._sd_image
+        elif self.device._ramdisk:
+            image = self.device._ramdisk
+        if image:
+            self.run_on_host(
+                'pkill -f "qemu-system-arm.*%s"' % image)
         self.run_on_host('rm -rf %s' % self.vm_images_dir)
 
     def run_on_host(self, cmd):
