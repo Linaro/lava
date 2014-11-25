@@ -201,3 +201,33 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
                     extract = action
         self.assertIsNotNone(extract)
         self.assertEqual(extract.timeout.duration, job.parameters['timeouts'][extract.name]['seconds'])
+
+    def test_reset_actions(self):
+        factory = Factory()
+        job = factory.create_job('sample_jobs/uboot.yaml')
+        uboot_action = None
+        uboot_retry = None
+        reset_action = None
+        for action in job.pipeline.actions:
+            action.validate()
+            self.assertTrue(action.valid)
+            if action.name == 'uboot-action':
+                uboot_action = action
+        names = [r_action.name for r_action in uboot_action.internal_pipeline.actions]
+        self.assertIn('connect-device', names)
+        self.assertIn('uboot-retry', names)
+        for action in uboot_action.internal_pipeline.actions:
+            if action.name == 'uboot-retry':
+                uboot_retry = action
+        names = [r_action.name for r_action in uboot_retry.internal_pipeline.actions]
+        self.assertIn('reboot-device', names)
+        self.assertIn('u-boot-interrupt', names)
+        self.assertIn('expect-shell-connection', names)
+        self.assertIn('u-boot-commands', names)
+        for action in uboot_retry.internal_pipeline.actions:
+            if action.name == 'reboot-device':
+                reset_action = action
+        names = [r_action.name for r_action in reset_action.internal_pipeline.actions]
+        self.assertIn('soft-reboot', names)
+        self.assertIn('pdu_reboot', names)
+        self.assertIn('power_on', names)

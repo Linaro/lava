@@ -184,7 +184,6 @@ class TestKVMBasicDeploy(unittest.TestCase):
     def test_kvm_basic_deploy(self):
         download = None
         mount = None
-        checksum = None
         customise = None
         apply_overlay = None
         overlay = None
@@ -370,7 +369,6 @@ class TestKVMQcow2Deploy(unittest.TestCase):
     def test_kvm_basic_deploy(self):
         download = None
         mount = None
-        checksum = None
         customise = None
         apply_overlay = None
         overlay = None
@@ -499,7 +497,6 @@ class TestKVMDownloadLocalDeploy(unittest.TestCase):
     def test_kvm_basic_deploy(self):
         download = None
         mount = None
-        checksum = None
         customise = None
         apply_overlay = None
         overlay = None
@@ -593,7 +590,6 @@ class TestKVMInlineTestDeploy(unittest.TestCase):
     def test_kvm_inline_deploy(self):
         download = None
         mount = None
-        checksum = None
         customise = None
         apply_overlay = None
         overlay = None

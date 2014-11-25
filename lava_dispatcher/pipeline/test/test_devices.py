@@ -109,3 +109,21 @@ class TestJobDeviceParameters(unittest.TestCase):  # pylint: disable=too-many-pu
                 self.assertIsNotNone(action.parameters['u-boot']['ramdisk'])
                 self.assertTrue(type(action.parameters['u-boot']['ramdisk']['commands']) == list)
                 self.assertTrue(len(action.parameters['u-boot']['ramdisk']['commands']) > 2)
+
+    def test_device_power(self):
+        device = NewDevice("bbb-01")
+        self.assertEqual(device.power_state, 'off')
+        self.assertNotEqual(device.hard_reset_command, '')
+        self.assertNotEqual(device.power_command, '')
+        self.assertIn('on', device.power_command)
+        with self.assertRaises(TypeError):
+            device.power_state('')
+        device.power_state = 'on'
+        self.assertEqual(device.power_state, 'on')
+        device = NewDevice("kvm01")
+        self.assertEqual(device.power_state, '')
+        self.assertEqual(device.hard_reset_command, '')
+        self.assertEqual(device.power_command, '')
+        with self.assertRaises(RuntimeError):
+            device.power_state = ''
+        self.assertEqual(device.power_command, '')

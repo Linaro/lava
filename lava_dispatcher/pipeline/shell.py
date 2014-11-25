@@ -235,8 +235,6 @@ class ConnectDevice(Action):
         # does require that telnet is always installed.
 
     def run(self, connection, args=None):
-        # if connection:
-        #     raise RuntimeError("A connection already exists")
         command = self.job.device.parameters['commands']['connect']
         self.logger.debug("connecting to device using '%s'" % command)
         shell = ShellCommand("%s\n" % command, self.timeout)
@@ -244,7 +242,9 @@ class ConnectDevice(Action):
             raise JobError("%s command exited %d: %s" % (command, shell.exitstatus, shell.readlines()))
         connection = ShellSession(self.job, shell)
         connection.prompt_str = self.job.device.parameters['test_image_prompts']
-        # FIXME: some tests need this, some do not.
+        # if the board is running, wait for a prompt - if not, skip.
+        if self.job.device.power_state is 'off':
+            return connection
         try:
             connection.wait()
         except TestError:

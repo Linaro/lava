@@ -127,7 +127,11 @@ class NewDevice(object):
         except TypeError:
             raise RuntimeError("%s could not be parsed" % type_file)
         self.parameters = device_params  # assert device overrides
-        self.parameters = {'hostname': target}
+        self.parameters = {
+            'hostname': target
+        }
+        self.parameters.setdefault('power_state', 'off')  # assume power is off at start of job
+
         if 'timeouts' in self.parameters:
             for name, _ in list(self.parameters['timeouts'].items()):
                 self.overrides['timeouts'][name] = Timeout.parse(self.parameters['timeouts'][name])
@@ -146,3 +150,40 @@ class NewDevice(object):
         *before* the Deployment actions are initialised.
         """
         raise NotImplementedError("check_config")
+
+    @property
+    def hard_reset_command(self):
+        if 'commands' in self.parameters and 'hard_reset' in self.parameters['commands']:
+            return self.parameters['commands']['hard_reset']
+        return ''
+
+    @property
+    def power_command(self):
+        if 'commands' in self.parameters and 'power_on' in self.parameters['commands']:
+            return self.parameters['commands']['power_on']
+        return self.hard_reset_command
+
+    @property
+    def connect_command(self):
+        if 'connect' in self.parameters['commands']:
+            return self.parameters['commands']['connect']
+        return ''
+
+    @property
+    def power_state(self):
+        """
+        The power_state may appear to be a boolean (with on and off string values) but
+        also copes with devices where the device has no power commands, returning an
+        empty string.
+        """
+        if 'commands' in self.parameters and 'power_on' in self.parameters['commands']:
+            return self.parameters['power_state']
+        return ''
+
+    @power_state.setter
+    def power_state(self, state):
+        if 'commands' not in self.parameters or 'power_off' not in self.parameters['commands']:
+            raise RuntimeError("Power state not supported for %s" % self.parameters['hostname'])
+        if state is '' or state is not 'on' and state is not 'off':
+            raise RuntimeError("Attempting to set an invalid power state")
+        self.parameters['power_state'] = state

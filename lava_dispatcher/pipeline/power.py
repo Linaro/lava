@@ -28,18 +28,18 @@ from lava_dispatcher.pipeline.action import (
     Pipeline,
     AdjuvantAction,
     InfrastructureError,
-    JobError,
     TestError,
 )
-from lava_dispatcher.pipeline.shell import ExpectShellSession
+from lava_dispatcher.pipeline.utils.constants import SHUTDOWN_MESSAGE
 
 
 class ResetDevice(Action):
     """
     Used within a RetryAction - first tries 'reboot' then
-    tries PDU
+    tries PDU. If the device supports power_state, the
+    internal pipeline actions will use the value to skip
+    waiting for certain prompts.
     """
-    # FIXME: extend to know the power state of the device
     def __init__(self):
         super(ResetDevice, self).__init__()
         self.name = "reboot-device"
@@ -48,9 +48,9 @@ class ResetDevice(Action):
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        # self.internal_pipeline.add_action(ExpectShellSession())
-        self.internal_pipeline.add_action(RebootDevice())
-        self.internal_pipeline.add_action(PDUReboot())
+        self.internal_pipeline.add_action(RebootDevice())  # skipped if power is off
+        self.internal_pipeline.add_action(PDUReboot())  # adjuvant, only if RebootDevice acts and fails
+        self.internal_pipeline.add_action(PowerOn())
 
 
 class RebootDevice(Action):
@@ -62,19 +62,29 @@ class RebootDevice(Action):
         self.name = "soft-reboot"
         self.summary = "reboot command sent to device"
         self.description = "attempt to reboot the running device"
+        self.reboot_prompt = None
+
+    def validate(self):
+        super(RebootDevice, self).validate()
+        if 'bootloader_prompt' in self.data['common']:
+            self.reboot_prompt = self.data['common']['bootloader_prompt']
 
     def run(self, connection, args=None):
         if not connection:
             raise RuntimeError("Called %s without an active Connection" % self.name)
-        connection.prompt_str = 'The system is going down for reboot NOW'
+        if self.job.device.power_state is 'off' and self.job.device.power_command is not '':  # power on action used instead
+            return connection
+        connection.prompt_str = self.parameters.get('shutdown-message', SHUTDOWN_MESSAGE)
         connection.sendline("reboot")
         self.results = {'status': "success"}
+        self.data[PDUReboot.key()] = False
         try:
             connection.wait()
         except TestError:
+            self.logger.debug("Wait for prompt after soft reboot failed")
             self.results = {'status': "failed"}
             self.data[PDUReboot.key()] = True
-            connection.prompt_str = self.parameters['u-boot']['parameters']['bootloader_prompt']
+            connection.prompt_str = self.reboot_prompt
         return connection
 
 
@@ -84,6 +94,8 @@ class PDUReboot(AdjuvantAction):
     Raises InfrastructureError if either the command fails
     (pdu client reports error) or if the connection times out
     waiting for the device to reset.
+    It is an error for a device to fail to reboot after a
+    soft reboot and a failed hard reset.
     """
     def __init__(self):
         self.name = PDUReboot.key()
@@ -96,27 +108,22 @@ class PDUReboot(AdjuvantAction):
     def key(cls):
         return 'pdu_reboot'
 
-    def validate(self):
-        super(PDUReboot, self).validate()
-        if 'commands' not in self.job.device.parameters:
-            return  # no PDU commands
-        if 'hard_reset' not in self.job.device.parameters['commands']:
-            return  # class will do nothing
-        self.command = self.job.device.parameters['commands']['hard_reset']
-
     def run(self, connection, args=None):
         connection = super(PDUReboot, self).run(connection, args)
         if not self.adjuvant:
-            self.logger.debug("Skipping adjuvant %s" % self.key())
             return connection
-        if not self._run_command(self.command.split(' ')):
-            raise InfrastructureError("%s failed" % self.command)
+        if not self.job.device.hard_reset_command:
+            raise InfrastructureError("Hard reset required but not defined for %s." % self.job.device.parameters['hostname'])
+        command = self.job.device.hard_reset_command
+        if not self._run_command(command.split(' ')):
+            raise InfrastructureError("%s failed" % command)
         try:
             connection.wait()
         except TestError:
             raise InfrastructureError("%s failed to reset device" % self.key())
         self.data[PDUReboot.key()] = False
         self.results = {'status': 'success'}
+        self.job.device.power_state = 'on'
         return connection
 
 
@@ -131,11 +138,13 @@ class PowerOn(Action):
         self.description = "supply power to device"
 
     def run(self, connection, args=None):
-        if 'commands' in self.job.device.parameters and \
-           'power_on' in self.job.device.parameters['commands']:
-            command = self.job.device.parameters['commands']['power_on']
+        if self.job.device.power_state is 'off':
+            command = self.job.device.power_command
+            if not command:
+                return connection
             if not self._run_command(command.split(' ')):
                 raise InfrastructureError("%s command failed" % command)
+            self.job.device.power_state = 'on'
         return connection
 
 
@@ -150,11 +159,11 @@ class PowerOff(Action):
         self.description = "discontinue power to device"
 
     def run(self, connection, args=None):
-        if 'commands' in self.job.device.parameters and \
-           'power_off' in self.job.device.parameters['commands']:
+        if self.job.device.power_state is 'on':  # allow for '' and skip
             command = self.job.device.parameters['commands']['power_off']
             if not self._run_command(command.split(' ')):
                 raise InfrastructureError("%s command failed" % command)
+            self.job.device.power_state = 'off'
         return connection
 
 

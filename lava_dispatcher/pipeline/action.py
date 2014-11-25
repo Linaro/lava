@@ -912,7 +912,7 @@ class PipelineContext(object):
 
     # FIXME: needs to pick up minimal general purpose config, e.g. proxy or cookies
     def __init__(self):
-        self.pipeline_data = {}
+        self.pipeline_data = {'common': {}}
 
 
 class Timeout(object):

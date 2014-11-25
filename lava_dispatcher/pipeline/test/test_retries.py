@@ -393,7 +393,7 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
         self.fakejob.set_pipeline(pipeline)
         self.fakejob.device = TestAdjuvant.FakeDevice()
         self.fakejob.run()
-        self.assertEqual(self.fakejob.context, {'fake-key': 'base class trigger'})
+        self.assertEqual(self.fakejob.context, {'common': {}, 'fake-key': 'base class trigger'})
 
     def test_run_action(self):
         pipeline = TestAction.FakePipeline(job=self.fakejob)
@@ -404,4 +404,4 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
         self.fakejob.run()
         self.assertNotEqual(self.fakejob.context, {'fake-key': 'triggered'})
         self.assertNotEqual(self.fakejob.context, {'fake-key': 'base class trigger'})
-        self.assertEqual(self.fakejob.context, {'fake-key': False})
+        self.assertEqual(self.fakejob.context, {'common': {}, 'fake-key': False})

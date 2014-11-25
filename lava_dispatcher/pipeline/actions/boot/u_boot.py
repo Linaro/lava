@@ -127,6 +127,10 @@ class UBootRetry(BootAction):
         auto_login.timeout = Timeout(self.name, AUTOLOGIN_DEFAULT_TIMEOUT)
         self.internal_pipeline.add_action(auto_login)
 
+    def validate(self):
+        super(UBootRetry, self).validate()
+        self.data['common']['bootloader_prompt'] = self.parameters['u-boot']['parameters']['bootloader_prompt']
+
     def run(self, connection, args=None):
         super(UBootRetry, self).run(connection, args)
         if self.errors:
@@ -148,20 +152,22 @@ class UBootInterrupt(Action):
 
     def validate(self):
         super(UBootInterrupt, self).validate()
-        command_list = self.job.device.parameters['commands']
-        # to enable power to a device, either power_on or hard_reset are needed.
-        # power_on assumes that the power state is known. hard_reset does not.
-        if 'power_on' not in command_list and 'hard_reset' not in command_list:
-            self.errors = "Unable to power on or reset the device %s" % self.job.device.hostname
-        if 'connect' not in self.job.device.parameters['commands']:
-            self.errors = "Unable to connect to device %s" % self.job.device.hostname
+        hostname = self.job.device.parameters['hostname']
+        # boards which are reset manually can be supported but errors have to handled manually too.
+        if self.job.device.power_state in ['on', 'off']:
+            # to enable power to a device, either power_on or hard_reset are needed.
+            if self.job.device.power_command is '':
+                self.errors = "Unable to power on or reset the device %s" % hostname
+            if self.job.device.connect_command is '':
+                self.errors = "Unable to connect to device %s" % hostname
+        else:
+            self.logger.debug("%s may need manual intervention to reboot" % hostname)
 
     def run(self, connection, args=None):
         if not connection:
             raise RuntimeError("%s started without a connection already in use" % self.name)
         self.logger.debug("Changing prompt to 'Hit any key to stop autoboot'")
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
-        # FIXME: pull in the prompt from configuration - check if constant or device-type specific.
         connection.prompt_str = UBOOT_AUTOBOOT_PROMPT
         # command = self.job.device.parameters['commands'].get('interrupt', '\n')
         connection.wait()
@@ -271,7 +277,7 @@ class UBootCommandsAction(Action):
     """
     def __init__(self):
         super(UBootCommandsAction, self).__init__()
-        self.name = "u-boot-action"
+        self.name = "u-boot-commands"
         self.description = "send commands to u-boot"
         self.summary = "interactive u-boot"
         self.prompt = None

@@ -55,3 +55,6 @@ OVERRIDE_CLAMP_DURATION = 300
 
 # Auto-login prompt timeout default
 AUTOLOGIN_DEFAULT_TIMEOUT = 120
+
+# OS shutdown message
+SHUTDOWN_MESSAGE = 'The system is going down for reboot NOW'
