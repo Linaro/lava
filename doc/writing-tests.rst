@@ -250,7 +250,7 @@ added in the `install` section as follows::
 
   install:
       keys:
-          - emdebian-archive-keyring
+          - 7C751B3F
           - 6CCD4038
       sources:
           - http://security.debian.org
