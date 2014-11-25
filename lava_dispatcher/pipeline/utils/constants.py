@@ -18,8 +18,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-# Delay between each caracter sent to the shell. This is required for some slow
-# serial consoles.
+# Delay between each character sent to the shell. This is required for some
+# slow serial consoles.
 SHELL_SEND_DELAY = 0.05
 
 # Default timeout for shell operations
