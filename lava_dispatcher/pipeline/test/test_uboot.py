@@ -28,6 +28,7 @@ from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 
 
 class Factory(object):  # pylint: disable=too-few-public-methods
@@ -125,7 +126,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
             'job_timeout': '15m',
             'action_timeout': '5m',
             'priority': 'medium',
-            'output_dir': '/tmp',
+            'output_dir': mkdtemp(),
             'actions': {
                 'boot': {
                     'method': 'u-boot',

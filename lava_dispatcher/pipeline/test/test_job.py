@@ -22,6 +22,8 @@ import os
 import logging
 import glob
 import unittest
+
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.action import Pipeline, Action, RetryAction, JobError
 from lava_dispatcher.pipeline.test.test_basic import Factory
 from lava_dispatcher.pipeline.actions.deploy.download import (
@@ -53,7 +55,7 @@ class TestBasicJob(unittest.TestCase):
 
     def test_basic_actions(self):
         factory = Factory()
-        job = factory.create_fake_qemu_job()
+        job = factory.create_fake_qemu_job(mkdtemp())
         if not job:
             return unittest.skip("not all deployments have been implemented")
         self.assertIsInstance(job, Job)
@@ -152,7 +154,7 @@ class TestKVMBasicDeploy(unittest.TestCase):
     def setUp(self):
         super(TestKVMBasicDeploy, self).setUp()
         factory = Factory()
-        self.job = factory.create_job('sample_jobs/kvm.yaml', output_dir='/tmp')
+        self.job = factory.create_job('sample_jobs/kvm.yaml', mkdtemp())
 
     def test_deploy_job(self):
         # from meliae import scanner
@@ -338,7 +340,7 @@ class TestKVMQcow2Deploy(unittest.TestCase):
     def setUp(self):
         super(TestKVMQcow2Deploy, self).setUp()
         factory = Factory()
-        self.job = factory.create_job('sample_jobs/kvm-qcow2.yaml', output_dir='/tmp')
+        self.job = factory.create_job('sample_jobs/kvm-qcow2.yaml', mkdtemp())
 
     def test_deploy_job(self):
         # from meliae import scanner
@@ -463,7 +465,7 @@ class TestKVMDownloadLocalDeploy(unittest.TestCase):
     def setUp(self):
         super(TestKVMDownloadLocalDeploy, self).setUp()
         factory = Factory()
-        self.job = factory.create_job('sample_jobs/kvm-local.yaml', output_dir='/tmp')
+        self.job = factory.create_job('sample_jobs/kvm-local.yaml', mkdtemp())
 
     def test_deploy_job(self):
         # from meliae import scanner

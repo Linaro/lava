@@ -23,7 +23,6 @@ import sys
 import time
 import types
 import yaml
-import logging
 import datetime
 import subprocess
 import collections
@@ -132,8 +131,9 @@ class Pipeline(object):
             action.level = "%s" % (len(self.actions))
         # create a log handler just for this action.
         if self.job and self.job.parameters['output_dir']:
+            log_level_dir = action.level.split('.')[0]
             yaml_filename = os.path.join(
-                self.job.parameters['output_dir'],
+                self.job.parameters['output_dir'], log_level_dir,
                 "%s-%s.log" % (action.level, action.name)
             )
             if not os.path.exists(os.path.dirname(yaml_filename)):
@@ -516,8 +516,6 @@ class Action(object):
         """
         if type(command_list) != list:
             raise RuntimeError("commands to _run_command need to be a list")
-        # FIXME: see logger
-        yaml_log = logging.getLogger("YAML")
         log = None
         # FIXME: define a method of configuring the proxy for the pipeline.
         # if not self.env:
@@ -531,13 +529,13 @@ class Action(object):
         except KeyboardInterrupt:
             self.cleanup()
             self.err = "\rCancel"  # Set a useful message.
-            yaml_log.debug("Cancelled")
+            self.logger.debug("Cancelled")
             return None
         except OSError as exc:
-            yaml_log.debug({exc.strerror: exc.child_traceback.split('\n')})
+            self.logger.debug({exc.strerror: exc.child_traceback.split('\n')})
         except subprocess.CalledProcessError as exc:
             self.errors = exc.message
-            yaml_log.debug({
+            self.logger.debug({
                 'command': [i.strip() for i in exc.cmd],
                 'message': [i.strip() for i in exc.message],
                 'output': exc.output.split('\n')})
