@@ -160,7 +160,7 @@ class DownloadHandler(Action):
         md5 = hashlib.md5()
         sha256 = hashlib.sha256()
         with self._decompressor_stream() as (writer, fname):
-            self.logger.debug("downloading and decompressing %s as %s" % (self.parameters[self.key], fname))
+            self.logger.debug("downloading %s as %s" % (self.parameters[self.key], fname))
 
             # TODO: print the progress in the logs
             for buff in self.reader():
@@ -173,6 +173,8 @@ class DownloadHandler(Action):
             'md5': md5.hexdigest(),
             'sha256': sha256.hexdigest()
         }
+        self.logger.debug("md5sum of downloaded content: %s" % (md5.hexdigest()))
+        self.logger.debug("sha256sum of downloaded content: %s" % (sha256.hexdigest()))
         return connection
 
 
@@ -290,29 +292,6 @@ class ScpDownloadAction(DownloadHandler):
                     pass
 
 
-class ChecksumAction(Action):  # FIXME: fold into the DownloadHandler
-    """
-    retrieves the checksums from the dynamic data
-    """
-
-    def __init__(self):
-        super(ChecksumAction, self).__init__()
-        self.name = "checksum_action"
-        self.description = "md5sum and sha256sum"
-        self.summary = "checksum"
-
-    def run(self, connection, args=None):
-        if 'download_action' in self.data:
-            if 'md5' in self.data['download_action']:
-                self.logger.debug("md5sum of downloaded content: %s" %
-                                  self.data['download_action']['md5'])
-            if 'sha256' in self.data['download_action']:
-                self.logger.debug("sha256sum of downloaded content: %s" %
-                                  self.data['download_action']['sha256'])
-        # TODO: if the checksums are not present, compute them now
-        return connection
-
-
 class QCowConversionAction(Action):
     """
     explicit action for qcow conversion to avoid reliance
@@ -321,7 +300,7 @@ class QCowConversionAction(Action):
 
     def __init__(self, key):
         super(QCowConversionAction, self).__init__()
-        self.name = "qcow2"
+        self.name = "qcow2_convert"
         self.description = "convert qcow image using qemu-img"
         self.summary = "qcow conversion"
         self.key = key

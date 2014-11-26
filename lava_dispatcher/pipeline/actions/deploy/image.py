@@ -21,7 +21,6 @@
 from lava_dispatcher.pipeline.action import Deployment, Pipeline
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.download import (
-    ChecksumAction,
     DownloaderAction,
     QCowConversionAction,
 )
@@ -55,7 +54,6 @@ class DeployImageAction(DeployAction):
         self.internal_pipeline.add_action(download)
         if parameters.get('format', '') == 'qcow2':
             self.internal_pipeline.add_action(QCowConversionAction('image'))
-        self.internal_pipeline.add_action(ChecksumAction())
         self.internal_pipeline.add_action(MountAction())
         self.internal_pipeline.add_action(CustomisationAction())
         self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef

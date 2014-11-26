@@ -27,11 +27,11 @@ from lava_dispatcher.pipeline.action import (
     Action,
     Deployment,
     Boot,
-    FinalizeAction,
     LavaTest,
 )
 from lava_dispatcher.pipeline.actions.commands import CommandsAction  # pylint: disable=unused-import
 from lava_dispatcher.pipeline.deployment_data import get_deployment_data
+from lava_dispatcher.pipeline.power import FinalizeAction
 # Bring in the strategy subclass lists, ignore pylint warnings.
 import lava_dispatcher.pipeline.actions.deploy.strategies  # pylint: disable=unused-import
 import lava_dispatcher.pipeline.actions.boot.strategies  # pylint: disable=unused-import

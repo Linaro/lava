@@ -235,7 +235,7 @@ class Target(object):
         # By default we pass
         pass
 
-    def reset_boot(self):
+    def reset_boot(self, in_test_shell=True):
         # By default we pass
         pass
 
@@ -714,6 +714,10 @@ class Target(object):
             f.write('export PS1="%s"\n' % self.tester_ps1)
         with open('%s/etc/hostname' % rootdir, 'w') as f:
             f.write('%s\n' % self.config.hostname)
+
+    @property
+    def target_distro(self):
+        return self.deployment_data['distro']
 
     @property
     def tester_ps1(self):

@@ -107,6 +107,11 @@ class TestShellAction(TestAction):
             # FIXME: with predictable UID, could set each test definition metadata to "skipped"
             return connection
         self.logger.debug("Executing test definitions using %s" % connection.name)
+        self.logger.debug("Setting default test shell prompt")
+        connection.prompt_str = self.job.device.parameters['test_image_prompts']
+        self.logger.debug("Setting default timeout: %s" % self.timeout.duration)
+        connection.timeout = self.timeout
+        connection.wait()
 
         self.match = SignalMatch()
 

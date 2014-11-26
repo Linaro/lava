@@ -103,7 +103,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         except pexpect.TIMEOUT:
             raise TestError("command timed out.")
         except pexpect.EOF:
-            raise RuntimeError("ShellCommand EOF: ".join(self.before.split('\r\n')))
+            raise RuntimeError(" ".join(self.before.split('\r\n')))
         return proc
 
     def empty_buffer(self):
@@ -245,6 +245,10 @@ class ConnectDevice(Action):
             raise JobError("%s command exited %d: %s" % (command, shell.exitstatus, shell.readlines()))
         connection = ShellSession(self.job, shell)
         connection.prompt_str = self.job.device.parameters['test_image_prompts']
-        connection.wait()
+        # FIXME: some tests need this, some do not.
+        try:
+            connection.wait()
+        except TestError:
+            self.errors = "%s wait expired" % self.name
         self.logger.debug("matched %s" % connection.match)
         return connection

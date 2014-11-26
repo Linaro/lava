@@ -91,9 +91,10 @@ class NewDevice(object):
         # FIXME: system paths need to be finalised.
         # possible default system_config_path = "/usr/share/lava-dispatcher"
         # FIXME: change to default-config once the old files are converted.
+        # FIXME: need a temporary or at least separate location in /etc/ and override support
         default_config_path = os.path.join(os.path.dirname(__file__))
         if not os.path.exists(os.path.join(default_config_path, 'devices', "%s.conf" % target)):
-            raise RuntimeError("Unable to use new devices: %s" % default_config_path)
+            raise RuntimeError("Unable to find device: %s in %s" % (target, default_config_path))
 
         defaults = NewDeviceDefaults()
         # parameters dict will update if new settings are found, so repeat for customisation files when those exist

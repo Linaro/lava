@@ -1,0 +1,3 @@
+#!/bin/sh
+
+opkg list-installed | sed -n 's/^/package: /p' | sed -n 's/ - / : /p'

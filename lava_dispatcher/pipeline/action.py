@@ -30,6 +30,7 @@ import collections
 from collections import OrderedDict
 from contextlib import contextmanager
 
+from lava_dispatcher.pipeline.utils.constants import OVERRIDE_CLAMP_DURATION
 from lava_dispatcher.pipeline.log import YamlLogger, get_yaml_handler
 
 if sys.version > '3':
@@ -668,11 +669,13 @@ class RetryAction(Action):
                 self.err = "\rCancel"  # Set a useful message.
                 self.errors = "Cancelled"
                 return connection
-            except (JobError, InfrastructureError, TestError):
+            except (JobError, InfrastructureError, TestError) as exc:
                 self.retries += 1
-                msg = "%s failed: %d of %d attempts." % (self.name, self.retries, self.max_retries)
+                msg = "%s failed: %d of %d attempts. '%s'" % (self.name, self.retries, self.max_retries, exc)
                 self.errors = msg
                 self.logger.debug(msg)
+                if self.timeout:
+                    self.logger.debug("timeout: %s %s" % (self.timeout.name, self.timeout.duration))
                 time.sleep(self.sleep)
             finally:
                 # TODO: QUESTION: is it the right time to cleanup?
@@ -709,37 +712,43 @@ class DiagnosticAction(Action):  # pylint: disable=abstract-class-not-used
         return connection
 
 
-class FinalizeAction(Action):
-
+class AdjuvantAction(Action):
+    """
+    Adjuvants are associative actions - partners and helpers which can be executed if
+    the initial Action determines a particular state.
+    Distinct from DiagnosticActions, Adjuvants execute within the normal flow of the
+    pipeline but support being skipped if the functionality is not required.
+    The default is that the Adjuvant is omitted. i.e. Requiring an adjuvant is an
+    indication that the device did not perform entirely as could be expected. One
+    example is when a soft reboot command fails, an Adjuvant can cause a power cycle
+    via the PDU.
+    """
     def __init__(self):
-        """
-        The FinalizeAction is always added as the last Action in the top level pipeline by the parser.
-        The tasks include finalising the connection (whatever is the last connection in the pipeline)
-        and writing out the final pipeline structure containing the results as a logfile.
-        """
-        super(FinalizeAction, self).__init__()
-        self.name = "finalize"
-        self.summary = "finalize the job"
-        self.description = "finish the process and cleanup"
+        super(AdjuvantAction, self).__init__()
+        self.adjuvant = False
+
+    @classmethod
+    def key(cls):
+        raise NotImplementedError("Base class has no key")
+
+    def validate(self):
+        super(AdjuvantAction, self).validate()
+        try:
+            self.key()
+        except NotImplementedError:
+            self.errors = "Adjuvant action without a key: %s" % self.name
 
     def run(self, connection, args=None):
-        """
-        The pexpect.spawn here is the ShellCommand not the ShellSession connection object.
-        So call the finalise() function of the connection which knows about the raw_connection inside.
-        """
-        if connection:
-            connection.finalise()
-        self.results = {'status': "Complete"}
-        # FIXME: just write out a file, not put to stdout via logger.
-        yaml_log = logging.getLogger("YAML")
-        yaml_log.debug(yaml.dump(self.job.pipeline.describe()))
-        # FIXME: detect a Cancel and set status as Cancel
-        if self.job.pipeline.errors:
-            self.results = {'status': "Incomplete"}
-            yaml_log.debug("Status: Incomplete")
-            yaml_log.debug(self.job.pipeline.errors)
-        # from meliae import scanner
-        # scanner.dump_all_objects('filename.json')
+        if not connection:
+            raise RuntimeError("Called %s without an active Connection" % self.name)
+        if not self.valid or self.key() not in self.data:
+            return connection
+        if self.data[self.key()]:
+            self.adjuvant = True
+            self.logger.debug("Adjuvant %s required" % self.name)
+        else:
+            self.logger.debug("Adjuvant %s skipped" % self.name)
+        return connection
 
 
 class Deployment(object):  # pylint: disable=abstract-class-not-used
@@ -947,4 +956,4 @@ class Timeout(object):
         if self.protected:
             raise JobError("Trying to modify a protected timeout: %s.", self.name)
         clamp = lambda n, minn, maxn: max(min(maxn, n), minn)
-        self.duration = clamp(duration, 1, 300)
+        self.duration = clamp(duration, 1, OVERRIDE_CLAMP_DURATION)  # FIXME: needs support in /etc/

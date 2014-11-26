@@ -190,6 +190,8 @@ class CommandRunner(object):
         self.match = None
 
     def change_prompt(self, string):
+        yaml_log = logging.getLogger("YAML")
+        yaml_log.debug("Changing prompt to %s" % string)
         self._prompt_str = string
 
     def wait_for_prompt(self, timeout=-1):
