@@ -153,24 +153,24 @@ class TestShellAction(TestAction):
         Call from subclasses before checking subclass-specific events.
         """
         if event == 'exit':
-            self.logger.debug('   ok: lava_test_shell seems to have completed')
+            self.logger.debug('ok: lava_test_shell seems to have completed')
             return False
 
         elif event == 'eof':
-            self.logger.debug('   err: lava_test_shell connection dropped')
+            self.logger.debug('err: lava_test_shell connection dropped')
             self.errors = 'lava_test_shell connection dropped'
             return False
 
         elif event == 'timeout':
             # if target.is_booted():
             #    target.reset_boot()
-            self.logger.debug('   err: lava_test_shell has timed out')
+            self.logger.debug('err: lava_test_shell has timed out')
             self.errors = 'lava_test_shell has timed out'
             return False
 
         elif event == 'signal':
             name, params = test_connection.match.groups()
-            self.logger.debug("   Received signal: <%s> %s" % (name, params))
+            self.logger.debug("Received signal: <%s> %s" % (name, params))
             params = params.split()
             if name == 'STARTRUN':
                 self.signal_director.test_uuid = params[1]
@@ -178,7 +178,7 @@ class TestShellAction(TestAction):
             if name == 'TESTCASE':
                 data = handle_testcase(params)
                 res = self.match.match(data)  # FIXME: rename!
-                self.logger.debug('   result: %s' % res)
+                self.logger.debug('result: %s' % res)
                 self.data['test'][self.signal_director.test_uuid].setdefault('results', OrderedDict())
 
                 # prevent losing data in the update
@@ -202,10 +202,10 @@ class TestShellAction(TestAction):
             if match is pexpect.TIMEOUT:
                 # if target.is_booted():
                 #    target.reset_boot()
-                self.logger.debug('   err: lava_test_shell has timed out (test_case)')
+                self.logger.debug('err: lava_test_shell has timed out (test_case)')
             else:
                 res = self.match.match(match.groupdict())  # FIXME: rename!
-                self.logger.debug('   result: %s' % res)
+                self.logger.debug('result: %s' % res)
                 self.data['test'][self.signal_director.test_uuid].setdefault('results', {})
                 self.data['test'][self.signal_director.test_uuid]['results'].update({
                     {res['test_case_id']: res}
@@ -218,7 +218,7 @@ class TestShellAction(TestAction):
         pass
 
     def _keep_running(self, test_connection, timeout):
-        self.logger.debug("   expect timeout: %d" % timeout)
+        self.logger.debug("expect timeout: %d" % timeout)
         retval = test_connection.expect(list(self.patterns.values()), timeout=timeout)
         return self.check_patterns(list(self.patterns.keys())[retval], test_connection)
 

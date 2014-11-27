@@ -103,6 +103,7 @@ class DeployImage(Deployment):
         # lookup if the job parameters match the available device methods
         if 'image' not in parameters:
             # python3 compatible
+            # FIXME: too broad
             print("Parameters %s have not been implemented yet." % parameters.keys())  # pylint: disable=superfluous-parens
             return False
         return True

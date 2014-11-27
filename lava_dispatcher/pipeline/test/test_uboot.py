@@ -73,7 +73,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertIn('dtb', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
         self.assertEqual(
             [action.path for action in tftp.internal_pipeline.actions if hasattr(action, 'path')],
-            ["/var/lib/lava/dispatcher/tmp" for item in range(len(tftp.internal_pipeline.actions) - 1)]  # pylint: disable=unused-variable
+            ["/var/lib/lava/dispatcher/tmp" for _ in range(len(tftp.internal_pipeline.actions) - 1)]
         )
 
     def test_device_bbb(self):
@@ -119,7 +119,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
             else:
                 self.assertIsNone(items.get(command, None))
 
-    def test_overlay_action(self):
+    def test_overlay_action(self):  # pylint: disable=too-many-locals
         parameters = {
             'device_type': 'beaglebone-black',
             'job_name': 'uboot-pipeline',
@@ -152,7 +152,6 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         except InfrastructureError as exc:
             raise RuntimeError("Unable to get dispatcher IP address: %s" % exc)
         parsed = []
-        suffix = ''
         kernel_addr = job.device.parameters['parameters'][overlay.parameters['type']]['ramdisk']
         ramdisk_addr = job.device.parameters['parameters'][overlay.parameters['type']]['ramdisk']
         dtb_addr = job.device.parameters['parameters'][overlay.parameters['type']]['dtb']
@@ -186,3 +185,19 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
             self.assertTrue(action.valid)
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
+        deploy = None
+        overlay = None
+        extract = None
+        for action in job.pipeline.actions:
+            if action.name == 'tftp-deploy':
+                deploy = action
+        if deploy:
+            for action in deploy.internal_pipeline.actions:
+                if action.name == 'prepare-tftp-overlay':
+                    overlay = action
+        if overlay:
+            for action in overlay.internal_pipeline.actions:
+                if action.name == 'extract-nfsrootfs':
+                    extract = action
+        self.assertIsNotNone(extract)
+        self.assertEqual(extract.timeout.duration, job.parameters['timeouts'][extract.name]['seconds'])

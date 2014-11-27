@@ -143,6 +143,11 @@ class TestDefinitionSimple(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertIsInstance(submit, SubmitResultsAction)
         self.assertIsInstance(finalize, FinalizeAction)
         self.assertEqual(len(self.job.pipeline.actions), 4)  # deploy, boot, submit, finalize
+        apply_overlay = deploy.pipeline.children[deploy.pipeline][4]
+        self.assertEqual(
+            apply_overlay.timeout.duration,
+            apply_overlay.job.device.overrides['timeouts'][apply_overlay.name]
+        )
 
 
 class TestDefinitionRepeat(unittest.TestCase):  # pylint: disable=too-many-public-methods

@@ -49,6 +49,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
             self.pipeline = parent
             self.job = parent.job
             self.action = TestAction.CleanupRetryAction()
+            self.action.job = self.job
 
     class MissingCleanupDeploy(object):
 
@@ -57,6 +58,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
             self.pipeline = parent
             self.job = parent.job
             self.action = TestAction.InternalRetryAction()
+            self.action.job = self.job
 
     class FakePipeline(Pipeline):
 
@@ -192,6 +194,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.assertIsNone(fakepipeline.validate_actions())
         fakepipeline.run_actions(None, None)
         self.assertIsNotNone(fakepipeline.errors)
+        self.assertIsNotNone(deploy.action.job)
 
     def test_internal_retry(self):
         fakepipeline = TestAction.FakePipeline(job=self.fakejob)
@@ -200,6 +203,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
             deploy.action.parameters = actions
         self.assertEqual(deploy.action.max_retries, 3)
         fakepipeline.add_action(deploy.action)
+        self.assertIsNotNone(deploy.action.job)
         self.assertIsNone(fakepipeline.validate_actions())
         fakepipeline.run_actions(None, None)
         with self.assertRaises(JobError):

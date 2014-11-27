@@ -71,11 +71,14 @@ class TestKVMSimulation(unittest.TestCase):
         data known to be broken). The details are entirely
         arbitrary.
         """
+        factory = Factory()
+        job = factory.create_job('sample_jobs/kvm.yaml')
         pipe = Pipeline()
         action = Action()
         action.name = "deploy_linaro_image"
         action.description = "deploy action using preset subactions in an internal pipe"
         action.summary = "deploy_linaro_image"
+        action.job = job
         # deliberately unlikely location
         # a successful validation would need to use the cwd
         action.parameters = {"image": "file:///none/images/bad-kvm-debian-wheezy.img"}
@@ -86,6 +89,7 @@ class TestKVMSimulation(unittest.TestCase):
         action.name = "downloader"
         action.description = "download image wrapper, including an internal retry pipe"
         action.summary = "downloader"
+        action.job = job
         deploy_pipe.add_action(action)
         self.assertEqual(action.level, "1.1")
         # a formal RetryAction would contain a pre-built pipeline which can be inserted directly
@@ -94,24 +98,28 @@ class TestKVMSimulation(unittest.TestCase):
         action.name = "wget"
         action.description = "do the download with retries"
         action.summary = "wget"
+        action.job = job
         retry_pipe.add_action(action)
         self.assertEqual(action.level, "1.1.1")
         action = Action()
         action.name = "checksum"
         action.description = "checksum the downloaded file"
         action.summary = "md5sum"
+        action.job = job
         deploy_pipe.add_action(action)
         self.assertEqual(action.level, "1.2")
         action = Action()
         action.name = "overlay"
         action.description = "apply lava overlay"
         action.summary = "overlay"
+        action.job = job
         deploy_pipe.add_action(action)
         self.assertEqual(action.level, "1.3")
         action = Action()
         action.name = "boot"
         action.description = "boot image"
         action.summary = "qemu"
+        action.job = job
         # cmd_line built from device configuration
         action.parameters = {
             'cmd_line': [
@@ -132,6 +140,7 @@ class TestKVMSimulation(unittest.TestCase):
         action.name = "simulated"
         action.description = "lava test shell"
         action.summary = "simulated"
+        action.job = job
         # a formal lava test shell action would include an internal pipe
         # which would handle the run.sh
         pipe.add_action(action)
@@ -142,6 +151,7 @@ class TestKVMSimulation(unittest.TestCase):
         action.name = "submit"
         action.description = "submit results"
         action.summary = "submit"
+        action.job = job
         pipe.add_action(action)
         self.assertEqual(action.level, "4")
         self.assertEqual(len(pipe.describe().values()), 8)
@@ -428,6 +438,10 @@ class TestKVMQcow2Deploy(unittest.TestCase):
                 self.assertIsInstance(apply_overlay, ApplyOverlayImage)
                 self.assertIsInstance(apply_overlay.log_handler, logging.FileHandler)
                 self.assertIsInstance(apply_overlay.logger, YamlLogger)
+                self.assertEqual(
+                    apply_overlay.timeout.duration,
+                    self.job.device.overrides['timeouts'][apply_overlay.name]
+                )
 
                 unmount = action.pipeline.children[action.pipeline][6]
                 self.assertEqual(unmount.name, "umount-retry")

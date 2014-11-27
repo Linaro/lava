@@ -22,6 +22,7 @@ import os
 import yaml
 from yaml.composer import Composer
 from yaml.constructor import Constructor
+from lava_dispatcher.pipeline.action import Timeout
 
 
 class DeviceTypeParser(object):
@@ -86,6 +87,7 @@ class NewDevice(object):
     def __init__(self, target):
         self.target = target
         self.__parameters__ = {}
+        self.overrides = {'timeouts': {}}
         dev_parser = DeviceTypeParser()
         # development paths are within the working directory
         # FIXME: system paths need to be finalised.
@@ -114,6 +116,9 @@ class NewDevice(object):
         except TypeError:
             raise RuntimeError("%s could not be parsed" % type_file)
         self.parameters = {'hostname': target}  # FIXME: is this needed?
+        if 'timeouts' in self.parameters:
+            for name, _ in list(self.parameters['timeouts'].items()):
+                self.overrides['timeouts'][name] = Timeout.parse(self.parameters['timeouts'][name])
 
     @property
     def parameters(self):

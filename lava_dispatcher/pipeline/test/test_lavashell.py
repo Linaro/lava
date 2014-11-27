@@ -20,7 +20,7 @@
 
 import unittest
 import datetime
-from lava_dispatcher.pipeline.action import Action, Pipeline, JobError
+from lava_dispatcher.pipeline.action import Action, Pipeline, JobError, Timeout
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.test.test_basic import Factory
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry, TestShellAction
@@ -44,10 +44,16 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
         self.assertNotIn('boot-result', testshell.data)
         self.assertTrue(testshell.valid)
 
-        time_str = testshell.parameters['timeout'][:-1]
-        time_int = int(time_str)
+        if 'timeout' in testshell.parameters:
+            time_int = Timeout.parse(testshell.parameters['timeout'])
+        else:
+            time_int = Timeout.default_duration()
         self.assertEqual(
-            datetime.timedelta(minutes=time_int).total_seconds(),
+            datetime.timedelta(seconds=time_int).total_seconds(),
+            testshell.timeout.duration
+        )
+        self.assertNotEqual(
+            testshell.parameters['default_action_timeout'],
             testshell.timeout.duration
         )
 

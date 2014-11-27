@@ -409,7 +409,8 @@ class TestDefinitionAction(TestAction):
         index = {}
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # FIXME: check the effect of the parameter review
-        test_list = [action['test']['definitions'] for action in self.job.parameters['actions'] if 'test' in action.keys()]
+        test_list = [action['test']['definitions'] for action in self.job.parameters['actions']
+                     if 'test' in action.keys()]  # 2to3 false positive, works with python3
         if not test_list:
             self.logger.debug("No test action defined.")
             return
@@ -417,24 +418,28 @@ class TestDefinitionAction(TestAction):
             handler = RepoAction.select(testdef['from'])()
 
             # set the full set of job YAML parameters for this handler as handler parameters.
+            handler.job = self.job
             handler.parameters = testdef
             # store the correct test_name before incrementing the local index dict
             handler.parameters['test_name'] = "%s_%s" % (len(list(index.keys())), handler.parameters['name'])
 
             # copy details into the overlay, one per handler but the same class each time.
             overlay = TestOverlayAction()
+            overlay.job = self.job
             overlay.parameters = testdef
             overlay.parameters['test_name'] = handler.parameters['test_name']
             overlay.test_uuid = handler.uuid
 
             # add install handler
             installer = TestInstallAction()
+            installer.job = self.job
             installer.parameters = testdef
             installer.parameters['test_name'] = handler.parameters['test_name']
             installer.test_uuid = handler.uuid
 
             # add runsh handler
             runsh = TestRunnerAction()
+            runsh.job = self.job
             runsh.parameters = testdef
             runsh.parameters['test_name'] = handler.parameters['test_name']
             runsh.test_uuid = handler.uuid

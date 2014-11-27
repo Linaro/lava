@@ -80,7 +80,7 @@ class UBoot(Boot):
         for tmp in device.parameters['actions']['boot']['methods']:
             if type(tmp) != dict:
                 return False
-            if 'u-boot' in tmp.keys():
+            if 'u-boot' in tmp.keys():  # 2to3 false positive, works with python3
                 return True
         return False
 
@@ -190,7 +190,7 @@ class UBootCommandOverlay(Action):
     def substitute(self, command_list, dictionary):
         parsed = []
         for line in command_list:
-            for key, value in dictionary.items():
+            for key, value in dictionary.items():  # 2to3 false positive, works with python3
                 line = line.replace(key, value)
             parsed.append(line)
         self.data['u-boot']['commands'] = parsed

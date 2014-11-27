@@ -90,7 +90,7 @@ class TftpAction(DeployAction):
 
     def validate(self):
         super(TftpAction, self).validate()
-        if 'kernel'not in self.parameters.keys():
+        if 'kernel'not in self.parameters.keys():  # 2to3 false positive, works with python3
             self.errors = "%s needs a kernel to deploy" % self.name
         if not self.valid:
             return

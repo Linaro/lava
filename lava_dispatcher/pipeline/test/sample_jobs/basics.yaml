@@ -3,8 +3,11 @@
 device_type: kvm
 
 job_name: sample
-job_timeout: 8h             # timeout for the whole job (default: ??h)
-action_timeout: 30m         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+timeouts:
+  job:
+    hours: 8             # timeout for the whole job (default: ??h)
+  action:
+   minutes: 30         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
 logging_level: DEBUG
 priority: medium
 
@@ -20,7 +23,10 @@ actions:
         - power-off
 
     - deploy:
-        timeout: 20m
+        timeout:  # passed into the python datetime.timedelta class
+          hours: 0
+          minutes: 20
+          seconds: 0
         to: sata
         image: http://myimage.com/target.img.gz
         os: debian
@@ -77,12 +83,14 @@ actions:
               name: ptest-foobar
 
     - boot:
-        timeout: 20m
+        timeout:
+          minutes: 20
         method: block
         media: sata
 
     - boot:
-        timeout: 1h
+        timeout:
+          hours: 1
         method: tftp
         media: usb
         kernel: http://myimage.com/zImage
