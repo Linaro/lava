@@ -81,41 +81,53 @@ class NewDevice(object):
     """
     YAML based Device class with clearer support for the pipeline overrides
     and deployment types.
+    To simplify development and prepare for the dumb dispatcher model, the
+    development path is the current working directory. The system path
+    is the installed location of this python module and is overridden by
+    files in the development path.
     """
-    # FIXME: replace the current Device class with this one.
 
     def __init__(self, target):
         self.target = target
         self.__parameters__ = {}
         self.overrides = {'timeouts': {}}
         dev_parser = DeviceTypeParser()
-        # development paths are within the working directory
-        # FIXME: system paths need to be finalised.
-        # possible default system_config_path = "/usr/share/lava-dispatcher"
-        # FIXME: change to default-config once the old files are converted.
-        # FIXME: need a temporary or at least separate location in /etc/ and override support
-        default_config_path = os.path.join(os.path.dirname(__file__))
-        if not os.path.exists(os.path.join(default_config_path, 'devices', "%s.conf" % target)):
-            raise RuntimeError("Unable to find device: %s in %s" % (target, default_config_path))
+        # development paths are within the current working directory
+        device_config_path = os.getcwd()
+        name = os.path.join('devices', "%s.conf" % target)
+        device_file = os.path.join(device_config_path, name)
+        if not os.path.exists(device_file):
+            # system paths are in the installed location of __file__
+            # principally used for unit-test support
+            device_config_path = os.path.join(os.path.dirname(__file__))
+            device_file = os.path.join(device_config_path, name)
+            if not os.path.exists(device_file):
+                raise RuntimeError("Unable to find device: %s in %s/%s" % (target, device_config_path, name))
 
         defaults = NewDeviceDefaults()
         # parameters dict will update if new settings are found, so repeat for customisation files when those exist
         self.parameters = defaults.parameters
-        device_file = os.path.join(default_config_path, 'devices', "%s.conf" % target)
-        if not os.path.exists(device_file):
-            raise RuntimeError("Could not find %s" % device_file)
         try:
             self.parameters = dev_parser.parse(open(device_file))
         except TypeError:
             raise RuntimeError("%s could not be parsed" % device_file)
-        type_file = os.path.join(default_config_path, 'device_types', "%s.conf" % self.parameters['device_type'])
+        # store device values to override device_type
+        device_params = self.parameters
+        type_config_path = os.getcwd()
+        type_name = os.path.join('device_types', "%s.conf" % device_params['device_type'])
+        type_file = os.path.join(type_config_path, type_name)
+        if not os.path.exists(type_file):
+            # some types are pre-defined
+            type_config_path = os.path.join(os.path.dirname(__file__))
+            type_file = os.path.join(type_config_path, type_name)
         if not os.path.exists(type_file):
             raise RuntimeError("Could not find %s" % type_file)
         try:
             self.parameters = dev_parser.parse(open(type_file))
         except TypeError:
             raise RuntimeError("%s could not be parsed" % type_file)
-        self.parameters = {'hostname': target}  # FIXME: is this needed?
+        self.parameters = device_params  # assert device overrides
+        self.parameters = {'hostname': target}
         if 'timeouts' in self.parameters:
             for name, _ in list(self.parameters['timeouts'].items()):
                 self.overrides['timeouts'][name] = Timeout.parse(self.parameters['timeouts'][name])
