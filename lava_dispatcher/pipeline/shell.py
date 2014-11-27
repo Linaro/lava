@@ -21,7 +21,6 @@
 import os
 import sys
 import time
-import logging
 import pexpect
 import contextlib
 from lava_dispatcher.pipeline.action import (
@@ -37,6 +36,7 @@ from lava_dispatcher.pipeline.utils.constants import (
     SHELL_SEND_DELAY,
 )
 from lava_dispatcher.pipeline.utils.shell import which
+from lava_dispatcher.pipeline.log import YamlLogger
 
 
 class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
@@ -57,6 +57,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         # serial can be slow, races do funny things, so increase delay
         self.delaybeforesend = SHELL_SEND_DELAY
         self.lava_timeout = lava_timeout
+        self.logger = YamlLogger("root")
 
     def sendline(self, s='', delay=0, send_char=True):  # pylint: disable=arguments-differ
         """
@@ -72,17 +73,14 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         self.send(os.linesep, delay)
 
     def sendcontrol(self, char):
-        yaml_log = logging.getLogger("YAML")
-        yaml_log.debug("   sending control character: %s", char)
+        self.logger.debug("   sending control character: %s" % char)
         return super(ShellCommand, self).sendcontrol(char)
 
     def send(self, string, delay=0, send_char=True):  # pylint: disable=arguments-differ
         """
         Extends pexpect.send to support extra arguments, delay and send by character flags.
         """
-        # YAML formatting
-        yaml_log = logging.getLogger("YAML")
-        yaml_log.debug("   send (delay_ms=%s): %s ", delay, string)
+        self.logger.debug("   send (delay_ms=%s): %s " % (delay, string))
         sent = 0
         delay = float(delay) / 1000
         if send_char:
@@ -176,8 +174,7 @@ class ShellSession(Connection):
         yield self.__runner__.get_connection()
 
     def wait(self):
-        yaml_log = logging.getLogger("YAML")
-        yaml_log.debug("   wait: Waiting for prompt for %s seconds", self.timeout.duration)
+        self.logger.debug("   wait: Waiting for prompt for %s seconds" % self.timeout.duration)
         self.raw_connection.sendline("")
         try:
             self.runner.wait_for_prompt(self.timeout.duration)

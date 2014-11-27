@@ -23,7 +23,6 @@
 
 
 import yaml
-import logging
 from lava_dispatcher.pipeline.action import (
     Action,
     Pipeline,
@@ -184,12 +183,11 @@ class FinalizeAction(Action):
         connection = super(FinalizeAction, self).run(connection, args)
         if connection:
             connection.finalise()
-        yaml_log = logging.getLogger("YAML")
         # FIXME: detect a Cancel and set status as Cancel
         if self.job.pipeline.errors:
             self.results = {'status': "Incomplete"}
-            yaml_log.debug("Status: Incomplete")
-            yaml_log.debug(self.job.pipeline.errors)
+            self.logger.debug("Status: Incomplete")
+            self.logger.debug(self.job.pipeline.errors)
         else:
             self.results = {'status': "Complete"}
         with open("%s/results.yaml" % self.job.parameters['output_dir'], 'w') as results:

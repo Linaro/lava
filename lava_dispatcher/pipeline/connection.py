@@ -22,8 +22,8 @@ import os
 import time
 import pexpect
 import signal
-import logging
 import decimal
+from lava_dispatcher.pipeline.log import YamlLogger
 from lava_dispatcher.pipeline.action import TestError
 
 
@@ -61,7 +61,7 @@ class BaseSignalHandler(object):
 class SignalMatch(object):
 
     def match(self, data, fixupdict=None):
-        yaml_log = logging.getLogger("YAML")
+        logger = YamlLogger("root")
         if not fixupdict:
             fixupdict = {}
 
@@ -82,7 +82,7 @@ class SignalMatch(object):
                     res['result'] = fixupdict[res['result']]
                 if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
                     res['result'] = 'unknown'
-                    yaml_log.debug('Setting result to "unknown"')
+                    logger.debug('Setting result to "unknown"')
                     raise TestError('Bad test result: %s', res['result'])
 
         if 'test_case_id' not in res:
@@ -90,7 +90,7 @@ class SignalMatch(object):
                             "incorrect parsing pattern being used): %s", res)
 
         if 'result' not in res:
-            yaml_log.debug('Setting result to "unknown"')
+            logger.debug('Setting result to "unknown"')
             res['result'] = 'unknown'
             raise TestError("Test case results without result (probably a sign of an "
                             "incorrect parsing pattern being used): %s", res)
@@ -124,19 +124,19 @@ class Connection(object):
         self.raw_connection = raw_connection
         self.results = {}
         self.match = None
+        self.logger = YamlLogger("root")
 
     def sendline(self, line):
         self.raw_connection.sendline(line)
 
     def finalise(self):
         if self.raw_connection:
-            yaml_log = logging.getLogger("YAML")
             try:
                 os.killpg(self.raw_connection.pid, signal.SIGKILL)
-                yaml_log.debug("Finalizing child process group with PID %d", self.raw_connection.pid)
+                self.logger.debug("Finalizing child process group with PID %d" % self.raw_connection.pid)
             except OSError:
                 self.raw_connection.kill(9)
-                yaml_log.debug("Finalizing child process with PID %d", self.raw_connection.pid)
+                self.logger.debug("Finalizing child process with PID %d" % self.raw_connection.pid)
             self.raw_connection.close()
 
 
@@ -151,13 +151,13 @@ def wait_for_prompt(connection, prompt_pattern, timeout):
     if timeout == -1:
         timeout = connection.timeout
     partial_timeout = timeout / 2.0
-    yaml_log = logging.getLogger("YAML")
+    logger = YamlLogger("root")
     while True:
         try:
             connection.expect(prompt_pattern, timeout=partial_timeout)
         except pexpect.TIMEOUT:
             if prompt_wait_count < 6:
-                yaml_log.debug('Sending newline in case of corruption.')
+                logger.debug('Sending newline in case of corruption.')
                 prompt_wait_count += 1
                 partial_timeout = timeout / 10
                 connection.sendline('')
@@ -188,10 +188,10 @@ class CommandRunner(object):
         self._prompt_str_includes_rc = prompt_str_includes_rc
         self.match_id = None
         self.match = None
+        self.logger = YamlLogger("root")
 
     def change_prompt(self, string):
-        yaml_log = logging.getLogger("YAML")
-        yaml_log.debug("Changing prompt to %s" % string)
+        self.logger.debug("Changing prompt to %s" % string)
         self._prompt_str = string
 
     def wait_for_prompt(self, timeout=-1):
