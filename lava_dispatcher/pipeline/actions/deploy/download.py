@@ -159,18 +159,18 @@ class DownloadHandler(Action):
                 self.errors = "Unknown 'compression' format '%s'" % (compression)
 
     def run(self, connection, args=None):
-        def progress_unknow_total(downloaded_size, last_value):
+        def progress_unknown_total(downloaded_size, last_value):
             """ Compute progress when the size is unknown """
-            condition = downloaded_size >= last_value + 25*1024*1024
+            condition = downloaded_size >= last_value + 25 * 1024 * 1024
             return (condition, downloaded_size,
-                    "progress %dMB" % (int(downloaded_size / (1024*1024))) if condition else "")
+                    "progress %dMB" % (int(downloaded_size / (1024 * 1024))) if condition else "")
 
         def progress_known_total(downloaded_size, last_value):
             """ Compute progress when the size is known """
             percent = math.floor(downloaded_size / float(self.size) * 100)
             condition = percent >= last_value + 5
             return (condition, percent,
-                    "progress %3d%% (%dMB)" % (percent, int(downloaded_size / (1024*1024))) if condition else "")
+                    "progress %3d%% (%dMB)" % (percent, int(downloaded_size / (1024 * 1024))) if condition else "")
 
         # self.cookies = self.job.context.config.lava_cookies  # FIXME: work out how to restore
         md5 = hashlib.md5()
@@ -183,10 +183,10 @@ class DownloadHandler(Action):
             # Choose the progress bar (is the size known?)
             if self.size == -1:
                 self.logger.debug("total size: unknown")
-                last_value = -25*1024*1024
-                progress = progress_unknow_total
+                last_value = -25 * 1024 * 1024
+                progress = progress_unknown_total
             else:
-                self.logger.debug("total size: %d (%dMB)" % (self.size, int(self.size / (1024*1024))))
+                self.logger.debug("total size: %d (%dMB)" % (self.size, int(self.size / (1024 * 1024))))
                 last_value = -5
                 progress = progress_known_total
 
@@ -204,8 +204,8 @@ class DownloadHandler(Action):
             # Log the download speed
             ending = time.time()
             self.logger.debug("%dMB downloaded in %0.2fs (%0.2fMB/s)" %
-                              (downloaded_size / (1024*1024), round(ending - beginning, 2),
-                               round(downloaded_size / (1024*1024 * (ending - beginning)), 2)))
+                              (downloaded_size / (1024 * 1024), round(ending - beginning, 2),
+                               round(downloaded_size / (1024 * 1024 * (ending - beginning)), 2)))
 
         # set the dynamic data into the context
         self.data['download_action'][self.key] = {
