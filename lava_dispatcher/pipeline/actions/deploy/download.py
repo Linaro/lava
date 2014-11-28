@@ -23,6 +23,7 @@
 
 import math
 import os
+import time
 import urlparse
 import hashlib
 import requests
@@ -178,6 +179,7 @@ class DownloadHandler(Action):
             self.logger.debug("downloading %s as %s" % (self.parameters[self.key], fname))
 
             downloaded_size = 0
+            beginning = time.time()
             # Choose the progress bar (is the size known?)
             if self.size == -1:
                 self.logger.debug("total size: unknown")
@@ -198,6 +200,12 @@ class DownloadHandler(Action):
                 md5.update(buff)
                 sha256.update(buff)
                 writer(buff)
+
+            # Log the download speed
+            ending = time.time()
+            self.logger.debug("%dMB downloaded in %0.2fs (%0.2fMB/s)" %
+                              (downloaded_size / (1024*1024), round(ending - beginning, 2),
+                               round(downloaded_size / (1024*1024 * (ending - beginning)), 2)))
 
         # set the dynamic data into the context
         self.data['download_action'][self.key] = {
