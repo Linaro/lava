@@ -21,6 +21,7 @@
 
 # This class is used for all downloads, including images and individual files for tftp.
 
+import math
 import os
 import urlparse
 import hashlib
@@ -97,6 +98,7 @@ class DownloadHandler(Action):
         self.url = url
         self.key = key
         self.path = path
+        self.size = -1
 
     def reader(self):
         raise NotImplementedError
@@ -156,17 +158,47 @@ class DownloadHandler(Action):
                 self.errors = "Unknown 'compression' format '%s'" % (compression)
 
     def run(self, connection, args=None):
+        def progress_unknow_total(downloaded_size, last_value):
+            """ Compute progress when the size is unknown """
+            condition = downloaded_size >= last_value + 25*1024*1024
+            return (condition, downloaded_size,
+                    "progress %dMB" % (int(downloaded_size / (1024*1024))) if condition else "")
+
+        def progress_known_total(downloaded_size, last_value):
+            """ Compute progress when the size is known """
+            percent = math.floor(downloaded_size / float(self.size) * 100)
+            condition = percent >= last_value + 5
+            return (condition, percent,
+                    "progress %3d%% (%dMB)" % (percent, int(downloaded_size / (1024*1024))) if condition else "")
+
         # self.cookies = self.job.context.config.lava_cookies  # FIXME: work out how to restore
         md5 = hashlib.md5()
         sha256 = hashlib.sha256()
         with self._decompressor_stream() as (writer, fname):
             self.logger.debug("downloading %s as %s" % (self.parameters[self.key], fname))
 
-            # TODO: print the progress in the logs
+            downloaded_size = 0
+            # Choose the progress bar (is the size known?)
+            if self.size == -1:
+                self.logger.debug("total size: unknown")
+                last_value = -25*1024*1024
+                progress = progress_unknow_total
+            else:
+                self.logger.debug("total size: %d (%dMB)" % (self.size, int(self.size / (1024*1024))))
+                last_value = -5
+                progress = progress_known_total
+
+            # Download the file and log the progresses
             for buff in self.reader():
+                downloaded_size += len(buff)
+                (printing, new_value, msg) = progress(downloaded_size, last_value)
+                if printing:
+                    last_value = new_value
+                    self.logger.debug(msg)
                 md5.update(buff)
                 sha256.update(buff)
                 writer(buff)
+
         # set the dynamic data into the context
         self.data['download_action'][self.key] = {
             'file': fname,
@@ -191,8 +223,10 @@ class FileDownloadAction(DownloadHandler):
 
     def validate(self):
         super(FileDownloadAction, self).validate()
-        if not os.path.isfile(self.url.path):
-            self.errors = "Image file '%s' does not exists" % (self.url.path)
+        try:
+            self.size = os.stat(self.url.path).st_size
+        except OSError:
+            self.errors = "Image file '%s' does not exists or is not readable" % (self.url.path)
 
     def reader(self):
         reader = None
@@ -227,6 +261,8 @@ class HttpDownloadAction(DownloadHandler):
             res = requests.head(self.url.geturl(), allow_redirects=True, timeout=HTTP_DOWNLOAD_TIMEOUT)
             if res.status_code != requests.codes.OK:  # pylint: disable=no-member
                 self.errors = "Resources not available at '%s'" % (self.url.geturl())
+            else:
+                self.size = int(res.headers.get('content-length', -1))
         except requests.Timeout:
             self.errors = "'%s' timed out" % (self.url.geturl())
         except requests.RequestException as exc:
@@ -264,9 +300,12 @@ class ScpDownloadAction(DownloadHandler):
     def validate(self):
         super(ScpDownloadAction, self).validate()
         try:
-            _ = subprocess.check_output(['nice', 'ssh', self.url.netloc,
-                                         'ls', self.url.path],
-                                        stderr=subprocess.STDOUT)
+            size = subprocess.check_output(['nice', 'ssh',
+                                            self.url.netloc,
+                                            'stat', '-c', '%s',
+                                            self.url.path],
+                                           stderr=subprocess.STDOUT)
+            self.size = int(size)
         except subprocess.CalledProcessError as exc:
             self.errors = str(exc)
 
