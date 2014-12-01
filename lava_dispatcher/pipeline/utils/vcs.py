@@ -39,25 +39,24 @@ class BzrHelper(VCSHelper):
 
     def __init__(self, url):
         super(BzrHelper, self).__init__(url)
-        self.vcs = '/usr/bin/bzr'
-        self.base_env = {'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'}
+        self.binary = '/usr/bin/bzr'
 
     def clone(self, dest_path, revision=None, env=None):
         cwd = os.getcwd()
 
-        if not env:
+        if env is None:
             env = dict()
-        env.update(self.base_env)
+        env.update({'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'})
 
         try:
-            if revision:
-                subprocess.check_output([self.vcs, 'branch', '-r',
+            if revision is not None:
+                subprocess.check_output([self.binary, 'branch', '-r',
                                          str(revision), self.url,
                                          dest_path],
                                         stderr=subprocess.STDOUT, env=env)
                 commit_id = str(revision)
             else:
-                subprocess.check_output([self.vcs, 'branch', self.url,
+                subprocess.check_output([self.binary, 'branch', self.url,
                                          dest_path],
                                         stderr=subprocess.STDOUT, env=env)
                 os.chdir(dest_path)
@@ -91,20 +90,20 @@ class GitHelper(VCSHelper):
 
     def __init__(self, url):
         super(GitHelper, self).__init__(url)
-        self.vcs = '/usr/bin/git'
+        self.binary = '/usr/bin/git'
 
     def clone(self, dest_path, revision=None, env=None):
         try:
-            subprocess.check_output([self.vcs, 'clone', self.url, dest_path],
+            subprocess.check_output([self.binary, 'clone', self.url, dest_path],
                                     stderr=subprocess.STDOUT, env=env)
 
-            if revision:
-                subprocess.check_output([self.vcs, '--git-dir',
+            if revision is not None:
+                subprocess.check_output([self.binary, '--git-dir',
                                          os.path.join(dest_path, '.git'),
                                          'checkout', str(revision)],
                                         stderr=subprocess.STDOUT, env=env)
 
-            commit_id = subprocess.check_output([self.vcs, '--git-dir',
+            commit_id = subprocess.check_output([self.binary, '--git-dir',
                                                  os.path.join(dest_path, '.git'),
                                                  'log', '-1', '--pretty=%H'],
                                                 stderr=subprocess.STDOUT,
@@ -125,7 +124,7 @@ class TarHelper(VCSHelper):
 
     def __init__(self, url):
         super(TarHelper, self).__init__(url)
-        self.vcs = ''
+        self.binary = None
 
 
 class URLHelper(VCSHelper):
@@ -133,4 +132,4 @@ class URLHelper(VCSHelper):
 
     def __init__(self, url):
         super(URLHelper, self).__init__(url)
-        self.vcs = ''
+        self.binary = None
