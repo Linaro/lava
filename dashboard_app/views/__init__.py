@@ -56,16 +56,20 @@ from dashboard_app.models import (
     Attachment,
     Bundle,
     BundleStream,
+    ImageReport,
+    ImageReportChart,
+    ImageChartUser,
     Tag,
     Test,
     TestCase,
     TestResult,
     TestRun,
+    TestRunFilter,
     TestDefinition,
     BugLink,
 )
 from lava_scheduler_app.models import (
-    TestJob
+    TestJob,
 )
 from dashboard_app.views.tables import (
     BundleStreamTable,
@@ -75,6 +79,9 @@ from dashboard_app.views.tables import (
     TestTable,
     TestDefinitionTable,
 )
+from dashboard_app.views.filters.tables import PublicFiltersTable
+from dashboard_app.views.image_reports.tables import UserImageReportTable
+
 from django_tables2 import (
     Attrs,
     Column,
@@ -153,6 +160,31 @@ class MyBundleStreamView(BundleStreamView):
         return BundleStream.objects.owned_by_principal(self.request.user).order_by('pathname')
 
 
+class SubscribedFiltersView(LavaView):
+
+    def __init__(self, request, **kwargs):
+        super(SubscribedFiltersView, self).__init__(request, **kwargs)
+
+    def stream_query(self, term):
+        streams = BundleStream.objects.filter(pathname__contains=term)
+        return Q(bundle_streams__in=streams)
+
+    def get_queryset(self):
+        return TestRunFilter.objects.filter(
+            public=True,
+            testrunfiltersubscription__user=self.request.user)
+
+
+class SubscribedImageReportView(LavaView):
+
+    def get_queryset(self):
+
+        return ImageReport.objects.filter(
+            imagereportchart__imagechartuser__user=self.request.user,
+            imagereportchart__imagechartuser__has_subscription=True
+        )
+
+
 @BreadCrumb("Dashboard", parent=lava_index)
 def index(request):
     return render_to_response(
@@ -225,7 +257,6 @@ def bundlestreams_json(request):
             }
         )
     return HttpResponse(json.dumps(streams), content_type='application/json')
-
 
 class BundleView(BundleStreamView):
 
@@ -802,6 +833,52 @@ def attachment_view(request, pk):
         "dashboard_app/attachment_view.html", {
             'attachment': attachment,
         }, RequestContext(request))
+
+
+@BreadCrumb("Subscriptions", parent=index)
+def my_subscriptions(request):
+
+    prefix="filter_"
+    filter_view = SubscribedFiltersView(request, model=TestRunFilter,
+                                        table_class=PublicFiltersTable)
+    filters_table = PublicFiltersTable(
+        request.user,
+        filter_view.get_table_data(prefix),
+        prefix=prefix
+    )
+    config = RequestConfig(request)
+    config.configure(filters_table)
+
+    search_data = filters_table.prepare_search_data(filter_view)
+    discrete_data = filters_table.prepare_discrete_data(filter_view)
+    terms_data = filters_table.prepare_terms_data(filter_view)
+    times_data = filters_table.prepare_times_data(filter_view)
+
+    prefix="report_"
+    report_view = SubscribedImageReportView(request, model=ImageReportChart,
+                                            table_class=UserImageReportTable)
+    report_table = UserImageReportTable(report_view.get_table_data(prefix),
+                                        prefix=prefix)
+    config = RequestConfig(request)
+    config.configure(report_table)
+
+    search_data.update(report_table.prepare_search_data(report_view))
+    discrete_data.update(report_table.prepare_discrete_data(report_view))
+    terms_data.update(report_table.prepare_terms_data(report_view))
+    times_data.update(report_table.prepare_times_data(report_view))
+
+    return render_to_response(
+        'dashboard_app/subscribed_list.html', {
+            'filters_table': filters_table,
+            'report_table': report_table,
+            "terms_data": terms_data,
+            "search_data": search_data,
+            "times_data": times_data,
+            "discrete_data": discrete_data,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                my_subscriptions),
+        }, RequestContext(request)
+    )
 
 
 def redirect_to(request, object, trailing):

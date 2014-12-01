@@ -38,6 +38,7 @@ urlpatterns = patterns(
     url(r'^filters/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+subscribe$', 'filters.views.filter_subscribe'),
     url(r'^filters/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+delete$', 'filters.views.filter_delete'),
     url(r'^filters/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+compare/(?P<tag1>[a-zA-Z0-9-_: .]+)/(?P<tag2>[a-zA-Z0-9-_: .]+)$', 'filters.views.compare_matches'),
+    url(r'^my-subscriptions$', 'my_subscriptions', name='lava.dashboard.my_subscriptions'),
     url(r'^streams/$', 'bundle_stream_list', name="lava.dashboard.bundle.list"),
     url(r'^streams/mybundlestreams$', 'mybundlestreams'),
     url(r'^streams/bundlestreams-json$', 'bundlestreams_json'),
