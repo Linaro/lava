@@ -60,10 +60,14 @@ class cmd_boot_linaro_android_image(BaseAction):
     parameters_schema['properties']['test_image_prompt'] = {
         'type': 'string', 'optional': True
     }
+    parameters_schema['properties']['enable_network_after_boot_android'] = {
+        'default': 'True', 'optional': True
+    }
 
     def run(self, options=[], boot_cmds=None, adb_check=False,
             wait_for_home_screen=True, wait_for_home_screen_activity=None,
-            test_image_prompt=None, repeat_count=0):
+            test_image_prompt=None, enable_network_after_boot_android=None,
+            repeat_count=0):
         client = self.client
         if boot_cmds is not None:
             client.config.boot_cmds = boot_cmds
@@ -72,6 +76,9 @@ class cmd_boot_linaro_android_image(BaseAction):
                 wait_for_home_screen_activity
         if test_image_prompt is not None:
             client.config.test_image_prompts.append(test_image_prompt)
+        if enable_network_after_boot_android is not None:
+            client.config.enable_network_after_boot_android = \
+                enable_network_after_boot_android
         client.target_device.boot_options = options
         client.config.android_wait_for_home_screen = wait_for_home_screen
         client.target_device.reset_boot(in_test_shell=False)
