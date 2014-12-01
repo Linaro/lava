@@ -227,7 +227,7 @@ class BzrRepoAction(RepoAction):
     actions.
     """
 
-    priority = 0  # FIXME: increase priority once this is working
+    priority = 1
 
     def __init__(self):
         super(BzrRepoAction, self).__init__()
