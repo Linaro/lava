@@ -120,10 +120,7 @@ class JobParser(object):
                     # set parameters specified in the device configuration, allow job to override.
                     parameters = handle_device_parameters(name, device.parameters, counts[name])
                     parameters.update(action_data[name])  # pass the job parameters to the instance
-                    if 'os' in parameters:
-                        parameters.update({'deployment_data': get_deployment_data(parameters['os'])})
-                    else:
-                        parameters.update({'deployment_data': get_deployment_data('oe')})
+                    parameters.update({'deployment_data': get_deployment_data(parameters.get('os', ''))})
                     # allow the classmethod to check the parameters
                     deploy = Deployment.select(device, action_data[name])(pipeline, parameters)
                     deploy.action.yaml_line = line

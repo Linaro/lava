@@ -88,8 +88,8 @@ def get_pipeline_runner(job):
             job.validate(simulate=validate_only)
             if not validate_only:
                 job.run()
-        except JobError as e:
-            logger.debug("   %s", e)
+        except JobError as exc:
+            logger.debug("%s" % exc)
             sys.exit(2)
         # FIXME: should we call the cleanup function in the finally block?
     return run_pipeline_job
@@ -222,7 +222,12 @@ class dispatch(DispatcherCommand):
             if not device.parameters:
                 raise RuntimeError("Pipeline does not support %s" % self.args.target)
             parser = JobParser()
-            job = parser.parse(open(filename), device, output_dir=self.args.output_dir)
+            job = None
+            try:
+                job = parser.parse(open(filename), device, output_dir=self.args.output_dir)
+            except JobError as exc:
+                logging.error("Invalid job submission: %s" % exc)
+                exit(1)
             # FIXME: NewDevice schema needs a validation parser
             # device.check_config(job)
             if 'target_group' in job.parameters:

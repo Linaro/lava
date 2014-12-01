@@ -92,6 +92,8 @@ class TftpAction(DeployAction):
         super(TftpAction, self).validate()
         if 'kernel'not in self.parameters.keys():
             self.errors = "%s needs a kernel to deploy" % self.name
+        if not self.valid:
+            return
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
         self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.device.parameters['hostname']
         if self.suffix:

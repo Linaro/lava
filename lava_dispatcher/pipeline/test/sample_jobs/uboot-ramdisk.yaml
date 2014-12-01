@@ -18,6 +18,7 @@ actions:
      kernel: http://images.validation.linaro.org/functional-test-images/bbb/zImage
      ramdisk: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
      ramdisk-type: u-boot
+     os: oe
      dtb: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 
   - boot:
