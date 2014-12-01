@@ -100,7 +100,7 @@ class TftpAction(DeployAction):
         try:
             which("in.tftpd")
         except InfrastructureError as exc:
-            self.errors = exc
+            self.errors = str(exc)
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
