@@ -188,12 +188,15 @@ class FinalizeAction(Action):
         """
         The pexpect.spawn here is the ShellCommand not the ShellSession connection object.
         So call the finalise() function of the connection which knows about the raw_connection inside.
+        The internal_pipeline of FinalizeAction is special - it needs to run even in the case of error / cancel.
         """
         connection = super(FinalizeAction, self).run(connection, args)
         if connection:
             connection.finalise()
-        # FIXME: detect a Cancel and set status as Cancel
-        if self.job.pipeline.errors:
+        if self.errors:
+            self.results = {'status': self.errors}
+            self.logger.debug('status: %s' % self.errors)
+        elif self.job.pipeline.errors:
             self.results = {'status': "Incomplete"}
             self.logger.debug("Status: Incomplete")
             self.logger.debug(self.job.pipeline.errors)

@@ -22,7 +22,7 @@ import os
 import sys
 import time
 import types
-import yaml
+import signal
 import datetime
 import subprocess
 import collections
@@ -71,7 +71,7 @@ class TestError(Exception):
     pass
 
 
-class Pipeline(object):
+class Pipeline(object):  # pylint: disable=too-many-instance-attributes
     """
     Pipelines ensure that actions are run in the correct sequence whilst
     allowing for retries and other requirements.
@@ -202,6 +202,21 @@ class Pipeline(object):
         if self.parent is None and self.errors:
             raise JobError("Invalid job data: %s\n" % '\n'.join(self.errors))
 
+    def pipeline_cleanup(self):
+        """
+        Recurse through internal pipelines running action.cleanup(),
+        in order of the pipeline levels.
+        """
+        for child in self.actions:
+            child.cleanup()
+            if child.internal_pipeline:
+                child.internal_pipeline.pipeline_cleanup()
+
+    def cleanup_actions(self):
+        for child in self.job.pipeline.actions:
+            if child.internal_pipeline:
+                child.internal_pipeline.pipeline_cleanup()
+
     def _diagnose(self, connection):
         """
         Pipeline Jobs have a number of Diagnostic classes registered - all
@@ -226,6 +241,19 @@ class Pipeline(object):
         return None
 
     def run_actions(self, connection, args=None):
+
+        def cancelling_handler(*args):  # pylint: disable=unused-argument
+            """
+            Catches KeyboardInterrupt from anywhere below the top level
+            pipeline and allow cleanup actions to happen on all actions,
+            not just the ones directly related to the currently running action.
+            """
+            logger = YamlLogger("root")
+            logger.debug("Cancelled")
+            self.cleanup_actions()
+            signal.signal(signal.SIGINT, signal.default_int_handler)
+            raise KeyboardInterrupt
+
         for action in self.actions:
             action.logger = YamlLogger(action.name)
             if action.log_handler:
@@ -234,6 +262,8 @@ class Pipeline(object):
                 action.logger.set_handler()
             action.logger.debug('start: %s %s' % (action.level, action.name))
             try:
+                if not self.parent:
+                    signal.signal(signal.SIGINT, cancelling_handler)
                 start = time.time()
                 new_connection = action.run(connection, args)
                 action.elapsed_time = time.time() - start
@@ -243,19 +273,20 @@ class Pipeline(object):
                 if new_connection:
                     connection = new_connection
             except KeyboardInterrupt:
-                action.cleanup()
-                self.err = "\rCancel"  # Set a useful message.
-                if self.parent:
-                    raise KeyboardInterrupt
-                break
+                # exit out of the pipeline & run the Finalize action to close the connection and poweroff the device
+                for child in self.job.pipeline.actions:
+                    # rely on the action name here - use isinstance if pipeline moves into a dedicated module.
+                    if child.name == 'finalize':
+                        child.errors = "Cancelled"
+                        child.run(connection, args)
+                sys.exit(1)
             except (JobError, InfrastructureError) as exc:
                 action.errors = exc.message
+                # set results including retries
                 action.results = {"fail": exc}
                 self._diagnose(connection)
+                action.cleanup()
                 raise exc
-            # FIXME: should we call the cleanup function here? Only the
-            #        KeyboardInterrupt case does run cleanup.
-            # set results including retries
             if action.logger.handler:
                 action.logger.remove_handler()
         return connection
@@ -269,7 +300,7 @@ class Pipeline(object):
             action.post_process()
 
 
-class Action(object):
+class Action(object):  # pylint: disable=too-many-instance-attributes
 
     def __init__(self):
         """
@@ -284,7 +315,6 @@ class Action(object):
         self.__summary__ = None
         self.__description__ = None
         self.__level__ = None
-        self.err = None
         self.pipeline = None
         self.internal_pipeline = None
         self.__parameters__ = {}
@@ -355,7 +385,7 @@ class Action(object):
     # FIXME: has to be called select to be consistent with Deployment
     @classmethod
     def find(cls, name):
-        for subclass in cls.__subclasses__():
+        for subclass in cls.__subclasses__():  # pylint: disable=no-member
             if subclass.name == name:
                 return subclass
         raise JobError("Cannot find action named \"%s\"" % name)
@@ -463,7 +493,7 @@ class Action(object):
         self.job.context.setdefault(self.name, {})
         if self.internal_pipeline:
             self.internal_pipeline.validate_actions()
-            self.errors.extend(self.internal_pipeline.errors)
+            self.errors.extend(self.internal_pipeline.errors)  # pylint: disable=maybe-no-member
 
     def populate(self, parameters):
         """
@@ -487,14 +517,6 @@ class Action(object):
         """
         # FIXME: is this still relevant?
         pass
-
-    def __call__(self, connection):
-        # FIXME: necessary?
-        try:
-            new_connection = self.run(connection)
-            return new_connection
-        finally:
-            self.cleanup()
 
     def _run_command(self, command_list, env=None):
         """
@@ -520,11 +542,6 @@ class Action(object):
             self.env.update(env)
         try:
             log = subprocess.check_output(command_list, stderr=subprocess.STDOUT, env=self.env)
-        except KeyboardInterrupt:
-            self.cleanup()
-            self.err = "\rCancel"  # Set a useful message.
-            self.logger.debug("Cancelled")
-            return None
         except OSError as exc:
             self.logger.debug({exc.strerror: exc.child_traceback.split('\n')})
         except subprocess.CalledProcessError as exc:
@@ -553,20 +570,6 @@ class Action(object):
         :param args: Command and arguments to run
         :raise: Classes inheriting from BaseAction must handle
         all exceptions possible from the command and re-raise
-        KeyboardInterrupt to allow for Cancel operations. e.g.:
-
-        try:
-            # call the command here
-        except KeyboardInterrupt:
-            self.cleanup()
-            self.err = "\rCancel"  # Set a useful message.
-            sys.exit(1)  # Only in the top level pipeline
-        except Exception as e:
-            raise e
-        finally:
-            self.cleanup()
-            if self.err:
-                print self.err
         """
         if self.internal_pipeline:
             return self.internal_pipeline.run_actions(connection, args)
@@ -578,14 +581,16 @@ class Action(object):
 
     def cleanup(self):
         """
-        This method *will* be called after run(), no matter whether
-        run() raises an exception or not. It should cleanup any resources
-        that may be left open by perform, such as, but not limited to:
+        cleanup will *only* be called after run() if run() raises an exception.
+        Use cleanup with any resources that may be left open by an interrupt or failed operation
+        such as, but not limited to:
 
             - open file descriptors
             - mount points
             - error codes
-            - etc
+
+        Use contextmanagers or signal handlers to clean up any resources when there are no errors,
+        instead of using cleanup().
         """
         pass
 
@@ -678,23 +683,14 @@ class RetryAction(Action):
             try:
                 new_connection = self.internal_pipeline.run_actions(connection)
                 return new_connection
-            except KeyboardInterrupt:
-                self.err = "\rCancel"  # Set a useful message.
-                self.errors = "Cancelled"
-                return connection
             except (JobError, InfrastructureError, TestError) as exc:
                 self.retries += 1
-                msg = "%s failed: %d of %d attempts. '%s'" % (self.name, self.retries, self.max_retries, exc)
-                self.errors = msg
-                self.logger.debug(msg)
+                self.errors = "%s failed: %d of %d attempts. '%s'" % (self.name, self.retries, self.max_retries, exc)
                 if self.timeout:
                     self.logger.debug("timeout: %s %s" % (self.timeout.name, self.timeout.duration))
                 time.sleep(self.sleep)
-            finally:
-                # TODO: QUESTION: is it the right time to cleanup?
-                self.cleanup()
-        self.errors = "%s retries failed for %s" % (self.retries, self.name)
-        self.logger.debug("%s retries failed for %s" % (self.retries, self.name))
+        if not self.valid:
+            self.errors = "%s retries failed for %s" % (self.retries, self.name)
 
     def __call__(self, connection):
         self.run(connection)
@@ -725,7 +721,7 @@ class DiagnosticAction(Action):  # pylint: disable=abstract-class-not-used
         return connection
 
 
-class AdjuvantAction(Action):
+class AdjuvantAction(Action):  # pylint: disable=abstract-class-not-used
     """
     Adjuvants are associative actions - partners and helpers which can be executed if
     the initial Action determines a particular state.
@@ -816,7 +812,7 @@ class Deployment(object):  # pylint: disable=abstract-class-not-used
     @classmethod
     def select(cls, device, parameters):
 
-        candidates = cls.__subclasses__()
+        candidates = cls.__subclasses__()  # pylint: disable=no-member
         willing = [c for c in candidates if c.accepts(device, parameters)]
 
         if len(willing) == 0:
@@ -855,7 +851,7 @@ class Boot(object):
 
     @classmethod
     def select(cls, device, parameters):
-        candidates = cls.__subclasses__()
+        candidates = cls.__subclasses__()  # pylint: disable=no-member
         willing = [c for c in candidates if c.accepts(device, parameters)]
         if len(willing) == 0:
             raise NotImplementedError(
@@ -901,7 +897,7 @@ class LavaTest(object):  # pylint: disable=abstract-class-not-used
 
     @classmethod
     def select(cls, device, parameters):
-        candidates = cls.__subclasses__()
+        candidates = cls.__subclasses__()  # pylint: disable=no-member
         willing = [c for c in candidates if c.accepts(device, parameters)]
         if len(willing) == 0:
             if hasattr(device, 'parameters'):
@@ -918,7 +914,7 @@ class LavaTest(object):  # pylint: disable=abstract-class-not-used
         return prioritized[0]
 
 
-class PipelineContext(object):
+class PipelineContext(object):  # pylint: disable=too-few-public-methods
     """
     Replacement for the LavaContext which only holds data for the device for the
     current pipeline.

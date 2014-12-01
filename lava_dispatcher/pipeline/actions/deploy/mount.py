@@ -29,7 +29,7 @@ from lava_dispatcher.pipeline.action import (
     Pipeline
 )
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, rmtree
 
 
 class OffsetAction(DeployAction):
@@ -73,7 +73,7 @@ class OffsetAction(DeployAction):
             'print'
         ])
         if not part_data:
-            raise JobError("Unable to identify offset")
+            raise JobError("Unable to identify offset using parted")
         # FIXME: identify the partitions from the image, not from the device configuration
         partno = self.job.device.parameters[self.parameters['deployment_data']['lava_test_results_part_attr']]
         pattern = re.compile('%d:([0-9]+)B:' % partno)
@@ -108,8 +108,7 @@ class LoopCheckAction(DeployAction):
 
     def run(self, connection, args=None):
         if 'available_loops' not in self.data['download_action']:
-            # FIXME: why is this data being cleared? Should we re-check anyway?
-            self.validate()
+            raise RuntimeError("Unable to check available loop devices")
         args = ['/sbin/losetup', '-a']
         pro = self._run_command(args)
         mounted_loops = len(pro.strip().split("\n")) if pro else 0
@@ -138,24 +137,22 @@ class LoopMountAction(RetryAction):
         self.summary = "loopback mount"
         self.retries = 10
         self.sleep = 10
+        self.mntdir = None
 
     def validate(self):
         self.data[self.name] = {}
         self.data.setdefault('mount_action', {})
         if 'download_action' not in self.data:
             raise RuntimeError("download-action missing: %s" % self.name)
-            # return
+        lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
+        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.device.parameters['hostname']
         if 'file' not in self.data['download_action']['image']:
             self.errors = "no file specified to mount"
 
     def run(self, connection, args=None):
-        # FIXME: figure out why deployment_data isn't available during validation.
-        lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.device.parameters['hostname']
-        # FIXME: this should not happen !!
-        if 'offset' not in self.data['download_action']:
-            raise RuntimeError("Offset action failed")
         self.data[self.name]['mntdir'] = mkdtemp(autoremove=False)
+        self.data['mount_action']['mntdir'] = \
+            os.path.abspath("%s/%s" % (self.data[self.name]['mntdir'], self.data['lava_test_results_dir']))
         mount_cmd = [
             'mount',
             '-o',
@@ -164,12 +161,20 @@ class LoopMountAction(RetryAction):
             self.data[self.name]['mntdir']
         ]
         command_output = self._run_command(mount_cmd)
-        self.data['mount_action']['mntdir'] = \
-            os.path.abspath("%s/%s" % (self.data[self.name]['mntdir'], self.data['lava_test_results_dir']))
+        self.mntdir = self.data['loop_mount']['mntdir']
+
         if not command_output or command_output is '':
             return connection
         else:
             raise JobError("Unable to mount: %s" % command_output)  # FIXME: JobError needs a unit test
+
+    def cleanup(self):
+        if self.mntdir:
+            if os.path.ismount(self.mntdir):
+                self._run_command(['umount', self.mntdir])
+            if os.path.isdir(self.mntdir):
+                rmtree(self.mntdir)
+            self.mntdir = None
 
 
 class MountAction(DeployAction):
@@ -205,16 +210,11 @@ class MountAction(DeployAction):
         self.internal_pipeline.add_action(LoopMountAction())
 
     def run(self, connection, args=None):
-        if self.internal_pipeline:
-            # Pipeline.run_actions handles running diagnose() after internal JobError
-            connection = self.internal_pipeline.run_actions(connection, args)
-        else:
-            # FIXME: this is a bug that should not happen (using assert?)
-            raise RuntimeError("Deployment failed to generate a mount pipeline.")
+        connection = self.internal_pipeline.run_actions(connection, args)
         return connection
 
 
-class UnmountAction(RetryAction):  # FIXME: contextmanager to ensure umounted on error?
+class UnmountAction(RetryAction):
 
     def __init__(self):
         super(UnmountAction, self).__init__()
@@ -226,10 +226,6 @@ class UnmountAction(RetryAction):  # FIXME: contextmanager to ensure umounted on
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(Unmount())
 
-    def cleanup(self):
-        # FIXME: define a cleanup
-        pass
-
 
 class Unmount(Action):
 
@@ -240,9 +236,13 @@ class Unmount(Action):
         self.summary = "unmount image"
 
     def run(self, connection, args=None):
-        self.logger.debug("umounting %s" % self.data['loop_mount']['mntdir'])
-        self._run_command(['umount', self.data['loop_mount']['mntdir']])
-        # FIXME: is the rm -rf a separate action or a cleanup of this action?
-        # FIXME: use the utils module
-        self._run_command(['rm', '-rf', self.data['loop_mount']['mntdir']])
+        """
+        rmtree is not a cleanup action - it needs to be umounted first.
+        """
+        mntdir = self.data['loop_mount']['mntdir']
+        self.logger.debug("umounting %s" % mntdir)
+        if os.path.ismount(mntdir):
+            self._run_command(['umount', mntdir])
+        if os.path.isdir(mntdir):
+            rmtree(mntdir)
         return connection

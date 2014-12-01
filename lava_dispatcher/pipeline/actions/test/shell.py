@@ -64,9 +64,6 @@ class TestShellRetry(RetryAction):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(TestShellAction())
 
-    def cleanup(self):
-        pass
-
 
 class TestShellAction(TestAction):
 
@@ -131,16 +128,12 @@ class TestShellAction(TestAction):
             })
 
         with connection.test_connection() as test_connection:
-            try:
-                # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
-                test_connection.sendline(
-                    "%s/bin/lava-test-runner %s" % (
-                        self.data['lava_test_results_dir'],
-                        self.data['lava_test_results_dir']),
-                )
-            except KeyboardInterrupt:
-                self.errors = "Cancelled"
-                return connection
+            # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
+            test_connection.sendline(
+                "%s/bin/lava-test-runner %s" % (
+                    self.data['lava_test_results_dir'],
+                    self.data['lava_test_results_dir']),
+            )
 
             if self.timeout:
                 test_connection.timeout = self.timeout.duration
@@ -218,9 +211,6 @@ class TestShellAction(TestAction):
 
         return False
 
-    def cleanup(self):
-        pass
-
     def _keep_running(self, test_connection, timeout):
         self.logger.debug("expect timeout: %d" % timeout)
         retval = test_connection.expect(list(self.patterns.values()), timeout=timeout)
@@ -257,7 +247,7 @@ class TestShellAction(TestAction):
                 except KeyboardInterrupt:
                     raise KeyboardInterrupt
                 except JobError:
-                    logger.debug("    err: handling signal %s failed" % name)
+                    logger.debug("err: handling signal %s failed" % name)
                     return False
                 return True
 
