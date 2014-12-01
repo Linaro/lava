@@ -101,8 +101,6 @@ class MasterImageTarget(Target):
         if config.pre_connect_command:
             self.context.run_command(config.pre_connect_command)
 
-        self.proc = connect_to_serial(self.context)
-
         self.__boot_cmds_dynamic__ = None
 
     def get_device_version(self):
@@ -443,6 +441,10 @@ class MasterImageTarget(Target):
             logging.info("Booting the system master image. Attempt: %d",
                          attempts + 1)
             try:
+                if self.proc:
+                    finalize_process(self.proc)
+                    self.proc = None
+                self.proc = connect_to_serial(self.context)
                 self.master_ip = None
                 if self.config.hard_reset_command:
                     self._hard_reboot(self.proc)
