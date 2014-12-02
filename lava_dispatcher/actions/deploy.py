@@ -100,7 +100,7 @@ class cmd_deploy_linaro_image(BaseAction):
             rootfstype='ext4', bootloadertype='u_boot', login_prompt=None,
             password_prompt=None, username=None, password=None,
             login_commands=None, customize=None,
-            boot_part = None, root_part = None):
+            boot_part=None, root_part=None):
         if login_prompt is not None:
             self.client.config.login_prompt = login_prompt
         if password_prompt is not None:
