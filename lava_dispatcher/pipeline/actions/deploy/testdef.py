@@ -236,7 +236,6 @@ class BzrRepoAction(RepoAction):
         self.name = "bzr-repo-action"
         self.description = "apply bazaar repository of tests to the test image"
         self.summary = "branch a bzr test repo"
-        self.vcs_binary = "/usr/bin/bzr"
         self.testdef = None
 
     def validate(self):
