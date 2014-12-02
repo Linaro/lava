@@ -99,7 +99,6 @@ class OverlayAction(DeployAction):
         * copy runners into test runner directories
         """
         self.data[self.name].setdefault('location', mkdtemp())
-        self.validate()
         lava_path = os.path.abspath("%s/%s" % (self.data[self.name]['location'], self.data['lava_test_results_dir']))
         self.logger.debug("lava_path:%s scripts:%s" % (lava_path, self.scripts_to_copy))
         for runner_dir in ['bin', 'tests', 'results']:
