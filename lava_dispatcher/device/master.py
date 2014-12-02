@@ -101,6 +101,8 @@ class MasterImageTarget(Target):
         if config.pre_connect_command:
             self.context.run_command(config.pre_connect_command)
 
+        self.proc = None
+
         self.__boot_cmds_dynamic__ = None
 
     def get_device_version(self):
