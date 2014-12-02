@@ -180,9 +180,6 @@ class JobParser(object):
 
         # there's always going to need to be a finalize_process action
         pipeline.add_action(FinalizeAction())
-        # the only parameters sent to the job are job parameters
-        # like job_name, logging_level or target_group.
-        data.pop('actions')
         data['output_dir'] = output_dir
         job.set_pipeline(pipeline)
         return job

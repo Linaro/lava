@@ -190,6 +190,8 @@ class Pipeline(object):
     @property
     def errors(self):
         sub_action_errors = [a.errors for a in self.actions]
+        if not sub_action_errors:  # allow for jobs with no actions
+            return []
         return reduce(lambda a, b: a + b, sub_action_errors)
 
     def validate_actions(self):

@@ -20,7 +20,6 @@
 
 import os
 import io
-import ast
 import yaml
 import base64
 import hashlib
@@ -37,7 +36,7 @@ from lava_dispatcher.pipeline.utils.strings import indices
 from lava_dispatcher.pipeline.utils.vcs import BzrHelper, GitHelper
 
 
-class RepoAction(Action):
+class RepoAction(Action):  # pylint: disable=too-many-instance-attributes
 
     def __init__(self):
         super(RepoAction, self).__init__()
@@ -57,7 +56,7 @@ class RepoAction(Action):
     @classmethod
     def select(cls, repo_type):
 
-        candidates = cls.__subclasses__()
+        candidates = cls.__subclasses__()  # pylint: disable=no-member
         willing = [c for c in candidates if c.accepts(repo_type)]
 
         if len(willing) == 0:
@@ -72,7 +71,6 @@ class RepoAction(Action):
         return prioritized[0]
 
     def validate(self):
-        # FIXME: this should work but test_basic.py needs to be migrated to the new Device configuration first
         if 'hostname' not in self.job.device.parameters:
             raise InfrastructureError("Invalid device configuration")
         if 'test_name' not in self.parameters:
@@ -454,6 +452,7 @@ class TestDefinitionAction(TestAction):
         self.name = "test-definition"
         self.description = "load test definitions into image"
         self.summary = "loading test definitions"
+        self.test_list = None
 
     def populate(self, parameters):
         """
@@ -464,13 +463,12 @@ class TestDefinitionAction(TestAction):
         """
         index = {}
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        # FIXME: check the effect of the parameter review
-        test_list = [action['test']['definitions'] for action in self.job.parameters['actions']
-                     if 'test' in action]
-        if not test_list:
+        self.test_list = [action['test']['definitions'] for action in self.job.parameters['actions']
+                          if 'test' in action]
+        if not self.test_list:
             self.logger.debug("No test action defined.")
             return
-        for testdef in test_list[0]:
+        for testdef in self.test_list[0]:
             handler = RepoAction.select(testdef['from'])()
 
             # set the full set of job YAML parameters for this handler as handler parameters.
@@ -486,14 +484,14 @@ class TestDefinitionAction(TestAction):
             overlay.parameters['test_name'] = handler.parameters['test_name']
             overlay.test_uuid = handler.uuid
 
-            # add install handler
+            # add install handler - uses job parameters
             installer = TestInstallAction()
             installer.job = self.job
             installer.parameters = testdef
             installer.parameters['test_name'] = handler.parameters['test_name']
             installer.test_uuid = handler.uuid
 
-            # add runsh handler
+            # add runsh handler - uses job parameters
             runsh = TestRunnerAction()
             runsh.job = self.job
             runsh.parameters = testdef
@@ -508,30 +506,25 @@ class TestDefinitionAction(TestAction):
             self.internal_pipeline.add_action(installer)
             self.internal_pipeline.add_action(runsh)
 
-            # FIXME: the outer pipeline may add unwanted data to the parameters['test']
-
     def validate(self):
+        """
+        TestDefinitionAction is part of the overlay and therefore part of the deployment -
+        the internal pipeline then looks inside the job definition for details of the tests to deploy.
+        Jobs with no test actions defined (empty test_list) are explicitly allowed.
+        """
         super(TestDefinitionAction, self).validate()
-        if 'actions' not in self.job.parameters:
-            # FIXME: is this the result of parameter issues or skipping?
-            return
         if not self.job:
             self.errors = "missing job object"
-        if 'test' not in self.parameters:
-            self.errors = "testaction without test parameters"
-            # runtimeerror?
-        if 'definitions' not in self.parameters['test']:
-            self.errors = "test action without definition"
-        for testdef in self.parameters['test']['definitions']:
+            return
+        if 'actions' not in self.job.parameters:
+            self.errors = "No actions defined in job parameters"
+            return
+        if not self.test_list:
+            self.logger.debug("No test action defined.")
+            return
+        for testdef in self.test_list[0]:
             if 'from' not in testdef:
                 self.errors = "missing 'from' field in test definition %s" % testdef
-            if testdef['from'] is 'git':
-                repository = str(testdef['repository'])
-                # FIXME: this is not a reliable method as some git repository
-                #        does not end with '.git'
-                if not repository.endswith('.git'):
-                    self.errors = "git specified but repository does not look like git"
-
         self.internal_pipeline.validate_actions()
 
     def run(self, connection, args=None):
@@ -583,26 +576,32 @@ class TestOverlayAction(TestAction):
     def validate(self):
         if 'path' not in self.parameters:
             self.errors = "Missing path in parameters"
+        test_list = [action['test']['definitions'] for action in self.job.parameters['actions'] if 'test' in action.keys()]
+        for testdef in test_list[0]:
+            if 'parameters' in testdef:  # optional
+                if type(testdef['parameters']) is not dict:
+                    self.errors = "Invalid test definition parameters"
 
-    # FIXME: still needs porting. LAVA-1583
-    def handle_parameters(self, filename, testdef):
+    def handle_parameters(self, testdef):
 
-        with open(filename, 'w') as runsh:
-
-            # inject default parameters that was defined in yaml first
-            runsh.write('###default parameters from yaml###\n')
-            if 'params' in testdef:
-                for def_param_name, def_param_value in list(testdef['params'].items()):
-                    runsh.write('%s=\'%s\'\n' % (def_param_name, def_param_value))
-            runsh.write('######\n')
-
-            # inject the parameters that were set in job submission.
-            runsh.write('###test parameters from json###\n')
-            if 'test_params' in self.parameters and self.parameters['test_params'] != '':
-                _test_params_temp = ast.literal_eval(self.parameters['test_params'])
-                for param_name, param_value in list(_test_params_temp.items()):
-                    runsh.write('%s=\'%s\'\n' % (param_name, param_value))
-            runsh.write('######\n')
+        ret_val = ['###default parameters from yaml###\n']
+        if 'parameters' in testdef:
+            for def_param_name, def_param_value in list(testdef['parameters'].items()):
+                if def_param_name is 'yaml_line':
+                    continue
+                ret_val.append('%s=\'%s\'\n' % (def_param_name, def_param_value))
+        ret_val.append('######\n')
+        # inject the parameters that were set in job submission.
+        ret_val.append('###test parameters from json###\n')
+        if 'parameters' in self.parameters and self.parameters['parameters'] != '':
+            # turn a string into a local variable.
+            for param_name, param_value in list(self.parameters['parameters'].items()):
+                if param_name is 'yaml_line':
+                    continue
+                ret_val.append('%s=\'%s\'\n' % (param_name, param_value))
+                self.logger.debug('%s=\'%s\'' % (param_name, param_value))
+        ret_val.append('######\n')
+        return ret_val
 
     def run(self, connection, args=None):
         runner_path = self.data['test'][self.test_uuid]['overlay_path'][self.parameters['test_name']]
@@ -675,9 +674,11 @@ class TestInstallAction(TestOverlayAction):
 
         # hostdir = self.data['test'][self.test_uuid]['overlay_path'][self.parameters['test_name']]
         filename = '%s/install.sh' % runner_path
-        self.handle_parameters(filename, testdef)
+        content = self.handle_parameters(testdef)
 
         with open(filename, 'w') as install_file:
+            for line in content:
+                install_file.write(line)
             if testdef['skip_install'] != 'keys':
                 sources = testdef['install'].get('keys', [])
                 for src in sources:
@@ -733,10 +734,11 @@ class TestRunnerAction(TestOverlayAction):
             testdef = yaml.safe_load(test_file)
 
         filename = '%s/run.sh' % runner_path
-        self.handle_parameters(filename, testdef)
+        content = self.handle_parameters(testdef)
 
         with open(filename, 'a') as runsh:
-
+            for line in content:
+                runsh.write(line)
             runsh.write('set -e\n')
             runsh.write('export TESTRUN_ID=%s\n' % testdef['metadata']['name'])
             runsh.write('cd %s\n' % self.data['test'][self.test_uuid]['runner_path'][self.parameters['test_name']])
