@@ -499,7 +499,7 @@ class MasterImageTarget(Target):
             self.proc.sendline("")
             match_id = self.proc.expect(
                 [self.MASTER_PS1_PATTERN, pexpect.TIMEOUT],
-                    timeout=10, lava_no_logging=1)
+                timeout=10, lava_no_logging=1)
             if match_id == 1:
                 self.boot_master_image()
         else:
