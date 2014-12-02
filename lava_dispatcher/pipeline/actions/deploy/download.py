@@ -20,12 +20,15 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 # This class is used for all downloads, including images and individual files for tftp.
+# python2 only
 
+import math
 import os
+import time
 import urlparse
 import hashlib
 import requests
-import subprocess  # FIXME: should not need this
+import subprocess
 import bz2
 import contextlib
 import lzma
@@ -46,7 +49,7 @@ from lava_dispatcher.pipeline.utils.constants import (
 
 # FIXME: separate download actions for decompressed and uncompressed downloads
 # so that the logic can be held in the Strategy class, not the Action.
-
+# FIXME: create a download3.py which uses urllib.urlparse
 
 class DownloaderAction(RetryAction):
     """
@@ -76,7 +79,7 @@ class DownloaderAction(RetryAction):
         self.internal_pipeline.add_action(action)
 
 
-class DownloadHandler(Action):
+class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
     """
     The identification of which downloader and whether to
     decompress needs to be done in the validation stage,
@@ -97,15 +100,19 @@ class DownloadHandler(Action):
         self.url = url
         self.key = key
         self.path = path
+        self.size = -1
 
     def reader(self):
         raise NotImplementedError
 
-    def _url_to_fname_suffix(self, path):
+    def _url_to_fname_suffix(self, path, modify):
         filename = os.path.basename(self.url.path)
         parts = filename.split('.')
         suffix = parts[-1]
-        if len(parts) == 1:  # handle files without suffixes, e.g. kernel images
+        if not modify:
+            filename = os.path.join(path, filename)
+            suffix = None
+        elif len(parts) == 1:  # handle files without suffixes, e.g. kernel images
             filename = os.path.join(path, ''.join(parts[-1]))
             suffix = None
         else:
@@ -115,17 +122,17 @@ class DownloadHandler(Action):
     @contextlib.contextmanager
     def _decompressor_stream(self):
         dwnld_file = None
-        fname, _ = self._url_to_fname_suffix(self.path)  # FIXME: use the context tmpdir
+        compression = self.parameters.get('compression', False)
+        fname, _ = self._url_to_fname_suffix(self.path, compression)
 
         decompressor = None
-        compression = self.parameters.get('compression', None)
-        if compression is not None:
+        if compression:
             if compression == 'gz':
                 decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
             elif compression == 'bz2':
                 decompressor = bz2.BZ2Decompressor()
             elif compression == 'xz':
-                decompressor = lzma.LZMADecompressor()
+                decompressor = lzma.LZMADecompressor()  # pylint: disable=no-member
             self.logger.debug("Using %s decompression" % compression)
         else:
             self.logger.debug("No compression specified.")
@@ -145,28 +152,65 @@ class DownloadHandler(Action):
     def validate(self):
         super(DownloadHandler, self).validate()
         self.url = urlparse.urlparse(self.parameters[self.key])
-        fname, _ = self._url_to_fname_suffix(self.path)  # FIXME: use the context tmpdir
+        compression = self.parameters.get('compression', False)
+        fname, _ = self._url_to_fname_suffix(self.path, compression)
 
         self.data.setdefault('download_action', {self.key: {}})
         self.data['download_action'].update({self.key: {'file': fname}})
 
-        compression = self.parameters.get('compression', None)
-        if compression is not None:
+        if compression:
             if compression not in ['gz', 'bz2', 'xz']:
-                self.errors = "Unknown 'compression' format '%s'" % (compression)
+                self.errors = "Unknown 'compression' format '%s'" % compression
 
     def run(self, connection, args=None):
+        def progress_unknown_total(downloaded_size, last_value):
+            """ Compute progress when the size is unknown """
+            condition = downloaded_size >= last_value + 25 * 1024 * 1024
+            return (condition, downloaded_size,
+                    "progress %dMB" % (int(downloaded_size / (1024 * 1024))) if condition else "")
+
+        def progress_known_total(downloaded_size, last_value):
+            """ Compute progress when the size is known """
+            percent = math.floor(downloaded_size / float(self.size) * 100)
+            condition = percent >= last_value + 5
+            return (condition, percent,
+                    "progress %3d%% (%dMB)" % (percent, int(downloaded_size / (1024 * 1024))) if condition else "")
+
         # self.cookies = self.job.context.config.lava_cookies  # FIXME: work out how to restore
         md5 = hashlib.md5()
         sha256 = hashlib.sha256()
         with self._decompressor_stream() as (writer, fname):
             self.logger.debug("downloading %s as %s" % (self.parameters[self.key], fname))
 
-            # TODO: print the progress in the logs
+            downloaded_size = 0
+            beginning = time.time()
+            # Choose the progress bar (is the size known?)
+            if self.size == -1:
+                self.logger.debug("total size: unknown")
+                last_value = -25 * 1024 * 1024
+                progress = progress_unknown_total
+            else:
+                self.logger.debug("total size: %d (%dMB)" % (self.size, int(self.size / (1024 * 1024))))
+                last_value = -5
+                progress = progress_known_total
+
+            # Download the file and log the progresses
             for buff in self.reader():
+                downloaded_size += len(buff)
+                (printing, new_value, msg) = progress(downloaded_size, last_value)
+                if printing:
+                    last_value = new_value
+                    self.logger.debug(msg)
                 md5.update(buff)
                 sha256.update(buff)
                 writer(buff)
+
+            # Log the download speed
+            ending = time.time()
+            self.logger.debug("%dMB downloaded in %0.2fs (%0.2fMB/s)" %
+                              (downloaded_size / (1024 * 1024), round(ending - beginning, 2),
+                               round(downloaded_size / (1024 * 1024 * (ending - beginning)), 2)))
+
         # set the dynamic data into the context
         self.data['download_action'][self.key] = {
             'file': fname,
@@ -191,8 +235,10 @@ class FileDownloadAction(DownloadHandler):
 
     def validate(self):
         super(FileDownloadAction, self).validate()
-        if not os.path.isfile(self.url.path):
-            self.errors = "Image file '%s' does not exists" % (self.url.path)
+        try:
+            self.size = os.stat(self.url.path).st_size
+        except OSError:
+            self.errors = "Image file '%s' does not exists or is not readable" % (self.url.path)
 
     def reader(self):
         reader = None
@@ -227,6 +273,8 @@ class HttpDownloadAction(DownloadHandler):
             res = requests.head(self.url.geturl(), allow_redirects=True, timeout=HTTP_DOWNLOAD_TIMEOUT)
             if res.status_code != requests.codes.OK:  # pylint: disable=no-member
                 self.errors = "Resources not available at '%s'" % (self.url.geturl())
+            else:
+                self.size = int(res.headers.get('content-length', -1))
         except requests.Timeout:
             self.errors = "'%s' timed out" % (self.url.geturl())
         except requests.RequestException as exc:
@@ -237,7 +285,6 @@ class HttpDownloadAction(DownloadHandler):
         res = None
         try:
             res = requests.get(self.url.geturl(), allow_redirects=True, stream=True, timeout=HTTP_DOWNLOAD_TIMEOUT)
-            # FIXME: allow for 302 as well (https)
             if res.status_code != requests.codes.OK:  # pylint: disable=no-member
                 raise JobError("Unable to download '%s'" % (self.url.geturl()))
             for buff in res.iter_content(HTTP_DOWNLOAD_CHUNK_SIZE):
@@ -264,9 +311,12 @@ class ScpDownloadAction(DownloadHandler):
     def validate(self):
         super(ScpDownloadAction, self).validate()
         try:
-            _ = subprocess.check_output(['nice', 'ssh', self.url.netloc,
-                                         'ls', self.url.path],
-                                        stderr=subprocess.STDOUT)
+            size = subprocess.check_output(['nice', 'ssh',
+                                            self.url.netloc,
+                                            'stat', '-c', '%s',
+                                            self.url.path],
+                                           stderr=subprocess.STDOUT)
+            self.size = int(size)
         except subprocess.CalledProcessError as exc:
             self.errors = str(exc)
 
@@ -307,7 +357,7 @@ class QCowConversionAction(Action):
 
     def run(self, connection, args=None):
         if self.key not in self.data['download_action']:
-            raise RuntimeError("'download_action.%s' missing in the context" % (self.key))
+            raise RuntimeError("'download_action.%s' missing in the context" % self.key)
 
         fname = self.data['download_action'][self.key]['file']
         origin = fname
@@ -315,7 +365,7 @@ class QCowConversionAction(Action):
         if fname.endswith('.qcow2'):
             fname = fname[:-5] + "img"
         else:
-            fname = fname + ".img"
+            fname += ".img"
 
         self.logger.debug("Converting downloaded image from qcow2 to raw")
         subprocess.check_call(['qemu-img', 'convert', '-f', 'qcow2',

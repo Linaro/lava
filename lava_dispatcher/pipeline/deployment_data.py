@@ -25,6 +25,8 @@ def get_deployment_data(distro):
     """
     Returns the deployment data by name, for the cases where we actually need that.
     """
+    if distro is '':
+        raise JobError("Missing 'os' value for deployment - unable to identify operating system for deployment data.")
     this_module = sys.modules[__name__]
     try:
         return getattr(this_module, distro)

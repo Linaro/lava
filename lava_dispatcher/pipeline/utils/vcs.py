@@ -18,11 +18,10 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import logging
 import os
 import subprocess
 
-
+from lava_dispatcher.pipeline.log import YamlLogger
 from lava_dispatcher.pipeline.action import InfrastructureError
 
 
@@ -30,6 +29,7 @@ class VCSHelper(object):
 
     def __init__(self, url):
         self.url = url
+        self.logger = YamlLogger('root')
 
     def clone(self, dest_path, revision=None, env=None):
         raise NotImplementedError
@@ -39,25 +39,24 @@ class BzrHelper(VCSHelper):
 
     def __init__(self, url):
         super(BzrHelper, self).__init__(url)
-        self.vcs = '/usr/bin/bzr'
-        self.base_env = {'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'}
+        self.binary = '/usr/bin/bzr'
 
     def clone(self, dest_path, revision=None, env=None):
         cwd = os.getcwd()
 
-        if not env:
+        if env is None:
             env = dict()
-        env.update(self.base_env)
+        env.update({'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'})
 
         try:
-            if revision:
-                subprocess.check_output([self.vcs, 'branch', '-r',
+            if revision is not None:
+                subprocess.check_output([self.binary, 'branch', '-r',
                                          str(revision), self.url,
                                          dest_path],
                                         stderr=subprocess.STDOUT, env=env)
                 commit_id = str(revision)
             else:
-                subprocess.check_output([self.vcs, 'branch', self.url,
+                subprocess.check_output([self.binary, 'branch', self.url,
                                          dest_path],
                                         stderr=subprocess.STDOUT, env=env)
                 os.chdir(dest_path)
@@ -65,8 +64,7 @@ class BzrHelper(VCSHelper):
                                                     env=env).strip()
 
         except subprocess.CalledProcessError as exc:
-            yaml_log = logging.getLogger("YAML")
-            yaml_log.debug({
+            self.logger.debug({
                 'command': [i.strip() for i in exc.cmd],
                 'message': [i.strip() for i in exc.message],
                 'output': exc.output.split('\n')})
@@ -92,27 +90,26 @@ class GitHelper(VCSHelper):
 
     def __init__(self, url):
         super(GitHelper, self).__init__(url)
-        self.vcs = '/usr/bin/git'
+        self.binary = '/usr/bin/git'
 
     def clone(self, dest_path, revision=None, env=None):
         try:
-            subprocess.check_output([self.vcs, 'clone', self.url, dest_path],
+            subprocess.check_output([self.binary, 'clone', self.url, dest_path],
                                     stderr=subprocess.STDOUT, env=env)
 
-            if revision:
-                subprocess.check_output([self.vcs, '--git-dir',
+            if revision is not None:
+                subprocess.check_output([self.binary, '--git-dir',
                                          os.path.join(dest_path, '.git'),
                                          'checkout', str(revision)],
                                         stderr=subprocess.STDOUT, env=env)
 
-            commit_id = subprocess.check_output([self.vcs, '--git-dir',
+            commit_id = subprocess.check_output([self.binary, '--git-dir',
                                                  os.path.join(dest_path, '.git'),
                                                  'log', '-1', '--pretty=%H'],
                                                 stderr=subprocess.STDOUT,
                                                 env=env).strip()
         except subprocess.CalledProcessError as exc:
-            yaml_log = logging.getLogger("YAML")
-            yaml_log.debug({
+            self.logger.debug({
                 'command': [i.strip() for i in exc.cmd],
                 'message': [i.strip() for i in exc.message],
                 'output': exc.output.split('\n')})
@@ -127,7 +124,7 @@ class TarHelper(VCSHelper):
 
     def __init__(self, url):
         super(TarHelper, self).__init__(url)
-        self.vcs = ''
+        self.binary = None
 
 
 class URLHelper(VCSHelper):
@@ -135,4 +132,4 @@ class URLHelper(VCSHelper):
 
     def __init__(self, url):
         super(URLHelper, self).__init__(url)
-        self.vcs = ''
+        self.binary = None

@@ -23,6 +23,7 @@ import time
 import unittest
 import simplejson
 
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.action import Pipeline, Action
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.job import Job
@@ -65,7 +66,7 @@ class TestJobParser(unittest.TestCase):  # pylint: disable=too-many-public-metho
 
     def setUp(self):
         factory = Factory()
-        self.job = factory.create_job('sample_jobs/basics.yaml')
+        self.job = factory.create_job('sample_jobs/basics.yaml', mkdtemp())
 
     def test_parser_creates_a_job_with_a_pipeline(self):  # pylint: disable=invalid-name
         if not self.job:
@@ -143,13 +144,13 @@ class Factory(object):
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
-    def create_fake_qemu_job(self):  # pylint: disable=no-self-use
+    def create_fake_qemu_job(self, output_dir=None):  # pylint: disable=no-self-use
         device = NewDevice('kvm01')
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/basics.yaml')
         sample_job_data = open(sample_job_file)
         parser = JobParser()
         try:
-            job = parser.parse(sample_job_data, device)
+            job = parser.parse(sample_job_data, device, output_dir=output_dir)
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
             return None
@@ -295,7 +296,7 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
 
     def test_simulated_action(self):
         factory = Factory()
-        job = factory.create_job('sample_jobs/basics.yaml')
+        job = factory.create_job('sample_jobs/basics.yaml', mkdtemp())
         if not job:
             return unittest.skip("not all deployments have been implemented")
         self.assertIsNotNone(job)

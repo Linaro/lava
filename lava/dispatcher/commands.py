@@ -14,6 +14,7 @@ from lava_dispatcher.job import LavaTestJob, validate_job_data
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.action import PipelineContext, JobError
 from lava_dispatcher.pipeline.device import NewDevice
+from lava_dispatcher.pipeline.log import YamlLogger, get_yaml_handler
 
 
 class SetUserConfigDirAction(argparse.Action):
@@ -79,24 +80,16 @@ def get_pipeline_runner(job):
 
     # FIXME: drop outdated arguments, job_data, config and output_dir
     def run_pipeline_job(job_data, oob_file, config, output_dir, validate_only):
-        # pipeline actions will add their own handlers.
-        yaml_log = logging.getLogger("YAML")
-        yaml_log.setLevel(logging.DEBUG)
-        std_log = logging.getLogger("ASCII")
-
-        stdhandler = logging.StreamHandler(oob_file)
-        stdhandler.setLevel(logging.INFO)
-        formatter = logging.Formatter('"%(asctime)s"\n%(message)s')
-        stdhandler.setFormatter(formatter)
-        std_log.addHandler(stdhandler)
+        logger = YamlLogger('root')
+        logger.set_handler(handler=get_yaml_handler(oob_file))
 
         # always validate every pipeline before attempting to run.
         try:
             job.validate(simulate=validate_only)
             if not validate_only:
                 job.run()
-        except JobError as e:
-            yaml_log.debug("   %s", e)
+        except JobError as exc:
+            logger.debug("%s" % exc)
             sys.exit(2)
         # FIXME: should we call the cleanup function in the finally block?
     return run_pipeline_job
@@ -229,7 +222,12 @@ class dispatch(DispatcherCommand):
             if not device.parameters:
                 raise RuntimeError("Pipeline does not support %s" % self.args.target)
             parser = JobParser()
-            job = parser.parse(open(filename), device, output_dir=self.args.output_dir)
+            job = None
+            try:
+                job = parser.parse(open(filename), device, output_dir=self.args.output_dir)
+            except JobError as exc:
+                logging.error("Invalid job submission: %s" % exc)
+                exit(1)
             # FIXME: NewDevice schema needs a validation parser
             # device.check_config(job)
             if 'target_group' in job.parameters:

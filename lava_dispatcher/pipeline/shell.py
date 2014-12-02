@@ -21,7 +21,6 @@
 import os
 import sys
 import time
-import logging
 import pexpect
 import contextlib
 from lava_dispatcher.pipeline.action import (
@@ -37,6 +36,7 @@ from lava_dispatcher.pipeline.utils.constants import (
     SHELL_SEND_DELAY,
 )
 from lava_dispatcher.pipeline.utils.shell import which
+from lava_dispatcher.pipeline.log import YamlLogger
 
 
 class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
@@ -49,14 +49,15 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
     """
 
     def __init__(self, command, lava_timeout, cwd=None):
-        if not lava_timeout:
-            lava_timeout = Timeout('default')
+        if not lava_timeout or type(lava_timeout) is not Timeout:
+            raise RuntimeError("ShellCommand needs a timeout set by the calling Action")
         pexpect.spawn.__init__(
             self, command, timeout=lava_timeout.duration, cwd=cwd, logfile=sys.stdout)
         self.name = "ShellCommand"
-        # serial can be slow, races do funny things, so increase delay
+        # serial can be slow, races do funny things, so allow for a delay
         self.delaybeforesend = SHELL_SEND_DELAY
         self.lava_timeout = lava_timeout
+        self.logger = YamlLogger("root")
 
     def sendline(self, s='', delay=0, send_char=True):  # pylint: disable=arguments-differ
         """
@@ -72,17 +73,14 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         self.send(os.linesep, delay)
 
     def sendcontrol(self, char):
-        yaml_log = logging.getLogger("YAML")
-        yaml_log.debug("   sending control character: %s", char)
+        self.logger.debug("sending control character: %s" % char)
         return super(ShellCommand, self).sendcontrol(char)
 
     def send(self, string, delay=0, send_char=True):  # pylint: disable=arguments-differ
         """
         Extends pexpect.send to support extra arguments, delay and send by character flags.
         """
-        # YAML formatting
-        yaml_log = logging.getLogger("YAML")
-        yaml_log.debug("   send (delay_ms=%s): %s ", delay, string)
+        self.logger.debug("send (delay_ms=%s): %s " % (delay, string))
         sent = 0
         delay = float(delay) / 1000
         if send_char:
@@ -106,6 +104,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
             raise RuntimeError(" ".join(self.before.split('\r\n')))
         return proc
 
+    # FIXME: check if this is ever called
     def empty_buffer(self):
         """Make sure there is nothing in the pexpect buffer."""
         index = 0
@@ -132,7 +131,7 @@ class ShellSession(Connection):
         self.name = "ShellSession"
         self.data = job.context
         self.__prompt_str__ = None
-        self.timeout = Timeout('default', SHELL_DEFAULT_TIMEOUT)
+        self.timeout = shell_command.lava_timeout
 
     @property
     def prompt_str(self):
@@ -149,6 +148,7 @@ class ShellSession(Connection):
         if self.__runner__ is None:
             # device = self.device
             spawned_shell = self.raw_connection  # ShellCommand(pexpect.spawn)
+            # FIXME: the prompts should not be needed here, only kvm uses these. Remove.
             # prompt_str = device.parameters['test_image_prompts']  # FIXME: deployment_data?
             prompt_str_includes_rc = True  # FIXME - parameters['deployment_data']['TESTER_PS1_INCLUDES_RC']?
 #            prompt_str_includes_rc = device.config.tester_ps1_includes_rc
@@ -176,8 +176,7 @@ class ShellSession(Connection):
         yield self.__runner__.get_connection()
 
     def wait(self):
-        yaml_log = logging.getLogger("YAML")
-        yaml_log.debug("   wait: Waiting for prompt for %s seconds", self.timeout.duration)
+        self.logger.debug("wait: Waiting for prompt for %s seconds" % self.timeout.duration)
         self.raw_connection.sendline("")
         try:
             self.runner.wait_for_prompt(self.timeout.duration)
@@ -239,7 +238,7 @@ class ConnectDevice(Action):
         # if connection:
         #     raise RuntimeError("A connection already exists")
         command = self.job.device.parameters['commands']['connect']
-        self.logger.debug("   connecting to device using '%s'" % command)
+        self.logger.debug("connecting to device using '%s'" % command)
         shell = ShellCommand("%s\n" % command, self.timeout)
         if shell.exitstatus:
             raise JobError("%s command exited %d: %s" % (command, shell.exitstatus, shell.readlines()))

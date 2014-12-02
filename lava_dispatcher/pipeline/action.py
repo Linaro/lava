@@ -23,7 +23,6 @@ import sys
 import time
 import types
 import yaml
-import logging
 import datetime
 import subprocess
 import collections
@@ -132,8 +131,9 @@ class Pipeline(object):
             action.level = "%s" % (len(self.actions))
         # create a log handler just for this action.
         if self.job and self.job.parameters['output_dir']:
+            log_level_dir = action.level.split('.')[0]
             yaml_filename = os.path.join(
-                self.job.parameters['output_dir'],
+                self.job.parameters['output_dir'], log_level_dir,
                 "%s-%s.log" % (action.level, action.name)
             )
             if not os.path.exists(os.path.dirname(yaml_filename)):
@@ -153,7 +153,7 @@ class Pipeline(object):
     def _generate(self, actions_list):
         actions = iter(actions_list)
         while actions:
-            action = actions.next()
+            action = next(actions)
             # yield the action containing the pipeline
             yield {
                 action.level: {
@@ -230,7 +230,7 @@ class Pipeline(object):
                 action.logger.set_handler(action.log_handler)
             else:
                 action.logger.set_handler()
-            action.logger.debug('   start: %s %s' % (action.level, action.name))
+            action.logger.debug('start: %s %s' % (action.level, action.name))
             try:
                 start = time.time()
                 new_connection = action.run(connection, args)
@@ -295,7 +295,7 @@ class Action(object):
         self.__results__ = OrderedDict()
         # FIXME: what about {} for default value?
         self.env = None  # FIXME make this a parameter which gets default value when first called
-        self.timeout = Timeout('default')  # Timeout class instance, if needed.
+        self.timeout = Timeout(self.name)  # Timeout class instance, if needed.
         self.max_retries = 1  # unless the strategy or the job parameters change this, do not retry
         self.diagnostics = []
 
@@ -412,24 +412,11 @@ class Action(object):
         except ValueError:
             raise RuntimeError("Action parameters need to be a dictionary")
         if 'timeout' in self.parameters:
-            # FIXME: a top level timeout should cover all actions within the pipeline, not each action have the same timeout.
-            time_int = 0
-            # allow integers but convert directly to seconds.
-            if type(self.parameters['timeout']) == int:
-                self.parameters['timeout'] = "%ss" % self.parameters['timeout']
-            time_str = self.parameters['timeout'][:-1]
-            try:
-                time_int = int(time_str)
-            except ValueError:
-                self.errors = "%s - Could not convert timeout: %s to an integer. %s" % (self.name, time_str, type(self.parameters['timeout']))
-            if time_int:
-                # FIXME: use a standard timeparsing module instead of inventing another confusing syntax.
-                if self.parameters['timeout'].endswith('m'):
-                    self.timeout = Timeout(self.name, datetime.timedelta(minutes=time_int).total_seconds())
-                elif self.parameters['timeout'].endswith('h'):
-                    self.timeout = Timeout(self.name, datetime.timedelta(hours=time_int).total_seconds())
-                elif self.parameters['timeout'].endswith('s'):
-                    self.timeout = Timeout(self.name, time_int)
+            self.timeout = Timeout(self.name, Timeout.parse(self.parameters['timeout']))
+        # only unit tests should have actions without a pointer to the job.
+        if self.job:
+            if self.name in self.job.overrides['timeouts']:
+                self.timeout = Timeout(self.name, self.job.overrides['timeouts'][self.name])
         if 'failure_retry' in self.parameters:
             self.max_retries = self.parameters['failure_retry']
 
@@ -516,8 +503,6 @@ class Action(object):
         """
         if type(command_list) != list:
             raise RuntimeError("commands to _run_command need to be a list")
-        # FIXME: see logger
-        yaml_log = logging.getLogger("YAML")
         log = None
         # FIXME: define a method of configuring the proxy for the pipeline.
         # if not self.env:
@@ -525,19 +510,18 @@ class Action(object):
         #                 'https_proxy': self.job.context.config.lava_proxy}
         if env:
             self.env.update(env)
-        # FIXME: distinguish between host and target commands and add 'nice' to host
         try:
             log = subprocess.check_output(command_list, stderr=subprocess.STDOUT, env=self.env)
         except KeyboardInterrupt:
             self.cleanup()
             self.err = "\rCancel"  # Set a useful message.
-            yaml_log.debug("Cancelled")
+            self.logger.debug("Cancelled")
             return None
         except OSError as exc:
-            yaml_log.debug({exc.strerror: exc.child_traceback.split('\n')})
+            self.logger.debug({exc.strerror: exc.child_traceback.split('\n')})
         except subprocess.CalledProcessError as exc:
             self.errors = exc.message
-            yaml_log.debug({
+            self.logger.debug({
                 'command': [i.strip() for i in exc.cmd],
                 'message': [i.strip() for i in exc.message],
                 'output': exc.output.split('\n')})
@@ -949,9 +933,35 @@ class Timeout(object):
     def default_duration(cls):
         return 30
 
+    @classmethod
+    def parse(cls, data):
+        """
+        Parsed timeouts can be set in device configuration or device_type configuration
+        and can therefore exceed the clamp.
+        """
+        if type(data) is not dict:
+            raise RuntimeError("Invalid timeout data")
+        days = 0
+        hours = 0
+        minutes = 0
+        seconds = 0
+        if 'days' in data:
+            days = data['days']
+        if 'hours' in data:
+            hours = data['hours']
+        if 'minutes' in data:
+            minutes = data['minutes']
+        if 'seconds' in data:
+            seconds = data['seconds']
+        duration = datetime.timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
+        if not duration:
+            return Timeout.default_duration()
+        return duration.total_seconds()
+
     def modify(self, duration):
         """
-        Called from the parser if the job or device YAML wants to set an override.
+        Called from the parser if the job YAML wants to set an override on a per-action
+        timeout. Complete job timeouts can be larger than the clamp.
         """
         if self.protected:
             raise JobError("Trying to modify a protected timeout: %s.", self.name)

@@ -33,6 +33,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.actions.test import TestAction
 from lava_dispatcher.pipeline.utils.strings import indices
+from lava_dispatcher.pipeline.utils.vcs import BzrHelper, GitHelper
 
 
 class RepoAction(Action):
@@ -42,7 +43,7 @@ class RepoAction(Action):
         self.name = "repo-action"
         self.description = "apply tests to the test image"
         self.summary = "repo base class"
-        self.vcs_binary = None
+        self.vcs = None
         self.runner = None
         self.default_pattern = "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))"
         self.default_fixupdict = {'PASS': 'pass', 'FAIL': 'fail', 'SKIP': 'skip', 'UNKNOWN': 'unknown'}
@@ -75,8 +76,10 @@ class RepoAction(Action):
             raise InfrastructureError("Invalid device configuration")
         if 'test_name' not in self.parameters:
             raise JobError("Unable to determine test_name")
-        if self.vcs_binary and not os.path.exists(self.vcs_binary):
-            raise JobError("%s is not installed on the dispatcher." % self.vcs_binary)
+        if self.vcs is None:
+            raise RuntimeError("RepoAction validate called super without setting the vcs")
+        if not os.path.exists(self.vcs.binary):
+            raise JobError("%s is not installed on the dispatcher." % self.vcs.binary)
         super(RepoAction, self).validate()
 
     def run(self, connection, args=None):
@@ -91,7 +94,7 @@ class RepoAction(Action):
         self.data['test'][self.uuid].setdefault('runner_path', {})
         self.data['test'][self.uuid].setdefault('overlay_path', {})
 
-        if not args or 'test_name' not in args:
+        if args is None or 'test_name' not in args:
             raise RuntimeError("RepoAction run called via super without parameters as arguments")
         if 'location' not in self.data['lava-overlay']:
             raise RuntimeError("Missing lava overlay location")
@@ -140,7 +143,7 @@ class RepoAction(Action):
             }
         })
 
-        if commit_id:
+        if commit_id is not None:
             self.data['test'][self.uuid]['testdef_metadata'].update({
                 'commit_id': commit_id,
             })
@@ -170,13 +173,13 @@ class GitRepoAction(RepoAction):
         self.name = "git-repo-action"
         self.description = "apply git repository of tests to the test image"
         self.summary = "clone git test repo"
-        self.vcs_binary = "/usr/bin/git"
 
     def validate(self):
         if 'repository' not in self.parameters:
             raise JobError("Git repository not specified in job definition")
         if 'path' not in self.parameters:
             raise JobError("Path to YAML file not specified in the job definition")
+        self.vcs = GitHelper(self.parameters['repository'])
         super(GitRepoAction, self).validate()
 
     @classmethod
@@ -196,14 +199,12 @@ class GitRepoAction(RepoAction):
         # use the base class to populate the runner_path and overlay_path data into the context
         connection = super(GitRepoAction, self).run(connection, self.parameters)
 
-        cwd = os.getcwd()
         # NOTE: the runner_path dir must remain empty until after the VCS clone, so let the VCS clone create the final dir
         runner_path = self.data['test'][self.uuid]['overlay_path'][self.parameters['test_name']]
-        self._run_command([self.vcs_binary, 'clone', self.parameters['repository'], runner_path])
-        if 'revision' in self.parameters:
-            os.chdir(runner_path)
-            self._run_command([self.vcs_binary, 'checkout', self.parameters['revision']])
-        commit_id = self._run_command([self.vcs_binary, 'log', '-1', '--pretty=%H']).strip()
+
+        commit_id = self.vcs.clone(runner_path, self.parameters.get('revision', None))
+        if commit_id is None:
+            raise RuntimeError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
         self.results = {'success': commit_id}
 
         # now read the YAML to create a testdef dict to retrieve metadata
@@ -216,11 +217,6 @@ class GitRepoAction(RepoAction):
         # set testdef metadata in base class
         self.store_testdef(testdef, commit_id)
 
-        os.chdir(cwd)
-        if not self.valid:
-            raise RuntimeError("Unable to get test definition from %s (%s)" % (self.vcs_binary, self.parameters))
-
-        self.results = {'success': commit_id}
         return connection
 
 
@@ -231,7 +227,7 @@ class BzrRepoAction(RepoAction):
     actions.
     """
 
-    priority = 0  # FIXME: increase priority once this is working
+    priority = 1
 
     def __init__(self):
         super(BzrRepoAction, self).__init__()
@@ -241,6 +237,14 @@ class BzrRepoAction(RepoAction):
         self.vcs_binary = "/usr/bin/bzr"
         self.testdef = None
 
+    def validate(self):
+        if 'repository' not in self.parameters:
+            raise JobError("Bzr repository not specified in job definition")
+        if 'path' not in self.parameters:
+            raise JobError("Path to YAML file not specified in the job definition")
+        self.vcs = BzrHelper(self.parameters['repository'])
+        super(BzrRepoAction, self).validate()
+
     @classmethod
     def accepts(cls, repo_type):
         if repo_type == 'bzr':
@@ -248,18 +252,19 @@ class BzrRepoAction(RepoAction):
         return False
 
     def run(self, connection, args=None):
-        super(BzrRepoAction, self).run(connection, args)
+        """
+        Clone the bazar repository into a directory
+        """
+
+        connection = super(BzrRepoAction, self).run(connection, self.parameters)
+
+        # NOTE: the runner_path dir must remain empty until after the VCS clone, so let the VCS clone create the final dir
         runner_path = os.path.join(self.data['test-definition']['overlay_dir'], 'tests', self.parameters['test_name'])
-        # As per bzr revisionspec, '-1' is "The last revision in a branch".
-        revision = '-1'
-        if 'revision' in self.parameters:
-            revision = self.parameters['revision']
-        self.env.update({'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'})
-        self._run_command([
-            [self.vcs_binary, 'branch', '-r', revision, self.parameters['repository'], runner_path],
-        ])
-        if self.errors:
-            raise RuntimeError("Unable to get test definition from %s (%s)" % (self.vcs_binary, self.parameters))
+
+        commit_id = self.vcs.clone(runner_path, self.parameters.get('revision', None))
+        if commit_id is None:
+            raise RuntimeError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
+        self.results = {'success': commit_id}
 
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters['path'])
@@ -269,7 +274,7 @@ class BzrRepoAction(RepoAction):
             self.testdef = yaml.safe_load(test_file)
 
         # set testdef metadata in base class
-        self.store_testdef(self.testdef, revision)
+        self.store_testdef(self.testdef, commit_id)
 
         return connection
 
@@ -295,7 +300,7 @@ class TarRepoAction(RepoAction):
         """
         Extracts the provided encoded tar archive into tmpdir.
         """
-        super(TarRepoAction, self).run(connection, args)
+        connection = super(TarRepoAction, self).run(connection, args)
         runner_path = os.path.join(self.data['test-definition']['overlay_dir'], 'tests', self.parameters['test_name'])
         temp_tar = os.path.join(self.data['test-definition']['overlay_dir'], "tar-repo.tar")
 
@@ -404,7 +409,8 @@ class TestDefinitionAction(TestAction):
         index = {}
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # FIXME: check the effect of the parameter review
-        test_list = [action['test']['definitions'] for action in self.job.parameters['actions'] if 'test' in action.keys()]
+        test_list = [action['test']['definitions'] for action in self.job.parameters['actions']
+                     if 'test' in action.keys()]  # 2to3 false positive, works with python3
         if not test_list:
             self.logger.debug("No test action defined.")
             return
@@ -412,24 +418,28 @@ class TestDefinitionAction(TestAction):
             handler = RepoAction.select(testdef['from'])()
 
             # set the full set of job YAML parameters for this handler as handler parameters.
+            handler.job = self.job
             handler.parameters = testdef
             # store the correct test_name before incrementing the local index dict
             handler.parameters['test_name'] = "%s_%s" % (len(list(index.keys())), handler.parameters['name'])
 
             # copy details into the overlay, one per handler but the same class each time.
             overlay = TestOverlayAction()
+            overlay.job = self.job
             overlay.parameters = testdef
             overlay.parameters['test_name'] = handler.parameters['test_name']
             overlay.test_uuid = handler.uuid
 
             # add install handler
             installer = TestInstallAction()
+            installer.job = self.job
             installer.parameters = testdef
             installer.parameters['test_name'] = handler.parameters['test_name']
             installer.test_uuid = handler.uuid
 
             # add runsh handler
             runsh = TestRunnerAction()
+            runsh.job = self.job
             runsh.parameters = testdef
             runsh.parameters['test_name'] = handler.parameters['test_name']
             runsh.test_uuid = handler.uuid

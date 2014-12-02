@@ -90,8 +90,10 @@ class TftpAction(DeployAction):
 
     def validate(self):
         super(TftpAction, self).validate()
-        if 'kernel'not in self.parameters.keys():
+        if 'kernel'not in self.parameters.keys():  # 2to3 false positive, works with python3
             self.errors = "%s needs a kernel to deploy" % self.name
+        if not self.valid:
+            return
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
         self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.device.parameters['hostname']
         if self.suffix:
@@ -100,7 +102,7 @@ class TftpAction(DeployAction):
         try:
             which("in.tftpd")
         except InfrastructureError as exc:
-            self.errors = exc
+            self.errors = str(exc)
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)

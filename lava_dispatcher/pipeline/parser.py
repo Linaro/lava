@@ -28,6 +28,7 @@ from lava_dispatcher.pipeline.action import (
     Deployment,
     Boot,
     LavaTest,
+    Timeout,
 )
 from lava_dispatcher.pipeline.actions.commands import CommandsAction  # pylint: disable=unused-import
 from lava_dispatcher.pipeline.deployment_data import get_deployment_data
@@ -36,7 +37,7 @@ from lava_dispatcher.pipeline.power import FinalizeAction
 import lava_dispatcher.pipeline.actions.deploy.strategies  # pylint: disable=unused-import
 import lava_dispatcher.pipeline.actions.boot.strategies  # pylint: disable=unused-import
 import lava_dispatcher.pipeline.actions.test.strategies  # pylint: disable=unused-import
-from lava_dispatcher.pipeline.actions.submit import SubmitResultsAction
+from lava_dispatcher.pipeline.actions.submit import SubmitResultsAction  # pylint: disable=unused-import
 
 
 def handle_device_parameters(name, parameters, count):
@@ -81,6 +82,7 @@ class JobParser(object):
     # FIXME: needs a Schema and a check routine
 
     loader = None
+    context = {}
 
     # annotate every object in data with line numbers so we can use
     # them is user-friendly validation messages, combined with the action.level
@@ -99,6 +101,19 @@ class JobParser(object):
         mapping['yaml_line'] = node.__line__
         return mapping
 
+    def _timeouts(self, data, job):
+        if 'timeouts' in data:
+            if 'job' in data['timeouts']:
+                duration = Timeout.parse(data['timeouts']['job'])
+                job.timeout = Timeout(data['job_name'], duration)
+            if 'action' in data['timeouts']:
+                self.context['default_action_duration'] = Timeout.parse(data['timeouts']['action'])
+            if 'test' in data['timeouts']:
+                self.context['default_test_duration'] = Timeout.parse(data['timeouts']['test'])
+            skip_set = {'job', 'action', 'yaml_line', 'test'}
+            for override in list(set(data['timeouts'].keys()) - skip_set):
+                job.overrides['timeouts'][override] = Timeout.parse(data['timeouts'][override])
+
     # FIXME: add a validate() function which checks against a Schema as a completely separate step.
     def parse(self, content, device, output_dir=None):  # pylint: disable=too-many-locals
         self.loader = yaml.Loader(content)
@@ -106,24 +121,30 @@ class JobParser(object):
         self.loader.construct_mapping = self.construct_mapping
         data = self.loader.get_single_data()
 
+        self.context['default_action_duration'] = Timeout.default_duration()
+        self.context['default_test_duration'] = Timeout.default_duration()
         job = Job(data)
         counts = {}
         job.device = device
+        job.overrides.update(device.overrides)
         job.parameters['output_dir'] = output_dir
         pipeline = Pipeline(job=job)
+        self._timeouts(data, job)
+
+        # FIXME: also read permissable overrides from device config and set from job data
         for action_data in data['actions']:
             line = action_data.pop('yaml_line', None)
             for name in action_data:
+                if type(action_data[name]) is dict:  # FIXME: commands are not fully implemented & may produce a list
+                    action_data[name].update({'default_action_timeout': self.context['default_action_duration']})
+                    action_data[name].update({'default_test_timeout': self.context['default_test_duration']})
                 count = counts.setdefault(name, 0)
                 counts.update({name: count})
                 if name == "deploy":
                     # set parameters specified in the device configuration, allow job to override.
                     parameters = handle_device_parameters(name, device.parameters, counts[name])
                     parameters.update(action_data[name])  # pass the job parameters to the instance
-                    if 'os' in parameters:
-                        parameters.update({'deployment_data': get_deployment_data(parameters['os'])})
-                    else:
-                        parameters.update({'deployment_data': get_deployment_data('oe')})
+                    parameters.update({'deployment_data': get_deployment_data(parameters.get('os', ''))})
                     # allow the classmethod to check the parameters
                     deploy = Deployment.select(device, action_data[name])(pipeline, parameters)
                     deploy.action.yaml_line = line
@@ -141,6 +162,7 @@ class JobParser(object):
                     # May only end up being used for submit as other actions all need strategy method objects
                     # select the specific action of this class for this job
                     action = Action.find(name)()
+                    action.job = job
                     # put parameters (like rootfs_type, results_dir) into the actions.
                     if type(action_data[name]) == dict:
                         action.parameters = action_data[name]
@@ -151,6 +173,7 @@ class JobParser(object):
                         for param in action_data[name]:
                             action.parameters = param
                     action.summary = name
+                    action.timeout = Timeout(action.name, self.context['default_action_duration'])
                     pipeline.add_action(action)
                 # uncomment for debug
                 # print action.parameters

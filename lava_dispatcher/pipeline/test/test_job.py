@@ -22,6 +22,8 @@ import os
 import logging
 import glob
 import unittest
+
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.action import Pipeline, Action, RetryAction, JobError
 from lava_dispatcher.pipeline.test.test_basic import Factory
 from lava_dispatcher.pipeline.actions.deploy.download import (
@@ -53,7 +55,7 @@ class TestBasicJob(unittest.TestCase):
 
     def test_basic_actions(self):
         factory = Factory()
-        job = factory.create_fake_qemu_job()
+        job = factory.create_fake_qemu_job(mkdtemp())
         if not job:
             return unittest.skip("not all deployments have been implemented")
         self.assertIsInstance(job, Job)
@@ -69,11 +71,14 @@ class TestKVMSimulation(unittest.TestCase):
         data known to be broken). The details are entirely
         arbitrary.
         """
+        factory = Factory()
+        job = factory.create_job('sample_jobs/kvm.yaml')
         pipe = Pipeline()
         action = Action()
         action.name = "deploy_linaro_image"
         action.description = "deploy action using preset subactions in an internal pipe"
         action.summary = "deploy_linaro_image"
+        action.job = job
         # deliberately unlikely location
         # a successful validation would need to use the cwd
         action.parameters = {"image": "file:///none/images/bad-kvm-debian-wheezy.img"}
@@ -84,6 +89,7 @@ class TestKVMSimulation(unittest.TestCase):
         action.name = "downloader"
         action.description = "download image wrapper, including an internal retry pipe"
         action.summary = "downloader"
+        action.job = job
         deploy_pipe.add_action(action)
         self.assertEqual(action.level, "1.1")
         # a formal RetryAction would contain a pre-built pipeline which can be inserted directly
@@ -92,24 +98,28 @@ class TestKVMSimulation(unittest.TestCase):
         action.name = "wget"
         action.description = "do the download with retries"
         action.summary = "wget"
+        action.job = job
         retry_pipe.add_action(action)
         self.assertEqual(action.level, "1.1.1")
         action = Action()
         action.name = "checksum"
         action.description = "checksum the downloaded file"
         action.summary = "md5sum"
+        action.job = job
         deploy_pipe.add_action(action)
         self.assertEqual(action.level, "1.2")
         action = Action()
         action.name = "overlay"
         action.description = "apply lava overlay"
         action.summary = "overlay"
+        action.job = job
         deploy_pipe.add_action(action)
         self.assertEqual(action.level, "1.3")
         action = Action()
         action.name = "boot"
         action.description = "boot image"
         action.summary = "qemu"
+        action.job = job
         # cmd_line built from device configuration
         action.parameters = {
             'cmd_line': [
@@ -130,6 +140,7 @@ class TestKVMSimulation(unittest.TestCase):
         action.name = "simulated"
         action.description = "lava test shell"
         action.summary = "simulated"
+        action.job = job
         # a formal lava test shell action would include an internal pipe
         # which would handle the run.sh
         pipe.add_action(action)
@@ -140,6 +151,7 @@ class TestKVMSimulation(unittest.TestCase):
         action.name = "submit"
         action.description = "submit results"
         action.summary = "submit"
+        action.job = job
         pipe.add_action(action)
         self.assertEqual(action.level, "4")
         self.assertEqual(len(pipe.describe().values()), 8)
@@ -152,7 +164,7 @@ class TestKVMBasicDeploy(unittest.TestCase):
     def setUp(self):
         super(TestKVMBasicDeploy, self).setUp()
         factory = Factory()
-        self.job = factory.create_job('sample_jobs/kvm.yaml', output_dir='/tmp')
+        self.job = factory.create_job('sample_jobs/kvm.yaml', mkdtemp())
 
     def test_deploy_job(self):
         # from meliae import scanner
@@ -338,7 +350,7 @@ class TestKVMQcow2Deploy(unittest.TestCase):
     def setUp(self):
         super(TestKVMQcow2Deploy, self).setUp()
         factory = Factory()
-        self.job = factory.create_job('sample_jobs/kvm-qcow2.yaml', output_dir='/tmp')
+        self.job = factory.create_job('sample_jobs/kvm-qcow2.yaml', mkdtemp())
 
     def test_deploy_job(self):
         # from meliae import scanner
@@ -426,6 +438,10 @@ class TestKVMQcow2Deploy(unittest.TestCase):
                 self.assertIsInstance(apply_overlay, ApplyOverlayImage)
                 self.assertIsInstance(apply_overlay.log_handler, logging.FileHandler)
                 self.assertIsInstance(apply_overlay.logger, YamlLogger)
+                self.assertEqual(
+                    apply_overlay.timeout.duration,
+                    self.job.device.overrides['timeouts'][apply_overlay.name]
+                )
 
                 unmount = action.pipeline.children[action.pipeline][6]
                 self.assertEqual(unmount.name, "umount-retry")
@@ -463,7 +479,7 @@ class TestKVMDownloadLocalDeploy(unittest.TestCase):
     def setUp(self):
         super(TestKVMDownloadLocalDeploy, self).setUp()
         factory = Factory()
-        self.job = factory.create_job('sample_jobs/kvm-local.yaml', output_dir='/tmp')
+        self.job = factory.create_job('sample_jobs/kvm-local.yaml', mkdtemp())
 
     def test_deploy_job(self):
         # from meliae import scanner

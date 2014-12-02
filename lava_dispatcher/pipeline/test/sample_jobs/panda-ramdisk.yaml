@@ -3,8 +3,11 @@
 device_type: panda
 
 job_name: uboot-pipeline
-job_timeout: 15m            # timeout for the whole job (default: ??h)
-action_timeout: 5m         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+timeouts:
+  job:
+    minutes: 15            # timeout for the whole job (default: ??h)
+  action:
+    minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
 priority: medium
 
 actions:

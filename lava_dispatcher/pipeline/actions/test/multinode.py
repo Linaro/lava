@@ -18,7 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import logging
 from lava_dispatcher.pipeline.actions.test.shell import TestShellAction
 
 
@@ -48,10 +47,9 @@ class MultinodeTestAction(TestShellAction):
         keep = super(MultinodeTestAction, self).check_patterns(event, test_connection)
         if not keep:
             return False
-        yaml_log = logging.getLogger("YAML")
         if event == 'multinode':
             name, params = test_connection.match.groups()
-            yaml_log.debug("Received Multi_Node API <LAVA_%s>", name)
+            self.logger.debug("Received Multi_Node API <LAVA_%s>" % name)
             params = params.split()
             try:
                 ret = self.signal_director.signal(name, params)

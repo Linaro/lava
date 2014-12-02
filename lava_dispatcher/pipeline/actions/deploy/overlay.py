@@ -109,7 +109,6 @@ class OverlayAction(DeployAction):
             if not os.path.exists(path):
                 os.makedirs(path)
         for fname in self.scripts_to_copy:
-            self.logger.debug("copying %s" % fname)
             with open(fname, 'r') as fin:
                 foutname = os.path.basename(fname)
                 with open('%s/bin/%s' % (lava_path, foutname), 'w') as fout:

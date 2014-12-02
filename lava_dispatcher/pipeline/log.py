@@ -30,7 +30,7 @@ class YamlLogger(object):
         """
         self.name = name
         self.description = "yaml logger"
-        self.log = logging.getLogger("YAML.%(name)s")
+        self.log = logging.getLogger("%s" % self.name)
         self.log.setLevel(logging.DEBUG)
         self.pattern = ' - id: "<LAVA_DISPATCHER>%(asctime)s"\n%(message)s'
         self.handler = None
@@ -43,7 +43,6 @@ class YamlLogger(object):
                 self.log.debug("   %s: %s", key, value)
         else:
             self.log.debug("   log: \"%s\"", message)
-        self.log.info(message)
 
     def debug(self, message):
         self.log_message(message)
@@ -53,6 +52,7 @@ class YamlLogger(object):
             self.handler = handler
         else:
             self.handler = get_yaml_handler()
+        self.handler.addFilter(logging.Filter(self.name))
         self.log.addHandler(self.handler)
 
     def remove_handler(self):
@@ -60,14 +60,18 @@ class YamlLogger(object):
             self.log.removeHandler(self.handler)
 
 
-def get_yaml_handler(filename=None, mode='a', encoding='utf-8'):
+def get_yaml_handler(filename=None, mode='w', encoding='utf-8'):
     pattern = ' - id: "<LAVA_DISPATCHER>%(asctime)s"\n%(message)s'
     if filename:
-        handler = logging.FileHandler(filename, mode=mode, encoding=encoding)
-        handler.setFormatter(logging.Formatter(pattern))
+        if isinstance(filename, file):
+            handler = logging.StreamHandler(filename)
+        elif isinstance(filename, str):
+            handler = logging.FileHandler(filename,
+                                          mode=mode,
+                                          encoding=encoding)
+            handler.setFormatter(logging.Formatter(pattern))
     else:
         handler = logging.StreamHandler()
-
     return handler
 
 
@@ -83,16 +87,21 @@ class YamlFilter(logging.Filter):  # pylint: disable=too-few-public-methods
 
 class StdLogger(object):  # pylint: disable=too-few-public-methods
 
-    def __init__(self, name):
+    def __init__(self, name, filename):
         """
         Output for stdout (which is redirected to the oob_file by the
         scheduler) should use the ASCII logger.
         """
         self.name = name
         self.description = "std logger"
-        self.log = logging.getLogger("ASCII.%(name)s")
+        self.log = logging.getLogger("%s" % name)
         self.log.setLevel(logging.INFO)
-        self.log.addHandler(logging.StreamHandler())
+        self.handler = logging.StreamHandler(filename)
+        self.formatter = logging.Formatter('"%(asctime)s"\n%(message)s')
+        self.handler.setFormatter(self.formatter)
 
     def info(self, message):
         self.log.info(message)
+
+    def debug(self, message):
+        self.log.debug(message)
