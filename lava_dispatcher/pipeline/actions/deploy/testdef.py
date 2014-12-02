@@ -126,7 +126,7 @@ class RepoAction(Action):
 
         return connection
 
-    def store_testdef(self, testdef, commit_id=None):
+    def store_testdef(self, testdef, vcs_name, commit_id=None):
         """
         Allows subclasses to pass in the parsed testdef after the repository has been obtained
         and the specified YAML file can be read.
@@ -140,7 +140,7 @@ class RepoAction(Action):
                 'os': testdef['metadata'].get('os', ''),
                 'devices': testdef['metadata'].get('devices', ''),
                 'environment': testdef['metadata'].get('environment', ''),
-                'branch_vcs': 'git',
+                'branch_vcs': vcs_name,
                 'project_name': testdef['metadata']['name'],
             }
         })
@@ -217,7 +217,7 @@ class GitRepoAction(RepoAction):
             testdef = yaml.safe_load(test_file)
 
         # set testdef metadata in base class
-        self.store_testdef(testdef, commit_id)
+        self.store_testdef(testdef, 'git', commit_id)
 
         return connection
 
@@ -275,7 +275,7 @@ class BzrRepoAction(RepoAction):
             self.testdef = yaml.safe_load(test_file)
 
         # set testdef metadata in base class
-        self.store_testdef(self.testdef, commit_id)
+        self.store_testdef(self.testdef, 'bzr', commit_id)
 
         return connection
 
@@ -330,7 +330,7 @@ class InlineRepoAction(RepoAction):
             test_file.write(data)
 
         # set testdef metadata in base class
-        self.store_testdef(self.parameters['repository'],
+        self.store_testdef(self.parameters['repository'], 'inline',
                            self.parameters.get('revision',
                                                sha1.hexdigest()))
 
