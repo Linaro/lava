@@ -50,10 +50,23 @@ to install on a system running Debian Jessie::
 
  deb http://people.linaro.org/~neil.williams/lava jessie main
 
+.. _lava_archive_signing_key:
+
+LAVA Archive signing key
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+This archive is signed using key 0x7C751B3F which can be
+downloaded_ and added to apt::
+
+ $ wget http://people.linaro.org/~neil.williams/lava/0x7C751B3F.asc
+ $ sudo apt-key add 0x7C751B3F.asc
+ OK
+
 Then update to locate the required dependencies::
 
- $ sudo apt-get install emdebian-archive-keyring
  $ sudo apt-get update
+
+.. _downloaded: http://people.linaro.org/~neil.williams/lava/0x7C751B3F.asc
 
 Installing just lava-server
 ===========================
@@ -124,9 +137,10 @@ backported to Jessie.
 Interim builds
 ==============
 
+See also :ref:`lava_archive_signing_key`
+
 Interim packages can also be installed from ``people.linaro.org``::
 
- $ sudo apt-get install emdebian-archive-keyring
  $ sudo apt-get update
 
 Add the ``people.linaro.org`` LAVA source. Usually, you can just create

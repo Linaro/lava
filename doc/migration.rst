@@ -335,12 +335,13 @@ Master instance upgrade
 
 #. Add the LAVA packaging repository.
 
+   See :ref:`lava_archive_signing_key`
+
    This will remain necessary on Trusty (although the path and keyring
    may change to an official repository) but on Ubuntu Utopic Unicorn
    and later releases, the necessary packages will migrate automatically
    from Debian::
 
-    sudo apt install emdebian-archive-keyring
     sudo vim /etc/apt/sources.list.d/lava.list
 
    The repository is at::
@@ -480,12 +481,13 @@ are all on the master.
 
 #. Add the LAVA packaging repository.
 
+   See :ref:`lava_archive_signing_key`
+
    This will remain necessary on Trusty (although the path and keyring
    may change to an official repository) but on Ubuntu Utopic Unicorn
    and later releases, the necessary packages will migrate automatically
    from Debian::
 
-    sudo apt install emdebian-archive-keyring
     sudo vim /etc/apt/sources.list.d/lava.list
 
    The repository is at::
@@ -642,10 +644,10 @@ packages.
 
    .. tip:: See :ref:`install_debian_jessie` - the packaging repository is
             only necessary to ensure that all dependencies exist in Jessie.
+            See also :ref:`lava_archive_signing_key`.
 
    ::
 
-    sudo apt install emdebian-archive-keyring
     sudo vim /etc/apt/sources.list.d/lava.list
 
    The repository is at::
@@ -771,10 +773,10 @@ packages.
 
    .. tip:: See :ref:`install_debian_jessie` - the packaging repository is
             only necessary to ensure that all dependencies exist in Jessie.
+            See also :ref:`lava_archive_signing_key`.
 
    ::
 
-    sudo apt install emdebian-archive-keyring
     sudo vim /etc/apt/sources.list.d/lava.list
 
    The repository is at::
