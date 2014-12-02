@@ -116,6 +116,7 @@ class MasterImageTarget(Target):
         if self.config.power_off_cmd:
             self.context.run_command(self.config.power_off_cmd)
         finalize_process(self.proc)
+        self.proc = None
 
     def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootloadertype):
         self.boot_master_image()
@@ -492,12 +493,16 @@ class MasterImageTarget(Target):
     @contextlib.contextmanager
     def _as_master(self):
         """A session that can be used to run commands in the master image."""
-        self.proc.sendline("")
-        match_id = self.proc.expect(
-            [self.MASTER_PS1_PATTERN, pexpect.TIMEOUT],
-            timeout=10, lava_no_logging=1)
-        if match_id == 1:
+        if self.proc is not None:
+            self.proc.sendline("")
+            match_id = self.proc.expect(
+                [self.MASTER_PS1_PATTERN, pexpect.TIMEOUT],
+                    timeout=10, lava_no_logging=1)
+            if match_id == 1:
+                self.boot_master_image()
+        else:
             self.boot_master_image()
+
         yield MasterCommandRunner(self)
 
     def _boot_linaro_image(self):
