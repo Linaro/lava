@@ -1,0 +1,67 @@
+# Sample JOB definition for a KVM
+
+device_type: kvm
+
+job_name: kvm-pipeline
+timeouts:
+  job:
+    minutes: 5
+  action:
+    minutes: 1
+  test:
+    minutes: 3
+priority: medium
+
+actions:
+
+    - deploy:
+        timeout:
+          minutes: 5
+        to: tmpfs
+        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        compression: gz
+        os: debian
+        # if root_partition partition is not present:
+        # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
+        # - look into device configuration
+        root_partition: 1
+
+    - boot:
+        method: kvm
+        media: tmpfs
+        failure_retry: 2
+
+    - test:
+        failure_retry: 3
+        name: kvm-basic-singlenode  # is not present, use "test $N"
+        definitions:
+            - repository:
+                metadata:
+                    format: Lava-Test Test Definition 1.0
+                    name: smoke-tests-basic
+                    description: "Basic system test command for Linaro Ubuntu images"
+                    os:
+                        - ubuntu
+                    scope:
+                        - functional
+                    devices:
+                        - panda
+                        - panda-es
+                        - arndale
+                        - vexpress-a9
+                        - vexpress-tc2
+                run:
+                    steps:
+                        - lava-test-case linux-INLINE-pwd --shell pwd
+                        - lava-test-case linux-INLINE-uname --shell uname -a
+                        - lava-test-case linux-INLINE-vmstat --shell vmstat
+                        - lava-test-case linux-INLINE-ifconfig --shell ifconfig -a
+                        - lava-test-case linux-INLINE-lscpu --shell lscpu
+                        - lava-test-case linux-INLINE-lsusb --shell lsusb
+                        - lava-test-case linux-INLINE-lsb_release --shell lsb_release -a
+              from: inline
+              name: smoke-tests-inline
+              path: inline/smoke-tests-basic.yaml
+
+    - submit_results:
+        stream: /anonymous/codehelp/
