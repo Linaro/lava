@@ -8,7 +8,7 @@ boards which enable many automated tests in LAVA which would otherwise be manual
 
 Overview
 ========
-Now, 5 kinds of LMP have been made:
+Four kinds of LMP are supported:
 
 :term:`LAVA-LMP USB`
 
@@ -17,8 +17,6 @@ Now, 5 kinds of LMP have been made:
 :term:`LAVA-LMP ETH+SATA`
 
 :term:`LAVA-LMP HDMI`
-
-:term:`LAVA-LMP SD MUX`
 
 Every LMP set has its own unique USB serial number which can be set after flashing
 the firmware, so multiple LMP sets can be controlled by a single LAVA server or dispatcher.

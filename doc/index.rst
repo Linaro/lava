@@ -48,7 +48,6 @@ LAVA Administrator Guide
    configuration.rst
    running.rst
    hiddentypes.rst
-   sdmux.rst
    proxy.rst
    lava-image-creation.rst
    known-devices.rst
