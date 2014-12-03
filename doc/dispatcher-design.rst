@@ -299,7 +299,7 @@ where no other media are supportable by the device, those tests can
 filesystem to use on those partitions needs to be specified by the test
 writer.
 
-.. defaults:
+.. _defaults:
 
 Avoid defaults in dispatcher code
 ---------------------------------
@@ -447,6 +447,46 @@ to the test writer. ``self.run_command()`` is a dispatcher call and
 needs to be protected. ``connection.sendline()`` is a deployment
 call and does not need to be protected.
 
+Providing gold standard images
+------------------------------
+
+Test writers are strongly recommended to only use a known working
+setup for their job. A set of gold standard jobs will be defined in
+association with the QA team. These jobs will provide a known baseline
+for test definition writers, in a similar manner as the existing QA test
+definitions provide a base for more elaborate testing.
+
+There will be a series of images provided for as many device types as
+practical, covering the basic deployments. Test definitions will be
+required to be run against these images before the LAVA team will spend
+time investigating bugs arising from tests. These images will provide a
+measure of reassurance around the following issues:
+
+* Kernel fails to load NFS or ramdisk.
+* Kernel panics when asked to use secondary media.
+* Image containing a different kernel to the gold standard fails
+  to deploy.
+
+.. note:: It is imperative that test writers understand that a gold
+          standard deployment for one device type is not necessarily
+          supported for a second device type. Some devices will
+          never be able to support all deployment methods due to
+          hardware constraints or the lack of kernel support. This is
+          **not** a bug in LAVA.
+          If a particular deployment is supported but not stable on a
+          device type, there will not be a gold standard image for that
+          deployment. Any issues in the images using such deployments
+          on that type are entirely down to the test writer to fix.
+
+The refactoring will provide :ref:`diagnostic_actions` which point at
+these issues and recommend that the test is retried using the standard
+kernel, dtb, initramfs, rootfs and other components.
+
+The reason to give developers enough rope is precisely so that kernel
+developers are able to fix issues in the test images before problems
+show up in the gold standard images. Test writers need to work with the
+QA team, using the gold standard images.
+
 Secondary media
 ===============
 
@@ -500,31 +540,196 @@ To make this work, several requirements must be met:
   boot.
 * The job definition also needs to specify the path to the kernel, dtb
   and the partition containing the rootfs within the deployed image.
-
-.. code-block:: yaml
-
-  - deploy:
-     to: usb
-     image: http://images.org/testimage.img.gz
-     compression: gz
-     device_id: SanDisk_Ultra  # deployment will try to use /dev/disk/by-id/
-     kernel: /zImage
-     dtb: /board.dtb
-     root_part: 2
-
-.. code-block:: yaml
-
-  - deploy:
-     to: usb
-     image: http://images.org/testimage.img.gz
-     compression: gz
-     device_name: /dev/sda  # deployment will fail if the label changes.
-     kernel: /zImage
-     dtb: /am335x-bone.dtb
-     root_part: 2
-
 * The job definition needs to include the bootloader commands, although
   defaults can be provided in some cases.
+
+UUID vs device node support
+---------------------------
+
+A deployment to secondary media must be done by a running kernel, not
+by the bootloader, so restrictions apply to that kernel:
+
+#. Device types with more than one media device sharing the same device
+   interface must be identifiable in the device_type configuration.
+   These would be devices where, if all slots were populated, a full
+   udev kernel would find explicitly more than one ``/dev/sd*`` top
+   level device. It does not matter if these are physically different
+   types of device (cubietruck has usb and sata) or the same type
+   (d01 has three sata). The device_type declares the flag:
+   ``UUID-required: True`` for each relevant interface. For cubietruck::
+
+    media:  # two USB slots, one SATA connector
+      usb:
+        UUID-required: True
+      sata:
+        UUID-required: False
+
+#. It is important to remember that there are five different identifiers
+   involved across the device configuration and job submission:
+
+   #. The ID of the device as it appears to the kernel running the deploy,
+      provided by the device configuration: ``uuid``. This is found in
+      ``/dev/disk/by-id/`` on a booted system.
+   #. The ID of the device as it appears to the bootloader when reading
+      deployed files into memory, provided by the device configuration:
+      ``device_id``. This can be confirmed by interrupting the bootloader
+      and listing the filesystem contents on the specified interface.
+   #. The ID of the partition to specify as ``root`` on the kernel
+      command line of the deployed kernel when booting the kernel inside
+      the image, set by the job submission ``root_uuid``. Must be specified
+      if the device has UUID-required set to True.
+   #. The ``boot_part`` specified in the job submission which is the
+      partition number inside the deployed image where the files can be
+      found for the bootloader to execute. Files in this partition will
+      be accessed directly through the bootloader, not via any mountpoint
+      specified inside the image.
+   #. The ``root_part`` specified in the job submission which is the
+      partition number inside the deployed image where the root filesystem
+      files can be found by the depoyed kernel, once booted. ``root_part``
+      cannot be used with ``root_uuid`` - to do so causes a JobError.
+
+Device configuration
+^^^^^^^^^^^^^^^^^^^^
+
+Media settings are per-device, based on the capability of the device type.
+An individual devices of a specified type *may* have exactly one of the
+available slots populated on any one interface. These individual devices
+would set UUID-required: False for that interface. e.g. A panda has two
+USB host slots. For each panda, if both slots are occupied, specify
+``UUID-required: True`` in the device configuration. If only one is
+occupied, specify ``UUID-required: False``. If none are occupied, comment
+out or remove the entire ``usb`` interface section in the configuration
+for that one device. List each specific device which is available as
+media on that interface using a humand-usable string, e.g. a Sandisk
+Ultra usb stick with a UUID of ``usb-SanDisk_Ultra_20060775320F43006019-0:0``
+could simply be called ``SanDisk_Ultra``. Ensure that this label is
+unique for each device on the same interface. Jobs will specify this label
+in order to look up the actual UUID, allowing physical media to be
+replaced with an equivalent device without changing the job submission data.
+
+The device configuration should always include the UUID for all media on
+each supported interface, even if ``UUID-required`` is False. The UUID is
+the recommended way to specify the media, even when not strictly required.
+Record the symlink name (without the path) for the top level device in
+``/dev/disk/by-id/`` for the media concerned, i.e. the symlink pointing
+at ``../sda`` not the symlink(s) pointing at individual partitions. The
+UUID should be **quoted** to ensure that the YAML can be parsed correctly.
+Also include the ``device_id`` which is the bootloader view of the same
+device on this interface.
+
+.. code-block:: yaml
+
+ device_type: cubietruck
+ commands:
+  connect: telnet localhost 6000
+ media:
+   usb:  # bootloader interface name
+     UUID-required: True  # cubie1 is pretending to have two usb media attached
+     SanDisk_Ultra:
+       uuid: "usb-SanDisk_Ultra_20060775320F43006019-0:0"  # /dev/disk/by-id/
+       device_id: 0  # the bootloader device id for this media on the 'usb' interface
+
+There is no reasonable way for the device configuration to specify the
+device node as it may depend on how the deployed kernel or image is configured.
+When this is used, the job submission must contain this data.
+
+Deploy commands
+"""""""""""""""
+
+This is an example block - the actual data values here are known not to
+work as the ``deploy`` step is for a panda but the ``boot`` step in the
+next example comes from a working cubietruck job.
+
+This example uses a device configuration where ``UUID-required`` is True.
+
+For simplicity, this example also omits the initial deployment and boot,
+at the start of this block, the device is already running a kernel with
+a ramdisk or rootfs which provides enough support to complete this second
+deployment.
+
+.. code-block:: yaml
+
+    # secondary media - use the first deploy to get to a system which can deploy the next
+    # in testing, assumed to already be deployed
+    - deploy:
+        timeout:
+          minutes: 10
+        to: usb
+        os: debian
+        # not a real job, just used for unit tests
+        compression: gz
+        image: http://releases.linaro.org/12.02/ubuntu/leb-panda/panda-ubuntu-desktop.img.gz
+        device: SanDisk_Ultra # needs to be exposed in the device-specific UI
+        download: /usr/bin/wget
+
+
+#. Ensure that the ``deploy`` action has sufficient time to download the
+   **decompressed** image **and** write that image directly to the media
+   using STDOUT. In the example, the deploy timeout has been set to ten
+   minutes - in a test on the panda, the actual time required to write
+   the specified image to a USB device was around 6 minutes.
+#. Note the deployment strategy - ``to: usb``. This is a direct mapping
+   to the kernel interface used to deploy and boot this image. The
+   bootloader must also support reading files over this interface.
+#. The compression method used by the specified image is explicitly set.
+#. The image is downloaded and decompressed by the dispatcher, then made
+   available to the device to retrieve and write to the specified media.
+#. The device is specified as a label so that the correct UUID can be
+   constructed from the device configuration data.
+#. The download tool is specified as a full path which must exist inside
+   the currently deployed system. This tool will be used to retrieve the
+   decompressed image from the dispatcher and pass STDOUT to ``dd``. If
+   the download tool is the default ``/usr/bin/wget``, LAVA will add the
+   following options:
+   ``--no-check-certificate --no-proxy --connect-timeout=30 -S --progress=dot:giga -O -``
+   If different download tools are required for particular images, these
+   can be specified, however, if those tools require options, the writer
+   can either ensure that a script exists in the image which wraps those
+   options or file a bug to have the alternative tool options supported.
+
+The kernel inside the initial deployment **MUST** support UUID when
+deployed on a device where UUID is required, as it is this kernel which
+needs to make ``/dev/disk/by-id/$path`` exist for ``dd`` to use.
+
+Boot commands
+"""""""""""""
+
+.. code-block:: yaml
+
+    - boot:
+        method: u-boot
+        commands: usb
+        parameters:
+          shutdown-message: "reboot: Restarting system"
+        # these files are part of the image already deployed and are known to the test writer
+        kernel: /boot/vmlinuz-3.16.0-4-armmp-lpae
+        ramdisk: /boot/initrd.img-3.16.0-4-armmp-lpae.u-boot
+        dtb: /boot/dtb-3.16.0-4-armmp-lpae'
+        root_uuid: UUID=159d17cc-697c-4125-95a0-a3775e1deabe  # comes from the supplied image.
+        boot_part: 1  # the partition on the media from which the bootloader can read the kernel, ramdisk & dtb
+        type: bootz
+
+The ``kernel`` and (if specified) the ``ramdisk`` and ``dtb`` paths are
+the paths used by the bootloader to load the files in order to boot the
+image deployed onto the secondary media. These are **not necessarily**
+the same as the paths to the same files as they would appear inside the
+image after booting, depending on whether any boot partition is mounted
+at a particular mountpoint.
+
+The ``root_uuid`` is the full option for the ``root=`` command to the
+kernel, including the ``UUID=`` prefix.
+
+The ``boot_part`` is the number of the partition from which the bootloader
+can read the files to boot the image. This will be combined with the
+device configuration interface name and device_id to create the command
+to the bootloader, e.g.::
+
+ "setenv loadfdt 'load usb 0:1 ${fdt_addr_r} /boot/dtb-3.16.0-4-armmp-lpae''",
+
+The dispatcher does NOT analyze the incoming image - internal UUIDs
+inside an image do not change as the refactored dispatcher does **not**
+break up or relay the partitions. Therefore, the UUIDs of partitions inside
+the image **MUST** be declared by the job submissions.
 
 Secondary connections
 =====================
@@ -535,6 +740,110 @@ the IP address, start an SSH server and signal the second job that a
 connection is ready to be established. This may be useful for situations
 where a debugging shell needs to be opened around a virtualisation
 boundary.
+
+Device configuration design
+===========================
+
+Device configuration has moved to YAML and has a larger scope of possible
+methods, related to the pipeline strategies.
+
+Changes from existing configuration
+-----------------------------------
+
+The device configuration is moving off the dispatcher and into the main
+LAVA server database. This simplifies the scheduler and is a step
+towards a dumb dispatcher model where the dispatcher receives all device
+configuration along with the job instead of deciding which jobs to run
+based on local configuration. There is then no need for the device
+configuration to include the hostname in the YAML as there is nothing
+on the dispatcher to check against - the dispatcher uses the command
+line arguments.
+
+Example device configuration
+----------------------------
+
+.. code-block:: yaml
+
+ device_type: beaglebone-black
+ commands:
+   connect: telnet localhost 6000
+   hard_reset: /usr/bin/pduclient --daemon localhost --hostname pdu --command reboot --port 08
+   power_off: /usr/bin/pduclient --daemon localhost --hostname pdu --command off --port 08
+   power_on: /usr/bin/pduclient --daemon localhost --hostname pdu --command on --port 08
+
+Example device_type configuration
+---------------------------------
+
+.. code-block:: yaml
+
+ # replacement device_type config for the beaglebone-black type
+
+ parameters:
+  bootm:
+   kernel: '0x80200000'
+   ramdisk: '0x81600000'
+   dtb: '0x815f0000'
+  bootz:
+   kernel: '0x81000000'
+   ramdisk: '0x82000000'
+   dtb: '0x81f00000'
+
+ actions:
+  deploy:
+    # list of deployment methods which this device supports
+    methods:
+      # - image # not ready yet
+      - tftp
+
+  boot:
+    # list of boot methods which this device supports.
+    methods:
+      - u-boot:
+          parameters:
+            bootloader_prompt: U-Boot
+            boot_message: Booting Linux
+            send_char: False
+            # interrupt: # character needed to interrupt u-boot, single whitespace by default
+          # method specific stanza
+          oe:
+            commands:
+            - setenv initrd_high '0xffffffff'
+            - setenv fdt_high '0xffffffff'
+            - setenv bootcmd 'fatload mmc 0:3 0x80200000 uImage; fatload mmc 0:3 0x815f0000 board.dtb;
+              bootm 0x80200000 - 0x815f0000'
+            - setenv bootargs 'console=ttyO0,115200n8 root=/dev/mmcblk0p5 rootwait ro'
+            - boot
+          nfs:
+            commands:
+            - setenv autoload no
+            - setenv initrd_high '0xffffffff'
+            - setenv fdt_high '0xffffffff'
+            - setenv kernel_addr_r '{KERNEL_ADDR}'
+            - setenv initrd_addr_r '{RAMDISK_ADDR}'
+            - setenv fdt_addr_r '{DTB_ADDR}'
+            - setenv loadkernel 'tftp ${kernel_addr_r} {KERNEL}'
+            - setenv loadinitrd 'tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
+            - setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'
+            # this could be a pycharm bug or a YAML problem with colons. Use &#58; for now.
+            # alternatively, construct the nfsroot argument from values.
+            - setenv nfsargs 'setenv bootargs console=ttyO0,115200n8 root=/dev/nfs rw nfsroot={SERVER_IP}&#58;{NFSROOTFS},tcp,hard,intr ip=dhcp'
+            - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
+            - boot
+          ramdisk:
+            commands:
+            - setenv autoload no
+            - setenv initrd_high '0xffffffff'
+            - setenv fdt_high '0xffffffff'
+            - setenv kernel_addr_r '{KERNEL_ADDR}'
+            - setenv initrd_addr_r '{RAMDISK_ADDR}'
+            - setenv fdt_addr_r '{DTB_ADDR}'
+            - setenv loadkernel 'tftp ${kernel_addr_r} {KERNEL}'
+            - setenv loadinitrd 'tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
+            - setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'
+            - setenv bootargs 'console=ttyO0,115200n8 root=/dev/ram0 ip=dhcp'
+            - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+            - boot
+
 
 Testing the new design
 ======================
@@ -1182,7 +1491,7 @@ the boot method or deployment method.
 #. a top level Action will generally have a basic ``run()`` function which
    calls ``run_actions`` on the internal pipeline.
 #. Ensure that the ``accepts`` routine can uniquely identify this
-   strategy without interfering with other strategies. (:ref:`new_classes_unit-test`)
+   strategy without interfering with other strategies. (:ref:`new_classes_unit_test`)
 #. Respect the existing classes - reuse wherever possible and keep all
    classes as pure as possible. There should be one class for each type
    of operation and no more, so to download a file onto the dispatcher
