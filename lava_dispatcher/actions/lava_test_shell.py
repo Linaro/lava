@@ -995,6 +995,9 @@ class cmd_lava_test_shell(BaseAction):
                     os.fchmod(fout.fileno(), XMOD)
 
     def _inject_lmp_api(self, mntdir, target):
+        """
+        This code is essentially unmaintained and may be dropped from the dispatcher in future.
+        """
         shell = target.deployment_data['lava_test_sh_cmd']
 
         # Generic scripts
