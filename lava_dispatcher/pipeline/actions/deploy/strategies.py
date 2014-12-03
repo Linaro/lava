@@ -23,3 +23,4 @@
 
 from lava_dispatcher.pipeline.actions.deploy.image import DeployImage  # pylint: disable=unused-import
 from lava_dispatcher.pipeline.actions.deploy.tftp import Tftp  # pylint: disable=unused-import
+from lava_dispatcher.pipeline.actions.deploy.removable import MassStorage  # pylint: disable=unused-import

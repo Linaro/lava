@@ -23,13 +23,17 @@ import os
 import unittest
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.actions.boot.u_boot import UBootAction, UBootCommandOverlay
+from lava_dispatcher.pipeline.actions.boot.u_boot import (
+    UBootAction,
+    UBootCommandOverlay,
+    UBootSecondaryMedia
+)
 from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
+from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR, SHUTDOWN_MESSAGE
 
 
 class Factory(object):  # pylint: disable=too-few-public-methods
@@ -64,6 +68,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
             ['tftp-deploy', 'uboot-action', 'lava-test-retry', 'submit_results', 'finalize']
         )
         tftp = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        self.assertTrue(tftp.get_common_data('tftp', 'ramdisk'))
         self.assertIsNotNone(tftp.internal_pipeline)
         self.assertEqual(
             [action.name for action in tftp.internal_pipeline.actions],
@@ -106,10 +111,14 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
             action.validate()
             if isinstance(action, UBootAction):
                 self.assertIn('u-boot', action.parameters)
+                self.assertEqual(
+                    'reboot: Restarting system',
+                    action.parameters.get('parameters', {}).get('shutdown-message', SHUTDOWN_MESSAGE)
+                )
             if isinstance(action, TftpAction):
                 self.assertIn('ramdisk', action.parameters)
                 self.assertIn('kernel', action.parameters)
-                # self.assertEqual(action.parameters['methods'], ['tftp', 'usb'])
+                self.assertEqual(action.parameters['methods'], ['tftp', 'usb'])
             self.assertTrue(action.valid)
         # FIXME: a more elegant introspection of the pipeline would be useful here
         tftp = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
@@ -238,3 +247,28 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertIn('soft-reboot', names)
         self.assertIn('pdu_reboot', names)
         self.assertIn('power_on', names)
+
+    def test_secondary_media(self):
+        """
+        Test UBootSecondaryMedia validation
+        """
+        job_parser = JobParser()
+        cubie = NewDevice('cubie1')
+        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
+        sample_job_data = open(sample_job_file)
+        job = job_parser.parse(sample_job_data, cubie)
+        job.validate()
+        u_boot_media = job.pipeline.actions[1].internal_pipeline.actions[0]
+        self.assertIsInstance(u_boot_media, UBootSecondaryMedia)
+        self.assertEqual([], u_boot_media.errors)
+        self.assertEqual(u_boot_media.parameters['kernel'], '/boot/vmlinuz-3.16.0-4-armmp-lpae')
+        self.assertEqual(u_boot_media.parameters['kernel'], u_boot_media.get_common_data('file', 'kernel'))
+        self.assertEqual(u_boot_media.parameters['ramdisk'], u_boot_media.get_common_data('file', 'ramdisk'))
+        self.assertEqual(u_boot_media.parameters['dtb'], u_boot_media.get_common_data('file', 'dtb'))
+        self.assertEqual(u_boot_media.parameters['root_uuid'], u_boot_media.get_common_data('uuid', 'root'))
+        part_reference = '%s:%s' % (
+            job.device.parameters['media']['usb'][u_boot_media.get_common_data('u-boot', 'device')]['device_id'],
+            u_boot_media.parameters['boot_part']
+        )
+        self.assertEqual(part_reference, u_boot_media.get_common_data('uuid', 'boot_part'))
+        self.assertEqual(part_reference, "0:1")

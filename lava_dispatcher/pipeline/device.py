@@ -120,12 +120,15 @@ class NewDevice(object):
         type_config_path = os.getcwd()
         type_name = os.path.join('device_types', "%s.conf" % self.parameters['device_type'])
         type_file = os.path.join(type_config_path, type_name)
+
         if not os.path.exists(type_file):
             # some types are pre-defined
             type_config_path = os.path.join(os.path.dirname(__file__))
             type_file = os.path.join(type_config_path, type_name)
+
         if not os.path.exists(type_file):
             raise RuntimeError("Could not find %s" % type_file)
+
         try:
             with open(type_file) as f_in:
                 device_params = dev_parser.parse(f_in)

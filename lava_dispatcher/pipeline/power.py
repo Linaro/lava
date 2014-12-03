@@ -64,11 +64,6 @@ class RebootDevice(Action):
         self.description = "attempt to reboot the running device"
         self.reboot_prompt = None
 
-    def validate(self):
-        super(RebootDevice, self).validate()
-        if 'bootloader_prompt' in self.data['common']:
-            self.reboot_prompt = self.get_common_data('bootloader_prompt', 'prompt')
-
     def run(self, connection, args=None):
         if not connection:
             raise RuntimeError("Called %s without an active Connection" % self.name)
@@ -78,6 +73,8 @@ class RebootDevice(Action):
         connection.sendline("reboot")
         self.results = {'status': "success"}
         self.data[PDUReboot.key()] = False
+        if 'bootloader_prompt' in self.data['common']:
+            self.reboot_prompt = self.get_common_data('bootloader_prompt', 'prompt')
         try:
             connection.wait()
         except TestError:

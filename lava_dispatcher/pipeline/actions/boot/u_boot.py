@@ -21,11 +21,11 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
-import os
 from lava_dispatcher.pipeline.action import (
     Action,
     Pipeline,
     Boot,
+    JobError,
     Timeout,
     InfrastructureError,
 )
@@ -38,6 +38,8 @@ from lava_dispatcher.pipeline.power import ResetDevice
 from lava_dispatcher.pipeline.utils.constants import (
     UBOOT_AUTOBOOT_PROMPT,
     UBOOT_DEFAULT_CMD_TIMEOUT,
+    BOOT_MESSAGE,
+    SHUTDOWN_MESSAGE,
 )
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
@@ -99,6 +101,7 @@ class UBootAction(BootAction):
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # customize the device configuration for this job
+        self.internal_pipeline.add_action(UBootSecondaryMedia())
         self.internal_pipeline.add_action(UBootCommandOverlay())
         self.internal_pipeline.add_action(ConnectDevice())
         self.internal_pipeline.add_action(UBootRetry())
@@ -124,6 +127,7 @@ class UBootRetry(BootAction):
         # Add AutoLoginAction unconditionnally as this action does nothing if
         # the configuration does not contain 'auto_login'
         self.internal_pipeline.add_action(AutoLoginAction())
+        self.internal_pipeline.add_action(ExpectShellSession())  # wait
 
     def validate(self):
         super(UBootRetry, self).validate()
@@ -177,6 +181,53 @@ class UBootInterrupt(Action):
         return connection
 
 
+class UBootSecondaryMedia(Action):
+    """
+    Idempotent action which sets the static data only used when this is a boot of secondary media
+    already deployed.
+    """
+    def __init__(self):
+        super(UBootSecondaryMedia, self).__init__()
+        self.name = "uboot-from-media"
+        self.summary = "set uboot strings for deployed media"
+        self.description = "let uboot know where to find the kernel in the image on secondary media"
+
+    def validate(self):
+        super(UBootSecondaryMedia, self).validate()
+        if self.parameters['commands'] != 'usb':
+            return
+        if 'kernel' not in self.parameters:
+            self.errors = "Missing kernel location"
+        # ramdisk does not have to be specified, nor dtb
+        if 'root_uuid' not in self.parameters:
+            # FIXME: root_node also needs to be supported
+            self.errors = "Missing UUID of the roofs inside the deployed image"
+        if 'boot_part' not in self.parameters:
+            self.errors = "Missing boot_part for the partition number of the boot files inside the deployed image"
+
+        if self.get_common_data('u-boot', 'boot_part') is None:
+            self.errors = "Missing boot_part listed for u-boot"
+        if not self.valid:
+            raise JobError(self.errors)
+        self.set_common_data('file', 'kernel', self.parameters['kernel'])
+        self.set_common_data('file', 'ramdisk', self.parameters.get('ramdisk', ''))
+        self.set_common_data('file', 'dtb', self.parameters.get('dtb', ''))
+        self.set_common_data('uuid', 'root', self.parameters['root_uuid'])
+        media_params = self.job.device.parameters['media']['usb']
+        self.set_common_data(
+            'uuid',
+            'boot_part',
+            '%s:%s' % (
+                media_params[self.get_common_data('u-boot', 'device')]['device_id'],
+                self.parameters['boot_part']
+            )
+        )
+
+    def run(self, connection, args=None):
+        # no need for a run action here, done in validate.
+        return connection
+
+
 class UBootCommandOverlay(Action):
     """
     Replace KERNEL_ADDR and DTB placeholders with the actual values for this
@@ -198,13 +249,13 @@ class UBootCommandOverlay(Action):
         super(UBootCommandOverlay, self).validate()
         if 'method' not in self.parameters:
             self.errors = "missing method"
+        # FIXME: allow u-boot commands in the job definition (which make this type a list)
         elif 'commands' not in self.parameters:
             self.errors = "missing commands"
         elif self.parameters['commands'] not in self.parameters[self.parameters['method']]:
             self.errors = "Command not found in supported methods"
         elif 'commands' not in self.parameters[self.parameters['method']][self.parameters['commands']]:
             self.errors = "No commands found in parameters"
-        commands = self.parameters[self.parameters['method']][self.parameters['commands']]['commands']
         # download_action will set ['dtb'] as tftp_path, tmpdir & filename later, in the run step.
         self.data.setdefault('u-boot', {})
         self.data['u-boot'].setdefault('commands', [])
@@ -212,13 +263,17 @@ class UBootCommandOverlay(Action):
             self.errors = "No boot type specified in device parameters."
         else:
             if self.parameters['type'] not in self.job.device.parameters['parameters']:
-                self.errors = "Unable to match specified boot type with device parameters"
-        self.data['u-boot']['commands'] = commands
+                self.errors = "Unable to match specified boot type '%s' with device parameters" % self.parameters['type']
 
     def run(self, connection, args=None):
         """
         Read data from the download action and replace in context
+        Use common data for all values passed into the substitutions so that
+        multiple actions can use the same code.
         """
+        # Multiple deployments would overwrite the value if parsed in the validate step.
+        # FIXME: implement isolation for repeated steps.
+        commands = self.parameters[self.parameters['method']][self.parameters['commands']]['commands']
         try:
             ip_addr = dispatcher_ip()
         except InfrastructureError as exc:
@@ -234,27 +289,22 @@ class UBootCommandOverlay(Action):
         substitutions['{KERNEL_ADDR}'] = kernel_addr
         substitutions['{DTB_ADDR}'] = dtb_addr
         substitutions['{RAMDISK_ADDR}'] = ramdisk_addr
+        if not self.get_common_data('tftp', 'ramdisk') and not self.get_common_data('file', 'ramdisk'):
+            ramdisk_addr = '-'
+
         substitutions['{BOOTX}'] = "%s %s %s %s" % (
             self.parameters['type'], kernel_addr, ramdisk_addr, dtb_addr)
 
-        suffix = self.data['tftp-deploy'].get('suffix', '')
-        if self.data['compress-ramdisk'].get('ramdisk', None):
-            substitutions['{RAMDISK}'] = os.path.join(
-                suffix, os.path.basename(self.data['compress-ramdisk']['ramdisk'])
-            )
-        else:
-            substitutions['{BOOTX}'] = "%s %s - %s" % (
-                self.parameters['type'], kernel_addr, dtb_addr)
+        substitutions['{RAMDISK}'] = self.get_common_data('file', 'ramdisk')
+        substitutions['{KERNEL}'] = self.get_common_data('file', 'kernel')
+        substitutions['{DTB}'] = self.get_common_data('file', 'dtb')
 
-        substitutions['{KERNEL}'] = os.path.join(
-            suffix, os.path.basename(self.data['download_action']['kernel']['file'])
-        )
-        substitutions['{DTB}'] = os.path.join(
-            suffix, os.path.basename(self.data['download_action']['dtb']['file'])
-        )
+        if 'download_action' in self.data and 'nfsrootfs' in self.data['download_action']:
+            substitutions['{NFSROOTFS}'] = self.get_common_data('file', 'nfsroot')
 
-        if 'nfsrootfs' in self.data['download_action']:
-            substitutions['{NFSROOTFS}'] = self.data['extract-nfsrootfs'].get('nfsroot')
+        substitutions['{ROOT}'] = self.get_common_data('uuid', 'root')  # UUID label, not a file
+        substitutions['{BOOT_PART}'] = self.get_common_data('uuid', 'boot_part')
+        self.substitute(commands, substitutions)
 
         self.data['u-boot']['commands'] = substitute(self.data['u-boot']['commands'], substitutions)
         self.logger.debug("Parsed boot commands: %s" % '; '.join(self.data['u-boot']['commands']))
@@ -271,15 +321,12 @@ class UBootCommandsAction(Action):
         self.description = "send commands to u-boot"
         self.summary = "interactive u-boot"
         self.prompt = None
-        # FIXME: the default timeout needs to be configurable.
         self.timeout = Timeout(self.name, UBOOT_DEFAULT_CMD_TIMEOUT)
 
     def validate(self):
         super(UBootCommandsAction, self).validate()
         if 'u-boot' not in self.data:
             self.errors = "Unable to read uboot context data"
-        elif 'commands' not in self.data['u-boot']:
-            self.errors = "Unable to read uboot command list"
         # get prompt_str from device parameters
         self.prompt = self.parameters['u-boot']['parameters']['bootloader_prompt']
 
@@ -291,5 +338,8 @@ class UBootCommandsAction(Action):
         for line in self.data['u-boot']['commands']:
             connection.wait()
             connection.sendline(line)
+            connection.wait()
         # allow for auto_login
+        connection.prompt_str = self.parameters.get('boot_message', BOOT_MESSAGE)
+        connection.wait()
         return connection

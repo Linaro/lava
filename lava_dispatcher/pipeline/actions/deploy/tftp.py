@@ -111,6 +111,7 @@ class TftpAction(DeployAction):
             download = DownloaderAction('ramdisk', path=self.tftp_dir)
             download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
             self.internal_pipeline.add_action(download)
+            self.set_common_data('tftp', 'ramdisk', True)
         if 'kernel' in parameters:
             download = DownloaderAction('kernel', path=self.tftp_dir)
             download.max_retries = 3

@@ -953,6 +953,9 @@ class PipelineContext(object):  # pylint: disable=too-few-public-methods
     NewDevice class loads only the configuration required for the one device.
 
     Keep the memory footprint of this class as low as practical.
+
+    If a particular piece of data is used in multiple places, use the 'common'
+    area to avoid all classes needing to know which class populated the data.
     """
 
     # FIXME: needs to pick up minimal general purpose config, e.g. proxy or cookies

@@ -158,6 +158,7 @@ class JobParser(object):
         self._timeouts(data, job)
 
         # FIXME: also read permissable overrides from device config and set from job data
+        # FIXME: ensure that a timeout for deployment 0 does not get set as the timeout for deployment 1 if 1 is default
         for action_data in data['actions']:
             action_data.pop('yaml_line', None)
             for name in action_data:

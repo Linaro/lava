@@ -236,6 +236,10 @@ class ConnectDevice(Action):
         # does require that telnet is always installed.
 
     def run(self, connection, args=None):
+        if connection:
+            self.logger.debug("Already connected")
+            connection.prompt_str = self.job.device.parameters['test_image_prompts']
+            return connection
         command = self.job.device.parameters['commands']['connect']
         self.logger.debug("connecting to device using '%s'" % command)
         shell = ShellCommand("%s\n" % command, self.timeout)

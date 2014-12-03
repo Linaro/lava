@@ -216,6 +216,12 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             'md5': md5.hexdigest(),
             'sha256': sha256.hexdigest()
         }
+        # certain deployments need prefixes set
+        if self.parameters['to'] == 'tftp':
+            suffix = self.data['tftp-deploy'].get('suffix', '')
+            self.set_common_data('file', self.key, os.path.join(suffix, os.path.basename(fname)))
+        else:
+            self.set_common_data('file', self.key, fname)
         self.logger.debug("md5sum of downloaded content: %s" % (md5.hexdigest()))
         self.logger.debug("sha256sum of downloaded content: %s" % (sha256.hexdigest()))
         return connection
@@ -370,5 +376,5 @@ class QCowConversionAction(Action):
         subprocess.check_call(['qemu-img', 'convert', '-f', 'qcow2',
                                '-O', 'raw', origin, fname])
         self.data['download_action'][self.key]['file'] = fname
-
+        self.set_common_data('file', self.key, fname)
         return connection

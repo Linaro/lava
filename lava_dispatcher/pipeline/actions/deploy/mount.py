@@ -73,9 +73,12 @@ class OffsetAction(DeployAction):
             'print'
         ])
         if not part_data:
-            raise JobError("Unable to identify offset using parted")
-        # FIXME: identify the partitions from the image, not from the device configuration
+            raise JobError("Unable to identify offset")
         partno = self.job.device.parameters[self.parameters['deployment_data']['lava_test_results_part_attr']]
+
+        if 'root_part' in self.parameters:
+            partno = self.parameters['root_part']
+
         pattern = re.compile('%d:([0-9]+)B:' % partno)
         for line in part_data.splitlines():
             found = re.match(pattern, line)
@@ -162,11 +165,11 @@ class LoopMountAction(RetryAction):
         ]
         command_output = self._run_command(mount_cmd)
         self.mntdir = self.data['loop_mount']['mntdir']
-
-        if not command_output or command_output is '':
-            return connection
-        else:
+        self.data['mount_action']['mntdir'] = \
+            os.path.abspath("%s/%s" % (self.data[self.name]['mntdir'], self.data['lava_test_results_dir']))
+        if command_output and command_output is not '':
             raise JobError("Unable to mount: %s" % command_output)  # FIXME: JobError needs a unit test
+        return connection
 
     def cleanup(self):
         if self.mntdir:

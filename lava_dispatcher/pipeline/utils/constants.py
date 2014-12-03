@@ -65,3 +65,6 @@ DISPATCHER_DOWNLOAD_DIR = "/var/lib/lava/dispatcher/tmp"
 # OS shutdown message
 # Override: set as the shutdown-message parameter of an Action.
 SHUTDOWN_MESSAGE = 'The system is going down for reboot NOW'
+
+# Kernel starting message
+BOOT_MESSAGE = 'Booting Linux'
