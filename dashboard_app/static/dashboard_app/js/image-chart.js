@@ -381,7 +381,7 @@ $(document).ready(function () {
                 "total": test_data["total"],
                 "measurement": test_data["measurement"],
                 "attr_value": test_data["attr_value"],
-                "link": test_data["link"],
+                "link": test_data["link"].replace("\\\\\\", ""),
                 "test_run_uuid": test_data["test_run_uuid"],
                 "bug_links": test_data["bug_links"]
             });
@@ -723,6 +723,9 @@ $(document).ready(function () {
             if (this.chart_data.has_build_numbers && !isNumeric(build_number)) {
                 continue;
             }
+
+            // Fix json escaping.
+            row["link"] = row["link"].replace("\\\\\\", "");
 
             test_filter_id = row["test_filter_id"];
             if (this.test_build_number(build_number)) {

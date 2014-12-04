@@ -379,6 +379,12 @@ is not defined in the JSON snippet, so the default would be used.
 
             VARIABLE_NAME_1='value_1'
 
+.. note:: Be mindful when using booleans as parameters. PyYAML converts such parameters
+          into 'True' or 'False' regardless of the original case::
+
+            VARIABLE_NAME_1: true
+            $VARIABLE_NAME_1 == True
+
 So please make sure you didn't put any special character(like single quote) into value or
 variable name. But Spaces and double quotes can be included in value.
 Because we use two single quote marks around value strings, if you put any variable into

@@ -60,6 +60,7 @@ from lava_scheduler_app.models import (
     DevicesUnavailableException,
     Worker,
 )
+from lava_scheduler_app import utils
 from dashboard_app.models import BundleStream
 
 from lava.utils.lavatable import LavaTable, LavaView
@@ -1265,6 +1266,9 @@ def _prepare_template(request):
     if request.POST.get("submit_stream"):
         command_submit = copy.deepcopy(COMMAND_SUBMIT_RESULTS)
         command_submit_config = {
+            "SUBMIT_SERVER": "http://{0}{1}RPC2".format(
+                utils.get_fqdn(),
+                reverse('lava.home')),
             "BUNDLE_STREAM": str(request.POST.get("submit_stream"))
         }
         expand_template(command_submit, command_submit_config)

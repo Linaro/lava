@@ -1,5 +1,3 @@
-from lava_scheduler_app import utils
-
 DEFAULT_TEMPLATE = {
     "job_name": "JOBNAME_PARAMETER",
     "device_type": "DEVICE_TYPE_PARAMETER",
@@ -66,7 +64,7 @@ LAVA_TEST_SHELL_URL = {
 COMMAND_SUBMIT_RESULTS = {
     "command": "submit_results",
     "parameters": {
-        "server": "http://{0}/RPC2".format(utils.get_fqdn()),
+        "server": "SUBMIT_SERVER",
         "stream": "BUNDLE_STREAM"
     }
 }
