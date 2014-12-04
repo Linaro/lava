@@ -23,7 +23,7 @@ can tell u-boot whether to boot to the "master image" or boot into the image
 to be tested. This has drawbacks, namely no bootloader testing, but its the
 best option available right now.
 
-There are two ways you can obtain a master image. LAVA maintains a set
+There are three ways you can obtain a master image. LAVA maintains a set
 of `pre-built master images`_ that you can 'dd' to your sd card. The
 following commands show how to set up a panda image::
 
@@ -50,6 +50,49 @@ Creating master images can be done by using the
 When the master image is booted by the first time, it *needs* to have
 network connectivity, so make sure an ethernet cable is plugged in and
 connected to a network with a working DHCP server.
+
+In addition to the above methods it is possible to use a `dynamic master images`_
+which will network boot either an initramfs or NFS root filesystem to be used as
+the master image. This is advantageous for a few obvious reasons. Firstly, writing
+a full system image to a boot media is not needed, only a netboot capable bootloader.
+Changing the master kernel, device tree blob, and filesystem is simple as you will see
+later. Lastly, platforms which do not have a hardware pack / prebuilt image can still
+be easily be integrated into the LAVA framework.
+
+.. _dynamic master images: http://images.validation.linaro.org/lava-dynamic-masters/
+
+The following example will demonstrate a dynamic master image integration on an Arndale.
+Add the following to your Arndale's device configuration::
+
+    master_kernel = http://images.validation.linaro.org/lava-dynamic-masters/arndale/uImage
+    master_dtb = http://images.validation.linaro.org/lava-dynamic-masters/arndale/exynos5250-arndale.dtb
+    master_nfsrootfs = http://images.validation.linaro.org/lava-dynamic-masters/common/linaro-trusty-server-master.tar.xz
+    master_ramdisk =
+    master_str = root@linaro-server:~#
+    master_testboot_label = TESTBOOT
+    master_sdcard_label = SDCARD
+
+    boot_cmds_master =
+        setenv autoload no,
+        setenv initrd_high "'0xffffffff'",
+        setenv fdt_high "'0xffffffff'",
+        setenv kernel_addr_r "'0x40007000'",
+        setenv fdt_addr_r "'0x41f00000'",
+        setenv loadkernel "'tftp ${kernel_addr_r} {KERNEL}'",
+        setenv loadfdt "'tftp ${fdt_addr_r} {DTB}'",
+        setenv nfsargs "'setenv bootargs console=ttySAC2,115200n8 root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr earlyprintk ip=dhcp'",
+        setenv bootcmd "'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadfdt; run nfsargs; bootm ${kernel_addr_r} - ${fdt_addr_r}'",
+        boot
+
+The first time the dispatcher attempts to boot the master image, the above binaries are downloaded
+to the dispatcher. The bootloader is then configured with the boot_cmds_master stanza above to
+bootstrap the master image using the downloaded binaries.
+
+To effectively deploy images using this technique, partitions must be created on some type of media
+and the proper labels must be applied. At a minimum, there should be one VFAT partition and one EXT
+or other based partition. The VFAT partition should have a label of 'TESTBOOT' and the other should
+have a label of 'testrootfs'. Android images do require additional partitions and labels, add them
+as needed.
 
 A note about U-boot timeouts
 ----------------------------

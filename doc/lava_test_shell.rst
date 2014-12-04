@@ -298,6 +298,38 @@ context when the results are submitted to the LAVA dashboard.
 Cloning of the repositories can be skipped by specifying ``"skip_install": "repos"``
 parameter in the JSON job definition :ref:`lava_test_shell_parameters`.
 
+git-repos
+---------
+The git-repos section shown above can be customized as follows::
+
+  install:
+      git-repos:
+          - url: http://git.linaro.org/git-ro/lava/lava-dispatcher.git
+            skip_by_default: False
+          - url: http://git.linaro.org/git-ro/lava/lava-dispatcher.git
+            destination:  lava-d-r
+            branch:       release
+          - url: http://git.linaro.org/git-ro/lava/lava-dispatcher.git
+            destination:  lava-d-s
+            branch:       staging
+
+* `url` is the git repository URL.
+* `skip_by_default` (optional) accepts a True or False. Repositories
+  can be skipped by default in the YAML and enabled for particular
+  jobs in the JSON. Similarly, repositories can be set to install by
+  default and be disabled for particular jobs in the JSON.
+* `destination` (optional) is the directory in which the git
+  repository given in `url` should be cloned.
+* `branch` (optional) is the branch within the git repository given in
+  `url` that should be cloned.
+
+All the above parameters within the `git-repos` section could be
+controlled from the JSON job file. See the following JSON job
+definition and YAML test definition to get an understanding of how it works.
+
+* JSON job definition - https://git.linaro.org/people/senthil.kumaran/job-definitions.git/blob/HEAD:/kvm-git-params-custom.json
+* YAML test definition - https://git.linaro.org/people/senthil.kumaran/test-definitions.git/blob/HEAD:/debian/git-params-controlled.yaml
+
 default parameters
 ==================
 
@@ -347,6 +379,12 @@ is not defined in the JSON snippet, so the default would be used.
 
             VARIABLE_NAME_1='value_1'
 
+.. note:: Be mindful when using booleans as parameters. PyYAML converts such parameters
+          into 'True' or 'False' regardless of the original case::
+
+            VARIABLE_NAME_1: true
+            $VARIABLE_NAME_1 == True
+
 So please make sure you didn't put any special character(like single quote) into value or
 variable name. But Spaces and double quotes can be included in value.
 Because we use two single quote marks around value strings, if you put any variable into
@@ -360,6 +398,20 @@ http://git.linaro.org/people/neil.williams/temp-functional-tests.git/blob/HEAD:/
 http://git.linaro.org/people/neil.williams/temp-functional-tests.git/blob/HEAD:/params.yaml
 
 .. _install_steps:
+
+other parameters
+================
+
+LAVA adds other parameters which could be accessed within the
+lava-test-shell test definition. Currently the following params are
+available automatically::
+
+* LAVA_SERVER_IP
+* TARGET_TYPE
+
+Example:
+
+https://git.linaro.org/people/senthil.kumaran/test-definitions.git/blob/HEAD:/debian/other-params.yaml
 
 Install Steps
 =============

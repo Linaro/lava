@@ -869,14 +869,15 @@ class BundleDeserializer(object):
         """
         assert s_bundle.is_deserialized is False
         s_bundle.content.open('rb')
+        logger = logging.getLogger(__name__)
         try:
-            logging.debug("Loading document")
+            logger.debug("Loading document")
             fmt, doc = DocumentIO.load(s_bundle.content)
-            logging.debug("Document loaded")
+            logger.debug("Document loaded")
             if prefer_evolution:
-                logging.debug("Evolving document")
+                logger.debug("Evolving document")
                 DocumentEvolution.evolve_document(doc)
-                logging.debug("Document evolution complete")
+                logger.debug("Document evolution complete")
                 fmt = doc["format"]
         finally:
             s_bundle.content.close()
@@ -884,9 +885,9 @@ class BundleDeserializer(object):
         if importer is None:
             raise DocumentFormatError(fmt)
         try:
-            logging.debug("Importing document")
+            logger.debug("Importing document")
             importer().import_document(s_bundle, doc)
-            logging.debug("Document import complete")
+            logger.debug("Document import complete")
         except Exception as exc:
-            logging.debug("Exception while importing document: %r", exc)
+            logger.debug("Exception while importing document: %r", exc)
             raise

@@ -23,6 +23,16 @@ the request to submit uses http:// or vice versa.
 To avoid such problems, consider exporting a variable in your
 *~/.bashrc* to avoid typos.
 
+Submiting jobs from a script
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When submiting a job using lava-tool submit-job, the user is requested to enter
+the password to open the wallet that stores the lava tokens.
+When submiting a job from a script, the user can skip this step by adding the
+credentials in the link to the lava server. ::
+
+  $ lava-tool submit-job http://<login>:<token>@localhost/RPC2/
+
 Jobs submitted but not running
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

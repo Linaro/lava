@@ -71,15 +71,11 @@ the job contains ``Incom``, therefore showing up to 25 results for jobs
 on such devices with that description which finished with a status of
 Incomplete.
 
-.. note:: Exclusive searches are not supported via the search box in the table
-          header. Add to the querystring directly.
-
-Exclusive text search can be combined with simple text search by using
-the **search** variable in the querystring.
-
-::
-
- ?device=mx5&length=25&description=ARMMP&status=Incom&search=single
+.. note:: Exclusive searches are not supported via the search box in
+          the table header. Add to the querystring directly. Exclusive
+          text search cannot be combined with simple text search. Replace
+          the **search** variable in the querystring with the closest
+          discrete query term, e.g. description.
 
 The fields which support exclusive search are listed above each table.
 

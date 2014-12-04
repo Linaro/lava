@@ -95,6 +95,7 @@ def filters_list(request):
     public_view = PublicFiltersView(request, model=TestRunFilter, table_class=PublicFiltersTable)
     prefix = "public_"
     public_filters_table = PublicFiltersTable(
+        request.user,
         public_view.get_table_data(prefix),
         prefix=prefix
     )
@@ -111,6 +112,7 @@ def filters_list(request):
         user_view = UserFiltersView(request, model=TestRunFilter, table_class=UserFiltersTable)
         prefix = "user_"
         user_filters_table = UserFiltersTable(
+            request.user,
             user_view.get_table_data(prefix),
             prefix=prefix
         )

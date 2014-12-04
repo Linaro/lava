@@ -25,10 +25,9 @@ function startCompare () {
     compareState = 1;
 }
 function tagFromRow(tr) {
-    var firstCell = $(tr).find("td:eq(0)");
     return {
-        machinetag: firstCell.find("span").data("machinetag"),
-        usertag: firstCell.text()
+        machinetag: $(tr).find("span").data("machinetag"),
+        usertag: $(tr).find("td:eq(0)").text()
     };
 }
 function rowClickHandler() {

@@ -45,6 +45,10 @@ from django.core.files import locks, File
 from django.core.files.storage import FileSystemStorage
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
+from django.core.validators import (
+    MaxValueValidator,
+    MinValueValidator
+)
 from django.db import models, connection, IntegrityError
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.signals import post_delete
@@ -1849,8 +1853,6 @@ def send_bundle_notifications(sender, bundle, **kwargs):
             title = "LAVA result notification: %s" % filter_names
             send_notification(title, template, data, user.email)
 
-        send_image_report_notifications(sender, bundle)
-
     except:
         logging.exception("send_bundle_notifications failed")
         raise
@@ -1867,7 +1869,25 @@ def get_domain():
 
     return domain
 
-bundle_was_deserialized.connect(send_bundle_notifications)
+
+def bundle_deserialization_callback(sender, bundle, **kwargs):
+    send_bundle_notifications(sender, bundle, **kwargs)
+    send_image_report_notifications(sender, bundle)
+    update_image_charts(bundle)
+
+
+def update_image_charts(bundle):
+
+    filter_matches = TestRunFilter.matches_against_bundle(bundle)
+
+    for filter in filter_matches:
+        chart_filters = ImageChartFilter.objects.filter(
+            image_chart_filter=filter)
+        for chart_filter in chart_filters:
+            chart_filter.save()
+
+
+bundle_was_deserialized.connect(bundle_deserialization_callback)
 
 
 class PMQABundleStream(models.Model):
@@ -1920,6 +1940,10 @@ CHART_TYPES = ((r'pass/fail', 'Pass/Fail'),
 # Chart representation
 REPRESENTATION_TYPES = ((r'lines', 'Lines'),
                         (r'bars', 'Bars'))
+# Chart visibility
+CHART_VISIBILITY = ((r'chart', 'Chart only'),
+                    (r'table', 'Result table only'),
+                    (r'both', 'Both'))
 
 
 class ImageReportChart(models.Model):
@@ -1952,6 +1976,14 @@ class ImageReportChart(models.Model):
         null=True,
         verbose_name='Target goal')
 
+    chart_height = models.PositiveIntegerField(
+        default=200,
+        validators=[
+            MinValueValidator(200),
+            MaxValueValidator(400)
+        ],
+        verbose_name='Chart height')
+
     is_interactive = models.BooleanField(
         default=False,
         verbose_name='Interactive')
@@ -1959,6 +1991,22 @@ class ImageReportChart(models.Model):
     is_data_table_visible = models.BooleanField(
         default=False,
         verbose_name='Data table visible')
+
+    is_delta = models.BooleanField(
+        default=False,
+        verbose_name='Delta reporting')
+
+    is_percentage = models.BooleanField(
+        default=False,
+        verbose_name='Percentage')
+
+    chart_visibility = models.CharField(
+        max_length=20,
+        choices=CHART_VISIBILITY,
+        verbose_name='Chart visibility',
+        blank=False,
+        default="chart",
+    )
 
     def __unicode__(self):
         return self.name
@@ -2002,12 +2050,14 @@ class ImageReportChart(models.Model):
 
     def get_basic_chart_data(self):
         chart_data = {}
-        fields = ["name", "chart_type", "description", "target_goal"]
+        fields = ["name", "chart_type", "description", "target_goal",
+                  "chart_height", "is_percentage", "chart_visibility"]
 
         for field in fields:
             chart_data[field] = getattr(self, field)
 
         chart_data["report_name"] = self.image_report.name
+        chart_data["is_delta"] = self.is_delta
 
         chart_data["has_build_numbers"] = False
         for image_chart_filter in self.imagechartfilter_set.all():
@@ -2025,7 +2075,6 @@ class ImageReportChart(models.Model):
             chart_data["start_date"] = chart_user.start_date
             chart_data["is_legend_visible"] = chart_user.is_legend_visible
             chart_data["has_subscription"] = chart_user.has_subscription
-            chart_data["toggle_percentage"] = chart_user.toggle_percentage
 
         except ImageChartUser.DoesNotExist:
             # Leave an empty dict.
@@ -2150,6 +2199,13 @@ class ImageReportChart(models.Model):
 
                 test_filter_id = "%s-%s" % (test_id, image_chart_filter.id)
 
+                # Calculate percentages.
+                percentage = 0
+                if self.is_percentage:
+                    if denorm.count_all() != 0:
+                        percentage = round(100 * float(denorm.count_pass) /
+                                           denorm.count_all(), 2)
+
                 # Find already existing chart item (this happens if we're
                 # dealing with parametrized tests) and add the values instead
                 # of creating new chart item.
@@ -2160,7 +2216,8 @@ class ImageReportChart(models.Model):
                         chart_item["passes"] += denorm.count_pass
                         chart_item["skip"] += denorm.count_skip
                         chart_item["total"] += denorm.count_all()
-                        chart_item["link"] = test_run.bundle.get_absolute_url()
+                        chart_item["link"] = image_chart_filter.filter.\
+                                             get_absolute_url()
                         chart_item["pass"] &= denorm.count_fail == 0
                         found = True
 
@@ -2177,6 +2234,7 @@ class ImageReportChart(models.Model):
                         "date": str(test_run.bundle.uploaded_on),
                         "pass": denorm.count_fail == 0,
                         "passes": denorm.count_pass,
+                        "percentage": percentage,
                         "skip": denorm.count_skip,
                         "total": denorm.count_all(),
                         "test_run_uuid": test_run.analyzer_assigned_uuid,
@@ -2393,9 +2451,14 @@ class ImageChartFilter(models.Model):
         default="lines",
     )
 
+    is_all_tests_included = models.BooleanField(
+        default=False,
+        verbose_name='Include all tests from this filter'
+    )
+
     @property
     def chart_tests(self):
-        if self.imagecharttestcase_set.count() > 0:
+        if self.image_chart.chart_type == "measurement":
             return self.imagecharttestcase_set.all()
         else:
             return self.imagecharttest_set.all()
@@ -2417,6 +2480,25 @@ class ImageChartFilter(models.Model):
             (), dict(name=self.image_chart.image_report.name,
                      id=self.image_chart.id, slug=self.id))
 
+    def save(self, *args, **kwargs):
+        """
+        Save this instance.
+
+        Add all tests to the image report filter if is_all_tests_included
+        flag is set.
+        """
+        result = super(ImageChartFilter, self).save(*args, **kwargs)
+        if self.image_chart.chart_type == "pass/fail":
+            tests = [chart_test.test.test_id for chart_test in self.chart_tests]
+            all_filter_tests = Test.objects.filter(
+                test_runs__bundle__bundle_stream__testrunfilter__id=self.filter.id).distinct('test_id')
+            for test in all_filter_tests:
+                if test.test_id not in tests:
+                    chart_test = ImageChartTest(image_chart_filter=self,
+                                                test=test)
+                    chart_test.save()
+
+        return result
 
 class ImageChartTest(models.Model):
 
@@ -2588,10 +2670,6 @@ class ImageChartUser(models.Model):
     has_subscription = models.BooleanField(
         default=False,
         verbose_name='Subscribed to target goal')
-
-    toggle_percentage = models.BooleanField(
-        default=False,
-        verbose_name='Toggle percentage')
 
 
 class ImageChartTestUser(models.Model):

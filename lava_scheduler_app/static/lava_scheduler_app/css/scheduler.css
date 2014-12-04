@@ -51,6 +51,9 @@ pre.action {
     height: 400px;
     margin: 0px;
     resize: both;
+    font-size: 9pt;
+    font-family: monospace;
+    line-height: normal !important;
 }
 
 #submit-container {

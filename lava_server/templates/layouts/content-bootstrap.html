@@ -71,7 +71,7 @@
               <li><a href="{% url 'admin:index' %}"><span class="glyphicon glyphicon-fire"></span> Administration</a></li>
               {% endif %}
               <li class="divider"></li>
-              <li><a href="{% url 'django.contrib.auth.views.logout' %}?next={{ MOUNT_POINT }}/"><span class="glyphicon glyphicon-off"></span> Sign out</a></li>
+              <li><a href="{% url 'django.contrib.auth.views.logout' %}?next={% url 'lava.home' %}"><span class="glyphicon glyphicon-off"></span> Sign out</a></li>
             </ul>
           </li>
           {% else %}

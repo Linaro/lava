@@ -64,7 +64,6 @@ add_bug_link = function () {
 
         bug_number = element.html().replace("[", "").replace("]", "");
 
-
         if (relative_index) {
             bug_links_element = $("span[data-uuid='" + uuid + "'][data-relative_index='" + relative_index + "'] > .bug-links");
         } else {

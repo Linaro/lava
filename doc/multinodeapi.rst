@@ -15,7 +15,15 @@ own network configuration, access and download methods and do the transfer in th
 lava-self
 ---------
 
-Prints the name of the current device.
+Prints the hostname of the current device.
+
+.. note:: The LAVA hostname of a device is the name of the device within
+           LAVA - as visible via the web frontend. The same name is used
+           whether the device itself has a network connection or not.
+           There is no requirement that the LAVA hostname matches anything
+           related to any network connection or network service. This
+           means that the LAVA hostname is always available via
+           ``lava-group`` and ``lava-self``.
 
 Usage: ``lava-self``
 
@@ -268,7 +276,7 @@ broadcast)::
 
 ``lava-network hosts`` can be used to output the list of all boards in the group
 which have returned a fully qualified domain name in a format suitable for
-``/etc/hosts``, appending to the specified file.
+``/etc/hosts``, appending to the specified file::
 
  10.1.1.2	staging-kvm01
  10.1.1.6	staging-kvm02.localdomain
@@ -290,6 +298,11 @@ Usage:
 group as an alias in the output. See :ref:`role_aliases` for more
 information on the limitations of using roles as aliases.
 
+The ``hostname`` used in a query of ``lava-network`` is the LAVA hostname
+which may differ from the network hostname of the device (which is why
+``lava-network`` supports querying the LAVA hostname to return the
+network hostname). See the note under :ref:`lava_self`.
+
 Example 1: simple client-server multi-node test
 -----------------------------------------------
 
@@ -308,18 +321,64 @@ with only one being run on each device, according to the role specified.
 
     #!/bin/sh
 
-    iperf -s &
-    lava-send server-ready username=testuser
-    lava-wait client-done
+    lava-send server-ready free-space=`df -h | grep "/$" | awk '{print $4}'`
 
 Notes:
 
+* To make use of the server-ready message, some kind of client
+  needs to do a ``lava-wait server-ready``
+
+
+``run-client.sh``::
+
+    #!/bin/sh
+
+    lava-wait server-ready
+    free-space=$(cat /tmp/lava_multi_node_cache.txt | cut -d = -f 2)
+    echo "The free disk space on server is ${free-space}"
+
+Notes:
+
+* The client waits for the server-ready message then get the data
+  which was sent by server from /tmp/lava_multi_node_cache.txt
+
+Example 2: iperf client-server test
+-----------------------------------
+
+Two devices, with roles ``client``, ``server``
+
+LAVA Test Shell test definition (say, ``example1.yaml``)::
+
+    run:
+        steps:
+            - ./run-`lava-role`.sh
+
+The test image or the test definition would then provide two scripts,
+with only one being run on each device, according to the role specified.
+
+``run-server.sh``::
+
+    #!/bin/sh
+
+    iperf -s &
+    echo $! > /tmp/iperf-server.pid
+    lava-send server-ready server-ip=`ip route get 8.8.8.8 | head -n 1 | awk '{print $NF}'`
+    lava-wait client-done
+    kill -9 `cat /tmp/iperf-server.pid`
+
+Notes:
+
+* iperf server process needs to be run in the background to wait
+  for the connection from the client and the process id will be stored
+  somewhere for later use.
 * To make use of the server-ready message, some kind of client
   needs to do a ``lava-wait server-ready``
 * There needs to be a support on a client to do the
   ``lava-send client-done`` or the wait will fail on the server.
 * If there was more than one client, the server could call
   ``lava-wait-all client-done`` instead.
+* iperf server process must be killed after getting client-done message,
+  otherwise the test job will not proceed.
 
 
 ``run-client.sh``::
@@ -338,7 +397,7 @@ Notes:
   then does some work, then sends a message so that the server can
   move on and do other tests.
 
-Example 2: variable number of clients
+Example 3: variable number of clients
 -------------------------------------
 
 ``run-server.sh``::
@@ -360,7 +419,7 @@ Example 2: variable number of clients
     run-client
     lava-sync done
 
-Example 3: peer-to-peer application
+Example 4: peer-to-peer application
 -----------------------------------
 
 Single role: ``peer``, any number of devices
@@ -381,7 +440,7 @@ Single role: ``peer``, any number of devices
     fi
 
 
-Example 4: using lava-network
+Example 5: using lava-network
 -----------------------------
 
 If the available roles include ``server`` and there is a board named

@@ -315,7 +315,9 @@ class DatabaseJobSource(object):
     def getOutputDirForJobOnBoard_impl(self, board_name):
         device = Device.objects.get(hostname=board_name)
         job = device.current_job
-        return job.output_dir
+        if job:
+            return job.output_dir
+        return None
 
     def getOutputDirForJobOnBoard(self, board_name):
         return self.deferForDB(self.getOutputDirForJobOnBoard_impl, board_name)
@@ -442,7 +444,7 @@ class DatabaseJobSource(object):
         return self.deferForDB(self.jobCheckForCancellation_impl, board_name)
 
     def _handle_cancelling_jobs(self):
-        cancel_list = TestJob.objects.all().filter(status=TestJob.CANCELING)
+        cancel_list = TestJob.objects.filter(status=TestJob.CANCELING)
         # Pick up TestJob objects in Canceling and ensure that the cancel completes.
         # call _kill_canceling to terminate any lava-dispatch calls
         # Explicitly set a DeviceStatusTransition as jobs which are stuck in Canceling

@@ -835,16 +835,17 @@ def _get_device_type(user, name):
     the user is an owner of at least one of those devices.
     :param user: the user submitting the TestJob
     """
+    logger = logging.getLogger(__name__)
     try:
         device_type = DeviceType.objects.get(name=name)
     except (ObjectDoesNotExist, MultipleObjectsReturned) as e:
-        raise DevicesUnavailableException(
-            "Device type '%s' is unavailable. %s" %
-            (name, e))
+        msg = "Device type '%s' is unavailable. %s" % (name, e)
+        logger.error(msg)
+        raise DevicesUnavailableException(msg)
     if len(device_type.devices_visible_to(user)) == 0:
-        raise DevicesUnavailableException(
-            "Device type '%s' is unavailable to user '%s'" %
-            (name, user.username))
+        msg = "Device type '%s' is unavailable to user '%s'" % (name, user.username)
+        logger.error(msg)
+        raise DevicesUnavailableException(msg)
     return device_type
 
 
@@ -1164,6 +1165,7 @@ class TestJob(RestrictedResource):
         """
         job_data = simplejson.loads(json_data)
         validate_job_data(job_data)
+        logger = logging.getLogger(__name__)
 
         # Validate job, for parameters, specific to multinode that has been
         # input by the user. These parameters are reserved by LAVA and
@@ -1186,6 +1188,7 @@ class TestJob(RestrictedResource):
                     ~models.Q(status=Device.RETIRED))\
                     .get(hostname=job_data['target'])
             except Device.DoesNotExist:
+                logger.debug("Requested device %s is unavailable." % job_data['target'])
                 raise DevicesUnavailableException(
                     "Requested device %s is unavailable." % job_data['target'])
             _check_submit_to_device([target], user)
@@ -1340,6 +1343,8 @@ class TestJob(RestrictedResource):
         # MultiNode processing - tally allowed devices with the
         # device_types requested per role.
         allowed_devices = {}
+        orig_job_data = job_data
+        job_data = utils.process_repeat_parameter(job_data)
         if 'device_group' in job_data:
             device_count = {}
             target = None  # prevent multinode jobs reserving devices which are currently running.
@@ -1481,8 +1486,10 @@ class TestJob(RestrictedResource):
         else:
             job_data = simplejson.dumps(job_data, sort_keys=True,
                                         indent=4 * ' ')
+            orig_job_data = simplejson.dumps(orig_job_data, sort_keys=True,
+                                             indent=4 * ' ')
             job = TestJob(
-                definition=job_data, original_definition=job_data,
+                definition=job_data, original_definition=orig_job_data,
                 submitter=submitter, requested_device=target,
                 requested_device_type=device_type, description=job_name,
                 health_check=health_check, user=user, group=group,

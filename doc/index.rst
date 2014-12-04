@@ -48,7 +48,6 @@ LAVA Administrator Guide
    configuration.rst
    running.rst
    hiddentypes.rst
-   sdmux.rst
    proxy.rst
    lava-image-creation.rst
    known-devices.rst
@@ -70,6 +69,7 @@ Other Topics
    arm_energy_probe.rst
    device-capabilities.rst
    packaging.rst
+   installing_on_debian.rst
    lava-scheduler.rst
    lava-scheduler-device-help.rst
    lava-scheduler-device-type-help.rst
@@ -86,3 +86,5 @@ Developer guides
    debian.rst
    migration.rst
    schema.rst
+   dispatcher-design.rst
+   dispatcher-format.rst

@@ -74,6 +74,10 @@ class DashboardAPI(ExposedAPI):
     All public methods are automatically exposed as XML-RPC methods
     """
 
+    def __init__(self, context=None):
+        super(DashboardAPI, self).__init__(context)
+        self.logger = logging.getLogger(__name__ + 'DashboardAPI')
+
     @xml_rpc_signature('str')
     def version(self):
         """
@@ -108,29 +112,29 @@ class DashboardAPI(ExposedAPI):
 
     def _put(self, content, content_filename, pathname):
         try:
-            logging.debug("Getting bundle stream")
+            self.logger.debug("Getting bundle stream")
             if self.user and self.user.is_superuser:
                 bundle_stream = BundleStream.objects.get(pathname=pathname)
             else:
                 bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
         except BundleStream.DoesNotExist:
-            logging.debug("Bundle stream does not exist, aborting")
+            self.logger.debug("Bundle stream does not exist, aborting")
             raise xmlrpclib.Fault(errors.NOT_FOUND,
                                   "Bundle stream not found")
         if not bundle_stream.can_upload(self.user):
             raise xmlrpclib.Fault(
                 errors.FORBIDDEN, "You cannot upload to this stream")
         try:
-            logging.debug("Creating bundle object")
+            self.logger.debug("Creating bundle object")
             bundle = Bundle.objects.create_with_content(bundle_stream, self.user, content_filename, content)
         except (IntegrityError, ValueError) as exc:
-            logging.debug("Raising xmlrpclib.Fault(errors.CONFLICT)")
+            self.logger.debug("Raising xmlrpclib.Fault(errors.CONFLICT)")
             raise xmlrpclib.Fault(errors.CONFLICT, str(exc))
         except:
-            logging.exception("big oops")
+            self.logger.exception("big oops")
             raise
         else:
-            logging.debug("Deserializing bundle")
+            self.logger.debug("Deserializing bundle")
             bundle.deserialize()
             return bundle
 
@@ -188,7 +192,7 @@ class DashboardAPI(ExposedAPI):
 
         """
         bundle = self._put(content, content_filename, pathname)
-        logging.debug("Returning bundle SHA1")
+        self.logger.debug("Returning bundle SHA1")
         return bundle.content_sha1
 
     @xml_rpc_signature('str', 'str', 'str', 'str')
@@ -246,7 +250,7 @@ class DashboardAPI(ExposedAPI):
 
         """
         bundle = self._put(content, content_filename, pathname)
-        logging.debug("Returning permalink to bundle")
+        self.logger.debug("Returning permalink to bundle")
         return self._context.request.build_absolute_uri(
             reverse('dashboard_app.views.redirect_to_bundle',
                     kwargs={'content_sha1': bundle.content_sha1}))
@@ -306,13 +310,13 @@ class DashboardAPI(ExposedAPI):
 
         """
         try:
-            logging.debug("Getting bundle stream")
+            self.logger.debug("Getting bundle stream")
             if self.user.is_superuser:
                 bundle_stream = BundleStream.objects.get(pathname=pathname)
             else:
                 bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
         except BundleStream.DoesNotExist:
-            logging.debug("Bundle stream does not exist, aborting")
+            self.logger.debug("Bundle stream does not exist, aborting")
             raise xmlrpclib.Fault(errors.NOT_FOUND,
                                   "Bundle stream not found")
         if not bundle_stream.can_upload(self.user):
@@ -328,7 +332,7 @@ class DashboardAPI(ExposedAPI):
                 grp_file.write("%s\n" % content)
             return hexdigest
         except Exception as e:
-            logging.debug("Dashboard pending submission caused an exception: %s", e)
+            self.logger.debug("Dashboard pending submission caused an exception: %s", e)
 
     def put_group(self, content, content_filename, pathname, group_name):
         """
@@ -411,21 +415,21 @@ class DashboardAPI(ExposedAPI):
         try:
             json_data = json.loads(content)
         except ValueError:
-            logging.debug("Invalid JSON content within the sub_id zero bundle")
+            self.logger.debug("Invalid JSON content within the sub_id zero bundle")
             json_data = None
         try:
             bundle_set[group_name].append(json_data)
         except Exception as e:
-            logging.debug("appending JSON caused exception %s", e)
+            self.logger.debug("appending JSON caused exception %s", e)
         try:
             for bundle_list in bundle_set[group_name]:
                 for test_run in bundle_list['test_runs']:
                     group_tests.append(test_run)
         except Exception as e:
-            logging.debug("aggregating bundles caused exception %s", e)
+            self.logger.debug("aggregating bundles caused exception %s", e)
         group_content = json.dumps({"test_runs": group_tests, "format": json_data['format']})
         bundle = self._put(group_content, content_filename, pathname)
-        logging.debug("Returning permalink to aggregated bundle for %s", group_name)
+        self.logger.debug("Returning permalink to aggregated bundle for %s", group_name)
         permalink = self._context.request.build_absolute_uri(
             reverse('dashboard_app.views.redirect_to_bundle',
                     kwargs={'content_sha1': bundle.content_sha1}))

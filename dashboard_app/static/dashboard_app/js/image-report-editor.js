@@ -60,6 +60,12 @@ filters_callback = function(chart_id, filter_id, name) {
             alert('Filter could not be loaded, please try again.');
         }
     });
+
+    if ($("#id_is_all_tests_included").prop("checked") == true) {
+        $("#filter-container").hide();
+    } else {
+        $("#filter-container").show();
+    }
 }
 
 add_filter_container = function(data, filter_id, title) {
@@ -180,6 +186,9 @@ filter_available_tests = function(text) {
         $('#available_tests option').filter(function() {
             return $(this).text().toLowerCase().indexOf(text) != 0;
         }).css("display", "none");
+        $('#available_tests option').filter(function() {
+            return $(this).text().toLowerCase().indexOf(text) == 0;
+        }).css("display", "block");
     } else {
         $('#available_tests option').css("display", "block");
     }

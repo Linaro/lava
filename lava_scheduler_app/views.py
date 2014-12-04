@@ -60,6 +60,7 @@ from lava_scheduler_app.models import (
     DevicesUnavailableException,
     Worker,
 )
+from lava_scheduler_app import utils
 from dashboard_app.models import BundleStream
 
 from lava.utils.lavatable import LavaTable, LavaView
@@ -1265,6 +1266,9 @@ def _prepare_template(request):
     if request.POST.get("submit_stream"):
         command_submit = copy.deepcopy(COMMAND_SUBMIT_RESULTS)
         command_submit_config = {
+            "SUBMIT_SERVER": "http://{0}{1}RPC2".format(
+                utils.get_fqdn(),
+                reverse('lava.home')),
             "BUNDLE_STREAM": str(request.POST.get("submit_stream"))
         }
         expand_template(command_submit, command_submit_config)
@@ -1360,6 +1364,10 @@ def job_detail(request, pk):
             'job_file_present': False,
         })
 
+    if "repeat_count" in job.definition:
+        data.update({
+            'expand': True,
+        })
     return render_to_response(
         "lava_scheduler_app/job.html", data, RequestContext(request))
 
@@ -1383,6 +1391,30 @@ def job_definition(request, pk):
 def job_definition_plain(request, pk):
     job = get_restricted_job(request.user, pk)
     response = HttpResponse(job.display_definition, content_type='text/plain')
+    response['Content-Disposition'] = "attachment; filename=job_%d.json" % \
+        job.id
+    return response
+
+
+@BreadCrumb("Expanded Definition", parent=job_detail, needs=['pk'])
+def expanded_job_definition(request, pk):
+    job = get_restricted_job(request.user, pk)
+    log_file = job.output_file()
+    return render_to_response(
+        "lava_scheduler_app/expanded_job_definition.html",
+        {
+            'job': job,
+            'job_file_present': bool(log_file),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(expanded_job_definition, pk=pk),
+            'show_cancel': job.can_cancel(request.user),
+            'show_resubmit': job.can_resubmit(request.user),
+        },
+        RequestContext(request))
+
+
+def expanded_job_definition_plain(request, pk):
+    job = get_restricted_job(request.user, pk)
+    response = HttpResponse(job.definition, content_type='text/plain')
     response['Content-Disposition'] = "attachment; filename=job_%d.json" % \
         job.id
     return response
@@ -1600,12 +1632,12 @@ def job_cancel(request, pk):
     job = get_restricted_job(request.user, pk)
     if job.can_cancel(request.user):
         if job.is_multinode:
-            multinode_jobs = TestJob.objects.all().filter(
+            multinode_jobs = TestJob.objects.filter(
                 target_group=job.target_group)
             for multinode_job in multinode_jobs:
                 multinode_job.cancel(request.user)
         elif job.is_vmgroup:
-            vmgroup_jobs = TestJob.objects.all().filter(
+            vmgroup_jobs = TestJob.objects.filter(
                 vm_group=job.vm_group)
             for vmgroup_job in vmgroup_jobs:
                 vmgroup_job.cancel(request.user)

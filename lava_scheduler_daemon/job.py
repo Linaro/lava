@@ -123,8 +123,10 @@ class Job(object):
 
     def run(self):
         d = self.source.getOutputDirForJobOnBoard(self.board_name)
-        return d.addCallback(self._run).addErrback(
-            catchall_errback(self.logger))
+        if d:
+            return d.addCallback(self._run).addErrback(
+                catchall_errback(self.logger))
+        return None
 
     def _run(self, output_dir):
         d = defer.Deferred()
@@ -279,7 +281,10 @@ class JobRunner(object):
             job_data, self.dispatcher, self.source, self.board_name,
             self.reactor, self.daemon_options)
         d = self.running_job.run()
-        d.addCallbacks(self._cbJobFinished, self._ebJobFinished)
+        if d:
+            d.addCallbacks(self._cbJobFinished, self._ebJobFinished)
+        else:
+            self.logger.info("Job failed to start")
 
     def _ebStartJob(self, result):
         self.logger.error(

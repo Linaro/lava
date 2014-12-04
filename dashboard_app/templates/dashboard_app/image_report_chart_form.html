@@ -41,9 +41,25 @@
     {{ form.chart_type.label_tag }}
     {{ form.chart_type }}
   </div>
+  <div class="form-field" id="is_percentage_container">
+    {{ form.is_percentage.label_tag }}
+    {{ form.is_percentage }}
+  </div>
+  <div class="form-field">
+    {{ form.is_delta.label_tag }}
+    {{ form.is_delta }}
+  </div>
   <div class="form-field">
     {{ form.target_goal.label_tag }}
     {{ form.target_goal }}
+  </div>
+  <div class="form-field">
+    {{ form.chart_height.label_tag }}
+    {{ form.chart_height }}
+  </div>
+  <div class="form-field">
+    {{ form.chart_visibility.label_tag }}
+    {{ form.chart_visibility }}
   </div>
 
   <div class="submit-button">
@@ -53,4 +69,19 @@
 
 {% endblock content_form %}
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function toggle_percentage() {
+    if ($("#id_chart_type").val() == "pass/fail") {
+      $("#is_percentage_container").show();
+    } else {
+      $("#is_percentage_container").hide();
+      $("#id_is_percentage").prop("checked", false);
+    }
+  }
+  $("#id_chart_type").change(toggle_percentage);
+  toggle_percentage();
+</script>
 {% endblock %}
