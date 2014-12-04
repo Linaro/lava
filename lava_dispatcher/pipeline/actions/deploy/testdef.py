@@ -23,6 +23,7 @@ import io
 import ast
 import yaml
 import base64
+import hashlib
 import tarfile
 from uuid import uuid4
 from lava_dispatcher.pipeline.action import (
@@ -76,10 +77,11 @@ class RepoAction(Action):
             raise InfrastructureError("Invalid device configuration")
         if 'test_name' not in self.parameters:
             raise JobError("Unable to determine test_name")
-        if self.vcs is None:
-            raise RuntimeError("RepoAction validate called super without setting the vcs")
-        if not os.path.exists(self.vcs.binary):
-            raise JobError("%s is not installed on the dispatcher." % self.vcs.binary)
+        if not isinstance(self, InlineRepoAction):
+            if self.vcs is None:
+                raise RuntimeError("RepoAction validate called super without setting the vcs")
+            if not os.path.exists(self.vcs.binary):
+                raise JobError("%s is not installed on the dispatcher." % self.vcs.binary)
         super(RepoAction, self).validate()
 
     def run(self, connection, args=None):
@@ -124,7 +126,7 @@ class RepoAction(Action):
 
         return connection
 
-    def store_testdef(self, testdef, commit_id=None):
+    def store_testdef(self, testdef, vcs_name, commit_id=None):
         """
         Allows subclasses to pass in the parsed testdef after the repository has been obtained
         and the specified YAML file can be read.
@@ -138,7 +140,7 @@ class RepoAction(Action):
                 'os': testdef['metadata'].get('os', ''),
                 'devices': testdef['metadata'].get('devices', ''),
                 'environment': testdef['metadata'].get('environment', ''),
-                'branch_vcs': 'git',
+                'branch_vcs': vcs_name,
                 'project_name': testdef['metadata']['name'],
             }
         })
@@ -215,7 +217,7 @@ class GitRepoAction(RepoAction):
             testdef = yaml.safe_load(test_file)
 
         # set testdef metadata in base class
-        self.store_testdef(testdef, commit_id)
+        self.store_testdef(testdef, 'git', commit_id)
 
         return connection
 
@@ -234,7 +236,6 @@ class BzrRepoAction(RepoAction):
         self.name = "bzr-repo-action"
         self.description = "apply bazaar repository of tests to the test image"
         self.summary = "branch a bzr test repo"
-        self.vcs_binary = "/usr/bin/bzr"
         self.testdef = None
 
     def validate(self):
@@ -274,9 +275,64 @@ class BzrRepoAction(RepoAction):
             self.testdef = yaml.safe_load(test_file)
 
         # set testdef metadata in base class
-        self.store_testdef(self.testdef, commit_id)
+        self.store_testdef(self.testdef, 'bzr', commit_id)
 
         return connection
+
+
+class InlineRepoAction(RepoAction):
+
+    priority = 1
+
+    def __init__(self):
+        super(InlineRepoAction, self).__init__()
+        self.name = "inline-repo-action"
+        self.description = "apply inline test defintion to the test image"
+        self.summary = "exctract inline test definition"
+
+    def validate(self):
+        if 'repository' not in self.parameters:
+            raise JobError("Inline definition not specified in job definition")
+        if not isinstance(self.parameters['repository'], dict):
+            raise JobError("Invalid inline definition in job definition")
+
+        super(InlineRepoAction, self).validate()
+
+    @classmethod
+    def accepts(cls, repo_type):
+        if repo_type == 'inline':
+            return True
+        return False
+
+    def run(self, connection, args=None):
+        """
+        Extract the inlined test definition and dump it onto the target image
+        """
+
+        # use the base class to populate the runner_path and overlay_path data into the context
+        connection = super(InlineRepoAction, self).run(connection, self.parameters)
+
+        # NOTE: the runner_path dir must remain empty until after the VCS clone, so let the VCS clone create the final dir
+        runner_path = self.data['test'][self.uuid]['overlay_path'][self.parameters['test_name']]
+
+        # Grab the inline test definition
+        testdef = self.parameters['repository']
+        sha1 = hashlib.sha1()
+
+        # Dump the test definition and compute the sha1
+        yaml_file = os.path.join(runner_path, self.parameters['path'])
+        yaml_dirname = os.path.dirname(yaml_file)
+        if yaml_dirname != '':
+            os.makedirs(os.path.join(runner_path, yaml_dirname))
+        with open(yaml_file, 'w') as test_file:
+            data = yaml.safe_dump(testdef)
+            sha1.update(data)
+            test_file.write(data)
+
+        # set testdef metadata in base class
+        self.store_testdef(self.parameters['repository'], 'inline',
+                           self.parameters.get('revision',
+                                               sha1.hexdigest()))
 
 
 class TarRepoAction(RepoAction):

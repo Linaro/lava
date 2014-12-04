@@ -90,7 +90,6 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
     as possible.
     """
 
-    # FIXME: ensure that a useful progress indicator is used for all downloads., e.g. every 5%
     def __init__(self, key, path, url):
         super(DownloadHandler, self).__init__()
         self.name = "download_action"

@@ -88,7 +88,6 @@ class OverlayAction(DeployAction):
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(MultinodeOverlayAction())
-        self.internal_pipeline.add_action(LMPOverlayAction())
         self.internal_pipeline.add_action(TestDefinitionAction())
         self.internal_pipeline.add_action(CompressOverlay())
 
@@ -99,7 +98,6 @@ class OverlayAction(DeployAction):
         * copy runners into test runner directories
         """
         self.data[self.name].setdefault('location', mkdtemp())
-        self.validate()
         lava_path = os.path.abspath("%s/%s" % (self.data[self.name]['location'], self.data['lava_test_results_dir']))
         self.logger.debug("lava_path:%s scripts:%s" % (lava_path, self.scripts_to_copy))
         for runner_dir in ['bin', 'tests', 'results']:
@@ -180,63 +178,6 @@ class MultinodeOverlayAction(OverlayAction):
                         fout.write("LAVA_MULTI_NODE_CACHE='%s'\n" % self.lava_multi_node_cache_file)
                         # always write out full debug logs
                         fout.write("LAVA_MULTI_NODE_DEBUG='yes'\n")
-                    fout.write(fin.read())
-                    os.fchmod(fout.fileno(), self.xmod)
-        return connection
-
-
-class LMPOverlayAction(OverlayAction):
-
-    def __init__(self):
-        super(LMPOverlayAction, self).__init__()
-        self.name = "lava-lmp-overlay"
-        self.description = "add lava LMP during deployment for multinode test shell use"
-        self.summary = "overlay the LMP multinode scripts"
-
-        # LMP-only
-        self.lava_lmp_cache_file = '/tmp/lava_lmp_cache.txt'
-        self.lava_lmp_test_dir = os.path.realpath(
-            '%s/../../../lava_test_shell/lmp' % os.path.dirname(__file__))
-
-    def populate(self, parameters):
-        pass
-
-    def validate(self):
-        super(LMPOverlayAction, self).validate()
-        # idempotency
-        if self.job.parameters.get('overlay'):
-            return
-        if 'lmp_module' not in self.job.parameters:
-            return
-        # if there is nothing else to do, omit function.
-
-    def run(self, connection, args=None):
-        self.logger.debug("job parameters %s" % self.job.parameters)
-        if 'lmp_module' not in self.job.parameters:
-            self.logger.debug("Skipped %s - no lmp_module setting" % self.name)
-            return connection
-        if 'location' not in self.data['lava-overlay']:
-            raise RuntimeError("Missing lava overlay location")
-        if not os.path.exists(self.data['lava-overlay']['location']):
-            raise RuntimeError("Unable to find overlay location")
-        location = self.data['lava-overlay']['location']
-
-        shell = self.parameters['deployment_data']['lava_test_sh_cmd']
-
-        # Generic scripts
-        scripts_to_copy = glob.glob(os.path.join(self.lava_lmp_test_dir, 'lava-lmp*'))
-
-        for fname in scripts_to_copy:
-            with open(fname, 'r') as fin:
-                foutname = os.path.basename(fname)
-                with open('%s/bin/%s' % (location, foutname), 'w') as fout:
-                    fout.write("#!%s\n\n" % shell)
-                    # Target-specific scripts (add ENV to the generic ones)
-                    fout.write("LAVA_TEST_BIN='%s/bin'\n" %
-                               self.lava_test_dir)
-                    fout.write("LAVA_LMP_CACHE='%s'\n" % self.lava_lmp_cache_file)
-                    # always write out full debug logs
-                    fout.write("LAVA_LMP_DEBUG='yes'\n")
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), self.xmod)
         return connection
