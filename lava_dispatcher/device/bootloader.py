@@ -29,6 +29,8 @@ from lava_dispatcher.client.base import (
     NetworkCommandRunner,
 )
 from lava_dispatcher.utils import (
+    finalize_process,
+    connect_to_serial,
     extract_modules,
     extract_ramdisk,
     create_ramdisk,
@@ -52,6 +54,7 @@ class BootloaderTarget(MasterImageTarget):
         super(BootloaderTarget, self).__init__(context, config)
         self._booted = False
         self._reset_boot = False
+        self._in_test_shell = False
         self._default_boot_cmds = 'boot_cmds_ramdisk'
         self._lava_nfsrootfs = None
         self._uboot_boot = False
@@ -65,16 +68,29 @@ class BootloaderTarget(MasterImageTarget):
         return prefix + '/' + self._get_rel_path(path, self._base_tmpdir)
 
     def _set_load_addresses(self, bootz):
+        meta = {}
         if not bootz and self.config.u_load_addrs and len(self.config.u_load_addrs) == 3:
             logging.info("Attempting to set uImage Load Addresses")
             self._boot_tags['{KERNEL_ADDR}'] = self.config.u_load_addrs[0]
             self._boot_tags['{RAMDISK_ADDR}'] = self.config.u_load_addrs[1]
             self._boot_tags['{DTB_ADDR}'] = self.config.u_load_addrs[2]
+            # Set boot metadata
+            meta['kernel-image'] = 'uImage'
+            meta['kernel-addr'] = self.config.u_load_addrs[0]
+            meta['initrd-addr'] = self.config.u_load_addrs[1]
+            meta['dtb-addr'] = self.config.u_load_addrs[2]
+            self.context.test_data.add_metadata(meta)
         elif bootz and self.config.z_load_addrs and len(self.config.z_load_addrs) == 3:
             logging.info("Attempting to set zImage Load Addresses")
             self._boot_tags['{KERNEL_ADDR}'] = self.config.z_load_addrs[0]
             self._boot_tags['{RAMDISK_ADDR}'] = self.config.z_load_addrs[1]
             self._boot_tags['{DTB_ADDR}'] = self.config.z_load_addrs[2]
+            # Set boot metadata
+            meta['kernel-image'] = 'zImage'
+            meta['kernel-addr'] = self.config.z_load_addrs[0]
+            meta['initrd-addr'] = self.config.z_load_addrs[1]
+            meta['dtb-addr'] = self.config.z_load_addrs[2]
+            self.context.test_data.add_metadata(meta)
         else:
             logging.debug("Undefined u_load_addrs or z_load_addrs. Three values required!")
 
@@ -320,7 +336,10 @@ class BootloaderTarget(MasterImageTarget):
                               self.config.boot_linaro_timeout)
 
     def _boot_linaro_image(self):
-        self.proc.empty_buffer()
+        if self.proc:
+            finalize_process(self.proc)
+            self.proc = None
+        self.proc = connect_to_serial(self.context)
         if self._is_bootloader() and not self._booted:
             if self.config.hard_reset_command or self.config.hard_reset_command == "":
                 self._hard_reboot(self.proc)
@@ -347,15 +366,18 @@ class BootloaderTarget(MasterImageTarget):
     def is_booted(self):
         return self._booted
 
-    def reset_boot(self):
+    def reset_boot(self, in_test_shell=True):
         self._reset_boot = True
+        self._booted = False
+        self._in_test_shell = in_test_shell
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
         if self._is_bootloader() and self._reset_boot:
-            self._booted = False
             self._reset_boot = False
-            raise Exception("Operation timed out, resetting platform!")
+            if self._in_test_shell:
+                self._in_test_shell = False
+                raise Exception("Operation timed out, resetting platform!")
         if self._is_bootloader() and not self._booted:
             self.context.client.boot_linaro_image()
         if self._is_bootloader() and self._lava_nfsrootfs:

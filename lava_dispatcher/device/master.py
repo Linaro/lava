@@ -101,7 +101,7 @@ class MasterImageTarget(Target):
         if config.pre_connect_command:
             self.context.run_command(config.pre_connect_command)
 
-        self.proc = connect_to_serial(self.context)
+        self.proc = None
 
         self.__boot_cmds_dynamic__ = None
 
@@ -116,6 +116,7 @@ class MasterImageTarget(Target):
         if self.config.power_off_cmd:
             self.context.run_command(self.config.power_off_cmd)
         finalize_process(self.proc)
+        self.proc = None
 
     def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootloadertype):
         self.boot_master_image()
@@ -186,7 +187,7 @@ class MasterImageTarget(Target):
         with self._as_master() as master:
             self._format_testpartition(master, rootfstype)
             try:
-                self._deploy_linaro_rootfs(master, root_url)
+                self._deploy_linaro_rootfs(master, root_url, rootfstype)
                 self._deploy_linaro_bootfs(master, boot_url)
             except KeyboardInterrupt:
                 raise KeyboardInterrupt
@@ -442,6 +443,10 @@ class MasterImageTarget(Target):
             logging.info("Booting the system master image. Attempt: %d",
                          attempts + 1)
             try:
+                if self.proc:
+                    finalize_process(self.proc)
+                    self.proc = None
+                self.proc = connect_to_serial(self.context)
                 self.master_ip = None
                 if self.config.hard_reset_command:
                     self._hard_reboot(self.proc)
@@ -492,12 +497,16 @@ class MasterImageTarget(Target):
     @contextlib.contextmanager
     def _as_master(self):
         """A session that can be used to run commands in the master image."""
-        self.proc.sendline("")
-        match_id = self.proc.expect(
-            [self.MASTER_PS1_PATTERN, pexpect.TIMEOUT],
-            timeout=10, lava_no_logging=1)
-        if match_id == 1:
+        if self.proc is not None:
+            self.proc.sendline("")
+            match_id = self.proc.expect(
+                [self.MASTER_PS1_PATTERN, pexpect.TIMEOUT],
+                timeout=10, lava_no_logging=1)
+            if match_id == 1:
+                self.boot_master_image()
+        else:
             self.boot_master_image()
+
         yield MasterCommandRunner(self)
 
     def _boot_linaro_image(self):
@@ -571,7 +580,7 @@ class MasterImageTarget(Target):
         _recreate_ramdisk(session, target)
         session.run('umount /mnt/lava/boot')
 
-    def _deploy_linaro_rootfs(self, session, rootfs):
+    def _deploy_linaro_rootfs(self, session, rootfs, rootfstype):
         logging.info("Deploying linaro image")
         session.run('udevadm trigger')
         session.run('mkdir -p /mnt/root')
@@ -590,6 +599,16 @@ class MasterImageTarget(Target):
                 'chroot /mnt/root dpkg-divert --local /usr/sbin/flash-kernel')
             session.run(
                 'chroot /mnt/root ln -sf /bin/true /usr/sbin/flash-kernel')
+        # Rewrite fstab file if it exists in test image with the labeled
+        # boot/rootfs partitions.
+        if session.is_file_exist('/mnt/root/etc/fstab'):
+            logging.info("Rewriting /etc/fstab in test image")
+            session.run(
+                'echo "LABEL=%s /boot vfat defaults 0 0" > /mnt/root/etc/fstab' %
+                self.testboot_label)
+            session.run(
+                'echo "LABEL=%s / %s defaults 0 1" >> /mnt/root/etc/fstab' %
+                (self.testrootfs_label, rootfstype))
 
         session.run('umount /mnt/root')
 

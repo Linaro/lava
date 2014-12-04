@@ -1,0 +1,254 @@
+# Copyright (C) 2014 Linaro Limited
+#
+# Author: Neil Williams <neil.williams@linaro.org>
+#
+# This file is part of LAVA Dispatcher.
+#
+# LAVA Dispatcher is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# LAVA Dispatcher is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along
+# with this program; if not, see <http://www.gnu.org/licenses>.
+
+import os
+import time
+import pexpect
+import signal
+import decimal
+from lava_dispatcher.pipeline.log import YamlLogger
+from lava_dispatcher.pipeline.action import TestError
+
+
+class BaseSignalHandler(object):
+
+    def __init__(self, testdef_obj=None):
+        """
+        For compatibility, any testdef_obj passed in is accepted, but ignored.
+        """
+        self.testdef_obj = testdef_obj
+
+    def __call__(self, *args, **kwargs):
+        pass
+
+    def start(self):
+        pass
+
+    def end(self):
+        pass
+
+    def starttc(self, test_case_id):
+        pass
+
+    def endtc(self, test_case_id):
+        pass
+
+    @callable
+    def custom_signal(self, signame, params):
+        pass
+
+    def postprocess_test_run(self, test_run):
+        pass
+
+
+class SignalMatch(object):
+
+    def match(self, data, fixupdict=None):
+        logger = YamlLogger("root")
+        if not fixupdict:
+            fixupdict = {}
+
+        res = {}
+        for key in data:
+            res[key] = data[key]
+
+            if key == 'measurement':
+                try:
+                    res[key] = decimal.Decimal(res[key])
+                except decimal.InvalidOperation:
+                    ret = res['measurement']
+                    del res['measurement']
+                    raise TestError("Invalid measurement %s", ret)
+
+            elif key == 'result':
+                if res['result'] in fixupdict:
+                    res['result'] = fixupdict[res['result']]
+                if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
+                    res['result'] = 'unknown'
+                    logger.debug('Setting result to "unknown"')
+                    raise TestError('Bad test result: %s', res['result'])
+
+        if 'test_case_id' not in res:
+            raise TestError("Test case results without test_case_id (probably a sign of an "
+                            "incorrect parsing pattern being used): %s", res)
+
+        if 'result' not in res:
+            logger.debug('Setting result to "unknown"')
+            res['result'] = 'unknown'
+            raise TestError("Test case results without result (probably a sign of an "
+                            "incorrect parsing pattern being used): %s", res)
+
+        return res
+
+
+class Connection(object):
+    """
+    A raw_connection is an arbitrary instance of a standard Python (or added LAVA) class
+    designed to implement an interactive connection onto the device. The raw_connection
+    needs to be able to send commands, use a timeout, handle errors, log the output,
+    match on regular expressions for the output, report the pid of the spawned process
+    and cause the spawned process to close/terminate.
+    The current implementation uses a pexpect.spawn wrapper. For a standard Shell
+    connection, that is the ShellCommand class.
+    Each different wrapper of pexpect.spawn (and any other wrappers later designed)
+    needs to be a separate class supported by another class inheriting from Connection.
+
+    A TestJob can have multiple connections but only one device and all Connection objects
+    must reference that one device.
+
+    Connecting between devices is handled inside the YAML test definition, whether by
+    multinode or by configured services inside the test image.
+    """
+    def __init__(self, job, raw_connection):
+        self.device = job.device
+        self.job = job
+        # provide access to the context data of the running job
+        self.data = self.job.context
+        self.raw_connection = raw_connection
+        self.results = {}
+        self.match = None
+        self.logger = YamlLogger("root")
+
+    def sendline(self, line):
+        self.raw_connection.sendline(line)
+
+    def finalise(self):
+        if self.raw_connection:
+            try:
+                os.killpg(self.raw_connection.pid, signal.SIGKILL)
+                self.logger.debug("Finalizing child process group with PID %d" % self.raw_connection.pid)
+            except OSError:
+                self.raw_connection.kill(9)
+                self.logger.debug("Finalizing child process with PID %d" % self.raw_connection.pid)
+            self.raw_connection.close()
+
+
+# FIXME: move to utils
+def wait_for_prompt(connection, prompt_pattern, timeout):
+    # One of the challenges we face is that kernel log messages can appear
+    # half way through a shell prompt.  So, if things are taking a while,
+    # we send a newline along to maybe provoke a new prompt.  We wait for
+    # half the timeout period and then wait for one tenth of the timeout
+    # 6 times (so we wait for 1.1 times the timeout period overall).
+    prompt_wait_count = 0
+    if timeout == -1:
+        timeout = connection.timeout
+    partial_timeout = timeout / 2.0
+    logger = YamlLogger("root")
+    while True:
+        try:
+            connection.expect(prompt_pattern, timeout=partial_timeout)
+        except pexpect.TIMEOUT:
+            if prompt_wait_count < 6:
+                logger.debug('Sending newline in case of corruption.')
+                prompt_wait_count += 1
+                partial_timeout = timeout / 10
+                connection.sendline('')
+                continue
+            else:
+                raise
+        else:
+            break
+
+
+class CommandRunner(object):
+    """
+    A convenient way to run a shell command and wait for a shell prompt.
+
+    Higher level functions must be done elsewhere, e.g. using Diagnostics
+    """
+
+    def __init__(self, connection, prompt_str, prompt_str_includes_rc):
+        """
+
+        :param connection: A pexpect.spawn-like object.
+        :param prompt_str: The shell prompt to wait for.
+        :param prompt_str_includes_rc: Whether prompt_str includes a pattern
+            matching the return code of the command.
+        """
+        self._connection = connection
+        self._prompt_str = prompt_str
+        self._prompt_str_includes_rc = prompt_str_includes_rc
+        self.match_id = None
+        self.match = None
+        self.logger = YamlLogger("root")
+
+    def change_prompt(self, string):
+        self.logger.debug("Changing prompt to %s" % string)
+        self._prompt_str = string
+
+    def wait_for_prompt(self, timeout=-1):
+        wait_for_prompt(self._connection, self._prompt_str, timeout)
+
+    def get_connection(self):
+        return self._connection
+
+    def run(self, cmd, response=None, timeout=-1,
+            failok=False, wait_prompt=True, log_in_host=None):
+        """Run `cmd` and wait for a shell response.
+
+        :param cmd: The command to execute.
+        :param response: A pattern or sequences of patterns to pass to
+            .expect().
+        :param timeout: How long to wait for 'response' (if specified) and the
+            shell prompt, defaulting to forever.
+        :param failok: The command can fail or not, if it is set False and
+            command fail, an OperationFail exception will raise
+        :param log_in_host: If set, the input and output of the command will be
+            logged in it
+        :return: The exit value of the command, if wait_for_rc not explicitly
+            set to False during construction.
+        """
+        self._connection.empty_buffer()
+        if log_in_host is not None:
+            self._connection.logfile = open(log_in_host, "a")
+        self._connection.sendline(cmd)
+        start = time.time()
+        if response is not None:
+            self.match_id = self._connection.expect(response, timeout=timeout)
+            self.match = self._connection.match
+            if self.match == pexpect.TIMEOUT:
+                return None
+            # If a non-trivial timeout was specified, it is held to apply to
+            # the whole invocation, so now reduce the time we'll wait for the
+            # shell prompt.
+            if timeout > 0:
+                timeout -= time.time() - start
+                # But not too much; give at least a little time for the shell
+                # prompt to appear.
+                if timeout < 1:
+                    timeout = 1
+        else:
+            self.match_id = None
+            self.match = None
+
+        if wait_prompt:
+            self.wait_for_prompt(timeout)
+
+            if self._prompt_str_includes_rc:
+                return_code = int(self._connection.match.group(1))
+                if return_code != 0 and not failok:
+                    raise TestError("executing %r failed with code %s" % (cmd, return_code))
+            else:
+                return_code = None
+        else:
+            return_code = None
+
+        return return_code

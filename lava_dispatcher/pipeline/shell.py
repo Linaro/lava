@@ -21,10 +21,22 @@
 import os
 import sys
 import time
-import logging
 import pexpect
-from lava_dispatcher.pipeline.action import Connection, Action, JobError
-from lava_dispatcher.client.base import CommandRunner
+import contextlib
+from lava_dispatcher.pipeline.action import (
+    Action,
+    JobError,
+    TestError,
+    InfrastructureError,
+    Timeout,
+)
+from lava_dispatcher.pipeline.connection import Connection, CommandRunner
+from lava_dispatcher.pipeline.utils.constants import (
+    SHELL_DEFAULT_TIMEOUT,
+    SHELL_SEND_DELAY,
+)
+from lava_dispatcher.pipeline.utils.shell import which
+from lava_dispatcher.pipeline.log import YamlLogger
 
 
 class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
@@ -37,19 +49,15 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
     """
 
     def __init__(self, command, lava_timeout, cwd=None):
+        if not lava_timeout or type(lava_timeout) is not Timeout:
+            raise RuntimeError("ShellCommand needs a timeout set by the calling Action")
         pexpect.spawn.__init__(
             self, command, timeout=lava_timeout.duration, cwd=cwd, logfile=sys.stdout)
         self.name = "ShellCommand"
-        # serial can be slow, races do funny things, so increase delay
-        # FIXME: this as to be a constant, written somewhere with all constants
-        self.delaybeforesend = 0.05
+        # serial can be slow, races do funny things, so allow for a delay
+        self.delaybeforesend = SHELL_SEND_DELAY
         self.lava_timeout = lava_timeout
-        yaml_log = logging.getLogger("YAML")
-        yaml_log.debug({'spawn': {
-            lava_timeout.name: lava_timeout.duration,
-            'command': self.command
-        }})
-        # FIXME: consider a logginghandler as with standard actions or use the handler of the calling Action?
+        self.logger = YamlLogger("root")
 
     def sendline(self, s='', delay=0, send_char=True):  # pylint: disable=arguments-differ
         """
@@ -65,18 +73,14 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         self.send(os.linesep, delay)
 
     def sendcontrol(self, char):
-        # FIXME: the getLogger should be done only once
-        yaml_log = logging.getLogger("YAML")
-        yaml_log.debug("sending control character: %s", char)
+        self.logger.debug("sending control character: %s" % char)
         return super(ShellCommand, self).sendcontrol(char)
 
     def send(self, string, delay=0, send_char=True):  # pylint: disable=arguments-differ
         """
         Extends pexpect.send to support extra arguments, delay and send by character flags.
         """
-        # FIXME: the getLogger should be done only once
-        yaml_log = logging.getLogger("YAML")
-        yaml_log.debug("send (delay_ms=%s): %s ", delay, string)
+        self.logger.debug("send (delay_ms=%s): %s " % (delay, string))
         sent = 0
         delay = float(delay) / 1000
         if send_char:
@@ -88,25 +92,19 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         return sent
 
     def expect(self, *args, **kw):
-        # FIXME: the getLogger should be done only once
-        yaml_log = logging.getLogger("YAML")
-        std_log = logging.getLogger("ASCII")
-
-        # FIXME: this produces the most ugly log output of any part of the dispatcher.
-        if len(args) == 1:
-            yaml_log.debug("expect (%d): '%s'", self.lava_timeout.duration, args[0])
-        else:
-            yaml_log.debug("expect (%d): '%s'", self.lava_timeout.duration, str(args))
-
+        """
+        No point doing explicit logging here, the SignalDirector can help
+        the TestShellAction make much more useful reports of what was matched
+        """
         try:
             proc = super(ShellCommand, self).expect(*args, **kw)
         except pexpect.TIMEOUT:
-            raise JobError("command timed out.")
+            raise TestError("command timed out.")
         except pexpect.EOF:
             raise RuntimeError(" ".join(self.before.split('\r\n')))
-        yaml_log.debug("Prompt matched.")
         return proc
 
+    # FIXME: check if this is ever called
     def empty_buffer(self):
         """Make sure there is nothing in the pexpect buffer."""
         index = 0
@@ -116,33 +114,74 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
 
 class ShellSession(Connection):
 
-    def __init__(self, device, shell_command):
-        super(ShellSession, self).__init__(device, shell_command)
+    def __init__(self, job, shell_command):
+        """
+        The connection takes over result handling for the TestAction, adding individual results to the
+        logs every time a test_case is matched, so that if a test definition falls over or times out,
+        the results so-far will be retained.
+        Each result generates an item in the data context with an ID. This ID can be used later to
+        look up each individial testcase result.
+        TODO: ensure the stdout for each testcase result is captured and tagged with this ID.
+
+        A ShellSession uses a CommandRunner. Other connections would need to add their own
+        support.
+        """
+        super(ShellSession, self).__init__(job, shell_command)
         self.__runner__ = None
         self.name = "ShellSession"
+        self.data = job.context
+        self.__prompt_str__ = None
+        self.timeout = shell_command.lava_timeout
+
+    @property
+    def prompt_str(self):
+        return self.__prompt_str__
+
+    @prompt_str.setter
+    def prompt_str(self, string):
+        self.__prompt_str__ = string
+        if self.__runner__:
+            self.__runner__.change_prompt(self.__prompt_str__)
 
     @property
     def runner(self):
         if self.__runner__ is None:
-            device = self.device
+            # device = self.device
             spawned_shell = self.raw_connection  # ShellCommand(pexpect.spawn)
-            prompt_str = device.parameters['test_image_prompts']
-            prompt_str_includes_rc = True  # FIXME
+            # FIXME: the prompts should not be needed here, only kvm uses these. Remove.
+            # prompt_str = device.parameters['test_image_prompts']  # FIXME: deployment_data?
+            prompt_str_includes_rc = True  # FIXME - parameters['deployment_data']['TESTER_PS1_INCLUDES_RC']?
 #            prompt_str_includes_rc = device.config.tester_ps1_includes_rc
-            # FIXME: although CommandRunner can be used, NetworkRunner and others need to be rewritten for logging & timeout support.
             # The Connection for a CommandRunner in the pipeline needs to be a ShellCommand, not logging_spawn
-            self.__runner__ = CommandRunner(spawned_shell, prompt_str,
-                                            prompt_str_includes_rc)
+            self.__runner__ = CommandRunner(spawned_shell, self.prompt_str, prompt_str_includes_rc)
         return self.__runner__
 
     def run_command(self, command):
         self.runner.run(command)
 
+    @contextlib.contextmanager
+    def test_connection(self):
+        """
+        Yields the actual connection which can be used to interact inside this shell.
+        """
+        if self.__runner__ is None:
+            # device = self.device
+            spawned_shell = self.raw_connection  # ShellCommand(pexpect.spawn)
+            # prompt_str = device.parameters['test_image_prompts']
+            prompt_str_includes_rc = True  # FIXME - do we need this?
+#            prompt_str_includes_rc = device.config.tester_ps1_includes_rc
+            # The Connection for a CommandRunner in the pipeline needs to be a ShellCommand, not logging_spawn
+            self.__runner__ = CommandRunner(spawned_shell, self.prompt_str,
+                                            prompt_str_includes_rc)
+        yield self.__runner__.get_connection()
+
     def wait(self):
-        yaml_log = logging.getLogger("YAML")
-        yaml_log.debug("sending new line. Waiting for prompt")
+        self.logger.debug("wait: Waiting for prompt for %s seconds" % self.timeout.duration)
         self.raw_connection.sendline("")
-        self.runner.wait_for_prompt()
+        try:
+            self.runner.wait_for_prompt(self.timeout.duration)
+        except pexpect.TIMEOUT:
+            raise JobError("wait for prompt timed out")
 
 
 class ExpectShellSession(Action):
@@ -157,6 +196,58 @@ class ExpectShellSession(Action):
         self.description = "Wait for a shell"
 
     def run(self, connection, args=None):
-        self._log("Waiting for prompt")
-        connection.wait()
+        self.logger.debug("%s: Waiting for prompt" % self.name)
+        connection.wait()  # FIXME: should this be a regular RetryAction operation?
+        return connection
+
+
+class ConnectDevice(Action):
+    """
+    General purpose class to use the device commands to
+    make a connection to the device. e.g. using ser2net
+    """
+    def __init__(self):
+        super(ConnectDevice, self).__init__()
+        self.name = "connect-device"
+        self.summary = "run connection command"
+        self.description = "use the configured command to connect to the device"
+
+    def validate(self):
+        super(ConnectDevice, self).validate()
+        if 'connect' not in self.job.device.parameters['commands']:
+            self.errors = "Unable to connect to device %s - missing connect command." % self.job.device.hostname
+            return
+        command = self.job.device.parameters['commands']['connect']
+        exe = ''
+        try:
+            exe = command.split(' ')[0]
+        except AttributeError:
+            self.errors = "Unable to parse the connection command %s" % command
+        try:
+            which(exe)
+        except InfrastructureError:
+            if exe != '':
+                self.errors = "Unable to find %s - is it installed?" % exe
+        # FIXME: check the executable is safe to call?
+        # from stat import S_IXUSR
+        # import os
+        # os.stat(exe).st_mode & S_IXUSR == S_IXUSR  # should be True
+        # does require that telnet is always installed.
+
+    def run(self, connection, args=None):
+        # if connection:
+        #     raise RuntimeError("A connection already exists")
+        command = self.job.device.parameters['commands']['connect']
+        self.logger.debug("connecting to device using '%s'" % command)
+        shell = ShellCommand("%s\n" % command, self.timeout)
+        if shell.exitstatus:
+            raise JobError("%s command exited %d: %s" % (command, shell.exitstatus, shell.readlines()))
+        connection = ShellSession(self.job, shell)
+        connection.prompt_str = self.job.device.parameters['test_image_prompts']
+        # FIXME: some tests need this, some do not.
+        try:
+            connection.wait()
+        except TestError:
+            self.errors = "%s wait expired" % self.name
+        self.logger.debug("matched %s" % connection.match)
         return connection

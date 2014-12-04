@@ -86,6 +86,7 @@ class FastModelTarget(Target):
         self._ramdisk_boot = False
         self._booted = False
         self._reset_boot = False
+        self._in_test_shell = False
         self._bootloadertype = 'u_boot'
         self._boot_tags = {}
         self._scratch_dir = self.scratch_dir
@@ -344,16 +345,19 @@ class FastModelTarget(Target):
     def is_booted(self):
         return self._booted
 
-    def reset_boot(self):
+    def reset_boot(self, in_test_shell=True):
         self._reset_boot = True
+        self._booted = False
+        self._in_test_shell = in_test_shell
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
         if self._ramdisk_boot:
             if self._reset_boot:
-                self._booted = False
                 self._reset_boot = False
-                raise Exception("Operation timed out, resetting platform!")
+                if self._in_test_shell:
+                    self._in_test_shell = False
+                    raise Exception("Operation timed out, resetting platform!")
             elif not self._booted:
                 self.context.client.boot_linaro_image()
             pat = self.tester_ps1_pattern

@@ -45,6 +45,7 @@ class FastbootTarget(Target):
         self._target_type = None
         self._booted = False
         self._reset_boot = False
+        self._in_test_shell = False
         self._image_deployment = False
         self._ramdisk_deployment = False
         self._use_boot_cmds = False
@@ -72,7 +73,7 @@ class FastbootTarget(Target):
         attempts = 0
         deployed = False
         while (attempts < deploy_attempts) and (not deployed):
-            logging.info("Deploying test image. Attempt: %d" % (attempts + 1))
+            logging.info("Deploying test image. Attempt: %d", attempts + 1)
             try:
                 self._enter_fastboot()
                 self.driver.deploy_linaro_kernel(kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
@@ -99,7 +100,7 @@ class FastbootTarget(Target):
         attempts = 0
         deployed = False
         while (attempts < deploy_attempts) and (not deployed):
-            logging.info("Deploying test image. Attempt: %d" % (attempts + 1))
+            logging.info("Deploying test image. Attempt: %d", attempts + 1)
             try:
                 self._enter_fastboot()
                 self.driver.deploy_android(boot, system, userdata, rootfstype,
@@ -128,8 +129,9 @@ class FastbootTarget(Target):
     def is_booted(self):
         return self._booted
 
-    def reset_boot(self):
+    def reset_boot(self, in_test_shell=False):
         self._reset_boot = True
+        self._booted = False
 
     def power_on(self):
         try:
@@ -163,9 +165,10 @@ class FastbootTarget(Target):
     @contextlib.contextmanager
     def file_system(self, partition, directory):
         if self._reset_boot:
-            self._booted = False
             self._reset_boot = False
-            raise Exception("Operation timed out, resetting platform!")
+            if self._in_test_shell:
+                self._in_test_shell = False
+                raise Exception("Operation timed out, resetting platform!")
         if not self._booted:
             if self._target_type == 'android':
                 self.context.client.boot_linaro_android_image()

@@ -4,6 +4,10 @@ Requirements
 See the whitepaper for detailed and updated information:
 https://docs.google.com/a/linaro.org/document/d/17wjThA69fteT85q0D_cmzyGqQjaaH6OCKtN3qXGkvWw/edit#heading=h.9eocfm1tarco
 
+See also the full documentation in lava-server:
+http://localhost/static/docs/dispatcher-design.html
+http://localhost/static/docs/dispatcher-format.html
+
 Note that lava_dispatcher/pipeline/test/sample_jobs/basics.yaml is not intended
 as a workable test job but as an outline of all possible layouts.
 

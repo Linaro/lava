@@ -36,6 +36,8 @@ _boot_schema = {
         'boot_cmds': {'type': 'array', 'items': {'type': 'string'},
                       'optional': True},
         'role': {'type': 'string', 'optional': True},
+        'repeat': {'type': 'integer', 'optional': True},
+        'repeat_count': {'type': 'integer', 'optional': True},
     },
     'additionalProperties': False,
 }
@@ -58,10 +60,14 @@ class cmd_boot_linaro_android_image(BaseAction):
     parameters_schema['properties']['test_image_prompt'] = {
         'type': 'string', 'optional': True
     }
+    parameters_schema['properties']['enable_network_after_boot_android'] = {
+        'default': 'True', 'optional': True
+    }
 
     def run(self, options=[], boot_cmds=None, adb_check=False,
             wait_for_home_screen=True, wait_for_home_screen_activity=None,
-            test_image_prompt=None):
+            test_image_prompt=None, enable_network_after_boot_android=None,
+            repeat_count=0):
         client = self.client
         if boot_cmds is not None:
             client.config.boot_cmds = boot_cmds
@@ -70,8 +76,12 @@ class cmd_boot_linaro_android_image(BaseAction):
                 wait_for_home_screen_activity
         if test_image_prompt is not None:
             client.config.test_image_prompts.append(test_image_prompt)
+        if enable_network_after_boot_android is not None:
+            client.config.enable_network_after_boot_android = \
+                enable_network_after_boot_android
         client.target_device.boot_options = options
         client.config.android_wait_for_home_screen = wait_for_home_screen
+        client.target_device.reset_boot(in_test_shell=False)
         try:
             client.boot_linaro_android_image(
                 adb_check=adb_check)
@@ -96,13 +106,14 @@ class cmd_boot_linaro_image(BaseAction):
         'type': 'string', 'optional': True
     }
 
-    def run(self, options=[], boot_cmds=None, test_image_prompt=None):
+    def run(self, options=[], boot_cmds=None, test_image_prompt=None, repeat_count=0):
         client = self.client
         if boot_cmds is not None:
             client.config.boot_cmds = boot_cmds
         if test_image_prompt is not None:
             client.config.test_image_prompts.append(test_image_prompt)
         client.target_device.boot_options = options
+        client.target_device.reset_boot(in_test_shell=False)
         status = 'pass'
         try:
             client.boot_linaro_image()

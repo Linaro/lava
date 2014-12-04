@@ -114,6 +114,7 @@
 
 from datetime import datetime
 from glob import glob
+import ast
 import base64
 import logging
 import os
@@ -161,6 +162,8 @@ XMOD = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH
 
 INVALID_CHARS = " $&()\"'<>/\\|;`"
 
+repeat_cnt = 0
+
 
 def _get_lava_proxy(context):
     return {'http_proxy': context.config.lava_proxy,
@@ -171,14 +174,21 @@ def _get_testdef_git_repo(testdef_repo, tmpdir, revision, proxy_env):
     cwd = os.getcwd()
     gitdir = os.path.join(tmpdir, 'gittestrepo')
     try:
-        subprocess.check_call(['git', 'clone', testdef_repo, gitdir],
-                              env=proxy_env)
+        subprocess.check_output(['git', 'clone', testdef_repo, gitdir],
+                                env=proxy_env, stderr=subprocess.STDOUT)
         if revision:
             os.chdir(gitdir)
-            subprocess.check_call(['git', 'checkout', revision])
+            subprocess.check_output(['git', 'checkout', revision],
+                                    stderr=subprocess.STDOUT)
         return gitdir
-    except Exception as e:
-        logging.error("Unable to get test definition from git (%s)" % (testdef_repo))
+    except subprocess.CalledProcessError as e:
+        logging.error("Unable to get test definition from git (%s)", (testdef_repo))
+        for line in e.output.split('\n'):
+            if line:
+                logging.debug("  | %s", line)
+        raise RuntimeError("Unable to get test definition from git (%s)" % (testdef_repo))
+    except Exception:
+        logging.error("Unable to get test definition from git (%s)", (testdef_repo))
         raise RuntimeError("Unable to get test definition from git (%s)" % (testdef_repo))
     finally:
         os.chdir(cwd)
@@ -193,13 +203,19 @@ def _get_testdef_bzr_repo(testdef_repo, tmpdir, revision, proxy_env):
             revision = '-1'
 
         proxy_env.update({'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'})
-        subprocess.check_call(
-            ['bzr', 'branch', '-r', revision, testdef_repo, bzrdir],
-            env=proxy_env)
+        subprocess.check_output(['bzr', 'branch', '-r', revision, testdef_repo,
+                                 bzrdir], env=proxy_env)
         return bzrdir
+    except subprocess.CalledProcessError as e:
+        logging.error("Unable to get test definition from bzr (%s)", (testdef_repo))
+        for line in e.output.split('\n'):
+            if line:
+                logging.debug("  | %s", line)
+        raise RuntimeError("Unable to get test definition from bzr (%s)", (testdef_repo))
+
     except Exception as e:
-        logging.error("Unable to get test definition from bzr (%s)" % (testdef_repo))
-        raise RuntimeError("Unable to get test definition from bzr (%s)" % (testdef_repo))
+        logging.error("Unable to get test definition from bzr (%s)", (testdef_repo))
+        raise RuntimeError("Unable to get test definition from bzr (%s)", (testdef_repo))
 
 
 def _get_testdef_tar_repo(testdef_repo, tmpdir):
@@ -462,6 +478,7 @@ class URLTestDefinition(object):
         self.__pattern__ = None
         self.__fixupdict__ = None
         self.skip_install = None
+        self.all_params = {}
 
     def load_signal_handler(self):
         hook_data = self.testdef.get('handler')
@@ -510,16 +527,61 @@ class URLTestDefinition(object):
                 self._sw_sources.append(_bzr_info(repo, name, name))
 
             for repo in self.testdef['install'].get('git-repos', []):
-                logging.info("git clone %s" % repo)
-                subprocess.check_output(['git', 'clone', repo],
-                                        env=_get_lava_proxy(self.context),
-                                        stderr=subprocess.STDOUT)
-                name = os.path.splitext(os.path.basename(repo))[0]
-                self._sw_sources.append(_git_info(repo, name, name))
+                if isinstance(repo, str):
+                    logging.info("git clone %s" % repo)
+                    subprocess.check_output(['git', 'clone', repo],
+                                            env=_get_lava_proxy(self.context),
+                                            stderr=subprocess.STDOUT)
+                    name = gitdir = os.path.splitext(os.path.basename(repo))[0]
+                    self._sw_sources.append(_git_info(repo, gitdir, name))
+                if isinstance(repo, dict):
+                    cmd = ['git', 'clone']
+                    # Check if this repository should be skipped.
+                    skip_by_default = repo.get('skip_by_default', False)
+                    if skip_by_default in self.all_params:
+                        if ast.literal_eval(self.all_params[skip_by_default]):
+                            continue
+
+                    url = repo.get('url', None)
+                    branch = repo.get('branch', None)
+                    if branch in self.all_params:
+                        branch = self.all_params[branch]
+                    destination = repo.get('destination', None)
+                    if destination in self.all_params:
+                        destination = self.all_params[destination]
+
+                    # Form the command list
+                    cmd = ['git', 'clone']
+                    if branch:
+                        cmd.append('-b')
+                        cmd.append(branch)
+                    if url:
+                        cmd.append(url)
+                    if destination:
+                        cmd.append(destination)
+
+                    logging.info("git clone %s" % url)
+                    subprocess.check_output(cmd,
+                                            env=_get_lava_proxy(self.context),
+                                            stderr=subprocess.STDOUT)
+                    name = os.path.splitext(os.path.basename(url))[0]
+                    gitdir = destination if destination else name
+                    self._sw_sources.append(_git_info(url, gitdir, name))
         finally:
             os.chdir(cwd)
 
+    def _fetch_all_parameters(self):
+        # default parameters that was defined in yaml
+        if 'params' in self.testdef:
+            self.all_params.update(self.testdef['params'])
+
+        # parameters that was set in json
+        if self._sw_sources and 'test_params' in self._sw_sources[0] and self._sw_sources[0]['test_params'] != '':
+            _test_params_temp = eval(self._sw_sources[0]['test_params'])
+            self.all_params.update(_test_params_temp)
+
     def _inject_testdef_parameters(self, fout):
+        global repeat_cnt
         # inject default parameters that was defined in yaml first
         fout.write('###default parameters from yaml###\n')
         if 'params' in self.testdef:
@@ -532,6 +594,15 @@ class URLTestDefinition(object):
             _test_params_temp = eval(self._sw_sources[0]['test_params'])
             for param_name, param_value in _test_params_temp.items():
                 fout.write('%s=\'%s\'\n' % (param_name, param_value))
+        fout.write('######\n')
+        # inject other parameters
+        target_type = self.context.client.target_device.deployment_data.get(
+            'distro')
+        fout.write('###other parameters###\n')
+        fout.write('%s=\'%s\'\n' % ('LAVA_SERVER_IP',
+                                    self.context.config.lava_server_ip))
+        fout.write('%s=\'%s\'\n' % ('TARGET_TYPE', target_type))
+        fout.write('%s=\'%s\'\n' % ('REPEAT_COUNT', repeat_cnt))
         fout.write('######\n')
 
     def _create_target_install(self, hostdir, targetdir):
@@ -586,6 +657,7 @@ class URLTestDefinition(object):
             boots.
         """
         utils.ensure_directory(hostdir)
+        self._fetch_all_parameters()
         with open('%s/testdef.yaml' % hostdir, 'w') as f:
             f.write(yaml.dump(self.testdef))
 
@@ -715,6 +787,8 @@ class cmd_lava_test_shell(BaseAction):
             'skip_install': {'type': 'string', 'optional': True},
             'lava_test_dir': {'type': 'string', 'optional': True},
             'lava_test_results_dir': {'type': 'string', 'optional': True},
+            'repeat': {'type': 'integer', 'optional': True},
+            'repeat_count': {'type': 'integer', 'optional': True},
         },
         'additionalProperties': False,
     }
@@ -731,8 +805,10 @@ class cmd_lava_test_shell(BaseAction):
         }
 
     def run(self, testdef_urls=None, testdef_repos=None, timeout=-1, skip_install=None,
-            lava_test_dir=None, lava_test_results_dir=None):
+            lava_test_dir=None, lava_test_results_dir=None, repeat_count=0):
         target = self.client.target_device
+        global repeat_cnt
+        repeat_cnt = repeat_count
 
         delay = target.config.test_shell_serial_delay_ms
 
@@ -919,6 +995,9 @@ class cmd_lava_test_shell(BaseAction):
                     os.fchmod(fout.fileno(), XMOD)
 
     def _inject_lmp_api(self, mntdir, target):
+        """
+        This code is essentially unmaintained and may be dropped from the dispatcher in future.
+        """
         shell = target.deployment_data['lava_test_sh_cmd']
 
         # Generic scripts

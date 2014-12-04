@@ -1,0 +1,30 @@
+# Sample JOB definition for a KVM
+
+device_type: kvm
+
+job_name: kvm-pipeline
+timeouts:
+  job:
+    minutes: 15            # timeout for the whole job (default: ??h)
+  action:
+    minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+priority: medium
+
+actions:
+
+    - deploy:
+        to: tmpfs
+        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        os: debian
+        # if root_partition partition is not present:
+        # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
+        # - look into device configuration
+        root_partition: 1
+
+    - boot:
+        method: kvm
+        media: tmpfs
+        failure_retry: 2
+
+    - submit_results:
+        stream: /anonymous/codehelp/

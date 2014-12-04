@@ -3,16 +3,23 @@
 device_type: kvm
 
 job_name: kvm-pipeline
-job_timeout: 15m            # timeout for the whole job (default: ??h)
-action_timeout: 5m         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+timeouts:
+  job:
+    minutes: 5            # timeout for the whole job (default: ??h)
+  action:
+    minutes: 1         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+  test:
+    minutes: 3
 priority: medium
 
 actions:
 
     - deploy:
-        timeout: 20m
+        timeout:
+          minutes: 2
         to: tmpfs
         image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        compression: gz
         os: debian
         # if root_partition partition is not present:
         # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
@@ -36,10 +43,10 @@ actions:
               # calling the lava-test-suite-name API call (e.g.
               # `lava-test-suite-name FOO`).
               name: smoke-tests
-            - from: git
-              repository: git://git.linaro.org/people/neilwilliams/multinode-yaml.git
-              path: singlenode01.yaml
-              name: singlenode-basic
+            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+              from: git
+              path: lava-test-shell/single-node/singlenode03.yaml
+              name: singlenode-advanced
 
     - submit_results:
         stream: /anonymous/codehelp/

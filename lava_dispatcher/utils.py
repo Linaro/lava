@@ -226,17 +226,31 @@ def create_uimage(kernel, load_addr, tmp_dir, xip, arch='arm'):
 
 
 def append_dtb(kernel, dtb, tmp_dir):
-    uimage_path = '%s/kernel-dtb' % tmp_dir
-    cmd = 'cat %s %s > %s' % (kernel, dtb, uimage_path)
+    kernel_path = '%s/kernel-dtb' % tmp_dir
+    cmd = 'cat %s %s > %s' % (kernel, dtb, kernel_path)
 
     logging.info('Appending dtb to kernel image')
     logging.debug(cmd)
     r = subprocess.call(cmd, shell=True)
 
     if r == 0:
-        return uimage_path
+        return kernel_path
     else:
         raise CriticalError("Appending dtb to kernel image failed")
+
+
+def prepend_blob(kernel, blob, tmp_dir):
+    kernel_path = '%s/kernel-blob' % tmp_dir
+    cmd = 'cat %s %s > %s' % (blob, kernel, kernel_path)
+
+    logging.info('Appending blob to kernel image')
+    logging.debug(cmd)
+    r = subprocess.call(cmd, shell=True)
+
+    if r == 0:
+        return kernel_path
+    else:
+        raise CriticalError("Appending blob to kernel image failed")
 
 
 def ensure_directory(path):

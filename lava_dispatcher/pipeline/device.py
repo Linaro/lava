@@ -22,9 +22,15 @@ import os
 import yaml
 from yaml.composer import Composer
 from yaml.constructor import Constructor
+from lava_dispatcher.pipeline.action import Timeout
 
 
 class DeviceTypeParser(object):
+    """
+    Very simple (too simple) parser for Device configuration files
+    """
+
+    # FIXME: design a schema and check files against it.
 
     loader = None
 
@@ -52,7 +58,7 @@ class NewDeviceDefaults(object):
     Ideally, use an external file as the schema
     """
 
-    # TODO! this should be a YAML file on the filesystem
+    # TODO! this should be a YAML file on the filesystem & only certain strings for specific distros
     def __init__(self):
         test_image_prompts = [r"\(initramfs\)",  # check if the r prefix breaks matching later & remove \.
                               "linaro-test",
@@ -72,42 +78,59 @@ class NewDeviceDefaults(object):
 
 
 class NewDevice(object):
+    """
+    YAML based Device class with clearer support for the pipeline overrides
+    and deployment types.
+    """
     # FIXME: replace the current Device class with this one.
 
     def __init__(self, target):
         self.target = target
         self.__parameters__ = {}
+        self.overrides = {'timeouts': {}}
         dev_parser = DeviceTypeParser()
-        # FIXME: development paths need to be finalised
-        # system_config_path = "/etc/lava-dispatcher"
+        # development paths are within the working directory
+        # FIXME: system paths need to be finalised.
+        # possible default system_config_path = "/usr/share/lava-dispatcher"
         # FIXME: change to default-config once the old files are converted.
+        # FIXME: need a temporary or at least separate location in /etc/ and override support
         default_config_path = os.path.join(os.path.dirname(__file__))
         if not os.path.exists(os.path.join(default_config_path, 'devices', "%s.conf" % target)):
-            raise RuntimeError("Unable to use new devices: %s" % default_config_path)
+            raise RuntimeError("Unable to find device: %s in %s" % (target, default_config_path))
 
         defaults = NewDeviceDefaults()
         # parameters dict will update if new settings are found, so repeat for customisation files when those exist
-        self.__parameters__.update(defaults.parameters)
-        self.__parameters__.update(dev_parser.parse(open(os.path.join(default_config_path, 'devices', "%s.conf" % target))))
-        self.__parameters__.update(dev_parser.parse(open(os.path.join(default_config_path, 'device_types', "%s.conf" % self.parameters['device_type']))))
-        self.__parameters__['hostname'] = target  # FIXME: is this a valid assumption?
+        self.parameters = defaults.parameters
+        device_file = os.path.join(default_config_path, 'devices', "%s.conf" % target)
+        if not os.path.exists(device_file):
+            raise RuntimeError("Could not find %s" % device_file)
+        try:
+            self.parameters = dev_parser.parse(open(device_file))
+        except TypeError:
+            raise RuntimeError("%s could not be parsed" % device_file)
+        type_file = os.path.join(default_config_path, 'device_types', "%s.conf" % self.parameters['device_type'])
+        if not os.path.exists(type_file):
+            raise RuntimeError("Could not find %s" % type_file)
+        try:
+            self.parameters = dev_parser.parse(open(type_file))
+        except TypeError:
+            raise RuntimeError("%s could not be parsed" % type_file)
+        self.parameters = {'hostname': target}  # FIXME: is this needed?
+        if 'timeouts' in self.parameters:
+            for name, _ in list(self.parameters['timeouts'].items()):
+                self.overrides['timeouts'][name] = Timeout.parse(self.parameters['timeouts'][name])
 
     @property
     def parameters(self):
         return self.__parameters__
 
-    # FIXME: why having one function for that?
-    def __set_parameters__(self, data):
-        self.__parameters__.update(data)
-
     @parameters.setter
     def parameters(self, data):
-        self.__set_parameters__(data)
+        self.__parameters__.update(data)
 
     def check_config(self, job):
         """
         Validates the combination of the job and the device
         *before* the Deployment actions are initialised.
         """
-        # FIXME: shoudl be raise NotImplementedError
-        pass
+        raise NotImplementedError("check_config")

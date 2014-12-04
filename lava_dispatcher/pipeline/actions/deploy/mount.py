@@ -25,9 +25,11 @@ from lava_dispatcher.pipeline.action import (
     JobError,
     InfrastructureError,
     RetryAction,
+    Action,
     Pipeline
 )
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 
 
 class OffsetAction(DeployAction):
@@ -39,16 +41,17 @@ class OffsetAction(DeployAction):
     The calculated offset is dynamic data, stored in the context.
     """
 
-    def __init__(self):
+    def __init__(self, key):
         super(OffsetAction, self).__init__()
         self.name = "offset_action"
         self.description = "calculate offset of the image"
         self.summary = "offset calculation"
+        self.key = key
 
     def validate(self):
         if 'download_action' not in self.data:
-            raise RuntimeError("missing download_action in parameters")
-        if 'file' not in self.data['download_action']:
+            self.errors = "missing download_action in parameters"
+        elif 'file' not in self.data['download_action']['image']:
             self.errors = "no file specified to calculate offset"
 
     def run(self, connection, args=None):
@@ -57,7 +60,7 @@ class OffsetAction(DeployAction):
         if 'offset' in self.data['download_action']:
             # idempotency
             return connection
-        image = self.data['download_action']['file']
+        image = self.data['download_action'][self.key]['file']
         if not os.path.exists(image):
             raise RuntimeError("Not able to mount %s: file does not exist" % image)
         part_data = self._run_command([
@@ -79,7 +82,6 @@ class OffsetAction(DeployAction):
             if found:
                 self.data['download_action']['offset'] = found.group(1)
         if 'offset' not in self.data['download_action']:
-            # more reliable than checking if offset exists as offset can be zero
             raise JobError(  # FIXME: JobError needs a unit test
                 "Unable to determine offset for %s" % image
             )
@@ -95,6 +97,9 @@ class LoopCheckAction(DeployAction):
         self.summary = "check available loop back support"
 
     def validate(self):
+        if 'download_action' not in self.data:
+            raise RuntimeError("download_action not found %s" % self.name)
+            # return  # already failed elsewhere
         if len(glob.glob('/sys/block/loop*')) <= 0:
             raise InfrastructureError("Could not mount the image without loopback devices. "
                                       "Is the 'loop' kernel module activated?")
@@ -113,8 +118,8 @@ class LoopCheckAction(DeployAction):
         # when one is unmounted
         if mounted_loops >= available_loops:
             raise InfrastructureError("Insufficient loopback devices?")
-        self._log("available loops: %s" % available_loops)
-        self._log("mounted_loops: %s" % mounted_loops)
+        self.logger.debug("available loops: %s" % available_loops)
+        self.logger.debug("mounted_loops: %s" % mounted_loops)
         return connection
 
 
@@ -136,11 +141,11 @@ class LoopMountAction(RetryAction):
 
     def validate(self):
         self.data[self.name] = {}
-        if 'mount_action' not in self.data:
-            self.data['mount_action'] = {}
+        self.data.setdefault('mount_action', {})
         if 'download_action' not in self.data:
-            raise RuntimeError("missing download_action in parameters")
-        if 'file' not in self.data['download_action']:
+            raise RuntimeError("download-action missing: %s" % self.name)
+            # return
+        if 'file' not in self.data['download_action']['image']:
             self.errors = "no file specified to mount"
 
     def run(self, connection, args=None):
@@ -150,12 +155,12 @@ class LoopMountAction(RetryAction):
         # FIXME: this should not happen !!
         if 'offset' not in self.data['download_action']:
             raise RuntimeError("Offset action failed")
-        self.data[self.name]['mntdir'] = self.job.mkdtemp()
+        self.data[self.name]['mntdir'] = mkdtemp(autoremove=False)
         mount_cmd = [
             'mount',
             '-o',
             'loop,offset=%s' % self.data['download_action']['offset'],
-            self.data['download_action']['file'],
+            self.data['download_action']['image']['file'],
             self.data[self.name]['mntdir']
         ]
         command_output = self._run_command(mount_cmd)
@@ -184,7 +189,7 @@ class MountAction(DeployAction):
             raise RuntimeError("No job object supplied to action")
         self.internal_pipeline.validate_actions()
 
-    def populate(self):
+    def populate(self, parameters):
         """
         Needs to take account of the deployment type / image type etc.
         to determine which actions need to be added to the internal pipeline
@@ -193,14 +198,15 @@ class MountAction(DeployAction):
         if not self.job:
             raise RuntimeError("No job object supplied to action")
         # FIXME: not all mount operations will need these actions
-        self.internal_pipeline = Pipeline(parent=self, job=self.job)
-        self.internal_pipeline.add_action(OffsetAction())
+        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline.add_action(OffsetAction('image'))
         # FIXME: LoopCheckAction and LoopMountAction should be in only one Action
         self.internal_pipeline.add_action(LoopCheckAction())
         self.internal_pipeline.add_action(LoopMountAction())
 
     def run(self, connection, args=None):
         if self.internal_pipeline:
+            # Pipeline.run_actions handles running diagnose() after internal JobError
             connection = self.internal_pipeline.run_actions(connection, args)
         else:
             # FIXME: this is a bug that should not happen (using assert?)
@@ -212,13 +218,31 @@ class UnmountAction(RetryAction):  # FIXME: contextmanager to ensure umounted on
 
     def __init__(self):
         super(UnmountAction, self).__init__()
+        self.name = "umount-retry"
+        self.description = "retry support for umount"
+        self.summary = "retry umount "
+
+    def populate(self, parameters):
+        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline.add_action(Unmount())
+
+    def cleanup(self):
+        # FIXME: define a cleanup
+        pass
+
+
+class Unmount(Action):
+
+    def __init__(self):
+        super(Unmount, self).__init__()
         self.name = "umount"
         self.description = "unmount the test image at end of deployment"
         self.summary = "unmount image"
 
     def run(self, connection, args=None):
-        self._log("umounting %s" % self.data['loop_mount']['mntdir'])
+        self.logger.debug("umounting %s" % self.data['loop_mount']['mntdir'])
         self._run_command(['umount', self.data['loop_mount']['mntdir']])
         # FIXME: is the rm -rf a separate action or a cleanup of this action?
+        # FIXME: use the utils module
         self._run_command(['rm', '-rf', self.data['loop_mount']['mntdir']])
         return connection

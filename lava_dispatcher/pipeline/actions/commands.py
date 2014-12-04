@@ -1,4 +1,4 @@
-from lava_dispatcher.pipeline import Action
+from lava_dispatcher.pipeline.action import Action
 
 
 class CommandsAction(Action):

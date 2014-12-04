@@ -18,26 +18,21 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import requests
-from contextlib import contextmanager
-from lava_dispatcher.pipeline.action import Deployment
-from lava_dispatcher.pipeline import Pipeline
+from lava_dispatcher.pipeline.action import Deployment, Pipeline
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.download import (
     DownloaderAction,
-    ChecksumAction,
+    QCowConversionAction,
 )
 from lava_dispatcher.pipeline.actions.deploy.mount import (
     MountAction,
     UnmountAction,
 )
+from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ApplyOverlayImage
 from lava_dispatcher.pipeline.actions.deploy.overlay import (
     CustomisationAction,
-    LMPOverlayAction,
-    MultinodeOverlayAction,
     OverlayAction,
 )
-from lava_dispatcher.pipeline.actions.deploy.testdef import TestDefinitionAction
 
 
 class DeployImageAction(DeployAction):
@@ -48,29 +43,28 @@ class DeployImageAction(DeployAction):
         self.description = "deploy image using loopback mounts"
         self.summary = "deploy image"
 
-    def prepare(self):
-        # FIXME: move to validate or into DownloadAction?
-        # mktemp dir
-        req = requests.head(self.parameters['image'])  # just check the headers, do not download.
-        if req.status_code != req.codes.ok:
-            # FIXME: this needs to use pipeline error handling
-            return False
-        return True
-
     def validate(self):
-        self.pipeline.validate_actions()
+        # Nothing to do at this stage. Everything is done by internal actions
+        super(DeployImageAction, self).validate()
 
-    def run(self, connection, args=None):
-        connection = super(DeployImageAction, self).run(connection, args)
-        self.pipeline.run_actions(connection, args)
+    def populate(self, parameters):
+        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        download = DownloaderAction('image')
+        download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
+        self.internal_pipeline.add_action(download)
+        if parameters.get('format', '') == 'qcow2':
+            self.internal_pipeline.add_action(QCowConversionAction('image'))
+        self.internal_pipeline.add_action(MountAction())
+        self.internal_pipeline.add_action(CustomisationAction())
+        self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
+        self.internal_pipeline.add_action(ApplyOverlayImage())  # specific to image deployments
+        self.internal_pipeline.add_action(UnmountAction())
 
-    def cleanup(self):
-        # rm temp dir
-        super(DeployImageAction, self).cleanup()
 
-
+# FIXME: may need to be renamed if it can only deal with KVM image deployment
 class DeployImage(Deployment):
     """
+    Strategy class for an Image based Deployment.
     Accepts parameters to deploy a KVM
     Uses existing Actions to download and checksum
     as well as copying test files.
@@ -85,41 +79,11 @@ class DeployImage(Deployment):
         umount action
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent, parameters):
         super(DeployImage, self).__init__(parent)
         self.action = DeployImageAction()
         self.action.job = self.job
-        parent.add_action(self.action)
-
-        internal_pipeline = Pipeline(parent=self.action, job=self.job)
-        internal_pipeline.add_action(DownloaderAction())
-        internal_pipeline.add_action(ChecksumAction())
-        internal_pipeline.add_action(MountAction())
-        internal_pipeline.add_action(CustomisationAction())
-        for action_params in self.job.parameters['actions']:
-            if 'test' in action_params:
-                # FIXME: does it matter if testdef_action runs before overlay?
-                testdef_action = TestDefinitionAction()
-                testdef_action.parameters = action_params
-                internal_pipeline.add_action(testdef_action)
-                if 'target_group' in self.job.parameters:
-                    internal_pipeline.add_action(MultinodeOverlayAction())
-                if 'lmp_module' in self.job.parameters:
-                    internal_pipeline.add_action(LMPOverlayAction())
-                internal_pipeline.add_action(OverlayAction())
-        internal_pipeline.add_action(UnmountAction())
-
-    @contextmanager
-    def deploy(self):
-        """
-        As a Deployment Strategy, this simply selects the
-        correct deploy action and allows it to be added to the
-        default Pipeline.
-        """
-        pass
-#        if not self.check_image_url():
-#            # FIXME: this needs to use pipeline error handling
-#            raise JobError
+        parent.add_action(self.action, parameters)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -129,18 +93,17 @@ class DeployImage(Deployment):
         This is *not* the same as validation of the action
         which can use instance data.
         """
-        # FIXME: read the device_types/*.conf and match against the job & support methods
+        # FIXME: the device object has the device_types/*.conf - match against the job & support methods
         if hasattr(device, 'config'):
             if device.config.device_type != 'kvm':
                 return False
         else:
             if device.parameters['device_type'] != 'kvm':
                 return False
-        # FIXME: only enable once all deployment strategies in basics.yaml are defined!
-#        if 'image' not in parameters:
-#            print parameters
-#            return False
+        # lookup if the job parameters match the available device methods
+        if 'image' not in parameters:
+            # python3 compatible
+            # FIXME: too broad
+            print("Parameters %s have not been implemented yet." % parameters.keys())  # pylint: disable=superfluous-parens
+            return False
         return True
-
-    def extract_results(self):
-        pass
