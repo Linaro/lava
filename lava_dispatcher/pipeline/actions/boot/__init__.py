@@ -42,7 +42,10 @@ class BootAction(RetryAction):
 
 
 class AutoLoginAction(Action):
-
+    """
+    Automatically login on the device.
+    If 'auto_login' is not present in the parameters, this action does nothing.
+    """
     def __init__(self):
         super(AutoLoginAction, self).__init__()
         self.name = 'auto-login-action'
@@ -51,10 +54,11 @@ class AutoLoginAction(Action):
 
     def validate(self):
         super(AutoLoginAction, self).validate()
-        if 'auto_login' not in self.parameters:
-            self.errors = "no 'auto_login' parameter"
+        # Skip auto login if the configuration is not found
+        params = self.parameters.get('auto_login', None)
+        if params is None:
+            return
 
-        params = self.parameters['auto_login']
         if not isinstance(params, dict):
             self.errors = "'auto_login' should be a dictionary"
             return
@@ -69,8 +73,11 @@ class AutoLoginAction(Action):
                 self.errors = "'password' is mandatory if 'password_prompt' is used in auto_login"
 
     def run(self, connection, args=None):
-        # Parameters for auto login
-        params = self.parameters['auto_login']
+        # Skip auto login if the configuration is not found
+        params = self.parameters.get('auto_login', None)
+        if params is None:
+            self.logger.debug("Skipping auto login")
+            return connection
 
         self.logger.debug("Waiting for the login prompt")
         wait_for_prompt(connection.raw_connection, params['login_prompt'], self.timeout.duration)

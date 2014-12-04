@@ -189,7 +189,7 @@ class TestKVMBasicDeploy(unittest.TestCase):
         apply_overlay = None
         overlay = None
         unmount = None
-        self.assertEqual(len(self.job.pipeline.describe().values()), 31)  # this will keep changing until KVM is complete.
+        self.assertEqual(len(self.job.pipeline.describe().values()), 32)  # this will keep changing until KVM is complete.
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
                 self.assertEqual(len(action.pipeline.children[action.pipeline]), 6)
@@ -375,7 +375,7 @@ class TestKVMQcow2Deploy(unittest.TestCase):
         apply_overlay = None
         overlay = None
         unmount = None
-        self.assertEqual(len(self.job.pipeline.describe().values()), 32)  # this will keep changing until KVM is complete.
+        self.assertEqual(len(self.job.pipeline.describe().values()), 33)  # this will keep changing until KVM is complete.
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
                 self.assertEqual(len(action.pipeline.children[action.pipeline]), 7)
@@ -504,7 +504,7 @@ class TestKVMDownloadLocalDeploy(unittest.TestCase):
         apply_overlay = None
         overlay = None
         unmount = None
-        self.assertEqual(len(self.job.pipeline.describe().values()), 31)  # this will keep changing until KVM is complete.
+        self.assertEqual(len(self.job.pipeline.describe().values()), 32)  # this will keep changing until KVM is complete.
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
                 self.assertEqual(len(action.pipeline.children[action.pipeline]), 6)
@@ -598,7 +598,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):
         apply_overlay = None
         overlay = None
         unmount = None
-        self.assertEqual(len(self.job.pipeline.describe().values()), 27)  # this will keep changing until KVM is complete.
+        self.assertEqual(len(self.job.pipeline.describe().values()), 28)  # this will keep changing until KVM is complete.
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
                 self.assertEqual(len(action.pipeline.children[action.pipeline]), 6)

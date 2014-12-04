@@ -121,10 +121,11 @@ class UBootRetry(BootAction):
         self.internal_pipeline.add_action(ExpectShellSession())  # wait
         # and set prompt to the uboot prompt
         self.internal_pipeline.add_action(UBootCommandsAction())
-        if 'auto_login' in parameters:
-            auto_login = AutoLoginAction()
-            auto_login.timeout = Timeout(self.name, AUTOLOGIN_DEFAULT_TIMEOUT)
-            self.internal_pipeline.add_action(auto_login)
+        # Add AutoLoginAction unconditionnally as this action does nothing if
+        # the configuration does not contain 'auto_login'
+        auto_login = AutoLoginAction()
+        auto_login.timeout = Timeout(self.name, AUTOLOGIN_DEFAULT_TIMEOUT)
+        self.internal_pipeline.add_action(auto_login)
 
     def run(self, connection, args=None):
         super(UBootRetry, self).run(connection, args)

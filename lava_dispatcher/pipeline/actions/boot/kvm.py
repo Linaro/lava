@@ -27,7 +27,10 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.shell import ExpectShellSession, ShellCommand, ShellSession
-from lava_dispatcher.pipeline.utils.constants import MAX_RETRY
+from lava_dispatcher.pipeline.utils.constants import (
+    AUTOLOGIN_DEFAULT_TIMEOUT,
+    MAX_RETRY,
+)
 from lava_dispatcher.pipeline.utils.shell import which
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 
@@ -71,8 +74,11 @@ class BootQEMUImageAction(BootAction):
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(BootQemuRetry())
-        if 'auto_login' in parameters:
-            self.internal_pipeline.add_action(AutoLoginAction())
+        # Add AutoLoginAction unconditionnally as this action does nothing if
+        # the configuration does not contain 'auto_login'
+        auto_login = AutoLoginAction()
+        auto_login.timeout = Timeout(self.name, AUTOLOGIN_DEFAULT_TIMEOUT)
+        self.internal_pipeline.add_action(auto_login)
         self.internal_pipeline.add_action(ExpectShellSession())
 
 
