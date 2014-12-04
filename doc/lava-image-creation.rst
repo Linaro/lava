@@ -61,7 +61,7 @@ be easily be integrated into the LAVA framework.
 
 .. _dynamic master images: http://images.validation.linaro.org/lava-dynamic-masters/
 
-The following example will demonstrate a `dynamic master image`_ integration on an Arndale.
+The following example will demonstrate a dynamic master image integration on an Arndale.
 Add the following to your Arndale's device configuration::
 
     master_kernel = http://images.validation.linaro.org/lava-dynamic-masters/arndale/uImage
