@@ -1,0 +1,296 @@
+# Dutch translation of lava-server debconf templates.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the lava-server package.
+# Frans Spiesschaert <Frans.Spiesschaert@yucom.be>, 2014.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: lava-server\n"
+"Report-Msgid-Bugs-To: lava-server@packages.debian.org\n"
+"POT-Creation-Date: 2014-07-31 20:44+0100\n"
+"PO-Revision-Date: 2014-10-14 00:09+0200\n"
+"Last-Translator: Frans Spiesschaert <Frans.Spiesschaert@yucom.be>\n"
+"Language-Team: Debian Dutch l10n Team <debian-l10n-dutch@lists.debian.org>\n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:1001
+msgid "Is this a standalone master instance of LAVA?"
+msgstr "Is dit een zelfstandige centrale unit van LAVA?"
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:1001
+msgid ""
+"LAVA can be set up in either of two ways: as a single standalone master "
+"instance with attached devices, or in a distributed configuration with a "
+"central master instance and remote dispatchers providing (more) devices."
+msgstr ""
+"LAVA kan op twee manieren ingesteld worden: ofwel als een enkelvoudige "
+"zelfstandige centrale unit met aangekoppelde apparatuur, ofwel in een "
+"gedecentraliseerde opstelling met een centrale hoofdunit en externe "
+"verdelers die (meer) apparaten ter beschikking stellen."
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:1001
+msgid ""
+"Configuration of remote dispatchers requires manual intervention, so the "
+"standalone configuration is recommended."
+msgstr ""
+"Het instellen van de externe verdelers vereist een handmatige interventie. "
+"Daarom wordt een zelfstandige uitvoering aangeraden."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:2001
+msgid "Port number of the PostgreSQL database:"
+msgstr "Poortnummer van het PostgreSQL-gegevensbestand:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:2001
+msgid "Please enter the port number for the PostgreSQL database."
+msgstr ""
+"Gelieve het poortnummer in te voeren voor het PostgreSQL-gegevensbestand."
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:3001
+msgid "This install looks like a remote worker"
+msgstr "Deze installatie lijkt een externe werkunit te zijn"
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:3001
+msgid ""
+"You asked for this system to be set up as master instance for a distributed "
+"configuration, but this system looks like a remote worker. You can either go "
+"back and change your answer or proceed with reconfiguring this system as "
+"specified."
+msgstr ""
+"U heeft gevraagd om dit systeem in te stellen als centrale unit van een "
+"gedecentraliseerde opstelling, maar dit systeem lijkt een externe werkunit "
+"te zijn. U kunt ofwel terugkeren en uw antwoord bijstellen, ofwel in "
+"overeenstemming met wat u opgaf verder gaan met het opnieuw instellen van "
+"dit systeem."
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:3001
+msgid ""
+"Note that you will have to ensure that the lava-coordinator configuration is "
+"correct."
+msgstr ""
+"Merk op dat u er zich moet van vergewissen dat de lava-coördinator juist "
+"ingesteld wordt."
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:4001
+msgid "This install looks like a master instance"
+msgstr "Deze installatie lijkt een centrale unit te zijn"
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:4001
+msgid ""
+"You asked for this system to be set up as a remote worker for a distributed "
+"configuration, but this system looks like a master instance. You can either "
+"go back and change your answer or proceed with reconfiguring this system as "
+"specified."
+msgstr ""
+"U heeft gevraagd om dit systeem in te stellen als een externe werkunit van "
+"een gedecentraliseerde opstelling, maar dit systeem lijkt een centrale unit "
+"te zijn. U kunt ofwel terugkeren en uw antwoord bijstellen, ofwel in "
+"overeenstemming met wat u opgaf verder gaan met het opnieuw instellen van "
+"dit systeem."
+
+#. Type: note
+#. Description
+#: ../lava-server.templates:4001
+msgid ""
+"Note that you will have to ensure that the lava-coordinator configuration is "
+"changed to point to the master instance for this remote worker. You can then "
+"remove the lava-coordinator package from the remote worker."
+msgstr ""
+"Merk op dat u er zich moet van vergewissen dat de configuratie van de lava-"
+"coördinator wordt gewijzigd, zodat deze werkunit een centrale unit "
+"toegewezen krijgt. Daarna kunt u het pakket lava-coördinator verwijderen van "
+"de externe werkunit."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:5001
+msgid "Name for this LAVA instance:"
+msgstr "Naam voor deze LAVA-unit:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:5001
+msgid ""
+"LAVA servers need to have an instance name. If this is a new instance, you "
+"can safely use the default name. If this is an upgrade of a previous LAVA "
+"instance, specify the instance name here to upgrade the database or use a "
+"different name to start fresh with a new database."
+msgstr ""
+"LAVA-servers moeten een unitnaam hebben. Indien dit een nieuwe unit is, is "
+"het veilig om de standaardnaam te gebruiken. Indien dit een opwaardering is "
+"van een bestaande LAVA-unit, geeft u hier de naam ervan in om het "
+"gegevensbestand op te waarderen of een andere naam om van vooraf aan te "
+"beginnen met een nieuw gegevensbestand."
+
+#. Type: error
+#. Description
+#: ../lava-server.templates:6001
+msgid "Missing LAVA instance name"
+msgstr "Ontbrekende naam voor de LAVA-unit"
+
+#. Type: error
+#. Description
+#: ../lava-server.templates:6001
+msgid ""
+"An instance name must be specified for LAVA-server. Using the instance name "
+"\"default\"."
+msgstr ""
+"Er moet een unitnaam gegeven worden aan LAVA-server. De unitnaam \"default\" "
+"wordt gebruikt."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:7001
+msgid "Name of the master instance for this worker:"
+msgstr "Naam van de centrale unit voor deze werkunit:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:7001
+msgid ""
+"LAVA servers need to have an instance name. Each remote worker must be given "
+"the instance name of the master LAVA server which it will poll for new jobs "
+"to run on the devices attached to the worker."
+msgstr ""
+"LAVA-servers moeten een unitnaam hebben. Elke externe werkunit moet de naam "
+"krijgen van de unit met de centrale LAVA-server bij wie hij zal peilen naar "
+"nieuwe taken die uitgevoerd moeten worden op zijn aangekoppelde apparaten."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:8001
+msgid "Master scheduler for this worker:"
+msgstr "Centrale regulator voor deze werkunit:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:8001
+msgid ""
+"Each remote worker needs to connect to a master scheduler running lava-"
+"server. This hostname or IP address will be used to connect to the master "
+"database."
+msgstr ""
+"Elke externe werkunit moet contact maken met een centrale regulator waarop "
+"lava-server uitgevoerd wordt. Deze computernaam of dit IP-adres zullen "
+"gebruikt worden om verbinding te maken met het centrale gegevensbestand."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:8001
+msgid ""
+"To work with remote nodes, the master needs to be configured to allow the "
+"database to listen to the workers. An SSH key also needs to be generated on "
+"the worker and added to the master list of authorized_keys. Ensure that the "
+"master allows remote access from workers before submitting jobs or health "
+"checks."
+msgstr ""
+"Om te kunnen werken met externe geledingen, moet de centrale unit zo "
+"ingesteld worden dat het gegevensbestand luistert naar de werkunits. Er moet "
+"ook een SSH-sleutel aangemaakt worden op de werkunit en die moet op de "
+"centrale unit toegevoegd worden aan de lijst van erkende sleutels "
+"(authorized_keys). Vergewis u ervan dat de centrale unit toegang verleent "
+"aan werkunits alvorens te beginnen met het aanbieden van taken en met "
+"controles op de functionering."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:8001
+msgid ""
+"You can continue setting up the worker, as long as remote database access is "
+"enabled before jobs are submitted."
+msgstr ""
+"U kunt voortgaan met het installeren van de werkunit, zolang de toegang tot "
+"het externe gegevensbestand operationeel wordt vooraleer taken aangeboden "
+"worden."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:9001
+msgid "Name of the database on the master:"
+msgstr "Naam van het gegevensbestand op de centrale unit:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:9001
+msgid ""
+"Please enter the name of the database on the master scheduler running lava-"
+"server. The worker will use this name to contact the database."
+msgstr ""
+"Gelieve de naam op te geven van het gegevensbestand op de centrale regulator "
+"waarop lava-server actief is. De werkunit zal deze naam gebruiken om contact "
+"te leggen met het gegevensbestand."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:10001
+msgid "Username for the database on the master:"
+msgstr "Gebruikersnaam voor het gegevensbestand op de centrale unit:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:10001
+msgid ""
+"Please enter the username for the database on the master scheduler running "
+"lava-server. The worker will use this username to contact the database."
+msgstr ""
+"Gelieve de gebruikersnaam op te geven voor het gegevensbestand op de "
+"centrale regulator waarop lava-server actief is. De werkunit zal deze "
+"gebruikersnaam nodig hebben om contact te leggen met het gegevensbestand."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:11001
+msgid "Port number of the database on the master:"
+msgstr "Poortnummer van het gegevensbestand op de centrale unit:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:11001
+msgid ""
+"Please enter the database port number for the database on the master "
+"scheduler running lava-server. The worker will use this port to contact the "
+"database."
+msgstr ""
+"Gelieve het poortnummer op te geven voor het gegevensbestand op de centrale "
+"regulator waarop lava-server actief is. De werkunit zal dit poortnummer "
+"gebruiken om contact te leggen met het gegevensbestand."
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:12001
+msgid "Password for the database on the master:"
+msgstr "Wachtwoord voor het gegevensbestand op de centrale unit:"
+
+#. Type: string
+#. Description
+#: ../lava-server.templates:12001
+msgid ""
+"Please enter the password for the database on the master scheduler running "
+"lava-server. The worker will use this password to contact the database."
+msgstr ""
+"Gelieve het wachtwoord op te geven voor het gegevensbestand op de centrale "
+"regulator waarop lava-server actief is. De werkunit zal dit wachtwoord "
+"gebruiken om contact te leggen met het gegevensbestand."
