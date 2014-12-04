@@ -1,3 +1,10 @@
+lava-server (2014.12-1) experimental; urgency=medium
+
+  * New production release
+  * Add dh-python to Build-Depends
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 04 Dec 2014 08:59:39 +0000
+
 lava-server (2014.09.1-1) unstable; urgency=medium
 
   * New hotfix release cherry-picking upstream fixes,
