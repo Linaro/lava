@@ -13,11 +13,9 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
 
-
     def backwards(self, orm):
         # Deleting field 'ImageChartFilter.is_all_tests_included'
         db.delete_column(u'dashboard_app_imagechartfilter', 'is_all_tests_included')
-
 
     models = {
         u'auth.group': {
