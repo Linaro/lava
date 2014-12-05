@@ -258,6 +258,7 @@ def bundlestreams_json(request):
         )
     return HttpResponse(json.dumps(streams), content_type='application/json')
 
+
 class BundleView(BundleStreamView):
 
     def __init__(self, request, bundle_stream, **kwargs):
@@ -838,7 +839,7 @@ def attachment_view(request, pk):
 @BreadCrumb("Subscriptions", parent=index)
 def my_subscriptions(request):
 
-    prefix="filter_"
+    prefix = "filter_"
     filter_view = SubscribedFiltersView(request, model=TestRunFilter,
                                         table_class=PublicFiltersTable)
     filters_table = PublicFiltersTable(
@@ -854,7 +855,7 @@ def my_subscriptions(request):
     terms_data = filters_table.prepare_terms_data(filter_view)
     times_data = filters_table.prepare_times_data(filter_view)
 
-    prefix="report_"
+    prefix = "report_"
     report_view = SubscribedImageReportView(request, model=ImageReportChart,
                                             table_class=UserImageReportTable)
     report_table = UserImageReportTable(report_view.get_table_data(prefix),
