@@ -80,7 +80,7 @@ class UBoot(Boot):
         for tmp in device.parameters['actions']['boot']['methods']:
             if type(tmp) != dict:
                 return False
-            if 'u-boot' in tmp.keys():  # 2to3 false positive, works with python3
+            if 'u-boot' in tmp:  # 2to3 false positive, works with python3
                 return True
         return False
 

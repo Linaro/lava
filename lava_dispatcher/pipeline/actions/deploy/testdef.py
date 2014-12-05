@@ -466,7 +466,7 @@ class TestDefinitionAction(TestAction):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # FIXME: check the effect of the parameter review
         test_list = [action['test']['definitions'] for action in self.job.parameters['actions']
-                     if 'test' in action.keys()]  # 2to3 false positive, works with python3
+                     if 'test' in action]
         if not test_list:
             self.logger.debug("No test action defined.")
             return

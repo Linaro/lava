@@ -104,11 +104,11 @@ class ApplyOverlayTftp(Action):
         overlay_type = ''
         overlay_file = None
         directory = None
-        if self.parameters.get('ramdisk', None):
+        if self.parameters.get('ramdisk', None) is not None:
             overlay_type = 'ramdisk'
             overlay_file = self.data['compress-overlay'].get('output')
             directory = self.data['extract-overlay-ramdisk']['extracted_ramdisk']
-        elif self.parameters.get('nfsrootfs', None):
+        elif self.parameters.get('nfsrootfs', None) is not None:
             overlay_type = 'nfsrootfs'
             overlay_file = self.data['compress-overlay'].get('output')
             directory = self.data['extract-nfsrootfs'].get('nfsroot')
