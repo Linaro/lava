@@ -75,7 +75,6 @@ class FastbootTarget(Target):
         while (attempts < deploy_attempts) and (not deployed):
             logging.info("Deploying test image. Attempt: %d", attempts + 1)
             try:
-                self._enter_fastboot()
                 self.driver.deploy_linaro_kernel(kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
                                                  bootloader, firmware, bl1, bl2, bl31, rootfstype,
                                                  bootloadertype, self._target_type, self.scratch_dir)
@@ -202,7 +201,8 @@ class FastbootTarget(Target):
         # Device needs to be forced into fastboot mode
         if not self.driver.in_fastboot():
             if self.config.fastboot_driver == 'capri' or \
-               self.config.fastboot_driver == 'pxa1928dkb':
+               self.config.fastboot_driver == 'pxa1928dkb' or \
+               self.config.fastboot_driver == 'optimusa80':
                 # Connect to serial
                 self.proc = self.driver.connect()
                 # Hard reset the platform

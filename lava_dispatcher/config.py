@@ -274,6 +274,7 @@ class DeviceSchema(schema.Schema):
     u_load_addrs = schema.ListOption(default=None)
     z_load_addrs = schema.ListOption(default=None)
     uimage_only = schema.BoolOption(default=False)
+    multi_image_only = schema.BoolOption(default=False)
     uimage_xip = schema.BoolOption(default=False)
     append_dtb = schema.BoolOption(default=False)
     prepend_blob = schema.StringOption(default=None)

@@ -37,6 +37,8 @@ from lava_dispatcher.utils import (
     create_ramdisk,
     append_dtb,
     prepend_blob,
+    create_multi_image,
+    create_uimage,
 )
 
 
@@ -183,7 +185,7 @@ class BaseDriver(object):
                 ramdisk_dir = extract_ramdisk(self._ramdisk, self.working_dir,
                                               is_uboot=False)
                 extract_modules(modules, ramdisk_dir)
-                self._ramdisk = create_ramdisk(ramdisk_dir, self._working_dir)
+                self._ramdisk = create_ramdisk(ramdisk_dir, self.working_dir)
         if dtb is not None:
             dtb = self._get_image(dtb)
             if self.config.append_dtb:
@@ -193,6 +195,20 @@ class BaseDriver(object):
             self._default_boot_cmds = 'boot_cmds_rootfs'
             rootfs = self._get_image(rootfs)
             self.fastboot.flash(self.config.rootfs_partition, rootfs)
+        if self.config.multi_image_only:
+            if self.config.fastboot_kernel_load_addr:
+                if self._ramdisk:
+                    self._kernel = create_multi_image(self._kernel,
+                                                      self._ramdisk,
+                                                      self.config.fastboot_kernel_load_addr,
+                                                      self.working_dir)
+                else:
+                    self._kernel = create_uimage(self._kernel,
+                                                 self.config.fastboot_kernel_load_addr,
+                                                 self.working_dir,
+                                                 self.config.uimage_xip)
+            else:
+                raise CriticalError('Kernel load address not defined!')
 
         self.__boot_image__ = 'kernel'
 
@@ -335,6 +351,28 @@ class capri(fastboot_serial):
     def boot(self, boot_cmds=None):
         self.fastboot.flash('boot', self.__boot_image__)
         self.fastboot('reboot')
+
+
+class optimusa80(fastboot_serial):
+
+    def __init__(self, device):
+        super(optimusa80, self).__init__(device)
+
+    def erase_boot(self):
+        pass
+
+    def boot(self, boot_cmds=None):
+        if self.__boot_image__ is None:
+            raise CriticalError('Deploy action must be run first')
+        if self._kernel is not None:
+            self.fastboot('flash boot %s' % self._kernel)
+            self.fastboot('reboot')
+        else:
+            self.fastboot.boot(self.__boot_image__)
+            self.fastboot('reboot')
+
+    def in_fastboot(self):
+        return False
 
 
 class pxa1928dkb(fastboot_serial):

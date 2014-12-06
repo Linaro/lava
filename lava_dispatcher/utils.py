@@ -225,6 +225,26 @@ def create_uimage(kernel, load_addr, tmp_dir, xip, arch='arm'):
         raise CriticalError("uImage creation failed")
 
 
+def create_multi_image(kernel, ramdisk, load_addr, tmp_dir, arch='arm'):
+    load_addr = int(load_addr, 16)
+    uimage_path = '%s/uImage' % tmp_dir
+    entry_addr = load_addr
+    cmd = 'mkimage -A %s -O linux -T multi \
+           -C none -a 0x%x -e 0x%x \
+            -d %s:%s %s' % (arch, load_addr,
+                            entry_addr, kernel,
+                            ramdisk, uimage_path)
+
+    logging.info('Creating Multi Image')
+    logging.debug(cmd)
+    r = subprocess.call(cmd, shell=True)
+
+    if r == 0:
+        return uimage_path
+    else:
+        raise CriticalError("Multi Image creation failed")
+
+
 def append_dtb(kernel, dtb, tmp_dir):
     kernel_path = '%s/.kernel' % tmp_dir
     cmd = 'cat %s %s > %s' % (kernel, dtb, kernel_path)
