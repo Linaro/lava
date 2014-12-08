@@ -356,7 +356,7 @@ class Action(object):
         for subclass in cls.__subclasses__():
             if subclass.name == name:
                 return subclass
-        raise KeyError("Cannot find action named \"%s\"" % name)
+        raise JobError("Cannot find action named \"%s\"" % name)
 
     @property
     def errors(self):
