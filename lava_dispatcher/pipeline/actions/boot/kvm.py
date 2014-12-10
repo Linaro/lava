@@ -145,9 +145,6 @@ class BootQemuRetry(Action):
 
         shell_connection = ShellSession(self.job, shell)
         shell_connection.prompt_str = self.job.device.parameters['test_image_prompts']
-        if self.errors:
-            # FIXME: tests with multiple boots need to be handled too.
-            self.data.update({
-                'boot-result': "failed"
-            })
+        # FIXME: tests with multiple boots need to be handled too.
+        self.data.update({'boot-result': 'failed' if self.errors else 'success'})
         return shell_connection

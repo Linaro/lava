@@ -133,11 +133,8 @@ class UBootRetry(BootAction):
 
     def run(self, connection, args=None):
         super(UBootRetry, self).run(connection, args)
-        if self.errors:
-            # FIXME: tests with multiple boots need to be handled too.
-            self.data.update({
-                'boot-result': "failed"
-            })
+        # FIXME: tests with multiple boots need to be handled too.
+        self.data.update({'boot-result': 'failed' if self.errors else 'success'})
 
 
 class UBootInterrupt(Action):
