@@ -100,9 +100,12 @@ class NewDevice(object):
             # system paths are in the installed location of __file__
             # principally used for unit-test support
             device_config_path = os.path.join(os.path.dirname(__file__))
-            device_file = os.path.join(device_config_path, name)
-            if not os.path.exists(device_file):
-                raise RuntimeError("Unable to find device: %s in %s/%s" % (target, device_config_path, name))
+            sys_device_file = os.path.join(device_config_path, name)
+            if not os.path.exists(sys_device_file):
+                raise RuntimeError(
+                    "Unable to find config file for device: %s  as %s or %s" % (
+                        target, device_file, sys_device_file))
+            device_file = sys_device_file
 
         defaults = NewDeviceDefaults()
         # parameters dict will update if new settings are found, so repeat for customisation files when those exist
