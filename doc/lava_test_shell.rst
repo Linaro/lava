@@ -447,6 +447,18 @@ LAVA. The parse section has a fixup mechanism that can help::
           PASS: pass
           FAIL: fail
 
+.. note:: Pattern can be double-quoted or single quoted. If it's double-quoted,
+          special characters need to be escaped. Otherwise, no escaping is
+          necessary.
+
+Single quote example::
+
+  parse:
+      pattern: '(?P<test_case_id>.*-*)\s+:\s+(?P<result>(PASS|FAIL))'
+      fixupdict:
+          PASS: pass
+          FAIL: fail
+
 Adding dependent test cases
 ===========================
 
