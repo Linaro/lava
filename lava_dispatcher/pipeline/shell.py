@@ -80,7 +80,6 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         """
         Extends pexpect.send to support extra arguments, delay and send by character flags.
         """
-        self.logger.debug("send (delay_ms=%s): %s " % (delay, string))
         sent = 0
         delay = float(delay) / 1000
         if send_char:
