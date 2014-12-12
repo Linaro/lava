@@ -28,6 +28,7 @@ from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import PrepareOverlayTftp
 from lava_dispatcher.pipeline.utils.shell import which
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
 
 
 def tftp_accept(device, parameters):
@@ -80,10 +81,10 @@ class TftpAction(DeployAction):
         self.name = "tftp-deploy"
         self.description = "download files and deploy using tftp"
         self.summary = "tftp deploment"
-        self.tftp_dir = "/var/lib/lava/dispatcher/tmp"  # FIXME: constant to get from a YAML file in /etc/
+        self.tftp_dir = DISPATCHER_DOWNLOAD_DIR
         self.suffix = None
         try:
-            self.tftp_dir = mkdtemp(basedir="/var/lib/lava/dispatcher/tmp")  # FIXME: constant to get from a YAML file in /etc/
+            self.tftp_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
         except OSError:
             # allows for unit tests to operate as normal user.
             self.suffix = '/'

@@ -29,6 +29,7 @@ from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
 
 
 class Factory(object):  # pylint: disable=too-few-public-methods
@@ -73,7 +74,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertIn('dtb', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
         self.assertEqual(
             [action.path for action in tftp.internal_pipeline.actions if hasattr(action, 'path')],
-            ["/var/lib/lava/dispatcher/tmp" for _ in range(len(tftp.internal_pipeline.actions) - 1)]
+            [DISPATCHER_DOWNLOAD_DIR for _ in range(len(tftp.internal_pipeline.actions) - 1)]
         )
 
     def test_device_bbb(self):

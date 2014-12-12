@@ -56,5 +56,8 @@ OVERRIDE_CLAMP_DURATION = 300
 # Auto-login prompt timeout default
 AUTOLOGIN_DEFAULT_TIMEOUT = 120
 
+# dispatcher temporary directory
+DISPATCHER_DOWNLOAD_DIR = "/var/lib/lava/dispatcher/tmp"
+
 # OS shutdown message
 SHUTDOWN_MESSAGE = 'The system is going down for reboot NOW'

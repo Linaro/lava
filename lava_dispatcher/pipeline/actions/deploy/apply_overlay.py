@@ -31,6 +31,7 @@ from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.pipeline.utils.constants import (
     RAMDISK_COMPRESSED_FNAME,
     RAMDISK_FNAME,
+    DISPATCHER_DOWNLOAD_DIR,
 )
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.utils.shell import which
@@ -146,7 +147,7 @@ class ExtractNfsRootfs(Action):
         if not self.parameters.get('nfsrootfs', None):  # idempotency
             return connection
         nfsroot = self.data['download_action']['nfsrootfs']['file']
-        nfsroot_dir = mkdtemp(basedir="/var/lib/lava/dispatcher/tmp")  # FIXME: constant to get from a YAML file in /etc/
+        nfsroot_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
         try:
             tar = tarfile.open(nfsroot)
             tar.extractall(nfsroot_dir)
