@@ -20,6 +20,7 @@
 
 import os
 import yaml
+import collections
 from yaml.composer import Composer
 from yaml.constructor import Constructor
 from lava_dispatcher.pipeline.action import Timeout
@@ -115,9 +116,8 @@ class NewDevice(object):
         except TypeError:
             raise RuntimeError("%s could not be parsed" % device_file)
         # store device values to override device_type
-        device_params = self.parameters
         type_config_path = os.getcwd()
-        type_name = os.path.join('device_types', "%s.conf" % device_params['device_type'])
+        type_name = os.path.join('device_types', "%s.conf" % self.parameters['device_type'])
         type_file = os.path.join(type_config_path, type_name)
         if not os.path.exists(type_file):
             # some types are pre-defined
@@ -126,10 +126,11 @@ class NewDevice(object):
         if not os.path.exists(type_file):
             raise RuntimeError("Could not find %s" % type_file)
         try:
-            self.parameters = dev_parser.parse(open(type_file))
+            device_params = dev_parser.parse(open(type_file))
         except TypeError:
             raise RuntimeError("%s could not be parsed" % type_file)
-        self.parameters = device_params  # assert device overrides
+        # assert device overrides
+        self.parameters = self.update_params(device_params, self.parameters)
         self.parameters = {
             'hostname': target
         }
@@ -138,6 +139,18 @@ class NewDevice(object):
         if 'timeouts' in self.parameters:
             for name, _ in list(self.parameters['timeouts'].items()):
                 self.overrides['timeouts'][name] = Timeout.parse(self.parameters['timeouts'][name])
+
+    def update_params(self, orig_dict, new_dict):
+        """
+        Recursively update parameters so that dicts inside the parameters get updated instead of overwritten.
+        """
+        for key, val in new_dict.iteritems():
+            if isinstance(val, collections.Mapping):
+                tmp = self.update_params(orig_dict.get(key, {}), val)
+                orig_dict[key] = tmp
+            else:
+                orig_dict[key] = new_dict[key]
+        return orig_dict
 
     @property
     def parameters(self):
