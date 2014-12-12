@@ -506,10 +506,13 @@ class Action(object):
         if type(command_list) != list:
             raise RuntimeError("commands to _run_command need to be a list")
         log = None
+        command_list.insert(0, 'nice')
         # FIXME: define a method of configuring the proxy for the pipeline.
         # if not self.env:
         #     self.env = {'http_proxy': self.job.context.config.lava_proxy,
         #                 'https_proxy': self.job.context.config.lava_proxy}
+        self.env = os.environ
+        self.env.update({"LC_ALL": "C.UTF-8"})
         if env:
             self.env.update(env)
         try:
@@ -564,7 +567,11 @@ class Action(object):
         """
         if self.internal_pipeline:
             return self.internal_pipeline.run_actions(connection, args)
-        raise NotImplementedError("run %s" % self.name)
+        if connection:
+            connection.timeout = self.timeout
+        if not self.internal_pipeline and not connection:
+            raise NotImplementedError("run %s" % self.name)
+        return connection
 
     def cleanup(self):
         """
