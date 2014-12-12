@@ -635,6 +635,23 @@ class Action(object):
                 data[name] = content
         return data
 
+    def get_common_data(self, ns, key):
+        """
+        Get a common data value from the specified namespace using the specified key
+        """
+        if ns not in self.data['common']:
+            return None
+        return self.data['common'][ns].get(key, None)
+
+    def set_common_data(self, ns, key, value):
+        """
+        Storage for filenames (on dispatcher or on device) and other common data (like labels and ID strings)
+        which are set in one Action and used in one or more other Actions elsewhere in the same pipeline.
+        """
+        # ensure the key exists
+        self.data['common'].setdefault(ns, {})
+        self.data['common'][ns][key] = value
+
 
 class RetryAction(Action):
 
