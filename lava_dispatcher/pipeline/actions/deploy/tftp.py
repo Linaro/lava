@@ -123,5 +123,9 @@ class TftpAction(DeployAction):
             download = DownloaderAction('nfsrootfs', path=self.tftp_dir)
             download.max_retries = 3
             self.internal_pipeline.add_action(download)
+        if 'modules' in parameters:
+            download = DownloaderAction('modules', path=self.tftp_dir)
+            download.max_retries = 3
+            self.internal_pipeline.add_action(download)
         # TftpAction is a deployment, so once the files are in place, just do the overlay
         self.internal_pipeline.add_action(PrepareOverlayTftp())
