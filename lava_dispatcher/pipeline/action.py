@@ -362,7 +362,10 @@ class Action(object):
 
     @property
     def errors(self):
-        return self.__errors__
+        if self.internal_pipeline:
+            return self.__errors__ + self.internal_pipeline.errors
+        else:
+            return self.__errors__
 
     @errors.setter
     def errors(self, error):
