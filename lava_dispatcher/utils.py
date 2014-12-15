@@ -307,8 +307,12 @@ class DrainConsoleOutput(threading.Thread):
             if expect_end and (expect_end <= time.time()):
                 logging.info("DrainConsoleOutput times out:%s" % self.timeout)
                 break
-            self.proc.empty_buffer()
-            time.sleep(5)
+            try:
+                self.proc.empty_buffer()
+                time.sleep(5)
+            except ValueError:
+                logging.debug("pexpect ended for thread %s" % self.getName())
+                expect_end = time.time()
 
     def join(self, timeout=None):
         self._stopevent.set()
