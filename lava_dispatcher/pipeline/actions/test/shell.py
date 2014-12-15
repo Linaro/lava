@@ -24,6 +24,7 @@ from contextlib import contextmanager
 from lava_dispatcher.pipeline.log import YamlLogger
 from lava_dispatcher.pipeline.actions.test import handle_testcase, TestAction
 from lava_dispatcher.pipeline.action import (
+    InfrastructureError,
     Pipeline,
     RetryAction,
     JobError,
@@ -107,7 +108,7 @@ class TestShellAction(TestAction):
             return connection
 
         if not connection:
-            raise RuntimeError("Not any valid connection")
+            raise InfrastructureError("Connection closed")
 
         self.logger.debug("Executing test definitions using %s" % connection.name)
         self.logger.debug("Setting default test shell prompt")
