@@ -46,6 +46,7 @@ class DeviceSchema(schema.Schema):
     boot_cmds_android = schema.StringOption(fatal=True)  # And here
     boot_cmds_oe = schema.StringOption(fatal=True)  # And here?
     read_boot_cmds_from_image = schema.BoolOption(default=True)
+    boot_cmd_timeout = schema.IntOption(default=10)
     boot_options = schema.ListOption()
     boot_linaro_timeout = schema.IntOption(default=300)
     boot_part = schema.IntOption(fatal=True)

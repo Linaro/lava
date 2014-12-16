@@ -526,11 +526,12 @@ class Target(object):
                     connection.sendcontrol(command)
                 elif action == "expect":
                     command = re.escape(command)
-                    connection.expect(command, timeout=20)
+                    connection.expect(command,
+                                      timeout=self.config.boot_cmd_timeout)
             else:
                 self._wait_for_prompt(connection,
                                       self.config.bootloader_prompt,
-                                      timeout=10)
+                                      timeout=self.config.boot_cmd_timeout)
                 connection.sendline(line, delay,
                                     send_char=self.config.send_char)
 
