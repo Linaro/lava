@@ -260,8 +260,6 @@ class UBootCommandOverlay(Action):
         )
 
         if 'nfsrootfs' in self.data['download_action']:
-            # FIXME: resolve issues around colon inside YAML dict strings or build string from components
-            substitutions['&#58;'] = ':'
             substitutions['{NFSROOTFS}'] = self.data['extract-nfsrootfs'].get('nfsroot')
 
         self.substitute(self.data['u-boot']['commands'], substitutions)
