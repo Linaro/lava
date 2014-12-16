@@ -100,6 +100,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         except pexpect.TIMEOUT:
             raise TestError("command timed out.")
         except pexpect.EOF:
+            # FIXME: deliberately closing the connection (and starting a new one) needs to be supported.
             raise InfrastructureError("Connection closed")
         return proc
 
