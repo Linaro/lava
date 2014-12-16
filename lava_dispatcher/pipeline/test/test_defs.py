@@ -46,7 +46,7 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
     def setUp(self):
         super(TestDefinitionHandlers, self).setUp()
         factory = Factory()
-        self.job = factory.create_job('sample_jobs/kvm.yaml')
+        self.job = factory.create_kvm_job('sample_jobs/kvm.yaml')
 
     def test_testdef(self):
         testdef = overlay = None
@@ -129,7 +129,7 @@ class TestDefinitionSimple(unittest.TestCase):  # pylint: disable=too-many-publi
     def setUp(self):
         super(TestDefinitionSimple, self).setUp()
         factory = Factory()
-        self.job = factory.create_job('sample_jobs/kvm-notest.yaml')
+        self.job = factory.create_kvm_job('sample_jobs/kvm-notest.yaml')
 
     def test_job_without_tests(self):
         deploy = boot = submit = finalize = None
@@ -158,7 +158,7 @@ class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-publi
     def setUp(self):
         super(TestDefinitionParams, self).setUp()
         factory = Factory()
-        self.job = factory.create_job('sample_jobs/kvm-params.yaml')
+        self.job = factory.create_kvm_job('sample_jobs/kvm-params.yaml')
 
     def test_job_without_tests(self):
         deploy = boot = submit = finalize = overlay = test = None
@@ -203,7 +203,7 @@ class TestDefinitionRepeat(unittest.TestCase):  # pylint: disable=too-many-publi
     def setUp(self):
         super(TestDefinitionRepeat, self).setUp()
         factory = Factory()
-        self.job = factory.create_job("sample_jobs/kvm-multi.yaml")
+        self.job = factory.create_kvm_job("sample_jobs/kvm-multi.yaml")
 
     def test_multiple_tests(self):
         deploy = []

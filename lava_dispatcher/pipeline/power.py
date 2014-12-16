@@ -74,7 +74,7 @@ class RebootDevice(Action):
             raise RuntimeError("Called %s without an active Connection" % self.name)
         if self.job.device.power_state is 'off' and self.job.device.power_command is not '':  # power on action used instead
             return connection
-        connection.prompt_str = self.parameters.get('shutdown-message', SHUTDOWN_MESSAGE)
+        connection.prompt_str = self.parameters.get('parameters', {}).get('shutdown-message', SHUTDOWN_MESSAGE)
         connection.sendline("reboot")
         self.results = {'status': "success"}
         self.data[PDUReboot.key()] = False

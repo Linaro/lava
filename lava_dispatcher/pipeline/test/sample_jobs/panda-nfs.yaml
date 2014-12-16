@@ -20,6 +20,7 @@ actions:
      to: tftp
      kernel: http://images.validation.linaro.org/functional-test-images/panda/uImage
      nfsrootfs: file:///home/linaro/chroots/jessie.tar.gz
+     os: debian
      dtb: http://images.validation.linaro.org/functional-test-images/panda/omap4-panda-es.dtb
 
   - boot:

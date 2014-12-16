@@ -79,7 +79,7 @@ class TestKVMSimulation(unittest.TestCase):
         arbitrary.
         """
         factory = Factory()
-        job = factory.create_job('sample_jobs/kvm.yaml')
+        job = factory.create_kvm_job('sample_jobs/kvm.yaml')
         pipe = Pipeline()
         action = Action()
         action.name = "deploy_linaro_image"
@@ -171,7 +171,7 @@ class TestKVMBasicDeploy(unittest.TestCase):
     def setUp(self):
         super(TestKVMBasicDeploy, self).setUp()
         factory = Factory()
-        self.job = factory.create_job('sample_jobs/kvm.yaml', mkdtemp())
+        self.job = factory.create_kvm_job('sample_jobs/kvm.yaml', mkdtemp())
 
     def test_deploy_job(self):
         # from meliae import scanner
@@ -356,7 +356,7 @@ class TestKVMQcow2Deploy(unittest.TestCase):
     def setUp(self):
         super(TestKVMQcow2Deploy, self).setUp()
         factory = Factory()
-        self.job = factory.create_job('sample_jobs/kvm-qcow2.yaml', mkdtemp())
+        self.job = factory.create_kvm_job('sample_jobs/kvm-qcow2.yaml', mkdtemp())
 
     def test_deploy_job(self):
         # from meliae import scanner
@@ -484,7 +484,7 @@ class TestKVMDownloadLocalDeploy(unittest.TestCase):
     def setUp(self):
         super(TestKVMDownloadLocalDeploy, self).setUp()
         factory = Factory()
-        self.job = factory.create_job('sample_jobs/kvm-local.yaml', mkdtemp())
+        self.job = factory.create_kvm_job('sample_jobs/kvm-local.yaml', mkdtemp())
 
     def test_deploy_job(self):
         # from meliae import scanner
@@ -585,7 +585,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):
     def setUp(self):
         super(TestKVMInlineTestDeploy, self).setUp()
         factory = Factory()
-        self.job = factory.create_job('sample_jobs/kvm-inline.yaml', mkdtemp())
+        self.job = factory.create_kvm_job('sample_jobs/kvm-inline.yaml', mkdtemp())
 
     def test_kvm_inline_deploy(self):
         download = None

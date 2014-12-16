@@ -66,7 +66,7 @@ class TestJobParser(unittest.TestCase):  # pylint: disable=too-many-public-metho
 
     def setUp(self):
         factory = Factory()
-        self.job = factory.create_job('sample_jobs/basics.yaml', mkdtemp())
+        self.job = factory.create_kvm_job('sample_jobs/basics.yaml', mkdtemp())
 
     def test_parser_creates_a_job_with_a_pipeline(self):  # pylint: disable=invalid-name
         if not self.job:
@@ -156,7 +156,7 @@ class Factory(object):
             return None
         return job
 
-    def create_job(self, filename, output_dir=None):  # pylint: disable=no-self-use
+    def create_kvm_job(self, filename, output_dir=None):  # pylint: disable=no-self-use
         device = NewDevice('kvm01')
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         sample_job_data = open(kvm_yaml)
@@ -296,7 +296,7 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
 
     def test_simulated_action(self):
         factory = Factory()
-        job = factory.create_job('sample_jobs/basics.yaml', mkdtemp())
+        job = factory.create_kvm_job('sample_jobs/basics.yaml', mkdtemp())
         if not job:
             return unittest.skip("not all deployments have been implemented")
         self.assertIsNotNone(job)

@@ -38,7 +38,7 @@ class Factory(object):  # pylint: disable=too-few-public-methods
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
-    def create_job(self, filename, output_dir=None):  # pylint: disable=no-self-use
+    def create_bbb_job(self, filename, output_dir=None):  # pylint: disable=no-self-use
         device = NewDevice('bbb-01')
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         sample_job_data = open(kvm_yaml)
@@ -51,14 +51,14 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
 
     def test_simulated_action(self):
         factory = Factory()
-        job = factory.create_job('sample_jobs/uboot-ramdisk.yaml')
+        job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
         self.assertIsNotNone(job)
         self.assertIsNone(job.validate())
         self.assertEqual(job.device.parameters['device_type'], 'beaglebone-black')
 
     def test_tftp_pipeline(self):
         factory = Factory()
-        job = factory.create_job('sample_jobs/uboot-ramdisk.yaml')
+        job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
         self.assertEqual(
             [action.name for action in job.pipeline.actions],
             ['tftp-deploy', 'uboot-action', 'lava-test-retry', 'submit_results', 'finalize']
@@ -79,7 +79,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
 
     def test_device_bbb(self):
         factory = Factory()
-        job = factory.create_job('sample_jobs/uboot.yaml')
+        job = factory.create_bbb_job('sample_jobs/uboot.yaml')
         self.assertEqual(
             job.device.parameters['commands']['connect'],
             'telnet localhost 6000'
@@ -92,7 +92,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
 
     def test_uboot_action(self):
         factory = Factory()
-        job = factory.create_job('sample_jobs/uboot-ramdisk.yaml')
+        job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn('u-boot', [item.keys() for item in job.device.parameters['actions']['boot']['methods']][0])
@@ -180,7 +180,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
 
     def test_download_action(self):
         factory = Factory()
-        job = factory.create_job('sample_jobs/uboot.yaml')
+        job = factory.create_bbb_job('sample_jobs/uboot.yaml')
         for action in job.pipeline.actions:
             action.validate()
             self.assertTrue(action.valid)
@@ -205,7 +205,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
 
     def test_reset_actions(self):
         factory = Factory()
-        job = factory.create_job('sample_jobs/uboot.yaml')
+        job = factory.create_bbb_job('sample_jobs/uboot.yaml')
         uboot_action = None
         uboot_retry = None
         reset_action = None
