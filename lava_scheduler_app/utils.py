@@ -38,6 +38,19 @@ from lava_server.settings.getsettings import Settings
 from lava_server.settings.config_file import ConfigFile
 
 
+def get_fqdn():
+    """Returns the fully qualified domain name.
+    """
+    host = socket.getfqdn()
+    try:
+        if bool(re.match("[-_a-zA-Z0-9.]+$", host)):
+            return host
+        else:
+            raise ValueError("Your FQDN contains invalid characters")
+    except ValueError as exc:
+        raise exc
+
+
 def rewrite_hostname(result_url):
     """If URL has hostname value as localhost/127.0.0.*, change it to the
     actual server FQDN.
@@ -46,7 +59,7 @@ def rewrite_hostname(result_url):
 
     See https://cards.linaro.org/browse/LAVA-611
     """
-    domain = socket.getfqdn()
+    domain = get_fqdn()
     try:
         site = Site.objects.get_current()
     except (Site.DoesNotExist, ImproperlyConfigured):
@@ -268,12 +281,6 @@ def get_lshw_out():
                             stderr=subprocess.PIPE)
     lshw_out, lshw_err = proc.communicate()
     return simplejson.dumps(lshw_out)
-
-
-def get_fqdn():
-    """Returns the fully qualified domain name.
-    """
-    return socket.getfqdn()
 
 
 def get_ip_address():
