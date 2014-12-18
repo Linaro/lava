@@ -90,11 +90,18 @@ class OtherImageReportView(LavaView):
         # Only reports containing all public filters for non-authenticated.
         other_reports = ImageReport.objects.filter(is_published=True,
                                                    image_report_group=None).order_by('name')
+
+        non_accessible_reports = []
+        for report in other_reports:
+            if not report.is_accessible_by(self.request.user):
+                non_accessible_reports.append(report.id)
+
         if self.request and self.request.user.is_authenticated():
-            return other_reports
+            return other_reports.exclude(id__in=non_accessible_reports)
         else:
             return other_reports.exclude(
-                imagereportchart__imagechartfilter__filter__public=False).order_by('name')
+                imagereportchart__imagechartfilter__filter__public=False,
+                id__in=non_accessible_reports).order_by('name')
 
 
 class GroupImageReportView(LavaView):
@@ -109,11 +116,18 @@ class GroupImageReportView(LavaView):
         group_reports = ImageReport.objects.filter(
             is_published=True,
             image_report_group=self.image_report_group).order_by('name')
+
+        non_accessible_reports = []
+        for report in group_reports:
+            if not report.is_accessible_by(self.request.user):
+                non_accessible_reports.append(report.id)
+
         if self.request.user.is_authenticated():
-            return group_reports
+            return group_reports.exclude(id__in=non_accessible_reports)
         else:
             return group_reports.exclude(
-                imagereportchart__imagechartfilter__filter__public=False).order_by('name')
+                imagereportchart__imagechartfilter__filter__public=False,
+                id__in=non_accessible_reports).order_by('name')
 
 
 @BreadCrumb("Image reports", parent=index)
@@ -177,6 +191,9 @@ def image_report_display(request, name):
     if not request.user.is_superuser:
         if not image_report.is_published and image_report.user != request.user:
             raise PermissionDenied
+
+    if not image_report.is_accessible_by(request.user):
+        raise PermissionDenied()
 
     chart_data = {}
     for chart in image_report.imagereportchart_set.all():
@@ -248,6 +265,7 @@ def image_report_delete(request, name):
 def image_report_publish(request, name):
 
     image_report = get_object_or_404(ImageReport, name=name)
+
     image_report.is_published = True
     image_report.save()
 

@@ -1700,6 +1700,15 @@ class TestRunFilter(models.Model):
             "dashboard_app.views.filters.views.filter_detail",
             [self.owner.username, self.name])
 
+    def is_accessible_by(self, user):
+        # If any of bundle streams is not accessible by this user, restrict
+        # access to this filter as well.
+        for bundle_stream in self.bundle_streams.all():
+            if not bundle_stream.is_accessible_by(user):
+                return False
+
+        return True
+
 
 class TestRunFilterSubscription(models.Model):
 
@@ -1931,6 +1940,17 @@ class ImageReport(models.Model):
     def get_absolute_url(self):
         return ("dashboard_app.views.image_reports.views.image_report_display",
                 (), dict(name=self.name))
+
+    def is_accessible_by(self, user):
+        # If any of bundle streams is not accessible by this user, restrict
+        # access to this image report as well.
+        for chart in self.imagereportchart_set.all():
+            for chart_filter in chart.imagechartfilter_set.all():
+                for bundle_stream in chart_filter.filter.bundle_streams.all():
+                    if not bundle_stream.is_accessible_by(user):
+                        return False
+
+        return True
 
 
 # Chart types
