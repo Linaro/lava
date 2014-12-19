@@ -1,0 +1,47 @@
+# Sample JOB definition for a u-boot job
+
+device_type: beaglebone-black
+
+job_name: uboot-pipeline
+timeouts:
+  job:
+    minutes: 15            # timeout for the whole job (default: ??h)
+  action:
+    minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+  extract-nfsrootfs:
+    seconds: 90
+priority: medium
+
+# example old-style job: https://staging.validation.linaro.org/scheduler/job/113682/definition
+
+actions:
+
+  # needs to be a list of hashes to retain the order
+  - deploy:
+     timeout:
+       minutes: 2
+     to: tftp
+     kernel: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+     nfsrootfs: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
+     os: debian
+     dtb: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+
+  - boot:
+     method: u-boot
+     commands: nfs
+     type: bootz
+
+  # needs to be a list of hashes to retain the order
+  - deploy:
+     timeout:
+       minutes: 4
+     to: tftp
+     kernel: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+     nfsrootfs: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
+     os: oe
+     dtb: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+
+  - boot:
+     method: u-boot
+     commands: ramdisk
+     type: bootz

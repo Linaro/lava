@@ -21,7 +21,7 @@
 import yaml
 from collections import OrderedDict
 
-from lava_dispatcher.pipeline.action import PipelineContext
+from lava_dispatcher.pipeline.action import PipelineContext, Action
 from lava_dispatcher.pipeline.diagnostics import DiagnoseNetwork
 
 
@@ -67,6 +67,12 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
     @context.setter
     def context(self, data):
         self.__context__.pipeline_data.update(data)
+
+    def reset_context(self):
+        """
+        Called within multiple deployment jobs from an Action.run()
+        """
+        self.__context__ = PipelineContext()
 
     def diagnose(self, trigger):
         """
@@ -120,3 +126,19 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         # arbitrary points?
         # results_dir = None
         #    self.action.post_process(results_dir)
+
+
+class ResetContext(Action):
+    """
+    Allow multiple deployment jobs to clear the context before each new deployment
+    """
+    def __init__(self):
+        super(ResetContext, self).__init__()
+        self.name = "reset-context"
+        self.summary = "reset context for current job"
+        self.description = "clear dynamic data from previous deployment"
+
+    def run(self, connection, args=None):
+        self.logger.debug("Resetting dynamic data from previous deployment")
+        self.job.reset_context()
+        return connection

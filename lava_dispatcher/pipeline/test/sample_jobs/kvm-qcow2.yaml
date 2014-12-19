@@ -26,7 +26,7 @@ actions:
         root_partition: 1
 
     - boot:
-        method: kvm
+        method: qemu
         # FIXME: this is not working for the moment
         timeout:
           minutes: 5

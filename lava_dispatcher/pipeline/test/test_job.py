@@ -58,7 +58,7 @@ from lava_dispatcher.pipeline.actions.deploy.testdef import (
 from lava_dispatcher.pipeline.actions.boot.kvm import BootAction
 
 
-class TestBasicJob(unittest.TestCase):
+class TestBasicJob(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def test_basic_actions(self):
         factory = Factory()
@@ -69,9 +69,9 @@ class TestBasicJob(unittest.TestCase):
         self.assertIsInstance(job.pipeline, Pipeline)
 
 
-class TestKVMSimulation(unittest.TestCase):
+class TestKVMSimulation(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
-    def test_kvm_simulation(self):
+    def test_kvm_simulation(self):  # pylint: disable=too-many-statements
         """
         Build a pipeline which simulates a KVM LAVA job
         without using the formal objects (to avoid validating
@@ -166,7 +166,7 @@ class TestKVMSimulation(unittest.TestCase):
         # print yaml.dump(pipe.describe())
 
 
-class TestKVMBasicDeploy(unittest.TestCase):
+class TestKVMBasicDeploy(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestKVMBasicDeploy, self).setUp()
@@ -181,13 +181,7 @@ class TestKVMBasicDeploy(unittest.TestCase):
             if isinstance(action, DeployAction):
                 self.assertEqual(action.job, self.job)
 
-    def test_kvm_basic_deploy(self):
-        download = None
-        mount = None
-        customise = None
-        apply_overlay = None
-        overlay = None
-        unmount = None
+    def test_kvm_basic_deploy(self):  # pylint: disable=too-many-statements
         self.assertEqual(len(self.job.pipeline.describe().values()), 32)  # this will keep changing until KVM is complete.
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
@@ -260,12 +254,9 @@ class TestKVMBasicDeploy(unittest.TestCase):
                 self.assertIsInstance(unmount.log_handler, logging.FileHandler)
                 self.assertIsInstance(unmount.logger, YamlLogger)
 
-                # FIXME: deployment includes overlaying the test definitions
-                # check for customisation (TBD later)
-                # FIXME: ensure next step happens without needing to umount & remount!
                 # ensure the test definition action is inside the mount pipeline
-                # load test definitions into the image
-                # umount
+                self.assertIsInstance(overlay.internal_pipeline.actions[1], TestDefinitionAction)
+
             elif isinstance(action, Action):
                 pass
             else:
@@ -336,7 +327,7 @@ class TestKVMBasicDeploy(unittest.TestCase):
         for action in self.job.pipeline.actions:
             if isinstance(action, BootAction):
                 # get the action & populate it
-                self.assertEqual(action.parameters['method'], 'kvm')
+                self.assertEqual(action.parameters['method'], 'qemu')
 
     def test_kvm_basic_test(self):
         for action in self.job.pipeline.actions:
@@ -351,7 +342,7 @@ class TestKVMBasicDeploy(unittest.TestCase):
                 self.assertEqual(action.parameters['stream'], "/anonymous/codehelp/")
 
 
-class TestKVMQcow2Deploy(unittest.TestCase):
+class TestKVMQcow2Deploy(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestKVMQcow2Deploy, self).setUp()
@@ -366,13 +357,7 @@ class TestKVMQcow2Deploy(unittest.TestCase):
             if isinstance(action, DeployAction):
                 self.assertEqual(action.job, self.job)
 
-    def test_kvm_basic_deploy(self):
-        download = None
-        mount = None
-        customise = None
-        apply_overlay = None
-        overlay = None
-        unmount = None
+    def test_kvm_basic_deploy(self):  # pylint: disable=too-many-statements
         self.assertEqual(len(self.job.pipeline.describe().values()), 33)  # this will keep changing until KVM is complete.
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
@@ -455,12 +440,9 @@ class TestKVMQcow2Deploy(unittest.TestCase):
                 self.assertIsInstance(unmount.log_handler, logging.FileHandler)
                 self.assertIsInstance(unmount.logger, YamlLogger)
 
-                # FIXME: deployment includes overlaying the test definitions
-                # check for customisation (TBD later)
-                # FIXME: ensure next step happens without needing to umount & remount!
                 # ensure the test definition action is inside the mount pipeline
-                # load test definitions into the image
-                # umount
+                self.assertIsInstance(overlay.internal_pipeline.actions[1], TestDefinitionAction)
+
             elif isinstance(action, Action):
                 pass
             else:
@@ -479,7 +461,7 @@ class TestKVMQcow2Deploy(unittest.TestCase):
             self.assertTrue(action.valid)
 
 
-class TestKVMDownloadLocalDeploy(unittest.TestCase):
+class TestKVMDownloadLocalDeploy(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestKVMDownloadLocalDeploy, self).setUp()
@@ -494,13 +476,7 @@ class TestKVMDownloadLocalDeploy(unittest.TestCase):
             if isinstance(action, DeployAction):
                 self.assertEqual(action.job, self.job)
 
-    def test_kvm_basic_deploy(self):
-        download = None
-        mount = None
-        customise = None
-        apply_overlay = None
-        overlay = None
-        unmount = None
+    def test_kvm_basic_deploy(self):  # pylint: disable=too-many-statements
         self.assertEqual(len(self.job.pipeline.describe().values()), 32)  # this will keep changing until KVM is complete.
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
@@ -580,20 +556,14 @@ class TestKVMDownloadLocalDeploy(unittest.TestCase):
                 self.fail("No deploy action found")
 
 
-class TestKVMInlineTestDeploy(unittest.TestCase):
+class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestKVMInlineTestDeploy, self).setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-inline.yaml', mkdtemp())
 
-    def test_kvm_inline_deploy(self):
-        download = None
-        mount = None
-        customise = None
-        apply_overlay = None
-        overlay = None
-        unmount = None
+    def test_kvm_inline_deploy(self):  # pylint: disable=too-many-statements,too-many-locals
         self.assertEqual(len(self.job.pipeline.describe().values()), 28)  # this will keep changing until KVM is complete.
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):

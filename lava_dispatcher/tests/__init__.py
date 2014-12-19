@@ -14,6 +14,7 @@ def test_suite():
         'lava_dispatcher.pipeline.test.test_lavashell',
         'lava_dispatcher.pipeline.test.test_retries',
         'lava_dispatcher.pipeline.test.test_uboot',
+        'lava_dispatcher.pipeline.test.test_multi'
         #  'lava_dispatcher.pipeline.test.test_utils',
     ]
     loader = unittest.TestLoader()

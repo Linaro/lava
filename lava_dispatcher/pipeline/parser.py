@@ -21,7 +21,7 @@
 import yaml
 from yaml.composer import Composer
 from yaml.constructor import Constructor
-from lava_dispatcher.pipeline.job import Job
+from lava_dispatcher.pipeline.job import Job, ResetContext
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,
@@ -40,24 +40,38 @@ import lava_dispatcher.pipeline.actions.test.strategies  # pylint: disable=unuse
 from lava_dispatcher.pipeline.actions.submit import SubmitResultsAction  # pylint: disable=unused-import
 
 
-def handle_device_parameters(name, parameters, count):
+def handle_device_parameters(job_data, name, parameters):
     """
     Parses the action specific parameters from the device configuration
     to be added to the matching action parameters.
     name refers to the action name in the YAML.
-    count refers to the number of times this action exists in the YAML file.
-    Depending on the YAML structure, some methods can be a list of strings,
-    some can be a list of dict objects.
+    Some methods have parameters, some do not.
+    Returns a dict of the device parameters for the method
     """
+    retval = {}
     if 'actions' not in parameters:
-        return {}
+        return retval
     if name not in parameters['actions']:
-        return {}
-    if type(parameters['actions'][name]['methods'][count]) == str:
-        return parameters['actions'][name]
-    if type(parameters['actions'][name]['methods'][count]) == dict:
-        return parameters['actions'][name]['methods'][count]
-    return {}
+        return retval
+    if 'method' in job_data and 'methods' in parameters['actions'][name]:
+        # distinguish between methods with and without parameters in the YAML
+        if job_data['method'] in parameters['actions'][name]['methods']:
+            retval.update({job_data['method']: [
+                method for method in parameters['actions'][name]['methods'] if job_data['method'] in method
+            ][0]})
+        elif job_data['method'] in parameters['actions'][name]['methods'][0]:
+            # method has parameters, return first match
+            retval = [
+                method for method in parameters['actions'][name]['methods'] if job_data['method'] in method
+            ][0]
+        else:
+            raise RuntimeError("Invalid device configuration for %s" % name)
+    elif 'to' in job_data and 'methods' in parameters['actions'][name]:
+        # FIXME: rationalise the use of deploy methods to match job data against device data, as with boot
+        retval = parameters['actions'][name]
+    else:
+        raise RuntimeError("Invalid device configuration for %s" % name)
+    return retval
 
 
 class JobParser(object):
@@ -138,24 +152,26 @@ class JobParser(object):
                 if type(action_data[name]) is dict:  # FIXME: commands are not fully implemented & may produce a list
                     action_data[name].update({'default_action_timeout': self.context['default_action_duration']})
                     action_data[name].update({'default_test_timeout': self.context['default_test_duration']})
-                count = counts.setdefault(name, 0)
-                counts.update({name: count})
+                counts.setdefault(name, 1)
                 if name == "deploy":
+                    # reset the context before adding a second deployment and again before third etc.
+                    if counts[name] >= 2:
+                        pipeline.add_action(ResetContext())
                     # set parameters specified in the device configuration, allow job to override.
-                    parameters = handle_device_parameters(name, device.parameters, counts[name])
+                    parameters = handle_device_parameters(action_data[name], name, device.parameters)
                     parameters.update(action_data[name])  # pass the job parameters to the instance
                     parameters.update({'deployment_data': get_deployment_data(parameters.get('os', ''))})
                     # allow the classmethod to check the parameters
                     deploy = Deployment.select(device, action_data[name])(pipeline, parameters)
                     deploy.action.yaml_line = line
                 elif name == "boot":
-                    parameters = handle_device_parameters(name, device.parameters, counts[name])
+                    parameters = handle_device_parameters(action_data[name], name, device.parameters)
                     parameters.update(action_data[name])
                     boot = Boot.select(device, action_data[name])(pipeline, parameters)
                     boot.action.yaml_line = line
                 elif name == "test":
                     # allow for multiple base tests, e.g. Android
-                    parameters = handle_device_parameters(name, device.parameters, counts[name])
+                    parameters = handle_device_parameters(action_data[name], name, device.parameters)
                     parameters.update(action_data[name])
                     LavaTest.select(device, action_data[name])(pipeline, parameters)
                 else:
@@ -175,6 +191,7 @@ class JobParser(object):
                     action.summary = name
                     action.timeout = Timeout(action.name, self.context['default_action_duration'])
                     pipeline.add_action(action)
+                counts[name] += 1
                 # uncomment for debug
                 # print action.parameters
 

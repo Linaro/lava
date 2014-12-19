@@ -138,8 +138,6 @@ class TestJobDeviceParameters(unittest.TestCase):  # pylint: disable=too-many-pu
         self.assertNotEqual(device.hard_reset_command, '')
         self.assertNotEqual(device.power_command, '')
         self.assertIn('on', device.power_command)
-        with self.assertRaises(TypeError):
-            device.power_state('')
         device.power_state = 'on'
         self.assertEqual(device.power_state, 'on')
         device = NewDevice("kvm01")
