@@ -2019,6 +2019,10 @@ class ImageReportChart(models.Model):
         default=False,
         verbose_name='Percentage')
 
+    is_aggregate_results = models.BooleanField(
+        default=False,
+        verbose_name='Aggregate parametrized results')
+
     chart_visibility = models.CharField(
         max_length=20,
         choices=CHART_VISIBILITY,
@@ -2235,16 +2239,17 @@ class ImageReportChart(models.Model):
                 # dealing with parametrized tests) and add the values instead
                 # of creating new chart item.
                 found = False
-                for chart_item in chart_data["test_data"]:
-                    if chart_item["test_filter_id"] == test_filter_id and \
-                            chart_item["number"] == str(match.tag):
-                        chart_item["passes"] += denorm.count_pass
-                        chart_item["skip"] += denorm.count_skip
-                        chart_item["total"] += denorm.count_all()
-                        chart_item["link"] = image_chart_filter.filter.\
-                            get_absolute_url()
-                        chart_item["pass"] &= denorm.count_fail == 0
-                        found = True
+                if image_chart_filter.image_chart.is_aggregate_results:
+                    for chart_item in chart_data["test_data"]:
+                        if chart_item["test_filter_id"] == test_filter_id and \
+                           chart_item["number"] == str(match.tag):
+                            chart_item["passes"] += denorm.count_pass
+                            chart_item["skip"] += denorm.count_skip
+                            chart_item["total"] += denorm.count_all()
+                            chart_item["link"] = image_chart_filter.filter.\
+                                get_absolute_url()
+                            chart_item["pass"] &= denorm.count_fail == 0
+                            found = True
 
                 # Use dates or build numbers.
                 build_number = str(test_run.bundle.uploaded_on)
@@ -2261,7 +2266,8 @@ class ImageReportChart(models.Model):
                         pass
 
                 # If no existing chart item was found, create a new one.
-                if not found:
+                if not image_chart_filter.image_chart.is_aggregate_results or \
+                   not found:
                     chart_item = {
                         "filter_rep": image_chart_filter.representation,
                         "test_filter_id": test_filter_id,
