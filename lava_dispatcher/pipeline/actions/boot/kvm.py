@@ -32,6 +32,9 @@ from lava_dispatcher.pipeline.utils.shell import which
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 
 
+# FIXME: decide if root_partition is needed, supported or can be removed from YAML.
+# document it if it is retained/useful.
+# FIXME: decide if 'media: tmpfs' is necessary or remove from YAML. Only removable needs 'media'
 class BootKVM(Boot):
     """
     The Boot method prepares the command to run on the dispatcher but this

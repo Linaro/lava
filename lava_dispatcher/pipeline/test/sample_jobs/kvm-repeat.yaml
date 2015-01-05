@@ -1,0 +1,88 @@
+actions:
+
+    - deploy:
+        timeout:
+          minutes: 20
+        to: tmpfs
+        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        compression: gz
+        os: debian
+        root_partition: 1
+
+    - repeat:
+        count: 6
+
+        actions:
+        - boot:
+            method: qemu
+            media: tmpfs
+
+        - test:
+            failure_retry: 3
+            name: kvm-smoke-test
+            timeout:
+              minutes: 5
+            definitions:
+            - repository: http://git.linaro.org/qa/test-definitions.git
+              from: git
+              path: ubuntu/smoke-tests-basic.yaml
+              name: smoke-tests-repeating
+            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+              from: git
+              path: lava-test-shell/single-node/singlenode03.yaml
+              name: singlenode-advanced
+
+        - boot:
+            method: qemu
+            media: tmpfs
+            failure_retry: 2  # deliberately invalid action,
+            # combines failure_retry and repeat
+
+        - test:
+           name: kvm-intermediate-singlenode
+           timeout:
+             seconds: 90
+           definitions:
+             - repository: http://git.linaro.org/qa/lava-team/lava-functional-test-definitions.git
+               from: git
+               path: ubuntu/network-tests-basic.yaml
+               name: smoke-tests-end
+             - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+               from: git
+               path: lava-test-shell/single-node/singlenode02.yaml
+               name: singlenode-intermediate
+
+    - boot:
+        method: qemu
+        media: tmpfs
+        repeat: 4
+
+    - deploy:
+        timeout:
+          minutes: 20
+        to: tmpfs
+        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        compression: gz
+        os: debian
+        root_partition: 1
+
+    - boot:
+        method: qemu
+        media: tmpfs
+        repeat: 4
+
+    - test:
+        failure_retry: 3
+        name: kvm-basic-singlenode
+        definitions:
+            - repository: http://git.linaro.org/qa/test-definitions.git
+              from: git
+              path: ubuntu/smoke-tests-basic.yaml
+              name: smoke-tests-single
+            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+              from: git
+              path: lava-test-shell/single-node/singlenode01.yaml
+              name: singlenode-basic
+
+    - submit_results:
+        stream: /anonymous/codehelp/

@@ -25,6 +25,7 @@ import base64
 import hashlib
 import tarfile
 from uuid import uuid4
+from collections import OrderedDict
 from lava_dispatcher.pipeline.action import (
     Action,
     InfrastructureError,
@@ -34,6 +35,60 @@ from lava_dispatcher.pipeline.action import (
 from lava_dispatcher.pipeline.actions.test import TestAction
 from lava_dispatcher.pipeline.utils.strings import indices
 from lava_dispatcher.pipeline.utils.vcs import BzrHelper, GitHelper
+
+
+def identify_test_definitions(parameters):
+    """
+    Iterates through the job parameters to identify all the test definitions,
+    including those involved in repeat actions.
+    """
+    # All test definitions are deployed in each deployment - TestDefinitionAction needs to only run relevant ones.
+    test_list = [action['test']['definitions'] for action in parameters['actions'] if 'test' in action]
+    repeat_list = [action['repeat'] for action in parameters['actions'] if 'repeat' in action]
+    if repeat_list:
+        test_list.extend([testdef['test']['definitions'] for testdef in repeat_list[0]['actions'] if 'test' in testdef])
+    return test_list
+
+
+def get_deployment_testdefs(parameters):
+    """
+    Identify the test definitions for each deployment within the job.
+    """
+    test_dict = OrderedDict()
+    deploy_list = []
+    for action in parameters['actions']:
+        yaml_line = None
+        if 'deploy' in action:
+            yaml_line = action['deploy']['yaml_line']
+            test_dict[yaml_line] = []
+            deploy_list = get_deployment_tests(parameters, yaml_line)
+        for action in deploy_list:
+            if 'test' in action:
+                test_dict[yaml_line].append(action['test']['definitions'])
+        deploy_list = []
+    return test_dict
+
+
+def get_deployment_tests(parameters, yaml_line):
+    """
+    Get the test YAML blocks according to which deployment precedes that test
+    This allows multiple deployments to use distinct test definitions.
+    """
+    deploy = []
+    seen = False
+    for action in parameters['actions']:
+        if 'deploy' in action:
+            seen = False
+        if 'deploy' in action and action['deploy']['yaml_line'] == yaml_line:
+            seen = True
+            continue
+        if 'repeat' in action and seen:
+            for repeat_action in action['repeat']['actions']:
+                if 'test' in repeat_action:
+                    deploy.append(repeat_action)
+        if 'test' in action and seen:
+            deploy.append(action)
+    return deploy
 
 
 class RepoAction(Action):  # pylint: disable=too-many-instance-attributes
@@ -150,7 +205,7 @@ class RepoAction(Action):  # pylint: disable=too-many-instance-attributes
         self.data['test'][self.uuid]['testdef_pattern'] = {'pattern': pattern}
 
 
-class GitRepoAction(RepoAction):
+class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
     """
     Each repo action is for a single repository,
     tests using multiple repositories get multiple
@@ -211,7 +266,7 @@ class GitRepoAction(RepoAction):
         return connection
 
 
-class BzrRepoAction(RepoAction):
+class BzrRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
     """
     Each repo action is for a single repository,
     tests using multiple repositories get multiple
@@ -269,7 +324,7 @@ class BzrRepoAction(RepoAction):
         return connection
 
 
-class InlineRepoAction(RepoAction):
+class InlineRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
     priority = 1
 
@@ -324,7 +379,7 @@ class InlineRepoAction(RepoAction):
                                                sha1.hexdigest()))
 
 
-class TarRepoAction(RepoAction):
+class TarRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
     priority = 0  # FIXME: increase priority once this is working
 
@@ -375,7 +430,7 @@ class TarRepoAction(RepoAction):
         return connection
 
 
-class UrlRepoAction(RepoAction):
+class UrlRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
     priority = 0  # FIXME: increase priority once this is working
 
@@ -454,47 +509,50 @@ class TestDefinitionAction(TestAction):
         """
         index = {}
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.test_list = [action['test']['definitions'] for action in self.job.parameters['actions']
-                          if 'test' in action]
+        self.test_list = identify_test_definitions(self.job.parameters)
         if not self.test_list:
             return
-        for testdef in self.test_list[0]:
-            handler = RepoAction.select(testdef['from'])()
+        for testdefs in self.test_list:
+            for testdef in testdefs:
+                # FIXME: only run the tests defined for this test action, not all the jobs for this deployment/job
+                # This includes only running the install steps for the relevant deployment as the next deployment
+                # could be a different OS.
+                handler = RepoAction.select(testdef['from'])()
 
-            # set the full set of job YAML parameters for this handler as handler parameters.
-            handler.job = self.job
-            handler.parameters = testdef
-            # store the correct test_name before incrementing the local index dict
-            handler.parameters['test_name'] = "%s_%s" % (len(list(index.keys())), handler.parameters['name'])
+                # set the full set of job YAML parameters for this handler as handler parameters.
+                handler.job = self.job
+                handler.parameters = testdef
+                # store the correct test_name before incrementing the local index dict
+                handler.parameters['test_name'] = "%s_%s" % (len(list(index.keys())), handler.parameters['name'])
 
-            # copy details into the overlay, one per handler but the same class each time.
-            overlay = TestOverlayAction()
-            overlay.job = self.job
-            overlay.parameters = testdef
-            overlay.parameters['test_name'] = handler.parameters['test_name']
-            overlay.test_uuid = handler.uuid
+                # copy details into the overlay, one per handler but the same class each time.
+                overlay = TestOverlayAction()
+                overlay.job = self.job
+                overlay.parameters = testdef
+                overlay.parameters['test_name'] = handler.parameters['test_name']
+                overlay.test_uuid = handler.uuid
 
-            # add install handler - uses job parameters
-            installer = TestInstallAction()
-            installer.job = self.job
-            installer.parameters = testdef
-            installer.parameters['test_name'] = handler.parameters['test_name']
-            installer.test_uuid = handler.uuid
+                # add install handler - uses job parameters
+                installer = TestInstallAction()
+                installer.job = self.job
+                installer.parameters = testdef
+                installer.parameters['test_name'] = handler.parameters['test_name']
+                installer.test_uuid = handler.uuid
 
-            # add runsh handler - uses job parameters
-            runsh = TestRunnerAction()
-            runsh.job = self.job
-            runsh.parameters = testdef
-            runsh.parameters['test_name'] = handler.parameters['test_name']
-            runsh.test_uuid = handler.uuid
+                # add runsh handler - uses job parameters
+                runsh = TestRunnerAction()
+                runsh.job = self.job
+                runsh.parameters = testdef
+                runsh.parameters['test_name'] = handler.parameters['test_name']
+                runsh.test_uuid = handler.uuid
 
-            index[len(list(index.keys()))] = handler.parameters['name']
-            self.internal_pipeline.add_action(handler)
+                index[len(list(index.keys()))] = handler.parameters['name']
+                self.internal_pipeline.add_action(handler)
 
-            # add overlay handlers to the pipeline
-            self.internal_pipeline.add_action(overlay)
-            self.internal_pipeline.add_action(installer)
-            self.internal_pipeline.add_action(runsh)
+                # add overlay handlers to the pipeline
+                self.internal_pipeline.add_action(overlay)
+                self.internal_pipeline.add_action(installer)
+                self.internal_pipeline.add_action(runsh)
 
     def validate(self):
         """
@@ -543,7 +601,7 @@ class TestDefinitionAction(TestAction):
         return connection
 
 
-class TestOverlayAction(TestAction):
+class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attributes
 
     def __init__(self):
         """
@@ -565,7 +623,7 @@ class TestOverlayAction(TestAction):
     def validate(self):
         if 'path' not in self.parameters:
             self.errors = "Missing path in parameters"
-        test_list = [action['test']['definitions'] for action in self.job.parameters['actions'] if 'test' in action.keys()]
+        test_list = identify_test_definitions(self.job.parameters)
         for testdef in test_list[0]:
             if 'parameters' in testdef:  # optional
                 if type(testdef['parameters']) is not dict:

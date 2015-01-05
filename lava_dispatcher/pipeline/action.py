@@ -255,6 +255,8 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             signal.signal(signal.SIGINT, signal.default_int_handler)
             raise KeyboardInterrupt
 
+        # FIXME: implement the job-wide timeout
+        # FIXME: implement action timeouts when there is no connection.
         for action in self.actions:
             # Open the logfile and create the log handler
             action.logger = YamlLogger(action.name)
@@ -453,8 +455,12 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         if self.job:
             if self.name in self.job.overrides['timeouts']:
                 self.timeout = Timeout(self.name, self.job.overrides['timeouts'][self.name])
+        if 'failure_retry' in self.parameters and 'repeat' in self.parameters:
+            self.errors = "Unable to use repeat and failure_retry, use a repeat block"
         if 'failure_retry' in self.parameters:
             self.max_retries = self.parameters['failure_retry']
+        if 'repeat' in self.parameters:
+            self.max_retries = self.parameters['repeat']
 
     @parameters.setter
     def parameters(self, data):
@@ -668,6 +674,12 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
 
 
 class RetryAction(Action):
+    """
+    RetryAction support failure_retry and repeat.
+    failure_retry returns upon the first success.
+    repeat continues the loop whether there is a failure or not.
+    Only the top level Boot and Test actions support 'repeat' as this is set in the job.
+    """
 
     def __init__(self):
         super(RetryAction, self).__init__()
@@ -688,7 +700,9 @@ class RetryAction(Action):
         while self.retries < self.max_retries:
             try:
                 new_connection = self.internal_pipeline.run_actions(connection)
-                return new_connection
+                if 'repeat' not in self.parameters:
+                    # failure_retry returns on first success. repeat returns only at max_retries.
+                    return new_connection
             except (JobError, InfrastructureError, TestError) as exc:
                 self.retries += 1
                 self.errors = "%s failed: %d of %d attempts. '%s'" % (self.name, self.retries, self.max_retries, exc)
@@ -697,7 +711,9 @@ class RetryAction(Action):
                 time.sleep(self.sleep)
         if not self.valid:
             self.errors = "%s retries failed for %s" % (self.retries, self.name)
+        return connection
 
+    # FIXME: needed?
     def __call__(self, connection):
         self.run(connection)
 

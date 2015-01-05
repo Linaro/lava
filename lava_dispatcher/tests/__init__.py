@@ -17,6 +17,7 @@ def test_suite():
         'lava_dispatcher.pipeline.test.test_multi',
         'lava_dispatcher.pipeline.test.test_kexec',
         #  'lava_dispatcher.pipeline.test.test_utils',
+        'lava_dispatcher.pipeline.test.test_repeat',
     ]
     loader = unittest.TestLoader()
     return loader.loadTestsFromNames(module_names)

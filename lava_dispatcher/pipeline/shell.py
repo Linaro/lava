@@ -196,6 +196,7 @@ class ExpectShellSession(Action):
         self.description = "Wait for a shell"
 
     def run(self, connection, args=None):
+        connection = super(ExpectShellSession, self).run(connection, args)
         self.logger.debug("%s: Waiting for prompt" % self.name)
         connection.wait()  # FIXME: should this be a regular RetryAction operation?
         return connection
