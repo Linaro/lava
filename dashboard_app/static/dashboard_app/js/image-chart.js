@@ -240,6 +240,15 @@ $(document).ready(function () {
                 'id="is_legend_visible_' + this.chart_id +
                 '" checked="checked"/></span>');
 
+        // Add delta reporting checkbox.
+        $("#filter_links_container_" + this.chart_id).append(
+            '<span class="toggle-delta"><label for="is_delta_' +
+                this.chart_id + '">Delta reporting</label></span>');
+        $("#filter_links_container_" + this.chart_id).append(
+            '<span class="toggle-checkbox"><input type="checkbox" ' +
+                'id="is_delta_' + this.chart_id +
+                '" checked="checked"/></span>');
+
         $("#filter_links_container_" + this.chart_id).append(
             '<span class="chart-save-img">' +
                 '<a id="chart_menu_' + this.chart_id + '"' +
@@ -617,6 +626,11 @@ $(document).ready(function () {
             chart.update_settings();
         });
 
+        $("#is_delta_"+this.chart_id).change(function() {
+            chart.update_plot();
+            chart.update_settings();
+        });
+
         $("#has_subscription_link_"+this.chart_id).click(function() {
             $("#has_subscription_" + chart.chart_id).val(
                 $("#has_subscription_" + chart.chart_id).val() != "true");
@@ -637,6 +651,10 @@ $(document).ready(function () {
             if (this.chart_data.user.is_legend_visible == false) {
                 $("#is_legend_visible_" + this.chart_id).prop("checked",
                                                               false);
+            }
+            if (this.chart_data.user.is_delta == false) {
+                $("#is_delta_" + this.chart_id).prop("checked",
+                                                     false);
             }
 
             this.set_subscription_link(this.chart_data.user.has_subscription);
@@ -666,6 +684,7 @@ $(document).ready(function () {
                 csrfmiddlewaretoken: csrf_token,
                 start_date: $("#start_date_" + this.chart_id).val(),
                 is_legend_visible: $("#is_legend_visible_" + this.chart_id).prop("checked"),
+                is_delta: $("#is_delta_" + this.chart_id).prop("checked"),
                 has_subscription: $("#has_subscription_" + this.chart_id).val(),
                 visible_chart_test_id: visible_chart_test_id,
                 visible_attribute_name: attr_name,
@@ -948,7 +967,7 @@ $(document).ready(function () {
             test_filter_id = sorted_filter_ids[i];
 
             // Delta reporting, calculate diferences.
-            if (this.chart_data["is_delta"]) {
+            if ($("#is_delta_" + this.chart_id).prop("checked")) {
                 var new_data = [];
                 var new_meta_keys = [];
                 var tooltips = [];

@@ -2012,10 +2012,6 @@ class ImageReportChart(models.Model):
         default=False,
         verbose_name='Data table visible')
 
-    is_delta = models.BooleanField(
-        default=False,
-        verbose_name='Delta reporting')
-
     is_percentage = models.BooleanField(
         default=False,
         verbose_name='Percentage')
@@ -2096,7 +2092,6 @@ class ImageReportChart(models.Model):
             chart_data[field] = getattr(self, field)
 
         chart_data["report_name"] = self.image_report.name
-        chart_data["is_delta"] = self.is_delta
 
         chart_data["test_data"] = []
         return chart_data
@@ -2108,6 +2103,7 @@ class ImageReportChart(models.Model):
             chart_user = ImageChartUser.objects.get(image_chart=self, user=user)
             chart_data["start_date"] = chart_user.start_date
             chart_data["is_legend_visible"] = chart_user.is_legend_visible
+            chart_data["is_delta"] = chart_user.is_delta
             chart_data["has_subscription"] = chart_user.has_subscription
 
         except ImageChartUser.DoesNotExist:
@@ -2758,6 +2754,10 @@ class ImageChartUser(models.Model):
     has_subscription = models.BooleanField(
         default=False,
         verbose_name='Subscribed to target goal')
+
+    is_delta = models.BooleanField(
+        default=False,
+        verbose_name='Delta reporting')
 
 
 class ImageChartTestUser(models.Model):

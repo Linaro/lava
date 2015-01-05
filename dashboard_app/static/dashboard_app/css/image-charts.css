@@ -147,11 +147,11 @@ div.selector .selector-chosen select {
     margin-top: 3px;
 }
 
-.toggle-percentage {
-    margin-left: 50px;
+.toggle-legend {
+    margin-left: 30px;
 }
 
-.toggle-legend {
+.toggle-delta {
     margin-left: 30px;
 }
 
