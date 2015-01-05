@@ -585,8 +585,8 @@ class TestOverlayAction(TestAction):
     def handle_parameters(self, testdef):
 
         ret_val = ['###default parameters from yaml###\n']
-        if 'parameters' in testdef:
-            for def_param_name, def_param_value in list(testdef['parameters'].items()):
+        if 'params' in testdef:
+            for def_param_name, def_param_value in list(testdef['params'].items()):
                 if def_param_name is 'yaml_line':
                     continue
                 ret_val.append('%s=\'%s\'\n' % (def_param_name, def_param_value))
