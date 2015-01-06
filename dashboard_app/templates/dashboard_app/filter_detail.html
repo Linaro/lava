@@ -49,8 +49,6 @@
 
 <h3 class="modal-header">Filter matches</h3>
 
-{% render_table filter_table %}
-
 <p>
   <button class="btn btn btn-primary" id="compare-button">Compare builds</button>
   <span id="first-prompt" style="display:none">
@@ -63,6 +61,8 @@
     <a class="btn btn btn-success" href="#">View comparison</a> of <span id="p3-build-1">XXX</span> with build <span id="p3-build-2">XXX</span>.
   </span>
 </p>
+
+{% render_table filter_table %}
 
 {% endblock %}
 
