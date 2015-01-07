@@ -103,7 +103,7 @@ being handed off to cope with particular tools:
 .. _code_flow:
 
 Following the code flow
-=======================
+***********************
 
 +------------------------------------------+-------------------------------------------------+
 |                Filename                  |   Role                                          |
@@ -505,7 +505,7 @@ require that the information is provided and **diagnose** the actual
 information if the attempt to use the specified information fails.
 
 Guidance
---------
+========
 
 #. If the command is to run inside a deployment, **require** that the
    **full** command line can be specified by the test writer. Remember:
@@ -873,8 +873,244 @@ inside an image do not change as the refactored dispatcher does **not**
 break up or relay the partitions. Therefore, the UUIDs of partitions inside
 the image **MUST** be declared by the job submissions.
 
+Connections
+***********
+
+A Connection is approximately equivalent to an automated login session
+on the device or within a virtual machine hosted by a device.
+
+Each connection needs to be supported by a TestJob, the output of each
+connection is viewed as the output of that TestJob.
+
+Typically, LAVA provides a serial connection to the board but other
+connections can be supported, including SSH or USB. Each connection
+method needs to be supported by software in LAVA, services within the
+software running on the device and other infrastructure, e.g. a serial
+console server.
+
+.. note:: :ref:`defaults` - although ``serial`` is the traditional and
+          previously default way of connecting to LAVA devices, it must be
+          specified in the test job YAML.
+
+The action which is responsible for creating the connection must
+specify the connection method.
+
+.. code-block:: yaml
+
+    - boot:
+        method: qemu
+        media: tmpfs
+        connection: serial
+        failure_retry: 2
+
+Support for particular connection methods needs to be implemented at a
+device level, so the device also declares support for particular
+connection methods.
+
+.. code-block:: yaml
+
+  boot:
+    connections:
+      - serial
+      - ssh
+    methods:
+      qemu:
+
+Most devices are capable of supporting SSH connections, as long as:
+
+* the device can be configured to raise a usable network interface
+* the device is booted into a suitable software environment
+
+USB connections are planned for Android support but are not yet
+implemented.
+
+SSH as the primary connection
+=============================
+
+Certain devices can support SSH as the primary connection - such
+devices are not powered off at the end of a TestJob and provide
+persistence for certain tasks. (This is the equivalent of the
+dummy-ssh device in the old dispatcher.) These devices declare this
+support in the device configuration:
+
+.. code-block:: yaml
+
+  deploy:
+    # list of deployment methods which this device supports
+    methods:
+      usb
+      sata
+      tftp
+      ssh
+  boot:
+    connections:
+      - serial
+      - ssh
+    methods:
+      qemu:
+
+.. note:: SSH as primary connection is a deployment method, the device
+          then supports SSH as the boot method which simply acts as a
+          login.
+
+The test job YAML would simply specify:
+
+.. code-block:: yaml
+
+    - deploy:
+        to: ssh
+        os: debian
+
+    - boot:
+        method: ssh
+        connection: ssh
+        failure_retry: 2
+
+Security
+--------
+
+A primary SSH connection from the dispatcher can be controlled through
+the device configuration, allowing the use of a private SSH key which
+is at least hidden from test writers. (:ref:`essential_components`).
+
+The key is declared as a path on the dispatcher, so is device-specific.
+Each device may have a unique key - all keys still need to not have
+any passphrase - as long as all devices supported by the SSH host have
+the relevant keys configured as authorized for login as root.
+
+.. _persistence:
+
+Persistence
+-----------
+
+SSH deployments are persistent and this has implications, some positive,
+some negative - depending on your use case.
+
+#. **Fixed OS** - the OS you get is the OS of the device and this
+   **must not** be changed or upgraded.
+#. **Package interference** - if another user installs a conflicting
+   package, your test can **fail**.
+#. **Process interference** - another process could restart (or crash)
+   a daemon upon which your test relies, so your test will **fail**.
+#. **Reusable scripts** - scripts and utilities your test leaves behind
+   can be reused (or can interfere) with subsequent tests.
+#. **Lack of reproducibility** - an artifact from a previous test can
+   make it impossible to rely on the results of a subsquent test, leading
+   to wasted effort with false positives and false negatives.
+
+Only use persistent deployments when essential and **always** take
+great care to avoid interfering with other tests.
+
+Disposable chroot deployments
+=============================
+
+Some devices can support mechanisms like `LVM snapshots`_ which allow
+for a self-contained environment to be unpacked for a single session
+and then discarded at the end of the session. These deployments do not
+suffer the same entanglement issues as simple SSH deployments and can
+provide multiple environments, not just the OS installed on the SSH
+host system.
+
+LAVA support for disposable chroots is implemented via `schroot`_
+(forming the replacement for the dummy-schroot device in the old
+dispatcher).
+
+.. code-block:: yaml
+
+  deploy:
+    # list of deployment methods which this device supports
+    methods:
+      usb:
+      sata:
+      tftp:
+      ssh:
+      schroot:
+        - unstable
+        - trusty
+        - jessie
+  boot:
+    connections:
+      - serial
+      - ssh
+
+The test job YAML would simply specify:
+
+.. code-block:: yaml
+
+    - deploy:
+        to: ssh
+        chroot: unstable
+        os: debian
+
+    - boot:
+        method: ssh
+        connection: ssh
+        failure_retry: 2
+
+.. note:: The OS still needs to be specified, LAVA
+          :ref:`does not guess <keep_dispatcher_dumb>` based
+          on the chroot name. There is nothing to stop an schroot
+          being `named` ``testing`` but actually being upgraded or
+          replaced with something else.
+
+The deployment of an schroot involves unpacking the schroot into a
+logical volume with LVM. It is an :ref:`infrastructure_error_exception`
+if this step fails, for example if the volume group has insufficient
+available space.
+
+``schroot`` also supports directories and tarballs but LVM is recommended
+as it avoids problems of :ref:`persistence`.
+
+.. _LVM Snapshots: https://www.debian-administration.org/article/410/A_simple_introduction_to_working_with_LVM
+.. _schroot: https://tracker.debian.org/pkg/schroot
+
 Secondary connections
 *********************
+
+Secondary connections are a way to have two simultaneous connections
+to the same physical device, equivalent to two logins. Each connection
+needs to be supported by a TestJob, so a Multinode group needs to be
+created so that the output of each connection can be viewed as the output
+of a single TestJob, just as if you had two terminals. The second
+connection does not have to use the same connection method as the current
+connection and many devices can only support secondary connections over
+a network interface, for example SSH or telnet.
+
+Connection access and permissions
+=================================
+
+Connections are typically initiated by the dispatcher, so come under
+the provisions of :ref:`essential_components` criteria. This means that
+the command and options used are controlled by LAVA.
+
+Automation of a test has implications for the keys used to provide SSH
+access as these need to be created without a passphrase and the private
+key itself needs to exist as a readable file, either inside LAVA or
+inside the test image. Use a temporary or disposable key, not a key you
+could end up using on any other system.
+
+LAVA provides a default (completely insecure) private key which can be
+used for these connections. This key is installed within lava-dispatcher
+and is readable by anyone inspecting the lava-dispatcher codebase in git.
+(This has not been changed in the refactoring.)
+
+It is conceivable that a test image could be suitably configured before
+being submitted to LAVA, with a private key included inside a second job
+which deploys normally and executes the connection **instead** of
+running a test definition. However, anyone with access to the test image
+would still be able to obtain the private key. Keys generated on a per
+job basis would still be open for the lifetime of the test job itself,
+up to the job timeout specified. Whilst this could provide test writers
+with the ability to control the options and commands used to create the
+connection, any additional security is minimal and support for this has
+not been implemented, yet.
+
+Using secondary connections with VM groups
+==========================================
+
+One example of the use of a secondary connection is to launch a VM on
+a device already running a test image. This allows the test writer to
+control both the kernel on the bare metal and the kernel in the VM.
 
 The implementation of VMGroups created a role for a delayed start
 Multinode job. This would allow one job to operate over serial, publish
@@ -882,6 +1118,175 @@ the IP address, start an SSH server and signal the second job that a
 connection is ready to be established. This may be useful for situations
 where a debugging shell needs to be opened around a virtualisation
 boundary.
+
+There is an option for downloading or preparing the guest VM image on the
+host device within a test shell, prior to the VM delayed start. Alternatively,
+a deploy stage can be used which would copy a downloaded image from the
+dispatcher to the host device.
+
+Each connection is a different job in a multinode group so that the output
+of each connection is tracked separately and can be monitored separately.
+
+Sequence
+--------
+#. The host device is deployed with a test image and booted.
+#. LAVA then manages the download of the files necessary to create
+   the secondary connection.
+
+     * e.g. for QEMU, this would be a bootable image file
+#. LAVA also creates a suitable overlay containing the test definitions
+   to be run inside the virtual machine.
+#. The test image **must** start whatever servers are required to
+   provide the secondary connections, e.g. ssh. It does not matter
+   whether this is done using install steps in the test definition or
+   pre-existing packages in the test image or manual setup. The server
+   **must** be configured to allow the (insecure) LAVA automation SSH
+   private key to login as authorized - this key is available in the
+   ``/usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys``
+   directory when lava-dispatcher is installed or in the lava-dispatcher
+   `git tree <https://git.linaro.org/lava/lava-dispatcher.git/tree/HEAD:/lava_dispatcher/device/dynamic_vm_keys>`_.
+#. The test image on the host device starts a test definition over the
+   existing (typically serial) connection. At this point, the image file
+   and overlay for the guest VM are available **on the host** for the
+   host device test definition to inspect, although only the image
+   file should actually be modified.
+#. The test definition includes a signal to the LAVA :ref:`multinode_api`
+   which allows the VM to start. The signal includes an identifier for
+   which VM to start, if there is more than one.
+#. The second job in the multinode group waits until the signal is
+   received from the coordinator. Upon receipt of the signal, the
+   ``lava dispatch`` process running the second job will initiate the
+   secondary connection to the host device, e.g. over SSH, using the
+   specified private key. The connection is used to run a set of
+   commands in the test image running on the host device. It is a
+   TestError if any of these commands fail. The last of these commands
+   **must** hold the connection open for as long as the test writer
+   needs to execute the task inside the VM. Once those tasks are
+   complete, the test definition running in the test image on the host
+   device signals that the VM has completed.
+
+The test writer is given full control over the commands issued inside the
+test image on the host device, including those commands which are responsible
+for launching the VM. The test writer is also responsible for making the
+**overlay** available inside the VM. This could be by passing arguments
+to the commands to mount the overlay alongside the VM or by unpacking
+the overlay inside the VM image before calling QEMU. If set in the job
+definition, the test writer can ask LAVA to unpack the overlay inside the
+image file for the VM and this will be done on the host device before
+the host device boots the test image - however, this will require an
+extra boot of the host device, e.g. using the dynamic master support.
+
+Basic use cases
+---------------
+
+Prebuilt files can be downloaded, kernel, ramdisk, dtb, rootfs or
+complete image. These will be downloaded to the host device and the
+paths to these files substituted into the commands issued to start the
+VM, in the same way as with bootloader like u-boot. This provides support
+for tests within the VM using standard, packaged tools. To simplify
+these tests further, it is recommended to use NFS for the root
+filesystem of the host device boot - it leads to a quicker deployment
+as the files for the VM can be downloaded directly to the NFS share
+by the dispatcher. Deployments of the host device system to secondary
+media, e.g. SATA, require additional steps and the job will take
+longer to get to a point where the VM can be started.
+
+The final launch of the VM will occur using a shell script (which will
+then be preserved in the results alongside the overlay), containing the
+parsed commands.
+
+Advanced use cases
+------------------
+
+It is possible to use a test shell to build files to be used when
+launching the VM. This allows for a test shell to operate on the
+host device, building, downloading or compiling whatever files are
+necessary for the operation of the VM, directly controlled by the
+test shell.
+
+To avoid confusion and duplication, LAVA does not support downloading
+some files via the dispatcher and some via the test shell. If there
+are files needed for the test job which are not to be built or generated
+within the test shell, the test shell will need to use ``wget`` or
+``curl`` or some other tool present in the test image to obtain the
+files. This also means that LAVA is not able to verify that such
+URLs are correct during the validation of the job, so test writers need
+to be aware that LAVA will not be able to fail a job early if the URL
+is incorrect as would happen in the basic use case.
+
+Any overlay containing the test definitions and LAVA test scripts which
+are to be executed inside the VM after the VM has booted still needs to
+be downloaded from the dispatcher. The URL of this overlay (a single
+tarball containing all files in a self-contained directory) will be
+injected into the test shell files on the host device, in a similar
+way to how the :ref:`multinode_api` provides dynamic data from other
+devices in the group.
+
+The test writer is responsible for extracting this tarball so that it
+is present or is bind mounted into the root directory of the VM so that
+the scripts can be launched immediately after login.
+
+The test shell needs to create the final shell script, just as the
+basic use case does. This allows the dispatcher running the VM to connect
+to the host device and use a common interface to launch the VM in each
+use case.
+
+LAVA initiates and controls the connection to the VM, using this script,
+so that all output is tracked in the multinode job assigned to the VM.
+
+Sample job definition for the VM job
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: yaml
+
+ # second half of a new-style VM group job
+ # each connection is a different job
+ # even if only one physical device is actually powered up.
+ device_type: kvm-arm
+ job_name: wandboard-qemu
+ timeouts:
+   job:
+     minutes: 15
+   action:
+     minutes: 5
+ priority: medium
+ target_group: asd243fdgdfhgf-45645hgf
+ group_size: 2
+ parameters:
+   # the test definition on the host device manages how
+   # the overlay is applied to the VM image.
+   overlay: manual  # use automatic for LAVA to do the overlay
+ # An ID appended to the signal to start this VM to distinguish
+ # it from any other VMs which may start later or when this one
+ # completes.
+ vm_id: gdb_session
+
+ actions:
+
+  - boot:
+     # as kvm-arm, this happens in a test image via
+     # the other half of this multinode job
+     timeout:
+       minutes: 3
+     # alternative to u-boot
+     connection: ssh
+     method: vm
+     # any way to launch a vm
+     commands:
+       # full access to the commands to run on the other device
+       - qemu-system-arm -hda {IMAGE}
+     type: qemu
+
+  - test:
+     name: kvm-basic-singlenode
+     timeout:
+       minutes: 5
+     definitions:
+         - repository: git://git.linaro.org/qa/test.git
+           from: git
+           path: ubuntu/smoke-tests-basic.yaml
+           name: smoke-tests
+
 
 Device configuration design
 ***************************
