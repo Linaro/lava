@@ -219,7 +219,7 @@ class cmd_submit_results(BaseAction):
         if not all_bundles:
             main_bundle = {
                 "test_runs": [],
-                "format": "Dashboard Bundle Format 1.7"
+                "format": "Dashboard Bundle Format 1.7.1"
             }
         else:
             main_bundle = all_bundles.pop(0)

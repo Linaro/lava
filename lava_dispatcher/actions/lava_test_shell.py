@@ -801,7 +801,7 @@ class cmd_lava_test_shell(BaseAction):
         self._test_runs = []
         self._backup_bundle = {
             'test_runs': self._test_runs,
-            'format': 'Dashboard Bundle Format 1.7',
+            'format': 'Dashboard Bundle Format 1.7.1',
         }
 
     def run(self, testdef_urls=None, testdef_repos=None, timeout=-1, skip_install=None,
