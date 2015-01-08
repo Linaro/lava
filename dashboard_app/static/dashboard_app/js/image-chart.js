@@ -374,12 +374,16 @@ $(document).ready(function () {
                 table[number][test_data["test_filter_id"]] = [];
             }
 
+            measurement = parseFloat(test_data["measurement"]);
+            if (isNaN(measurement)) {
+                measurement = test_data["measurement"];
+            }
             table[number][test_data["test_filter_id"]].push({
                 "passes": test_data["passes"],
                 "pass": test_data["pass"],
                 "skip": test_data["skip"],
                 "total": test_data["total"],
-                "measurement": test_data["measurement"],
+                "measurement": measurement,
                 "attr_value": test_data["attr_value"],
                 "link": test_data["link"].replace("\\\\\\", ""),
                 "test_run_uuid": test_data["test_run_uuid"],
@@ -746,7 +750,11 @@ $(document).ready(function () {
                     }
 
                 } else if (this.chart_data["chart_type"] == "measurement") {
-                    value = row["measurement"];
+                    value = parseFloat(row["measurement"]);
+                    if (isNaN(value)) {
+                        // Ignore plot point where measurement is non-numeric.
+                        continue;
+                    }
                     tooltip = "Value: " + value;
 
                 } else if (this.chart_data["chart_type"] == "attributes") {

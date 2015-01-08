@@ -1326,11 +1326,10 @@ class TestResult(models.Model):
             (RESULT_UNKNOWN, _(u"Unknown outcome")))
     )
 
-    measurement = models.DecimalField(
+    measurement = models.CharField(
         blank=True,
-        decimal_places=10,
+        max_length=512,
         help_text=_(u"Arbitrary value that was measured as a part of this test."),
-        max_digits=20,
         null=True,
         verbose_name=_(u"Measurement"),
     )
