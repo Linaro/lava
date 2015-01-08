@@ -59,18 +59,18 @@ def handle_device_parameters(job_data, name, parameters):
             retval[job_data['method']] = [
                 method for method in parameters['actions'][name]['methods'] if job_data['method'] in method
             ][0]
-        elif job_data['method'] in parameters['actions'][name]['methods'][0]:
-            # method has parameters, return first match
+        elif type(parameters['actions'][name]['methods'] == list):
             retval = [
                 method for method in parameters['actions'][name]['methods'] if job_data['method'] in method
             ][0]
+            # print retval
         else:
-            raise RuntimeError("Invalid device configuration for %s" % name)
+            raise RuntimeError("no method parameters for %s %s" % (name, job_data['method']))
     elif 'to' in job_data and 'methods' in parameters['actions'][name]:
         # FIXME: rationalise the use of deploy methods to match job data against device data, as with boot
         retval = parameters['actions'][name]
     else:
-        raise RuntimeError("Invalid device configuration for %s" % name)
+        raise RuntimeError("Specified method does not match device methods for %s" % name)
     return retval
 
 

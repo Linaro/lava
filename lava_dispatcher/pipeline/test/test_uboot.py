@@ -86,7 +86,9 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         )
         self.assertEqual(job.device.parameters['commands'].get('interrupt', ' '), ' ')
         items = []
-        items.extend([item['u-boot'] for item in job.device.parameters['actions']['boot']['methods']])
+        for item in job.device.parameters['actions']['boot']['methods']:
+            if 'u-boot' in item:
+                items.extend([item['u-boot']])
         for item in items:
             self.assertEqual(item['parameters'].get('bootloader_prompt', None), 'U-Boot')
 
@@ -95,7 +97,11 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
-        self.assertIn('u-boot', [item.keys() for item in job.device.parameters['actions']['boot']['methods']][0])
+        methods = {}
+        for item in job.device.parameters['actions']['boot']['methods']:
+            if 'u-boot' in item:
+                methods.update(item)
+        self.assertIn('u-boot', methods)
         for action in job.pipeline.actions:
             action.validate()
             if isinstance(action, UBootAction):
@@ -108,17 +114,13 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         # FIXME: a more elegant introspection of the pipeline would be useful here
         tftp = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         types = []
-        items = []
-        items.extend([item['u-boot'] for item in job.device.parameters['actions']['boot']['methods']])
-        items = items[0]
         for action in tftp.internal_pipeline.actions:
             types.extend([action.key for action in action.internal_pipeline.actions if hasattr(action, 'key') and action.key != 'parameters'])
         for command in types:
             if command == 'ramdisk':
-                self.assertIsNotNone(items.get(command, None))
-                # print items[command]
+                self.assertIsNotNone(methods['u-boot'].get(command, None))
             else:
-                self.assertIsNone(items.get(command, None))
+                self.assertIsNone(methods['u-boot'].get(command, None))
 
     def test_overlay_action(self):  # pylint: disable=too-many-locals
         parameters = {
@@ -159,7 +161,11 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         kernel = parameters['actions']['deploy']['kernel']
         ramdisk = parameters['actions']['deploy']['ramdisk']
         dtb = parameters['actions']['deploy']['dtb']
-        for line in device.parameters['actions']['boot']['methods'][0]['u-boot']['ramdisk']['commands']:
+        lines = {}
+        for line in device.parameters['actions']['boot']['methods']:
+            if 'u-boot' in line:
+                lines.update(line)
+        for line in lines['u-boot']['ramdisk']['commands']:
             line = line.replace('{SERVER_IP}', ip_addr)
             # the addresses need to be hexadecimal
             line = line.replace('{KERNEL_ADDR}', kernel_addr)

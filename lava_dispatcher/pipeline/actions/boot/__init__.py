@@ -41,6 +41,7 @@ class BootAction(RetryAction):
     name = 'boot'
 
 
+# FIXME: needs a unit test to check YAML parameter syntax
 class AutoLoginAction(Action):
     """
     Automatically login on the device.

@@ -1,0 +1,70 @@
+# Kexec example YAML to support unit tests, not a working job.
+
+device_type: beaglebone-black
+
+job_name: uboot-kexec-unittest-only
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  extract-nfsrootfs:
+    seconds: 90
+  call-kexec:
+    seconds: 45  # artificially short
+priority: medium
+
+actions:
+  - deploy:
+     timeout:
+       minutes: 2
+     to: tftp
+     # a real job would need different files, these do *not* support kexec at runtime
+     # this YAML is just an example.
+     kernel: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+     # ramdisk: some file somewhere ...
+     nfsrootfs: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
+     os: debian
+     dtb: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+
+  - boot:
+     method: u-boot
+     commands: nfs
+     type: bootz
+
+  - test:
+      failure_retry: 3
+      name: download-kexec-files
+      definitions:
+          - repository:
+              metadata:
+                  format: Lava-Test Test Definition 1.0
+                  name: downloader
+                  description: "Downloading files for kexec"
+                  os:
+                      - ubuntu
+              install:
+                 deps:
+                   - wget
+                   - kexec-tools
+              run:
+                  steps:
+                      - wget -O /home/vmlinux http://people.linaro.org/~neil.williams/bbb/vmlinux
+                      - wget -O /home/dtb http://people.linaro.org/~neil.williams/bbb/am335x-boneblack.dtb
+            from: inline
+            name: downloader
+            path: inline/download.yaml
+
+  - boot:
+     method: kexec
+     # kernel, dtb, initrd and kernel-config are optional
+     # if necessary, list all commands and options in the options list
+     kernel: /home/vmlinux  # passed to --load
+     dtb: /home/dtb  # passed to --dtb
+     initrd: /home/initrd  # passed to --initrd, not included in the deploy stage of this file, just for the test.
+     command: /sbin/kexec  # can be a locally built
+     # this may be a glob as it is passed to zgrep.
+     kernel-config: /boot/config-3.16.0-4-armmp
+     boot_message: Booting Linux
+     options:
+       - "--reuse-cmdline"
