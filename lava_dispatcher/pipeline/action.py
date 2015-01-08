@@ -125,7 +125,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         if self.job:  # should only be None inside the unit tests
             action.job = self.job
         if self.parent:  # action
-            self.children.update({self: self.actions})
+            self.children[self] = self.actions
             self.parent.pipeline = self
         else:
             action.level = "%s" % (len(self.actions))
@@ -537,7 +537,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         #     self.env = {'http_proxy': self.job.context.config.lava_proxy,
         #                 'https_proxy': self.job.context.config.lava_proxy}
         self.env = os.environ
-        self.env.update({"LC_ALL": "C.UTF-8"})
+        self.env["LC_ALL"] = "C.UTF-8"
         if env:
             self.env.update(env)
         try:

@@ -108,8 +108,8 @@ class TestMultiDeploy(unittest.TestCase):  # pylint: disable=too-many-public-met
         counts = {}
         for action_data in self.parsed_data['actions']:
             for name in action_data:
-                count = counts.setdefault(name, 1)
-                if counts.get(name, 0) >= 2:
+                counts.setdefault(name, 1)
+                if counts[name] >= 2:
                     pipeline.add_action(ResetContext())
                 parameters = handle_device_parameters(action_data[name], name, device.parameters)
                 parameters.update(action_data[name])
@@ -118,7 +118,7 @@ class TestMultiDeploy(unittest.TestCase):  # pylint: disable=too-many-public-met
                     {'common': {}},
                     test_deploy.action.data
                 )
-                counts.update({name: count + 1})
+                counts[name] += 1
         # check that only one action has the example set
         self.assertEqual(
             ['nowhere'],

@@ -56,9 +56,9 @@ def handle_device_parameters(job_data, name, parameters):
     if 'method' in job_data and 'methods' in parameters['actions'][name]:
         # distinguish between methods with and without parameters in the YAML
         if job_data['method'] in parameters['actions'][name]['methods']:
-            retval.update({job_data['method']: [
+            retval[job_data['method']] = [
                 method for method in parameters['actions'][name]['methods'] if job_data['method'] in method
-            ][0]})
+            ][0]
         elif job_data['method'] in parameters['actions'][name]['methods'][0]:
             # method has parameters, return first match
             retval = [
@@ -150,8 +150,8 @@ class JobParser(object):
             line = action_data.pop('yaml_line', None)
             for name in action_data:
                 if type(action_data[name]) is dict:  # FIXME: commands are not fully implemented & may produce a list
-                    action_data[name].update({'default_action_timeout': self.context['default_action_duration']})
-                    action_data[name].update({'default_test_timeout': self.context['default_test_duration']})
+                    action_data[name]['default_action_timeout'] = self.context['default_action_duration']
+                    action_data[name]['default_test_timeout'] = self.context['default_test_duration']
                 counts.setdefault(name, 1)
                 if name == "deploy":
                     # reset the context before adding a second deployment and again before third etc.
@@ -160,7 +160,7 @@ class JobParser(object):
                     # set parameters specified in the device configuration, allow job to override.
                     parameters = handle_device_parameters(action_data[name], name, device.parameters)
                     parameters.update(action_data[name])  # pass the job parameters to the instance
-                    parameters.update({'deployment_data': get_deployment_data(parameters.get('os', ''))})
+                    parameters['deployment_data'] = get_deployment_data(parameters.get('os', ''))
                     # allow the classmethod to check the parameters
                     deploy = Deployment.select(device, action_data[name])(pipeline, parameters)
                     deploy.action.yaml_line = line

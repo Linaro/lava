@@ -155,7 +155,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         fname, _ = self._url_to_fname_suffix(self.path, compression)
 
         self.data.setdefault('download_action', {self.key: {}})
-        self.data['download_action'].update({self.key: {'file': fname}})
+        self.data['download_action'][self.key] = {'file': fname}
 
         if compression:
             if compression not in ['gz', 'bz2', 'xz']:

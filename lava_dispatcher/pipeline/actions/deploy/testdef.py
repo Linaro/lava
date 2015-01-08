@@ -133,30 +133,21 @@ class RepoAction(Action):  # pylint: disable=too-many-instance-attributes
         The Connection stores raw results in the same test dict.
         The main TestAction can then process the results.
         """
-        self.data['test'][self.uuid].update({
-            'testdef_metadata': {
-                'os': testdef['metadata'].get('os', ''),
-                'devices': testdef['metadata'].get('devices', ''),
-                'environment': testdef['metadata'].get('environment', ''),
-                'branch_vcs': vcs_name,
-                'project_name': testdef['metadata']['name'],
-            }
-        })
+        self.data['test'][self.uuid]['testdef_metadata'] = \
+            {'os': testdef['metadata'].get('os', ''),
+             'devices': testdef['metadata'].get('devices', ''),
+             'environment': testdef['metadata'].get('environment', ''),
+             'branch_vcs': vcs_name,
+             'project_name': testdef['metadata']['name']}
 
         if commit_id is not None:
-            self.data['test'][self.uuid]['testdef_metadata'].update({
-                'commit_id': commit_id,
-            })
+            self.data['test'][self.uuid]['testdef_metadata']['commit_id'] = commit_id
 
         if 'parse' in testdef:
             pattern = testdef['parse'].get('pattern', '')
         else:
             pattern = self.default_pattern
-        self.data['test'][self.uuid].update({
-            'testdef_pattern': {
-                'pattern': pattern,
-            }
-        })
+        self.data['test'][self.uuid]['testdef_pattern'] = {'pattern': pattern}
 
 
 class GitRepoAction(RepoAction):
