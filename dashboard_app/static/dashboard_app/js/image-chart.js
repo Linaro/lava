@@ -446,9 +446,9 @@ $(document).ready(function () {
                     uuid = cell["test_run_uuid"];
                     relative_index_str = "";
                     if (cell["measurement"]) {
-                        arr = cell["link"].split("/")
-                        relative_index = arr[arr.length-2]
-                        relative_index_str = 'data-relative_index="' + relative_index +'"'
+                        arr = cell["link"].split("/");
+                        relative_index = arr[arr.length-2];
+                        relative_index_str = 'data-relative_index="' + relative_index +'"';
                     }
 
                     table_body += '<td class="' + cls + '" data-chart-id="' +
@@ -460,10 +460,12 @@ $(document).ready(function () {
                             cell["total"] + '</a>';
                     } else if (this.chart_data["chart_type"] == "measurement") {
                         table_body += '<a target="_blank" href="' +
-                            cell["link"] + '">' + cell["measurement"] + '</a>';
+                            cell["link"] + '">' +
+                            cell["measurement"].toFixed(2) + '</a>';
                     } else if (this.chart_data["chart_type"] == "attributes") {
                         table_body += '<a target="_blank" href="' +
-                            cell["link"] + '">' + cell["attr_value"] + '</a>';
+                            cell["link"] + '">' +
+                            cell["attr_value"].toFixed(2) + '</a>';
                     }
 
                     table_body += '<span class="bug-link-container">' +
