@@ -145,6 +145,8 @@ This then matches the python class structure::
 The class defines the list of Action classes needed to implement this
 deployment. See also :ref:`dispatcher_actions`.
 
+.. _pipeline_construction:
+
 Pipeline construction and flow
 ==============================
 
@@ -181,6 +183,8 @@ Pipeline construction and flow
 #. Job ends, check for errors
 #. Completed pipeline is available.
 
+.. _using_strategy_classes:
+
 Using strategy classes
 ----------------------
 
@@ -209,6 +213,9 @@ a different strategy, a select function is preferable. A select handler
 allows the pipeline to contain only classes supporting git repositories
 when only git repositories are in use for that job.
 
+The list of available strategies can be determined in the codebase from
+the module imports in the ``strategies.py`` file for each action type.
+
 This results in more classes but a cleaner (and more predictable)
 pipeline construction.
 
@@ -236,6 +243,11 @@ test job log.
 Pipeline error handling
 =======================
 
+.. _runtime_error_exception:
+
+RuntimeError Exception
+----------------------
+
 Runtime errors include:
 
 #. Parser fails to handle device configuration
@@ -247,10 +259,30 @@ Runtime errors include:
 Each runtime error is a bug in the code - wherever possible, implement
 a unit test to prevent regressions.
 
+.. _infrastructure_error_exception:
+
+InfrastructureError Exception
+-----------------------------
+
+Infrastructure errors include:
+
+#. Missing dependencies on the dispatcher
+#. Device configuration errors
+
+.. _job_error_exception:
+
+JobError Exception
+------------------
+
 Job errors include:
 
 #. Failed to find the specified URL.
 #. Failed in an operation to create the necessary extensions.
+
+.. _test_error_exception:
+
+TestError Exception
+-------------------
 
 Test errors include:
 

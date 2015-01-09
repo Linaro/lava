@@ -702,6 +702,22 @@ Example python code:
     def test_function(self):
         print "Hello world"
 
+Group similar operations
+========================
+
+When using a connection to a device, group calls over that connection to
+calls which are expected to return within a consistent timeout for that
+class. If the final command from the class starts a longer running process,
+e.g. boot, set the connection prompt to look for a message which will be
+seen on that connection within a similar timeframe to all the other calls
+made by that class. This allows test writers to correctly choose the
+timeout to extend.
+
+Add documentation
+=================
+
+Add to the documentation when adding new classes which implement new
+dispatcher actions, parameters or behaviour.
 
 Online YAML checker
 ===================

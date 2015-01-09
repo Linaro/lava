@@ -89,3 +89,4 @@ Developer guides
    dispatcher-design.rst
    dispatcher-format.rst
    dispatcher-testing.rst
+   dispatcher-actions2.rst
