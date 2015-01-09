@@ -193,10 +193,10 @@ class UBootInterrupt(Action):
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
         connection.prompt_str = UBOOT_AUTOBOOT_PROMPT
         # command = self.job.device.parameters['commands'].get('interrupt', '\n')
-        connection.wait()
+        self.wait(connection)
         connection.sendline(' \n')
         connection.prompt_str = self.parameters['u-boot']['parameters']['bootloader_prompt']
-        connection.wait()
+        self.wait(connection)
         return connection
 
 
@@ -354,7 +354,7 @@ class UBootCommandsAction(Action):
         connection.timeout = self.timeout
         self.logger.debug("Changing prompt to %s" % self.prompt)
         for line in self.data['u-boot']['commands']:
-            connection.wait()
+            self.wait(connection)
             connection.sendline(line)
             connection.wait()
         # allow for auto_login

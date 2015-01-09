@@ -91,7 +91,10 @@ def get_deployment_tests(parameters, yaml_line):
     return deploy
 
 
-class RepoAction(Action):  # pylint: disable=too-many-instance-attributes
+# pylint:disable=too-many-public-methods,too-many-instance-attributes,too-many-locals,too-many-branches
+
+
+class RepoAction(Action):
 
     def __init__(self):
         super(RepoAction, self).__init__()

@@ -141,7 +141,8 @@ class JobParser(object):
                 job.overrides['timeouts'][override] = Timeout.parse(data['timeouts'][override])
 
     # FIXME: add a validate() function which checks against a Schema as a completely separate step.
-    def parse(self, content, device, output_dir=None):  # pylint: disable=too-many-locals,too-many-branches
+    # pylint: disable=too-many-locals,too-many-statements
+    def parse(self, content, device, output_dir=None):
         self.loader = yaml.Loader(content)
         self.loader.compose_node = self.compose_node
         self.loader.construct_mapping = self.construct_mapping

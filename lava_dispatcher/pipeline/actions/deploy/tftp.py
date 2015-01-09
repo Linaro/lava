@@ -74,7 +74,7 @@ class Tftp(Deployment):
         return False
 
 
-class TftpAction(DeployAction):
+class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
     def __init__(self):
         super(TftpAction, self).__init__()

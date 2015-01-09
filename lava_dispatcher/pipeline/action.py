@@ -105,7 +105,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             if parent.job:
                 self.job = parent.job
 
-    def _check_action(self, action):
+    def _check_action(self, action):  # pylint: disable=no-self-use
         if not action or not issubclass(type(action), Action):
             raise RuntimeError("Only actions can be added to a pipeline: %s" % action)
         if isinstance(action, DiagnosticAction):
@@ -151,7 +151,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         # getting the parameters.
         action.parameters = parameters
 
-    def _generate(self, actions_list):
+    def _generate(self, actions_list):  # pylint: disable=no-self-use
         actions = iter(actions_list)
         while actions:
             action = next(actions)
@@ -241,7 +241,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         # Diagnosis is not allowed to alter the connection, do not use the return value.
         return None
 
-    def run_actions(self, connection, args=None):
+    def run_actions(self, connection, args=None):  # pylint: disable=too-many-branches,too-many-statements
 
         def cancelling_handler(*args):  # pylint: disable=unused-argument
             """
@@ -255,9 +255,20 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             signal.signal(signal.SIGINT, signal.default_int_handler)
             raise KeyboardInterrupt
 
-        # FIXME: implement the job-wide timeout
-        # FIXME: implement action timeouts when there is no connection.
+        timeout_start = time.time()
         for action in self.actions:
+            if self.job and self.job.timeout and time.time() > timeout_start + self.job.timeout.duration:
+                # affects all pipelines, including internal
+                # the action which overran the timeout has been allowed to complete.
+                name = self.job.parameters.get('job_name', '?')
+                msg = "Job '%s' timed out after %s seconds" % (name, int(self.job.timeout.duration))
+                action.errors = msg
+                final = self.actions[-1]
+                if final.name == "finalize":
+                    final.run(connection, None)
+                else:
+                    raise RuntimeError("Invalid job pipeline - no finalize action to run after job timeout.")
+                raise JobError(msg)
             # Open the logfile and create the log handler
             action.logger = YamlLogger(action.name)
             action.logger.set_handler(get_yaml_handler(action.log_filename))
@@ -268,9 +279,15 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 if not self.parent:
                     signal.signal(signal.SIGINT, cancelling_handler)
                 start = time.time()
-                new_connection = action.run(connection, args)
+                if not connection:
+                    with action.timeout.action_timeout():
+                        new_connection = action.run(connection, args)
+                    # clear the timeout alarm, the action has returned
+                    signal.alarm(0)
+                else:
+                    new_connection = action.run(connection, args)
                 action.elapsed_time = time.time() - start
-                action.logger.debug("duration: %.02f" % action.elapsed_time)
+                action.logger.debug("%s duration: %.02f" % (action.name, action.elapsed_time))
                 if action.results:
                     action.logger.debug({"results": action.results})
                 if new_connection:
@@ -451,6 +468,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
             raise RuntimeError("Action parameters need to be a dictionary")
         if 'timeout' in self.parameters:
             self.timeout = Timeout(self.name, Timeout.parse(self.parameters['timeout']))
+        else:
+            self.timeout.name = self.name
         # only unit tests should have actions without a pointer to the job.
         if self.job:
             if self.name in self.job.overrides['timeouts']:
@@ -650,7 +669,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
                 data[name] = content
         return data
 
-    def get_common_data(self, ns, key, deepcopy=True):
+    def get_common_data(self, ns, key, deepcopy=True):  # pylint: disable=invalid-name
         """
         Get a common data value from the specified namespace using the specified key.
         By default, returns a deep copy of the value instead of a reference to allow actions to
@@ -663,7 +682,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         value = self.data['common'][ns].get(key, None)
         return copy.deepcopy(value) if deepcopy else value
 
-    def set_common_data(self, ns, key, value):
+    def set_common_data(self, ns, key, value):  # pylint: disable=invalid-name
         """
         Storage for filenames (on dispatcher or on device) and other common data (like labels and ID strings)
         which are set in one Action and used in one or more other Actions elsewhere in the same pipeline.
@@ -671,6 +690,12 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         # ensure the key exists
         self.data['common'].setdefault(ns, {})
         self.data['common'][ns][key] = value
+
+    def wait(self, connection):
+        if not connection:
+            return
+        self.logger.debug("%s: Wait for prompt. %s seconds" % (self.name, int(self.timeout.duration)))
+        connection.wait()
 
 
 class RetryAction(Action):
@@ -707,7 +732,7 @@ class RetryAction(Action):
                 self.retries += 1
                 self.errors = "%s failed: %d of %d attempts. '%s'" % (self.name, self.retries, self.max_retries, exc)
                 if self.timeout:
-                    self.logger.debug("timeout: %s %s" % (self.timeout.name, self.timeout.duration))
+                    self.logger.debug(" %s: timeout. %s seconds" % (self.timeout.name, int(self.timeout.duration)))
                 time.sleep(self.sleep)
         if not self.valid:
             self.errors = "%s retries failed for %s" % (self.retries, self.name)
@@ -972,8 +997,10 @@ class Timeout(object):
     altered by the job. All timeouts are subject to a hardcoded maximum duration which
     cannot be exceeded by device_type, device or job input, only by the Action initialising
     the timeout.
+    If a connection is set, this timeout is used per pexpect operation on that connection.
+    If a connection is not set, this timeout applies for the entire run function of the action.
     """
-
+    # FIXME: move default of 30 to utils.constants.py
     def __init__(self, name, duration=30, protected=False):
         self.name = name
         self.duration = duration  # Actions can set timeouts higher than the clamp.
@@ -1007,6 +1034,15 @@ class Timeout(object):
         if not duration:
             return Timeout.default_duration()
         return duration.total_seconds()
+
+    def _timed_out(self, signum, frame):  # pylint: disable=unused-argument
+        raise JobError("%s timed out after %s seconds" % (self.name, int(self.duration)))
+
+    @contextmanager
+    def action_timeout(self):
+        signal.signal(signal.SIGALRM, self._timed_out)
+        signal.alarm(int(self.duration))
+        yield
 
     def modify(self, duration):
         """

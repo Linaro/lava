@@ -76,7 +76,7 @@ class RebootDevice(Action):
         if 'bootloader_prompt' in self.data['common']:
             self.reboot_prompt = self.get_common_data('bootloader_prompt', 'prompt')
         try:
-            connection.wait()
+            self.wait(connection)
         except TestError:
             self.logger.debug("Wait for prompt after soft reboot failed")
             self.results = {'status': "failed"}
@@ -115,7 +115,7 @@ class PDUReboot(AdjuvantAction):
         if not self._run_command(command.split(' ')):
             raise InfrastructureError("%s failed" % command)
         try:
-            connection.wait()
+            self.wait(connection)
         except TestError:
             raise InfrastructureError("%s failed to reset device" % self.key())
         self.data[PDUReboot.key()] = False

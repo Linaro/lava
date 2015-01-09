@@ -112,7 +112,10 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
 
     def run(self):
         """
-        Top level routine for the entire life of the Job.
+        Top level routine for the entire life of the Job, using the job level timeout.
+        Python only supports one alarm on SIGALRM - any Action without a connection
+        will have a default timeout which will use SIGALRM. So the overarching Job timeout
+        can only stop processing actions if the job wide timeout is exceeded.
         """
         self.pipeline.run_actions(self.connection)  # FIXME: some Deployment methods may need to set a Connection.
         # FIXME how to get rootfs with multiple deployments, and at arbitrary

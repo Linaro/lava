@@ -112,7 +112,7 @@ class TestShellAction(TestAction):
         connection.prompt_str = self.job.device.parameters['test_image_prompts']
         self.logger.debug("Setting default timeout: %s" % self.timeout.duration)
         connection.timeout = self.timeout
-        connection.wait()
+        self.wait(connection)
 
         self.match = SignalMatch()
 
@@ -212,7 +212,7 @@ class TestShellAction(TestAction):
         return False
 
     def _keep_running(self, test_connection, timeout):
-        self.logger.debug("expect timeout: %d" % timeout)
+        self.logger.debug("test shell timeout: %d seconds" % timeout)
         retval = test_connection.expect(list(self.patterns.values()), timeout=timeout)
         return self.check_patterns(list(self.patterns.keys())[retval], test_connection)
 

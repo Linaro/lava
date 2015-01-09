@@ -38,6 +38,9 @@ from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
 
 
+# pylint: disable=duplicate-code
+
+
 # Test the loading of test definitions within the deploy stage
 
 

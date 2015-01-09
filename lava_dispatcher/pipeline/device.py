@@ -52,7 +52,7 @@ class DeviceTypeParser(object):
         return data
 
 
-class NewDeviceDefaults(object):
+class NewDeviceDefaults(object):  # pylint: disable=too-few-public-methods
     """
     Placeholder for an eventual schema based on the current device config schema
     but adapted to the new device parameter structure.

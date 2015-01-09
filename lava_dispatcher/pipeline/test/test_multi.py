@@ -30,8 +30,10 @@ from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.parser import handle_device_parameters
 from lava_dispatcher.pipeline.test.test_uboot import Factory
 
+# pylint: disable=too-many-public-methods,too-few-public-methods
 
-class TestMultiDeploy(unittest.TestCase):  # pylint: disable=too-many-public-methods
+
+class TestMultiDeploy(unittest.TestCase):
 
     def setUp(self):
         self.parameters = {}
@@ -66,7 +68,7 @@ class TestMultiDeploy(unittest.TestCase):  # pylint: disable=too-many-public-met
             ]
         }
 
-    class FakeDevice(NewDevice):
+    class FakeDevice(NewDevice):  # pylint:disable=abstract-method
         def __init__(self):
             super(TestMultiDeploy.FakeDevice, self).__init__('bbb-01')
 
