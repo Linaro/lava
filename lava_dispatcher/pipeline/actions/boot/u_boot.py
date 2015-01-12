@@ -155,7 +155,10 @@ class UBootRetry(BootAction):
 
     def run(self, connection, args=None):
         connection = super(UBootRetry, self).run(connection, args)
-        # FIXME: tests with multiple boots need to be handled too.
+        self.logger.debug("Setting default test shell prompt")
+        connection.prompt_str = self.job.device['test_image_prompts']
+        connection.timeout = self.timeout
+        self.wait(connection)
         self.data['boot-result'] = 'failed' if self.errors else 'success'
         return connection
 

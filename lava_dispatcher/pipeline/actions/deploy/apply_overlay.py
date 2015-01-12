@@ -302,14 +302,14 @@ class ExtractRamdisk(Action):
         self.logger.debug(os.system("file %s" % ramdisk_compressed_data))
         cmd = ('gzip -d -f %s' % ramdisk_compressed_data).split(' ')
         if self.run_command(cmd) is not '':
-            raise RuntimeError('Unable to uncompress: %s' % ramdisk_compressed_data)
+            raise JobError('Unable to uncompress: %s - missing ramdisk-type?' % ramdisk_compressed_data)
         # filename has been changed by gzip
         ramdisk_data = os.path.join(ramdisk_dir, RAMDISK_FNAME)
         pwd = os.getcwd()
         os.chdir(extracted_ramdisk)
         cmd = ('cpio -i -F %s' % ramdisk_data).split(' ')
         if not self.run_command(cmd):
-            raise RuntimeError('Unable to uncompress: %s' % ramdisk_data)
+            raise JobError('Unable to uncompress: %s - missing ramdisk-type?' % ramdisk_data)
         os.chdir(pwd)
         # tell other actions where the unpacked ramdisk can be found
         self.data[self.name]['extracted_ramdisk'] = extracted_ramdisk  # directory

@@ -93,6 +93,9 @@ class TestShellAction(TestAction):
     def run(self, connection, args=None):
         """
         Common run function for subclasses which define custom patterns
+        boot-result is a simple sanity test and only supports the most recent boot
+        just to allow the test action to know if something has booted. Failed boots will timeout.
+        A missing boot-result could be a missing deployment for some actions.
         """
         # Sanity test: could be a missing deployment for some actions
         if "boot-result" not in self.data:

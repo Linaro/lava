@@ -92,7 +92,8 @@ class ConnectSsh(Action):
             self.errors = "Empty ssh parameter list in device configuration %s" % params
             return
         if any([option for option in params['ssh']['options'] if type(option) != str]):
-            self.errors = "[%s] Invalid device configuration: all options must be only strings" % self.name
+            msg = [(option, type(option)) for option in params['ssh']['options'] if type(option) != str]
+            self.errors = "[%s] Invalid device configuration: all options must be only strings: %s" % (self.name, msg)
             return
         if 'port' in params['ssh']:
             self.ssh_port = ["-p", "%s" % str(params['ssh']['port'])]
