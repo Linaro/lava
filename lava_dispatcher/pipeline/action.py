@@ -138,7 +138,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             )
             if not os.path.exists(os.path.dirname(yaml_filename)):
                 os.makedirs(os.path.dirname(yaml_filename))
-            action.log_handler = get_yaml_handler(yaml_filename)
+            action.log_filename = yaml_filename
 
         # Use the pipeline parameters if the function was walled without
         # parameters.
@@ -255,11 +255,11 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             raise KeyboardInterrupt
 
         for action in self.actions:
+            # Open the logfile and create the log handler
             action.logger = YamlLogger(action.name)
-            if action.log_handler:
-                action.logger.set_handler(action.log_handler)
-            else:
-                action.logger.set_handler()
+            action.logger.set_handler(get_yaml_handler(action.log_filename))
+
+            # Begin the action
             action.logger.debug('start: %s %s' % (action.level, action.name))
             try:
                 if not self.parent:
@@ -287,7 +287,8 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 self._diagnose(connection)
                 action.cleanup()
                 raise exc
-            if action.logger.handler:
+            finally:
+                # Close the log handler
                 action.logger.remove_handler()
         return connection
 
@@ -322,7 +323,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         self.__errors__ = []
         self.elapsed_time = None  # FIXME: pipeline_data?
         self.logger = YamlLogger("root")
-        self.log_handler = None
+        self.log_filename = None
         self.job = None
         self.__results__ = OrderedDict()
         # FIXME: what about {} for default value?
@@ -399,7 +400,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
 
     @errors.setter
     def errors(self, error):
-        self.logger.debug(error)
         self.__errors__.append(error)
 
     @property

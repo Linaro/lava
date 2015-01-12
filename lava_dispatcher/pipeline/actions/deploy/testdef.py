@@ -457,7 +457,6 @@ class TestDefinitionAction(TestAction):
         self.test_list = [action['test']['definitions'] for action in self.job.parameters['actions']
                           if 'test' in action]
         if not self.test_list:
-            self.logger.debug("No test action defined.")
             return
         for testdef in self.test_list[0]:
             handler = RepoAction.select(testdef['from'])()
@@ -511,7 +510,6 @@ class TestDefinitionAction(TestAction):
             self.errors = "No actions defined in job parameters"
             return
         if not self.test_list:
-            self.logger.debug("No test action defined.")
             return
         for testdef in self.test_list[0]:
             if 'from' not in testdef:

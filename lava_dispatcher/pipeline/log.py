@@ -48,7 +48,7 @@ class YamlLogger(object):
         self.log_message(message)
 
     def set_handler(self, handler=None):
-        if handler:
+        if handler is not None:
             self.handler = handler
         else:
             self.handler = get_yaml_handler()
@@ -56,8 +56,10 @@ class YamlLogger(object):
         self.log.addHandler(self.handler)
 
     def remove_handler(self):
-        if self.handler:
+        if self.handler is not None:
             self.log.removeHandler(self.handler)
+            self.handler.close()
+            self.handler = None
 
 
 def get_yaml_handler(filename=None, mode='w', encoding='utf-8'):

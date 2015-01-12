@@ -191,68 +191,48 @@ class TestKVMBasicDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
                 self.assertIsInstance(download_retry, DownloaderAction)
                 self.assertIsInstance(download_retry, RetryAction)
                 self.assertEqual(len(download_retry.pipeline.children), 1)
-                self.assertIsInstance(download_retry.log_handler, logging.FileHandler)
-                self.assertIsInstance(download_retry.logger, YamlLogger)
 
                 download = download_retry.pipeline.children[download_retry.pipeline][0]
                 self.assertEqual(download.name, "http_download")
                 self.assertIsInstance(download, DownloadHandler)
                 self.assertIsInstance(download, HttpDownloadAction)
-                self.assertIsInstance(download.log_handler, logging.FileHandler)
-                self.assertIsInstance(download.logger, YamlLogger)
 
                 mount = action.pipeline.children[action.pipeline][1]
                 self.assertIsInstance(mount.internal_pipeline, Pipeline)
                 self.assertEqual(mount.name, "mount_action")
                 self.assertIsInstance(mount, MountAction)
-                self.assertIsInstance(mount.log_handler, logging.FileHandler)
-                self.assertIsInstance(mount.logger, YamlLogger)
 
                 # Check internal Mount pipeline
                 self.assertEqual(len(mount.internal_pipeline.actions), 3)
                 offset = mount.internal_pipeline.actions[0]
                 self.assertEqual(offset.name, "offset_action")
                 self.assertIsInstance(offset, OffsetAction)
-                self.assertIsInstance(offset.log_handler, logging.FileHandler)
-                self.assertIsInstance(offset.logger, YamlLogger)
 
                 loop_check = mount.internal_pipeline.actions[1]
                 self.assertEqual(loop_check.name, "loop_check")
                 self.assertIsInstance(loop_check, LoopCheckAction)
-                self.assertIsInstance(loop_check.log_handler, logging.FileHandler)
-                self.assertIsInstance(loop_check.logger, YamlLogger)
 
                 loop_mount = mount.internal_pipeline.actions[2]
                 self.assertEqual(loop_mount.name, "loop_mount")
                 self.assertIsInstance(loop_mount, LoopMountAction)
                 self.assertIsInstance(loop_mount, RetryAction)
-                self.assertIsInstance(loop_mount.log_handler, logging.FileHandler)
-                self.assertIsInstance(loop_mount.logger, YamlLogger)
 
                 customise = action.pipeline.children[action.pipeline][2]
                 self.assertEqual(customise.name, "customise")
                 self.assertIsInstance(customise, CustomisationAction)
-                self.assertIsInstance(customise.log_handler, logging.FileHandler)
-                self.assertIsInstance(customise.logger, YamlLogger)
 
                 overlay = action.pipeline.children[action.pipeline][3]
                 self.assertEqual(overlay.name, "lava-overlay")
                 self.assertIsInstance(overlay, OverlayAction)
-                self.assertIsInstance(overlay.log_handler, logging.FileHandler)
-                self.assertIsInstance(overlay.logger, YamlLogger)
 
                 apply_overlay = action.pipeline.children[action.pipeline][4]
                 self.assertEqual(apply_overlay.name, "apply-overlay-image")
                 self.assertIsInstance(apply_overlay, ApplyOverlayImage)
-                self.assertIsInstance(apply_overlay.log_handler, logging.FileHandler)
-                self.assertIsInstance(apply_overlay.logger, YamlLogger)
 
                 unmount = action.pipeline.children[action.pipeline][5]
                 self.assertEqual(unmount.name, "umount-retry")
                 self.assertIsInstance(unmount, UnmountAction)
                 self.assertIsInstance(unmount, RetryAction)
-                self.assertIsInstance(unmount.log_handler, logging.FileHandler)
-                self.assertIsInstance(unmount.logger, YamlLogger)
 
                 # ensure the test definition action is inside the mount pipeline
                 self.assertIsInstance(overlay.internal_pipeline.actions[1], TestDefinitionAction)
@@ -367,67 +347,47 @@ class TestKVMQcow2Deploy(unittest.TestCase):  # pylint: disable=too-many-public-
                 self.assertIsInstance(download_retry, DownloaderAction)
                 self.assertIsInstance(download_retry, RetryAction)
                 self.assertEqual(len(download_retry.pipeline.children), 1)
-                self.assertIsInstance(download_retry.log_handler, logging.FileHandler)
-                self.assertIsInstance(download_retry.logger, YamlLogger)
 
                 download = download_retry.pipeline.children[download_retry.pipeline][0]
                 self.assertEqual(download.name, "http_download")
                 self.assertIsInstance(download, DownloadHandler)
                 self.assertIsInstance(download, HttpDownloadAction)
-                self.assertIsInstance(download.log_handler, logging.FileHandler)
-                self.assertIsInstance(download.logger, YamlLogger)
 
                 convert = action.pipeline.children[action.pipeline][1]
                 self.assertEqual(convert.name, "qcow2_convert")
                 self.assertIsInstance(convert, QCowConversionAction)
-                self.assertIsInstance(convert.log_handler, logging.FileHandler)
-                self.assertIsInstance(convert.logger, YamlLogger)
 
                 mount = action.pipeline.children[action.pipeline][2]
                 self.assertIsInstance(mount.internal_pipeline, Pipeline)
                 self.assertEqual(mount.name, "mount_action")
                 self.assertIsInstance(mount, MountAction)
-                self.assertIsInstance(mount.log_handler, logging.FileHandler)
-                self.assertIsInstance(mount.logger, YamlLogger)
 
                 # Check internal Mount pipeline
                 self.assertEqual(len(mount.internal_pipeline.actions), 3)
                 offset = mount.internal_pipeline.actions[0]
                 self.assertEqual(offset.name, "offset_action")
                 self.assertIsInstance(offset, OffsetAction)
-                self.assertIsInstance(offset.log_handler, logging.FileHandler)
-                self.assertIsInstance(offset.logger, YamlLogger)
 
                 loop_check = mount.internal_pipeline.actions[1]
                 self.assertEqual(loop_check.name, "loop_check")
                 self.assertIsInstance(loop_check, LoopCheckAction)
-                self.assertIsInstance(loop_check.log_handler, logging.FileHandler)
-                self.assertIsInstance(loop_check.logger, YamlLogger)
 
                 loop_mount = mount.internal_pipeline.actions[2]
                 self.assertEqual(loop_mount.name, "loop_mount")
                 self.assertIsInstance(loop_mount, LoopMountAction)
                 self.assertIsInstance(loop_mount, RetryAction)
-                self.assertIsInstance(loop_mount.log_handler, logging.FileHandler)
-                self.assertIsInstance(loop_mount.logger, YamlLogger)
 
                 customise = action.pipeline.children[action.pipeline][3]
                 self.assertEqual(customise.name, "customise")
                 self.assertIsInstance(customise, CustomisationAction)
-                self.assertIsInstance(customise.log_handler, logging.FileHandler)
-                self.assertIsInstance(customise.logger, YamlLogger)
 
                 overlay = action.pipeline.children[action.pipeline][4]
                 self.assertEqual(overlay.name, "lava-overlay")
                 self.assertIsInstance(overlay, OverlayAction)
-                self.assertIsInstance(overlay.log_handler, logging.FileHandler)
-                self.assertIsInstance(overlay.logger, YamlLogger)
 
                 apply_overlay = action.pipeline.children[action.pipeline][5]
                 self.assertEqual(apply_overlay.name, "apply-overlay-image")
                 self.assertIsInstance(apply_overlay, ApplyOverlayImage)
-                self.assertIsInstance(apply_overlay.log_handler, logging.FileHandler)
-                self.assertIsInstance(apply_overlay.logger, YamlLogger)
                 self.assertEqual(
                     apply_overlay.timeout.duration,
                     self.job.device.overrides['timeouts'][apply_overlay.name]
@@ -437,8 +397,6 @@ class TestKVMQcow2Deploy(unittest.TestCase):  # pylint: disable=too-many-public-
                 self.assertEqual(unmount.name, "umount-retry")
                 self.assertIsInstance(unmount, UnmountAction)
                 self.assertIsInstance(unmount, RetryAction)
-                self.assertIsInstance(unmount.log_handler, logging.FileHandler)
-                self.assertIsInstance(unmount.logger, YamlLogger)
 
                 # ensure the test definition action is inside the mount pipeline
                 self.assertIsInstance(overlay.internal_pipeline.actions[1], TestDefinitionAction)
@@ -486,68 +444,48 @@ class TestKVMDownloadLocalDeploy(unittest.TestCase):  # pylint: disable=too-many
                 self.assertIsInstance(download_retry, DownloaderAction)
                 self.assertIsInstance(download_retry, RetryAction)
                 self.assertEqual(len(download_retry.pipeline.children), 1)
-                self.assertIsInstance(download_retry.log_handler, logging.FileHandler)
-                self.assertIsInstance(download_retry.logger, YamlLogger)
 
                 download = download_retry.pipeline.children[download_retry.pipeline][0]
                 self.assertEqual(download.name, "file_download")
                 self.assertIsInstance(download, DownloadHandler)
                 self.assertIsInstance(download, FileDownloadAction)
-                self.assertIsInstance(download.log_handler, logging.FileHandler)
-                self.assertIsInstance(download.logger, YamlLogger)
 
                 mount = action.pipeline.children[action.pipeline][1]
                 self.assertIsInstance(mount.internal_pipeline, Pipeline)
                 self.assertEqual(mount.name, "mount_action")
                 self.assertIsInstance(mount, MountAction)
-                self.assertIsInstance(mount.log_handler, logging.FileHandler)
-                self.assertIsInstance(mount.logger, YamlLogger)
 
                 # Check internal Mount pipeline
                 self.assertEqual(len(mount.internal_pipeline.actions), 3)
                 offset = mount.internal_pipeline.actions[0]
                 self.assertEqual(offset.name, "offset_action")
                 self.assertIsInstance(offset, OffsetAction)
-                self.assertIsInstance(offset.log_handler, logging.FileHandler)
-                self.assertIsInstance(offset.logger, YamlLogger)
 
                 loop_check = mount.internal_pipeline.actions[1]
                 self.assertEqual(loop_check.name, "loop_check")
                 self.assertIsInstance(loop_check, LoopCheckAction)
-                self.assertIsInstance(loop_check.log_handler, logging.FileHandler)
-                self.assertIsInstance(loop_check.logger, YamlLogger)
 
                 loop_mount = mount.internal_pipeline.actions[2]
                 self.assertEqual(loop_mount.name, "loop_mount")
                 self.assertIsInstance(loop_mount, LoopMountAction)
                 self.assertIsInstance(loop_mount, RetryAction)
-                self.assertIsInstance(loop_mount.log_handler, logging.FileHandler)
-                self.assertIsInstance(loop_mount.logger, YamlLogger)
 
                 customise = action.pipeline.children[action.pipeline][2]
                 self.assertEqual(customise.name, "customise")
                 self.assertIsInstance(customise, CustomisationAction)
-                self.assertIsInstance(customise.log_handler, logging.FileHandler)
-                self.assertIsInstance(customise.logger, YamlLogger)
 
                 overlay = action.pipeline.children[action.pipeline][3]
                 self.assertEqual(overlay.name, "lava-overlay")
                 self.assertIsInstance(overlay, OverlayAction)
-                self.assertIsInstance(overlay.log_handler, logging.FileHandler)
-                self.assertIsInstance(overlay.logger, YamlLogger)
 
                 apply_overlay = action.pipeline.children[action.pipeline][4]
                 self.assertEqual(apply_overlay.name, "apply-overlay-image")
                 self.assertIsInstance(apply_overlay, ApplyOverlayImage)
-                self.assertIsInstance(apply_overlay.log_handler, logging.FileHandler)
-                self.assertIsInstance(apply_overlay.logger, YamlLogger)
 
                 unmount = action.pipeline.children[action.pipeline][5]
                 self.assertEqual(unmount.name, "umount-retry")
                 self.assertIsInstance(unmount, UnmountAction)
                 self.assertIsInstance(unmount, RetryAction)
-                self.assertIsInstance(unmount.log_handler, logging.FileHandler)
-                self.assertIsInstance(unmount.logger, YamlLogger)
 
             elif isinstance(action, Action):
                 pass
@@ -573,55 +511,39 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
                 self.assertIsInstance(download_retry, DownloaderAction)
                 self.assertIsInstance(download_retry, RetryAction)
                 self.assertEqual(len(download_retry.pipeline.children), 1)
-                self.assertIsInstance(download_retry.log_handler, logging.FileHandler)
-                self.assertIsInstance(download_retry.logger, YamlLogger)
 
                 download = download_retry.pipeline.children[download_retry.pipeline][0]
                 self.assertEqual(download.name, "http_download")
                 self.assertIsInstance(download, DownloadHandler)
                 self.assertIsInstance(download, HttpDownloadAction)
-                self.assertIsInstance(download.log_handler, logging.FileHandler)
-                self.assertIsInstance(download.logger, YamlLogger)
 
                 mount = action.pipeline.children[action.pipeline][1]
                 self.assertIsInstance(mount.internal_pipeline, Pipeline)
                 self.assertEqual(mount.name, "mount_action")
                 self.assertIsInstance(mount, MountAction)
-                self.assertIsInstance(mount.log_handler, logging.FileHandler)
-                self.assertIsInstance(mount.logger, YamlLogger)
 
                 # Check internal Mount pipeline
                 self.assertEqual(len(mount.internal_pipeline.actions), 3)
                 offset = mount.internal_pipeline.actions[0]
                 self.assertEqual(offset.name, "offset_action")
                 self.assertIsInstance(offset, OffsetAction)
-                self.assertIsInstance(offset.log_handler, logging.FileHandler)
-                self.assertIsInstance(offset.logger, YamlLogger)
 
                 loop_check = mount.internal_pipeline.actions[1]
                 self.assertEqual(loop_check.name, "loop_check")
                 self.assertIsInstance(loop_check, LoopCheckAction)
-                self.assertIsInstance(loop_check.log_handler, logging.FileHandler)
-                self.assertIsInstance(loop_check.logger, YamlLogger)
 
                 loop_mount = mount.internal_pipeline.actions[2]
                 self.assertEqual(loop_mount.name, "loop_mount")
                 self.assertIsInstance(loop_mount, LoopMountAction)
                 self.assertIsInstance(loop_mount, RetryAction)
-                self.assertIsInstance(loop_mount.log_handler, logging.FileHandler)
-                self.assertIsInstance(loop_mount.logger, YamlLogger)
 
                 customise = action.pipeline.children[action.pipeline][2]
                 self.assertEqual(customise.name, "customise")
                 self.assertIsInstance(customise, CustomisationAction)
-                self.assertIsInstance(customise.log_handler, logging.FileHandler)
-                self.assertIsInstance(customise.logger, YamlLogger)
 
                 overlay = action.pipeline.children[action.pipeline][3]
                 self.assertEqual(overlay.name, "lava-overlay")
                 self.assertIsInstance(overlay, OverlayAction)
-                self.assertIsInstance(overlay.log_handler, logging.FileHandler)
-                self.assertIsInstance(overlay.logger, YamlLogger)
 
                 # Check internal Overlay pipeline
                 self.assertEqual(len(overlay.internal_pipeline.actions), 3)
@@ -646,15 +568,11 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
                 apply_overlay = action.pipeline.children[action.pipeline][4]
                 self.assertEqual(apply_overlay.name, "apply-overlay-image")
                 self.assertIsInstance(apply_overlay, ApplyOverlayImage)
-                self.assertIsInstance(apply_overlay.log_handler, logging.FileHandler)
-                self.assertIsInstance(apply_overlay.logger, YamlLogger)
 
                 unmount = action.pipeline.children[action.pipeline][5]
                 self.assertEqual(unmount.name, "umount-retry")
                 self.assertIsInstance(unmount, UnmountAction)
                 self.assertIsInstance(unmount, RetryAction)
-                self.assertIsInstance(unmount.log_handler, logging.FileHandler)
-                self.assertIsInstance(unmount.logger, YamlLogger)
 
             elif isinstance(action, Action):
                 pass
