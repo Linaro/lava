@@ -224,7 +224,8 @@ class dispatch(DispatcherCommand):
             parser = JobParser()
             job = None
             try:
-                job = parser.parse(open(filename), device, output_dir=self.args.output_dir)
+                with open(filename) as f_in:
+                    job = parser.parse(f_in, device, output_dir=self.args.output_dir)
             except JobError as exc:
                 logging.error("Invalid job submission: %s" % exc)
                 exit(1)
