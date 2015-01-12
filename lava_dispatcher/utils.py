@@ -62,9 +62,9 @@ def link_or_copy_file(src, dest):
         if err.errno == errno.EXDEV:
             shutil.copy(src, dest)
         if err.errno == errno.EEXIST:
-            logging.debug("Cached copy of %s already exists" % dest)
+            logging.debug("Cached copy of %s already exists", dest)
         else:
-            logging.exception("os.link '%s' with '%s' failed" % (src, dest))
+            logging.exception("os.link '%s' with '%s' failed", src, dest)
 
 
 def copy_file(src, dest):
@@ -286,7 +286,7 @@ def string_to_list(string):
 
 
 def logging_system(cmd):
-    logging.debug("Executing on host : '%r'" % cmd)
+    logging.debug("Executing on host : '%r'", cmd)
     return os.system(cmd)
 
 
@@ -305,13 +305,13 @@ class DrainConsoleOutput(threading.Thread):
             expect_end = time.time() + self.timeout
         while not self._stopevent.isSet():
             if expect_end and (expect_end <= time.time()):
-                logging.info("DrainConsoleOutput times out:%s" % self.timeout)
+                logging.info("DrainConsoleOutput times out:%s", self.timeout)
                 break
             try:
                 self.proc.empty_buffer()
                 time.sleep(5)
             except ValueError:
-                logging.debug("pexpect ended for thread %s" % self.getName())
+                logging.debug("pexpect ended for thread %s", self.getName())
                 expect_end = time.time()
 
     def join(self, timeout=None):
@@ -345,7 +345,7 @@ class logging_spawn(pexpect.spawn):
         return super(logging_spawn, self).sendcontrol(char)
 
     def send(self, string, delay=0, send_char=True):
-        logging.debug("send (delay_ms=%s): %s " % (delay, string))
+        logging.debug("send (delay_ms=%s): %s ", delay, string)
         sent = 0
         delay = float(delay) / 1000
         if send_char:
@@ -413,7 +413,7 @@ def connect_to_serial(context):
         proc = context.spawn(
             context.device_config.connection_command,
             timeout=1200)
-        logging.info('Attempting to connect to device using: %s' % context.device_config.connection_command)
+        logging.info('Attempting to connect to device using: %s', context.device_config.connection_command)
         match = proc.expect(patterns, timeout=10)
         result = results[match]
         logging.info('Matched %r which means %s', patterns[match], result)
@@ -471,10 +471,10 @@ def finalize_process(proc):
     if proc:
         try:
             os.killpg(proc.pid, signal.SIGKILL)
-            logging.debug("Finalizing child process group with PID %d" % proc.pid)
+            logging.debug("Finalizing child process group with PID %d", proc.pid)
         except OSError:
             proc.kill(9)
-            logging.debug("Finalizing child process with PID %d" % proc.pid)
+            logging.debug("Finalizing child process with PID %d", proc.pid)
         proc.close()
 
 
