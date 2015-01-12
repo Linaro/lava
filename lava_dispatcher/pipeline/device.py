@@ -112,7 +112,8 @@ class NewDevice(object):
         # parameters dict will update if new settings are found, so repeat for customisation files when those exist
         self.parameters = defaults.parameters
         try:
-            self.parameters = dev_parser.parse(open(device_file))
+            with open(device_file) as f_in:
+                self.parameters = dev_parser.parse(f_in)
         except TypeError:
             raise RuntimeError("%s could not be parsed" % device_file)
         # store device values to override device_type
@@ -126,7 +127,8 @@ class NewDevice(object):
         if not os.path.exists(type_file):
             raise RuntimeError("Could not find %s" % type_file)
         try:
-            device_params = dev_parser.parse(open(type_file))
+            with open(type_file) as f_in:
+                device_params = dev_parser.parse(f_in)
         except TypeError:
             raise RuntimeError("%s could not be parsed" % type_file)
         # assert device overrides

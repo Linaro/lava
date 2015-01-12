@@ -41,9 +41,9 @@ class Factory(object):  # pylint: disable=too-few-public-methods
     def create_bbb_job(self, filename, output_dir=None):  # pylint: disable=no-self-use
         device = NewDevice('bbb-01')
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
-        sample_job_data = open(kvm_yaml)
-        parser = JobParser()
-        job = parser.parse(sample_job_data, device, output_dir=output_dir)
+        with open(kvm_yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, output_dir=output_dir)
         return job
 
 

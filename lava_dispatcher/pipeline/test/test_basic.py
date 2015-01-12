@@ -147,10 +147,10 @@ class Factory(object):
     def create_fake_qemu_job(self, output_dir=None):  # pylint: disable=no-self-use
         device = NewDevice('kvm01')
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/basics.yaml')
-        sample_job_data = open(sample_job_file)
         parser = JobParser()
         try:
-            job = parser.parse(sample_job_data, device, output_dir=output_dir)
+            with open(sample_job_file) as sample_job_data:
+                job = parser.parse(sample_job_data, device, output_dir=output_dir)
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
             return None
@@ -159,10 +159,10 @@ class Factory(object):
     def create_kvm_job(self, filename, output_dir=None):  # pylint: disable=no-self-use
         device = NewDevice('kvm01')
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
-        sample_job_data = open(kvm_yaml)
         parser = JobParser()
         try:
-            job = parser.parse(sample_job_data, device, output_dir=output_dir)
+            with open(kvm_yaml) as sample_job_data:
+                job = parser.parse(sample_job_data, device, output_dir=output_dir)
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
             return None
