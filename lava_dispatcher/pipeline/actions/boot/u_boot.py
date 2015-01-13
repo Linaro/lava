@@ -40,6 +40,7 @@ from lava_dispatcher.pipeline.utils.constants import (
     UBOOT_DEFAULT_CMD_TIMEOUT,
     AUTOLOGIN_DEFAULT_TIMEOUT,
 )
+from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 
 
@@ -129,12 +130,17 @@ class UBootRetry(BootAction):
 
     def validate(self):
         super(UBootRetry, self).validate()
-        self.data['common']['bootloader_prompt'] = self.parameters['u-boot']['parameters']['bootloader_prompt']
+        self.set_common_data(
+            'bootloader_prompt',
+            'prompt',
+            self.parameters['u-boot']['parameters']['bootloader_prompt']
+        )
 
     def run(self, connection, args=None):
-        super(UBootRetry, self).run(connection, args)
+        connection = super(UBootRetry, self).run(connection, args)
         # FIXME: tests with multiple boots need to be handled too.
         self.data['boot-result'] = 'failed' if self.errors else 'success'
+        return connection
 
 
 class UBootInterrupt(Action):
@@ -190,15 +196,6 @@ class UBootCommandOverlay(Action):
         self.name = "uboot-overlay"
         self.summary = "replace placeholders with job data"
         self.description = "substitute job data into uboot command list"
-
-    def substitute(self, command_list, dictionary):
-        parsed = []
-        for line in command_list:
-            for key, value in dictionary.items():  # 2to3 false positive, works with python3
-                line = line.replace(key, value)
-            parsed.append(line)
-        self.data['u-boot']['commands'] = parsed
-        self.logger.debug("Parsed boot commands: %s" % '; '.join(parsed))
 
     def validate(self):
         super(UBootCommandOverlay, self).validate()
@@ -262,7 +259,8 @@ class UBootCommandOverlay(Action):
         if 'nfsrootfs' in self.data['download_action']:
             substitutions['{NFSROOTFS}'] = self.data['extract-nfsrootfs'].get('nfsroot')
 
-        self.substitute(self.data['u-boot']['commands'], substitutions)
+        self.data['u-boot']['commands'] = substitute(self.data['u-boot']['commands'], substitutions)
+        self.logger.debug("Parsed boot commands: %s" % '; '.join(self.data['u-boot']['commands']))
         return connection
 
 

@@ -25,3 +25,12 @@ def indices(string, char):
     Return an empty list if the character cannot be found.
     """
     return [i for i, c in enumerate(string) if c == char]
+
+
+def substitute(command_list, dictionary):
+    parsed = []
+    for line in command_list:
+        for key, value in dictionary.items():  # 2to3 false positive, works with python3
+            line = line.replace(key, value)
+        parsed.append(line)
+    return parsed

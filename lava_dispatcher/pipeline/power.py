@@ -67,7 +67,7 @@ class RebootDevice(Action):
     def validate(self):
         super(RebootDevice, self).validate()
         if 'bootloader_prompt' in self.data['common']:
-            self.reboot_prompt = self.data['common']['bootloader_prompt']
+            self.reboot_prompt = self.get_common_data('bootloader_prompt', 'prompt')
 
     def run(self, connection, args=None):
         if not connection:
