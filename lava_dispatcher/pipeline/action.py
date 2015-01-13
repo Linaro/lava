@@ -20,6 +20,7 @@
 
 import os
 import sys
+import copy
 import time
 import types
 import signal
@@ -643,13 +644,18 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
                 data[name] = content
         return data
 
-    def get_common_data(self, ns, key):
+    def get_common_data(self, ns, key, deepcopy=True):
         """
-        Get a common data value from the specified namespace using the specified key
+        Get a common data value from the specified namespace using the specified key.
+        By default, returns a deep copy of the value instead of a reference to allow actions to
+        manipulate lists and dicts based on common data without altering the values used by other actions.
+        If deepcopy is False, the reference is used - meaning that certain operations on common data
+        values other than simple strings will be able to modify the common data without calls to set_common_data.
         """
         if ns not in self.data['common']:
             return None
-        return self.data['common'][ns].get(key, None)
+        value = self.data['common'][ns].get(key, None)
+        return copy.deepcopy(value) if deepcopy else value
 
     def set_common_data(self, ns, key, value):
         """
