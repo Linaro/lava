@@ -15,6 +15,7 @@ from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.action import PipelineContext, JobError
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.log import YamlLogger, get_yaml_handler
+from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 
 
 class SetUserConfigDirAction(argparse.Action):
@@ -229,8 +230,6 @@ class dispatch(DispatcherCommand):
                 exit(1)
             # FIXME: NewDevice schema needs a validation parser
             # device.check_config(job)
-            if 'target_group' in job.parameters:
-                raise RuntimeError("Pipeline dispatcher does not yet support MultiNode")
             return get_pipeline_runner(job), job.parameters
 
         # everything else is assumed to be JSON

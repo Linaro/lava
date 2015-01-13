@@ -90,6 +90,8 @@ class TestRepeatBootTest(unittest.TestCase):  # pylint: disable=too-many-public-
         self.assertNotIn('repeat-count', self.job.pipeline.actions[25].parameters)
 
     def test_test_definitions(self):
+        if not self.job.parameters:
+            self.skipTest("Missing job parameters")
         test_dict = get_deployment_testdefs(self.job.parameters)
         names = []
         # first deployment

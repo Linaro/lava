@@ -190,6 +190,8 @@ class FinalizeAction(Action):
         connection = super(FinalizeAction, self).run(connection, args)
         if connection:
             connection.finalise()
+        for protocol in self.job.protocols:
+            protocol.finalise_protocol()
         if self.errors:
             self.results = {'status': self.errors}
             self.logger.debug('status: %s' % self.errors)

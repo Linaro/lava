@@ -213,10 +213,19 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             if child.internal_pipeline:
                 child.internal_pipeline.pipeline_cleanup()
 
-    def cleanup_actions(self):
+    def cleanup_actions(self, connection, message):
+        if not self.job.pipeline:
+            # is this only unit-tests doing this?
+            return
         for child in self.job.pipeline.actions:
             if child.internal_pipeline:
                 child.internal_pipeline.pipeline_cleanup()
+        # exit out of the pipeline & run the Finalize action to close the connection and poweroff the device
+        for child in self.job.pipeline.actions:
+            # rely on the action name here - use isinstance if pipeline moves into a dedicated module.
+            if child.name == 'finalize':
+                child.errors = message
+                child.run(connection, None)
 
     def _diagnose(self, connection):
         """
@@ -251,7 +260,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             """
             logger = YamlLogger("root")
             logger.debug("Cancelled")
-            self.cleanup_actions()
+            self.cleanup_actions(None, "Cancelled")
             signal.signal(signal.SIGINT, signal.default_int_handler)
             raise KeyboardInterrupt
 
@@ -291,12 +300,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 if new_connection:
                     connection = new_connection
             except KeyboardInterrupt:
-                # exit out of the pipeline & run the Finalize action to close the connection and poweroff the device
-                for child in self.job.pipeline.actions:
-                    # rely on the action name here - use isinstance if pipeline moves into a dedicated module.
-                    if child.name == 'finalize':
-                        child.errors = "Cancelled"
-                        child.run(connection, args)
+                self.cleanup_actions(connection, "Cancelled")
                 sys.exit(1)
             except (JobError, InfrastructureError) as exc:
                 action.errors = exc.message
@@ -304,6 +308,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 action.results = {"fail": exc}
                 self._diagnose(connection)
                 action.cleanup()
+                self.cleanup_actions(connection, exc.message)
                 raise exc
             finally:
                 # Close the log handler
@@ -350,6 +355,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         self.timeout = Timeout(self.name)
         self.max_retries = 1  # unless the strategy or the job parameters change this, do not retry
         self.diagnostics = []
+        self.protocols = []  # list of protocol objects supported by this action, full list in job.protocols
 
     # public actions (i.e. those who can be referenced from a job file) must
     # declare a 'class-type' name so they can be looked up.
@@ -909,13 +915,6 @@ class LavaTest(object):  # pylint: disable=abstract-class-not-used
         self.__parameters__ = {}
         self.pipeline = parent
         self.job = parent.job
-
-    @contextmanager
-    def test(self):
-        """
-        This method must be implemented by subclasses.
-        """
-        raise NotImplementedError("test %s" % self)
 
     @classmethod
     def accepts(cls, device, parameters):  # pylint: disable=unused-argument

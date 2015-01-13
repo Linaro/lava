@@ -33,6 +33,7 @@ from lava_dispatcher.pipeline.actions.deploy.overlay import (
     CustomisationAction,
     OverlayAction,
 )
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 
 
 class DeployImageAction(DeployAction):
@@ -49,7 +50,8 @@ class DeployImageAction(DeployAction):
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        download = DownloaderAction('image')
+        path = mkdtemp()
+        download = DownloaderAction('image', path)
         download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
         self.internal_pipeline.add_action(download)
         if parameters.get('format', '') == 'qcow2':

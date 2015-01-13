@@ -55,7 +55,7 @@ class deployment_data_dict(object):  # pylint: disable=invalid-name, too-few-pub
     def get(self, key):
         return self.__data__.get(key)
 
-
+# FIXME: harmonise the prompt management to avoid duplication with device configuration
 android = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1': "root@linaro# ",
     'TESTER_PS1_PATTERN': "root@linaro# ",

@@ -53,11 +53,13 @@ def identify_test_definitions(parameters):
 
 
 @nottest
-def get_deployment_testdefs(parameters):
+def get_deployment_testdefs(parameters=None):
     """
     Identify the test definitions for each deployment within the job.
     """
     test_dict = OrderedDict()
+    if parameters is None:
+        return test_dict
     deploy_list = []
     for action in parameters['actions']:
         yaml_line = None
@@ -260,6 +262,7 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         self.results = {'success': commit_id}
 
         # now read the YAML to create a testdef dict to retrieve metadata
+        self.logger.debug(os.path.join(runner_path, self.parameters['path']))
         yaml_file = os.path.join(runner_path, self.parameters['path'])
         if not os.path.exists(yaml_file):
             raise JobError("Unable to find test definition YAML: %s" % yaml_file)

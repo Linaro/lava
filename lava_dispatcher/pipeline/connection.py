@@ -24,16 +24,14 @@ import pexpect
 import signal
 import decimal
 from lava_dispatcher.pipeline.log import YamlLogger
-from lava_dispatcher.pipeline.action import TestError
+from lava_dispatcher.pipeline.action import TestError, Timeout
 
 
+# FIXME: drop this base class and just use the SignalDirector?
 class BaseSignalHandler(object):
 
-    def __init__(self, testdef_obj=None):
-        """
-        For compatibility, any testdef_obj passed in is accepted, but ignored.
-        """
-        self.testdef_obj = testdef_obj
+    def __init__(self, protocol=None):
+        self.protocol = protocol
 
     def __call__(self, *args, **kwargs):
         pass
@@ -58,7 +56,7 @@ class BaseSignalHandler(object):
         pass
 
 
-class SignalMatch(object):  # pylint:disable=too-few-public-methods
+class SignalMatch(object):  # pylint: disable=too-few-public-methods
 
     def match(self, data, fixupdict=None):
         logger = YamlLogger("root")
@@ -200,6 +198,7 @@ class CommandRunner(object):
     def get_connection(self):
         return self._connection
 
+    # FIXME: too many arguments, trim unused args
     def run(self, cmd, response=None, timeout=-1,
             failok=False, wait_prompt=True, log_in_host=None):
         """Run `cmd` and wait for a shell response.
@@ -252,3 +251,67 @@ class CommandRunner(object):
             return_code = None
 
         return return_code
+
+
+class Protocol(object):  # pylint: disable=abstract-class-not-used
+    """
+    Similar to a Connection object, provides a transport layer for the dispatcher.
+    Uses a pre-defined API instead of pexpect using Shell.
+
+    Testing a protocol involves either basing the protocol on SocketServer and using threading
+    or adding a main function in the protocol python file and including a demo server script which
+    can be run on the command line - using a different port to the default. However, this is likely
+    to be of limited use because testing the actual API calls will need a functional test.
+    """
+    name = 'protocol'
+
+    def __init__(self, parameters):
+        self.logger = YamlLogger("root")
+        self.poll_timeout = Timeout(self.name)
+        self.parameters = None
+        self.__errors__ = []
+        self.parameters = parameters
+
+    @classmethod
+    def select_all(cls, parameters):
+        """
+        Multiple protocols can apply to the same job, each with their own parameters.
+        Jobs may have zero or more protocols selected.
+        """
+        candidates = cls.__subclasses__()  # pylint: disable=no-member
+        return [c for c in candidates if c.accepts(parameters)]
+
+    @property
+    def errors(self):
+        return self.__errors__
+
+    @errors.setter
+    def errors(self, error):
+        self.__errors__.append(error)
+
+    @property
+    def valid(self):
+        return len([x for x in self.errors if x]) == 0
+
+    def poll(self, message, timeout=None):
+        raise NotImplementedError()
+
+    def set_up(self):
+        raise NotImplementedError()
+
+    def finalise_protocol(self):
+        raise NotImplementedError()
+
+    def _api_select(self, data):
+        if not data:
+            return None
+        raise NotImplementedError()
+
+    def __call__(self, args):
+        """ Makes the Protocol callable so that actions can send messages just using the protocol.
+        This function may block until the specified API call returns. Some API calls may involve a
+        substantial period of polling.
+        :param args: arguments of the API call to make
+        :return: A Python object containing the reply dict from the API call
+        """
+        return self._api_select(args)

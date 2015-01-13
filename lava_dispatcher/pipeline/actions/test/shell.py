@@ -20,7 +20,6 @@
 
 import pexpect
 from collections import OrderedDict
-from contextlib import contextmanager
 from lava_dispatcher.pipeline.log import YamlLogger
 from lava_dispatcher.pipeline.actions.test import handle_testcase, TestAction
 from lava_dispatcher.pipeline.action import (
@@ -42,10 +41,6 @@ class TestShell(LavaTest):
         self.action = TestShellRetry()
         self.action.job = self.job
         parent.add_action(self.action, parameters)
-
-    @contextmanager
-    def test(self):
-        pass
 
     @classmethod
     def accepts(cls, device, parameters):  # pylint: disable=unused-argument
@@ -72,7 +67,7 @@ class TestShellAction(TestAction):
         self.description = "Executing lava-test-runner"
         self.summary = "Lava Test Shell"
         self.name = "lava-test-shell"
-        self.signal_director = self.SignalDirector()
+        self.signal_director = self.SignalDirector(None)  # no default protocol
         self.patterns = {}
         self.match = SignalMatch()
 
@@ -106,6 +101,8 @@ class TestShellAction(TestAction):
 
         if not connection:
             raise InfrastructureError("Connection closed")
+
+        self.signal_director.connection = connection
 
         self.logger.debug("Executing test definitions using %s" % connection.name)
         self.logger.debug("Setting default test shell prompt")
@@ -219,7 +216,7 @@ class TestShellAction(TestAction):
     class SignalDirector(object):
 
         # FIXME: create proxy handlers
-        def __init__(self):
+        def __init__(self, protocol=None):
             """
             Base SignalDirector for singlenode jobs.
             MultiNode and LMP jobs need to create a suitable derived class as both also require
@@ -228,11 +225,13 @@ class TestShellAction(TestAction):
             SignalDirector is the link between the Action and the Connection. The Action uses
             the SignalDirector to interact with the I/O over the Connection.
             """
-            self._cur_handler = BaseSignalHandler(None)
+            self._cur_handler = BaseSignalHandler(protocol)
+            self.protocol = protocol  # communicate externally over the protocol API
+            self.connection = None  # communicate with the device
+            self.logger = YamlLogger("root")
             self.test_uuid = None
 
         def signal(self, name, params):
-            logger = YamlLogger("root")
             handler = getattr(self, '_on_' + name.lower(), None)
             if not handler and self._cur_handler:
                 handler = self._cur_handler.custom_signal
@@ -247,24 +246,22 @@ class TestShellAction(TestAction):
                 except KeyboardInterrupt:
                     raise KeyboardInterrupt
                 except JobError:
-                    logger.debug("err: handling signal %s failed" % name)
+                    self.logger.debug("err: handling signal %s failed" % name)
                     return False
                 return True
 
         def postprocess_bundle(self, bundle):
             pass
 
-        # FIXME: remove unused arguments
-        def _on_startrun(self, test_run_id, uuid):
+        def _on_startrun(self, test_run_id, uuid):  # pylint: disable=unused-argument
+            """
+            runsh.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')
+            """
             self._cur_handler = None
-            # FIXME: adapt old code to work for more than a single test definition
-#            testdef_obj = get_testdef_obj_with_uuid(self.testdef_objs, uuid)
-#            if testdef_obj:
-#                self._cur_handler = testdef_obj.handler
             if self._cur_handler:
                 self._cur_handler.start()
 
-        def _on_endrun(self, test_run_id, uuid):
+        def _on_endrun(self, test_run_id, uuid):  # pylint: disable=unused-argument
             if self._cur_handler:
                 self._cur_handler.end()
 

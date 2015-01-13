@@ -170,6 +170,7 @@ class LoopMountAction(RetryAction):
         return connection
 
     def cleanup(self):
+        self.logger.debug("%s cleanup" % self.name)
         if self.mntdir:
             if os.path.ismount(self.mntdir):
                 self._run_command(['umount', self.mntdir])

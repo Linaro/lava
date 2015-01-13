@@ -18,10 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-# List just the subclasses supported for this base strategy
-# imported by the parser to populate the list of subclasses.
-
 # pylint: disable=unused-import
 
-from lava_dispatcher.pipeline.actions.test.shell import TestShell
-from lava_dispatcher.pipeline.actions.test.multinode import MultinodeTestShell
+from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol

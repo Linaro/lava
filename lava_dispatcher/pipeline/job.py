@@ -21,8 +21,9 @@
 import yaml
 from collections import OrderedDict
 
-from lava_dispatcher.pipeline.action import PipelineContext, Action
+from lava_dispatcher.pipeline.action import PipelineContext, Action, JobError
 from lava_dispatcher.pipeline.diagnostics import DiagnoseNetwork
+from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 
 
 class Job(object):  # pylint: disable=too-many-instance-attributes
@@ -54,6 +55,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             DiagnoseNetwork,
         ]
         self.timeout = None
+        self.protocols = []
 
     def set_pipeline(self, pipeline):
         self.pipeline = pipeline
@@ -109,7 +111,12 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         will have a default timeout which will use SIGALRM. So the overarching Job timeout
         can only stop processing actions if the job wide timeout is exceeded.
         """
+        for protocol in self.protocols:
+            protocol.set_up()
+            if not protocol.valid:
+                raise JobError("Unable to setup a valid %s protocol" % protocol.name)
         self.pipeline.run_actions(self.connection)  # FIXME: some Deployment methods may need to set a Connection.
+
         # FIXME how to get rootfs with multiple deployments, and at arbitrary
         # points in the pipeline?
         # rootfs = None
