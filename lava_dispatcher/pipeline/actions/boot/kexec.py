@@ -27,9 +27,6 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.shell import ExpectShellSession
-from lava_dispatcher.pipeline.utils.constants import (
-    AUTOLOGIN_DEFAULT_TIMEOUT,
-)
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 
 
@@ -67,9 +64,7 @@ class BootKexecAction(BootAction):
         self.internal_pipeline.add_action(KexecAction())
         # Add AutoLoginAction unconditionnally as this action does nothing if
         # the configuration does not contain 'auto_login'
-        auto_login = AutoLoginAction()
-        auto_login.timeout = Timeout(self.name, AUTOLOGIN_DEFAULT_TIMEOUT)
-        self.internal_pipeline.add_action(auto_login)
+        self.internal_pipeline.add_action(AutoLoginAction())
         self.internal_pipeline.add_action(ExpectShellSession())
 
 
