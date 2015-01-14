@@ -20,6 +20,7 @@
 
 from lava_dispatcher.pipeline.action import Action, RetryAction
 from lava_dispatcher.pipeline.connection import wait_for_prompt
+from lava_dispatcher.pipeline.utils.constants import AUTOLOGIN_DEFAULT_TIMEOUT
 
 
 class BootAction(RetryAction):
@@ -52,6 +53,7 @@ class AutoLoginAction(Action):
         self.name = 'auto-login-action'
         self.description = "automatically login after boot using job parameters"
         self.summary = "Auto-login after boot"
+        self.timeout.duration = AUTOLOGIN_DEFAULT_TIMEOUT
 
     def validate(self):
         super(AutoLoginAction, self).validate()

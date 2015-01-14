@@ -38,7 +38,6 @@ from lava_dispatcher.pipeline.power import ResetDevice
 from lava_dispatcher.pipeline.utils.constants import (
     UBOOT_AUTOBOOT_PROMPT,
     UBOOT_DEFAULT_CMD_TIMEOUT,
-    AUTOLOGIN_DEFAULT_TIMEOUT,
 )
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
@@ -124,9 +123,7 @@ class UBootRetry(BootAction):
         self.internal_pipeline.add_action(UBootCommandsAction())
         # Add AutoLoginAction unconditionnally as this action does nothing if
         # the configuration does not contain 'auto_login'
-        auto_login = AutoLoginAction()
-        auto_login.timeout = Timeout(self.name, AUTOLOGIN_DEFAULT_TIMEOUT)
-        self.internal_pipeline.add_action(auto_login)
+        self.internal_pipeline.add_action(AutoLoginAction())
 
     def validate(self):
         super(UBootRetry, self).validate()
