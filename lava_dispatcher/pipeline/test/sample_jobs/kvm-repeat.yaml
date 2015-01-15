@@ -43,7 +43,7 @@ actions:
            timeout:
              seconds: 90
            definitions:
-             - repository: http://git.linaro.org/qa/lava-team/lava-functional-test-definitions.git
+             - repository: http://git.linaro.org/qa/test-definitions.git
                from: git
                path: ubuntu/network-tests-basic.yaml
                name: smoke-tests-end
