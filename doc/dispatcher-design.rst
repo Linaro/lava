@@ -1,15 +1,32 @@
 .. _dispatcher_design:
 
 Lava Dispatcher Design
-**********************
+######################
+
+.. _objectives:
+
+Objectives
+**********
 
 The new dispatcher design is intended to make it easier to adapt the
-dispatcher flow to new boards, new mechanisms and new deployments.
+dispatcher flow to new boards, new mechanisms and new deployments. It
+also shifts support to do less work on the dispatcher, make fewer
+assumptions about the test in the dispatcher configuration and put more
+flexibility into the hands of the test writer.
 
 .. note:: The new code is still developing, some areas are absent,
           some areas will change substantially before it will work.
           All details here need to be seen only as examples and the
-          specific code may well change independently.
+          specific code may well change independently. This documentation
+          is aimed at LAVA developers - although some content covers user
+          facing actions, the syntax and parameters for these actions
+          are still subject to change and do not constitute an API. In
+          particular, the sample jobs supporting the unit tests do not
+          represent a submission format, rather a generated format based
+          on (as yet unwritten) server-side conversions.
+
+Design
+******
 
 Start with a Job which is broken up into a Deployment, a Boot, a Test
 and a Submit class:
@@ -148,7 +165,7 @@ deployment. See also :ref:`dispatcher_actions`.
 .. _pipeline_construction:
 
 Pipeline construction and flow
-==============================
+******************************
 
 #. One device per job. One top level pipeline per job
 
@@ -186,7 +203,7 @@ Pipeline construction and flow
 .. _using_strategy_classes:
 
 Using strategy classes
-----------------------
+======================
 
 Strategies are ways of meeting the requirements of the submitted job within
 the limits of available devices and code support.
@@ -229,7 +246,7 @@ Lava test shell scripts
           alongside the deployment instead of overlaying, and thereby
           altering, the deployment.
 
-The LAVA scripts a standard addition to a LAVA test and are handled as
+The LAVA scripts are a standard addition to a LAVA test and are handled as
 a single unit. Using idempotent actions, the test script extension can
 support LMP or MultiNode or other custom requirements without requiring
 this support to be added to all tests. The extensions are created during
@@ -241,12 +258,12 @@ part of the test records. The checksum of the overlay is added to the
 test job log.
 
 Pipeline error handling
-=======================
+***********************
 
 .. _runtime_error_exception:
 
 RuntimeError Exception
-----------------------
+======================
 
 Runtime errors include:
 
@@ -262,7 +279,7 @@ a unit test to prevent regressions.
 .. _infrastructure_error_exception:
 
 InfrastructureError Exception
------------------------------
+=============================
 
 Infrastructure errors include:
 
@@ -272,7 +289,7 @@ Infrastructure errors include:
 .. _job_error_exception:
 
 JobError Exception
-------------------
+==================
 
 Job errors include:
 
@@ -282,7 +299,7 @@ Job errors include:
 .. _test_error_exception:
 
 TestError Exception
--------------------
+===================
 
 Test errors include:
 
@@ -290,7 +307,7 @@ Test errors include:
 #. Failed to parse a test case
 
 Result bundle identifiers
-=========================
+*************************
 
 Old style result bundles are assigned a text based UUID during submission.
 This has several issues:
@@ -324,7 +341,7 @@ users of the server to which the bundle was later uploaded.
 .. _criteria:
 
 Refactoring review criteria
-===========================
+***************************
 
 The refactored dispatcher has different objectives to the original and
 any assumptions in the old code must be thrown out. It is very easy to
@@ -336,7 +353,7 @@ improved.
 .. _keep_dispatcher_dumb:
 
 Keep the dispatcher dumb
-------------------------
+========================
 
 There is a temptation to make the dispatcher clever but this only
 restricts the test writer from doing their own clever tests by hard
@@ -366,7 +383,7 @@ writer.
 .. _defaults:
 
 Avoid defaults in dispatcher code
----------------------------------
+=================================
 
 Constants and defaults are going to need an override somewhere for some
 device or test, eventually. Code defensively and put constants into
@@ -376,7 +393,7 @@ device_type than a string in the python code as this can later be
 extended to a device or a job submission.
 
 Let the test fail and diagnose later
-------------------------------------
+====================================
 
 **Avoid guessing** in LAVA code. If any operation in the dispatcher
 could go in multiple paths, those paths must be made explicit to the
@@ -410,7 +427,7 @@ on the assumption that the interface will appear, somehow, eventually.
 .. _black_box_deploy:
 
 Treat the deployment as a black box
------------------------------------
+===================================
 
 LAVA has claimed to do this for a long time but the refactored
 dispatcher is pushing this further. Do not think of the LAVA scripts
@@ -426,7 +443,7 @@ devices.
 .. _essential_components:
 
 Only protect the essential components
--------------------------------------
+=====================================
 
 LAVA has had a tendency to hardcode commands and operations and there
 are critical areas which must still be protected from changes in the
@@ -458,7 +475,7 @@ the bootloader is corrupted, that is an issue for the lab admins to
 take up with the test submitter.
 
 Give the test writer enough rope
---------------------------------
+================================
 
 Within the provisos of :ref:`essential_components`, the test writer
 needs to be given enough rope and then let LAVA **diagnose** issues
@@ -488,7 +505,7 @@ require that the information is provided and **diagnose** the actual
 information if the attempt to use the specified information fails.
 
 Guidance
-^^^^^^^^
+--------
 
 #. If the command is to run inside a deployment, **require** that the
    **full** command line can be specified by the test writer. Remember:
@@ -512,7 +529,7 @@ needs to be protected. ``connection.sendline()`` is a deployment
 call and does not need to be protected.
 
 Providing gold standard images
-------------------------------
+==============================
 
 Test writers are strongly recommended to only use a known working
 setup for their job. A set of gold standard jobs will be defined in
@@ -552,7 +569,7 @@ show up in the gold standard images. Test writers need to work with the
 QA team, using the gold standard images.
 
 Creating a gold standard image
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------
 
 Part of the benefit of a standard image is that the methods for building
 the image - and therefore the methods for updating it, modifying it and
@@ -579,7 +596,7 @@ wiki can be used - if a suitable page does not already exist elsewhere,
 use wiki.linaro.org.
 
 Other gold standard components
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------
 
 The standard does not have to be a complete OS image - a kernel with a
 DTB (and possibly an initrd) can also count as a standard ramdisk image.
@@ -590,8 +607,10 @@ The same requirement exists for documenting how to build, modify and
 update all components of the "image" and the set of components need to
 be tested as a whole to represent a test using the standard.
 
+.. _secondary_media:
+
 Secondary media
-===============
+***************
 
 With the migration from master images on an SD card to dynamic master
 images over NFS, other possibilities arise from the refactoring.
@@ -604,6 +623,15 @@ images over NFS, other possibilities arise from the refactoring.
   which is installed in the initial deployment. Parameters for the
   script need to be contained within the test image.
 
+Secondary deployments are done by the device under test, using actions
+defined by LAVA and tools provided by the initial deployment. Test writers
+need to ensure that the initial deployment has enough support to complete
+the second deployment. See :ref:`uuid_device_node`.
+
+Images on remote servers are downloaded to the dispatcher (and decompressed
+where relevant) so that the device does not need to do the decompression
+or need lots of storage in the initial deployment.
+
 By keeping the downloaded image intact, it becomes possible to put the
 LAVA extensions alongside the image instead of inside.
 
@@ -613,11 +641,20 @@ To make this work, several requirements must be met:
   tools necessary to complete the second deployment - it is a TestError
   if there is insufficient space or the deployment cannot complete
   this step.
-* The operation of the second deployment is a test shell which
+* The initial deployment does not need enough space for the decompressed
+  image, however, the initial deployment is responsible for writing the
+  decompressed image to the secondary media from ``stdin``, so the amount
+  of memory taken up by the initial deployment can have an impact on the
+  speed or success of the write.
+* The operation of the second deployment is an action which
   **precedes** the second boot. There is no provision for getting
   data back from this test shell into the boot arguments for the next
   boot. Any data which is genuinely persistent needs to be specified
   in advance.
+* LAVA manages the path to which the second deployment is written, based
+  on the media supported by the device and the ID of that media. Where
+  a device supports multiple options for secondary media, the job specifies
+  which media is to be used.
 * LAVA will need to support instructions in the job definition which
   determine whether a failed test shell should allow or skip the
   boot action following.
@@ -646,8 +683,10 @@ To make this work, several requirements must be met:
 * The job definition needs to include the bootloader commands, although
   defaults can be provided in some cases.
 
+.. _uuid_device_node:
+
 UUID vs device node support
----------------------------
+===========================
 
 A deployment to secondary media must be done by a running kernel, not
 by the bootloader, so restrictions apply to that kernel:
@@ -692,7 +731,7 @@ by the bootloader, so restrictions apply to that kernel:
       cannot be used with ``root_uuid`` - to do so causes a JobError.
 
 Device configuration
-^^^^^^^^^^^^^^^^^^^^
+====================
 
 Media settings are per-device, based on the capability of the device type.
 An individual devices of a specified type *may* have exactly one of the
@@ -737,7 +776,7 @@ device node as it may depend on how the deployed kernel or image is configured.
 When this is used, the job submission must contain this data.
 
 Deploy commands
-"""""""""""""""
+---------------
 
 This is an example block - the actual data values here are known not to
 work as the ``deploy`` step is for a panda but the ``boot`` step in the
@@ -795,7 +834,7 @@ deployed on a device where UUID is required, as it is this kernel which
 needs to make ``/dev/disk/by-id/$path`` exist for ``dd`` to use.
 
 Boot commands
-"""""""""""""
+-------------
 
 .. code-block:: yaml
 
@@ -835,7 +874,7 @@ break up or relay the partitions. Therefore, the UUIDs of partitions inside
 the image **MUST** be declared by the job submissions.
 
 Secondary connections
-=====================
+*********************
 
 The implementation of VMGroups created a role for a delayed start
 Multinode job. This would allow one job to operate over serial, publish
@@ -845,13 +884,13 @@ where a debugging shell needs to be opened around a virtualisation
 boundary.
 
 Device configuration design
-===========================
+***************************
 
 Device configuration has moved to YAML and has a larger scope of possible
 methods, related to the pipeline strategies.
 
 Changes from existing configuration
------------------------------------
+===================================
 
 The device configuration is moving off the dispatcher and into the main
 LAVA server database. This simplifies the scheduler and is a step
@@ -861,6 +900,16 @@ based on local configuration. There is then no need for the device
 configuration to include the hostname in the YAML as there is nothing
 on the dispatcher to check against - the dispatcher uses the command
 line arguments.
+
+The device type configuration is dropped. In preparation for the server-side
+integration and templating support, each device configuration includes all
+of the configuration for the device type. During testing, this does mean
+more repetition inside the files used on the dispatcher command line.
+
+It remains desirable that the final implementation will only provide a
+single YAML file to the dispatcher containing the job and all of the
+configuration, without reference to configuration which is not relevant
+to that job. This allows quicker prototyping of support for new devices.
 
 Example device configuration
 ----------------------------
@@ -873,13 +922,6 @@ Example device configuration
    hard_reset: /usr/bin/pduclient --daemon localhost --hostname pdu --command reboot --port 08
    power_off: /usr/bin/pduclient --daemon localhost --hostname pdu --command off --port 08
    power_on: /usr/bin/pduclient --daemon localhost --hostname pdu --command on --port 08
-
-Example device_type configuration
----------------------------------
-
-.. code-block:: yaml
-
- # replacement device_type config for the beaglebone-black type
 
  parameters:
   bootm:
