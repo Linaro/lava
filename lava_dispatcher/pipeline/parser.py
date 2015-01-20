@@ -133,12 +133,11 @@ class JobParser(object):
                 duration = Timeout.parse(data['timeouts']['job'])
                 job.timeout = Timeout(data['job_name'], duration)
             if 'action' in data['timeouts']:
+                # FIXME: never used !
                 self.context['default_action_duration'] = Timeout.parse(data['timeouts']['action'])
             if 'test' in data['timeouts']:
+                # FIXME: never used !
                 self.context['default_test_duration'] = Timeout.parse(data['timeouts']['test'])
-            skip_set = {'job', 'action', 'yaml_line', 'test'}
-            for override in list(set(data['timeouts'].keys()) - skip_set):
-                job.overrides['timeouts'][override] = Timeout.parse(data['timeouts'][override])
 
     # FIXME: add a validate() function which checks against a Schema as a completely separate step.
     # pylint: disable=too-many-locals,too-many-statements
@@ -153,7 +152,6 @@ class JobParser(object):
         job = Job(data)
         counts = {}
         job.device = device
-        job.overrides.update(device.overrides)
         job.parameters['output_dir'] = output_dir
         pipeline = Pipeline(job=job)
         self._timeouts(data, job)

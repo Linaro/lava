@@ -53,7 +53,7 @@ class AutoLoginAction(Action):
         self.name = 'auto-login-action'
         self.description = "automatically login after boot using job parameters"
         self.summary = "Auto-login after boot"
-        self.timeout.duration = AUTOLOGIN_DEFAULT_TIMEOUT
+        # FIXME: self.timeout.duration = AUTOLOGIN_DEFAULT_TIMEOUT
 
     def validate(self):
         super(AutoLoginAction, self).validate()

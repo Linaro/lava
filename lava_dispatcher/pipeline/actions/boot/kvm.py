@@ -86,28 +86,15 @@ class BootQemuRetry(RetryAction):
         self.name = 'boot_qemu_image'
         self.description = "boot image using QEMU command line"
         self.summary = "boot QEMU image"
-        self.overrides = None
 
     def validate(self):
         super(BootQemuRetry, self).validate()
         try:
             # FIXME: need a schema and do this inside the NewDevice with a QemuDevice class? (just for parsing)
-            params = self.job.device.parameters['actions']['boot']
-            arch = self.job.device.parameters['architecture']
-            qemu_binary = which(params['command'][arch]['qemu_binary'])
-            self.overrides = params['overrides']  # FIXME: resolve how to allow overrides in the schema
-            command = [
-                qemu_binary,
-                "-machine",
-                params['parameters']['machine'],
-                # "-hda",
-                # self.data['download_action']['file'],
-            ]
-            # these options are lists
-            for net_opt in params['parameters']['net']:
-                command.extend(["-net", net_opt])
-            for opt in params['parameters']['qemu_options']:
-                command.extend([opt])
+            boot = self.job.device.parameters['actions']['boot']
+            qemu_binary = which(boot['parameters']['command'])
+            command = [qemu_binary]
+            command.extend(boot['parameters'].get('options', []))
             self.set_common_data('qemu-command', 'command', command)
         except (KeyError, TypeError):
             self.errors = "Invalid parameters"

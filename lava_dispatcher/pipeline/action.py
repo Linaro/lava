@@ -147,8 +147,28 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             parameters = self.parameters
         # if the action has an internal pipeline, initialise that here.
         action.populate(parameters)
+        # Set the timeout
+        # FIXME: only the last test is really useful. The first ones are only
+        # needed to run the tests that do not use a device and job.
+        if self.job is not None and \
+           self.job.device is not None and \
+           action.name in self.job.device.parameters.get('timeouts', {}):
+            action.timeout = Timeout(
+                action.name,
+                Timeout.parse(
+                    self.job.device.
+                    parameters['timeouts'][action.name]
+                )
+            )
         # Set the parameters after populate so the sub-actions are also
         # getting the parameters.
+        # Also set the parameters after the creation of the default timeout
+        # so timeouts specified in the job override the defaults.
+        # job overrides device timeouts:
+        # FIXME: this shouldn't be needed once the device configuration is generated using the job definition
+        if self.job and 'timeouts' in self.job.parameters and action.name in self.job.parameters['timeouts']:
+            parameters['timeout'] = self.job.parameters['timeouts'][action.name]
+
         action.parameters = parameters
 
     def _generate(self, actions_list):  # pylint: disable=no-self-use
@@ -274,7 +294,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             action.logger.set_handler(get_yaml_handler(action.log_filename))
 
             # Begin the action
-            action.logger.debug('start: %s %s' % (action.level, action.name))
+            action.logger.debug('start: %s %s (max %ds)' % (action.level, action.name, action.timeout.duration))
             try:
                 if not self.parent:
                     signal.signal(signal.SIGINT, cancelling_handler)
@@ -346,7 +366,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         self.__results__ = OrderedDict()
         # FIXME: what about {} for default value?
         self.env = None  # FIXME make this a parameter which gets default value when first called
-        self.timeout = Timeout(self.name)  # Timeout class instance, if needed.
+        # TODO: self.name is None for the moment.
+        self.timeout = Timeout(self.name)
         self.max_retries = 1  # unless the strategy or the job parameters change this, do not retry
         self.diagnostics = []
 
@@ -464,14 +485,15 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
             self.__parameters__.update(data)
         except ValueError:
             raise RuntimeError("Action parameters need to be a dictionary")
+
+        # FIXME: the name should be available in the constructor
+        # Set the timeout name now
+        self.timeout.name = self.name
+        # Overide the duration if needed
         if 'timeout' in self.parameters:
-            self.timeout = Timeout(self.name, Timeout.parse(self.parameters['timeout']))
-        else:
-            self.timeout.name = self.name
+            self.timeout.duration = Timeout.parse(self.parameters['timeout'])
+
         # only unit tests should have actions without a pointer to the job.
-        if self.job:
-            if self.name in self.job.overrides['timeouts']:
-                self.timeout = Timeout(self.name, self.job.overrides['timeouts'][self.name])
         if 'failure_retry' in self.parameters and 'repeat' in self.parameters:
             self.errors = "Unable to use repeat and failure_retry, use a repeat block"
         if 'failure_retry' in self.parameters:

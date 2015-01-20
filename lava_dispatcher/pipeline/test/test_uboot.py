@@ -293,7 +293,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertEqual(u_boot_media.parameters['dtb'], u_boot_media.get_common_data('file', 'dtb'))
         self.assertEqual(u_boot_media.parameters['root_uuid'], u_boot_media.get_common_data('uuid', 'root'))
         part_reference = '%s:%s' % (
-            job.device.parameters['media']['usb'][u_boot_media.get_common_data('u-boot', 'device')]['device_id'],
+            job.device.parameters['parameters']['media']['usb'][u_boot_media.get_common_data('u-boot', 'device')]['device_id'],
             u_boot_media.parameters['boot_part']
         )
         self.assertEqual(part_reference, u_boot_media.get_common_data('uuid', 'boot_part'))

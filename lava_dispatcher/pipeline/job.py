@@ -54,7 +54,6 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             DiagnoseNetwork,
         ]
         self.timeout = None
-        self.overrides = {'timeouts': {}}
 
     def set_pipeline(self, pipeline):
         self.pipeline = pipeline

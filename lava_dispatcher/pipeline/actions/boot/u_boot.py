@@ -232,7 +232,7 @@ class UBootSecondaryMedia(Action):
         self.set_common_data('file', 'ramdisk', self.parameters.get('ramdisk', ''))
         self.set_common_data('file', 'dtb', self.parameters.get('dtb', ''))
         self.set_common_data('uuid', 'root', self.parameters['root_uuid'])
-        media_params = self.job.device.parameters['media']['usb']
+        media_params = self.job.device.parameters['parameters']['media']['usb']
         self.set_common_data(
             'uuid',
             'boot_part',

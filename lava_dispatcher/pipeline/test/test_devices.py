@@ -53,28 +53,6 @@ class TestDeviceParser(unittest.TestCase):  # pylint: disable=too-many-public-me
         self.assertTrue('qemu' in kvm01.parameters['actions']['boot']['methods'])
         self.assertTrue('image' in kvm01.parameters['actions']['deploy']['methods'])
 
-    def test_device_params(self):
-        """
-        Not a representative test of how devices are created but a test of the
-        update functionality used in device creation. Ensures that if a dict
-        exists inside the initial parameters, updating the parameters to add
-        new values to that dict does not remove the previous values.
-        """
-        kvm01 = NewDevice('kvm01')
-        commands = kvm01.parameters['actions']['boot']['command']
-        params = {'arm64': {'qemu_binary': 'qemu-system-aarch64'}}
-        updated = kvm01.update_params(commands, params)
-        self.assertIn('arm64', updated.keys())
-        self.assertIn(commands.keys()[0], updated.keys())
-        parent = {'actions': {'boot': {'command': params}}}
-        updated = kvm01.update_params(kvm01.parameters, parent)
-        self.assertIn('arm64', updated['actions']['boot']['command'].keys())
-        self.assertIn(commands.keys()[0], updated['actions']['boot']['command'].keys())
-        self.assertIn(params.keys()[0], updated['actions']['boot']['command'].keys())
-        self.assertIn('arm64', kvm01.parameters['actions']['boot']['command'].keys())
-        self.assertIn('qemu_binary', kvm01.parameters['actions']['boot']['command']['arm64'].keys())
-        self.assertEqual('qemu-system-aarch64', kvm01.parameters['actions']['boot']['command']['arm64']['qemu_binary'])
-
 
 class FakeAction(Action):
 

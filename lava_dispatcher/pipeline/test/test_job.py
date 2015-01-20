@@ -388,10 +388,6 @@ class TestKVMQcow2Deploy(unittest.TestCase):  # pylint: disable=too-many-public-
                 apply_overlay = action.pipeline.children[action.pipeline][5]
                 self.assertEqual(apply_overlay.name, "apply-overlay-image")
                 self.assertIsInstance(apply_overlay, ApplyOverlayImage)
-                self.assertEqual(
-                    apply_overlay.timeout.duration,
-                    self.job.device.overrides['timeouts'][apply_overlay.name]
-                )
 
                 unmount = action.pipeline.children[action.pipeline][6]
                 self.assertEqual(unmount.name, "umount-retry")

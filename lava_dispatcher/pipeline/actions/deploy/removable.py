@@ -67,9 +67,9 @@ class Removable(Deployment):
                 media = 'sata'
         if job_device is None:
             return False
-        if job_device not in device.parameters['media'][media]:
+        if job_device not in device.parameters['parameters']['media'][media]:
             return False
-        if 'uuid' in device.parameters['media'][media][job_device]:
+        if 'uuid' in device.parameters['parameters']['media'][media][job_device]:
             return True
         return False
 
@@ -96,9 +96,9 @@ class DDAction(Action):
         if not os.path.isabs(self.parameters['download']):
             self.errors = "download parameter needs to be an absolute path"
         uuid_required = False
-        self.boot_params = self.job.device.parameters['media'][self.parameters['to']]
+        self.boot_params = self.job.device.parameters['parameters']['media'][self.parameters['to']]
         if 'media' in self.job.device.parameters:
-            media_params = self.job.device.parameters['media']
+            media_params = self.job.device.parameters['parameters']['media']
             interface_params = [
                 interface for interface in media_params if interface == self.parameters['to']
             ]

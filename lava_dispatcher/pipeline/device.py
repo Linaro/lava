@@ -91,11 +91,9 @@ class NewDevice(object):
     def __init__(self, target):
         self.target = target
         self.__parameters__ = {}
-        self.overrides = {'timeouts': {}}
-        dev_parser = DeviceTypeParser()
         # development paths are within the current working directory
         device_config_path = os.getcwd()
-        name = os.path.join('devices', "%s.conf" % target)
+        name = os.path.join('devices', "%s.yaml" % target)
         device_file = os.path.join(device_config_path, name)
         if not os.path.exists(device_file):
             # system paths are in the installed location of __file__
@@ -108,54 +106,17 @@ class NewDevice(object):
                         target, device_file, sys_device_file))
             device_file = sys_device_file
 
-        defaults = NewDeviceDefaults()
-        # parameters dict will update if new settings are found, so repeat for customisation files when those exist
-        self.parameters = defaults.parameters
+        # Parse the yaml configuration
         try:
             with open(device_file) as f_in:
-                self.parameters = dev_parser.parse(f_in)
-        except TypeError:
+                self.parameters = yaml.load(f_in)
+        except yaml.parser.ParserError:
             raise RuntimeError("%s could not be parsed" % device_file)
-        # store device values to override device_type
-        type_config_path = os.getcwd()
-        type_name = os.path.join('device_types', "%s.conf" % self.parameters['device_type'])
-        type_file = os.path.join(type_config_path, type_name)
 
-        if not os.path.exists(type_file):
-            # some types are pre-defined
-            type_config_path = os.path.join(os.path.dirname(__file__))
-            type_file = os.path.join(type_config_path, type_name)
-
-        if not os.path.exists(type_file):
-            raise RuntimeError("Could not find %s" % type_file)
-
-        try:
-            with open(type_file) as f_in:
-                device_params = dev_parser.parse(f_in)
-        except TypeError:
-            raise RuntimeError("%s could not be parsed" % type_file)
-        # assert device overrides
-        self.parameters = self.update_params(device_params, self.parameters)
         self.parameters = {
             'hostname': target
         }
         self.parameters.setdefault('power_state', 'off')  # assume power is off at start of job
-
-        if 'timeouts' in self.parameters:
-            for name, _ in list(self.parameters['timeouts'].items()):
-                self.overrides['timeouts'][name] = Timeout.parse(self.parameters['timeouts'][name])
-
-    def update_params(self, orig_dict, new_dict):
-        """
-        Recursively update parameters so that dicts inside the parameters get updated instead of overwritten.
-        """
-        for key, val in new_dict.iteritems():
-            if isinstance(val, collections.Mapping):
-                tmp = self.update_params(orig_dict.get(key, {}), val)
-                orig_dict[key] = tmp
-            else:
-                orig_dict[key] = new_dict[key]
-        return orig_dict
 
     @property
     def parameters(self):
