@@ -28,9 +28,20 @@ def indices(string, char):
 
 
 def substitute(command_list, dictionary):
+    """
+    Replace markup in the command_list which matches a key in the dictionary with the
+    value of that key in the dictionary. Empty values leave the item unchanged.
+    Markup needs to be safe to use in the final command as there is no guarantee that
+    any dictionary will replace all markup in the command_list.
+    arguments: command_list - a list of strings
+               dictionary - a dictionary of keys which match some of the strings with values
+                            to replace for the key in the string.
+    """
     parsed = []
     for line in command_list:
         for key, value in dictionary.items():  # 2to3 false positive, works with python3
+            if not key or not value:
+                continue
             line = line.replace(key, value)
         parsed.append(line)
     return parsed

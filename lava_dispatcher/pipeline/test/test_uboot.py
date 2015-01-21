@@ -33,6 +33,7 @@ from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR, SHUTDOWN_MESSAGE
 
 
@@ -170,6 +171,31 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         kernel = parameters['actions']['deploy']['kernel']
         ramdisk = parameters['actions']['deploy']['ramdisk']
         dtb = parameters['actions']['deploy']['dtb']
+
+        substitution_dictionary = {
+            '{SERVER_IP}': ip_addr,
+            # the addresses need to be hexadecimal
+            '{KERNEL_ADDR}': kernel_addr,
+            '{DTB_ADDR}': dtb_addr,
+            '{RAMDISK_ADDR}': ramdisk_addr,
+            '{BOOTX}': "%s %s %s %s" % (
+                overlay.parameters['type'], kernel_addr, ramdisk_addr, dtb_addr),
+            '{RAMDISK}': ramdisk,
+            '{KERNEL}': kernel,
+            '{DTB}': dtb
+        }
+        params = [line for line in device.parameters['actions']['boot']['methods'] if 'u-boot' in line][0]
+        params['u-boot']['ramdisk']['commands'] = substitute(params['u-boot']['ramdisk']['commands'], substitution_dictionary)
+
+        commands = params['u-boot']['ramdisk']['commands']
+        self.assertIs(type(commands), list)
+        self.assertIn("setenv loadkernel 'tftp ${kernel_addr_r} zImage'", commands)
+        self.assertIn("setenv loadinitrd 'tftp ${initrd_addr_r} initrd.gz; setenv initrd_size ${filesize}'", commands)
+        self.assertIn("setenv loadfdt 'tftp ${fdt_addr_r} broken.dtb'", commands)
+        self.assertNotIn("setenv kernel_addr_r '{KERNEL_ADDR}'", commands)
+        self.assertNotIn("setenv initrd_addr_r '{RAMDISK_ADDR}'", commands)
+        self.assertNotIn("setenv fdt_addr_r '{DTB_ADDR}'", commands)
+
         lines = {}
         for line in device.parameters['actions']['boot']['methods']:
             if 'u-boot' in line:

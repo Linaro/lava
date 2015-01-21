@@ -107,6 +107,25 @@ class UBootAction(BootAction):
         self.internal_pipeline.add_action(UBootRetry())
 
 
+class ExpectBootloaderSession(Action):
+    """
+    Waits for a shell connection to the device for the current job.
+    """
+
+    def __init__(self):
+        super(ExpectBootloaderSession, self).__init__()
+        self.name = "expect-bootloader-connection"
+        self.summary = "Expect a bootloader prompt"
+        self.description = "Wait for a u-boot shell"
+
+    def run(self, connection, args=None):
+        connection = super(ExpectBootloaderSession, self).run(connection, args)
+        connection.prompt_str = self.parameters['u-boot']['parameters']['bootloader_prompt']
+        self.logger.debug("%s: Waiting for prompt" % self.name)
+        connection.wait()
+        return connection
+
+
 class UBootRetry(BootAction):
 
     def __init__(self):
@@ -121,7 +140,7 @@ class UBootRetry(BootAction):
         self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(UBootInterrupt())
         # need to look for Hit any key to stop autoboot
-        self.internal_pipeline.add_action(ExpectShellSession())  # wait
+        self.internal_pipeline.add_action(ExpectBootloaderSession())  # wait
         # and set prompt to the uboot prompt
         self.internal_pipeline.add_action(UBootCommandsAction())
         # Add AutoLoginAction unconditionnally as this action does nothing if
@@ -304,9 +323,8 @@ class UBootCommandOverlay(Action):
 
         substitutions['{ROOT}'] = self.get_common_data('uuid', 'root')  # UUID label, not a file
         substitutions['{BOOT_PART}'] = self.get_common_data('uuid', 'boot_part')
-        self.substitute(commands, substitutions)
 
-        self.data['u-boot']['commands'] = substitute(self.data['u-boot']['commands'], substitutions)
+        self.data['u-boot']['commands'] = substitute(commands, substitutions)
         self.logger.debug("Parsed boot commands: %s" % '; '.join(self.data['u-boot']['commands']))
         return connection
 

@@ -197,6 +197,7 @@ class ExpectShellSession(Action):
 
     def run(self, connection, args=None):
         connection = super(ExpectShellSession, self).run(connection, args)
+        connection.prompt_str = self.job.device.parameters['test_image_prompts']
         self.logger.debug("%s: Waiting for prompt" % self.name)
         connection.wait()  # FIXME: should this be a regular RetryAction operation?
         return connection
