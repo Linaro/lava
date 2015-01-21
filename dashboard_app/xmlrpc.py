@@ -24,6 +24,7 @@ import datetime
 import decimal
 import logging
 import re
+import urllib2
 import xmlrpclib
 import hashlib
 import json
@@ -249,6 +250,7 @@ class DashboardAPI(ExposedAPI):
             - team streams are accessible to team members
 
         """
+        content_filename = urllib2.unquote(content_filename).decode('utf-8')
         bundle = self._put(content, content_filename, pathname)
         self.logger.debug("Returning permalink to bundle")
         return self._context.request.build_absolute_uri(
