@@ -22,6 +22,7 @@
 import os
 import logging
 import tempfile
+import urllib2
 import urlparse
 import xmlrpclib
 import simplejson
@@ -247,6 +248,7 @@ class cmd_submit_results(BaseAction):
         dashboard = _get_dashboard(server, token)
         json_bundle = DocumentIO.dumps(main_bundle)
         job_name = self.context.job_data.get('job_name', "LAVA Results")
+        job_name = urllib2.quote(job_name.encode('utf-8'))
         try:
             result = dashboard.put_ex(json_bundle, job_name, stream)
             print >> self.context.oob_file, 'dashboard-put-result:', result
