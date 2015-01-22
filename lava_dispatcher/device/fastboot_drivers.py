@@ -260,6 +260,7 @@ class BaseDriver(object):
         }
         return lookup[partition]
 
+
 class fastboot(BaseDriver):
 
     def __init__(self, device):
