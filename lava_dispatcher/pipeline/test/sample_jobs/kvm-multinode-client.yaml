@@ -22,6 +22,10 @@ protocols:
       kvm02: server
     group_size: 2
     sub_id: 1
+    request: lava-start
+    expect_role: server
+    timeout:
+      minutes: 10
 
 priority: medium
 
@@ -36,12 +40,26 @@ actions:
         os: debian
         root_partition: 1
         role: client
+        protocols:
+          lava-multinode:
+            - action: customise
+              request: lava-send
+              message:
+                key: value
+              messageID: test
 
     - boot:
         method: qemu
         media: tmpfs
         failure_retry: 2
         role: client
+        protocols:
+          lava-multinode:
+            - action: execute-qemu
+              request: lava-wait
+              messageID: test
+              message:
+                ipv4: $IPV4  # any value here will be replaced by the reply to the lava-send
 
     - test:
         role: client

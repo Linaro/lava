@@ -188,6 +188,7 @@ class UBootInterrupt(Action):
     def run(self, connection, args=None):
         if not connection:
             raise RuntimeError("%s started without a connection already in use" % self.name)
+        connection = super(UBootInterrupt, self).run(connection, args)
         self.logger.debug("Changing prompt to 'Hit any key to stop autoboot'")
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
         connection.prompt_str = UBOOT_AUTOBOOT_PROMPT
@@ -242,10 +243,6 @@ class UBootSecondaryMedia(Action):
             )
         )
 
-    def run(self, connection, args=None):
-        # no need for a run action here, done in validate.
-        return connection
-
 
 class UBootCommandOverlay(Action):
     """
@@ -295,6 +292,7 @@ class UBootCommandOverlay(Action):
         """
         # Multiple deployments would overwrite the value if parsed in the validate step.
         # FIXME: implement isolation for repeated steps.
+        connection = super(UBootCommandOverlay, self).run(connection, args)
         try:
             ip_addr = dispatcher_ip()
         except InfrastructureError as exc:
@@ -353,7 +351,7 @@ class UBootCommandsAction(Action):
     def run(self, connection, args=None):
         if not connection:
             self.errors = "%s started without a connection already in use" % self.name
-        connection.timeout = self.timeout
+        connection = super(UBootCommandsAction, self).run(connection, args)
         self.logger.debug("Changing prompt to %s" % self.prompt)
         for line in self.data['u-boot']['commands']:
             self.wait(connection)

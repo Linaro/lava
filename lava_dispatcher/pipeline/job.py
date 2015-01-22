@@ -142,6 +142,7 @@ class ResetContext(Action):
         self.description = "clear dynamic data from previous deployment"
 
     def run(self, connection, args=None):
+        connection = super(ResetContext, self).run(connection, args)
         self.logger.debug("Resetting dynamic data from previous deployment")
         self.job.reset_context()
         return connection

@@ -138,6 +138,7 @@ class CallQemuAction(Action):
 
         shell_connection = ShellSession(self.job, shell)
         shell_connection.prompt_str = self.job.device['test_image_prompts']
+        shell_connection = super(CallQemuAction, self).run(shell_connection, args)
 
         # FIXME: tests with multiple boots need to be handled too.
         self.data['boot-result'] = 'failed' if self.errors else 'success'

@@ -293,9 +293,6 @@ class Protocol(object):  # pylint: disable=abstract-class-not-used
     def valid(self):
         return len([x for x in self.errors if x]) == 0
 
-    def poll(self, message, timeout=None):
-        raise NotImplementedError()
-
     def set_up(self):
         raise NotImplementedError()
 
@@ -315,3 +312,6 @@ class Protocol(object):  # pylint: disable=abstract-class-not-used
         :return: A Python object containing the reply dict from the API call
         """
         return self._api_select(args)
+
+    def collate(self, reply_dict, params_dict):
+        return None

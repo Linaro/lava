@@ -176,6 +176,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             return (condition, percent,
                     "progress %3d%% (%dMB)" % (percent, int(downloaded_size / (1024 * 1024))) if condition else "")
 
+        connection = super(DownloadHandler, self).run(connection, args)
         # self.cookies = self.job.context.config.lava_cookies  # FIXME: work out how to restore
         md5 = hashlib.md5()
         sha256 = hashlib.sha256()
@@ -364,7 +365,7 @@ class QCowConversionAction(Action):
     def run(self, connection, args=None):
         if self.key not in self.data['download_action']:
             raise RuntimeError("'download_action.%s' missing in the context" % self.key)
-
+        connection = super(QCowConversionAction, self).run(connection, args)
         fname = self.data['download_action'][self.key]['file']
         origin = fname
         # Change the extension only if the file ends with '.qcow2'

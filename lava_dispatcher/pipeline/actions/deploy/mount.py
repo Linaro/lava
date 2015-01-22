@@ -60,6 +60,7 @@ class OffsetAction(DeployAction):
         if 'offset' in self.data['download_action']:
             # idempotency
             return connection
+        connection = super(OffsetAction, self).run(connection, args)
         image = self.data['download_action'][self.key]['file']
         if not os.path.exists(image):
             raise RuntimeError("Not able to mount %s: file does not exist" % image)
@@ -108,6 +109,7 @@ class LoopCheckAction(DeployAction):
         self.data['download_action']['available_loops'] = available_loops
 
     def run(self, connection, args=None):
+        connection = super(LoopCheckAction, self).run(connection, args)
         if 'available_loops' not in self.data['download_action']:
             raise RuntimeError("Unable to check available loop devices")
         args = ['/sbin/losetup', '-a']
@@ -151,6 +153,7 @@ class LoopMountAction(RetryAction):
             self.errors = "no file specified to mount"
 
     def run(self, connection, args=None):
+        connection = super(LoopMountAction, self).run(connection, args)
         self.data[self.name]['mntdir'] = mkdtemp(autoremove=False)
         self.data['mount_action']['mntdir'] = \
             os.path.abspath("%s/%s" % (self.data[self.name]['mntdir'], self.data['lava_test_results_dir']))
@@ -211,10 +214,6 @@ class MountAction(DeployAction):
         self.internal_pipeline.add_action(LoopCheckAction())
         self.internal_pipeline.add_action(LoopMountAction())
 
-    def run(self, connection, args=None):
-        connection = self.internal_pipeline.run_actions(connection, args)
-        return connection
-
 
 class UnmountAction(RetryAction):
 
@@ -241,6 +240,7 @@ class Unmount(Action):
         """
         rmtree is not a cleanup action - it needs to be umounted first.
         """
+        connection = super(Unmount, self).run(connection, args)
         mntdir = self.data['loop_mount']['mntdir']
         self.logger.debug("umounting %s" % mntdir)
         if os.path.ismount(mntdir):

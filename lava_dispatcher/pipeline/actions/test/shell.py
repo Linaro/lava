@@ -91,7 +91,7 @@ class TestShellAction(TestAction):
         # Sanity test: could be a missing deployment for some actions
         if 'boot-result' not in self.data:
             raise RuntimeError("No boot action result found")
-
+        connection = super(TestShellAction, self).run(connection, args)
         if self.data['boot-result'] != 'success':
             self.logger.debug("Skipping test definitions - previous boot attempt was not successful.")
             self.results.update({self.name: 'skipped'})

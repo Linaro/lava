@@ -26,7 +26,6 @@ import types
 import signal
 import datetime
 import subprocess
-import collections
 from collections import OrderedDict
 from contextlib import contextmanager
 
@@ -587,6 +586,29 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
             return ''  # allow for commands which return no output
         return log
 
+    def call_protocols(self):
+        """
+        Actions which support using protocol calls from the job submission use this routine to execute those calls.
+        It is up to the action to determine when the protocols are called within the run step of that action.
+        The order in which calls are made for any one action is not guaranteed.
+        The reply is set in the context data.
+        Although actions may have multiple protocol calls in individual tests, use of multiple calls in Strategies
+        needs to be avoided to ensure that the individual calls can be easily reused and identified.
+        """
+        if 'protocols' not in self.parameters:
+            return
+        for protocol in self.job.protocols:
+            for params in self.parameters['protocols'][protocol.name]:
+                for call in [
+                        params for name in params
+                        if name == 'action' and params[name] == self.name]:
+                    reply = protocol(call)
+                    message = protocol.collate(reply, params)
+                    self.logger.debug(
+                        "Setting common data key %s to %s"
+                        % (message[0], message[1]))
+                    self.set_common_data(protocol.name, message[0], message[1])
+
     def run(self, connection, args=None):
         """
         This method is responsible for performing the operations that an action
@@ -603,12 +625,11 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         :raise: Classes inheriting from BaseAction must handle
         all exceptions possible from the command and re-raise
         """
+        self.call_protocols()
         if self.internal_pipeline:
             return self.internal_pipeline.run_actions(connection, args)
         if connection:
             connection.timeout = self.timeout
-        if not self.internal_pipeline and not connection:
-            raise NotImplementedError("run %s" % self.name)
         return connection
 
     def cleanup(self):
@@ -652,7 +673,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
             if attr == 'timeout':
                 data['timeout'] = {'duration': self.timeout.duration, 'name': self.timeout.name}
             elif attr == 'url':
-                data['url'] = self.url.geturl()
+                data['url'] = attr.url.geturl()
             else:
                 data[attr] = getattr(self, attr)
         if 'deployment_data' in self.parameters:

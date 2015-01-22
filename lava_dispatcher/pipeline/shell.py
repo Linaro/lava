@@ -245,6 +245,7 @@ class ConnectDevice(Action):
         if shell.exitstatus:
             raise JobError("%s command exited %d: %s" % (command, shell.exitstatus, shell.readlines()))
         connection = ShellSession(self.job, shell)
+        connection = super(ConnectDevice, self).run(connection, args)
         connection.prompt_str = self.job.device['test_image_prompts']
         # if the board is running, wait for a prompt - if not, skip.
         if self.job.device.power_state is 'off':

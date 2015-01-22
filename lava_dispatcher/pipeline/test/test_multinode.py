@@ -26,10 +26,13 @@ import unittest
 from lava_dispatcher.pipeline.test.fake_coordinator import TestCoordinator
 from lava_dispatcher.pipeline.test.test_basic import Factory
 from lava_dispatcher.pipeline.actions.deploy.image import DeployImageAction
-from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction, MultinodeOverlayAction
+from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction, MultinodeOverlayAction, CustomisationAction
+from lava_dispatcher.pipeline.actions.boot.kvm import BootQemuRetry, CallQemuAction
+from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.actions.test.multinode import MultinodeTestAction
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.pipeline.action import TestError, JobError
+from lava_dispatcher.pipeline.utils.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
 
 # pylint: disable=protected-access,superfluous-parens
 
@@ -70,7 +73,7 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
                 json.loads(args)
             except ValueError:
                 raise TestError("Invalid arguments to %s protocol" % self.name)
-            self._send(json.loads(args))
+            return self._send(json.loads(args))
 
         def _send(self, msg, system=False):
             msg.update(self.base_message)
@@ -227,10 +230,11 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
             'message': 'testclient'
         }))
         self.coord.expectResponse('wait')
-        client(json.dumps({
+        reply = json.loads(client(json.dumps({
             'request': 'lava_wait',
             'messageID': 'test'
-        }))
+        })))
+        self.assertIn('wait', reply['response'])
 
     def test_client_send_keyvalue(self):
         self.coord.newGroup(2)
@@ -246,10 +250,132 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
             }
         }))
         self.coord.expectResponse('ack')
-        client(json.dumps({
+        reply = json.loads(client(json.dumps({
             'request': 'lava_wait',
             'messageID': 'test'
-        }))
+        })))
+        self.assertEqual(
+            {"message": {"kvm01": {"key": "value"}}, "response": "ack"},
+            reply
+        )
+
+    def test_protocol_action(self):
+        deploy = [action for action in self.client_job.pipeline.actions if isinstance(action, DeployImageAction)][0]
+        customise = [action for action in deploy.internal_pipeline.actions if isinstance(action, CustomisationAction)][0]
+        self.assertIn('protocols', deploy.parameters)
+        self.assertIn('protocols', customise.parameters)
+        self.assertIn(MultinodeProtocol.name, customise.parameters['protocols'])
+        customise_params = [
+            params for params in customise.parameters['protocols'][MultinodeProtocol.name] if params['action'] == customise.name
+        ][0]
+        self.assertIn('action', customise_params)
+        self.assertEqual(customise.name, customise_params['action'])
+        multinode_protocol = [protocol for protocol in customise.job.protocols if protocol.name == MultinodeProtocol.name][0]
+        self.assertIs(multinode_protocol.name, MultinodeProtocol.name)
+
+        # yaml_line gets ignored by the api
+        self.assertEqual(
+            customise_params,
+            {
+                'action': customise.name,
+                'request': 'lava-send',
+                'messageID': 'test',
+                'yaml_line': 45,
+                'message': {
+                    'key': 'value',
+                    'yaml_line': 47
+                },
+            }
+        )
+        client_calls = {}
+        for action in deploy.internal_pipeline.actions:
+            if 'protocols' in action.parameters:
+                for protocol in action.job.protocols:
+                    for params in action.parameters['protocols'][protocol.name]:
+                        api_calls = [params for name in params if name == 'action' and params[name] == action.name]
+                        for call in api_calls:
+                            client_calls.update(call)
+        self.assertEqual(
+            client_calls,
+            {
+                'action': 'customise',
+                'message': {
+                    'key': 'value',
+                    'yaml_line': 47
+                },
+                'messageID': 'test',
+                'request': 'lava-send',
+                'yaml_line': 45
+            }
+        )
+
+    def test_protocol_variables(self):  # pylint: disable=too-many-locals
+        boot = [action for action in self.client_job.pipeline.actions if isinstance(action, BootAction)][0]
+        self.assertIsNotNone(boot)
+        retry = [action for action in boot.internal_pipeline.actions if isinstance(action, BootQemuRetry)][0]
+        self.assertIsNotNone(retry)
+        qemu_boot = [action for action in retry.internal_pipeline.actions if isinstance(action, CallQemuAction)][0]
+        self.assertIsNotNone(qemu_boot)
+        self.assertIn('protocols', qemu_boot.parameters)
+        self.assertIn(MultinodeProtocol.name, qemu_boot.parameters['protocols'])
+        mn_protocol = [protocol for protocol in qemu_boot.job.protocols if protocol.name == MultinodeProtocol.name][0]
+        params = qemu_boot.parameters['protocols'][MultinodeProtocol.name]
+        # params is a list - multiple actions can exist
+        self.assertEqual(
+            params,
+            [{
+                'action': 'execute-qemu',
+                'message': {
+                    'ipv4': '$IPV4',
+                    'yaml_line': 61
+                },
+                'messageID': 'test',
+                'request': 'lava-wait',
+                'yaml_line': 58
+            }])
+        client_calls = {}
+        for action in retry.internal_pipeline.actions:
+            if 'protocols' in action.parameters:
+                for protocol in action.job.protocols:
+                    for params in action.parameters['protocols'][protocol.name]:
+                        api_calls = [params for name in params if name == 'action' and params[name] == action.name]
+                        for call in api_calls:
+                            action.set_common_data(protocol.name, action.name, call)
+                            client_calls.update(call)
+
+        # now pretend that another job has called lava-send with the same messageID, this would be the reply to the
+        # :lava-wait
+        reply = {
+            "message": {
+                "kvm01": {
+                    "ipv4": "192.168.0.2"
+                }
+            },
+            "response": "ack"
+        }
+        self.assertEqual(
+            ('test', {'ipv4': '192.168.0.2'}),
+            mn_protocol.collate(reply, params)
+        )
+
+        replaceables = [key for key, value in params['message'].items() if key != 'yaml_line' and value.startswith('$')]
+        for item in replaceables:
+            data = [val for val in reply['message'].items()][0][1]
+            params['message'][item] = data[item]
+
+        self.assertEqual(
+            client_calls,
+            {
+                'action': 'execute-qemu',
+                'message': {
+                    'ipv4': reply['message'][self.client_job.device.target]['ipv4'],
+                    'yaml_line': 61
+                },
+                'yaml_line': 58,
+                'request': 'lava-wait',
+                'messageID': 'test'
+            }
+        )
 
 
 class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -333,8 +459,9 @@ class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-method
     class FakeProtocol(MultinodeProtocol):
 
         def __init__(self, fake_coordinator, parameters):
-            super(TestProtocol.FakeProtocol, self).__init__(parameters)
+            # set the name before passing in the parameters based on that name
             self.name = "fake-multinode"
+            super(TestProtocol.FakeProtocol, self).__init__(parameters)
             self.sock = TestProtocol.FakeClient(fake_coordinator)
             self.debug_setup()
 
@@ -348,7 +475,7 @@ class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-method
         self.protocol._connect(1)
 
     def test_empty_data(self):
-        with self.assertRaises(TestError):
+        with self.assertRaises(JobError):
             self.protocol(None)
 
     def test_json_failure(self):
@@ -364,7 +491,7 @@ class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-method
         }
         json.loads(json.dumps(msg))
         with self.assertRaises(JobError):
-            self.protocol(json.dumps(msg))
+            self.protocol(msg)
 
     def test_fail_aggregation(self):
         """
@@ -374,8 +501,8 @@ class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-method
             'request': 'aggregate'
         }
         json.loads(json.dumps(msg))
-        with self.assertRaises(NotImplementedError):
-            self.protocol(json.dumps(msg))
+        with self.assertRaises(JobError):
+            self.protocol(msg)
 
     def test_unsupported_request(self):
         msg = {
@@ -384,9 +511,9 @@ class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-method
             'blocksize': 8,
             'messageID': 7
         }
-        json.loads(json.dumps(msg))
+        msg.update(self.protocol.base_message)
         with self.assertRaises(TestError):
-            self.protocol(json.dumps(msg))
+            self.protocol(msg)
 
     def test_lava_send_fail(self):
         msg = {
@@ -395,6 +522,82 @@ class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-method
             'blocksize': 8,
             'messageID': 'test-id'
         }
-        json.loads(json.dumps(msg))
+        msg.update(self.protocol.base_message)
         with self.assertRaises(TestError):
-            self.protocol(json.dumps(msg))
+            self.protocol(msg)
+
+
+class TestDelayedStart(unittest.TestCase):  # pylint: disable=too-many-public-methods
+
+    coord = None
+
+    def setUp(self):
+        """
+        Unable to test actually sending messages - need a genuine group with clients and roles
+        """
+        client_parameters = {
+            'target': 'kvm01',
+            'protocols': {
+                'fake-multinode': {
+                    'sub_id': 0,
+                    'target_group': 'arbitrary-group-id',
+                    'role': 'client',
+                    'group_size': 2,
+                    'roles': {
+                        'kvm01': 'client',
+                        'kvm02': 'server'
+                    },
+                    'request': 'lava-start',
+                    'expect_role': 'server',
+                    'timeout': {
+                        'minutes': 10
+                    }
+                }
+            }
+        }
+        bad_parameters = {
+            'target': 'kvm01',
+            'protocols': {
+                'fake-multinode': {
+                    'sub_id': 0,
+                    'target_group': 'arbitrary-group-id',
+                    'role': 'client',
+                    'group_size': 2,
+                    'roles': {
+                        'kvm01': 'client',
+                        'kvm02': 'server'
+                    },
+                    'request': 'lava-start',
+                    'expect_role': 'client',
+                    'timeout': {
+                        'minutes': 10
+                    }
+                }
+            }
+        }
+        server_parameters = {
+            'target': 'kvm02',
+            'protocols': {
+                'fake-multinode': {
+                    'sub_id': 0,
+                    'target_group': 'arbitrary-group-id',
+                    'role': 'server',
+                    'group_size': 2,
+                    'roles': {
+                        'kvm01': 'client',
+                        'kvm02': 'server'
+                    }
+                }
+            }
+        }
+        self.coord = TestCoordinator()
+        self.client_protocol = TestProtocol.FakeProtocol(self.coord, client_parameters)
+        self.server_protocol = TestProtocol.FakeProtocol(self.coord, server_parameters)
+        self.bad_protocol = TestProtocol.FakeProtocol(self.coord, bad_parameters)
+
+    def test_lava_start(self):
+        self.assertTrue(self.client_protocol.delayed_start)
+        self.assertEqual(self.client_protocol.system_timeout.duration, 600)
+        self.assertEqual(self.server_protocol.system_timeout.duration, LAVA_MULTINODE_SYSTEM_TIMEOUT)
+        self.assertFalse(self.server_protocol.delayed_start)
+        self.assertFalse(self.bad_protocol.valid)

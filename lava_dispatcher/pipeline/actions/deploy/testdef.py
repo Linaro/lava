@@ -152,6 +152,7 @@ class RepoAction(Action):
         Better approach will be to create the entire overlay without mounting and then
         unpack an overlay.tgz after mounting.
         """
+        connection = super(RepoAction, self).run(connection, args)
         self.data.setdefault('test', {})
         self.data['test'].setdefault(self.uuid, {})
         self.data['test'][self.uuid].setdefault('runner_path', {})
@@ -593,6 +594,7 @@ class TestDefinitionAction(TestAction):
         """
         if 'location' not in self.data['lava-overlay']:
             raise RuntimeError("Missing lava overlay location")
+        connection = super(TestDefinitionAction, self).run(connection, args)
         self.logger.debug("Loading test definitions")
 
         # overlay_path is the location of the files before boot
@@ -660,6 +662,7 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
         return ret_val
 
     def run(self, connection, args=None):
+        connection = super(TestOverlayAction, self).run(connection, args)
         runner_path = self.data['test'][self.test_uuid]['overlay_path'][self.parameters['test_name']]
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters['path'])
@@ -712,7 +715,7 @@ class TestInstallAction(TestOverlayAction):
         self.summary = "applying LAVA test install scripts"
 
     def run(self, connection, args=None):
-
+        connection = super(TestInstallAction, self).run(connection, args)
         runner_path = self.data['test'][self.test_uuid]['overlay_path'][self.parameters['test_name']]
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters['path'])
@@ -779,7 +782,7 @@ class TestRunnerAction(TestOverlayAction):
         self.summary = "applying LAVA test run script"
 
     def run(self, connection, args=None):
-
+        connection = super(TestRunnerAction, self).run(connection, args)
         runner_path = self.data['test'][self.test_uuid]['overlay_path'][self.parameters['test_name']]
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters['path'])

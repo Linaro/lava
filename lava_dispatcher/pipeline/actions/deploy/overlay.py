@@ -38,6 +38,7 @@ class CustomisationAction(DeployAction):
         self.summary = "customise image"
 
     def run(self, connection, args=None):
+        connection = super(CustomisationAction, self).run(connection, args)
         self.logger.debug("Customising image...")
         # FIXME: implement
         return connection
@@ -99,6 +100,7 @@ class OverlayAction(DeployAction):
         * create test runner directories beneath the temporary location
         * copy runners into test runner directories
         """
+        connection = super(OverlayAction, self).run(connection, args)
         self.data[self.name].setdefault('location', mkdtemp())
         self.logger.debug("Preparing overlay tarball in %s" % self.data[self.name]['location'])
         lava_path = os.path.abspath("%s/%s" % (self.data[self.name]['location'], self.data['lava_test_results_dir']))
@@ -220,6 +222,7 @@ class CompressOverlay(Action):
         if not self.valid:
             self.logger.debug(self.errors)
             return connection
+        connection = super(CompressOverlay, self).run(connection, args)
         location = self.data['lava-overlay']['location']
         output = os.path.join(self.job.parameters['output_dir'], "overlay-%s.tar.gz" % self.level)
         cur_dir = os.getcwd()
