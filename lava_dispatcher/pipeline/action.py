@@ -282,8 +282,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 if not connection:
                     with action.timeout.action_timeout():
                         new_connection = action.run(connection, args)
-                    # clear the timeout alarm, the action has returned
-                    signal.alarm(0)
                 else:
                     new_connection = action.run(connection, args)
                 action.elapsed_time = time.time() - start
@@ -1043,6 +1041,8 @@ class Timeout(object):
         signal.signal(signal.SIGALRM, self._timed_out)
         signal.alarm(int(self.duration))
         yield
+        # clear the timeout alarm, the action has returned
+        signal.alarm(0)
 
     def modify(self, duration):
         """
