@@ -183,13 +183,13 @@ def _get_testdef_git_repo(testdef_repo, tmpdir, revision, proxy_env):
                                     stderr=subprocess.STDOUT)
         return gitdir
     except subprocess.CalledProcessError as e:
-        logging.error("Unable to get test definition from git (%s)", (testdef_repo))
+        logging.error("Test Shell Error: Unable to get test definition from git (%s)", (testdef_repo))
         for line in e.output.split('\n'):
             if line:
                 logging.debug("  | %s", line)
         raise RuntimeError("Unable to get test definition from git (%s)" % (testdef_repo))
     except Exception:
-        logging.error("Unable to get test definition from git (%s)", (testdef_repo))
+        logging.error("Test Shell Error: Unable to get test definition from git (%s)", (testdef_repo))
         raise RuntimeError("Unable to get test definition from git (%s)" % (testdef_repo))
     finally:
         os.chdir(cwd)
@@ -208,14 +208,14 @@ def _get_testdef_bzr_repo(testdef_repo, tmpdir, revision, proxy_env):
                                  bzrdir], env=proxy_env)
         return bzrdir
     except subprocess.CalledProcessError as e:
-        logging.error("Unable to get test definition from bzr (%s)", (testdef_repo))
+        logging.error("Test Error: Unable to get test definition from bzr (%s)", (testdef_repo))
         for line in e.output.split('\n'):
             if line:
                 logging.debug("  | %s", line)
         raise RuntimeError("Unable to get test definition from bzr (%s)", (testdef_repo))
 
     except Exception as e:
-        logging.error("Unable to get test definition from bzr (%s)", (testdef_repo))
+        logging.error("Test Error: Unable to get test definition from bzr (%s)", (testdef_repo))
         raise RuntimeError("Unable to get test definition from bzr (%s)", (testdef_repo))
 
 
@@ -242,7 +242,7 @@ def _get_testdef_tar_repo(testdef_repo, tmpdir):
         with tarfile.open(temp_tar) as tar:
             tar.extractall(path=tardir)
     except (OSError, tarfile.TarError) as ex:
-        logging.error("Error extracting the tar archive.\n" + str(ex))
+        logging.error("Test Shell Error: Error extracting the tar archive.\n" + str(ex))
     finally:
         # Remove the temporary created tar file after it has been extracted.
         if os.path.isfile(temp_tar):
@@ -262,7 +262,7 @@ def _get_testdef_url_repo(testdef_repo, context, tmpdir):
         testdef_file = download_image(testdef_repo, context, urldir)
 
     except Exception as e:
-        logging.error('Unable to get test definition from url\n' + str(e))
+        logging.error('Test Shell Error: Unable to get test definition from url\n' + str(e))
         return None
     finally:
         logging.info("Downloaded test definition file to %s." % urldir)
@@ -492,7 +492,7 @@ class URLTestDefinition(object):
                 pkg_resources.iter_entry_points(
                     'lava.signal_handlers', handler_name))
             if len(handler_eps) == 0:
-                logging.error("No handler named %s found", handler_name)
+                logging.error("Test Shell Error: No handler named %s found", handler_name)
                 return
             elif len(handler_eps) > 1:
                 logging.warning(

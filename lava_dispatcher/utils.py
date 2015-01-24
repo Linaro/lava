@@ -378,9 +378,10 @@ class logging_spawn(pexpect.spawn):
 
     def expect(self, *args, **kw):
         # some expect should not be logged because it is so much noise.
+        lava_logging = True
         if 'lava_no_logging' in kw:
             del kw['lava_no_logging']
-            return self.expect(*args, **kw)
+            lava_logging = False
 
         if 'timeout' in kw:
             timeout = kw['timeout']
@@ -388,9 +389,11 @@ class logging_spawn(pexpect.spawn):
             timeout = self.timeout
 
         if len(args) == 1:
-            logging.debug("expect (%d): '%s'", timeout, args[0])
+            if lava_logging:
+                logging.debug("expect (%d): '%s'", timeout, args[0])
         else:
-            logging.debug("expect (%d): '%s'", timeout, str(args))
+            if lava_logging:
+                logging.debug("expect (%d): '%s'", timeout, str(args))
 
         try:
             proc = super(logging_spawn, self).expect(*args, **kw)
@@ -404,7 +407,7 @@ class logging_spawn(pexpect.spawn):
         while index == 0:
             index = self.expect(
                 ['.+', pexpect.EOF, pexpect.TIMEOUT],
-                timeout=1, lava_no_logging=1)
+                timeout=0.1, lava_no_logging=1)
 
 
 def connect_to_serial(context):
@@ -430,27 +433,36 @@ def connect_to_serial(context):
         results.append(result)
 
     while retry_count < retry_limit:
-        proc = context.spawn(
-            context.device_config.connection_command,
-            timeout=1200)
-        logging.info('Attempting to connect to device using: %s', context.device_config.connection_command)
-        match = proc.expect(patterns, timeout=10)
-        result = results[match]
-        logging.info('Matched %r which means %s', patterns[match], result)
-        if result == 'retry' or result == 'reset-port':
-            reset_cmd = context.device_config.reset_port_command
-            if reset_cmd:
-                logging.warning('attempting to reset serial port')
-                context.run_command(reset_cmd)
-            else:
-                logging.warning('no reset_port command configured')
-            proc.close(True)
+        try:
+            proc = context.spawn(
+                context.device_config.connection_command,
+                timeout=120)
+            logging.info('Attempting to connect to device using: %s', context.device_config.connection_command)
+            match = proc.expect(patterns, timeout=10)
+            result = results[match]
+            logging.info('Matched %r which means %s', patterns[match], result)
+            if result == 'retry' or result == 'reset-port':
+                reset_cmd = context.device_config.reset_port_command
+                if reset_cmd:
+                    logging.warning('attempting to reset serial port')
+                    context.run_command(reset_cmd)
+                else:
+                    logging.warning('no reset_port command configured')
+                proc.close(True)
+                retry_count += 1
+                time.sleep(5)
+                continue
+            elif result == 'all-good':
+                context.test_data.add_result('connect_to_console', 'pass')
+                atexit.register(proc.close, True)
+                return proc
+        except CriticalError:
             retry_count += 1
-            time.sleep(5)
-            continue
-        elif result == 'all-good':
-            atexit.register(proc.close, True)
-            return proc
+
+    msg = 'Infrastructure Error: cannot connect to console.'
+    logging.error(msg)
+    context.test_data.add_result('connect_to_console', 'fail',
+                                 message=msg)
     raise CriticalError('could execute connection_command successfully')
 
 

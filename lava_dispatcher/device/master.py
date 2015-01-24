@@ -275,18 +275,27 @@ class MasterImageTarget(Target):
             logging.debug("Unable to read boot commands dynamically.")
 
     def _format_testpartition(self, runner, fstype):
-        force = ""
-        logging.info("Format testboot and testrootfs partitions")
-        if fstype.startswith("ext"):
-            force = "-F"
-        elif fstype == "btrfs":
-            force = "-f"
+        try:
+            force = ""
+            logging.info("Format testboot and testrootfs partitions")
+            if fstype.startswith("ext"):
+                force = "-F"
+            elif fstype == "btrfs":
+                force = "-f"
 
-        runner.run('umount %s' % self.testrootfs_path, failok=True)
-        runner.run('nice mkfs %s -t %s -q %s -L %s'
-                   % (force, fstype, self.testrootfs_path, self.testrootfs_label), timeout=1800)
-        runner.run('umount %s' % self.testboot_path, failok=True)
-        runner.run('nice mkfs.vfat %s -n %s' % (self.testboot_path, self.testboot_label))
+            runner.run('umount %s' % self.testrootfs_path, failok=True)
+            runner.run('nice mkfs %s -t %s -q %s -L %s'
+                       % (force, fstype, self.testrootfs_path, self.testrootfs_label), timeout=1800)
+            runner.run('umount %s' % self.testboot_path, failok=True)
+            runner.run('nice mkfs.vfat %s -n %s' % (self.testboot_path, self.testboot_label))
+            self.context.test_data.add_result('format_test_partition_in_master_image',
+                                              'pass')
+        except:
+            msg = 'Master Image Error: could not format test partition'
+            logging.error(msg)
+            self.context.test_data.add_result('format_test_partition_in_master_image',
+                                              'fail')
+            raise
 
     def _generate_tarballs(self, image_file):
         self.customize_image(image_file)
@@ -296,10 +305,15 @@ class MasterImageTarget(Target):
         try:
             _extract_partition(image_file, self.config.boot_part, boot_tgz)
             _extract_partition(image_file, self.config.root_part, root_tgz)
+            self.context.test_data.add_result('generate_tar_balls_in_master_image',
+                                              'pass')
         except KeyboardInterrupt:
             raise KeyboardInterrupt
         except:
-            logging.exception("Failed to generate tarballs")
+            msg = 'Master Image Error: failed to generate tarballs'
+            logging.error(msg)
+            self.context.test_data.add_result('generate_tar_balls_in_master_image',
+                                              'fail')
             raise
 
         return boot_tgz, root_tgz, self.deployment_data['distro']
@@ -311,7 +325,10 @@ class MasterImageTarget(Target):
         elif tar_url.endswith('.bz2'):
             decompression_char = 'j'
         else:
-            raise RuntimeError('bad file extension: %s' % tar_url)
+            msg = 'Master Image Error: bad file extension: %s' % tar_url
+            self.context.test_data.add_result('extract_tar_ball_in_master_image',
+                                              'fail')
+            raise RuntimeError(msg)
 
         # we know that tar is new enough on the dispatcher via the packaging but
         # also need to look for support for a new enough version of tar in the master
@@ -331,6 +348,8 @@ class MasterImageTarget(Target):
                     'tar %s --warning=no-timestamp --numeric-owner -C %s -x%sf -'
                     % (tar_url, self.context.selinux, dest, decompression_char),
                     timeout=timeout)
+                self.context.test_data.add_result('extract_tar_ball_in_master_image',
+                                                  'pass')
                 return
             except (OperationFailed, pexpect.TIMEOUT):
                 logging.warning("transfering %s failed. %d retry left.",
@@ -349,8 +368,10 @@ class MasterImageTarget(Target):
                 logging.info("Wait %d second before retry", sleep_time)
                 time.sleep(sleep_time)
             num_retry -= 1
-
-        raise RuntimeError('extracting %s on target failed' % tar_url)
+        msg = 'Master Image Error: extracting %s on target failed' % tar_url
+        self.context.test_data.add_result('extract_tar_ball_in_master_image',
+                                          'fail')
+        raise RuntimeError(msg)
 
     def get_partition(self, runner, partition):
         if partition == self.config.boot_part:
@@ -425,10 +446,7 @@ class MasterImageTarget(Target):
             boot_cmds = self._load_boot_cmds(default='boot_cmds_master',
                                              boot_tags=self.master_boot_tags)
             self._customize_bootloader(self.proc, boot_cmds)
-        self.proc.expect(self.config.image_boot_msg,
-                         timeout=self.config.image_boot_msg_timeout)
-        self._auto_login(self.proc, is_master=True)
-        self._wait_for_prompt(self.proc, self.config.master_str, timeout=300)
+        self._monitor_boot(self.proc, self.MASTER_PS1, self.MASTER_PS1_PATTERN, is_master=True)
 
     def boot_master_image(self):
         """
@@ -462,16 +480,6 @@ class MasterImageTarget(Target):
                 attempts += 1
                 continue
 
-            try:
-                self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
-                self.proc.expect(
-                    self.MASTER_PS1_PATTERN, timeout=120, lava_no_logging=1)
-            except pexpect.TIMEOUT as e:
-                msg = "Failed to get command line prompt: %s" % e
-                logging.warning(msg)
-                attempts += 1
-                continue
-
             runner = MasterCommandRunner(self)
             try:
                 self.master_ip = runner.get_target_ip()
@@ -487,11 +495,15 @@ class MasterImageTarget(Target):
                 logging.info("Setting up http proxy")
                 runner.run("export http_proxy=%s" % lava_proxy, timeout=30)
             logging.info("System is in master image now")
+            self.context.test_data.add_result('boot_master_image',
+                                              'pass')
             in_master_image = True
 
         if not in_master_image:
-            msg = "Could not get master image booted properly"
-            logging.critical(msg)
+            msg = "Master Image Error: Could not get master image booted properly"
+            logging.error(msg)
+            self.context.test_data.add_result('boot_master_image',
+                                              'fail')
             raise CriticalError(msg)
 
     @contextlib.contextmanager
@@ -539,6 +551,7 @@ class MasterImageTarget(Target):
             self._load_test_firmware()
             self._enter_bootloader(self.proc)
         self._customize_bootloader(self.proc, boot_cmds)
+        self._monitor_boot(self.proc, self.tester_ps1, self.tester_ps1_pattern)
         self._auto_login(self.proc)
 
     def _android_data_label(self, session):
@@ -551,122 +564,177 @@ class MasterImageTarget(Target):
         return data_label, data_path
 
     def _deploy_linaro_android_data(self, session, datatbz2):
-        data_label, data_path = self._android_data_label(session)
-        session.run('umount %s' % data_path, failok=True)
-        session.run('nice mkfs.ext4 -F -q %s -L %s' %
-                    (data_path, data_label))
-        session.run('udevadm trigger')
-        session.run('mkdir -p /mnt/lava/data')
-        session.run('mount %s /mnt/lava/data' % data_path)
-        _test_filesystem_writeable(session, '/mnt/lava/data')
-        session._client.target_extract(session, datatbz2, '/mnt/lava', timeout=600)
-        session.run('umount /mnt/lava/data')
+        try:
+            logging.info("Deploying Android data fs")
+            data_label, data_path = self._android_data_label(session)
+            session.run('umount %s' % data_path, failok=True)
+            session.run('nice mkfs.ext4 -F -q %s -L %s' %
+                        (data_path, data_label))
+            session.run('udevadm trigger')
+            session.run('mkdir -p /mnt/lava/data')
+            session.run('mount %s /mnt/lava/data' % data_path)
+            _test_filesystem_writeable(session, '/mnt/lava/data')
+            session._client.target_extract(session, datatbz2, '/mnt/lava', timeout=600)
+            session.run('umount /mnt/lava/data')
+            self.context.test_data.add_result('deploy_android_datafs_in_master_image',
+                                              'pass')
+        except:
+            msg = 'Master Image Error: unable to deploy android data filesystem'
+            logging.error(msg)
+            self.context.test_data.add_result('deploy_android_datafs_in_master_image',
+                                              'fail')
+            raise
 
     def _deploy_linaro_bootfs(self, session, bootfs):
-        logging.info("Deploying linaro bootfs")
-        session.run('udevadm trigger')
-        session.run('mkdir -p /mnt/boot')
-        session.run('mount %s /mnt/boot' % self.testboot_path)
-        _test_filesystem_writeable(session, '/mnt/boot')
-        session._client.target_extract(session, bootfs, '/mnt/boot')
-        session.run('umount /mnt/boot')
+        try:
+            logging.info("Deploying linaro boot fs")
+            session.run('udevadm trigger')
+            session.run('mkdir -p /mnt/boot')
+            session.run('mount %s /mnt/boot' % self.testboot_path)
+            _test_filesystem_writeable(session, '/mnt/boot')
+            session._client.target_extract(session, bootfs, '/mnt/boot')
+            session.run('umount /mnt/boot')
+            self.context.test_data.add_result('deploy_bootfs_in_master_image',
+                                              'pass')
+        except:
+            msg = 'Master Image Error: unable to deploy test boot filesystem'
+            logging.error(msg)
+            self.context.test_data.add_result('deploy_bootfs_in_master_image',
+                                              'fail')
+            raise
 
     def _deploy_linaro_android_boot(self, session, boottbz2, target):
-        logging.info("Deploying test boot filesystem")
-        session.run('mkdir -p /mnt/lava/boot')
-        session.run('mount %s /mnt/lava/boot' % self.testboot_path)
-        _test_filesystem_writeable(session, '/mnt/lava/boot')
-        session._client.target_extract(session, boottbz2, '/mnt/lava')
-        _recreate_ramdisk(session, target)
-        session.run('umount /mnt/lava/boot')
+        try:
+            logging.info("Deploying Android boot fs")
+            session.run('mkdir -p /mnt/lava/boot')
+            session.run('mount %s /mnt/lava/boot' % self.testboot_path)
+            _test_filesystem_writeable(session, '/mnt/lava/boot')
+            session._client.target_extract(session, boottbz2, '/mnt/lava')
+            _recreate_ramdisk(session, target)
+            session.run('umount /mnt/lava/boot')
+            self.context.test_data.add_result('deploy_android_bootfs_in_master_image',
+                                              'pass')
+        except:
+            msg = 'Master Image Error: unable to deploy android boot filesystem'
+            logging.error(msg)
+            self.context.test_data.add_result('deploy_android_bootfs_in_master_image',
+                                              'fail')
+            raise
 
     def _deploy_linaro_rootfs(self, session, rootfs, rootfstype):
-        logging.info("Deploying linaro image")
-        session.run('udevadm trigger')
-        session.run('mkdir -p /mnt/root')
-        session.run('mount %s /mnt/root' % self.testrootfs_path)
-        _test_filesystem_writeable(session, '/mnt/root')
-        # The timeout has to be this long for vexpress. For a full desktop it
-        # takes 214 minutes, plus about 25 minutes for the mkfs ext3, add
-        # another hour to err on the side of caution.
-        session._client.target_extract(session, rootfs, '/mnt/root', timeout=18000)
+        try:
+            logging.info("Deploying linaro image")
+            session.run('udevadm trigger')
+            session.run('mkdir -p /mnt/root')
+            session.run('mount %s /mnt/root' % self.testrootfs_path)
+            _test_filesystem_writeable(session, '/mnt/root')
+            # The timeout has to be this long for vexpress. For a full desktop it
+            # takes 214 minutes, plus about 25 minutes for the mkfs ext3, add
+            # another hour to err on the side of caution.
+            session._client.target_extract(session, rootfs, '/mnt/root', timeout=18000)
 
-        # DO NOT REMOVE - diverting flash-kernel and linking it to /bin/true
-        # prevents a serious problem where packages getting installed that
-        # call flash-kernel can update the kernel on the master image
-        if session.run('chroot /mnt/root which dpkg-divert', failok=True) == 0:
-            session.run(
-                'chroot /mnt/root dpkg-divert --local /usr/sbin/flash-kernel')
-            session.run(
-                'chroot /mnt/root ln -sf /bin/true /usr/sbin/flash-kernel')
-        # Rewrite fstab file if it exists in test image with the labeled
-        # boot/rootfs partitions.
-        if session.is_file_exist('/mnt/root/etc/fstab'):
-            logging.info("Rewriting /etc/fstab in test image")
-            session.run(
-                'echo "LABEL=%s /boot vfat defaults 0 0" > /mnt/root/etc/fstab' %
-                self.testboot_label)
-            session.run(
-                'echo "LABEL=%s / %s defaults 0 1" >> /mnt/root/etc/fstab' %
-                (self.testrootfs_label, rootfstype))
+            # DO NOT REMOVE - diverting flash-kernel and linking it to /bin/true
+            # prevents a serious problem where packages getting installed that
+            # call flash-kernel can update the kernel on the master image
+            if session.run('chroot /mnt/root which dpkg-divert', failok=True) == 0:
+                session.run(
+                    'chroot /mnt/root dpkg-divert --local /usr/sbin/flash-kernel')
+                session.run(
+                    'chroot /mnt/root ln -sf /bin/true /usr/sbin/flash-kernel')
+            # Rewrite fstab file if it exists in test image with the labeled
+            # boot/rootfs partitions.
+            if session.is_file_exist('/mnt/root/etc/fstab'):
+                logging.info("Rewriting /etc/fstab in test image")
+                session.run(
+                    'echo "LABEL=%s /boot vfat defaults 0 0" > /mnt/root/etc/fstab' %
+                    self.testboot_label)
+                session.run(
+                    'echo "LABEL=%s / %s defaults 0 1" >> /mnt/root/etc/fstab' %
+                    (self.testrootfs_label, rootfstype))
 
-        session.run('umount /mnt/root')
+            session.run('umount /mnt/root')
+            self.context.test_data.add_result('deploy_rootfs_in_master_image',
+                                              'pass')
+        except:
+            msg = 'Master Image Error: unable to deploy test root filesystem'
+            logging.error(msg)
+            self.context.test_data.add_result('deploy_rootfs_in_master_image',
+                                              'fail')
+            raise
 
     def _deploy_linaro_android_system(self, session, systemtbz2):
-        logging.info("Deploying the system filesystem")
-        target = session._client
+        try:
+            logging.info("Deploying the Android system fs")
+            target = session._client
 
-        session.run('mkdir -p /mnt/lava/system')
-        session.run('mount %s /mnt/lava/system' % self.testrootfs_path)
-        _test_filesystem_writeable(session, '/mnt/lava/system')
-        # Timeout has to be this long because of older vexpress motherboards
-        # being somewhat slower
-        session._client.target_extract(
-            session, systemtbz2, '/mnt/lava', timeout=3600)
+            session.run('mkdir -p /mnt/lava/system')
+            session.run('mount %s /mnt/lava/system' % self.testrootfs_path)
+            _test_filesystem_writeable(session, '/mnt/lava/system')
+            # Timeout has to be this long because of older vexpress motherboards
+            # being somewhat slower
+            session._client.target_extract(
+                session, systemtbz2, '/mnt/lava', timeout=3600)
 
-        if session.has_partition_with_label(self.userdata_label) and \
-           session.has_partition_with_label(self.sdcard_label) and \
-           session.is_file_exist('/mnt/lava/system/etc/vold.fstab'):
-            # If there is no userdata partition on the sdcard(like iMX and Origen),
-            # then the sdcard partition will be used as the userdata partition as
-            # before, and so cannot be used here as the sdcard on android
-            original = 'dev_mount sdcard %s %s ' % (
-                target.config.sdcard_mountpoint_path,
-                target.config.sdcard_part_android_org)
-            replacement = 'dev_mount sdcard %s %s ' % (
-                target.config.sdcard_mountpoint_path,
-                target.config.sdcard_part_android)
-            sed_cmd = "s@{original}@{replacement}@".format(original=original,
-                                                           replacement=replacement)
-            session.run(
-                'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd,
-                failok=True)
-            session.run("cat /mnt/lava/system/etc/vold.fstab", failok=True)
-
-        script_path = '%s/%s' % ('/mnt/lava', '/system/bin/disablesuspend.sh')
-        if not session.is_file_exist(script_path):
-            session.run("sh -c 'export http_proxy=%s'" %
-                        target.context.config.lava_proxy)
-            session.run('wget --no-check-certificate %s -O %s' %
-                        (target.config.git_url_disablesuspend_sh, script_path))
-            session.run('chmod +x %s' % script_path)
-            session.run('chown :2000 %s' % script_path)
-
-        session.run("""sed -i '/export HOME/i \
-                    PS1="%s"
-                    ' /mnt/lava/system/etc/mkshrc""" % target.tester_ps1,
+            if session.has_partition_with_label(self.userdata_label) and \
+               session.has_partition_with_label(self.sdcard_label) and \
+               session.is_file_exist('/mnt/lava/system/etc/vold.fstab'):
+                # If there is no userdata partition on the sdcard(like iMX and Origen),
+                # then the sdcard partition will be used as the userdata partition as
+                # before, and so cannot be used here as the sdcard on android
+                original = 'dev_mount sdcard %s %s ' % (
+                    target.config.sdcard_mountpoint_path,
+                    target.config.sdcard_part_android_org)
+                replacement = 'dev_mount sdcard %s %s ' % (
+                    target.config.sdcard_mountpoint_path,
+                    target.config.sdcard_part_android)
+                sed_cmd = "s@{original}@{replacement}@".format(original=original,
+                                                               replacement=replacement)
+                session.run(
+                    'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd,
                     failok=True)
-        session.run('cat /mnt/lava/system/etc/mkshrc', failok=True)
+                session.run("cat /mnt/lava/system/etc/vold.fstab", failok=True)
 
-        session.run('umount /mnt/lava/system')
+            script_path = '%s/%s' % ('/mnt/lava', '/system/bin/disablesuspend.sh')
+            if not session.is_file_exist(script_path):
+                session.run("sh -c 'export http_proxy=%s'" %
+                            target.context.config.lava_proxy)
+                session.run('wget --no-check-certificate %s -O %s' %
+                            (target.config.git_url_disablesuspend_sh, script_path))
+                session.run('chmod +x %s' % script_path)
+                session.run('chown :2000 %s' % script_path)
+
+            session.run("""sed -i '/export HOME/i \
+                        PS1="%s"
+                        ' /mnt/lava/system/etc/mkshrc""" % target.tester_ps1,
+                        failok=True)
+            session.run('cat /mnt/lava/system/etc/mkshrc', failok=True)
+
+            session.run('umount /mnt/lava/system')
+            self.context.test_data.add_result('deploy_android_systemfs_in_master_image',
+                                              'pass')
+        except:
+            msg = 'Master Image Error: unable to deploy android system filesystem'
+            logging.error(msg)
+            self.context.test_data.add_result('deploy_android_systemfs_in_master_image',
+                                              'fail')
+            raise
 
     def _purge_linaro_android_sdcard(self, session):
-        logging.info("Reformatting Linaro Android sdcard filesystem")
-        session.run('nice mkfs.vfat %s -n %s' % (self.sdcard_path, self.sdcard_label))
-        session.run('udevadm trigger')
-        session.run('mkdir /tmp/sdcard; mount %s /tmp/sdcard' % self.sdcard_path)
-        _test_filesystem_writeable(session, '/tmp/sdcard')
-        session.run('umount /tmp/sdcard; rm -r /tmp/sdcard')
+        try:
+            logging.info("Reformatting Linaro Android sdcard filesystem")
+            session.run('nice mkfs.vfat %s -n %s' % (self.sdcard_path, self.sdcard_label))
+            session.run('udevadm trigger')
+            session.run('mkdir /tmp/sdcard; mount %s /tmp/sdcard' % self.sdcard_path)
+            _test_filesystem_writeable(session, '/tmp/sdcard')
+            session.run('umount /tmp/sdcard; rm -r /tmp/sdcard')
+            self.context.test_data.add_result('format_sdcard_partition_in_master_image',
+                                              'pass')
+        except:
+            msg = 'Master Image Error: unable to format Android sdcard partition'
+            logging.error(msg)
+            self.context.test_data.add_result('format_sdcard_partition_in_master_image',
+                                              'fail')
+            raise
 
 target_class = MasterImageTarget
 

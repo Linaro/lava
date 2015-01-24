@@ -478,15 +478,11 @@ class FastModelTarget(Target):
                                              boot_tags=self._boot_tags)
             self._customize_bootloader(self.proc, boot_cmds)
 
+        self._monitor_boot(self.proc, self.tester_ps1, self.tester_ps1_pattern)
         self._auto_login(self.proc)
 
         if self._ramdisk_boot:
-            self._wait_for_prompt(self.proc, self.config.test_image_prompts,
-                                  self.config.boot_linaro_timeout)
             self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
-                               send_char=self.config.send_char)
-            self.proc.sendline('export PS1="%s"'
-                               % self.tester_ps1,
                                send_char=self.config.send_char)
             self._booted = True
 

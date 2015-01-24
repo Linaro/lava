@@ -373,6 +373,8 @@ class LavaTestJob(object):
                 metadata = cmd.get('metadata', {})
                 self.context.test_data.add_metadata(metadata)
                 action = lava_commands[cmd['command']](self.context)
+                self.context.test_data.add_result(action.test_name(**params),
+                                                  'pass')
                 err = None
                 try:
                     status = 'fail'
@@ -481,8 +483,8 @@ class LavaTestJob(object):
                             "[ACTION-E] %s is finished successfully." %
                             (cmd['command']))
                         err_msg = ""
-                    self.context.test_data.add_result(
-                        action.test_name(**params), status, err_msg)
+                    self.context.test_data.update_last_result(
+                        action.test_name(**params), status, message=err_msg)
         except:
             # Capture all user-defined and non-user-defined critical errors
             self.context.test_data.job_status = 'fail'

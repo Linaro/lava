@@ -183,12 +183,7 @@ class IpmiPxeTarget(Target):
         self._enter_bootloader(self.proc)
         boot_cmds = self._load_boot_cmds(default='boot_cmds_master')
         self._customize_bootloader(self.proc, boot_cmds)
-        self.proc.expect(self.config.image_boot_msg,
-                         timeout=self.config.image_boot_msg_timeout)
-        self._wait_for_prompt(self.proc, self.config.test_image_prompts,
-                              self.config.boot_linaro_timeout)
-        self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
-        self.proc.expect(self.MASTER_PS1_PATTERN, timeout=180, lava_no_logging=1)
+        self._monitor_boot(self.proc, self.MASTER_PS1, self.MASTER_PS1_PATTERN)
         runner = MasterCommandRunner(self)
         logging.info("System is in master image now")
 

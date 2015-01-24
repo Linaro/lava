@@ -114,7 +114,7 @@ class CommandRunner(object):
             self.match = None
 
         if wait_prompt:
-            self.wait_for_prompt(timeout)
+            self.wait_for_prompt(timeout=timeout)
 
             if self._prompt_str_includes_rc:
                 rc = int(self._connection.match.group(1))
@@ -510,66 +510,46 @@ class LavaClient(object):
         """
         Reboot the system to the test image
         """
-        logging.info("Boot the test image")
+        logging.info("Booting the test image")
         boot_attempts = self.config.boot_retries
+        boot_meta = {}
         attempts = 0
         in_linaro_image = False
+
         while (attempts < boot_attempts) and (not in_linaro_image):
             logging.info("Booting the test image. Attempt: %d" % (attempts + 1))
-            timeout = self.config.boot_linaro_timeout
-            TESTER_PS1_PATTERN = self.target_device.tester_ps1_pattern
 
             self.vm_group.wait_for_vms()
 
-            start = time.time()
             try:
                 self._boot_linaro_image()
-            except (OperationFailed, pexpect.TIMEOUT) as e:
-                msg = "Boot linaro image failed: %s" % e
-                logging.info(msg)
+            except (OperationFailed, pexpect.TIMEOUT):
                 attempts += 1
+                self.context.test_data.add_metadata({'boot_retries': str(attempts)})
                 continue
 
-            try:
-                wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
-            except pexpect.TIMEOUT as e:
-                msg = "Timeout waiting for boot prompt: %s" % e
-                logging.info(msg)
-                attempts += 1
-                continue
-
-            # Record boot time metadata
-            boottime = "{0:.2f}".format(time.time() - start)
-            boottime_meta = {}
-            boottime_meta['kernel-boot-time'] = boottime
-            boottime_meta['boot-retries'] = str(attempts)
-            boottime_meta['dtb-append'] = str(self.config.append_dtb)
-            self.context.test_data.add_metadata(boottime_meta)
-            logging.debug("Kernel boot time: %s seconds" % boottime)
-
-            self.setup_proxy(TESTER_PS1_PATTERN)
-            logging.info("System is in test image now")
-            logging.debug("mount information")
-            self.proc.sendline('mount')
-            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
-            logging.debug("root directory information")
-            self.proc.sendline('ls -l /')
-            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
-            logging.debug("free space information")
-            self.proc.sendline('df -h')
-            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
-            logging.debug("IP addr information")
-            self.proc.sendline('ip addr')
-            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
             in_linaro_image = True
-            logging.debug("Checking for vm-group host")
 
+            logging.info("System is in test image now, performing basic user space tests.")
+            with self.context.client.tester_session() as session:
+                test_cmds = ['mount', 'df', 'ls /', 'ip addr']
+
+                for cmd in test_cmds:
+                    try:
+                        logging.debug('executing test command %s' % cmd)
+                        session.run(cmd, timeout=5)
+                        status = 'pass'
+                    except RuntimeError:
+                        status = 'fail'
+                    self.context.test_data.add_result(cmd.split()[0], status)
+
+            self.setup_proxy(self.config.tester_ps1_pattern)
+
+            logging.debug("Checking for vm-group host")
             self.vm_group.start_vms()
 
         if not in_linaro_image:
-            msg = "Could not get the test image booted properly"
-            logging.critical(msg)
-            raise CriticalError(msg)
+            raise CriticalError()
 
     def get_www_scratch_dir(self):
         """ returns a temporary directory available for downloads that gets

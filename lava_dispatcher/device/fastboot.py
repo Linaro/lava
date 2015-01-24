@@ -86,6 +86,7 @@ class FastbootTarget(Target):
                 continue
 
         if not deployed:
+            logging.error("Infrastructure Error: image deployment failed")
             msg = "Deployment Failed"
             logging.critical(msg)
             raise CriticalError(msg)
@@ -113,6 +114,7 @@ class FastbootTarget(Target):
                 continue
 
         if not deployed:
+            logging.error("Infrastructure Error: image deployment failed")
             msg = "Deployment Failed"
             logging.critical(msg)
             raise CriticalError(msg)
@@ -145,13 +147,11 @@ class FastbootTarget(Target):
                 self.driver.boot()
             if self.proc is None:
                 self.proc = self.driver.connect()
-            self._auto_login(self.proc)
-            self._wait_for_prompt(self.proc, self.config.test_image_prompts,
-                                  self.config.boot_linaro_timeout)
-            self._setup_prompt()
+            self._monitor_boot(self.proc, self.tester_ps1, self.tester_ps1_pattern)
             self._booted = True
             return self.proc
         except subprocess.CalledProcessError:
+            logging.info("Infrastructure Error: fastboot exception caught.")
             msg = 'Fastboot boot failed'
             raise OperationFailed(msg)
 

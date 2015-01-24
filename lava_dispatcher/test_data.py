@@ -49,13 +49,29 @@ class LavaTestData(object):
     def _assign_uuid(self):
         self._test_run['analyzer_assigned_uuid'] = str(uuid1())
 
-    def add_result(self, test_case_id, result, message=""):
+    def add_result(self, test_case_id, result, measurement="", units="",
+                   message=""):
         result_data = {
             'test_case_id': test_case_id,
             'result': result,
+            'measurement': measurement,
+            'units': units,
             'message': message
         }
         self._test_run['test_results'].append(result_data)
+
+    def update_last_result(self, test_case_id, result, measurement="",
+                           units="", message=""):
+        result_data = {
+            'test_case_id': test_case_id,
+            'result': result,
+            'measurement': measurement,
+            'units': units,
+            'message': message
+        }
+        if self._test_run['test_results'][-1]['test_case_id'] == \
+                result_data['test_case_id']:
+            self._test_run['test_results'][-1] = result_data
 
     def add_attachments(self, attachments):
         self._test_run['attachments'].extend(attachments)

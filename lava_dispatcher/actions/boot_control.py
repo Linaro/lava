@@ -131,11 +131,8 @@ class cmd_boot_linaro_image(BaseAction):
         except KeyboardInterrupt:
             raise KeyboardInterrupt
         except:
-            logging.exception("boot_linaro_image failed")
             status = 'fail'
             raise CriticalError("Failed to boot test image.")
-        finally:
-            self.context.test_data.add_result("boot_image", status)
 
 
 cmd_boot_image = cmd_boot_linaro_image

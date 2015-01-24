@@ -54,7 +54,10 @@ class DeviceSchema(schema.Schema):
     boot_retries = schema.IntOption(default=3)
     bootloader_prompt = schema.StringOption()
     bootloader_timeout = schema.IntOption(default=120)
+    image_boot_msg = schema.StringOption()
     image_boot_msg_timeout = schema.IntOption(default=120)
+    kernel_boot_msg = schema.StringOption()
+    kernel_boot_msg_timeout = schema.IntOption(default=120)
     send_char = schema.BoolOption(default=True)
     test_image_prompts = schema.ListOption(default=["\(initramfs\)",
                                                     "linaro-test",
@@ -81,7 +84,6 @@ class DeviceSchema(schema.Schema):
     git_url_disablesuspend_sh = schema.StringOption()
     hard_reset_command = schema.StringOption()
     hostname = schema.StringOption()
-    image_boot_msg = schema.StringOption()
     interrupt_boot_command = schema.StringOption()
     interrupt_boot_prompt = schema.StringOption()
     interrupt_boot_control_character = schema.StringOption()

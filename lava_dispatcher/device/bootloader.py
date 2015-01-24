@@ -301,11 +301,7 @@ class BootloaderTarget(MasterImageTarget):
             self.proc.sendline(self.config.pre_boot_cmd,
                                send_char=self.config.send_char)
         self._customize_bootloader(self.proc, boot_cmds)
-        self.proc.expect(self.config.image_boot_msg,
-                         timeout=self.config.image_boot_msg_timeout)
-        self._auto_login(self.proc)
-        self._wait_for_prompt(self.proc, self.config.test_image_prompts,
-                              self.config.boot_linaro_timeout)
+        self._monitor_boot(self.proc, self.tester_ps1, self.tester_ps1_pattern)
 
     def _boot_linaro_image(self):
         if self.proc:
@@ -323,9 +319,6 @@ class BootloaderTarget(MasterImageTarget):
             # the nameserver data does get populated by the DHCP
             # daemon. Thus, LAVA will populate the name server data.
             self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
-                               send_char=self.config.send_char)
-            self.proc.sendline('export PS1="%s"'
-                               % self.tester_ps1,
                                send_char=self.config.send_char)
             self._booted = True
         elif self._is_bootloader() and self._booted:

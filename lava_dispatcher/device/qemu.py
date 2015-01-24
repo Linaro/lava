@@ -157,15 +157,11 @@ class QEMUTarget(Target):
         qemu_cmd = '%s %s %s' % (self.config.qemu_binary, self.config.qemu_options, qemu_options)
         logging.info('launching qemu with command %r', qemu_cmd)
         self.proc = self.context.spawn(qemu_cmd, timeout=1200)
-        self._auto_login(self.proc)
+        self._monitor_boot(self.proc, self.tester_ps1, self.tester_ps1_pattern)
         if self._ramdisk and self._sd_image is None:
-            self._wait_for_prompt(self.proc, self.config.test_image_prompts,
-                                  self.config.boot_linaro_timeout)
             self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
                                send_char=self.config.send_char)
-            self.proc.sendline('export PS1="%s"'
-                               % self.tester_ps1,
-                               send_char=self.config.send_char)
+
         return self.proc
 
     def power_off(self, proc):
