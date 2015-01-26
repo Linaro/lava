@@ -1969,6 +1969,7 @@ class ImageReportChart(models.Model):
 
     class Meta:
         unique_together = ("image_report", "name")
+        ordering = ['relative_index']
 
     name = models.CharField(max_length=100)
 
@@ -2041,6 +2042,10 @@ class ImageReportChart(models.Model):
         max_length=20,
         verbose_name='X-axis attribute')
 
+    relative_index = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Order in the report')
+
     def __unicode__(self):
         return self.name
 
@@ -2083,7 +2088,7 @@ class ImageReportChart(models.Model):
 
     def get_basic_chart_data(self):
         chart_data = {}
-        fields = ["name", "chart_type", "description", "target_goal",
+        fields = ["id", "name", "chart_type", "description", "target_goal",
                   "chart_height", "is_percentage", "chart_visibility",
                   "xaxis_attribute"]
 

@@ -70,32 +70,34 @@
   </a>
 </div>
 
-<div class="list-container">
+<div class="list-container" id="charts">
   {% for image_chart in image_report.imagereportchart_set.all %}
-  <div class="chart-title">
-    {{ image_chart.name }}
-    <a style="font-size: 13px;" href="{{ image_chart.get_absolute_url }}/+delete">
-      remove
-    </a>
-    <a style="font-size: 13px;" href="{{ image_chart.get_absolute_url }}">
-      details
-    </a>
+  <div id="{{ image_chart.id }}" class="sortable-placeholder">
+    <div class="chart-title">
+      {{ image_chart.name }}
+      <a style="font-size: 13px;" href="{{ image_chart.get_absolute_url }}/+delete">
+        remove
+      </a>
+      <a style="font-size: 13px;" href="{{ image_chart.get_absolute_url }}">
+        details
+      </a>
+    </div>
+    <div>
+      Description: {{ image_chart.description }}
+    </div>
+    <div>
+      Chart type: {{ image_chart.chart_type }}
+    </div>
+    <div>
+      Target goal: {{ image_chart.target_goal|floatformat:"-2" }}
+    </div>
+    {% if image_chart.chart_type == "pass/fail" %}
+    <div>
+      Percentage: {{ image_chart.is_percentage|yesno:"Yes,No" }}
+    </div>
+    {% endif %}
   </div>
-  <div>
-    Description: {{ image_chart.description }}
-  </div>
-  <div>
-    Chart type: {{ image_chart.chart_type }}
-  </div>
-  <div>
-    Target goal: {{ image_chart.target_goal|floatformat:"-2" }}
-  </div>
-  {% if image_chart.chart_type == "pass/fail" %}
-  <div>
-    Percentage: {{ image_chart.is_percentage|yesno:"Yes,No" }}
-  </div>
-  {% endif %}
-  <hr/>
+
   {% empty %}
   <div>
     <li>No charts added yet.</li>
@@ -107,6 +109,23 @@
 
 {% block scripts %}
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script>
+<script>
+  $("#charts").sortable();
+  $("#charts").disableSelection();
+
+  $("#charts").on("sortstop", function(event, ui) {
+  var chart_id_order = $("#charts").sortable("toArray").join();
+    $.ajax({
+      url: "{% url 'dashboard_app.views.image_reports.views.image_report_order_update' name=image_report.name %}",
+      type: "POST",
+      data: {
+        csrfmiddlewaretoken: '{{csrf_token}}',
+        chart_id_order: chart_id_order,
+      },
+    });
+  });
+</script>
+
 {% if image_report.is_published %}
 <script>
   $("#image_report_group").editable(

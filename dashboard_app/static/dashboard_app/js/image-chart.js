@@ -7,8 +7,9 @@ $(document).ready(function () {
 
     ImageReport.prototype.start = function() {
         // Add charts.
-        for (chart_id in this.chart_data) {
-            chart = new ImageChart(chart_id, this.chart_data[chart_id]);
+        for (index in this.chart_data) {
+            chart = new ImageChart(this.chart_data[index].id,
+                                   this.chart_data[index]);
             chart.add_chart();
             this.charts.push(chart);
         }

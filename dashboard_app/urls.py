@@ -70,6 +70,7 @@ urlpatterns = patterns(
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)$', 'image_reports.views.image_report_display'),
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/\+detail$', 'image_reports.views.image_report_detail', name='image_report_detail'),
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/\+add-group$', 'image_reports.views.image_report_add_group', name='image_report_add_group'),
+    url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/\+order-update$', 'image_reports.views.image_report_order_update', name='image_report_order_update'),
     url(r'^image-charts/\+add$', 'image_reports.views.image_report_add'),
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/\+edit$', 'image_reports.views.image_report_edit'),
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/\+delete$', 'image_reports.views.image_report_delete'),

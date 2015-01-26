@@ -169,9 +169,9 @@ div.selector .selector-chosen select {
 
 .sortable-placeholder {
     border: 1px solid #000000;
-    background-color: #ecffc2;
-    height: 200px;
-    width: 80%;
+    width: 100%;
+    margin: 10px 0 10px 0;
+    padding: 7px;
 }
 
 .print-menu {

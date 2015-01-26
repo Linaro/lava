@@ -196,8 +196,9 @@ def image_report_display(request, name):
         raise PermissionDenied()
 
     chart_data = {}
-    for chart in image_report.imagereportchart_set.all():
-        chart_data[chart.id] = chart.get_chart_data(request.user)
+    for chart in image_report.imagereportchart_set.all().order_by(
+            'relative_index'):
+        chart_data[chart.relative_index] = chart.get_chart_data(request.user)
 
     return render_to_response(
         'dashboard_app/image_report_display.html', {
@@ -410,6 +411,26 @@ def image_report_add_group(request, name):
             old_group.delete()
 
     return HttpResponse(group_name, content_type='application/json')
+
+
+@login_required
+def image_report_order_update(request, name):
+
+    if request.method != 'POST':
+        raise PermissionDenied
+
+    chart_id_order = request.POST.get("chart_id_order").split(",")
+    image_report = get_object_or_404(ImageReport, name=name)
+
+    try:
+        for index, chart_id in enumerate(chart_id_order):
+            image_chart = ImageReportChart.objects.get(pk=chart_id)
+            image_chart.relative_index = index
+            image_chart.save()
+    except:
+        return HttpResponse("fail", content_type='application/json')
+
+    return HttpResponse("success", content_type='application/json')
 
 
 @login_required
