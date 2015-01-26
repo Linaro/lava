@@ -20,6 +20,7 @@
 
 import os
 import io
+import re
 import yaml
 import base64
 import hashlib
@@ -801,6 +802,8 @@ class TestRunnerAction(TestOverlayAction):
             steps = testdef['run'].get('steps', [])
             if steps:
                 for cmd in steps:
+                    if '--cmd' in cmd or '--shell' in cmd:
+                        cmd = re.sub(r'\$(\d+)\b', r'\\$\1', cmd)
                     runsh.write('%s\n' % cmd)
             runsh.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n')
             runsh.write('#wait for an ack from the dispatcher\n')

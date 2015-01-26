@@ -686,6 +686,8 @@ class URLTestDefinition(object):
             steps = self.testdef['run'].get('steps', [])
             if steps:
                 for cmd in steps:
+                    if '--cmd' in cmd or '--shell' in cmd:
+                        cmd = re.sub(r'\$(\d+)\b', r'\\$\1', cmd)
                     f.write('%s\n' % cmd)
             f.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n')
             f.write('#wait for an ack from the dispatcher\n')
