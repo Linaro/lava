@@ -52,32 +52,6 @@ class DeviceTypeParser(object):
         return data
 
 
-class NewDeviceDefaults(object):  # pylint: disable=too-few-public-methods
-    """
-    Placeholder for an eventual schema based on the current device config schema
-    but adapted to the new device parameter structure.
-    Ideally, use an external file as the schema
-    """
-
-    # TODO! this should be a YAML file on the filesystem & only certain strings for specific distros
-    def __init__(self):
-        test_image_prompts = [r"\(initramfs\)",  # check if the r prefix breaks matching later & remove \.
-                              "linaro-test",
-                              "/ #",
-                              "root@android",
-                              "root@linaro",
-                              "root@master",
-                              "root@debian",
-                              "root@linaro-nano:~#",
-                              "root@linaro-developer:~#",
-                              "root@linaro-server:~#",
-                              "root@genericarmv7a:~#",
-                              "root@genericarmv8:~#"]
-        self.parameters = {
-            'test_image_prompts': test_image_prompts
-        }
-
-
 class NewDevice(object):
     """
     YAML based Device class with clearer support for the pipeline overrides

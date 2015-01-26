@@ -21,7 +21,7 @@
 import os
 import unittest
 from lava_dispatcher.pipeline.action import Action
-from lava_dispatcher.pipeline.device import DeviceTypeParser, NewDevice
+from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.boot import BootAction
@@ -31,10 +31,6 @@ from lava_dispatcher.pipeline.actions.boot.u_boot import UBootInterrupt, UBootAc
 
 
 class TestDeviceParser(unittest.TestCase):  # pylint: disable=too-many-public-methods
-
-    def test_parser(self):
-        test_parser = DeviceTypeParser()
-        self.assertIsInstance(test_parser, DeviceTypeParser)
 
     def test_new_device(self):
         kvm01 = NewDevice('kvm01')
