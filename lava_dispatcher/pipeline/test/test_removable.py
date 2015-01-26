@@ -56,6 +56,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         """
         Test that the job parameters match expected structure
         """
+        self.maxDiff = None
         job_parser = JobParser()
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
@@ -158,8 +159,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
                 u_boot_action.parameters['boot_part']
             )
         }
-
-        self.assertEqual('bootz 0x47000000 0x48000000 0x43000000', substitutions['{BOOTX}'])
+        self.assertEqual('bootz 0x42000000 0x43300000 0x43000000', substitutions['{BOOTX}'])
         self.assertEqual('/boot/initrd.img-3.16.0-4-armmp-lpae.u-boot', substitutions['{RAMDISK}'])
         commands = substitute(commands_list, substitutions)
         self.assertEqual(
@@ -173,9 +173,9 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
                 'setenv initrd_addr_r ${ramdisk_addr_r}',
                 "setenv loadkernel 'load usb 0:1 ${kernel_addr_r} /boot/vmlinuz-3.16.0-4-armmp-lpae'",
                 "setenv loadinitrd 'load usb 0:1 ${initrd_addr_r} /boot/initrd.img-3.16.0-4-armmp-lpae.u-boot; setenv initrd_size ${filesize}'",
-                "setenv loadfdt 'load usb 0:1 ${fdt_addr_r} /boot/dtb-3.16.0-4-armmp-lpae''",
+                "setenv loadfdt 'load usb 0:1 ${fdt_addr_r} /boot/dtb-3.16.0-4-armmp-lpae'",
                 "setenv bootargs 'console=ttyS0,115200n8 root=UUID=159d17cc-697c-4125-95a0-a3775e1deabe ip=dhcp'",
-                "setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; bootz 0x47000000 0x48000000 0x43000000'", 'boot'
+                "setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; bootz 0x42000000 0x43300000 0x43000000'", 'boot'
             ]
         )
         # reference commands:

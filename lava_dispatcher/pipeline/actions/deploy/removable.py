@@ -30,6 +30,10 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
+from lava_dispatcher.pipeline.actions.deploy.overlay import (
+    CustomisationAction,
+    OverlayAction,
+)
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
@@ -93,6 +97,7 @@ class DDAction(Action):
         self.boot_params = None
 
     def validate(self):
+        super(DDAction, self).validate()
         if 'device' not in self.parameters:
             self.errors = "missing device for deployment"
         if 'download' not in self.parameters:
@@ -119,10 +124,18 @@ class DDAction(Action):
                 'boot_part',
                 self.boot_params[self.parameters['device']]['device_id']
             )
+        if not self.valid:
+            raise JobError(self.errors)
 
     def run(self, connection, args=None):
+        """
+        Retrieve the decompressed image from the dispatcher by calling the tool specified
+        by the test writer, from within the test image of the first deployment, using the
+        device to write directly to the secondary media, without needing to cache on the device.
+        """
         connection = super(DDAction, self).run(connection, args)
         if 'file' not in self.data['download_action']['image']:
+            self.logger.debug("Skipping %s - nothing downloaded")
             return connection
         decompressed_image = os.path.basename(self.data['download_action']['image']['file'])
         try:
@@ -177,6 +190,8 @@ class MassStorage(DeployAction):
         have DNS resolution fully working, so we can use the IP address of the dispatcher
         to get it (with the advantage that the dispatcher decompresses it so that the ramdisk
         can pipe the raw image directly from wget to dd.
+        This also allows the use of local file:// locations which are visible to the dispatcher
+        but not the device.
         """
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if 'image' in parameters:
@@ -184,3 +199,6 @@ class MassStorage(DeployAction):
             download.max_retries = 3
             self.internal_pipeline.add_action(download)
             self.internal_pipeline.add_action(DDAction())
+        # FIXME: could support tarballs too
+        self.internal_pipeline.add_action(CustomisationAction())
+        self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef

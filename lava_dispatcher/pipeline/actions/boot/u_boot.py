@@ -214,7 +214,12 @@ class UBootSecondaryMedia(Action):
 
     def validate(self):
         super(UBootSecondaryMedia, self).validate()
-        if self.parameters['commands'] != 'usb':
+        if 'media' not in self.job.device['parameters']:
+            return
+        media_keys = self.job.device['parameters']['media'].keys()
+        if self.parameters['commands'] not in media_keys:
+            self.errors = "Unsupported UBoot commands %s requested for device %s: %s" % (
+                self.parameters['commands'], self.job.device.target, media_keys)
             return
         if 'kernel' not in self.parameters:
             self.errors = "Missing kernel location"
@@ -225,15 +230,17 @@ class UBootSecondaryMedia(Action):
         if 'boot_part' not in self.parameters:
             self.errors = "Missing boot_part for the partition number of the boot files inside the deployed image"
 
-        if self.get_common_data('u-boot', 'boot_part') is None:
-            self.errors = "Missing boot_part listed for u-boot"
-        if not self.valid:
-            raise JobError(self.errors)
         self.set_common_data('file', 'kernel', self.parameters['kernel'])
         self.set_common_data('file', 'ramdisk', self.parameters.get('ramdisk', ''))
         self.set_common_data('file', 'dtb', self.parameters.get('dtb', ''))
         self.set_common_data('uuid', 'root', self.parameters['root_uuid'])
-        media_params = self.job.device['parameters']['media']['usb']
+        media_params = self.job.device['parameters']['media'][self.parameters['commands']]
+        if self.get_common_data('u-boot', 'device') not in media_params:
+            self.errors = "%s does not match requested media type %s" % (
+                self.get_common_data('u-boot', 'device'), self.parameters['commands']
+            )
+        if not self.valid:
+            raise JobError(self.errors)
         self.set_common_data(
             'uuid',
             'boot_part',
@@ -322,7 +329,7 @@ class UBootCommandOverlay(Action):
             substitutions['{NFSROOTFS}'] = self.get_common_data('file', 'nfsroot')
 
         substitutions['{ROOT}'] = self.get_common_data('uuid', 'root')  # UUID label, not a file
-        substitutions['{BOOT_PART}'] = self.get_common_data('uuid', 'boot_part')
+        substitutions['{ROOT_PART}'] = self.get_common_data('uuid', 'boot_part')
 
         self.data['u-boot']['commands'] = substitute(self.commands, substitutions)
         self.logger.debug("Parsed boot commands: %s" % '; '.join(self.data['u-boot']['commands']))
