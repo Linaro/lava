@@ -152,12 +152,11 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         # needed to run the tests that do not use a device and job.
         if self.job is not None and \
            self.job.device is not None and \
-           action.name in self.job.device.parameters.get('timeouts', {}):
+           action.name in self.job.device.get('timeouts', {}):
             action.timeout = Timeout(
                 action.name,
                 Timeout.parse(
-                    self.job.device.
-                    parameters['timeouts'][action.name]
+                    self.job.device['timeouts'][action.name]
                 )
             )
         # Set the parameters after populate so the sub-actions are also
@@ -885,7 +884,7 @@ class Deployment(object):  # pylint: disable=abstract-class-not-used
         if len(willing) == 0:
             raise NotImplementedError(
                 "No deployment strategy available for the given "
-                "device '%s'. %s" % (device.parameters['hostname'], cls))
+                "device '%s'. %s" % (device['hostname'], cls))
 
         # higher priority first
         compare = lambda x, y: cmp(y.priority, x.priority)
@@ -923,7 +922,7 @@ class Boot(object):
         if len(willing) == 0:
             raise NotImplementedError(
                 "No boot strategy available for the device "
-                "'%s' with the specified job parameters. %s" % (device.parameters['hostname'], cls)
+                "'%s' with the specified job parameters. %s" % (device['hostname'], cls)
             )
 
         # higher priority first
@@ -969,7 +968,7 @@ class LavaTest(object):  # pylint: disable=abstract-class-not-used
         if len(willing) == 0:
             if hasattr(device, 'parameters'):
                 msg = "No test strategy available for the device "\
-                      "'%s' with the specified job parameters. %s" % (device.parameters['hostname'], cls)
+                      "'%s' with the specified job parameters. %s" % (device['hostname'], cls)
             else:
                 msg = "No test strategy available for the device. %s" % cls
             raise NotImplementedError(msg)

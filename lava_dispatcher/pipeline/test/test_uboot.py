@@ -59,7 +59,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
         self.assertIsNotNone(job)
         self.assertIsNone(job.validate())
-        self.assertEqual(job.device.parameters['device_type'], 'beaglebone-black')
+        self.assertEqual(job.device['device_type'], 'beaglebone-black')
 
     def test_tftp_pipeline(self):
         factory = Factory()
@@ -87,12 +87,12 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         factory = Factory()
         job = factory.create_bbb_job('sample_jobs/uboot.yaml')
         self.assertEqual(
-            job.device.parameters['commands']['connect'],
+            job.device['commands']['connect'],
             'telnet localhost 6000'
         )
-        self.assertEqual(job.device.parameters['commands'].get('interrupt', ' '), ' ')
+        self.assertEqual(job.device['commands'].get('interrupt', ' '), ' ')
         items = []
-        for item in job.device.parameters['actions']['boot']['methods']:
+        for item in job.device['actions']['boot']['methods']:
             if 'u-boot' in item:
                 items.extend([item['u-boot']])
         for item in items:
@@ -104,7 +104,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         methods = {}
-        for item in job.device.parameters['actions']['boot']['methods']:
+        for item in job.device['actions']['boot']['methods']:
             if 'u-boot' in item:
                 methods.update(item)
         self.assertIn('u-boot', methods)
@@ -165,9 +165,9 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         except InfrastructureError as exc:
             raise RuntimeError("Unable to get dispatcher IP address: %s" % exc)
         parsed = []
-        kernel_addr = job.device.parameters['parameters'][overlay.parameters['type']]['ramdisk']
-        ramdisk_addr = job.device.parameters['parameters'][overlay.parameters['type']]['ramdisk']
-        dtb_addr = job.device.parameters['parameters'][overlay.parameters['type']]['dtb']
+        kernel_addr = job.device['parameters'][overlay.parameters['type']]['ramdisk']
+        ramdisk_addr = job.device['parameters'][overlay.parameters['type']]['ramdisk']
+        dtb_addr = job.device['parameters'][overlay.parameters['type']]['dtb']
         kernel = parameters['actions']['deploy']['kernel']
         ramdisk = parameters['actions']['deploy']['ramdisk']
         dtb = parameters['actions']['deploy']['dtb']
@@ -184,7 +184,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
             '{KERNEL}': kernel,
             '{DTB}': dtb
         }
-        params = [line for line in device.parameters['actions']['boot']['methods'] if 'u-boot' in line][0]
+        params = [line for line in device['actions']['boot']['methods'] if 'u-boot' in line][0]
         params['u-boot']['ramdisk']['commands'] = substitute(params['u-boot']['ramdisk']['commands'], substitution_dictionary)
 
         commands = params['u-boot']['ramdisk']['commands']
@@ -197,7 +197,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertNotIn("setenv fdt_addr_r '{DTB_ADDR}'", commands)
 
         lines = {}
-        for line in device.parameters['actions']['boot']['methods']:
+        for line in device['actions']['boot']['methods']:
             if 'u-boot' in line:
                 lines.update(line)
         for line in lines['u-boot']['ramdisk']['commands']:
@@ -293,7 +293,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertEqual(u_boot_media.parameters['dtb'], u_boot_media.get_common_data('file', 'dtb'))
         self.assertEqual(u_boot_media.parameters['root_uuid'], u_boot_media.get_common_data('uuid', 'root'))
         part_reference = '%s:%s' % (
-            job.device.parameters['parameters']['media']['usb'][u_boot_media.get_common_data('u-boot', 'device')]['device_id'],
+            job.device['parameters']['media']['usb'][u_boot_media.get_common_data('u-boot', 'device')]['device_id'],
             u_boot_media.parameters['boot_part']
         )
         self.assertEqual(part_reference, u_boot_media.get_common_data('uuid', 'boot_part'))

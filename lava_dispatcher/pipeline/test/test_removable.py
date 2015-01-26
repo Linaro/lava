@@ -35,17 +35,17 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         Test that the correct parameters have been set for the device
         """
         cubie = NewDevice('cubie1')
-        self.assertIsNotNone(cubie.parameters['parameters']['media'].get('usb', None))
-        self.assertIsNotNone(cubie.parameters.get('commands', None))
-        self.assertIsNotNone(cubie.parameters.get('actions', None))
-        self.assertIsNotNone(cubie.parameters['actions'].get('deploy', None))
-        self.assertIsNotNone(cubie.parameters['actions']['deploy'].get('methods', None))
-        self.assertIn('usb', cubie.parameters['actions']['deploy']['methods'])
-        self.assertIsNotNone(cubie.parameters['actions'].get('boot', None))
-        self.assertIsNotNone(cubie.parameters['actions']['boot'].get('methods', None))
-        self.assertIn('u-boot', [methods.keys() for methods in cubie.parameters['actions']['boot']['methods']][0])
+        self.assertIsNotNone(cubie['parameters']['media'].get('usb', None))
+        self.assertIsNotNone(cubie.get('commands', None))
+        self.assertIsNotNone(cubie.get('actions', None))
+        self.assertIsNotNone(cubie['actions'].get('deploy', None))
+        self.assertIsNotNone(cubie['actions']['deploy'].get('methods', None))
+        self.assertIn('usb', cubie['actions']['deploy']['methods'])
+        self.assertIsNotNone(cubie['actions'].get('boot', None))
+        self.assertIsNotNone(cubie['actions']['boot'].get('methods', None))
+        self.assertIn('u-boot', [methods.keys() for methods in cubie['actions']['boot']['methods']][0])
         u_boot_params = [
-            methods for methods in cubie.parameters['actions']['boot']['methods']
+            methods for methods in cubie['actions']['boot']['methods']
             if 'u-boot' in methods.keys()
         ][0]['u-boot']
         self.assertIn('usb', u_boot_params)
@@ -74,14 +74,14 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
                     self.assertTrue(action.valid)
                     agent = action.parameters['download']
                     self.assertTrue(agent.startswith('/'))  # needs to be a full path but on the device, so avoid os.path
-                    self.assertIn(action.parameters['device'], job.device.parameters['parameters']['media']['usb'])
+                    self.assertIn(action.parameters['device'], job.device['parameters']['media']['usb'])
                     mass_storage = action
         self.assertIsNotNone(mass_storage)
         self.assertIn('device', mass_storage.parameters)
-        self.assertIn(mass_storage.parameters['device'], cubie.parameters['parameters']['media']['usb'])
+        self.assertIn(mass_storage.parameters['device'], cubie['parameters']['media']['usb'])
         self.assertIsNotNone(mass_storage.get_common_data('u-boot', 'device'))
         u_boot_params = [
-            methods for methods in cubie.parameters['actions']['boot']['methods']
+            methods for methods in cubie['actions']['boot']['methods']
             if 'u-boot' in methods.keys()
         ][0]['u-boot']
         self.assertEqual(mass_storage.get_common_data('bootloader_prompt', 'prompt'), u_boot_params['parameters']['bootloader_prompt'])
@@ -93,13 +93,13 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         sample_job_data = open(sample_job_file)
         job = job_parser.parse(sample_job_data, cubie)
         job.validate()
-        self.assertIn('usb', cubie.parameters['parameters']['media'].keys())
+        self.assertIn('usb', cubie['parameters']['media'].keys())
         deploy_params = [methods for methods in job.parameters['actions'] if 'deploy' in methods.keys()][0]['deploy']
         self.assertIn('device', deploy_params)
-        self.assertIn(deploy_params['device'], cubie.parameters['parameters']['media']['usb'])
-        self.assertIn('uuid', cubie.parameters['parameters']['media']['usb'][deploy_params['device']])
-        self.assertIn('device_id', cubie.parameters['parameters']['media']['usb'][deploy_params['device']])
-        self.assertNotIn('boot_part', cubie.parameters['parameters']['media']['usb'][deploy_params['device']])
+        self.assertIn(deploy_params['device'], cubie['parameters']['media']['usb'])
+        self.assertIn('uuid', cubie['parameters']['media']['usb'][deploy_params['device']])
+        self.assertIn('device_id', cubie['parameters']['media']['usb'][deploy_params['device']])
+        self.assertNotIn('boot_part', cubie['parameters']['media']['usb'][deploy_params['device']])
         deploy_action = job.pipeline.actions[0]
         self.assertIsInstance(deploy_action, MassStorage)
         self.assertIn('image', deploy_action.parameters.keys())
@@ -145,15 +145,15 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         substitutions = {
             '{BOOTX}': "%s %s %s %s" % (
                 u_boot_action.parameters['type'],
-                cubie.parameters['parameters'][u_boot_action.parameters['type']]['kernel'],
-                cubie.parameters['parameters'][u_boot_action.parameters['type']]['ramdisk'],
-                cubie.parameters['parameters'][u_boot_action.parameters['type']]['dtb'],),
+                cubie['parameters'][u_boot_action.parameters['type']]['kernel'],
+                cubie['parameters'][u_boot_action.parameters['type']]['ramdisk'],
+                cubie['parameters'][u_boot_action.parameters['type']]['dtb'],),
             '{RAMDISK}': boot_params['ramdisk'],
             '{KERNEL}': boot_params['kernel'],
             '{DTB}': boot_params['dtb'],
             '{ROOT}': boot_params['root_uuid'],
             '{ROOT_PART}': "%s:%s" % (
-                cubie.parameters['parameters']['media']['usb'][device_id]['device_id'],
+                cubie['parameters']['media']['usb'][device_id]['device_id'],
                 u_boot_action.parameters['boot_part']
             )
         }

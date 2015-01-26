@@ -57,7 +57,7 @@ class BootKVM(Boot):
             return False
         if parameters['method'] != 'qemu':
             return False
-        if device.parameters['device_type'] == 'kvm':  # FIXME: device_type should likely be qemu - see also deploy
+        if device['device_type'] == 'kvm':  # FIXME: device_type should likely be qemu - see also deploy
             return True
         return False
 
@@ -91,7 +91,7 @@ class BootQemuRetry(RetryAction):
         super(BootQemuRetry, self).validate()
         try:
             # FIXME: need a schema and do this inside the NewDevice with a QemuDevice class? (just for parsing)
-            boot = self.job.device.parameters['actions']['boot']
+            boot = self.job.device['actions']['boot']
             qemu_binary = which(boot['parameters']['command'])
             command = [qemu_binary]
             command.extend(boot['parameters'].get('options', []))
@@ -138,7 +138,7 @@ class CallQemuAction(Action):
         self.logger.debug("started a shell command")
 
         shell_connection = ShellSession(self.job, shell)
-        shell_connection.prompt_str = self.job.device.parameters['test_image_prompts']
+        shell_connection.prompt_str = self.job.device['test_image_prompts']
 
         # FIXME: tests with multiple boots need to be handled too.
         self.data['boot-result'] = 'failed' if self.errors else 'success'

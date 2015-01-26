@@ -50,11 +50,11 @@ def uboot_accepts(device, parameters):
         raise RuntimeError("method not specified in boot parameters")
     if parameters['method'] != 'u-boot':
         return False
-    if 'actions' not in device.parameters:
+    if 'actions' not in device:
         raise RuntimeError("Invalid device configuration")
-    if 'boot' not in device.parameters['actions']:
+    if 'boot' not in device['actions']:
         return False
-    if 'methods' not in device.parameters['actions']['boot']:
+    if 'methods' not in device['actions']['boot']:
         raise RuntimeError("Device misconfiguration")
     return True
 
@@ -79,7 +79,7 @@ class UBoot(Boot):
     def accepts(cls, device, parameters):
         if not uboot_accepts(device, parameters):
             return False
-        for tmp in device.parameters['actions']['boot']['methods']:
+        for tmp in device['actions']['boot']['methods']:
             if type(tmp) != dict:
                 return False
             if 'u-boot' in tmp:  # 2to3 false positive, works with python3
@@ -175,7 +175,7 @@ class UBootInterrupt(Action):
 
     def validate(self):
         super(UBootInterrupt, self).validate()
-        hostname = self.job.device.parameters['hostname']
+        hostname = self.job.device['hostname']
         # boards which are reset manually can be supported but errors have to handled manually too.
         if self.job.device.power_state in ['on', 'off']:
             # to enable power to a device, either power_on or hard_reset are needed.
@@ -192,7 +192,7 @@ class UBootInterrupt(Action):
         self.logger.debug("Changing prompt to 'Hit any key to stop autoboot'")
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
         connection.prompt_str = UBOOT_AUTOBOOT_PROMPT
-        # command = self.job.device.parameters['commands'].get('interrupt', '\n')
+        # command = self.job.device['commands'].get('interrupt', '\n')
         self.wait(connection)
         connection.sendline(' \n')
         connection.prompt_str = self.parameters['u-boot']['parameters']['bootloader_prompt']
@@ -232,7 +232,7 @@ class UBootSecondaryMedia(Action):
         self.set_common_data('file', 'ramdisk', self.parameters.get('ramdisk', ''))
         self.set_common_data('file', 'dtb', self.parameters.get('dtb', ''))
         self.set_common_data('uuid', 'root', self.parameters['root_uuid'])
-        media_params = self.job.device.parameters['parameters']['media']['usb']
+        media_params = self.job.device['parameters']['media']['usb']
         self.set_common_data(
             'uuid',
             'boot_part',
@@ -281,8 +281,8 @@ class UBootCommandOverlay(Action):
         if 'type' not in self.parameters:
             self.errors = "No boot type specified in device parameters."
         else:
-            if self.parameters['type'] not in self.job.device.parameters['parameters']:
-                self.errors = "Unable to match specified boot type '%s' with device parameters" % self.parameters['type']
+            if self.parameters['type'] not in self.job.device['parameters']:
+                self.errors = "Unable to match specified boot type '%s' with device parameters" % self['type']
 
     def run(self, connection, args=None):
         """
@@ -301,9 +301,9 @@ class UBootCommandOverlay(Action):
             '{SERVER_IP}': ip_addr
         }
 
-        kernel_addr = self.job.device.parameters['parameters'][self.parameters['type']]['kernel']
-        dtb_addr = self.job.device.parameters['parameters'][self.parameters['type']]['dtb']
-        ramdisk_addr = self.job.device.parameters['parameters'][self.parameters['type']]['ramdisk']
+        kernel_addr = self.job.device['parameters'][self.parameters['type']]['kernel']
+        dtb_addr = self.job.device['parameters'][self.parameters['type']]['dtb']
+        ramdisk_addr = self.job.device['parameters'][self.parameters['type']]['ramdisk']
 
         substitutions['{KERNEL_ADDR}'] = kernel_addr
         substitutions['{DTB_ADDR}'] = dtb_addr

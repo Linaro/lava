@@ -84,7 +84,7 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
             # FIXME: needs deployment_data to be visible during validation
             # self.assertNotEqual(repo_action.runner, None)
         self.assertIsNotNone(testdef.parameters['deployment_data']['lava_test_results_dir'])
-#        self.assertIsNotNone(testdef.job.device.parameters['hostname'])
+#        self.assertIsNotNone(testdef.job.device['hostname'])
 
     def test_overlay(self):
 

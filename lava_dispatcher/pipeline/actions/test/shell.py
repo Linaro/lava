@@ -109,7 +109,7 @@ class TestShellAction(TestAction):
 
         self.logger.debug("Executing test definitions using %s" % connection.name)
         self.logger.debug("Setting default test shell prompt")
-        connection.prompt_str = self.job.device.parameters['test_image_prompts']
+        connection.prompt_str = self.job.device['test_image_prompts']
         self.logger.debug("Setting default timeout: %s" % self.timeout.duration)
         connection.timeout = self.timeout
         self.wait(connection)

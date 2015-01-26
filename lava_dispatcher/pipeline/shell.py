@@ -147,7 +147,7 @@ class ShellSession(Connection):
             # device = self.device
             spawned_shell = self.raw_connection  # ShellCommand(pexpect.spawn)
             # FIXME: the prompts should not be needed here, only kvm uses these. Remove.
-            # prompt_str = device.parameters['test_image_prompts']  # FIXME: deployment_data?
+            # prompt_str = device['test_image_prompts']  # FIXME: deployment_data?
             prompt_str_includes_rc = True  # FIXME - parameters['deployment_data']['TESTER_PS1_INCLUDES_RC']?
 #            prompt_str_includes_rc = device.config.tester_ps1_includes_rc
             # The Connection for a CommandRunner in the pipeline needs to be a ShellCommand, not logging_spawn
@@ -165,7 +165,7 @@ class ShellSession(Connection):
         if self.__runner__ is None:
             # device = self.device
             spawned_shell = self.raw_connection  # ShellCommand(pexpect.spawn)
-            # prompt_str = device.parameters['test_image_prompts']
+            # prompt_str = device['test_image_prompts']
             prompt_str_includes_rc = True  # FIXME - do we need this?
 #            prompt_str_includes_rc = device.config.tester_ps1_includes_rc
             # The Connection for a CommandRunner in the pipeline needs to be a ShellCommand, not logging_spawn
@@ -194,7 +194,7 @@ class ExpectShellSession(Action):
 
     def run(self, connection, args=None):
         connection = super(ExpectShellSession, self).run(connection, args)
-        connection.prompt_str = self.job.device.parameters['test_image_prompts']
+        connection.prompt_str = self.job.device['test_image_prompts']
         self.logger.debug("%s: Waiting for prompt" % self.name)
         self.wait(connection)  # FIXME: should this be a regular RetryAction operation?
         return connection
@@ -213,10 +213,10 @@ class ConnectDevice(Action):
 
     def validate(self):
         super(ConnectDevice, self).validate()
-        if 'connect' not in self.job.device.parameters['commands']:
+        if 'connect' not in self.job.device['commands']:
             self.errors = "Unable to connect to device %s - missing connect command." % self.job.device.hostname
             return
-        command = self.job.device.parameters['commands']['connect']
+        command = self.job.device['commands']['connect']
         exe = ''
         try:
             exe = command.split(' ')[0]
@@ -236,16 +236,16 @@ class ConnectDevice(Action):
     def run(self, connection, args=None):
         if connection:
             self.logger.debug("Already connected")
-            connection.prompt_str = self.job.device.parameters['test_image_prompts']
+            connection.prompt_str = self.job.device['test_image_prompts']
             return connection
-        command = self.job.device.parameters['commands']['connect']
+        command = self.job.device['commands']['connect']
         self.logger.debug("connecting to device using '%s'" % command)
         signal.alarm(0)  # clear the timeouts used without connections.
         shell = ShellCommand("%s\n" % command, self.timeout)
         if shell.exitstatus:
             raise JobError("%s command exited %d: %s" % (command, shell.exitstatus, shell.readlines()))
         connection = ShellSession(self.job, shell)
-        connection.prompt_str = self.job.device.parameters['test_image_prompts']
+        connection.prompt_str = self.job.device['test_image_prompts']
         # if the board is running, wait for a prompt - if not, skip.
         if self.job.device.power_state is 'off':
             return connection

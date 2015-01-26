@@ -41,13 +41,13 @@ def tftp_accept(device, parameters):
         return False
     if parameters['to'] != 'tftp':
         return False
-    if not device.parameters:
+    if not device:
         return False
-    if 'actions' not in device.parameters:
+    if 'actions' not in device:
         raise RuntimeError("Invalid device configuration")
-    if 'deploy' not in device.parameters['actions']:
+    if 'deploy' not in device['actions']:
         return False
-    if 'methods' not in device.parameters['actions']['deploy']:
+    if 'methods' not in device['actions']['deploy']:
         raise RuntimeError("Device misconfiguration")
     return True
 
@@ -69,7 +69,7 @@ class Tftp(Deployment):
     def accepts(cls, device, parameters):
         if not tftp_accept(device, parameters):
             return False
-        if 'tftp' in device.parameters['actions']['deploy']['methods']:
+        if 'tftp' in device['actions']['deploy']['methods']:
             return True
         return False
 
@@ -96,7 +96,7 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         if not self.valid:
             return
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.device.parameters['hostname']
+        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.device['hostname']
         if self.suffix:
             self.data[self.name].setdefault('suffix', self.suffix)
         self.data[self.name].setdefault('suffix', os.path.basename(self.tftp_dir))

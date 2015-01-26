@@ -52,7 +52,7 @@ class DeviceTypeParser(object):
         return data
 
 
-class NewDevice(object):
+class NewDevice(dict):
     """
     YAML based Device class with clearer support for the pipeline overrides
     and deployment types.
@@ -63,8 +63,8 @@ class NewDevice(object):
     """
 
     def __init__(self, target):
+        super(NewDevice, self).__init__()
         self.target = target
-        self.__parameters__ = {}
         # development paths are within the current working directory
         device_config_path = os.getcwd()
         name = os.path.join('devices', "%s.yaml" % target)
@@ -83,22 +83,12 @@ class NewDevice(object):
         # Parse the yaml configuration
         try:
             with open(device_file) as f_in:
-                self.parameters = yaml.load(f_in)
+                self.update(yaml.load(f_in))
         except yaml.parser.ParserError:
             raise RuntimeError("%s could not be parsed" % device_file)
 
-        self.parameters = {
-            'hostname': target
-        }
-        self.parameters.setdefault('power_state', 'off')  # assume power is off at start of job
-
-    @property
-    def parameters(self):
-        return self.__parameters__
-
-    @parameters.setter
-    def parameters(self, data):
-        self.__parameters__.update(data)
+        self['hostname'] = target
+        self.setdefault('power_state', 'off')  # assume power is off at start of job
 
     def check_config(self, job):
         """
@@ -109,20 +99,20 @@ class NewDevice(object):
 
     @property
     def hard_reset_command(self):
-        if 'commands' in self.parameters and 'hard_reset' in self.parameters['commands']:
-            return self.parameters['commands']['hard_reset']
+        if 'commands' in self and 'hard_reset' in self['commands']:
+            return self['commands']['hard_reset']
         return ''
 
     @property
     def power_command(self):
-        if 'commands' in self.parameters and 'power_on' in self.parameters['commands']:
-            return self.parameters['commands']['power_on']
+        if 'commands' in self and 'power_on' in self['commands']:
+            return self['commands']['power_on']
         return self.hard_reset_command
 
     @property
     def connect_command(self):
-        if 'connect' in self.parameters['commands']:
-            return self.parameters['commands']['connect']
+        if 'connect' in self['commands']:
+            return self['commands']['connect']
         return ''
 
     @property
@@ -132,14 +122,14 @@ class NewDevice(object):
         also copes with devices where the device has no power commands, returning an
         empty string.
         """
-        if 'commands' in self.parameters and 'power_on' in self.parameters['commands']:
-            return self.parameters['power_state']
+        if 'commands' in self and 'power_on' in self['commands']:
+            return self['power_state']
         return ''
 
     @power_state.setter
     def power_state(self, state):
-        if 'commands' not in self.parameters or 'power_off' not in self.parameters['commands']:
-            raise RuntimeError("Power state not supported for %s" % self.parameters['hostname'])
+        if 'commands' not in self or 'power_off' not in self['commands']:
+            raise RuntimeError("Power state not supported for %s" % self['hostname'])
         if state is '' or state is not 'on' and state is not 'off':
             raise RuntimeError("Attempting to set an invalid power state")
-        self.parameters['power_state'] = state
+        self['power_state'] = state

@@ -35,19 +35,19 @@ class TestDeviceParser(unittest.TestCase):  # pylint: disable=too-many-public-me
     def test_new_device(self):
         kvm01 = NewDevice('kvm01')
         try:
-            self.assertIsNotNone(kvm01.parameters['actions'])
+            self.assertIsNotNone(kvm01['actions'])
         except:  # pylint: disable=bare-except
             self.fail("missing actions block for device")
         try:
-            self.assertIsNotNone(kvm01.parameters['actions']['boot'])
+            self.assertIsNotNone(kvm01['actions']['boot'])
         except:  # pylint: disable=bare-except
             self.fail("missing boot block for device")
         try:
-            self.assertIsNotNone(kvm01.parameters['actions']['deploy'])
+            self.assertIsNotNone(kvm01['actions']['deploy'])
         except:  # pylint: disable=bare-except
             self.fail("missing boot block for device")
-        self.assertTrue('qemu' in kvm01.parameters['actions']['boot']['methods'])
-        self.assertTrue('image' in kvm01.parameters['actions']['deploy']['methods'])
+        self.assertTrue('qemu' in kvm01['actions']['boot']['methods'])
+        self.assertTrue('image' in kvm01['actions']['deploy']['methods'])
 
 
 class FakeAction(Action):
@@ -92,10 +92,10 @@ class TestJobDeviceParameters(unittest.TestCase):  # pylint: disable=too-many-pu
         self.assertTrue(uboot_action.valid)
         for action in uboot_action.internal_pipeline.actions:
             if isinstance(action, UBootInterrupt):
-                self.assertIn('power_on', action.job.device.parameters['commands'])
-                self.assertIn('hard_reset', action.job.device.parameters['commands'])
-                self.assertIn('connect', action.job.device.parameters['commands'])
-                self.assertEqual(action.job.device.parameters['commands']['connect'].split(' ')[0], 'telnet')
+                self.assertIn('power_on', action.job.device['commands'])
+                self.assertIn('hard_reset', action.job.device['commands'])
+                self.assertIn('connect', action.job.device['commands'])
+                self.assertEqual(action.job.device['commands']['connect'].split(' ')[0], 'telnet')
             if isinstance(action, UBootAction):
                 self.assertIn('method', action.parameters)
                 self.assertIn('commands', action.parameters)

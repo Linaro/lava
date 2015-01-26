@@ -33,9 +33,9 @@ class ConnectToSerial(Action):
         self.timeout = Timeout(self.name)
 
     def validate(self):
-        if 'connection_command' not in self.job.device.parameters:
-            raise RuntimeError("%s does not have a connection_command parameter" % self.job.device.parameters['hostname'])
+        if 'connection_command' not in self.job.device:
+            raise RuntimeError("%s does not have a connection_command parameter" % self.job.device['hostname'])
 
     def run(self, connection, args=None):
-        telnet = ShellCommand(self.job.device.parameters['connection_command'], self.timeout)
+        telnet = ShellCommand(self.job.device['connection_command'], self.timeout)
         return Connection(self.job, telnet)

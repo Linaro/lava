@@ -75,7 +75,7 @@ def handle_device_parameters(job_data, name, parameters):
 
 
 def parse_action(job_data, name, device, pipeline):
-    parameters = handle_device_parameters(job_data[name], name, device.parameters)
+    parameters = handle_device_parameters(job_data[name], name, device)
     parameters.update(job_data[name])
     if name == 'boot':
         Boot.select(device, job_data[name])(pipeline, parameters)

@@ -74,7 +74,7 @@ class OffsetAction(DeployAction):
         ])
         if not part_data:
             raise JobError("Unable to identify offset")
-        deploy_params = self.job.device.parameters['actions']['deploy']['parameters']
+        deploy_params = self.job.device['actions']['deploy']['parameters']
         partno = deploy_params[self.parameters['deployment_data']['lava_test_results_part_attr']]
 
         pattern = re.compile('%d:([0-9]+)B:' % partno)
@@ -146,7 +146,7 @@ class LoopMountAction(RetryAction):
         if 'download_action' not in self.data:
             raise RuntimeError("download-action missing: %s" % self.name)
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.device.parameters['hostname']
+        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.device['hostname']
         if 'file' not in self.data['download_action']['image']:
             self.errors = "no file specified to mount"
 

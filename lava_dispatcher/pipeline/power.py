@@ -110,7 +110,7 @@ class PDUReboot(AdjuvantAction):
         if not self.adjuvant:
             return connection
         if not self.job.device.hard_reset_command:
-            raise InfrastructureError("Hard reset required but not defined for %s." % self.job.device.parameters['hostname'])
+            raise InfrastructureError("Hard reset required but not defined for %s." % self.job.device['hostname'])
         command = self.job.device.hard_reset_command
         if not self._run_command(command.split(' ')):
             raise InfrastructureError("%s failed" % command)
@@ -157,7 +157,7 @@ class PowerOff(Action):
 
     def run(self, connection, args=None):
         if self.job.device.power_state is 'on':  # allow for '' and skip
-            command = self.job.device.parameters['commands']['power_off']
+            command = self.job.device['commands']['power_off']
             if not self._run_command(command.split(' ')):
                 raise InfrastructureError("%s command failed" % command)
             self.job.device.power_state = 'off'

@@ -94,7 +94,7 @@ class DeployImage(Deployment):
         which can use instance data.
         """
         # FIXME: the device object has the device_types/*.conf - match against the job & support methods
-        if device.parameters['device_type'] != 'kvm':
+        if device['device_type'] != 'kvm':
             return False
         # lookup if the job parameters match the available device methods
         if 'image' not in parameters:

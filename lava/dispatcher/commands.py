@@ -218,9 +218,6 @@ class dispatch(DispatcherCommand):
             # Prepare the pipeline from the file using the parser.
 
             device = NewDevice(self.args.target)  # DeviceParser
-            # FIXME: system paths are not standardised, so needs local clone to work on the command line
-            if not device.parameters:
-                raise RuntimeError("Pipeline does not support %s" % self.args.target)
             parser = JobParser()
             job = None
             try:

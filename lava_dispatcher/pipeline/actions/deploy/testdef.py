@@ -131,7 +131,7 @@ class RepoAction(Action):
         return prioritized[0]
 
     def validate(self):
-        if 'hostname' not in self.job.device.parameters:
+        if 'hostname' not in self.job.device:
             raise InfrastructureError("Invalid device configuration")
         if 'test_name' not in self.parameters:
             raise JobError("Unable to determine test_name")
@@ -163,7 +163,7 @@ class RepoAction(Action):
 
         # runner_path is the path to read and execute from to run the tests after boot
         self.data['test'][self.uuid]['runner_path'][args['test_name']] = os.path.join(
-            args['deployment_data']['lava_test_results_dir'] % self.job.device.parameters['hostname'],
+            args['deployment_data']['lava_test_results_dir'] % self.job.device['hostname'],
             'tests',
             args['test_name']
         )

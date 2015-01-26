@@ -113,7 +113,7 @@ class TestMultiDeploy(unittest.TestCase):
                 counts.setdefault(name, 1)
                 if counts[name] >= 2:
                     pipeline.add_action(ResetContext())
-                parameters = handle_device_parameters(action_data[name], name, device.parameters)
+                parameters = handle_device_parameters(action_data[name], name, device)
                 parameters.update(action_data[name])
                 test_deploy = TestMultiDeploy.TestDeploy(pipeline, parameters, job)
                 self.assertEqual(
@@ -152,7 +152,7 @@ class TestMultiUBoot(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.job = factory.create_bbb_job('sample_jobs/uboot-multiple.yaml')
         self.assertIsNotNone(self.job)
         self.assertIsNone(self.job.validate())
-        self.assertEqual(self.job.device.parameters['device_type'], 'beaglebone-black')
+        self.assertEqual(self.job.device['device_type'], 'beaglebone-black')
 
     def test_multi_uboot(self):
         self.assertIsNotNone(self.job)

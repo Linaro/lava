@@ -57,19 +57,19 @@ class Removable(Deployment):
     def accepts(cls, device, parameters):
         job_device = None
         media = None
-        if 'usb' == device.parameters['actions']['deploy']['to']:
+        if 'usb' == device['actions']['deploy']['to']:
             if 'device' in parameters:  # from the job YAML
                 job_device = parameters['device']
                 media = 'usb'
-        if 'sata' == device.parameters['actions']['deploy']['to']:
+        if 'sata' == device['actions']['deploy']['to']:
             if 'device' in parameters:  # from the job YAML
                 job_device = parameters['device']
                 media = 'sata'
         if job_device is None:
             return False
-        if job_device not in device.parameters['parameters']['media'][media]:
+        if job_device not in device['parameters']['media'][media]:
             return False
-        if 'uuid' in device.parameters['parameters']['media'][media][job_device]:
+        if 'uuid' in device['parameters']['media'][media][job_device]:
             return True
         return False
 
@@ -77,7 +77,7 @@ class Removable(Deployment):
 class DDAction(Action):
     """
     Runs dd against the realpath of the symlink provided by the static device information:
-    device.parameters['parameters']['media'] (e.g. usb-SanDisk_Ultra_20060775320F43006019-0:0)
+    device['parameters']['media'] (e.g. usb-SanDisk_Ultra_20060775320F43006019-0:0)
     in /dev/disk/by-id/ of the initial deployment, on device.
     """
     def __init__(self):
@@ -96,9 +96,9 @@ class DDAction(Action):
         if not os.path.isabs(self.parameters['download']):
             self.errors = "download parameter needs to be an absolute path"
         uuid_required = False
-        self.boot_params = self.job.device.parameters['parameters']['media'][self.parameters['to']]
-        if 'media' in self.job.device.parameters:
-            media_params = self.job.device.parameters['parameters']['media']
+        self.boot_params = self.job.device['parameters']['media'][self.parameters['to']]
+        if 'media' in self.job.device:
+            media_params = self.job.device['parameters']['media']
             interface_params = [
                 interface for interface in media_params if interface == self.parameters['to']
             ]
@@ -163,7 +163,7 @@ class MassStorage(DeployAction):
         if not self.valid:
             return
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.device.parameters['hostname']
+        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.device['hostname']
         if 'device' in self.parameters:
             self.set_common_data('u-boot', 'device', self.parameters['device'])
 

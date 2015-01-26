@@ -87,7 +87,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
     def describe(self):
         structure = OrderedDict()
         structure['device'] = {
-            'parameters': self.device.parameters
+            'parameters': self.device
         }
         structure['job'] = {
             'parameters': self.parameters
