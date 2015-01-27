@@ -24,11 +24,11 @@
 from lava_dispatcher.pipeline.action import (
     Action,
     Pipeline,
-    Boot,
     JobError,
     Timeout,
     InfrastructureError,
 )
+from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
 from lava_dispatcher.pipeline.shell import (
     ConnectDevice,

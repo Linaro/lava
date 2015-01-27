@@ -25,10 +25,12 @@ from lava_dispatcher.pipeline.job import Job, ResetContext
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,
+    Timeout,
+)
+from lava_dispatcher.pipeline.logical import (
     Deployment,
     Boot,
     LavaTest,
-    Timeout,
 )
 from lava_dispatcher.pipeline.deployment_data import get_deployment_data
 from lava_dispatcher.pipeline.power import FinalizeAction

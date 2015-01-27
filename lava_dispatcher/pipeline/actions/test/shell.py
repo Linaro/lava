@@ -25,10 +25,9 @@ from lava_dispatcher.pipeline.actions.test import handle_testcase, TestAction
 from lava_dispatcher.pipeline.action import (
     InfrastructureError,
     Pipeline,
-    RetryAction,
     JobError,
-    LavaTest
 )
+from lava_dispatcher.pipeline.logical import LavaTest, RetryAction
 from lava_dispatcher.pipeline.connection import BaseSignalHandler, SignalMatch
 
 

@@ -19,7 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-from lava_dispatcher.pipeline.action import DiagnosticAction
+from lava_dispatcher.pipeline.logical import DiagnosticAction
 
 
 class DiagnoseNetwork(DiagnosticAction):

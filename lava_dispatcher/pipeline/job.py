@@ -21,7 +21,8 @@
 import yaml
 from collections import OrderedDict
 
-from lava_dispatcher.pipeline.action import PipelineContext, Action, JobError
+from lava_dispatcher.pipeline.action import Action
+from lava_dispatcher.pipeline.logical import PipelineContext
 from lava_dispatcher.pipeline.diagnostics import DiagnoseNetwork
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 

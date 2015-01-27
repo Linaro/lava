@@ -18,7 +18,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.pipeline.action import Deployment, Pipeline
+from lava_dispatcher.pipeline.action import Pipeline
+from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.download import (
     DownloaderAction,

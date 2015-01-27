@@ -23,12 +23,14 @@ import time
 import unittest
 from lava_dispatcher.pipeline.action import (
     Action,
-    AdjuvantAction,
     Pipeline,
-    RetryAction,
-    DiagnosticAction,
     Timeout,
     JobError,
+)
+from lava_dispatcher.pipeline.logical import (
+    AdjuvantAction,
+    RetryAction,
+    DiagnosticAction,
 )
 from lava_dispatcher.pipeline.power import FinalizeAction
 from lava_dispatcher.pipeline.job import Job

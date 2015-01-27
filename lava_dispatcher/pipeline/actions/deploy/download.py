@@ -37,8 +37,8 @@ from lava_dispatcher.pipeline.action import (
     Action,
     JobError,
     Pipeline,
-    RetryAction,
 )
+from lava_dispatcher.pipeline.logical import RetryAction
 from lava_dispatcher.pipeline.utils.constants import (
     FILE_DOWNLOAD_CHUNK_SIZE,
     HTTP_DOWNLOAD_CHUNK_SIZE,

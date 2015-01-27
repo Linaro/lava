@@ -24,10 +24,10 @@ import glob
 from lava_dispatcher.pipeline.action import (
     JobError,
     InfrastructureError,
-    RetryAction,
     Action,
     Pipeline
 )
+from lava_dispatcher.pipeline.logical import RetryAction
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, rmtree
 

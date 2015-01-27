@@ -19,13 +19,12 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.pipeline.action import (
-    Boot,
     Pipeline,
     Action,
-    RetryAction,
     JobError,
     Timeout
 )
+from lava_dispatcher.pipeline.logical import Boot, RetryAction
 from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.shell import ExpectShellSession, ShellCommand, ShellSession
 from lava_dispatcher.pipeline.utils.shell import which

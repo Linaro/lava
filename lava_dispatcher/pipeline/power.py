@@ -26,10 +26,10 @@ import yaml
 from lava_dispatcher.pipeline.action import (
     Action,
     Pipeline,
-    AdjuvantAction,
     InfrastructureError,
     TestError,
 )
+from lava_dispatcher.pipeline.logical import AdjuvantAction
 from lava_dispatcher.pipeline.utils.constants import SHUTDOWN_MESSAGE
 
 
