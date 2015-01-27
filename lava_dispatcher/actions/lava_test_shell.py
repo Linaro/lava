@@ -1078,7 +1078,7 @@ class cmd_lava_test_shell(BaseAction):
                 err_log = os.path.join(d, 'parse_err.log')
                 results_dir = os.path.join(d, 'results')
                 bundle = lava_test_shell.get_bundle(results_dir, testdef_objs, err_log)
-                parse_err_msg = read_content(err_log, ignore_missing=True)
+                parse_err_msg = utils.read_content(err_log, ignore_missing=True)
                 if os.path.isfile(err_log):
                     os.unlink(err_log)
                 # lava/results must be empty, but we keep a copy named
