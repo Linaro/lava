@@ -26,6 +26,7 @@ import hashlib
 import tarfile
 from uuid import uuid4
 from collections import OrderedDict
+from nose.tools import nottest
 from lava_dispatcher.pipeline.action import (
     Action,
     InfrastructureError,
@@ -50,6 +51,7 @@ def identify_test_definitions(parameters):
     return test_list
 
 
+@nottest
 def get_deployment_testdefs(parameters):
     """
     Identify the test definitions for each deployment within the job.
