@@ -3,24 +3,24 @@ device_type: kvm
 actions:
   deploy:
     methods:
-    - image
-    parameters:
-      root_part: 1
+      image:
+        parameters:
+          root_part: 1
   boot:
     methods:
-    - qemu
-    parameters:
-      command:
-        qemu-system-x86_64
-      boot_options:
-        root: /dev/sda1
-        console: ttyS0,115200
-      options:
-        - -nographic
-        - -enable-kvm
-        - -cpu host
-        - -net nic,model=virtio,macaddr=52:54:00:12:34:58 -net user
-        - -m 512
+      qemu:
+        parameters:
+          command:
+            qemu-system-x86_64
+          boot_options:
+            root: /dev/sda1
+            console: ttyS0,115200
+          options:
+            - -nographic
+            - -enable-kvm
+            - -cpu host
+            - -net nic,model=virtio,macaddr=52:54:00:12:34:58 -net user
+            - -m 512
 
 timeouts:
   apply-overlay-image:

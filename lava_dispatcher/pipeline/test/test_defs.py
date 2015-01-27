@@ -191,8 +191,8 @@ class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-publi
             content,
             [
                 '###default parameters from yaml###\n', "VARIABLE_NAME_1='value_1'\n", "VARIABLE_NAME_2='value_2'\n",
-                '######\n', '###test parameters from json###\n', "root_part='1'\n",
-                '######\n'
+                '######\n', '###test parameters from json###\n', "VARIABLE_NAME_1='eth2'\n",
+                "VARIABLE_NAME_2='wlan0'\n", '######\n'
             ]
         )
 

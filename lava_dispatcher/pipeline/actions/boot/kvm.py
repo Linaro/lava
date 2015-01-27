@@ -91,7 +91,7 @@ class BootQemuRetry(RetryAction):
         super(BootQemuRetry, self).validate()
         try:
             # FIXME: need a schema and do this inside the NewDevice with a QemuDevice class? (just for parsing)
-            boot = self.job.device['actions']['boot']
+            boot = self.job.device['actions']['boot']['methods']['qemu']
             qemu_binary = which(boot['parameters']['command'])
             command = [qemu_binary]
             command.extend(boot['parameters'].get('options', []))

@@ -74,7 +74,7 @@ class OffsetAction(DeployAction):
         ])
         if not part_data:
             raise JobError("Unable to identify offset")
-        deploy_params = self.job.device['actions']['deploy']['parameters']
+        deploy_params = self.job.device['actions']['deploy']['methods']['image']['parameters']
         partno = deploy_params[self.parameters['deployment_data']['lava_test_results_part_attr']]
 
         pattern = re.compile('%d:([0-9]+)B:' % partno)
