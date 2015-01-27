@@ -122,7 +122,7 @@ class ExpectBootloaderSession(Action):
         connection = super(ExpectBootloaderSession, self).run(connection, args)
         connection.prompt_str = self.parameters['u-boot']['parameters']['bootloader_prompt']
         self.logger.debug("%s: Waiting for prompt" % self.name)
-        connection.wait()
+        self.wait(connection)
         return connection
 
 
@@ -356,8 +356,8 @@ class UBootCommandsAction(Action):
         for line in self.data['u-boot']['commands']:
             self.wait(connection)
             connection.sendline(line)
-            connection.wait()
+            self.wait(connection)
         # allow for auto_login
         connection.prompt_str = self.parameters.get('boot_message', BOOT_MESSAGE)
-        connection.wait()
+        self.wait(connection)
         return connection

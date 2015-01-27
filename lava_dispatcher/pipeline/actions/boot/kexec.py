@@ -110,7 +110,7 @@ class KexecAction(Action):
             self.logger.debug("Checking for kexec: %s" % cmd)
             connection.sendline(cmd)
         connection.sendline(self.load_command)
-        connection.wait()
+        self.wait(connection)
         connection.prompt = self.parameters['boot_message']
         connection.sendline(self.command)
         return connection
