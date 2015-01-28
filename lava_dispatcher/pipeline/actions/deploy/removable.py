@@ -57,18 +57,22 @@ class Removable(Deployment):
     def accepts(cls, device, parameters):
         job_device = None
         media = None
-        if 'usb' == device['actions']['deploy']['to']:
-            if 'device' in parameters:  # from the job YAML
+        # Which deployment method to use?
+        if 'usb' == parameters['to']:
+            if 'device' in parameters:
                 job_device = parameters['device']
                 media = 'usb'
-        if 'sata' == device['actions']['deploy']['to']:
-            if 'device' in parameters:  # from the job YAML
+        if 'sata' == parameters['to']:
+            if 'device' in parameters:
                 job_device = parameters['device']
                 media = 'sata'
+        # Matching a method ?
         if job_device is None:
             return False
+        # Is the device allowing this method ?
         if job_device not in device['parameters']['media'][media]:
             return False
+        # TODO: what if the key does not exist for this device configuration?
         if 'uuid' in device['parameters']['media'][media][job_device]:
             return True
         return False

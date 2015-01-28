@@ -23,12 +23,12 @@ commands:
 actions:
   deploy:
     methods:
-    - tftp
-    - usb
+      tftp
+      usb
   boot:
     methods:
-    - kexec:
-    - u-boot:
+      kexec:
+      u-boot:
         parameters:
           bootloader_prompt: U-Boot
           boot_message: Booting Linux

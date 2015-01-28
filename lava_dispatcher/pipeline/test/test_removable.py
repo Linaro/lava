@@ -43,11 +43,8 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertIn('usb', cubie['actions']['deploy']['methods'])
         self.assertIsNotNone(cubie['actions'].get('boot', None))
         self.assertIsNotNone(cubie['actions']['boot'].get('methods', None))
-        self.assertIn('u-boot', [methods.keys() for methods in cubie['actions']['boot']['methods']][0])
-        u_boot_params = [
-            methods for methods in cubie['actions']['boot']['methods']
-            if 'u-boot' in methods.keys()
-        ][0]['u-boot']
+        self.assertIn('u-boot', cubie['actions']['boot']['methods'])
+        u_boot_params = cubie['actions']['boot']['methods']['u-boot']
         self.assertIn('usb', u_boot_params)
         self.assertIn('commands', u_boot_params['usb'])
         self.assertIn('parameters', u_boot_params)
@@ -80,10 +77,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertIn('device', mass_storage.parameters)
         self.assertIn(mass_storage.parameters['device'], cubie['parameters']['media']['usb'])
         self.assertIsNotNone(mass_storage.get_common_data('u-boot', 'device'))
-        u_boot_params = [
-            methods for methods in cubie['actions']['boot']['methods']
-            if 'u-boot' in methods.keys()
-        ][0]['u-boot']
+        u_boot_params = cubie['actions']['boot']['methods']['u-boot']
         self.assertEqual(mass_storage.get_common_data('bootloader_prompt', 'prompt'), u_boot_params['parameters']['bootloader_prompt'])
 
     def test_deployment(self):
@@ -137,10 +131,12 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         u_boot_action = job.pipeline.actions[1].internal_pipeline.actions[1]
         self.assertIsNotNone(u_boot_action.get_common_data('u-boot', 'device'))
         self.assertEqual(u_boot_action.name, "uboot-overlay")
-        self.assertIn('u-boot', u_boot_action.parameters)
-        self.assertIn('usb', u_boot_action.parameters['u-boot'])
-        self.assertIn('commands', u_boot_action.parameters['u-boot']['usb'])
-        commands_list = u_boot_action.parameters['u-boot']['usb']['commands']
+
+        methods = cubie['actions']['boot']['methods']
+        self.assertIn('u-boot', methods)
+        self.assertIn('usb', methods['u-boot'])
+        self.assertIn('commands', methods['u-boot']['usb'])
+        commands_list = methods['u-boot']['usb']['commands']
         device_id = u_boot_action.get_common_data('u-boot', 'device')
         substitutions = {
             '{BOOTX}': "%s %s %s %s" % (

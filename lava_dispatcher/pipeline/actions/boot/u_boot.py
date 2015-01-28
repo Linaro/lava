@@ -79,12 +79,7 @@ class UBoot(Boot):
     def accepts(cls, device, parameters):
         if not uboot_accepts(device, parameters):
             return False
-        for tmp in device['actions']['boot']['methods']:
-            if type(tmp) != dict:
-                return False
-            if 'u-boot' in tmp:  # 2to3 false positive, works with python3
-                return True
-        return False
+        return 'u-boot' in device['actions']['boot']['methods']
 
 
 class UBootAction(BootAction):
@@ -153,7 +148,7 @@ class UBootRetry(BootAction):
         self.set_common_data(
             'bootloader_prompt',
             'prompt',
-            self.parameters['u-boot']['parameters']['bootloader_prompt']
+            self.job.device['actions']['boot']['methods']['u-boot']['parameters']['bootloader_prompt']
         )
 
     def run(self, connection, args=None):
@@ -266,14 +261,15 @@ class UBootCommandOverlay(Action):
 
     def validate(self):
         super(UBootCommandOverlay, self).validate()
+        device_methods = self.job.device['actions']['boot']['methods']
         if 'method' not in self.parameters:
             self.errors = "missing method"
         # FIXME: allow u-boot commands in the job definition (which make this type a list)
         elif 'commands' not in self.parameters:
             self.errors = "missing commands"
-        elif self.parameters['commands'] not in self.parameters[self.parameters['method']]:
+        elif self.parameters['commands'] not in device_methods[self.parameters['method']]:
             self.errors = "Command not found in supported methods"
-        elif 'commands' not in self.parameters[self.parameters['method']][self.parameters['commands']]:
+        elif 'commands' not in device_methods[self.parameters['method']][self.parameters['commands']]:
             self.errors = "No commands found in parameters"
         # download_action will set ['dtb'] as tftp_path, tmpdir & filename later, in the run step.
         self.data.setdefault('u-boot', {})
@@ -346,7 +342,7 @@ class UBootCommandsAction(Action):
         if 'u-boot' not in self.data:
             self.errors = "Unable to read uboot context data"
         # get prompt_str from device parameters
-        self.prompt = self.parameters['u-boot']['parameters']['bootloader_prompt']
+        self.prompt = self.job.device['actions']['boot']['methods']['u-boot']['parameters']['bootloader_prompt']
 
     def run(self, connection, args=None):
         if not connection:

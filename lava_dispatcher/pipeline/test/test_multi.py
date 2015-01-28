@@ -27,7 +27,6 @@ from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.power import FinalizeAction
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.parser import handle_device_parameters
 from lava_dispatcher.pipeline.test.test_uboot import Factory
 
 # pylint: disable=too-many-public-methods,too-few-public-methods
@@ -113,8 +112,7 @@ class TestMultiDeploy(unittest.TestCase):
                 counts.setdefault(name, 1)
                 if counts[name] >= 2:
                     pipeline.add_action(ResetContext())
-                parameters = handle_device_parameters(action_data[name], name, device)
-                parameters.update(action_data[name])
+                parameters = action_data[name]
                 test_deploy = TestMultiDeploy.TestDeploy(pipeline, parameters, job)
                 self.assertEqual(
                     {'common': {}},

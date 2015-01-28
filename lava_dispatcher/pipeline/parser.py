@@ -40,43 +40,8 @@ import lava_dispatcher.pipeline.actions.test.strategies  # pylint: disable=unuse
 from lava_dispatcher.pipeline.actions.submit import SubmitResultsAction  # pylint: disable=unused-import
 
 
-def handle_device_parameters(job_data, name, parameters):
-    """
-    Parses the action specific parameters from the device configuration
-    to be added to the matching action parameters.
-    name refers to the action name in the YAML.
-    Some methods have parameters, some do not.
-    Returns a dict of the device parameters for the method
-    """
-    retval = {}
-    if 'actions' not in parameters:
-        return retval
-    if name not in parameters['actions']:
-        return retval
-    if 'method' in job_data and 'methods' in parameters['actions'][name]:
-        # distinguish between methods with and without parameters in the YAML
-        if job_data['method'] in parameters['actions'][name]['methods']:
-            retval[job_data['method']] = [
-                method for method in parameters['actions'][name]['methods'] if job_data['method'] in method
-            ][0]
-        elif type(parameters['actions'][name]['methods'] == list):
-            retval = [
-                method for method in parameters['actions'][name]['methods'] if job_data['method'] in method
-            ][0]
-            # print retval
-        else:
-            raise RuntimeError("no method parameters for %s %s" % (name, job_data['method']))
-    elif 'to' in job_data and 'methods' in parameters['actions'][name]:
-        # FIXME: rationalise the use of deploy methods to match job data against device data, as with boot
-        retval = parameters['actions'][name]
-    else:
-        raise RuntimeError("Specified method does not match device methods for %s" % name)
-    return retval
-
-
 def parse_action(job_data, name, device, pipeline):
-    parameters = handle_device_parameters(job_data[name], name, device)
-    parameters.update(job_data[name])
+    parameters = job_data[name]
     if name == 'boot':
         Boot.select(device, job_data[name])(pipeline, parameters)
     elif name == 'test':

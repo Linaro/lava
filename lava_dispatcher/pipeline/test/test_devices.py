@@ -75,15 +75,15 @@ class TestJobDeviceParameters(unittest.TestCase):  # pylint: disable=too-many-pu
             if isinstance(action, DeployAction):
                 self.assertIn('ramdisk', action.parameters)
             if isinstance(action, BootAction):
-                self.assertIn('u-boot', action.parameters)
-                self.assertIn('ramdisk', action.parameters['u-boot'])
-                self.assertIn('bootloader_prompt', action.parameters['u-boot']['parameters'])
+                self.assertIn('method', action.parameters)
+                self.assertEqual('u-boot', action.parameters['method'])
+
+                methods = device['actions']['boot']['methods']
+                self.assertIn('ramdisk', methods['u-boot'])
+                self.assertIn('bootloader_prompt', methods['u-boot']['parameters'])
                 self.assertIsNotNone(
-                    action.parameters[
-                        action.parameters['method']][
-                            action.parameters['commands']]['commands']
-                )
-                for line in action.parameters[action.parameters['method']][action.parameters['commands']]['commands']:
+                    methods[action.parameters['method']][action.parameters['commands']]['commands'])
+                for line in methods[action.parameters['method']][action.parameters['commands']]['commands']:
                     self.assertIsNotNone(line)
                 self.assertIsInstance(action, UBootAction)
                 uboot_action = action

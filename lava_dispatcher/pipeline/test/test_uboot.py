@@ -91,27 +91,21 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
             'telnet localhost 6000'
         )
         self.assertEqual(job.device['commands'].get('interrupt', ' '), ' ')
-        items = []
-        for item in job.device['actions']['boot']['methods']:
-            if 'u-boot' in item:
-                items.extend([item['u-boot']])
-        for item in items:
-            self.assertEqual(item['parameters'].get('bootloader_prompt', None), 'U-Boot')
+        methods = job.device['actions']['boot']['methods']
+        self.assertIn('u-boot', methods)
+        self.assertEqual(methods['u-boot']['parameters'].get('bootloader_prompt', None), 'U-Boot')
 
     def test_uboot_action(self):
         factory = Factory()
         job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
-        methods = {}
-        for item in job.device['actions']['boot']['methods']:
-            if 'u-boot' in item:
-                methods.update(item)
-        self.assertIn('u-boot', methods)
+        self.assertIn('u-boot', job.device['actions']['boot']['methods'])
         for action in job.pipeline.actions:
             action.validate()
             if isinstance(action, UBootAction):
-                self.assertIn('u-boot', action.parameters)
+                self.assertIn('method', action.parameters)
+                self.assertEqual('u-boot', action.parameters['method'])
                 self.assertEqual(
                     'reboot: Restarting system',
                     action.parameters.get('parameters', {}).get('shutdown-message', SHUTDOWN_MESSAGE)
@@ -119,18 +113,9 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
             if isinstance(action, TftpAction):
                 self.assertIn('ramdisk', action.parameters)
                 self.assertIn('kernel', action.parameters)
-                self.assertEqual(action.parameters['methods'], ['tftp', 'usb'])
+                self.assertIn('to', action.parameters)
+                self.assertEqual('tftp', action.parameters['to'])
             self.assertTrue(action.valid)
-        # FIXME: a more elegant introspection of the pipeline would be useful here
-        tftp = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
-        types = []
-        for action in tftp.internal_pipeline.actions:
-            types.extend([action.key for action in action.internal_pipeline.actions if hasattr(action, 'key') and action.key != 'parameters'])
-        for command in types:
-            if command == 'ramdisk':
-                self.assertIsNotNone(methods['u-boot'].get(command, None))
-            else:
-                self.assertIsNone(methods['u-boot'].get(command, None))
 
     def test_overlay_action(self):  # pylint: disable=too-many-locals
         parameters = {
@@ -184,7 +169,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
             '{KERNEL}': kernel,
             '{DTB}': dtb
         }
-        params = [line for line in device['actions']['boot']['methods'] if 'u-boot' in line][0]
+        params = device['actions']['boot']['methods']
         params['u-boot']['ramdisk']['commands'] = substitute(params['u-boot']['ramdisk']['commands'], substitution_dictionary)
 
         commands = params['u-boot']['ramdisk']['commands']
@@ -196,11 +181,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertNotIn("setenv initrd_addr_r '{RAMDISK_ADDR}'", commands)
         self.assertNotIn("setenv fdt_addr_r '{DTB_ADDR}'", commands)
 
-        lines = {}
-        for line in device['actions']['boot']['methods']:
-            if 'u-boot' in line:
-                lines.update(line)
-        for line in lines['u-boot']['ramdisk']['commands']:
+        for line in params['u-boot']['ramdisk']['commands']:
             line = line.replace('{SERVER_IP}', ip_addr)
             # the addresses need to be hexadecimal
             line = line.replace('{KERNEL_ADDR}', kernel_addr)

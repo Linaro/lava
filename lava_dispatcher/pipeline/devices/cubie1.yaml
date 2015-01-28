@@ -24,13 +24,13 @@ actions:
   deploy:
     # list of deployment methods which this device supports
     methods:
-    - usb
-    - sata
-    - tftp
+      usb
+      sata
+      tftp
   boot:
     # list of boot methods which this device supports.
     methods:
-    - u-boot:
+      u-boot:
         parameters:
           bootloader_prompt: sun7i
           boot_message: Booting Linux
