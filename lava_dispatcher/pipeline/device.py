@@ -1,6 +1,7 @@
 # Copyright (C) 2014 Linaro Limited
 #
 # Author: Neil Williams <neil.williams@linaro.org>
+#         Remi Duraffort <remi.duraffort@linaro.org>
 #
 # This file is part of LAVA Dispatcher.
 #
@@ -20,36 +21,6 @@
 
 import os
 import yaml
-import collections
-from yaml.composer import Composer
-from yaml.constructor import Constructor
-from lava_dispatcher.pipeline.action import Timeout
-
-
-class DeviceTypeParser(object):
-    """
-    Very simple (too simple) parser for Device configuration files
-    """
-
-    # FIXME: design a schema and check files against it.
-
-    loader = None
-
-    def compose_node(self, parent, index):
-        # the line number where the previous token has ended (plus empty lines)
-        node = Composer.compose_node(self.loader, parent, index)
-        return node
-
-    def construct_mapping(self, node, deep=False):
-        mapping = Constructor.construct_mapping(self.loader, node, deep=deep)
-        return mapping
-
-    def parse(self, content):
-        self.loader = yaml.Loader(content)
-        self.loader.compose_node = self.compose_node
-        self.loader.construct_mapping = self.construct_mapping
-        data = self.loader.get_single_data()
-        return data
 
 
 class NewDevice(dict):
