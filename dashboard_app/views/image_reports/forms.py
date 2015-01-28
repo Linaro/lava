@@ -49,7 +49,10 @@ class ImageReportChartForm(forms.ModelForm):
     class Meta:
         model = ImageReportChart
         fields = '__all__'
-        widgets = {'image_report': forms.HiddenInput}
+        widgets = {
+            'image_report': forms.HiddenInput,
+            'relative_index': forms.HiddenInput
+        }
 
     xaxis_attribute_changed = forms.BooleanField(
         widget=forms.widgets.HiddenInput,
