@@ -112,6 +112,7 @@
 # directory is pulled over to the host and turned into a bundle for submission
 # to the dashboard.
 
+import re
 from datetime import datetime
 from glob import glob
 import ast
