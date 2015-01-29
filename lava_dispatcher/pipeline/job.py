@@ -85,16 +85,9 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         return None
 
     def describe(self):
-        structure = OrderedDict()
-        structure['device'] = {
-            'parameters': self.device
-        }
-        structure['job'] = {
-            'parameters': self.parameters
-        }
-        # FIXME: output the deployment data here and remove from the Actions
-        structure.update(self.pipeline.describe())
-        return structure
+        return {'device': self.device,
+                'job': self.parameters,
+                'pipeline': self.pipeline.describe()}
 
     def validate(self, simulate=False):
         """

@@ -292,7 +292,7 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
         action.summary = "action"
         pipe.add_action(action)
         self.assertEqual(action.level, "3")
-        self.assertEqual(len(pipe.describe().values()), 8)
+        self.assertEqual(len(pipe.describe()), 3)
 
     def test_simulated_action(self):
         factory = Factory()
@@ -300,8 +300,6 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
         if not job:
             return unittest.skip("not all deployments have been implemented")
         self.assertIsNotNone(job)
-        # uncomment to see the YAML dump of the pipeline.
-        # print yaml.dump(job.pipeline.describe())
 
 
 class TestFakeActions(unittest.TestCase):  # pylint: disable=too-many-public-methods

@@ -170,42 +170,23 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
 
         action.parameters = parameters
 
-    def _generate(self, actions_list):  # pylint: disable=no-self-use
-        actions = iter(actions_list)
-        while actions:
-            action = next(actions)
-            # yield the action containing the pipeline
-            yield {
-                action.level: {
-                    'description': action.description,
-                    'summary': action.summary,
-                    'content': action.explode()
-                }
-            }
-            # now yield the pipeline to add the nested actions after the containing action.
-            if action.pipeline:
-                yield action.pipeline
-
-    def _describe(self, structure):
-        # TODO: make the amount of output conditional on a parameter passed to describe
-
-        for data in self._generate(self.actions):
-            if isinstance(data, Pipeline):  # recursion into sublevels
-                data._describe(structure)
-            else:
-                structure.update(data)
-
-    def describe(self):
+    def describe(self, verbose=True):
         """
         Describe the current pipeline, recursing through any
         internal pipelines.
-        :return: JSON string of the structure
+        :return: a recursive dictionary
         """
-        structure = OrderedDict()
-        self._describe(structure)
-        # from meliae import scanner
-        # scanner.dump_all_objects('/tmp/lava-describe.json')
-        return structure
+        desc = []
+        for action in self.actions:
+            if verbose:
+                current = action.explode()
+            else:
+                cls = str(type(action))[8:-2].replace('lava_dispatcher.pipeline.', '')
+                current = {'class': cls, 'name': action.name}
+            if action.pipeline is not None:
+                current['pipeline'] = action.pipeline.describe(verbose)
+            desc.append(current)
+        return desc
 
     @property
     def errors(self):

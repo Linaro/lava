@@ -161,9 +161,7 @@ class TestKVMSimulation(unittest.TestCase):  # pylint: disable=too-many-public-m
         action.job = job
         pipe.add_action(action)
         self.assertEqual(action.level, "4")
-        self.assertEqual(len(pipe.describe().values()), 8)
-        # uncomment to see the YAML dump of the pipeline.
-        # print yaml.dump(pipe.describe())
+        self.assertEqual(len(pipe.describe()), 4)
 
 
 class TestKVMBasicDeploy(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -182,7 +180,9 @@ class TestKVMBasicDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
                 self.assertEqual(action.job, self.job)
 
     def test_kvm_basic_deploy(self):  # pylint: disable=too-many-statements
-        self.assertEqual(len(self.job.pipeline.describe().values()), 33)  # this will keep changing until KVM is complete.
+        # TODO: compare the describe output with a reference file
+        #       this will make the code smaller
+        self.assertEqual(len(self.job.pipeline.describe()), 5)
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
                 self.assertEqual(len(action.pipeline.children[action.pipeline]), 6)
@@ -338,7 +338,7 @@ class TestKVMQcow2Deploy(unittest.TestCase):  # pylint: disable=too-many-public-
                 self.assertEqual(action.job, self.job)
 
     def test_kvm_basic_deploy(self):  # pylint: disable=too-many-statements
-        self.assertEqual(len(self.job.pipeline.describe().values()), 34)  # this will keep changing until KVM is complete.
+        self.assertEqual(len(self.job.pipeline.describe()), 5)
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
                 self.assertEqual(len(action.pipeline.children[action.pipeline]), 7)
@@ -431,7 +431,7 @@ class TestKVMDownloadLocalDeploy(unittest.TestCase):  # pylint: disable=too-many
                 self.assertEqual(action.job, self.job)
 
     def test_kvm_basic_deploy(self):  # pylint: disable=too-many-statements
-        self.assertEqual(len(self.job.pipeline.describe().values()), 33)  # this will keep changing until KVM is complete.
+        self.assertEqual(len(self.job.pipeline.describe()), 5)
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
                 self.assertEqual(len(action.pipeline.children[action.pipeline]), 6)
@@ -498,7 +498,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         self.job = factory.create_kvm_job('sample_jobs/kvm-inline.yaml', mkdtemp())
 
     def test_kvm_inline_deploy(self):  # pylint: disable=too-many-statements,too-many-locals
-        self.assertEqual(len(self.job.pipeline.describe().values()), 29)  # this will keep changing until KVM is complete.
+        self.assertEqual(len(self.job.pipeline.describe()), 5)
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
                 self.assertEqual(len(action.pipeline.children[action.pipeline]), 6)
