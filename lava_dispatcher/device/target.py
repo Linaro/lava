@@ -26,21 +26,19 @@ import logging
 import time
 import pexpect
 import subprocess
+import lava_dispatcher.utils as utils
 
 from lava_dispatcher.device import boot_options
+from lava_dispatcher import deployment_data
 from lava_dispatcher.utils import (
     wait_for_prompt
 )
 from lava_dispatcher.client.lmc_utils import (
     image_partition_mounted
 )
-import lava_dispatcher.utils as utils
-from lava_dispatcher import deployment_data
-
 from lava_dispatcher.downloader import (
     download_image,
 )
-
 from lava_dispatcher.errors import (
     CriticalError,
     OperationFailed,
