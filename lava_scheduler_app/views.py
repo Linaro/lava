@@ -1697,7 +1697,8 @@ def job_resubmit(request, pk):
             else:
                 definition = job.display_definition
 
-            if request.user != job.owner and not request.user.is_superuser:
+            if request.user != job.owner and not request.user.is_superuser \
+               and not utils.is_member(request.user, job.owner):
                 obj = simplejson.loads(definition)
 
                 # Iterate through the objects in the JSON and pop (remove)
@@ -1716,7 +1717,8 @@ def job_resubmit(request, pk):
                                                 break
                 definition = simplejson.dumps(obj, sort_keys=True, indent=4, separators=(',', ': '))
                 response_data["resubmit_warning"] = \
-                    "Since you were not the submitter of the original job,\\nthe bundle stream was removed, please provide a bundle stream."
+                    "The bundle stream was removed because you are neither the submitter "\
+                    "nor in the same group as the submitter. Please provide a bundle stream."
 
             try:
                 response_data["json_input"] = definition
