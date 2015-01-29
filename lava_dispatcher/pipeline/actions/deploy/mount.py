@@ -221,7 +221,7 @@ class UnmountAction(RetryAction):
         super(UnmountAction, self).__init__()
         self.name = "umount-retry"
         self.description = "retry support for umount"
-        self.summary = "retry umount "
+        self.summary = "retry umount"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
