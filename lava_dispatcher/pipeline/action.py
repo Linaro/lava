@@ -637,36 +637,21 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         """
         serialisation support
         """
-        # FIXME: convert to generators for each particular handler
         data = {}
-        members = [attr for attr in dir(self)
-                   if not isinstance(attr, collections.Callable) and not attr.startswith("__")]
-        members.sort()
-        for name in members:
-            if name == "pipeline":
-                continue
-            content = getattr(self, name)
-            if name == "job" or name == "_log" or name == "internal_pipeline":
-                continue
-            if name == "timeout":
-                if content and not getattr(content, 'protected'):
-                    content = {
-                        'name': getattr(content, 'name'),
-                        'duration': getattr(content, 'duration')
-                    }
-            if name == 'parameters':
-                # FIXME: move deployment_data into the Job to save on repetition. Then output alongside the Device in Pipeline.
-                if 'deployment_data' in content:
-                    content = {
-                        'deployment_data': content['deployment_data'].__data__
-                    }
-                else:
-                    output = {'parameters': content}
-                    content = output
-            if isinstance(content, types.MethodType):
-                continue
-            if content:
-                data[name] = content
+        attrs = set([attr for attr in dir(self)
+                     if not attr.startswith('_') and getattr(self, attr)
+                     and not isinstance(getattr(self, attr), types.MethodType)])
+
+        for attr in attrs - set(['internal_pipeline', 'job', 'logger', 'pipeline', 'parameters']):
+            if attr == 'timeout':
+                data['timeout'] = {'duration': self.timeout.duration, 'name': self.timeout.name}
+            elif attr == 'url':
+                data['url'] = self.url.geturl()
+            else:
+                data[attr] = getattr(self, attr)
+        if 'deployment_data' in self.parameters:
+            data['parameters'] = dict()
+            data['parameters']['deployment_data'] = self.parameters['deployment_data'].__data__
         return data
 
     def get_common_data(self, ns, key, deepcopy=True):  # pylint: disable=invalid-name
