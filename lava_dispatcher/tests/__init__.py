@@ -8,7 +8,6 @@ def test_suite():
         'linaro_dashboard_bundle.tests',
         'lava_dispatcher.tests.test_job',
         'lava_dispatcher.pipeline.test.test_basic',
-        'lava_dispatcher.pipeline.test.test_job',
         'lava_dispatcher.pipeline.test.test_defs',
         'lava_dispatcher.pipeline.test.test_devices',
         'lava_dispatcher.pipeline.test.test_lavashell',
@@ -17,6 +16,7 @@ def test_suite():
         'lava_dispatcher.pipeline.test.test_uboot',
         'lava_dispatcher.pipeline.test.test_multi',
         'lava_dispatcher.pipeline.test.test_kexec',
+        'lava_dispatcher.pipeline.test.test_kvm',
         #  'lava_dispatcher.pipeline.test.test_utils',
         'lava_dispatcher.pipeline.test.test_repeat',
     ]

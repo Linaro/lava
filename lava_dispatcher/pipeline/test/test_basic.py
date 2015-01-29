@@ -22,6 +22,7 @@ import os
 import time
 import unittest
 import simplejson
+import yaml
 
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.action import Pipeline, Action
@@ -78,6 +79,13 @@ class TestJobParser(unittest.TestCase):  # pylint: disable=too-many-public-metho
         if not self.job:
             return unittest.skip("not all deployments have been implemented")
         self.assertTrue(self.job.actions > 1)
+
+
+def pipeline_reference(filename):
+    with open(os.path.join(os.path.dirname(__file__),
+              'pipeline_refs', filename), 'r') as f_ref:
+        return yaml.load(f_ref)
+
 
 # FIXME: disabled as the current parser relies on a real file, not a string.
 # class TestJobSnippet(unittest.TestCase):
