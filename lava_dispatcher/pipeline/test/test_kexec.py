@@ -20,6 +20,7 @@
 
 
 import unittest
+from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.test.test_uboot import Factory
 from lava_dispatcher.pipeline.actions.boot.kexec import BootKexecAction, KexecAction
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
@@ -33,6 +34,12 @@ class TestKExec(unittest.TestCase):
         factory = Factory()
         job = factory.create_bbb_job('sample_jobs/kexec.yaml')
         self.assertIsNotNone(job)
+
+        # Check Pipeline
+        description_ref = pipeline_reference('kexec.yaml')
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+
+        # Check kexec specific options
         job.validate()
         self.assertIsInstance(job.pipeline.actions[2], TestShellRetry)
         self.assertIsInstance(job.pipeline.actions[3], BootKexecAction)

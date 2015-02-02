@@ -23,7 +23,7 @@ import unittest
 from lava_dispatcher.pipeline.actions.boot.kvm import BootQEMUImageAction
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.test.test_basic import Factory
+from lava_dispatcher.pipeline.test.test_basic import Factory, pipeline_reference
 from lava_dispatcher.pipeline.actions.deploy.testdef import get_deployment_testdefs
 
 
@@ -40,6 +40,8 @@ class TestRepeatBootTest(unittest.TestCase):  # pylint: disable=too-many-public-
         self.assertIsNotNone(self.job)
         self.job.validate()
         self.assertEqual([], self.job.pipeline.errors)
+        description_ref = pipeline_reference('kvm-repeat.yaml')
+        self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
     def test_deploy_norepeat(self):
         deploy = [deploy for deploy in self.job.parameters['actions'] if 'deploy' in deploy][0]['deploy']

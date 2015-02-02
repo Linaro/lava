@@ -31,6 +31,7 @@ from lava_dispatcher.pipeline.actions.boot.u_boot import (
 from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError
+from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.utils.strings import substitute
@@ -58,6 +59,11 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         factory = Factory()
         job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
         self.assertIsNotNone(job)
+
+        # uboot and uboot-ramdisk have the same pipeline structure
+        description_ref = pipeline_reference('uboot.yaml')
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+
         self.assertIsNone(job.validate())
         self.assertEqual(job.device['device_type'], 'beaglebone-black')
 

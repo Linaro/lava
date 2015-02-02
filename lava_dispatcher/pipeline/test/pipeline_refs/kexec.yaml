@@ -1,0 +1,69 @@
+- class: actions.deploy.tftp.TftpAction
+  name: tftp-deploy
+  pipeline:
+  - class: actions.deploy.download.DownloaderAction
+    name: download_retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+  - class: actions.deploy.download.DownloaderAction
+    name: download_retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+  - class: actions.deploy.download.DownloaderAction
+    name: download_retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http_download}
+  - class: actions.deploy.apply_overlay.PrepareOverlayTftp
+    name: prepare-tftp-overlay
+    pipeline:
+    - {class: actions.deploy.apply_overlay.ExtractNfsRootfs, name: extract-nfsrootfs}
+    - class: actions.deploy.overlay.OverlayAction
+      name: lava-overlay
+      pipeline:
+      - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
+      - class: actions.deploy.testdef.TestDefinitionAction
+        name: test-definition
+        pipeline:
+        - {class: actions.deploy.testdef.InlineRepoAction, name: inline-repo-action}
+        - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
+        - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
+        - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
+      - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
+    - {class: actions.deploy.apply_overlay.ExtractRamdisk, name: extract-overlay-ramdisk}
+    - {class: actions.deploy.apply_overlay.ExtractModules, name: extract-modules}
+    - {class: actions.deploy.apply_overlay.ApplyOverlayTftp, name: apply-overlay-tftp}
+    - {class: actions.deploy.apply_overlay.CompressRamdisk, name: compress-ramdisk}
+- class: actions.boot.u_boot.UBootAction
+  name: uboot-action
+  pipeline:
+  - {class: actions.boot.u_boot.UBootSecondaryMedia, name: uboot-from-media}
+  - {class: actions.boot.u_boot.UBootCommandOverlay, name: uboot-overlay}
+  - {class: shell.ConnectDevice, name: connect-device}
+  - class: actions.boot.u_boot.UBootRetry
+    name: uboot-retry
+    pipeline:
+    - class: power.ResetDevice
+      name: reboot-device
+      pipeline:
+      - {class: power.RebootDevice, name: soft-reboot}
+      - {class: power.PDUReboot, name: pdu_reboot}
+      - {class: power.PowerOn, name: power_on}
+    - {class: actions.boot.u_boot.UBootInterrupt, name: u-boot-interrupt}
+    - {class: actions.boot.u_boot.ExpectBootloaderSession, name: expect-bootloader-connection}
+    - {class: actions.boot.u_boot.UBootCommandsAction, name: u-boot-commands}
+    - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+    - {class: shell.ExpectShellSession, name: expect-shell-connection}
+- class: actions.test.shell.TestShellRetry
+  name: lava-test-retry
+  pipeline:
+  - {class: actions.test.shell.TestShellAction, name: lava-test-shell}
+- class: actions.boot.kexec.BootKexecAction
+  name: kexec_boot
+  pipeline:
+  - {class: actions.boot.kexec.KexecAction, name: call-kexec}
+  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - {class: shell.ExpectShellSession, name: expect-shell-connection}
+- class: power.FinalizeAction
+  name: finalize
+  pipeline:
+  - {class: power.PowerOff, name: power_off}

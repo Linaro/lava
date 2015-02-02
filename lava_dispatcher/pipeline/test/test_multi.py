@@ -20,6 +20,7 @@
 
 
 import unittest
+from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.job import Job, ResetContext
 from lava_dispatcher.pipeline.action import Pipeline
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
@@ -154,9 +155,5 @@ class TestMultiUBoot(unittest.TestCase):  # pylint: disable=too-many-public-meth
 
     def test_multi_uboot(self):
         self.assertIsNotNone(self.job)
-        self.assertIsInstance(self.job.pipeline.actions[0], DeployAction)
-        self.assertIsInstance(self.job.pipeline.actions[1], BootAction)
-        self.assertIsInstance(self.job.pipeline.actions[2], ResetContext)
-        self.assertIsInstance(self.job.pipeline.actions[3], DeployAction)
-        self.assertIsInstance(self.job.pipeline.actions[4], BootAction)
-        self.assertIsInstance(self.job.pipeline.actions[5], FinalizeAction)
+        description_ref = pipeline_reference('uboot-multiple.yaml')
+        self.assertEqual(description_ref, self.job.pipeline.describe(False))
