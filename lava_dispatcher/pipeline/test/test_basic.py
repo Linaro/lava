@@ -22,6 +22,7 @@ import os
 import time
 import unittest
 import simplejson
+import yaml
 
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.action import Pipeline, Action
@@ -66,7 +67,7 @@ class TestJobParser(unittest.TestCase):  # pylint: disable=too-many-public-metho
 
     def setUp(self):
         factory = Factory()
-        self.job = factory.create_job('sample_jobs/basics.yaml', mkdtemp())
+        self.job = factory.create_kvm_job('sample_jobs/basics.yaml', mkdtemp())
 
     def test_parser_creates_a_job_with_a_pipeline(self):  # pylint: disable=invalid-name
         if not self.job:
@@ -78,6 +79,13 @@ class TestJobParser(unittest.TestCase):  # pylint: disable=too-many-public-metho
         if not self.job:
             return unittest.skip("not all deployments have been implemented")
         self.assertTrue(self.job.actions > 1)
+
+
+def pipeline_reference(filename):
+    with open(os.path.join(os.path.dirname(__file__),
+              'pipeline_refs', filename), 'r') as f_ref:
+        return yaml.load(f_ref)
+
 
 # FIXME: disabled as the current parser relies on a real file, not a string.
 # class TestJobSnippet(unittest.TestCase):
@@ -147,22 +155,22 @@ class Factory(object):
     def create_fake_qemu_job(self, output_dir=None):  # pylint: disable=no-self-use
         device = NewDevice('kvm01')
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/basics.yaml')
-        sample_job_data = open(sample_job_file)
         parser = JobParser()
         try:
-            job = parser.parse(sample_job_data, device, output_dir=output_dir)
+            with open(sample_job_file) as sample_job_data:
+                job = parser.parse(sample_job_data, device, output_dir=output_dir)
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
             return None
         return job
 
-    def create_job(self, filename, output_dir=None):  # pylint: disable=no-self-use
+    def create_kvm_job(self, filename, output_dir=None):  # pylint: disable=no-self-use
         device = NewDevice('kvm01')
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
-        sample_job_data = open(kvm_yaml)
         parser = JobParser()
         try:
-            job = parser.parse(sample_job_data, device, output_dir=output_dir)
+            with open(kvm_yaml) as sample_job_data:
+                job = parser.parse(sample_job_data, device, output_dir=output_dir)
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
             return None
@@ -292,16 +300,14 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
         action.summary = "action"
         pipe.add_action(action)
         self.assertEqual(action.level, "3")
-        self.assertEqual(len(pipe.describe().values()), 8)
+        self.assertEqual(len(pipe.describe()), 3)
 
     def test_simulated_action(self):
         factory = Factory()
-        job = factory.create_job('sample_jobs/basics.yaml', mkdtemp())
+        job = factory.create_kvm_job('sample_jobs/basics.yaml', mkdtemp())
         if not job:
             return unittest.skip("not all deployments have been implemented")
         self.assertIsNotNone(job)
-        # uncomment to see the YAML dump of the pipeline.
-        # print yaml.dump(job.pipeline.describe())
 
 
 class TestFakeActions(unittest.TestCase):  # pylint: disable=too-many-public-methods

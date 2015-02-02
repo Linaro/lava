@@ -30,10 +30,15 @@ from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.testdef import (
     TestDefinitionAction,
     GitRepoAction,
-    TestOverlayAction
+    TestOverlayAction,
+    TestInstallAction,
+    TestRunnerAction,
 )
 from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
+
+
+# pylint: disable=duplicate-code
 
 
 # Test the loading of test definitions within the deploy stage
@@ -44,7 +49,7 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
     def setUp(self):
         super(TestDefinitionHandlers, self).setUp()
         factory = Factory()
-        self.job = factory.create_job('sample_jobs/kvm.yaml')
+        self.job = factory.create_kvm_job('sample_jobs/kvm.yaml')
 
     def test_testdef(self):
         testdef = overlay = None
@@ -79,7 +84,7 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
             # FIXME: needs deployment_data to be visible during validation
             # self.assertNotEqual(repo_action.runner, None)
         self.assertIsNotNone(testdef.parameters['deployment_data']['lava_test_results_dir'])
-#        self.assertIsNotNone(testdef.job.device.parameters['hostname'])
+#        self.assertIsNotNone(testdef.job.device['hostname'])
 
     def test_overlay(self):
 
@@ -127,10 +132,11 @@ class TestDefinitionSimple(unittest.TestCase):  # pylint: disable=too-many-publi
     def setUp(self):
         super(TestDefinitionSimple, self).setUp()
         factory = Factory()
-        self.job = factory.create_job('sample_jobs/kvm-notest.yaml')
+        self.job = factory.create_kvm_job('sample_jobs/kvm-notest.yaml')
 
     def test_job_without_tests(self):
         deploy = boot = submit = finalize = None
+        self.job.pipeline.validate_actions()
         for action in self.job.pipeline.actions:
             self.assertNotIsInstance(action, TestDefinitionAction)
             self.assertNotIsInstance(action, OverlayAction)
@@ -144,9 +150,50 @@ class TestDefinitionSimple(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertIsInstance(finalize, FinalizeAction)
         self.assertEqual(len(self.job.pipeline.actions), 4)  # deploy, boot, submit, finalize
         apply_overlay = deploy.pipeline.children[deploy.pipeline][4]
+
+
+class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-public-methods
+
+    def setUp(self):
+        super(TestDefinitionParams, self).setUp()
+        factory = Factory()
+        self.job = factory.create_kvm_job('sample_jobs/kvm-params.yaml')
+
+    def test_job_without_tests(self):
+        deploy = boot = submit = finalize = overlay = test = None
+        self.job.pipeline.validate_actions()
+        for action in self.job.pipeline.actions:
+            self.assertNotIsInstance(action, TestDefinitionAction)
+            self.assertNotIsInstance(action, OverlayAction)
+            deploy = self.job.pipeline.actions[0]
+            boot = self.job.pipeline.actions[1]
+            submit = self.job.pipeline.actions[3]
+            finalize = self.job.pipeline.actions[4]
+            overlay = deploy.internal_pipeline.actions[3]
+        self.assertIsInstance(overlay, OverlayAction)
+        testdef = overlay.internal_pipeline.actions[1]
+        self.assertIsInstance(testdef, TestDefinitionAction)
+        test = testdef.internal_pipeline.actions[1]
+        install = testdef.internal_pipeline.actions[2]
+        runsh = testdef.internal_pipeline.actions[3]
+        self.assertIsInstance(deploy, DeployAction)
+        self.assertIsInstance(boot, BootAction)
+        self.assertIsInstance(submit, SubmitResultsAction)
+        self.assertIsInstance(finalize, FinalizeAction)
+        self.assertEqual(len(self.job.pipeline.actions), 5)  # deploy, boot, test, submit, finalize
+        self.assertNotIn('test_params', testdef.parameters)
+        self.assertIsInstance(install, TestInstallAction)
+        self.assertIsInstance(runsh, TestRunnerAction)
+        self.assertIsNot(list(install.parameters.items()), [])
+        testdef = {'params': {'VARIABLE_NAME_1': 'value_1', 'VARIABLE_NAME_2': 'value_2'}}
+        content = test.handle_parameters(testdef)
         self.assertEqual(
-            apply_overlay.timeout.duration,
-            apply_overlay.job.device.overrides['timeouts'][apply_overlay.name]
+            content,
+            [
+                '###default parameters from yaml###\n', "VARIABLE_NAME_1='value_1'\n", "VARIABLE_NAME_2='value_2'\n",
+                '######\n', '###test parameters from json###\n', "VARIABLE_NAME_1='eth2'\n",
+                "VARIABLE_NAME_2='wlan0'\n", '######\n'
+            ]
         )
 
 
@@ -155,7 +202,7 @@ class TestDefinitionRepeat(unittest.TestCase):  # pylint: disable=too-many-publi
     def setUp(self):
         super(TestDefinitionRepeat, self).setUp()
         factory = Factory()
-        self.job = factory.create_job("sample_jobs/kvm-multi.yaml")
+        self.job = factory.create_kvm_job("sample_jobs/kvm-multi.yaml")
 
     def test_multiple_tests(self):
         deploy = []

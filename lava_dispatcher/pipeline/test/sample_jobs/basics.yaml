@@ -101,18 +101,22 @@ actions:
         media: whatever
 
     - repeat:
-        times: 10
+        count: 10
         actions:
             # just a list of commands
-            - boot:
-                method: block
-                media: sata
-            - test:
-                commands:
+        - boot:
+            method: block
+            media: sata
+        - test:
+            definitions:
+              - from: url
+                path: file:///path/to/testdef.yaml
+                name: unsupported
+                commands:  # FIXME: not supported yet
                     - ls -l
-            - boot:
-                method: fastboot
-                media: whatever
+        - boot:
+            method: fastboot
+            media: whatever
 
 
     # includes other YAML test definitions at this point

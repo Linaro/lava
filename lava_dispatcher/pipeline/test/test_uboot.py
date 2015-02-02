@@ -23,12 +23,19 @@ import os
 import unittest
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.actions.boot.u_boot import UBootAction, UBootCommandOverlay
+from lava_dispatcher.pipeline.actions.boot.u_boot import (
+    UBootAction,
+    UBootCommandOverlay,
+    UBootSecondaryMedia
+)
 from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError
+from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+from lava_dispatcher.pipeline.utils.strings import substitute
+from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR, SHUTDOWN_MESSAGE
 
 
 class Factory(object):  # pylint: disable=too-few-public-methods
@@ -37,12 +44,12 @@ class Factory(object):  # pylint: disable=too-few-public-methods
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
-    def create_job(self, filename, output_dir=None):  # pylint: disable=no-self-use
+    def create_bbb_job(self, filename, output_dir=None):  # pylint: disable=no-self-use
         device = NewDevice('bbb-01')
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
-        sample_job_data = open(kvm_yaml)
-        parser = JobParser()
-        job = parser.parse(sample_job_data, device, output_dir=output_dir)
+        with open(kvm_yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, output_dir=output_dir)
         return job
 
 
@@ -50,19 +57,25 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
 
     def test_simulated_action(self):
         factory = Factory()
-        job = factory.create_job('sample_jobs/uboot-ramdisk.yaml')
+        job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
         self.assertIsNotNone(job)
+
+        # uboot and uboot-ramdisk have the same pipeline structure
+        description_ref = pipeline_reference('uboot.yaml')
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+
         self.assertIsNone(job.validate())
-        self.assertEqual(job.device.parameters['device_type'], 'beaglebone-black')
+        self.assertEqual(job.device['device_type'], 'beaglebone-black')
 
     def test_tftp_pipeline(self):
         factory = Factory()
-        job = factory.create_job('sample_jobs/uboot-ramdisk.yaml')
+        job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
         self.assertEqual(
             [action.name for action in job.pipeline.actions],
             ['tftp-deploy', 'uboot-action', 'lava-test-retry', 'submit_results', 'finalize']
         )
         tftp = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        self.assertTrue(tftp.get_common_data('tftp', 'ramdisk'))
         self.assertIsNotNone(tftp.internal_pipeline)
         self.assertEqual(
             [action.name for action in tftp.internal_pipeline.actions],
@@ -73,51 +86,42 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertIn('dtb', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
         self.assertEqual(
             [action.path for action in tftp.internal_pipeline.actions if hasattr(action, 'path')],
-            ["/var/lib/lava/dispatcher/tmp" for _ in range(len(tftp.internal_pipeline.actions) - 1)]
+            [DISPATCHER_DOWNLOAD_DIR for _ in range(len(tftp.internal_pipeline.actions) - 1)]
         )
 
     def test_device_bbb(self):
         factory = Factory()
-        job = factory.create_job('sample_jobs/uboot.yaml')
+        job = factory.create_bbb_job('sample_jobs/uboot.yaml')
         self.assertEqual(
-            job.device.parameters['commands']['connect'],
+            job.device['commands']['connect'],
             'telnet localhost 6000'
         )
-        self.assertEqual(job.device.parameters['commands'].get('interrupt', ' '), ' ')
-        items = []
-        items.extend([item['u-boot'] for item in job.device.parameters['actions']['boot']['methods']])
-        for item in items:
-            self.assertEqual(item['parameters'].get('bootloader_prompt', None), 'U-Boot')
+        self.assertEqual(job.device['commands'].get('interrupt', ' '), ' ')
+        methods = job.device['actions']['boot']['methods']
+        self.assertIn('u-boot', methods)
+        self.assertEqual(methods['u-boot']['parameters'].get('bootloader_prompt', None), 'U-Boot')
 
     def test_uboot_action(self):
         factory = Factory()
-        job = factory.create_job('sample_jobs/uboot-ramdisk.yaml')
+        job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
-        self.assertIn('u-boot', [item.keys() for item in job.device.parameters['actions']['boot']['methods']][0])
+        self.assertIn('u-boot', job.device['actions']['boot']['methods'])
         for action in job.pipeline.actions:
             action.validate()
             if isinstance(action, UBootAction):
-                self.assertIn('u-boot', action.parameters.keys())
+                self.assertIn('method', action.parameters)
+                self.assertEqual('u-boot', action.parameters['method'])
+                self.assertEqual(
+                    'reboot: Restarting system',
+                    action.parameters.get('parameters', {}).get('shutdown-message', SHUTDOWN_MESSAGE)
+                )
             if isinstance(action, TftpAction):
-                self.assertIn('ramdisk', action.parameters.keys())
-                self.assertIn('kernel', action.parameters.keys())
-                self.assertEqual(action.parameters['methods'], ['tftp'])
+                self.assertIn('ramdisk', action.parameters)
+                self.assertIn('kernel', action.parameters)
+                self.assertIn('to', action.parameters)
+                self.assertEqual('tftp', action.parameters['to'])
             self.assertTrue(action.valid)
-        # FIXME: a more elegant introspection of the pipeline would be useful here
-        tftp = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
-        types = []
-        items = []
-        items.extend([item['u-boot'] for item in job.device.parameters['actions']['boot']['methods']])
-        items = items[0]
-        for action in tftp.internal_pipeline.actions:
-            types.extend([action.key for action in action.internal_pipeline.actions if hasattr(action, 'key') and action.key != 'parameters'])
-        for command in types:
-            if command == 'ramdisk':
-                self.assertIsNotNone(items.get(command, None))
-                # print items[command]
-            else:
-                self.assertIsNone(items.get(command, None))
 
     def test_overlay_action(self):  # pylint: disable=too-many-locals
         parameters = {
@@ -152,13 +156,38 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         except InfrastructureError as exc:
             raise RuntimeError("Unable to get dispatcher IP address: %s" % exc)
         parsed = []
-        kernel_addr = job.device.parameters['parameters'][overlay.parameters['type']]['ramdisk']
-        ramdisk_addr = job.device.parameters['parameters'][overlay.parameters['type']]['ramdisk']
-        dtb_addr = job.device.parameters['parameters'][overlay.parameters['type']]['dtb']
+        kernel_addr = job.device['parameters'][overlay.parameters['type']]['ramdisk']
+        ramdisk_addr = job.device['parameters'][overlay.parameters['type']]['ramdisk']
+        dtb_addr = job.device['parameters'][overlay.parameters['type']]['dtb']
         kernel = parameters['actions']['deploy']['kernel']
         ramdisk = parameters['actions']['deploy']['ramdisk']
         dtb = parameters['actions']['deploy']['dtb']
-        for line in device.parameters['actions']['boot']['methods'][0]['u-boot']['ramdisk']['commands']:
+
+        substitution_dictionary = {
+            '{SERVER_IP}': ip_addr,
+            # the addresses need to be hexadecimal
+            '{KERNEL_ADDR}': kernel_addr,
+            '{DTB_ADDR}': dtb_addr,
+            '{RAMDISK_ADDR}': ramdisk_addr,
+            '{BOOTX}': "%s %s %s %s" % (
+                overlay.parameters['type'], kernel_addr, ramdisk_addr, dtb_addr),
+            '{RAMDISK}': ramdisk,
+            '{KERNEL}': kernel,
+            '{DTB}': dtb
+        }
+        params = device['actions']['boot']['methods']
+        params['u-boot']['ramdisk']['commands'] = substitute(params['u-boot']['ramdisk']['commands'], substitution_dictionary)
+
+        commands = params['u-boot']['ramdisk']['commands']
+        self.assertIs(type(commands), list)
+        self.assertIn("setenv loadkernel 'tftp ${kernel_addr_r} zImage'", commands)
+        self.assertIn("setenv loadinitrd 'tftp ${initrd_addr_r} initrd.gz; setenv initrd_size ${filesize}'", commands)
+        self.assertIn("setenv loadfdt 'tftp ${fdt_addr_r} broken.dtb'", commands)
+        self.assertNotIn("setenv kernel_addr_r '{KERNEL_ADDR}'", commands)
+        self.assertNotIn("setenv initrd_addr_r '{RAMDISK_ADDR}'", commands)
+        self.assertNotIn("setenv fdt_addr_r '{DTB_ADDR}'", commands)
+
+        for line in params['u-boot']['ramdisk']['commands']:
             line = line.replace('{SERVER_IP}', ip_addr)
             # the addresses need to be hexadecimal
             line = line.replace('{KERNEL_ADDR}', kernel_addr)
@@ -179,7 +208,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
 
     def test_download_action(self):
         factory = Factory()
-        job = factory.create_job('sample_jobs/uboot.yaml')
+        job = factory.create_bbb_job('sample_jobs/uboot.yaml')
         for action in job.pipeline.actions:
             action.validate()
             self.assertTrue(action.valid)
@@ -201,3 +230,58 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
                     extract = action
         self.assertIsNotNone(extract)
         self.assertEqual(extract.timeout.duration, job.parameters['timeouts'][extract.name]['seconds'])
+
+    def test_reset_actions(self):
+        factory = Factory()
+        job = factory.create_bbb_job('sample_jobs/uboot.yaml')
+        uboot_action = None
+        uboot_retry = None
+        reset_action = None
+        for action in job.pipeline.actions:
+            action.validate()
+            self.assertTrue(action.valid)
+            if action.name == 'uboot-action':
+                uboot_action = action
+        names = [r_action.name for r_action in uboot_action.internal_pipeline.actions]
+        self.assertIn('connect-device', names)
+        self.assertIn('uboot-retry', names)
+        for action in uboot_action.internal_pipeline.actions:
+            if action.name == 'uboot-retry':
+                uboot_retry = action
+        names = [r_action.name for r_action in uboot_retry.internal_pipeline.actions]
+        self.assertIn('reboot-device', names)
+        self.assertIn('u-boot-interrupt', names)
+        self.assertIn('expect-shell-connection', names)
+        self.assertIn('u-boot-commands', names)
+        for action in uboot_retry.internal_pipeline.actions:
+            if action.name == 'reboot-device':
+                reset_action = action
+        names = [r_action.name for r_action in reset_action.internal_pipeline.actions]
+        self.assertIn('soft-reboot', names)
+        self.assertIn('pdu_reboot', names)
+        self.assertIn('power_on', names)
+
+    def test_secondary_media(self):
+        """
+        Test UBootSecondaryMedia validation
+        """
+        job_parser = JobParser()
+        cubie = NewDevice('cubie1')
+        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
+        sample_job_data = open(sample_job_file)
+        job = job_parser.parse(sample_job_data, cubie)
+        job.validate()
+        u_boot_media = job.pipeline.actions[1].internal_pipeline.actions[0]
+        self.assertIsInstance(u_boot_media, UBootSecondaryMedia)
+        self.assertEqual([], u_boot_media.errors)
+        self.assertEqual(u_boot_media.parameters['kernel'], '/boot/vmlinuz-3.16.0-4-armmp-lpae')
+        self.assertEqual(u_boot_media.parameters['kernel'], u_boot_media.get_common_data('file', 'kernel'))
+        self.assertEqual(u_boot_media.parameters['ramdisk'], u_boot_media.get_common_data('file', 'ramdisk'))
+        self.assertEqual(u_boot_media.parameters['dtb'], u_boot_media.get_common_data('file', 'dtb'))
+        self.assertEqual(u_boot_media.parameters['root_uuid'], u_boot_media.get_common_data('uuid', 'root'))
+        part_reference = '%s:%s' % (
+            job.device['parameters']['media']['usb'][u_boot_media.get_common_data('u-boot', 'device')]['device_id'],
+            u_boot_media.parameters['boot_part']
+        )
+        self.assertEqual(part_reference, u_boot_media.get_common_data('uuid', 'boot_part'))
+        self.assertEqual(part_reference, "0:1")

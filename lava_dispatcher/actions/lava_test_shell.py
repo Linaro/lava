@@ -112,6 +112,7 @@
 # directory is pulled over to the host and turned into a bundle for submission
 # to the dashboard.
 
+import re
 from datetime import datetime
 from glob import glob
 import ast
@@ -182,13 +183,13 @@ def _get_testdef_git_repo(testdef_repo, tmpdir, revision, proxy_env):
                                     stderr=subprocess.STDOUT)
         return gitdir
     except subprocess.CalledProcessError as e:
-        logging.error("Unable to get test definition from git (%s)", (testdef_repo))
+        logging.error("Test Shell Error: Unable to get test definition from git (%s)", (testdef_repo))
         for line in e.output.split('\n'):
             if line:
                 logging.debug("  | %s", line)
         raise RuntimeError("Unable to get test definition from git (%s)" % (testdef_repo))
     except Exception:
-        logging.error("Unable to get test definition from git (%s)", (testdef_repo))
+        logging.error("Test Shell Error: Unable to get test definition from git (%s)", (testdef_repo))
         raise RuntimeError("Unable to get test definition from git (%s)" % (testdef_repo))
     finally:
         os.chdir(cwd)
@@ -207,14 +208,14 @@ def _get_testdef_bzr_repo(testdef_repo, tmpdir, revision, proxy_env):
                                  bzrdir], env=proxy_env)
         return bzrdir
     except subprocess.CalledProcessError as e:
-        logging.error("Unable to get test definition from bzr (%s)", (testdef_repo))
+        logging.error("Test Error: Unable to get test definition from bzr (%s)", (testdef_repo))
         for line in e.output.split('\n'):
             if line:
                 logging.debug("  | %s", line)
         raise RuntimeError("Unable to get test definition from bzr (%s)", (testdef_repo))
 
     except Exception as e:
-        logging.error("Unable to get test definition from bzr (%s)", (testdef_repo))
+        logging.error("Test Error: Unable to get test definition from bzr (%s)", (testdef_repo))
         raise RuntimeError("Unable to get test definition from bzr (%s)", (testdef_repo))
 
 
@@ -241,7 +242,7 @@ def _get_testdef_tar_repo(testdef_repo, tmpdir):
         with tarfile.open(temp_tar) as tar:
             tar.extractall(path=tardir)
     except (OSError, tarfile.TarError) as ex:
-        logging.error("Error extracting the tar archive.\n" + str(ex))
+        logging.error("Test Shell Error: Error extracting the tar archive.\n" + str(ex))
     finally:
         # Remove the temporary created tar file after it has been extracted.
         if os.path.isfile(temp_tar):
@@ -261,7 +262,7 @@ def _get_testdef_url_repo(testdef_repo, context, tmpdir):
         testdef_file = download_image(testdef_repo, context, urldir)
 
     except Exception as e:
-        logging.error('Unable to get test definition from url\n' + str(e))
+        logging.error('Test Shell Error: Unable to get test definition from url\n' + str(e))
         return None
     finally:
         logging.info("Downloaded test definition file to %s." % urldir)
@@ -491,7 +492,7 @@ class URLTestDefinition(object):
                 pkg_resources.iter_entry_points(
                     'lava.signal_handlers', handler_name))
             if len(handler_eps) == 0:
-                logging.error("No handler named %s found", handler_name)
+                logging.error("Test Shell Error: No handler named %s found", handler_name)
                 return
             elif len(handler_eps) > 1:
                 logging.warning(
@@ -685,6 +686,8 @@ class URLTestDefinition(object):
             steps = self.testdef['run'].get('steps', [])
             if steps:
                 for cmd in steps:
+                    if '--cmd' in cmd or '--shell' in cmd:
+                        cmd = re.sub(r'\$(\d+)\b', r'\\$\1', cmd)
                     f.write('%s\n' % cmd)
             f.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n')
             f.write('#wait for an ack from the dispatcher\n')
@@ -801,7 +804,7 @@ class cmd_lava_test_shell(BaseAction):
         self._test_runs = []
         self._backup_bundle = {
             'test_runs': self._test_runs,
-            'format': 'Dashboard Bundle Format 1.7',
+            'format': 'Dashboard Bundle Format 1.7.1',
         }
 
     def run(self, testdef_urls=None, testdef_repos=None, timeout=-1, skip_install=None,
@@ -1078,7 +1081,7 @@ class cmd_lava_test_shell(BaseAction):
                 err_log = os.path.join(d, 'parse_err.log')
                 results_dir = os.path.join(d, 'results')
                 bundle = lava_test_shell.get_bundle(results_dir, testdef_objs, err_log)
-                parse_err_msg = read_content(err_log, ignore_missing=True)
+                parse_err_msg = utils.read_content(err_log, ignore_missing=True)
                 if os.path.isfile(err_log):
                     os.unlink(err_log)
                 # lava/results must be empty, but we keep a copy named

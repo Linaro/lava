@@ -16,10 +16,12 @@ actions:
 
   # needs to be a list of hashes to retain the order
   - deploy:
-     timeout: 2m
+     timeout:
+       minutes: 2
      to: tftp
      kernel: http://images.validation.linaro.org/functional-test-images/panda/uImage
      nfsrootfs: file:///home/linaro/chroots/jessie.tar.gz
+     os: debian
      dtb: http://images.validation.linaro.org/functional-test-images/panda/omap4-panda-es.dtb
 
   - boot:
@@ -31,7 +33,8 @@ actions:
      failure_retry: 3
      name: kvm-basic-singlenode  # is not present, use "test $N"
      # only s, m & h are supported.
-     timeout: 5m # uses install:deps, so takes longer than singlenode01
+     timeout:
+       minutes: 5 # uses install:deps, so takes longer than singlenode01
      definitions:
          - repository: git://git.linaro.org/qa/test-definitions.git
            from: git

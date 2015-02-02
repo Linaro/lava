@@ -174,21 +174,22 @@ class BootloaderTarget(MasterImageTarget):
         # At a minimum we must have a kernel
         if kernel is None:
             raise CriticalError("No kernel image to boot")
-        if self._is_uboot() or self._is_uefi():
+        if self._is_uboot() or self._is_uefi() or self._is_ipxe():
             # Set the server IP (Dispatcher)
             self._boot_tags['{SERVER_IP}'] = self.context.config.lava_server_ip
             # We have been passed kernel image
             kernel = download_image(kernel, self.context,
                                     self._tmpdir, decompress=False)
-            if self.config.uimage_only and not is_uimage(kernel, self.context):
-                if len(self.config.u_load_addrs) == 3:
-                    kernel = create_uimage(kernel, self.config.u_load_addrs[0],
-                                           self._tmpdir, self.config.uimage_xip)
-                    logging.info('uImage created successfully')
-                else:
-                    logging.error('Undefined u_load_addrs, aborting uImage creation')
-
+            if self._is_uboot() or self._is_uefi():
+                if self.config.uimage_only and not is_uimage(kernel, self.context):
+                    if len(self.config.u_load_addrs) == 3:
+                        kernel = create_uimage(kernel, self.config.u_load_addrs[0],
+                                               self._tmpdir, self.config.uimage_xip)
+                        logging.info('uImage created successfully')
+                    else:
+                        logging.error('Undefined u_load_addrs, aborting uImage creation')
             self._boot_tags['{KERNEL}'] = self._get_rel_path(kernel, self._base_tmpdir)
+
             if ramdisk is not None:
                 # We have been passed a ramdisk
                 ramdisk = download_image(ramdisk, self.context,
@@ -261,35 +262,6 @@ class BootloaderTarget(MasterImageTarget):
                                                                           ramdisk,
                                                                           dtb)
 
-        elif self._is_ipxe():
-            # We have been passed kernel image
-            kernel = download_image(kernel, self.context,
-                                    self._tmpdir, decompress=False)
-            kernel_url = self._get_http_url(kernel)
-            self._boot_tags['{KERNEL}'] = kernel_url
-            # We have been passed a ramdisk
-            if ramdisk is not None:
-                # We have been passed a ramdisk
-                ramdisk = download_image(ramdisk, self.context,
-                                         self._tmpdir,
-                                         decompress=False)
-                if modules is not None:
-                    modules = download_image(modules, self.context,
-                                             self._tmpdir,
-                                             decompress=False)
-                    ramdisk_dir = extract_ramdisk(ramdisk, self._tmpdir,
-                                                  is_uboot=self._is_uboot_ramdisk(ramdisk))
-                    extract_modules(modules, ramdisk_dir)
-                    ramdisk = create_ramdisk(ramdisk_dir, self._tmpdir)
-                ramdisk_url = self._get_http_url(ramdisk)
-                self._boot_tags['{RAMDISK}'] = ramdisk_url
-            elif rootfs is not None:
-                # We have been passed a rootfs
-                rootfs = download_image(rootfs, self.context,
-                                        self._tmpdir, decompress=False)
-                rootfs_url = self._get_http_url(rootfs)
-                self._boot_tags['{ROOTFS}'] = rootfs_url
-
     def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootloadertype):
         self._uboot_boot = False
         super(BootloaderTarget, self).deploy_linaro(hwpack, rfs, dtb,
@@ -329,11 +301,7 @@ class BootloaderTarget(MasterImageTarget):
             self.proc.sendline(self.config.pre_boot_cmd,
                                send_char=self.config.send_char)
         self._customize_bootloader(self.proc, boot_cmds)
-        self.proc.expect(self.config.image_boot_msg,
-                         timeout=self.config.image_boot_msg_timeout)
-        self._auto_login(self.proc)
-        self._wait_for_prompt(self.proc, self.config.test_image_prompts,
-                              self.config.boot_linaro_timeout)
+        self._monitor_boot(self.proc, self.tester_ps1, self.tester_ps1_pattern)
 
     def _boot_linaro_image(self):
         if self.proc:
@@ -351,9 +319,6 @@ class BootloaderTarget(MasterImageTarget):
             # the nameserver data does get populated by the DHCP
             # daemon. Thus, LAVA will populate the name server data.
             self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
-                               send_char=self.config.send_char)
-            self.proc.sendline('export PS1="%s"'
-                               % self.tester_ps1,
                                send_char=self.config.send_char)
             self._booted = True
         elif self._is_bootloader() and self._booted:

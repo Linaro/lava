@@ -21,7 +21,7 @@
 import yaml
 from yaml.composer import Composer
 from yaml.constructor import Constructor
-from lava_dispatcher.pipeline.job import Job
+from lava_dispatcher.pipeline.job import Job, ResetContext
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,
@@ -40,24 +40,15 @@ import lava_dispatcher.pipeline.actions.test.strategies  # pylint: disable=unuse
 from lava_dispatcher.pipeline.actions.submit import SubmitResultsAction  # pylint: disable=unused-import
 
 
-def handle_device_parameters(name, parameters, count):
-    """
-    Parses the action specific parameters from the device configuration
-    to be added to the matching action parameters.
-    name refers to the action name in the YAML.
-    count refers to the number of times this action exists in the YAML file.
-    Depending on the YAML structure, some methods can be a list of strings,
-    some can be a list of dict objects.
-    """
-    if 'actions' not in parameters:
-        return {}
-    if name not in parameters['actions']:
-        return {}
-    if type(parameters['actions'][name]['methods'][count]) == str:
-        return parameters['actions'][name]
-    if type(parameters['actions'][name]['methods'][count]) == dict:
-        return parameters['actions'][name]['methods'][count]
-    return {}
+def parse_action(job_data, name, device, pipeline):
+    parameters = job_data[name]
+    if name == 'boot':
+        Boot.select(device, job_data[name])(pipeline, parameters)
+    elif name == 'test':
+        LavaTest.select(device, job_data[name])(pipeline, parameters)
+    elif name == 'deploy':
+        parameters.update({'deployment_data': get_deployment_data(parameters.get('os', ''))})
+        Deployment.select(device, job_data[name])(pipeline, parameters)
 
 
 class JobParser(object):
@@ -107,15 +98,15 @@ class JobParser(object):
                 duration = Timeout.parse(data['timeouts']['job'])
                 job.timeout = Timeout(data['job_name'], duration)
             if 'action' in data['timeouts']:
+                # FIXME: never used !
                 self.context['default_action_duration'] = Timeout.parse(data['timeouts']['action'])
             if 'test' in data['timeouts']:
+                # FIXME: never used !
                 self.context['default_test_duration'] = Timeout.parse(data['timeouts']['test'])
-            skip_set = {'job', 'action', 'yaml_line', 'test'}
-            for override in list(set(data['timeouts'].keys()) - skip_set):
-                job.overrides['timeouts'][override] = Timeout.parse(data['timeouts'][override])
 
     # FIXME: add a validate() function which checks against a Schema as a completely separate step.
-    def parse(self, content, device, output_dir=None):  # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals,too-many-statements
+    def parse(self, content, device, output_dir=None):
         self.loader = yaml.Loader(content)
         self.loader.compose_node = self.compose_node
         self.loader.construct_mapping = self.construct_mapping
@@ -126,38 +117,35 @@ class JobParser(object):
         job = Job(data)
         counts = {}
         job.device = device
-        job.overrides.update(device.overrides)
         job.parameters['output_dir'] = output_dir
         pipeline = Pipeline(job=job)
         self._timeouts(data, job)
 
         # FIXME: also read permissable overrides from device config and set from job data
+        # FIXME: ensure that a timeout for deployment 0 does not get set as the timeout for deployment 1 if 1 is default
         for action_data in data['actions']:
-            line = action_data.pop('yaml_line', None)
+            action_data.pop('yaml_line', None)
             for name in action_data:
                 if type(action_data[name]) is dict:  # FIXME: commands are not fully implemented & may produce a list
-                    action_data[name].update({'default_action_timeout': self.context['default_action_duration']})
-                    action_data[name].update({'default_test_timeout': self.context['default_test_duration']})
-                count = counts.setdefault(name, 0)
-                counts.update({name: count})
-                if name == "deploy":
-                    # set parameters specified in the device configuration, allow job to override.
-                    parameters = handle_device_parameters(name, device.parameters, counts[name])
-                    parameters.update(action_data[name])  # pass the job parameters to the instance
-                    parameters.update({'deployment_data': get_deployment_data(parameters.get('os', ''))})
-                    # allow the classmethod to check the parameters
-                    deploy = Deployment.select(device, action_data[name])(pipeline, parameters)
-                    deploy.action.yaml_line = line
-                elif name == "boot":
-                    parameters = handle_device_parameters(name, device.parameters, counts[name])
-                    parameters.update(action_data[name])
-                    boot = Boot.select(device, action_data[name])(pipeline, parameters)
-                    boot.action.yaml_line = line
-                elif name == "test":
-                    # allow for multiple base tests, e.g. Android
-                    parameters = handle_device_parameters(name, device.parameters, counts[name])
-                    parameters.update(action_data[name])
-                    LavaTest.select(device, action_data[name])(pipeline, parameters)
+                    action_data[name]['default_action_timeout'] = self.context['default_action_duration']
+                    action_data[name]['default_test_timeout'] = self.context['default_test_duration']
+                counts.setdefault(name, 1)
+                if name == 'deploy' or name == 'boot' or name == 'test':
+                    # reset the context before adding a second deployment and again before third etc.
+                    if name == 'deploy' and counts[name] >= 2:
+                        pipeline.add_action(ResetContext())
+                    parse_action(action_data, name, device, pipeline)
+                elif name == 'repeat':
+                    count = action_data[name]['count']  # first list entry must be the count dict
+                    repeats = action_data[name]['actions']
+                    for c_iter in xrange(count):
+                        for repeating in repeats:  # block of YAML to repeat
+                            for repeat_action in repeating:  # name of the action for this block
+                                if repeat_action == 'yaml_line':
+                                    continue
+                                repeating[repeat_action]['repeat-count'] = c_iter
+                                parse_action(repeating, repeat_action, device, pipeline)
+
                 else:
                     # May only end up being used for submit as other actions all need strategy method objects
                     # select the specific action of this class for this job
@@ -175,14 +163,10 @@ class JobParser(object):
                     action.summary = name
                     action.timeout = Timeout(action.name, self.context['default_action_duration'])
                     pipeline.add_action(action)
-                # uncomment for debug
-                # print action.parameters
+                counts[name] += 1
 
         # there's always going to need to be a finalize_process action
         pipeline.add_action(FinalizeAction())
-        # the only parameters sent to the job are job parameters
-        # like job_name, logging_level or target_group.
-        data.pop('actions')
         data['output_dir'] = output_dir
         job.set_pipeline(pipeline)
         return job

@@ -24,6 +24,7 @@ from contextlib import contextmanager
 from lava_dispatcher.pipeline.log import YamlLogger
 from lava_dispatcher.pipeline.actions.test import handle_testcase, TestAction
 from lava_dispatcher.pipeline.action import (
+    InfrastructureError,
     Pipeline,
     RetryAction,
     JobError,
@@ -63,9 +64,6 @@ class TestShellRetry(RetryAction):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(TestShellAction())
 
-    def cleanup(self):
-        pass
-
 
 class TestShellAction(TestAction):
 
@@ -96,22 +94,25 @@ class TestShellAction(TestAction):
         """
         Common run function for subclasses which define custom patterns
         """
-        if not connection:
-            self.logger.debug("No connection!")
-
+        # Sanity test: could be a missing deployment for some actions
         if 'boot-result' not in self.data:
-            self.logger.debug("No boot action result found")  # FIXME: this could be a missing deployment for some actions
-        elif self.data['boot-result'] != 'success':
+            raise RuntimeError("No boot action result found")
+
+        if self.data['boot-result'] != 'success':
             self.logger.debug("Skipping test definitions - previous boot attempt was not successful.")
             self.results.update({self.name: 'skipped'})
             # FIXME: with predictable UID, could set each test definition metadata to "skipped"
             return connection
+
+        if not connection:
+            raise InfrastructureError("Connection closed")
+
         self.logger.debug("Executing test definitions using %s" % connection.name)
         self.logger.debug("Setting default test shell prompt")
-        connection.prompt_str = self.job.device.parameters['test_image_prompts']
+        connection.prompt_str = self.job.device['test_image_prompts']
         self.logger.debug("Setting default timeout: %s" % self.timeout.duration)
         connection.timeout = self.timeout
-        connection.wait()
+        self.wait(connection)
 
         self.match = SignalMatch()
 
@@ -127,16 +128,12 @@ class TestShellAction(TestAction):
             })
 
         with connection.test_connection() as test_connection:
-            try:
-                # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
-                test_connection.sendline(
-                    "%s/bin/lava-test-runner %s" % (
-                        self.data['lava_test_results_dir'],
-                        self.data['lava_test_results_dir']),
-                )
-            except KeyboardInterrupt:
-                self.errors = "Cancelled"
-                return connection
+            # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
+            test_connection.sendline(
+                "%s/bin/lava-test-runner %s" % (
+                    self.data['lava_test_results_dir'],
+                    self.data['lava_test_results_dir']),
+            )
 
             if self.timeout:
                 test_connection.timeout = self.timeout.duration
@@ -214,11 +211,8 @@ class TestShellAction(TestAction):
 
         return False
 
-    def cleanup(self):
-        pass
-
     def _keep_running(self, test_connection, timeout):
-        self.logger.debug("expect timeout: %d" % timeout)
+        self.logger.debug("test shell timeout: %d seconds" % timeout)
         retval = test_connection.expect(list(self.patterns.values()), timeout=timeout)
         return self.check_patterns(list(self.patterns.keys())[retval], test_connection)
 
@@ -253,7 +247,7 @@ class TestShellAction(TestAction):
                 except KeyboardInterrupt:
                     raise KeyboardInterrupt
                 except JobError:
-                    logger.debug("    err: handling signal %s failed" % name)
+                    logger.debug("err: handling signal %s failed" % name)
                     return False
                 return True
 

@@ -18,6 +18,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+# Overrides are only supported when and as declared in the comments for
+# each constant.
+
 # Delay between each character sent to the shell. This is required for some
 # slow serial consoles.
 SHELL_SEND_DELAY = 0.05
@@ -55,3 +58,13 @@ OVERRIDE_CLAMP_DURATION = 300
 
 # Auto-login prompt timeout default
 AUTOLOGIN_DEFAULT_TIMEOUT = 120
+
+# dispatcher temporary directory
+DISPATCHER_DOWNLOAD_DIR = "/var/lib/lava/dispatcher/tmp"
+
+# OS shutdown message
+# Override: set as the shutdown-message parameter of an Action.
+SHUTDOWN_MESSAGE = 'The system is going down for reboot NOW'
+
+# Kernel starting message
+BOOT_MESSAGE = 'Booting Linux'

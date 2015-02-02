@@ -416,10 +416,6 @@ class FastModelTarget(Target):
         DrainConsoleOutput(proc=self._sim_proc).start()
 
     def power_on(self):
-        if self.config.bridged_networking:
-            self._interface_name = os.path.basename(self._scratch_dir)
-            if not self._bridge_configured:
-                self._config_network_bridge(self.config.bridge_interface, self._interface_name)
         if self._ramdisk_boot and self._booted:
             self.proc.sendline('export PS1="%s"'
                                % self.tester_ps1,
@@ -428,6 +424,10 @@ class FastModelTarget(Target):
         if self._sim_proc is not None:
             logging.warning('device already powered on, powering off first')
             self.power_off(None)
+        if self.config.bridged_networking:
+            self._interface_name = os.path.basename(self._scratch_dir)
+            if not self._bridge_configured:
+                self._config_network_bridge(self.config.bridge_interface, self._interface_name)
 
         self._check_needed_files()
 
@@ -478,15 +478,11 @@ class FastModelTarget(Target):
                                              boot_tags=self._boot_tags)
             self._customize_bootloader(self.proc, boot_cmds)
 
+        self._monitor_boot(self.proc, self.tester_ps1, self.tester_ps1_pattern)
         self._auto_login(self.proc)
 
         if self._ramdisk_boot:
-            self._wait_for_prompt(self.proc, self.config.test_image_prompts,
-                                  self.config.boot_linaro_timeout)
             self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
-                               send_char=self.config.send_char)
-            self.proc.sendline('export PS1="%s"'
-                               % self.tester_ps1,
                                send_char=self.config.send_char)
             self._booted = True
 

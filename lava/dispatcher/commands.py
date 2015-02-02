@@ -218,13 +218,11 @@ class dispatch(DispatcherCommand):
             # Prepare the pipeline from the file using the parser.
 
             device = NewDevice(self.args.target)  # DeviceParser
-            # FIXME: system paths are not standardised, so needs local clone to work on the command line
-            if not device.parameters:
-                raise RuntimeError("Pipeline does not support %s" % self.args.target)
             parser = JobParser()
             job = None
             try:
-                job = parser.parse(open(filename), device, output_dir=self.args.output_dir)
+                with open(filename) as f_in:
+                    job = parser.parse(f_in, device, output_dir=self.args.output_dir)
             except JobError as exc:
                 logging.error("Invalid job submission: %s" % exc)
                 exit(1)

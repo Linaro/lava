@@ -25,6 +25,9 @@ import netifaces
 from lava_dispatcher.pipeline.action import InfrastructureError
 
 
+# pylint: disable=no-member
+
+
 def dispatcher_gateway():
     """
     Retrieves the IP address of the current default gateway.

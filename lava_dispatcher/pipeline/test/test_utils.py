@@ -24,7 +24,11 @@ import subprocess
 import tempfile
 import unittest
 
-
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+from lava_dispatcher.pipeline.test.test_uboot import Factory
+from lava_dispatcher.pipeline.actions.boot.u_boot import UBootAction, UBootRetry
+from lava_dispatcher.pipeline.power import ResetDevice, RebootDevice
+from lava_dispatcher.pipeline.utils.constants import SHUTDOWN_MESSAGE
 from lava_dispatcher.pipeline.action import InfrastructureError
 from lava_dispatcher.pipeline.utils import vcs
 
@@ -161,3 +165,50 @@ class TestBzr(unittest.TestCase):  # pylint: disable=too-many-public-methods
         bzr = vcs.BzrHelper('repo')
         self.assertRaises(InfrastructureError, bzr.clone, 'foo.bar', '3')
         self.assertRaises(InfrastructureError, bzr.clone, 'foo.bar', 'badrev')
+
+
+class TestConstants(unittest.TestCase):  # pylint: disable=too-many-public-methods
+    """
+    Tests that constants set in the Job YAML as parameters in an Action stanza
+    override the value of that constant set in the python code for each action
+    in that stanza.
+    """
+    def setUp(self):
+        super(TestConstants, self).setUp()
+        factory = Factory()
+        self.job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml', mkdtemp())
+        self.assertIsNotNone(self.job)
+
+    def test_action_parameters(self):
+        self.assertIsNotNone(self.job.parameters)
+        deploy = self.job.pipeline.actions[0]
+        self.assertIsNone(deploy.parameters.get('parameters', None))
+        uboot = self.job.pipeline.actions[1]
+        self.assertEqual(
+            "reboot: Restarting system",  # modified in the job yaml
+            uboot.parameters.get('parameters', {}).get('shutdown-message', SHUTDOWN_MESSAGE)
+        )
+        self.assertIsInstance(uboot, UBootAction)
+        retry = uboot.internal_pipeline.actions[3]
+        self.assertEqual(
+            "reboot: Restarting system",  # modified in the job yaml
+            retry.parameters['parameters'].get('shutdown-message', SHUTDOWN_MESSAGE)
+        )
+        self.assertIsInstance(retry, UBootRetry)
+        reset = retry.internal_pipeline.actions[0]
+        self.assertEqual(
+            "reboot: Restarting system",  # modified in the job yaml
+            reset.parameters['parameters'].get('shutdown-message', SHUTDOWN_MESSAGE)
+        )
+        self.assertIsInstance(reset, ResetDevice)
+        reboot = reset.internal_pipeline.actions[0]
+        self.assertEqual(
+            "reboot: Restarting system",  # modified in the job yaml
+            reboot.parameters['parameters'].get('shutdown-message', SHUTDOWN_MESSAGE)
+        )
+        self.assertIsInstance(reboot, RebootDevice)
+        self.assertIsNotNone(reboot.parameters.get('parameters'))
+        self.assertEqual(
+            "reboot: Restarting system",  # modified in the job yaml
+            reboot.parameters['parameters'].get('shutdown-message', SHUTDOWN_MESSAGE)
+        )

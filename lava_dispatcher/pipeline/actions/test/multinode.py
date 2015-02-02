@@ -53,8 +53,8 @@ class MultinodeTestAction(TestShellAction):
             params = params.split()
             try:
                 ret = self.signal_director.signal(name, params)
-            except KeyboardInterrupt:
-                raise KeyboardInterrupt
+            except Exception:
+                raise Exception
             # FIXME: define the possible exceptions!
             # except:
             #    raise JobError("on_signal(Multi_Node) failed")

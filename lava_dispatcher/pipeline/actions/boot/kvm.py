@@ -22,16 +22,19 @@ from lava_dispatcher.pipeline.action import (
     Boot,
     Pipeline,
     Action,
+    RetryAction,
     JobError,
     Timeout
 )
 from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.shell import ExpectShellSession, ShellCommand, ShellSession
-from lava_dispatcher.pipeline.utils.constants import MAX_RETRY
 from lava_dispatcher.pipeline.utils.shell import which
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 
 
+# FIXME: decide if root_partition is needed, supported or can be removed from YAML.
+# document it if it is retained/useful.
+# FIXME: decide if 'media: tmpfs' is necessary or remove from YAML. Only removable needs 'media'
 class BootKVM(Boot):
     """
     The Boot method prepares the command to run on the dispatcher but this
@@ -50,13 +53,12 @@ class BootKVM(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        # FIXME: needs to do more work with job parameters before accepting
-        if hasattr(device, 'config'):
-            if device.config.device_type == 'kvm':  # FIXME: teach base unit tests to use new style Device objects
-                return True
-        else:
-            if device.parameters['device_type'] == 'kvm':  # FIXME: device_type should likely be qemu - see also deploy
-                return True
+        if 'method' not in parameters:
+            return False
+        if parameters['method'] != 'qemu':
+            return False
+        if device['device_type'] == 'kvm':  # FIXME: device_type should likely be qemu - see also deploy
+            return True
         return False
 
 
@@ -71,77 +73,73 @@ class BootQEMUImageAction(BootAction):
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(BootQemuRetry())
-        if 'auto_login' in parameters:
-            self.internal_pipeline.add_action(AutoLoginAction())
+        # Add AutoLoginAction unconditionnally as this action does nothing if
+        # the configuration does not contain 'auto_login'
+        self.internal_pipeline.add_action(AutoLoginAction())
         self.internal_pipeline.add_action(ExpectShellSession())
 
 
-# FIXME: make this a RetryAction
-class BootQemuRetry(Action):
+class BootQemuRetry(RetryAction):
 
     def __init__(self):
         super(BootQemuRetry, self).__init__()
         self.name = 'boot_qemu_image'
         self.description = "boot image using QEMU command line"
         self.summary = "boot QEMU image"
-        self.overrides = None
-        self.command = []
 
     def validate(self):
         super(BootQemuRetry, self).validate()
-        if not hasattr(self.job.device, 'config'):  # FIXME: new devices only
-            try:
-                # FIXME: need a schema and do this inside the NewDevice with a QemuDevice class? (just for parsing)
-                params = self.job.device.parameters['actions']['boot']
-                arch = self.job.device.parameters['architecture']
-                qemu_binary = which(params['command'][arch]['qemu_binary'])
-                self.overrides = params['overrides']  # FIXME: resolve how to allow overrides in the schema
-                self.command = [
-                    qemu_binary,
-                    "-machine",
-                    params['parameters']['machine'],
-                    # "-hda",
-                    # self.data['download_action']['file'],
-                ]
-                # these options are lists
-                for net_opt in params['parameters']['net']:
-                    self.command.extend(["-net", net_opt])
-                for opt in params['parameters']['qemu_options']:
-                    self.command.extend([opt])
-            except (KeyError, TypeError):
-                self.errors = "Invalid parameters"
+        try:
+            # FIXME: need a schema and do this inside the NewDevice with a QemuDevice class? (just for parsing)
+            boot = self.job.device['actions']['boot']['methods']['qemu']
+            qemu_binary = which(boot['parameters']['command'])
+            command = [qemu_binary]
+            command.extend(boot['parameters'].get('options', []))
+            self.set_common_data('qemu-command', 'command', command)
+        except (KeyError, TypeError):
+            self.errors = "Invalid parameters"
+
+    def populate(self, parameters):
+        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline.add_action(CallQemuAction())
+
+
+class CallQemuAction(Action):
+
+    def __init__(self):
+        super(CallQemuAction, self).__init__()
+        self.name = "execute-qemu"
+        self.description = "call qemu to boot the image"
+        self.summary = "execute qemu to boot the image"
 
     def run(self, connection, args=None):
-        # FIXME: this avoids the base class Retry functionality.
+        """
+        CommandRunner expects a pexpect.spawn connection which is the return value
+        of target.device.power_on executed by boot in the old dispatcher.
+
+        In the new pipeline, the pexpect.spawn is a ShellCommand and the
+        connection is a ShellSession. CommandRunner inside the ShellSession
+        turns the ShellCommand into a runner which the ShellSession uses via ShellSession.run()
+        to run commands issued *after* the device has booted.
+        pexpect.spawn is one of the raw_connection objects for a Connection class.
+        """
         if 'download_action' not in self.data:
             raise RuntimeError("Value for download_action is missing from %s" % self.name)
-        self.command.extend(["-hda", self.data['download_action']['image']['file']])  # FIXME: validate ['image']
-        self.logger.debug("Boot command: %s" % ' '.join(self.command))
+        if 'image' not in self.data['download_action']:
+            raise RuntimeError("No image file setting from the download_action")
+        command = self.get_common_data('qemu-command', 'command')
+        command.extend(["-hda", self.data['download_action']['image']['file']])
+        self.logger.debug("Boot command: %s" % ' '.join(command))
+
         # initialise the first Connection object, a command line shell into the running QEMU.
-        # ShellCommand wraps pexpect.spawn.
-        self.max_retries = self.parameters.get('failure_retry', MAX_RETRY)
-        if not self.timeout:
-            self.logger.debug("No timeout specified for %s, using action_timeout from job." % self.name)
-            self.timeout = Timeout("default", self.job.parameters['action_timeout'])
-        self.logger.debug("timeout %s %s" % (self.timeout.name, self.timeout.duration))
-        shell = ShellCommand(' '.join(self.command), self.timeout)
+        shell = ShellCommand(' '.join(command), self.timeout)
         if shell.exitstatus:
-            raise JobError("%s command exited %d: %s" % (self.command, shell.exitstatus, shell.readlines()))
+            raise JobError("%s command exited %d: %s" % (command, shell.exitstatus, shell.readlines()))
         self.logger.debug("started a shell command")
-        # CommandRunner expects a pexpect.spawn connection which is the return value
-        # of target.device.power_on executed by boot in the old dispatcher.
-        #
-        # In the new pipeline, the pexpect.spawn is a ShellCommand and the
-        # connection is a ShellSession. CommandRunner inside the ShellSession
-        # turns the ShellCommand into a runner which the ShellSession uses via ShellSession.run()
-        # to run commands issued *after* the device has booted.
-        # pexpect.spawn is one of the raw_connection objects for a Connection class.
 
         shell_connection = ShellSession(self.job, shell)
-        shell_connection.prompt_str = self.job.device.parameters['test_image_prompts']
-        if self.errors:
-            # FIXME: tests with multiple boots need to be handled too.
-            self.data.update({
-                'boot-result': "failed"
-            })
+        shell_connection.prompt_str = self.job.device['test_image_prompts']
+
+        # FIXME: tests with multiple boots need to be handled too.
+        self.data['boot-result'] = 'failed' if self.errors else 'success'
         return shell_connection

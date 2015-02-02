@@ -1,0 +1,51 @@
+# Sample JOB definition for a KVM
+
+device_type: kvm
+
+job_name: kvm-pipeline
+job_timeout:
+  minutes: 15            # timeout for the whole job (default: ??h)
+action_timeout:
+  minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+priority: medium
+
+actions:
+
+    - deploy:
+        timeout:
+          minutes: 20
+        to: tmpfs
+        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        compression: gz
+        os: debian
+        # if root_partition partition is not present:
+        # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
+        # - look into device configuration
+        root_partition: 1
+
+    - boot:
+        method: qemu
+        media: tmpfs
+        failure_retry: 2
+
+    - test:
+        failure_retry: 3
+        name: kvm-basic-singlenode  # is not present, use "test $N"
+        # only s, m & h are supported.
+        timeout:
+          minutes: 5 # uses install:deps, so takes longer than singlenode01
+        definitions:
+            - repository: http://git.linaro.org/people/neil.williams/temp-functional-tests.git
+              from: git
+              path: params.yaml
+              parameters:
+                VARIABLE_NAME_1: "eth2"
+                VARIABLE_NAME_2: "wlan0"
+              name: smoke-tests
+            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+              from: git
+              path: lava-test-shell/single-node/singlenode03.yaml
+              name: singlenode-advanced
+
+    - submit_results:
+        stream: /anonymous/codehelp/

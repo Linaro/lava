@@ -23,3 +23,4 @@
 
 from lava_dispatcher.pipeline.actions.boot.kvm import BootKVM  # pylint: disable=unused-import
 from lava_dispatcher.pipeline.actions.boot.u_boot import UBoot  # pylint: disable=unused-import
+from lava_dispatcher.pipeline.actions.boot.kexec import BootKExec  # pylint: disable=unused-import

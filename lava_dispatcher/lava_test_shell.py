@@ -27,7 +27,6 @@ by a lava-test-shell run.
 
 import base64
 import datetime
-import decimal
 import mimetypes
 import yaml
 import logging
@@ -213,12 +212,10 @@ def parse_testcase_result(data, fixupdict={}):
         res[key] = data[key]
 
         if key == 'measurement':
-            try:
-                res[key] = decimal.Decimal(res[key])
-            except decimal.InvalidOperation:
-                logging.warning("Invalid measurement %s",
-                                res['measurement'])
-                del res['measurement']
+            # Measurement accepts non-numeric values, but be careful with
+            # special characters including space, which may distrupt the
+            # parsing.
+            res[key] = res[key]
 
         elif key == 'result':
             if res['result'] in fixupdict:
@@ -469,4 +466,4 @@ def get_bundle(results_dir, testdef_objs, err_log):
             except:
                 logging.exception('error processing results for: %s', test_run_name)
 
-    return {'test_runs': testruns, 'format': 'Dashboard Bundle Format 1.7'}
+    return {'test_runs': testruns, 'format': 'Dashboard Bundle Format 1.7.1'}

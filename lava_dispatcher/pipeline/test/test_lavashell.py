@@ -26,12 +26,15 @@ from lava_dispatcher.pipeline.test.test_basic import Factory
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry, TestShellAction
 
 
+# pylint: disable=duplicate-code
+
+
 class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super(TestDefinitionHandlers, self).setUp()
         factory = Factory()
-        self.job = factory.create_job('sample_jobs/kvm.yaml')
+        self.job = factory.create_kvm_job('sample_jobs/kvm.yaml')
 
     def test_testshell(self):
         testshell = None

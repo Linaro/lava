@@ -66,7 +66,8 @@ setup(
         'pyserial >= 2.6',
         'pyliblzma >= 0.5.3',
         'requests',
-        'netifaces >= 0.10.0'
+        'netifaces >= 0.10.0',
+        'nose'
     ],
     tests_require=[
         'pep8 >= 1.4.6',

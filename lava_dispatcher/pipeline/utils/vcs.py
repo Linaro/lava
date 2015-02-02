@@ -25,6 +25,9 @@ from lava_dispatcher.pipeline.log import YamlLogger
 from lava_dispatcher.pipeline.action import InfrastructureError
 
 
+# pylint: disable=too-few-public-methods
+
+
 class VCSHelper(object):
 
     def __init__(self, url):

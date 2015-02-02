@@ -23,5 +23,15 @@ Dashboard bundle is a family of file formats designed to store test results and
 associated meta data. This module provides standard API for manipulating such
 documents.
 """
+import unittest
+
 
 __version__ = (1, 10, 2, "final", 0)
+
+
+def test_suite():
+    module_names = [
+        'linaro_dashboard_bundle.tests',
+    ]
+    loader = unittest.TestLoader()
+    return loader.loadTestsFromNames(module_names)

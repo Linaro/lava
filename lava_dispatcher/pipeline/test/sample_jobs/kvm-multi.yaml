@@ -24,7 +24,7 @@ actions:
         root_partition: 1
 
     - boot:
-        method: kvm
+        method: qemu
         media: tmpfs
         failure_retry: 2
 
@@ -49,7 +49,7 @@ actions:
               name: singlenode-advanced
 
     - boot:
-        method: kvm
+        method: qemu
         media: tmpfs
         failure_retry: 2
 

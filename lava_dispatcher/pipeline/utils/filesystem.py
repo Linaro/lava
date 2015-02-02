@@ -30,6 +30,8 @@ def rmtree(directory):
     errors.
     If called on a symbolic link, this function will raise a RuntimeError.
     """
+    # TODO: consider how to handle problems if the directory has already been removed -
+    # coding bugs may trigger this Runtime exception - implement before moving to production.
     try:
         shutil.rmtree(directory)
     except OSError as exc:

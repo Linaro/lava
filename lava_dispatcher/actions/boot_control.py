@@ -63,11 +63,18 @@ class cmd_boot_linaro_android_image(BaseAction):
     parameters_schema['properties']['enable_network_after_boot_android'] = {
         'default': 'True', 'optional': True
     }
+    parameters_schema['properties']['boot_uiautomator_jar'] = {
+        'type': 'string', 'optional': True
+    }
+    parameters_schema['properties']['boot_uiautomator_commands'] = {
+        'type': 'array', 'items': {'type': 'string'}, 'optional': True
+    }
 
     def run(self, options=[], boot_cmds=None, adb_check=False,
             wait_for_home_screen=True, wait_for_home_screen_activity=None,
             test_image_prompt=None, enable_network_after_boot_android=None,
-            repeat_count=0):
+            repeat_count=0, boot_uiautomator_jar=None,
+            boot_uiautomator_commands=None):
         client = self.client
         if boot_cmds is not None:
             client.config.boot_cmds = boot_cmds
@@ -82,6 +89,10 @@ class cmd_boot_linaro_android_image(BaseAction):
         client.target_device.boot_options = options
         client.config.android_wait_for_home_screen = wait_for_home_screen
         client.target_device.reset_boot(in_test_shell=False)
+        client.config.android_boot_uiautomator_jar = \
+            boot_uiautomator_jar
+        client.config.android_boot_uiautomator_commands = \
+            boot_uiautomator_commands
         try:
             client.boot_linaro_android_image(
                 adb_check=adb_check)
@@ -120,11 +131,8 @@ class cmd_boot_linaro_image(BaseAction):
         except KeyboardInterrupt:
             raise KeyboardInterrupt
         except:
-            logging.exception("boot_linaro_image failed")
             status = 'fail'
             raise CriticalError("Failed to boot test image.")
-        finally:
-            self.context.test_data.add_result("boot_image", status)
 
 
 cmd_boot_image = cmd_boot_linaro_image

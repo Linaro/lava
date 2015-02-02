@@ -28,6 +28,7 @@ from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import PrepareOverlayTftp
 from lava_dispatcher.pipeline.utils.shell import which
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
 
 
 def tftp_accept(device, parameters):
@@ -40,13 +41,13 @@ def tftp_accept(device, parameters):
         return False
     if parameters['to'] != 'tftp':
         return False
-    if not device.parameters:
+    if not device:
         return False
-    if 'actions' not in device.parameters:
+    if 'actions' not in device:
         raise RuntimeError("Invalid device configuration")
-    if 'deploy' not in device.parameters['actions']:
+    if 'deploy' not in device['actions']:
         return False
-    if 'methods' not in device.parameters['actions']['deploy']:
+    if 'methods' not in device['actions']['deploy']:
         raise RuntimeError("Device misconfiguration")
     return True
 
@@ -68,34 +69,34 @@ class Tftp(Deployment):
     def accepts(cls, device, parameters):
         if not tftp_accept(device, parameters):
             return False
-        if 'tftp' in device.parameters['actions']['deploy']['methods']:
+        if 'tftp' in device['actions']['deploy']['methods']:
             return True
         return False
 
 
-class TftpAction(DeployAction):
+class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
     def __init__(self):
         super(TftpAction, self).__init__()
         self.name = "tftp-deploy"
         self.description = "download files and deploy using tftp"
         self.summary = "tftp deploment"
-        self.tftp_dir = "/var/lib/lava/dispatcher/tmp"  # FIXME: constant to get from a YAML file in /etc/
+        self.tftp_dir = DISPATCHER_DOWNLOAD_DIR
         self.suffix = None
         try:
-            self.tftp_dir = mkdtemp(basedir="/var/lib/lava/dispatcher/tmp")  # FIXME: constant to get from a YAML file in /etc/
+            self.tftp_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
         except OSError:
             # allows for unit tests to operate as normal user.
             self.suffix = '/'
 
     def validate(self):
         super(TftpAction, self).validate()
-        if 'kernel'not in self.parameters.keys():  # 2to3 false positive, works with python3
+        if 'kernel' not in self.parameters:
             self.errors = "%s needs a kernel to deploy" % self.name
         if not self.valid:
             return
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.device.parameters['hostname']
+        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.device['hostname']
         if self.suffix:
             self.data[self.name].setdefault('suffix', self.suffix)
         self.data[self.name].setdefault('suffix', os.path.basename(self.tftp_dir))
@@ -110,6 +111,7 @@ class TftpAction(DeployAction):
             download = DownloaderAction('ramdisk', path=self.tftp_dir)
             download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
             self.internal_pipeline.add_action(download)
+            self.set_common_data('tftp', 'ramdisk', True)
         if 'kernel' in parameters:
             download = DownloaderAction('kernel', path=self.tftp_dir)
             download.max_retries = 3
@@ -120,6 +122,10 @@ class TftpAction(DeployAction):
             self.internal_pipeline.add_action(download)
         if 'nfsrootfs' in parameters:
             download = DownloaderAction('nfsrootfs', path=self.tftp_dir)
+            download.max_retries = 3
+            self.internal_pipeline.add_action(download)
+        if 'modules' in parameters:
+            download = DownloaderAction('modules', path=self.tftp_dir)
             download.max_retries = 3
             self.internal_pipeline.add_action(download)
         # TftpAction is a deployment, so once the files are in place, just do the overlay

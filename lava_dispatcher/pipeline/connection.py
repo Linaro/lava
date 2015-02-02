@@ -58,7 +58,7 @@ class BaseSignalHandler(object):
         pass
 
 
-class SignalMatch(object):
+class SignalMatch(object):  # pylint:disable=too-few-public-methods
 
     def match(self, data, fixupdict=None):
         logger = YamlLogger("root")

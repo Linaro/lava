@@ -1,0 +1,102 @@
+device_type: beaglebone-black
+
+parameters:
+  bootm:
+   kernel: '0x80200000'
+   ramdisk: '0x81600000'
+   dtb: '0x815f0000'
+  bootz:
+   kernel: '0x81000000'
+   ramdisk: '0x82000000'
+   dtb: '0x81f00000'
+  usb:
+    SanDisk_Ultra:
+      uuid: usb-SanDisk_Ultra_20060775320F43006019-0:0
+      boot_part: 0:1
+commands:
+  connect: telnet localhost 6000
+  hard_reset: /usr/bin/pduclient --daemon localhost --hostname pdu --command reboot --port 08
+  power_off: /usr/bin/pduclient --daemon localhost --hostname pdu --command off --port 08
+  power_on: /usr/bin/pduclient --daemon localhost --hostname pdu --command on --port 08
+
+
+actions:
+  deploy:
+    methods:
+      tftp
+      usb
+  boot:
+    methods:
+      kexec:
+      u-boot:
+        parameters:
+          bootloader_prompt: U-Boot
+          boot_message: Booting Linux
+          send_char: False
+          # interrupt: # character needed to interrupt u-boot, single whitespace by default
+          # method specific stanza
+        oe:
+          commands:
+          - setenv initrd_high '0xffffffff'
+          - setenv fdt_high '0xffffffff'
+          - setenv bootcmd 'fatload mmc 0:3 0x80200000 uImage; fatload mmc 0:3 0x815f0000 board.dtb;
+            bootm 0x80200000 - 0x815f0000'
+          - setenv bootargs 'console=ttyO0,115200n8 root=/dev/mmcblk0p5 rootwait ro'
+          - boot
+        master:
+          commands:
+          - setenv initrd_high '0xffffffff'
+          - setenv fdt_high '0xffffffff'
+          - setenv bootcmd 'fatload mmc 0:3 0x80200000 uImage; fatload mmc 0:3 0x81600000 uInitrd;
+             fatload mmc 0:3 0x815f0000 board.dtb; bootm 0x80200000 0x81600000 0x815f0000'
+          - setenv bootargs 'console=ttyO0,115200n8 root=LABEL=testrootfs rootwait ro'
+          - boot
+        nfs:
+          commands:
+          - setenv autoload no
+          - setenv initrd_high '0xffffffff'
+          - setenv fdt_high '0xffffffff'
+          - setenv kernel_addr_r '{KERNEL_ADDR}'
+          - setenv initrd_addr_r '{RAMDISK_ADDR}'
+          - setenv fdt_addr_r '{DTB_ADDR}'
+          - setenv loadkernel 'tftp ${kernel_addr_r} {KERNEL}'
+          - setenv loadinitrd 'tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'
+          # Always quote the entire string if the command includes a colon to support correct YAML.
+          - "setenv nfsargs 'setenv bootargs console=ttyO0,115200n8 root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp'"
+          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
+          - boot
+        ramdisk:
+          commands:
+          - setenv autoload no
+          - setenv initrd_high '0xffffffff'
+          - setenv fdt_high '0xffffffff'
+          - setenv kernel_addr_r '{KERNEL_ADDR}'
+          - setenv initrd_addr_r '{RAMDISK_ADDR}'
+          - setenv fdt_addr_r '{DTB_ADDR}'
+          - setenv loadkernel 'tftp ${kernel_addr_r} {KERNEL}'
+          - setenv loadinitrd 'tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'
+          - setenv bootargs 'console=ttyO0,115200n8 root=/dev/ram0 ip=dhcp'
+          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+          - boot
+        usb:
+          commands:
+          - usb start
+          - usb info
+          - setenv autoload no
+          - setenv initrd_high '0xffffffff'
+          - setenv fdt_high '0xffffffff'
+          - setenv kernel_addr_r '{KERNEL_ADDR}'
+          - setenv initrd_addr_r '{RAMDISK_ADDR}'
+          - setenv fdt_addr_r '{DTB_ADDR}'
+          - setenv loadkernel 'load usb 0:{ROOT_PART} ${kernel_addr_r} {KERNEL}'
+          - setenv loadinitrd 'load usb 0:{ROOT_PART} ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'load usb 0:{ROOT_PART} ${fdt_addr_r} {DTB}'
+          - setenv bootargs 'console=ttyO0,115200n8 root={ROOT} ip=dhcp'
+          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+          - boot
+
+timeouts:
+  call-kexec:
+    seconds: 45

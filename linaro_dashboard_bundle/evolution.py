@@ -187,6 +187,26 @@ class DocumentEvolution(object):
         assert doc.get("format") == "Dashboard Bundle Format 1.6"
         doc["format"] = "Dashboard Bundle Format 1.7"
 
+    def _evolution_from_1_7_to_1_7_1(doc):
+        """
+        Evolution method for 1.7 -> 1.7.1:
+
+            * Measurement is changed to string from Decimal
+            * Format is upgraded to "Dashboard Bundle Format 1.7.1"
+        """
+        assert doc.get("format") == "Dashboard Bundle Format 1.7"
+        for test_run in doc.get("test_runs", []):
+            if "test_results" in test_run:
+                test_results = test_run["test_results"]
+                new_test_results = []
+                for test_result in test_results:
+                    if "measurement" in test_result:
+                        measurement = str(test_result.get("measurement", "0"))
+                        test_result["measurement"] = measurement
+                    new_test_results.append(test_result)
+                test_run["test_results"] = new_test_results
+        doc["format"] = "Dashboard Bundle Format 1.7.1"
+
     EVOLUTION_PATH = [
         ("Dashboard Bundle Format 1.0",
          "Dashboard Bundle Format 1.0.1",
@@ -212,4 +232,7 @@ class DocumentEvolution(object):
         ("Dashboard Bundle Format 1.6",
          "Dashboard Bundle Format 1.7",
          _evolution_from_1_6_to_1_7),
+        ("Dashboard Bundle Format 1.7",
+         "Dashboard Bundle Format 1.7.1",
+         _evolution_from_1_7_to_1_7_1),
     ]

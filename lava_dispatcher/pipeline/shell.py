@@ -21,6 +21,7 @@
 import os
 import sys
 import time
+import signal
 import pexpect
 import contextlib
 from lava_dispatcher.pipeline.action import (
@@ -31,10 +32,7 @@ from lava_dispatcher.pipeline.action import (
     Timeout,
 )
 from lava_dispatcher.pipeline.connection import Connection, CommandRunner
-from lava_dispatcher.pipeline.utils.constants import (
-    SHELL_DEFAULT_TIMEOUT,
-    SHELL_SEND_DELAY,
-)
+from lava_dispatcher.pipeline.utils.constants import SHELL_SEND_DELAY
 from lava_dispatcher.pipeline.utils.shell import which
 from lava_dispatcher.pipeline.log import YamlLogger
 
@@ -80,7 +78,6 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         """
         Extends pexpect.send to support extra arguments, delay and send by character flags.
         """
-        self.logger.debug("send (delay_ms=%s): %s " % (delay, string))
         sent = 0
         delay = float(delay) / 1000
         if send_char:
@@ -101,7 +98,8 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         except pexpect.TIMEOUT:
             raise TestError("command timed out.")
         except pexpect.EOF:
-            raise RuntimeError(" ".join(self.before.split('\r\n')))
+            # FIXME: deliberately closing the connection (and starting a new one) needs to be supported.
+            raise InfrastructureError("Connection closed")
         return proc
 
     # FIXME: check if this is ever called
@@ -149,7 +147,7 @@ class ShellSession(Connection):
             # device = self.device
             spawned_shell = self.raw_connection  # ShellCommand(pexpect.spawn)
             # FIXME: the prompts should not be needed here, only kvm uses these. Remove.
-            # prompt_str = device.parameters['test_image_prompts']  # FIXME: deployment_data?
+            # prompt_str = device['test_image_prompts']  # FIXME: deployment_data?
             prompt_str_includes_rc = True  # FIXME - parameters['deployment_data']['TESTER_PS1_INCLUDES_RC']?
 #            prompt_str_includes_rc = device.config.tester_ps1_includes_rc
             # The Connection for a CommandRunner in the pipeline needs to be a ShellCommand, not logging_spawn
@@ -167,7 +165,7 @@ class ShellSession(Connection):
         if self.__runner__ is None:
             # device = self.device
             spawned_shell = self.raw_connection  # ShellCommand(pexpect.spawn)
-            # prompt_str = device.parameters['test_image_prompts']
+            # prompt_str = device['test_image_prompts']
             prompt_str_includes_rc = True  # FIXME - do we need this?
 #            prompt_str_includes_rc = device.config.tester_ps1_includes_rc
             # The Connection for a CommandRunner in the pipeline needs to be a ShellCommand, not logging_spawn
@@ -176,7 +174,6 @@ class ShellSession(Connection):
         yield self.__runner__.get_connection()
 
     def wait(self):
-        self.logger.debug("wait: Waiting for prompt for %s seconds" % self.timeout.duration)
         self.raw_connection.sendline("")
         try:
             self.runner.wait_for_prompt(self.timeout.duration)
@@ -196,8 +193,10 @@ class ExpectShellSession(Action):
         self.description = "Wait for a shell"
 
     def run(self, connection, args=None):
+        connection = super(ExpectShellSession, self).run(connection, args)
+        connection.prompt_str = self.job.device['test_image_prompts']
         self.logger.debug("%s: Waiting for prompt" % self.name)
-        connection.wait()  # FIXME: should this be a regular RetryAction operation?
+        self.wait(connection)  # FIXME: should this be a regular RetryAction operation?
         return connection
 
 
@@ -214,10 +213,10 @@ class ConnectDevice(Action):
 
     def validate(self):
         super(ConnectDevice, self).validate()
-        if 'connect' not in self.job.device.parameters['commands']:
+        if 'connect' not in self.job.device['commands']:
             self.errors = "Unable to connect to device %s - missing connect command." % self.job.device.hostname
             return
-        command = self.job.device.parameters['commands']['connect']
+        command = self.job.device['commands']['connect']
         exe = ''
         try:
             exe = command.split(' ')[0]
@@ -235,18 +234,23 @@ class ConnectDevice(Action):
         # does require that telnet is always installed.
 
     def run(self, connection, args=None):
-        # if connection:
-        #     raise RuntimeError("A connection already exists")
-        command = self.job.device.parameters['commands']['connect']
+        if connection:
+            self.logger.debug("Already connected")
+            connection.prompt_str = self.job.device['test_image_prompts']
+            return connection
+        command = self.job.device['commands']['connect']
         self.logger.debug("connecting to device using '%s'" % command)
+        signal.alarm(0)  # clear the timeouts used without connections.
         shell = ShellCommand("%s\n" % command, self.timeout)
         if shell.exitstatus:
             raise JobError("%s command exited %d: %s" % (command, shell.exitstatus, shell.readlines()))
         connection = ShellSession(self.job, shell)
-        connection.prompt_str = self.job.device.parameters['test_image_prompts']
-        # FIXME: some tests need this, some do not.
+        connection.prompt_str = self.job.device['test_image_prompts']
+        # if the board is running, wait for a prompt - if not, skip.
+        if self.job.device.power_state is 'off':
+            return connection
         try:
-            connection.wait()
+            self.wait(connection)
         except TestError:
             self.errors = "%s wait expired" % self.name
         self.logger.debug("matched %s" % connection.match)

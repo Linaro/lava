@@ -46,6 +46,7 @@ class DeviceSchema(schema.Schema):
     boot_cmds_android = schema.StringOption(fatal=True)  # And here
     boot_cmds_oe = schema.StringOption(fatal=True)  # And here?
     read_boot_cmds_from_image = schema.BoolOption(default=True)
+    boot_cmd_timeout = schema.IntOption(default=10)
     boot_options = schema.ListOption()
     boot_linaro_timeout = schema.IntOption(default=300)
     boot_part = schema.IntOption(fatal=True)
@@ -53,7 +54,10 @@ class DeviceSchema(schema.Schema):
     boot_retries = schema.IntOption(default=3)
     bootloader_prompt = schema.StringOption()
     bootloader_timeout = schema.IntOption(default=120)
+    image_boot_msg = schema.StringOption()
     image_boot_msg_timeout = schema.IntOption(default=120)
+    kernel_boot_msg = schema.StringOption()
+    kernel_boot_msg_timeout = schema.IntOption(default=120)
     send_char = schema.BoolOption(default=True)
     test_image_prompts = schema.ListOption(default=["\(initramfs\)",
                                                     "linaro-test",
@@ -80,7 +84,6 @@ class DeviceSchema(schema.Schema):
     git_url_disablesuspend_sh = schema.StringOption()
     hard_reset_command = schema.StringOption()
     hostname = schema.StringOption()
-    image_boot_msg = schema.StringOption()
     interrupt_boot_command = schema.StringOption()
     interrupt_boot_prompt = schema.StringOption()
     interrupt_boot_control_character = schema.StringOption()
@@ -180,6 +183,8 @@ class DeviceSchema(schema.Schema):
     partition_padding_string_org = schema.StringOption(default="p")
     partition_padding_string_android = schema.StringOption(default="p")
     android_serialno_patterns = schema.ListOption(default=['[0-9A-Fa-f]{16}'])
+    android_boot_uiautomator_jar = schema.StringOption(default=None)
+    android_boot_uiautomator_commands = schema.ListOption(default=None)
 
     arm_probe_binary = schema.StringOption(default='/usr/local/bin/arm-probe')
     arm_probe_config = schema.StringOption(default='/usr/local/etc/arm-probe-config')
@@ -271,6 +276,7 @@ class DeviceSchema(schema.Schema):
     u_load_addrs = schema.ListOption(default=None)
     z_load_addrs = schema.ListOption(default=None)
     uimage_only = schema.BoolOption(default=False)
+    multi_image_only = schema.BoolOption(default=False)
     uimage_xip = schema.BoolOption(default=False)
     append_dtb = schema.BoolOption(default=False)
     prepend_blob = schema.StringOption(default=None)
