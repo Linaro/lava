@@ -183,7 +183,11 @@ class BootloaderTarget(MasterImageTarget):
             if self._is_uboot() or self._is_uefi():
                 if self.config.uimage_only and not is_uimage(kernel, self.context):
                     if len(self.config.u_load_addrs) == 3:
-                        kernel = create_uimage(kernel, self.config.u_load_addrs[0],
+                        if self.config.text_offset:
+                            load_addr = self.config.text_offset
+                        else:
+                            load_addr = self.config.u_load_addrs[0]
+                        kernel = create_uimage(kernel, load_addr,
                                                self._tmpdir, self.config.uimage_xip)
                         logging.info('uImage created successfully')
                     else:

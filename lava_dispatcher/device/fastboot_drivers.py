@@ -197,14 +197,18 @@ class BaseDriver(object):
             self.fastboot.flash(self.config.rootfs_partition, rootfs)
         if self.config.multi_image_only:
             if self.config.fastboot_kernel_load_addr:
+                if self.config.text_offset:
+                    load_addr = self.config.text_offset
+                else:
+                    load_addr = self.config.fastboot_kernel_load_addr
                 if self._ramdisk:
                     self._kernel = create_multi_image(self._kernel,
                                                       self._ramdisk,
-                                                      self.config.fastboot_kernel_load_addr,
+                                                      load_addr,
                                                       self.working_dir)
                 else:
                     self._kernel = create_uimage(self._kernel,
-                                                 self.config.fastboot_kernel_load_addr,
+                                                 load_addr,
                                                  self.working_dir,
                                                  self.config.uimage_xip)
             else:
