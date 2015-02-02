@@ -189,6 +189,9 @@ class dispatch(DispatcherCommand):
         # Load the job file
         job_runner, job_data = self.parse_job_file(self.args.job_file, oob_file)
 
+        if self.args.output_dir and not os.path.isdir(self.args.output_dir):
+            os.makedirs(self.args.output_dir)
+
         # detect multinode and start a NodeDispatcher to work with the LAVA Coordinator.
         if not self.args.validate:
             if 'target_group' in job_data:
@@ -203,8 +206,6 @@ class dispatch(DispatcherCommand):
                 exit(1)
         else:
             job_data['target'] = self.args.target
-        if self.args.output_dir and not os.path.isdir(self.args.output_dir):
-            os.makedirs(self.args.output_dir)
 
         job_runner(job_data, oob_file, self.config, self.args.output_dir, self.args.validate)
 

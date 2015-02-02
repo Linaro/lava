@@ -277,6 +277,8 @@ class LavaTestJob(object):
             return None
 
     def run(self, transport=None, group_data=None, vm_host_ip=None):
+        if group_data:
+            logging.debug("Group initialisation: %s" % json.dumps(group_data))
         self.context.assign_transport(transport)
         self.context.assign_group_data(group_data)
         validate_job_data(self.job_data)
