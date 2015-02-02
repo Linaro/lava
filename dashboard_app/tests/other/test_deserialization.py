@@ -486,8 +486,7 @@ class BundleDeserializerSuccessTests(TestCaseWithScenarios):
 
     def test_TestResult__measurement(self):
         self.assertEqual(
-            self.s_test_result.measurement,
-            decimal.Decimal("1000.3"))
+            self.s_test_result.measurement, "1000.3")
 
     def test_TestResult__units(self):
         self.assertEqual(self.s_test_result.units, "bogomips")

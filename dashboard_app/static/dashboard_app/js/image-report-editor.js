@@ -13,7 +13,6 @@ filters_callback = function(chart_id, filter_id, name) {
     $.ajax({
         url: url,
         type: "POST",
-        async: false,
         data: {
             csrfmiddlewaretoken: csrf_token,
             chart_id: chart_id,
@@ -44,7 +43,6 @@ filters_callback = function(chart_id, filter_id, name) {
 
     $.ajax({
         url: url,
-        async: false,
         data: {"id": filter_id},
         beforeSend: function () {
             $('#filter-container').remove();
@@ -54,6 +52,7 @@ filters_callback = function(chart_id, filter_id, name) {
             $('#loading_dialog').dialog('close');
             $("#id_filter").val(filter_id);
             add_filter_container(data, filter_id, name);
+            filter_loaded_callback();
         },
         error: function(data, status, error) {
             $('#loading_dialog').dialog('close');
@@ -67,6 +66,24 @@ filters_callback = function(chart_id, filter_id, name) {
         $("#filter-container").show();
     }
 }
+
+filter_loaded_callback = function() {
+
+    if ($('#id_chart_type').val() != "measurement") {
+        for (i in selected_test_ids) {
+            $('#available_tests option[value="' + selected_test_ids[i] + '"]').attr('selected', 'selected');
+        }
+        move_options('available_tests', 'chosen_tests');
+    } else {
+        for (i in selected_testcase_ids) {
+            $('#chosen_tests').append($('<option>', {
+                value: selected_testcase_ids[i].value,
+                text: selected_testcase_ids[i].text
+            }));
+        }
+    }
+}
+
 
 add_filter_container = function(data, filter_id, title) {
     // Adds elements which contain tests or test cases from the previously

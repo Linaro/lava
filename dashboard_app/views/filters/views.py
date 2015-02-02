@@ -87,7 +87,13 @@ class UserFiltersView(FilterView):
 class PublicFiltersView(FilterView):
 
     def get_queryset(self):
-        return TestRunFilter.objects.filter(public=True)
+        filters = TestRunFilter.objects.filter(public=True)
+        non_accessible_filters = []
+        for filter in filters:
+            if not filter.is_accessible_by(self.request.user):
+                non_accessible_filters.append(filter.id)
+
+        return filters.exclude(id__in=non_accessible_filters)
 
 
 @BreadCrumb("Filters and Subscriptions", parent=index)
@@ -174,6 +180,10 @@ def filter_detail(request, username, name):
     if not request.user.is_superuser:
         if not qfilter.public and qfilter.owner != request.user:
             raise PermissionDenied()
+
+    if not qfilter.is_accessible_by(request.user):
+        raise PermissionDenied()
+
     if not request.user.is_authenticated():
         subscription = None
     else:
@@ -297,6 +307,9 @@ def filter_edit(request, username, name):
         if request.user.username != username:
             raise PermissionDenied()
     filter = get_object_or_404(TestRunFilter, owner__username=username, name=name)
+    if not filter.is_accessible_by(request.user):
+        raise PermissionDenied()
+
     return filter_form(
         request,
         BreadCrumbTrail.leading_to(filter_edit, name=name, username=username),
@@ -311,6 +324,9 @@ def filter_copy(request, username, name):
         if not filter.public and filter.owner != request.user:
             raise PermissionDenied()
 
+    if not filter.is_accessible_by(request.user):
+        raise PermissionDenied()
+
     return filter_form(
         request,
         BreadCrumbTrail.leading_to(filter_copy, name=name, username=username),
@@ -324,6 +340,9 @@ def filter_delete(request, username, name):
         if request.user.username != username:
             raise PermissionDenied()
     filter = get_object_or_404(TestRunFilter, owner__username=username, name=name)
+    if not filter.is_accessible_by(request.user):
+        raise PermissionDenied()
+
     if request.method == "POST":
         if 'yes' in request.POST:
             filter.delete()

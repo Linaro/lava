@@ -15,7 +15,7 @@ other files which are part of the repository, inside the test image.::
     "parameters": {
         "testdef_repos": [
             {
-                "git-repo": "http://git.linaro.org/git-ro/people/neil.williams/temp-functional-tests.git",
+                "git-repo": "https://git.linaro.org/people/neil.williams/temp-functional-tests.git",
                 "testdef": "multinode/multinode02.yaml"
             }
         ],
@@ -54,7 +54,7 @@ revision will be used instead of HEAD.::
     "parameters": {
         "testdef_repos": [
             {
-                "git-repo": "http://git.linaro.org/git-ro/people/neil.williams/temp-functional-tests.git",
+                "git-repo": "https://git.linaro.org/people/neil.williams/temp-functional-tests.git",
                 "testdef": "multinode/multinode02.yaml",
                 "revision": "3d555378"
             }

@@ -90,11 +90,18 @@ class OtherImageReportView(LavaView):
         # Only reports containing all public filters for non-authenticated.
         other_reports = ImageReport.objects.filter(is_published=True,
                                                    image_report_group=None).order_by('name')
+
+        non_accessible_reports = []
+        for report in other_reports:
+            if not report.is_accessible_by(self.request.user):
+                non_accessible_reports.append(report.id)
+
         if self.request and self.request.user.is_authenticated():
-            return other_reports
+            return other_reports.exclude(id__in=non_accessible_reports)
         else:
             return other_reports.exclude(
-                imagereportchart__imagechartfilter__filter__public=False).order_by('name')
+                imagereportchart__imagechartfilter__filter__public=False,
+                id__in=non_accessible_reports).order_by('name')
 
 
 class GroupImageReportView(LavaView):
@@ -109,11 +116,18 @@ class GroupImageReportView(LavaView):
         group_reports = ImageReport.objects.filter(
             is_published=True,
             image_report_group=self.image_report_group).order_by('name')
+
+        non_accessible_reports = []
+        for report in group_reports:
+            if not report.is_accessible_by(self.request.user):
+                non_accessible_reports.append(report.id)
+
         if self.request.user.is_authenticated():
-            return group_reports
+            return group_reports.exclude(id__in=non_accessible_reports)
         else:
             return group_reports.exclude(
-                imagereportchart__imagechartfilter__filter__public=False).order_by('name')
+                imagereportchart__imagechartfilter__filter__public=False,
+                id__in=non_accessible_reports).order_by('name')
 
 
 @BreadCrumb("Image reports", parent=index)
@@ -178,9 +192,13 @@ def image_report_display(request, name):
         if not image_report.is_published and image_report.user != request.user:
             raise PermissionDenied
 
+    if not image_report.is_accessible_by(request.user):
+        raise PermissionDenied()
+
     chart_data = {}
-    for chart in image_report.imagereportchart_set.all():
-        chart_data[chart.id] = chart.get_chart_data(request.user)
+    for chart in image_report.imagereportchart_set.all().order_by(
+            'relative_index'):
+        chart_data[chart.relative_index] = chart.get_chart_data(request.user)
 
     return render_to_response(
         'dashboard_app/image_report_display.html', {
@@ -248,6 +266,7 @@ def image_report_delete(request, name):
 def image_report_publish(request, name):
 
     image_report = get_object_or_404(ImageReport, name=name)
+
     image_report.is_published = True
     image_report.save()
 
@@ -306,9 +325,19 @@ def image_chart_detail(request, name, id):
 
     image_chart = get_object_or_404(ImageReportChart, id=id)
 
+    xaxis_attribute_changed = False
+    supported_attrs = image_chart.get_supported_attributes(request.user)
+    if image_chart.xaxis_attribute:
+        if not supported_attrs or \
+           image_chart.xaxis_attribute not in supported_attrs:
+            image_chart.xaxis_attribute = None
+            image_chart.save()
+            xaxis_attribute_changed = True
+
     return render_to_response(
         'dashboard_app/image_report_chart_detail.html', {
             'image_chart': image_chart,
+            'xaxis_attribute_changed': xaxis_attribute_changed,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 image_chart_detail, name=name, id=id),
         }, RequestContext(request)
@@ -382,6 +411,26 @@ def image_report_add_group(request, name):
             old_group.delete()
 
     return HttpResponse(group_name, content_type='application/json')
+
+
+@login_required
+def image_report_order_update(request, name):
+
+    if request.method != 'POST':
+        raise PermissionDenied
+
+    chart_id_order = request.POST.get("chart_id_order").split(",")
+    image_report = get_object_or_404(ImageReport, name=name)
+
+    try:
+        for index, chart_id in enumerate(chart_id_order):
+            image_chart = ImageReportChart.objects.get(pk=chart_id)
+            image_chart.relative_index = index
+            image_chart.save()
+    except:
+        return HttpResponse("fail", content_type='application/json')
+
+    return HttpResponse("success", content_type='application/json')
 
 
 @login_required
@@ -585,9 +634,20 @@ def image_chart_filter_detail(request, name, id, slug):
 
     chart_filter = get_object_or_404(ImageChartFilter, id=slug)
 
+    image_chart = chart_filter.image_chart
+    xaxis_attribute_changed = False
+    supported_attrs = image_chart.get_supported_attributes(request.user)
+    if image_chart.xaxis_attribute:
+        if not supported_attrs or \
+           image_chart.xaxis_attribute not in supported_attrs:
+            image_chart.xaxis_attribute = None
+            image_chart.save()
+            xaxis_attribute_changed = True
+
     return render_to_response(
         'dashboard_app/image_chart_filter_detail.html', {
             'chart_filter': chart_filter,
+            'xaxis_attribute_changed': xaxis_attribute_changed,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 image_chart_filter_detail, name=name, id=id, slug=slug),
         }, RequestContext(request)

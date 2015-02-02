@@ -91,6 +91,10 @@ straight dotted line. All the users subscribed to the target goal will
 receive an email notification any time any of the plot lines in chart go below
 the target goal.
 
+Note that order of the image charts in the report can be changed in the image
+report review page. Simple drag and drop of the charts in the list can be used
+for re-ordering.
+
 
 .. _adding-filter:
 

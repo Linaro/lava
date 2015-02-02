@@ -584,7 +584,7 @@ to not use two ``lava_test_shell`` commands::
             "parameters": {
                 "testdef_repos": [
                     {
-                        "git-repo": "http://git.linaro.org/git-ro/people/neil.williams/temp-functional-tests.git",
+                        "git-repo": "https://git.linaro.org/people/neil.williams/temp-functional-tests.git",
                         "testdef": "singlenode/singlenode01.yaml"
                     }
                 ],
@@ -603,7 +603,7 @@ Becomes::
                         "testdef": "ubuntu/smoke-tests-basic.yaml"
                     },
                     {
-                        "git-repo": "http://git.linaro.org/git-ro/people/neil.williams/temp-functional-tests.git",
+                        "git-repo": "https://git.linaro.org/people/neil.williams/temp-functional-tests.git",
                         "testdef": "singlenode/singlenode01.yaml"
                     }
                 ],

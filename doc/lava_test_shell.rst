@@ -304,12 +304,12 @@ The git-repos section shown above can be customized as follows::
 
   install:
       git-repos:
-          - url: http://git.linaro.org/git-ro/lava/lava-dispatcher.git
+          - url: https://git.linaro.org/lava/lava-dispatcher.git
             skip_by_default: False
-          - url: http://git.linaro.org/git-ro/lava/lava-dispatcher.git
+          - url: https://git.linaro.org/lava/lava-dispatcher.git
             destination:  lava-d-r
             branch:       release
-          - url: http://git.linaro.org/git-ro/lava/lava-dispatcher.git
+          - url: https://git.linaro.org/lava/lava-dispatcher.git
             destination:  lava-d-s
             branch:       staging
 
@@ -355,7 +355,7 @@ The JSON would override these defaults using the syntax::
             "parameters": {
                 "testdef_repos": [
                     {
-                        "git-repo": "http://git.linaro.org/git-ro/people/neil.williams/temp-functional-tests.git",
+                        "git-repo": "https://git.linaro.org/people/neil.williams/temp-functional-tests.git",
                         "testdef": "params.yaml",
                         "parameters": {"VARIABLE_NAME_1": "eth2"}
                     }
@@ -443,6 +443,18 @@ LAVA. The parse section has a fixup mechanism that can help::
 
   parse:
       pattern: "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|FAIL))"
+      fixupdict:
+          PASS: pass
+          FAIL: fail
+
+.. note:: Pattern can be double-quoted or single quoted. If it's double-quoted,
+          special characters need to be escaped. Otherwise, no escaping is
+          necessary.
+
+Single quote example::
+
+  parse:
+      pattern: '(?P<test_case_id>.*-*)\s+:\s+(?P<result>(PASS|FAIL))'
       fixupdict:
           PASS: pass
           FAIL: fail
