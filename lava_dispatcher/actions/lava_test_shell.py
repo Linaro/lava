@@ -407,7 +407,8 @@ class TestDefinitionLoader(object):
                     logging.debug('loading test definition ...')
                     testdef = yaml.safe_load(f)
             except IOError as e:
-                msg = "Unable to load test definition '%s/%s': %s" % (os.path.basename(repo), test, e)
+                msg = "Test Shell Error: Unable to load test definition '%s/%s': %s" % (os.path.basename(repo), test, e)
+                logging.error(msg)
                 raise CriticalError(msg)
 
             if 'test-case-deps' in testdef:
