@@ -43,7 +43,8 @@ from lava_dispatcher.utils import (
     create_ramdisk
 )
 from lava_dispatcher.errors import (
-    CriticalError
+    CriticalError,
+    OperationFailed,
 )
 
 
@@ -110,6 +111,7 @@ class QEMUTarget(Target):
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
+        self._check_power_state()
         with image_partition_mounted(self._sd_image, partition) as mntdir:
             path = '%s/%s' % (mntdir, directory)
             ensure_directory(path)
@@ -118,14 +120,13 @@ class QEMUTarget(Target):
     def extract_tarball(self, tarball_url, partition, directory='/'):
         logging.info('extracting %s to target', tarball_url)
 
+        self._check_power_state()
         with image_partition_mounted(self._sd_image, partition) as mntdir:
             tb = download_image(tarball_url, self.context, decompress=False)
             extract_tar(tb, '%s/%s' % (mntdir, directory))
 
     def power_on(self):
-        if self.proc is not None:
-            logging.warning('device already powered on, powering off first')
-            self.power_off(None)
+        self._check_power_state()
 
         qemu_options = ''
 
@@ -165,6 +166,11 @@ class QEMUTarget(Target):
         return self.proc
 
     def power_off(self, proc):
+        if self.proc:
+            try:
+                self._soft_reboot(self.proc)
+            except OperationFailed:
+                logging.info('Graceful reboot of platform failed')
         finalize_process(self.proc)
         self.proc = None
 
@@ -176,6 +182,11 @@ class QEMUTarget(Target):
             return matches[-1]
         except subprocess.CalledProcessError:
             return "unknown"
+
+    def _check_power_state(self):
+        if self.proc is not None:
+            logging.warning('device already powered on, powering off first')
+            self.power_off(None)
 
 
 target_class = QEMUTarget

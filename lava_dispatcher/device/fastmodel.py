@@ -48,6 +48,7 @@ from lava_dispatcher.test_data import (
 )
 from lava_dispatcher.errors import (
     CriticalError,
+    OperationFailed,
 )
 from lava_dispatcher.utils import (
     extract_tar,
@@ -366,6 +367,7 @@ class FastModelTarget(Target):
             with self._busybox_file_system(runner, directory) as path:
                 yield path
         else:
+            self._check_power_state()
             with image_partition_mounted(self._sd_image, partition) as mntdir:
                 path = '%s/%s' % (mntdir, directory)
                 ensure_directory(path)
@@ -374,6 +376,7 @@ class FastModelTarget(Target):
     def extract_tarball(self, tarball_url, partition, directory='/'):
         logging.info('extracting %s to target', tarball_url)
 
+        self._check_power_state()
         with image_partition_mounted(self._sd_image, partition) as mntdir:
             tb = download_image(tarball_url, self.context, decompress=False)
             extract_tar(tb, '%s/%s' % (mntdir, directory))
@@ -392,7 +395,17 @@ class FastModelTarget(Target):
             for f in files:
                 os.chmod(os.path.join(root, f), 0o777)
 
+    def _check_power_state(self):
+        if self._sim_proc is not None:
+            logging.warning('device already powered on, powering off first')
+            self.power_off(None)
+
     def power_off(self, proc):
+        if self._sim_proc:
+            try:
+                self._soft_reboot(self.proc)
+            except OperationFailed:
+                logging.info('Graceful reboot of platform failed')
         if self._uefi_vars is not None:
             logging.info('Requesting graceful shutdown')
             self._sim_proc.kill(signal.SIGTERM)
@@ -421,9 +434,7 @@ class FastModelTarget(Target):
                                % self.tester_ps1,
                                send_char=self.config.send_char)
             return self.proc
-        if self._sim_proc is not None:
-            logging.warning('device already powered on, powering off first')
-            self.power_off(None)
+        self._check_power_state()
         if self.config.bridged_networking:
             self._interface_name = os.path.basename(self._scratch_dir)
             if not self._bridge_configured:
