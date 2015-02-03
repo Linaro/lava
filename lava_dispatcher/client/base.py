@@ -126,6 +126,8 @@ class CommandRunner(object):
         else:
             rc = None
 
+        self._connection.empty_buffer()
+
         return rc
 
 
