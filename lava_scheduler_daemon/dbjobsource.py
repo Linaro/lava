@@ -226,22 +226,27 @@ class DatabaseJobSource(object):
         for job in jobs:
             device = find_device_for_job(job, devices)
             if device:
-                job.actual_device = device
                 try:
-                    job.submit_token = AuthToken.objects.filter(
-                        user=job.submitter)[0]
-                except IndexError:
-                    job.submit_token = AuthToken.objects.create(
-                        user=job.submitter)
-                device.current_job = job
-                device.state_transition_to(Device.RESERVED, message="Reserved for job %s" % job.display_id)
-                self._commit_transaction(src='%s state' % device.hostname)
-                self.logger.info('%s reserved for job %s', device.hostname,
-                                 job.id)
-                job.save()
-                device.save()
-                if device in devices:
-                    devices.remove(device)
+                    # Make this sequence atomic
+                    with transaction.atomic():
+                        job.actual_device = device
+                        try:
+                            job.submit_token = AuthToken.objects.filter(
+                                user=job.submitter)[0]
+                        except IndexError:
+                            job.submit_token = AuthToken.objects.create(
+                                user=job.submitter)
+                        device.current_job = job
+                        device.state_transition_to(Device.RESERVED, message="Reserved for job %s" % job.display_id)
+                        job.save()
+                        device.save()
+                    if device in devices:
+                        devices.remove(device)
+                    self.logger.info('%s reserved for job %s', device.hostname,
+                                     job.id)
+                except IntegrityError:
+                    # Retry in the next call to _assign_jobs
+                    self.logger.debug("Transaction failed for job %s" % job.display_id)
 
     def _kill_canceling(self, job):
         """
