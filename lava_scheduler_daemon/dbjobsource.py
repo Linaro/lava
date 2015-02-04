@@ -164,10 +164,7 @@ class DatabaseJobSource(object):
         health checks.
         """
 
-        for device in Device.objects.all():
-            if device.status != Device.IDLE:
-                continue
-            run_health_check = False
+        for device in Device.objects.filter(status=Device.IDLE):
             if not device.device_type.health_check_job:
                 run_health_check = False
             elif device.health_status == Device.HEALTH_UNKNOWN:
