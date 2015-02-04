@@ -93,7 +93,8 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
         if worker is None:
             worker = self.master
         with self.log_scheduler_state("job %d completes" % job.id):
-            worker.jobCompleted_impl(job.actual_device.hostname, 0, None)
+            worker.jobCompleted_impl(job.id, job.actual_device.hostname, 0,
+                                     None)
 
     def device_status(self, hostname, status=None, health_status=None):
         device = Device.objects.get(pk=hostname)

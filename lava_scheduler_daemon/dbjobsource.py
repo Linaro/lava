@@ -345,7 +345,14 @@ class DatabaseJobSource(object):
     def jobStarted(self, job):
         return self.deferForDB(self.jobStarted_impl, job)
 
-    def jobCompleted_impl(self, board_name, exit_code, kill_reason):
+    def jobCompleted_impl(self, job_id, board_name, exit_code, kill_reason):
+        if not job_id:
+            self.logger.debug('job completion called without a job id on %s',
+                              board_name)
+            return
+        else:
+            job = TestJob.objects.get(id=job_id)
+
         self.logger.debug('marking job as complete on %s', board_name)
         device = Device.objects.get(hostname=board_name)
         old_device_status = device.status
@@ -364,7 +371,6 @@ class DatabaseJobSource(object):
             new_device_status = Device.IDLE
         if new_device_status is None:
             new_device_status = Device.IDLE
-        job = device.current_job
 
         # Temporary devices should be marked as RETIRED once the job is
         # complete or canceled.
@@ -375,8 +381,6 @@ class DatabaseJobSource(object):
             except TemporaryDevice.DoesNotExist:
                 self.logger.debug("%s is not a tmp device", device.hostname)
 
-        device.device_version = _get_device_version(job.results_bundle)
-        device.current_job = None
         if job.status == TestJob.RUNNING:
             if exit_code == 0:
                 job.status = TestJob.COMPLETE
@@ -385,14 +389,8 @@ class DatabaseJobSource(object):
         elif job.status == TestJob.CANCELING:
             job.status = TestJob.CANCELED
         else:
-            self.logger.error(
-                "Unexpected job state in jobCompleted: %s", job.status)
-            job.status = TestJob.COMPLETE
-
-        msg = "Job %s completed" % job.display_id
-        device.state_transition_to(new_device_status, message=msg, job=job)
-        self._commit_transaction(src='%s state' % device.hostname)
-        self.logger.info('job %s completed on %s', job.id, device.hostname)
+            self.logger.error("Unexpected job state in jobCompleted: %s, probably we are trying job completion for a different job", job.status)
+            return
 
         if job.health_check:
             device.last_health_report_job = job
@@ -419,9 +417,18 @@ class DatabaseJobSource(object):
         job.end_time = datetime.datetime.utcnow()
         token = job.submit_token
         job.submit_token = None
+
+        device.device_version = _get_device_version(job.results_bundle)
+        device.current_job = None
+        msg = "Job %s completed" % job.display_id
+        device.state_transition_to(new_device_status, message=msg, job=job)
+        self._commit_transaction(src='%s state' % device.hostname)
+
         device.save()
         job.save()
         self._commit_transaction(src='jobCompleted_impl')
+        self.logger.info('job %s completed on %s', job.id, device.hostname)
+
         if utils.is_master():
             try:
                 job.send_summary_mails()
@@ -434,8 +441,9 @@ class DatabaseJobSource(object):
             worker = WorkerData()
             worker.notify_on_incomplete(job.id)
 
-    def jobCompleted(self, board_name, exit_code, kill_reason):
-        return self.deferForDB(self.jobCompleted_impl, board_name, exit_code, kill_reason)
+    def jobCompleted(self, job_id, board_name, exit_code, kill_reason):
+        return self.deferForDB(self.jobCompleted_impl, job_id, board_name,
+                               exit_code, kill_reason)
 
     def jobCheckForCancellation_impl(self, board_name):
         device = Device.objects.get(hostname=board_name)
