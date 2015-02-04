@@ -409,7 +409,7 @@ class TestDefinitionLoader(object):
             except IOError as e:
                 msg = "Test Shell Error: Unable to load test definition '%s/%s': %s" % (os.path.basename(repo), test, e)
                 logging.error(msg)
-                raise CriticalError(msg)
+                raise RuntimeError(msg)
 
             if 'test-case-deps' in testdef:
                 self._get_dependent_test_cases(testdef)

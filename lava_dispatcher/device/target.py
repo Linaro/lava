@@ -397,6 +397,7 @@ class Target(object):
         # Set flags
         boot_cmds_job_file = False
         boot_cmds_boot_options = False
+        master_boot = False
 
         # Set the default boot commands
         if default is None:
@@ -407,10 +408,12 @@ class Target(object):
         # Check for job defined boot commands
         if boot_cmds != 'boot_cmds_master':
             boot_cmds_job_file = self._is_job_defined_boot_cmds(self.config.boot_cmds)
+        else:
+            master_boot = True
 
         # Check if a user has entered boot_options
         options, user_option = boot_options.as_dict(self, defaults={'boot_cmds': boot_cmds})
-        if 'boot_cmds' in options and user_option:
+        if 'boot_cmds' in options and user_option and not master_boot:
             boot_cmds_boot_options = True
 
         # Interactive boot_cmds from the job file are a list.
