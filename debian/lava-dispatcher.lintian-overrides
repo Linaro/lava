@@ -1,5 +1,6 @@
 # needs to be executable to be put onto the target later, the shebang is substituted
 lava-dispatcher: executable-not-elf-or-script usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-shell
+lava-dispatcher: executable-not-elf-or-script usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case-metadata
 # become executable once copied into the target system
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/fedora/lava-install-packages
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/fedora/lava-installed-packages
@@ -36,6 +37,7 @@ lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_disp
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-sources
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/ubuntu/lava-add-keys
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/ubuntu/lava-add-sources
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-vm-groups-setup-host
 
 # android specific
 #lava-dispatcher: wrong-path-for-interpreter usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/android/lava-test-runner (#!/system/bin/mksh != /bin/mksh)
