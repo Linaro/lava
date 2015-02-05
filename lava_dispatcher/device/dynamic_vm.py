@@ -44,6 +44,7 @@ class DynamicVmTarget(Target):
     supported_backends = {
         'kvm': lambda: kvm_adapter,
         'kvm-arm': lambda: kvm_adapter,
+        'kvm-aarch64': lambda: kvm_adapter,
     }
 
     def __init__(self, context, config):
