@@ -44,6 +44,12 @@ class DispatcherProcessProtocol(ProcessProtocol):
         self.job = job
 
     def childDataReceived(self, childFD, data):
+        if childFD == 2:
+            debug_path = os.path.join(self.job.output_dir, 'output.txt')
+            if os.path.exists(debug_path):
+                with open(debug_path, 'a') as logfile:
+                    logfile.write("ERROR: %s\n" % data)
+            self.logger.error("ERROR: %s", data)
         self.log_size += len(data)
         if self.log_size > self.job.daemon_options['LOG_FILE_SIZE_LIMIT']:
             if not self.job._killing:
@@ -84,6 +90,7 @@ class Job(object):
         self._kill_reason = ''
         self._pidrecord = None
         self._device_config = None
+        self.output_dir = None
 
     def _checkCancel(self):
         if self._killing:
@@ -136,6 +143,7 @@ class Job(object):
         fd, self._json_file = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
+        self.output_dir = output_dir
 
         args = [self.dispatcher, self._json_file, '--output-dir', output_dir]
 
@@ -147,11 +155,14 @@ class Job(object):
             args.append('--config')
             args.append(self._device_config)
 
+        # childFDs are given defaults ie., {0: 'w', 1:'r', 2:'r'}
+        # See https://twistedmatrix.com/documents/14.0.1/core/howto/process.html#running-another-process for details.
         self._protocol = DispatcherProcessProtocol(d, self)
+        self.logger.info('executing "%s"', ' '.join(args))
         ret = self.reactor.spawnProcess(self._protocol, self.dispatcher,
-                                        args=args, env=None,
-                                        childFDs={0: 0, 1: 'r', 2: 'r'})
+                                        args=args, env=None)
         if ret:
+            self.logger.debug("reactor spawned process with status: %s", ret.status)
             os.mkdir(output_dir)
             self._pidrecord = os.path.join(output_dir, "jobpid")
             with open(self._pidrecord, 'w') as f:
@@ -170,7 +181,10 @@ class Job(object):
             os.unlink(self._json_file)
         if self._pidrecord is not None and os.path.exists(self._pidrecord):
             os.unlink(self._pidrecord)
-        self.logger.info("reporting job completed")
+        if exit_code:
+            self.logger.info("job incomplete: reported %s exit code", exit_code)
+        else:
+            self.logger.info("job complete")
         if self._time_limit_call is not None:
             self._time_limit_call.cancel()
         self._checkCancel_call.stop()
@@ -223,7 +237,8 @@ class MonitorJob(object):
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
 
-        childFDs = {0: 0, 1: 1, 2: 2}
+        # See https://twistedmatrix.com/documents/14.0.1/core/howto/process.html#running-another-process for details.
+        childFDs = {0: 'w', 1: 'r', 2: 'r'}
         args = [
             'setsid', 'lava-server', 'manage', 'schedulermonitor',
             str(self.job.id), self.dispatcher, str(self.board_name),
