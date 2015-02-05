@@ -1,3 +1,11 @@
+lava-dispatcher (2014.12-2) experimental; urgency=medium
+
+  * Add xz-utils for xz and lzma support.
+  * Add lintian override for more test shell support scripts for
+    openembedded.
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 05 Feb 2015 09:43:34 +0000
+
 lava-dispatcher (2014.12-1) experimental; urgency=medium
 
   * New production release

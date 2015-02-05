@@ -10,6 +10,8 @@ lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_disp
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-install-packages
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-installed-packages
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-os-build
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/oe/lava-install-packages
+lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/oe/lava-installed-packages
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-installed-packages
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-os-build
 lava-dispatcher: script-not-executable usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lmp/lava-lmp-audio-jack
