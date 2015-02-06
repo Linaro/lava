@@ -158,7 +158,7 @@ class Job(object):
         if cancel:
             self.cancel("killing job by user request")
         else:
-            logging.debug('not cancelling')
+            self.logger.debug('running job id %s', self.job_id)
 
     def _time_limit_exceeded(self):
         self._time_limit_call = None
