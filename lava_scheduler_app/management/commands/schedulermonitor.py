@@ -27,8 +27,6 @@ class Command(SchedulerCommand):
 
     help = "Run the LAVA test job scheduler"
 
-    log_prefix = 'M'
-
     def handle(self, *args, **options):
         from twisted.internet import reactor
         from lava_scheduler_daemon.job import Job
