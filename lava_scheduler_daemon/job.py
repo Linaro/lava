@@ -27,6 +27,8 @@ from twisted.internet.error import ProcessDone, ProcessExitedAlready
 from twisted.internet.protocol import ProcessProtocol
 from twisted.internet import defer, task
 
+# pylint: disable=invalid-name,too-many-instance-attributes,too-many-arguments,too-few-public-methods
+
 
 def catchall_errback(logger):
     def eb(failure):
@@ -92,15 +94,15 @@ def argChecker(arg):
         try:
             arg = arg.encode(defaultEncoding)
         except UnicodeEncodeError:
-            logger.warning("arg failed to encode from unicode: %s" % type(arg))
+            logger.warning("arg failed to encode from unicode: %s", type(arg))
             arg = arg.encode('ascii', 'ignore')
-            logger.warning("converted by dropping invalid characters: %s" % arg)
+            logger.warning("converted by dropping invalid characters: %s", arg)
             return arg
     if isinstance(arg, str) and '\0' not in arg:
         return arg
     else:
         arg = arg.replace('\0', '')
-        logger.warning("%s contained null" % arg)
+        logger.warning("%s contained null", arg)
         return arg
 
 
@@ -179,8 +181,6 @@ class Job(object):
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
         self.output_dir = output_dir
-
-        # args = [self.dispatcher, self._json_file, '--output-dir', output_dir]
 
         args = [
             argChecker(self.dispatcher),
@@ -329,7 +329,7 @@ class JobRunner(object):
             return
         self.source.jobStarted(self.job).addCallback(self._prepareJob)
 
-    def _prepareJob(self, status):
+    def _prepareJob(self, status):  # pylint: disable=unused-argument
         self.source.getJobDetails(self.job).addCallbacks(
             self._startJob, self._ebStartJob)
 
@@ -366,5 +366,5 @@ class JobRunner(object):
     def _ebJobFinished(self, result):
         self.logger.exception(result.value)
 
-    def _cbJobFinished(self, result):
+    def _cbJobFinished(self, result):  # pylint: disable=unused-argument
         self.running_job = None
