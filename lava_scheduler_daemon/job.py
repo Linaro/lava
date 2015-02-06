@@ -18,6 +18,7 @@
 
 import json
 import os
+import sys
 import signal
 import tempfile
 import logging
@@ -46,10 +47,12 @@ class DispatcherProcessProtocol(ProcessProtocol):
     def childDataReceived(self, childFD, data):
         if childFD == 2:
             debug_path = os.path.join(self.job.output_dir, 'output.txt')
-            if os.path.exists(debug_path):
+            # only add output if there is nothing else as later failures will be logged.
+            if os.path.exists(debug_path) and os.stat(debug_path).st_size == 0:
                 with open(debug_path, 'a') as logfile:
                     logfile.write("ERROR: %s\n" % data)
-            self.logger.error("ERROR: %s", data)
+                self.logger.error("ERROR: %s", data)
+                self.job.cancel(data)
         self.log_size += len(data)
         if self.log_size > self.job.daemon_options['LOG_FILE_SIZE_LIMIT']:
             if not self.job._killing:
@@ -67,6 +70,38 @@ class DispatcherProcessProtocol(ProcessProtocol):
         self.logger.info("processEnded for %s: %s",
                          self.job.board_name, reason.value)
         self.deferred.callback(reason.value.exitCode)
+
+
+# Common check function, adapted from /usr/lib/python2.7/dist-packages/twisted/internet/base.py:880:
+# python-twisted-core 14.0.2-3 (codehelp)
+def argChecker(arg):
+    """
+    Return either a str or None.  If the given value is not
+    allowable for some reason, None is returned.  Otherwise, a
+    possibly different object which should be used in place of arg
+    is returned.  This forces unicode encoding to happen now, rather
+    than implicitly later.
+
+    This adapted version always returns something and that something
+    will always pass the original argChecker in twisted, whilst logging
+    warnings if changes had to be made.
+    """
+    logger = logging.getLogger('argChecker')
+    defaultEncoding = sys.getdefaultencoding()
+    if isinstance(arg, unicode):
+        try:
+            arg = arg.encode(defaultEncoding)
+        except UnicodeEncodeError:
+            logger.warning("arg failed to encode from unicode: %s" % type(arg))
+            arg = arg.encode('ascii', 'ignore')
+            logger.warning("converted by dropping invalid characters: %s" % arg)
+            return arg
+    if isinstance(arg, str) and '\0' not in arg:
+        return arg
+    else:
+        arg = arg.replace('\0', '')
+        logger.warning("%s contained null" % arg)
+        return arg
 
 
 class Job(object):
@@ -145,20 +180,29 @@ class Job(object):
             json.dump(json_data, f)
         self.output_dir = output_dir
 
-        args = [self.dispatcher, self._json_file, '--output-dir', output_dir]
+        # args = [self.dispatcher, self._json_file, '--output-dir', output_dir]
+
+        args = [
+            argChecker(self.dispatcher),
+            argChecker(self._json_file),
+            argChecker('--output-dir'),
+            argChecker(output_dir)
+        ]
 
         if custom_config:
             fd, self._device_config = tempfile.mkstemp()
             with os.fdopen(fd, 'wb') as f:
                 for k in custom_config:
                     f.write(k + '=' + custom_config[k] + "\n")
-            args.append('--config')
-            args.append(self._device_config)
+            args.append(argChecker('--config'))
+            args.append(argChecker(self._device_config))
 
         # childFDs are given defaults ie., {0: 'w', 1:'r', 2:'r'}
         # See https://twistedmatrix.com/documents/14.0.1/core/howto/process.html#running-another-process for details.
         self._protocol = DispatcherProcessProtocol(d, self)
+
         self.logger.info('executing "%s"', ' '.join(args))
+
         ret = self.reactor.spawnProcess(self._protocol, self.dispatcher,
                                         args=args, env=None)
         if ret:
