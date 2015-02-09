@@ -196,9 +196,10 @@ def image_report_display(request, name):
         raise PermissionDenied()
 
     chart_data = {}
-    for chart in image_report.imagereportchart_set.all().order_by(
-            'relative_index'):
-        chart_data[chart.relative_index] = chart.get_chart_data(request.user)
+    for index, chart in enumerate(
+            image_report.imagereportchart_set.all().order_by(
+                'relative_index')):
+        chart_data[index] = chart.get_chart_data(request.user)
 
     return render_to_response(
         'dashboard_app/image_report_display.html', {
