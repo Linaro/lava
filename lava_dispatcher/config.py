@@ -87,6 +87,7 @@ class DeviceSchema(schema.Schema):
     interrupt_boot_command = schema.StringOption()
     interrupt_boot_prompt = schema.StringOption()
     interrupt_boot_control_character = schema.StringOption()
+    fvp_terminal_port_pattern = schema.StringOption(default="terminal_0: Listening for serial connection on port (\d+)")
     bootloader_serial_delay_ms = schema.IntOption(default=0)
     test_shell_serial_delay_ms = schema.IntOption(default=0)
     lmc_dev_arg = schema.StringOption()
