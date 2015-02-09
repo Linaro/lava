@@ -108,18 +108,12 @@ class DatabaseJobSource(object):
 
     def deferForDB(self, func, *args, **kw):
         def wrapper(*args, **kw):
-            # If there is no db connection yet on this thread, create a
-            # connection and immediately commit, because rolling back the
-            # first transaction on a connection loses the effect of
-            # settings.TIME_ZONE when using postgres (see
-            # https://code.djangoproject.com/ticket/17062).
             transaction.enter_transaction_management()
             transaction.managed()
             try:
                 if connection.connection is None:
                     connection.cursor().close()
                     assert connection.connection is not None
-                    transaction.commit()
                 try:
                     return func(*args, **kw)
                 except (DatabaseError, OperationalError, InterfaceError), error:
