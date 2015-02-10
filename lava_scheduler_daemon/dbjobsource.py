@@ -358,6 +358,10 @@ class DatabaseJobSource(object):
         old_device_status = device.status
         new_device_status = None
         previous_state = device.previous_state()
+        self.logger.debug('old device status %s, previous device state %s, job state %s' % (
+            Device.STATUS_CHOICES[old_device_status][1],
+            Device.STATUS_CHOICES[previous_state][1],
+            TestJob.STATUS_CHOICES[job.status][1]))
 
         if old_device_status == Device.RUNNING:
             new_device_status = previous_state
@@ -370,7 +374,13 @@ class DatabaseJobSource(object):
                 "Unexpected device state in jobCompleted: %s", device.status)
             new_device_status = Device.IDLE
         if new_device_status is None:
+            self.logger.debug("unhandled old device state")
             new_device_status = Device.IDLE
+
+        self.logger.debug('new device status %s, previous device state %s, job state %s' % (
+            Device.STATUS_CHOICES[new_device_status][1],
+            Device.STATUS_CHOICES[previous_state][1],
+            TestJob.STATUS_CHOICES[job.status][1]))
 
         # Temporary devices should be marked as RETIRED once the job is
         # complete or canceled.
@@ -392,14 +402,29 @@ class DatabaseJobSource(object):
             self.logger.error("Unexpected job state in jobCompleted: %s, probably we are trying job completion for a different job", job.status)
             return
 
+        self.logger.debug('changed job status to %s' % (
+            TestJob.STATUS_CHOICES[job.status][1]))
+
         if job.health_check:
             device.last_health_report_job = job
+            self.logger.debug("old device health status %s" % Device.HEALTH_CHOICES[device.health_status][1])
             if device.health_status != Device.HEALTH_LOOPING:
                 if job.status == TestJob.INCOMPLETE:
                     device.health_status = Device.HEALTH_FAIL
+                    if previous_state not in [Device.OFFLINE, Device.OFFLINING]:
+                        self.logger.debug("taking %s offline, failed health check job %s" % (
+                            device.hostname, job_id))
+                    else:
+                        self.logger.debug("%s is offline, failed health check job %s" % (
+                            device.hostname, job_id))
                     device.put_into_maintenance_mode(None, "Health Check Job Failed")
+                    # update the local variable to track the effect of the external function call
+                    new_device_status = device.status
+                    if new_device_status == Device.OFFLINING:
+                        new_device_status = Device.OFFLINE  # offlining job is complete.
                 elif job.status == TestJob.COMPLETE:
                     device.health_status = Device.HEALTH_PASS
+            self.logger.debug("new device health status %s" % Device.HEALTH_CHOICES[device.health_status][1])
 
         bundle_file = os.path.join(job.output_dir, 'result-bundle')
         if os.path.exists(bundle_file):
@@ -414,8 +439,13 @@ class DatabaseJobSource(object):
             else:
                 job._results_bundle = bundle
 
+        self.logger.debug('new device status %s, previous device state %s, job state %s' % (
+            Device.STATUS_CHOICES[new_device_status][1],
+            Device.STATUS_CHOICES[previous_state][1],
+            TestJob.STATUS_CHOICES[job.status][1]))
+
         job.end_time = datetime.datetime.utcnow()
-        token = job.submit_token
+
         job.submit_token = None
 
         device.device_version = _get_device_version(job.results_bundle)
