@@ -1,0 +1,53 @@
+- class: actions.deploy.image.DeployImageAction
+  name: deployimage
+  pipeline:
+  - class: actions.deploy.download.DownloaderAction
+    name: download_retry
+    pipeline:
+    - {class: actions.deploy.download.FileDownloadAction, name: file_download}
+  - class: actions.deploy.mount.MountAction
+    name: mount_action
+    pipeline:
+    - {class: actions.deploy.mount.OffsetAction, name: offset_action}
+    - {class: actions.deploy.mount.LoopCheckAction, name: loop_check}
+    - {class: actions.deploy.mount.LoopMountAction, name: loop_mount}
+  - {class: actions.deploy.overlay.CustomisationAction, name: customise}
+  - class: actions.deploy.overlay.OverlayAction
+    name: lava-overlay
+    pipeline:
+    - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
+    - class: actions.deploy.testdef.TestDefinitionAction
+      name: test-definition
+      pipeline:
+      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
+      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
+      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
+      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
+      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
+      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
+      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
+      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
+    - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
+  - {class: actions.deploy.apply_overlay.ApplyOverlayImage, name: apply-overlay-image}
+  - class: actions.deploy.mount.UnmountAction
+    name: umount-retry
+    pipeline:
+    - {class: actions.deploy.mount.Unmount, name: umount}
+- class: actions.boot.kvm.BootQEMUImageAction
+  name: boot_image_retry
+  pipeline:
+  - class: actions.boot.kvm.BootQemuRetry
+    name: boot_qemu_image
+    pipeline:
+    - {class: actions.boot.kvm.CallQemuAction, name: execute-qemu}
+  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - {class: shell.ExpectShellSession, name: expect-shell-connection}
+- class: actions.test.shell.TestShellRetry
+  name: lava-test-retry
+  pipeline:
+  - {class: actions.test.shell.TestShellAction, name: lava-test-shell}
+- {class: actions.submit.SubmitResultsAction, name: submit_results}
+- class: power.FinalizeAction
+  name: finalize
+  pipeline:
+  - {class: power.PowerOff, name: power_off}

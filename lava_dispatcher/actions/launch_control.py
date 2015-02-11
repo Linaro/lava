@@ -22,6 +22,7 @@
 import os
 import logging
 import tempfile
+import urllib2
 import urlparse
 import xmlrpclib
 import simplejson
@@ -219,7 +220,7 @@ class cmd_submit_results(BaseAction):
         if not all_bundles:
             main_bundle = {
                 "test_runs": [],
-                "format": "Dashboard Bundle Format 1.7"
+                "format": "Dashboard Bundle Format 1.7.1"
             }
         else:
             main_bundle = all_bundles.pop(0)
@@ -247,9 +248,9 @@ class cmd_submit_results(BaseAction):
         dashboard = _get_dashboard(server, token)
         json_bundle = DocumentIO.dumps(main_bundle)
         job_name = self.context.job_data.get('job_name', "LAVA Results")
+        job_name = urllib2.quote(job_name.encode('utf-8'))
         try:
             result = dashboard.put_ex(json_bundle, job_name, stream)
-            print >> self.context.oob_file, 'dashboard-put-result:', result
             self.context.output.write_named_data('result-bundle', result)
             logging.info("Dashboard : %s" % result)
         except xmlrpclib.Fault, err:

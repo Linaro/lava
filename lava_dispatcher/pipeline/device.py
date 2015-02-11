@@ -1,6 +1,7 @@
 # Copyright (C) 2014 Linaro Limited
 #
 # Author: Neil Williams <neil.williams@linaro.org>
+#         Remi Duraffort <remi.duraffort@linaro.org>
 #
 # This file is part of LAVA Dispatcher.
 #
@@ -20,113 +21,45 @@
 
 import os
 import yaml
-from yaml.composer import Composer
-from yaml.constructor import Constructor
-from lava_dispatcher.pipeline.action import Timeout
 
 
-class DeviceTypeParser(object):
-    """
-    Very simple (too simple) parser for Device configuration files
-    """
-
-    # FIXME: design a schema and check files against it.
-
-    loader = None
-
-    def compose_node(self, parent, index):
-        # the line number where the previous token has ended (plus empty lines)
-        node = Composer.compose_node(self.loader, parent, index)
-        return node
-
-    def construct_mapping(self, node, deep=False):
-        mapping = Constructor.construct_mapping(self.loader, node, deep=deep)
-        return mapping
-
-    def parse(self, content):
-        self.loader = yaml.Loader(content)
-        self.loader.compose_node = self.compose_node
-        self.loader.construct_mapping = self.construct_mapping
-        data = self.loader.get_single_data()
-        return data
-
-
-class NewDeviceDefaults(object):
-    """
-    Placeholder for an eventual schema based on the current device config schema
-    but adapted to the new device parameter structure.
-    Ideally, use an external file as the schema
-    """
-
-    # TODO! this should be a YAML file on the filesystem & only certain strings for specific distros
-    def __init__(self):
-        test_image_prompts = [r"\(initramfs\)",  # check if the r prefix breaks matching later & remove \.
-                              "linaro-test",
-                              "/ #",
-                              "root@android",
-                              "root@linaro",
-                              "root@master",
-                              "root@debian",
-                              "root@linaro-nano:~#",
-                              "root@linaro-developer:~#",
-                              "root@linaro-server:~#",
-                              "root@genericarmv7a:~#",
-                              "root@genericarmv8:~#"]
-        self.parameters = {
-            'test_image_prompts': test_image_prompts
-        }
-
-
-class NewDevice(object):
+class NewDevice(dict):
     """
     YAML based Device class with clearer support for the pipeline overrides
     and deployment types.
+    To simplify development and prepare for the dumb dispatcher model, the
+    development path is the current working directory. The system path
+    is the installed location of this python module and is overridden by
+    files in the development path.
     """
-    # FIXME: replace the current Device class with this one.
 
     def __init__(self, target):
+        super(NewDevice, self).__init__()
         self.target = target
-        self.__parameters__ = {}
-        self.overrides = {'timeouts': {}}
-        dev_parser = DeviceTypeParser()
-        # development paths are within the working directory
-        # FIXME: system paths need to be finalised.
-        # possible default system_config_path = "/usr/share/lava-dispatcher"
-        # FIXME: change to default-config once the old files are converted.
-        # FIXME: need a temporary or at least separate location in /etc/ and override support
-        default_config_path = os.path.join(os.path.dirname(__file__))
-        if not os.path.exists(os.path.join(default_config_path, 'devices', "%s.conf" % target)):
-            raise RuntimeError("Unable to find device: %s in %s" % (target, default_config_path))
-
-        defaults = NewDeviceDefaults()
-        # parameters dict will update if new settings are found, so repeat for customisation files when those exist
-        self.parameters = defaults.parameters
-        device_file = os.path.join(default_config_path, 'devices', "%s.conf" % target)
+        # development paths are within the current working directory
+        device_config_path = os.getcwd()
+        name = os.path.join('devices', "%s.yaml" % target)
+        device_file = os.path.join(device_config_path, name)
         if not os.path.exists(device_file):
-            raise RuntimeError("Could not find %s" % device_file)
+            # system paths are in the installed location of __file__
+            # principally used for unit-test support
+            device_config_path = os.path.join(os.path.dirname(__file__))
+            sys_device_file = os.path.join(device_config_path, name)
+            if not os.path.exists(sys_device_file):
+                raise RuntimeError(
+                    "Unable to find config file for device: %s  as %s or %s" % (
+                        target, device_file, sys_device_file))
+            device_file = sys_device_file
+
+        # Parse the yaml configuration
         try:
-            self.parameters = dev_parser.parse(open(device_file))
-        except TypeError:
+            with open(device_file) as f_in:
+                self.update(yaml.load(f_in))
+        except yaml.parser.ParserError:
             raise RuntimeError("%s could not be parsed" % device_file)
-        type_file = os.path.join(default_config_path, 'device_types', "%s.conf" % self.parameters['device_type'])
-        if not os.path.exists(type_file):
-            raise RuntimeError("Could not find %s" % type_file)
-        try:
-            self.parameters = dev_parser.parse(open(type_file))
-        except TypeError:
-            raise RuntimeError("%s could not be parsed" % type_file)
-        self.parameters = {'hostname': target}  # FIXME: is this needed?
-        if 'timeouts' in self.parameters:
-            for name, _ in list(self.parameters['timeouts'].items()):
-                self.overrides['timeouts'][name] = Timeout.parse(self.parameters['timeouts'][name])
 
-    @property
-    def parameters(self):
-        return self.__parameters__
-
-    @parameters.setter
-    def parameters(self, data):
-        self.__parameters__.update(data)
+        self['hostname'] = target
+        self.setdefault('power_state', 'off')  # assume power is off at start of job
 
     def check_config(self, job):
         """
@@ -134,3 +67,40 @@ class NewDevice(object):
         *before* the Deployment actions are initialised.
         """
         raise NotImplementedError("check_config")
+
+    @property
+    def hard_reset_command(self):
+        if 'commands' in self and 'hard_reset' in self['commands']:
+            return self['commands']['hard_reset']
+        return ''
+
+    @property
+    def power_command(self):
+        if 'commands' in self and 'power_on' in self['commands']:
+            return self['commands']['power_on']
+        return self.hard_reset_command
+
+    @property
+    def connect_command(self):
+        if 'connect' in self['commands']:
+            return self['commands']['connect']
+        return ''
+
+    @property
+    def power_state(self):
+        """
+        The power_state may appear to be a boolean (with on and off string values) but
+        also copes with devices where the device has no power commands, returning an
+        empty string.
+        """
+        if 'commands' in self and 'power_on' in self['commands']:
+            return self['power_state']
+        return ''
+
+    @power_state.setter
+    def power_state(self, state):
+        if 'commands' not in self or 'power_off' not in self['commands']:
+            raise RuntimeError("Power state not supported for %s" % self['hostname'])
+        if state is '' or state is not 'on' and state is not 'off':
+            raise RuntimeError("Attempting to set an invalid power state")
+        self['power_state'] = state

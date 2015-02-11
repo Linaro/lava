@@ -25,6 +25,11 @@ class SubmitResultsAction(Action):
 
     name = 'submit_results'
 
+    def validate(self):
+        super(SubmitResultsAction, self).validate()
+        if 'repeat' in self.parameters:
+            self.errors = "%s does not support repeat" % self.name
+
     def run(self, connection, args=None):
         return connection
 

@@ -37,6 +37,8 @@ from lava_dispatcher.utils import (
     create_ramdisk,
     append_dtb,
     prepend_blob,
+    create_multi_image,
+    create_uimage,
 )
 
 
@@ -59,7 +61,7 @@ class FastBoot(object):
     def enter(self):
         try:
             # First we try a gentle reset
-            self.device._adb(self.device.config.soft_boot_cmd)
+            self.device.adb(self.device.config.soft_boot_cmd)
         except subprocess.CalledProcessError:
             # Now a more brute force attempt. In this case the device is
             # probably hung.
@@ -183,7 +185,7 @@ class BaseDriver(object):
                 ramdisk_dir = extract_ramdisk(self._ramdisk, self.working_dir,
                                               is_uboot=False)
                 extract_modules(modules, ramdisk_dir)
-                self._ramdisk = create_ramdisk(ramdisk_dir, self._working_dir)
+                self._ramdisk = create_ramdisk(ramdisk_dir, self.working_dir)
         if dtb is not None:
             dtb = self._get_image(dtb)
             if self.config.append_dtb:
@@ -193,6 +195,24 @@ class BaseDriver(object):
             self._default_boot_cmds = 'boot_cmds_rootfs'
             rootfs = self._get_image(rootfs)
             self.fastboot.flash(self.config.rootfs_partition, rootfs)
+        if self.config.multi_image_only:
+            if self.config.fastboot_kernel_load_addr:
+                if self.config.text_offset:
+                    load_addr = self.config.text_offset
+                else:
+                    load_addr = self.config.fastboot_kernel_load_addr
+                if self._ramdisk:
+                    self._kernel = create_multi_image(self._kernel,
+                                                      self._ramdisk,
+                                                      load_addr,
+                                                      self.working_dir)
+                else:
+                    self._kernel = create_uimage(self._kernel,
+                                                 load_addr,
+                                                 self.working_dir,
+                                                 self.config.uimage_xip)
+            else:
+                raise CriticalError('Kernel load address not defined!')
 
         self.__boot_image__ = 'kernel'
 
@@ -214,6 +234,13 @@ class BaseDriver(object):
 
         self.__boot_image__ = boot
 
+    def adb(self, args, ignore_failure=False, spawn=False, timeout=600):
+        cmd = self.config.adb_command + ' ' + args
+        if spawn:
+            return self.context.spawn(cmd, timeout=60)
+        else:
+            _call(self.context, cmd, ignore_failure, timeout)
+
     @property
     def working_dir(self):
         if self.config.shared_working_directory is None or \
@@ -233,11 +260,11 @@ class BaseDriver(object):
         target_dir = '%s/%s' % (mount_point, directory)
 
         subprocess.check_call(['mkdir', '-p', host_dir])
-        self._adb('pull %s %s' % (target_dir, host_dir), ignore_failure=True)
+        self.adb('pull %s %s' % (target_dir, host_dir), ignore_failure=True)
 
         yield host_dir
 
-        self._adb('push %s %s' % (host_dir, target_dir))
+        self.adb('push %s %s' % (host_dir, target_dir))
 
     # Private Methods
 
@@ -252,13 +279,6 @@ class BaseDriver(object):
             self.config.sys_part_android_org: '/system',
         }
         return lookup[partition]
-
-    def _adb(self, args, ignore_failure=False, spawn=False, timeout=600):
-        cmd = self.config.adb_command + ' ' + args
-        if spawn:
-            return self.context.spawn(cmd, timeout=60)
-        else:
-            _call(self.context, cmd, ignore_failure, timeout)
 
 
 class fastboot(BaseDriver):
@@ -276,8 +296,8 @@ class fastboot(BaseDriver):
 
     def connect(self):
         if self.target_type == 'android':
-            self._adb('wait-for-device')
-            proc = self._adb('shell', spawn=True)
+            self.adb('wait-for-device')
+            proc = self.adb('shell', spawn=True)
         else:
             raise CriticalError('This device only supports Android!')
 
@@ -314,7 +334,7 @@ class fastboot_serial(BaseDriver):
             raise CriticalError('The connection_command is not defined!')
 
         if self.target_type == 'android':
-            self._adb('wait-for-device')
+            self.adb('wait-for-device')
 
         return proc
 
@@ -335,6 +355,28 @@ class capri(fastboot_serial):
     def boot(self, boot_cmds=None):
         self.fastboot.flash('boot', self.__boot_image__)
         self.fastboot('reboot')
+
+
+class optimusa80(fastboot_serial):
+
+    def __init__(self, device):
+        super(optimusa80, self).__init__(device)
+
+    def erase_boot(self):
+        pass
+
+    def boot(self, boot_cmds=None):
+        if self.__boot_image__ is None:
+            raise CriticalError('Deploy action must be run first')
+        if self._kernel is not None:
+            self.fastboot('flash boot %s' % self._kernel)
+            self.fastboot('reboot')
+        else:
+            self.fastboot.boot(self.__boot_image__)
+            self.fastboot('reboot')
+
+    def in_fastboot(self):
+        return False
 
 
 class pxa1928dkb(fastboot_serial):
@@ -363,7 +405,7 @@ class pxa1928dkb(fastboot_serial):
         self.fastboot('reboot')
 
         if self.target_type == 'android':
-            self._adb('wait-for-device')
+            self.adb('wait-for-device')
 
 
 class k3v2(fastboot_serial):

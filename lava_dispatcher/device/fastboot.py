@@ -75,7 +75,6 @@ class FastbootTarget(Target):
         while (attempts < deploy_attempts) and (not deployed):
             logging.info("Deploying test image. Attempt: %d", attempts + 1)
             try:
-                self._enter_fastboot()
                 self.driver.deploy_linaro_kernel(kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
                                                  bootloader, firmware, bl1, bl2, bl31, rootfstype,
                                                  bootloadertype, self._target_type, self.scratch_dir)
@@ -87,6 +86,7 @@ class FastbootTarget(Target):
                 continue
 
         if not deployed:
+            logging.error("Infrastructure Error: image deployment failed")
             msg = "Deployment Failed"
             logging.critical(msg)
             raise CriticalError(msg)
@@ -114,6 +114,7 @@ class FastbootTarget(Target):
                 continue
 
         if not deployed:
+            logging.error("Infrastructure Error: image deployment failed")
             msg = "Deployment Failed"
             logging.critical(msg)
             raise CriticalError(msg)
@@ -146,13 +147,11 @@ class FastbootTarget(Target):
                 self.driver.boot()
             if self.proc is None:
                 self.proc = self.driver.connect()
-            self._auto_login(self.proc)
-            self._wait_for_prompt(self.proc, self.config.test_image_prompts,
-                                  self.config.boot_linaro_timeout)
-            self._setup_prompt()
+            self._monitor_boot(self.proc, self.tester_ps1, self.tester_ps1_pattern)
             self._booted = True
             return self.proc
         except subprocess.CalledProcessError:
+            logging.info("Infrastructure Error: fastboot exception caught.")
             msg = 'Fastboot boot failed'
             raise OperationFailed(msg)
 
@@ -202,7 +201,8 @@ class FastbootTarget(Target):
         # Device needs to be forced into fastboot mode
         if not self.driver.in_fastboot():
             if self.config.fastboot_driver == 'capri' or \
-               self.config.fastboot_driver == 'pxa1928dkb':
+               self.config.fastboot_driver == 'pxa1928dkb' or \
+               self.config.fastboot_driver == 'optimusa80':
                 # Connect to serial
                 self.proc = self.driver.connect()
                 # Hard reset the platform

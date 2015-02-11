@@ -1,0 +1,37 @@
+# Sample JOB definition for a u-boot job
+
+device_type: panda
+
+job_name: uboot-panda-usb
+timeouts:
+  job:
+    minutes: 15            # timeout for the whole job (default: ??h)
+  action:
+    minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+  extract-nfsrootfs:
+   seconds: 60
+priority: medium
+
+actions:
+
+  # needs to be a list of hashes to retain the order
+  - deploy:
+     timeout:
+       minutes: 2
+     to: tftp
+     kernel: http://images.validation.linaro.org/functional-test-images/panda/uImage
+     nfsrootfs: file:///home/linaro/chroots/jessie.tar.gz
+     dtb: http://images.validation.linaro.org/functional-test-images/panda/omap4-panda-es.dtb
+
+  - boot:
+     method: u-boot
+     commands: nfs
+     type: bootm
+
+  - deploy:
+      timeout:
+        minutes: 10
+      to: usb
+      image: http://releases.linaro.org/12.02/ubuntu/leb-panda/panda-ubuntu-desktop.img.gz
+      os: debian
+      device: SanDisk_Ultra # needs to be exposed in the device-specific UI

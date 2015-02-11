@@ -31,6 +31,7 @@ import json
 from lava_dispatcher.device.target import (
     get_target,
 )
+from lava_dispatcher.downloader import download_image
 from lava_dispatcher.utils import (
     mkdtemp,
     mk_targz,
@@ -113,7 +114,7 @@ class CommandRunner(object):
             self.match = None
 
         if wait_prompt:
-            self.wait_for_prompt(timeout)
+            self.wait_for_prompt(timeout=timeout)
 
             if self._prompt_str_includes_rc:
                 rc = int(self._connection.match.group(1))
@@ -124,6 +125,8 @@ class CommandRunner(object):
                 rc = None
         else:
             rc = None
+
+        self._connection.empty_buffer()
 
         return rc
 
@@ -509,66 +512,45 @@ class LavaClient(object):
         """
         Reboot the system to the test image
         """
-        logging.info("Boot the test image")
         boot_attempts = self.config.boot_retries
+        boot_meta = {}
         attempts = 0
         in_linaro_image = False
+
         while (attempts < boot_attempts) and (not in_linaro_image):
             logging.info("Booting the test image. Attempt: %d" % (attempts + 1))
-            timeout = self.config.boot_linaro_timeout
-            TESTER_PS1_PATTERN = self.target_device.tester_ps1_pattern
 
             self.vm_group.wait_for_vms()
 
-            start = time.time()
             try:
                 self._boot_linaro_image()
-            except (OperationFailed, pexpect.TIMEOUT) as e:
-                msg = "Boot linaro image failed: %s" % e
-                logging.info(msg)
+            except (OperationFailed, pexpect.TIMEOUT):
+                self.context.test_data.add_metadata({'boot_retries': str(attempts)})
                 attempts += 1
                 continue
 
-            try:
-                wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
-            except pexpect.TIMEOUT as e:
-                msg = "Timeout waiting for boot prompt: %s" % e
-                logging.info(msg)
-                attempts += 1
-                continue
-
-            # Record boot time metadata
-            boottime = "{0:.2f}".format(time.time() - start)
-            boottime_meta = {}
-            boottime_meta['kernel-boot-time'] = boottime
-            boottime_meta['boot-retries'] = str(attempts)
-            boottime_meta['dtb-append'] = str(self.config.append_dtb)
-            self.context.test_data.add_metadata(boottime_meta)
-            logging.debug("Kernel boot time: %s seconds" % boottime)
-
-            self.setup_proxy(TESTER_PS1_PATTERN)
-            logging.info("System is in test image now")
-            logging.debug("mount information")
-            self.proc.sendline('mount')
-            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
-            logging.debug("root directory information")
-            self.proc.sendline('ls -l /')
-            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
-            logging.debug("free space information")
-            self.proc.sendline('df -h')
-            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
-            logging.debug("IP addr information")
-            self.proc.sendline('ip addr')
-            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
             in_linaro_image = True
-            logging.debug("Checking for vm-group host")
 
+            logging.info("System is in test image now, performing basic user space tests.")
+            with self.context.client.tester_session() as session:
+                test_cmds = ['mount', 'df', 'ls /', 'ip addr']
+
+                for cmd in test_cmds:
+                    try:
+                        logging.debug('executing test command %s' % cmd)
+                        session.run(cmd, timeout=5)
+                        status = 'pass'
+                    except Exception:
+                        status = 'fail'
+                    self.context.test_data.add_result(cmd.split()[0], status)
+
+            self.setup_proxy(self.config.tester_ps1_pattern)
+
+            logging.debug("Checking for vm-group host")
             self.vm_group.start_vms()
 
         if not in_linaro_image:
-            msg = "Could not get the test image booted properly"
-            logging.critical(msg)
-            raise CriticalError(msg)
+            raise CriticalError()
 
     def get_www_scratch_dir(self):
         """ returns a temporary directory available for downloads that gets
@@ -602,6 +584,8 @@ class LavaClient(object):
         """Reboot the system to the test android image."""
         boot_attempts = self.config.boot_retries
         attempts = 0
+        good = 'pass'
+        bad = 'fail'
         in_linaro_android_image = False
 
         while (attempts < boot_attempts) and (not in_linaro_android_image):
@@ -610,50 +594,53 @@ class LavaClient(object):
             TESTER_PS1_PATTERN = self.target_device.tester_ps1_pattern
             timeout = self.config.android_boot_prompt_timeout
 
-            start = time.time()
             try:
                 self._boot_linaro_android_image()
             except (OperationFailed, pexpect.TIMEOUT) as e:
-                msg = "Failed to boot the Android test image: %s" % e
-                logging.info(msg)
+                self.context.test_data.add_metadata({'boot_retries': str(attempts)})
                 attempts += 1
                 continue
-
-            try:
-                wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
-            except pexpect.TIMEOUT:
-                msg = "Timeout waiting for boot prompt"
-                logging.info(msg)
-                attempts += 1
-                continue
-
-            # Record boot time metadata
-            boottime = "{0:.2f}".format(time.time() - start)
-            boottime_meta = {'kernel-boot-time': boottime}
-            self.context.test_data.add_metadata(boottime_meta)
-            logging.debug("Kernel boot time: %s seconds" % boottime)
 
             # Gain root access
             self.proc.sendline('su')
             wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
 
-            # TODO: set up proxy
-
             if not self.config.android_adb_over_usb:
                 try:
                     self._disable_adb_over_usb()
-                except (OperationFailed, pexpect.TIMEOUT) as e:
-                    msg = "Failed to disable adb: %s" % e
-                    logging.info(msg)
+                    self.context.test_data.add_result('test_userspace_disable_adb_over_usb',
+                                                      good)
+                except (OperationFailed, RuntimeError, pexpect.TIMEOUT) as e:
+                    self.context.test_data.add_result('test_userspace_disable_adb_over_usb',
+                                                      bad)
+                    msg = "Userspace Error: Failed to disable adb: %s" % e
+                    logging.error(msg)
                     attempts += 1
                     continue
 
             if self.config.android_disable_suspend:
                 try:
                     self._disable_suspend()
-                except (OperationFailed, pexpect.TIMEOUT, CriticalError) as e:
-                    msg = "Failed to disable suspend: %s" % e
-                    logging.info(msg)
+                    self.context.test_data.add_result('test_userspace_disable_suspend',
+                                                      good)
+                except (OperationFailed, RuntimeError, pexpect.TIMEOUT, CriticalError) as e:
+                    self.context.test_data.add_result('test_userspace_disable_suspend',
+                                                      bad)
+                    msg = "Userspace Error: Failed to disable suspend: %s" % e
+                    logging.error(msg)
+                    attempts += 1
+                    continue
+
+            if self.config.android_boot_uiautomator_jar is not None:
+                try:
+                    self._run_uiautomator_commands()
+                    self.context.test_data.add_result('test_userspace_run_ui_automator_commands',
+                                                      good)
+                except (OperationFailed, RuntimeError, pexpect.TIMEOUT, CriticalError) as e:
+                    self.context.test_data.add_result('test_userspace_run_ui_automator_commands',
+                                                      bad)
+                    msg = "Userspace Error: Failed running first boot ui jar: %s" % e
+                    logging.error(msg)
                     attempts += 1
                     continue
 
@@ -661,18 +648,26 @@ class LavaClient(object):
                 time.sleep(1)
                 try:
                     self._enable_network()
-                except (OperationFailed, pexpect.TIMEOUT) as e:
-                    msg = "Failed to enable network: %s" % e
-                    logging.info(msg)
+                    self.context.test_data.add_result('test_userspace_enable_network_after_boot',
+                                                      good)
+                except (OperationFailed, RuntimeError, pexpect.TIMEOUT) as e:
+                    self.context.test_data.add_result('test_userspace_enable_network_after_boot',
+                                                      bad)
+                    msg = "Userspace Error: Failed to enable network: %s" % e
+                    logging.error(msg)
                     attempts += 1
                     continue
 
             if self.config.android_adb_over_tcp:
                 try:
                     self._enable_adb_over_tcp()
-                except (OperationFailed, pexpect.TIMEOUT) as e:
-                    msg = "Failed to enable adp over tcp: %s" % e
-                    logging.info(msg)
+                    self.context.test_data.add_result('test_userspace_enable_adb_over_tcp',
+                                                      good)
+                except (OperationFailed, RuntimeError, pexpect.TIMEOUT) as e:
+                    self.context.test_data.add_result('test_userspace_enable_adb_over_tcp',
+                                                      bad)
+                    msg = "Userspace Error: Failed to enable adp over tcp: %s" % e
+                    logging.error(msg)
                     attempts += 1
                     continue
 
@@ -692,18 +687,44 @@ class LavaClient(object):
             finally:
                 session.disconnect()
 
+    def _run_uiautomator_commands(self):
+        """ run uiautomator commands"""
+        jar = self.config.android_boot_uiautomator_jar
+        commands = self.config.android_boot_uiautomator_commands
+        session = AndroidTesterCommandRunner(self)
+        jar = download_image(jar, self.context, decompress=False)
+        jar_file = os.path.basename(jar)
+        self.target_device.driver.adb('push %s /data/local/tmp/' % jar)
+        if commands is not None:
+            for command in commands:
+                session.run('uiautomator runtest %s %s' % (jar_file, command))
+        else:
+            session.run('uiautomator runtest %s' % jar_file)
+
     def _disable_suspend(self):
         """ disable the suspend of images.
         this needs wait unitl the home screen displayed"""
         session = AndroidTesterCommandRunner(self)
         try:
             if self.config.android_wait_for_home_screen:
+                start = time.time()
                 session.wait_home_screen()
+                userspace_android_home_screen_boot_time = "{0:.2f}".format(time.time() - start)
+                self.context.test_data.add_result('test_userspace_wait_for_home_screen_activity',
+                                                  'pass')
+                self.context.test_data.add_result('test_userspace_home_screen_boot_time', 'pass',
+                                                  userspace_android_home_screen_boot_time,
+                                                  'seconds')
         except KeyboardInterrupt:
             raise KeyboardInterrupt
         except:
             # ignore home screen exception if it is a health check job.
             if not ('health_check' in self.context.job_data and self.context.job_data["health_check"] is True):
+                self.context.test_data.add_result('test_userspace_wait_for_home_screen_activity',
+                                                  'fail')
+                msg = 'Userspace Error: Failed to find home screen activity: %s' % \
+                      self.config.android_wait_for_home_screen
+                logging.error(msg)
                 raise
             else:
                 logging.info("Skip raising exception on the home screen has not displayed for health check jobs")

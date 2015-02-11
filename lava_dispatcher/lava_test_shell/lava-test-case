@@ -21,7 +21,7 @@ if [ "$1" = "--shell" ]; then
     shift
     echo "<LAVA_SIGNAL_STARTTC $TEST_CASE_ID>"
     read
-    $*
+    eval "$*"
     rc=$?
     echo "<LAVA_SIGNAL_ENDTC $TEST_CASE_ID>"
     read

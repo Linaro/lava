@@ -21,7 +21,7 @@
 import os
 import unittest
 from lava_dispatcher.pipeline.action import Action
-from lava_dispatcher.pipeline.device import DeviceTypeParser, NewDevice
+from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.boot import BootAction
@@ -32,26 +32,22 @@ from lava_dispatcher.pipeline.actions.boot.u_boot import UBootInterrupt, UBootAc
 
 class TestDeviceParser(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
-    def test_parser(self):
-        test_parser = DeviceTypeParser()
-        self.assertIsInstance(test_parser, DeviceTypeParser)
-
     def test_new_device(self):
         kvm01 = NewDevice('kvm01')
         try:
-            self.assertIsNotNone(kvm01.parameters['actions'])
+            self.assertIsNotNone(kvm01['actions'])
         except:  # pylint: disable=bare-except
             self.fail("missing actions block for device")
         try:
-            self.assertIsNotNone(kvm01.parameters['actions']['boot'])
+            self.assertIsNotNone(kvm01['actions']['boot'])
         except:  # pylint: disable=bare-except
             self.fail("missing boot block for device")
         try:
-            self.assertIsNotNone(kvm01.parameters['actions']['deploy'])
+            self.assertIsNotNone(kvm01['actions']['deploy'])
         except:  # pylint: disable=bare-except
             self.fail("missing boot block for device")
-        self.assertTrue('qemu' in kvm01.parameters['actions']['boot']['methods'])
-        self.assertTrue('image' in kvm01.parameters['actions']['deploy']['methods'])
+        self.assertTrue('qemu' in kvm01['actions']['boot']['methods'])
+        self.assertTrue('image' in kvm01['actions']['deploy']['methods'])
 
 
 class FakeAction(Action):
@@ -72,22 +68,22 @@ class TestJobDeviceParameters(unittest.TestCase):  # pylint: disable=too-many-pu
         job_parser = JobParser()
         device = NewDevice('bbb-01')
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
-        sample_job_data = open(sample_job_file)
-        job = job_parser.parse(sample_job_data, device)
+        with open(sample_job_file) as sample_job_data:
+            job = job_parser.parse(sample_job_data, device)
         uboot_action = None
         for action in job.pipeline.actions:
             if isinstance(action, DeployAction):
                 self.assertIn('ramdisk', action.parameters)
             if isinstance(action, BootAction):
-                self.assertIn('u-boot', action.parameters)
-                self.assertIn('ramdisk', action.parameters['u-boot'])
-                self.assertIn('bootloader_prompt', action.parameters['u-boot']['parameters'])
+                self.assertIn('method', action.parameters)
+                self.assertEqual('u-boot', action.parameters['method'])
+
+                methods = device['actions']['boot']['methods']
+                self.assertIn('ramdisk', methods['u-boot'])
+                self.assertIn('bootloader_prompt', methods['u-boot']['parameters'])
                 self.assertIsNotNone(
-                    action.parameters[
-                        action.parameters['method']][
-                            action.parameters['commands']]['commands']
-                )
-                for line in action.parameters[action.parameters['method']][action.parameters['commands']]['commands']:
+                    methods[action.parameters['method']][action.parameters['commands']]['commands'])
+                for line in methods[action.parameters['method']][action.parameters['commands']]['commands']:
                     self.assertIsNotNone(line)
                 self.assertIsInstance(action, UBootAction)
                 uboot_action = action
@@ -96,10 +92,10 @@ class TestJobDeviceParameters(unittest.TestCase):  # pylint: disable=too-many-pu
         self.assertTrue(uboot_action.valid)
         for action in uboot_action.internal_pipeline.actions:
             if isinstance(action, UBootInterrupt):
-                self.assertIn('power_on', action.job.device.parameters['commands'])
-                self.assertIn('hard_reset', action.job.device.parameters['commands'])
-                self.assertIn('connect', action.job.device.parameters['commands'])
-                self.assertEqual(action.job.device.parameters['commands']['connect'].split(' ')[0], 'telnet')
+                self.assertIn('power_on', action.job.device['commands'])
+                self.assertIn('hard_reset', action.job.device['commands'])
+                self.assertIn('connect', action.job.device['commands'])
+                self.assertEqual(action.job.device['commands']['connect'].split(' ')[0], 'telnet')
             if isinstance(action, UBootAction):
                 self.assertIn('method', action.parameters)
                 self.assertIn('commands', action.parameters)
@@ -109,3 +105,19 @@ class TestJobDeviceParameters(unittest.TestCase):  # pylint: disable=too-many-pu
                 self.assertIsNotNone(action.parameters['u-boot']['ramdisk'])
                 self.assertTrue(type(action.parameters['u-boot']['ramdisk']['commands']) == list)
                 self.assertTrue(len(action.parameters['u-boot']['ramdisk']['commands']) > 2)
+
+    def test_device_power(self):
+        device = NewDevice("bbb-01")
+        self.assertEqual(device.power_state, 'off')
+        self.assertNotEqual(device.hard_reset_command, '')
+        self.assertNotEqual(device.power_command, '')
+        self.assertIn('on', device.power_command)
+        device.power_state = 'on'
+        self.assertEqual(device.power_state, 'on')
+        device = NewDevice("kvm01")
+        self.assertEqual(device.power_state, '')
+        self.assertEqual(device.hard_reset_command, '')
+        self.assertEqual(device.power_command, '')
+        with self.assertRaises(RuntimeError):
+            device.power_state = ''
+        self.assertEqual(device.power_command, '')

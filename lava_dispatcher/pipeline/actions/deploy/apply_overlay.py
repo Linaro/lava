@@ -31,6 +31,7 @@ from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.pipeline.utils.constants import (
     RAMDISK_COMPRESSED_FNAME,
     RAMDISK_FNAME,
+    DISPATCHER_DOWNLOAD_DIR,
 )
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.utils.shell import which
@@ -84,7 +85,7 @@ class PrepareOverlayTftp(Action):
 
     def run(self, connection, args=None):
         connection = self.internal_pipeline.run_actions(connection, args)
-        ramdisk = self.data['compress-ramdisk'].get('ramdisk', None)
+        ramdisk = self.get_common_data('file', 'ramdisk')
         if ramdisk:  # nothing else to do
             return connection
         return connection
@@ -104,14 +105,14 @@ class ApplyOverlayTftp(Action):
         overlay_type = ''
         overlay_file = None
         directory = None
-        if self.parameters.get('ramdisk', None):
+        if self.parameters.get('ramdisk', None) is not None:
             overlay_type = 'ramdisk'
             overlay_file = self.data['compress-overlay'].get('output')
             directory = self.data['extract-overlay-ramdisk']['extracted_ramdisk']
-        elif self.parameters.get('nfsrootfs', None):
+        elif self.parameters.get('nfsrootfs', None) is not None:
             overlay_type = 'nfsrootfs'
             overlay_file = self.data['compress-overlay'].get('output')
-            directory = self.data['extract-nfsrootfs'].get('nfsroot')
+            directory = self.get_common_data('file', 'nfsroot')
         try:
             tar = tarfile.open(overlay_file)
             tar.extractall(directory)
@@ -146,14 +147,15 @@ class ExtractNfsRootfs(Action):
         if not self.parameters.get('nfsrootfs', None):  # idempotency
             return connection
         nfsroot = self.data['download_action']['nfsrootfs']['file']
-        nfsroot_dir = mkdtemp(basedir="/var/lib/lava/dispatcher/tmp")  # FIXME: constant to get from a YAML file in /etc/
+        nfsroot_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
         try:
             tar = tarfile.open(nfsroot)
             tar.extractall(nfsroot_dir)
             tar.close()
         except tarfile.TarError as exc:
             raise JobError("Unable to unpack nfsroot: '%s' - %s" % (os.path.basename(nfsroot), exc))
-        self.data[self.name].setdefault('nfsroot', nfsroot_dir)
+        self.set_common_data('file', 'nfsroot', nfsroot_dir)
+        # self.data[self.name].setdefault('nfsroot', nfsroot_dir)
         self.logger.debug("Extracted nfs root to %s" % nfsroot_dir)
         return connection
 
@@ -181,7 +183,7 @@ class ExtractModules(Action):
             if not self.parameters.get('nfsrootfs', None):
                 raise RuntimeError("Unable to identify unpack location")
             else:
-                root = self.data['extract-nfsrootfs']['nfsroot']
+                root = self.get_common_data('file', 'nfsroot')
         else:
             root = self.data['extract-overlay-ramdisk']['extracted_ramdisk']
 
@@ -308,5 +310,9 @@ class CompressRamdisk(Action):
             final_file = ramdisk_uboot
 
         os.rename(final_file, os.path.join(tftp_dir, os.path.basename(final_file)))
-        self.data[self.name]['ramdisk'] = final_file
+        if self.parameters['to'] == 'tftp':
+            suffix = self.data['tftp-deploy'].get('suffix', '')
+            self.set_common_data('file', 'ramdisk', os.path.join(suffix, os.path.basename(final_file)))
+        else:
+            self.set_common_data('file', 'ramdisk', final_file)
         return connection

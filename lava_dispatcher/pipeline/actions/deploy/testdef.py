@@ -20,12 +20,14 @@
 
 import os
 import io
-import ast
+import re
 import yaml
 import base64
 import hashlib
 import tarfile
 from uuid import uuid4
+from collections import OrderedDict
+from nose.tools import nottest
 from lava_dispatcher.pipeline.action import (
     Action,
     InfrastructureError,
@@ -35,6 +37,64 @@ from lava_dispatcher.pipeline.action import (
 from lava_dispatcher.pipeline.actions.test import TestAction
 from lava_dispatcher.pipeline.utils.strings import indices
 from lava_dispatcher.pipeline.utils.vcs import BzrHelper, GitHelper
+
+
+def identify_test_definitions(parameters):
+    """
+    Iterates through the job parameters to identify all the test definitions,
+    including those involved in repeat actions.
+    """
+    # All test definitions are deployed in each deployment - TestDefinitionAction needs to only run relevant ones.
+    test_list = [action['test']['definitions'] for action in parameters['actions'] if 'test' in action]
+    repeat_list = [action['repeat'] for action in parameters['actions'] if 'repeat' in action]
+    if repeat_list:
+        test_list.extend([testdef['test']['definitions'] for testdef in repeat_list[0]['actions'] if 'test' in testdef])
+    return test_list
+
+
+@nottest
+def get_deployment_testdefs(parameters):
+    """
+    Identify the test definitions for each deployment within the job.
+    """
+    test_dict = OrderedDict()
+    deploy_list = []
+    for action in parameters['actions']:
+        yaml_line = None
+        if 'deploy' in action:
+            yaml_line = action['deploy']['yaml_line']
+            test_dict[yaml_line] = []
+            deploy_list = get_deployment_tests(parameters, yaml_line)
+        for action in deploy_list:
+            if 'test' in action:
+                test_dict[yaml_line].append(action['test']['definitions'])
+        deploy_list = []
+    return test_dict
+
+
+def get_deployment_tests(parameters, yaml_line):
+    """
+    Get the test YAML blocks according to which deployment precedes that test
+    This allows multiple deployments to use distinct test definitions.
+    """
+    deploy = []
+    seen = False
+    for action in parameters['actions']:
+        if 'deploy' in action:
+            seen = False
+        if 'deploy' in action and action['deploy']['yaml_line'] == yaml_line:
+            seen = True
+            continue
+        if 'repeat' in action and seen:
+            for repeat_action in action['repeat']['actions']:
+                if 'test' in repeat_action:
+                    deploy.append(repeat_action)
+        if 'test' in action and seen:
+            deploy.append(action)
+    return deploy
+
+
+# pylint:disable=too-many-public-methods,too-many-instance-attributes,too-many-locals,too-many-branches
 
 
 class RepoAction(Action):
@@ -57,7 +117,7 @@ class RepoAction(Action):
     @classmethod
     def select(cls, repo_type):
 
-        candidates = cls.__subclasses__()
+        candidates = cls.__subclasses__()  # pylint: disable=no-member
         willing = [c for c in candidates if c.accepts(repo_type)]
 
         if len(willing) == 0:
@@ -72,8 +132,7 @@ class RepoAction(Action):
         return prioritized[0]
 
     def validate(self):
-        # FIXME: this should work but test_basic.py needs to be migrated to the new Device configuration first
-        if 'hostname' not in self.job.device.parameters:
+        if 'hostname' not in self.job.device:
             raise InfrastructureError("Invalid device configuration")
         if 'test_name' not in self.parameters:
             raise JobError("Unable to determine test_name")
@@ -105,7 +164,7 @@ class RepoAction(Action):
 
         # runner_path is the path to read and execute from to run the tests after boot
         self.data['test'][self.uuid]['runner_path'][args['test_name']] = os.path.join(
-            args['deployment_data']['lava_test_results_dir'] % self.job.device.parameters['hostname'],
+            args['deployment_data']['lava_test_results_dir'] % self.job.device['hostname'],
             'tests',
             args['test_name']
         )
@@ -135,33 +194,24 @@ class RepoAction(Action):
         The Connection stores raw results in the same test dict.
         The main TestAction can then process the results.
         """
-        self.data['test'][self.uuid].update({
-            'testdef_metadata': {
-                'os': testdef['metadata'].get('os', ''),
-                'devices': testdef['metadata'].get('devices', ''),
-                'environment': testdef['metadata'].get('environment', ''),
-                'branch_vcs': vcs_name,
-                'project_name': testdef['metadata']['name'],
-            }
-        })
+        self.data['test'][self.uuid]['testdef_metadata'] = \
+            {'os': testdef['metadata'].get('os', ''),
+             'devices': testdef['metadata'].get('devices', ''),
+             'environment': testdef['metadata'].get('environment', ''),
+             'branch_vcs': vcs_name,
+             'project_name': testdef['metadata']['name']}
 
         if commit_id is not None:
-            self.data['test'][self.uuid]['testdef_metadata'].update({
-                'commit_id': commit_id,
-            })
+            self.data['test'][self.uuid]['testdef_metadata']['commit_id'] = commit_id
 
         if 'parse' in testdef:
             pattern = testdef['parse'].get('pattern', '')
         else:
             pattern = self.default_pattern
-        self.data['test'][self.uuid].update({
-            'testdef_pattern': {
-                'pattern': pattern,
-            }
-        })
+        self.data['test'][self.uuid]['testdef_pattern'] = {'pattern': pattern}
 
 
-class GitRepoAction(RepoAction):
+class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
     """
     Each repo action is for a single repository,
     tests using multiple repositories get multiple
@@ -222,7 +272,7 @@ class GitRepoAction(RepoAction):
         return connection
 
 
-class BzrRepoAction(RepoAction):
+class BzrRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
     """
     Each repo action is for a single repository,
     tests using multiple repositories get multiple
@@ -280,7 +330,7 @@ class BzrRepoAction(RepoAction):
         return connection
 
 
-class InlineRepoAction(RepoAction):
+class InlineRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
     priority = 1
 
@@ -335,7 +385,7 @@ class InlineRepoAction(RepoAction):
                                                sha1.hexdigest()))
 
 
-class TarRepoAction(RepoAction):
+class TarRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
     priority = 0  # FIXME: increase priority once this is working
 
@@ -386,7 +436,7 @@ class TarRepoAction(RepoAction):
         return connection
 
 
-class UrlRepoAction(RepoAction):
+class UrlRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
     priority = 0  # FIXME: increase priority once this is working
 
@@ -454,6 +504,7 @@ class TestDefinitionAction(TestAction):
         self.name = "test-definition"
         self.description = "load test definitions into image"
         self.summary = "loading test definitions"
+        self.test_list = None
 
     def populate(self, parameters):
         """
@@ -464,74 +515,69 @@ class TestDefinitionAction(TestAction):
         """
         index = {}
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        # FIXME: check the effect of the parameter review
-        test_list = [action['test']['definitions'] for action in self.job.parameters['actions']
-                     if 'test' in action.keys()]  # 2to3 false positive, works with python3
-        if not test_list:
-            self.logger.debug("No test action defined.")
+        self.test_list = identify_test_definitions(self.job.parameters)
+        if not self.test_list:
             return
-        for testdef in test_list[0]:
-            handler = RepoAction.select(testdef['from'])()
+        for testdefs in self.test_list:
+            for testdef in testdefs:
+                # FIXME: only run the tests defined for this test action, not all the jobs for this deployment/job
+                # This includes only running the install steps for the relevant deployment as the next deployment
+                # could be a different OS.
+                handler = RepoAction.select(testdef['from'])()
 
-            # set the full set of job YAML parameters for this handler as handler parameters.
-            handler.job = self.job
-            handler.parameters = testdef
-            # store the correct test_name before incrementing the local index dict
-            handler.parameters['test_name'] = "%s_%s" % (len(list(index.keys())), handler.parameters['name'])
+                # set the full set of job YAML parameters for this handler as handler parameters.
+                handler.job = self.job
+                handler.parameters = testdef
+                # store the correct test_name before incrementing the local index dict
+                handler.parameters['test_name'] = "%s_%s" % (len(list(index.keys())), handler.parameters['name'])
 
-            # copy details into the overlay, one per handler but the same class each time.
-            overlay = TestOverlayAction()
-            overlay.job = self.job
-            overlay.parameters = testdef
-            overlay.parameters['test_name'] = handler.parameters['test_name']
-            overlay.test_uuid = handler.uuid
+                # copy details into the overlay, one per handler but the same class each time.
+                overlay = TestOverlayAction()
+                overlay.job = self.job
+                overlay.parameters = testdef
+                overlay.parameters['test_name'] = handler.parameters['test_name']
+                overlay.test_uuid = handler.uuid
 
-            # add install handler
-            installer = TestInstallAction()
-            installer.job = self.job
-            installer.parameters = testdef
-            installer.parameters['test_name'] = handler.parameters['test_name']
-            installer.test_uuid = handler.uuid
+                # add install handler - uses job parameters
+                installer = TestInstallAction()
+                installer.job = self.job
+                installer.parameters = testdef
+                installer.parameters['test_name'] = handler.parameters['test_name']
+                installer.test_uuid = handler.uuid
 
-            # add runsh handler
-            runsh = TestRunnerAction()
-            runsh.job = self.job
-            runsh.parameters = testdef
-            runsh.parameters['test_name'] = handler.parameters['test_name']
-            runsh.test_uuid = handler.uuid
+                # add runsh handler - uses job parameters
+                runsh = TestRunnerAction()
+                runsh.job = self.job
+                runsh.parameters = testdef
+                runsh.parameters['test_name'] = handler.parameters['test_name']
+                runsh.test_uuid = handler.uuid
 
-            index[len(list(index.keys()))] = handler.parameters['name']
-            self.internal_pipeline.add_action(handler)
+                index[len(list(index.keys()))] = handler.parameters['name']
+                self.internal_pipeline.add_action(handler)
 
-            # add overlay handlers to the pipeline
-            self.internal_pipeline.add_action(overlay)
-            self.internal_pipeline.add_action(installer)
-            self.internal_pipeline.add_action(runsh)
-
-            # FIXME: the outer pipeline may add unwanted data to the parameters['test']
+                # add overlay handlers to the pipeline
+                self.internal_pipeline.add_action(overlay)
+                self.internal_pipeline.add_action(installer)
+                self.internal_pipeline.add_action(runsh)
 
     def validate(self):
+        """
+        TestDefinitionAction is part of the overlay and therefore part of the deployment -
+        the internal pipeline then looks inside the job definition for details of the tests to deploy.
+        Jobs with no test actions defined (empty test_list) are explicitly allowed.
+        """
         super(TestDefinitionAction, self).validate()
-        if 'actions' not in self.job.parameters:
-            # FIXME: is this the result of parameter issues or skipping?
-            return
         if not self.job:
             self.errors = "missing job object"
-        if 'test' not in self.parameters:
-            self.errors = "testaction without test parameters"
-            # runtimeerror?
-        if 'definitions' not in self.parameters['test']:
-            self.errors = "test action without definition"
-        for testdef in self.parameters['test']['definitions']:
+            return
+        if 'actions' not in self.job.parameters:
+            self.errors = "No actions defined in job parameters"
+            return
+        if not self.test_list:
+            return
+        for testdef in self.test_list[0]:
             if 'from' not in testdef:
                 self.errors = "missing 'from' field in test definition %s" % testdef
-            if testdef['from'] is 'git':
-                repository = str(testdef['repository'])
-                # FIXME: this is not a reliable method as some git repository
-                #        does not end with '.git'
-                if not repository.endswith('.git'):
-                    self.errors = "git specified but repository does not look like git"
-
         self.internal_pipeline.validate_actions()
 
     def run(self, connection, args=None):
@@ -561,7 +607,7 @@ class TestDefinitionAction(TestAction):
         return connection
 
 
-class TestOverlayAction(TestAction):
+class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attributes
 
     def __init__(self):
         """
@@ -583,26 +629,32 @@ class TestOverlayAction(TestAction):
     def validate(self):
         if 'path' not in self.parameters:
             self.errors = "Missing path in parameters"
+        test_list = identify_test_definitions(self.job.parameters)
+        for testdef in test_list[0]:
+            if 'parameters' in testdef:  # optional
+                if type(testdef['parameters']) is not dict:
+                    self.errors = "Invalid test definition parameters"
 
-    # FIXME: still needs porting. LAVA-1583
-    def handle_parameters(self, filename, testdef):
+    def handle_parameters(self, testdef):
 
-        with open(filename, 'w') as runsh:
-
-            # inject default parameters that was defined in yaml first
-            runsh.write('###default parameters from yaml###\n')
-            if 'params' in testdef:
-                for def_param_name, def_param_value in list(testdef['params'].items()):
-                    runsh.write('%s=\'%s\'\n' % (def_param_name, def_param_value))
-            runsh.write('######\n')
-
-            # inject the parameters that were set in job submission.
-            runsh.write('###test parameters from json###\n')
-            if 'test_params' in self.parameters and self.parameters['test_params'] != '':
-                _test_params_temp = ast.literal_eval(self.parameters['test_params'])
-                for param_name, param_value in list(_test_params_temp.items()):
-                    runsh.write('%s=\'%s\'\n' % (param_name, param_value))
-            runsh.write('######\n')
+        ret_val = ['###default parameters from yaml###\n']
+        if 'params' in testdef:
+            for def_param_name, def_param_value in list(testdef['params'].items()):
+                if def_param_name is 'yaml_line':
+                    continue
+                ret_val.append('%s=\'%s\'\n' % (def_param_name, def_param_value))
+        ret_val.append('######\n')
+        # inject the parameters that were set in job submission.
+        ret_val.append('###test parameters from json###\n')
+        if 'parameters' in self.parameters and self.parameters['parameters'] != '':
+            # turn a string into a local variable.
+            for param_name, param_value in list(self.parameters['parameters'].items()):
+                if param_name is 'yaml_line':
+                    continue
+                ret_val.append('%s=\'%s\'\n' % (param_name, param_value))
+                self.logger.debug('%s=\'%s\'' % (param_name, param_value))
+        ret_val.append('######\n')
+        return ret_val
 
     def run(self, connection, args=None):
         runner_path = self.data['test'][self.test_uuid]['overlay_path'][self.parameters['test_name']]
@@ -675,9 +727,11 @@ class TestInstallAction(TestOverlayAction):
 
         # hostdir = self.data['test'][self.test_uuid]['overlay_path'][self.parameters['test_name']]
         filename = '%s/install.sh' % runner_path
-        self.handle_parameters(filename, testdef)
+        content = self.handle_parameters(testdef)
 
         with open(filename, 'w') as install_file:
+            for line in content:
+                install_file.write(line)
             if testdef['skip_install'] != 'keys':
                 sources = testdef['install'].get('keys', [])
                 for src in sources:
@@ -733,10 +787,11 @@ class TestRunnerAction(TestOverlayAction):
             testdef = yaml.safe_load(test_file)
 
         filename = '%s/run.sh' % runner_path
-        self.handle_parameters(filename, testdef)
+        content = self.handle_parameters(testdef)
 
         with open(filename, 'a') as runsh:
-
+            for line in content:
+                runsh.write(line)
             runsh.write('set -e\n')
             runsh.write('export TESTRUN_ID=%s\n' % testdef['metadata']['name'])
             runsh.write('cd %s\n' % self.data['test'][self.test_uuid]['runner_path'][self.parameters['test_name']])
@@ -747,6 +802,8 @@ class TestRunnerAction(TestOverlayAction):
             steps = testdef['run'].get('steps', [])
             if steps:
                 for cmd in steps:
+                    if '--cmd' in cmd or '--shell' in cmd:
+                        cmd = re.sub(r'\$(\d+)\b', r'\\$\1', cmd)
                     runsh.write('%s\n' % cmd)
             runsh.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n')
             runsh.write('#wait for an ack from the dispatcher\n')

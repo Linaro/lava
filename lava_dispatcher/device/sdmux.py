@@ -102,6 +102,7 @@ class SDMuxTarget(Target):
     def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype):
         img = download_image(image, self.context)
         self.customize_image(img)
+
         self._write_image(img)
 
     def _customize_android(self, img):
@@ -144,11 +145,7 @@ class SDMuxTarget(Target):
         self._enter_bootloader(self.proc)
         boot_cmds = self._load_boot_cmds()
         self._customize_bootloader(self.proc, boot_cmds)
-        self._auto_login(self.proc)
-        self._wait_for_prompt(self.proc, self.config.test_image_prompts,
-                              self.config.boot_linaro_timeout)
-        self.proc.sendline('export PS1="%s"' % self.tester_ps1,
-                           send_char=self.config.send_char)
+        self._monitor_boot(self.proc, self.tester_ps1, self.tester_ps1_pattern)
 
     def mux_device(self):
         """

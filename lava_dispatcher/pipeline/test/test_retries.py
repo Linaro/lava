@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
+import time
 import unittest
 from lava_dispatcher.pipeline.action import (
     Action,
@@ -26,10 +27,15 @@ from lava_dispatcher.pipeline.action import (
     Pipeline,
     RetryAction,
     DiagnosticAction,
+    Timeout,
     JobError,
 )
+from lava_dispatcher.pipeline.power import FinalizeAction
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+
+
+# pylint: disable=too-few-public-methods
 
 
 class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -162,7 +168,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
         }
         self.fakejob = TestAction.FakeJob(self.parameters)
 
-    def lookup_deploy(self, params):
+    def lookup_deploy(self, params):  # pylint: disable=no-self-use
         actions = iter(params)
         while actions:
             action = actions.next()
@@ -263,7 +269,7 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
         def __init__(self, parent=None, job=None):
             super(TestAdjuvant.FakePipeline, self).__init__(parent, job)
 
-    class FailingAdjuvant(AdjuvantAction):
+    class FailingAdjuvant(AdjuvantAction):  # pylint: disable=abstract-method
         """
         Added to the pipeline but only runs if FakeAction sets a suitable key.
         """
@@ -393,7 +399,7 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
         self.fakejob.set_pipeline(pipeline)
         self.fakejob.device = TestAdjuvant.FakeDevice()
         self.fakejob.run()
-        self.assertEqual(self.fakejob.context, {'fake-key': 'base class trigger'})
+        self.assertEqual(self.fakejob.context, {'common': {}, 'fake-key': 'base class trigger'})
 
     def test_run_action(self):
         pipeline = TestAction.FakePipeline(job=self.fakejob)
@@ -404,4 +410,260 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
         self.fakejob.run()
         self.assertNotEqual(self.fakejob.context, {'fake-key': 'triggered'})
         self.assertNotEqual(self.fakejob.context, {'fake-key': 'base class trigger'})
-        self.assertEqual(self.fakejob.context, {'fake-key': False})
+        self.assertEqual(self.fakejob.context, {'common': {}, 'fake-key': False})
+
+    def test_common_data(self):
+        """
+        common data uses copies, not references
+
+        This allows actions to refer to the common data and manipulate it without affecting other actions.
+        """
+        pipeline = TestAction.FakePipeline(job=self.fakejob)
+        action = TestAdjuvant.SafeAction()
+        pipeline.add_action(action)
+        action.set_common_data("fake", "string value", "test string")
+        self.assertEqual(action.get_common_data('fake', 'string value'), 'test string')
+        test_string = action.get_common_data('fake', 'string value')
+        self.assertEqual(action.get_common_data('fake', 'string value'), 'test string')
+        self.assertEqual(test_string, 'test string')
+        test_string += "extra data"
+        self.assertEqual(action.get_common_data('fake', 'string value'), 'test string')
+        self.assertNotEqual(test_string, 'test string')
+        self.assertNotEqual(action.get_common_data('fake', 'string value'), test_string)
+        action.set_common_data("fake", "list value", [1, 2, 3])
+        self.assertEqual(action.get_common_data('fake', 'list value'), [1, 2, 3])
+        test_list = action.get_common_data('fake', 'list value')
+        self.assertEqual(action.get_common_data('fake', 'list value'), [1, 2, 3])
+        self.assertEqual(action.get_common_data('fake', 'list value'), test_list)
+        test_list.extend([4, 5, 6])
+        self.assertEqual(action.get_common_data('fake', 'list value'), [1, 2, 3])
+        self.assertNotEqual(action.get_common_data('fake', 'list value'), test_list)
+        self.assertEqual(test_list, [1, 2, 3, 4, 5, 6])
+
+        # test support for the more risky reference method
+        reference_list = action.get_common_data('fake', 'list value', deepcopy=False)
+        self.assertEqual(action.get_common_data('fake', 'list value'), [1, 2, 3])
+        self.assertEqual(action.get_common_data('fake', 'list value'), reference_list)
+        reference_list.extend([7, 8, 9])
+        self.assertEqual(action.get_common_data('fake', 'list value'), [1, 2, 3, 7, 8, 9])
+        self.assertEqual(reference_list, [1, 2, 3, 7, 8, 9])
+        reference_list = [4, 5, 6]
+        self.assertEqual(action.get_common_data('fake', 'list value'), [1, 2, 3, 7, 8, 9])
+        self.assertNotEqual(reference_list, [1, 2, 3, 7, 8, 9])
+
+
+class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
+
+    class FakeJob(Job):
+
+        def __init__(self, parameters):
+            super(TestTimeout.FakeJob, self).__init__(parameters)
+
+        def validate(self, simulate=False):
+            self.pipeline.validate_actions()
+
+    class FakeDevice(object):
+        def __init__(self):
+            self.parameters = {}
+            self.power_state = ''
+
+    class FakePipeline(Pipeline):
+
+        def __init__(self, parent=None, job=None):
+            super(TestTimeout.FakePipeline, self).__init__(parent, job)
+
+    class FakeAction(Action):
+        """
+        Isolated Action which can be used to generate artificial exceptions.
+        """
+
+        def __init__(self):
+            super(TestTimeout.FakeAction, self).__init__()
+            self.name = "fake-action"
+            self.summary = "fake action for unit tests"
+            self.description = "fake, do not use outside unit tests"
+
+        def populate(self, parameters):
+            self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+            self.internal_pipeline.add_action(TestAdjuvant.FakeAdjuvant())
+
+        def run(self, connection, args=None):
+            if connection:
+                raise RuntimeError("Fake action not meant to have a real connection")
+            time.sleep(3)
+            self.results = {'status': "failed"}
+            return connection
+
+    class SafeAction(Action):
+        """
+        Isolated test action which passes
+        """
+        def __init__(self):
+            super(TestTimeout.SafeAction, self).__init__()
+            self.name = "passing-action"
+            self.summary = "fake action without adjuvant"
+            self.description = "fake action runs without calling adjuvant"
+
+        def run(self, connection, args=None):
+            if connection:
+                raise RuntimeError("Fake action not meant to have a real connection")
+            self.results = {'status': "passed"}
+            return connection
+
+    class LongAction(Action):
+        """
+        Isolated test action which times out the job itself
+        """
+        def __init__(self):
+            super(TestTimeout.LongAction, self).__init__()
+            self.name = "long-action"
+            self.summary = "fake action with overly long sleep"
+            self.description = "fake action"
+
+        def run(self, connection, args=None):
+            if connection:
+                raise RuntimeError("Fake action not meant to have a real connection")
+            time.sleep(5)
+            self.results = {'status': "passed"}
+            return connection
+
+    class SkippedAction(Action):
+        """
+        Isolated test action which must not be run
+        """
+        def __init__(self):
+            super(TestTimeout.SkippedAction, self).__init__()
+            self.name = "passing-action"
+            self.summary = "fake action without adjuvant"
+            self.description = "fake action runs without calling adjuvant"
+
+        def run(self, connection, args=None):
+            raise RuntimeError("Fake action not meant to actually run - should have timed out")
+
+    class FakeSafeAction(Action):
+        """
+        Isolated Action which can be used to generate artificial exceptions.
+        """
+
+        def __init__(self):
+            super(TestTimeout.FakeSafeAction, self).__init__()
+            self.name = "fake-action"
+            self.summary = "fake action for unit tests"
+            self.description = "fake, do not use outside unit tests"
+            self.timeout.duration = 4
+
+        def populate(self, parameters):
+            self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+            self.internal_pipeline.add_action(TestAdjuvant.FakeAdjuvant())
+
+        def run(self, connection, args=None):
+            if connection:
+                raise RuntimeError("Fake action not meant to have a real connection")
+            time.sleep(3)
+            self.results = {'status': "failed"}
+            return connection
+
+    def setUp(self):
+        self.parameters = {
+            "job_name": "fakejob",
+            'output_dir': mkdtemp(),
+            'timeouts': {
+                'job': {
+                    'seconds': 3
+                }
+            },
+            "actions": [
+                {
+                    'deploy': {
+                        'failure_retry': 3
+                    },
+                    'boot': {
+                        'failure_retry': 4
+                    },
+                    'test': {
+                        'failure_retry': 5
+                    }
+                }
+            ]
+        }
+        self.fakejob = TestTimeout.FakeJob(self.parameters)
+        # copy of the _timeout function from parser.
+        if 'timeouts' in self.parameters:
+            if 'job' in self.parameters['timeouts']:
+                duration = Timeout.parse(self.parameters['timeouts']['job'])
+                self.fakejob.timeout = Timeout(self.parameters['job_name'], duration)
+
+    def test_action_timeout(self):
+        """
+        Testing timeouts does mean that the tests do nothing until the timeout happens,
+        so the total length of time to run the tests has to increase...
+        """
+        self.assertIsNotNone(self.fakejob.timeout)
+        seconds = 2
+        pipeline = TestTimeout.FakePipeline(job=self.fakejob)
+        action = TestTimeout.FakeAction()
+        action.timeout = Timeout(action.name, duration=seconds)
+        pipeline.add_action(action)
+        self.fakejob.set_pipeline(pipeline)
+        self.fakejob.device = TestTimeout.FakeDevice()
+        with self.assertRaises(JobError):
+            self.fakejob.run()
+
+    def test_action_complete(self):
+        self.assertIsNotNone(self.fakejob.timeout)
+        seconds = 2
+        pipeline = TestTimeout.FakePipeline(job=self.fakejob)
+        action = TestTimeout.SafeAction()
+        action.timeout = Timeout(action.name, duration=seconds)
+        pipeline.add_action(action)
+        self.fakejob.set_pipeline(pipeline)
+        self.fakejob.device = TestTimeout.FakeDevice()
+        try:
+            self.fakejob.run()
+        except JobError as exc:
+            self.fail(exc)
+
+    def test_job_timeout(self):
+        self.assertIsNotNone(self.fakejob.timeout)
+        pipeline = TestTimeout.FakePipeline(job=self.fakejob)
+        action = TestTimeout.LongAction()
+        pipeline.add_action(action)
+        pipeline.add_action(TestTimeout.SafeAction())
+        pipeline.add_action(FinalizeAction())
+        self.fakejob.set_pipeline(pipeline)
+        self.fakejob.device = TestTimeout.FakeDevice()
+        with self.assertRaises(JobError):
+            self.fakejob.run()
+
+    def test_job_safe(self):
+        self.assertIsNotNone(self.fakejob.timeout)
+        pipeline = TestTimeout.FakePipeline(job=self.fakejob)
+        action = TestTimeout.SafeAction()
+        pipeline.add_action(action)
+        pipeline.add_action(TestTimeout.SafeAction())
+        pipeline.add_action(FinalizeAction())
+        self.fakejob.set_pipeline(pipeline)
+        self.fakejob.device = TestTimeout.FakeDevice()
+        try:
+            self.fakejob.run()
+        except JobError as exc:
+            self.fail(exc)
+
+    def test_long_job_safe(self):
+        self.fakejob.timeout.duration = 8
+        self.assertIsNotNone(self.fakejob.timeout)
+        pipeline = TestTimeout.FakePipeline(job=self.fakejob)
+        self.fakejob.pipeline = pipeline
+        action = TestTimeout.SafeAction()
+        action.timeout.duration = 2
+        pipeline.add_action(action)
+        pipeline.add_action(action)
+        pipeline.add_action(TestTimeout.FakeSafeAction())
+        pipeline.add_action(TestTimeout.FakeSafeAction())
+        pipeline.add_action(FinalizeAction())
+        self.fakejob.set_pipeline(pipeline)
+        self.fakejob.device = TestTimeout.FakeDevice()
+        try:
+            self.fakejob.run()
+        except JobError as exc:
+            self.fail(exc)

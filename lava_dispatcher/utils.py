@@ -62,9 +62,9 @@ def link_or_copy_file(src, dest):
         if err.errno == errno.EXDEV:
             shutil.copy(src, dest)
         if err.errno == errno.EEXIST:
-            logging.debug("Cached copy of %s already exists" % dest)
+            logging.debug("Cached copy of %s already exists", dest)
         else:
-            logging.exception("os.link '%s' with '%s' failed" % (src, dest))
+            logging.exception("os.link '%s' with '%s' failed", src, dest)
 
 
 def copy_file(src, dest):
@@ -225,6 +225,26 @@ def create_uimage(kernel, load_addr, tmp_dir, xip, arch='arm'):
         raise CriticalError("uImage creation failed")
 
 
+def create_multi_image(kernel, ramdisk, load_addr, tmp_dir, arch='arm'):
+    load_addr = int(load_addr, 16)
+    uimage_path = '%s/uImage' % tmp_dir
+    entry_addr = load_addr
+    cmd = 'mkimage -A %s -O linux -T multi \
+           -C none -a 0x%x -e 0x%x \
+            -d %s:%s %s' % (arch, load_addr,
+                            entry_addr, kernel,
+                            ramdisk, uimage_path)
+
+    logging.info('Creating Multi Image')
+    logging.debug(cmd)
+    r = subprocess.call(cmd, shell=True)
+
+    if r == 0:
+        return uimage_path
+    else:
+        raise CriticalError("Multi Image creation failed")
+
+
 def append_dtb(kernel, dtb, tmp_dir):
     kernel_path = '%s/kernel-dtb' % tmp_dir
     cmd = 'cat %s %s > %s' % (kernel, dtb, kernel_path)
@@ -286,7 +306,7 @@ def string_to_list(string):
 
 
 def logging_system(cmd):
-    logging.debug("Executing on host : '%r'" % cmd)
+    logging.debug("Executing on host : '%r'", cmd)
     return os.system(cmd)
 
 
@@ -305,10 +325,14 @@ class DrainConsoleOutput(threading.Thread):
             expect_end = time.time() + self.timeout
         while not self._stopevent.isSet():
             if expect_end and (expect_end <= time.time()):
-                logging.info("DrainConsoleOutput times out:%s" % self.timeout)
+                logging.info("DrainConsoleOutput times out:%s", self.timeout)
                 break
-            self.proc.empty_buffer()
-            time.sleep(5)
+            try:
+                self.proc.empty_buffer()
+                time.sleep(5)
+            except ValueError:
+                logging.debug("pexpect ended for thread %s", self.getName())
+                expect_end = time.time()
 
     def join(self, timeout=None):
         self._stopevent.set()
@@ -341,7 +365,7 @@ class logging_spawn(pexpect.spawn):
         return super(logging_spawn, self).sendcontrol(char)
 
     def send(self, string, delay=0, send_char=True):
-        logging.debug("send (delay_ms=%s): %s " % (delay, string))
+        logging.debug("send (delay_ms=%s): %s ", delay, string)
         sent = 0
         delay = float(delay) / 1000
         if send_char:
@@ -354,9 +378,10 @@ class logging_spawn(pexpect.spawn):
 
     def expect(self, *args, **kw):
         # some expect should not be logged because it is so much noise.
+        lava_logging = True
         if 'lava_no_logging' in kw:
             del kw['lava_no_logging']
-            return self.expect(*args, **kw)
+            lava_logging = False
 
         if 'timeout' in kw:
             timeout = kw['timeout']
@@ -364,9 +389,11 @@ class logging_spawn(pexpect.spawn):
             timeout = self.timeout
 
         if len(args) == 1:
-            logging.debug("expect (%d): '%s'", timeout, args[0])
+            if lava_logging:
+                logging.debug("expect (%d): '%s'", timeout, args[0])
         else:
-            logging.debug("expect (%d): '%s'", timeout, str(args))
+            if lava_logging:
+                logging.debug("expect (%d): '%s'", timeout, str(args))
 
         try:
             proc = super(logging_spawn, self).expect(*args, **kw)
@@ -380,7 +407,7 @@ class logging_spawn(pexpect.spawn):
         while index == 0:
             index = self.expect(
                 ['.+', pexpect.EOF, pexpect.TIMEOUT],
-                timeout=1, lava_no_logging=1)
+                timeout=0.1, lava_no_logging=1)
 
 
 def connect_to_serial(context):
@@ -406,27 +433,36 @@ def connect_to_serial(context):
         results.append(result)
 
     while retry_count < retry_limit:
-        proc = context.spawn(
-            context.device_config.connection_command,
-            timeout=1200)
-        logging.info('Attempting to connect to device using: %s' % context.device_config.connection_command)
-        match = proc.expect(patterns, timeout=10)
-        result = results[match]
-        logging.info('Matched %r which means %s', patterns[match], result)
-        if result == 'retry' or result == 'reset-port':
-            reset_cmd = context.device_config.reset_port_command
-            if reset_cmd:
-                logging.warning('attempting to reset serial port')
-                context.run_command(reset_cmd)
-            else:
-                logging.warning('no reset_port command configured')
-            proc.close(True)
+        try:
+            proc = context.spawn(
+                context.device_config.connection_command,
+                timeout=120)
+            logging.info('Attempting to connect to device using: %s', context.device_config.connection_command)
+            match = proc.expect(patterns, timeout=10)
+            result = results[match]
+            logging.info('Matched %r which means %s', patterns[match], result)
+            if result == 'retry' or result == 'reset-port':
+                reset_cmd = context.device_config.reset_port_command
+                if reset_cmd:
+                    logging.warning('attempting to reset serial port')
+                    context.run_command(reset_cmd)
+                else:
+                    logging.warning('no reset_port command configured')
+                proc.close(True)
+                retry_count += 1
+                time.sleep(5)
+                continue
+            elif result == 'all-good':
+                context.test_data.add_result('connect_to_console', 'pass')
+                atexit.register(proc.close, True)
+                return proc
+        except CriticalError:
             retry_count += 1
-            time.sleep(5)
-            continue
-        elif result == 'all-good':
-            atexit.register(proc.close, True)
-            return proc
+
+    msg = 'Infrastructure Error: cannot connect to console.'
+    logging.error(msg)
+    context.test_data.add_result('connect_to_console', 'fail',
+                                 message=msg)
     raise CriticalError('could execute connection_command successfully')
 
 
@@ -467,10 +503,10 @@ def finalize_process(proc):
     if proc:
         try:
             os.killpg(proc.pid, signal.SIGKILL)
-            logging.debug("Finalizing child process group with PID %d" % proc.pid)
+            logging.debug("Finalizing child process group with PID %d", proc.pid)
         except OSError:
             proc.kill(9)
-            logging.debug("Finalizing child process with PID %d" % proc.pid)
+            logging.debug("Finalizing child process with PID %d", proc.pid)
         proc.close()
 
 

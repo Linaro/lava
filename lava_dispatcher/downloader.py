@@ -186,7 +186,10 @@ def download_image(url_string, context, imgdir=None,
             elif url.scheme == 'file':
                 reader = _file_stream
             else:
-                raise Exception("Unsupported url protocol scheme: %s" % url.scheme)
+                msg = "Infrastructure Error: Unsupported url protocol scheme: %s" % \
+                      url.scheme
+                logging.error(msg)
+                raise Exception(msg)
 
             cookies = context.config.lava_cookies
             with reader(url, context.config.lava_proxy, cookies) as r:
@@ -219,25 +222,29 @@ def download_image(url_string, context, imgdir=None,
                 urllib2.HTTPError, urllib2.URLError) as e:
             if hasattr(e, 'reason'):
                 if hasattr(e, 'code'):
-                    logging.error("Unable to download '%s': %s %s", url_string, e.code, e.reason)
+                    logging.error("Infrastructure Error: Unable to download '%s': %s %s", url_string, e.code, e.reason)
                 else:
-                    logging.error("Unable to download '%s': %s", url_string, e.reason)
+                    logging.error("Infrastructure Error: Unable to download '%s': %s", url_string, e.reason)
             else:
-                logging.error("Unable to download '%s': %s", url_string, e)
+                logging.error("Infrastructure Error: Unable to download '%s': %s", url_string, e)
             tries += 1
             if time.time() >= now + timeout:
-                raise RuntimeError(
-                    'downloading %s failed after %d tries: %s' % (url_string, tries, e))
+                msg = 'Infrastructure Error: Downloading %s failed after %d tries: %s' % \
+                      (url_string, tries, e)
+                logging.error(msg)
+                raise RuntimeError(msg)
             else:
                 logging.info('Sleep one minute and retry (%d)', tries)
                 time.sleep(60)
         # add other exceptions to the above section and then remove the broad clause
         except Exception as e:
-            logging.warn("unable to download: %r", traceback.format_exc())
+            logging.warn("Unable to download: %r", traceback.format_exc())
             tries += 1
             if time.time() >= now + timeout:
-                raise RuntimeError(
-                    'downloading %s failed after %d tries: %s' % (url_string, tries, e))
+                msg = 'Infrastructure Error: Downloading %s failed after %d tries: %s' % \
+                      (url_string, tries, e)
+                logging.error(msg)
+                raise RuntimeError(msg)
             else:
                 logging.info('Sleep one minute and retry (%d)', tries)
                 time.sleep(60)

@@ -1,0 +1,37 @@
+device_type: cubietruck
+
+job_name: cubie-uboot-usb
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  dd-image:
+    minutes: 8
+priority: medium
+
+actions:
+    # secondary media - use the first deploy to get to a system which can deploy the next
+    # in testing, assumed to already be deployed
+    - deploy:
+        timeout:
+          minutes: 10
+        to: usb
+        os: debian
+        # not a real job, just used for unit tests
+        image: http://releases.linaro.org/12.02/ubuntu/leb-panda/panda-ubuntu-desktop.img.gz
+        device: SanDisk_Ultra # needs to be exposed in the device-specific UI
+        download: /usr/bin/wget
+
+    - boot:
+        method: u-boot
+        commands: usb
+        parameters:
+          shutdown-message: "reboot: Restarting system"
+        # these files are part of the image already deployed and are known to the test writer
+        kernel: /boot/vmlinuz-3.16.0-4-armmp-lpae
+        ramdisk: /boot/initrd.img-3.16.0-4-armmp-lpae.u-boot
+        dtb: /boot/dtb-3.16.0-4-armmp-lpae'
+        root_uuid: UUID=159d17cc-697c-4125-95a0-a3775e1deabe  # comes from the supplied image.
+        boot_part: 1  # the partition on the media from which the bootloader can read the kernel, ramdisk & dtb
+        type: bootz

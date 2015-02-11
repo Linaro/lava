@@ -189,6 +189,9 @@ class dispatch(DispatcherCommand):
         # Load the job file
         job_runner, job_data = self.parse_job_file(self.args.job_file, oob_file)
 
+        if self.args.output_dir and not os.path.isdir(self.args.output_dir):
+            os.makedirs(self.args.output_dir)
+
         # detect multinode and start a NodeDispatcher to work with the LAVA Coordinator.
         if not self.args.validate:
             if 'target_group' in job_data:
@@ -203,8 +206,6 @@ class dispatch(DispatcherCommand):
                 exit(1)
         else:
             job_data['target'] = self.args.target
-        if self.args.output_dir and not os.path.isdir(self.args.output_dir):
-            os.makedirs(self.args.output_dir)
 
         job_runner(job_data, oob_file, self.config, self.args.output_dir, self.args.validate)
 
@@ -218,13 +219,11 @@ class dispatch(DispatcherCommand):
             # Prepare the pipeline from the file using the parser.
 
             device = NewDevice(self.args.target)  # DeviceParser
-            # FIXME: system paths are not standardised, so needs local clone to work on the command line
-            if not device.parameters:
-                raise RuntimeError("Pipeline does not support %s" % self.args.target)
             parser = JobParser()
             job = None
             try:
-                job = parser.parse(open(filename), device, output_dir=self.args.output_dir)
+                with open(filename) as f_in:
+                    job = parser.parse(f_in, device, output_dir=self.args.output_dir)
             except JobError as exc:
                 logging.error("Invalid job submission: %s" % exc)
                 exit(1)

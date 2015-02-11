@@ -1,0 +1,46 @@
+device_type: kvm
+
+actions:
+  deploy:
+    methods:
+      image:
+        parameters:
+          root_part: 1
+  boot:
+    methods:
+      qemu:
+        parameters:
+          command:
+            qemu-system-x86_64
+          boot_options:
+            root: /dev/sda1
+            console: ttyS0,115200
+          options:
+            - -nographic
+            - -enable-kvm
+            - -cpu host
+            - -net nic,model=virtio,macaddr=52:54:00:12:34:58 -net user
+            - -m 512
+
+timeouts:
+  apply-overlay-image:
+    minutes: 2
+  umount-retry:
+    seconds: 57
+  lava-test-shell:
+    seconds: 30
+
+
+test_image_prompts:
+  # TODO: we should'nt need such a long list
+  - '\(initramfs\)'
+  - '/ #'
+  - 'root@android'
+  - 'root@linaro'
+  - 'root@master'
+  - 'root@debian'
+  - 'root@linaro-nano:~#'
+  - 'root@linaro-developer:~#'
+  - 'root@linaro-server:~#'
+  - 'root@genericarmv7a:~#'
+  - 'root@genericarmv8:~#'

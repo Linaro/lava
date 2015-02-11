@@ -62,7 +62,7 @@ class PrettyPrinter(object):
                     line = '%-40s %8s' % (test_case['test_case_id'],
                                           test_case['result'].upper())
                     if 'measurement' in test_case:
-                        line += ' %20.5f' % test_case['measurement']
+                        line += ' %s' % test_case['measurement']
                     if 'units' in test_case:
                         line += ' %s' % test_case['units']
                     self._print_with_color(line, test_case['result'].upper())

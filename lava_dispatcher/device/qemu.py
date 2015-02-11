@@ -43,7 +43,8 @@ from lava_dispatcher.utils import (
     create_ramdisk
 )
 from lava_dispatcher.errors import (
-    CriticalError
+    CriticalError,
+    OperationFailed,
 )
 
 
@@ -110,6 +111,7 @@ class QEMUTarget(Target):
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
+        self._check_power_state()
         with image_partition_mounted(self._sd_image, partition) as mntdir:
             path = '%s/%s' % (mntdir, directory)
             ensure_directory(path)
@@ -118,14 +120,13 @@ class QEMUTarget(Target):
     def extract_tarball(self, tarball_url, partition, directory='/'):
         logging.info('extracting %s to target', tarball_url)
 
+        self._check_power_state()
         with image_partition_mounted(self._sd_image, partition) as mntdir:
             tb = download_image(tarball_url, self.context, decompress=False)
             extract_tar(tb, '%s/%s' % (mntdir, directory))
 
     def power_on(self):
-        if self.proc is not None:
-            logging.warning('device already powered on, powering off first')
-            self.power_off(None)
+        self._check_power_state()
 
         qemu_options = ''
 
@@ -157,18 +158,19 @@ class QEMUTarget(Target):
         qemu_cmd = '%s %s %s' % (self.config.qemu_binary, self.config.qemu_options, qemu_options)
         logging.info('launching qemu with command %r', qemu_cmd)
         self.proc = self.context.spawn(qemu_cmd, timeout=1200)
-        self._auto_login(self.proc)
+        self._monitor_boot(self.proc, self.tester_ps1, self.tester_ps1_pattern)
         if self._ramdisk and self._sd_image is None:
-            self._wait_for_prompt(self.proc, self.config.test_image_prompts,
-                                  self.config.boot_linaro_timeout)
             self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
                                send_char=self.config.send_char)
-            self.proc.sendline('export PS1="%s"'
-                               % self.tester_ps1,
-                               send_char=self.config.send_char)
+
         return self.proc
 
     def power_off(self, proc):
+        if self.proc:
+            try:
+                self._soft_reboot(self.proc)
+            except OperationFailed:
+                logging.info('Graceful reboot of platform failed')
         finalize_process(self.proc)
         self.proc = None
 
@@ -180,6 +182,11 @@ class QEMUTarget(Target):
             return matches[-1]
         except subprocess.CalledProcessError:
             return "unknown"
+
+    def _check_power_state(self):
+        if self.proc is not None:
+            logging.warning('device already powered on, powering off first')
+            self.power_off(None)
 
 
 target_class = QEMUTarget

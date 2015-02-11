@@ -26,21 +26,19 @@ import logging
 import time
 import pexpect
 import subprocess
+import lava_dispatcher.utils as utils
 
 from lava_dispatcher.device import boot_options
+from lava_dispatcher import deployment_data
 from lava_dispatcher.utils import (
     wait_for_prompt
 )
 from lava_dispatcher.client.lmc_utils import (
     image_partition_mounted
 )
-import lava_dispatcher.utils as utils
-from lava_dispatcher import deployment_data
-
 from lava_dispatcher.downloader import (
     download_image,
 )
-
 from lava_dispatcher.errors import (
     CriticalError,
     OperationFailed,
@@ -399,6 +397,7 @@ class Target(object):
         # Set flags
         boot_cmds_job_file = False
         boot_cmds_boot_options = False
+        master_boot = False
 
         # Set the default boot commands
         if default is None:
@@ -409,10 +408,12 @@ class Target(object):
         # Check for job defined boot commands
         if boot_cmds != 'boot_cmds_master':
             boot_cmds_job_file = self._is_job_defined_boot_cmds(self.config.boot_cmds)
+        else:
+            master_boot = True
 
         # Check if a user has entered boot_options
         options, user_option = boot_options.as_dict(self, defaults={'boot_cmds': boot_cmds})
-        if 'boot_cmds' in options and user_option:
+        if 'boot_cmds' in options and user_option and not master_boot:
             boot_cmds_boot_options = True
 
         # Interactive boot_cmds from the job file are a list.
@@ -469,16 +470,26 @@ class Target(object):
         else:
             connection.send("~$")
             connection.sendline("hardreset")
-            connection.empty_buffer()
 
     def _enter_bootloader(self, connection):
-        if connection.expect(self.config.interrupt_boot_prompt,
-                             timeout=self.config.bootloader_timeout) != 0:
-            raise Exception("Failed to enter bootloader")
-        if self.config.interrupt_boot_control_character:
-            connection.sendcontrol(self.config.interrupt_boot_control_character)
-        else:
-            connection.send(self.config.interrupt_boot_command)
+        try:
+            start = time.time()
+            connection.expect(self.config.interrupt_boot_prompt,
+                              timeout=self.config.bootloader_timeout)
+            if self.config.interrupt_boot_control_character:
+                connection.sendcontrol(self.config.interrupt_boot_control_character)
+            else:
+                connection.send(self.config.interrupt_boot_command)
+            # Record the time it takes to enter the bootloader.
+            enter_bootloader_time = "{0:.2f}".format(time.time() - start)
+            self.context.test_data.add_result('enter_bootloader', 'pass',
+                                              enter_bootloader_time, 'seconds')
+        except pexpect.TIMEOUT:
+            msg = 'Infrastructure Error: failed to enter the bootloader.'
+            logging.error(msg)
+            self.context.test_data.add_result('enter_bootloader', 'fail',
+                                              message=msg)
+            raise
 
     def _boot_cmds_preprocessing(self, boot_cmds):
         """ preprocess boot_cmds to prevent the boot procedure from some errors
@@ -503,42 +514,163 @@ class Target(object):
 
         return boot_cmds
 
+    def _monitor_boot(self, connection, ps1, ps1_pattern, is_master=False):
+
+        good = 'pass'
+        bad = 'fail'
+        if not is_master:
+            wait_for_image_boot = 'wait_for_image_boot_msg'
+            wait_for_kernel_boot = 'wait_for_kernel_boot_msg'
+            wait_for_login_prompt = 'wait_for_login_prompt'
+            kernel_exception = 'test_kernel_exception_'
+            wait_for_image_prompt = 'wait_for_test_image_prompt'
+            kernel_boot = 'test_kernel_boot_time'
+            userspace_boot = 'test_userspace_boot_time'
+        else:
+            wait_for_image_boot = 'wait_for_master_image_boot_msg'
+            wait_for_kernel_boot = 'wait_for_master_kernel_boot_msg'
+            wait_for_login_prompt = 'wait_for_master_login_prompt'
+            kernel_exception = 'master_kernel_exception_'
+            wait_for_image_prompt = 'wait_for_master_image_prompt'
+            kernel_boot = 'master_kernel_boot_time'
+            userspace_boot = 'master_userspace_boot_time'
+
+        try:
+            connection.expect(self.config.image_boot_msg,
+                              timeout=self.config.image_boot_msg_timeout)
+            start = time.time()
+            self.context.test_data.add_result(wait_for_image_boot,
+                                              good)
+        except pexpect.TIMEOUT:
+            msg = "Kernel Error: did not start booting."
+            logging.error(msg)
+            self.context.test_data.add_result(wait_for_image_boot,
+                                              bad, message=msg)
+            raise
+
+        try:
+            done = False
+            warnings = 0
+            while not done:
+                pl = [self.config.kernel_boot_msg,
+                      'Freeing init memory',
+                      '-+\[ cut here \]-+\s+(.*\s+-+\[ end trace (\w*) \]-+)',
+                      '(Unhandled fault.*)\r\n']
+                i = connection.expect(pl,
+                                      timeout=self.config.kernel_boot_msg_timeout)
+                if i == 0 or i == 1:
+                    # Kernel booted normally
+                    done = True
+                elif i == 2:
+                    warnings += 1
+                    logging.info('Kernel exception detected, logging error')
+                    kwarn = kernel_exception + str(warnings)
+                    kwarnings = connection.match.group(1)
+                    self.context.test_data.add_result(kwarn, 'fail', message=kwarnings)
+                    continue
+                elif i == 3:
+                    warnings += 1
+                    logging.info('Kernel exception detected, logging error')
+                    kwarn = kernel_exception + str(warnings)
+                    kwarnings = connection.match.group(0)
+                    self.context.test_data.add_result(kwarn, 'fail', message=kwarnings)
+                    continue
+            kernel_boot_time = "{0:.2f}".format(time.time() - start)
+            self.context.test_data.add_result(wait_for_kernel_boot,
+                                              good)
+            start = time.time()
+        except pexpect.TIMEOUT:
+            # Get the last line from the pexpect buffer
+            last_kmsg = connection.before.rstrip().split('\r\n')[-1]
+            msg = "Kernel Error:  %s " % last_kmsg
+            logging.error(msg)
+            kernel_boot_time = 0.0
+            self.context.test_data.add_result(wait_for_kernel_boot,
+                                              bad, message=msg)
+            raise
+
+        try:
+            self._auto_login(connection)
+        except pexpect.TIMEOUT:
+            msg = "Userspace Error: auto login prompt not found."
+            logging.error(msg)
+            self.context.test_data.add_result(wait_for_login_prompt,
+                                              bad, message=msg)
+            raise
+
+        try:
+            self._wait_for_prompt(connection, self.config.test_image_prompts,
+                                  self.config.boot_linaro_timeout)
+            connection.sendline('export PS1="%s"' % ps1,
+                                send_char=self.config.send_char)
+            self._wait_for_prompt(connection, ps1_pattern, timeout=10)
+            userspace_boot_time = "{0:.2f}".format(time.time() - start)
+            self.context.test_data.add_result(wait_for_image_prompt,
+                                              good)
+        except pexpect.TIMEOUT:
+            msg = "Userspace Error: image prompt not found."
+            logging.error(msg)
+            self.context.test_data.add_result(wait_for_image_prompt,
+                                              bad)
+            raise
+
+        # Record results
+        boot_meta = {}
+        boot_meta['dtb-append'] = str(self.config.append_dtb)
+        self.context.test_data.add_metadata(boot_meta)
+        self.context.test_data.add_result(kernel_boot, 'pass',
+                                          kernel_boot_time, 'seconds')
+        self.context.test_data.add_result(userspace_boot, 'pass',
+                                          userspace_boot_time, 'seconds')
+        logging.info("Kernel boot time: %s seconds" % kernel_boot_time)
+        logging.info("Userspace boot time: %s seconds" % userspace_boot_time)
+
     def _customize_bootloader(self, connection, boot_cmds):
         start = time.time()
         delay = self.config.bootloader_serial_delay_ms
         _boot_cmds = self._boot_cmds_preprocessing(boot_cmds)
-        for line in _boot_cmds:
-            parts = re.match('^(?P<action>sendline|sendcontrol|expect)\s*(?P<command>.*)',
-                             line)
-            if parts:
-                try:
-                    action = parts.group('action')
-                    command = parts.group('command')
-                except AttributeError as e:
-                    raise Exception("Badly formatted command in \
-                                      boot_cmds %s" % e)
-                if action == "sendline":
-                    connection.send(command, delay,
-                                    send_char=self.config.send_char)
-                    connection.sendline('', delay,
-                                        send_char=self.config.send_char)
-                elif action == "sendcontrol":
-                    connection.sendcontrol(command)
-                elif action == "expect":
-                    command = re.escape(command)
-                    connection.expect(command, timeout=20)
-            else:
-                self._wait_for_prompt(connection,
-                                      self.config.bootloader_prompt,
-                                      timeout=10)
-                connection.sendline(line, delay,
-                                    send_char=self.config.send_char)
 
-        # Record boot time metadata
-        boottime = "{0:.2f}".format(time.time() - start)
-        boottime_meta = {'bootloader-load-time': boottime}
-        self.context.test_data.add_metadata(boottime_meta)
-        logging.debug("Bootloader load time: %s seconds", boottime)
+        try:
+            for line in _boot_cmds:
+                parts = re.match('^(?P<action>sendline|sendcontrol|expect)\s*(?P<command>.*)',
+                                 line)
+                if parts:
+                    try:
+                        action = parts.group('action')
+                        command = parts.group('command')
+                    except AttributeError as e:
+                        raise Exception("Badly formatted command in \
+                                          boot_cmds %s" % e)
+                    if action == "sendline":
+                        connection.send(command, delay,
+                                        send_char=self.config.send_char)
+                        connection.sendline('', delay,
+                                            send_char=self.config.send_char)
+                    elif action == "sendcontrol":
+                        connection.sendcontrol(command)
+                    elif action == "expect":
+                        command = re.escape(command)
+                        connection.expect(command,
+                                          timeout=self.config.boot_cmd_timeout)
+                else:
+                    self._wait_for_prompt(connection,
+                                          self.config.bootloader_prompt,
+                                          timeout=self.config.boot_cmd_timeout)
+                    connection.sendline(line, delay,
+                                        send_char=self.config.send_char)
+            self.context.test_data.add_result('execute_boot_cmds',
+                                              'pass')
+        except pexpect.TIMEOUT:
+            msg = "Bootloader Error: boot command execution failed."
+            logging.error(msg)
+            self.context.test_data.add_result('execute_boot_cmds',
+                                              'fail', message=msg)
+            raise
+
+        # Record boot_cmds execution time
+        execution_time = "{0:.2f}".format(time.time() - start)
+        self.context.test_data.add_result('boot_cmds_execution_time', 'pass',
+                                          execution_time, 'seconds')
 
     def _target_extract(self, runner, tar_file, dest, timeout=-1, busybox=False):
         tmpdir = self.context.config.lava_image_tmpdir

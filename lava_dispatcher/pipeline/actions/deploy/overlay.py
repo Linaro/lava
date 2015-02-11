@@ -202,7 +202,7 @@ class CompressOverlay(Action):
             self.logger.debug(self.errors)
             return connection
         location = self.data['lava-overlay']['location']
-        output = os.path.join(self.job.parameters['output_dir'], 'overlay.tar.gz')
+        output = os.path.join(self.job.parameters['output_dir'], "overlay-%s.tar.gz" % self.level)
         cur_dir = os.getcwd()
         try:
             with tarfile.open(output, "w:gz") as tar:

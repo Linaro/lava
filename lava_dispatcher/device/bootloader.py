@@ -183,7 +183,11 @@ class BootloaderTarget(MasterImageTarget):
             if self._is_uboot() or self._is_uefi():
                 if self.config.uimage_only and not is_uimage(kernel, self.context):
                     if len(self.config.u_load_addrs) == 3:
-                        kernel = create_uimage(kernel, self.config.u_load_addrs[0],
+                        if self.config.text_offset:
+                            load_addr = self.config.text_offset
+                        else:
+                            load_addr = self.config.u_load_addrs[0]
+                        kernel = create_uimage(kernel, load_addr,
                                                self._tmpdir, self.config.uimage_xip)
                         logging.info('uImage created successfully')
                     else:
@@ -301,11 +305,7 @@ class BootloaderTarget(MasterImageTarget):
             self.proc.sendline(self.config.pre_boot_cmd,
                                send_char=self.config.send_char)
         self._customize_bootloader(self.proc, boot_cmds)
-        self.proc.expect(self.config.image_boot_msg,
-                         timeout=self.config.image_boot_msg_timeout)
-        self._auto_login(self.proc)
-        self._wait_for_prompt(self.proc, self.config.test_image_prompts,
-                              self.config.boot_linaro_timeout)
+        self._monitor_boot(self.proc, self.tester_ps1, self.tester_ps1_pattern)
 
     def _boot_linaro_image(self):
         if self.proc:
@@ -323,9 +323,6 @@ class BootloaderTarget(MasterImageTarget):
             # the nameserver data does get populated by the DHCP
             # daemon. Thus, LAVA will populate the name server data.
             self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
-                               send_char=self.config.send_char)
-            self.proc.sendline('export PS1="%s"'
-                               % self.tester_ps1,
                                send_char=self.config.send_char)
             self._booted = True
         elif self._is_bootloader() and self._booted:

@@ -5,7 +5,8 @@ include .testr.conf
 include .gitreview
 include COPYING
 include lava_dispatcher/default-config/lava-dispatcher/README
-recursive-include lava_dispatcher/pipeline/devices *.conf
+recursive-include lava_dispatcher/pipeline/devices *.conf *.yaml
+recursive-include lava_dispatcher/pipeline/test/pipeline_refs *.yaml
 recursive-include lava_dispatcher/pipeline/device_types *.conf
 include lava_dispatcher/pipeline/test/sample_jobs/*
 include lava_dispatcher/tests/test-config/bin/*
