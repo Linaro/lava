@@ -520,3 +520,11 @@ def read_content(filepath, ignore_missing=False):
 def write_content(filename, content):
     with open(filename, 'a') as f:
         f.write(content)
+
+
+def indices(string, char):
+    """
+    Return the indices of the given character in the given string.
+    Return an empty list if the character cannot be found.
+    """
+    return [i for i, c in enumerate(string) if c == char]
