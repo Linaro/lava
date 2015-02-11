@@ -2,15 +2,25 @@ import re
 
 
 def getDispatcherErrors(logfile):
-    errors = ""
-    for line in logfile:
-        if line.find("CriticalError:") != -1 or \
-           line.find("OperationFailed:") != -1 or \
-           line.find("ErrorMessage:") != -1 or \
-           line.find("Lava failed on test:") != -1:
-            errors += line
+    errors = []
+    error_types = ["Infrastructure Error:",
+                   "Bootloader Error:",
+                   "Kernel Error:",
+                   "Userspace Error:",
+                   "Test Shell Error:",
+                   "Master Image Error:",
+                   "OperationFailed:"]
 
-    return errors
+    for line in logfile:
+        for error in error_types:
+            index = line.find(error)
+            print line
+            print error
+            if index != -1:
+                print line[index:]
+                errors.append(line[index:])
+
+    return list(set(errors))
 
 
 def getDispatcherLogMessages(logfile):

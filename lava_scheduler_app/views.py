@@ -1341,7 +1341,7 @@ def job_detail(request, pk):
         if not job.failure_comment:
             job_errors = getDispatcherErrors(job.output_file())
             if len(job_errors) > 0:
-                msg = "".join(job_errors).strip()
+                msg = job_errors[-1]
                 if msg != "ErrorMessage: None":
                     job.failure_comment = msg
                     job.save()

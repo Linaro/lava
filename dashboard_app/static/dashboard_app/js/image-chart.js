@@ -7,8 +7,9 @@ $(document).ready(function () {
 
     ImageReport.prototype.start = function() {
         // Add charts.
-        for (chart_id in this.chart_data) {
-            chart = new ImageChart(chart_id, this.chart_data[chart_id]);
+        for (index in this.chart_data) {
+            chart = new ImageChart(this.chart_data[index].id,
+                                   this.chart_data[index]);
             chart.add_chart();
             this.charts.push(chart);
         }
@@ -73,6 +74,8 @@ $(document).ready(function () {
                 this.chart_data["chart_height"]
             );
 
+            // Determine whether dates/build numbers/attributes are numeric .
+            this.is_keys_numeric();
             // Add headline and description.
             this.update_headline();
             // Add filter links.
@@ -92,6 +95,35 @@ $(document).ready(function () {
         }
     }
 
+    ImageChart.prototype.is_keys_numeric = function() {
+
+        keys = this.get_keys();
+        // Check if all range items are numeric and set the value in chart_data.
+        this.chart_data.is_keys_numeric = is_array_numeric(keys);
+
+        this.chart_data.is_keys_decimal = false;
+        if (this.chart_data.is_keys_numeric) {
+            this.chart_data.is_keys_decimal = is_any_element_decimal(keys);
+        }
+    }
+
+    ImageChart.prototype.get_keys = function() {
+
+        // Get all keys based on chart options.
+        keys = [];
+        for (iter in this.chart_data.test_data) {
+            if (this.chart_data.xaxis_attribute) {
+                item = this.chart_data.test_data[iter]["attribute"];
+            } else {
+                item = this.chart_data.test_data[iter]["number"].split('.')[0];
+            }
+            if (item && keys.indexOf(item) == -1) {
+                keys.push(item);
+            }
+        }
+
+        return keys;
+    }
 
     ImageChart.prototype.update_alias = function() {
         if (Object.keys(this.chart_data.filters).length == 1) {
@@ -208,6 +240,15 @@ $(document).ready(function () {
                 'id="is_legend_visible_' + this.chart_id +
                 '" checked="checked"/></span>');
 
+        // Add delta reporting checkbox.
+        $("#filter_links_container_" + this.chart_id).append(
+            '<span class="toggle-delta"><label for="is_delta_' +
+                this.chart_id + '">Delta reporting</label></span>');
+        $("#filter_links_container_" + this.chart_id).append(
+            '<span class="toggle-checkbox"><input type="checkbox" ' +
+                'id="is_delta_' + this.chart_id +
+                '" checked="checked"/></span>');
+
         $("#filter_links_container_" + this.chart_id).append(
             '<span class="chart-save-img">' +
                 '<a id="chart_menu_' + this.chart_id + '"' +
@@ -232,13 +273,13 @@ $(document).ready(function () {
 
         // Add dates(build number) fields and toggle legend checkbox.
         $("#dates_container_" + this.chart_id).append(
-            '<span style="margin-left: 30px;">Start build number:&nbsp;' +
+            '<span style="margin-left: 30px;">Start:&nbsp;' +
                 '&nbsp;</span>');
         $("#dates_container_" + this.chart_id).append(
             '<span><select id="start_date_' + this.chart_id +
                 '"></select></span>');
         $("#dates_container_" + this.chart_id).append(
-            '<span>&nbsp;&nbsp;&nbsp;&nbsp;End build number:&nbsp;&nbsp;' +
+            '<span>&nbsp;&nbsp;&nbsp;&nbsp;End:&nbsp;&nbsp;' +
                 '</span>');
         $("#dates_container_" + this.chart_id).append(
             '<span><select id="end_date_' + this.chart_id + '"></select>' +
@@ -374,12 +415,16 @@ $(document).ready(function () {
                 table[number][test_data["test_filter_id"]] = [];
             }
 
+            measurement = parseFloat(test_data["measurement"]);
+            if (isNaN(measurement)) {
+                measurement = test_data["measurement"];
+            }
             table[number][test_data["test_filter_id"]].push({
                 "passes": test_data["passes"],
                 "pass": test_data["pass"],
                 "skip": test_data["skip"],
                 "total": test_data["total"],
-                "measurement": test_data["measurement"],
+                "measurement": measurement,
                 "attr_value": test_data["attr_value"],
                 "link": test_data["link"].replace("\\\\\\", ""),
                 "test_run_uuid": test_data["test_run_uuid"],
@@ -446,9 +491,9 @@ $(document).ready(function () {
                     uuid = cell["test_run_uuid"];
                     relative_index_str = "";
                     if (cell["measurement"]) {
-                        arr = cell["link"].split("/")
-                        relative_index = arr[arr.length-2]
-                        relative_index_str = 'data-relative_index="' + relative_index +'"'
+                        arr = cell["link"].split("/");
+                        relative_index = arr[arr.length-2];
+                        relative_index_str = 'data-relative_index="' + relative_index +'"';
                     }
 
                     table_body += '<td class="' + cls + '" data-chart-id="' +
@@ -460,10 +505,12 @@ $(document).ready(function () {
                             cell["total"] + '</a>';
                     } else if (this.chart_data["chart_type"] == "measurement") {
                         table_body += '<a target="_blank" href="' +
-                            cell["link"] + '">' + cell["measurement"] + '</a>';
+                            cell["link"] + '">' +
+                            cell["measurement"].toFixed(2) + '</a>';
                     } else if (this.chart_data["chart_type"] == "attributes") {
                         table_body += '<a target="_blank" href="' +
-                            cell["link"] + '">' + cell["attr_value"] + '</a>';
+                            cell["link"] + '">' +
+                            cell["attr_value"].toFixed(2) + '</a>';
                     }
 
                     table_body += '<span class="bug-link-container">' +
@@ -498,29 +545,23 @@ $(document).ready(function () {
     }
 
     ImageChart.prototype.set_dates = function() {
-        // Populate date dropdowns.
-        dates = [];
-        for (iter in this.chart_data.test_data) {
-            item = this.chart_data.test_data[iter]["number"].split('.')[0];
-            if (dates.indexOf(item) == -1) {
-                dates.push(item);
-            }
-        }
+        // Populate range dropdowns.
+        keys = this.get_keys();
 
-        if (this.chart_data.has_build_numbers) {
-            dates.sort(function(x,y) {return x-y;});
+        if (this.chart_data.is_keys_numeric) {
+            keys.sort(function(x,y) {return x-y;});
         } else {
-            dates.sort();
+            keys.sort();
         }
 
-        for (i in dates) {
+        for (i in keys) {
             $("#start_date_" + this.chart_id).append($("<option/>", {
-                value: dates[i],
-                text: dates[i]
+                value: keys[i],
+                text: keys[i]
             }));
             $("#end_date_" + this.chart_id).append($("<option/>", {
-                value: dates[i],
-                text: dates[i]
+                value: keys[i],
+                text: keys[i]
             }));
         }
         $("#end_date_" + this.chart_id + " option:last").attr("selected",
@@ -528,14 +569,16 @@ $(document).ready(function () {
     }
 
     ImageChart.prototype.validate_build_number_selection = function() {
+        // Validates start date field value against end data field value.
+        // start date needs to be "less" then end date.
 
         start_number = $("#start_date_" + this.chart_id).val();
         if (isNumeric(start_number)) {
-	    start_number = parseInt(start_number);
+	    start_number = parseFloat(start_number);
         }
         end_number = $("#end_date_" + this.chart_id).val();
         if (isNumeric(end_number)) {
-	    end_number = parseInt(end_number);
+	    end_number = parseFloat(end_number);
         }
 
         if (start_number >= end_number) {
@@ -583,6 +626,11 @@ $(document).ready(function () {
             chart.update_settings();
         });
 
+        $("#is_delta_"+this.chart_id).change(function() {
+            chart.update_plot();
+            chart.update_settings();
+        });
+
         $("#has_subscription_link_"+this.chart_id).click(function() {
             $("#has_subscription_" + chart.chart_id).val(
                 $("#has_subscription_" + chart.chart_id).val() != "true");
@@ -594,12 +642,19 @@ $(document).ready(function () {
 
         if (this.chart_data.user) { // Is authenticated.
             if (this.chart_data.user.start_date) {
-                $("#start_date_" + this.chart_id).val(
-                    this.chart_data.user.start_date);
+                available_options = $.map($("#start_date_" + this.chart_id + " option"), function(e) { return e.value; });
+                if (available_options.indexOf(this.chart_data.user.start_date) > -1) {
+                    $("#start_date_" + this.chart_id).val(
+                        this.chart_data.user.start_date);
+                }
             }
             if (this.chart_data.user.is_legend_visible == false) {
                 $("#is_legend_visible_" + this.chart_id).prop("checked",
                                                               false);
+            }
+            if (this.chart_data.user.is_delta == false) {
+                $("#is_delta_" + this.chart_id).prop("checked",
+                                                     false);
             }
 
             this.set_subscription_link(this.chart_data.user.has_subscription);
@@ -629,6 +684,7 @@ $(document).ready(function () {
                 csrfmiddlewaretoken: csrf_token,
                 start_date: $("#start_date_" + this.chart_id).val(),
                 is_legend_visible: $("#is_legend_visible_" + this.chart_id).prop("checked"),
+                is_delta: $("#is_delta_" + this.chart_id).prop("checked"),
                 has_subscription: $("#has_subscription_" + this.chart_id).val(),
                 visible_chart_test_id: visible_chart_test_id,
                 visible_attribute_name: attr_name,
@@ -669,10 +725,10 @@ $(document).ready(function () {
         // number/date boundaries.
         start_number = $("#start_date_" + this.chart_id).val();
         end_number = $("#end_date_" + this.chart_id).val();
-        if (this.chart_data.has_build_numbers) {
-            build_number = parseInt(build_number);
-            start_number = parseInt(start_number);
-            end_number = parseInt(end_number);
+        if (this.chart_data.is_keys_numeric) {
+            build_number = parseFloat(build_number);
+            start_number = parseFloat(start_number);
+            end_number = parseFloat(end_number);
         }
         if (build_number <= end_number && build_number >= start_number) {
 	    return true;
@@ -705,8 +761,30 @@ $(document).ready(function () {
 
         // Dates on the x-axis.
         dates = [];
-        // Store all build numbers
+
+
+        // Get all build numbers to be used as tick labels.
         build_numbers = [];
+        for (iter in this.chart_data.test_data) {
+
+	    row = this.chart_data.test_data[iter];
+
+            if (this.chart_data.xaxis_attribute) {
+                build_number = row["attribute"];
+            } else {
+	        build_number = row["number"].split('.')[0];
+            }
+
+            if (this.test_build_number(build_number)) {
+
+	        if (!isNumeric(build_number) && !this.chart_data.xaxis_attribute) {
+	            build_number = format_date(build_number);
+	        }
+                if (build_numbers.indexOf(build_number) == -1) {
+	            build_numbers.push(build_number);
+                }
+            }
+        }
 
         // Grid maximum and minimum values for y axis.
         var y_max = - Number.MAX_VALUE;
@@ -716,11 +794,20 @@ $(document).ready(function () {
         for (iter in this.chart_data.test_data) {
 
 	    row = this.chart_data.test_data[iter];
-            build_number = row["number"].split(".")[0];
 
-            // If some of the filters have build_number_attribute, ignore
+            if (this.chart_data.xaxis_attribute) {
+                if (row["attribute"]) {
+                    build_number = row["attribute"];
+                } else {
+                    continue;
+                }
+            } else {
+                build_number = row["number"].split(".")[0];
+            }
+
+            // If some of the filters have build_number attribute, ignore
             // others which don't.
-            if (this.chart_data.has_build_numbers && !isNumeric(build_number)) {
+            if (this.chart_data.is_keys_numeric && !isNumeric(build_number)) {
                 continue;
             }
 
@@ -744,7 +831,11 @@ $(document).ready(function () {
                     }
 
                 } else if (this.chart_data["chart_type"] == "measurement") {
-                    value = row["measurement"];
+                    value = parseFloat(row["measurement"]);
+                    if (isNaN(value)) {
+                        // Ignore plot point where measurement is non-numeric.
+                        continue;
+                    }
                     tooltip = "Value: " + value;
 
                 } else if (this.chart_data["chart_type"] == "attributes") {
@@ -792,17 +883,26 @@ $(document).ready(function () {
                 plot_data[test_filter_id]["chart_test_id"] = row["chart_test_id"];
 
                 // Add the data.
-                if (this.chart_data.has_build_numbers) {
+                if (this.chart_data.is_keys_numeric) {
                     insert_data_item(build_number, [build_number, value],
                                      plot_data[test_filter_id]["data"]);
                     insert_data_item(build_number, label,
                                      plot_data[test_filter_id]["labels"]);
                     meta_key = build_number + "_" +  value;
                     plot_data[test_filter_id]["meta"][meta_key] = meta_item;
-                    build_numbers.push(build_number);
 
+                } else if (this.chart_data.xaxis_attribute) {
+                    key = build_numbers.indexOf(row["attribute"]);
+                    data_item = [key, value];
+                    insert_data_item(key, [key, value],
+                                     plot_data[test_filter_id]["data"]);
+                    insert_data_item(key, label,
+                                     plot_data[test_filter_id]["labels"]);
+                    // Meta keys are made unique by concatination.
+                    plot_data[test_filter_id]["meta"][data_item.join("_")] =
+                        meta_item;
                 } else {
-                    date = row["date"].split(".")[0].split(" ").join("T");
+                    date = row["number"].split(".")[0].split(" ").join("T");
                     key = Date.parse(date);
                     dates.push(key);
                     data_item = [key, value];
@@ -867,7 +967,7 @@ $(document).ready(function () {
             test_filter_id = sorted_filter_ids[i];
 
             // Delta reporting, calculate diferences.
-            if (this.chart_data["is_delta"]) {
+            if ($("#is_delta_" + this.chart_id).prop("checked")) {
                 var new_data = [];
                 var new_meta_keys = [];
                 var tooltips = [];
@@ -974,25 +1074,6 @@ $(document).ready(function () {
             });
         }
 
-        // Get all build numbers to be used as tick labels.
-        build_numbers = [];
-        for (iter in this.chart_data.test_data) {
-
-	    row = this.chart_data.test_data[iter];
-
-	    build_number = row["number"].split('.')[0];
-
-            if (this.test_build_number(build_number)) {
-
-	        if (!isNumeric(build_number)) {
-	            build_number = format_date(build_number);
-	        }
-                if (build_numbers.indexOf(build_number) == -1) {
-	            build_numbers.push(build_number);
-                }
-            }
-        }
-
         // Add target goal dashed line to the plot.
         if (this.chart_data["target_goal"] != null) {
             if (this.chart_data["is_percentage"] == true) {
@@ -1003,7 +1084,7 @@ $(document).ready(function () {
 
 	    goal_data = [];
 
-            if (this.chart_data.has_build_numbers) {
+            if (this.chart_data.is_keys_numeric || this.chart_data.xaxis_attribute) {
 	        for (var i in build_numbers) {
 	            goal_data.push([build_numbers[i], target_goal]);
 	        }
@@ -1047,11 +1128,11 @@ $(document).ready(function () {
             }
         }
 
-        if (this.chart_data.has_build_numbers) {
+        if (this.chart_data.is_keys_numeric || this.chart_data.xaxis_attribute) {
 
             chart_data = this.chart_data;
             tick_formatter = function(val, axis) {
-                    if (chart_data.has_build_numbers) {
+                    if (chart_data.is_keys_numeric) {
                         return val;
                     } else {
                         return build_numbers[val];
@@ -1059,7 +1140,7 @@ $(document).ready(function () {
             }
 
             xaxis = {
-                tickDecimals: 0,
+                tickDecimals: (this.chart_data.is_keys_decimal)? 2:0,
                 tickFormatter: tick_formatter,
             };
 
@@ -1213,6 +1294,30 @@ $(document).ready(function () {
         return !isNaN(parseFloat(n)) && isFinite(n);
     }
 
+    is_array_numeric = function(arr) {
+        // Check if all items in array are numeric.
+        var is_array_numeric = true;
+        for (iter in arr) {
+            if (!isNumeric(arr[iter])) {
+                is_array_numeric = false;
+                break;
+            }
+        }
+        return is_array_numeric;
+    }
+
+    is_any_element_decimal = function(arr) {
+        // Check if any of the elements in array are decimal.
+        var is_decimal = false;
+        for (iter in arr) {
+            if (arr[iter].indexOf(".") != -1) {
+                is_decimal = true;
+                break;
+            }
+        }
+        return is_decimal;
+    }
+
     isValidUrl = function(url) {
         return url.match(/^https?:\/\/[a-z0-9-\.]+\.[a-z]{2,4}\/?([^\s<>\#%"\,\{\}\\|\\\^\[\]`]+)?$/);
     }
@@ -1220,13 +1325,13 @@ $(document).ready(function () {
     insert_data_item = function(key, value, data) {
         // Insert item at the sorted position in the data.
         // data represents list of two-value lists.
-        if (data.length == 0 || parseInt(key) <= parseInt(data[0][0])) {
+        if (data.length == 0 || parseFloat(key) <= parseFloat(data[0][0])) {
             data.splice(0, 0, value);
             return;
         }
         for (var i=0; i < data.length-1; i++) {
-            if (parseInt(key) > parseInt(data[i][0]) &&
-                parseInt(key) <= parseInt(data[i+1][0])) {
+            if (parseFloat(key) > parseFloat(data[i][0]) &&
+                parseFloat(key) <= parseFloat(data[i+1][0])) {
                 data.splice(i+1, 0, value);
                 return;
             }

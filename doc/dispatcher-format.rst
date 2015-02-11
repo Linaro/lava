@@ -7,7 +7,9 @@ To use the new features in the refactored dispatcher, a new submission
 format was required and as YAML supports comments, it was decided to
 adopt YAML as the new format.
 
-http://yaml-online-parser.appspot.com/
+`Online YAML`_ Parser.
+
+.. _Online YAML: http://yaml-online-parser.appspot.com/
 
 The submission format schema has not been created, so the detail may
 change and errors in the content might not be picked up by the code,
@@ -51,8 +53,10 @@ Other parameters commonly supported include:
 
  device_type: kvm
  job_name: kvm-pipeline
- job_timeout: 15m            # timeout for the whole job (default: ??h)
- action_timeout: 5m         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+ job_timeout:
+   minutes: 15            # timeout for the whole job (default: ??h)
+ action_timeout:
+   minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
  priority: medium
 
 In YAML, a list has a name, then a colon then an indented set of
@@ -72,7 +76,8 @@ preceding hyphen.
 
  actions:
     - deploy:
-        timeout: 20m
+        timeout:
+          minutes: 20
         to: tmpfs
         image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
         os: debian
@@ -105,14 +110,17 @@ Sample JOB definition for a KVM
  device_type: kvm
 
  job_name: kvm-pipeline
- job_timeout: 15m            # timeout for the whole job (default: ??h)
- action_timeout: 5m         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+ job_timeout:
+   minutes: 15            # timeout for the whole job (default: ??h)
+ action_timeout:
+   minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
  priority: medium
 
  actions:
 
     - deploy:
-        timeout: 20m
+        timeout:
+          minutes: 20
         to: tmpfs
         image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
         os: debian
@@ -129,8 +137,8 @@ Sample JOB definition for a KVM
     - test:
         failure_retry: 3
         name: kvm-basic-singlenode  # is not present, use "test $N"
-        # only s, m & h are supported.
-        timeout: 5m # uses install:deps, so takes longer than singlenode01
+        timeout:
+          minutes: 5 # uses install:deps, so takes longer than singlenode01
         definitions:
             - repository: git://git.linaro.org/qa/test-definitions.git
               from: git
@@ -148,35 +156,8 @@ Sample JOB definition for a KVM
     - submit_results:
         stream: /anonymous/codehelp/
 
-This is an example of how the sample YAML would look as a python snippet:
-
-.. code-block:: python
-
- {'action_timeout': '5m',
- 'actions': [{'deploy': {'image': 'http://images.validation.linaro.org/kvm-debian-wheezy.img.gz',
-                         'os': 'debian',
-                         'root_partition': 1,
-                         'timeout': '20m',
-                         'to': 'tmpfs'}},
-             {'boot': {'failure_retry': 2,
-                       'media': 'tmpfs',
-                       'method': 'kvm'}},
-             {'test': {'definitions': [{'from': 'git',
-                                        'name': 'smoke-tests',
-                                        'path': 'ubuntu/smoke-tests-basic.yaml',
-                                        'repository': 'git://git.linaro.org/qa/test-definitions.git'},
-                                       {'from': 'git',
-                                        'name': 'singlenode-advanced',
-                                        'path': 'lava-test-shell/single-node/singlenode03.yaml',
-                                        'repository': 'http://git.linaro.org/lava-team/lava-functional-tests.git'}],
-                       'failure_retry': 3,
-                       'name': 'kvm-basic-singlenode',
-                       'timeout': '5m'}},
-             {'submit_results': {'stream': '/anonymous/codehelp/'}}],
- 'device_type': 'kvm',
- 'job_name': 'kvm-pipeline',
- 'job_timeout': '15m',
- 'priority': 'medium'}
+To see an example of how the sample YAML would look as a python snippet,
+use the `Online YAML`_ Parser.
 
 .. _yaml_device_type:
 
@@ -303,7 +284,8 @@ Supported methods
    .. code-block:: yaml
 
     - deploy:
-        timeout: 20m
+        timeout:
+          minutes: 20
         to: tmpfs
         image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
         os: debian
@@ -349,7 +331,8 @@ Example code block:
         failure_retry: 3
         name: kvm-basic-singlenode  # is not present, use "test $N"
         # only s, m & h are supported.
-        timeout: 5m # uses install:deps, so takes longer than singlenode01
+        timeout:
+          minutes: 5 # uses install:deps, so takes longer than singlenode01
         definitions:
             - repository: git://git.linaro.org/qa/test-definitions.git
               from: git

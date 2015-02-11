@@ -164,10 +164,7 @@ class DatabaseJobSource(object):
         health checks.
         """
 
-        for device in Device.objects.all():
-            if device.status != Device.IDLE:
-                continue
-            run_health_check = False
+        for device in Device.objects.filter(status=Device.IDLE):
             if not device.device_type.health_check_job:
                 run_health_check = False
             elif device.health_status == Device.HEALTH_UNKNOWN:
@@ -226,22 +223,27 @@ class DatabaseJobSource(object):
         for job in jobs:
             device = find_device_for_job(job, devices)
             if device:
-                job.actual_device = device
                 try:
-                    job.submit_token = AuthToken.objects.filter(
-                        user=job.submitter)[0]
-                except IndexError:
-                    job.submit_token = AuthToken.objects.create(
-                        user=job.submitter)
-                device.current_job = job
-                device.state_transition_to(Device.RESERVED, message="Reserved for job %s" % job.display_id)
-                self._commit_transaction(src='%s state' % device.hostname)
-                self.logger.info('%s reserved for job %s', device.hostname,
-                                 job.id)
-                job.save()
-                device.save()
-                if device in devices:
-                    devices.remove(device)
+                    # Make this sequence atomic
+                    with transaction.atomic():
+                        job.actual_device = device
+                        try:
+                            job.submit_token = AuthToken.objects.filter(
+                                user=job.submitter)[0]
+                        except IndexError:
+                            job.submit_token = AuthToken.objects.create(
+                                user=job.submitter)
+                        device.current_job = job
+                        device.state_transition_to(Device.RESERVED, message="Reserved for job %s" % job.display_id)
+                        job.save()
+                        device.save()
+                    if device in devices:
+                        devices.remove(device)
+                    self.logger.info('%s reserved for job %s', device.hostname,
+                                     job.id)
+                except IntegrityError:
+                    # Retry in the next call to _assign_jobs
+                    self.logger.debug("Transaction failed for job %s" % job.display_id)
 
     def _kill_canceling(self, job):
         """
@@ -343,12 +345,23 @@ class DatabaseJobSource(object):
     def jobStarted(self, job):
         return self.deferForDB(self.jobStarted_impl, job)
 
-    def jobCompleted_impl(self, board_name, exit_code, kill_reason):
+    def jobCompleted_impl(self, job_id, board_name, exit_code, kill_reason):
+        if not job_id:
+            self.logger.debug('job completion called without a job id on %s',
+                              board_name)
+            return
+        else:
+            job = TestJob.objects.get(id=job_id)
+
         self.logger.debug('marking job as complete on %s', board_name)
         device = Device.objects.get(hostname=board_name)
         old_device_status = device.status
         new_device_status = None
         previous_state = device.previous_state()
+        self.logger.debug('old device status %s, previous device state %s, job state %s' % (
+            Device.STATUS_CHOICES[old_device_status][1],
+            Device.STATUS_CHOICES[previous_state][1],
+            TestJob.STATUS_CHOICES[job.status][1]))
 
         if old_device_status == Device.RUNNING:
             new_device_status = previous_state
@@ -361,8 +374,13 @@ class DatabaseJobSource(object):
                 "Unexpected device state in jobCompleted: %s", device.status)
             new_device_status = Device.IDLE
         if new_device_status is None:
+            self.logger.debug("unhandled old device state")
             new_device_status = Device.IDLE
-        job = device.current_job
+
+        self.logger.debug('new device status %s, previous device state %s, job state %s' % (
+            Device.STATUS_CHOICES[new_device_status][1],
+            Device.STATUS_CHOICES[previous_state][1],
+            TestJob.STATUS_CHOICES[job.status][1]))
 
         # Temporary devices should be marked as RETIRED once the job is
         # complete or canceled.
@@ -373,8 +391,6 @@ class DatabaseJobSource(object):
             except TemporaryDevice.DoesNotExist:
                 self.logger.debug("%s is not a tmp device", device.hostname)
 
-        device.device_version = _get_device_version(job.results_bundle)
-        device.current_job = None
         if job.status == TestJob.RUNNING:
             if exit_code == 0:
                 job.status = TestJob.COMPLETE
@@ -383,23 +399,32 @@ class DatabaseJobSource(object):
         elif job.status == TestJob.CANCELING:
             job.status = TestJob.CANCELED
         else:
-            self.logger.error(
-                "Unexpected job state in jobCompleted: %s", job.status)
-            job.status = TestJob.COMPLETE
+            self.logger.error("Unexpected job state in jobCompleted: %s, probably we are trying job completion for a different job", job.status)
+            return
 
-        msg = "Job %s completed" % job.display_id
-        device.state_transition_to(new_device_status, message=msg, job=job)
-        self._commit_transaction(src='%s state' % device.hostname)
-        self.logger.info('job %s completed on %s', job.id, device.hostname)
+        self.logger.debug('changed job status to %s' % (
+            TestJob.STATUS_CHOICES[job.status][1]))
 
         if job.health_check:
             device.last_health_report_job = job
+            self.logger.debug("old device health status %s" % Device.HEALTH_CHOICES[device.health_status][1])
             if device.health_status != Device.HEALTH_LOOPING:
                 if job.status == TestJob.INCOMPLETE:
                     device.health_status = Device.HEALTH_FAIL
+                    if previous_state not in [Device.OFFLINE, Device.OFFLINING]:
+                        self.logger.debug("taking %s offline, failed health check job %s" % (
+                            device.hostname, job_id))
+                    else:
+                        self.logger.debug("%s is offline, failed health check job %s" % (
+                            device.hostname, job_id))
                     device.put_into_maintenance_mode(None, "Health Check Job Failed")
+                    # update the local variable to track the effect of the external function call
+                    new_device_status = device.status
+                    if new_device_status == Device.OFFLINING:
+                        new_device_status = Device.OFFLINE  # offlining job is complete.
                 elif job.status == TestJob.COMPLETE:
                     device.health_status = Device.HEALTH_PASS
+            self.logger.debug("new device health status %s" % Device.HEALTH_CHOICES[device.health_status][1])
 
         bundle_file = os.path.join(job.output_dir, 'result-bundle')
         if os.path.exists(bundle_file):
@@ -414,12 +439,26 @@ class DatabaseJobSource(object):
             else:
                 job._results_bundle = bundle
 
+        self.logger.debug('new device status %s, previous device state %s, job state %s' % (
+            Device.STATUS_CHOICES[new_device_status][1],
+            Device.STATUS_CHOICES[previous_state][1],
+            TestJob.STATUS_CHOICES[job.status][1]))
+
         job.end_time = datetime.datetime.utcnow()
-        token = job.submit_token
+
         job.submit_token = None
+
+        device.device_version = _get_device_version(job.results_bundle)
+        device.current_job = None
+        msg = "Job %s completed" % job.display_id
+        device.state_transition_to(new_device_status, message=msg, job=job)
+        self._commit_transaction(src='%s state' % device.hostname)
+
         device.save()
         job.save()
         self._commit_transaction(src='jobCompleted_impl')
+        self.logger.info('job %s completed on %s', job.id, device.hostname)
+
         if utils.is_master():
             try:
                 job.send_summary_mails()
@@ -432,8 +471,9 @@ class DatabaseJobSource(object):
             worker = WorkerData()
             worker.notify_on_incomplete(job.id)
 
-    def jobCompleted(self, board_name, exit_code, kill_reason):
-        return self.deferForDB(self.jobCompleted_impl, board_name, exit_code, kill_reason)
+    def jobCompleted(self, job_id, board_name, exit_code, kill_reason):
+        return self.deferForDB(self.jobCompleted_impl, job_id, board_name,
+                               exit_code, kill_reason)
 
     def jobCheckForCancellation_impl(self, board_name):
         device = Device.objects.get(hostname=board_name)

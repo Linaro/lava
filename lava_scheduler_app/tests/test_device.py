@@ -65,3 +65,17 @@ class DeviceTest(TestCaseWithFactory):
         self.assertEqual(device.can_submit(user2), False)
         # user cannot submit as the device is retired
         self.assertEqual(device.can_submit(user), False)
+
+    def test_maintenance_mode(self):
+        foo = DeviceType(name='foo')
+        device = Device(device_type=foo, hostname='foo01', status=Device.IDLE)
+        device.save()
+
+        device.put_into_maintenance_mode(None, None)
+
+        self.assertEqual(device.status, Device.OFFLINE, "should be offline")
+
+        device.status = Device.RUNNING
+        device.put_into_maintenance_mode(None, None)
+
+        self.assertEqual(device.status, Device.OFFLINING, "should be offlining")

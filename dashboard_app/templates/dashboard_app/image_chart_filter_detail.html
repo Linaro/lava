@@ -90,6 +90,10 @@
   $().ready(function () {
     init_loading_dialog();
     init_test_edit_dialog();
+    {% if xaxis_attribute_changed %}
+    alert("Xaxis attribute not consistant for parent image chart with " +
+      "recent filter changes. It's value has been reset.");
+    {% endif %}
   });
 </script>
 {% endblock %}

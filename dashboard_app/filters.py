@@ -262,9 +262,12 @@ class MatchMakingQuerySet(object):
                 result_ids.add(v[1])
 
             results_by_id = {}
+            prefetch = self.prefetch_related
+            if "test_results" in prefetch:
+                prefetch.remove("test_results")
             for result in TestResult.objects.filter(
                     id__in=list(result_ids)).select_related(
-                    'test_run__test', 'test_case', 'test_run__bundle__bundle_stream').prefetch_related(*self.prefetch_related):
+                    'test_run__test', 'test_case', 'test_run__bundle__bundle_stream').prefetch_related(*prefetch):
                 results_by_id[result.id] = result
 
             for tr_id, result_ids in result_ids_by_tr_id.items():

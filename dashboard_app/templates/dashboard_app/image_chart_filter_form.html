@@ -76,6 +76,21 @@
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script>
 <script>
   csrf_token = '{{csrf_token}}';
+  selected_test_ids = [];
+  selected_testcase_ids = [];
+  if ($('#id_chart_type').val() != "measurement") {
+  {% for test in instance.imagecharttest_set.all %}
+    selected_test_ids.push({{ test.test_id }});
+  {% endfor %}
+  } else {
+  {% for imagecharttestcase in instance.imagecharttestcase_set.all %}
+    selected_testcase_ids.push({
+      value: {{ imagecharttestcase.test_case.id }},
+      text: "{{ imagecharttestcase.test_case.test_case_id|escapejs }}"
+    });
+  {% endfor %}
+  }
+
   $().ready(function () {
 
     $("#image_chart_filter").editable(function(value, settings){
@@ -110,21 +125,6 @@
       filters_callback('{{ image_chart.id }}',
                        '{{ instance.filter.id }}',
                        '{{ instance.filter.name }}');
-
-      if ($('#id_chart_type').val() != "measurement") {
-      {% for test in instance.imagecharttest_set.all %}
-        $('#available_tests option[value="{{ test.test_id }}"]').attr('selected', 'selected');
-      {% endfor %}
-        move_options('available_tests', 'chosen_tests');
-      } else {
-      {% for imagecharttestcase in instance.imagecharttestcase_set.all %}
-        $('#chosen_tests').append($('<option>', {
-          value: {{ imagecharttestcase.test_case.id }},
-          text: '{{ imagecharttestcase.test_case.test_case_id|escapejs }}'
-        }));
-      {% endfor %}
-      }
-
     {% endif %}
   });
 </script>

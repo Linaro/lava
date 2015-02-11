@@ -18,6 +18,7 @@
 
 import json
 import os
+import sys
 import signal
 import tempfile
 import logging
@@ -25,6 +26,8 @@ import logging
 from twisted.internet.error import ProcessDone, ProcessExitedAlready
 from twisted.internet.protocol import ProcessProtocol
 from twisted.internet import defer, task
+
+# pylint: disable=invalid-name,too-many-instance-attributes,too-many-arguments,too-few-public-methods
 
 
 def catchall_errback(logger):
@@ -44,6 +47,14 @@ class DispatcherProcessProtocol(ProcessProtocol):
         self.job = job
 
     def childDataReceived(self, childFD, data):
+        if childFD == 2:
+            debug_path = os.path.join(self.job.output_dir, 'output.txt')
+            # only add output if there is nothing else as later failures will be logged.
+            if os.path.exists(debug_path) and os.stat(debug_path).st_size == 0:
+                with open(debug_path, 'a') as logfile:
+                    logfile.write("ERROR: %s\n" % data)
+                self.logger.error("ERROR: %s", data)
+                self.job.cancel(data)
         self.log_size += len(data)
         if self.log_size > self.job.daemon_options['LOG_FILE_SIZE_LIMIT']:
             if not self.job._killing:
@@ -63,10 +74,43 @@ class DispatcherProcessProtocol(ProcessProtocol):
         self.deferred.callback(reason.value.exitCode)
 
 
+# Common check function, adapted from /usr/lib/python2.7/dist-packages/twisted/internet/base.py:880:
+# python-twisted-core 14.0.2-3 (codehelp)
+def argChecker(arg):
+    """
+    Return either a str or None.  If the given value is not
+    allowable for some reason, None is returned.  Otherwise, a
+    possibly different object which should be used in place of arg
+    is returned.  This forces unicode encoding to happen now, rather
+    than implicitly later.
+
+    This adapted version always returns something and that something
+    will always pass the original argChecker in twisted, whilst logging
+    warnings if changes had to be made.
+    """
+    logger = logging.getLogger('argChecker')
+    defaultEncoding = sys.getdefaultencoding()
+    if isinstance(arg, unicode):
+        try:
+            arg = arg.encode(defaultEncoding)
+        except UnicodeEncodeError:
+            logger.warning("arg failed to encode from unicode: %s", type(arg))
+            arg = arg.encode('ascii', 'ignore')
+            logger.warning("converted by dropping invalid characters: %s", arg)
+            return arg
+    if isinstance(arg, str) and '\0' not in arg:
+        return arg
+    else:
+        arg = arg.replace('\0', '')
+        logger.warning("%s contained null", arg)
+        return arg
+
+
 class Job(object):
 
-    def __init__(self, job_data, dispatcher, source, board_name, reactor,
-                 daemon_options):
+    def __init__(self, job_id, job_data, dispatcher, source, board_name,
+                 reactor, daemon_options):
+        self.job_id = job_id
         self.job_data = job_data
         self.dispatcher = dispatcher
         self.source = source
@@ -83,6 +127,7 @@ class Job(object):
         self._kill_reason = ''
         self._pidrecord = None
         self._device_config = None
+        self.output_dir = None
 
     def _checkCancel(self):
         if self._killing:
@@ -104,10 +149,10 @@ class Job(object):
         else:
             self.logger.warning("self._signals is empty!")
             signame = 'SIGKILL'
-        self.logger.info(
-            'attempting to kill job with signal %s', signame)
+        self.logger.info('attempting to kill job with signal %s', signame)
         try:
             self._protocol.transport.signalProcess(getattr(signal, signame))
+            self.logger.info('killed job with signal %s', signame)
         except ProcessExitedAlready:
             pass
 
@@ -115,7 +160,7 @@ class Job(object):
         if cancel:
             self.cancel("killing job by user request")
         else:
-            logging.debug('not cancelling')
+            self.logger.debug('running job id %s', self.job_id)
 
     def _time_limit_exceeded(self):
         self._time_limit_call = None
@@ -135,22 +180,33 @@ class Job(object):
         fd, self._json_file = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
+        self.output_dir = output_dir
 
-        args = [self.dispatcher, self._json_file, '--output-dir', output_dir]
+        args = [
+            argChecker(self.dispatcher),
+            argChecker(self._json_file),
+            argChecker('--output-dir'),
+            argChecker(output_dir)
+        ]
 
         if custom_config:
             fd, self._device_config = tempfile.mkstemp()
             with os.fdopen(fd, 'wb') as f:
                 for k in custom_config:
                     f.write(k + '=' + custom_config[k] + "\n")
-            args.append('--config')
-            args.append(self._device_config)
+            args.append(argChecker('--config'))
+            args.append(argChecker(self._device_config))
 
+        # childFDs are given defaults ie., {0: 'w', 1:'r', 2:'r'}
+        # See https://twistedmatrix.com/documents/14.0.1/core/howto/process.html#running-another-process for details.
         self._protocol = DispatcherProcessProtocol(d, self)
+
+        self.logger.info('executing "%s"', ' '.join(args))
+
         ret = self.reactor.spawnProcess(self._protocol, self.dispatcher,
-                                        args=args, env=None,
-                                        childFDs={0: 0, 1: 'r', 2: 'r'})
+                                        args=args, env=None)
         if ret:
+            self.logger.debug("reactor spawned process with status: %s", ret.status)
             os.mkdir(output_dir)
             self._pidrecord = os.path.join(output_dir, "jobpid")
             with open(self._pidrecord, 'w') as f:
@@ -169,12 +225,16 @@ class Job(object):
             os.unlink(self._json_file)
         if self._pidrecord is not None and os.path.exists(self._pidrecord):
             os.unlink(self._pidrecord)
-        self.logger.info("reporting job completed")
+        if exit_code:
+            self.logger.info("job incomplete: reported %s exit code", exit_code)
+        else:
+            self.logger.info("job complete")
         if self._time_limit_call is not None:
             self._time_limit_call.cancel()
         self._checkCancel_call.stop()
         return self._source_lock.run(
             self.source.jobCompleted,
+            self.job_id,
             self.board_name,
             exit_code,
             self._killing).addCallback(lambda r: exit_code)
@@ -202,9 +262,10 @@ class SchedulerMonitorPP(ProcessProtocol):
 
 class MonitorJob(object):
 
-    def __init__(self, job_data, dispatcher, source, board_name, reactor,
+    def __init__(self, job, job_data, dispatcher, source, board_name, reactor,
                  daemon_options):
         self.logger = logging.getLogger(__name__ + '.MonitorJob')
+        self.job = job
         self.job_data = job_data
         self.dispatcher = dispatcher
         self.source = source
@@ -220,11 +281,12 @@ class MonitorJob(object):
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
 
-        childFDs = {0: 0, 1: 1, 2: 2}
+        # See https://twistedmatrix.com/documents/14.0.1/core/howto/process.html#running-another-process for details.
+        childFDs = {0: 'w', 1: 'r', 2: 'r'}
         args = [
             'setsid', 'lava-server', 'manage', 'schedulermonitor',
-            self.dispatcher, str(self.board_name), self._json_file,
-            '-l', self.daemon_options['LOG_LEVEL']]
+            str(self.job.id), self.dispatcher, str(self.board_name),
+            self._json_file, '-l', self.daemon_options['LOG_LEVEL']]
         if self.daemon_options['LOG_FILE_PATH']:
             args.extend(['-f', self.daemon_options['LOG_FILE_PATH']])
             childFDs = None
@@ -267,7 +329,7 @@ class JobRunner(object):
             return
         self.source.jobStarted(self.job).addCallback(self._prepareJob)
 
-    def _prepareJob(self, status):
+    def _prepareJob(self, status):  # pylint: disable=unused-argument
         self.source.getJobDetails(self.job).addCallbacks(
             self._startJob, self._ebStartJob)
 
@@ -278,7 +340,7 @@ class JobRunner(object):
         self.logger.info("starting job %r", job_data)
 
         self.running_job = self.job_cls(
-            job_data, self.dispatcher, self.source, self.board_name,
+            self.job, job_data, self.dispatcher, self.source, self.board_name,
             self.reactor, self.daemon_options)
         d = self.running_job.run()
         if d:
@@ -304,5 +366,5 @@ class JobRunner(object):
     def _ebJobFinished(self, result):
         self.logger.exception(result.value)
 
-    def _cbJobFinished(self, result):
+    def _cbJobFinished(self, result):  # pylint: disable=unused-argument
         self.running_job = None

@@ -49,13 +49,39 @@ class ImageReportChartForm(forms.ModelForm):
     class Meta:
         model = ImageReportChart
         fields = '__all__'
-        widgets = {'image_report': forms.HiddenInput}
+        widgets = {
+            'image_report': forms.HiddenInput,
+            'relative_index': forms.HiddenInput
+        }
+
+    xaxis_attribute_changed = forms.BooleanField(
+        widget=forms.widgets.HiddenInput,
+        required=False,
+        initial=False
+    )
 
     def __init__(self, user, *args, **kwargs):
         super(ImageReportChartForm, self).__init__(*args, **kwargs)
         if len(self.instance.imagechartfilter_set.all()) != 0:
             self.fields['chart_type'].label = ""
             self.fields['chart_type'].widget = forms.HiddenInput()
+
+        if not self.instance.imagechartfilter_set.all() or \
+           self.instance.chart_type == "attributes":
+            self.fields['xaxis_attribute'].label = ""
+            self.fields['xaxis_attribute'].widget = forms.HiddenInput()
+        else:
+            custom_attrs = self.instance.get_supported_attributes(user)
+
+            if custom_attrs:
+                self.fields['xaxis_attribute'] = forms.TypedChoiceField(
+                    required=False,
+                    choices=[("", "----")] +
+                    [(attr, attr) for attr in custom_attrs],
+                )
+            else:
+                self.fields['xaxis_attribute'].label = ""
+                self.fields['xaxis_attribute'].widget = forms.HiddenInput()
 
     def save(self, commit=True, **kwargs):
         instance = super(ImageReportChartForm,

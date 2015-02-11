@@ -11,6 +11,10 @@ Debian Jessie (testing)   Ubuntu Trusty Tahr 14.04LTS
 Debian Sid (unstable)     Ubuntu Utopic Unicorn
 ======================== =============================
 
+To install on Ubuntu, ensure the universe_ repository is enabled.
+
+.. _universe: https://help.ubuntu.com/community/Repositories/CommandLine#Adding_the_Universe_and_Multiverse_Repositories
+
 When using the packages to develop LAVA, there is a change to
 the workflow compared to the old lava-deployment-tool buildouts.
 

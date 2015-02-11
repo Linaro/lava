@@ -1,0 +1,24 @@
+{% extends "layouts/content-bootstrap.html" %}
+{% load i18n %}
+{% load django_tables2 %}
+
+{% block content %}
+<h1>Filters</h1>
+
+<p>Filters you are subscribed to.</p>
+
+{% render_table filters_table %}
+
+
+<h1>Image reports</h1>
+
+<p>Image reports you are subscribed to.</p>
+
+{% render_table report_table %}
+
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
+{% endblock %}
