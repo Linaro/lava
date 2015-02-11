@@ -251,7 +251,6 @@ class cmd_submit_results(BaseAction):
         job_name = urllib2.quote(job_name.encode('utf-8'))
         try:
             result = dashboard.put_ex(json_bundle, job_name, stream)
-            print >> self.context.oob_file, 'dashboard-put-result:', result
             self.context.output.write_named_data('result-bundle', result)
             logging.info("Dashboard : %s" % result)
         except xmlrpclib.Fault, err:
