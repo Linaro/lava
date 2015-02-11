@@ -1,3 +1,5 @@
 Tests: testsuite
-Depends: @, @builddeps@, python-testscenarios, pep8, git, telnet
+Depends: @, @builddeps@,
+ python-testscenarios, pep8, git, telnet, qemu-system-x86,
+ nfs-kernel-server, u-boot-tools, iproute2, tftpd-hpa
 Restrictions: allow-stderr
