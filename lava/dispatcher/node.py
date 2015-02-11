@@ -26,6 +26,7 @@
 import socket
 from socket import gethostname
 import json
+import errno
 import logging
 import os
 import copy
@@ -81,6 +82,7 @@ class Poller(object):
             logging.error("Message was too long to send!")
             return
         c = 0
+        waited = 0
         response = None
         while True:
             c += self.poll_delay
@@ -92,9 +94,22 @@ class Poller(object):
                               self.json_data['host'], self.json_data['port'])
                 delay = self.poll_delay
             except socket.error as e:
-                logging.warn("socket error on connect: %d %s %s" %
-                             (e.errno, self.json_data['host'], self.json_data['port']))
+                if e.errno == errno.ECONNREFUSED:
+                    logging.warn("Lava Coordinator refused connection on %s %s" %
+                                 (self.json_data['host'], self.json_data['port']))
+                elif e.errno == errno.ECONNRESET:
+                    logging.warn("Connection to coordinator reset by peer on port %s" %
+                                 self.json_data['port'])
+                else:
+                    logging.warn("socket error on connect: %d %s %s" %
+                                 (e.errno, self.json_data['host'], self.json_data['port']))
+                logging.debug("Trying again in %s seconds. Job will timeout in %s seconds" %
+                              (delay, self.json_data['timeout'] - waited))
+                waited += delay
                 time.sleep(delay)
+                if waited >= self.json_data['timeout']:
+                    logging.info("Connection to coordinator timed out")
+                    break
                 delay += 2
                 s.close()
                 continue
@@ -246,6 +261,7 @@ class NodeDispatcher(object):
         self.poller = Poller(json.dumps(self.base_msg))
         self.oob_file = oob_file
         self.output_dir = output_dir
+        self.job = None
 
     def run(self):
         """
@@ -255,6 +271,14 @@ class NodeDispatcher(object):
         Temporary devices in a vm_group do not begin running tests until
         the host is ready.
         """
+        jobdata = json.dumps(self.json_data)
+        config = get_config()
+        if 'logging_level' in self.json_data:
+            logging.root.setLevel(self.json_data["logging_level"])
+        else:
+            logging.root.setLevel(config.logging_level)
+        # create the job so that logging is enabled, start the job later.
+        self.job = LavaTestJob(jobdata, self.oob_file, config, self.output_dir)
         init_msg = {"request": "group_data", "group_size": self.group_size}
         init_msg.update(self.base_msg)
         logging.info("Starting Multi-Node communications for group '%s'", self.group_name)
@@ -415,17 +439,8 @@ class NodeDispatcher(object):
         if 'response' in group_data and group_data['response'] == 'nack':
             logging.error("Unable to initiliase a Multi-Node group - timed out waiting for other devices.")
             return
-        config = get_config()
-        if 'logging_level' in json_jobdata:
-            logging.root.setLevel(json_jobdata["logging_level"])
-        else:
-            logging.root.setLevel(config.logging_level)
         if 'target' not in json_jobdata:
             logging.error("The job file does not specify a target device.")
             exit(1)
-        jobdata = json.dumps(json_jobdata)
-        if self.output_dir and not os.path.isdir(self.output_dir):
-            os.makedirs(self.output_dir)
-        job = LavaTestJob(jobdata, self.oob_file, config, self.output_dir)
         # pass this NodeDispatcher down so that the lava_test_shell can __call__ nodeTransport to write a message
-        job.run(self, group_data, vm_host_ip=self.vm_host_ip)
+        self.job.run(self, group_data, vm_host_ip=self.vm_host_ip)
