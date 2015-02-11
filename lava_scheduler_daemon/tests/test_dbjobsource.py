@@ -89,11 +89,19 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
             worker = self.master
         worker.jobStarted_impl(job)
 
+    def job_failed(self, job, worker=None):
+        if worker is None:
+            worker = self.master
+        with self.log_scheduler_state("job %d completes" % job.id):
+            worker.jobCompleted_impl(job.id, job.actual_device.hostname, 1,
+                                     None)
+
     def job_finished(self, job, worker=None):
         if worker is None:
             worker = self.master
         with self.log_scheduler_state("job %d completes" % job.id):
-            worker.jobCompleted_impl(job.actual_device.hostname, 0, None)
+            worker.jobCompleted_impl(job.id, job.actual_device.hostname, 0,
+                                     None)
 
     def device_status(self, hostname, status=None, health_status=None):
         device = Device.objects.get(pk=hostname)
@@ -357,6 +365,33 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
         self.assertTrue(all([job.actual_device is not None for job in jobs]))
         self.assertEqual(self.panda01.status, Device.OFFLINE)
         self.assertEqual(self.panda02.status, Device.OFFLINE)
+
+    def test_failed_health_check(self):
+        """
+        Incomplete health checks must take the device offline with a failed health status.
+        """
+        self.panda.health_check_job = self.factory.make_job_json(health_check='true')
+        self.panda.save()
+        self.panda01.state_transition_to(Device.OFFLINE)
+        self.panda02.state_transition_to(Device.IDLE)
+        self.assertEqual(self.panda01.status, Device.OFFLINE)
+        self.assertEqual(self.panda02.status, Device.IDLE)
+        self.assertEqual(self.panda01.health_status, Device.HEALTH_UNKNOWN)
+        self.assertEqual(self.panda02.health_status, Device.HEALTH_UNKNOWN)
+
+        jobs = self.scheduler_tick()
+        for job in jobs:
+            job_obj = TestJob.objects.get(pk=job.id)  # reload
+            job_obj.status = TestJob.INCOMPLETE
+            self.job_failed(job_obj)
+
+        # Always go to the database to check the effects of job completion.
+        self.panda01 = Device.objects.get(hostname="panda01")  # reload
+        self.panda02 = Device.objects.get(hostname="panda02")  # reload
+        self.assertEqual(self.panda01.status, Device.OFFLINE)
+        self.assertEqual(self.panda02.status, Device.OFFLINE)
+        self.assertEqual(self.panda01.health_status, Device.HEALTH_UNKNOWN)
+        self.assertEqual(self.panda02.health_status, Device.HEALTH_FAIL)
 
     def test_find_device_for_job_with_tag(self):
         """

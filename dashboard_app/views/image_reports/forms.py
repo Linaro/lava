@@ -73,11 +73,15 @@ class ImageReportChartForm(forms.ModelForm):
         else:
             custom_attrs = self.instance.get_supported_attributes(user)
 
-            self.fields['xaxis_attribute'] = forms.TypedChoiceField(
-                required=False,
-                choices=[("", "----")] +
-                [(attr, attr) for attr in custom_attrs],
-            )
+            if custom_attrs:
+                self.fields['xaxis_attribute'] = forms.TypedChoiceField(
+                    required=False,
+                    choices=[("", "----")] +
+                    [(attr, attr) for attr in custom_attrs],
+                )
+            else:
+                self.fields['xaxis_attribute'].label = ""
+                self.fields['xaxis_attribute'].widget = forms.HiddenInput()
 
     def save(self, commit=True, **kwargs):
         instance = super(ImageReportChartForm,
