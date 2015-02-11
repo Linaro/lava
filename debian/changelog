@@ -1,9 +1,10 @@
-lava-server (2015.1-1) experimental; urgency=medium
+lava-server (2015.01-1) experimental; urgency=medium
 
+  * New production release.
   * [INTL:nl] Dutch translation of debconf messages
     (Closes: #766547)
 
- -- Neil Williams <codehelp@debian.org>  Tue, 20 Jan 2015 16:05:17 +0000
+ -- Neil Williams <codehelp@debian.org>  Wed, 11 Feb 2015 13:39:42 +0800
 
 lava-server (2014.12-1) experimental; urgency=medium
 
