@@ -396,7 +396,7 @@ class MasterImageTarget(Target):
             try:
                 self.target_extract(runner, tarball_url, '/mnt/%s' % directory)
             finally:
-                runner.run('umount /mnt')
+                runner.run('umount /mnt', timeout=3600)
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
@@ -575,7 +575,7 @@ class MasterImageTarget(Target):
             session.run('mount %s /mnt/lava/data' % data_path)
             _test_filesystem_writeable(session, '/mnt/lava/data')
             session._client.target_extract(session, datatbz2, '/mnt/lava', timeout=600)
-            session.run('umount /mnt/lava/data')
+            session.run('umount /mnt/lava/data', timeout=3600)
             self.context.test_data.add_result('deploy_android_datafs_in_master_image',
                                               'pass')
         except:
@@ -593,7 +593,7 @@ class MasterImageTarget(Target):
             session.run('mount %s /mnt/boot' % self.testboot_path)
             _test_filesystem_writeable(session, '/mnt/boot')
             session._client.target_extract(session, bootfs, '/mnt/boot')
-            session.run('umount /mnt/boot')
+            session.run('umount /mnt/boot', timeout=3600)
             self.context.test_data.add_result('deploy_bootfs_in_master_image',
                                               'pass')
         except:
@@ -611,7 +611,7 @@ class MasterImageTarget(Target):
             _test_filesystem_writeable(session, '/mnt/lava/boot')
             session._client.target_extract(session, boottbz2, '/mnt/lava')
             _recreate_ramdisk(session, target)
-            session.run('umount /mnt/lava/boot')
+            session.run('umount /mnt/lava/boot', timeout=3600)
             self.context.test_data.add_result('deploy_android_bootfs_in_master_image',
                                               'pass')
         except:
@@ -652,7 +652,7 @@ class MasterImageTarget(Target):
                     'echo "LABEL=%s / %s defaults 0 1" >> /mnt/root/etc/fstab' %
                     (self.testrootfs_label, rootfstype))
 
-            session.run('umount /mnt/root')
+            session.run('umount /mnt/root', timeout=3600)
             self.context.test_data.add_result('deploy_rootfs_in_master_image',
                                               'pass')
         except:
@@ -709,7 +709,7 @@ class MasterImageTarget(Target):
                         failok=True)
             session.run('cat /mnt/lava/system/etc/mkshrc', failok=True)
 
-            session.run('umount /mnt/lava/system')
+            session.run('umount /mnt/lava/system', timeout=3600)
             self.context.test_data.add_result('deploy_android_systemfs_in_master_image',
                                               'pass')
         except:
@@ -726,7 +726,7 @@ class MasterImageTarget(Target):
             session.run('udevadm trigger')
             session.run('mkdir /tmp/sdcard; mount %s /tmp/sdcard' % self.sdcard_path)
             _test_filesystem_writeable(session, '/tmp/sdcard')
-            session.run('umount /tmp/sdcard; rm -r /tmp/sdcard')
+            session.run('umount /tmp/sdcard; rm -r /tmp/sdcard', timeout=3600)
             self.context.test_data.add_result('format_sdcard_partition_in_master_image',
                                               'pass')
         except:
