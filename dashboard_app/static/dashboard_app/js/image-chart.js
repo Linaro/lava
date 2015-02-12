@@ -1127,7 +1127,7 @@ $(document).ready(function () {
         }
 
         y_label = "";
-        if (this.chart_data["chart_type"] == "measurement") {
+        if (this.chart_data["chart_type"] == "pass/fail") {
             y_label = "Pass/Fail";
         } else if (this.chart_data["chart_type"] == "measurement") {
             if (this.chart_data.test_data[0]) {
