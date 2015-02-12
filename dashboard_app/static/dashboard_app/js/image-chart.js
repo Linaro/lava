@@ -508,10 +508,16 @@ $(document).ready(function () {
                             cell["link"] + '">' + cell["passes"] + '/' +
                             cell["total"] + '</a>';
                     } else if (this.chart_data["chart_type"] == "measurement") {
+                        if (isNumeric(cell["measurement"])) {
+                            cell["measurement"] = cell["measurement"].toFixed(2);
+                        }
                         table_body += '<a target="_blank" href="' +
                             cell["link"] + '">' +
-                            cell["measurement"].toFixed(2) + '</a>';
+                            cell["measurement"] + '</a>';
                     } else if (this.chart_data["chart_type"] == "attributes") {
+                        if (isNumeric(cell["attr_value"])) {
+                            cell["attr_value"] = cell["attr_value"].toFixed(2);
+                        }
                         table_body += '<a target="_blank" href="' +
                             cell["link"] + '">' +
                             cell["attr_value"].toFixed(2) + '</a>';
