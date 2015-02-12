@@ -73,6 +73,10 @@ $(document).ready(function () {
             $("#inner_container_" + this.chart_id).height(
                 this.chart_data["chart_height"]
             );
+            // Set chart legend height.
+            $("#legend_container_" + this.chart_id).height(
+                this.chart_data["chart_height"]
+            );
 
             // Determine whether dates/build numbers/attributes are numeric .
             this.is_keys_numeric();
