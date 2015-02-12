@@ -652,7 +652,7 @@ $(document).ready(function () {
                 $("#is_legend_visible_" + this.chart_id).prop("checked",
                                                               false);
             }
-            if (this.chart_data.user.is_delta == false) {
+            if (!this.chart_data.user.is_delta) {
                 $("#is_delta_" + this.chart_id).prop("checked",
                                                      false);
             }
