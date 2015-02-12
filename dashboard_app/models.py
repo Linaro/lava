@@ -2031,7 +2031,7 @@ class ImageReportChart(models.Model):
         verbose_name='Target goal')
 
     chart_height = models.PositiveIntegerField(
-        default=200,
+        default=300,
         validators=[
             MinValueValidator(200),
             MaxValueValidator(400)
@@ -2051,7 +2051,7 @@ class ImageReportChart(models.Model):
         verbose_name='Percentage')
 
     is_aggregate_results = models.BooleanField(
-        default=False,
+        default=True,
         verbose_name='Aggregate parametrized results')
 
     chart_visibility = models.CharField(
@@ -2063,7 +2063,7 @@ class ImageReportChart(models.Model):
     )
 
     is_build_number = models.BooleanField(
-        default=False,
+        default=True,
         verbose_name='Use build number')
 
     xaxis_attribute = models.CharField(
