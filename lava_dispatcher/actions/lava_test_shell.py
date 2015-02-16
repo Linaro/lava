@@ -414,7 +414,7 @@ class TestDefinitionLoader(object):
             if 'test-case-deps' in testdef:
                 self._get_dependent_test_cases(testdef)
 
-            # for test paramters
+            # for test parameters
             if 'params' in testdef:
                 logging.debug('Get default parameters : %s' % testdef['params'])
                 info['default_params'] = str(testdef['params'])
