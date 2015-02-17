@@ -484,6 +484,12 @@ class Device(RestrictedResource):
         default=None
     )
 
+    is_pipeline = models.BooleanField(
+        verbose_name="Pipeline device?",
+        default=False,
+        editable=True
+    )
+
     def clean(self):
         """
         Complies with the RestrictedResource constraints
@@ -1032,6 +1038,12 @@ class TestJob(RestrictedResource):
     vmgroup_definition = models.TextField(
         editable=False,
         blank=True
+    )
+
+    is_pipeline = models.BooleanField(
+        verbose_name="Pipeline job?",
+        default=False,
+        editable=False
     )
 
     # only one value can be set as there is only one opportunity

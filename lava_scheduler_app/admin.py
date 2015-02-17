@@ -77,13 +77,13 @@ class DeviceAdmin(admin.ModelAdmin):
         ('Properties', {
             'fields': ('device_type', 'hostname', 'worker_host', 'device_version')}),
         ('Device owner', {
-            'fields': ('user', 'group', 'physical_owner', 'physical_group', 'is_public')}),
+            'fields': ('user', 'group', 'physical_owner', 'physical_group', 'is_public', 'is_pipeline')}),
         ('Advanced properties', {
             'fields': ('description', 'tags')}),
         ('Status', {
             'fields': ('status', 'health_status', 'last_health_report_job', 'current_job')}),
     )
-    list_display = ('hostname', 'device_type', 'worker_host', 'status', 'health_status', 'is_public')
+    list_display = ('hostname', 'device_type', 'worker_host', 'status', 'health_status', 'is_public', 'is_pipeline')
     search_fields = ('hostname', 'device_type__name')
 
 
@@ -100,7 +100,7 @@ class TestJobAdmin(admin.ModelAdmin):
     raw_id_fields = ['_results_bundle']
     fieldsets = (
         ('Owner', {
-            'fields': ('user', 'group', 'submitter', 'submit_token', 'is_public')}),
+            'fields': ('user', 'group', 'submitter', 'submit_token', 'is_public', 'is_pipeline')}),
         ('Request', {
             'fields': ('requested_device', 'requested_device_type', 'priority', 'health_check')}),
         ('Advanced properties', {

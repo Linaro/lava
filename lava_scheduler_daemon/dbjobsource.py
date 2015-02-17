@@ -155,7 +155,7 @@ class DatabaseJobSource(object):
         health checks.
         """
 
-        for device in Device.objects.filter(status=Device.IDLE):
+        for device in Device.objects.filter(status=Device.IDLE).filter(is_pipeline=False):
             if not device.device_type.health_check_job:
                 run_health_check = False
             elif device.health_status == Device.HEALTH_UNKNOWN:
@@ -188,7 +188,7 @@ class DatabaseJobSource(object):
         later into the queue.
         """
 
-        jobs = TestJob.objects.filter(status=TestJob.SUBMITTED)
+        jobs = TestJob.objects.filter(status=TestJob.SUBMITTED, is_pipeline=False)
         jobs = jobs.filter(actual_device=None)
         jobs = jobs.order_by('-health_check', '-priority', 'submit_time',
                              'vm_group', 'target_group', 'id')
@@ -203,7 +203,7 @@ class DatabaseJobSource(object):
         using John Doe's private devices over using public devices that could
         be available for other users who don't have their own.
         """
-        devices = Device.objects.filter(status=Device.IDLE)
+        devices = Device.objects.filter(status=Device.IDLE).filter(is_pipeline=False)
         devices = devices.order_by('is_public')
 
         return devices
@@ -268,6 +268,7 @@ class DatabaseJobSource(object):
         my_submitted_jobs = TestJob.objects.filter(
             status=TestJob.SUBMITTED,
             actual_device_id__in=my_devices,
+            is_pipeline=False
         )
 
         my_ready_jobs = filter(lambda job: job.is_ready_to_start, my_submitted_jobs)
@@ -475,7 +476,7 @@ class DatabaseJobSource(object):
         return self.deferForDB(self.jobCheckForCancellation_impl, board_name)
 
     def _handle_cancelling_jobs(self):
-        cancel_list = TestJob.objects.filter(status=TestJob.CANCELING)
+        cancel_list = TestJob.objects.filter(status=TestJob.CANCELING, is_pipeline=False)
         # Pick up TestJob objects in Canceling and ensure that the cancel completes.
         # call _kill_canceling to terminate any lava-dispatch calls
         # Explicitly set a DeviceStatusTransition as jobs which are stuck in Canceling
