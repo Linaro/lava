@@ -14,11 +14,19 @@ def getDispatcherErrors(logfile):
     for line in logfile:
         for error in error_types:
             index = line.find(error)
-            print line
-            print error
+            try:
+                print line
+                print error
+            except UnicodeEncodeError:
+                print line.encode('utf-8')
+                print error.encode('utf-8')
             if index != -1:
-                print line[index:]
-                errors.append(line[index:])
+                new_line = line[index:]
+                try:
+                    print new_line
+                except UnicodeEncodeError:
+                    print new_line.encode('utf-8')
+                errors.append(new_line)
 
     return list(set(errors))
 
@@ -80,7 +88,6 @@ def formatLogFile(logfile):
 
     for line in logfile:
         line = line.replace('\r', '')
-        line = unicode(line, 'ascii', 'replace')
         if not line:
             continue
         if line == 'Traceback (most recent call last):\n':
