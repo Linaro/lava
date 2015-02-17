@@ -88,7 +88,6 @@ def get_pipeline_runner(job):
             if not validate_only:
                 exitcode = job.run()
         except JobError as exc:
-            print exc
             logging.debug("%s" % exc)
             sys.exit(2)
         if exitcode:
@@ -236,8 +235,9 @@ class dispatch(DispatcherCommand):
         """
         if is_pipeline_job(filename):
             # Prepare the pipeline from the file using the parser.
-
-            device = NewDevice(self.args.target)  # DeviceParser
+            device = None  # secondary connections do not need a device
+            if self.args.target:
+                device = NewDevice(self.args.target)  # DeviceParser
             parser = JobParser()
             job = None
             try:

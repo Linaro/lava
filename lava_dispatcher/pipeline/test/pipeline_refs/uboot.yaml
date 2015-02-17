@@ -43,7 +43,7 @@
   pipeline:
   - {class: actions.boot.u_boot.UBootSecondaryMedia, name: uboot-from-media}
   - {class: actions.boot.u_boot.UBootCommandOverlay, name: uboot-overlay}
-  - {class: shell.ConnectDevice, name: connect-device}
+  - {class: connections.serial.ConnectDevice, name: connect-device}
   - class: actions.boot.u_boot.UBootRetry
     name: uboot-retry
     pipeline:

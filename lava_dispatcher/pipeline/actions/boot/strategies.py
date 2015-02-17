@@ -21,6 +21,9 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
-from lava_dispatcher.pipeline.actions.boot.qemu import BootQEMU  # pylint: disable=unused-import
-from lava_dispatcher.pipeline.actions.boot.u_boot import UBoot  # pylint: disable=unused-import
-from lava_dispatcher.pipeline.actions.boot.kexec import BootKExec  # pylint: disable=unused-import
+# pylint: disable=unused-import
+
+from lava_dispatcher.pipeline.actions.boot.qemu import BootQEMU, VirtualMachine
+from lava_dispatcher.pipeline.actions.boot.u_boot import UBoot
+from lava_dispatcher.pipeline.actions.boot.kexec import BootKExec
+from lava_dispatcher.pipeline.actions.boot.ssh import SshLogin, Schroot

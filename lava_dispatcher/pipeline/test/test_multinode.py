@@ -577,8 +577,16 @@ class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-method
         def close(self):
             pass
 
-        def recv(self, _):
-            self.coord._waitResponse()
+        def recv(self, msg):
+            """
+            Allow the fake to send a properly formatted response.
+            """
+            if self.header:
+                self.header = False
+                return '1000'  # int('1000', 16) == 4096
+            else:
+                self.header = True
+                return json.dumps({'response': 'ack'})
 
     class FakeProtocol(MultinodeProtocol):
 
@@ -591,6 +599,12 @@ class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-method
 
         def _connect(self, delay):
             return True
+
+        def finalise_protocol(self):
+            """
+            Allow the fake coordinator to finalise the protocol
+            """
+            pass
 
         def __call__(self, *args, **kwargs):
             super(TestProtocol.FakeProtocol, self).__call__(*args, **kwargs)
@@ -639,7 +653,19 @@ class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-method
         with self.assertRaises(TestError):
             self.protocol(msg)
 
-    def test_lava_send_fail(self):
+    def test_lava_send_too_long(self):
+        msg = {
+            'request': 'lava_send',
+            'port': 3,
+            'blocksize': 8,
+            'messageID': 'a' * (int('0xFFFE', 16) + 10)
+        }
+        msg.update(self.protocol.base_message)
+        self.coord.expectResponse("ack")
+        with self.assertRaises(JobError):
+            self.protocol(msg)
+
+    def test_lava_send(self):
         msg = {
             'request': 'lava_send',
             'port': 3,
@@ -647,8 +673,23 @@ class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-method
             'messageID': 'test-id'
         }
         msg.update(self.protocol.base_message)
-        with self.assertRaises(TestError):
-            self.protocol(msg)
+        self.coord.expectResponse("ack")
+        self.protocol(msg)
+
+    def test_lava_send_message(self):
+        msg = {
+            'request': 'lava_send',
+            'port': 3,
+            'blocksize': 8,
+            'messageID': 'test-id',
+            'message': {
+                'one': 1,
+                'two': 2
+            }
+        }
+        msg.update(self.protocol.base_message)
+        self.coord.expectResponse("ack")
+        self.protocol(msg)
 
 
 class TestDelayedStart(unittest.TestCase):  # pylint: disable=too-many-public-methods

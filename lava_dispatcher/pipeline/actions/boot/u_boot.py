@@ -31,10 +31,8 @@ from lava_dispatcher.pipeline.action import (
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.pipeline.shell import (
-    ConnectDevice,
-    ExpectShellSession
-)
+from lava_dispatcher.pipeline.shell import ExpectShellSession
+from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.power import ResetDevice
 from lava_dispatcher.pipeline.utils.constants import (
     UBOOT_AUTOBOOT_PROMPT,

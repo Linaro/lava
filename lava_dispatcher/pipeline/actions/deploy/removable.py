@@ -63,15 +63,17 @@ class Removable(Deployment):
     def accepts(cls, device, parameters):
         job_device = None
         media = None
-        # Which deployment method to use?
-        if 'usb' == parameters['to']:
-            if 'device' in parameters:
-                job_device = parameters['device']
-                media = 'usb'
-        if 'sata' == parameters['to']:
-            if 'device' in parameters:
-                job_device = parameters['device']
-                media = 'sata'
+        if 'to' in parameters:
+            # connection support
+            # Which deployment method to use?
+            if 'usb' == parameters['to']:
+                if 'device' in parameters:
+                    job_device = parameters['device']
+                    media = 'usb'
+            if 'sata' == parameters['to']:
+                if 'device' in parameters:
+                    job_device = parameters['device']
+                    media = 'sata'
         # Matching a method ?
         if job_device is None:
             return False

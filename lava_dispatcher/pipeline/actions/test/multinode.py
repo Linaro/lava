@@ -116,7 +116,7 @@ class MultinodeTestAction(TestShellAction):
             self.logger.debug("%s lava-send" % MultinodeProtocol.name)
             arg_length = len(args)
             if arg_length == 1:
-                msg = {"request": "lava_send", "messageID": args[0], "message": None}
+                msg = {"request": "lava_send", "messageID": args[0], "message": {}}
             else:
                 message_id = args[0]
                 remainder = args[1:arg_length]

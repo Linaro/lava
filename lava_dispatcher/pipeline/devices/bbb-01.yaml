@@ -24,11 +24,33 @@ commands:
 actions:
   deploy:
     methods:
-      tftp
-      usb
+      tftp:
+      usb:
+      ssh:
+        options:
+          - '-o'
+          - 'Compression=yes'
+          - '-o'
+          - 'UserKnownHostsFile=/dev/null'
+          - '-o'
+          - 'PasswordAuthentication=no'
+          - '-o'
+          - 'StrictHostKeyChecking=no'
+          - '-o'
+          - 'LogLevel=FATAL'
+          - '-l'
+          - 'root '
+          - '-p'
+          - 22
+        host: 172.16.200.165
+        identity_file: device/dynamic_vm_keys/lava
   boot:
+    connections:
+      serial:
+      ssh:
     methods:
       kexec:
+      ssh:
       u-boot:
         parameters:
           bootloader_prompt: U-Boot
@@ -38,6 +60,7 @@ actions:
           # method specific stanza
         oe:
           commands:
+          - setenv autoload no
           - setenv initrd_high '0xffffffff'
           - setenv fdt_high '0xffffffff'
           - setenv bootcmd 'fatload mmc 0:3 0x80200000 uImage; fatload mmc 0:3 0x815f0000 board.dtb;
@@ -46,6 +69,7 @@ actions:
           - boot
         master:
           commands:
+          - setenv autoload no
           - setenv initrd_high '0xffffffff'
           - setenv fdt_high '0xffffffff'
           - setenv bootcmd 'fatload mmc 0:3 0x80200000 uImage; fatload mmc 0:3 0x81600000 uInitrd;
@@ -103,8 +127,8 @@ timeouts:
     seconds: 45
 
 test_image_prompts:
-  # TODO: we should'nt need such a long list
-  - '\(initramfs\)'
+  - '(initramfs)'
+  - 'linaro-test'
   - '/ #'
   - 'root@android'
   - 'root@linaro'
@@ -115,4 +139,3 @@ test_image_prompts:
   - 'root@linaro-server:~#'
   - 'root@genericarmv7a:~#'
   - 'root@genericarmv8:~#'
-  - 'linaro-test'

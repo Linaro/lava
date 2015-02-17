@@ -162,6 +162,10 @@ class ShellSession(Connection):
         self.spawn = shell_command
         self.timeout = shell_command.lava_timeout
 
+    def disconnect(self, reason):
+        # FIXME
+        pass
+
     @property
     def prompt_str(self):
         return self.__prompt_str__
@@ -205,7 +209,7 @@ class ShellSession(Connection):
         yield self.__runner__.get_connection()
 
     def wait(self):
-        self.raw_connection.sendline("")
+        self.raw_connection.sendline("#")
         try:
             self.runner.wait_for_prompt(self.timeout.duration)
         except pexpect.TIMEOUT:
@@ -215,6 +219,8 @@ class ShellSession(Connection):
 class ExpectShellSession(Action):
     """
     Waits for a shell connection to the device for the current job.
+    The shell connection can be over any particular connection,
+    all that is needed is a prompt.
     """
 
     def __init__(self):
@@ -235,7 +241,7 @@ class ExpectShellSession(Action):
 
     def run(self, connection, args=None):
         connection = super(ExpectShellSession, self).run(connection, args)
-        connection.prompt_str = self.prompts
+        connection.prompt_str = self.job.device['test_image_prompts']
         self.logger.debug("%s: Waiting for prompt", self.name)
         self.wait(connection)  # FIXME: should this be a regular RetryAction operation?
         return connection
@@ -282,7 +288,7 @@ class ConnectDevice(Action):
             connection.prompt_str = self.job.device['test_image_prompts']
             return connection
         command = self.job.device['commands']['connect']
-        self.logger.info("connecting to device using '%s'" % command)
+        self.logger.info("%s Connecting to device using '%s'", self.name, command)
         signal.alarm(0)  # clear the timeouts used without connections.
         shell = ShellCommand("%s\n" % command, self.timeout)
         if shell.exitstatus:
@@ -296,6 +302,7 @@ class ConnectDevice(Action):
         try:
             self.wait(connection)
         except TestError:
-            self.errors = "%s wait expired" % self.name
-        self.logger.debug("matched %s" % connection.match)
+            self.errors = "%s wait expired", self.name
+            self.logger.debug("wait expired %s", self.elapsed_time)
+        self.logger.debug("matched %s", connection.match)
         return connection

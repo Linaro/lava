@@ -18,6 +18,7 @@ def test_suite():
         'lava_dispatcher.pipeline.test.test_kexec',
         'lava_dispatcher.pipeline.test.test_kvm',
         'lava_dispatcher.pipeline.test.test_multinode',
+        'lava_dispatcher.pipeline.test.test_connections',
         #  'lava_dispatcher.pipeline.test.test_utils',
         'lava_dispatcher.pipeline.test.test_repeat',
     ]

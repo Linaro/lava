@@ -261,6 +261,9 @@ class TestShellAction(TestAction):
                     handler(*params)  # pylint: disable=star-args
                 except KeyboardInterrupt:
                     raise KeyboardInterrupt
+                except TypeError as exc:
+                    # handle serial corruption which can overlap kernel messages onto test output.
+                    self.logger.exception(exc)
                 except JobError as exc:
                     self.logger.error("job error: handling signal %s failed: %s", name, exc)
                     return False

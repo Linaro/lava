@@ -27,6 +27,8 @@ import logging
 from lava_dispatcher.pipeline.action import TestError, Timeout, InternalObject
 from lava_dispatcher.pipeline.utils.shell import wait_for_prompt
 
+# pylint: disable=too-many-public-methods,too-many-instance-attributes
+
 
 class BaseSignalHandler(object):
     """
@@ -122,9 +124,16 @@ class Connection(object):
         self.raw_connection = raw_connection
         self.results = {}
         self.match = None
+        self.connected = True
 
     def sendline(self, line):
-        self.raw_connection.sendline(line)
+        if self.connected:
+            self.raw_connection.sendline(line)
+        else:
+            raise RuntimeError()  # FIXME:
+
+    def disconnect(self, reason):
+        raise NotImplementedError()
 
     def finalise(self):
         if self.raw_connection:

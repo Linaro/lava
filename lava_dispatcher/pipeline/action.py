@@ -276,7 +276,9 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 if final.name == "finalize":
                     final.run(connection, None)
                 else:
-                    raise RuntimeError("Invalid job pipeline - no finalize action to run after job timeout.")
+                    msg = "Invalid job pipeline - no finalize action to run after job timeout."
+                    action.logger.error(msg)
+                    raise RuntimeError(msg)
                 raise JobError(msg)
 
             # Begin the action
@@ -715,6 +717,9 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
 
     def wait(self, connection):
         if not connection:
+            return
+        if not connection.connected:
+            self.logger.debug("Already disconnected")
             return
         self.logger.debug("%s: Wait for prompt. %s seconds" % (self.name, int(self.timeout.duration)))
         connection.wait()

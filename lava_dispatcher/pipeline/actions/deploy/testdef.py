@@ -168,7 +168,7 @@ class RepoAction(Action):
 
         # runner_path is the path to read and execute from to run the tests after boot
         self.data['test'][self.uuid]['runner_path'][args['test_name']] = os.path.join(
-            args['deployment_data']['lava_test_results_dir'] % self.job.device['hostname'],
+            args['deployment_data']['lava_test_results_dir'] % self.job.job_id,
             'tests',
             args['test_name']
         )

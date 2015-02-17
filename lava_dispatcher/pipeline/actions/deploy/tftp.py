@@ -99,7 +99,7 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         if not self.valid:
             return
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.device['hostname']
+        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
         if self.suffix:
             self.data[self.name].setdefault('suffix', self.suffix)
         self.data[self.name].setdefault('suffix', os.path.basename(self.tftp_dir))
