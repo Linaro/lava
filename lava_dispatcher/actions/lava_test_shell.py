@@ -186,7 +186,8 @@ def _validate_invalid_chars(parameter):
 
 def _get_lava_proxy(context):
     return {'http_proxy': context.config.lava_proxy,
-            'https_proxy': context.config.lava_proxy}
+            'https_proxy': context.config.lava_proxy,
+            'no_proxy': context.config.lava_no_proxy}
 
 
 def _get_testdef_git_repo(testdef_repo, tmpdir, revision, proxy_env):
@@ -840,6 +841,9 @@ class cmd_lava_test_shell(BaseAction):
             if self.context.config.lava_proxy:
                 runner._connection.sendline(
                     "export http_proxy=%s" % self.context.config.lava_proxy, delay)
+            if self.context.config.lava_no_proxy:
+                runner._connection.sendline(
+                    "export no_proxy=%s" % self.context.config.lava_no_proxy, delay)
             runner._connection.sendline(
                 "%s/bin/lava-test-runner %s" % (
                     target.lava_test_dir,

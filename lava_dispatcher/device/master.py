@@ -514,6 +514,9 @@ class MasterImageTarget(Target):
             if lava_proxy:
                 logging.info("Setting up http proxy")
                 runner.run("export http_proxy=%s" % lava_proxy, timeout=30)
+            lava_no_proxy = self.context.config.lava_no_proxy
+            if lava_no_proxy:
+                runner.run("export no_proxy=%s" % lava_no_proxy, timeout=30)
             logging.info("System is in master image now")
             self.context.test_data.add_result('boot_master_image',
                                               'pass')

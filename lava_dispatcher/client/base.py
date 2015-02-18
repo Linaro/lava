@@ -493,6 +493,10 @@ class LavaClient(object):
             self.proc.expect(prompt_str, timeout=30)
             self.aptget_cmd = ' '.join([self.aptget_cmd,
                                         "-o Acquire::http::proxy=%s" % lava_proxy])
+        lava_no_proxy = self.context.config.lava_no_proxy
+        if lava_no_proxy:
+            self.proc.sendline("export no_proxy=%s" % lava_no_proxy)
+            self.proc.expect(prompt_str, timeout=30)
 
     def boot_master_image(self):
         raise NotImplementedError(self.boot_master_image)
