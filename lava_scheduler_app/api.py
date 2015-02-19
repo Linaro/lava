@@ -1,4 +1,5 @@
 import xmlrpclib
+import yaml
 from django.core.exceptions import PermissionDenied
 from simplejson import JSONDecodeError
 from django.db.models import Count
@@ -50,10 +51,14 @@ class SchedulerAPI(ExposedAPI):
                 403, "Permission denied.  User %r does not have the "
                 "'lava_scheduler_app.add_testjob' permission.  Contact "
                 "the administrators." % self.user.username)
+
         try:
             job = TestJob.from_json_and_user(job_data, self.user)
         except JSONDecodeError as e:
-            raise xmlrpclib.Fault(400, "Decoding JSON failed: %s." % e)
+            try:
+                job = TestJob.from_yaml_and_user(job_data, self.user)
+            except yaml.YAMLError as e:
+                raise xmlrpclib.Fault(400, "Decoding YAML failed: %s." % e)
         except (JSONDataError, ValueError) as e:
             raise xmlrpclib.Fault(400, str(e))
         except Device.DoesNotExist:

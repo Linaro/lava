@@ -7,6 +7,7 @@ import datetime
 import smtplib
 import socket
 import sys
+import yaml
 
 from django.conf import settings
 from django.contrib.auth.models import User, Group
@@ -1171,6 +1172,24 @@ class TestJob(RestrictedResource):
     @models.permalink
     def get_absolute_url(self):
         return ("lava.scheduler.job.detail", [self.display_id])
+
+    @classmethod
+    def from_yaml_and_user(cls, yaml_data, user):
+        job_data = yaml.load(yaml_data)
+        device_type = _get_device_type(user, job_data['device_type'])
+        allow = _check_submit_to_device(list(Device.objects.filter(
+                                        device_type=device_type)), user)
+
+        job = TestJob(definition=yaml_data, original_definition=yaml_data,
+                      submitter=user,
+                      requested_device_type=device_type,
+                      description=job_data['job_name'],
+                      health_check=False,
+                      user=user,
+                      is_pipeline=True)
+
+        job.save()
+        return job
 
     @classmethod
     def from_json_and_user(cls, json_data, user, health_check=False):
