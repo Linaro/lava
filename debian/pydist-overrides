@@ -6,3 +6,5 @@ configglue python-configglue
 pyliblzma python-lzma; PEP386
 requests python-requests; PEP386
 netifaces python-netifaces; PEP386
+nose python-nose; PEP386
+
