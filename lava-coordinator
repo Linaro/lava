@@ -29,15 +29,6 @@ from logging.handlers import WatchedFileHandler
 from lava.coordinator import LavaCoordinator
 
 
-# noinspection PyUnusedLocal
-def signal_handler(signal, frame):
-    try:
-        print '\nClosing %s' % os.path.basename(__file__)
-        sys.exit(os.EX_OK)
-    except Exception as e:
-        raise Exception('Error in signal handler: ' + str(e))
-
-
 def getDaemonLogger(filePath, log_format=None, loglevel=logging.INFO):
     logger = logging.getLogger()
     logger.setLevel(loglevel)

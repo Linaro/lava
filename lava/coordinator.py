@@ -377,6 +377,10 @@ class LavaCoordinator(object):
         messageID = self._getMessageID(json_data)
         if 'waitrole' in json_data:
             for client in self.group['roles'][json_data['role']]:
+                if messageID not in self.group['waits']:
+                    logging.debug("messageID %s not yet seen" % messageID)
+                    self._waitResponse()
+                    return
                 if client not in self.group['waits'][messageID]:
                     # FIXME: bug? if this client has not sent the messageID yet,
                     # causing it to wait will simply force a timeout. node needs
