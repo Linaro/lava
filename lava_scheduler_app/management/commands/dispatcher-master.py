@@ -27,6 +27,7 @@ import time
 import zmq
 
 from django.core.management.base import BaseCommand
+from django.db import transaction
 from lava_scheduler_app.models import Device, TestJob, Worker
 
 
@@ -271,13 +272,14 @@ class Command(BaseCommand):
 
                     # Mark all jobs on this dispatcher as canceled.
                     # The dispatcher had (re)started, so all jobs have to be finished.
-                    # TODO: make this atomic
-                    jobs = TestJob.objects.filter(actual_device__worker_host__hostname=hostname,
-                                                  is_pipeline=True,
-                                                  status=TestJob.RUNNING)
-                    for job in jobs:
-                        logger.info("Canceling job %d", job.id)
-                        cancel_job(job)
+                    with transaction.atomic():
+                        jobs = TestJob.objects.filter(actual_device__worker_host__hostname=hostname,
+                                                      is_pipeline=True,
+                                                      status=TestJob.RUNNING) \
+                                              .select_for_update()
+                        for job in jobs:
+                            logger.info("Canceling job %d", job.id)
+                            cancel_job(job)
 
                     # Mark the dispatcher as alive
                     dispatchers[hostname].alive()
@@ -303,13 +305,13 @@ class Command(BaseCommand):
                         logger.error("Invalid message from <%s> '%s'", hostname, msg, extra=extra)
                         continue
                     logger.info("%s => END %d", hostname, job_id, extra=extra)
-                    # TODO: make this atomic
                     try:
-                        job = TestJob.objects.get(id=job_id)
+                        with transaction.atomic():
+                            job = TestJob.objects.select_for_update() \
+                                                 .get(id=job_id)
+                            end_job(job)
                     except TestJob.DoesNotExist:
                         logger.error("Unknown job %d", job_id)
-                    else:
-                        end_job(job)
                     # ACK even if the job is unknown to let the dispatcher
                     # forget about it
                     controler.send_multipart([hostname, 'END_OK', str(job_id)])
@@ -330,13 +332,13 @@ class Command(BaseCommand):
                         logger.error("Invalid message from <%s> '%s'", hostname, msg, extra=extra)
                         continue
                     logger.info("%s => START_OK %d", hostname, job_id, extra=extra)
-                    # TODO: make this atomic
                     try:
-                        job = TestJob.objects.get(id=job_id)
+                        with transaction.atomic():
+                            job = TestJob.objects.select_for_update() \
+                                                 .get(id=job_id)
+                            start_job(job)
                     except TestJob.DoesNotExist:
                         logger.error("Unknown job <%d>", job_id)
-                    else:
-                        start_job(job)
 
                     if hostname not in dispatchers:
                         # The server crashed: send a STATUS message
