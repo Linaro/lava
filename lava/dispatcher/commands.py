@@ -12,7 +12,8 @@ import lava_dispatcher.config
 from lava_dispatcher.config import get_config, get_device_config, list_devices
 from lava_dispatcher.job import LavaTestJob, validate_job_data
 from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.action import PipelineContext, JobError
+from lava_dispatcher.pipeline.action import JobError
+from lava_dispatcher.pipeline.logical import PipelineContext
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.log import YamlLogger, get_yaml_handler
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
