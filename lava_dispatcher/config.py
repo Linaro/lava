@@ -58,6 +58,7 @@ class DeviceSchema(schema.Schema):
     image_boot_msg_timeout = schema.IntOption(default=120)
     kernel_boot_msg = schema.StringOption()
     kernel_boot_msg_timeout = schema.IntOption(default=120)
+    has_kernel_messages = schema.BoolOption(default=True)
     send_char = schema.BoolOption(default=True)
     test_image_prompts = schema.ListOption(default=["\(initramfs\)",
                                                     "linaro-test",
