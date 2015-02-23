@@ -124,7 +124,7 @@ def send_status(hostname, socket, logger):
                                   status=TestJob.RUNNING)
     for job in jobs:
         # TODO: keep track of the list of job to check (retrying)
-        logger.info("STATUS %d => %s", job.id, hostname)
+        logger.info("STATUS %d => %s (%s)", job.id, hostname, job.actual_device.hostname)
         socket.send_multipart([hostname, 'STATUS', str(job.id)])
 
 
@@ -141,6 +141,9 @@ class Command(BaseCommand):
         make_option('-l', '--level',
                     default='DEBUG',
                     help="Logging level (ERROR, WARN, INFO, DEBUG)"),
+        make_option('--devices',
+                    default="/etc/lava-dispatcher/devices",
+                    help="Device configuration directory"),
     )
 
     def handle(self, *args, **options):
@@ -387,17 +390,20 @@ class Command(BaseCommand):
                         create_job(job, device)
                         logger.info("START %d => %s (%s)", job.id,
                                     device.worker_host.hostname, device.hostname)
-                        controler.send_multipart([str(device.worker_host.hostname), 'START',
-                                                  str(job.id),
-                                                  str(job.definition), 'TODO'])
 
                     else:
                         device = job.actual_device
                         logger.info("START %d => %s (%s) (retrying)", job.id,
                                     device.worker_host.hostname, device.hostname)
-                        controler.send_multipart([str(job.actual_device.worker_host.hostname), 'START',
-                                                  str(job.id),
-                                                  str(job.definition), 'TODO'])
+                    # Load device configuration
+                    # TODO: use jinja2 here!
+                    filename = os.path.join(options['devices'], "%s.yaml" % job.actual_device.hostname)
+                    with open(filename, 'r') as f_in:
+                        device_configuration = f_in.read()
+                    controler.send_multipart([str(job.actual_device.worker_host.hostname), 'START',
+                                              str(job.id),
+                                              str(job.definition),
+                                              str(device_configuration)])
 
                 if not_allocated > 0:
                     logger.info("%d jobs not allocated yet", not_allocated)
