@@ -90,7 +90,7 @@ class FastbootTarget(Target):
             logging.critical(msg)
             raise CriticalError(msg)
 
-    def deploy_android(self, boot, system, userdata, rootfstype,
+    def deploy_android(self, images, rootfstype,
                        bootloadertype, target_type):
         self._target_type = target_type
         self._image_deployment = True
@@ -102,7 +102,7 @@ class FastbootTarget(Target):
             logging.info("Deploying test image. Attempt: %d", attempts + 1)
             try:
                 self._enter_fastboot()
-                self.driver.deploy_android(boot, system, userdata, rootfstype,
+                self.driver.deploy_android(images, rootfstype,
                                            bootloadertype, self._target_type,
                                            self.scratch_dir)
                 deployed = True

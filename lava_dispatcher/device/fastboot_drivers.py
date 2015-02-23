@@ -86,6 +86,9 @@ class FastBoot(object):
     def erase(self, partition):
         self('erase %s' % partition)
 
+    def format(self, partition):
+        self('format %s' % partition)
+
     def flash(self, partition, image):
         self('flash %s %s' % (partition, image))
 
@@ -223,21 +226,27 @@ class BaseDriver(object):
 
         self.__boot_image__ = 'kernel'
 
-    def deploy_android(self, boot, system, userdata, rootfstype,
+    def deploy_android(self, images, rootfstype,
                        bootloadertype, target_type, scratch_dir):
         self.target_type = target_type
         self.scratch_dir = scratch_dir
         self.erase_boot()
+        boot = None
+
+        for image in images:
+            if 'fastboot' in image:
+                for command in image['fastboot']:
+                    self.fastboot(command)
+            if 'url' in image and 'partition' in image:
+                if image['partition'] == 'boot':
+                    boot = image['url']
+                else:
+                    self.fastboot.flash(image['partition'], self._get_image(image['url']))
+
         if boot is not None:
             boot = self._get_image(boot)
         else:
             raise CriticalError('A boot image is required!')
-        if system is not None:
-            system = self._get_image(system)
-            self.fastboot.flash('system', system)
-        if userdata is not None:
-            userdata = self._get_image(userdata)
-            self.fastboot.flash('userdata', userdata)
 
         self.__boot_image__ = boot
 

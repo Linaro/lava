@@ -380,9 +380,9 @@ class LavaClient(object):
         self.target_device = get_target(context, config)
         self.vm_group = VmGroupHandler(self)
 
-    def deploy_linaro_android(self, boot, system, data, rootfstype,
+    def deploy_linaro_android(self, images, rootfstype,
                               bootloadertype, target_type):
-        self.target_device.deploy_android(boot, system, data, rootfstype,
+        self.target_device.deploy_android(images, rootfstype,
                                           bootloadertype, target_type)
 
     def deploy_linaro(self, hwpack, rootfs, image, dtb, rootfstype, bootloadertype):

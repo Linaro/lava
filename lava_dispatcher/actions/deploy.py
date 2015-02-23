@@ -130,9 +130,17 @@ class cmd_deploy_linaro_android_image(BaseAction):
     parameters_schema = {
         'type': 'object',
         'properties': {
-            'boot': {'type': 'string'},
-            'system': {'type': 'string', 'optional': True},
-            'data': {'type': 'string', 'optional': True},
+            'images': {'type': 'array',
+                       'items': {'type': 'object',
+                                 'properties':
+                                 {'url': {'type': 'string',
+                                          'optional': True},
+                                  'partition': {'type': 'string',
+                                                'optional': True},
+                                  'fastboot': {'type': 'array',
+                                               'items': {'type': 'string'},
+                                               'optional': True}},
+                                 'additionalProperties': False}},
             'rootfstype': {'type': 'string', 'optional': True,
                            'default': 'ext4'},
             'bootloadertype': {'type': 'string', 'optional': True,
@@ -166,8 +174,20 @@ class cmd_deploy_linaro_android_image(BaseAction):
             if 'login_commands' in parameters:
                 raise ValueError('must specify a login prompt or password \
                       prompt when specifying login commands')
+        if 'images' not in parameters:
+            raise ValueError('must specify an image')
+        else:
+            for image in parameters['images']:
+                if 'fastboot' in image:
+                    if 'url' in image or 'partition' in image:
+                        raise ValueError('must not specify a url or partition '
+                                         'when fastboot commands are defined')
+                if 'url' not in image and 'partition' in image:
+                    raise ValueError('must specify a url for a given partition')
+                if 'partition' not in image and 'url' in image:
+                    raise ValueError('must specify a partition for a given url')
 
-    def run(self, boot=None, system=None, data=None, rootfstype='ext4', bootloadertype='u_boot',
+    def run(self, images=None, rootfstype='ext4', bootloadertype='u_boot',
             target_type='android', login_prompt=None, password_prompt=None, username=None,
             password=None, login_commands=None):
         if login_prompt is not None:
@@ -180,7 +200,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
             self.client.config.password = password
         if login_commands is not None:
             self.client.config.login_commands = login_commands
-        self.client.deploy_linaro_android(boot=boot, system=system, data=data,
+        self.client.deploy_linaro_android(images=images,
                                           rootfstype=rootfstype,
                                           bootloadertype=bootloadertype,
                                           target_type=target_type)

@@ -211,7 +211,7 @@ class Target(object):
     def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootloadertype):
         raise NotImplementedError('deploy_image')
 
-    def deploy_android(self, boot, system, userdata, rootfstype,
+    def deploy_android(self, images, rootfstype,
                        bootloadertype, target_type):
         raise NotImplementedError('deploy_android_image')
 
