@@ -45,7 +45,7 @@ class Factory(object):  # pylint: disable=too-few-public-methods
     of any database objects.
     """
     def create_bbb_job(self, filename, output_dir=None):  # pylint: disable=no-self-use
-        device = NewDevice('bbb-01')
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(kvm_yaml) as sample_job_data:
             parser = JobParser()
@@ -144,7 +144,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
                 }
             }
         }
-        device = NewDevice('bbb-01')
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         job = Job(parameters)
         job.device = device
         pipeline = Pipeline(job=job, parameters=parameters['actions']['boot'])
@@ -266,7 +266,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         Test UBootSecondaryMedia validation
         """
         job_parser = JobParser()
-        cubie = NewDevice('cubie1')
+        cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         sample_job_data = open(sample_job_file)
         job = job_parser.parse(sample_job_data, cubie)

@@ -33,7 +33,7 @@ from lava_dispatcher.pipeline.actions.boot.u_boot import UBootInterrupt, UBootAc
 class TestDeviceParser(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def test_new_device(self):
-        kvm01 = NewDevice('kvm01')
+        kvm01 = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
         try:
             self.assertIsNotNone(kvm01['actions'])
         except:  # pylint: disable=bare-except
@@ -66,7 +66,7 @@ class TestJobDeviceParameters(unittest.TestCase):  # pylint: disable=too-many-pu
 
     def test_device_parser(self):
         job_parser = JobParser()
-        device = NewDevice('bbb-01')
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(sample_job_data, device)
@@ -107,14 +107,14 @@ class TestJobDeviceParameters(unittest.TestCase):  # pylint: disable=too-many-pu
                 self.assertTrue(len(action.parameters['u-boot']['ramdisk']['commands']) > 2)
 
     def test_device_power(self):
-        device = NewDevice("bbb-01")
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         self.assertEqual(device.power_state, 'off')
         self.assertNotEqual(device.hard_reset_command, '')
         self.assertNotEqual(device.power_command, '')
         self.assertIn('on', device.power_command)
         device.power_state = 'on'
         self.assertEqual(device.power_state, 'on')
-        device = NewDevice("kvm01")
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
         self.assertEqual(device.power_state, '')
         self.assertEqual(device.hard_reset_command, '')
         self.assertEqual(device.power_command, '')
