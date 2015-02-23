@@ -109,10 +109,8 @@ class JobParser(object):
                 duration = Timeout.parse(data['timeouts']['job'])
                 job.timeout = Timeout(data['job_name'], duration)
             if 'action' in data['timeouts']:
-                # FIXME: never used !
                 self.context['default_action_duration'] = Timeout.parse(data['timeouts']['action'])
             if 'test' in data['timeouts']:
-                # FIXME: never used !
                 self.context['default_test_duration'] = Timeout.parse(data['timeouts']['test'])
 
     # FIXME: add a validate() function which checks against a Schema as a completely separate step.
@@ -163,7 +161,7 @@ class JobParser(object):
                 else:
                     # May only end up being used for submit as other actions all need strategy method objects
                     # select the specific action of this class for this job
-                    action = Action.find(name)()
+                    action = Action.select(name)()
                     action.job = job
                     # put parameters (like rootfs_type, results_dir) into the actions.
                     if type(action_data[name]) == dict:

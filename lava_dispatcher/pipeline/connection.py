@@ -25,10 +25,13 @@ import signal
 import decimal
 from lava_dispatcher.pipeline.log import YamlLogger
 from lava_dispatcher.pipeline.action import TestError, Timeout
+from lava_dispatcher.pipeline.utils.shell import wait_for_prompt
 
 
-# FIXME: drop this base class and just use the SignalDirector?
 class BaseSignalHandler(object):
+    """
+    Used to extend the SignalDirector to allow protocols to respond to signals.
+    """
 
     def __init__(self, protocol=None):
         self.protocol = protocol
@@ -138,34 +141,6 @@ class Connection(object):
             self.raw_connection.close()
 
 
-# FIXME: move to utils
-def wait_for_prompt(connection, prompt_pattern, timeout):
-    # One of the challenges we face is that kernel log messages can appear
-    # half way through a shell prompt.  So, if things are taking a while,
-    # we send a newline along to maybe provoke a new prompt.  We wait for
-    # half the timeout period and then wait for one tenth of the timeout
-    # 6 times (so we wait for 1.1 times the timeout period overall).
-    prompt_wait_count = 0
-    if timeout == -1:
-        timeout = connection.timeout
-    partial_timeout = timeout / 2.0
-    logger = YamlLogger("root")
-    while True:
-        try:
-            connection.expect(prompt_pattern, timeout=partial_timeout)
-        except pexpect.TIMEOUT:
-            if prompt_wait_count < 6:
-                logger.debug('Sending newline in case of corruption.')
-                prompt_wait_count += 1
-                partial_timeout = timeout / 10
-                connection.sendline('')
-                continue
-            else:
-                raise
-        else:
-            break
-
-
 class CommandRunner(object):
     """
     A convenient way to run a shell command and wait for a shell prompt.
@@ -198,9 +173,8 @@ class CommandRunner(object):
     def get_connection(self):
         return self._connection
 
-    # FIXME: too many arguments, trim unused args
-    def run(self, cmd, response=None, timeout=-1,
-            failok=False, wait_prompt=True, log_in_host=None):
+    # FIXME: legacy code?
+    def run(self, cmd, response=None, timeout=-1, wait_prompt=True):
         """Run `cmd` and wait for a shell response.
 
         :param cmd: The command to execute.
@@ -208,16 +182,10 @@ class CommandRunner(object):
             .expect().
         :param timeout: How long to wait for 'response' (if specified) and the
             shell prompt, defaulting to forever.
-        :param failok: The command can fail or not, if it is set False and
-            command fail, an OperationFail exception will raise
-        :param log_in_host: If set, the input and output of the command will be
-            logged in it
         :return: The exit value of the command, if wait_for_rc not explicitly
             set to False during construction.
         """
         self._connection.empty_buffer()
-        if log_in_host is not None:
-            self._connection.logfile = open(log_in_host, "a")
         self._connection.sendline(cmd)
         start = time.time()
         if response is not None:
@@ -243,7 +211,7 @@ class CommandRunner(object):
 
             if self._prompt_str_includes_rc:
                 return_code = int(self._connection.match.group(1))
-                if return_code != 0 and not failok:
+                if return_code != 0:
                     raise TestError("executing %r failed with code %s" % (cmd, return_code))
             else:
                 return_code = None

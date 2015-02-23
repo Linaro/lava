@@ -102,7 +102,6 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
             raise InfrastructureError("Connection closed")
         return proc
 
-    # FIXME: check if this is ever called
     def empty_buffer(self):
         """Make sure there is nothing in the pexpect buffer."""
         index = 0

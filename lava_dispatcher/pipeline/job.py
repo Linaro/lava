@@ -116,19 +116,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             protocol.set_up()
             if not protocol.valid:
                 raise JobError("Unable to setup a valid %s protocol" % protocol.name)
-        self.pipeline.run_actions(self.connection)  # FIXME: some Deployment methods may need to set a Connection.
-
-        # FIXME how to get rootfs with multiple deployments, and at arbitrary
-        # points in the pipeline?
-        # rootfs = None
-        # self.action.prepare(rootfs)
-
-        # self.action.run(None)
-
-        # FIXME how to know when to extract results with multiple deployment at
-        # arbitrary points?
-        # results_dir = None
-        #    self.action.post_process(results_dir)
+        self.pipeline.run_actions(self.connection)
 
 
 class ResetContext(Action):

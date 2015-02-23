@@ -29,7 +29,7 @@ import subprocess
 from collections import OrderedDict
 from contextlib import contextmanager
 
-from lava_dispatcher.pipeline.utils.constants import OVERRIDE_CLAMP_DURATION
+from lava_dispatcher.pipeline.utils.constants import OVERRIDE_CLAMP_DURATION, ACTION_TIMEOUT
 from lava_dispatcher.pipeline.log import YamlLogger, get_yaml_handler
 
 if sys.version > '3':
@@ -66,8 +66,8 @@ class TestError(Exception):
     """
     An error in the operation of the test definition, e.g.
     in parsing measurements or commands which fail.
+    Always ensure TestError is caught, logged and cleared. It is not fatal.
     """
-    # FIXME: ensure TestError is caught, logged and cleared. It is not fatal.
     pass
 
 
@@ -111,11 +111,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         #     raise RuntimeError("Diagnostic actions need to be triggered, not added to a pipeline.")
         if not action:
             raise RuntimeError("Unable to add empty action to pipeline")
-        # FIXME: these should be part of the validate from the base Action class
-        if not action.name:
-            raise RuntimeError("Unnamed action!")
-        if ' ' in action.name:
-            raise RuntimeError("Whitespace must not be used in action names, only descriptions or summaries")
 
     def add_action(self, action, parameters=None):
         self._check_action(action)
@@ -334,23 +329,18 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         within those pipelines. Parameters are to be
         treated as inmutable.
         """
-        # FIXME: too many?
         self.__summary__ = None
         self.__description__ = None
         self.__level__ = None
         self.pipeline = None
         self.internal_pipeline = None
         self.__parameters__ = {}
-        self.yaml_line = None  # FIXME: should always be in parameters
         self.__errors__ = []
-        self.elapsed_time = None  # FIXME: pipeline_data?
+        self.elapsed_time = None
         self.logger = YamlLogger("root")
         self.log_filename = None
         self.job = None
         self.__results__ = OrderedDict()
-        # FIXME: what about {} for default value?
-        self.env = None  # FIXME make this a parameter which gets default value when first called
-        # TODO: self.name is None for the moment.
         self.timeout = Timeout(self.name)
         self.max_retries = 1  # unless the strategy or the job parameters change this, do not retry
         self.diagnostics = []
@@ -407,9 +397,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         """
         self.job.context.update(value)
 
-    # FIXME: has to be called select to be consistent with Deployment
     @classmethod
-    def find(cls, name):
+    def select(cls, name):
         for subclass in cls.__subclasses__():  # pylint: disable=no-member
             if subclass.name == name:
                 return subclass
@@ -471,7 +460,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         except ValueError:
             raise RuntimeError("Action parameters need to be a dictionary")
 
-        # FIXME: the name should be available in the constructor
         # Set the timeout name now
         self.timeout.name = self.name
         # Overide the duration if needed
@@ -534,21 +522,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         """
         pass
 
-    def prepare(self):
-        """
-        This method will be called before deploying an image to the target,
-        being passed a local mount point with the target root filesystem. This
-        method will then have a chance to modify the root filesystem, including
-        editing existing files (which should be used with caution) and adding
-        new ones. Any modifications done will be reflected in the final image
-        which is deployed to the target.
-
-        In this classs this method does nothing. It must be implemented by
-        subclasses
-        """
-        # FIXME: is this still relevant?
-        pass
-
     def _run_command(self, command_list, env=None):
         """
         Single location for all external command operations on the
@@ -567,12 +540,12 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         # if not self.env:
         #     self.env = {'http_proxy': self.job.context.config.lava_proxy,
         #                 'https_proxy': self.job.context.config.lava_proxy}
-        self.env = os.environ
-        self.env["LC_ALL"] = "C.UTF-8"
+        def_env = os.environ
+        def_env["LC_ALL"] = "C.UTF-8"
         if env:
-            self.env.update(env)
+            def_env.update(env)
         try:
-            log = subprocess.check_output(command_list, stderr=subprocess.STDOUT, env=self.env)
+            log = subprocess.check_output(command_list, stderr=subprocess.STDOUT, env=def_env)
         except OSError as exc:
             self.logger.debug({exc.strerror: exc.child_traceback.split('\n')})
         except subprocess.CalledProcessError as exc:
@@ -647,19 +620,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         """
         pass
 
-    def post_process(self):
-        """
-        After tests finish running, the test results directory will be
-        extracted, and passed to this method so that the action can
-        inspect/extract its results.
-
-        Most Actions except TestAction will not have anything to do here.
-        In this classs this method does nothing. It must be implemented by
-        subclasses
-        """
-        # FIXME: with the results inside the pipeline already, is this needed?
-        pass
-
     def explode(self):
         """
         serialisation support
@@ -669,6 +629,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
                      if not attr.startswith('_') and getattr(self, attr)
                      and not isinstance(getattr(self, attr), types.MethodType)])
 
+        # noinspection PySetFunctionToLiteral
         for attr in attrs - set(['internal_pipeline', 'job', 'logger', 'pipeline', 'parameters']):
             if attr == 'timeout':
                 data['timeout'] = {'duration': self.timeout.duration, 'name': self.timeout.name}
@@ -722,15 +683,14 @@ class Timeout(object):
     If a connection is set, this timeout is used per pexpect operation on that connection.
     If a connection is not set, this timeout applies for the entire run function of the action.
     """
-    # FIXME: move default of 30 to utils.constants.py
-    def __init__(self, name, duration=30, protected=False):
+    def __init__(self, name, duration=ACTION_TIMEOUT, protected=False):
         self.name = name
         self.duration = duration  # Actions can set timeouts higher than the clamp.
         self.protected = protected
 
     @classmethod
     def default_duration(cls):
-        return 30
+        return ACTION_TIMEOUT
 
     @classmethod
     def parse(cls, data):
