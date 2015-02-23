@@ -195,7 +195,7 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
         """
         self.coord.group_name = str(uuid.uuid4())
         self.coord.group_size = 2
-        self.coord.conn.response = "ack"
+        self.coord.conn.response = {'response': "ack"}
         self.coord.client_name = "incomplete"
         ret = self.coord._updateData(
             {"client_name": self.coord.client_name,
@@ -241,7 +241,11 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.coord.addClient("completing")
         self.coord.addClient("completed")
         client = TestMultinode.TestClient(self.coord, self.client_job.parameters)
+        TestMultinode.TestClient(self.coord, self.server_job.parameters)
+        self.coord.expectResponse('wait')
+        client.initialise_group()
         client.settings['target'] = 'completed'
+        self.coord.expectResponse('ack')
         client(json.dumps({
             'request': 'lava_send',
             'messageID': 'test',
@@ -258,6 +262,93 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
             {"message": {"kvm01": {"key": "value"}}, "response": "ack"},
             reply
         )
+
+    def test_wait(self):
+        client = TestMultinode.TestClient(self.coord, self.client_job.parameters)
+        server = TestMultinode.TestClient(self.coord, self.server_job.parameters)
+        client.settings['target'] = 'completed'
+        self.coord.expectResponse('wait')
+        client.initialise_group()
+        self.coord.expectResponse('wait')
+        client(json.dumps({
+            'request': 'lava_wait',
+            'messageID': 'test_wait',
+        }))
+        self.coord.expectResponse('wait')
+        client(json.dumps({
+            'request': 'lava_wait',
+            'messageID': 'test_wait',
+        }))
+        self.coord.expectResponse('wait')
+        client(json.dumps({
+            'request': 'lava_wait',
+            'messageID': 'test_wait',
+        }))
+        self.coord.expectResponse('ack')
+        server(json.dumps({
+            'request': 'lava_send',
+            'messageID': 'test_wait',
+        }))
+        self.coord.expectResponse('ack')
+        client(json.dumps({
+            'request': 'lava_wait',
+            'messageID': 'test_wait',
+        }))
+
+    def test_wait_all(self):
+        client = TestMultinode.TestClient(self.coord, self.client_job.parameters)
+        server = TestMultinode.TestClient(self.coord, self.server_job.parameters)
+        client.settings['target'] = 'completed'
+        self.coord.expectResponse('wait')
+        client.initialise_group()
+        client(json.dumps({
+            'request': 'lava_wait_all',
+            'messageID': 'test_wait_all',
+        }))
+        self.coord.expectResponse('wait')
+        client(json.dumps({
+            'request': 'lava_wait_all',
+            'messageID': 'test_wait_all'
+        }))
+        self.coord.expectResponse('wait')
+        client(json.dumps({
+            'request': 'lava_wait_all',
+            'messageID': 'test_wait_all'
+        }))
+        self.coord.expectResponse('ack')
+        server(json.dumps({
+            'request': 'lava_send',
+            'messageID': 'test_wait_all',
+        }))
+
+    def test_wait_all_role(self):
+        client = TestMultinode.TestClient(self.coord, self.client_job.parameters)
+        server = TestMultinode.TestClient(self.coord, self.server_job.parameters)
+        client.settings['target'] = 'completed'
+        self.coord.expectResponse('wait')
+        client.initialise_group()
+        client(json.dumps({
+            'request': 'lava_wait_all',
+            'waitrole': 'server',
+            'messageID': 'test_wait_all_role',
+        }))
+        self.coord.expectResponse('wait')
+        client(json.dumps({
+            'request': 'lava_wait_all',
+            'waitrole': 'server',
+            'messageID': 'test_wait_all_role'
+        }))
+        self.coord.expectResponse('wait')
+        client(json.dumps({
+            'request': 'lava_wait_all',
+            'waitrole': 'server',
+            'messageID': 'test_wait_all_role'
+        }))
+        self.coord.expectResponse('ack')
+        server(json.dumps({
+            'request': 'lava_send',
+            'messageID': 'test_wait_all_role',
+        }))
 
     def test_protocol_action(self):
         deploy = [action for action in self.client_job.pipeline.actions if isinstance(action, DeployImageAction)][0]
