@@ -535,59 +535,60 @@ class Target(object):
             kernel_boot = 'master_kernel_boot_time'
             userspace_boot = 'master_userspace_boot_time'
 
-        try:
-            connection.expect(self.config.image_boot_msg,
-                              timeout=self.config.image_boot_msg_timeout)
-            start = time.time()
-            self.context.test_data.add_result(wait_for_image_boot,
-                                              good)
-        except pexpect.TIMEOUT:
-            msg = "Kernel Error: did not start booting."
-            logging.error(msg)
-            self.context.test_data.add_result(wait_for_image_boot,
-                                              bad, message=msg)
-            raise
+        if self.config.has_kernel_messages:
+            try:
+                connection.expect(self.config.image_boot_msg,
+                                  timeout=self.config.image_boot_msg_timeout)
+                start = time.time()
+                self.context.test_data.add_result(wait_for_image_boot,
+                                                  good)
+            except pexpect.TIMEOUT:
+                msg = "Kernel Error: did not start booting."
+                logging.error(msg)
+                self.context.test_data.add_result(wait_for_image_boot,
+                                                  bad, message=msg)
+                raise
 
-        try:
-            done = False
-            warnings = 0
-            while not done:
-                pl = [self.config.kernel_boot_msg,
-                      'Freeing init memory',
-                      '-+\[ cut here \]-+\s+(.*\s+-+\[ end trace (\w*) \]-+)',
-                      '(Unhandled fault.*)\r\n']
-                i = connection.expect(pl,
-                                      timeout=self.config.kernel_boot_msg_timeout)
-                if i == 0 or i == 1:
-                    # Kernel booted normally
-                    done = True
-                elif i == 2:
-                    warnings += 1
-                    logging.info('Kernel exception detected, logging error')
-                    kwarn = kernel_exception + str(warnings)
-                    kwarnings = connection.match.group(1)
-                    self.context.test_data.add_result(kwarn, 'fail', message=kwarnings)
-                    continue
-                elif i == 3:
-                    warnings += 1
-                    logging.info('Kernel exception detected, logging error')
-                    kwarn = kernel_exception + str(warnings)
-                    kwarnings = connection.match.group(0)
-                    self.context.test_data.add_result(kwarn, 'fail', message=kwarnings)
-                    continue
-            kernel_boot_time = "{0:.2f}".format(time.time() - start)
-            self.context.test_data.add_result(wait_for_kernel_boot,
-                                              good)
-            start = time.time()
-        except pexpect.TIMEOUT:
-            # Get the last line from the pexpect buffer
-            last_kmsg = connection.before.rstrip().split('\r\n')[-1]
-            msg = "Kernel Error:  %s " % last_kmsg
-            logging.error(msg)
-            kernel_boot_time = 0.0
-            self.context.test_data.add_result(wait_for_kernel_boot,
-                                              bad, message=msg)
-            raise
+            try:
+                done = False
+                warnings = 0
+                while not done:
+                    pl = [self.config.kernel_boot_msg,
+                          'Freeing init memory',
+                          '-+\[ cut here \]-+\s+(.*\s+-+\[ end trace (\w*) \]-+)',
+                          '(Unhandled fault.*)\r\n']
+                    i = connection.expect(pl,
+                                          timeout=self.config.kernel_boot_msg_timeout)
+                    if i == 0 or i == 1:
+                        # Kernel booted normally
+                        done = True
+                    elif i == 2:
+                        warnings += 1
+                        logging.info('Kernel exception detected, logging error')
+                        kwarn = kernel_exception + str(warnings)
+                        kwarnings = connection.match.group(1)
+                        self.context.test_data.add_result(kwarn, 'fail', message=kwarnings)
+                        continue
+                    elif i == 3:
+                        warnings += 1
+                        logging.info('Kernel exception detected, logging error')
+                        kwarn = kernel_exception + str(warnings)
+                        kwarnings = connection.match.group(0)
+                        self.context.test_data.add_result(kwarn, 'fail', message=kwarnings)
+                        continue
+                kernel_boot_time = "{0:.2f}".format(time.time() - start)
+                self.context.test_data.add_result(wait_for_kernel_boot,
+                                                  good)
+                start = time.time()
+            except pexpect.TIMEOUT:
+                # Get the last line from the pexpect buffer
+                last_kmsg = connection.before.rstrip().split('\r\n')[-1]
+                msg = "Kernel Error:  %s " % last_kmsg
+                logging.error(msg)
+                kernel_boot_time = 0.0
+                self.context.test_data.add_result(wait_for_kernel_boot,
+                                                  bad, message=msg)
+                raise
 
         try:
             self._auto_login(connection, is_master)
@@ -608,9 +609,10 @@ class Target(object):
             connection.sendline('export PS1="%s"' % ps1,
                                 send_char=self.config.send_char)
             self._wait_for_prompt(connection, ps1_pattern, timeout=10)
-            userspace_boot_time = "{0:.2f}".format(time.time() - start)
+            if self.config.has_kernel_messages:
+                userspace_boot_time = "{0:.2f}".format(time.time() - start)
             self.context.test_data.add_result(wait_for_image_prompt,
-                                              good)
+                                                  good)
         except pexpect.TIMEOUT:
             msg = "Userspace Error: image prompt not found."
             logging.error(msg)
@@ -622,12 +624,13 @@ class Target(object):
         boot_meta = {}
         boot_meta['dtb-append'] = str(self.config.append_dtb)
         self.context.test_data.add_metadata(boot_meta)
-        self.context.test_data.add_result(kernel_boot, 'pass',
-                                          kernel_boot_time, 'seconds')
-        self.context.test_data.add_result(userspace_boot, 'pass',
-                                          userspace_boot_time, 'seconds')
-        logging.info("Kernel boot time: %s seconds" % kernel_boot_time)
-        logging.info("Userspace boot time: %s seconds" % userspace_boot_time)
+        if self.config.has_kernel_messages:
+            self.context.test_data.add_result(kernel_boot, 'pass',
+                                              kernel_boot_time, 'seconds')
+            self.context.test_data.add_result(userspace_boot, 'pass',
+                                              userspace_boot_time, 'seconds')
+            logging.info("Kernel boot time: %s seconds" % kernel_boot_time)
+            logging.info("Userspace boot time: %s seconds" % userspace_boot_time)
 
     def _customize_bootloader(self, connection, boot_cmds):
         start = time.time()
