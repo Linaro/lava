@@ -63,7 +63,7 @@ class SlaveDispatcher(object):
 class FileHandler(object):
     def __init__(self, name, path):
         self.filename = name
-        self.fd = open(path, 'w+')
+        self.fd = open(path, 'a+')
         self.last_usage = time.time()
 
     def close(self):
@@ -144,6 +144,9 @@ class Command(BaseCommand):
         make_option('--devices',
                     default="/etc/lava-dispatcher/devices",
                     help="Device configuration directory"),
+        make_option('--output-dir',
+                    default='/var/lib/lava-server/default/media/job-output',
+                    help="Directory where to store job outputs"),
     )
 
     def handle(self, *args, **options):
@@ -201,13 +204,14 @@ class Command(BaseCommand):
                 (job_id, filename, message) = msg
 
                 # Clear filename
-                filename = os.path.realpath(filename)
+                filename = os.path.normpath(filename)
                 if filename == '/':
                     logger.error("Wrong filename received, dropping the message",
                                  extra={'job_id': job_id})
                     continue
-                filename = filename[1:]
-                # TODO: check that the path has the righ prefix
+                filename = filename.lstrip('/')
+                filename = "%s/job-%s/pipeline/%s" % (options['output_dir'], job_id,
+                                             filename)
 
                 # Find the handler (if available)
                 f_handler = None
@@ -235,6 +239,13 @@ class Command(BaseCommand):
                 f_handler.write(message)
                 f_handler.write('\n')
                 f_handler.flush()
+
+                # FIXME: to be removed when the web UI knows how to deal with
+                # pipeline logs
+                filename = os.path.join(options['output_dir'], "job-%s" % job_id, 'output.txt')
+                with open(filename, 'a+') as f_out:
+                    f_out.write(message)
+                    f_out.write('\n')
 
             # Garbage collect file handlers
             now = time.time()
