@@ -25,6 +25,8 @@ from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
+from django_kvstore import models as kvmodels
+from django_kvstore import get_kvstore
 
 from django_restricted_resource.models import RestrictedResource
 
@@ -382,6 +384,55 @@ class Worker(models.Model):
             return master.last_master_scheduler_tick
         else:
             return datetime.datetime.utcnow()
+
+
+class DeviceDictionaryTable(models.Model):
+    kee = models.CharField(max_length=255)
+    value = models.TextField()
+
+
+class ExtendedKVStore(kvmodels.Model):
+    """
+    Enhanced kvstore Model which allows to set the kvstore as a class variable
+    """
+    kvstore = None
+
+    def save(self):
+        d = self.to_dict()
+        self.kvstore.set(kvmodels.generate_key(self.__class__, self._get_pk_value()), d)
+
+    def delete(self):
+        self.kvstore.delete(kvmodels.generate_key(self.__class__, self._get_pk_value()))
+
+    @classmethod
+    def get(cls, kvstore_id):
+        fields = cls.kvstore.get(kvmodels.generate_key(cls, kvstore_id))
+        if fields is None:
+            return None
+        return cls.from_dict(fields)
+
+
+class DeviceKVStore(ExtendedKVStore):
+    kvstore = get_kvstore('db://lava_scheduler_app_devicedictionarytable')
+
+
+class PipelineKVStore(ExtendedKVStore):
+    """
+    Set a different backend table
+    """
+    kvstore = get_kvstore('db://lava_scheduler_app_pipelinestore')
+
+
+class DeviceDictionary(DeviceKVStore):
+    """
+    KeyValue store for Pipeline device support
+    Not a RestricedResource - may need a new class based on kvmodels
+    """
+    hostname = kvmodels.Field(pk=True)
+    parameters = kvmodels.Field()
+
+    class Meta:
+        app_label = 'pipeline'
 
 
 class Device(RestrictedResource):
@@ -894,6 +945,23 @@ def _check_device_types(user):
         if dt[1] > 0:
             all_devices[dt[0]] = dt[1]
     return all_devices
+
+
+class PipelineStore(models.Model):
+    kee = models.CharField(max_length=255)
+    value = models.TextField()
+
+
+class JobPipeline(PipelineKVStore):
+    """
+    KeyValue store for Pipeline device support
+    Not a RestricedResource - may need a new class based on kvmodels
+    """
+    job_id = kvmodels.Field(pk=True)
+    pipeline = kvmodels.Field()
+
+    class Meta:
+        app_label = 'pipeline'
 
 
 class TestJob(RestrictedResource):

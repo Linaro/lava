@@ -2,8 +2,9 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from lava_scheduler_app.models import (
     Device, DeviceStateTransition, DeviceType, TestJob, Tag, JobFailureTag,
-    User, Worker, DefaultDeviceOwner
+    User, Worker, DefaultDeviceOwner, DeviceDictionaryTable, PipelineStore
 )
+from django_kvstore import models as kvmodels
 
 
 class DefaultOwnerInline(admin.StackedInline):
@@ -163,3 +164,5 @@ admin.site.register(TestJob, TestJobAdmin)
 admin.site.register(Tag)
 admin.site.register(JobFailureTag)
 admin.site.register(Worker, WorkerAdmin)
+admin.site.register(DeviceDictionaryTable)
+admin.site.register(PipelineStore)

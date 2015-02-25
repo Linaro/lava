@@ -31,6 +31,7 @@ from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.db import models
 from django.db.models import Q
+from django_kvstore import models as kvmodels
 
 from django_tables2 import (
     Column,
@@ -2288,3 +2289,7 @@ def queue(request):
             'bread_crumb_trail': BreadCrumbTrail.leading_to(queue),
         },
         RequestContext(request))
+
+
+def device_dictionary(request, pk):
+    return "test function"

@@ -1,0 +1,16 @@
+{% load utils %}
+
+
+<li>{{ key }}
+    {% if value|get_type == 'str' %}
+       : {{ value }}
+    {% else %}
+    <ul>
+        {% for newkey, newvalue in value.items %}
+            {% with value=newvalue key=newkey %}
+                {% include 'admin/lava_scheduler_app/recursive.html' %}
+            {% endwith %}
+        {% endfor %}
+    </ul>
+    {% endif %}
+</li>

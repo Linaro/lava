@@ -1,4 +1,4 @@
-from lava_scheduler_app.models import Device, DeviceType
+from lava_scheduler_app.models import Device, DeviceType, DeviceDictionary, JobPipeline
 from django_testscenarios.ubertest import TestCase
 from django.contrib.auth.models import Group, Permission, User
 
@@ -79,3 +79,76 @@ class DeviceTest(TestCaseWithFactory):
         device.put_into_maintenance_mode(None, None)
 
         self.assertEqual(device.status, Device.OFFLINING, "should be offlining")
+
+
+class DeviceDictionaryTest(TestCaseWithFactory):
+    """
+    Test the Device Dictionary KVStore
+    """
+
+    def test_new_dictionary(self):
+        foo = DeviceDictionary(hostname='foo')
+        foo.save()
+        self.assertEqual(foo.hostname, 'foo')
+
+    def test_dictionary_parameters(self):
+        foo = DeviceDictionary(hostname='foo')
+        foo.parameters = {
+            'bootz': {
+                'kernel': '0x4700000',
+                'ramdisk': '0x4800000',
+                'dtb': '0x4300000'
+            },
+            'media': {
+                'usb': {
+                    'UUID-required': True,
+                    'SanDisk_Ultra': {
+                        'uuid': 'usb-SanDisk_Ultra_20060775320F43006019-0:0',
+                        'device_id': 0
+                    },
+                    'sata': {
+                        'UUID-required': False
+                    }
+                }
+            }
+        }
+        foo.save()
+        bar = DeviceDictionary.get('foo')
+        self.assertEqual(bar.parameters, foo.parameters)
+
+    def test_dictionary_remove(self):
+        foo = DeviceDictionary(hostname='foo')
+        foo.parameters = {
+            'bootz': {
+                'kernel': '0x4700000',
+                'ramdisk': '0x4800000',
+                'dtb': '0x4300000'
+            },
+        }
+        foo.save()
+        baz = DeviceDictionary.get('foo')
+        self.assertEqual(baz.parameters, foo.parameters)
+        baz.delete()
+        self.assertIsInstance(baz, DeviceDictionary)
+        baz = DeviceDictionary.get('foo')
+        self.assertIsNone(baz)
+
+
+class JobPipelineTest(TestCaseWithFactory):
+    """
+    Test that the JobPipeline KVStore is separate from the Device Dictionary KVStore.
+    """
+    def test_new_dictionary(self):
+        foo = JobPipeline.get('foo')
+        self.assertIsNone(foo)
+        foo = DeviceDictionary(hostname='foo')
+        foo.save()
+        self.assertEqual(foo.hostname, 'foo')
+        self.assertIsInstance(foo, DeviceDictionary)
+        foo = DeviceDictionary.get('foo')
+        self.assertIsNotNone(foo)
+        foo = JobPipeline(job_id=4212)
+        foo.save()
+        foo = JobPipeline.get('foo')
+        self.assertIsNotNone(foo)
+        self.assertIsInstance(foo, JobPipeline)

@@ -203,6 +203,9 @@ ALLOWED_HOSTS = ['*']
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 
+# this is a tad ugly but the upstream package still needs something here.
+KEY_VALUE_STORE_BACKEND = 'db://lava_scheduler_app_devicedictionarytable'
+
 # Logging
 
 LOGGING = {

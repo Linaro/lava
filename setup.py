@@ -66,6 +66,7 @@ setup(
         'markupsafe',
         'mocker >= 1.0',
         'netifaces >= 0.10.4',
+        'django-kvstore',
 
         # optional dependency; for authentication with Attlassian Crowd SSO
         # 'django-crowd-rest-backend >= 0.3,
