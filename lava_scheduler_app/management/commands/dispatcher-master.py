@@ -20,9 +20,11 @@
 
 import datetime
 import errno
+import fcntl
 import logging
 from optparse import make_option
 import os
+import signal
 import time
 import zmq
 
@@ -186,16 +188,29 @@ class Command(BaseCommand):
         poller.register(pull_socket, zmq.POLLIN)
         poller.register(controler, zmq.POLLIN)
 
+        # Mask signals and create a pipe that will receive a bit for each signal
+        # received. Poll the pipe along with the zmq socket so that we can only be
+        # interupted while reading data.
+        (pipe_r, pipe_w) = os.pipe()
+        flags = fcntl.fcntl(pipe_w, fcntl.F_GETFL, 0)
+        flags = flags | os.O_NONBLOCK
+        flags = fcntl.fcntl(pipe_w, fcntl.F_SETFL, flags)
+        signal.set_wakeup_fd(pipe_w)
+        signal.signal(signal.SIGINT, lambda x,y: None)
+        signal.signal(signal.SIGTERM, lambda x,y: None)
+        signal.signal(signal.SIGQUIT, lambda x,y: None)
+        poller.register(pipe_r, zmq.POLLIN)
+
         while True:
             try:
                 # TODO: Fix the timeout computation
                 # Wait for data or a timeout
                 sockets = dict(poller.poll(TIMEOUT * 1000))
-            except KeyboardInterrupt:
-                logger.info("Signal received, leaving", extra=extra)
-                # Close sockets on Ctr+C
-                # TODO: add a way to dump data anyway and then leave
-                pull_socket.close()
+            except zmq.error.ZMQError:
+                continue
+
+            if sockets.get(pipe_r) == zmq.POLLIN:
+                logger.info("Received a signal, leaving")
                 break
 
             # Logging socket
@@ -424,3 +439,9 @@ class Command(BaseCommand):
                     logger.info("CANCEL %d => %s", job.id, job.actual_device.worker_host.hostname)
                     controler.send_multipart([str(job.actual_device.worker_host.hostname),
                                               'CANCEL', str(job.id)])
+
+        # Closing sockets and droping messages.
+        logger.info("Closing the socket and droping messages")
+        controler.close(linger=0)
+        pull_socket.close(linger=0)
+        context.term()
