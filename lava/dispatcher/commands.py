@@ -124,6 +124,7 @@ class dispatch(DispatcherCommand):
         parser.add_argument(
             "--validate", action='store_true',
             help="Just validate the job file, do not execute any steps.")
+        # TODO: this is required for the new dispatcher
         parser.add_argument(
             "--job-id", action='store', default=None,
             help=("Set the scheduler job identifier. "
@@ -225,7 +226,7 @@ class dispatch(DispatcherCommand):
             job = None
             try:
                 with open(filename) as f_in:
-                    job = parser.parse(f_in, device, output_dir=self.args.output_dir)
+                    job = parser.parse(f_in, device, self.args.job_id, output_dir=self.args.output_dir)
             except JobError as exc:
                 logging.error("Invalid job submission: %s" % exc)
                 exit(1)

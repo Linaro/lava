@@ -44,7 +44,8 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
     device for this job - one job, one device.
     """
 
-    def __init__(self, parameters):
+    def __init__(self, job_id, parameters):
+        self.job_id = job_id
         self.device = None
         self.parameters = parameters
         self.__context__ = PipelineContext()

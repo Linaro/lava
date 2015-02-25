@@ -49,7 +49,7 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(kvm_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, output_dir=output_dir)
         return job
 
 
@@ -145,7 +145,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
             }
         }
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
-        job = Job(parameters)
+        job = Job(4212, parameters)
         job.device = device
         pipeline = Pipeline(job=job, parameters=parameters['actions']['boot'])
         job.set_pipeline(pipeline)
@@ -269,7 +269,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         sample_job_data = open(sample_job_file)
-        job = job_parser.parse(sample_job_data, cubie)
+        job = job_parser.parse(sample_job_data, cubie, 4212)
         job.validate()
         u_boot_media = job.pipeline.actions[1].internal_pipeline.actions[0]
         self.assertIsInstance(u_boot_media, UBootSecondaryMedia)

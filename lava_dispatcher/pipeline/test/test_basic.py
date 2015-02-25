@@ -123,7 +123,7 @@ class Factory(object):
         parser = JobParser()
         try:
             with open(sample_job_file) as sample_job_data:
-                job = parser.parse(sample_job_data, device, output_dir=output_dir)
+                job = parser.parse(sample_job_data, device, 4212, output_dir=output_dir)
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
             return None
@@ -135,7 +135,7 @@ class Factory(object):
         parser = JobParser()
         try:
             with open(kvm_yaml) as sample_job_data:
-                job = parser.parse(sample_job_data, device, output_dir=output_dir)
+                job = parser.parse(sample_job_data, device, 4212, output_dir=output_dir)
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
             return None

@@ -102,7 +102,7 @@ class TestMultiDeploy(unittest.TestCase):
 
     def test_multi_deploy(self):
         self.assertIsNotNone(self.parsed_data)
-        job = Job(self.parsed_data)
+        job = Job(4212, self.parsed_data)
         pipeline = Pipeline(job=job)
         device = TestMultiDeploy.FakeDevice()
         self.assertIsNotNone(device)
