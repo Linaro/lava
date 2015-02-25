@@ -1,3 +1,6 @@
+device_type: kvm
+job_name: kvm-repeat
+
 actions:
 
     - deploy:
