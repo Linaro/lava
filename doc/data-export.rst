@@ -26,12 +26,24 @@ See the :ref:`lava_tool`
 Once the bundle has been downloaded, data from the bundle can be used
 with other export calls to obtain more detail.
 
+.. index:: xmlrpc
+
+.. _xml_rpc:
+
 XML-RPC
 *******
 
 LAVA uses XML-RPC to communicate between dispatchers and the server
 and `methods <../../api/help>`_ are available to query various information
 in LAVA.
+
+.. warning:: When using XML-RPC to communicate with a remote server,
+             check whether ``https://`` can be used to protect the token.
+             ``http://`` connections to a remote XML-RPC server will
+             transmit the token in plaintext. Not all servers have
+             ``https://`` configured. If a token becomes compromised,
+             login to that LAVA instance and delete the token before
+             creating a new one.
 
 The general structure of an XML-RPC call can be shown in this python
 snippet::
@@ -106,7 +118,7 @@ Specific bundles can be exported using the ``content_sha1``:
 
 https://validation.linaro.org/dashboard/streams/anonymous/codehelp/bundles/795d8b77493e3a0507af1a7160368fb53b2823df/export
 
-Within a bundle, test runs can be exported using the Test Run UUID 
+Within a bundle, test runs can be exported using the Test Run UUID
 (which is the same as the analyzer_assigned_uuid in the previous export)
 
 https://validation.linaro.org/dashboard/streams/anonymous/codehelp/bundles/795d8b77493e3a0507af1a7160368fb53b2823df/97cb22fb-73eb-4e08-90a6-317c0ad5e63a/export

@@ -35,7 +35,7 @@ import xmlrpclib
 server = xmlrpclib.ServerProxy("{{ site_url }}{% url 'lava.api_handler' %}")
 print server.system.listMethods()
 </pre>
-
+<p><code>https::</code> is preferred as some calls require authentication.</p>
 <h2 id="top">Available functions</h2>
 <div>
   {% for method in methods %}
