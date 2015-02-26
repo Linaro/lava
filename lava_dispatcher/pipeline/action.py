@@ -634,7 +634,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
             if attr == 'timeout':
                 data['timeout'] = {'duration': self.timeout.duration, 'name': self.timeout.name}
             elif attr == 'url':
-                data['url'] = attr.url.geturl()
+                data['url'] = self.url.geturl()  # pylint: disable=no-member
             else:
                 data[attr] = getattr(self, attr)
         if 'deployment_data' in self.parameters:

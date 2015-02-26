@@ -105,7 +105,9 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
             'lava-install-packages',
             'lava-os-build',
             'lava-installed-packages',
-            'lava-add-sources'
+            'lava-add-sources',
+            'lava-background-process-start',
+            'lava-background-process-stop',
         ]
 
         overlay = None
