@@ -7,7 +7,7 @@ from django.db import models, migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('lava_scheduler_app', '0003_populate_master_node'),
+        ('lava_scheduler_app', '0004_add_pipeline_marks'),
     ]
 
     operations = [
@@ -32,5 +32,17 @@ class Migration(migrations.Migration):
             options={
             },
             bases=(models.Model,),
+        ),
+        migrations.AlterField(
+            model_name='device',
+            name='is_pipeline',
+            field=models.BooleanField(default=False, verbose_name=b'Pipeline device?'),
+            preserve_default=True,
+        ),
+        migrations.AlterField(
+            model_name='testjob',
+            name='is_pipeline',
+            field=models.BooleanField(default=False, verbose_name=b'Pipeline job?', editable=False),
+            preserve_default=True,
         ),
     ]
