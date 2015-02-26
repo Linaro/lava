@@ -196,9 +196,9 @@ class Command(BaseCommand):
         flags = flags | os.O_NONBLOCK
         flags = fcntl.fcntl(pipe_w, fcntl.F_SETFL, flags)
         signal.set_wakeup_fd(pipe_w)
-        signal.signal(signal.SIGINT, lambda x,y: None)
-        signal.signal(signal.SIGTERM, lambda x,y: None)
-        signal.signal(signal.SIGQUIT, lambda x,y: None)
+        signal.signal(signal.SIGINT, lambda x, y: None)
+        signal.signal(signal.SIGTERM, lambda x, y: None)
+        signal.signal(signal.SIGQUIT, lambda x, y: None)
         poller.register(pipe_r, zmq.POLLIN)
 
         while True:
@@ -226,7 +226,7 @@ class Command(BaseCommand):
                     continue
                 filename = filename.lstrip('/')
                 filename = "%s/job-%s/pipeline/%s" % (options['output_dir'], job_id,
-                                             filename)
+                                                      filename)
 
                 # Find the handler (if available)
                 f_handler = None
