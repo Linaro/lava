@@ -150,5 +150,7 @@ class JobPipelineTest(TestCaseWithFactory):
         foo = JobPipeline(job_id=4212)
         foo.save()
         foo = JobPipeline.get('foo')
+        self.assertIsNone(foo)
+        foo = JobPipeline.get(4212)
         self.assertIsNotNone(foo)
         self.assertIsInstance(foo, JobPipeline)
