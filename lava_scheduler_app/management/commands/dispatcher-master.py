@@ -30,9 +30,12 @@ import zmq
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from lava_scheduler_app.models import Device, TestJob, Worker
+from lava_scheduler_app.models import Device, TestJob
+
+# pylint: disable=no-member,too-many-branches,too-many-statements,too-many-locals
 
 
+#TODO constants to move into external files
 FD_TIMEOUT = 60
 TIMEOUT = 10
 DB_LIMIT = 10
@@ -52,7 +55,8 @@ def mkdir(path):
             raise
 
 
-class SlaveDispatcher(object):
+class SlaveDispatcher(object):  # pylint: disable=too-few-public-methods
+
     def __init__(self, hostname, online=False):
         self.hostname = hostname
         self.last_msg = time.time() if online else 0
@@ -62,10 +66,11 @@ class SlaveDispatcher(object):
         self.last_msg = time.time()
 
 
-class FileHandler(object):
+class FileHandler(object):  # pylint: disable=too-few-public-methods
+
     def __init__(self, name, path):
         self.filename = name
-        self.fd = open(path, 'a+')
+        self.fd = open(path, 'a+')  # pylint: disable=invalid-name
         self.last_usage = time.time()
 
     def close(self):
@@ -132,6 +137,7 @@ def send_status(hostname, socket, logger):
 
 class Command(BaseCommand):
 
+    logger = None
     help = "LAVA dispatcher master"
     option_list = BaseCommand.option_list + (
         make_option('--master-socket',
@@ -152,20 +158,22 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
+        del logging.root.handlers[:]
+        del logging.root.filters[:]
         # Create the logger
-        FORMAT = '%(asctime)-15s %(levelname)s [%(job_id)s] %(message)s'
+        FORMAT = '%(asctime)-15s %(levelname)s [%(job_id)s] %(message)s'  # pylint: disable=invalid-name
         extra = {'job_id': 'Server'}
         logging.basicConfig(format=FORMAT)
-        logger = logging.getLogger('dispatcher-master')
+        self.logger = logging.getLogger('dispatcher-master')
 
         if options['level'] == 'ERROR':
-            logger.setLevel(logging.ERROR)
+            self.logger.setLevel(logging.ERROR)
         elif options['level'] == 'WARN':
-            logger.setLevel(logging.WARN)
+            self.logger.setLevel(logging.WARN)
         elif options['level'] == 'INFO':
-            logger.setLevel(logging.INFO)
+            self.logger.setLevel(logging.INFO)
         else:
-            logger.setLevel(logging.DEBUG)
+            self.logger.setLevel(logging.DEBUG)
 
         # Create the sockets
         context = zmq.Context()
@@ -200,6 +208,7 @@ class Command(BaseCommand):
         signal.signal(signal.SIGTERM, lambda x, y: None)
         signal.signal(signal.SIGQUIT, lambda x, y: None)
         poller.register(pipe_r, zmq.POLLIN)
+        self.logger.info("LAVA dispatcher-master has started.", extra={'job_id': 'INIT'})
 
         while True:
             try:
@@ -210,7 +219,7 @@ class Command(BaseCommand):
                 continue
 
             if sockets.get(pipe_r) == zmq.POLLIN:
-                logger.info("Received a signal, leaving")
+                self.logger.info("Received a signal, leaving", extra={'job_id': 'POLL'})
                 break
 
             # Logging socket
@@ -221,8 +230,8 @@ class Command(BaseCommand):
                 # Clear filename
                 filename = os.path.normpath(filename)
                 if filename == '/':
-                    logger.error("Wrong filename received, dropping the message",
-                                 extra={'job_id': job_id})
+                    self.logger.error("Wrong filename received, dropping the message",
+                                      extra={'job_id': job_id})
                     continue
                 filename = filename.lstrip('/')
                 filename = "%s/job-%s/pipeline/%s" % (options['output_dir'], job_id,
@@ -239,7 +248,7 @@ class Command(BaseCommand):
                         mkdir(os.path.dirname(path))
                         logs[job_id] = FileHandler(filename, path)
                 else:
-                    logger.info("Receiving logs from a new job", extra={'job_id': job_id})
+                    self.logger.info("Receiving logs from a new job", extra={'job_id': job_id})
                     path = os.path.join('/tmp', 'lava-dispatcher', 'jobs', job_id, filename)
                     mkdir(os.path.dirname(path))
                     logs[job_id] = FileHandler(filename, path)
@@ -249,7 +258,7 @@ class Command(BaseCommand):
                 logs[job_id].last_usage = time.time()
 
                 # Write data
-                logger.debug("%s -> %s", filename, message, extra={'job_id': job_id})
+                self.logger.debug("%s -> %s", filename, message, extra={'job_id': job_id})
                 f_handler = logs[job_id].fd
                 f_handler.write(message)
                 f_handler.write('\n')
@@ -266,16 +275,16 @@ class Command(BaseCommand):
             now = time.time()
             for job_id in logs.keys():
                 if now - logs[job_id].last_usage > FD_TIMEOUT:
-                    logger.info("Collecting file handler '%s' from job %s",
-                                logs[job_id].filename, job_id,
-                                extra={'job_id': 'Server'})
+                    self.logger.info("Collecting file handler '%s' from job %s",
+                                     logs[job_id].filename, job_id,
+                                     extra={'job_id': 'Server'})
                     logs[job_id].close()
                     del logs[job_id]
 
             # Command socket
             if sockets.get(controler) == zmq.POLLIN:
                 msg = controler.recv_multipart()
-                logger.debug("Receiving on controler: %s", msg, extra=extra)
+                self.logger.debug("Receiving on controller: %s", msg, extra=extra)
 
                 # 1: the hostname (see ZMQ documentation)
                 hostname = msg[0]
@@ -283,14 +292,14 @@ class Command(BaseCommand):
                 action = msg[1]
                 # Handle the actions
                 if action == 'HELLO':
-                    logger.info("%s => HELLO", hostname, extra=extra)
+                    self.logger.info("%s => HELLO", hostname, extra=extra)
                     controler.send_multipart([hostname, 'HELLO_OK'])
                     # If the dispatcher is known and sent an HELLO, means that the
                     # slave has restarted
                     if hostname in dispatchers:
-                        logger.warning("Dispatcher <%s> has RESTARTED", hostname, extra=extra)
+                        self.logger.warning("Dispatcher <%s> has RESTARTED", hostname, extra=extra)
                     else:
-                        logger.warning("New dispatcher %s", hostname, extra=extra)
+                        self.logger.warning("New dispatcher %s", hostname, extra=extra)
                         dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
 
                     # Mark the dispatcher as Online
@@ -307,22 +316,22 @@ class Command(BaseCommand):
                                                       status=TestJob.RUNNING) \
                                               .select_for_update()
                         for job in jobs:
-                            logger.info("Canceling job %d", job.id)
+                            self.logger.info("Canceling job %d", job.id)
                             cancel_job(job)
 
                     # Mark the dispatcher as alive
                     dispatchers[hostname].alive()
 
                 elif action == 'PING':
-                    logger.debug("%s => PING", hostname, extra=extra)
+                    self.logger.debug("%s => PING", hostname, extra=extra)
                     # Send back a signal
                     controler.send_multipart([hostname, 'PONG'])
 
                     if hostname not in dispatchers:
                         # The server crashed: send a STATUS message
-                        logger.warning("Unknown dispatcher %s (server crashed)", hostname, extra=extra)
+                        self.logger.warning("Unknown dispatcher %s (server crashed)", hostname, extra=extra)
                         dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
-                        send_status(hostname, controler, logger)
+                        send_status(hostname, controler, self.logger)
 
                     # Mark the dispatcher as alive
                     dispatchers[hostname].alive()
@@ -331,25 +340,25 @@ class Command(BaseCommand):
                     try:
                         job_id = int(msg[2])
                     except (IndexError, ValueError):
-                        logger.error("Invalid message from <%s> '%s'", hostname, msg, extra=extra)
+                        self.logger.error("Invalid message from <%s> '%s'", hostname, msg, extra=extra)
                         continue
-                    logger.info("%s => END %d", hostname, job_id, extra=extra)
+                    self.logger.info("%s => END %d", hostname, job_id, extra=extra)
                     try:
                         with transaction.atomic():
                             job = TestJob.objects.select_for_update() \
                                                  .get(id=job_id)
                             end_job(job)
                     except TestJob.DoesNotExist:
-                        logger.error("Unknown job %d", job_id)
+                        self.logger.error("Unknown job %d", job_id)
                     # ACK even if the job is unknown to let the dispatcher
                     # forget about it
                     controler.send_multipart([hostname, 'END_OK', str(job_id)])
 
                     if hostname not in dispatchers:
                         # The server crashed: send a STATUS message
-                        logger.warning("Unknown dispatcher %s (server crashed)", hostname, extra=extra)
+                        self.logger.warning("Unknown dispatcher %s (server crashed)", hostname, extra=extra)
                         dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
-                        send_status(hostname, controler, logger)
+                        send_status(hostname, controler, self.logger)
 
                     # Mark the dispatcher as alive
                     dispatchers[hostname].alive()
@@ -358,36 +367,36 @@ class Command(BaseCommand):
                     try:
                         job_id = int(msg[2])
                     except (IndexError, ValueError):
-                        logger.error("Invalid message from <%s> '%s'", hostname, msg, extra=extra)
+                        self.logger.error("Invalid message from <%s> '%s'", hostname, msg, extra=extra)
                         continue
-                    logger.info("%s => START_OK %d", hostname, job_id, extra=extra)
+                    self.logger.info("%s => START_OK %d", hostname, job_id, extra=extra)
                     try:
                         with transaction.atomic():
                             job = TestJob.objects.select_for_update() \
                                                  .get(id=job_id)
                             start_job(job)
                     except TestJob.DoesNotExist:
-                        logger.error("Unknown job <%d>", job_id)
+                        self.logger.error("Unknown job <%d>", job_id)
 
                     if hostname not in dispatchers:
                         # The server crashed: send a STATUS message
-                        logger.warning("Unknown dispatcher %s (server crashed)", hostname, extra=extra)
+                        self.logger.warning("Unknown dispatcher %s (server crashed)", hostname, extra=extra)
                         dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
-                        send_status(hostname, controler, logger)
+                        send_status(hostname, controler, self.logger)
 
                     # Mark the dispatcher as alive
                     dispatchers[hostname].alive()
 
                 else:
-                    logger.error("<%s> sent unknown action=%s, args=(%s)",
-                                 hostname, action, msg[1:], extra=extra)
+                    self.logger.error("<%s> sent unknown action=%s, args=(%s)",
+                                      hostname, action, msg[1:], extra=extra)
 
             # Check dispatchers status
             now = time.time()
             for hostname in dispatchers.keys():
                 dispatcher = dispatchers[hostname]
                 if dispatcher.online and now - dispatcher.last_msg > DISPATCHER_TIMEOUT:
-                    logger.error("Dispatcher <%s> goes OFFLINE", hostname, extra=extra)
+                    self.logger.error("Dispatcher <%s> goes OFFLINE", hostname, extra=extra)
                     dispatchers[hostname].online = False
                     # TODO: DB: mark the dispatcher as offline and attached
                     # devices
@@ -407,20 +416,20 @@ class Command(BaseCommand):
                             # Choose a random matching device
                             device = devices.filter(device_type=device_type).order_by('?')[0]
                         except IndexError:
-                            logger.debug("Job <%d> (%s for %s) not allocated yet", job.id,
-                                         job.description, job.requested_device_type)
+                            self.logger.debug("Job <%d> (%s for %s) not allocated yet", job.id,
+                                              job.description, job.requested_device_type)
                             not_allocated += 1
                             continue
 
                         # Launch the job
                         create_job(job, device)
-                        logger.info("START %d => %s (%s)", job.id,
-                                    device.worker_host.hostname, device.hostname)
+                        self.logger.info("START %d => %s (%s)", job.id,
+                                         device.worker_host.hostname, device.hostname)
 
                     else:
                         device = job.actual_device
-                        logger.info("START %d => %s (%s) (retrying)", job.id,
-                                    device.worker_host.hostname, device.hostname)
+                        self.logger.info("START %d => %s (%s) (retrying)", job.id,
+                                         device.worker_host.hostname, device.hostname)
                     # Load device configuration
                     # TODO: use jinja2 here!
                     filename = os.path.join(options['devices'], "%s.yaml" % job.actual_device.hostname)
@@ -432,16 +441,16 @@ class Command(BaseCommand):
                                               str(device_configuration)])
 
                 if not_allocated > 0:
-                    logger.info("%d jobs not allocated yet", not_allocated)
+                    self.logger.info("%d jobs not allocated yet", not_allocated)
 
                 # Handle canceling jobs
                 for job in TestJob.objects.filter(status=TestJob.CANCELING, is_pipeline=True):
-                    logger.info("CANCEL %d => %s", job.id, job.actual_device.worker_host.hostname)
+                    self.logger.info("CANCEL %d => %s", job.id, job.actual_device.worker_host.hostname)
                     controler.send_multipart([str(job.actual_device.worker_host.hostname),
                                               'CANCEL', str(job.id)])
 
         # Closing sockets and droping messages.
-        logger.info("Closing the socket and droping messages")
+        self.logger.info("Closing the socket and dropping messages", extra={'job_id': 'CLOSE'})
         controler.close(linger=0)
         pull_socket.close(linger=0)
         context.term()
