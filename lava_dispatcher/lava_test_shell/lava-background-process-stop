@@ -1,0 +1,52 @@
+usage () {
+    echo "Usage: lava-background-process-stop NAME [--attach file mime]"
+    echo ""
+    echo "Stop background process NAME."
+    echo ""
+    echo "--attach file mime    If specified, the 'file' will be attached"
+    echo "                      to the test run with corresponding mime type."
+    echo "                      Can be specified multiple times."
+}
+
+NAME="$1"
+shift
+if [ -z "$NAME" ]; then
+    usage
+    exit 1
+fi
+
+i=0
+while [ $# -gt 0 ]; do
+    case $1 in
+        --attach)
+            shift
+            ATTACH[i]="$1"
+            MIME[i]="$2"
+            i=$((i + 1))
+            shift
+            shift
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+# $LAVA_RESULT_DIR is set by lava-test-shell
+result_dir="$LAVA_RESULT_DIR/results/$NAME"
+
+PID=`cat $result_dir/pid`
+
+if ps -p $PID > /dev/null;
+then
+    kill $PID 2>&1 > /dev/null\n
+fi
+
+while [ $i -gt 0 ]
+do
+    i=$(( $i - 1 ))
+    lava-test-run-attach ${ATTACH[i]} ${MIME[i]}
+done
+
+exit 0

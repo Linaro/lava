@@ -22,7 +22,8 @@
 # imported by the parser to populate the list of subclasses.
 
 import os
-from lava_dispatcher.pipeline.action import Pipeline, Deployment, InfrastructureError
+from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError
+from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import PrepareOverlayTftp

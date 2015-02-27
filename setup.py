@@ -38,6 +38,8 @@ setup(
             'pipeline/devices/*.conf',
             'device/sdmux.sh',
             'device/dynamic_vm_keys/lava*',
+            'lava_test_shell/lava-background-process-start',
+            'lava_test_shell/lava-background-process-stop',
             'lava_test_shell/lava-vm-groups-setup-host',
             'lava_test_shell/lava-installed-packages',
             'lava_test_shell/lava-os-build',

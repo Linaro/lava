@@ -153,7 +153,7 @@ class Factory(object):
     of any database objects.
     """
     def create_fake_qemu_job(self, output_dir=None):  # pylint: disable=no-self-use
-        device = NewDevice('kvm01')
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/basics.yaml')
         parser = JobParser()
         try:
@@ -165,7 +165,7 @@ class Factory(object):
         return job
 
     def create_kvm_job(self, filename, output_dir=None):  # pylint: disable=no-self-use
-        device = NewDevice('kvm01')
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         parser = JobParser()
         try:

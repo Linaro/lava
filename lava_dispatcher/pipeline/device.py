@@ -35,30 +35,17 @@ class NewDevice(dict):
 
     def __init__(self, target):
         super(NewDevice, self).__init__()
-        self.target = target
-        # development paths are within the current working directory
-        device_config_path = os.getcwd()
-        name = os.path.join('devices', "%s.yaml" % target)
-        device_file = os.path.join(device_config_path, name)
-        if not os.path.exists(device_file):
-            # system paths are in the installed location of __file__
-            # principally used for unit-test support
-            device_config_path = os.path.join(os.path.dirname(__file__))
-            sys_device_file = os.path.join(device_config_path, name)
-            if not os.path.exists(sys_device_file):
-                raise RuntimeError(
-                    "Unable to find config file for device: %s  as %s or %s" % (
-                        target, device_file, sys_device_file))
-            device_file = sys_device_file
-
         # Parse the yaml configuration
         try:
-            with open(device_file) as f_in:
+            with open(target) as f_in:
                 self.update(yaml.load(f_in))
         except yaml.parser.ParserError:
             raise RuntimeError("%s could not be parsed" % device_file)
 
-        self['hostname'] = target
+        # Get the device name (/path/to/kvm01.yaml => kvm01)
+        self.target = os.path.splitext(os.path.basename(target))[0]
+
+        self['hostname'] = self.target
         self.setdefault('power_state', 'off')  # assume power is off at start of job
 
     def check_config(self, job):

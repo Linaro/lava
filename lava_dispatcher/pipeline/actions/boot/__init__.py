@@ -18,7 +18,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.pipeline.action import Action, RetryAction
+from lava_dispatcher.pipeline.action import Action
+from lava_dispatcher.pipeline.logical import RetryAction
 from lava_dispatcher.pipeline.connection import wait_for_prompt
 from lava_dispatcher.pipeline.utils.constants import AUTOLOGIN_DEFAULT_TIMEOUT
 

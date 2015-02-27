@@ -544,7 +544,7 @@ class LavaClient(object):
                         status = 'fail'
                     self.context.test_data.add_result(cmd.split()[0], status)
 
-            self.setup_proxy(self.config.tester_ps1_pattern)
+            self.setup_proxy(self.target_device.tester_ps1_pattern)
 
             logging.debug("Checking for vm-group host")
             self.vm_group.start_vms()

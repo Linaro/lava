@@ -23,12 +23,12 @@
 
 import os
 from lava_dispatcher.pipeline.action import (
-    Deployment,
     Action,
     Pipeline,
     JobError,
     Timeout,
 )
+from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip

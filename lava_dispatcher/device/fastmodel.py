@@ -65,7 +65,6 @@ from lava_dispatcher import deployment_data
 
 class FastModelTarget(Target):
 
-    PORT_PATTERN = 'terminal_0: Listening for serial connection on port (\d+)'
     ANDROID_WALLPAPER = 'system/wallpaper_info.xml'
     SYS_PARTITION = 2
     DATA_PARTITION = 5
@@ -465,7 +464,7 @@ class FastModelTarget(Target):
         # bl1 -> bl2 -> bl3.
         odir = os.path.dirname(self._sd_image)
         self._sim_proc = self.context.spawn(sim_cmd, cwd=odir, timeout=1200)
-        self._sim_proc.expect(self.PORT_PATTERN, timeout=300)
+        self._sim_proc.expect(self.config.fvp_terminal_port_pattern, timeout=300)
         self._serial_port = self._sim_proc.match.groups()[0]
         logging.info('serial console port on: %s', self._serial_port)
 

@@ -552,7 +552,6 @@ class MasterImageTarget(Target):
             self._enter_bootloader(self.proc)
         self._customize_bootloader(self.proc, boot_cmds)
         self._monitor_boot(self.proc, self.tester_ps1, self.tester_ps1_pattern)
-        self._auto_login(self.proc)
 
     def _android_data_label(self, session):
         data_label = self.userdata_label

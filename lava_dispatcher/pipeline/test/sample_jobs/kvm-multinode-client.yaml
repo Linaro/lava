@@ -1,0 +1,57 @@
+target: kvm01
+
+job_name: kvm-client
+
+timeouts:
+  job:
+    minutes: 5
+  action:
+    minutes: 1
+  test:
+    minutes: 3
+
+protocols:
+  lava-multinode:
+    # real multinode jobs will be parsed by the scheduler into separate YAML fies
+    # so there are two files for the unittests which use a false target_group
+    # these jobs are not expected to run, only support the unit tests
+    target_group: arbitrary-group-id  # only for unittest support
+    role: client
+    roles:
+      kvm01: client
+      kvm02: server
+    group_size: 2
+    sub_id: 1
+
+priority: medium
+
+actions:
+
+    - deploy:
+        timeout:
+          minutes: 2
+        to: tmpfs
+        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        compression: gz
+        os: debian
+        root_partition: 1
+        role: client
+
+    - boot:
+        method: qemu
+        media: tmpfs
+        failure_retry: 2
+        role: client
+
+    - test:
+        role: client
+        failure_retry: 3
+        name: kvm-basic-multinode
+        definitions:
+            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+              from: git
+              path: lava-test-shell/multi-node/multinode01.yaml
+              name: multinode-basic
+
+    - submit_results:
+        stream: /anonymous/codehelp/

@@ -590,7 +590,7 @@ class Target(object):
             raise
 
         try:
-            self._auto_login(connection)
+            self._auto_login(connection, is_master)
         except pexpect.TIMEOUT:
             msg = "Userspace Error: auto login prompt not found."
             logging.error(msg)
@@ -599,8 +599,12 @@ class Target(object):
             raise
 
         try:
-            self._wait_for_prompt(connection, self.config.test_image_prompts,
-                                  self.config.boot_linaro_timeout)
+            if is_master:
+                pattern = self.config.master_str
+            else:
+                pattern = self.config.test_image_prompts
+
+            self._wait_for_prompt(connection, pattern, self.config.boot_linaro_timeout)
             connection.sendline('export PS1="%s"' % ps1,
                                 send_char=self.config.send_char)
             self._wait_for_prompt(connection, ps1_pattern, timeout=10)

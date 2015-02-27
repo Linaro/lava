@@ -35,7 +35,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         """
         Test that the correct parameters have been set for the device
         """
-        cubie = NewDevice('cubie1')
+        cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         self.assertIsNotNone(cubie['parameters']['media'].get('usb', None))
         self.assertIsNotNone(cubie.get('commands', None))
         self.assertIsNotNone(cubie.get('actions', None))
@@ -57,7 +57,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         Test that the job parameters match expected structure
         """
         job_parser = JobParser()
-        cubie = NewDevice('cubie1')
+        cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         sample_job_data = open(sample_job_file)
         job = job_parser.parse(sample_job_data, cubie)
@@ -87,7 +87,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
 
     def test_deployment(self):
         job_parser = JobParser()
-        cubie = NewDevice('cubie1')
+        cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         sample_job_data = open(sample_job_file)
         job = job_parser.parse(sample_job_data, cubie)
@@ -119,7 +119,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         and the image details from the job submission.
         """
         job_parser = JobParser()
-        cubie = NewDevice('cubie1')
+        cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         sample_job_data = open(sample_job_file)
         job = job_parser.parse(sample_job_data, cubie)

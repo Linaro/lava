@@ -35,7 +35,7 @@ class PrettyPrinter(object):
             test_cases = test_run.get('test_results', [])
             if len(test_cases) > 0:
 
-                test_id = test_run['test_id']
+                test_id = test_run['test_id'].encode('utf-8')
 
                 _print('')
                 _print("=" * len(test_id))
