@@ -57,6 +57,7 @@ LAVA Administrator Guide
    nexus-deploy.rst
    ipmi-pxe-deploy.rst
    dummy-deploy.rst
+   ipxe.rst
 
 Other Topics
 ############

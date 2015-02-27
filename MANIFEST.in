@@ -19,11 +19,11 @@ recursive-include dashboard_app/templates *.html
 recursive-include examples *.xml *.json *html *.conf
 recursive-include lava_scheduler_app/templates *.html *.txt
 recursive-include lava_scheduler_app/static *.js *.css *.gif *.png
+recursive-include doc/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg
 include entry_points.ini
 include instance.template
 include doc/*
 include doc/examples/*
-include doc/images/*
 include doc/_static/*
 include man/*
 include etc/debug.wsgi
