@@ -3,10 +3,75 @@
 Debian-based distributions
 ##########################
 
+These instructions cover Debian and all distributions based upon Debian,
+including Ubuntu. The supported versions of Debian and Ubuntu are:
+
++---------------+------------------------+--------+------------+
+| Distribution  | Codename               | Number | Support    |
++===============+========================+========+============+
+| Debian        | experimental           | n/a    | Yes [#f1]_ |
++---------------+------------------------+--------+------------+
+| Debian        | sid                    | n/a    | Yes        |
++---------------+------------------------+--------+------------+
+| Debian        | stretch                | n/a    | [#f2]_     |
++---------------+------------------------+--------+------------+
+| Debian        | jessie                 | 8.0    | Yes [#f3]_ |
++---------------+------------------------+--------+------------+
+| Ubuntu        | vivid vervet (& later) | 15.04  | Yes [#f4]_ |
++---------------+------------------------+--------+------------+
+| Ubuntu        | utopic unicorn         | 14.10  | Yes [#f5]_ |
++---------------+------------------------+--------+------------+
+| Ubuntu        | trusty tahr LTS        | 14.04  | Yes [#f6]_ |
++---------------+------------------------+--------+------------+
+
+Debian uses names for `suites`_ (unstable, testing, stable & oldstable)
+but the content of all suites except unstable will change codename once
+a release of Debian stable is made. Once Jessie is released, the Debian
+testing suite will gain the codename ``stretch`` and the oldstable suite
+will have the codename ``wheezy`` (the name of the current stable suite),
+so to prevent this table having to be updated every time there is a
+Debian release, codenames are used.
+
+`Ubuntu codenames`_ change with each 6 monthly release.
+See :ref:`ubuntu_install`
+
+.. _suites: http://en.wikipedia.org/wiki/Debian#Branches
+
+.. _Ubuntu codenames: https://wiki.ubuntu.com/DevelopmentCodeNames
+
+.. [#f1] `experimental`_ allows updates to be selected on top of
+         unstable (or the current testing) during times when testing
+         is frozen ahead of a release of Debian stable.
+.. [#f2] `stretch` is the name of the next Debian release after Jessie,
+         not yet open to package uploads but will be supported
+         automatically once opened.
+.. [#f3] As of Feb 2015, Jessie has not yet been released and updates
+         are still being made. Once released, updates to LAVA will be
+         made using `jessie-backports`_.
+.. [#f4] Ubuntu vivid vervet 15.04 is due for release in April 2015. LAVA
+         packages automatically migrate from Debian into the current
+         development release of Ubuntu. Once Ubuntu make a release, the
+         LAVA packages in that release do not receive updates.
+.. [#f5] To install on Ubuntu, ensure the universe_ repository is enabled.
+
+.. [#f6] See :ref:`trusty_tahr_install` - a secondary trusty-repo needs to
+         be enabled to add dependencies which are not present in trusty.
+
+.. _experimental: https://wiki.debian.org/DebianExperimental
+
+.. _universe: https://help.ubuntu.com/community/Repositories/CommandLine#Adding_the_Universe_and_Multiverse_Repositories
+
+.. _jessie-backports: http://backports.debian.org/
+
+You can track the versions of LAVA packages in the various Debian and
+Ubuntu suites by following links from the Debian package trackers for
+`lava-dispatcher <https://tracker.debian.org/pkg/lava-dispatcher>`_ and
+`lava-server <https://tracker.debian.org/pkg/lava-server>`_.
+
 Production releases
 ===================
 
-LAVA is currently packaged for Debian unstable using Django1.6 and
+LAVA is currently packaged for Debian unstable using Django1.7 and
 Postgresql. LAVA packages are now available from official Debian
 mirrors for Debian unstable::
 
@@ -125,13 +190,15 @@ one set.
  $ sudo a2ensite lava-server.conf
  $ sudo service apache2 restart
 
-Upgrading after the Jessie release
+Upgrading LAVA packages on Jessie
 ----------------------------------
 
-Debian Jessie is due to go into a release freeze in November 2014. At this
+Debian Jessie has been in release freeze since November 2014. At this
 point, it will not be possible to update the version of lava packages
-in the Jessie release. (A separate repository will be made available at that
-time.) Once Jessie is released, future updates of LAVA packages can be
+in the Jessie release. During the release freeze, updates to lava packages
+are available using `experimental`_.
+
+Once Jessie is released, future updates of LAVA packages can be
 backported to Jessie.
 
 Interim builds
@@ -176,17 +243,29 @@ LAVA recommends the use of Debian - Ubuntu installs are possible but
 may not receive updates of the LAVA packages. See :ref:`lava_on_debian`
 for information on building LAVA packages of your own.
 
-Installing on Ubuntu Utopic Unicorn
------------------------------------
+Always ensure that the Ubuntu universe_ repository is enabled on all
+Ubuntu instances before installing LAVA.
 
-Ubuntu Unicorn (which is due to be released as 14.10) has received
-updates from Debian up to the 2014.07 release. Future production
-releases of LAVA will migrate into the next Ubuntu codename after
-Unicorn. Installing on Unicorn is the same as :ref:`install_debian_jessie`.
-The full set of architectures are supported, just as with Debian Jessie.
+.. _ubuntu_unicorn:
 
-See also :ref:`lava_on_debian` for information on building LAVA packages
-of your own as LAVA will not be making backports to Unicorn.
+Installing on Ubuntu Utopic Unicorn and later
+---------------------------------------------
+
+Ubuntu Unicorn 14.10 includes all packages needed by LAVA
+up to the 2014.07 release. Subsequent releases of Ubuntu will contain
+newer versions of LAVA and LAVA dependencies.
+
+Installing on Unicorn and Ubuntu releases newer than Unicorn 14.10
+is the same as :ref:`install_debian_jessie`.
+
+Future production releases of LAVA will be uploaded to Debian and then
+migrate into the current Ubuntu development release. The full set of
+architectures are supported, just as with Debian Jessie.
+
+See also :ref:`lava_on_debian` for information on building updated LAVA
+packages on your own, LAVA will not be making backports to Ubuntu.
+
+.. _trusty_tahr_install:
 
 Installing on Ubuntu Trusty Tahr 14.04 LTS
 ------------------------------------------

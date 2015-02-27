@@ -114,6 +114,8 @@ utilities are available:
  * ``lava-test-case``
  * ``lava-test-case-attach``
  * ``lava-test-run-attach``
+ * ``lava-background-process-start``
+ * ``lava-background-process-stop``
 
 You need to use ``lava-test-case`` (specifically, ``lava-test-case
 --shell``) when you are working with `hooks, signals and external
@@ -256,6 +258,44 @@ The arguments are:
  1. the file to attach
  2. (optional) the MIME type of the file (if no MIME type is passed, a
     guess is made based on the filename)
+
+lava-background-process-start
+-----------------------------
+
+This starts process in the background.
+For example::
+
+  steps:
+    - lava-background-process-start MEM --cmd "free -m | grep Mem | awk '{print $3}' >> /tmp/memusage"
+    - lava-background-process-start CPU --cmd "grep 'cpu ' /proc/stat"
+    - uname -a
+    - lava-background-process-stop CPU
+    - lava-background-process-stop MEM --attach /tmp/memusage text/plain --attach /proc/meminfo application/octet-stream
+
+The arguments are:
+
+ 1. Name that is used to identify the process later in
+    lava-background-process-stop
+ 2. The process to be run in the background
+
+lava-background-process-stop
+-----------------------------
+
+This stops the process previously started in the background. User can attach files to the test run if there is a need.
+
+For example::
+
+  steps:
+    - lava-background-process-start MEM --cmd "free -m | grep Mem | awk '{print $3}' >> /tmp/memusage"
+    - lava-background-process-start CPU --cmd "grep 'cpu ' /proc/stat"
+    - uname -a
+    - lava-background-process-stop CPU
+    - lava-background-process-stop MEM --attach /tmp/memusage text/plain --attach /proc/meminfo application/octet-stream
+
+The arguments are:
+
+ 1. Name that was specified in lava-background-process-start
+ 2. (optional) Indicate if you want to attach file(s) the test run with specified mime type
 
 .. _handling_dependencies:
 

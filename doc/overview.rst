@@ -156,9 +156,12 @@ integration tools should use a dedicated user created by the
 administrator of a particular instance),
 
 The API help page includes an example python script to connect to the
-local instance. To add token support, use the syntax *username:token*::
+local instance. To add token support, use the syntax **username:token**
+for the server concerned::
 
- server = xlrpclib.ServerProxy("http://%s:%s@localhost/RPC2" % (username, token))
+ server = xmlrpclib.ServerProxy("https://%s:%s@%s/RPC2" % (username, token, server))
+
+See :ref:`xml_rpc` for more information.
 
 Installing lava-tool
 --------------------

@@ -497,3 +497,7 @@ def process_repeat_parameter(json_jobdata):
     new_json["actions"] = new_actions
 
     return new_json
+
+
+def is_member(user, group):
+    return user.groups.filter(name='%s' % group).exists()

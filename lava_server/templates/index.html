@@ -15,39 +15,147 @@ href="{{ STATIC_URL }}docs/glossary.html#term-device-type">device types</a>) sup
 on the <a href="{% url 'lava.scheduler' %}">scheduler status</a> page which includes details of how many boards
 of each type are available for tests and currently running jobs.</p>
 
-<h3>Testing in LAVA</h3>
-<h4><a href="{{ STATIC_URL }}docs/writing-tests.html">Writing a LAVA test definition</a></h4>
+<h3>LAVA components</h3>
+<ul>
+    <li>
+        <span class="glyphicon glyphicon-dashboard"></span>
+        <b><a href="{% url 'lava.dashboard' %}">Dashboard</a></b> - viewing
+        results of tests run by you or others, depending on your group
+        membership.
+    </li>
+    <li>
+        <span class="glyphicon glyphicon-calendar"></span>
+        <b><a href="{% url 'lava.scheduler' %}">Scheduler</a></b> - jobs
+        are scheduled on available devices and the scheduler pages allow
+        you to view current and past jobs as well as submit new jobs.
+    </li>
+    <li>
+        <span class="glyphicon glyphicon-flash"></span>
+        <b><a href="/api/help">API</a></b> - information on how to interact
+        with LAVA and export data from LAVA using XMLRPC.</li>
+    <li>
+        <span class="glyphicon glyphicon-question-sign"></span>
+        <b><a href="{{ STATIC_URL }}docs/">Help</a></b> - documentation
+        on using LAVA, worked examples and use cases, developing your own
+        tests and how to adminster a LAVA instance of your own.</li>
+    {% if user.is_authenticated %}
+    <li>
+        <span class="glyphicon glyphicon-user"></span>
+        <b><a href="/me">Profile</a></b> - you are logged in as
+    <b>{{ user.get_full_name|default:user.username }}</b>. Your profile
+    provides access to jobs you have submitted or marked as favourites,
+    your bundle streams and your filter or image report subscriptions.
+    </li>
+    {% else %}
+    <li>
+        <span class="glyphicon glyphicon-user"></span>
+        <b><a href="/accounts/login/?next=/">Sign In</a></b> - once you
+    are logged in, LAVA will build a profile for you which provides access
+    to jobs you submit or mark as favourites, your bundle streams containing
+    results of those tests and your filter or image report subscriptions
+    which can alert you to changes in sets of results.</li>
+    {% endif %}
+</ul>
+</p>
 
-<p>Each test can provide a result, including a <a
-href="{{ STATIC_URL }}docs/writing-tests.html#recording-test-case-measurements-and-units">measurement and units</a> or a as
-<a href="{{ STATIC_URL }}docs/writing-tests.html#recording-test-case-results">a pass/fail/skip</a>, with
-<a href="{{ STATIC_URL }}docs/glossary.html#term-bundle-stream">results being bundled into set</a> from each test job.
-Tests can be as simple as using <code>ping</code> with a known address to ensure that the kernel has raised the
-network interface correctly, to a single result obtained by downloading, compiling and executing third party test
-suites.</p>
+<div class="row">
+  <div class="col-md-6">
+    <h4 class="modal-header">Guides to LAVA</h4>
+    <div class="row">
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+          <li><a href="{{ STATIC_URL }}docs/overview.html"
+              class="btn btn-primary">
+              <span class="glyphicon glyphicon-question-sign"></span>
+              Introduction to LAVA</a></li>
+          <li><a href="{{ STATIC_URL }}docs/#lava-administrator-guide"
+              class="btn btn-default">
+              <span class="glyphicon glyphicon-question-sign"></span>
+              Administering a LAVA instance</a></li>
+       </ul>
+      </div>
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+          <li><a href="http://www.linaro.org/projects/test-validation/"
+              class="btn btn-default">
+              More about LAVA &amp; Linaro</a></li>
+          <li><a href="{{ STATIC_URL }}docs/#developer-guides"
+              class="btn btn-default">
+              <span class="glyphicon glyphicon-question-sign"></span>
+              Developing LAVA</a></li>
+       </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <h4 class="modal-header">Test using LAVA</h4>
+    <div class="row">
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+          <li><a href="{{ STATIC_URL }}docs/multinode-usecases.html"
+              class="btn btn-info">
+              <span class="glyphicon glyphicon-question-sign"></span>
+              Use cases and worked examples.</a></li>
+          <li><a href="{{ STATIC_URL}}docs/hacking-session.html"
+              class="btn btn-info">
+              <span class="glyphicon glyphicon-question-sign"></span>
+              Logging into a LAVA device.</a></li>
+       </ul>
+      </div>
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+          <li><a href="{{ STATIC_URL }}docs/writing-tests.html"
+              class="btn btn-success">
+              <span class="glyphicon glyphicon-question-sign"></span>
+              Writing a LAVA test definition.</a></li>
+            {% if user.is_authenticated %}
+          <li><a href="{% url 'lava.scheduler.job.submit_wizard' %}"
+              class="btn btn-success">
+              <span class="glyphicon glyphicon-calendar"></span>
+              Job submission wizard.</a></li>
+            {% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
 
-<p>Tests can be run on a single device or combined across multiple devices and some devices can use dedicated test
-hardware like <a href="{{ STATIC_URL }}docs/lmp_test_guide.html">lmp</a> with jobs selecting those devices using tags.
-LAVA does not dictate which tests can be run, so to get an idea of what tests other people have been running in LAVA,
-take a look at the <a href="{% url 'lava.dashboard' %}">Dashboard</a>. Bundles contain details of the environment in which the test
-was run as well as the test results from completed jobs. Bundles are collected into <a
-href="{{ STATIC_URL }}docs/glossary.html#term-bundle-stream">bundle streams</a>, some of which are publicly visible. Each
-bundle stream provides access to bundles of test results and each bundle can be inspected exported
-or downloaded for further analysis. Exports are available as CSV or JSON. A variety of queries are supported
-over <a href="/api/help">XMLRPC</a>.</p>
+{% if user.is_authenticated %}
+<div class="row">
+  <div class="col-md-6">
+   <h4 class="modal-header">Your submissions</h4>
+    <ul class="nav nav-pills nav-stacked">
+      <li>
+        <a href="{% url 'lava.scheduler.myjobs' %}"><span
+            class="glyphicon glyphicon-tasks pull-right"></span> Your jobs</a>
+      </li>
+      <li>
+        <a href="{% url 'lava.scheduler.favorite_jobs' %}"><span
+            class="glyphicon glyphicon-phone pull-right"></span> Your favourite jobs</a>
+      </li>
+    </ul>
+  </div>
+  <div class="col-md-6">
+   <h4 class="modal-header">Your results</h4>
+    <ul class="nav nav-pills nav-stacked">
+      <li>
+        <a href="{% url 'dashboard_app.views.mybundlestreams' %}"><span
+            class="glyphicon glyphicon-folder-open pull-right"></span> Your bundle streams</a>
+      </li>
+      <li>
+        <a href="{% url 'dashboard_app.views.my_subscriptions' %}"><span
+            class="glyphicon glyphicon-pencil pull-right"></span> Your subscriptions</a>
+      </li>
+     </ul>
+    </div>
+  </div>
+</div>
+{% endif %}
 
-<p><a href="{% url 'lava.dashboard.filters_list' %}">Dashboard filters</a> allow results in bundles
-to be <a href="{{ STATIC_URL }}docs/filters-reports.html">compared by matching criteria about the device under test</a>, the
-type of test being run or most other elements of a test job. Filters then provide the basis for <a
-href="{{ STATIC_URL }}docs/lava-dashboard-image-reports.html">image reports</a> which can provide detailed graphs of results
-over time, with links back to individual tests, output from the LAVA log file and the original
-<a href="{{ STATIC_URL }}docs/glossary.html#term-job-definition">test job definition</a>.</p>
-
-<p><a href="{{ STATIC_URL }}docs/overview.html">Introduction to LAVA</a></p>
-
-<p><a href="http://www.linaro.org/projects/test-validation/">More about LAVA</a></p>
-
-{% if extension_list %}
+{% comment %}
+Four extensions are defined as wrappers for other extensions:
+DashboardExtension, ProjectExtension, SchedulerExtension & SchedulerDaemonExtension
+{% endcomment %}
+{% if extension_list|length > 4 %}
 <h2>LAVA Extensions</h2>
 {% for extension in extension_list %}
 {% if extension.front_page_template %}

@@ -98,6 +98,7 @@ def help(request, mapper, template_name="linaro_django_xmlrpc/api.html"):
     context = CallContext(
         user=None, mapper=mapper, dispatcher=None, request=request)
     system = SystemAPI(context)
+    scheme = request.META.get('REQUEST_SCHEME', "http")
     methods = [{
         'name': method,
         'signature': system.methodSignature(method),
@@ -105,7 +106,9 @@ def help(request, mapper, template_name="linaro_django_xmlrpc/api.html"):
         for method in system.listMethods()]
     return render_to_response(template_name, {
         'methods': methods,
-        'site_url': "http://{domain}".format(
+        'context_help': ['data-export'],
+        'site_url': "{scheme}://{domain}".format(
+            scheme=scheme,
             domain=Site.objects.get_current().domain)},
         RequestContext(request))
 

@@ -17,18 +17,19 @@ Requirements to Consider Before Installing LAVA
 Software Requirements
 =====================
 
-We currently recommend using `Debian`_ unstable. Work is ongoing to support
-Debian Jessie, Ubuntu Trusty, Ubuntu Unicorn and other distributions.
+See :ref:`debian_installation` for instructions.
 
-Support for Debian Jessie needs migrations affecting `uwsgi`_ to complete.
+We currently recommend installing LAVA on `Debian`_ unstable or jessie.
+Support for installing LAVA on Ubuntu and other :ref:`debian_installation` is
+provided via uploads to Debian.
 
-Dependencies of LAVA are migrating automatically into Ubuntu Unicorn
-but these will need backports to be used with Trusty. Adapting LAVA to
-Ubuntu builds is not currently working.
+Contributions to support other distributions are welcome.
+
+LAVA packages and dependencies of LAVA migrate automatically into the
+current Ubuntu development release. :ref:`trusty_tahr_install` needs
+an extra repository to provide these packages.
 
 .. _Debian: http://www.debian.org/
-
-.. _uwsgi: http://packages.qa.debian.org/u/uwsgi.html
 
 If you'd like to help us with other distributions feel free to contact
 us at linaro-validation (at) lists (dot) linaro (dot) org.

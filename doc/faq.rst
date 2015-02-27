@@ -12,8 +12,11 @@ misleading:
 
 ERROR: Username provided but no token found.
 
-Check the URL in use - http://user@localhost/RPC2 will fail,
-http://user@localhost/RPC2/ should work. Note the trailing slash.
+Check the URL in use - https://user@server/RPC2 will fail,
+https://user@server/RPC2/ should work. Note the trailing slash. Also
+check whether you authenticated using ``https://`` or ``http://`` and
+make sure this is consistent in subsequent calls to ``lava-tool``. See
+:ref:`authentication_tokens`.
 
 The error arises because the supplied URL does not precisely match the
 authenticated URL used for the token (which would include the final
