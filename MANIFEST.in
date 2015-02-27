@@ -29,6 +29,7 @@ include man/*
 include etc/debug.wsgi
 include etc/lava-default.conf
 include etc/lava-server.init
+include etc/lava-master.init
 include etc/lava-server.conf
 include etc/logrotate.d/*
 include etc/lava-server.wsgi
