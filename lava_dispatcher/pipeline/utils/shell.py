@@ -21,6 +21,7 @@
 import os
 
 from lava_dispatcher.pipeline.action import InfrastructureError
+from lava_dispatcher.pipeline.log import YamlLogger
 
 
 def which(path, match=os.path.isfile):

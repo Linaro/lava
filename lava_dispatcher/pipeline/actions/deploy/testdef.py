@@ -594,14 +594,13 @@ class TestDefinitionAction(TestAction):
         """
         if 'location' not in self.data['lava-overlay']:
             raise RuntimeError("Missing lava overlay location")
-        connection = super(TestDefinitionAction, self).run(connection, args)
         self.logger.debug("Loading test definitions")
 
         # overlay_path is the location of the files before boot
         self.data[self.name]['overlay_dir'] = os.path.abspath(
             "%s/%s" % (self.data['lava-overlay']['location'], self.data['lava_test_results_dir']))
 
-        connection = self.internal_pipeline.run_actions(connection)
+        connection = super(TestDefinitionAction, self).run(connection, args)
 
         self.logger.debug("lava-test-runner.conf")
         with open('%s/lava-test-runner.conf' % self.data['test-definition']['overlay_dir'], 'a') as runner_conf:

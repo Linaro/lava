@@ -100,7 +100,6 @@ class OverlayAction(DeployAction):
         * create test runner directories beneath the temporary location
         * copy runners into test runner directories
         """
-        connection = super(OverlayAction, self).run(connection, args)
         self.data[self.name].setdefault('location', mkdtemp())
         self.logger.debug("Preparing overlay tarball in %s" % self.data[self.name]['location'])
         lava_path = os.path.abspath("%s/%s" % (self.data[self.name]['location'], self.data['lava_test_results_dir']))
