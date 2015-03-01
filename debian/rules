@@ -23,6 +23,7 @@ export DH_OPTIONS
 	dh $@ --with python2
 
 override_dh_auto_build:
+	[ ! -f etc/lava-slave.init ] || cp etc/lava-slave.init debian/
 	dh_auto_build
 	python setup.py build
 	make -C man/ man
