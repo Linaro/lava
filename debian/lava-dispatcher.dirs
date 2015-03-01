@@ -4,3 +4,4 @@ etc/lava-dispatcher/device-types
 var/lib/lava/dispatcher/tmp
 var/lib/lava/dispatcher/cache
 var/lib/lava/dispatcher/results
+var/log/lava-dispatcher
