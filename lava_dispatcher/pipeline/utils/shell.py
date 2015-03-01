@@ -19,7 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-
+import pexpect
 from lava_dispatcher.pipeline.action import InfrastructureError
 from lava_dispatcher.pipeline.log import YamlLogger
 
