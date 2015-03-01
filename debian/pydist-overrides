@@ -17,3 +17,5 @@ simplejson python-simplejson; PEP386
 twisted python-twisted; PEP386
 dateutil python-dateutil; PEP386
 netifaces python-netifaces; PEP386
+pyzmq python-zmq; PEP386
+django-kvstore python-django-kvstore; PEP386
