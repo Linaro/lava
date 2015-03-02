@@ -33,7 +33,7 @@ LOGFILE = '/var/log/lava-dispatcher/lava-slave.log'
 
 def main():
     # arguments are supplied by the init script and read inside the daemon
-    # dispatcher-slave.py --hostname sylvester.codehelp --master tcp://localhost:5556 --log-socket tcp://localhost:5555 --level DEBUG
+    # dispatcher-slave.py --hostname sylvester.codehelp --master tcp://localhost:5556 --socket-addr tcp://localhost:5555 --level DEBUG
     return daemonise(PIDFILE, LOGFILE)
 
 if __name__ == '__main__':

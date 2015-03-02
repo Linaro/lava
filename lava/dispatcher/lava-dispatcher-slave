@@ -92,8 +92,8 @@ class Job(object):
         args = ['lava-dispatch', '--target', "%s/device.yaml" % self.base_dir,
                 "%s/job.yaml" % self.base_dir,
                 "--output-dir=%s%s/logs/" % (TMP_DIR, self.job_id),
-                "--job-id=%s" % self.job_id]
-                # "--log-socket=%s" % self.log_socket]
+                "--job-id=%s" % self.job_id,
+                "--socket-addr=%s" % self.log_socket]
         # TODO: maybe using something else than this basic functions to control
         # the processes?
         self.proc = subprocess.Popen(args, stdout=open("%s/out" % self.base_dir, 'w'),
@@ -131,7 +131,7 @@ def main():
         type=str,
         help='Name of the slave')
     parser.add_argument('--master', type=str, help='Main master socket', required=True)
-    parser.add_argument('--log-socket', type=str, help='Log socket', required=True)
+    parser.add_argument('--socket-addr', type=str, help='Log socket', required=True)
     parser.add_argument('--level', '-l', type=str, help='Log level (ERROR, WARN, INFO, DEBUG)', default='INFO')
     args = parser.parse_args()
 
@@ -244,7 +244,7 @@ def main():
                         jobs[job_id].last_end_msg = time.time()
                 else:
                     jobs[job_id] = Job(job_id, job_definition,
-                                       device_definition, args.log_socket)
+                                       device_definition, args.socket_addr)
                     jobs[job_id].start()
                     sock.send_multipart(['START_OK', str(job_id)])
 

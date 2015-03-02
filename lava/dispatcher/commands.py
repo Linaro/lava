@@ -130,8 +130,8 @@ class dispatch(DispatcherCommand):
             help=("Set the scheduler job identifier. "
                   "This alters process name for easier debugging"))
         parser.add_argument(
-            "--socket-addr",  default=None,
-            help="Adress of the ZMQ socket used to send the logs to the master")
+            "--socket-addr", default=None,
+            help="Address of the ZMQ socket used to send the logs to the master")
         parser.add_argument(
             "job_file",
             metavar="JOB",

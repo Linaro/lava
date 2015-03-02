@@ -12,10 +12,10 @@
 # Author: Neil Williams <codehelp@debian.org>
 
 # example command:
-# python dispatcher-slave.py --master tcp://localhost:5556 --log-socket tcp://localhost:5555 --level DEBUG
+# python dispatcher-slave.py --master tcp://localhost:5556 --socket-addr tcp://localhost:5555 --level DEBUG
 
 MASTER="--master tcp://localhost:5556"
-LOG_SOCKET="--log-socket tcp://localhost:5555"
+LOG_SOCKET="--socket-addr tcp://localhost:5555"
 LOGLEVEL="--level=DEBUG"
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
