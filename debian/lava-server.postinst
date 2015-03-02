@@ -224,16 +224,11 @@ case "$1" in
             mkdir -p $LAVA_SYS_MOUNTDIR/media/attachments/
             mkdir -p $LAVA_SYS_MOUNTDIR/media/bundles/
             adduser --quiet --system --group --home $LAVA_SYS_HOME $LAVA_SYS_USER --shell /bin/sh
-            # Allow instance to write to media directory
-            chown -R $LAVA_SYS_USER:$LAVA_SYS_USER $LAVA_SYS_MOUNTDIR
-            chmod -R g+rwXs $LAVA_SYS_MOUNTDIR
-            # Prevent anyone else from reading from the media directory
-            chmod -R o-rX $LAVA_SYS_MOUNTDIR
         fi
         # user may not have been removed but the directory has, after purge.
         if [ ! -d $LAVA_SYS_HOME ]; then
             mkdir $LAVA_SYS_HOME
-            chown -R $LAVA_SYS_USER:$LAVA_SYS_USER $LAVA_SYS_HOME
+            chown $LAVA_SYS_USER:$LAVA_SYS_USER $LAVA_SYS_HOME
         fi
         # Allow lavaserver to write to all the log files
         chmod u+rXs /var/log/lava-server/
