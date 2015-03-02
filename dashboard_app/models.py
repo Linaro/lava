@@ -651,7 +651,7 @@ class SanitizedBundle(object):
         try:
             self.bundle_json = simplejson.load(stream)
             self.deserialization_error = None
-        except simplejson.JSONDeserializationError as ex:
+        except TypeError as ex:
             self.bundle_json = None
             self.deserialization_error = ex
         self.did_remove_attachments = False
