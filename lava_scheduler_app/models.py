@@ -1055,12 +1055,12 @@ class TestJob(RestrictedResource):
     def output_file(self):
         output_path = os.path.join(self.output_dir, 'output.txt')
         if os.path.exists(output_path):
-            return open(output_path, encoding='utf-8')
+            return open(output_path, encoding='utf-8', errors='replace')
         elif self.log_file:
             log_file = self.log_file
             if log_file:
                 try:
-                    open(log_file.name, encoding='utf-8')
+                    open(log_file.name)
                 except IOError:
                     log_file = None
             return log_file
