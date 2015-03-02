@@ -30,7 +30,7 @@ from collections import OrderedDict
 from contextlib import contextmanager
 
 from lava_dispatcher.pipeline.utils.constants import OVERRIDE_CLAMP_DURATION, ACTION_TIMEOUT
-from lava_dispatcher.pipeline.log import YamlLogger, get_yaml_handler
+from lava_dispatcher.pipeline.log import YamlLogger, get_yaml_handler, ZMQPUSHHandler
 
 if sys.version > '3':
     from functools import reduce  # pylint: disable=redefined-builtin
@@ -274,7 +274,14 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 raise JobError(msg)
             # Open the logfile and create the log handler
             action.logger = YamlLogger(action.name)
-            action.logger.set_handler(get_yaml_handler(action.log_filename))
+            if action.job.zmq_ctx is not None:
+                action.logger.set_handler(
+                    ZMQPUSHHandler(action.job.zmq_ctx, action.job.socket_addr,
+                                   action.job.job_id,
+                                   os.path.join(action.level.split('.')[0],
+                                                "%s-%s.log" % (action.level, action.name))))
+            else:
+                action.logger.set_handler(get_yaml_handler(action.log_filename))
 
             # Begin the action
             action.logger.debug('start: %s %s (max %ds)' % (action.level, action.name, action.timeout.duration))

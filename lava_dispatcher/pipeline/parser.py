@@ -115,7 +115,7 @@ class JobParser(object):
 
     # FIXME: add a validate() function which checks against a Schema as a completely separate step.
     # pylint: disable=too-many-locals,too-many-statements
-    def parse(self, content, device, job_id, output_dir=None):
+    def parse(self, content, device, job_id, socket_addr, output_dir=None):
         self.loader = yaml.Loader(content)
         self.loader.compose_node = self.compose_node
         self.loader.construct_mapping = self.construct_mapping
@@ -123,7 +123,7 @@ class JobParser(object):
 
         self.context['default_action_duration'] = Timeout.default_duration()
         self.context['default_test_duration'] = Timeout.default_duration()
-        job = Job(job_id, data)
+        job = Job(job_id, socket_addr, data)
         counts = {}
         job.device = device
         job.parameters['output_dir'] = output_dir

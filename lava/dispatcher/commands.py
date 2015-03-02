@@ -130,6 +130,9 @@ class dispatch(DispatcherCommand):
             help=("Set the scheduler job identifier. "
                   "This alters process name for easier debugging"))
         parser.add_argument(
+            "--socket-addr",  default=None,
+            help="Adress of the ZMQ socket used to send the logs to the master")
+        parser.add_argument(
             "job_file",
             metavar="JOB",
             help="Test scenario file")
@@ -180,14 +183,13 @@ class dispatch(DispatcherCommand):
         # Set process id if job-id was passed to dispatcher
         if self.args.job_id:
             try:
-                from setproctitle import getproctitle, setproctitle
+                from setproctitle import setproctitle
             except ImportError:
                 logging.warning(
                     ("Unable to set import 'setproctitle', "
                      "process name cannot be changed"))
             else:
-                setproctitle("%s [job: %s]" % (
-                    getproctitle(), self.args.job_id))
+                setproctitle("lava-dispatch [job: %s]" % (self.args.job_id))
 
         # Load the job file
         job_runner, job_data = self.parse_job_file(self.args.job_file, oob_file)
@@ -226,7 +228,10 @@ class dispatch(DispatcherCommand):
             job = None
             try:
                 with open(filename) as f_in:
-                    job = parser.parse(f_in, device, self.args.job_id, output_dir=self.args.output_dir)
+                    job = parser.parse(f_in, device, self.args.job_id,
+                                       socket_addr=self.args.socket_addr,
+                                       output_dir=self.args.output_dir)
+
             except JobError as exc:
                 logging.error("Invalid job submission: %s" % exc)
                 exit(1)

@@ -20,6 +20,30 @@
 
 import logging
 import yaml
+import zmq
+
+
+class ZMQPUSHHandler(logging.Handler):
+    def __init__(self, context, socket_addr, job_id, filename):
+        logging.Handler.__init__(self)
+
+        # Create the PUSH socket
+        self.socket = context.socket(zmq.PUSH)
+        self.socket.connect(socket_addr)
+
+        self.job_id = job_id
+        self.filename = filename
+
+        self.formatter = logging.Formatter("%(message)s")
+
+    def emit(self, record):
+        # Emit a multipart message
+        msg = [str(self.job_id), self.filename, self.formatter.format(record)]
+        self.socket.send_multipart(msg)
+
+    def close(self):
+        super(ZMQPUSHHandler, self).close()
+        self.socket.close()
 
 
 class YamlLogger(object):
