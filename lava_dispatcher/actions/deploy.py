@@ -313,3 +313,38 @@ class cmd_dummy_deploy(BaseAction):
         device = self.client.target_device
         device.deployment_data = deployment_data.get(target_type)
         self.client.dummy_deploy(target_type)
+
+
+class cmd_deploy_lxc_image(BaseAction):
+
+    parameters_schema = {
+        'type': 'object',
+        'properties': {
+            'name': {'type': 'string', 'optional': False},
+            'release': {'type': 'string', 'optional': False},
+            'arch': {'type': 'string', 'optional': False},
+            'target_type': {'type': 'string', 'enum': ['ubuntu', 'debian',
+                                                       'fedora', 'gentoo',
+                                                       'oracle', 'centos',
+                                                       'plamo'],
+                            'optional': False},
+            'persist': {'type': 'boolean', 'optional': True, 'default': False},
+            'role': {'type': 'string', 'optional': True},
+        },
+        'additionalProperties': False,
+    }
+
+    @classmethod
+    def validate_parameters(cls, parameters):
+        super(cmd_deploy_lxc_image, cls).validate_parameters(parameters)
+        if 'name' not in parameters:
+            raise ValueError('must specify a container name')
+        if 'release' not in parameters:
+            raise ValueError('must specify a release')
+        if 'arch' not in parameters:
+            raise ValueError('must specify an architecture')
+
+    def run(self, name=None, release=None, arch=None, target_type='debian',
+            persist=False):
+        self.client.deploy_lxc_image(name=name, release=release, arch=arch,
+                                     target_type=target_type, persist=persist)

@@ -167,3 +167,52 @@ class ssh(BaseDriver):
             logging.debug("SSH configuration in use: \n" + open(filename).read())
 
         return self.__ssh_config__
+
+
+class lxc(BaseDriver):
+
+    def __init__(self, device):
+        super(lxc, self).__init__(device)
+        self.__session__ = None
+        self.__root__ = None
+        self.container = self.config.dummy_lxc_container
+
+    @property
+    def session(self):
+        if self.__session__ is None:
+            try:
+                session_id = subprocess.check_output(['lxc-create',
+                                                      '-t download',
+                                                      '-n',
+                                                      self.container,
+                                                      '--',
+                                                      '--dist',
+                                                      'debian',
+                                                      '--release',
+                                                      'jessie',
+                                                      '--arch',
+                                                      'amd64']).strip()
+            except subprocess.CalledProcessError:
+                session_id = subprocess.check_output(['lxc-start',
+                                                      '-n',
+                                                      self.container,
+                                                      '-d']).strip()
+            self.__session__ = 'session:' + session_id
+            logging.info("lxc session created with id %s",
+                         self.__session__)
+
+        return self.__session__
+
+    @contextmanager
+    def root(self):
+        yield '/'
+
+    def connect(self):
+        logging.info("Running lxc session %s", self.session)
+        cmd = 'lxc-attach -n %s ' % self.container
+        proc = self.context.spawn(cmd, timeout=1200)
+        return proc
+
+    def finalize(self, proc):
+        logging.info("Finalizing lxc session %s", self.session)
+        subprocess.check_call(['lxc-stop', '-n', self.container])

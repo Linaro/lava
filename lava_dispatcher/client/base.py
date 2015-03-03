@@ -426,6 +426,10 @@ class LavaClient(object):
     def dummy_deploy(self, target_type):
         self.target_device.dummy_deploy(target_type)
 
+    def deploy_lxc_image(self, name, release, arch, target_type, persist):
+        self.target_device.deploy_lxc_image(name, release, arch, target_type,
+                                            persist)
+
     @contextlib.contextmanager
     def runner(self):
         """
