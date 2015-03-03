@@ -274,7 +274,8 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 raise JobError(msg)
             # Open the logfile and create the log handler
             action.logger = YamlLogger(action.name)
-            if action.job.zmq_ctx is not None:
+            # actions in unit tests can have a None job.
+            if action.job and action.job.zmq_ctx is not None:
                 action.logger.set_handler(
                     ZMQPUSHHandler(action.job.zmq_ctx, action.job.socket_addr,
                                    action.job.job_id,

@@ -69,7 +69,7 @@ class TestJobDeviceParameters(unittest.TestCase):  # pylint: disable=too-many-pu
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
         with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, device, 4212)
+            job = job_parser.parse(sample_job_data, device, 4212, None)
         uboot_action = None
         for action in job.pipeline.actions:
             if isinstance(action, DeployAction):
