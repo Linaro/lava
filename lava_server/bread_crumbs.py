@@ -63,8 +63,8 @@ class BreadCrumb(object):
 
         The name is the essential property creating the actual text visible on
         web pages. It may be a static string or a new-style python string
-        template. Parent allows one to construct a static brad crumb tree where
-        each crubm may have at most one parent. Needs, if specified, must be
+        template. Parent allows one to construct a static bread crumb tree where
+        each crumb may have at most one parent. Needs, if specified, must be
         an array of strings that denote identifiers required to resolve the URL
         of this bread crumb. The identifiers are obtained from the call
         BreadCrumbTrail.leading_to().
@@ -83,7 +83,7 @@ class BreadCrumb(object):
         Call method, used when decorating function-based views
 
         Id does not redefine the function (so is not a real decorator) but
-        instead stores the brad crumb object in the _bread_crumb attribute of
+        instead stores the bread crumb object in the _bread_crumb attribute of
         the function.
         """
         self.view = view
