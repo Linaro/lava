@@ -27,6 +27,7 @@ import logging
 import os
 import re
 import signal
+import traceback
 import subprocess
 import sys
 import time
@@ -89,15 +90,27 @@ class Job(object):
             f_device.write(device_definition)
 
     def start(self):
-        args = ['lava-dispatch', '--target', "%s/device.yaml" % self.base_dir,
-                "%s/job.yaml" % self.base_dir,
-                "--output-dir=%s%s/logs/" % (TMP_DIR, self.job_id),
-                "--job-id=%s" % self.job_id,
-                "--socket-addr=%s" % self.log_socket]
-        # TODO: maybe using something else than this basic functions to control
-        # the processes?
-        self.proc = subprocess.Popen(args, stdout=open("%s/out" % self.base_dir, 'w'),
-                                     stderr=open("%s/err" % self.base_dir, 'w'))
+        logger = logging.getLogger()
+        try:
+            logger.debug("start %s", self.job_id)
+            args = ['lava-dispatch', '--target', "%s/device.yaml" % self.base_dir,
+                    "%s/job.yaml" % self.base_dir,
+                    "--output-dir=%s%s/logs/" % (TMP_DIR, self.job_id),
+                    "--job-id=%s" % self.job_id,
+                    "--socket-addr=%s" % self.log_socket]
+            # TODO: maybe using something else than this basic functions to control
+            # the processes?
+            self.proc = subprocess.Popen(args, stdout=open("%s/out" % self.base_dir, 'w'),
+                                         stderr=open("%s/err" % self.base_dir, 'w'))
+        except Exception as exc:
+            # daemon must always continue running even if the job crashes
+            if hasattr(exc, 'child_traceback'):
+                logger.exception({exc.strerror: exc.child_traceback.split('\n')})
+            else:
+                logger.exception(exc)
+            with open("%s/err" % self.base_dir, 'a') as errlog:
+                errlog.write("%s\n%s\n" % (exc, traceback.format_exc()))
+            self.cancel()
         self.running = True
 
     def cancel(self):
