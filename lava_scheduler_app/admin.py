@@ -101,7 +101,7 @@ class TestJobAdmin(admin.ModelAdmin):
     raw_id_fields = ['_results_bundle']
     fieldsets = (
         ('Owner', {
-            'fields': ('user', 'group', 'submitter', 'submit_token', 'is_public', 'is_pipeline')}),
+            'fields': ('user', 'group', 'submitter', 'submit_token', 'is_public')}),
         ('Request', {
             'fields': ('requested_device', 'requested_device_type', 'priority', 'health_check')}),
         ('Advanced properties', {
