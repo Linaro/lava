@@ -271,8 +271,12 @@
   {% endif %}
 </div>
 {% else %}
+{% if job.failure_comment %}
+<h4 class="modal-header">Job failure comment</h4>
+<div class="alert alert-danger">{{ job.failure_comment }}</div>
 <h4 class="modal-header">Dispatcher Log messages</h4>
 <i>Job file missing.</i>
+{% endif %}
 {% endif %}
 {% endif %}
 

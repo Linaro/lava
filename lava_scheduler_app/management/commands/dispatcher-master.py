@@ -78,10 +78,13 @@ class FileHandler(object):  # pylint: disable=too-few-public-methods
 
 
 def create_job(job, device):
+    # FIXME check the incoming device status
     job.actual_device = device
     device.current_job = job
-    # TODO: create transition state
-    device.status = Device.RESERVED
+    new_status = Device.RESERVED
+    msg = "Reserved for job %s" % job.id
+    device.state_transition_to(new_status, message=msg, job=job)
+    device.status = new_status
     # Save the result
     job.save()
     device.save()
@@ -92,8 +95,10 @@ def start_job(job):
     # TODO: Only if that was not already the case !
     job.start_time = datetime.datetime.utcnow()
     device = job.actual_device
-    # TODO: create transition state
-    device.status = Device.RUNNING
+    msg = "Job %s running" % job.id
+    new_status = Device.RUNNING
+    device.state_transition_to(new_status, message=msg, job=job)
+    device.status = new_status
     # Save the result
     job.save()
     device.save()
@@ -105,8 +110,11 @@ def end_job(job):
     # TODO: Only if that was not already the case !
     job.end_time = datetime.datetime.utcnow()
     device = job.actual_device
-    # TODO: create transition state
-    device.status = Device.IDLE
+    msg = "Job %s has ended" % job.id
+    new_status = Device.IDLE
+    device.state_transition_to(new_status, message=msg, job=job)
+    device.status = new_status
+    device.current_job = None
     # Save the result
     job.save()
     device.save()
@@ -116,9 +124,11 @@ def cancel_job(job):
     job.status = TestJob.CANCELED
     job.end_time = datetime.datetime.utcnow()
     device = job.actual_device
-    # TODO: create transition state
-    # TODO: what should be the new device status?
-    device.status = Device.IDLE
+    msg = "Job %s cancelled" % job.id
+    # TODO: what should be the new device status? health check should set health unknown
+    new_status = Device.IDLE
+    device.state_transition_to(new_status, message=msg, job=job)
+    device.status = new_status
     # Save the result
     job.save()
     device.save()
@@ -410,6 +420,7 @@ class Command(BaseCommand):
                         device_type = job.requested_device_type
                         try:
                             # Choose a random matching device
+                            # TODO: user restrictions and device tags need to be applied
                             device = devices.filter(device_type=device_type).order_by('?')[0]
                         except IndexError:
                             self.logger.debug("Job <%d> (%s for %s) not allocated yet", job.id,
@@ -426,15 +437,32 @@ class Command(BaseCommand):
                         device = job.actual_device
                         self.logger.info("START %d => %s (%s) (retrying)", job.id,
                                          device.worker_host.hostname, device.hostname)
-                    # Load device configuration
-                    # TODO: use jinja2 here!
-                    filename = os.path.join(options['devices'], "%s.yaml" % job.actual_device.hostname)
-                    with open(filename, 'r') as f_in:
-                        device_configuration = f_in.read()
-                    controler.send_multipart([str(job.actual_device.worker_host.hostname), 'START',
-                                              str(job.id),
-                                              str(job.definition),
-                                              str(device_configuration)])
+                    try:
+                        # Load device configuration
+                        # TODO: use jinja2 here!
+                        filename = os.path.join(options['devices'], "%s.yaml" % job.actual_device.hostname)
+                        with open(filename, 'r') as f_in:
+                            device_configuration = f_in.read()
+                        controler.send_multipart([str(job.actual_device.worker_host.hostname), 'START',
+                                                  str(job.id),
+                                                  str(job.definition),
+                                                  str(device_configuration)])
+                    except IOError as exc:
+                        # TODO port to jinja2 to handle IOError exceptions there or replace with submission check
+                        # covers missing configuration files
+                        self.logger.exception(exc)
+                        job.status = TestJob.INCOMPLETE
+                        new_status = Device.IDLE
+                        msg = "Infrastructure error: %s %s" % (exc.strerror, exc.filename)
+                        device.state_transition_to(
+                            new_status,
+                            message=msg,
+                            job=job)
+                        device.status = new_status
+                        device.current_job = None
+                        job.failure_comment = msg
+                        job.save()
+                        device.save()
 
                 if not_allocated > 0:
                     self.logger.info("%d jobs not allocated yet", not_allocated)
