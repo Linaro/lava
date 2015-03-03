@@ -100,6 +100,9 @@ def argChecker(arg):
             return arg
     if isinstance(arg, str) and '\0' not in arg:
         return arg
+    elif arg is None:
+        logger.warning("No argument passed")
+        return ''
     else:
         arg = arg.replace('\0', '')
         logger.warning("%s contained null", arg)
