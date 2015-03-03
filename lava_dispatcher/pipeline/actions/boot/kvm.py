@@ -111,6 +111,11 @@ class CallQemuAction(Action):
         self.description = "call qemu to boot the image"
         self.summary = "execute qemu to boot the image"
 
+    def validate(self):
+        super(CallQemuAction, self).validate()
+        if 'test_image_prompts' not in self.job.device:
+            self.errors = "Unable to identify test image prompts from device configuration."
+
     def run(self, connection, args=None):
         """
         CommandRunner expects a pexpect.spawn connection which is the return value

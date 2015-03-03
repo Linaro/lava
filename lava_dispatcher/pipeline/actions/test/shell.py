@@ -71,6 +71,8 @@ class TestShellAction(TestAction):
         self.match = SignalMatch()
 
     def validate(self):
+        if 'test_image_prompts' not in self.job.device:
+            self.errors = "Unable to identify test image prompts from device configuration."
         if 'definitions' in self.parameters:
             for testdef in self.parameters['definitions']:
                 if 'repository' not in testdef:

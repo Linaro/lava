@@ -191,6 +191,11 @@ class ExpectShellSession(Action):
         self.summary = "Expect a shell prompt"
         self.description = "Wait for a shell"
 
+    def validate(self):
+        super(ExpectShellSession, self).validate()
+        if 'test_image_prompts' not in self.job.device:
+            self.errors = "Unable to identify test image prompts from device configuration."
+
     def run(self, connection, args=None):
         connection = super(ExpectShellSession, self).run(connection, args)
         connection.prompt_str = self.job.device['test_image_prompts']
@@ -215,6 +220,8 @@ class ConnectDevice(Action):
         if 'connect' not in self.job.device['commands']:
             self.errors = "Unable to connect to device %s - missing connect command." % self.job.device.hostname
             return
+        if 'test_image_prompts' not in self.job.device:
+            self.errors = "Unable to identify test image prompts from device configuration."
         command = self.job.device['commands']['connect']
         exe = ''
         try:
