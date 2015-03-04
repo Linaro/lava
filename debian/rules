@@ -38,6 +38,8 @@ override_dh_auto_install:
 	python setup.py install --root=$(CURDIR)/debian/lava-server/ --install-layout=deb
 	# dispatcher-master zeromq support, lava-server.init handled by auto_install.
 	[ ! -f etc/lava-master.init ] || dh_installinit --name lava-master
+	# jinja support
+	[ ! -d share/jinja2 ] || cp -r share/jinja2 $(CURDIR)/debian/lava-server/usr/share/lava-server/
 	dh_installman -plava-server man/_build/man/lava-server.1
 	dh_installman -plava-server man/_build/man/lava-daemon.1
 	# FIXME: should not need this mv
