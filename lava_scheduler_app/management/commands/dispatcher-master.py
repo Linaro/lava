@@ -21,6 +21,7 @@
 import datetime
 import errno
 import fcntl
+import jinja2
 import logging
 from optparse import make_option
 import os
@@ -35,7 +36,7 @@ from lava_scheduler_app.models import Device, TestJob
 # pylint: disable=no-member,too-many-branches,too-many-statements,too-many-locals
 
 
-#TODO constants to move into external files
+# TODO constants to move into external files
 FD_TIMEOUT = 60
 TIMEOUT = 10
 DB_LIMIT = 10
@@ -159,9 +160,9 @@ class Command(BaseCommand):
         make_option('-l', '--level',
                     default='DEBUG',
                     help="Logging level (ERROR, WARN, INFO, DEBUG)"),
-        make_option('--devices',
-                    default="/etc/lava-dispatcher/devices",
-                    help="Device configuration directory"),
+        make_option('--templates',
+                    default="/etc/lava-dispatcher/",
+                    help="Base directory for device configuration templates"),
         make_option('--output-dir',
                     default='/var/lib/lava-server/default/media/job-output',
                     help="Directory where to store job outputs"),
@@ -439,21 +440,31 @@ class Command(BaseCommand):
                                          device.worker_host.hostname, device.hostname)
                     try:
                         # Load device configuration
-                        # TODO: use jinja2 here!
-                        filename = os.path.join(options['devices'], "%s.yaml" % job.actual_device.hostname)
-                        with open(filename, 'r') as f_in:
-                            device_configuration = f_in.read()
+                        # TODO: load variables from job definition
+                        env = jinja2.Environment(loader=jinja2.FileSystemLoader(
+                                                 [os.path.join(options['templates'], 'devices'),
+                                                  os.path.join(options['templates'], 'device_types')]),
+                                                 trim_blocks=True)
+                        template = env.get_template("%s.yaml" % device.hostname)
+                        device_configuration = template.render()
+
                         controler.send_multipart([str(job.actual_device.worker_host.hostname), 'START',
                                                   str(job.id),
                                                   str(job.definition),
                                                   str(device_configuration)])
-                    except IOError as exc:
-                        # TODO port to jinja2 to handle IOError exceptions there or replace with submission check
-                        # covers missing configuration files
-                        self.logger.exception(exc)
+                    except jinja2.TemplateError as exc:
+                        if isinstance(exc, jinja2.TemplateNotFound):
+                            self.logger.error("Template not found: '%s.yaml'", device.hostname)
+                        elif isinstance(exc, jinja2.TemplateSyntaxError):
+                            self.logger.error("Template syntax error in '%s', line %d: %s", exc.name, exc.lineno, exc.message)
+                        else:
+                            self.logger.exception(exc)
+
+                        self.logger.error("Job %d is INCOMPLETE", job.id)
                         job.status = TestJob.INCOMPLETE
                         new_status = Device.IDLE
-                        msg = "Infrastructure error: %s %s" % (exc.strerror, exc.filename)
+                        msg = "Infrastructure error: %s (%s, line %d)" % \
+                              (exc.message, exc.name, exc.lineno)
                         device.state_transition_to(
                             new_status,
                             message=msg,
