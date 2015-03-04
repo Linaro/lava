@@ -8,4 +8,4 @@ requests python-requests; PEP386
 netifaces python-netifaces; PEP386
 nose python-nose; PEP386
 pyzmq python-zmq; PEP386
-
+jinja2 python-jinja2; PEP386
