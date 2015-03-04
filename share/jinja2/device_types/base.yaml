@@ -1,0 +1,30 @@
+{% block body %}{% endblock %}
+
+{% block test_image_prompts %}
+test_image_prompts:
+  - '\(initramfs\)'
+  - 'linaro-test'
+  - '/ #'
+  - 'root@android'
+  - 'root@linaro'
+  - 'root@master'
+  - 'root@debian'
+  - 'root@linaro-nano:~#'
+  - 'root@linaro-developer:~#'
+  - 'root@linaro-server:~#'
+  - 'root@genericarmv7a:~#'
+  - 'root@genericarmv8:~#'
+{% block extend_test_image_prompts %}{% endblock %}
+{% endblock %}
+
+{% block timeouts %}
+timeouts:
+  apply-overlay-image:
+    seconds: 120
+  umount-retry:
+    seconds: 45
+  lava-test-shell:
+    seconds: 30
+  power_off:
+    seconds: 5
+{% endblock %}

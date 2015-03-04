@@ -1,0 +1,11 @@
+{% extends 'cubietruck.yaml' %}
+{% set usb_uuid = "usb-SanDisk_Ultra_20060775320F43006019-0:0" %}
+{% set sata_uuid = "ata-ST160LM003_HN-M160MBB_S2SYJ9KC102184" %}
+
+{% block commands %}
+commands:
+  connect: telnet localhost 6002
+  #hard_reset: /usr/bin/pduclient --daemon snagglepuss --hostname pdu --command reboot --port 05
+  #power_off: /usr/bin/pduclient --daemon snagglepuss --hostname pdu --command off --port 05
+  #power_on: /usr/bin/pduclient --daemon snagglepuss --hostname pdu --command on --port 05
+{% endblock %}

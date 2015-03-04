@@ -1,0 +1,4 @@
+{% extends 'kvm.yaml' %}
+{% set arch = 'amd64' %}
+{% set memory = 256 %}
+{% set macc_addr = '25:54:00:12:34:59' %}
