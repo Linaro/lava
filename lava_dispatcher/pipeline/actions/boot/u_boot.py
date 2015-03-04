@@ -240,7 +240,7 @@ class UBootSecondaryMedia(Action):
                 self.get_common_data('u-boot', 'device'), self.parameters['commands']
             )
         if not self.valid:
-            raise JobError(self.errors)
+            return
         self.set_common_data(
             'uuid',
             'boot_part',

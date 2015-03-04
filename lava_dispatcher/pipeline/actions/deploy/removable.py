@@ -124,8 +124,6 @@ class DDAction(Action):
                 'boot_part',
                 self.boot_params[self.parameters['device']]['device_id']
             )
-        if not self.valid:
-            raise JobError(self.errors)
 
     def run(self, connection, args=None):
         """
