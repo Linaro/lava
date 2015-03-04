@@ -98,9 +98,11 @@ class TestShellAction(TestAction):
             self.logger.debug("Skipping test definitions - previous boot attempt was not successful.")
             self.results.update({self.name: 'skipped'})
             # FIXME: with predictable UID, could set each test definition metadata to "skipped"
+            self.logger.debug({self.name: connection.stdout()})
             return connection
 
         if not connection:
+            self.logger.debug({self.name: connection.stdout()})
             raise InfrastructureError("Connection closed")
 
         self.signal_director.connection = connection
@@ -137,7 +139,7 @@ class TestShellAction(TestAction):
                 test_connection.timeout = self.timeout.duration
 
             while self._keep_running(test_connection, test_connection.timeout):
-                pass
+                self.logger.debug({self.name: connection.stdout()})
 
         return connection
 

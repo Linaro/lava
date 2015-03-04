@@ -23,7 +23,7 @@ import time
 import pexpect
 import signal
 import decimal
-from lava_dispatcher.pipeline.log import YamlLogger
+import logging
 from lava_dispatcher.pipeline.action import TestError, Timeout
 from lava_dispatcher.pipeline.utils.shell import wait_for_prompt
 
@@ -62,7 +62,6 @@ class BaseSignalHandler(object):
 class SignalMatch(object):  # pylint: disable=too-few-public-methods
 
     def match(self, data, fixupdict=None):
-        logger = YamlLogger("root")
         if not fixupdict:
             fixupdict = {}
 
@@ -83,7 +82,6 @@ class SignalMatch(object):  # pylint: disable=too-few-public-methods
                     res['result'] = fixupdict[res['result']]
                 if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
                     res['result'] = 'unknown'
-                    logger.debug('Setting result to "unknown"')
                     raise TestError('Bad test result: %s', res['result'])
 
         if 'test_case_id' not in res:
@@ -91,7 +89,6 @@ class SignalMatch(object):  # pylint: disable=too-few-public-methods
                             "incorrect parsing pattern being used): %s", res)
 
         if 'result' not in res:
-            logger.debug('Setting result to "unknown"')
             res['result'] = 'unknown'
             raise TestError("Test case results without result (probably a sign of an "
                             "incorrect parsing pattern being used): %s", res)
@@ -125,19 +122,25 @@ class Connection(object):
         self.raw_connection = raw_connection
         self.results = {}
         self.match = None
-        self.logger = YamlLogger("root")
 
     def sendline(self, line):
         self.raw_connection.sendline(line)
+
+    def stdout(self):
+        """
+        Retrieve stdout content over this connection since the last call to stdout and return it.
+        """
+        pass
 
     def finalise(self):
         if self.raw_connection:
             try:
                 os.killpg(self.raw_connection.pid, signal.SIGKILL)
-                self.logger.debug("Finalizing child process group with PID %d" % self.raw_connection.pid)
+                # FIXME: determine how to access the zmq logger
+                # self.logger.debug("Finalizing child process group with PID %d" % self.raw_connection.pid)
             except OSError:
                 self.raw_connection.kill(9)
-                self.logger.debug("Finalizing child process with PID %d" % self.raw_connection.pid)
+                # self.logger.debug("Finalizing child process with PID %d" % self.raw_connection.pid)
             self.raw_connection.close()
 
 
@@ -161,10 +164,9 @@ class CommandRunner(object):
         self._prompt_str_includes_rc = prompt_str_includes_rc
         self.match_id = None
         self.match = None
-        self.logger = YamlLogger("root")
 
     def change_prompt(self, string):
-        self.logger.debug("Changing prompt to %s" % string)
+        # self.logger.debug("Changing prompt to %s" % string)
         self._prompt_str = string
 
     def wait_for_prompt(self, timeout=-1):
@@ -173,7 +175,6 @@ class CommandRunner(object):
     def get_connection(self):
         return self._connection
 
-    # FIXME: legacy code?
     def run(self, cmd, response=None, timeout=-1, wait_prompt=True):
         """Run `cmd` and wait for a shell response.
 
@@ -234,7 +235,8 @@ class Protocol(object):  # pylint: disable=abstract-class-not-used
     name = 'protocol'
 
     def __init__(self, parameters):
-        self.logger = YamlLogger("root")
+        # FIXME: allow the bare logger to use the zmq socket
+        self.logger = logging.getLogger("root")
         self.poll_timeout = Timeout(self.name)
         self.parameters = None
         self.__errors__ = []

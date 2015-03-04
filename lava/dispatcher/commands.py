@@ -13,10 +13,8 @@ from lava_dispatcher.config import get_config, get_device_config, list_devices
 from lava_dispatcher.job import LavaTestJob, validate_job_data
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.action import JobError
-from lava_dispatcher.pipeline.logical import PipelineContext
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.log import YamlLogger, get_yaml_handler
-from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 
 
 class SetUserConfigDirAction(argparse.Action):
@@ -189,7 +187,7 @@ class dispatch(DispatcherCommand):
                     ("Unable to set import 'setproctitle', "
                      "process name cannot be changed"))
             else:
-                setproctitle("lava-dispatch [job: %s]" % (self.args.job_id))
+                setproctitle("lava-dispatch [job: %s]" % self.args.job_id)
 
         # Load the job file
         job_runner, job_data = self.parse_job_file(self.args.job_file, oob_file)

@@ -290,11 +290,15 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 if not self.parent:
                     signal.signal(signal.SIGINT, cancelling_handler)
                 start = time.time()
-                if not connection:
-                    with action.timeout.action_timeout():
+                try:
+                    if not connection:
+                        with action.timeout.action_timeout():
+                            new_connection = action.run(connection, args)
+                    else:
                         new_connection = action.run(connection, args)
-                else:
-                    new_connection = action.run(connection, args)
+                except (ValueError, KeyError, TypeError, RuntimeError) as exc:
+                    action.logger.exception(exc)
+                    raise RuntimeError(exc)
                 action.elapsed_time = time.time() - start
                 action.logger.debug("%s duration: %.02f" % (action.name, action.elapsed_time))
                 if action.results:
@@ -603,6 +607,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
             return self.internal_pipeline.run_actions(connection, args)
         if connection:
             connection.timeout = self.timeout
+            # retrieve the stdout content from the active connection
+            self.logger.debug({self.name: connection.stdout()})
         return connection
 
     def cleanup(self):

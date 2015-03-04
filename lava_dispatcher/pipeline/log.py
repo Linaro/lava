@@ -25,9 +25,11 @@ import zmq
 
 class ZMQPUSHHandler(logging.Handler):
     def __init__(self, context, socket_addr, job_id, filename):
+
         logging.Handler.__init__(self)
 
         # Create the PUSH socket
+        # pylint: disable=no-member
         self.socket = context.socket(zmq.PUSH)
         self.socket.connect(socket_addr)
 
@@ -64,12 +66,23 @@ class YamlLogger(object):
             return
         if type(message) is dict:
             for key, value in list(message.items()):
-                self.log.debug("   %s: %s", key, value)
+                if type(value) is list:
+                    for item in value:
+                        self.log.debug(' - %s:\n   - "%s"', key, item)
+                else:
+                    self.log.debug("   %s: %s", key, value)
+        elif type(message) is list:
+            for item in message:
+                self.log.debug(' - log:\n   - "%s"', item)
         else:
-            self.log.debug("   log: \"%s\"", message)
+            self.log.debug(" - log: \"%s\"", message)
 
     def debug(self, message):
         self.log_message(message)
+
+    def exception(self, message):
+        # FIXME: make YAML compliant?
+        self.log.exception(message)
 
     def set_handler(self, handler=None):
         if handler is not None:
@@ -87,6 +100,7 @@ class YamlLogger(object):
 
 
 def get_yaml_handler(filename=None, mode='w', encoding='utf-8'):
+    handler = None
     pattern = ' - id: "<LAVA_DISPATCHER>%(asctime)s"\n%(message)s'
     if filename:
         if isinstance(filename, file):
@@ -123,7 +137,7 @@ class StdLogger(object):  # pylint: disable=too-few-public-methods
         self.log = logging.getLogger("%s" % name)
         self.log.setLevel(logging.INFO)
         self.handler = logging.StreamHandler(filename)
-        self.formatter = logging.Formatter('"%(asctime)s"\n%(message)s')
+        self.formatter = logging.Formatter('"%(asctime)s":\n - %(message)s')
         self.handler.setFormatter(self.formatter)
 
     def info(self, message):
