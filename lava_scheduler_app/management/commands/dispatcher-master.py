@@ -126,7 +126,8 @@ def cancel_job(job):
     job.end_time = datetime.datetime.utcnow()
     device = job.actual_device
     msg = "Job %s cancelled" % job.id
-    # TODO: what should be the new device status? health check should set health unknown
+    # TODO: what should be the new device status? health check should set
+    # health unknown
     new_status = Device.IDLE
     device.state_transition_to(new_status, message=msg, job=job)
     device.status = new_status
@@ -136,13 +137,16 @@ def cancel_job(job):
 
 
 def send_status(hostname, socket, logger):
-    # The master crashed, send a signal to get the status of each job
+    """
+    The master crashed, send a STATUS message to get the curren state of jobs
+    """
     jobs = TestJob.objects.filter(actual_device__worker_host__hostname=hostname,
                                   is_pipeline=True,
                                   status=TestJob.RUNNING)
     for job in jobs:
         # TODO: keep track of the list of job to check (retrying)
-        logger.info("STATUS %d => %s (%s)", job.id, hostname, job.actual_device.hostname)
+        logger.info("STATUS %d => %s (%s)", job.id, hostname,
+                    job.actual_device.hostname)
         socket.send_multipart([hostname, 'STATUS', str(job.id)])
 
 
@@ -200,15 +204,15 @@ class Command(BaseCommand):
         # Last access to the database for new jobs and cancelations
         last_db_access = 0
 
-        # Poll on the sockets (only one for the moment). This allow to have a nice
-        # timeout along with polling.
+        # Poll on the sockets (only one for the moment). This allow to have a
+        # nice timeout along with polling.
         poller = zmq.Poller()
         poller.register(pull_socket, zmq.POLLIN)
         poller.register(controler, zmq.POLLIN)
 
-        # Mask signals and create a pipe that will receive a bit for each signal
-        # received. Poll the pipe along with the zmq socket so that we can only be
-        # interupted while reading data.
+        # Mask signals and create a pipe that will receive a bit for each
+        # signal received. Poll the pipe along with the zmq socket so that we
+        # can only be interupted while reading data.
         (pipe_r, pipe_w) = os.pipe()
         flags = fcntl.fcntl(pipe_w, fcntl.F_GETFL, 0)
         fcntl.fcntl(pipe_w, fcntl.F_SETFL, flags | os.O_NONBLOCK)
@@ -242,8 +246,8 @@ class Command(BaseCommand):
                     self.logger.error("[%s] Wrong filename received, dropping the message", job_id)
                     continue
                 filename = filename.lstrip('/')
-                filename = "%s/job-%s/pipeline/%s" % (options['output_dir'], job_id,
-                                                      filename)
+                filename = "%s/job-%s/pipeline/%s" % (options['output_dir'],
+                                                      job_id, filename)
 
                 # Find the handler (if available)
                 f_handler = None
@@ -252,12 +256,14 @@ class Command(BaseCommand):
                         # Close the old file handler
                         logs[job_id].close()
 
-                        path = os.path.join('/tmp', 'lava-dispatcher', 'jobs', job_id, filename)
+                        path = os.path.join('/tmp', 'lava-dispatcher', 'jobs',
+                                            job_id, filename)
                         mkdir(os.path.dirname(path))
                         logs[job_id] = FileHandler(filename, path)
                 else:
                     self.logger.info("[%s] Receiving logs from a new job", job_id)
-                    path = os.path.join('/tmp', 'lava-dispatcher', 'jobs', job_id, filename)
+                    path = os.path.join('/tmp', 'lava-dispatcher', 'jobs',
+                                        job_id, filename)
                     mkdir(os.path.dirname(path))
                     logs[job_id] = FileHandler(filename, path)
 
@@ -274,7 +280,9 @@ class Command(BaseCommand):
 
                 # FIXME: to be removed when the web UI knows how to deal with
                 # pipeline logs
-                filename = os.path.join(options['output_dir'], "job-%s" % job_id, 'output.txt')
+                filename = os.path.join(options['output_dir'],
+                                        "job-%s" % job_id,
+                                        'output.txt')
                 with open(filename, 'a+') as f_out:
                     f_out.write(message)
                     f_out.write('\n')
@@ -301,8 +309,8 @@ class Command(BaseCommand):
                 if action == 'HELLO':
                     self.logger.info("%s => HELLO", hostname)
                     controler.send_multipart([hostname, 'HELLO_OK'])
-                    # If the dispatcher is known and sent an HELLO, means that the
-                    # slave has restarted
+                    # If the dispatcher is known and sent an HELLO, means that
+                    # the slave has restarted
                     if hostname in dispatchers:
                         self.logger.warning("Dispatcher <%s> has RESTARTED", hostname)
                     else:
@@ -310,13 +318,13 @@ class Command(BaseCommand):
                         dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
 
                     # Mark the dispatcher as Online
-                    # TODO: DB: mark the dispatcher as online in the
-                    # database. For the moment this should not be done by
-                    # this process as some dispatchers are using old and
-                    # new dispatcher.
+                    # TODO: DB: mark the dispatcher as online in the database.
+                    # For the moment this should not be done by this process as
+                    # some dispatchers are using old and new dispatcher.
 
                     # Mark all jobs on this dispatcher as canceled.
-                    # The dispatcher had (re)started, so all jobs have to be finished.
+                    # The dispatcher had (re)started, so all jobs have to be
+                    # finished.
                     with transaction.atomic():
                         jobs = TestJob.objects.filter(actual_device__worker_host__hostname=hostname,
                                                       is_pipeline=True,
@@ -441,22 +449,24 @@ class Command(BaseCommand):
                     try:
                         # Load device configuration
                         # TODO: load variables from job definition
-                        env = jinja2.Environment(loader=jinja2.FileSystemLoader(
-                                                 [os.path.join(options['templates'], 'devices'),
-                                                  os.path.join(options['templates'], 'device_types')]),
-                                                 trim_blocks=True)
+                        env = jinja2.Environment(
+                            loader=jinja2.FileSystemLoader(
+                                [os.path.join(options['templates'], 'devices'),
+                                 os.path.join(options['templates'], 'device_types')]),
+                            trim_blocks=True)
                         template = env.get_template("%s.yaml" % device.hostname)
                         device_configuration = template.render()
 
-                        controler.send_multipart([str(job.actual_device.worker_host.hostname), 'START',
-                                                  str(job.id),
-                                                  str(job.definition),
-                                                  str(device_configuration)])
+                        controler.send_multipart(
+                            [str(job.actual_device.worker_host.hostname),
+                             'START', str(job.id), str(job.definition),
+                             str(device_configuration)])
                     except jinja2.TemplateError as exc:
                         if isinstance(exc, jinja2.TemplateNotFound):
                             self.logger.error("Template not found: '%s.yaml'", device.hostname)
                         elif isinstance(exc, jinja2.TemplateSyntaxError):
-                            self.logger.error("Template syntax error in '%s', line %d: %s", exc.name, exc.lineno, exc.message)
+                            self.logger.error("Template syntax error in '%s', line %d: %s",
+                                              exc.name, exc.lineno, exc.message)
                         else:
                             self.logger.exception(exc)
 
@@ -480,7 +490,8 @@ class Command(BaseCommand):
 
                 # Handle canceling jobs
                 for job in TestJob.objects.filter(status=TestJob.CANCELING, is_pipeline=True):
-                    self.logger.info("CANCEL %d => %s", job.id, job.actual_device.worker_host.hostname)
+                    self.logger.info("CANCEL %d => %s", job.id,
+                                     job.actual_device.worker_host.hostname)
                     controler.send_multipart([str(job.actual_device.worker_host.hostname),
                                               'CANCEL', str(job.id)])
 
