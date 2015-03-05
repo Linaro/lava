@@ -601,10 +601,6 @@ class LavaClient(object):
                 attempts += 1
                 continue
 
-            # Gain root access
-            self.proc.sendline('su')
-            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
-
             if not self.config.android_adb_over_usb:
                 try:
                     self._disable_adb_over_usb()
