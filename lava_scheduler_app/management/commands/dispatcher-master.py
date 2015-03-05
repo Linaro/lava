@@ -463,18 +463,21 @@ class Command(BaseCommand):
                              str(device_configuration)])
                     except jinja2.TemplateError as exc:
                         if isinstance(exc, jinja2.TemplateNotFound):
-                            self.logger.error("Template not found: '%s.yaml'", device.hostname)
+                            self.logger.error("Template not found: '%s'", exc.message)
+                            msg = "Infrastructure error: Template not found: '%s'" % \
+                                  exc.message
                         elif isinstance(exc, jinja2.TemplateSyntaxError):
                             self.logger.error("Template syntax error in '%s', line %d: %s",
                                               exc.name, exc.lineno, exc.message)
+                            msg = "Infrastructure error: Template syntax error in '%s', line %d: %s" % \
+                                  (exc.name, exc.lineno, exc.message)
                         else:
                             self.logger.exception(exc)
+                            msg = "Infrastructure error: %s" % exc.message
 
                         self.logger.error("Job %d is INCOMPLETE", job.id)
                         job.status = TestJob.INCOMPLETE
                         new_status = Device.IDLE
-                        msg = "Infrastructure error: %s (%s, line %d)" % \
-                              (exc.message, exc.name, exc.lineno)
                         device.state_transition_to(
                             new_status,
                             message=msg,
