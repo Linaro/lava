@@ -90,7 +90,6 @@ class Job(object):
         self.log_socket = log_socket
         self.proc = None
         self.running = False
-        self.last_end_msg = 0
         self.base_dir = "%s%s" % (TMP_DIR, self.job_id)
         mkdir(self.base_dir)
 
@@ -267,7 +266,6 @@ def main():
                     else:
                         logger.warning("Job %d has already end", job_id)
                         sock.send_multipart(['END', str(job_id)])
-                        jobs[job_id].last_end_msg = time.time()
                 else:
                     jobs[job_id] = Job(job_id, job_definition,
                                        device_definition, args.socket_addr)
@@ -299,7 +297,6 @@ def main():
                     jobs[job_id].running = False
                 # Send the END message anyway
                 sock.send_multipart(['END', str(job_id)])
-                jobs[job_id].last_end_msg = time.time()
 
                 # Mark the master as alive
                 master.received_msg()
@@ -333,14 +330,12 @@ def main():
                     else:
                         # The job has already ended
                         sock.send_multipart(['END', str(job_id)])
-                        jobs[job_id].last_end_msg = time.time()
                 else:
                     # Unknwon job: return END anyway
                     logger.debug("Unknown job %d, sending END", job_id)
                     jobs[job_id] = Job(job_id, '', '', None)
                     jobs[job_id].running = False
                     sock.send_multipart(['END', str(job_id)])
-                    jobs[job_id].last_end_msg = time.time()
 
                 # Mark the master as alive
                 master.received_msg()
@@ -349,15 +344,6 @@ def main():
                 logger.error("Unknown action: '%s', args=(%s)", action, msg[1:])
                 # Do not write the master as alive as the message does not mean
                 # anything.
-
-        # Lookup all jobs to find ones that are not running but hasn't been
-        # acked by the master.
-        now = time.time()
-        for job_id in jobs.keys():
-            if not jobs[job_id].running and now - jobs[job_id].last_end_msg > END_OK_TIMEOUT:
-                logger.debug("Re-sending END for job %d", job_id)
-                sock.send_multipart(['END', str(job_id)])
-                jobs[job_id].last_end_msg = now
 
         # Check job status
         for job_id in jobs.keys():
@@ -368,10 +354,10 @@ def main():
                     logger.info("Job %s END", job_id)
                     jobs[job_id].running = False
                     sock.send_multipart(['END', str(job_id)])
-                    jobs[job_id].last_end_msg = time.time()
 
         # Send a PING only if we haven't received a message from the master nor
         # sent a PING for a long time.
+        now = time.time()
         if now - max(master.last_msg, master.last_ping) > TIMEOUT:
             # Is the master offline ?
             if master.online and now - master.last_msg > 4 * TIMEOUT:
