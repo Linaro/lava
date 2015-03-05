@@ -95,7 +95,8 @@ class BootQemuRetry(RetryAction):
             command = [qemu_binary]
             command.extend(boot['parameters'].get('options', []))
             self.set_common_data('qemu-command', 'command', command)
-        except (KeyError, TypeError):
+        # FIXME: AttributeError is an InfrastructureError in fact
+        except (KeyError, TypeError, AttributeError):
             self.errors = "Invalid parameters"
 
     def populate(self, parameters):
