@@ -50,6 +50,9 @@ logger = logging.getLogger('dispatcher-slave')
 
 
 def mkdir(path):
+    """
+    Create a directory only if needed.
+    """
     try:
         os.makedirs(path)
     except OSError as exc:
@@ -60,12 +63,16 @@ def mkdir(path):
 
 
 class Master(object):
+    """
+    Store information about the master status
+    """
     def __init__(self):
         self.last_msg = 0
         self.last_ping = 0
         self.online = True
 
     def received_msg(self):
+        """ We received a valid message from the master """
         self.last_msg = time.time()
         if not self.online:
             logger.info("Master back ONLINE")
@@ -73,6 +80,9 @@ class Master(object):
 
 
 class Job(object):
+    """
+    Wrapper around a job process
+    """
     def __init__(self, job_id, definition, device_definition, log_socket):
         self.job_id = job_id
         self.definition = definition
@@ -84,13 +94,14 @@ class Job(object):
         self.base_dir = "%s%s" % (TMP_DIR, self.job_id)
         mkdir(self.base_dir)
 
+        # Write back the job and device cofniguration
         with open("%s/job.yaml" % self.base_dir, 'w') as f_job:
             f_job.write(self.definition)
         with open("%s/device.yaml" % self.base_dir, 'w') as f_device:
             f_device.write(device_definition)
 
     def start(self):
-        logger = logging.getLogger()
+        """ Start the process """
         try:
             logger.debug("start %s", self.job_id)
             args = ['lava-dispatch', '--target', "%s/device.yaml" % self.base_dir,
@@ -114,6 +125,7 @@ class Job(object):
         self.running = True
 
     def cancel(self):
+        """ Cancel the job and kill the process """
         if self.proc is not None:
             self.proc.kill()
             # TODO: be sure not to block here
@@ -123,7 +135,8 @@ class Job(object):
 
 
 def get_fqdn():
-    """Returns the fully qualified domain name.
+    """
+    Returns the fully qualified domain name.
     """
     host = socket.getfqdn()
     try:
