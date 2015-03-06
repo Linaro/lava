@@ -167,6 +167,9 @@ class Command(BaseCommand):
         make_option('--templates',
                     default="/etc/lava-dispatcher/",
                     help="Base directory for device configuration templates"),
+        make_option('--env',
+                    default="/etc/lava-dispatcher/env.yaml",
+                    help="Environment variables for the dispatcher processes"),
         make_option('--output-dir',
                     default='/var/lib/lava-server/default/media/job-output',
                     help="Directory where to store job outputs"),
@@ -456,12 +459,14 @@ class Command(BaseCommand):
                             trim_blocks=True)
                         template = env.get_template("%s.yaml" % device.hostname)
                         device_configuration = template.render()
+                        env = open(options['env'], 'r').read()
 
                         controler.send_multipart(
                             [str(job.actual_device.worker_host.hostname),
                              'START', str(job.id), str(job.definition),
-                             str(device_configuration)])
-                    except jinja2.TemplateError as exc:
+                             str(device_configuration),
+                             str(open(options['env'], 'r').read())])
+                    except (jinja2.TemplateError, IOError) as exc:
                         if isinstance(exc, jinja2.TemplateNotFound):
                             self.logger.error("Template not found: '%s'", exc.message)
                             msg = "Infrastructure error: Template not found: '%s'" % \
@@ -471,6 +476,11 @@ class Command(BaseCommand):
                                               exc.name, exc.lineno, exc.message)
                             msg = "Infrastructure error: Template syntax error in '%s', line %d: %s" % \
                                   (exc.name, exc.lineno, exc.message)
+                        elif isinstance(exc, IOError):
+                            self.logger.error("Unable to read '%s': %s",
+                                              options['env'], exc.strerror)
+                            msg = "Infrastructure error: cannot open '%s': %s" % \
+                                  (options['env'], exc.strerror)
                         else:
                             self.logger.exception(exc)
                             msg = "Infrastructure error: %s" % exc.message
