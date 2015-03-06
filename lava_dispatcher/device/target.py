@@ -706,7 +706,7 @@ class Target(object):
             raise RuntimeError('bad file extension: %s' % tar_url)
 
         if busybox:
-            wget_options = ''
+            wget_options = '--proxy off'
         else:
             wget_options = '--no-check-certificate --no-proxy --connect-timeout=30 -S --progress=dot -e dotbytes=2M'
 
