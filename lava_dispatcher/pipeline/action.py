@@ -530,7 +530,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         """
         pass
 
-    def _run_command(self, command_list, env=None):
+    def _run_command(self, command_list):
         """
         Single location for all external command operations on the
         dispatcher, without using a shell and with full structured logging.
@@ -544,16 +544,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
             raise RuntimeError("commands to _run_command need to be a list")
         log = None
         command_list.insert(0, 'nice')
-        # FIXME: define a method of configuring the proxy for the pipeline.
-        # if not self.env:
-        #     self.env = {'http_proxy': self.job.context.config.lava_proxy,
-        #                 'https_proxy': self.job.context.config.lava_proxy}
-        def_env = os.environ
-        def_env["LC_ALL"] = "C.UTF-8"
-        if env:
-            def_env.update(env)
         try:
-            log = subprocess.check_output(command_list, stderr=subprocess.STDOUT, env=def_env)
+            log = subprocess.check_output(command_list, stderr=subprocess.STDOUT)
         except OSError as exc:
             self.logger.debug({exc.strerror: exc.child_traceback.split('\n')})
         except subprocess.CalledProcessError as exc:
