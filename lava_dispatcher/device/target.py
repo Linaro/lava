@@ -615,8 +615,7 @@ class Target(object):
             self._wait_for_prompt(connection, ps1_pattern, timeout=10)
             if self.config.has_kernel_messages:
                 userspace_boot_time = "{0:.2f}".format(time.time() - start)
-            self.context.test_data.add_result(wait_for_image_prompt,
-                                                  good)
+            self.context.test_data.add_result(wait_for_image_prompt, good)
         except pexpect.TIMEOUT:
             msg = "Userspace Error: image prompt not found."
             logging.error(msg)
