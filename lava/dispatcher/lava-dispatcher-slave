@@ -31,6 +31,7 @@ import traceback
 import subprocess
 import sys
 import time
+import yaml
 import zmq
 
 # pylint: disable=too-few-public-methods,too-many-instance-attributes,too-many-locals,no-member
@@ -83,11 +84,10 @@ class Job(object):
     """
     Wrapper around a job process
     """
-    def __init__(self, job_id, definition, device_definition, log_socket):
+    def __init__(self, job_id, definition, device_definition, env, log_socket):
         self.job_id = job_id
-        self.definition = definition
-        self.device = device_definition
         self.log_socket = log_socket
+        self.env = env
         self.proc = None
         self.running = False
         self.base_dir = "%s%s" % (TMP_DIR, self.job_id)
@@ -95,14 +95,34 @@ class Job(object):
 
         # Write back the job and device cofniguration
         with open("%s/job.yaml" % self.base_dir, 'w') as f_job:
-            f_job.write(self.definition)
+            f_job.write(definition)
         with open("%s/device.yaml" % self.base_dir, 'w') as f_device:
             f_device.write(device_definition)
+
+    def create_environ(self):
+        """ Generate the env variables for the job """
+        conf = yaml.load(self.env)
+        if conf.get('purge', False):
+            environ = {}
+        else:
+            environ = dict(os.environ)
+
+        # Remove some variables (that might not exist)
+        for var in conf.get('removes', {}):
+            try:
+                del environ[var]
+            except KeyError:
+                pass
+
+        # Override
+        environ.update(conf.get('overrides', {}))
+        return environ
 
     def start(self):
         """ Start the process """
         try:
             logger.debug("start %s", self.job_id)
+            env = self.create_environ()
             args = ['lava-dispatch', '--target', "%s/device.yaml" % self.base_dir,
                     "%s/job.yaml" % self.base_dir,
                     "--output-dir=%s%s/logs/" % (TMP_DIR, self.job_id),
@@ -111,7 +131,9 @@ class Job(object):
             # TODO: maybe using something else than this basic functions to control
             # the processes?
             self.proc = subprocess.Popen(args, stdout=open("%s/out" % self.base_dir, 'w'),
-                                         stderr=open("%s/err" % self.base_dir, 'w'))
+                                         stderr=open("%s/err" % self.base_dir, 'w'),
+                                         env=env)
+            self.running = True
         except Exception as exc:
             # daemon must always continue running even if the job crashes
             if hasattr(exc, 'child_traceback'):
@@ -121,7 +143,6 @@ class Job(object):
             with open("%s/err" % self.base_dir, 'a') as errlog:
                 errlog.write("%s\n%s\n" % (exc, traceback.format_exc()))
             self.cancel()
-        self.running = True
 
     def cancel(self):
         """ Cancel the job and kill the process """
@@ -249,12 +270,14 @@ def main():
                     job_id = int(msg[1])
                     job_definition = msg[2]
                     device_definition = msg[3]
+                    env = msg[4]
                 except (IndexError, ValueError):
                     logger.error("Invalid message '%s'", msg)
                     continue
                 logger.info("Starting job %d", job_id)
                 logger.debug("Job %d       : %s", job_id, job_definition)
                 logger.debug("Job %d device: %s", job_id, device_definition)
+                logger.debug("Job %d env   : %s", job_id, env)
 
                 # Check if the job is known and started. In this case, send
                 # back the right signal (ignoring the duplication or signaling
@@ -268,7 +291,8 @@ def main():
                         sock.send_multipart(['END', str(job_id)])
                 else:
                     jobs[job_id] = Job(job_id, job_definition,
-                                       device_definition, args.socket_addr)
+                                       device_definition, env,
+                                       args.socket_addr)
                     jobs[job_id].start()
                     sock.send_multipart(['START_OK', str(job_id)])
 
@@ -293,7 +317,7 @@ def main():
                         logger.info("Job %d has already been canceled", job_id)
                 else:
                     logger.debug("Unknown job %d, sending END", job_id)
-                    jobs[job_id] = Job(job_id, '', '', None)
+                    jobs[job_id] = Job(job_id, '', '', None, None)
                     jobs[job_id].running = False
                 # Send the END message anyway
                 sock.send_multipart(['END', str(job_id)])
@@ -333,7 +357,7 @@ def main():
                 else:
                     # Unknwon job: return END anyway
                     logger.debug("Unknown job %d, sending END", job_id)
-                    jobs[job_id] = Job(job_id, '', '', None)
+                    jobs[job_id] = Job(job_id, '', '', None, None)
                     jobs[job_id].running = False
                     sock.send_multipart(['END', str(job_id)])
 
