@@ -1,5 +1,8 @@
 #!/bin/sh
 
+#set proxy in /etc/opkg/opkg.conf if required
+unset http_proxy
+
 retry=0
 max_retry=4
 
