@@ -501,3 +501,46 @@ def process_repeat_parameter(json_jobdata):
 
 def is_member(user, group):
     return user.groups.filter(name='%s' % group).exists()
+
+
+def devicedictionary_to_jinja2(data_dict, extends):
+    """
+    Formats a DeviceDictionary as a jinja2 string dictionary
+    Arguments:
+        data_dict: the DeviceDictionary.to_dict()
+        extends: the name of the jinja2 device_type template file to extend.
+        (including file name extension / suffix) which jinja2 will later
+        assume to be in the jinja2 device_types folder
+    """
+    if type(data_dict) is not dict:
+        return None
+    data = u'{%% extends \'%s\' %%}\n' % extends
+    for key, value in data_dict.items():
+        if key == 'extends':
+            continue
+        data += u'{%% set %s = \'%s\' %%}\n' % (key, value)
+    return data
+
+
+def jinja2_to_devicedictionary(data_dict):
+    """
+    Do some string mangling to convert the template to a key value store
+    The reverse of lava_scheduler_app.utils.devicedictionary_to_jinja2
+    """
+    if type(data_dict) is not dict:
+        return None
+    data = {}
+    for line in data_dict.replace('{% ', '').replace(' %}', '').split('\n'):
+        if line == '':
+            continue
+        if line.startswith('extends'):
+            base = line.replace('extends ', '')
+            base = base.replace('"', "'").replace("'", '')
+            data['extends'] = base
+        if line.startswith('set '):
+            key = line.replace('set ', '')
+            key = re.sub(' = .*$', '', key)
+            value = re.sub('^.* = ', '', line)
+            value = value.replace('"', "'").replace("'", '')
+            data[key] = value
+    return data

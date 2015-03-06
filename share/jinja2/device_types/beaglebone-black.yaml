@@ -2,19 +2,24 @@
 {% block body %}
 device_type: beaglebone-black
 
+{% set console_device = console_device | default('ttyO0') %}
+{% set baud_rate = baud_rate | default(115200) %}
+
+
 parameters:
   bootm:
-   kernel: '0x80200000'
-   ramdisk: '0x81600000'
-   dtb: '0x815f0000'
+   kernel: '{{ bootm_kernel_addr|default('0x80200000') }}'
+   ramdisk: '{{ bootm_ramdisk_addr|default('0x81600000') }}'
+   dtb: '{{ bootm_dtb_addr|default('0x815f0000') }}'
   bootz:
-   kernel: '0x81000000'
-   ramdisk: '0x82000000'
-   dtb: '0x81f00000'
-  usb:
-    SanDisk_Ultra:
-      uuid: {{ usb_uuid }}
-      boot_part: 0:1
+   kernel: '{{ bootz_kernel_addr|defaault('0x81000000') }}'
+   ramdisk: '{{ bootz_ramdisk_addr|default('0x82000000') }}'
+   dtb: '{{ bootz_dtb_addr|default('0x81f00000') }}'
+  media:
+    usb:
+      {{ usb_label|default('SanDisk_Ultra') }}:
+        uuid: {{ usb_uuid }}  # /dev/disk/by-id/
+        device_id: {{ usb_device_id|default(0) }}  # the bootloader device id for this media on the 'usb' interface
 
 {% block commands %}{% endblock %}
 
@@ -28,72 +33,51 @@ actions:
       kexec:
       u-boot:
         parameters:
-          bootloader_prompt: U-Boot
-          boot_message: Booting Linux
+          bootloader_prompt: {{ bootloader_prompt|default('U-Boot') }}
+          boot_message: {{ boot_message|default('Booting Linux') }}
           send_char: False
           # interrupt: # character needed to interrupt u-boot, single whitespace by default
           # method specific stanza
-        oe:
+        oe:  # whether this stanza makes it into master is uncertain, it's "old-world" - if it does, handle root & 0:3 etc.
           commands:
-          - setenv initrd_high '0xffffffff'
-          - setenv fdt_high '0xffffffff'
-          - setenv bootcmd 'fatload mmc 0:3 0x80200000 uImage; fatload mmc 0:3 0x815f0000 board.dtb;
-            bootm 0x80200000 - 0x815f0000'
-          - setenv bootargs 'console=ttyO0,115200n8 root=/dev/mmcblk0p5 rootwait ro'
+{{ base_uboot_commands }}
+          - setenv bootcmd 'fatload mmc 0:3 {{ bootm_kernel_addr }} uImage; fatload mmc 0:3 {{ bootm_dtb_addr }} board.dtb;
+            bootm {{ bootm_kernel_addr }} - {{ bootm_dtb_addr }}'
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/mmcblk0p5 rootwait ro'
           - boot
-        master:
+        master:  # whether this stanza makes it into master is uncertain, it's "old-world" - if it does, handle root
           commands:
-          - setenv initrd_high '0xffffffff'
-          - setenv fdt_high '0xffffffff'
-          - setenv bootcmd 'fatload mmc 0:3 0x80200000 uImage; fatload mmc 0:3 0x81600000 uInitrd;
-             fatload mmc 0:3 0x815f0000 board.dtb; bootm 0x80200000 0x81600000 0x815f0000'
-          - setenv bootargs 'console=ttyO0,115200n8 root=LABEL=testrootfs rootwait ro'
+{{ base_uboot_commands }}
+          - setenv bootcmd 'fatload mmc 0:3 {{ bootm_kernel_addr }} uImage; fatload mmc 0:3 {{ bootm_ramdisk_addr }} uInitrd;
+             fatload mmc 0:3 {{ bootm_dtb_addr }} board.dtb; bootm {{ bootm_kernel_addr }} {{ bootm_ramdisk_addr }} {{ bootm_dtb_addr }}'
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=LABEL=testrootfs rootwait ro'
           - boot
         nfs:
           commands:
-          - setenv autoload no
-          - setenv initrd_high '0xffffffff'
-          - setenv fdt_high '0xffffffff'
-          - setenv kernel_addr_r '{KERNEL_ADDR}'
-          - setenv initrd_addr_r '{RAMDISK_ADDR}'
-          - setenv fdt_addr_r '{DTB_ADDR}'
-          - setenv loadkernel 'tftp ${kernel_addr_r} {KERNEL}'
-          - setenv loadinitrd 'tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
-          - setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'
+{{ base_uboot_commands }}
+{{ base_uboot_addr_commands }}
+{{ base_tftp_commands }}
           # Always quote the entire string if the command includes a colon to support correct YAML.
-          - "setenv nfsargs 'setenv bootargs console=ttyO0,115200n8 root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp'"
-          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
-          - boot
+          - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw {{ base_nfsroot_args }} ip=dhcp'"
+{{ base_nfs_uboot_bootcmd }}
         ramdisk:
           commands:
-          - setenv autoload no
-          - setenv initrd_high '0xffffffff'
-          - setenv fdt_high '0xffffffff'
-          - setenv kernel_addr_r '{KERNEL_ADDR}'
-          - setenv initrd_addr_r '{RAMDISK_ADDR}'
-          - setenv fdt_addr_r '{DTB_ADDR}'
-          - setenv loadkernel 'tftp ${kernel_addr_r} {KERNEL}'
-          - setenv loadinitrd 'tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
-          - setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'
-          - setenv bootargs 'console=ttyO0,115200n8 root=/dev/ram0 ip=dhcp'
-          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
-          - boot
+{{ base_uboot_commands }}
+{{ base_uboot_addr_commands }}
+{{ base_tftp_commands }}
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/ram0 ip=dhcp'
+{{ base_tftp_uboot_bootcmd }}
         usb:
           commands:
           - usb start
           - usb info
-          - setenv autoload no
-          - setenv initrd_high '0xffffffff'
-          - setenv fdt_high '0xffffffff'
-          - setenv kernel_addr_r '{KERNEL_ADDR}'
-          - setenv initrd_addr_r '{RAMDISK_ADDR}'
-          - setenv fdt_addr_r '{DTB_ADDR}'
+{{ base_uboot_commands }}
+{{ base_uboot_addr_commands }}
           - setenv loadkernel 'load usb 0:{ROOT_PART} ${kernel_addr_r} {KERNEL}'
           - setenv loadinitrd 'load usb 0:{ROOT_PART} ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
           - setenv loadfdt 'load usb 0:{ROOT_PART} ${fdt_addr_r} {DTB}'
-          - setenv bootargs 'console=ttyO0,115200n8 root={ROOT} ip=dhcp'
-          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
-          - boot
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root={ROOT} ip=dhcp'
+{{ base_uboot_bootcmd }}
 {% endblock %}
 
 #timeouts:
