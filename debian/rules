@@ -39,7 +39,7 @@ override_dh_auto_install:
 	# dispatcher-master zeromq support, lava-server.init handled by auto_install.
 	[ ! -f etc/lava-master.init ] || dh_installinit --name lava-master
 	# jinja support
-	[ ! -d share/jinja2 ] || cp -r share/jinja2 $(CURDIR)/debian/lava-server/usr/share/lava-server/
+	[ ! -d etc/dispatcher-config ] || cp -r etc/dispatcher-config $(CURDIR)/debian/lava-server/etc/
 	dh_installman -plava-server man/_build/man/lava-server.1
 	dh_installman -plava-server man/_build/man/lava-daemon.1
 	[ ! -f man/_build/man/lava-master.1 ] || dh_installman -plava-server man/_build/man/lava-master.1
