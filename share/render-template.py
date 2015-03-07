@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/python
 
 """
 This script is particularly intended for those adding new devices to LAVA
@@ -74,6 +74,9 @@ def main():
             [os.path.join(args.path, 'devices'),
              os.path.join(args.path, 'device-types')]),
         trim_blocks=True)
+    if not os.path.exists(os.path.join(args.path, "%s.yaml" % args.device)):
+        print "Cannot find %s device configuration file" % args.device
+        return
     template = env.get_template("%s.yaml" % args.device)
     ctx = {}
     config = template.render(**ctx)
