@@ -1979,6 +1979,8 @@ class ImageReport(models.Model):
         # access to this image report as well.
         for chart in self.imagereportchart_set.all():
             for chart_filter in chart.imagechartfilter_set.all():
+                if not chart_filter.filter:
+                    continue
                 for bundle_stream in chart_filter.filter.bundle_streams.all():
                     if not bundle_stream.is_accessible_by(user):
                         return False
