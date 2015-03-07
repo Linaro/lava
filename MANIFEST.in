@@ -42,4 +42,5 @@ include contrib/virtualenv-install.sh
 include assets.src/icons.xcf
 include fake-dispatcher
 include version.py
-recursive-include share README *.sh *.py *.yaml
+recursive-include etc/dispatcher-config README *.sh *.py *.yaml
+include share/*

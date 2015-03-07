@@ -87,6 +87,8 @@ setup(
                 'etc/debug.wsgi',
                 'etc/lava-server.wsgi',
                 'etc/uwsgi.reload']),
+        ('/etc/lava-server/dispatcher-config',
+            ['etc/dispatcher-config/env.yaml']),
         ('/etc/apache2/sites-available',
             ['etc/lava-server.conf']),
         ('/etc/logrotate.d',
@@ -96,7 +98,8 @@ setup(
         ('/usr/share/lava-server',
             ['instance.template']),
         ('/usr/share/lava-server',
-            ['share/add_device.py']),
+            ['share/add_device.py',
+             'share/render-template.py']),
     ],
     scripts=[
         'lava_server/lava-daemon',

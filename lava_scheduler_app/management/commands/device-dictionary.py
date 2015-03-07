@@ -52,7 +52,7 @@ class Command(BaseCommand):
         make_option('--import', help="create new or update existing entry"),
         make_option(
             '--path',
-            default='/usr/share/lava-server/jinja2',
+            default='/etc/lava-server/dispatcher-config/',
             help='path to the lava-server jinja2 device type templates'),
         make_option(
             '--export',
@@ -98,7 +98,7 @@ class Command(BaseCommand):
             else:
                 string_loader = jinja2.DictLoader({'%s.yaml' % hostname: data})
                 type_loader = jinja2.FileSystemLoader([
-                    os.path.join(options['path'], 'device_types')])
+                    os.path.join(options['path'], 'device-types')])
                 env = jinja2.Environment(
                     loader=jinja2.ChoiceLoader([string_loader, type_loader]),
                     trim_blocks=True)

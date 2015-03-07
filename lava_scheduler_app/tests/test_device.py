@@ -138,7 +138,8 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         self.assertIsNone(baz)
 
     def test_jinja_string_templates(self):
-        jinja2_path = os.path.realpath(os.path.join(__file__, '..', '..', '..', 'share', 'jinja2'))
+        jinja2_path = os.path.realpath(os.path.join(
+            __file__, '..', '..', '..', 'etc', 'dispatcher-config'))
         self.assertTrue(os.path.exists(jinja2_path))
         device_dictionary = {
             'usb_label': 'SanDisk_Ultra',
@@ -151,7 +152,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         }
         data = devicedictionary_to_jinja2(device_dictionary, 'cubietruck.yaml')
         string_loader = jinja2.DictLoader({'cubie.yaml': data})
-        type_loader = jinja2.FileSystemLoader([os.path.join(jinja2_path, 'device_types')])
+        type_loader = jinja2.FileSystemLoader([os.path.join(jinja2_path, 'device-types')])
         env = jinja2.Environment(
             loader=jinja2.ChoiceLoader([string_loader, type_loader]),
             trim_blocks=True)
@@ -183,7 +184,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
 
     def test_jinja_postgres_loader(self):
         # path used for the device_type template
-        jinja2_path = os.path.realpath(os.path.join(__file__, '..', '..', '..', 'share', 'jinja2'))
+        jinja2_path = os.path.realpath(os.path.join(__file__, '..', '..', '..', 'etc', 'dispatcher-config'))
         self.assertTrue(os.path.exists(jinja2_path))
         device_type = 'cubietruck'
         # pretend this was already imported into the database and use for comparison later.
@@ -207,7 +208,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
             }
         )
 
-        type_loader = jinja2.FileSystemLoader([os.path.join(jinja2_path, 'device_types')])
+        type_loader = jinja2.FileSystemLoader([os.path.join(jinja2_path, 'device-types')])
         env = jinja2.Environment(
             loader=jinja2.ChoiceLoader([dict_loader, type_loader]),
             trim_blocks=True)

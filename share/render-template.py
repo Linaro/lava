@@ -1,13 +1,26 @@
 #! /usr/bin/env python
 
 """
-This script is particularly intended for those adding new devices to LAVA.
-Once devices exist, the per-device configuration exists in the database.
+This script is particularly intended for those adding new devices to LAVA
+and developing new jinja templates to create the per-device configuration
+in the DeviceDictionary database table.
 
-The devices directory won't have any files - except when developers are
-working on new support directly from the command line lava-dispatch or developing
-new templates. (As such, this script will go into the lava-dev binary package once
-the playground branch is merged into master.)
+To view database entries, as the lavaserver user, view the current jinja data for
+a specific device:
+
+ lava-server manage device-dictionary --hostname <HOSTNAME> --export
+
+This template can also be turned into a full version of the actual device
+configuration:
+
+ lava-server manage device-dictionary --hostname <HOSTNAME> --review
+
+In a production system, the devices directory will not have any files, with
+devices being managed in the database. When developers are working on new support
+directly from the command line lava-dispatch or developing new templates,
+this script can be used to match the template output with existing templates.
+
+(This script will go into the lava-dev binary package.)
 
 """
 
@@ -35,25 +48,33 @@ the playground branch is merged into master.)
 import os
 import sys
 import yaml
+import argparse
 from jinja2 import Environment, FileSystemLoader
 
 # pylint: disable=superfluous-parens,star-args,maybe-no-member
 
 
 def main():
-    # Check command line
-    if len(sys.argv) != 2:
-        print("Usage: render-template.py device")
-        sys.exit(1)
 
-    device = sys.argv[1]
+    parser = argparse.ArgumentParser(description='LAVA Dispatcher template helper')
+    parser.add_argument(
+        '--device',
+        type=str,
+        required=True,
+        help='Path to the device template file')
+    parser.add_argument(
+        '--path',
+        default='/etc/lava-server/dispatcher-config/',
+        type=str,
+        help='Path to the device-types template folder')
+    args = parser.parse_args()
 
     env = Environment(
         loader=FileSystemLoader(
-            [os.path.join(os.path.dirname(__file__), 'jinja2/devices'),
-             os.path.join(os.path.dirname(__file__), 'jinja2/device_types')]),
+            [os.path.join(args.path, 'devices'),
+             os.path.join(args.path, 'device-types')]),
         trim_blocks=True)
-    template = env.get_template("%s.yaml" % device)
+    template = env.get_template("%s.yaml" % args.device)
     ctx = {}
     config = template.render(**ctx)
 

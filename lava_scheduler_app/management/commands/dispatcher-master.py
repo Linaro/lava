@@ -165,10 +165,11 @@ class Command(BaseCommand):
                     default='DEBUG',
                     help="Logging level (ERROR, WARN, INFO, DEBUG)"),
         make_option('--templates',
-                    default="/etc/lava-dispatcher/",
+                    default="/etc/lava-server/dispatcher-config/",
                     help="Base directory for device configuration templates"),
+        # FIXME: ensure share/env.yaml is put into /etc/ by setup.py when merging.
         make_option('--env',
-                    default="/etc/lava-dispatcher/env.yaml",
+                    default="/etc/lava-server/dispatcher-config/env.yaml",
                     help="Environment variables for the dispatcher processes"),
         make_option('--output-dir',
                     default='/var/lib/lava-server/default/media/job-output',
@@ -459,7 +460,9 @@ class Command(BaseCommand):
                             trim_blocks=True)
                         template = env.get_template("%s.yaml" % device.hostname)
                         device_configuration = template.render()
-                        env = open(options['env'], 'r').read()
+
+                        if os.path.exists(options['env']):
+                            env = open(options['env'], 'r').read()
 
                         controler.send_multipart(
                             [str(job.actual_device.worker_host.hostname),
