@@ -35,7 +35,7 @@ from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, rmtree
 class OffsetAction(DeployAction):
     """
     Uses the target.deployment_data['lava_test_results_part_attr']
-    which, for example, maps to the root_part in the Device config for a kvm.
+    which, for example, maps to the root_part in the Device config for a qemu.
     The Device object is passed into the parser which uses the action
     parameters to determine the deployment_data parameter of the Device object.
     The calculated offset is dynamic data, stored in the context.

@@ -1,6 +1,6 @@
 # Sample JOB definition for LAVA dispatcher
 
-device_type: kvm
+device_type: qemu
 
 job_name: sample
 timeouts:

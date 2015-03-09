@@ -34,7 +34,7 @@ from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 # FIXME: decide if root_partition is needed, supported or can be removed from YAML.
 # document it if it is retained/useful.
 # FIXME: decide if 'media: tmpfs' is necessary or remove from YAML. Only removable needs 'media'
-class BootKVM(Boot):
+class BootQEMU(Boot):
     """
     The Boot method prepares the command to run on the dispatcher but this
     command needs to start a new connection and then allow AutoLogin, if
@@ -45,7 +45,7 @@ class BootKVM(Boot):
     """
 
     def __init__(self, parent, parameters):
-        super(BootKVM, self).__init__(parent)
+        super(BootQEMU, self).__init__(parent)
         self.action = BootQEMUImageAction()
         self.action.job = self.job
         parent.add_action(self.action, parameters)
@@ -56,7 +56,7 @@ class BootKVM(Boot):
             return False
         if parameters['method'] != 'qemu':
             return False
-        if device['device_type'] == 'kvm':  # FIXME: device_type should likely be qemu - see also deploy
+        if device['device_type'] == 'qemu':
             return True
         return False
 

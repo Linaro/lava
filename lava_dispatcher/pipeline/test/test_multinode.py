@@ -27,7 +27,7 @@ from lava_dispatcher.pipeline.test.fake_coordinator import TestCoordinator
 from lava_dispatcher.pipeline.test.test_basic import Factory
 from lava_dispatcher.pipeline.actions.deploy.image import DeployImageAction
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction, MultinodeOverlayAction, CustomisationAction
-from lava_dispatcher.pipeline.actions.boot.kvm import BootQemuRetry, CallQemuAction
+from lava_dispatcher.pipeline.actions.boot.qemu import BootQemuRetry, CallQemuAction
 from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.actions.test.multinode import MultinodeTestAction
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
