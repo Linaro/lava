@@ -159,6 +159,8 @@ class PowerOff(Action):
 
     def run(self, connection, args=None):
         connection = super(PowerOff, self).run(connection, args)
+        if not hasattr(self.job.device, 'power_state'):
+            return connection
         if self.job.device.power_state is 'on':  # allow for '' and skip
             command = self.job.device['commands']['power_off']
             if not self._run_command(command.split(' ')):
@@ -204,6 +206,7 @@ class FinalizeAction(Action):
             self.logger.debug(self.job.pipeline.errors)
         else:
             self.results = {'status': "Complete"}
+            self.logger.debug("Status: Complete")
         with open("%s/results.yaml" % self.job.parameters['output_dir'], 'w') as results:
             results.write(yaml.dump(self.job.pipeline.describe()))
         # from meliae import scanner
