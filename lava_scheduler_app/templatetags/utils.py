@@ -64,9 +64,9 @@ def get_device_dictionary(data):
 @register.filter
 def get_pipeline_store(data):
     key = os.path.basename(os.path.dirname(data))
-    device_dict_obj = DeviceDictionaryTable.objects.get(id=key)
-    msg = device_dict_obj.kee.replace('__KV_STORE_::lava_scheduler_app.models.DeviceDictionary:', '')
-    device_dict = DeviceDictionary.get(msg)
+    device_dict_obj = PipelineStore.objects.get(id=key)
+    msg = device_dict_obj.kee.replace('__KV_STORE_::lava_scheduler_app.models.JobPipeline:', '')
+    device_dict = JobPipeline.get(msg)
     return device_dict.to_dict()
 
 
@@ -83,4 +83,9 @@ def get_device_parameters(data, key):
 
 @register.filter
 def get_yaml_parameters(parameters):
-    return yaml.safe_dump(parameters, default_flow_style=False, canonical=False, default_style=None)
+    # FIXME: it should be possible to dump this dict as YAML.
+    try:
+        ret = yaml.safe_dump(parameters, default_flow_style=False, canonical=False, default_style=None)
+    except:
+        return parameters
+    return ret

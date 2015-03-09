@@ -1,6 +1,9 @@
+# pylint: disable=too-many-lines
+
 import logging
 import os
 import uuid
+import jinja2
 import simplejson
 import urlparse
 import datetime
@@ -8,7 +11,7 @@ import smtplib
 import socket
 import sys
 import yaml
-
+import pickle
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.sites.models import Site
@@ -33,15 +36,18 @@ from django_restricted_resource.models import RestrictedResource
 from dashboard_app.models import Bundle, BundleStream
 
 from lava_dispatcher.job import validate_job_data
+from lava_dispatcher.pipeline.parser import JobParser
+from lava_dispatcher.pipeline.action import JobError
 from lava_scheduler_app import utils
 
 from linaro_django_xmlrpc.models import AuthToken
 
+# pylint: disable=invalid-name,no-self-use
 
 # Make the open function accept encodings in python < 3.x
 if sys.version_info[0] < 3:
     import codecs
-    open = codecs.open
+    open = codecs.open  # pylint: disable=redefined-builtin
 
 
 class JSONDataError(ValueError):
@@ -736,6 +742,35 @@ class Device(RestrictedResource):
                     None, "Job submission failed for health job: %s" % e)
                 raise JSONDataError("Health check job submission failed: %s" % e)
 
+    def load_device_configuration(self):
+        """
+        Maps the DeviceDictionary to the static templates in /etc/.
+        Use lava-server manage device-dictionary --import <FILE>
+        to update the DeviceDictionary.
+        raise: this function can raise IOError, jinja2.TemplateError or yaml.YAMLError -
+            handling these exceptions may be context-dependent, users will need
+            useful messages based on these exceptions.
+        """
+        if self.is_pipeline is False:
+            return None
+        element = DeviceDictionary.get(self.hostname)
+        # TODO: hardcoded path (determined by setup.py)
+        path = '/etc/lava-server/dispatcher-config/'
+        if element is None:
+            return None
+        data = utils.devicedictionary_to_jinja2(
+            element.parameters,
+            element.parameters['extends']
+        )
+        string_loader = jinja2.DictLoader({'%s.yaml' % self.hostname: data})
+        type_loader = jinja2.FileSystemLoader([
+            os.path.join(path, 'device-types')])
+        env = jinja2.Environment(
+            loader=jinja2.ChoiceLoader([string_loader, type_loader]),
+            trim_blocks=True)
+        template = env.get_template("%s.yaml" % self.hostname)
+        return yaml.load(template.render())
+
     def previous_state(self):
         """Returns the previous state which will not be any form of device
         busy status such as the following:
@@ -962,6 +997,17 @@ class JobPipeline(PipelineKVStore):
 
     class Meta:
         app_label = 'pipeline'
+
+
+class PipelineDevice(dict):
+    """
+    Scheduler version of the dispatcher NewDevice dict
+    which loads from a variable, not a file.
+    """
+
+    def __init__(self, config):
+        super(PipelineDevice, self).__init__()
+        self.update(config)
 
 
 class TestJob(RestrictedResource):
@@ -1242,17 +1288,55 @@ class TestJob(RestrictedResource):
         return ("lava.scheduler.job.detail", [self.display_id])
 
     @classmethod
+    def select_device(cls, allowed_list, definition):
+        """
+        Check device configuration to look for a valid pipeline.
+        Return the first suitable device, along with the pipeline for storage & update.
+        """
+        if type(allowed_list) is not list:
+            return None, None
+
+        # FIXME: check device tags too.
+        for device in allowed_list:
+            try:
+                device_config = device.load_device_configuration()
+            except (jinja2.TemplateError, yaml.YAMLError, IOError):
+                # FIXME: report the exceptions as useful user messages
+                continue
+            if not device_config:
+                continue
+            parser = JobParser()
+            obj = PipelineDevice(device_config)
+            # FIXME: drop this nasty hack once 'target' is dropped as a parameter
+            if 'target' not in obj:
+                obj.target = device.hostname
+            obj['hostname'] = device.hostname
+            pipeline_job = parser.parse(definition, obj, 0, None, None)
+            # validate, if valid, return the fist match
+            try:
+                pipeline_job.validate(simulate=True)
+            except JobError:
+                continue
+            if pipeline_job:
+                return device, pipeline_job.describe()
+        return None, None
+
+    @classmethod
     def from_yaml_and_user(cls, yaml_data, user):
         job_data = yaml.load(yaml_data)
         device_type = _get_device_type(user, job_data['device_type'])
         allow = _check_submit_to_device(list(Device.objects.filter(
-                                        device_type=device_type)), user)
-        # FIXME: device tags support in pipeline is not implemented yet
+            device_type=device_type)), user)
+        device, pipeline = TestJob.select_device(allow, yaml_data)
+
+        if not device or not pipeline:
+            raise DevicesUnavailableException("None of the allowed devices are valid for this job")
 
         # FIXME: multinode scheduling
-        # add pipeline to pipelinestore, update with results later.
+
         job = TestJob(definition=yaml_data, original_definition=yaml_data,
                       submitter=user,
+                      requested_device=device,
                       requested_device_type=device_type,
                       description=job_data['job_name'],
                       health_check=False,
@@ -1260,6 +1344,19 @@ class TestJob(RestrictedResource):
                       is_pipeline=True)
 
         job.save()
+        # add pipeline to jobpipeline, update with results later - needs the job.id.
+        dupe = JobPipeline.get(job.id)
+        if dupe:
+            # this should be impossible
+            # FIXME: needs a unit test
+            raise RuntimeError("Duplicate job id?")
+        store = JobPipeline(job_id=job.id)
+        store.pipeline = pipeline
+        try:
+            store.save()
+        except (TypeError, pickle.PicklingError) as exc:
+            # FIXME: not sure what to do here ...
+            store.pipeline = None
         return job
 
     @classmethod

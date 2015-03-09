@@ -427,19 +427,9 @@ class Command(BaseCommand):
                 # Dispatch jobs
                 # TODO: make this atomic
                 not_allocated = 0
-                devices = Device.objects.filter(status=Device.IDLE, is_pipeline=True)
                 for job in TestJob.objects.filter(status=TestJob.SUBMITTED, is_pipeline=True):
                     if job.actual_device is None:
-                        device_type = job.requested_device_type
-                        try:
-                            # Choose a random matching device
-                            # TODO: user restrictions and device tags need to be applied
-                            device = devices.filter(device_type=device_type).order_by('?')[0]
-                        except IndexError:
-                            self.logger.debug("Job <%d> (%s for %s) not allocated yet", job.id,
-                                              job.description, job.requested_device_type)
-                            not_allocated += 1
-                            continue
+                        device = job.requested_device
 
                         # Launch the job
                         create_job(job, device)
@@ -452,14 +442,7 @@ class Command(BaseCommand):
                                          device.worker_host.hostname, device.hostname)
                     try:
                         # Load device configuration
-                        # TODO: load variables from job definition
-                        env = jinja2.Environment(
-                            loader=jinja2.FileSystemLoader(
-                                [os.path.join(options['templates'], 'devices'),
-                                 os.path.join(options['templates'], 'device_types')]),
-                            trim_blocks=True)
-                        template = env.get_template("%s.yaml" % device.hostname)
-                        device_configuration = template.render()
+                        device_configuration = device.load_device_configuration()
 
                         if os.path.exists(options['env']):
                             env = open(options['env'], 'r').read()
@@ -469,6 +452,7 @@ class Command(BaseCommand):
                              'START', str(job.id), str(job.definition),
                              str(device_configuration),
                              str(open(options['env'], 'r').read())])
+                    # FIXME: add YAML.Error
                     except (jinja2.TemplateError, IOError) as exc:
                         if isinstance(exc, jinja2.TemplateNotFound):
                             self.logger.error("Template not found: '%s'", exc.message)

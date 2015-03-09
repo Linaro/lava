@@ -527,7 +527,7 @@ def jinja2_to_devicedictionary(data_dict):
     Do some string mangling to convert the template to a key value store
     The reverse of lava_scheduler_app.utils.devicedictionary_to_jinja2
     """
-    if type(data_dict) is not dict:
+    if type(data_dict) is not str:
         return None
     data = {}
     for line in data_dict.replace('{% ', '').replace(' %}', '').split('\n'):
