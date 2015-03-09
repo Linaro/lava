@@ -1,5 +1,6 @@
-lava-dispatcher (2015.01-2) UNRELEASED; urgency=medium
+lava-dispatcher (2015.03-1) experimental; urgency=medium
 
+  * New production release.
   * Update adt test run dependencies 
   * Add nose to pydist-overrides
 
