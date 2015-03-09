@@ -173,7 +173,7 @@ class SpecificCaseColumn(tables.Column):
         for result in results:
             if result.test_case_id != self.test_case.id:
                 continue
-            if result.result == result.RESULT_PASS and result.units:
+            if result.result == result.RESULT_PASS and result.measurement:
                 s = '%s %s' % (result.measurement, result.units)
             else:
                 s = result.RESULT_MAP[result.result]

@@ -516,6 +516,16 @@ So, for a UBoot operation, this results in a pipeline like:
  * ExpectShellSession - waits for the specified prompt to match
  * UBootCommandsAction - issues the commands to UBoot
 
+.. _starting_connections:
+
+Starting a connection
+---------------------
+
+Typically, a Connection is started by an Action within the Pipeline.
+The call to start a Connection must not return until all operations on
+that Connection are complete or the Pipeline determines that the
+Connection needs to be terminated.
+
 Using debug logs
 ****************
 

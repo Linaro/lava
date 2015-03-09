@@ -651,7 +651,7 @@ class SanitizedBundle(object):
         try:
             self.bundle_json = simplejson.load(stream)
             self.deserialization_error = None
-        except simplejson.JSONDeserializationError as ex:
+        except TypeError as ex:
             self.bundle_json = None
             self.deserialization_error = ex
         self.did_remove_attachments = False
@@ -1851,15 +1851,49 @@ def send_notification(title, template, data, address):
 
 def send_bundle_notifications(sender, bundle, **kwargs):
     try:
+        from dashboard_app.filters import evaluate_filter
+
         recipients = TestRunFilterSubscription.recipients_for_bundle(bundle)
         url_prefix = 'http://%s' % get_domain()
         for user, matches in recipients.items():
-            logging.info("sending bundle notification to %s", user)
-            data = {'bundle': bundle, 'user': user, 'matches': matches, 'url_prefix': url_prefix}
-            template = 'dashboard_app/filter_subscription_mail.txt'
-            filter_names = ', '.join(match.filter.name for match in matches)
-            title = "LAVA result notification: %s" % filter_names
-            send_notification(title, template, data, user.email)
+            logging.info("sending bundle notifications to %s", user)
+            for match in matches:
+                test_names = set()
+                for test_run in match.test_runs:
+                    test_names.add(test_run.test.test_id)
+
+                # Get the last two bundles.
+                filter_matches = list(evaluate_filter(user, match.filter.as_data())[:2])
+                # We're interested in the previous bundle.
+                previous_match = filter_matches[1]
+
+                test_names_previous = set()
+                for test_run in previous_match.test_runs:
+                    test_names_previous.add(test_run.test.test_id)
+
+                # Get differences between the tests in this and
+                # previous bundle.
+                test_diff_left = list(set(test_names) -
+                                      set(test_names_previous))
+                test_diff_right = list(set(test_names_previous) -
+                                       set(test_names))
+
+                # Total test count and pass test count diff.
+                test_count_diff = False
+                if match.pass_count != previous_match.pass_count or \
+                   match.result_count != previous_match.result_count:
+                    test_count_diff = True
+
+                data = {
+                    'bundle': bundle, 'user': user, 'url_prefix': url_prefix,
+                    'match': match, 'previous_match': previous_match,
+                    'test_diff_left': test_diff_left,
+                    'test_diff_right': test_diff_right,
+                    'test_count_diff': test_count_diff,
+                }
+                template = 'dashboard_app/filter_subscription_mail.txt'
+                title = "LAVA result notification: %s" % match.filter.name
+                send_notification(title, template, data, user.email)
 
     except:
         logging.exception("send_bundle_notifications failed")
@@ -1997,7 +2031,7 @@ class ImageReportChart(models.Model):
         verbose_name='Target goal')
 
     chart_height = models.PositiveIntegerField(
-        default=200,
+        default=300,
         validators=[
             MinValueValidator(200),
             MaxValueValidator(400)
@@ -2017,7 +2051,7 @@ class ImageReportChart(models.Model):
         verbose_name='Percentage')
 
     is_aggregate_results = models.BooleanField(
-        default=False,
+        default=True,
         verbose_name='Aggregate parametrized results')
 
     chart_visibility = models.CharField(
@@ -2029,7 +2063,7 @@ class ImageReportChart(models.Model):
     )
 
     is_build_number = models.BooleanField(
-        default=False,
+        default=True,
         verbose_name='Use build number')
 
     xaxis_attribute = models.CharField(

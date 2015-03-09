@@ -20,7 +20,8 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #
-# Pre install some usefull tools when stating a python script
+# Pre install some usefull tools when stating a python script with:
+# PYTHONSTARTUP=./share/startup.py python
 #
 print("=============================")
 print("Startup script for LAVA")
@@ -34,7 +35,7 @@ from linaro_django_xmlrpc.models import *
 
 print(" - Entering transaction mode")
 from django.db import transaction
-transaction.enter_transaction_management()
+transaction.set_autocommit(False)
 
 print(" - creating rollback function")
 

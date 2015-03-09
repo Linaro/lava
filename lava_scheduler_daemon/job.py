@@ -100,6 +100,9 @@ def argChecker(arg):
             return arg
     if isinstance(arg, str) and '\0' not in arg:
         return arg
+    elif arg is None:
+        logger.warning("No argument passed")
+        return ''
     else:
         arg = arg.replace('\0', '')
         logger.warning("%s contained null", arg)
@@ -207,7 +210,8 @@ class Job(object):
                                         args=args, env=None)
         if ret:
             self.logger.debug("reactor spawned process with status: %s", ret.status)
-            os.mkdir(output_dir)
+            if not os.path.exists(output_dir):
+                os.mkdir(output_dir)
             self._pidrecord = os.path.join(output_dir, "jobpid")
             with open(self._pidrecord, 'w') as f:
                 f.write("%s\n" % os.getpgid(ret.pid))

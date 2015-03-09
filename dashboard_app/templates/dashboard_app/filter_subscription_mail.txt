@@ -2,9 +2,20 @@ Dear {{ user.first_name }} {{ user.last_name }},
 
 The bundle {{ bundle.content_filename }} was uploaded at {{ bundle.uploaded_on|date:"Y-m-d H:i:s" }} by {% if bundle.uploaded_by %}{{ bundle.uploaded_by }}{% else %}an anonymous user{% endif %}.
 
-It matched the following filters that you are subscribed to:
+It matched the following filter that you are subscribed to:
 
-{% for match in matches %}{{ match.format_for_mail }}{% endfor %}
+{{ match.format_for_mail }}
+{% if test_count_diff %}The test count has changed compared to previous test run.
+There were {{ previous_match.result_count }} tests in total and now there are {{ match.result_count }}.
+There were {{ previous_match.pass_count }} tests passed and now there are {{ match.pass_count }}.{% endif %}
+{% if test_diff_left %}The following tests are added to the bundle:
+{% for test in test_diff_left %}
+{{ test }}{% endfor %}{% endif %}
+{% if test_diff_right %}The following tests are removed from the bundle:
+{% for test in test_diff_right %}
+{{ test }}{% endfor %}{% endif %}
+{% if not test_diff_left and not test_diff_right %}There were no changes in tests executed.{% endif %}
+
 You can see more details at:
 
   {{ url_prefix }}{{ bundle.get_absolute_url }}

@@ -36,10 +36,11 @@ the current page into context of where it "belongs".
 To use this system apply the @BreadCrumb(name, parent=parent_view,
 needs=['required', 'keywords']) decorator to your view function. To render
 breadcrumbs you can use the default template that is a part of
-"layout/content.html" template. Your context must include the bread_crumb_trail
-variable. To construct it call BreadCrumbTrail.leading_to(your_view_name, ...)
-passing any of  the keyword arguments specified in needs of your and any parent
-views (yes this is annoying).
+"layouts/content-bootstrap.html" template. Your context must include the
+bread_crumb_trail variable. To construct it call
+BreadCrumbTrail.leading_to(your_view_name, ...) passing any of  the keyword
+arguments specified in needs of your and any parent views (yes this is
+annoying).
 
 A mistake in pairing 'needs' to keywords passed to BreadCrumbTrail.leading_to()
 will result in logged warnings (either a name of the URL being not

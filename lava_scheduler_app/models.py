@@ -6,6 +6,7 @@ import urlparse
 import datetime
 import smtplib
 import socket
+import sys
 
 from django.conf import settings
 from django.contrib.auth.models import User, Group
@@ -32,6 +33,12 @@ from lava_dispatcher.job import validate_job_data
 from lava_scheduler_app import utils
 
 from linaro_django_xmlrpc.models import AuthToken
+
+
+# Make the open function accept encodings in python < 3.x
+if sys.version_info[0] < 3:
+    import codecs
+    open = codecs.open
 
 
 class JSONDataError(ValueError):
@@ -1048,12 +1055,12 @@ class TestJob(RestrictedResource):
     def output_file(self):
         output_path = os.path.join(self.output_dir, 'output.txt')
         if os.path.exists(output_path):
-            return open(output_path)
+            return open(output_path, encoding='utf-8', errors='replace')
         elif self.log_file:
             log_file = self.log_file
             if log_file:
                 try:
-                    log_file.open()
+                    open(log_file.name)
                 except IOError:
                     log_file = None
             return log_file

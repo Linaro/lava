@@ -345,7 +345,7 @@ def bundle_list_export(request, pathname):
     # Add results columns from denormalization object.
     bundle_keys.extend(["pass", "fail", "total"])
 
-    with open(file_path, 'w+') as csv_file:
+    with open(file_path, 'wb+') as csv_file:
         out = csv.DictWriter(csv_file, quoting=csv.QUOTE_ALL,
                              extrasaction='ignore',
                              fieldnames=bundle_keys)
@@ -471,7 +471,7 @@ def bundle_export(request, pathname, content_sha1):
     # Add bug link
     test_run_keys.append("bug_link")
 
-    with open(file_path, 'w+') as csv_file:
+    with open(file_path, 'wb+') as csv_file:
         out = csv.DictWriter(csv_file, quoting=csv.QUOTE_ALL,
                              extrasaction='ignore',
                              fieldnames=test_run_keys)
@@ -482,7 +482,7 @@ def bundle_export(request, pathname, content_sha1):
             test_run_denorm = test_run.denormalization
             test_run_dict = test_run.__dict__.copy()
             test_run_dict.update(test_run_denorm.__dict__)
-            test_run_dict["test"] = test_run.test.test_id
+            test_run_dict["test"] = test_run.test.test_id.encode('utf-8')
             test_run_dict["test_params"] = test_run.get_test_params()
             test_run_dict["device"] = test_run.show_device()
             test_run_dict["bug_link"] = " ".join([b.bug_link for b in test_run.bug_links.all()])
@@ -679,7 +679,7 @@ def test_run_export(request, pathname, content_sha1, analyzer_assigned_uuid):
 
     test_result_keys.append('bug_link')
 
-    with open(file_path, 'w+') as csv_file:
+    with open(file_path, 'wb+') as csv_file:
         out = csv.DictWriter(csv_file, quoting=csv.QUOTE_ALL,
                              extrasaction='ignore',
                              fieldnames=test_result_keys)

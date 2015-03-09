@@ -127,6 +127,72 @@ deploy to the requested location.
 
        os: debian
 
+  * **usb**: Deploy unchanged images to secondary USB media. Any bootloader
+    inside the image will **not** be used. Instead, the files needed for the
+    boot are specified in the deployment. The entire physical device is
+    available to the secondary deployment. Secondary relates to the expected
+    requirement of a primary boot (e.g. ramdisk or NFS) which provides a
+    suitable working environment to deploy the image directly to the
+    secondary device. See :ref:`secondary_media`.
+
+    Not all devices support USB media.
+
+    The test writer needs to provide the following information about the
+    image:
+
+     * **kernel**: The path, within the image, to the kernel which will
+       be used by the bootloader.
+     * **ramdisk**: (optional). If used, must be a path, within the image,
+       which the bootloader can use.
+     * **dtb**: The path, within the image, to the dtb which will
+       be used by the bootloader.
+     * **UUID**: The UUID of the partition which contains the root filesystem
+       of the booted image.
+     * **boot_part**: the partition on the media from which the bootloader
+       can read the kernel, ramdisk & dtb.
+
+    .. note:: If the image mounts the boot partition at a mounpoint below
+              the root directory of the image, the path to files within that
+              partition must **not** include that mountpoint. The bootloader
+              will read the files directly from the partition.
+
+    The UUID can be obtained by writing the image to local media and checking
+    the contents of ``/dev/disk/by-uuid``
+
+    The ramdisk may need adjustment for some bootloaders (like UBoot), so
+    mount the local media and use something like::
+
+     mkimage -A arm -T ramdisk -C none -d /mnt/boot/init.. /mnt/boot/init..u-boot
+
+  * **sata**: Deploy unchanged images to secondary SATA media. Any bootloader
+    inside the image will **not** be used. Instead, the files needed for the
+    boot are specified in the deployment. The entire physical device is
+    available to the secondary deployment. Secondary relates to the expected
+    requirement of a primary boot (e.g. ramdisk or NFS) which provides a
+    suitable working environment to deploy the image directly to the
+    secondary device. See :ref:`secondary_media`.
+
+    Not all devices support SATA media.
+
+    The test writer needs to provide the following information about the
+    image:
+
+     * **kernel**: The path, within the image, to the kernel which will
+       be used by the bootloader.
+     * **ramdisk**: (optional). If used, must be a path, within the image,
+       which the bootloader can use.
+     * **dtb**: The path, within the image, to the dtb which will
+       be used by the bootloader.
+     * **UUID**: The UUID of the partition which contains the root filesystem
+       of the booted image.
+     * **boot_part**: the partition on the media from which the bootloader
+       can read the kernel, ramdisk & dtb.
+
+    .. note:: If the image mounts the boot partition at a mounpoint below
+              the root directory of the image, the path to files within that
+              partition must **not** include that mountpoint. The bootloader
+              will read the files directly from the partition.
+
 Deploy example
 ==============
 
@@ -688,3 +754,211 @@ https://git.linaro.org/lava/lava-dispatcher.git/blob/HEAD:/lava_dispatcher/pipel
      ramdisk: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
      ramdisk-type: u-boot
      dtb: http://images.validation.linaro.org/functional-test-images/panda/omap4-panda-es.dtb
+
+.. _protocols:
+
+Protocols
+#########
+
+Protocols are similar to a Connection but operate over a known API
+instead of a shell connection. The protocol defines which API calls
+are available through the LAVA interface and the Pipeline determines
+when the API call is made.
+
+Not all protocols can be called from all actions. Not all protocols are
+able to share data between actions.
+
+A Protocol operates separately from any Connection, generally over a
+predetermined layer, e.g. TCP/IP sockets. Some protocols can access
+data passing over a Connection.
+
+.. _multinode_protocol:
+
+Multinode Protocol
+******************
+
+The initial protocol available with the refactoring is Multinode. This
+protocol allows actions within the Pipeline to make calls using the
+:ref:`multinode_api` outside of a test definition by wrapping the call
+inside the protocol. Wrapped calls do not necessarily have all of the
+functionality of the same call available in the test definition.
+
+The Multinode Protocol allows data to be shared between actions, including
+data generated in one test shell definition being made available over the
+protocol to a deploy or boot action of jobs with a different ``role``. It
+does this by adding handlers to the current Connection to intercept API
+calls.
+
+The Multinode Protocol can underpin the use of other tools without
+necessarily needing a dedicated Protocol class to be written for those
+tools. Using the Multinode Protocol is an extension of using the existing
+:ref:`multinode_api` calls within a test definition. The use of the
+protocol is an advanced use of LAVA and relies on the test writer
+carefully planning how the job will work.
+
+.. code-block:: yaml
+
+        protocols:
+          lava-multinode:
+            action: umount-retry
+            request: lava-sync
+            messageID: test
+
+This snippet would add a :ref:`lava_sync` call at the start of the
+UmountRetry action:
+
+* Actions which are too complex and would need data mid-operation need
+  to be split up.
+* When a particular action is repeatedly used with the protocol, a
+  dedicated action needs to be created. Any Strategy which explicitly
+  uses protocol support **must** create a dedicated action for each
+  protocol call.
+* To update the value available to the action, ensure that the key exists
+  in the matching :ref:`lava_send` and that the value in the job submission
+  YAML starts with **$** ::
+
+          protocols:
+          lava-multinode:
+            action: execute-qemu
+            request: lava-wait
+            messageID: test
+            message:
+              ipv4: $IPV4
+
+  This results in this data being available to the action::
+
+   {'message': {'ipv4': '192.168.0.3'}, 'messageID': 'test'}
+
+* Actions check for protocol calls at the start of the run step before
+  even the internal pipeline actions are run.
+* Only the named Action instance inside the Pipeline will make the call
+* The :ref:`multinode_api` asserts that repeated calls to :ref:`lava_sync`
+  with the same messageID will return immediately, so this protocol call
+  in a Retry action will only synchronise the first attempt at the action.
+* Some actions may make the protocol call at the end of the run step.
+
+The Multinode Protocol also exposes calls which are not part of the
+test shell API, which were formerly hidden inside the job setup phase.
+
+.. _lava_start:
+
+lava-start API call
+===================
+
+``lava-start`` determines when Multinode jobs start, according to the
+state of other jobs in the same Multinode group. This allows jobs with
+one ``role`` to determine when jobs of a different ``role`` start, so
+that the delayed jobs can be sure that particular services required for
+those jobs are available. For example, if the ``server`` role is actually
+providing a virtualisation platform and the ``client`` is a VM to be
+started on the ``server``, then a delayed start is necessary as the first
+action of the ``client`` role will be to attempt to connect to the server
+in order to boot the VM, before the ``server`` has even been deployed. The
+``lava-start`` API call allows the test writer to control when the ``client``
+is started, allowing the ``server`` test image to setup the virtualisation
+support in a way that allows attaching of debuggers or other interventions,
+before the VM starts.
+
+The client enables a delayed start by declaring which ``role`` the client
+can ``expect`` to send the signal to start the client.
+
+.. code-block:: yaml
+
+        protocols:
+          lava-multinode:
+            request: lava-start
+            expect_role: server
+            timeout:
+              minutes: 10
+
+The timeout specified for ``lava_start`` is the amount of time the job
+will wait for permission to start from the other jobs in the group.
+
+Internally, ``lava-start`` is implemented as a :ref:`lava_send` and a
+:ref:`lava_wait_all` for the role of the action which will make the
+``lava_start`` API call using the message ID ``lava_start``.
+
+It is an error to specify the same ``role`` and ``expect_role`` to
+``lava-start``.
+
+It is an error to specify ``lava-start`` on all roles within a job or
+on any action without a ``role`` specified.
+
+All jobs without a ``lava-start`` API call specified for the ``role`` of
+that job will start immediately. Other jobs will write to the log files
+that the start has been delayed, pending a call to ``lava-start`` by
+actions with the specified role(s).
+
+Subsequent calls to ``lava-start`` for a role which has already started
+will still be sent but will have no effect.
+
+If ``lava-start`` is specified for a ``test`` action, the test definition
+is responsible for making the ``lava-start`` call.
+
+.. code-block:: yaml
+
+ run:
+   steps:
+     - lava-send lava_start
+
+Passing data at startup
+-----------------------
+
+Various delayed start jobs will need dynamic data from the "server" job
+in order to be able to start, like an IP address. This is achieved by
+adding the ``lava-start`` call to the ``test`` action of the server
+where the test definition initiates a :ref:`lava_send` message. When this
+``test`` action completes, the protocol will send the ``lava-start``.
+The first thing the delayed start job does is a ``lava-wait`` which would
+be added to the ``deploy`` action of that job.
+
++-------------------------------+-------------------------+
+| ``Server`` role               | Delayed ``client`` role |
++===============================+=========================+
+| ``deploy``                    |                         |
++-------------------------------+-------------------------+
+| ``boot``                      |                         |
++-------------------------------+-------------------------+
+| ``test``                      |                         |
++-------------------------------+-------------------------+
+| - lava-send ipv4 ipaddr=$(IP) |                         |
++-------------------------------+-------------------------+
+| - lava-start                  |  ``deploy``             |
++-------------------------------+-------------------------+
+|                               |  - lava-wait ipv4       |
++-------------------------------+-------------------------+
+| - lava-test-case              |  ``boot``               |
++-------------------------------+-------------------------+
+
+.. code-block:: yaml
+
+      deploy:
+        role: client
+        protocols:
+          lava-multinode:
+            api: lava-wait
+            id: ipv4
+            key: ipaddr
+
+Depending on the implementation of the ``deploy`` action, determined by
+the Strategy class, the ``lava-wait`` call will be made at a suitable
+opportunity within the deployment. In the above example, the ``lava-send``
+call is made before ``lava-start`` - this allows the data to be stored
+in the lava coordinator and the ``lava-wait`` will receive the data
+immediately.
+
+The specified ``id`` and ``key`` **must** exactly match the message ID
+used for the :ref:`lava_send` call in the test definition. (So an **inline**
+test definition could be useful for the test action of the job definition
+for the ``server`` role. See :ref:`inline_test_definition_example`)
+
+.. code-block:: yaml
+
+      test:
+        role: server
+        protocols:
+          lava-multinode:
+            api: lava-start
+            roles:
+              - client
+

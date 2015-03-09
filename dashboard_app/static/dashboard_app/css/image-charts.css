@@ -99,7 +99,6 @@ div.selector .selector-chosen select {
 }
 
 .legend {
-    height: 200px;
     width: 15%;
     display: inline-block;
     overflow-x: scroll;
