@@ -1,0 +1,3 @@
+{% extends 'qemu.yaml' %}
+{% set memory = 1024 %}
+{% set mac_addr = '52:54:00:12:34:59' %}
