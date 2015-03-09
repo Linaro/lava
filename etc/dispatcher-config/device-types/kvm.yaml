@@ -23,7 +23,7 @@ actions:
           boot_options:
 {% if arch == 'arm64' %}
             {root: '{{ boot_root|default("/dev/vda2") }} rw rootwait', console: {{ boot_console|default('ttyAMA0 115200') }}, ip: dhcp, mem: 1024M}
-{% elif arch == 'adm64' %}
+{% elif arch == 'amd64' %}
             {root: {{ boot_root|default('/dev/sda1') }}, console: {{ boot_console|default('ttyS0,115200') }}}
 {% else %}
             {root: {{ boot_root|default('/dev/sda1') }}, console: {{ boot_console|default('ttyS0,115200') }}}
