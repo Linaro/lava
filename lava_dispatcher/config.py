@@ -58,6 +58,7 @@ class DeviceSchema(schema.Schema):
     image_boot_msg_timeout = schema.IntOption(default=120)
     kernel_boot_msg = schema.StringOption()
     kernel_boot_msg_timeout = schema.IntOption(default=120)
+    has_kernel_messages = schema.BoolOption(default=True)
     send_char = schema.BoolOption(default=True)
     test_image_prompts = schema.ListOption(default=["\(initramfs\)",
                                                     "linaro-test",
@@ -87,6 +88,7 @@ class DeviceSchema(schema.Schema):
     interrupt_boot_command = schema.StringOption()
     interrupt_boot_prompt = schema.StringOption()
     interrupt_boot_control_character = schema.StringOption()
+    fvp_terminal_port_pattern = schema.StringOption(default="terminal_0: Listening for serial connection on port (\d+)")
     bootloader_serial_delay_ms = schema.IntOption(default=0)
     test_shell_serial_delay_ms = schema.IntOption(default=0)
     lmc_dev_arg = schema.StringOption()

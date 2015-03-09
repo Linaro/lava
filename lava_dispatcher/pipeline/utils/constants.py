@@ -68,3 +68,6 @@ SHUTDOWN_MESSAGE = 'The system is going down for reboot NOW'
 
 # Kernel starting message
 BOOT_MESSAGE = 'Booting Linux'
+
+# LAVA Coordinator setup and finalize timeout
+LAVA_MULTINODE_SYSTEM_TIMEOUT = 90

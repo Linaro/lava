@@ -349,6 +349,18 @@ def _get_test_results(test_run_dir, testdef, stdout, err_log):
         if res is not None:
             results_from_log_file.append(res)
 
+    return_code = read_content(os.path.join(test_run_dir, 'return_code'), ignore_missing=True)
+    if return_code:
+        code = int(return_code)
+        res = {}
+        res['test_case_id'] = 'lava-test-shell-run'
+        if code == 0:
+            res['result'] = 'pass'
+        else:
+            res['result'] = 'fail'
+        res['message'] = 'exit code ' + return_code
+        results_from_log_file.append(res)
+
     return results_from_log_file
 
 

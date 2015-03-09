@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
+import os
 import unittest
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.job import Job, ResetContext
@@ -70,7 +71,8 @@ class TestMultiDeploy(unittest.TestCase):
 
     class FakeDevice(NewDevice):  # pylint:disable=abstract-method
         def __init__(self):
-            super(TestMultiDeploy.FakeDevice, self).__init__('bbb-01')
+            filename = os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml')
+            super(TestMultiDeploy.FakeDevice, self).__init__(filename)
 
     class TestDeploy(object):  # cannot be a subclass of Deployment without a full select function.
         def __init__(self, parent, parameters, job):

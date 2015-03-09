@@ -19,10 +19,12 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.pipeline.action import (
-    RetryAction,
     Action,
     JobError,
+)
+from lava_dispatcher.pipeline.logical import (
     LavaTest,
+    RetryAction,
 )
 
 

@@ -24,11 +24,11 @@
 from lava_dispatcher.pipeline.action import (
     Action,
     Pipeline,
-    Boot,
     JobError,
     Timeout,
     InfrastructureError,
 )
+from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
 from lava_dispatcher.pipeline.shell import (
     ConnectDevice,
@@ -115,7 +115,8 @@ class ExpectBootloaderSession(Action):
 
     def run(self, connection, args=None):
         connection = super(ExpectBootloaderSession, self).run(connection, args)
-        connection.prompt_str = self.parameters['u-boot']['parameters']['bootloader_prompt']
+        device_methods = self.job.device['actions']['boot']['methods']
+        connection.prompt_str = device_methods['u-boot']['parameters']['bootloader_prompt']
         self.logger.debug("%s: Waiting for prompt" % self.name)
         self.wait(connection)
         return connection
@@ -180,6 +181,9 @@ class UBootInterrupt(Action):
                 self.errors = "Unable to connect to device %s" % hostname
         else:
             self.logger.debug("%s may need manual intervention to reboot" % hostname)
+        device_methods = self.job.device['actions']['boot']['methods']
+        if 'bootloader_prompt' not in device_methods['u-boot']['parameters']:
+            self.errors = "Missing bootloader prompt for device"
 
     def run(self, connection, args=None):
         if not connection:
@@ -190,7 +194,8 @@ class UBootInterrupt(Action):
         # command = self.job.device['commands'].get('interrupt', '\n')
         self.wait(connection)
         connection.sendline(' \n')
-        connection.prompt_str = self.parameters['u-boot']['parameters']['bootloader_prompt']
+        device_methods = self.job.device['actions']['boot']['methods']
+        connection.prompt_str = device_methods['u-boot']['parameters']['bootloader_prompt']
         self.wait(connection)
         return connection
 
@@ -258,6 +263,7 @@ class UBootCommandOverlay(Action):
         self.name = "uboot-overlay"
         self.summary = "replace placeholders with job data"
         self.description = "substitute job data into uboot command list"
+        self.commands = None
 
     def validate(self):
         super(UBootCommandOverlay, self).validate()
@@ -279,6 +285,7 @@ class UBootCommandOverlay(Action):
         else:
             if self.parameters['type'] not in self.job.device['parameters']:
                 self.errors = "Unable to match specified boot type '%s' with device parameters" % self['type']
+        self.commands = device_methods[self.parameters['method']][self.parameters['commands']]['commands']
 
     def run(self, connection, args=None):
         """
@@ -288,7 +295,6 @@ class UBootCommandOverlay(Action):
         """
         # Multiple deployments would overwrite the value if parsed in the validate step.
         # FIXME: implement isolation for repeated steps.
-        commands = self.parameters[self.parameters['method']][self.parameters['commands']]['commands']
         try:
             ip_addr = dispatcher_ip()
         except InfrastructureError as exc:
@@ -320,7 +326,7 @@ class UBootCommandOverlay(Action):
         substitutions['{ROOT}'] = self.get_common_data('uuid', 'root')  # UUID label, not a file
         substitutions['{BOOT_PART}'] = self.get_common_data('uuid', 'boot_part')
 
-        self.data['u-boot']['commands'] = substitute(commands, substitutions)
+        self.data['u-boot']['commands'] = substitute(self.commands, substitutions)
         self.logger.debug("Parsed boot commands: %s" % '; '.join(self.data['u-boot']['commands']))
         return connection
 

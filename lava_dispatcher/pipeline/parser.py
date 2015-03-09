@@ -25,23 +25,34 @@ from lava_dispatcher.pipeline.job import Job, ResetContext
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,
+    Timeout,
+)
+from lava_dispatcher.pipeline.logical import (
     Deployment,
     Boot,
     LavaTest,
-    Timeout,
 )
-from lava_dispatcher.pipeline.actions.commands import CommandsAction  # pylint: disable=unused-import
 from lava_dispatcher.pipeline.deployment_data import get_deployment_data
 from lava_dispatcher.pipeline.power import FinalizeAction
+from lava_dispatcher.pipeline.connection import Protocol
 # Bring in the strategy subclass lists, ignore pylint warnings.
-import lava_dispatcher.pipeline.actions.deploy.strategies  # pylint: disable=unused-import
-import lava_dispatcher.pipeline.actions.boot.strategies  # pylint: disable=unused-import
-import lava_dispatcher.pipeline.actions.test.strategies  # pylint: disable=unused-import
-from lava_dispatcher.pipeline.actions.submit import SubmitResultsAction  # pylint: disable=unused-import
+# pylint: disable=unused-import
+from lava_dispatcher.pipeline.actions.commands import CommandsAction
+import lava_dispatcher.pipeline.actions.deploy.strategies
+import lava_dispatcher.pipeline.actions.boot.strategies
+import lava_dispatcher.pipeline.actions.test.strategies
+import lava_dispatcher.pipeline.protocols.strategies
+from lava_dispatcher.pipeline.actions.submit import SubmitResultsAction
 
 
 def parse_action(job_data, name, device, pipeline):
+    """
+    If protocols are defined, each Action may need to be aware of the protocol parameters.
+    """
     parameters = job_data[name]
+    if 'protocols' in pipeline.job.parameters:
+        parameters.update(pipeline.job.parameters['protocols'])
+
     if name == 'boot':
         Boot.select(device, job_data[name])(pipeline, parameters)
     elif name == 'test':
@@ -118,6 +129,9 @@ class JobParser(object):
         counts = {}
         job.device = device
         job.parameters['output_dir'] = output_dir
+        job.parameters['target'] = device.target
+        for instance in Protocol.select_all(job.parameters):
+            job.protocols.append(instance(job.parameters))
         pipeline = Pipeline(job=job)
         self._timeouts(data, job)
 

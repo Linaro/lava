@@ -128,6 +128,7 @@ import subprocess
 import tarfile
 import tempfile
 import time
+import sys
 from uuid import uuid4
 
 import yaml
@@ -164,6 +165,22 @@ XMOD = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH
 INVALID_CHARS = " $&()\"'<>/\\|;`"
 
 repeat_cnt = 0
+
+
+# Make the open function accept encodings in python < 3.x
+if sys.version_info[0] < 3:
+    import codecs
+    open = codecs.open
+
+
+def _validate_invalid_chars(parameter):
+    i = []
+    for e in INVALID_CHARS:
+        i.extend(utils.indices(parameter, e))
+    if i:
+        msg = "Parameter '%s' contains invalid symbol(s) at position(s): %s" % \
+              (parameter, ", ".join(map(str, i)))
+        raise GeneralError(msg)
 
 
 def _get_lava_proxy(context):
@@ -271,7 +288,12 @@ def _get_testdef_url_repo(testdef_repo, context, tmpdir):
 
 
 def _get_testdef_info(testdef):
+
+    # before populating metadata, validate the testdef name.
+    _validate_invalid_chars(testdef['metadata']['name'])
+
     metadata = {'os': '', 'devices': '', 'environment': ''}
+    metadata['name'] = testdef['metadata']['name']
     metadata['description'] = testdef['metadata'].get('description')
     metadata['format'] = testdef['metadata'].get('format')
     version = testdef['metadata'].get('version')
@@ -319,24 +341,11 @@ class TestDefinitionLoader(object):
                 self.load_from_repo(testcase)
 
     def load_from_url(self, url):
-        i = []
         tmpdir = utils.mkdtemp(self.tmpbase)
         testdef_file = download_image(url, self.context, tmpdir)
         with open(testdef_file, 'r') as f:
             logging.debug('loading test definition ...')
             testdef = yaml.safe_load(f)
-
-        for e in INVALID_CHARS:
-            i.extend(indices(testdef["metadata"]["name"], e))
-        if i:
-            msg = "Test name contains invalid symbol(s) at position(s): %s" % ", ".join(map(str, i))
-            raise GeneralError(msg)
-
-        try:
-            testdef["metadata"]["name"].encode()
-        except UnicodeEncodeError as e:
-            msg = "Test name contains non-ascii symbols: %s" % e
-            raise GeneralError(msg)
 
         if 'test-case-deps' in testdef:
             self._get_dependent_test_cases(testdef)
@@ -414,7 +423,7 @@ class TestDefinitionLoader(object):
             if 'test-case-deps' in testdef:
                 self._get_dependent_test_cases(testdef)
 
-            # for test paramters
+            # for test parameters
             if 'params' in testdef:
                 logging.debug('Get default parameters : %s' % testdef['params'])
                 info['default_params'] = str(testdef['params'])
@@ -424,11 +433,6 @@ class TestDefinitionLoader(object):
             idx = len(self.testdefs)
             self._append_testdef(
                 RepoTestDefinition(self.context, idx, testdef, repo, info))
-
-
-def indices(string, char):
-
-    return [i for i, c in enumerate(string) if c == char]
 
 
 def _bzr_info(url, bzrdir, name):
@@ -472,9 +476,9 @@ class URLTestDefinition(object):
         self.testdef = testdef
         self.testdef_metadata = testdef_metadata
         self.idx = idx
-        self.test_id = self.testdef['metadata']['name']
-        self.dirname = '%s_%s' % (idx, self.test_id)
         self.uuid = str(uuid4())
+        self.test_id = self.testdef_metadata['name']
+        self.dirname = '%s_%s' % (idx, self.uuid)
         self._sw_sources = []
         self.handler = None
         self.__pattern__ = None
@@ -608,7 +612,7 @@ class URLTestDefinition(object):
         fout.write('######\n')
 
     def _create_target_install(self, hostdir, targetdir):
-        with open('%s/install.sh' % hostdir, 'w') as f:
+        with open('%s/install.sh' % hostdir, 'w', encoding='utf-8') as f:
             self._inject_testdef_parameters(f)
             f.write('set -ex\n')
             f.write('cd %s\n' % targetdir)
@@ -661,12 +665,12 @@ class URLTestDefinition(object):
         utils.ensure_directory(hostdir)
         self._fetch_all_parameters()
         with open('%s/testdef.yaml' % hostdir, 'w') as f:
-            f.write(yaml.dump(self.testdef))
+            f.write(yaml.dump(self.testdef, encoding='utf-8', allow_unicode=True))
 
-        with open('%s/uuid' % hostdir, 'w') as f:
+        with open('%s/uuid' % hostdir, 'w', encoding='utf-8') as f:
             f.write(self.uuid)
 
-        with open('%s/testdef_metadata' % hostdir, 'w') as f:
+        with open('%s/testdef_metadata' % hostdir, 'w', encoding='utf-8') as f:
             f.write(yaml.safe_dump(self.testdef_metadata))
 
         if self.skip_install != "all":
@@ -675,7 +679,7 @@ class URLTestDefinition(object):
                     self._create_repos(hostdir)
                 self._create_target_install(hostdir, targetdir)
 
-        with open('%s/run.sh' % hostdir, 'w') as f:
+        with open('%s/run.sh' % hostdir, 'w', encoding='utf-8') as f:
             self._inject_testdef_parameters(f)
             f.write('set -e\n')
             f.write('export TESTRUN_ID=%s\n' % self.test_id)
@@ -958,7 +962,8 @@ class cmd_lava_test_shell(BaseAction):
         for fname in scripts_to_copy:
             with open(fname, 'r') as fin:
                 foutname = os.path.basename(fname)
-                with open('%s/bin/%s' % (mntdir, foutname), 'w') as fout:
+                with open('%s/bin/%s' % (mntdir, foutname), 'w',
+                          encoding='utf-8') as fout:
                     fout.write("#!%s\n\n" % shell)
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), XMOD)
@@ -972,7 +977,8 @@ class cmd_lava_test_shell(BaseAction):
         for fname in scripts_to_copy:
             with open(fname, 'r') as fin:
                 foutname = os.path.basename(fname)
-                with open('%s/bin/%s' % (mntdir, foutname), 'w') as fout:
+                with open('%s/bin/%s' % (mntdir, foutname), 'w',
+                          encoding='utf-8') as fout:
                     fout.write("#!%s\n\n" % shell)
                     # Target-specific scripts (add ENV to the generic ones)
                     if foutname == LAVA_GROUP_FILE:
@@ -1010,7 +1016,8 @@ class cmd_lava_test_shell(BaseAction):
         for fname in scripts_to_copy:
             with open(fname, 'r') as fin:
                 foutname = os.path.basename(fname)
-                with open('%s/bin/%s' % (mntdir, foutname), 'w') as fout:
+                with open('%s/bin/%s' % (mntdir, foutname), 'w',
+                          encoding='utf-8') as fout:
                     fout.write("#!%s\n\n" % shell)
                     # Target-specific scripts (add ENV to the generic ones)
                     fout.write("LAVA_TEST_BIN='%s/bin'\n" %
@@ -1060,7 +1067,8 @@ class cmd_lava_test_shell(BaseAction):
                 testdef.copy_test(hdir, tdir)
                 tdirs.append(tdir)
 
-            with open('%s/lava-test-runner.conf' % d, 'w') as f:
+            with open('%s/lava-test-runner.conf' % d, 'w',
+                      encoding='utf-8') as f:
                 for testdir in tdirs:
                     f.write('%s\n' % testdir)
 
@@ -1120,7 +1128,7 @@ class cmd_lava_test_shell(BaseAction):
             raise GeneralError(parse_err_msg)
 
     def _handle_testrun(self, params):
-        test_id = params[0]
+        test_id = params[0].decode('utf-8')
         testdef = self._testdefs_by_name[test_id]
 
         now = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')

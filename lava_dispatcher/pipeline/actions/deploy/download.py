@@ -37,8 +37,8 @@ from lava_dispatcher.pipeline.action import (
     Action,
     JobError,
     Pipeline,
-    RetryAction,
 )
+from lava_dispatcher.pipeline.logical import RetryAction
 from lava_dispatcher.pipeline.utils.constants import (
     FILE_DOWNLOAD_CHUNK_SIZE,
     HTTP_DOWNLOAD_CHUNK_SIZE,
@@ -54,8 +54,9 @@ from lava_dispatcher.pipeline.utils.constants import (
 class DownloaderAction(RetryAction):
     """
     The retry pipeline for downloads.
+    To allow any deploy action to work with multinode, each call *must* set a unique path.
     """
-    def __init__(self, key, path="/tmp"):
+    def __init__(self, key, path):
         super(DownloaderAction, self).__init__()
         self.name = "download_retry"
         self.description = "download with retry"

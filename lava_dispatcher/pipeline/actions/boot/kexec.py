@@ -20,11 +20,11 @@
 
 
 from lava_dispatcher.pipeline.action import (
-    Boot,
     Pipeline,
     Action,
     Timeout
 )
+from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction

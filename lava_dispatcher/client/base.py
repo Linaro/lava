@@ -544,7 +544,7 @@ class LavaClient(object):
                         status = 'fail'
                     self.context.test_data.add_result(cmd.split()[0], status)
 
-            self.setup_proxy(self.config.tester_ps1_pattern)
+            self.setup_proxy(self.target_device.tester_ps1_pattern)
 
             logging.debug("Checking for vm-group host")
             self.vm_group.start_vms()
@@ -600,10 +600,6 @@ class LavaClient(object):
                 self.context.test_data.add_metadata({'boot_retries': str(attempts)})
                 attempts += 1
                 continue
-
-            # Gain root access
-            self.proc.sendline('su')
-            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
 
             if not self.config.android_adb_over_usb:
                 try:

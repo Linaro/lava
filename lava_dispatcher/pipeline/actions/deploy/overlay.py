@@ -26,6 +26,7 @@ from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.action import Action, Pipeline
 from lava_dispatcher.pipeline.actions.deploy.testdef import TestDefinitionAction
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 
 
 class CustomisationAction(DeployAction):
@@ -42,6 +43,7 @@ class CustomisationAction(DeployAction):
         return connection
 
 
+# pylint: disable=too-many-instance-attributes
 class OverlayAction(DeployAction):
     """
     Creates a temporary location into which the lava test shell scripts are installed.
@@ -98,18 +100,19 @@ class OverlayAction(DeployAction):
         * copy runners into test runner directories
         """
         self.data[self.name].setdefault('location', mkdtemp())
+        self.logger.debug("Preparing overlay tarball in %s" % self.data[self.name]['location'])
         lava_path = os.path.abspath("%s/%s" % (self.data[self.name]['location'], self.data['lava_test_results_dir']))
-        self.logger.debug("lava_path:%s scripts:%s" % (lava_path, self.scripts_to_copy))
         for runner_dir in ['bin', 'tests', 'results']:
             # avoid os.path.join as lava_test_results_dir startswith / so location is *dropped* by join.
             path = os.path.abspath("%s/%s" % (lava_path, runner_dir))
-            self.logger.debug(path)
             if not os.path.exists(path):
                 os.makedirs(path)
+                self.logger.debug("makedir: %s" % path)
         for fname in self.scripts_to_copy:
             with open(fname, 'r') as fin:
-                foutname = os.path.basename(fname)
-                with open('%s/bin/%s' % (lava_path, foutname), 'w') as fout:
+                output_file = '%s/bin/%s' % (lava_path, os.path.basename(fname))
+                self.logger.debug("Creating %s" % output_file)
+                with open(output_file, 'w') as fout:
                     fout.write("#!%s\n\n" % self.parameters['deployment_data']['lava_test_sh_cmd'])
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), self.xmod)
@@ -129,8 +132,12 @@ class MultinodeOverlayAction(OverlayAction):
         self.lava_multi_node_test_dir = os.path.realpath(
             '%s/../../../lava_test_shell/multi_node' % os.path.dirname(__file__))
         self.lava_multi_node_cache_file = '/tmp/lava_multi_node_cache.txt'
+        self.role = None
+        self.protocol = MultinodeProtocol.name
 
     def populate(self, parameters):
+        # override the populate function of overlay action which provides the
+        # lava test directory settings etc.
         pass
 
     def validate(self):
@@ -138,12 +145,18 @@ class MultinodeOverlayAction(OverlayAction):
         # idempotency
         if 'actions' not in self.job.parameters:
             return
-        if 'target_group' not in self.job.parameters:
-            return
+        if 'protocols' in self.job.parameters and \
+                self.protocol in [protocol.name for protocol in self.job.protocols]:
+            if 'target_group' not in self.job.parameters['protocols'][self.protocol]:
+                return
+            if 'role' not in self.job.parameters['protocols'][self.protocol]:
+                self.errors = "multinode job without a specified role"
+            else:
+                self.role = self.job.parameters['protocols'][self.protocol]['role']
 
     def run(self, connection, args=None):
-        if 'target_group' not in self.job.parameters:
-            self.logger.debug("skipped %s - no target group" % self.name)
+        if self.role is None:
+            self.logger.debug("skipped %s" % self.name)
             return connection
         if 'location' not in self.data['lava-overlay']:
             raise RuntimeError("Missing lava overlay location")
@@ -153,28 +166,34 @@ class MultinodeOverlayAction(OverlayAction):
         shell = self.parameters['deployment_data']['lava_test_sh_cmd']
 
         # Generic scripts
+        lava_path = os.path.abspath("%s/%s" % (location, self.data['lava_test_results_dir']))
         scripts_to_copy = glob.glob(os.path.join(self.lava_multi_node_test_dir, 'lava-*'))
+        self.logger.debug(self.lava_multi_node_test_dir)
+        self.logger.debug("lava_path:%s scripts:%s" % (lava_path, scripts_to_copy))
 
         for fname in scripts_to_copy:
             with open(fname, 'r') as fin:
                 foutname = os.path.basename(fname)
-                with open('%s/bin/%s' % (location, foutname), 'w') as fout:
+                output_file = '%s/bin/%s' % (lava_path, foutname)
+                self.logger.debug("Creating %s" % output_file)
+                with open(output_file, 'w') as fout:
                     fout.write("#!%s\n\n" % shell)
                     # Target-specific scripts (add ENV to the generic ones)
                     if foutname == 'lava-group':
                         fout.write('LAVA_GROUP="\n')
-                        if 'roles' in self.job.parameters:
-                            for client_name in self.job.parameters['roles']:
-                                fout.write(r"\t%s\t%s\n" % (client_name, self.job.parameters['roles'][client_name]))
-                        else:
-                            self.logger.debug("group data MISSING")
+                        for client_name in self.job.parameters['protocols'][self.protocol]['roles']:
+                            if client_name == 'yaml_line':
+                                continue
+                            role_line = self.job.parameters['protocols'][self.protocol]['roles'][client_name]
+                            self.logger.debug("group roles:\t%s\t%s" % (client_name, role_line))
+                            fout.write(r"\t%s\t%s\n" % (client_name, role_line))
                         fout.write('"\n')
                     elif foutname == 'lava-role':
-                        fout.write("TARGET_ROLE='%s'\n" % self.job.parameters['role'])
+                        fout.write("TARGET_ROLE='%s'\n" % self.job.parameters['protocols'][self.protocol]['role'])
                     elif foutname == 'lava-self':
-                        fout.write("LAVA_HOSTNAME='%s'\n" % self.job.device.config.hostname)
+                        fout.write("LAVA_HOSTNAME='%s'\n" % self.job.device.target)
                     else:
-                        fout.write("LAVA_TEST_BIN='%s/bin'\n" % self.lava_test_dir)
+                        fout.write("LAVA_TEST_BIN='%s/bin'\n" % self.data['lava_test_results_dir'])
                         fout.write("LAVA_MULTI_NODE_CACHE='%s'\n" % self.lava_multi_node_cache_file)
                         # always write out full debug logs
                         fout.write("LAVA_MULTI_NODE_DEBUG='yes'\n")

@@ -108,8 +108,8 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
     def _check_action(self, action):  # pylint: disable=no-self-use
         if not action or not issubclass(type(action), Action):
             raise RuntimeError("Only actions can be added to a pipeline: %s" % action)
-        if isinstance(action, DiagnosticAction):
-            raise RuntimeError("Diagnostic actions need to be triggered, not added to a pipeline.")
+        # if isinstance(action, DiagnosticAction):
+        #     raise RuntimeError("Diagnostic actions need to be triggered, not added to a pipeline.")
         if not action:
             raise RuntimeError("Unable to add empty action to pipeline")
         # FIXME: these should be part of the validate from the base Action class
@@ -213,10 +213,19 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             if child.internal_pipeline:
                 child.internal_pipeline.pipeline_cleanup()
 
-    def cleanup_actions(self):
+    def cleanup_actions(self, connection, message):
+        if not self.job.pipeline:
+            # is this only unit-tests doing this?
+            return
         for child in self.job.pipeline.actions:
             if child.internal_pipeline:
                 child.internal_pipeline.pipeline_cleanup()
+        # exit out of the pipeline & run the Finalize action to close the connection and poweroff the device
+        for child in self.job.pipeline.actions:
+            # rely on the action name here - use isinstance if pipeline moves into a dedicated module.
+            if child.name == 'finalize':
+                child.errors = message
+                child.run(connection, None)
 
     def _diagnose(self, connection):
         """
@@ -251,7 +260,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             """
             logger = YamlLogger("root")
             logger.debug("Cancelled")
-            self.cleanup_actions()
+            self.cleanup_actions(None, "Cancelled")
             signal.signal(signal.SIGINT, signal.default_int_handler)
             raise KeyboardInterrupt
 
@@ -291,12 +300,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 if new_connection:
                     connection = new_connection
             except KeyboardInterrupt:
-                # exit out of the pipeline & run the Finalize action to close the connection and poweroff the device
-                for child in self.job.pipeline.actions:
-                    # rely on the action name here - use isinstance if pipeline moves into a dedicated module.
-                    if child.name == 'finalize':
-                        child.errors = "Cancelled"
-                        child.run(connection, args)
+                self.cleanup_actions(connection, "Cancelled")
                 sys.exit(1)
             except (JobError, InfrastructureError) as exc:
                 action.errors = exc.message
@@ -304,6 +308,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 action.results = {"fail": exc}
                 self._diagnose(connection)
                 action.cleanup()
+                self.cleanup_actions(connection, exc.message)
                 raise exc
             finally:
                 # Close the log handler
@@ -350,6 +355,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         self.timeout = Timeout(self.name)
         self.max_retries = 1  # unless the strategy or the job parameters change this, do not retry
         self.diagnostics = []
+        self.protocols = []  # list of protocol objects supported by this action, full list in job.protocols
 
     # public actions (i.e. those who can be referenced from a job file) must
     # declare a 'class-type' name so they can be looked up.
@@ -681,296 +687,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
             return
         self.logger.debug("%s: Wait for prompt. %s seconds" % (self.name, int(self.timeout.duration)))
         connection.wait()
-
-
-class RetryAction(Action):
-    """
-    RetryAction support failure_retry and repeat.
-    failure_retry returns upon the first success.
-    repeat continues the loop whether there is a failure or not.
-    Only the top level Boot and Test actions support 'repeat' as this is set in the job.
-    """
-
-    def __init__(self):
-        super(RetryAction, self).__init__()
-        self.retries = 0
-        self.sleep = 1
-
-    def validate(self):
-        """
-        The reasoning here is that the RetryAction should be in charge of an internal pipeline
-        so that the retry logic only occurs once and applies equally to the entire pipeline
-        of the retry.
-        """
-        super(RetryAction, self).validate()
-        if not self.internal_pipeline:
-            raise RuntimeError("Retry action %s needs to implement an internal pipeline" % self.name)
-
-    def run(self, connection, args=None):
-        while self.retries < self.max_retries:
-            try:
-                new_connection = self.internal_pipeline.run_actions(connection)
-                if 'repeat' not in self.parameters:
-                    # failure_retry returns on first success. repeat returns only at max_retries.
-                    return new_connection
-            except (JobError, InfrastructureError, TestError) as exc:
-                self.retries += 1
-                self.errors = "%s failed: %d of %d attempts. '%s'" % (self.name, self.retries, self.max_retries, exc)
-                if self.timeout:
-                    self.logger.debug(" %s: timeout. %s seconds" % (self.timeout.name, int(self.timeout.duration)))
-                time.sleep(self.sleep)
-        if not self.valid:
-            self.errors = "%s retries failed for %s" % (self.retries, self.name)
-        return connection
-
-    # FIXME: needed?
-    def __call__(self, connection):
-        self.run(connection)
-
-
-class DiagnosticAction(Action):  # pylint: disable=abstract-class-not-used
-
-    def __init__(self):
-        """
-        Base class for actions which are run only if a failure is detected.
-        Diagnostics have no level and are not intended to be added to Pipeline.
-        """
-        super(DiagnosticAction, self).__init__()
-        self.name = "diagnose"
-        self.summary = "diagnose action failure"
-        self.description = "action-specific diagnostics in case of failure"
-
-    @classmethod
-    def trigger(cls):
-        raise NotImplementedError("Define in the subclass: %s" % cls)
-
-    def run(self, connection, args=None):
-        """
-        Log the requested diagnostic.
-        Raises NotImplementedError if subclass has omitted a trigger classmethod.
-        """
-        self.logger.debug("%s diagnostic triggered." % self.trigger())
-        return connection
-
-
-class AdjuvantAction(Action):  # pylint: disable=abstract-class-not-used
-    """
-    Adjuvants are associative actions - partners and helpers which can be executed if
-    the initial Action determines a particular state.
-    Distinct from DiagnosticActions, Adjuvants execute within the normal flow of the
-    pipeline but support being skipped if the functionality is not required.
-    The default is that the Adjuvant is omitted. i.e. Requiring an adjuvant is an
-    indication that the device did not perform entirely as could be expected. One
-    example is when a soft reboot command fails, an Adjuvant can cause a power cycle
-    via the PDU.
-    """
-    def __init__(self):
-        super(AdjuvantAction, self).__init__()
-        self.adjuvant = False
-
-    @classmethod
-    def key(cls):
-        raise NotImplementedError("Base class has no key")
-
-    def validate(self):
-        super(AdjuvantAction, self).validate()
-        try:
-            self.key()
-        except NotImplementedError:
-            self.errors = "Adjuvant action without a key: %s" % self.name
-
-    def run(self, connection, args=None):
-        if not connection:
-            raise RuntimeError("Called %s without an active Connection" % self.name)
-        if not self.valid or self.key() not in self.data:
-            return connection
-        if self.data[self.key()]:
-            self.adjuvant = True
-            self.logger.debug("Adjuvant %s required" % self.name)
-        else:
-            self.logger.debug("Adjuvant %s skipped" % self.name)
-        return connection
-
-
-class Deployment(object):  # pylint: disable=abstract-class-not-used
-    """
-    Deployment is a strategy class which aggregates Actions
-    until the request from the YAML can be validated or rejected.
-    Translates the parsed pipeline into Actions and populates
-    each Action with parameters.
-    Primary purpose of the Deployment class is to allow the
-    parser to select the correct deployment before initialising
-    any Actions.
-    """
-
-    priority = 0
-
-    def __init__(self, parent):
-        self.__parameters__ = {}
-        self.pipeline = parent
-        self.job = parent.job
-
-    @property
-    def parameters(self):
-        """
-        All data which this action needs to have available for
-        the prepare, run or post_process functions needs to be
-        set as a parameter. The parameters will be validated
-        during pipeline creation.
-        This allows all pipelines to be fully described, including
-        the parameters supplied to each action, as well as supporting
-        tests on each parameter (like 404 or bad formatting) during
-        validation of each action within a pipeline.
-        Parameters are static, internal data within each action
-        copied directly from the YAML or Device configuration.
-        Dynamic data is held in the context available via the parent Pipeline()
-        """
-        return self.__parameters__
-
-    @parameters.setter
-    def parameters(self, data):
-        self.__parameters__.update(data)
-
-    @classmethod
-    def accepts(cls, device, parameters):  # pylint: disable=unused-argument
-        """
-        Returns True if this deployment strategy can be used the the
-        given device and details of an image in the parameters.
-
-        Must be implemented by subclasses.
-        """
-        return NotImplementedError("accepts %s" % cls)
-
-    @classmethod
-    def select(cls, device, parameters):
-
-        candidates = cls.__subclasses__()  # pylint: disable=no-member
-        willing = [c for c in candidates if c.accepts(device, parameters)]
-
-        if len(willing) == 0:
-            raise NotImplementedError(
-                "No deployment strategy available for the given "
-                "device '%s'. %s" % (device['hostname'], cls))
-
-        # higher priority first
-        compare = lambda x, y: cmp(y.priority, x.priority)
-        prioritized = sorted(willing, compare)
-
-        return prioritized[0]
-
-
-class Boot(object):
-    """
-    Allows selection of the boot method for this job within the parser.
-    """
-
-    priority = 0
-
-    def __init__(self, parent):
-        self.__parameters__ = {}
-        self.pipeline = parent
-        self.job = parent.job
-
-    @classmethod
-    def accepts(cls, device, parameters):  # pylint: disable=unused-argument
-        """
-        Returns True if this deployment strategy can be used the the
-        given device and details of an image in the parameters.
-
-        Must be implemented by subclasses.
-        """
-        return NotImplementedError("accepts %s" % cls)
-
-    @classmethod
-    def select(cls, device, parameters):
-        candidates = cls.__subclasses__()  # pylint: disable=no-member
-        willing = [c for c in candidates if c.accepts(device, parameters)]
-        if len(willing) == 0:
-            raise NotImplementedError(
-                "No boot strategy available for the device "
-                "'%s' with the specified job parameters. %s" % (device['hostname'], cls)
-            )
-
-        # higher priority first
-        compare = lambda x, y: cmp(y.priority, x.priority)
-        prioritized = sorted(willing, compare)
-
-        return prioritized[0]
-
-
-class LavaTest(object):  # pylint: disable=abstract-class-not-used
-    """
-    Allows selection of the LAVA test method for this job within the parser.
-    """
-
-    priority = 1
-
-    def __init__(self, parent):
-        self.__parameters__ = {}
-        self.pipeline = parent
-        self.job = parent.job
-
-    @contextmanager
-    def test(self):
-        """
-        This method must be implemented by subclasses.
-        """
-        raise NotImplementedError("test %s" % self)
-
-    @classmethod
-    def accepts(cls, device, parameters):  # pylint: disable=unused-argument
-        """
-        Returns True if this Lava test strategy can be used on the
-        given device and details of an image in the parameters.
-
-        Must be implemented by subclasses.
-        """
-        return NotImplementedError("accepts %s" % cls)
-
-    @classmethod
-    def select(cls, device, parameters):
-        candidates = cls.__subclasses__()  # pylint: disable=no-member
-        willing = [c for c in candidates if c.accepts(device, parameters)]
-        if len(willing) == 0:
-            if hasattr(device, 'parameters'):
-                msg = "No test strategy available for the device "\
-                      "'%s' with the specified job parameters. %s" % (device['hostname'], cls)
-            else:
-                msg = "No test strategy available for the device. %s" % cls
-            raise NotImplementedError(msg)
-
-        # higher priority first
-        compare = lambda x, y: cmp(y.priority, x.priority)
-        prioritized = sorted(willing, compare)
-
-        return prioritized[0]
-
-
-class PipelineContext(object):  # pylint: disable=too-few-public-methods
-    """
-    Replacement for the LavaContext which only holds data for the device for the
-    current pipeline.
-
-    The PipelineContext is the home for dynamic data generated by action run steps
-    where that data is required by a later step. e.g. the mountpoint used by the
-    loopback mount action will be needed by the umount action later.
-
-    Data which does not change for the lifetime of the job must be kept as a
-    parameter of the job, e.g. output_dir and target.
-
-    Do NOT store data here which is not relevant to ALL pipelines, this is NOT
-    the place for any configuration relating to devices or device types. The
-    NewDevice class loads only the configuration required for the one device.
-
-    Keep the memory footprint of this class as low as practical.
-
-    If a particular piece of data is used in multiple places, use the 'common'
-    area to avoid all classes needing to know which class populated the data.
-    """
-
-    # FIXME: needs to pick up minimal general purpose config, e.g. proxy or cookies
-    def __init__(self):
-        self.pipeline_data = {'common': {}}
 
 
 class Timeout(object):
