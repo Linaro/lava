@@ -742,7 +742,7 @@ class Device(RestrictedResource):
                     None, "Job submission failed for health job: %s" % e)
                 raise JSONDataError("Health check job submission failed: %s" % e)
 
-    def load_device_configuration(self):
+    def load_device_configuration(self, job_ctx=None):
         """
         Maps the DeviceDictionary to the static templates in /etc/.
         Use lava-server manage device-dictionary --import <FILE>
@@ -753,6 +753,11 @@ class Device(RestrictedResource):
         """
         if self.is_pipeline is False:
             return None
+
+        # The job_ctx should not be None while an empty dict is ok
+        if job_ctx is None:
+            job_ctx = {}
+
         element = DeviceDictionary.get(self.hostname)
         # TODO: hardcoded path (determined by setup.py)
         path = '/etc/lava-server/dispatcher-config/'
@@ -769,7 +774,8 @@ class Device(RestrictedResource):
             loader=jinja2.ChoiceLoader([string_loader, type_loader]),
             trim_blocks=True)
         template = env.get_template("%s.yaml" % self.hostname)
-        return yaml.load(template.render())
+
+        return yaml.load(template.render(**job_ctx))
 
     def previous_state(self):
         """Returns the previous state which will not be any form of device

@@ -27,6 +27,7 @@ from optparse import make_option
 import os
 import signal
 import time
+import yaml
 import zmq
 
 from django.core.management.base import BaseCommand
@@ -441,19 +442,21 @@ class Command(BaseCommand):
                         self.logger.info("START %d => %s (%s) (retrying)", job.id,
                                          device.worker_host.hostname, device.hostname)
                     try:
-                        # Load device configuration
-                        device_configuration = device.load_device_configuration()
+                        # Load job definition to get the variables for template
+                        # rendering
+                        job_def = yaml.load(job.definition)
+                        job_ctx = job_def.get('context', {})
 
-                        if os.path.exists(options['env']):
-                            env = open(options['env'], 'r').read()
+                        # Load device configuration
+                        device_configuration = device.load_device_configuration(job_ctx)
 
                         controler.send_multipart(
                             [str(job.actual_device.worker_host.hostname),
                              'START', str(job.id), str(job.definition),
                              str(device_configuration),
                              str(open(options['env'], 'r').read())])
-                    # FIXME: add YAML.Error
-                    except (jinja2.TemplateError, IOError) as exc:
+
+                    except (jinja2.TemplateError, IOError, yaml.YAMLError) as exc:
                         if isinstance(exc, jinja2.TemplateNotFound):
                             self.logger.error("Template not found: '%s'", exc.message)
                             msg = "Infrastructure error: Template not found: '%s'" % \
@@ -468,6 +471,11 @@ class Command(BaseCommand):
                                               options['env'], exc.strerror)
                             msg = "Infrastructure error: cannot open '%s': %s" % \
                                   (options['env'], exc.strerror)
+                        elif isinstance(exc, yaml.YAMLError):
+                            self.logger.error("Unable to parse job definition: %s",
+                                              exc)
+                            msg = "Infrastructure error: cannot parse job definition: %s" % \
+                                  exc
                         else:
                             self.logger.exception(exc)
                             msg = "Infrastructure error: %s" % exc.message
