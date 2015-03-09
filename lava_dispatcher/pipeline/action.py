@@ -636,7 +636,9 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
                      and not isinstance(getattr(self, attr), types.MethodType)])
 
         # noinspection PySetFunctionToLiteral
-        for attr in attrs - set(['internal_pipeline', 'job', 'logger', 'pipeline', 'parameters']):
+        for attr in attrs - set([
+                'internal_pipeline', 'job', 'logger', 'pipeline',
+                'parameters', 'SignalDirector', 'signal_director']):
             if attr == 'timeout':
                 data['timeout'] = {'duration': self.timeout.duration, 'name': self.timeout.name}
             elif attr == 'url':
