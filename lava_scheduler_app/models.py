@@ -1247,7 +1247,10 @@ class TestJob(RestrictedResource):
         device_type = _get_device_type(user, job_data['device_type'])
         allow = _check_submit_to_device(list(Device.objects.filter(
                                         device_type=device_type)), user)
+        # FIXME: device tags support in pipeline is not implemented yet
 
+        # FIXME: multinode scheduling
+        # add pipeline to pipelinestore, update with results later.
         job = TestJob(definition=yaml_data, original_definition=yaml_data,
                       submitter=user,
                       requested_device_type=device_type,
