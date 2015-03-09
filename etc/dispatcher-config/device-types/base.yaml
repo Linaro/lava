@@ -28,10 +28,9 @@
 {% set base_nfsroot_args = ("nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr")%}
 
 {% block commands %}
-commands:
 {% if connection_command %}
+commands:
     connect: {{ connection_command }}
-{% endif %}
 {% if hard_reset_command %}
     hard_reset: {{ hard_reset_command }}
 {% endif %}
@@ -40,6 +39,7 @@ commands:
 {% endif %}
 {% if power_on_command %}
     power_on: {{ power_on_command }}
+{% endif %}
 {% endif %}
 {% endblock %}
 
