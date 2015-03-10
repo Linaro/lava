@@ -129,7 +129,7 @@ class Factory(object):
             return None
         return job
 
-    def create_kvm_job(self, filename, output_dir=None):  # pylint: disable=no-self-use
+    def create_kvm_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         parser = JobParser()

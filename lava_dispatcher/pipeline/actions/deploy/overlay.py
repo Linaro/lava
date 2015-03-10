@@ -87,6 +87,8 @@ class OverlayAction(DeployAction):
             self.scripts_to_copy.append(script)
         if not self.scripts_to_copy:
             self.errors = "Unable to locate lava_test_shell support scripts."
+        if self.job.parameters.get('output_dir', None) is None:
+            self.errors = "Unable to use output directory."
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)

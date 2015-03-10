@@ -44,7 +44,7 @@ class Factory(object):  # pylint: disable=too-few-public-methods
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
-    def create_bbb_job(self, filename, output_dir=None):  # pylint: disable=no-self-use
+    def create_bbb_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(kvm_yaml) as sample_job_data:
@@ -269,7 +269,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         sample_job_data = open(sample_job_file)
-        job = job_parser.parse(sample_job_data, cubie, 4212, None)
+        job = job_parser.parse(sample_job_data, cubie, 4212, None, output_dir='/tmp/')
         job.validate()
         u_boot_media = job.pipeline.actions[1].internal_pipeline.actions[0]
         self.assertIsInstance(u_boot_media, UBootSecondaryMedia)
