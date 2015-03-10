@@ -11,7 +11,6 @@ import smtplib
 import socket
 import sys
 import yaml
-import pickle
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.sites.models import Site
@@ -834,7 +833,7 @@ class JobFailureTag(models.Model):
         return self.name
 
 
-def _get_tag_list(tags):
+def _get_tag_list(tags, pipeline=False):
     """
     Creates a list of Tag objects for the specified device tags
     for singlenode and multinode jobs.
@@ -844,12 +843,15 @@ def _get_tag_list(tags):
     """
     taglist = []
     if type(tags) != list:
-        raise JSONDataError("'device_tags' needs to be a list - received %s" % type(tags))
+        msg = "'device_tags' needs to be a list - received %s" % type(tags)
+        raise yaml.YAMLError(msg) if pipeline else JSONDataError(msg)
     for tag_name in tags:
         try:
             taglist.append(Tag.objects.get(name=tag_name))
         except Tag.DoesNotExist:
-            raise JSONDataError("Device tag '%s' does not exist in the database." % tag_name)
+            msg = "Device tag '%s' does not exist in the database." % tag_name
+            raise yaml.YAMLError(msg) if pipeline else JSONDataError(msg)
+
     return taglist
 
 
@@ -1305,11 +1307,10 @@ class TestJob(RestrictedResource):
         if type(allowed_list) is not list:
             return None, None
 
-        # FIXME: check device tags too.
         for device in allowed_list:
             try:
                 device_config = device.load_device_configuration()
-            except (jinja2.TemplateError, yaml.YAMLError, IOError):
+            except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
                 # FIXME: report the exceptions as useful user messages
                 continue
             if not device_config:
@@ -1321,10 +1322,11 @@ class TestJob(RestrictedResource):
                 obj.target = device.hostname
             obj['hostname'] = device.hostname
             pipeline_job = parser.parse(definition, obj, 0, None, None)
-            # validate, if valid, return the fist match
+            # validate, if valid, return the first match
             try:
-                pipeline_job.validate(simulate=True)
-            except JobError:
+                pipeline_job.pipeline.validate_actions()
+            except (AttributeError, JobError) as exc:
+                # FIXME: output these errors from this classmethod somehow, if no devices match.
                 continue
             if pipeline_job:
                 return device, pipeline_job.describe()
@@ -1336,7 +1338,17 @@ class TestJob(RestrictedResource):
         device_type = _get_device_type(user, job_data['device_type'])
         allow = _check_submit_to_device(list(Device.objects.filter(
             device_type=device_type)), user)
-        device, pipeline = TestJob.select_device(allow, yaml_data)
+
+        taglist = _get_tag_list(job_data.get('tags', []), True)
+        if taglist:
+            supported = _check_tags(taglist, device_type=device_type)
+            _check_tags_support(supported, allow)
+        else:
+            # no tags defined, any allowed device can be selected
+            supported = allow
+
+        # now verify whether the supported devices parse as valid pipeline jobs.
+        device, pipeline = TestJob.select_device(supported, yaml_data)
 
         if not device or not pipeline:
             raise DevicesUnavailableException("None of the allowed devices are valid for this job")
@@ -1360,12 +1372,12 @@ class TestJob(RestrictedResource):
             # FIXME: needs a unit test
             raise RuntimeError("Duplicate job id?")
         store = JobPipeline(job_id=job.id)
-        store.pipeline = pipeline
-        try:
-            store.save()
-        except (TypeError, pickle.PicklingError) as exc:
-            # FIXME: not sure what to do here ...
-            store.pipeline = None
+        # saving as YAML avoids pickling errors - the pipelinestore is read-only
+        store.pipeline = yaml.dump(pipeline)
+        store.save()
+
+        for tag in Tag.objects.filter(name__in=taglist):
+            job.tags.add(tag)
         return job
 
     @classmethod
