@@ -398,6 +398,11 @@ class DeviceDictionaryTable(models.Model):
     def __unicode__(self):
         return self.kee.replace('__KV_STORE_::lava_scheduler_app.models.DeviceDictionary:', '')
 
+    def lookup_device_dictionary(self):
+        val = self.kee
+        msg = val.replace('__KV_STORE_::lava_scheduler_app.models.DeviceDictionary:', '')
+        return DeviceDictionary.get(msg)
+
 
 class ExtendedKVStore(kvmodels.Model):
     """
@@ -996,6 +1001,21 @@ def _check_device_types(user):
 class PipelineStore(models.Model):
     kee = models.CharField(max_length=255)
     value = models.TextField()
+
+    def lookup_job_pipeline(self):
+        """
+        Exports the pipeline as YAML
+        """
+        # FIXME: add a command line call to retrieve specific items - too slow to show in admin interface.
+        val = self.kee
+        msg = val.replace('__KV_STORE_::lava_scheduler_app.models.JobPipeline:', '')
+        data = JobPipeline.get(msg)
+        if type(data.pipeline) == str:
+            # FIXME: check if these are still required after changes in pipeline.describe()
+            data.pipeline = data.pipeline.replace('stream: !!python/object:mod_wsgi.Log {}', '')
+            data.pipeline = data.pipeline.replace('_RLock__block: !!python/object:thread.lock {}', '')
+            data.pipeline = yaml.load(data.pipeline)
+        return data
 
 
 class JobPipeline(PipelineKVStore):

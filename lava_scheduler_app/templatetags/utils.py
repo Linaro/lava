@@ -58,8 +58,7 @@ def get_item(dictionary, key):
 def get_device_dictionary(data):
     key = os.path.basename(os.path.dirname(data))
     device_dict_obj = DeviceDictionaryTable.objects.get(id=key)
-    msg = device_dict_obj.kee.replace('__KV_STORE_::lava_scheduler_app.models.DeviceDictionary:', '')
-    device_dict = DeviceDictionary.get(msg)
+    device_dict = device_dict_obj.lookup_device_dictionary()
     return device_dict.to_dict()
 
 
@@ -67,8 +66,7 @@ def get_device_dictionary(data):
 def get_pipeline_store(data):
     key = os.path.basename(os.path.dirname(data))
     device_dict_obj = PipelineStore.objects.get(id=key)
-    msg = device_dict_obj.kee.replace('__KV_STORE_::lava_scheduler_app.models.JobPipeline:', '')
-    device_dict = JobPipeline.get(msg)
+    device_dict = device_dict_obj.lookup_job_pipeline()
     return device_dict.to_dict()
 
 

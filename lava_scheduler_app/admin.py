@@ -2,9 +2,8 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from lava_scheduler_app.models import (
     Device, DeviceStateTransition, DeviceType, TestJob, Tag, JobFailureTag,
-    User, Worker, DefaultDeviceOwner, DeviceDictionaryTable, PipelineStore
+    User, Worker, DefaultDeviceOwner, DeviceDictionaryTable
 )
-from django_kvstore import models as kvmodels
 
 
 class DefaultOwnerInline(admin.StackedInline):
@@ -157,6 +156,17 @@ class WorkerAdmin(admin.ModelAdmin):
                     'uptime', 'arch')
 
 
+class DeviceDictionaryAdmin(admin.ModelAdmin):
+
+    def device_hostname(self, obj):
+        device_dict = obj.lookup_device_dictionary()
+        return device_dict.hostname
+
+    list_display = ('device_hostname', )
+    ordering = ('kee', )  # django is unable to sort other than by database fields.
+    actions = []
+
+
 admin.site.register(Device, DeviceAdmin)
 admin.site.register(DeviceStateTransition, DeviceStateTransitionAdmin)
 admin.site.register(DeviceType, DeviceTypeAdmin)
@@ -164,5 +174,4 @@ admin.site.register(TestJob, TestJobAdmin)
 admin.site.register(Tag)
 admin.site.register(JobFailureTag)
 admin.site.register(Worker, WorkerAdmin)
-admin.site.register(DeviceDictionaryTable)
-admin.site.register(PipelineStore)
+admin.site.register(DeviceDictionaryTable, DeviceDictionaryAdmin)
