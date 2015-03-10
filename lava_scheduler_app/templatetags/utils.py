@@ -44,6 +44,8 @@ def get_type(value):
         return 'str'
     if type(value) == dict:
         return 'dict'
+    if type(value) == list:
+        return 'list'
     return type(value)
 
 
