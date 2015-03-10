@@ -427,6 +427,7 @@ class k3v2(fastboot_serial):
         self.fastboot.flash('boot', self.__boot_image__)
         self.fastboot('reboot')
 
+
 class tshark(fastboot):
 
     def __init__(self, device):
