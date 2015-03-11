@@ -7,6 +7,7 @@ from lava_scheduler_app.models import (
     DeviceType,
     DeviceDictionary,
     JobPipeline,
+    PipelineStore,
     TestJob,
     Tag,
     DevicesUnavailableException,
@@ -163,3 +164,44 @@ class PipelineDeviceTags(TestCaseWithFactory):
             set(tag for tag in job.tags.all()),
             set(tag_list)
         )
+
+
+class TestPipelineSubmit(TestCaseWithFactory):
+
+    def setUp(self):
+        super(TestPipelineSubmit, self).setUp()
+        self.factory = YamlFactory()
+        self.device_type = self.factory.make_device_type()
+        self.factory.make_device(device_type=self.device_type, hostname="fakeqemu1")
+
+    def test_from_yaml_and_user_sets_definition(self):
+        definition = self.factory.make_job_json()
+        job = TestJob.from_yaml_and_user(definition, self.factory.make_user())
+        self.assertEqual(definition, job.definition)
+
+    def test_from_yaml_and_user_sets_submitter(self):
+        user = self.factory.make_user()
+        job = TestJob.from_yaml_and_user(
+            self.factory.make_job_json(), user)
+        self.assertEqual(user, job.submitter)
+
+
+class TestPipelineStore(TestCaseWithFactory):
+
+    def setUp(self):
+        super(TestPipelineStore, self).setUp()
+        self.factory = YamlFactory()
+        self.device_type = self.factory.make_device_type()
+        self.factory.make_device(device_type=self.device_type, hostname="fakeqemu1")
+
+    def test_new_pipeline_store(self):
+        user = self.factory.make_user()
+        job = TestJob.from_yaml_and_user(
+            self.factory.make_job_json(), user)
+        foo = JobPipeline.get('foo')
+        self.assertIsNone(foo)
+        foo = JobPipeline.get(job.id)
+        self.assertIsNotNone(foo)
+        self.assertIsInstance(foo, JobPipeline)
+        # pipeline.describe() needs to reparse as YAML
+        yaml.load(foo.pipeline)

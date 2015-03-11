@@ -1011,9 +1011,7 @@ class PipelineStore(models.Model):
         msg = val.replace('__KV_STORE_::lava_scheduler_app.models.JobPipeline:', '')
         data = JobPipeline.get(msg)
         if type(data.pipeline) == str:
-            # FIXME: check if these are still required after changes in pipeline.describe()
-            data.pipeline = data.pipeline.replace('stream: !!python/object:mod_wsgi.Log {}', '')
-            data.pipeline = data.pipeline.replace('_RLock__block: !!python/object:thread.lock {}', '')
+            # if this fails, fix lava_dispatcher.pipeline.actions.explode()
             data.pipeline = yaml.load(data.pipeline)
         return data
 

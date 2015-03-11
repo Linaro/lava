@@ -155,6 +155,7 @@ class DatabaseJobSource(object):
         health checks.
         """
 
+        # FIXME: check if the health check is a pipeline YAML job
         for device in Device.objects.filter(status=Device.IDLE).filter(is_pipeline=False):
             if not device.device_type.health_check_job:
                 run_health_check = False
@@ -203,6 +204,7 @@ class DatabaseJobSource(object):
         using John Doe's private devices over using public devices that could
         be available for other users who don't have their own.
         """
+        # FIXME: allow pipeline devices to be shared.
         devices = Device.objects.filter(status=Device.IDLE).filter(is_pipeline=False)
         devices = devices.order_by('is_public')
 
