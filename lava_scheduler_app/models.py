@@ -396,6 +396,9 @@ class DeviceDictionaryTable(models.Model):
     kee = models.CharField(max_length=255)
     value = models.TextField()
 
+    def __unicode__(self):
+        return self.kee.replace('__KV_STORE_::lava_scheduler_app.models.DeviceDictionary:', '')
+
 
 class ExtendedKVStore(kvmodels.Model):
     """
