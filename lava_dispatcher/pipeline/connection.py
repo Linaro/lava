@@ -24,7 +24,7 @@ import pexpect
 import signal
 import decimal
 import logging
-from lava_dispatcher.pipeline.action import TestError, Timeout
+from lava_dispatcher.pipeline.action import TestError, Timeout, InternalObject
 from lava_dispatcher.pipeline.utils.shell import wait_for_prompt
 
 
@@ -59,7 +59,7 @@ class BaseSignalHandler(object):
         pass
 
 
-class SignalMatch(object):  # pylint: disable=too-few-public-methods
+class SignalMatch(InternalObject):  # pylint: disable=too-few-public-methods
 
     def match(self, data, fixupdict=None):
         if not fixupdict:

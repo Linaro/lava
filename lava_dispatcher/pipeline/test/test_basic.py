@@ -274,6 +274,17 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
             return unittest.skip("not all deployments have been implemented")
         self.assertIsNotNone(job)
 
+    def test_describe(self):
+        factory = Factory()
+        job = factory.create_kvm_job('sample_jobs/kvm.yaml', mkdtemp())
+        self.assertIsNotNone(job)
+        pipe = job.pipeline.describe()
+        for item in pipe:
+            self.assertNotIn('match', item)
+            if 'pipeline' in item:
+                for element in item['pipeline']:
+                    self.assertNotIn('match', element)
+
 
 class TestFakeActions(unittest.TestCase):  # pylint: disable=too-many-public-methods
 

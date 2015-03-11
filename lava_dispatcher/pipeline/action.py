@@ -71,6 +71,14 @@ class TestError(Exception):
     pass
 
 
+class InternalObject(object):  # pylint: disable=too-few-public-methods
+    """
+    An object within the dispatcher pipeline which should not be included in
+    the description of the pipeline.
+    """
+    pass
+
+
 class Pipeline(object):  # pylint: disable=too-many-instance-attributes
     """
     Pipelines ensure that actions are run in the correct sequence whilst
@@ -629,11 +637,14 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
     def explode(self):
         """
         serialisation support
+        Omit our objects marked as internal by inheriting form InternalObject instead of object,
+        e.g. SignalMatch
         """
         data = {}
         attrs = set([attr for attr in dir(self)
                      if not attr.startswith('_') and getattr(self, attr)
-                     and not isinstance(getattr(self, attr), types.MethodType)])
+                     and not isinstance(getattr(self, attr), types.MethodType)
+                     and not isinstance(getattr(self, attr), InternalObject)])
 
         # noinspection PySetFunctionToLiteral
         for attr in attrs - set([
@@ -643,6 +654,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
                 data['timeout'] = {'duration': self.timeout.duration, 'name': self.timeout.name}
             elif attr == 'url':
                 data['url'] = self.url.geturl()  # pylint: disable=no-member
+            elif attr == 'vcs':
+                data[attr] = getattr(self, attr).url
             else:
                 data[attr] = getattr(self, attr)
         if 'deployment_data' in self.parameters:
