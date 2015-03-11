@@ -4,6 +4,10 @@
 {% load i18n %}
 {% load humanize %}
 
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/bootstrap-editable.css"/>
+{% endblock %}
+
 {% block content %}
 <h2 class="modal-header">Test run results</h2>
 {% render_table test_table %}
@@ -86,17 +90,27 @@
 
 <div class="row">
   <div class="col-md-6">
-    <h4 class="modal-header">Custom attributes (<abbr title="LAVA can store arbitrary key-value attributes associated with each test run (and separately, each test result)">?</abbr>)</h4>
-    {% if test_run.attributes.all %}
-    <dl class="dl-horizontal">
-    {% for attribute in test_run.attributes.all %}
-      <dt>{{ attribute.name }}</dt>
-      <dd>{{ attribute.value }}</dd>
+
+    <h4 class="modal-header">Custom attributes (<abbr title="LAVA can store arbitrary key-value attributes associated with each test run (and separately, each test result)">?</abbr>)  <button class="btn btn-xs btn-success" id="attribute_insert"><span class="glyphicon glyphicon-plus"></span></button></h4>
+
+    {% with test_run.attributes.values as attrs %}
+    <dl class="dl-horizontal" id="attributes_container">
+    {% for item in attrs|dictsort:"is_manual" %}
+    <dt><div class="{% if item.is_manual %}editable{% endif %} pull-right" data-pk="{{item.id}}" data-name="name">{{ item.name }}</div></dt>
+    <dd><div class="{% if item.is_manual %}editable{% endif %} pull-left" data-pk="{{item.id}}" data-name="value">{{ item.value }}</div>
+      <div class="text-right">&nbsp;
+        {% if item.is_manual %}
+        <button class="btn btn-xs btn-danger attribute-remove" data-pk="{{item.id}}">
+          <span class="glyphicon glyphicon-remove"></span>
+        </button>
+        {% endif %}
+      </div>
+    </dd>
+    {% empty %}
+      <i>none</i>
     {% endfor %}
     </dl>
-    {% else %}
-      <i>none</i>
-    {% endif %}
+  {% endwith %}
   </div>
 
   <div class="col-md-6">
@@ -139,12 +153,17 @@
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/bug-links.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery-ui-1.10.4.custom.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/bootstrap-editable.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/editable_attributes.js"></script>
 
 <script>
   image_url = '{{ STATIC_URL }}dashboard_app/images/';
   unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testresult' %}';
   link_bug_url = '{% url 'dashboard_app.views.link_bug_to_testresult' %}';
   csrf_token = '{{csrf_token}}';
+
+  remove_attribute_url = '+remove-testrun-attribute';
+  update_attribute_url = '+update-testrun-attribute';
 
   $(document).ready(function() {
     add_bug_link();

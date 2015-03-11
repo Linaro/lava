@@ -29,6 +29,7 @@ import tempfile
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core import serializers
 from django.core.exceptions import PermissionDenied
@@ -59,6 +60,7 @@ from dashboard_app.models import (
     ImageReport,
     ImageReportChart,
     ImageChartUser,
+    NamedAttribute,
     Tag,
     Test,
     TestCase,
@@ -747,6 +749,62 @@ def test_run_hardware_context(request, pathname, content_sha1, analyzer_assigned
         }, RequestContext(request))
 
 
+@login_required
+def test_run_update_attribute(request, pathname, content_sha1,
+                              analyzer_assigned_uuid):
+
+    if request.method != 'POST':
+        raise PermissionDenied
+
+    test_run = get_restricted_object(
+        TestRun,
+        lambda test_run: test_run.bundle.bundle_stream,
+        request.user,
+        analyzer_assigned_uuid=analyzer_assigned_uuid
+    )
+
+    content_type_id = ContentType.objects.get_for_model(TestRun).id
+
+    if not request.POST.get("pk"):
+        named_attribute = NamedAttribute()
+        named_attribute.object_id = test_run.id
+        named_attribute.content_type_id = content_type_id
+        named_attribute.is_manual = True
+
+    else:
+        try:
+            named_attribute = NamedAttribute.objects.get(
+                pk=request.POST.get("pk"))
+        except NamedAttribute.DoesNotExist:
+            named_attribute = NamedAttribute()
+            named_attribute.object_id = test_run.id
+            named_attribute.content_type_id = content_type_id
+            named_attribute.is_manual = True
+
+    named_attribute.name = request.POST.get('name')
+    named_attribute.value = request.POST.get('value')
+    named_attribute.save()
+    data = serializers.serialize('json', [named_attribute])
+    return HttpResponse(data, content_type='application/json')
+
+
+@login_required
+def test_run_remove_attribute(request, pathname, content_sha1,
+                              analyzer_assigned_uuid):
+
+    if request.method != 'POST':
+        raise PermissionDenied
+
+    named_attribute = NamedAttribute.objects.get(
+        pk=request.POST.get('pk'))
+    if not named_attribute.is_manual:
+        return HttpResponse("error", status=403)
+    else:
+        named_attribute.delete()
+        data = request.POST.get('pk')
+        return HttpResponse(data, content_type='application/json')
+
+
 @BreadCrumb(
     "Details of result {relative_index}",
     parent=test_run_detail,
@@ -796,6 +854,67 @@ def test_result_update_comments(request, pathname, content_sha1,
     test_result.save()
     data = serializers.serialize('json', [test_result])
     return HttpResponse(data, content_type='application/json')
+
+
+@login_required
+def test_result_update_attribute(request, pathname, content_sha1,
+                                 analyzer_assigned_uuid, relative_index):
+
+    if request.method != 'POST':
+        raise PermissionDenied
+
+    test_run = get_restricted_object(
+        TestRun,
+        lambda test_run: test_run.bundle.bundle_stream,
+        request.user,
+        analyzer_assigned_uuid=analyzer_assigned_uuid
+    )
+    try:
+        test_result = test_run.test_results.select_related('fig').get(
+            relative_index=relative_index)
+    except TestResult.DoesNotExist:
+        raise Http404
+
+    content_type_id = ContentType.objects.get_for_model(TestResult).id
+
+    if not request.POST.get("pk"):
+        named_attribute = NamedAttribute()
+        named_attribute.object_id = test_result.id
+        named_attribute.content_type_id = content_type_id
+        named_attribute.is_manual = True
+
+    else:
+        try:
+            named_attribute = NamedAttribute.objects.get(
+                pk=request.POST.get("pk"))
+        except NamedAttribute.DoesNotExist:
+            named_attribute = NamedAttribute()
+            named_attribute.object_id = test_result.id
+            named_attribute.content_type_id = content_type_id
+            named_attribute.is_manual = True
+
+    named_attribute.name = request.POST.get('name')
+    named_attribute.value = request.POST.get('value')
+    named_attribute.save()
+    data = serializers.serialize('json', [named_attribute])
+    return HttpResponse(data, content_type='application/json')
+
+
+@login_required
+def test_result_remove_attribute(request, pathname, content_sha1,
+                                 analyzer_assigned_uuid, relative_index):
+
+    if request.method != 'POST':
+        raise PermissionDenied
+
+    named_attribute = NamedAttribute.objects.get(
+        pk=request.POST.get('pk'))
+    if not named_attribute.is_manual:
+        return HttpResponse("error", status=403)
+    else:
+        named_attribute.delete()
+        data = request.POST.get('pk')
+        return HttpResponse(data, content_type='application/json')
 
 
 def attachment_download(request, pk):

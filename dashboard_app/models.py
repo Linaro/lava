@@ -133,6 +133,7 @@ class NamedAttribute(models.Model):
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     content_object = generic.GenericForeignKey('content_type', 'object_id')
+    is_manual = models.NullBooleanField(null=True)
 
     def __unicode__(self):
         return _(u"{name}: {value}").format(
