@@ -417,6 +417,8 @@ class MasterImageTarget(Target):
             self._enter_bootloader(self.proc)
             # Configure dynamic master image boot
             if self.config.master_kernel and self.master_kernel is None:
+                # Assume the master deployment is vanilla
+                self.deployment_data = deployment_data.oe
                 # Set the server IP (Dispatcher)
                 self.master_boot_tags['{SERVER_IP}'] = self.context.config.lava_server_ip
                 self.master_kernel = download_image(

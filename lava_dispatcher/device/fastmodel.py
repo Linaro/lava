@@ -403,7 +403,9 @@ class FastModelTarget(Target):
         if self._sim_proc:
             try:
                 self._soft_reboot(self.proc)
-            except OperationFailed:
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
+            except:
                 logging.info('Graceful reboot of platform failed')
         if self._uefi_vars is not None and self._sim_proc:
             logging.info('Requesting graceful shutdown')

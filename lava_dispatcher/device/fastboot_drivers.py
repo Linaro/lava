@@ -426,3 +426,21 @@ class k3v2(fastboot_serial):
     def boot(self, boot_cmds=None):
         self.fastboot.flash('boot', self.__boot_image__)
         self.fastboot('reboot')
+
+
+class tshark(fastboot):
+
+    def __init__(self, device):
+        super(tshark, self).__init__(device)
+
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
+                             bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
+                             target_type, scratch_dir):
+        raise CriticalError('This platform does not support kernel deployment!')
+
+    def boot(self, boot_cmds=None):
+        self.fastboot.flash('boot', self.__boot_image__)
+        self.fastboot('reboot')
+
+    def erase_boot(self):
+        pass
