@@ -169,7 +169,9 @@ class QEMUTarget(Target):
         if self.proc:
             try:
                 self._soft_reboot(self.proc)
-            except OperationFailed:
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
+            except:
                 logging.info('Graceful reboot of platform failed')
         finalize_process(self.proc)
         self.proc = None
