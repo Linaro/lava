@@ -166,7 +166,11 @@ class SchedulerAPI(ExposedAPI):
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
-        return xmlrpclib.Binary(job.output_file().read().encode('UTF-8'))
+        output_file = job.output_file()
+        if output_file:
+            return xmlrpclib.Binary(output_file.read().encode('UTF-8'))
+        else:
+            raise xmlrpclib.Fault(404, "Job output not found.")
 
     def all_devices(self):
         """
