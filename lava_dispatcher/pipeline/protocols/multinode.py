@@ -19,13 +19,13 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-import os
 import copy
-import time
 import json
+import logging
+import os
 import socket
+import time
 from lava_dispatcher.pipeline.connection import Protocol
-from lava_dispatcher.pipeline.log import YamlLogger
 from lava_dispatcher.pipeline.action import (
     Timeout,
     JobError,
@@ -51,7 +51,7 @@ class MultinodeProtocol(Protocol):
         self.settings = None
         self.sock = None
         self.base_message = None
-        self.logger = YamlLogger("root")
+        self.logger = logging.getLogger('dispatcher')
         self.delayed_start = False
         params = parameters['protocols'][self.name]
         if 'request' in params and 'lava-start' == params['request'] and 'expect_role' in params:

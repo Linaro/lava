@@ -18,12 +18,13 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import contextlib
+import logging
 import os
+import pexpect
+import signal
 import sys
 import time
-import signal
-import pexpect
-import contextlib
 from lava_dispatcher.pipeline.action import (
     Action,
     JobError,
@@ -34,6 +35,34 @@ from lava_dispatcher.pipeline.action import (
 from lava_dispatcher.pipeline.connection import Connection, CommandRunner
 from lava_dispatcher.pipeline.utils.constants import SHELL_SEND_DELAY
 from lava_dispatcher.pipeline.utils.shell import which
+
+
+class ShellLogger(object):
+    def __init__(self):
+        self.line = ''
+        self.logger = logging.getLogger('dispatcher')
+
+    def write(self, new_line):
+        replacements = {
+            '\n\n': '\n',  # double lines to single
+            '\r': '',
+            '"': '\\\"',  # escape double quotes for YAML syntax
+            '\x1b': ''  # remove escape control characters
+        }
+        for key, value in replacements.items():
+            new_line = new_line.replace(key, value)
+
+        line = self.line + new_line
+        # TODO: loop on the newline check
+        try:
+            index = line.index('\n')
+            self.logger.target(line[:index])
+            self.line = line[index + 1:]
+        except ValueError:
+            self.line = line
+
+    def flush(self):
+        pass
 
 
 class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
@@ -52,7 +81,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
             self, command,
             timeout=lava_timeout.duration,
             cwd=cwd,
-            logfile=sys.stdout,
+            logfile=ShellLogger(),
         )
         self.name = "ShellCommand"
         # serial can be slow, races do funny things, so allow for a delay
@@ -173,31 +202,6 @@ class ShellSession(Connection):
             self.__runner__ = CommandRunner(spawned_shell, self.prompt_str,
                                             prompt_str_includes_rc)
         yield self.__runner__.get_connection()
-
-    def stdout(self):
-        """ Retrieve the relevant STDOUT output of the commands sent over
-        this connection, up to the point where the current expect matched.
-        Any content after that match will be in the next call to stdout.
-        Note that input from the device cannot be handled directly as unicode.
-        """
-        ret = ''
-        replacements = {
-            '\n\n': '\n',  # double lines to single
-            '\r': '',
-            '"': '\\\"',  # escape double quotes for YAML syntax
-            '\x1b': ''  # remove escape control characters
-        }
-        if self.spawn.before:
-            ret += self.spawn.before
-        if self.spawn.after:
-            ret += self.spawn.after
-
-        for key, value in replacements.items():
-            ret = ret.replace(key, value)
-
-        if ret == '':
-            return "%s" % self.name
-        return [item for item in ret.split('\n') if item != '' and item != '#']
 
     def wait(self):
         self.raw_connection.sendline("")

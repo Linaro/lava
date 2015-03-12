@@ -141,6 +141,7 @@ class Job(object):
             else:
                 logger.exception(exc)
             with open("%s/err" % self.base_dir, 'a') as errlog:
+                # TODO: send something to the zmq logger
                 errlog.write("%s\n%s\n" % (exc, traceback.format_exc()))
             self.cancel()
 

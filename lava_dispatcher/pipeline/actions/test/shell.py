@@ -18,9 +18,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import logging
 import pexpect
 from collections import OrderedDict
-from lava_dispatcher.pipeline.log import YamlLogger
 from lava_dispatcher.pipeline.actions.test import handle_testcase, TestAction
 from lava_dispatcher.pipeline.action import (
     InfrastructureError,
@@ -98,11 +98,9 @@ class TestShellAction(TestAction):
             self.logger.debug("Skipping test definitions - previous boot attempt was not successful.")
             self.results.update({self.name: 'skipped'})
             # FIXME: with predictable UID, could set each test definition metadata to "skipped"
-            self.logger.debug({self.name: connection.stdout()})
             return connection
 
         if not connection:
-            self.logger.debug({self.name: connection.stdout()})
             raise InfrastructureError("Connection closed")
 
         self.signal_director.connection = connection
@@ -139,7 +137,7 @@ class TestShellAction(TestAction):
                 test_connection.timeout = self.timeout.duration
 
             while self._keep_running(test_connection, test_connection.timeout):
-                self.logger.debug({self.name: connection.stdout()})
+                pass
 
         return connection
 
@@ -231,7 +229,7 @@ class TestShellAction(TestAction):
             self._cur_handler = BaseSignalHandler(protocol)
             self.protocol = protocol  # communicate externally over the protocol API
             self.connection = None  # communicate with the device
-            self.logger = YamlLogger("root")
+            self.logger = logging.getLogger('dispatcher')
             self.test_uuid = None
 
         def signal(self, name, params):

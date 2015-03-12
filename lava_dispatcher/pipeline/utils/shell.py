@@ -18,10 +18,10 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import logging
 import os
 import pexpect
 from lava_dispatcher.pipeline.action import InfrastructureError
-from lava_dispatcher.pipeline.log import YamlLogger
 
 
 def which(path, match=os.path.isfile):
@@ -51,12 +51,12 @@ def wait_for_prompt(connection, prompt_pattern, timeout):
     if timeout == -1:
         timeout = connection.timeout
     partial_timeout = timeout / 2.0
-    logger = YamlLogger("root")
     while True:
         try:
             connection.expect(prompt_pattern, timeout=partial_timeout)
         except pexpect.TIMEOUT:
             if prompt_wait_count < 6:
+                logger = logging.getLogger('dispatcher')
                 logger.debug('Sending newline in case of corruption.')
                 prompt_wait_count += 1
                 partial_timeout = timeout / 10

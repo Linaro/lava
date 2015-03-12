@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import logging
 import os
 import sys
 import copy
@@ -29,8 +30,8 @@ import subprocess
 from collections import OrderedDict
 from contextlib import contextmanager
 
+from lava_dispatcher.pipeline.log import YAMLLogger
 from lava_dispatcher.pipeline.utils.constants import OVERRIDE_CLAMP_DURATION, ACTION_TIMEOUT
-from lava_dispatcher.pipeline.log import YamlLogger, get_yaml_handler, ZMQPUSHHandler
 
 if sys.version > '3':
     from functools import reduce  # pylint: disable=redefined-builtin
@@ -95,10 +96,8 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         if parameters is None:
             parameters = {}
         self.parameters = parameters
-        self.job = None
+        self.job = job
         self.branch_level = 1  # the level of the last added child
-        if job:  # do not unset if set by outer pipeline
-            self.job = job
         if not parent:
             self.children = {self: self.actions}
         elif not parent.level:
@@ -260,8 +259,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             pipeline and allow cleanup actions to happen on all actions,
             not just the ones directly related to the currently running action.
             """
-            logger = YamlLogger("root")
-            logger.debug("Cancelled")
+            self.logger.debug("Cancelled")
             self.cleanup_actions(None, "Cancelled")
             signal.signal(signal.SIGINT, signal.default_int_handler)
             raise KeyboardInterrupt
@@ -280,25 +278,19 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 else:
                     raise RuntimeError("Invalid job pipeline - no finalize action to run after job timeout.")
                 raise JobError(msg)
-            # Open the logfile and create the log handler
-            action.logger = YamlLogger(action.name)
-            # actions in unit tests can have a None job.
-            if action.job and action.job.zmq_ctx is not None:
-                action.logger.set_handler(
-                    ZMQPUSHHandler(action.job.zmq_ctx, action.job.socket_addr,
-                                   action.job.job_id,
-                                   os.path.join(action.level.split('.')[0],
-                                                "%s-%s.log" % (action.level, action.name))))
-            else:
-                action.logger.set_handler(get_yaml_handler(action.log_filename))
 
             # Begin the action
+            # TODO: this shouldn't be needed
+            # The ci-test does not set the default logging class
+            if isinstance(action.logger, YAMLLogger):
+                action.logger.setMetadata(action.level, action.name)
             action.logger.debug('start: %s %s (max %ds)' % (action.level, action.name, action.timeout.duration))
             try:
                 if not self.parent:
                     signal.signal(signal.SIGINT, cancelling_handler)
                 start = time.time()
                 try:
+                    # FIXME: not sure to understand why we have two cases here?
                     if not connection:
                         with action.timeout.action_timeout():
                             new_connection = action.run(connection, args)
@@ -324,9 +316,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 action.cleanup()
                 self.cleanup_actions(connection, exc.message)
                 raise exc
-            finally:
-                # Close the log handler
-                action.logger.remove_handler()
         return connection
 
     def prepare_actions(self):
@@ -357,9 +346,9 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         self.__parameters__ = {}
         self.__errors__ = []
         self.elapsed_time = None
-        self.logger = YamlLogger("root")
         self.log_filename = None
         self.job = None
+        self.logger = logging.getLogger('dispatcher')
         self.__results__ = OrderedDict()
         self.timeout = Timeout(self.name)
         self.max_retries = 1  # unless the strategy or the job parameters change this, do not retry
@@ -566,10 +555,15 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
                 'command': [i.strip() for i in exc.cmd],
                 'message': [i.strip() for i in exc.message],
                 'output': exc.output.split('\n')})
-        self.logger.debug("%s\n%s" % (' '.join(command_list), log))
+
+        # allow for commands which return no output
         if not log:
-            return ''  # allow for commands which return no output
-        return log
+            self.logger.debug({'command': command_list})
+            return ''
+        else:
+            self.logger.debug({'command': command_list,
+                               'output': log})
+            return log
 
     def call_protocols(self):
         """
@@ -615,8 +609,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
             return self.internal_pipeline.run_actions(connection, args)
         if connection:
             connection.timeout = self.timeout
-            # retrieve the stdout content from the active connection
-            self.logger.debug({self.name: connection.stdout()})
         return connection
 
     def cleanup(self):

@@ -20,7 +20,6 @@
 import logging
 import json
 import uuid
-from lava_dispatcher.pipeline.log import YamlLogger
 
 
 # disable pylint warnings until lava-coordinator is updated to make it easier to port other changes.

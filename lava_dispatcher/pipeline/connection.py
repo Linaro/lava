@@ -126,12 +126,6 @@ class Connection(object):
     def sendline(self, line):
         self.raw_connection.sendline(line)
 
-    def stdout(self):
-        """
-        Retrieve stdout content over this connection since the last call to stdout and return it.
-        """
-        pass
-
     def finalise(self):
         if self.raw_connection:
             try:

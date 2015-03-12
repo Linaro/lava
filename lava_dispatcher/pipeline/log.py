@@ -1,6 +1,7 @@
 # Copyright (C) 2014 Linaro Limited
 #
 # Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
+#         Remi Duraffort <remi.duraffort@linaro.org>
 #
 # This file is part of LAVA Dispatcher.
 #
@@ -23,106 +24,72 @@ import yaml
 import zmq
 
 
-class ZMQPUSHHandler(logging.Handler):
-    def __init__(self, context, socket_addr, job_id, filename):
-
-        logging.Handler.__init__(self)
+class ZMQPushHandler(logging.Handler):
+    def __init__(self, socket_addr, job_id):
+        super(ZMQPushHandler, self).__init__()
 
         # Create the PUSH socket
         # pylint: disable=no-member
-        self.socket = context.socket(zmq.PUSH)
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.PUSH)
         self.socket.connect(socket_addr)
 
-        self.job_id = job_id
-        self.filename = filename
+        self.job_id = str(job_id)
+        self.action_level = '0'
+        self.action_name = 'dispatcher'
 
         self.formatter = logging.Formatter("%(message)s")
 
+    def setMetadata(self, level, name):
+        self.action_level = level
+        self.action_name = name
+
     def emit(self, record):
-        # Emit a multipart message
-        msg = [str(self.job_id), self.filename, self.formatter.format(record)]
+        msg = [self.job_id, self.action_level, self.action_name,
+               self.formatter.format(record)]
         self.socket.send_multipart(msg)
 
     def close(self):
-        super(ZMQPUSHHandler, self).close()
+        super(ZMQPushHandler, self).close()
         self.socket.close()
+        self.context.destroy()
 
 
-class YamlLogger(object):
-
+class YAMLLogger(logging.Logger):
     def __init__(self, name):
-        """
-        Logs written to the per action log must use the YamlLogger.
-        """
-        self.name = name
-        self.description = "yaml logger"
-        self.log = logging.getLogger("%s" % self.name)
-        self.log.setLevel(logging.DEBUG)
-        self.pattern = ' - id: "<LAVA_DISPATCHER>%(asctime)s"\n%(message)s'
+        super(YAMLLogger, self).__init__(name)
         self.handler = None
 
-    def log_message(self, message):
-        if not message:
-            return
-        if type(message) is dict:
-            for key, value in list(message.items()):
-                if type(value) is list:
-                    for item in value:
-                        self.log.debug(' - %s:\n   - "%s"', key, item)
-                else:
-                    self.log.debug("   %s: %s", key, value)
-        elif type(message) is list:
-            for item in message:
-                self.log.debug(' - log:\n   - "%s"', item)
-        else:
-            self.log.debug(" - log: \"%s\"", message)
+    def addZMQHandler(self, socket_addr, job_id):
+        self.handler = ZMQPushHandler(socket_addr, job_id)
+        self.addHandler(self.handler)
+        return self.handler
+
+    def setMetadata(self, level, name):
+        if self.handler is not None:
+            self.handler.setMetadata(level, name)
+
+    def log_message(self, level, level_name, message):
+        if message:
+            self._log(level, yaml.dump([{level_name: message}])[:-1], None, {})
+
+    def exception(self, exc):
+        self.log_message(logging.ERROR, 'exception', exc)
+
+    def error(self, message):
+        self.log_message(logging.ERROR, 'error', message)
+
+    def warning(self, message):
+        self.log_message(logging.WARNING, 'warning', message)
+
+    def info(self, message):
+        self.log_message(logging.INFO, 'info', message)
 
     def debug(self, message):
-        self.log_message(message)
+        self.log_message(logging.DEBUG, 'debug', message)
 
-    def exception(self, message):
-        # FIXME: make YAML compliant?
-        self.log.exception(message)
-
-    def set_handler(self, handler=None):
-        if handler is not None:
-            self.handler = handler
-        else:
-            self.handler = get_yaml_handler()
-        self.handler.addFilter(logging.Filter(self.name))
-        self.log.addHandler(self.handler)
-
-    def remove_handler(self):
-        if self.handler is not None:
-            self.log.removeHandler(self.handler)
-            self.handler.close()
-            self.handler = None
-
-
-def get_yaml_handler(filename=None, mode='w', encoding='utf-8'):
-    handler = None
-    pattern = ' - id: "<LAVA_DISPATCHER>%(asctime)s"\n%(message)s'
-    if filename:
-        if isinstance(filename, file):
-            handler = logging.StreamHandler(filename)
-        elif isinstance(filename, str):
-            handler = logging.FileHandler(filename,
-                                          mode=mode,
-                                          encoding=encoding)
-            handler.setFormatter(logging.Formatter(pattern))
-    else:
-        handler = logging.StreamHandler()
-    return handler
-
-
-class YamlFilter(logging.Filter):  # pylint: disable=too-few-public-methods
-    """
-    filters standard logs into structured logs
-    """
-
-    def filter(self, record):
-        record.msg = yaml.dump(record.msg)
-        return True
+    def target(self, message):
+        self.log_message(logging.INFO, 'target', message)
 
 
 class StdLogger(object):  # pylint: disable=too-few-public-methods

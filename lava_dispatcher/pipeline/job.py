@@ -18,11 +18,12 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import yaml
-import zmq
 from collections import OrderedDict
+import logging
+import yaml
 
 from lava_dispatcher.pipeline.action import Action
+from lava_dispatcher.pipeline.log import YAMLLogger
 from lava_dispatcher.pipeline.logical import PipelineContext
 from lava_dispatcher.pipeline.diagnostics import DiagnoseNetwork
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
@@ -48,7 +49,6 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
     def __init__(self, job_id, socket_addr, parameters):
         self.job_id = job_id
         self.socket_addr = socket_addr
-        self.zmq_ctx = None if self.socket_addr is None else zmq.Context()
         self.device = None
         self.parameters = parameters
         self.__context__ = PipelineContext()
@@ -61,6 +61,14 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         ]
         self.timeout = None
         self.protocols = []
+        # TODO: we are now able to create the logger when the job is started,
+        # allowing the functions that are called before run() to log.
+        # Do we want to do something with this?
+        # Taking into account that the validate() function will be called on
+        # the LAVA server when the job is submitted.
+        # For the moment, we create the logger without the ZMQ handler that
+        # will be added when running the job.
+        self.logger = logging.getLogger('dispatcher')
 
     def set_pipeline(self, pipeline):
         self.pipeline = pipeline
@@ -120,6 +128,10 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             protocol.set_up()
             if not protocol.valid:
                 raise JobError("Unable to setup a valid %s protocol" % protocol.name)
+
+        # Add the ZMQ handler now
+        if self.socket_addr is not None:
+            self.logger.addZMQHandler(self.socket_addr, self.job_id)
         self.pipeline.run_actions(self.connection)
 
 
