@@ -248,6 +248,7 @@ class DeviceSchema(schema.Schema):
     qemu_options = schema.StringOption()
     qemu_drive_interface = schema.StringOption()
     qemu_machine_type = schema.StringOption()
+    qemu_pflash = schema.ListOption(default=None)
 
     # for jtag devices
     jtag_driver = schema.StringOption(default=None)
