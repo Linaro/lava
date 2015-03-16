@@ -37,6 +37,7 @@ from dashboard_app.models import Bundle, BundleStream
 from lava_dispatcher.job import validate_job_data
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.action import JobError
+from lava_dispatcher.pipeline.device import PipelineDevice
 from lava_scheduler_app import utils
 
 from linaro_django_xmlrpc.models import AuthToken
@@ -1028,17 +1029,6 @@ class JobPipeline(PipelineKVStore):
         app_label = 'pipeline'
 
 
-class PipelineDevice(dict):
-    """
-    Scheduler version of the dispatcher NewDevice dict
-    which loads from a variable, not a file.
-    """
-
-    def __init__(self, config):
-        super(PipelineDevice, self).__init__()
-        self.update(config)
-
-
 class TestJob(RestrictedResource):
     """
     A test job is a test process that will be run on a Device.
@@ -1325,30 +1315,32 @@ class TestJob(RestrictedResource):
         if type(allowed_list) is not list:
             return None, None
 
+        errors = {}
         for device in allowed_list:
             try:
-                device_config = device.load_device_configuration()
+                device_config = device.load_device_configuration()  # raw dict
             except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
                 # FIXME: report the exceptions as useful user messages
                 continue
-            if not device_config:
+            if not device_config or type(device_config) is not dict:
                 continue
             parser = JobParser()
-            obj = PipelineDevice(device_config)
+            obj = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
             # FIXME: drop this nasty hack once 'target' is dropped as a parameter
             if 'target' not in obj:
                 obj.target = device.hostname
             obj['hostname'] = device.hostname
-            pipeline_job = parser.parse(definition, obj, 0, None, None)
+            # pass output_dir just for validation as there is no zmq socket either.
+            pipeline_job = parser.parse(definition, obj, 0, None, output_dir='/tmp')
             # validate, if valid, return the first match
             try:
                 pipeline_job.pipeline.validate_actions()
             except (AttributeError, JobError) as exc:
-                # FIXME: output these errors from this classmethod somehow, if no devices match.
+                errors[device] = exc
                 continue
             if pipeline_job:
                 return device, pipeline_job.describe()
-        return None, None
+        raise DevicesUnavailableException(errors)
 
     @classmethod
     def from_yaml_and_user(cls, yaml_data, user):

@@ -1,7 +1,13 @@
 import os
 import yaml
 import jinja2
-from lava_scheduler_app.models import Device, DeviceType, DeviceDictionary, JobPipeline
+from lava_scheduler_app.models import (
+    Device,
+    DeviceType,
+    DeviceDictionary,
+    JobPipeline,
+    PipelineDevice,
+)
 from lava_scheduler_app.utils import devicedictionary_to_jinja2
 from django_testscenarios.ubertest import TestCase
 from django.contrib.auth.models import Group, Permission, User
@@ -120,6 +126,35 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         bar = DeviceDictionary.get('foo')
         self.assertEqual(bar.parameters, foo.parameters)
 
+    def test_pipeline_device(self):
+        foo = DeviceDictionary(hostname='foo')
+        foo.parameters = {
+            'bootz': {
+                'kernel': '0x4700000',
+                'ramdisk': '0x4800000',
+                'dtb': '0x4300000'
+            },
+            'media': {
+                'usb': {
+                    'UUID-required': True,
+                    'SanDisk_Ultra': {
+                        'uuid': 'usb-SanDisk_Ultra_20060775320F43006019-0:0',
+                        'device_id': 0
+                    },
+                    'sata': {
+                        'UUID-required': False
+                    }
+                }
+            }
+        }
+        device = PipelineDevice(foo.parameters, 'foo')
+        self.assertEqual(device.target, 'foo')
+        self.assertIn('power_state', device)
+        self.assertEqual(device.power_state, '')  # there is no power_on_command for this device, so the property is ''
+        self.assertTrue(hasattr(device, 'power_state'))
+        self.assertFalse(hasattr(device, 'hostname'))
+        self.assertIn('hostname', device)
+
     def test_dictionary_remove(self):
         foo = DeviceDictionary(hostname='foo')
         foo.parameters = {
@@ -182,6 +217,31 @@ class DeviceDictionaryTest(TestCaseWithFactory):
             "setenv bootargs 'console=ttyfake1,56 debug rw root=/dev/ram0 ip=dhcp'",
             ramdisk_args['commands'])
 
+        device_dictionary.update(
+            {
+                'hard_reset_command': "/usr/bin/pduclient --daemon localhost --hostname pdu --command reboot --port 08",
+                'power_off_command': "/usr/bin/pduclient --daemon localhost --hostname pdu --command off --port 08",
+                'power_on_command': "/usr/bin/pduclient --daemon localhost --hostname pdu --command on --port 08"
+            }
+        )
+
+        data = devicedictionary_to_jinja2(device_dictionary, 'beaglebone-black.yaml')
+        string_loader = jinja2.DictLoader({'bbb.yaml': data})
+        type_loader = jinja2.FileSystemLoader([os.path.join(jinja2_path, 'device-types')])
+        env = jinja2.Environment(
+            loader=jinja2.ChoiceLoader([string_loader, type_loader]),
+            trim_blocks=True)
+        template = env.get_template("%s.yaml" % 'bbb')
+        device_configuration = template.render()
+        yaml_data = yaml.load(device_configuration)
+        device = PipelineDevice(yaml_data, 'bbb')
+        self.assertIn('power_state', device)
+        # bbb has power_on_command defined above
+        self.assertEqual(device.power_state, 'off')
+        self.assertTrue(hasattr(device, 'power_state'))
+        self.assertFalse(hasattr(device, 'hostname'))
+        self.assertIn('hostname', device)
+
     def test_jinja_postgres_loader(self):
         # path used for the device_type template
         jinja2_path = os.path.realpath(os.path.join(__file__, '..', '..', '..', 'etc', 'dispatcher-config'))
@@ -231,6 +291,13 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         self.assertEqual(
             device_dictionary['connection_command'],
             yaml_data['commands']['connect'])
+        device = PipelineDevice(yaml_data, 'cubie')
+        self.assertIn('power_state', device)
+        # cubie1 has no power_on_command defined
+        self.assertEqual(device.power_state, '')
+        self.assertTrue(hasattr(device, 'power_state'))
+        self.assertFalse(hasattr(device, 'hostname'))
+        self.assertIn('hostname', device)
 
 
 class JobPipelineTest(TestCaseWithFactory):
