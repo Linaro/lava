@@ -279,7 +279,7 @@ class FastModelTarget(Target):
             raise CriticalError("A dtb is required")
 
         if rootfs is not None or nfsrootfs is not None or firmware is not None:
-            logging.warn("This platform only suports ramdisk booting, ignoring other parameters")
+            logging.warn("This platform only supports ramdisk booting, ignoring other parameters")
 
         self._ramdisk_boot = True
 

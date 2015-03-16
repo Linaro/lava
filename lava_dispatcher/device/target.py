@@ -606,10 +606,11 @@ class Target(object):
                 pattern = self.config.test_image_prompts
 
             self._wait_for_prompt(connection, pattern, self.config.boot_linaro_timeout)
-            if self.target_distro == 'android':
-                # Gain root access 	609
-                connection.sendline('su')
-                self._wait_for_prompt(connection, pattern, timeout=10)
+            if not is_master:
+                if self.target_distro == 'android':
+                    # Gain root access
+                    connection.sendline('su')
+                    self._wait_for_prompt(connection, pattern, timeout=10)
             connection.sendline('export PS1="%s"' % ps1,
                                 send_char=self.config.send_char)
             self._wait_for_prompt(connection, ps1_pattern, timeout=10)
