@@ -429,6 +429,12 @@ class Command(BaseCommand):
                 # TODO: make this atomic
                 not_allocated = 0
                 for job in TestJob.objects.filter(status=TestJob.SUBMITTED, is_pipeline=True):
+                    job_device = job.actual_device if job.actual_device else job.requested_device
+                    # get the up to date information each time
+                    device = Device.objects.get(hostname=job_device.hostname)
+                    if device.status != Device.IDLE:
+                        # FIXME: handle forced health checks which are allowed if the device is offline.
+                        continue
                     if job.actual_device is None:
                         device = job.requested_device
 
