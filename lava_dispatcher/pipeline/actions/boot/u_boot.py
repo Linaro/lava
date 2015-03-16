@@ -218,8 +218,6 @@ class UBootSecondaryMedia(Action):
             return
         media_keys = self.job.device['parameters']['media'].keys()
         if self.parameters['commands'] not in media_keys:
-            self.errors = "Unsupported UBoot commands %s requested for device %s: %s" % (
-                self.parameters['commands'], self.job.device.target, media_keys)
             return
         if 'kernel' not in self.parameters:
             self.errors = "Missing kernel location"

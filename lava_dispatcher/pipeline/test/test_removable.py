@@ -111,6 +111,19 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertTrue(type(dd_action.get_common_data('uuid', 'boot_part')) is str)
         self.assertEqual('0:1', dd_action.get_common_data('uuid', 'boot_part'))
 
+    def test_primary_media(self):
+        """
+        Test that definitions of secondary media do not block submissions using primary media
+        """
+        job_parser = JobParser()
+        bbb = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
+        sample_job_data = open(sample_job_file)
+        job = job_parser.parse(sample_job_data, bbb, 4212, None)
+        job.validate()
+        self.assertEqual(job.pipeline.errors, [])
+        self.assertIn('usb', bbb['parameters']['media'].keys())
+
     def test_substitutions(self):
         """
         Test substitution of secondary media values into u-boot commands

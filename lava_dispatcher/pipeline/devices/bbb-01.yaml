@@ -9,10 +9,11 @@ parameters:
    kernel: '0x81000000'
    ramdisk: '0x82000000'
    dtb: '0x81f00000'
-  usb:
-    SanDisk_Ultra:
-      uuid: usb-SanDisk_Ultra_20060775320F43006019-0:0
-      boot_part: 0:1
+  media:
+    usb:
+      SanDisk_Ultra:
+        uuid: usb-SanDisk_Ultra_20060775320F43006019-0:0
+        boot_part: 0:1
 commands:
   connect: telnet localhost 6000
   hard_reset: /usr/bin/pduclient --daemon localhost --hostname pdu --command reboot --port 08
