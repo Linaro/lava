@@ -194,13 +194,13 @@ class kvm_adapter(object):
             image = self.device._ramdisk
         if image:
             self.run_on_host(
-                'pkill -f "qemu-system-arm.*%s"' % image)
+                'pkill -f "qemu-system-arm.*%s"' % image, failok=True)
         self.run_on_host('rm -rf %s' % self.vm_images_dir)
 
-    def run_on_host(self, cmd):
+    def run_on_host(self, cmd, failok=False):
         ssh = self.ssh + ' -i %s' % self.identity_file
         run = self.device.context.run_command
-        run('%s root@%s -- %s' % (ssh, self.host, cmd), failok=False)
+        run('%s root@%s -- %s' % (ssh, self.host, cmd), failok)
 
     def scp_to_host(self, src, dst):
         scp = self.scp + ' -i %s' % self.identity_file
