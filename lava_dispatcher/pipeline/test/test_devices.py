@@ -67,6 +67,11 @@ class TestJobDeviceParameters(unittest.TestCase):  # pylint: disable=too-many-pu
     def test_device_parser(self):
         job_parser = JobParser()
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        self.assertIn('power_state', device)
+        self.assertEqual(device.power_state, 'off')
+        self.assertTrue(hasattr(device, 'power_state'))
+        self.assertFalse(hasattr(device, 'hostname'))
+        self.assertIn('hostname', device)
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(sample_job_data, device, 4212, None)
