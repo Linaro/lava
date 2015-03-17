@@ -243,16 +243,15 @@ class Command(BaseCommand):
             # Logging socket
             if sockets.get(pull_socket) == zmq.POLLIN:
                 msg = pull_socket.recv_multipart()
-                (job_id, filename, message) = msg
+                (job_id, level, name, message) = msg
 
                 # Clear filename
-                filename = os.path.normpath(filename)
-                if filename == '/':
-                    self.logger.error("[%s] Wrong filename received, dropping the message", job_id)
+                if '/' in level or '/' in name:
+                    self.logger.error("[%s] Wrong level or name received, dropping the message", job_id)
                     continue
-                filename = filename.lstrip('/')
-                filename = "%s/job-%s/pipeline/%s" % (options['output_dir'],
-                                                      job_id, filename)
+                filename = "%s/job-%s/pipeline/%s/%s-%s.log" % (options['output_dir'],
+                                                                job_id, level.split('.')[0],
+                                                                level, name)
 
                 # Find the handler (if available)
                 f_handler = None
