@@ -15,6 +15,7 @@ from lava_scheduler_app.models import (
 from django.db import models
 from django_testscenarios.ubertest import TestCase
 from django.contrib.auth.models import Group, Permission, User
+from lava_scheduler_app.utils import jinja_template_path
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
 
 
@@ -75,7 +76,14 @@ class PipelineDeviceTags(TestCaseWithFactory):
     def setUp(self):
         super(PipelineDeviceTags, self).setUp()
         self.factory = YamlFactory()
+        jinja_template_path(system=False)
         self.device_type = self.factory.make_device_type()
+        self.conf = {
+            'arch': 'amd64',
+            'extends': 'qemu.yaml',
+            'mac_addr': '52:54:00:12:34:59',
+            'memory': '256',
+        }
 
     def test_make_job_yaml(self):
         data = yaml.load(self.factory.make_job_yaml())
@@ -85,7 +93,11 @@ class PipelineDeviceTags(TestCaseWithFactory):
         self.assertIn('job', data['timeouts'])
 
     def test_make_device(self):
-        device = self.factory.make_device(self.device_type, 'fakeqemu3')
+        hostname = 'fakeqemu3'
+        device_dict = DeviceDictionary(hostname=hostname)
+        device_dict.parameters = self.conf
+        device_dict.save()
+        device = self.factory.make_device(self.device_type, hostname)
         self.assertEqual(device.device_type.name, 'qemu')
         job = self.factory.make_job_yaml()
         self.assertIsNotNone(job)

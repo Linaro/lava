@@ -106,12 +106,16 @@ def start_job(job):
     device.save()
 
 
-def end_job(job):
-    # TODO: check if it has to be COMPLETE, INCOMPLETE or CANCELED
-    job.status = TestJob.COMPLETE
-    # TODO: Only if that was not already the case !
-    job.end_time = datetime.datetime.utcnow()
+def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
+    job.status = job_status
+    if job.start_time and not job.end_time:
+        job.end_time = datetime.datetime.utcnow()
     device = job.actual_device
+    if fail_msg:
+        job.failure_comment = "%s %s" % (job.failure_comment, fail_msg) if job.failure_comment else fail_msg
+    if not device:
+        job.save()
+        return
     msg = "Job %s has ended" % job.id
     new_status = Device.IDLE
     device.state_transition_to(new_status, message=msg, job=job)
@@ -150,8 +154,45 @@ def send_status(hostname, socket, logger):
         socket.send_multipart([hostname, 'STATUS', str(job.id)])
 
 
-class Command(BaseCommand):
+def get_job_device(job):
+    """
+    Single place to check the device status and configuration
+    before starting the job.
+    """
 
+    job_device = job.actual_device if job.actual_device else job.requested_device
+    logger = logging.getLogger('dispatcher-master')
+
+    if not job_device:
+        fail_msg = "No device specified in job"
+        end_job(job, fail_msg=fail_msg, job_status=TestJob.INCOMPLETE)
+        logger.error(fail_msg)
+        return None
+    if job_device.worker_host is None:
+        fail_msg = "Misconfigured device configuration - missing worker_host"
+        end_job(job, fail_msg=fail_msg, job_status=TestJob.INCOMPLETE)
+        logger.error(fail_msg)
+        return None
+    # get the up to date information each time
+    try:
+        device = Device.objects.get(hostname=job_device.hostname)
+    except Device.DoesNotExist:
+        fail_msg = "No device found for %s" % job_device.hostname
+        end_job(job, fail_msg=fail_msg, job_status=TestJob.INCOMPLETE)
+        logger.warning(fail_msg)
+        return None
+    if device.status != Device.IDLE:
+        # FIXME: handle forced health checks which are allowed if the device is offline.
+        return None
+    return device
+
+
+class Command(BaseCommand):
+    """
+    worker_host is the hostname of the worker - under the old dispatcher, this was declared by
+    that worker using the heartbeat. In the new dispatcher, this field is set by the admin
+    and could therefore be empty in a misconfigured instance.
+    """
     logger = None
     help = "LAVA dispatcher master"
     option_list = BaseCommand.option_list + (
@@ -355,17 +396,23 @@ class Command(BaseCommand):
                     dispatchers[hostname].alive()
 
                 elif action == 'END':
+                    status = TestJob.COMPLETE
                     try:
                         job_id = int(msg[2])
+                        job_status = int(msg[3])
                     except (IndexError, ValueError):
                         self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
                         continue
-                    self.logger.info("[%d] %s => END", job_id, hostname)
+                    if job_status:
+                        self.logger.info("[%d] %s => END with error %d", job_id, hostname, job_status)
+                        status = TestJob.INCOMPLETE
+                    else:
+                        self.logger.info("[%d] %s => END", job_id, hostname)
                     try:
                         with transaction.atomic():
                             job = TestJob.objects.select_for_update() \
                                                  .get(id=job_id)
-                            end_job(job)
+                            end_job(job, job_status=status)
                     except TestJob.DoesNotExist:
                         self.logger.error("[%d] Unknown job", job_id)
                     # ACK even if the job is unknown to let the dispatcher
@@ -427,11 +474,8 @@ class Command(BaseCommand):
                 # TODO: make this atomic
                 not_allocated = 0
                 for job in TestJob.objects.filter(status=TestJob.SUBMITTED, is_pipeline=True):
-                    job_device = job.actual_device if job.actual_device else job.requested_device
-                    # get the up to date information each time
-                    device = Device.objects.get(hostname=job_device.hostname)
-                    if device.status != Device.IDLE:
-                        # FIXME: handle forced health checks which are allowed if the device is offline.
+                    device = get_job_device(job)
+                    if not device:
                         continue
                     if job.actual_device is None:
                         device = job.requested_device

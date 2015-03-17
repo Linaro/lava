@@ -544,3 +544,16 @@ def jinja2_to_devicedictionary(data_dict):
             value = value.replace('"', "'").replace("'", '')
             data[key] = value
     return data
+
+
+def jinja_template_path(system=True):
+    """
+    Use the source code for jinja2 templates, e.g. for unit tests
+    """
+    path = '/etc/lava-server/dispatcher-config/'
+    if os.path.exists(path) and system:
+        return path
+    path = os.path.realpath(os.path.join(os.path.dirname(__file__), '../etc/dispatcher-config/'))
+    if not os.path.exists(path):
+        raise RuntimeError("Misconfiguration of jinja templates")
+    return path

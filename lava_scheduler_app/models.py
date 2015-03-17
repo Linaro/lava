@@ -768,7 +768,7 @@ class Device(RestrictedResource):
 
         element = DeviceDictionary.get(self.hostname)
         # TODO: hardcoded path (determined by setup.py)
-        path = '/etc/lava-server/dispatcher-config/'
+        path = utils.jinja_template_path()
         if element is None:
             return None
         data = utils.devicedictionary_to_jinja2(
