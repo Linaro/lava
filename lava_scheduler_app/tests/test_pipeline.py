@@ -22,15 +22,15 @@ class YamlFactory(ModelFactory):
     """
     Override some factory functions to supply YAML instead of JSON
     The YAML **must** be valid for the current pipeline to be able to
-    save a TestJob into the database. Hence kvm.yaml.
+    save a TestJob into the database. Hence qemu.yaml.
     """
 
     def make_fake_qemu_device(self, hostname='fakeqemu1'):
         qemu = DeviceDictionary(hostname=hostname)
-        qemu.parameters = {'extends': 'kvm.yaml', 'arch': 'amd64'}
+        qemu.parameters = {'extends': 'qemu.yaml', 'arch': 'amd64'}
         qemu.save()
 
-    def make_device_type(self, name='kvm', health_check_job=None):
+    def make_device_type(self, name='qemu', health_check_job=None):
         device_type = DeviceType.objects.create(
             name=name, health_check_job=health_check_job)
         device_type.save()
@@ -54,7 +54,7 @@ class YamlFactory(ModelFactory):
         return device
 
     def make_job_data(self, actions=[], **kw):
-        sample_job_file = os.path.join(os.path.dirname(__file__), 'kvm.yaml')
+        sample_job_file = os.path.join(os.path.dirname(__file__), 'qemu.yaml')
         with open(sample_job_file, 'r') as test_support:
             data = yaml.load(test_support)
         data.update(kw)
@@ -83,6 +83,12 @@ class PipelineDeviceTags(TestCaseWithFactory):
         self.assertNotIn('timeout', data)
         self.assertIn('timeouts', data)
         self.assertIn('job', data['timeouts'])
+
+    def test_make_device(self):
+        device = self.factory.make_device(self.device_type, 'fakeqemu3')
+        self.assertEqual(device.device_type.name, 'qemu')
+        job = self.factory.make_job_yaml()
+        self.assertIsNotNone(job)
 
     def test_no_tags(self):
         self.factory.make_device(self.device_type, 'fakeqemu3')

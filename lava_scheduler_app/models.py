@@ -1311,16 +1311,19 @@ class TestJob(RestrictedResource):
         """
         Check device configuration to look for a valid pipeline.
         Return the first suitable device, along with the pipeline for storage & update.
+        Use the errors dict for debugging.
         """
+        errors = {}
         if type(allowed_list) is not list:
+            errors['runtime'] = "allowed_list was not a list type"
             return None, None
 
-        errors = {}
         for device in allowed_list:
             try:
                 device_config = device.load_device_configuration()  # raw dict
             except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
                 # FIXME: report the exceptions as useful user messages
+                errors['jinja2'] = exc
                 continue
             if not device_config or type(device_config) is not dict:
                 continue
@@ -1331,7 +1334,12 @@ class TestJob(RestrictedResource):
                 obj.target = device.hostname
             obj['hostname'] = device.hostname
             # pass output_dir just for validation as there is no zmq socket either.
-            pipeline_job = parser.parse(definition, obj, 0, None, output_dir='/tmp')
+            try:
+                pipeline_job = parser.parse(definition, obj, 0, None, output_dir='/tmp')
+            except NotImplementedError as exc:
+                errors['parser'] = exc
+                # catch and report earlier errors too.
+                raise DevicesUnavailableException(errors)
             # validate, if valid, return the first match
             try:
                 pipeline_job.pipeline.validate_actions()

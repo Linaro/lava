@@ -1,8 +1,8 @@
 # Sample JOB definition for a KVM
 
-device_type: kvm
+device_type: qemu
 
-job_name: kvm-pipeline
+job_name: qemu-pipeline
 timeouts:
   job:
     minutes: 15            # timeout for the whole job (default: ??h)
