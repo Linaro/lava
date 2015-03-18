@@ -72,6 +72,7 @@ class Command(BaseCommand):
         hostname = options['hostname']
         if hostname is None:
             print "Error: please specify a hostname"
+            return
         if options['import'] is not None:
             data = parse_template(options['import'])
             element = DeviceDictionary.get(hostname)
