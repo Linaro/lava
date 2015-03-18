@@ -304,7 +304,7 @@ def main():
                         sock.send_multipart(["START_OK", str(job_id)])
                     else:
                         logger.warning("[%d] Job has already ended", job_id)
-                        sock.send_multipart(["END", str(job_id)])
+                        sock.send_multipart(["END", str(job_id)], 0)
                 else:
                     jobs[job_id] = Job(job_id, job_definition,
                                        device_definition, env,
@@ -337,7 +337,7 @@ def main():
                     jobs[job_id] = Job(job_id, "", "", None, None)
                     jobs[job_id].running = False
                 # Send the END message anyway
-                sock.send_multipart(["END", str(job_id)])
+                sock.send_multipart(["END", str(job_id)], 0)
 
                 # Mark the master as alive
                 master.received_msg()
@@ -370,13 +370,13 @@ def main():
                         sock.send_multipart(["START_OK", str(job_id)])
                     else:
                         # The job has already ended
-                        sock.send_multipart(["END", str(job_id)])
+                        sock.send_multipart(["END", str(job_id)], 0)
                 else:
-                    # Unknwon job: return END anyway
-                    logger.debug("[%d] Unknown job, sending END", job_id)
+                    # Unknown job: return END anyway
+                    logger.debug("[%d] Unknown job, sending END after STATUS", job_id)
                     jobs[job_id] = Job(job_id, "", "", None, None)
                     jobs[job_id].running = False
-                    sock.send_multipart(["END", str(job_id)])
+                    sock.send_multipart(["END", str(job_id)], 0)
 
                 # Mark the master as alive
                 master.received_msg()
@@ -391,11 +391,15 @@ def main():
         for job_id in jobs.keys():
             if jobs[job_id].running:
                 ret = jobs[job_id].proc.poll()
-                # Job as finished
+                # Job has finished
                 if ret is not None:
-                    logger.info("[%d] Job END", job_id)
+                    logger.info("Job %s END", job_id)
+                    job_status = jobs[job_id].proc.returncode
+                    if job_status:
+                        logger.info("Job %s returned non-zero", job_id)
+
                     jobs[job_id].running = False
-                    sock.send_multipart(["END", str(job_id)])
+                    sock.send_multipart(["END", str(job_id), str(job_status)])
 
         # Send a PING only if we haven't received a message from the master nor
         # sent a PING for a long time.

@@ -81,14 +81,17 @@ def get_pipeline_runner(job):
     # FIXME: drop outdated arguments, job_data, config and output_dir
     def run_pipeline_job(job_data, oob_file, config, output_dir, validate_only):
         # always validate every pipeline before attempting to run.
+        exitcode = 0
         try:
             job.validate(simulate=validate_only)
             if not validate_only:
-                job.run()
+                exitcode = job.run()
         except JobError as exc:
             print exc
             logging.debug("%s" % exc)
             sys.exit(2)
+        if exitcode:
+            sys.exit(exitcode)
         # FIXME: should we call the cleanup function in the finally block?
     return run_pipeline_job
 

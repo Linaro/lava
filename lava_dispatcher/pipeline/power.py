@@ -202,6 +202,7 @@ class FinalizeAction(Action):
             self.logger.debug('status: %s' % self.errors)
         elif self.job.pipeline.errors:
             self.results = {'status': "Incomplete"}
+            self.errors = "Incomplete"
             self.logger.debug("Status: Incomplete")
             self.logger.debug(self.job.pipeline.errors)
         else:
