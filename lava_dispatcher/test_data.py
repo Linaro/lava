@@ -60,19 +60,6 @@ class LavaTestData(object):
         }
         self._test_run['test_results'].append(result_data)
 
-    def update_last_result(self, test_case_id, result, measurement="",
-                           units="", message=""):
-        result_data = {
-            'test_case_id': test_case_id,
-            'result': result,
-            'measurement': measurement,
-            'units': units,
-            'message': message
-        }
-        if self._test_run['test_results'][-1]['test_case_id'] == \
-                result_data['test_case_id']:
-            self._test_run['test_results'][-1] = result_data
-
     def add_attachments(self, attachments):
         self._test_run['attachments'].extend(attachments)
 
