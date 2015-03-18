@@ -72,17 +72,11 @@
 #
 # /lava-$(DEVICE_HOSTNAME)/
 #    results/
-#       hwcontext/                 Each test_run in the bundle has the same
-#                                  hw & sw context info attached to it.
-#          cpuinfo.txt             Hardware info.
-#          meminfo.txt             Ditto.
-#       swcontext/
-#          build.txt               Software info.
-#          pkgs.txt                Ditto
 #       ${IDX}_${TEST_ID}-${TIMESTAMP}/
 #          testdef.yml
 #          testdef_metadata
 #          stdout.log
+#          install_return_code             The exit code of install.sh.
 #          return_code             The exit code of run.sh.
 #          analyzer_assigned_uuid
 #          attachments/
@@ -107,6 +101,13 @@
 #                attachments/      Contains attachments for test results.
 #                   ${FILENAME}           The attached data.
 #                   ${FILENAME}.mimetype  The mime type of the attachment.
+#           hwcontext/                 Each test_run in the bundle has the same
+#                                  hw & sw context info attached to it.
+#               cpuinfo.txt             Hardware info.
+#               meminfo.txt             Ditto.
+#           swcontext/
+#               build.txt               Software info.
+#               pkgs.txt                Ditto
 #
 # After the test run has completed, the /lava-$(DEVICE_HOSTNAME)/results
 # directory is pulled over to the host and turned into a bundle for submission

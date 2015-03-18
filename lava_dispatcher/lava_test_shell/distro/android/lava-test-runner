@@ -23,9 +23,10 @@ BINDIR="$LAVA_PATH/bin"
 
 hwcontext()
 {
-	mkdir -p ${RESULTSDIR}/hwcontext
-	cpuinfo=${RESULTSDIR}/hwcontext/cpuinfo.txt
-	meminfo=${RESULTSDIR}/hwcontext/meminfo.txt
+	ODIR=$1
+	mkdir -p ${ODIR}/hwcontext
+	cpuinfo=${ODIR}/hwcontext/cpuinfo.txt
+	meminfo=${ODIR}/hwcontext/meminfo.txt
 
 	[ -f ${cpuinfo} ] || cat /proc/cpuinfo > ${cpuinfo}
 	[ -f ${meminfo} ] || cat /proc/meminfo > ${meminfo}
@@ -33,9 +34,10 @@ hwcontext()
 
 swcontext()
 {
-	mkdir -p ${RESULTSDIR}/swcontext
-	build=${RESULTSDIR}/swcontext/build.txt
-	pkgs=${RESULTSDIR}/swcontext/pkgs.txt
+	ODIR=$1
+	mkdir -p ${ODIR}/swcontext
+	build=${ODIR}/swcontext/build.txt
+	pkgs=${ODIR}/swcontext/pkgs.txt
 
 	[ -f ${build} ] || getprop ro.build.display.id > ${build}
 	[ -f ${pkgs} ] || pm list packages > ${pkgs}
@@ -66,28 +68,6 @@ cleanup()
 	mv ${WORKFILE} ${WORKFILE}-${TS}
 	WORKFILE=${WORKFILE}-${TS}
 
-	echo "${PREFIX} looking for installation work in ${WORKFILE}"
-	for line in $(cat ${WORKFILE}); do
-		# we don't have "basename" on android, but this does the
-		# equivalent under mksh
-		testdir=${line%/} # trim off trailing slash iff it exists
-		test=${testdir/*\//}
-		if [ -f ${line}/install.sh ] ; then
-			echo "${PREFIX} running ${test} installer ..."
-			/system/bin/sh ${line}/install.sh
-			if [ $? -ne 0 ] ; then
-				echo "${PREFIX} ${test} installer failed, exiting"
-				hwcontext
-				swcontext
-				exit 1
-			fi
-		fi
-	done
-
-	echo "${PREFIX} save hardware/software context info..."
-	hwcontext
-	swcontext
-
 	echo "${PREFIX} looking for work in ${WORKFILE}"
 	for line in $(cat ${WORKFILE}); do
 		# we don't have "basename" on android, but this does the
@@ -98,15 +78,34 @@ cleanup()
 		odir=${RESULTSDIR}/${test}-`date +%s`
 		mkdir ${odir}
 		mkdir ${odir}/attachments/
+
+		touch ${odir}/stdout.log
+
 		cp ${line}/testdef.yaml ${odir}/
 		cp ${line}/testdef_metadata ${odir}/
 		cp ${line}/uuid ${odir}/analyzer_assigned_uuid
+
 		cp ${line}/run.sh ${odir}/attachments/
 		echo 'text/plain' > ${odir}/attachments/run.sh.mimetype
 		if [ -f ${line}/install.sh ]; then
 			cp ${line}/install.sh ${odir}/attachments/
 			echo 'text/plain' > ${odir}/attachments/install.sh.mimetype
+			echo "${PREFIX} running ${test} installer ..."
+			/system/bin/sh ${line}/install.sh
+			R=$?
+			echo ${R} > ${odir}/install_return_code
+			if [ ${R} -ne 0 ] ; then
+				echo "${PREFIX} ${test} installer failed, skippig"
+				hwcontext ${odir}
+				swcontext ${odir}
+				continue
+			fi
 		fi
+
+		echo "${PREFIX} save hardware/software context info..."
+		hwcontext ${odir}
+		swcontext ${odir}
+
 		lava-test-shell --output_dir ${odir} /system/bin/sh -e "${line}/run.sh"
 		echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
 	done
