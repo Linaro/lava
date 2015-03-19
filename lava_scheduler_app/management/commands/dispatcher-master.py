@@ -145,7 +145,6 @@ def send_status(hostname, socket, logger):
                                   is_pipeline=True,
                                   status=TestJob.RUNNING)
     for job in jobs:
-        # TODO: keep track of the list of job to check (retrying)
         logger.info("STATUS %d => %s (%s)", job.id, hostname,
                     job.actual_device.hostname)
         socket.send_multipart([hostname, 'STATUS', str(job.id)])
