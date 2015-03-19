@@ -86,6 +86,7 @@ def get_pipeline_runner(job):
             if not validate_only:
                 job.run()
         except JobError as exc:
+            print exc
             logging.debug("%s" % exc)
             sys.exit(2)
         # FIXME: should we call the cleanup function in the finally block?
