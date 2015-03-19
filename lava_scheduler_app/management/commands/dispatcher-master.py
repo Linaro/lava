@@ -295,15 +295,15 @@ class Command(BaseCommand):
             now = time.time()
             for job_id in logs.keys():
                 if now - logs[job_id].last_usage > FD_TIMEOUT:
-                    self.logger.info("Collecting file handler '%s' from job %s",
-                                     logs[job_id].filename, job_id)
+                    self.logger.info("[%s] Collecting file handler '%s'",
+                                     job_id, logs[job_id].filename)
                     logs[job_id].close()
                     del logs[job_id]
 
             # Command socket
             if sockets.get(controler) == zmq.POLLIN:
                 msg = controler.recv_multipart()
-                self.logger.debug("Receiving on controller: %s", msg)
+                self.logger.debug("[CC] Receiving: %s", msg)
 
                 # 1: the hostname (see ZMQ documentation)
                 hostname = msg[0]
@@ -318,7 +318,7 @@ class Command(BaseCommand):
                     if hostname in dispatchers:
                         self.logger.warning("Dispatcher <%s> has RESTARTED", hostname)
                     else:
-                        self.logger.warning("New dispatcher %s", hostname)
+                        self.logger.warning("New dispatcher <%s>", hostname)
                         dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
 
                     # Mark the dispatcher as Online
@@ -335,7 +335,7 @@ class Command(BaseCommand):
                                                       status=TestJob.RUNNING) \
                                               .select_for_update()
                         for job in jobs:
-                            self.logger.info("Canceling job %d", job.id)
+                            self.logger.info("[%d] Canceling", job.id)
                             cancel_job(job)
 
                     # Mark the dispatcher as alive
@@ -348,7 +348,7 @@ class Command(BaseCommand):
 
                     if hostname not in dispatchers:
                         # The server crashed: send a STATUS message
-                        self.logger.warning("Unknown dispatcher %s (server crashed)", hostname)
+                        self.logger.warning("Unknown dispatcher <%s> (server crashed)", hostname)
                         dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
                         send_status(hostname, controler, self.logger)
 
@@ -361,21 +361,21 @@ class Command(BaseCommand):
                     except (IndexError, ValueError):
                         self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
                         continue
-                    self.logger.info("%s => END %d", hostname, job_id)
+                    self.logger.info("[%d] %s => END", job_id, hostname)
                     try:
                         with transaction.atomic():
                             job = TestJob.objects.select_for_update() \
                                                  .get(id=job_id)
                             end_job(job)
                     except TestJob.DoesNotExist:
-                        self.logger.error("Unknown job %d", job_id)
+                        self.logger.error("[%d] Unknown job", job_id)
                     # ACK even if the job is unknown to let the dispatcher
                     # forget about it
                     controler.send_multipart([hostname, 'END_OK', str(job_id)])
 
                     if hostname not in dispatchers:
                         # The server crashed: send a STATUS message
-                        self.logger.warning("Unknown dispatcher %s (server crashed)", hostname)
+                        self.logger.warning("Unknown dispatcher <%s> (server crashed)", hostname)
                         dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
                         send_status(hostname, controler, self.logger)
 
@@ -388,18 +388,18 @@ class Command(BaseCommand):
                     except (IndexError, ValueError):
                         self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
                         continue
-                    self.logger.info("%s => START_OK %d", hostname, job_id)
+                    self.logger.info("[%d] %s => START_OK", job_id, hostname)
                     try:
                         with transaction.atomic():
                             job = TestJob.objects.select_for_update() \
                                                  .get(id=job_id)
                             start_job(job)
                     except TestJob.DoesNotExist:
-                        self.logger.error("Unknown job <%d>", job_id)
+                        self.logger.error("[%d] Unknown job", job_id)
 
                     if hostname not in dispatchers:
                         # The server crashed: send a STATUS message
-                        self.logger.warning("Unknown dispatcher %s (server crashed)", hostname)
+                        self.logger.warning("Unknown dispatcher <%s> (server crashed)", hostname)
                         dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
                         send_status(hostname, controler, self.logger)
 
@@ -439,12 +439,12 @@ class Command(BaseCommand):
 
                         # Launch the job
                         create_job(job, device)
-                        self.logger.info("START %d => %s (%s)", job.id,
+                        self.logger.info("[%d] START => %s (%s)", job.id,
                                          device.worker_host.hostname, device.hostname)
 
                     else:
                         device = job.actual_device
-                        self.logger.info("START %d => %s (%s) (retrying)", job.id,
+                        self.logger.info("[%d] START => %s (%s) (retrying)", job.id,
                                          device.worker_host.hostname, device.hostname)
                     try:
                         # Load job definition to get the variables for template
@@ -485,7 +485,7 @@ class Command(BaseCommand):
                             self.logger.exception(exc)
                             msg = "Infrastructure error: %s" % exc.message
 
-                        self.logger.error("Job %d is INCOMPLETE", job.id)
+                        self.logger.error("[%d] INCOMPLETE job", job.id)
                         job.status = TestJob.INCOMPLETE
                         new_status = Device.IDLE
                         device.state_transition_to(
@@ -503,7 +503,7 @@ class Command(BaseCommand):
 
                 # Handle canceling jobs
                 for job in TestJob.objects.filter(status=TestJob.CANCELING, is_pipeline=True):
-                    self.logger.info("CANCEL %d => %s", job.id,
+                    self.logger.info("[%d] CANCEL => %s", job.id,
                                      job.actual_device.worker_host.hostname)
                     controler.send_multipart([str(job.actual_device.worker_host.hostname),
                                               'CANCEL', str(job.id)])
