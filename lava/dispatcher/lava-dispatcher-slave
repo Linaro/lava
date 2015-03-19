@@ -275,20 +275,20 @@ def main():
                 except (IndexError, ValueError):
                     logger.error("Invalid message '%s'", msg)
                     continue
-                logger.info("Starting job %d", job_id)
-                logger.debug("Job %d       : %s", job_id, job_definition)
-                logger.debug("Job %d device: %s", job_id, device_definition)
-                logger.debug("Job %d env   : %s", job_id, env)
+                logger.info("[%d] Starting job", job_id)
+                logger.debug("[%d]       : %s", job_id, job_definition)
+                logger.debug("[%d] device: %s", job_id, device_definition)
+                logger.debug("[%d] env   : %s", job_id, env)
 
                 # Check if the job is known and started. In this case, send
                 # back the right signal (ignoring the duplication or signaling
                 # the end of the job).
                 if job_id in jobs:
                     if jobs[job_id].running:
-                        logger.info("Job %d has already been started", job_id)
+                        logger.info("[%d] Job has already been started", job_id)
                         sock.send_multipart(['START_OK', str(job_id)])
                     else:
-                        logger.warning("Job %d has already end", job_id)
+                        logger.warning("[%d] Job has already ended", job_id)
                         sock.send_multipart(['END', str(job_id)])
                 else:
                     jobs[job_id] = Job(job_id, job_definition,
@@ -306,7 +306,7 @@ def main():
                 except (IndexError, ValueError):
                     logger.error("Invalid message '%s'", msg)
                     continue
-                logger.info("Canceling job %d", job_id)
+                logger.info("[%d] Canceling", job_id)
 
                 # Check if the job is known and started. In this case, send
                 # back the right signal (ignoring the duplication or signaling
@@ -315,9 +315,9 @@ def main():
                     if jobs[job_id].running:
                         jobs[job_id].cancel()
                     else:
-                        logger.info("Job %d has already been canceled", job_id)
+                        logger.info("[%d] Job has already been canceled", job_id)
                 else:
-                    logger.debug("Unknown job %d, sending END", job_id)
+                    logger.debug("[%d] Unknown job, sending END", job_id)
                     jobs[job_id] = Job(job_id, '', '', None, None)
                     jobs[job_id].running = False
                 # Send the END message anyway
@@ -333,10 +333,10 @@ def main():
                     logger.error("Invalid message '%s'", msg)
                     continue
                 if job_id in jobs:
-                    logger.debug("Job %d END acked", job_id)
+                    logger.debug("[%d] Job END acked", job_id)
                     del jobs[job_id]
                 else:
-                    logger.debug("Unknown job %d END acked", job_id)
+                    logger.debug("[%d] Unknown job END acked", job_id)
 
                 # Do not mark the master as alive. In fact we are not sending
                 # back any data so the master will not be able to mark the
@@ -357,7 +357,7 @@ def main():
                         sock.send_multipart(['END', str(job_id)])
                 else:
                     # Unknwon job: return END anyway
-                    logger.debug("Unknown job %d, sending END", job_id)
+                    logger.debug("[%d] Unknown job, sending END", job_id)
                     jobs[job_id] = Job(job_id, '', '', None, None)
                     jobs[job_id].running = False
                     sock.send_multipart(['END', str(job_id)])
@@ -376,7 +376,7 @@ def main():
                 ret = jobs[job_id].proc.poll()
                 # Job as finished
                 if ret is not None:
-                    logger.info("Job %s END", job_id)
+                    logger.info("[%d] Job END", job_id)
                     jobs[job_id].running = False
                     sock.send_multipart(['END', str(job_id)])
 
