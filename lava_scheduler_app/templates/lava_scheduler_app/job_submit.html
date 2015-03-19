@@ -51,21 +51,22 @@
 <form action="" method="post">
   {% csrf_token %}
   <div>
-  <textarea id="json-input" name="json-input" placeholder="Enter your job definition or link to a job definition here.">{{ json_input }}</textarea>
-  <div id="busyIndicator"></div>
-  <div>
-  <div id="json-valid-container">
-  </div>
-  <div>
-    <input type="checkbox" name="is_favorite" id="is_favorite" {% if is_favorite %} checked {% endif %} />
-    Add to my favorite jobs
-  </div>
-  <div id="submit-container">
-    <input type="hidden" name="is_resubmit" value="true">
-    <button class="btn btn-primary" id="validate" type="button">Validate</button>
-    <button class="btn btn-success" id="submit" type="submit" value="Submit">Submit</button>
-    <span id="validation_note">(Note: Please validate JSON before job submission.)</span>
-
+    <textarea id="json-input" name="json-input" placeholder="Enter your job definition or link to a job definition here.">{{ json_input }}</textarea>
+    <div id="busyIndicator"></div>
+    <div>
+      <div id="json-valid-container">
+      </div>
+      <div>
+        <input type="checkbox" name="is_favorite" id="is_favorite" {% if is_favorite %} checked {% endif %} />
+        Add to my favorite jobs
+      </div>
+      <div id="submit-container">
+        <input type="hidden" name="is_resubmit" value="true">
+        <button class="btn btn-primary" id="validate" type="button">Validate</button>
+        <button class="btn btn-success" id="submit" type="submit" value="Submit">Submit</button>
+        <span id="validation_note">(Note: Please validate JSON before job submission.)</span>
+      </div>
+    </div>
   </div>
 </form>
 {% endif %}
