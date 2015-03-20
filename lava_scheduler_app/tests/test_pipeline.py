@@ -15,6 +15,7 @@ from lava_scheduler_app.models import (
 from django.db import models
 from django_testscenarios.ubertest import TestCase
 from django.contrib.auth.models import Group, Permission, User
+from collections import OrderedDict
 from lava_scheduler_app.utils import jinja_template_path
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
 
@@ -54,7 +55,7 @@ class YamlFactory(ModelFactory):
         device.save()
         return device
 
-    def make_job_data(self, actions=[], **kw):
+    def make_job_data(self, actions=None, **kw):
         sample_job_file = os.path.join(os.path.dirname(__file__), 'qemu.yaml')
         with open(sample_job_file, 'r') as test_support:
             data = yaml.load(test_support)
@@ -221,5 +222,64 @@ class TestPipelineStore(TestCaseWithFactory):
         foo = JobPipeline.get(job.id)
         self.assertIsNotNone(foo)
         self.assertIsInstance(foo, JobPipeline)
-        # pipeline.describe() needs to reparse as YAML
-        yaml.load(foo.pipeline)
+        self.assertIs(type(foo.pipeline), dict)
+
+    def test_pipeline_results(self):
+        result_sample = """
+- results: !!python/object/apply:collections.OrderedDict
+  - - [linux-linaro-ubuntu-pwd, pass]
+    - [linux-linaro-ubuntu-uname, pass]
+    - [linux-linaro-ubuntu-vmstat, pass]
+    - [linux-linaro-ubuntu-ifconfig, pass]
+    - [linux-linaro-ubuntu-lscpu, pass]
+    - [linux-linaro-ubuntu-lsb_release, pass]
+    - [linux-linaro-ubuntu-netstat, pass]
+    - [linux-linaro-ubuntu-ifconfig-dump, pass]
+    - [linux-linaro-ubuntu-route-dump-a, pass]
+    - [linux-linaro-ubuntu-route-ifconfig-up-lo, pass]
+    - [linux-linaro-ubuntu-route-dump-b, pass]
+    - [linux-linaro-ubuntu-route-ifconfig-up, pass]
+    - [ping-test, fail]
+    - [realpath-check, fail]
+    - [ntpdate-check, pass]
+    - [curl-ftp, pass]
+    - [tar-tgz, pass]
+    - [remove-tgz, pass]
+        """
+        result_store = {
+            'result_sample': OrderedDict([
+                ('linux-linaro-ubuntu-pwd', 'pass'),
+                ('linux-linaro-ubuntu-uname', 'pass'),
+                ('linux-linaro-ubuntu-vmstat', 'pass'),
+                ('linux-linaro-ubuntu-ifconfig', 'pass'),
+                ('linux-linaro-ubuntu-lscpu', 'pass'),
+                ('linux-linaro-ubuntu-lsb_release', 'pass'),
+                ('linux-linaro-ubuntu-netstat', 'pass'),
+                ('linux-linaro-ubuntu-ifconfig-dump', 'pass'),
+                ('linux-linaro-ubuntu-route-dump-a', 'pass'),
+                ('linux-linaro-ubuntu-route-ifconfig-up-lo', 'pass'),
+                ('linux-linaro-ubuntu-route-dump-b', 'pass'),
+                ('linux-linaro-ubuntu-route-ifconfig-up', 'pass'),
+                ('ping-test', 'fail'),
+                ('realpath-check', 'fail'),
+                ('ntpdate-check', 'pass'),
+                ('curl-ftp', 'pass'),
+                ('tar-tgz', 'pass'),
+                ('remove-tgz', 'pass')])}
+        name = "result_sample"
+        user = self.factory.make_user()
+        job = TestJob.from_yaml_and_user(
+            self.factory.make_job_json(), user)
+        store = JobPipeline.get(job.id)
+        scanned = yaml.load(result_sample)
+        if type(scanned) is list and len(scanned) == 1:
+            if 'results' in scanned[0] and type(scanned[0]) is dict:
+                store.pipeline.update({name: scanned[0]['results']})
+                # too often to save the results?
+                store.save()
+        self.assertIsNotNone(store.pipeline)
+        self.assertIsNot({}, store.pipeline)
+        self.assertIs(type(store.pipeline), dict)
+        self.assertIn('result_sample', store.pipeline)
+        self.assertIs(type(store.pipeline['result_sample']), OrderedDict)
+        self.assertEqual(store.pipeline, result_store)

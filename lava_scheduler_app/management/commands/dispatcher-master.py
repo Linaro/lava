@@ -25,14 +25,16 @@ import jinja2
 import logging
 from optparse import make_option
 import os
+import yaml
 import signal
 import time
 import yaml
 import zmq
 
+from collections import OrderedDict
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from lava_scheduler_app.models import Device, TestJob
+from lava_scheduler_app.models import Device, TestJob, JobPipeline
 
 # pylint: disable=no-member,too-many-branches,too-many-statements,too-many-locals
 
@@ -310,6 +312,23 @@ class Command(BaseCommand):
             if sockets.get(pull_socket) == zmq.POLLIN:
                 msg = pull_socket.recv_multipart()
                 (job_id, level, name, message) = msg
+
+                try:
+                    scanned = yaml.load(message)
+                except yaml.ScannerError:
+                    scanned = None
+                # the results logger wraps the OrderedDict in a dict called results, for identification,
+                # YAML then puts that into a list of one item for each call to log.results.
+                if type(scanned) is list and len(scanned) == 1:
+                    if type(scanned[0]) is dict and 'results' in scanned[0]:
+                        store = JobPipeline.get(job_id)
+                        if not store:
+                            # create a new store
+                            store = JobPipeline(job_id=job_id)
+                            # the store pipeline is a standard dict, not an OrderedDict
+                        store.pipeline.update({name: scanned[0]['results']})
+                        # too often to save the results?
+                        store.save()
 
                 # Clear filename
                 if '/' in level or '/' in name:

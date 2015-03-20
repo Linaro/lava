@@ -1387,6 +1387,11 @@ class TestJob(RestrictedResource):
                       is_pipeline=True)
 
         job.save()
+
+        # need a valid job before the tags can be assigned, then it needs to be saved again.
+        for tag in Tag.objects.filter(name__in=taglist):
+            job.tags.add(tag)
+        job.save()
         # add pipeline to jobpipeline, update with results later - needs the job.id.
         dupe = JobPipeline.get(job.id)
         if dupe:
@@ -1394,12 +1399,15 @@ class TestJob(RestrictedResource):
             # FIXME: needs a unit test
             raise RuntimeError("Duplicate job id?")
         store = JobPipeline(job_id=job.id)
-        # saving as YAML avoids pickling errors - the pipelinestore is read-only
-        store.pipeline = yaml.dump(pipeline)
+        store.pipeline = {}
         store.save()
 
-        for tag in Tag.objects.filter(name__in=taglist):
-            job.tags.add(tag)
+        # write the pipeline description to the job output directory.
+        if not os.path.exists(job.output_dir):
+            os.makedirs(job.output_dir)
+        with open(os.path.join(job.output_dir, 'description.yaml'), 'w') as describe_yaml:
+            describe_yaml.write(yaml.dump(pipeline))
+
         return job
 
     @classmethod
