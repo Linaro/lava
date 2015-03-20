@@ -115,6 +115,9 @@ class ApplyOverlayTftp(Action):
             overlay_type = 'nfsrootfs'
             overlay_file = self.data['compress-overlay'].get('output')
             directory = self.get_common_data('file', 'nfsroot')
+        else:
+            self.logger.debug("No overlay directory")
+            self.logger.debug(self.parameters)
         try:
             tar = tarfile.open(overlay_file)
             tar.extractall(directory)
@@ -292,6 +295,9 @@ class CompressRamdisk(Action):
         ramdisk_data = self.data['extract-overlay-ramdisk']['ramdisk_file']
         pwd = os.getcwd()
         os.chdir(ramdisk_dir)
+        self.logger.debug("Building ramdisk %s containing %s" % (
+            ramdisk_data, ramdisk_dir
+        ))
         cmd = "find . | cpio --create --format='newc' > %s" % ramdisk_data
         try:
             # safe to use shell=True here, no external arguments
@@ -316,6 +322,9 @@ class CompressRamdisk(Action):
             final_file = ramdisk_uboot
 
         os.rename(final_file, os.path.join(tftp_dir, os.path.basename(final_file)))
+        self.logger.debug("rename %s to %s" % (
+            final_file, os.path.join(tftp_dir, os.path.basename(final_file))
+        ))
         if self.parameters['to'] == 'tftp':
             suffix = self.data['tftp-deploy'].get('suffix', '')
             self.set_common_data('file', 'ramdisk', os.path.join(suffix, os.path.basename(final_file)))

@@ -35,7 +35,11 @@ from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.utils.strings import substitute
-from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR, SHUTDOWN_MESSAGE
+from lava_dispatcher.pipeline.utils.constants import (
+    DISPATCHER_DOWNLOAD_DIR,
+    SHUTDOWN_MESSAGE,
+    BOOT_MESSAGE,
+)
 
 
 class Factory(object):  # pylint: disable=too-few-public-methods
@@ -107,6 +111,9 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn('u-boot', job.device['actions']['boot']['methods'])
+        params = job.device['actions']['boot']['methods']['u-boot']['parameters']
+        boot_message = params.get('boot_message', BOOT_MESSAGE)
+        self.assertIsNotNone(boot_message)
         for action in job.pipeline.actions:
             action.validate()
             if isinstance(action, UBootAction):

@@ -343,7 +343,7 @@ class UBootCommandsAction(Action):
         self.name = "u-boot-commands"
         self.description = "send commands to u-boot"
         self.summary = "interactive u-boot"
-        self.prompt = None
+        self.params = None
         self.timeout = Timeout(self.name, UBOOT_DEFAULT_CMD_TIMEOUT)
 
     def validate(self):
@@ -351,18 +351,21 @@ class UBootCommandsAction(Action):
         if 'u-boot' not in self.data:
             self.errors = "Unable to read uboot context data"
         # get prompt_str from device parameters
-        self.prompt = self.job.device['actions']['boot']['methods']['u-boot']['parameters']['bootloader_prompt']
+        self.params = self.job.device['actions']['boot']['methods']['u-boot']['parameters']
 
     def run(self, connection, args=None):
         if not connection:
             self.errors = "%s started without a connection already in use" % self.name
         connection = super(UBootCommandsAction, self).run(connection, args)
-        self.logger.debug("Changing prompt to %s" % self.prompt)
+        connection.prompt_str = self.params['bootloader_prompt']
+        self.logger.debug("Changing prompt to %s" % connection.prompt_str)
         for line in self.data['u-boot']['commands']:
             self.wait(connection)
             connection.sendline(line)
             self.wait(connection)
         # allow for auto_login
-        connection.prompt_str = self.parameters.get('boot_message', BOOT_MESSAGE)
+        params = self.job.device['actions']['boot']['methods']['u-boot']['parameters']
+        connection.prompt_str = params.get('boot_message', BOOT_MESSAGE)
+        self.logger.debug("Changing prompt to %s" % connection.prompt_str)
         self.wait(connection)
         return connection
