@@ -19,30 +19,36 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
+"""Start the lava dispatcher and the zmq messager."""
+
 import argparse
-import socket
 import errno
 import fcntl
 import logging
 import os
 import re
 import signal
-import traceback
+import socket
 import subprocess
 import sys
 import time
+import traceback
 import yaml
 import zmq
 
-# pylint: disable=too-few-public-methods,too-many-instance-attributes,too-many-locals,no-member
-# pylint: disable=too-many-branches,too-many-statements
+# pylint: disable=no-member
+# pylint: disable=too-few-public-methods
+# pylint: disable=too-many-arguments
+# pylint: disable=too-many-branches
+# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-locals
+# pylint: disable=too-many-statements
 
 # TODO: add configuration for this
 TIMEOUT = 5
 END_OK_TIMEOUT = 5
 SEND_QUEUE = 10
 TMP_DIR = '/tmp/lava-dispatcher/slave/'
-
 
 # Setup the logger
 FORMAT = '%(asctime)-15s %(levelname)s %(message)s'
@@ -123,21 +129,28 @@ class Job(object):
         try:
             logger.debug("start %s", self.job_id)
             env = self.create_environ()
-            args = ['lava-dispatch', '--target', "%s/device.yaml" % self.base_dir,
-                    "%s/job.yaml" % self.base_dir,
-                    "--output-dir=%s%s/logs/" % (TMP_DIR, self.job_id),
-                    "--job-id=%s" % self.job_id,
-                    "--socket-addr=%s" % self.log_socket]
-            # TODO: maybe using something else than this basic functions to control
-            # the processes?
-            self.proc = subprocess.Popen(args, stdout=open("%s/out" % self.base_dir, 'w'),
-                                         stderr=open("%s/err" % self.base_dir, 'w'),
-                                         env=env)
+            args = [
+                'lava-dispatch',
+                '--target',
+                "%s/device.yaml" % self.base_dir,
+                "%s/job.yaml" % self.base_dir,
+                "--output-dir=%s%s/logs/" % (TMP_DIR, self.job_id),
+                "--job-id=%s" % self.job_id,
+                "--socket-addr=%s" % self.log_socket
+            ]
+            # TODO: maybe using something else than this basic functions to
+            # control the processes?
+            self.proc = subprocess.Popen(
+                args,
+                stdout=open("%s/out" % self.base_dir, 'w'),
+                stderr=open("%s/err" % self.base_dir, 'w'),
+                env=env)
             self.running = True
         except Exception as exc:
             # daemon must always continue running even if the job crashes
             if hasattr(exc, 'child_traceback'):
-                logger.exception({exc.strerror: exc.child_traceback.split('\n')})
+                logger.exception(
+                    {exc.strerror: exc.child_traceback.split('\n')})
             else:
                 logger.exception(exc)
             with open("%s/err" % self.base_dir, 'a') as errlog:
@@ -173,13 +186,14 @@ def main():
     # Parse command line
     parser = argparse.ArgumentParser(description='LAVA Dispatcher Slave')
     parser.add_argument(
-        '--hostname',
-        default=get_fqdn(),
-        type=str,
-        help='Name of the slave')
-    parser.add_argument('--master', type=str, help='Main master socket', required=True)
-    parser.add_argument('--socket-addr', type=str, help='Log socket', required=True)
-    parser.add_argument('--level', '-l', type=str, help='Log level (ERROR, WARN, INFO, DEBUG)', default='INFO')
+        '--hostname', default=get_fqdn(), type=str, help='Name of the slave')
+    parser.add_argument(
+        '--master', type=str, help='Main master socket', required=True)
+    parser.add_argument(
+        '--socket-addr', type=str, help='Log socket', required=True)
+    parser.add_argument(
+        '--level', '-l', type=str,
+        help='Log level (ERROR, WARN, INFO, DEBUG)', default='INFO')
     args = parser.parse_args()
 
     # Set-up the logger level
@@ -315,7 +329,8 @@ def main():
                     if jobs[job_id].running:
                         jobs[job_id].cancel()
                     else:
-                        logger.info("[%d] Job has already been canceled", job_id)
+                        logger.info(
+                            "[%d] Job has already been canceled", job_id)
                 else:
                     logger.debug("[%d] Unknown job, sending END", job_id)
                     jobs[job_id] = Job(job_id, '', '', None, None)
@@ -366,7 +381,8 @@ def main():
                 master.received_msg()
 
             else:
-                logger.error("Unknown action: '%s', args=(%s)", action, msg[1:])
+                logger.error(
+                    "Unknown action: '%s', args=(%s)", action, msg[1:])
                 # Do not write the master as alive as the message does not mean
                 # anything.
 
@@ -389,7 +405,10 @@ def main():
                 logger.warning("Master goes OFFLINE")
                 master.online = False
 
-            logger.debug("Sending PING to the master (last message %ss ago)", int(now - master.last_msg))
+            logger.debug(
+                "Sending PING to the master (last message %ss ago)",
+                int(now - master.last_msg))
+
             sock.send_multipart(['PING'])
             master.last_ping = now
 
