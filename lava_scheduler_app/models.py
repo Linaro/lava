@@ -1318,9 +1318,13 @@ class TestJob(RestrictedResource):
             errors['runtime'] = "allowed_list was not a list type"
             return None, None
 
+        # Load job definition to get the variables for template rendering
+        job_def = yaml.load(definition)
+        job_ctx = job_def.get('context', {})
+
         for device in allowed_list:
             try:
-                device_config = device.load_device_configuration()  # raw dict
+                device_config = device.load_device_configuration(job_ctx)  # raw dict
             except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
                 # FIXME: report the exceptions as useful user messages
                 errors['jinja2'] = exc
