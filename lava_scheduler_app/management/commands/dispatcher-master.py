@@ -170,7 +170,7 @@ class Command(BaseCommand):
                     help="Base directory for device configuration templates"),
         # FIXME: ensure share/env.yaml is put into /etc/ by setup.py when merging.
         make_option('--env',
-                    default="/etc/lava-server/dispatcher-config/env.yaml",
+                    default="/etc/lava-server/env.yaml",
                     help="Environment variables for the dispatcher processes"),
         make_option('--output-dir',
                     default='/var/lib/lava-server/default/media/job-output',
