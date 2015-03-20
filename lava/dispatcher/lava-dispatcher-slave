@@ -48,12 +48,12 @@ import zmq
 TIMEOUT = 5
 END_OK_TIMEOUT = 5
 SEND_QUEUE = 10
-TMP_DIR = '/tmp/lava-dispatcher/slave/'
+TMP_DIR = "/tmp/lava-dispatcher/slave/"
 
 # Setup the logger
-FORMAT = '%(asctime)-15s %(levelname)s %(message)s'
+FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
 logging.basicConfig(format=FORMAT)
-logger = logging.getLogger('dispatcher-slave')
+logger = logging.getLogger("dispatcher-slave")
 
 
 def mkdir(path):
@@ -100,28 +100,28 @@ class Job(object):
         mkdir(self.base_dir)
 
         # Write back the job and device cofniguration
-        with open("%s/job.yaml" % self.base_dir, 'w') as f_job:
+        with open("%s/job.yaml" % self.base_dir, "w") as f_job:
             f_job.write(definition)
-        with open("%s/device.yaml" % self.base_dir, 'w') as f_device:
+        with open("%s/device.yaml" % self.base_dir, "w") as f_device:
             f_device.write(device_definition)
 
     def create_environ(self):
         """ Generate the env variables for the job """
         conf = yaml.load(self.env)
-        if conf.get('purge', False):
+        if conf.get("purge", False):
             environ = {}
         else:
             environ = dict(os.environ)
 
         # Remove some variables (that might not exist)
-        for var in conf.get('removes', {}):
+        for var in conf.get("removes", {}):
             try:
                 del environ[var]
             except KeyError:
                 pass
 
         # Override
-        environ.update(conf.get('overrides', {}))
+        environ.update(conf.get("overrides", {}))
         return environ
 
     def start(self):
@@ -130,8 +130,8 @@ class Job(object):
             logger.debug("start %s", self.job_id)
             env = self.create_environ()
             args = [
-                'lava-dispatch',
-                '--target',
+                "lava-dispatch",
+                "--target",
                 "%s/device.yaml" % self.base_dir,
                 "%s/job.yaml" % self.base_dir,
                 "--output-dir=%s%s/logs/" % (TMP_DIR, self.job_id),
@@ -142,18 +142,18 @@ class Job(object):
             # control the processes?
             self.proc = subprocess.Popen(
                 args,
-                stdout=open("%s/out" % self.base_dir, 'w'),
-                stderr=open("%s/err" % self.base_dir, 'w'),
+                stdout=open("%s/out" % self.base_dir, "w"),
+                stderr=open("%s/err" % self.base_dir, "w"),
                 env=env)
             self.running = True
         except Exception as exc:
             # daemon must always continue running even if the job crashes
-            if hasattr(exc, 'child_traceback'):
+            if hasattr(exc, "child_traceback"):
                 logger.exception(
-                    {exc.strerror: exc.child_traceback.split('\n')})
+                    {exc.strerror: exc.child_traceback.split("\n")})
             else:
                 logger.exception(exc)
-            with open("%s/err" % self.base_dir, 'a') as errlog:
+            with open("%s/err" % self.base_dir, "a") as errlog:
                 # TODO: send something to the zmq logger
                 errlog.write("%s\n%s\n" % (exc, traceback.format_exc()))
             self.cancel()
@@ -184,24 +184,24 @@ def get_fqdn():
 
 def main():
     # Parse command line
-    parser = argparse.ArgumentParser(description='LAVA Dispatcher Slave')
+    parser = argparse.ArgumentParser(description="LAVA Dispatcher Slave")
     parser.add_argument(
-        '--hostname', default=get_fqdn(), type=str, help='Name of the slave')
+        "--hostname", default=get_fqdn(), type=str, help="Name of the slave")
     parser.add_argument(
-        '--master', type=str, help='Main master socket', required=True)
+        "--master", type=str, help="Main master socket", required=True)
     parser.add_argument(
-        '--socket-addr', type=str, help='Log socket', required=True)
+        "--socket-addr", type=str, help="Log socket", required=True)
     parser.add_argument(
-        '--level', '-l', type=str,
-        help='Log level (ERROR, WARN, INFO, DEBUG)', default='INFO')
+        "--level", "-l", type=str,
+        help="Log level (ERROR, WARN, INFO, DEBUG)", default="INFO")
     args = parser.parse_args()
 
     # Set-up the logger level
-    if args.level == 'ERROR':
+    if args.level == "ERROR":
         logger.setLevel(logging.ERROR)
-    elif args.level == 'WARN':
+    elif args.level == "WARN":
         logger.setLevel(logging.WARN)
-    elif args.level == 'INFO':
+    elif args.level == "INFO":
         logger.setLevel(logging.INFO)
     else:
         logger.setLevel(logging.DEBUG)
@@ -220,12 +220,12 @@ def main():
 
     # Say hello to the server
     logger.info("Connecting to master as <%s>", args.hostname)
-    sock.send_multipart(['HELLO'])
+    sock.send_multipart(["HELLO"])
 
     # Waiting for an 'HELLO_OK'
     # TODO: add a loop to retry
     msg = sock.recv_multipart()
-    if msg[0] != 'HELLO_OK':
+    if msg[0] != "HELLO_OK":
         logger.error("Invalid answer from server")
         logger.debug("Received: '%s'", msg)
         sys.exit(1)
@@ -274,13 +274,13 @@ def main():
             logger.debug("Received action=%s, args=(%s)", action, msg[1:])
 
             # Parse the action
-            if action == 'PONG':
+            if action == "PONG":
                 logger.debug("Connection to master ok")
 
                 # Mark the master as alive
                 master.received_msg()
 
-            elif action == 'START':
+            elif action == "START":
                 try:
                     job_id = int(msg[1])
                     job_definition = msg[2]
@@ -299,22 +299,23 @@ def main():
                 # the end of the job).
                 if job_id in jobs:
                     if jobs[job_id].running:
-                        logger.info("[%d] Job has already been started", job_id)
-                        sock.send_multipart(['START_OK', str(job_id)])
+                        logger.info(
+                            "[%d] Job has already been started", job_id)
+                        sock.send_multipart(["START_OK", str(job_id)])
                     else:
                         logger.warning("[%d] Job has already ended", job_id)
-                        sock.send_multipart(['END', str(job_id)])
+                        sock.send_multipart(["END", str(job_id)])
                 else:
                     jobs[job_id] = Job(job_id, job_definition,
                                        device_definition, env,
                                        args.socket_addr)
                     jobs[job_id].start()
-                    sock.send_multipart(['START_OK', str(job_id)])
+                    sock.send_multipart(["START_OK", str(job_id)])
 
                 # Mark the master as alive
                 master.received_msg()
 
-            elif action == 'CANCEL':
+            elif action == "CANCEL":
                 try:
                     job_id = int(msg[1])
                 except (IndexError, ValueError):
@@ -333,15 +334,15 @@ def main():
                             "[%d] Job has already been canceled", job_id)
                 else:
                     logger.debug("[%d] Unknown job, sending END", job_id)
-                    jobs[job_id] = Job(job_id, '', '', None, None)
+                    jobs[job_id] = Job(job_id, "", "", None, None)
                     jobs[job_id].running = False
                 # Send the END message anyway
-                sock.send_multipart(['END', str(job_id)])
+                sock.send_multipart(["END", str(job_id)])
 
                 # Mark the master as alive
                 master.received_msg()
 
-            elif action == 'END_OK':
+            elif action == "END_OK":
                 try:
                     job_id = int(msg[1])
                 except (IndexError, ValueError):
@@ -357,7 +358,7 @@ def main():
                 # back any data so the master will not be able to mark the
                 # slave as alive.
 
-            elif action == 'STATUS':
+            elif action == "STATUS":
                 try:
                     job_id = int(msg[1])
                 except (IndexError, ValueError):
@@ -366,16 +367,16 @@ def main():
                 if job_id in jobs:
                     if jobs[job_id].running:
                         # The job is still running
-                        sock.send_multipart(['START_OK', str(job_id)])
+                        sock.send_multipart(["START_OK", str(job_id)])
                     else:
                         # The job has already ended
-                        sock.send_multipart(['END', str(job_id)])
+                        sock.send_multipart(["END", str(job_id)])
                 else:
                     # Unknwon job: return END anyway
                     logger.debug("[%d] Unknown job, sending END", job_id)
-                    jobs[job_id] = Job(job_id, '', '', None, None)
+                    jobs[job_id] = Job(job_id, "", "", None, None)
                     jobs[job_id].running = False
-                    sock.send_multipart(['END', str(job_id)])
+                    sock.send_multipart(["END", str(job_id)])
 
                 # Mark the master as alive
                 master.received_msg()
@@ -394,7 +395,7 @@ def main():
                 if ret is not None:
                     logger.info("[%d] Job END", job_id)
                     jobs[job_id].running = False
-                    sock.send_multipart(['END', str(job_id)])
+                    sock.send_multipart(["END", str(job_id)])
 
         # Send a PING only if we haven't received a message from the master nor
         # sent a PING for a long time.
@@ -409,14 +410,14 @@ def main():
                 "Sending PING to the master (last message %ss ago)",
                 int(now - master.last_msg))
 
-            sock.send_multipart(['PING'])
+            sock.send_multipart(["PING"])
             master.last_ping = now
 
     # Closing sockets and droping messages.
-    logger.info("Closing the socket and droping messages")
+    logger.info("Closing the socket and dropping messages")
     sock.close(linger=0)
     context.term()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
