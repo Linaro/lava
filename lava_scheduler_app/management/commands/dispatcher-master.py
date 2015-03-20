@@ -107,6 +107,9 @@ def start_job(job):
 
 
 def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
+    if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
+        # testjob has already ended and been marked as such
+        return
     job.status = job_status
     if job.start_time and not job.end_time:
         job.end_time = datetime.datetime.utcnow()
