@@ -78,13 +78,13 @@ class Master(object):
     def __init__(self):
         self.last_msg = 0
         self.last_ping = 0
-        self.online = True
+        self.online = False
 
     def received_msg(self):
         """We received a valid message from the master."""
         self.last_msg = time.time()
         if not self.online:
-            LOG.info("Master back ONLINE")
+            LOG.info("Master is ONLINE")
         self.online = True
 
 
@@ -129,7 +129,7 @@ class Job(object):
         out_file = os.path.join(self.base_dir, "out")
         err_file = os.path.join(self.base_dir, "err")
         try:
-            LOG.debug("start %s", self.job_id)
+            LOG.debug("[%d] START", self.job_id)
             env = self.create_environ()
             args = [
                 "lava-dispatch",
@@ -287,20 +287,41 @@ def main():
     master = Master()
     jobs = {}
 
-    # Say hello to the server
     LOG.info("Connecting to master as <%s>", host_name)
+    LOG.debug("Greeting the master => 'HELLO'")
     sock.send_multipart(["HELLO"])
 
-    # Waiting for an 'HELLO_OK'
-    # TODO: add a loop to retry
-    msg = sock.recv_multipart()
-    if msg[0] != "HELLO_OK":
-        LOG.error("Invalid answer from server")
-        LOG.debug("Received: '%s'", msg)
-        sys.exit(1)
+    while True:
+        try:
+            LOG.info("Waiting for the master to reply")
+            sockets = dict(poller.poll(timeout * 1000))
+        except zmq.error.ZMQError:
+            # TODO: tests needed to understand cases where ZMQError is raised.
+            LOG.error("Received an error, interrupted")
+            sys.exit(1)
 
-    # Mark the master as alive
-    master.received_msg()
+        if sockets.get(pipe_r) == zmq.POLLIN:
+            LOG.info("Received a signal, leaving")
+            sys.exit(0)
+        elif sockets.get(sock) == zmq.POLLIN:
+            msg = sock.recv_multipart()
+
+            try:
+                message = msg[0]
+                LOG.debug("The master replied: %s", msg)
+            except (IndexError, TypeError):
+                LOG.error("Invalid message from the master: %s", msg)
+            else:
+                if message == "HELLO_OK":
+                    LOG.info("Connection with the master established")
+                    # Mark the master as alive.
+                    master.received_msg()
+                    break
+                else:
+                    LOG.info("Unexpected message from the master: %s", message)
+
+        LOG.debug("Sending new HELLO_RETRY message to the master")
+        sock.send_multipart(["HELLO_RETRY"])
 
     # Loop for server instructions
     LOG.info("Waiting for master instructions")
@@ -308,6 +329,7 @@ def main():
         try:
             sockets = dict(poller.poll(timeout * 1000))
         except zmq.error.ZMQError:
+            # TODO: tests needed to understand cases where ZMQError is raised.
             continue
 
         if sockets.get(pipe_r) == zmq.POLLIN:
@@ -321,13 +343,17 @@ def main():
             try:
                 action = msg[0]
             except (IndexError, TypeError):
-                LOG.error("Invalid message '%s'", msg)
+                LOG.error("Invalid message from the master: %s", msg)
                 continue
             LOG.debug("Received action=%s, args=(%s)", action, msg[1:])
 
             # Parse the action
-            if action == "PONG":
-                LOG.debug("Connection to master ok")
+            if action == "HELLO_OK":
+                LOG.debug(
+                    "Received HELLO_OK from the master - nothing do to")
+
+            elif action == "PONG":
+                LOG.debug("Connection to master OK")
 
                 # Mark the master as alive
                 master.received_msg()
