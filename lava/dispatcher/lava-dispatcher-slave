@@ -393,10 +393,10 @@ def main():
                 ret = jobs[job_id].proc.poll()
                 # Job has finished
                 if ret is not None:
-                    logger.info("Job %s END", job_id)
+                    logger.info("[%d] Job END", job_id)
                     job_status = jobs[job_id].proc.returncode
                     if job_status:
-                        logger.info("Job %s returned non-zero", job_id)
+                        logger.info("[%d] Job returned non-zero", job_id)
 
                     jobs[job_id].running = False
                     sock.send_multipart(["END", str(job_id), str(job_status)])
