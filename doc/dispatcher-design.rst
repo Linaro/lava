@@ -1291,33 +1291,76 @@ Sample job definition for the VM job
 Device configuration design
 ***************************
 
-Device configuration has moved to YAML and has a larger scope of possible
-methods, related to the pipeline strategies.
+Device configuration, as received by ``lava_dispatch`` has moved to YAML
+and the database device configuration has moved to `Jinja2`_ templates.
+This method has a much larger scope of possible methods, related to the
+pipeline strategies as well as allowing simple overrides and reuse of
+common device configuration stanzas.
 
-Changes from existing configuration
-===================================
+There is no need for the device configuration to include the
+hostname in the YAML as there is nothing on the dispatcher to check
+against - the dispatcher uses the command line arguments and the
+supplied device configuration. The configuration includes all the data
+the dispatcher needs to be able to run the job on the device attached
+to the specified ports.
 
-The device configuration is moving off the dispatcher and into the main
-LAVA server database. This simplifies the scheduler and is a step
-towards a dumb dispatcher model where the dispatcher receives all device
-configuration along with the job instead of deciding which jobs to run
-based on local configuration. There is then no need for the device
-configuration to include the hostname in the YAML as there is nothing
-on the dispatcher to check against - the dispatcher uses the command
-line arguments.
+The device type configuration on the dispatcher is replaced by a
+device type template on the server which is used to generate the
+YAML device configuration sent to the dispatcher.
 
-The device type configuration is dropped. In preparation for the server-side
-integration and templating support, each device configuration includes all
-of the configuration for the device type. During testing, this does mean
-more repetition inside the files used on the dispatcher command line.
+Device Dictionary
+=================
 
-It remains desirable that the final implementation will only provide a
-single YAML file to the dispatcher containing the job and all of the
-configuration, without reference to configuration which is not relevant
-to that job. This allows quicker prototyping of support for new devices.
+The normal admin flow for individual devices will be to make changes
+to the :term:`device dictionary` of that device. In time, an editable
+interface will exist within the admin interface. Initially, changes
+to the dictionary are made from the command line with details being
+available in a read-only view in the admin interface.
 
-Example device configuration
-----------------------------
+The device dictionary acts as a set of variables inside the template,
+in a very similar manner to how Django handles HTML templates. In turn,
+a device type template will extend a base template.
+
+It is a bug in the template if a missing value causes a broken device
+configuration to be generated. Values which are not included in the
+specified template will be ignored.
+
+Once the device dictionary has been populated, the scheduler can be
+told that the device is a ``pipeline device`` in the admin interface.
+
+.. note:: Several parts of this process still need helpers and tools
+          or may give unexpected errors - there is a lot of ongoing
+          work in this area.
+
+Exporting an existing device dictionary
+---------------------------------------
+
+If the local instance has a working pipeline device called ``mypanda``,
+the device dictionary can be exported::
+
+ $ sudo lava-server manage device-dictionary --hostname mypanda --export
+ {% extends 'panda.yaml' %}
+ {% set power_off_command = '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command off --port 08' %}
+ {% set hard_reset_command = '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command reboot --port 08' %}
+ {% set connection_command = 'telnet droopy 4001' %}
+ {% set power_on_command = '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command on --port 08' %}
+
+This dictionary declares that the device inherits the rest of the device
+configuration from the ``panda`` device type. Settings specific to this
+one device are then specified.
+
+Reviewing an existing device dictionary
+---------------------------------------
+
+To populate the full configuration using the device dictionary and the
+associated templates, use the ``review`` option::
+
+ $ sudo lava-server manage device-dictionary --hostname mypanda --review
+
+.. _Jinja2: http://jinja.pocoo.org/docs/dev/
+
+Example device configuration review
+-----------------------------------
 
 .. code-block:: yaml
 
@@ -1393,3 +1436,37 @@ Example device configuration
             - setenv bootargs 'console=ttyO0,115200n8 root=/dev/ram0 ip=dhcp'
             - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
             - boot
+
+Importing configuration using a known template
+-----------------------------------------------
+
+To add or update the device dictionary, a file using the same syntax as
+the ``export`` content can be imported into the database::
+
+ $ sudo lava-server manage device-dictionary --hostname mypanda --import mypanda.yaml
+
+(The file extension is unnecessary and the content is not actually YAML
+but will be rendered as YAML when the templates are used.)
+
+Creating a new template
+-----------------------
+
+Start with the ``base.yaml`` template and use the structure of that
+template to ensure that your template remains valid YAML.
+
+Start with a complete device configuration (in YAML) which works on the
+``lava-dispatch`` command line, then iterate over changes in the template
+to produce the same output.
+
+.. note:: A helper is being planned for this step.
+
+Running lava-dispatch directly
+==============================
+
+``lava-dispatch`` only accepts a YAML file for pipeline jobs - the old
+behaviour of looking up the file based on the device hostname has been
+dropped. The absolute or relative path to the YAML file must be
+specified to the ``--target`` option. ``--output-dir`` must also be
+specified::
+
+ sudo lava-dispatch --target devices/fred.conf panda-ramdisk.yaml --output-dir=/tmp/test

@@ -242,3 +242,7 @@ Glossary of terms
     allow the power to the devices to be turned off and on remotely.
     Certain PDUs are supported by ``lavapdu-daemon`` to be able to
     hard reset devices in LAVA.
+
+  device dictionary
+    A key:value store within the LAVA server database which admins can
+    modify to set configuration values for specific devices.
