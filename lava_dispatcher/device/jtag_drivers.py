@@ -36,6 +36,8 @@ from lava_dispatcher.utils import (
     create_ramdisk
 )
 
+import pexpect
+
 
 class BaseDriver(object):
 
@@ -242,7 +244,15 @@ class stmc(BaseDriver):
 
             # Deliver images with STMC
             logging.info("Delivering images with STMC")
-            self.context.run_command(jtag_command, failok=False)
+            # Boot the board with a timeout on this command that MUST finish on
+            # time (the command block when failing to boot)
+            boot_proc = self.context.spawn(jtag_command, timeout=240)
+            try:
+                boot_proc.expect(pexpect.EOF)
+            except pexpect.TIMEOUT:
+                raise CriticalError("GDB is unable to boot the board")
+
+            logging.info("GDB has finished, waiting for the board prompt")
 
         # Wait for the prompt
         proc.expect(self.config.image_boot_msg,
