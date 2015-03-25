@@ -18,15 +18,14 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from collections import OrderedDict
 import logging
 import yaml
 
-from lava_dispatcher.pipeline.action import Action
-from lava_dispatcher.pipeline.log import YAMLLogger
+from lava_dispatcher.pipeline.action import Action, JobError
+from lava_dispatcher.pipeline.log import YAMLLogger  # pylint: disable=unused-import
 from lava_dispatcher.pipeline.logical import PipelineContext
 from lava_dispatcher.pipeline.diagnostics import DiagnoseNetwork
-from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
+from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol  # pylint: disable=unused-import
 
 
 class Job(object):  # pylint: disable=too-many-instance-attributes
@@ -131,7 +130,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
 
         # Add the ZMQ handler now
         if self.socket_addr is not None:
-            self.logger.addZMQHandler(self.socket_addr, self.job_id)
+            self.logger.addZMQHandler(self.socket_addr, self.job_id)  # pylint: disable=maybe-no-member
         self.pipeline.run_actions(self.connection)
         if self.pipeline.errors:
             return len(self.pipeline.errors)
