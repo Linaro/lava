@@ -22,6 +22,7 @@
 """Start the lava dispatcher and the zmq messager."""
 
 import argparse
+import atexit
 import errno
 import fcntl
 import logging
@@ -179,6 +180,64 @@ def get_fqdn():
         raise exc
 
 
+def create_zmq_context(master_uri, hostname, send_queue=10):
+    """Create the ZMQ context and necessary accessories.
+
+    :param master_uri: The URI where the sokect should be connected.
+    :type master_uri: string
+    :param hostname: The name of this host.
+    :type hostname: string
+    :param send_queue: How many object should be in the send queue.
+    :type send_queue: int
+    :return A tuple with: the zmq context, the zmq socket, the zmq poller, a
+    read pipe and a write pipe.
+    """
+    LOG.info("Creating ZMQ context and socket connections")
+    # Connect to the master dispatcher.
+    context = zmq.Context()
+    sock = context.socket(zmq.DEALER)
+    sock.setsockopt(zmq.IDENTITY, hostname)
+    sock.setsockopt(zmq.SNDHWM, send_queue)
+    sock.connect(master_uri)
+
+    # Poll on the socket and the pipe (signal).
+    poller = zmq.Poller()
+    poller.register(sock, zmq.POLLIN)
+
+    # Mask signals and create a pipe that will receive a bit for each signal
+    # received. Poll the pipe along with the zmq socket so that we can only be
+    # interrupted while reading data.
+    (read_pipe, write_pipe) = os.pipe()
+    flags = fcntl.fcntl(write_pipe, fcntl.F_GETFL, 0) | os.O_NONBLOCK
+    fcntl.fcntl(write_pipe, fcntl.F_SETFL, flags)
+    signal.set_wakeup_fd(write_pipe)
+    signal.signal(signal.SIGINT, lambda x, y: None)
+    signal.signal(signal.SIGTERM, lambda x, y: None)
+    signal.signal(signal.SIGQUIT, lambda x, y: None)
+    poller.register(read_pipe, zmq.POLLIN)
+
+    return context, sock, poller, read_pipe, write_pipe
+
+
+def destroy_zmq_context(context, sock, read_pipe, write_pipe):
+    """Clean up function to close ZMQ and related objects.
+
+    :param context: The zmq context to terminate.
+    :param sock: The zmq socket to close.
+    :param read_pipe: The read pipe to close.
+    :param write_pipe: The write pipe to close.
+    """
+    LOG.info("Closing sock and pipes, dropping messages")
+    try:
+        os.close(read_pipe)
+        os.close(write_pipe)
+    except OSError:
+        # Silently ignore possible errors.
+        pass
+    sock.close(linger=0)
+    context.term()
+
+
 def main():
     """Set up and start the dispatcher slave."""
     parser = argparse.ArgumentParser(description="LAVA Dispatcher Slave")
@@ -218,13 +277,11 @@ def main():
     else:
         LOG.setLevel(logging.DEBUG)
 
-    # Connect to the master dispatcher
-    context = zmq.Context()
-    sock = context.socket(zmq.DEALER)
-    sock.setsockopt(zmq.IDENTITY, host_name)
-    # Set the maximum number of message waiting in queue
-    sock.setsockopt(zmq.SNDHWM, SEND_QUEUE)
-    sock.connect(master_uri)
+    context, sock, poller, pipe_r, pipe_w = create_zmq_context(
+        master_uri, host_name, send_queue=SEND_QUEUE)
+
+    # Register cleanup function to be run at exit.
+    atexit.register(destroy_zmq_context, context, sock, pipe_r, pipe_w)
 
     # Collect every server data and list of jobs
     master = Master()
@@ -244,22 +301,6 @@ def main():
 
     # Mark the master as alive
     master.received_msg()
-
-    # Poll on the socket and the pipe (signal)
-    poller = zmq.Poller()
-    poller.register(sock, zmq.POLLIN)
-
-    # Mask signals and create a pipe that will receive a bit for each signal
-    # received. Poll the pipe along with the zmq socket so that we can only be
-    # interupted while reading data.
-    (pipe_r, pipe_w) = os.pipe()
-    flags = fcntl.fcntl(pipe_w, fcntl.F_GETFL, 0) | os.O_NONBLOCK
-    fcntl.fcntl(pipe_w, fcntl.F_SETFL, flags)
-    signal.set_wakeup_fd(pipe_w)
-    signal.signal(signal.SIGINT, lambda x, y: None)
-    signal.signal(signal.SIGTERM, lambda x, y: None)
-    signal.signal(signal.SIGQUIT, lambda x, y: None)
-    poller.register(pipe_r, zmq.POLLIN)
 
     # Loop for server instructions
     LOG.info("Waiting for master instructions")
@@ -429,11 +470,6 @@ def main():
 
             sock.send_multipart(["PING"])
             master.last_ping = now
-
-    # Closing sockets and dropping messages.
-    LOG.info("Closing the socket and dropping messages")
-    sock.close(linger=0)
-    context.term()
 
 
 if __name__ == "__main__":
