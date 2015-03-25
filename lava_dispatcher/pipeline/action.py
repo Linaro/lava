@@ -309,8 +309,8 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     action.logger.info(msg)
                 else:
                     action.logger.debug(msg)
-                if action.results:
-                    action.logger.debug({"results": action.results})
+                if action.results and isinstance(action.logger, YAMLLogger):
+                    action.logger.results(action.results)
                 if new_connection:
                     connection = new_connection
             except KeyboardInterrupt:

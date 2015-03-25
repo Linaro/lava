@@ -69,27 +69,30 @@ class YAMLLogger(logging.Logger):
         if self.handler is not None:
             self.handler.setMetadata(level, name)
 
-    def log_message(self, level, level_name, message):
+    def log_message(self, level, level_name, message, *args, **kwargs):
         if message:
-            self._log(level, yaml.dump([{level_name: message}])[:-1], None, {})
+            self._log(level, yaml.dump([{level_name: message}])[:-1], *args, **kwargs)
 
-    def exception(self, exc):
-        self.log_message(logging.ERROR, 'exception', exc)
+    def exception(self, exc, *args, **kwargs):
+        self.log_message(logging.ERROR, 'exception', exc, *args, **kwargs)
 
-    def error(self, message):
-        self.log_message(logging.ERROR, 'error', message)
+    def error(self, message, *args, **kwargs):
+        self.log_message(logging.ERROR, 'error', message, *args, **kwargs)
 
-    def warning(self, message):
-        self.log_message(logging.WARNING, 'warning', message)
+    def warning(self, message, *args, **kwargs):
+        self.log_message(logging.WARNING, 'warning', message, *args, **kwargs)
 
-    def info(self, message):
-        self.log_message(logging.INFO, 'info', message)
+    def info(self, message, *args, **kwargs):
+        self.log_message(logging.INFO, 'info', message, *args, **kwargs)
 
-    def debug(self, message):
-        self.log_message(logging.DEBUG, 'debug', message)
+    def debug(self, message, *args, **kwargs):
+        self.log_message(logging.DEBUG, 'debug', message, *args, **kwargs)
 
-    def target(self, message):
-        self.log_message(logging.INFO, 'target', message)
+    def target(self, message, *args, **kwargs):
+        self.log_message(logging.INFO, 'target', message, *args, **kwargs)
+
+    def results(self, results, *args, **kwargs):
+        self.log_message(logging.INFO, 'results', results, *args, **kwargs)
 
 
 class StdLogger(object):  # pylint: disable=too-few-public-methods
