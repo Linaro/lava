@@ -71,7 +71,7 @@ class YAMLLogger(logging.Logger):
 
     def log_message(self, level, level_name, message, *args, **kwargs):
         if message:
-            self._log(level, yaml.dump([{level_name: message}])[:-1], *args, **kwargs)
+            self._log(level, yaml.dump([{level_name: message}])[:-1], args, kwargs)
 
     def exception(self, exc, *args, **kwargs):
         self.log_message(logging.ERROR, 'exception', exc, *args, **kwargs)
