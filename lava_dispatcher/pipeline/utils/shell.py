@@ -57,7 +57,7 @@ def wait_for_prompt(connection, prompt_pattern, timeout):
         except pexpect.TIMEOUT:
             if prompt_wait_count < 6:
                 logger = logging.getLogger('dispatcher')
-                logger.debug('Sending newline in case of corruption.')
+                logger.warning('Sending newline in case of corruption.')
                 prompt_wait_count += 1
                 partial_timeout = timeout / 10
                 connection.sendline('')

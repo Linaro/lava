@@ -134,7 +134,7 @@ class CallQemuAction(Action):
             raise RuntimeError("No image file setting from the download_action")
         command = self.get_common_data('qemu-command', 'command')
         command.extend(["-hda", self.data['download_action']['image']['file']])
-        self.logger.debug("Boot command: %s" % ' '.join(command))
+        self.logger.info("Boot command: %s" % ' '.join(command))
 
         # initialise the first Connection object, a command line shell into the running QEMU.
         shell = ShellCommand(' '.join(command), self.timeout)

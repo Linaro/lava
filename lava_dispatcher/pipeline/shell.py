@@ -276,7 +276,7 @@ class ConnectDevice(Action):
             connection.prompt_str = self.job.device['test_image_prompts']
             return connection
         command = self.job.device['commands']['connect']
-        self.logger.debug("connecting to device using '%s'" % command)
+        self.logger.info("connecting to device using '%s'" % command)
         signal.alarm(0)  # clear the timeouts used without connections.
         shell = ShellCommand("%s\n" % command, self.timeout)
         if shell.exitstatus:

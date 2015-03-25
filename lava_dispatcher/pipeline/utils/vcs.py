@@ -66,7 +66,7 @@ class BzrHelper(VCSHelper):
 
         except subprocess.CalledProcessError as exc:
             logger = logging.getLogger('dispatcher')
-            logger.debug({
+            logger.exception({
                 'command': [i.strip() for i in exc.cmd],
                 'message': [i.strip() for i in exc.message],
                 'output': exc.output.split('\n')})
@@ -111,7 +111,7 @@ class GitHelper(VCSHelper):
                                                 stderr=subprocess.STDOUT).strip()
         except subprocess.CalledProcessError as exc:
             logger = logging.getLogger('dispatcher')
-            logger.debug({
+            logger.exception({
                 'command': [i.strip() for i in exc.cmd],
                 'message': [i.strip() for i in exc.message],
                 'output': exc.output.split('\n')})

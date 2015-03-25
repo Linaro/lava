@@ -181,7 +181,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         md5 = hashlib.md5()
         sha256 = hashlib.sha256()
         with self._decompressor_stream() as (writer, fname):
-            self.logger.debug("downloading %s as %s" % (self.parameters[self.key], fname))
+            self.logger.info("downloading %s as %s" % (self.parameters[self.key], fname))
 
             downloaded_size = 0
             beginning = time.time()
@@ -208,9 +208,9 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
 
             # Log the download speed
             ending = time.time()
-            self.logger.debug("%dMB downloaded in %0.2fs (%0.2fMB/s)" %
-                              (downloaded_size / (1024 * 1024), round(ending - beginning, 2),
-                               round(downloaded_size / (1024 * 1024 * (ending - beginning)), 2)))
+            self.logger.info("%dMB downloaded in %0.2fs (%0.2fMB/s)" %
+                             (downloaded_size / (1024 * 1024), round(ending - beginning, 2),
+                              round(downloaded_size / (1024 * 1024 * (ending - beginning)), 2)))
 
         # set the dynamic data into the context
         self.data['download_action'][self.key] = {
@@ -224,8 +224,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             self.set_common_data('file', self.key, os.path.join(suffix, os.path.basename(fname)))
         else:
             self.set_common_data('file', self.key, fname)
-        self.logger.debug("md5sum of downloaded content: %s" % (md5.hexdigest()))
-        self.logger.debug("sha256sum of downloaded content: %s" % (sha256.hexdigest()))
+        self.logger.info("md5sum of downloaded content: %s" % (md5.hexdigest()))
+        self.logger.info("sha256sum of downloaded content: %s" % (sha256.hexdigest()))
         return connection
 
 

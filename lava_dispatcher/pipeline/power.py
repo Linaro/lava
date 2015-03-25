@@ -79,7 +79,7 @@ class RebootDevice(Action):
         try:
             self.wait(connection)
         except TestError:
-            self.logger.debug("Wait for prompt after soft reboot failed")
+            self.logger.info("Wait for prompt after soft reboot failed")
             self.results = {'status': "failed"}
             self.data[PDUReboot.key()] = True
             connection.prompt_str = self.reboot_prompt
@@ -203,8 +203,9 @@ class FinalizeAction(Action):
         elif self.job.pipeline.errors:
             self.results = {'status': "Incomplete"}
             self.errors = "Incomplete"
-            self.logger.debug("Status: Incomplete")
-            self.logger.debug(self.job.pipeline.errors)
+            self.logger.error({
+                'Status': 'Incomplete',
+                'Errors': self.job.pipeline.errors})
         else:
             self.results = {'status': "Complete"}
             self.logger.debug("Status: Complete")

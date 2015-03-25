@@ -156,7 +156,7 @@ class DDAction(Action):
         # connection.wait()  # long command lines can echo back
         # connection.wait()
         if not self.valid:
-            self.logger.debug(self.errors)
+            self.logger.error(self.errors)
 
         return connection
 

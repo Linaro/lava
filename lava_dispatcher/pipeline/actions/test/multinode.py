@@ -88,7 +88,7 @@ class MultinodeTestAction(TestShellAction):
             try:
                 ret = self.signal_director.signal(name, params)
             except JobError as exc:
-                self.logger.debug("Job error in %s signal: %s %s" % (event, exc, name))
+                self.logger.exception("Job error in %s signal: %s %s" % (event, exc, name))
                 return False
             return ret
         return ret

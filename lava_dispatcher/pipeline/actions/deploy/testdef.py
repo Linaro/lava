@@ -480,7 +480,7 @@ class UrlRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         except OSError as exc:
             raise JobError('Unable to get test definition from url\n' + str(exc))
         finally:
-            self.logger.debug("Downloaded test definition file to %s." % runner_path)
+            self.logger.info("Downloaded test definition file to %s." % runner_path)
 
         i = []
         for elem in " $&()\"'<>/\\|;`":
@@ -600,7 +600,7 @@ class TestDefinitionAction(TestAction):
         """
         if 'location' not in self.data['lava-overlay']:
             raise RuntimeError("Missing lava overlay location")
-        self.logger.debug("Loading test definitions")
+        self.logger.info("Loading test definitions")
 
         # overlay_path is the location of the files before boot
         self.data[self.name]['overlay_dir'] = os.path.abspath(

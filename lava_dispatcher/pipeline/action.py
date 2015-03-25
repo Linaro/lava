@@ -259,7 +259,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             pipeline and allow cleanup actions to happen on all actions,
             not just the ones directly related to the currently running action.
             """
-            self.logger.debug("Cancelled")
+            self.logger.info("Cancelled")
             self.cleanup_actions(None, "Cancelled")
             signal.signal(signal.SIGINT, signal.default_int_handler)
             raise KeyboardInterrupt
@@ -284,7 +284,11 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             # The ci-test does not set the default logging class
             if isinstance(action.logger, YAMLLogger):
                 action.logger.setMetadata(action.level, action.name)
-            action.logger.debug('start: %s %s (max %ds)' % (action.level, action.name, action.timeout.duration))
+            msg = 'start: %s %s (max %ds)' % (action.level, action.name, action.timeout.duration)
+            if self.parent is None:
+                action.logger.info(msg)
+            else:
+                action.logger.debug(msg)
             try:
                 if not self.parent:
                     signal.signal(signal.SIGINT, cancelling_handler)
@@ -300,7 +304,11 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     action.logger.exception(exc)
                     raise RuntimeError(exc)
                 action.elapsed_time = time.time() - start
-                action.logger.debug("%s duration: %.02f" % (action.name, action.elapsed_time))
+                msg = "%s duration: %.02f" % (action.name, action.elapsed_time)
+                if self.parent is None:
+                    action.logger.info(msg)
+                else:
+                    action.logger.debug(msg)
                 if action.results:
                     action.logger.debug({"results": action.results})
                 if new_connection:
@@ -548,10 +556,10 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         try:
             log = subprocess.check_output(command_list, stderr=subprocess.STDOUT)
         except OSError as exc:
-            self.logger.debug({exc.strerror: exc.child_traceback.split('\n')})
+            self.logger.exception({exc.strerror: exc.child_traceback.split('\n')})
         except subprocess.CalledProcessError as exc:
             self.errors = exc.message
-            self.logger.debug({
+            self.logger.exception({
                 'command': [i.strip() for i in exc.cmd],
                 'message': [i.strip() for i in exc.message],
                 'output': exc.output.split('\n')})

@@ -111,7 +111,7 @@ class MultinodeProtocol(Protocol):
             self.sock.connect((self.settings['coordinator_hostname'], self.settings['port']))
             return True
         except socket.error as exc:
-            self.logger.debug(
+            self.logger.exception(
                 "socket error on connect: %d %s %s" % (
                     exc.errno, self.settings['coordinator_hostname'], self.settings['port']))
             time.sleep(delay)
@@ -131,7 +131,7 @@ class MultinodeProtocol(Protocol):
                 self.logger.debug("zero bytes sent for message - connection closed?")
                 return False
         except socket.error as exc:
-            self.logger.debug("socket error '%d' on send" % exc.message)
+            self.logger.exception("socket error '%d' on send" % exc.message)
             self.sock.close()
             return False
         return True
@@ -149,7 +149,7 @@ class MultinodeProtocol(Protocol):
                 response += self.sock.recv(self.blocks)
                 recv_count += self.blocks
         except socket.error as exc:
-            self.logger.debug("socket error '%d' on response" % exc.errno)
+            self.logger.exception("socket error '%d' on response" % exc.errno)
             self.sock.close()
             return json.dumps({"response": "wait"})
         return response

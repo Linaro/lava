@@ -221,7 +221,7 @@ class CompressOverlay(Action):
         if not os.path.exists(self.data['lava-overlay']['location']):
             raise RuntimeError("Unable to find overlay location")
         if not self.valid:
-            self.logger.debug(self.errors)
+            self.logger.error(self.errors)
             return connection
         connection = super(CompressOverlay, self).run(connection, args)
         location = self.data['lava-overlay']['location']

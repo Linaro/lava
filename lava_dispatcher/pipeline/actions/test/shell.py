@@ -105,7 +105,7 @@ class TestShellAction(TestAction):
 
         self.signal_director.connection = connection
 
-        self.logger.debug("Executing test definitions using %s" % connection.name)
+        self.logger.info("Executing test definitions using %s" % connection.name)
         self.logger.debug("Setting default test shell prompt")
         connection.prompt_str = self.job.device['test_image_prompts']
         self.logger.debug("Setting default timeout: %s" % self.timeout.duration)
@@ -148,18 +148,18 @@ class TestShellAction(TestAction):
         Call from subclasses before checking subclass-specific events.
         """
         if event == 'exit':
-            self.logger.debug('ok: lava_test_shell seems to have completed')
+            self.logger.info('ok: lava_test_shell seems to have completed')
             return False
 
         elif event == 'eof':
-            self.logger.debug('err: lava_test_shell connection dropped')
+            self.logger.warning('err: lava_test_shell connection dropped')
             self.errors = 'lava_test_shell connection dropped'
             return False
 
         elif event == 'timeout':
             # if target.is_booted():
             #    target.reset_boot()
-            self.logger.debug('err: lava_test_shell has timed out')
+            self.logger.warning('err: lava_test_shell has timed out')
             self.errors = 'lava_test_shell has timed out'
             return False
 
@@ -197,7 +197,7 @@ class TestShellAction(TestAction):
             if match is pexpect.TIMEOUT:
                 # if target.is_booted():
                 #    target.reset_boot()
-                self.logger.debug('err: lava_test_shell has timed out (test_case)')
+                self.logger.warning('err: lava_test_shell has timed out (test_case)')
             else:
                 res = self.match.match(match.groupdict())  # FIXME: rename!
                 self.logger.debug('result: %s' % res)
@@ -247,7 +247,7 @@ class TestShellAction(TestAction):
                 except KeyboardInterrupt:
                     raise KeyboardInterrupt
                 except JobError:
-                    self.logger.debug("err: handling signal %s failed" % name)
+                    self.logger.error("err: handling signal %s failed" % name)
                     return False
                 return True
 
