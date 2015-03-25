@@ -220,6 +220,29 @@ class Command(BaseCommand):
                     help="Directory where to store job outputs"),
     )
 
+    def _cancel_slave_dispatcher_jobs(self, hostname):
+        """Get dispatcher jobs and cancel them.
+
+        :param hostname: The name of the dispatcher host.
+        :type hostname: string
+        """
+        # TODO: DB: mark the dispatcher as online in the database.
+        # For the moment this should not be done by this process as
+        # some dispatchers are using old and new dispatcher.
+
+        # Mark all jobs on this dispatcher as canceled.
+        # The dispatcher had (re)started, so all jobs have to be
+        # finished.
+        with transaction.atomic():
+            jobs = TestJob.objects.filter(
+                actual_device__worker_host__hostname=hostname,
+                is_pipeline=True,
+                status=TestJob.RUNNING).select_for_update()
+
+            for job in jobs:
+                self.logger.info("[%d] Canceling", job.id)
+                cancel_job(job)
+
     def handle(self, *args, **options):
         del logging.root.handlers[:]
         del logging.root.filters[:]
@@ -364,22 +387,27 @@ class Command(BaseCommand):
                         self.logger.warning("New dispatcher <%s>", hostname)
                         dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
 
-                    # Mark the dispatcher as Online
-                    # TODO: DB: mark the dispatcher as online in the database.
-                    # For the moment this should not be done by this process as
-                    # some dispatchers are using old and new dispatcher.
+                    self._cancel_slave_dispatcher_jobs(hostname)
 
-                    # Mark all jobs on this dispatcher as canceled.
-                    # The dispatcher had (re)started, so all jobs have to be
-                    # finished.
-                    with transaction.atomic():
-                        jobs = TestJob.objects.filter(actual_device__worker_host__hostname=hostname,
-                                                      is_pipeline=True,
-                                                      status=TestJob.RUNNING) \
-                                              .select_for_update()
-                        for job in jobs:
-                            self.logger.info("[%d] Canceling", job.id)
-                            cancel_job(job)
+                    # Mark the dispatcher as alive
+                    dispatchers[hostname].alive()
+
+                elif action == "HELLO_RETRY":
+                    self.logger.info("%s => HELLO_RETRY", hostname)
+                    controler.send_multipart([hostname, "HELLO_OK"])
+
+                    if hostname in dispatchers:
+                        # Assume the HELLO command was received, and the
+                        # action succeeded.
+                        self.logger.warning(
+                            "Dispatcher <%s> was not confirmed", hostname)
+                    else:
+                        # No dispatcher, treat it as a normal HELLO message.
+                        self.logger.warning("New dispatcher <%s>", hostname)
+                        dispatchers[hostname] = SlaveDispatcher(
+                            hostname, online=True)
+
+                        self._cancel_slave_dispatcher_jobs(hostname)
 
                     # Mark the dispatcher as alive
                     dispatchers[hostname].alive()
