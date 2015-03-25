@@ -146,6 +146,10 @@ class dispatch(DispatcherCommand):
         Entry point for lava dispatch, after the arguments have been parsed.
         """
 
+        if os.geteuid() != 0:
+            logging.error("You need to be root to run lava-dispatch.")
+            exit(1)
+
         if self.args.oob_fd:
             oob_file = os.fdopen(self.args.oob_fd, 'w')
         else:
