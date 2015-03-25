@@ -131,6 +131,8 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         # Add the ZMQ handler now
         if self.socket_addr is not None:
             self.logger.addZMQHandler(self.socket_addr, self.job_id)  # pylint: disable=maybe-no-member
+        else:
+            self.logger.addHandler(logging.StreamHandler())
         self.pipeline.run_actions(self.connection)
         if self.pipeline.errors:
             return len(self.pipeline.errors)

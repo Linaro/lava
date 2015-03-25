@@ -66,7 +66,7 @@ class YAMLLogger(logging.Logger):
         return self.handler
 
     def setMetadata(self, level, name):
-        if self.handler is not None:
+        if isinstance(self.handler, ZMQPushHandler):
             self.handler.setMetadata(level, name)
 
     def log_message(self, level, level_name, message, *args, **kwargs):
