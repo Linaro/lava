@@ -45,10 +45,12 @@ import zmq
 # pylint: disable=too-many-locals
 # pylint: disable=too-many-statements
 
-# TODO: add configuration for this
+# Default values for:
+# timeouts (in seconds)
+# zmq socket send high water mark
 TIMEOUT = 5
-END_OK_TIMEOUT = 5
 SEND_QUEUE = 10
+
 # FIXME: This is a temporary fix and the dir contents need to be assessed
 # whether they are useful (logs should go into /tmp or tmpfs) or not.
 TMP_DIR = os.path.join(tempfile.gettempdir(), "lava-dispatcher/slave/")
@@ -187,16 +189,31 @@ def main():
     parser.add_argument(
         "--socket-addr", type=str, help="Log socket", required=True)
     parser.add_argument(
-        "--level", "-l", type=str,
-        help="Log level (ERROR, WARN, INFO, DEBUG)", default="INFO")
+        "--level", "-l",
+        type=str,
+        default="INFO",
+        choices=["DEBUG", "ERROR", "INFO", "WARN"],
+        help="Log level (DEBUG, ERROR, INFO, WARN); default to INFO"
+    )
+    parser.add_argument(
+        "--timeout", "-t",
+        type=int,
+        default=TIMEOUT,
+        help="Socket connection timeout in seconds; default to %d" % TIMEOUT,
+    )
     args = parser.parse_args()
 
+    log_level = args.level
+    timeout = args.timeout
+    host_name = args.hostname
+    master_uri = args.master
+
     # Set-up the LOG level
-    if args.level == "ERROR":
+    if log_level == "ERROR":
         LOG.setLevel(logging.ERROR)
-    elif args.level == "WARN":
+    elif log_level == "WARN":
         LOG.setLevel(logging.WARN)
-    elif args.level == "INFO":
+    elif log_level == "INFO":
         LOG.setLevel(logging.INFO)
     else:
         LOG.setLevel(logging.DEBUG)
@@ -204,17 +221,17 @@ def main():
     # Connect to the master dispatcher
     context = zmq.Context()
     sock = context.socket(zmq.DEALER)
-    sock.setsockopt(zmq.IDENTITY, args.hostname)
+    sock.setsockopt(zmq.IDENTITY, host_name)
     # Set the maximum number of message waiting in queue
     sock.setsockopt(zmq.SNDHWM, SEND_QUEUE)
-    sock.connect(args.master)
+    sock.connect(master_uri)
 
     # Collect every server data and list of jobs
     master = Master()
     jobs = {}
 
     # Say hello to the server
-    LOG.info("Connecting to master as <%s>", args.hostname)
+    LOG.info("Connecting to master as <%s>", host_name)
     sock.send_multipart(["HELLO"])
 
     # Waiting for an 'HELLO_OK'
@@ -247,9 +264,8 @@ def main():
     # Loop for server instructions
     LOG.info("Waiting for master instructions")
     while True:
-        # TODO: compute the right timeout on the socket
         try:
-            sockets = dict(poller.poll(TIMEOUT * 1000))
+            sockets = dict(poller.poll(timeout * 1000))
         except zmq.error.ZMQError:
             continue
 
@@ -401,9 +417,9 @@ def main():
         # Send a PING only if we haven't received a message from the master nor
         # sent a PING for a long time.
         now = time.time()
-        if now - max(master.last_msg, master.last_ping) > TIMEOUT:
+        if now - max(master.last_msg, master.last_ping) > timeout:
             # Is the master offline ?
-            if master.online and now - master.last_msg > 4 * TIMEOUT:
+            if master.online and now - master.last_msg > 4 * timeout:
                 LOG.warning("Master goes OFFLINE")
                 master.online = False
 
