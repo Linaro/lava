@@ -35,14 +35,11 @@ from django_restricted_resource.models import RestrictedResource
 from dashboard_app.models import Bundle, BundleStream
 
 from lava_dispatcher.job import validate_job_data
-from lava_dispatcher.pipeline.parser import JobParser
-from lava_dispatcher.pipeline.action import JobError
-from lava_dispatcher.pipeline.device import PipelineDevice
 from lava_scheduler_app import utils
 
 from linaro_django_xmlrpc.models import AuthToken
 
-# pylint: disable=invalid-name,no-self-use
+# pylint: disable=invalid-name,no-self-use,too-many-public-methods,too-few-public-methods
 
 # Make the open function accept encodings in python < 3.x
 if sys.version_info[0] < 3:
@@ -1307,55 +1304,14 @@ class TestJob(RestrictedResource):
         return ("lava.scheduler.job.detail", [self.display_id])
 
     @classmethod
-    def select_device(cls, allowed_list, definition):
-        """
-        Check device configuration to look for a valid pipeline.
-        Return the first suitable device, along with the pipeline for storage & update.
-        Use the errors dict for debugging.
-        """
-        errors = {}
-        if type(allowed_list) is not list:
-            errors['runtime'] = "allowed_list was not a list type"
-            return None, None
-
-        # Load job definition to get the variables for template rendering
-        job_def = yaml.load(definition)
-        job_ctx = job_def.get('context', {})
-
-        for device in allowed_list:
-            try:
-                device_config = device.load_device_configuration(job_ctx)  # raw dict
-            except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
-                # FIXME: report the exceptions as useful user messages
-                errors['jinja2'] = exc
-                continue
-            if not device_config or type(device_config) is not dict:
-                continue
-            parser = JobParser()
-            obj = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
-            # FIXME: drop this nasty hack once 'target' is dropped as a parameter
-            if 'target' not in obj:
-                obj.target = device.hostname
-            obj['hostname'] = device.hostname
-            # pass output_dir just for validation as there is no zmq socket either.
-            try:
-                pipeline_job = parser.parse(definition, obj, 0, None, output_dir='/tmp')
-            except NotImplementedError as exc:
-                errors['parser'] = exc
-                # catch and report earlier errors too.
-                raise DevicesUnavailableException(errors)
-            # validate, if valid, return the first match
-            try:
-                pipeline_job.pipeline.validate_actions()
-            except (AttributeError, JobError) as exc:
-                errors[device] = exc
-                continue
-            if pipeline_job:
-                return device, pipeline_job.describe()
-        raise DevicesUnavailableException(errors)
-
-    @classmethod
     def from_yaml_and_user(cls, yaml_data, user):
+        """
+        Runs the submission checks on incoming pipeline jobs.
+        Either rejects the job with a DevicesUnavailableException (which the caller is expected to handle), or
+        creates a TestJob object for the submission and saves that testjob into the database.
+        This function must *never* be involved in setting the state of this job or the state of any associated device.
+        'target' is not supported, so requested_device is always None at submission time.
+        """
         job_data = yaml.load(yaml_data)
         device_type = _get_device_type(user, job_data['device_type'])
         allow = _check_submit_to_device(list(Device.objects.filter(
@@ -1365,21 +1321,12 @@ class TestJob(RestrictedResource):
         if taglist:
             supported = _check_tags(taglist, device_type=device_type)
             _check_tags_support(supported, allow)
-        else:
-            # no tags defined, any allowed device can be selected
-            supported = allow
-
-        # now verify whether the supported devices parse as valid pipeline jobs.
-        device, pipeline = TestJob.select_device(supported, yaml_data)
-
-        if not device or not pipeline:
-            raise DevicesUnavailableException("None of the allowed devices are valid for this job")
 
         # FIXME: multinode scheduling
 
         job = TestJob(definition=yaml_data, original_definition=yaml_data,
                       submitter=user,
-                      requested_device=device,
+                      requested_device=None,
                       requested_device_type=device_type,
                       description=job_data['job_name'],
                       health_check=False,
@@ -1392,6 +1339,7 @@ class TestJob(RestrictedResource):
         for tag in Tag.objects.filter(name__in=taglist):
             job.tags.add(tag)
         job.save()
+
         # add pipeline to jobpipeline, update with results later - needs the job.id.
         dupe = JobPipeline.get(job.id)
         if dupe:
@@ -1401,12 +1349,6 @@ class TestJob(RestrictedResource):
         store = JobPipeline(job_id=job.id)
         store.pipeline = {}
         store.save()
-
-        # write the pipeline description to the job output directory.
-        if not os.path.exists(job.output_dir):
-            os.makedirs(job.output_dir)
-        with open(os.path.join(job.output_dir, 'description.yaml'), 'w') as describe_yaml:
-            describe_yaml.write(yaml.dump(pipeline))
 
         return job
 

@@ -25,16 +25,18 @@ import jinja2
 import logging
 from optparse import make_option
 import os
-import yaml
 import signal
 import time
 import yaml
 import zmq
 
-from collections import OrderedDict
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from lava_scheduler_app.models import Device, TestJob, JobPipeline
+from lava_dispatcher.pipeline.device import PipelineDevice
+from lava_dispatcher.pipeline.parser import JobParser
+from lava_dispatcher.pipeline.action import JobError
+
 
 # pylint: disable=no-member,too-many-branches,too-many-statements,too-many-locals
 
@@ -159,36 +161,81 @@ def send_status(hostname, socket, logger):
         socket.send_multipart([hostname, 'STATUS', str(job.id)])
 
 
-def get_job_device(job):
+def select_device(job):
     """
-    Single place to check the device status and configuration
-    before starting the job.
-    """
+    Transitioning a device from Idle to Reserved is the responsibility of the scheduler_daemon (currently).
+    This function just checks that the reserved device is valid for this job.
+    Jobs will only enter this function if a device is already reserved for that job.
+    Storse the pipeline description
 
-    job_device = job.actual_device if job.actual_device else job.requested_device
+    To prevent cycling between lava_scheduler_daemon:assign_jobs and here, if a job
+    fails validation, the job is incomplete. Issues with this need to be fixed using
+    device tags.
+    """
     logger = logging.getLogger('dispatcher-master')
+    if not job.actual_device:
+        # should not happen.
+        logger.error("[%d] no device reserved", job.id)
+        return None
 
-    if not job_device:
-        fail_msg = "No device specified in job"
+    if job.actual_device.status is not Device.RESERVED:
+        # should not happen
+        logger.error("[%d] device [%s] not in reserved state", job.id, job.actual_device)
+        return None
+
+    if job.actual_device.worker_host is None:
+        fail_msg = "Misconfigured device configuration for %s - missing worker_host" % job.actual_device
         end_job(job, fail_msg=fail_msg, job_status=TestJob.INCOMPLETE)
         logger.error(fail_msg)
-        return None
-    if job_device.worker_host is None:
-        fail_msg = "Misconfigured device configuration - missing worker_host"
-        end_job(job, fail_msg=fail_msg, job_status=TestJob.INCOMPLETE)
-        logger.error(fail_msg)
-        return None
-    # get the up to date information each time
+
+    # Load job definition to get the variables for template rendering
+    job_def = yaml.load(job.definition)
+    job_ctx = job_def.get('context', {})
+    device = job.actual_device
+
     try:
-        device = Device.objects.get(hostname=job_device.hostname)
-    except Device.DoesNotExist:
-        fail_msg = "No device found for %s" % job_device.hostname
-        end_job(job, fail_msg=fail_msg, job_status=TestJob.INCOMPLETE)
-        logger.warning(fail_msg)
+        device_config = device.load_device_configuration(job_ctx)  # raw dict
+    except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
+        # FIXME: report the exceptions as useful user messages
+        logger.error({'jinja2': exc})
         return None
-    if device.status != Device.IDLE:
-        # FIXME: handle forced health checks which are allowed if the device is offline.
+    if not device_config or type(device_config) is not dict:
+        # it is an error to have a pipeline device without a device dictionary as it will never get any jobs.
+        msg = "Administrative error. Device '%s' has no device dictionary." % device.hostname
+        logger.error({'device-dictionary': msg})
+        # as we don't control the scheduler, yet, this has to be an error and an incomplete job.
+        # the scheduler_daemon sorts by a fixed order, so this would otherwise just keep on repeating.
+        end_job(job, fail_msg=msg, job_status=TestJob.INCOMPLETE)
         return None
+
+    parser = JobParser()
+    obj = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
+    # FIXME: drop this nasty hack once 'target' is dropped as a parameter
+    if 'target' not in obj:
+        obj.target = device.hostname
+    obj['hostname'] = device.hostname
+
+    # pass (unused) output_dir just for validation as there is no zmq socket either.
+    try:
+        pipeline_job = parser.parse(job.definition, obj, job.id, None, output_dir='/tmp')
+    except NotImplementedError as exc:
+        logger.error({'parser': exc})
+        end_job(job, fail_msg=exc, job_status=TestJob.INCOMPLETE)
+        return None
+
+    try:
+        pipeline_job.pipeline.validate_actions()
+    except (AttributeError, JobError) as exc:
+        logger.error({device: exc})
+        end_job(job, fail_msg=exc, job_status=TestJob.INCOMPLETE)
+        return None
+    if pipeline_job:
+        pipeline = pipeline_job.describe()
+        # write the pipeline description to the job output directory.
+        if not os.path.exists(job.output_dir):
+            os.makedirs(job.output_dir)
+        with open(os.path.join(job.output_dir, 'description.yaml'), 'w') as describe_yaml:
+            describe_yaml.write(yaml.dump(pipeline))
     return device
 
 
@@ -524,10 +571,17 @@ class Command(BaseCommand):
                 # Dispatch jobs
                 # TODO: make this atomic
                 not_allocated = 0
-                for job in TestJob.objects.filter(status=TestJob.SUBMITTED, is_pipeline=True):
-                    device = get_job_device(job)
+                # only pick up pipeline jobs with devices in Reserved state
+                for job in TestJob.objects.filter(
+                        status=TestJob.SUBMITTED,
+                        is_pipeline=True,
+                        actual_device__isnull=False).order_by(
+                            '-health_check', '-priority', 'submit_time', 'target_group', 'id'):
+
+                    device = select_device(job)
                     if not device:
                         continue
+                    self.logger.info("[%d] Assigning %s device", job.id, device)
                     if job.actual_device is None:
                         device = job.requested_device
 
