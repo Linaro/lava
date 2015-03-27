@@ -519,8 +519,7 @@ $(document).ready(function () {
                             cell["attr_value"] = cell["attr_value"].toFixed(2);
                         }
                         table_body += '<a target="_blank" href="' +
-                            cell["link"] + '">' +
-                            cell["attr_value"].toFixed(2) + '</a>';
+                            cell["link"] + '">' + cell["attr_value"] + '</a>';
                     }
 
                     table_body += '<span class="bug-link-container">' +

@@ -1323,7 +1323,7 @@ def job_detail(request, pk):
 
     log_file = job.output_file()
     if log_file:
-        with job.output_file() as f:
+        with log_file as f:
             f.seek(0, 2)
             job_file_size = f.tell()
 
@@ -1518,7 +1518,7 @@ def job_log_file(request, pk):
     if not log_file:
         raise Http404
 
-    with job.output_file() as f:
+    with log_file as f:
         f.seek(0, 2)
         job_file_size = f.tell()
 
@@ -1535,7 +1535,7 @@ def job_log_file(request, pk):
             'show_cancel': job.can_cancel(request.user),
             'show_resubmit': job.can_resubmit(request.user),
             'job': TestJob.objects.get(pk=pk),
-            'job_file_present': bool(job.output_file()),
+            'job_file_present': bool(log_file),
             'sections': content,
             'size_warning': size_warning,
             'job_file_size': job_file_size,
