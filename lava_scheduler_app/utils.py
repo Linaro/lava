@@ -20,7 +20,6 @@
 import os
 import re
 import copy
-import uuid
 import socket
 import urlparse
 import simplejson
@@ -557,3 +556,88 @@ def jinja_template_path(system=True):
     if not os.path.exists(path):
         raise RuntimeError("Misconfiguration of jinja templates")
     return path
+
+
+def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-branches,too-many-locals
+    """
+    Handles the lava-multinode protocol requirements.
+    Uses the multinode protocol requirements to generate as many YAML
+    snippets as are required to create TestJobs for the multinode submission.
+    Each multinode YAML submission is only split once for all roles and all sub jobs.
+    parameters:
+      submission_dict - the dictionary of the submission YAML.
+      device_dict - the dictionary mapping device hostnames to roles
+      target_group - the uuid of the multinode group
+    return:
+      None on error or a dictionary of job roles.
+      key: role
+      value: list of jobs to be created for that role.
+     """
+    # the list of devices cannot be definite here, only after devices have been reserved
+
+    copies = [
+        'job_name',
+        'timeouts',
+        'priority',
+    ]
+    skip = ['role', 'roles']
+    maps = ['device_type', 'count']
+
+    roles = {}
+    actions = {}
+    subid = 0
+
+    # FIXME: check structure using a schema
+
+    group_size = len(submission['protocols']['lava-multinode']['roles'].keys())
+
+    # populate the lava-multinode protocol metadata
+    for role, value in submission['protocols']['lava-multinode']['roles'].iteritems():
+        roles[role] = {}
+        for item in copies:
+            roles[role][item] = submission[item]
+        for name in maps:
+            roles[role][name] = value[name]
+        tags = set(value) - set(maps)
+        params = {
+            'target_group': target_group,
+            'role': role,
+            'group_size': group_size,
+            'sub_id': subid,
+        }
+        for tag in tags:
+            params[tag] = value[tag]
+        roles[role].update({'protocols': {'lava-multinode': params}})
+        subid += 1
+
+    # split the submission based on the roles specified for the actions, retaining order.
+    for role in roles:
+        for action in submission['actions']:
+            for key, value in action.items():
+                if role in value['role']:
+                    actions.setdefault(role, {'actions': []})
+                    actions[role]['actions'].append({copy.deepcopy(key): copy.deepcopy(value)})
+
+    # add other parameters from the lava-multinode protocol
+    for key, value in submission['protocols']['lava-multinode'].iteritems():
+        if key in skip:
+            continue
+        for role in roles:
+            roles[role]['protocols']['lava-multinode'][key] = value
+
+    # set the role for each action to the role of the job instead of the original list..
+    for role in actions:
+        for action in actions[role]['actions']:
+            for key, value in action.items():
+                value['role'] = role
+
+    jobs = []
+    for role in roles:
+        for _ in range(0, roles[role]['count']):
+            job = {}
+            job.update(actions[role])
+            job.update(roles[role])
+            del job['count']
+            del job['device_type']
+            jobs.append(job)
+    return jobs

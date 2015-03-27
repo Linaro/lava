@@ -1,13 +1,11 @@
 import os
 import yaml
-import jinja2
 import logging
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
     DeviceDictionary,
     JobPipeline,
-    PipelineStore,
     TestJob,
     Tag,
     DevicesUnavailableException,
@@ -17,7 +15,10 @@ from django_testscenarios.ubertest import TestCase
 from django.contrib.auth.models import Group, Permission, User
 from collections import OrderedDict
 from lava_scheduler_app.utils import jinja_template_path
+from lava_scheduler_app.utils import jinja_template_path, split_multinode_yaml
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
+
+# pylint: disable=too-many-ancestors,too-many-public-methods,invalid-name,no-member
 
 
 class YamlFactory(ModelFactory):
@@ -27,7 +28,7 @@ class YamlFactory(ModelFactory):
     save a TestJob into the database. Hence qemu.yaml.
     """
 
-    def make_fake_qemu_device(self, hostname='fakeqemu1'):
+    def make_fake_qemu_device(self, hostname='fakeqemu1'):  # pylint: disable=no-self-use
         qemu = DeviceDictionary(hostname=hostname)
         qemu.parameters = {'extends': 'qemu.yaml', 'arch': 'amd64'}
         qemu.save()
@@ -217,12 +218,12 @@ class TestPipelineStore(TestCaseWithFactory):
         user = self.factory.make_user()
         job = TestJob.from_yaml_and_user(
             self.factory.make_job_json(), user)
-        foo = JobPipeline.get('foo')
-        self.assertIsNone(foo)
-        foo = JobPipeline.get(job.id)
-        self.assertIsNotNone(foo)
-        self.assertIsInstance(foo, JobPipeline)
-        self.assertIs(type(foo.pipeline), dict)
+        store = JobPipeline.get('foo')
+        self.assertIsNone(store)
+        store = JobPipeline.get(job.id)
+        self.assertIsNotNone(store)
+        self.assertIsInstance(store, JobPipeline)
+        self.assertIs(type(store.pipeline), dict)
 
     def test_pipeline_results(self):
         result_sample = """
@@ -283,3 +284,26 @@ class TestPipelineStore(TestCaseWithFactory):
         self.assertIn('result_sample', store.pipeline)
         self.assertIs(type(store.pipeline['result_sample']), OrderedDict)
         self.assertEqual(store.pipeline, result_store)
+
+
+class TestYamlMultinode(TestCaseWithFactory):
+
+    def setUp(self):
+        super(TestYamlMultinode, self).setUp()
+
+    def test_multinode_group(self):
+        server_check = os.path.join(os.path.dirname(__file__), 'kvm-multinode-server.yaml')
+        client_check = os.path.join(os.path.dirname(__file__), 'kvm-multinode-client.yaml')
+        submission = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'kvm-multinode.yaml'), 'r'))
+        target_group = 'arbitrary-group-id'  # for unit tests only
+
+        jobs = split_multinode_yaml(submission, target_group)
+        self.assertEqual(len(jobs), 2)
+        yaml.dump(jobs)  # ensure the jobs can be serialised as YAML
+        for job in jobs:
+            role = job['protocols']['lava-multinode']['role']
+            if role == 'client':
+                self.assertEqual(job, yaml.load(open(client_check, 'r')))
+            if role == 'server':
+                self.assertEqual(job, yaml.load(open(server_check, 'r')))

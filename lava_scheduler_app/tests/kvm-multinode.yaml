@@ -1,0 +1,84 @@
+job_name: kvm-multinode
+
+timeouts:
+  job:
+    minutes: 5
+  action:
+    minutes: 1
+  test:
+    minutes: 3
+
+protocols:
+  lava-multinode:
+    roles:
+      client:
+        device_type: qemu
+        count: 1
+        tags:
+        - usb-flash
+        - usb-eth
+        interfaces:
+        - vlan: name_two
+          tags:
+          - 10G
+        - vlan: name_two
+          tags:
+          - 1G
+      server:
+        device_type: qemu
+        count: 1
+    timeouts:
+      seconds: 60
+
+priority: medium
+
+actions:
+
+    - deploy:
+        timeout:
+          minutes: 2
+        to: tmpfs
+        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        compression: gz
+        os: debian
+        root_partition: 1
+        role:
+        - server
+
+    - deploy:
+        timeout:
+          minutes: 2
+        to: tmpfs
+        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        compression: gz
+        os: debian
+        root_partition: 1
+        role:
+        - client
+
+    - boot:
+        method: qemu
+        media: tmpfs
+        failure_retry: 2
+        role:
+        - server
+        - client
+
+    - test:
+        failure_retry: 3
+        role: server
+        name: kvm-basic-multinode
+        definitions:
+            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+              from: git
+              path: lava-test-shell/multi-node/multinode01.yaml
+              name: multinode-basic
+        role:
+        - server
+        - client
+
+    - submit_results:
+        stream: /anonymous/codehelp/
+        role:
+        - client
+        - server
