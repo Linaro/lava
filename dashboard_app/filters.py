@@ -460,10 +460,13 @@ def get_filter_testruns(user, filter, prefetch_related=[], limit=100,
     if image_chart_filter:
         testruns = testruns.filter(
             test__imagecharttest__image_chart_filter=image_chart_filter)
+        use_build_number = image_chart_filter.image_chart.is_build_number and \
+            filter.build_number_attribute
     elif filter.tests.all():
         testruns = testruns.filter(test__testrunfilters__filter=filter)
+        use_build_number = filter.build_number_attribute
 
-    if filter.build_number_attribute:
+    if use_build_number:
         if descending:
             ob = ['-build_number']
         else:
@@ -486,7 +489,7 @@ def get_filter_testruns(user, filter, prefetch_related=[], limit=100,
         'test'
     )[:limit]
 
-    return testruns
+    return reversed(testruns)
 
 
 def get_filter_testresults(user, filter, prefetch_related=[], limit=50,
@@ -535,4 +538,4 @@ def get_filter_testresults(user, filter, prefetch_related=[], limit=50,
         'test_run__test'
     )[:limit]
 
-    return testresults
+    return reversed(testresults)
