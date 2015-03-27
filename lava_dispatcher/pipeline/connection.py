@@ -23,12 +23,15 @@ import time
 import pexpect
 import signal
 import decimal
-from lava_dispatcher.pipeline.log import YamlLogger
-from lava_dispatcher.pipeline.action import TestError, Timeout
+import logging
+from lava_dispatcher.pipeline.action import TestError, Timeout, InternalObject
+from lava_dispatcher.pipeline.utils.shell import wait_for_prompt
 
 
-# FIXME: drop this base class and just use the SignalDirector?
 class BaseSignalHandler(object):
+    """
+    Used to extend the SignalDirector to allow protocols to respond to signals.
+    """
 
     def __init__(self, protocol=None):
         self.protocol = protocol
@@ -56,10 +59,9 @@ class BaseSignalHandler(object):
         pass
 
 
-class SignalMatch(object):  # pylint: disable=too-few-public-methods
+class SignalMatch(InternalObject):  # pylint: disable=too-few-public-methods
 
     def match(self, data, fixupdict=None):
-        logger = YamlLogger("root")
         if not fixupdict:
             fixupdict = {}
 
@@ -80,7 +82,6 @@ class SignalMatch(object):  # pylint: disable=too-few-public-methods
                     res['result'] = fixupdict[res['result']]
                 if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
                     res['result'] = 'unknown'
-                    logger.debug('Setting result to "unknown"')
                     raise TestError('Bad test result: %s', res['result'])
 
         if 'test_case_id' not in res:
@@ -88,7 +89,6 @@ class SignalMatch(object):  # pylint: disable=too-few-public-methods
                             "incorrect parsing pattern being used): %s", res)
 
         if 'result' not in res:
-            logger.debug('Setting result to "unknown"')
             res['result'] = 'unknown'
             raise TestError("Test case results without result (probably a sign of an "
                             "incorrect parsing pattern being used): %s", res)
@@ -122,7 +122,6 @@ class Connection(object):
         self.raw_connection = raw_connection
         self.results = {}
         self.match = None
-        self.logger = YamlLogger("root")
 
     def sendline(self, line):
         self.raw_connection.sendline(line)
@@ -131,39 +130,12 @@ class Connection(object):
         if self.raw_connection:
             try:
                 os.killpg(self.raw_connection.pid, signal.SIGKILL)
-                self.logger.debug("Finalizing child process group with PID %d" % self.raw_connection.pid)
+                # FIXME: determine how to access the zmq logger
+                # self.logger.debug("Finalizing child process group with PID %d" % self.raw_connection.pid)
             except OSError:
                 self.raw_connection.kill(9)
-                self.logger.debug("Finalizing child process with PID %d" % self.raw_connection.pid)
+                # self.logger.debug("Finalizing child process with PID %d" % self.raw_connection.pid)
             self.raw_connection.close()
-
-
-# FIXME: move to utils
-def wait_for_prompt(connection, prompt_pattern, timeout):
-    # One of the challenges we face is that kernel log messages can appear
-    # half way through a shell prompt.  So, if things are taking a while,
-    # we send a newline along to maybe provoke a new prompt.  We wait for
-    # half the timeout period and then wait for one tenth of the timeout
-    # 6 times (so we wait for 1.1 times the timeout period overall).
-    prompt_wait_count = 0
-    if timeout == -1:
-        timeout = connection.timeout
-    partial_timeout = timeout / 2.0
-    logger = YamlLogger("root")
-    while True:
-        try:
-            connection.expect(prompt_pattern, timeout=partial_timeout)
-        except pexpect.TIMEOUT:
-            if prompt_wait_count < 6:
-                logger.debug('Sending newline in case of corruption.')
-                prompt_wait_count += 1
-                partial_timeout = timeout / 10
-                connection.sendline('')
-                continue
-            else:
-                raise
-        else:
-            break
 
 
 class CommandRunner(object):
@@ -186,10 +158,9 @@ class CommandRunner(object):
         self._prompt_str_includes_rc = prompt_str_includes_rc
         self.match_id = None
         self.match = None
-        self.logger = YamlLogger("root")
 
     def change_prompt(self, string):
-        self.logger.debug("Changing prompt to %s" % string)
+        # self.logger.debug("Changing prompt to %s" % string)
         self._prompt_str = string
 
     def wait_for_prompt(self, timeout=-1):
@@ -198,9 +169,7 @@ class CommandRunner(object):
     def get_connection(self):
         return self._connection
 
-    # FIXME: too many arguments, trim unused args
-    def run(self, cmd, response=None, timeout=-1,
-            failok=False, wait_prompt=True, log_in_host=None):
+    def run(self, cmd, response=None, timeout=-1, wait_prompt=True):
         """Run `cmd` and wait for a shell response.
 
         :param cmd: The command to execute.
@@ -208,16 +177,10 @@ class CommandRunner(object):
             .expect().
         :param timeout: How long to wait for 'response' (if specified) and the
             shell prompt, defaulting to forever.
-        :param failok: The command can fail or not, if it is set False and
-            command fail, an OperationFail exception will raise
-        :param log_in_host: If set, the input and output of the command will be
-            logged in it
         :return: The exit value of the command, if wait_for_rc not explicitly
             set to False during construction.
         """
         self._connection.empty_buffer()
-        if log_in_host is not None:
-            self._connection.logfile = open(log_in_host, "a")
         self._connection.sendline(cmd)
         start = time.time()
         if response is not None:
@@ -243,7 +206,7 @@ class CommandRunner(object):
 
             if self._prompt_str_includes_rc:
                 return_code = int(self._connection.match.group(1))
-                if return_code != 0 and not failok:
+                if return_code != 0:
                     raise TestError("executing %r failed with code %s" % (cmd, return_code))
             else:
                 return_code = None
@@ -266,7 +229,8 @@ class Protocol(object):  # pylint: disable=abstract-class-not-used
     name = 'protocol'
 
     def __init__(self, parameters):
-        self.logger = YamlLogger("root")
+        # FIXME: allow the bare logger to use the zmq socket
+        self.logger = logging.getLogger("root")
         self.poll_timeout = Timeout(self.name)
         self.parameters = None
         self.__errors__ = []
@@ -293,9 +257,6 @@ class Protocol(object):  # pylint: disable=abstract-class-not-used
     def valid(self):
         return len([x for x in self.errors if x]) == 0
 
-    def poll(self, message, timeout=None):
-        raise NotImplementedError()
-
     def set_up(self):
         raise NotImplementedError()
 
@@ -315,3 +276,6 @@ class Protocol(object):  # pylint: disable=abstract-class-not-used
         :return: A Python object containing the reply dict from the API call
         """
         return self._api_select(args)
+
+    def collate(self, reply_dict, params_dict):
+        return None

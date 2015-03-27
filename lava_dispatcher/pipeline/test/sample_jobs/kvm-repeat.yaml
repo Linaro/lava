@@ -1,3 +1,6 @@
+device_type: qemu
+job_name: kvm-repeat
+
 actions:
 
     - deploy:
@@ -86,3 +89,6 @@ actions:
 
     - submit_results:
         stream: /anonymous/codehelp/
+
+context:
+  arch: amd64

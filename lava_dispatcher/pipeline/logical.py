@@ -63,7 +63,7 @@ class RetryAction(Action):
                 self.retries += 1
                 self.errors = "%s failed: %d of %d attempts. '%s'" % (self.name, self.retries, self.max_retries, exc)
                 if self.timeout:
-                    self.logger.debug(" %s: timeout. %s seconds" % (self.timeout.name, int(self.timeout.duration)))
+                    self.logger.warning(" %s: timeout. %s seconds" % (self.timeout.name, int(self.timeout.duration)))
                 time.sleep(self.sleep)
         if not self.valid:
             self.errors = "%s retries failed for %s" % (self.retries, self.name)
@@ -132,7 +132,7 @@ class AdjuvantAction(Action):  # pylint: disable=abstract-class-not-used
             return connection
         if self.data[self.key()]:
             self.adjuvant = True
-            self.logger.debug("Adjuvant %s required" % self.name)
+            self.logger.warning("Adjuvant %s required" % self.name)
         else:
             self.logger.debug("Adjuvant %s skipped" % self.name)
         return connection

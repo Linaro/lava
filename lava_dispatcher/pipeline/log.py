@@ -1,6 +1,7 @@
 # Copyright (C) 2014 Linaro Limited
 #
 # Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
+#         Remi Duraffort <remi.duraffort@linaro.org>
 #
 # This file is part of LAVA Dispatcher.
 #
@@ -20,71 +21,78 @@
 
 import logging
 import yaml
+import zmq
 
 
-class YamlLogger(object):
+class ZMQPushHandler(logging.Handler):
+    def __init__(self, socket_addr, job_id):
+        super(ZMQPushHandler, self).__init__()
 
+        # Create the PUSH socket
+        # pylint: disable=no-member
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.PUSH)
+        self.socket.connect(socket_addr)
+
+        self.job_id = str(job_id)
+        self.action_level = '0'
+        self.action_name = 'dispatcher'
+
+        self.formatter = logging.Formatter("%(message)s")
+
+    def setMetadata(self, level, name):
+        self.action_level = level
+        self.action_name = name
+
+    def emit(self, record):
+        msg = [self.job_id, self.action_level, self.action_name,
+               self.formatter.format(record)]
+        self.socket.send_multipart(msg)
+
+    def close(self):
+        super(ZMQPushHandler, self).close()
+        self.socket.close()
+        self.context.destroy()
+
+
+class YAMLLogger(logging.Logger):
     def __init__(self, name):
-        """
-        Logs written to the per action log must use the YamlLogger.
-        """
-        self.name = name
-        self.description = "yaml logger"
-        self.log = logging.getLogger("%s" % self.name)
-        self.log.setLevel(logging.DEBUG)
-        self.pattern = ' - id: "<LAVA_DISPATCHER>%(asctime)s"\n%(message)s'
+        super(YAMLLogger, self).__init__(name)
         self.handler = None
 
-    def log_message(self, message):
-        if not message:
-            return
-        if type(message) is dict:
-            for key, value in list(message.items()):
-                self.log.debug("   %s: %s", key, value)
-        else:
-            self.log.debug("   log: \"%s\"", message)
+    def addZMQHandler(self, socket_addr, job_id):
+        self.handler = ZMQPushHandler(socket_addr, job_id)
+        self.addHandler(self.handler)
+        return self.handler
 
-    def debug(self, message):
-        self.log_message(message)
+    def setMetadata(self, level, name):
+        if isinstance(self.handler, ZMQPushHandler):
+            self.handler.setMetadata(level, name)
 
-    def set_handler(self, handler=None):
-        if handler is not None:
-            self.handler = handler
-        else:
-            self.handler = get_yaml_handler()
-        self.handler.addFilter(logging.Filter(self.name))
-        self.log.addHandler(self.handler)
+    def log_message(self, level, level_name, message, *args, **kwargs):
+        if message:
+            self._log(level, yaml.dump([{level_name: message}])[:-1], args, kwargs)
 
-    def remove_handler(self):
-        if self.handler is not None:
-            self.log.removeHandler(self.handler)
-            self.handler.close()
-            self.handler = None
+    def exception(self, exc, *args, **kwargs):
+        self.log_message(logging.ERROR, 'exception', exc, *args, **kwargs)
 
+    def error(self, message, *args, **kwargs):
+        self.log_message(logging.ERROR, 'error', message, *args, **kwargs)
 
-def get_yaml_handler(filename=None, mode='w', encoding='utf-8'):
-    pattern = ' - id: "<LAVA_DISPATCHER>%(asctime)s"\n%(message)s'
-    if filename:
-        if isinstance(filename, file):
-            handler = logging.StreamHandler(filename)
-        elif isinstance(filename, str):
-            handler = logging.FileHandler(filename,
-                                          mode=mode,
-                                          encoding=encoding)
-            handler.setFormatter(logging.Formatter(pattern))
-    else:
-        handler = logging.StreamHandler()
-    return handler
+    def warning(self, message, *args, **kwargs):
+        self.log_message(logging.WARNING, 'warning', message, *args, **kwargs)
 
+    def info(self, message, *args, **kwargs):
+        self.log_message(logging.INFO, 'info', message, *args, **kwargs)
 
-class YamlFilter(logging.Filter):  # pylint: disable=too-few-public-methods
-    """
-    filters standard logs into structured logs
-    """
+    def debug(self, message, *args, **kwargs):
+        self.log_message(logging.DEBUG, 'debug', message, *args, **kwargs)
 
-    def filter(self, record):
-        record.msg = yaml.dump(record.msg)
-        return True
+    def target(self, message, *args, **kwargs):
+        self.log_message(logging.INFO, 'target', message, *args, **kwargs)
+
+    def results(self, results, *args, **kwargs):
+        self.log_message(logging.INFO, 'results', results, *args, **kwargs)
 
 
 class StdLogger(object):  # pylint: disable=too-few-public-methods
@@ -99,7 +107,7 @@ class StdLogger(object):  # pylint: disable=too-few-public-methods
         self.log = logging.getLogger("%s" % name)
         self.log.setLevel(logging.INFO)
         self.handler = logging.StreamHandler(filename)
-        self.formatter = logging.Formatter('"%(asctime)s"\n%(message)s')
+        self.formatter = logging.Formatter('"%(asctime)s":\n - %(message)s')
         self.handler.setFormatter(self.formatter)
 
     def info(self, message):

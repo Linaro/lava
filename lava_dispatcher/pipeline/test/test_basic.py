@@ -87,40 +87,6 @@ def pipeline_reference(filename):
         return yaml.load(f_ref)
 
 
-# FIXME: disabled as the current parser relies on a real file, not a string.
-# class TestJobSnippet(unittest.TestCase):
-
-#    def setUp(self):
-#        factory = Factory()
-#        fake_qemu = os.path.join(os.path.dirname(__file__), '..', '..', 'tests', 'test-config', 'bin', 'fake-qemu')
-#        device = factory.create_kvm_target({'qemu-binary': fake_qemu})
-#        self.parser = JobParser()
-#        self.job = self.parser.parse(self.boot_from_sata, device)
-
-#    def boot_from_sata(self):
-#        return StringIO({
-#            'actions': [
-#                {'deploy': {'to': 'sata', 'image': 'file:///path/to/image.img'}},
-#            ]
-#        })
-
-#    def test_boot_from_sata(self):
-#        self.assertEquals(1, len(self.job.actions))
-#        self.assertEquals(self.job.actions[self.job.pipeline][0].level, "1")
-
-#    def test_action_data(self):
-#        deploy_action = self.job.actions[self.job.pipeline][0]
-#        self.assertEqual(type(deploy_action), DeployAction)
-#        self.assertEquals('sata', deploy_action.parameters['to'])
-#        self.assertEquals('file:///path/to/image.img', deploy_action.parameters['image'])
-
-#    def test_action_class(self):
-#        job = self.parser.parse(self.boot_from_sata)
-#        deploy_action = job.actions[job.pipeline][0]
-#
-#        self.assertIsInstance(deploy_action, DeployAction)
-
-
 class TestValidation(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def test_action_is_valid_if_there_are_not_errors(self):  # pylint: disable=invalid-name
@@ -131,6 +97,7 @@ class TestValidation(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertTrue(action.valid)
 
     def test_composite_action_aggregates_errors_from_sub_actions(self):  # pylint: disable=invalid-name
+        # Unable to call Action.validate() as there is no job in this unit test
         sub1 = Action()
         sub1.__errors__ = [1]
         sub2 = Action()
@@ -138,11 +105,9 @@ class TestValidation(unittest.TestCase):  # pylint: disable=too-many-public-meth
         sub2.__errors__ = [2]
 
         pipe = Pipeline()
-        self.assertRaises(RuntimeError, pipe.add_action, sub1)
         sub1.name = "sub1"
         pipe.add_action(sub1)
         pipe.add_action(sub2)
-
         self.assertEqual([1, 2], pipe.errors)
 
 
@@ -158,19 +123,19 @@ class Factory(object):
         parser = JobParser()
         try:
             with open(sample_job_file) as sample_job_data:
-                job = parser.parse(sample_job_data, device, output_dir=output_dir)
+                job = parser.parse(sample_job_data, device, 4212, None, output_dir=output_dir)
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
             return None
         return job
 
-    def create_kvm_job(self, filename, output_dir=None):  # pylint: disable=no-self-use
+    def create_kvm_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         parser = JobParser()
         try:
             with open(kvm_yaml) as sample_job_data:
-                job = parser.parse(sample_job_data, device, output_dir=output_dir)
+                job = parser.parse(sample_job_data, device, 4212, None, output_dir=output_dir)
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
             return None
@@ -309,29 +274,19 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
             return unittest.skip("not all deployments have been implemented")
         self.assertIsNotNone(job)
 
+    def test_describe(self):
+        factory = Factory()
+        job = factory.create_kvm_job('sample_jobs/kvm.yaml', mkdtemp())
+        self.assertIsNotNone(job)
+        pipe = job.pipeline.describe()
+        for item in pipe:
+            self.assertNotIn('match', item)
+            if 'pipeline' in item:
+                for element in item['pipeline']:
+                    self.assertNotIn('match', element)
+
 
 class TestFakeActions(unittest.TestCase):  # pylint: disable=too-many-public-methods
-
-    class PrepareAction(Action):
-
-        def __init__(self):
-            self.called = False
-            super(TestFakeActions.PrepareAction, self).__init__()
-            self.name = "prepare"
-
-        def prepare(self):
-            self.called = True
-
-    class PostProcess(Action):
-
-        def __init__(self):
-            self.called = False
-            super(TestFakeActions.PostProcess, self).__init__()
-            self.name = "post-process"
-            # FIXME: process the pipeline argument
-
-        def post_process(self):
-            self.called = True
 
     class KeepConnection(Action):  # pylint: disable=abstract-class-not-used
         def __init__(self):
@@ -373,21 +328,6 @@ class TestFakeActions(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertTrue(self.sub1.ran)
         self.assertNotEqual(self.sub0.elapsed_time, 0)
         self.assertNotEqual(self.sub1.elapsed_time, 0)
-
-    def test_prepare(self):
-        pipe = Pipeline()
-        prepare = TestFakeActions.PrepareAction()
-        pipe.add_action(prepare)
-        pipe.prepare_actions()
-        self.assertTrue(prepare.called)
-
-    def test_post_process(self):
-
-        pipe = Pipeline()
-        post_process = TestFakeActions.PostProcess()
-        pipe.add_action(post_process)
-        pipe.post_process_actions()
-        self.assertTrue(post_process.called)
 
     def test_keep_connection(self):
 

@@ -20,7 +20,6 @@
 import logging
 import json
 import uuid
-from lava_dispatcher.pipeline.log import YamlLogger
 
 
 # disable pylint warnings until lava-coordinator is updated to make it easier to port other changes.
@@ -78,8 +77,8 @@ class TestSocket(object):
                 return
             assert 'response' in json_data
             self.log.info("\tCoordinator response: '%s'" % json_data['response'])
-            self.log.info("\tdebug: %s" % json.dumps(json_data))
-            assert(json_data['response'] == self.response)
+            self.log.info("\tdebug: %s" % self.response['response'])
+            assert(json_data['response'] == self.response['response'])
             self.passes += 1
             if self.message:
                 # we are expecting a message back.
@@ -117,9 +116,10 @@ class TestSocket(object):
             self.log.info("\tCoordinator: %d socket tests passed" % self.passes)
 
     def prepare(self, name):
-        self.response = name
+        if name:
+            self.response = {'response': name}
         if self.response:
-            self.log.info("\tCoordinator: expecting a response: '%s'" % self.response)
+            self.log.info("\tCoordinator: expecting a response: '%s'" % self.response['response'])
 
     def validate(self, message):
         self.message = message
@@ -405,6 +405,10 @@ class TestCoordinator(object):
         messageID = self._getMessageID(json_data)
         if 'waitrole' in json_data:
             for client in self.group['roles'][json_data['role']]:
+                if messageID not in self.group['waits']:
+                    logging.debug("messageID %s not yet seen" % messageID)
+                    self._waitResponse()
+                    return
                 if client not in self.group['waits'][messageID]:
                     # FIXME: bug? if this client has not sent the messageID yet,
                     # causing it to wait will simply force a timeout. node needs
@@ -419,7 +423,8 @@ class TestCoordinator(object):
             for client in self.group['clients']:
                 logging.debug("checking %s for wait message" % client)
                 if messageID not in self.group['waits']:
-                    self._badRequest()
+                    logging.debug("messageID %s not yet seen" % messageID)
+                    self._waitResponse()
                     return
                 if client not in self.group['waits'][messageID]:
                     logging.debug("setting waiting for %s" % client)

@@ -56,11 +56,12 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         """
         Test that the job parameters match expected structure
         """
+        self.maxDiff = None
         job_parser = JobParser()
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         sample_job_data = open(sample_job_file)
-        job = job_parser.parse(sample_job_data, cubie)
+        job = job_parser.parse(sample_job_data, cubie, 4212, None, output_dir='/tmp/')
         try:
             job.validate()
         except JobError:
@@ -90,7 +91,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         sample_job_data = open(sample_job_file)
-        job = job_parser.parse(sample_job_data, cubie)
+        job = job_parser.parse(sample_job_data, cubie, 4212, None, output_dir='/tmp/')
         job.validate()
         self.assertIn('usb', cubie['parameters']['media'].keys())
         deploy_params = [methods for methods in job.parameters['actions'] if 'deploy' in methods.keys()][0]['deploy']
@@ -110,6 +111,19 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertTrue(type(dd_action.get_common_data('uuid', 'boot_part')) is str)
         self.assertEqual('0:1', dd_action.get_common_data('uuid', 'boot_part'))
 
+    def test_primary_media(self):
+        """
+        Test that definitions of secondary media do not block submissions using primary media
+        """
+        job_parser = JobParser()
+        bbb = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
+        sample_job_data = open(sample_job_file)
+        job = job_parser.parse(sample_job_data, bbb, 4212, None, output_dir='/tmp/')
+        job.validate()
+        self.assertEqual(job.pipeline.errors, [])
+        self.assertIn('usb', bbb['parameters']['media'].keys())
+
     def test_substitutions(self):
         """
         Test substitution of secondary media values into u-boot commands
@@ -122,7 +136,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         sample_job_data = open(sample_job_file)
-        job = job_parser.parse(sample_job_data, cubie)
+        job = job_parser.parse(sample_job_data, cubie, 4212, None, output_dir='/tmp/')
         job.validate()
         boot_params = [methods for methods in job.parameters['actions'] if 'boot' in methods.keys()][0]['boot']
         self.assertIn('ramdisk', boot_params)
@@ -158,8 +172,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
                 u_boot_action.parameters['boot_part']
             )
         }
-
-        self.assertEqual('bootz 0x47000000 0x48000000 0x43000000', substitutions['{BOOTX}'])
+        self.assertEqual('bootz 0x42000000 0x43300000 0x43000000', substitutions['{BOOTX}'])
         self.assertEqual('/boot/initrd.img-3.16.0-4-armmp-lpae.u-boot', substitutions['{RAMDISK}'])
         commands = substitute(commands_list, substitutions)
         self.assertEqual(
@@ -173,9 +186,9 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
                 'setenv initrd_addr_r ${ramdisk_addr_r}',
                 "setenv loadkernel 'load usb 0:1 ${kernel_addr_r} /boot/vmlinuz-3.16.0-4-armmp-lpae'",
                 "setenv loadinitrd 'load usb 0:1 ${initrd_addr_r} /boot/initrd.img-3.16.0-4-armmp-lpae.u-boot; setenv initrd_size ${filesize}'",
-                "setenv loadfdt 'load usb 0:1 ${fdt_addr_r} /boot/dtb-3.16.0-4-armmp-lpae''",
+                "setenv loadfdt 'load usb 0:1 ${fdt_addr_r} /boot/dtb-3.16.0-4-armmp-lpae'",
                 "setenv bootargs 'console=ttyS0,115200n8 root=UUID=159d17cc-697c-4125-95a0-a3775e1deabe ip=dhcp'",
-                "setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; bootz 0x47000000 0x48000000 0x43000000'", 'boot'
+                "setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; bootz 0x42000000 0x43300000 0x43000000'", 'boot'
             ]
         )
         # reference commands:

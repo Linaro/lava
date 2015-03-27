@@ -1,4 +1,4 @@
-device_type: kvm
+device_type: qemu
 
 actions:
   deploy:

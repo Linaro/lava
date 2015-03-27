@@ -188,6 +188,7 @@ class UBootInterrupt(Action):
     def run(self, connection, args=None):
         if not connection:
             raise RuntimeError("%s started without a connection already in use" % self.name)
+        connection = super(UBootInterrupt, self).run(connection, args)
         self.logger.debug("Changing prompt to 'Hit any key to stop autoboot'")
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
         connection.prompt_str = UBOOT_AUTOBOOT_PROMPT
@@ -213,7 +214,10 @@ class UBootSecondaryMedia(Action):
 
     def validate(self):
         super(UBootSecondaryMedia, self).validate()
-        if self.parameters['commands'] != 'usb':
+        if 'media' not in self.job.device['parameters']:
+            return
+        media_keys = self.job.device['parameters']['media'].keys()
+        if self.parameters['commands'] not in media_keys:
             return
         if 'kernel' not in self.parameters:
             self.errors = "Missing kernel location"
@@ -224,15 +228,17 @@ class UBootSecondaryMedia(Action):
         if 'boot_part' not in self.parameters:
             self.errors = "Missing boot_part for the partition number of the boot files inside the deployed image"
 
-        if self.get_common_data('u-boot', 'boot_part') is None:
-            self.errors = "Missing boot_part listed for u-boot"
-        if not self.valid:
-            raise JobError(self.errors)
         self.set_common_data('file', 'kernel', self.parameters['kernel'])
         self.set_common_data('file', 'ramdisk', self.parameters.get('ramdisk', ''))
         self.set_common_data('file', 'dtb', self.parameters.get('dtb', ''))
         self.set_common_data('uuid', 'root', self.parameters['root_uuid'])
-        media_params = self.job.device['parameters']['media']['usb']
+        media_params = self.job.device['parameters']['media'][self.parameters['commands']]
+        if self.get_common_data('u-boot', 'device') not in media_params:
+            self.errors = "%s does not match requested media type %s" % (
+                self.get_common_data('u-boot', 'device'), self.parameters['commands']
+            )
+        if not self.valid:
+            return
         self.set_common_data(
             'uuid',
             'boot_part',
@@ -241,10 +247,6 @@ class UBootSecondaryMedia(Action):
                 self.parameters['boot_part']
             )
         )
-
-    def run(self, connection, args=None):
-        # no need for a run action here, done in validate.
-        return connection
 
 
 class UBootCommandOverlay(Action):
@@ -295,6 +297,7 @@ class UBootCommandOverlay(Action):
         """
         # Multiple deployments would overwrite the value if parsed in the validate step.
         # FIXME: implement isolation for repeated steps.
+        connection = super(UBootCommandOverlay, self).run(connection, args)
         try:
             ip_addr = dispatcher_ip()
         except InfrastructureError as exc:
@@ -324,7 +327,7 @@ class UBootCommandOverlay(Action):
             substitutions['{NFSROOTFS}'] = self.get_common_data('file', 'nfsroot')
 
         substitutions['{ROOT}'] = self.get_common_data('uuid', 'root')  # UUID label, not a file
-        substitutions['{BOOT_PART}'] = self.get_common_data('uuid', 'boot_part')
+        substitutions['{ROOT_PART}'] = self.get_common_data('uuid', 'boot_part')
 
         self.data['u-boot']['commands'] = substitute(self.commands, substitutions)
         self.logger.debug("Parsed boot commands: %s" % '; '.join(self.data['u-boot']['commands']))
@@ -340,7 +343,7 @@ class UBootCommandsAction(Action):
         self.name = "u-boot-commands"
         self.description = "send commands to u-boot"
         self.summary = "interactive u-boot"
-        self.prompt = None
+        self.params = None
         self.timeout = Timeout(self.name, UBOOT_DEFAULT_CMD_TIMEOUT)
 
     def validate(self):
@@ -348,18 +351,21 @@ class UBootCommandsAction(Action):
         if 'u-boot' not in self.data:
             self.errors = "Unable to read uboot context data"
         # get prompt_str from device parameters
-        self.prompt = self.job.device['actions']['boot']['methods']['u-boot']['parameters']['bootloader_prompt']
+        self.params = self.job.device['actions']['boot']['methods']['u-boot']['parameters']
 
     def run(self, connection, args=None):
         if not connection:
             self.errors = "%s started without a connection already in use" % self.name
-        connection.timeout = self.timeout
-        self.logger.debug("Changing prompt to %s" % self.prompt)
+        connection = super(UBootCommandsAction, self).run(connection, args)
+        connection.prompt_str = self.params['bootloader_prompt']
+        self.logger.debug("Changing prompt to %s" % connection.prompt_str)
         for line in self.data['u-boot']['commands']:
             self.wait(connection)
             connection.sendline(line)
             self.wait(connection)
         # allow for auto_login
-        connection.prompt_str = self.parameters.get('boot_message', BOOT_MESSAGE)
+        params = self.job.device['actions']['boot']['methods']['u-boot']['parameters']
+        connection.prompt_str = params.get('boot_message', BOOT_MESSAGE)
+        self.logger.debug("Changing prompt to %s" % connection.prompt_str)
         self.wait(connection)
         return connection

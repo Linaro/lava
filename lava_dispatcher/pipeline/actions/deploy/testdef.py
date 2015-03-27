@@ -137,12 +137,13 @@ class RepoAction(Action):
         if 'hostname' not in self.job.device:
             raise InfrastructureError("Invalid device configuration")
         if 'test_name' not in self.parameters:
-            raise JobError("Unable to determine test_name")
+            self.errors = "Unable to determine test_name"
+            return
         if not isinstance(self, InlineRepoAction):
             if self.vcs is None:
                 raise RuntimeError("RepoAction validate called super without setting the vcs")
             if not os.path.exists(self.vcs.binary):
-                raise JobError("%s is not installed on the dispatcher." % self.vcs.binary)
+                self.errors = "%s is not installed on the dispatcher." % self.vcs.binary
         super(RepoAction, self).validate()
 
     def run(self, connection, args=None):
@@ -152,6 +153,7 @@ class RepoAction(Action):
         Better approach will be to create the entire overlay without mounting and then
         unpack an overlay.tgz after mounting.
         """
+        connection = super(RepoAction, self).run(connection, args)
         self.data.setdefault('test', {})
         self.data['test'].setdefault(self.uuid, {})
         self.data['test'][self.uuid].setdefault('runner_path', {})
@@ -230,9 +232,11 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
     def validate(self):
         if 'repository' not in self.parameters:
-            raise JobError("Git repository not specified in job definition")
+            self.errors = "Git repository not specified in job definition"
         if 'path' not in self.parameters:
-            raise JobError("Path to YAML file not specified in the job definition")
+            self.errors = "Path to YAML file not specified in the job definition"
+        if not self.valid:
+            return
         self.vcs = GitHelper(self.parameters['repository'])
         super(GitRepoAction, self).validate()
 
@@ -293,9 +297,11 @@ class BzrRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
     def validate(self):
         if 'repository' not in self.parameters:
-            raise JobError("Bzr repository not specified in job definition")
+            self.errors = "Bzr repository not specified in job definition"
         if 'path' not in self.parameters:
-            raise JobError("Path to YAML file not specified in the job definition")
+            self.errors = "Path to YAML file not specified in the job definition"
+        if not self.valid:
+            return
         self.vcs = BzrHelper(self.parameters['repository'])
         super(BzrRepoAction, self).validate()
 
@@ -345,10 +351,11 @@ class InlineRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
     def validate(self):
         if 'repository' not in self.parameters:
-            raise JobError("Inline definition not specified in job definition")
+            self.errors = "Inline definition not specified in job definition"
         if not isinstance(self.parameters['repository'], dict):
-            raise JobError("Invalid inline definition in job definition")
-
+            self.errors = "Invalid inline definition in job definition"
+        if not self.valid:
+            return
         super(InlineRepoAction, self).validate()
 
     @classmethod
@@ -473,7 +480,7 @@ class UrlRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         except OSError as exc:
             raise JobError('Unable to get test definition from url\n' + str(exc))
         finally:
-            self.logger.debug("Downloaded test definition file to %s." % runner_path)
+            self.logger.info("Downloaded test definition file to %s." % runner_path)
 
         i = []
         for elem in " $&()\"'<>/\\|;`":
@@ -593,13 +600,13 @@ class TestDefinitionAction(TestAction):
         """
         if 'location' not in self.data['lava-overlay']:
             raise RuntimeError("Missing lava overlay location")
-        self.logger.debug("Loading test definitions")
+        self.logger.info("Loading test definitions")
 
         # overlay_path is the location of the files before boot
         self.data[self.name]['overlay_dir'] = os.path.abspath(
             "%s/%s" % (self.data['lava-overlay']['location'], self.data['lava_test_results_dir']))
 
-        connection = self.internal_pipeline.run_actions(connection)
+        connection = super(TestDefinitionAction, self).run(connection, args)
 
         self.logger.debug("lava-test-runner.conf")
         with open('%s/lava-test-runner.conf' % self.data['test-definition']['overlay_dir'], 'a') as runner_conf:
@@ -660,6 +667,7 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
         return ret_val
 
     def run(self, connection, args=None):
+        connection = super(TestOverlayAction, self).run(connection, args)
         runner_path = self.data['test'][self.test_uuid]['overlay_path'][self.parameters['test_name']]
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters['path'])
@@ -712,7 +720,7 @@ class TestInstallAction(TestOverlayAction):
         self.summary = "applying LAVA test install scripts"
 
     def run(self, connection, args=None):
-
+        connection = super(TestInstallAction, self).run(connection, args)
         runner_path = self.data['test'][self.test_uuid]['overlay_path'][self.parameters['test_name']]
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters['path'])
@@ -779,7 +787,7 @@ class TestRunnerAction(TestOverlayAction):
         self.summary = "applying LAVA test run script"
 
     def run(self, connection, args=None):
-
+        connection = super(TestRunnerAction, self).run(connection, args)
         runner_path = self.data['test'][self.test_uuid]['overlay_path'][self.parameters['test_name']]
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters['path'])

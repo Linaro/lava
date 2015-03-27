@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import logging
 import os
 import sys
 import copy
@@ -26,12 +27,11 @@ import types
 import signal
 import datetime
 import subprocess
-import collections
 from collections import OrderedDict
 from contextlib import contextmanager
 
-from lava_dispatcher.pipeline.utils.constants import OVERRIDE_CLAMP_DURATION
-from lava_dispatcher.pipeline.log import YamlLogger, get_yaml_handler
+from lava_dispatcher.pipeline.log import YAMLLogger
+from lava_dispatcher.pipeline.utils.constants import OVERRIDE_CLAMP_DURATION, ACTION_TIMEOUT
 
 if sys.version > '3':
     from functools import reduce  # pylint: disable=redefined-builtin
@@ -67,8 +67,16 @@ class TestError(Exception):
     """
     An error in the operation of the test definition, e.g.
     in parsing measurements or commands which fail.
+    Always ensure TestError is caught, logged and cleared. It is not fatal.
     """
-    # FIXME: ensure TestError is caught, logged and cleared. It is not fatal.
+    pass
+
+
+class InternalObject(object):  # pylint: disable=too-few-public-methods
+    """
+    An object within the dispatcher pipeline which should not be included in
+    the description of the pipeline.
+    """
     pass
 
 
@@ -88,10 +96,8 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         if parameters is None:
             parameters = {}
         self.parameters = parameters
-        self.job = None
+        self.job = job
         self.branch_level = 1  # the level of the last added child
-        if job:  # do not unset if set by outer pipeline
-            self.job = job
         if not parent:
             self.children = {self: self.actions}
         elif not parent.level:
@@ -112,11 +118,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         #     raise RuntimeError("Diagnostic actions need to be triggered, not added to a pipeline.")
         if not action:
             raise RuntimeError("Unable to add empty action to pipeline")
-        # FIXME: these should be part of the validate from the base Action class
-        if not action.name:
-            raise RuntimeError("Unnamed action!")
-        if ' ' in action.name:
-            raise RuntimeError("Whitespace must not be used in action names, only descriptions or summaries")
 
     def add_action(self, action, parameters=None):
         self._check_action(action)
@@ -258,8 +259,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             pipeline and allow cleanup actions to happen on all actions,
             not just the ones directly related to the currently running action.
             """
-            logger = YamlLogger("root")
-            logger.debug("Cancelled")
+            self.logger.info("Cancelled")
             self.cleanup_actions(None, "Cancelled")
             signal.signal(signal.SIGINT, signal.default_int_handler)
             raise KeyboardInterrupt
@@ -278,25 +278,39 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 else:
                     raise RuntimeError("Invalid job pipeline - no finalize action to run after job timeout.")
                 raise JobError(msg)
-            # Open the logfile and create the log handler
-            action.logger = YamlLogger(action.name)
-            action.logger.set_handler(get_yaml_handler(action.log_filename))
 
             # Begin the action
-            action.logger.debug('start: %s %s (max %ds)' % (action.level, action.name, action.timeout.duration))
+            # TODO: this shouldn't be needed
+            # The ci-test does not set the default logging class
+            if isinstance(action.logger, YAMLLogger):
+                action.logger.setMetadata(action.level, action.name)
+            msg = 'start: %s %s (max %ds)' % (action.level, action.name, action.timeout.duration)
+            if self.parent is None:
+                action.logger.info(msg)
+            else:
+                action.logger.debug(msg)
             try:
                 if not self.parent:
                     signal.signal(signal.SIGINT, cancelling_handler)
                 start = time.time()
-                if not connection:
-                    with action.timeout.action_timeout():
+                try:
+                    # FIXME: not sure to understand why we have two cases here?
+                    if not connection:
+                        with action.timeout.action_timeout():
+                            new_connection = action.run(connection, args)
+                    else:
                         new_connection = action.run(connection, args)
-                else:
-                    new_connection = action.run(connection, args)
+                except (ValueError, KeyError, TypeError, RuntimeError) as exc:
+                    action.logger.exception(exc)
+                    raise RuntimeError(exc)
                 action.elapsed_time = time.time() - start
-                action.logger.debug("%s duration: %.02f" % (action.name, action.elapsed_time))
-                if action.results:
-                    action.logger.debug({"results": action.results})
+                msg = "%s duration: %.02f" % (action.name, action.elapsed_time)
+                if self.parent is None:
+                    action.logger.info(msg)
+                else:
+                    action.logger.debug(msg)
+                if action.results and isinstance(action.logger, YAMLLogger):
+                    action.logger.results(action.results)
                 if new_connection:
                     connection = new_connection
             except KeyboardInterrupt:
@@ -310,9 +324,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 action.cleanup()
                 self.cleanup_actions(connection, exc.message)
                 raise exc
-            finally:
-                # Close the log handler
-                action.logger.remove_handler()
         return connection
 
     def prepare_actions(self):
@@ -335,23 +346,18 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         within those pipelines. Parameters are to be
         treated as inmutable.
         """
-        # FIXME: too many?
         self.__summary__ = None
         self.__description__ = None
         self.__level__ = None
         self.pipeline = None
         self.internal_pipeline = None
         self.__parameters__ = {}
-        self.yaml_line = None  # FIXME: should always be in parameters
         self.__errors__ = []
-        self.elapsed_time = None  # FIXME: pipeline_data?
-        self.logger = YamlLogger("root")
+        self.elapsed_time = None
         self.log_filename = None
         self.job = None
+        self.logger = logging.getLogger('dispatcher')
         self.__results__ = OrderedDict()
-        # FIXME: what about {} for default value?
-        self.env = None  # FIXME make this a parameter which gets default value when first called
-        # TODO: self.name is None for the moment.
         self.timeout = Timeout(self.name)
         self.max_retries = 1  # unless the strategy or the job parameters change this, do not retry
         self.diagnostics = []
@@ -408,9 +414,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         """
         self.job.context.update(value)
 
-    # FIXME: has to be called select to be consistent with Deployment
     @classmethod
-    def find(cls, name):
+    def select(cls, name):
         for subclass in cls.__subclasses__():  # pylint: disable=no-member
             if subclass.name == name:
                 return subclass
@@ -472,7 +477,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         except ValueError:
             raise RuntimeError("Action parameters need to be a dictionary")
 
-        # FIXME: the name should be available in the constructor
         # Set the timeout name now
         self.timeout.name = self.name
         # Overide the duration if needed
@@ -535,22 +539,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         """
         pass
 
-    def prepare(self):
-        """
-        This method will be called before deploying an image to the target,
-        being passed a local mount point with the target root filesystem. This
-        method will then have a chance to modify the root filesystem, including
-        editing existing files (which should be used with caution) and adding
-        new ones. Any modifications done will be reflected in the final image
-        which is deployed to the target.
-
-        In this classs this method does nothing. It must be implemented by
-        subclasses
-        """
-        # FIXME: is this still relevant?
-        pass
-
-    def _run_command(self, command_list, env=None):
+    def _run_command(self, command_list):
         """
         Single location for all external command operations on the
         dispatcher, without using a shell and with full structured logging.
@@ -564,28 +553,48 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
             raise RuntimeError("commands to _run_command need to be a list")
         log = None
         command_list.insert(0, 'nice')
-        # FIXME: define a method of configuring the proxy for the pipeline.
-        # if not self.env:
-        #     self.env = {'http_proxy': self.job.context.config.lava_proxy,
-        #                 'https_proxy': self.job.context.config.lava_proxy}
-        self.env = os.environ
-        self.env["LC_ALL"] = "C.UTF-8"
-        if env:
-            self.env.update(env)
         try:
-            log = subprocess.check_output(command_list, stderr=subprocess.STDOUT, env=self.env)
+            log = subprocess.check_output(command_list, stderr=subprocess.STDOUT)
         except OSError as exc:
-            self.logger.debug({exc.strerror: exc.child_traceback.split('\n')})
+            self.logger.exception({exc.strerror: exc.child_traceback.split('\n')})
         except subprocess.CalledProcessError as exc:
             self.errors = exc.message
-            self.logger.debug({
+            self.logger.exception({
                 'command': [i.strip() for i in exc.cmd],
                 'message': [i.strip() for i in exc.message],
                 'output': exc.output.split('\n')})
-        self.logger.debug("%s\n%s" % (' '.join(command_list), log))
+
+        # allow for commands which return no output
         if not log:
-            return ''  # allow for commands which return no output
-        return log
+            self.logger.debug({'command': command_list})
+            return ''
+        else:
+            self.logger.debug({'command': command_list,
+                               'output': log})
+            return log
+
+    def call_protocols(self):
+        """
+        Actions which support using protocol calls from the job submission use this routine to execute those calls.
+        It is up to the action to determine when the protocols are called within the run step of that action.
+        The order in which calls are made for any one action is not guaranteed.
+        The reply is set in the context data.
+        Although actions may have multiple protocol calls in individual tests, use of multiple calls in Strategies
+        needs to be avoided to ensure that the individual calls can be easily reused and identified.
+        """
+        if 'protocols' not in self.parameters:
+            return
+        for protocol in self.job.protocols:
+            for params in self.parameters['protocols'][protocol.name]:
+                for call in [
+                        params for name in params
+                        if name == 'action' and params[name] == self.name]:
+                    reply = protocol(call)
+                    message = protocol.collate(reply, params)
+                    self.logger.debug(
+                        "Setting common data key %s to %s"
+                        % (message[0], message[1]))
+                    self.set_common_data(protocol.name, message[0], message[1])
 
     def run(self, connection, args=None):
         """
@@ -603,12 +612,11 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         :raise: Classes inheriting from BaseAction must handle
         all exceptions possible from the command and re-raise
         """
+        self.call_protocols()
         if self.internal_pipeline:
             return self.internal_pipeline.run_actions(connection, args)
         if connection:
             connection.timeout = self.timeout
-        if not self.internal_pipeline and not connection:
-            raise NotImplementedError("run %s" % self.name)
         return connection
 
     def cleanup(self):
@@ -626,33 +634,28 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         """
         pass
 
-    def post_process(self):
-        """
-        After tests finish running, the test results directory will be
-        extracted, and passed to this method so that the action can
-        inspect/extract its results.
-
-        Most Actions except TestAction will not have anything to do here.
-        In this classs this method does nothing. It must be implemented by
-        subclasses
-        """
-        # FIXME: with the results inside the pipeline already, is this needed?
-        pass
-
     def explode(self):
         """
         serialisation support
+        Omit our objects marked as internal by inheriting form InternalObject instead of object,
+        e.g. SignalMatch
         """
         data = {}
         attrs = set([attr for attr in dir(self)
                      if not attr.startswith('_') and getattr(self, attr)
-                     and not isinstance(getattr(self, attr), types.MethodType)])
+                     and not isinstance(getattr(self, attr), types.MethodType)
+                     and not isinstance(getattr(self, attr), InternalObject)])
 
-        for attr in attrs - set(['internal_pipeline', 'job', 'logger', 'pipeline', 'parameters']):
+        # noinspection PySetFunctionToLiteral
+        for attr in attrs - set([
+                'internal_pipeline', 'job', 'logger', 'pipeline',
+                'parameters', 'SignalDirector', 'signal_director']):
             if attr == 'timeout':
                 data['timeout'] = {'duration': self.timeout.duration, 'name': self.timeout.name}
             elif attr == 'url':
-                data['url'] = self.url.geturl()
+                data['url'] = self.url.geturl()  # pylint: disable=no-member
+            elif attr == 'vcs':
+                data[attr] = getattr(self, attr).url
             else:
                 data[attr] = getattr(self, attr)
         if 'deployment_data' in self.parameters:
@@ -701,15 +704,14 @@ class Timeout(object):
     If a connection is set, this timeout is used per pexpect operation on that connection.
     If a connection is not set, this timeout applies for the entire run function of the action.
     """
-    # FIXME: move default of 30 to utils.constants.py
-    def __init__(self, name, duration=30, protected=False):
+    def __init__(self, name, duration=ACTION_TIMEOUT, protected=False):
         self.name = name
         self.duration = duration  # Actions can set timeouts higher than the clamp.
         self.protected = protected
 
     @classmethod
     def default_duration(cls):
-        return 30
+        return ACTION_TIMEOUT
 
     @classmethod
     def parse(cls, data):
