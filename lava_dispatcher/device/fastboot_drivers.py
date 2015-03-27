@@ -168,7 +168,9 @@ class BaseDriver(object):
         self.target_type = target_type
         self.scratch_dir = scratch_dir
         if kernel is not None:
-            self._kernel = self._get_image(kernel)
+            self._kernel = download_image(kernel, self.context,
+                                          self._working_dir,
+                                          decompress=False)
             if self.config.prepend_blob:
                 blob = self._get_image(self.config.prepend_blob)
                 self._kernel = prepend_blob(self._kernel,
@@ -177,7 +179,9 @@ class BaseDriver(object):
         else:
             raise CriticalError('A kernel image is required!')
         if ramdisk is not None:
-            self._ramdisk = self._get_image(ramdisk)
+            self._ramdisk = download_image(ramdisk, self.context,
+                                           self._working_dir,
+                                           decompress=False)
             if modules is not None:
                 modules = download_image(modules, self.context,
                                          self._working_dir,
@@ -187,7 +191,9 @@ class BaseDriver(object):
                 extract_modules(modules, ramdisk_dir)
                 self._ramdisk = create_ramdisk(ramdisk_dir, self.working_dir)
         if dtb is not None:
-            dtb = self._get_image(dtb)
+            dtb = download_image(dtb, self.context,
+                                 self._working_dir,
+                                 decompress=False)
             if self.config.append_dtb:
                 self._kernel = append_dtb(self._kernel, dtb, self.working_dir)
                 logging.info('Appended dtb to kernel image successfully')

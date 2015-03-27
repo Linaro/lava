@@ -18,9 +18,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import logging
 import pexpect
 from collections import OrderedDict
-from lava_dispatcher.pipeline.log import YamlLogger
 from lava_dispatcher.pipeline.actions.test import handle_testcase, TestAction
 from lava_dispatcher.pipeline.action import (
     InfrastructureError,
@@ -71,6 +71,8 @@ class TestShellAction(TestAction):
         self.match = SignalMatch()
 
     def validate(self):
+        if 'test_image_prompts' not in self.job.device:
+            self.errors = "Unable to identify test image prompts from device configuration."
         if 'definitions' in self.parameters:
             for testdef in self.parameters['definitions']:
                 if 'repository' not in testdef:
@@ -91,7 +93,7 @@ class TestShellAction(TestAction):
         # Sanity test: could be a missing deployment for some actions
         if 'boot-result' not in self.data:
             raise RuntimeError("No boot action result found")
-
+        connection = super(TestShellAction, self).run(connection, args)
         if self.data['boot-result'] != 'success':
             self.logger.debug("Skipping test definitions - previous boot attempt was not successful.")
             self.results.update({self.name: 'skipped'})
@@ -103,7 +105,7 @@ class TestShellAction(TestAction):
 
         self.signal_director.connection = connection
 
-        self.logger.debug("Executing test definitions using %s" % connection.name)
+        self.logger.info("Executing test definitions using %s" % connection.name)
         self.logger.debug("Setting default test shell prompt")
         connection.prompt_str = self.job.device['test_image_prompts']
         self.logger.debug("Setting default timeout: %s" % self.timeout.duration)
@@ -146,18 +148,18 @@ class TestShellAction(TestAction):
         Call from subclasses before checking subclass-specific events.
         """
         if event == 'exit':
-            self.logger.debug('ok: lava_test_shell seems to have completed')
+            self.logger.info('ok: lava_test_shell seems to have completed')
             return False
 
         elif event == 'eof':
-            self.logger.debug('err: lava_test_shell connection dropped')
+            self.logger.warning('err: lava_test_shell connection dropped')
             self.errors = 'lava_test_shell connection dropped'
             return False
 
         elif event == 'timeout':
             # if target.is_booted():
             #    target.reset_boot()
-            self.logger.debug('err: lava_test_shell has timed out')
+            self.logger.warning('err: lava_test_shell has timed out')
             self.errors = 'lava_test_shell has timed out'
             return False
 
@@ -195,7 +197,7 @@ class TestShellAction(TestAction):
             if match is pexpect.TIMEOUT:
                 # if target.is_booted():
                 #    target.reset_boot()
-                self.logger.debug('err: lava_test_shell has timed out (test_case)')
+                self.logger.warning('err: lava_test_shell has timed out (test_case)')
             else:
                 res = self.match.match(match.groupdict())  # FIXME: rename!
                 self.logger.debug('result: %s' % res)
@@ -227,7 +229,7 @@ class TestShellAction(TestAction):
             self._cur_handler = BaseSignalHandler(protocol)
             self.protocol = protocol  # communicate externally over the protocol API
             self.connection = None  # communicate with the device
-            self.logger = YamlLogger("root")
+            self.logger = logging.getLogger('dispatcher')
             self.test_uuid = None
 
         def signal(self, name, params):
@@ -245,7 +247,7 @@ class TestShellAction(TestAction):
                 except KeyboardInterrupt:
                     raise KeyboardInterrupt
                 except JobError:
-                    self.logger.debug("err: handling signal %s failed" % name)
+                    self.logger.error("err: handling signal %s failed" % name)
                     return False
                 return True
 

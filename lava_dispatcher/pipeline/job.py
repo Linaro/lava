@@ -18,13 +18,14 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import logging
 import yaml
-from collections import OrderedDict
 
-from lava_dispatcher.pipeline.action import Action
+from lava_dispatcher.pipeline.action import Action, JobError
+from lava_dispatcher.pipeline.log import YAMLLogger  # pylint: disable=unused-import
 from lava_dispatcher.pipeline.logical import PipelineContext
 from lava_dispatcher.pipeline.diagnostics import DiagnoseNetwork
-from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
+from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol  # pylint: disable=unused-import
 
 
 class Job(object):  # pylint: disable=too-many-instance-attributes
@@ -44,7 +45,9 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
     device for this job - one job, one device.
     """
 
-    def __init__(self, parameters):
+    def __init__(self, job_id, socket_addr, parameters):
+        self.job_id = job_id
+        self.socket_addr = socket_addr
         self.device = None
         self.parameters = parameters
         self.__context__ = PipelineContext()
@@ -57,6 +60,14 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         ]
         self.timeout = None
         self.protocols = []
+        # TODO: we are now able to create the logger when the job is started,
+        # allowing the functions that are called before run() to log.
+        # Do we want to do something with this?
+        # Taking into account that the validate() function will be called on
+        # the LAVA server when the job is submitted.
+        # For the moment, we create the logger without the ZMQ handler that
+        # will be added when running the job.
+        self.logger = logging.getLogger('dispatcher')
 
     def set_pipeline(self, pipeline):
         self.pipeline = pipeline
@@ -116,19 +127,16 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
             protocol.set_up()
             if not protocol.valid:
                 raise JobError("Unable to setup a valid %s protocol" % protocol.name)
-        self.pipeline.run_actions(self.connection)  # FIXME: some Deployment methods may need to set a Connection.
 
-        # FIXME how to get rootfs with multiple deployments, and at arbitrary
-        # points in the pipeline?
-        # rootfs = None
-        # self.action.prepare(rootfs)
-
-        # self.action.run(None)
-
-        # FIXME how to know when to extract results with multiple deployment at
-        # arbitrary points?
-        # results_dir = None
-        #    self.action.post_process(results_dir)
+        # Add the ZMQ handler now
+        if self.socket_addr is not None:
+            self.logger.addZMQHandler(self.socket_addr, self.job_id)  # pylint: disable=maybe-no-member
+        else:
+            self.logger.addHandler(logging.StreamHandler())
+        self.pipeline.run_actions(self.connection)
+        if self.pipeline.errors:
+            return len(self.pipeline.errors)
+        return 0
 
 
 class ResetContext(Action):
@@ -142,6 +150,7 @@ class ResetContext(Action):
         self.description = "clear dynamic data from previous deployment"
 
     def run(self, connection, args=None):
+        connection = super(ResetContext, self).run(connection, args)
         self.logger.debug("Resetting dynamic data from previous deployment")
         self.job.reset_context()
         return connection

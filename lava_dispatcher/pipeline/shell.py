@@ -18,12 +18,13 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import contextlib
+import logging
 import os
+import pexpect
+import signal
 import sys
 import time
-import signal
-import pexpect
-import contextlib
 from lava_dispatcher.pipeline.action import (
     Action,
     JobError,
@@ -34,7 +35,34 @@ from lava_dispatcher.pipeline.action import (
 from lava_dispatcher.pipeline.connection import Connection, CommandRunner
 from lava_dispatcher.pipeline.utils.constants import SHELL_SEND_DELAY
 from lava_dispatcher.pipeline.utils.shell import which
-from lava_dispatcher.pipeline.log import YamlLogger
+
+
+class ShellLogger(object):
+    def __init__(self):
+        self.line = ''
+        self.logger = logging.getLogger('dispatcher')
+
+    def write(self, new_line):
+        replacements = {
+            '\n\n': '\n',  # double lines to single
+            '\r': '',
+            '"': '\\\"',  # escape double quotes for YAML syntax
+            '\x1b': ''  # remove escape control characters
+        }
+        for key, value in replacements.items():
+            new_line = new_line.replace(key, value)
+
+        line = self.line + new_line
+        # TODO: loop on the newline check
+        try:
+            index = line.index('\n')
+            self.logger.target(line[:index])
+            self.line = line[index + 1:]
+        except ValueError:
+            self.line = line
+
+    def flush(self):
+        pass
 
 
 class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
@@ -50,12 +78,15 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         if not lava_timeout or type(lava_timeout) is not Timeout:
             raise RuntimeError("ShellCommand needs a timeout set by the calling Action")
         pexpect.spawn.__init__(
-            self, command, timeout=lava_timeout.duration, cwd=cwd, logfile=sys.stdout)
+            self, command,
+            timeout=lava_timeout.duration,
+            cwd=cwd,
+            logfile=ShellLogger(),
+        )
         self.name = "ShellCommand"
         # serial can be slow, races do funny things, so allow for a delay
         self.delaybeforesend = SHELL_SEND_DELAY
         self.lava_timeout = lava_timeout
-        self.logger = YamlLogger("root")
 
     def sendline(self, s='', delay=0, send_char=True):  # pylint: disable=arguments-differ
         """
@@ -71,7 +102,6 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         self.send(os.linesep, delay)
 
     def sendcontrol(self, char):
-        self.logger.debug("sending control character: %s" % char)
         return super(ShellCommand, self).sendcontrol(char)
 
     def send(self, string, delay=0, send_char=True):  # pylint: disable=arguments-differ
@@ -102,7 +132,6 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
             raise InfrastructureError("Connection closed")
         return proc
 
-    # FIXME: check if this is ever called
     def empty_buffer(self):
         """Make sure there is nothing in the pexpect buffer."""
         index = 0
@@ -129,6 +158,7 @@ class ShellSession(Connection):
         self.name = "ShellSession"
         self.data = job.context
         self.__prompt_str__ = None
+        self.spawn = shell_command
         self.timeout = shell_command.lava_timeout
 
     @property
@@ -192,6 +222,11 @@ class ExpectShellSession(Action):
         self.summary = "Expect a shell prompt"
         self.description = "Wait for a shell"
 
+    def validate(self):
+        super(ExpectShellSession, self).validate()
+        if 'test_image_prompts' not in self.job.device:
+            self.errors = "Unable to identify test image prompts from device configuration."
+
     def run(self, connection, args=None):
         connection = super(ExpectShellSession, self).run(connection, args)
         connection.prompt_str = self.job.device['test_image_prompts']
@@ -216,6 +251,8 @@ class ConnectDevice(Action):
         if 'connect' not in self.job.device['commands']:
             self.errors = "Unable to connect to device %s - missing connect command." % self.job.device.hostname
             return
+        if 'test_image_prompts' not in self.job.device:
+            self.errors = "Unable to identify test image prompts from device configuration."
         command = self.job.device['commands']['connect']
         exe = ''
         try:
@@ -239,12 +276,13 @@ class ConnectDevice(Action):
             connection.prompt_str = self.job.device['test_image_prompts']
             return connection
         command = self.job.device['commands']['connect']
-        self.logger.debug("connecting to device using '%s'" % command)
+        self.logger.info("connecting to device using '%s'" % command)
         signal.alarm(0)  # clear the timeouts used without connections.
         shell = ShellCommand("%s\n" % command, self.timeout)
         if shell.exitstatus:
             raise JobError("%s command exited %d: %s" % (command, shell.exitstatus, shell.readlines()))
         connection = ShellSession(self.job, shell)
+        connection = super(ConnectDevice, self).run(connection, args)
         connection.prompt_str = self.job.device['test_image_prompts']
         # if the board is running, wait for a prompt - if not, skip.
         if self.job.device.power_state is 'off':

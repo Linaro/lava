@@ -69,6 +69,7 @@ class RebootDevice(Action):
             raise RuntimeError("Called %s without an active Connection" % self.name)
         if self.job.device.power_state is 'off' and self.job.device.power_command is not '':  # power on action used instead
             return connection
+        connection = super(RebootDevice, self).run(connection, args)
         connection.prompt_str = self.parameters.get('parameters', {}).get('shutdown-message', SHUTDOWN_MESSAGE)
         connection.sendline("reboot")
         self.results = {'status': "success"}
@@ -78,7 +79,7 @@ class RebootDevice(Action):
         try:
             self.wait(connection)
         except TestError:
-            self.logger.debug("Wait for prompt after soft reboot failed")
+            self.logger.info("Wait for prompt after soft reboot failed")
             self.results = {'status': "failed"}
             self.data[PDUReboot.key()] = True
             connection.prompt_str = self.reboot_prompt
@@ -135,6 +136,7 @@ class PowerOn(Action):
         self.description = "supply power to device"
 
     def run(self, connection, args=None):
+        connection = super(PowerOn, self).run(connection, args)
         if self.job.device.power_state is 'off':
             command = self.job.device.power_command
             if not command:
@@ -156,6 +158,9 @@ class PowerOff(Action):
         self.description = "discontinue power to device"
 
     def run(self, connection, args=None):
+        connection = super(PowerOff, self).run(connection, args)
+        if not hasattr(self.job.device, 'power_state'):
+            return connection
         if self.job.device.power_state is 'on':  # allow for '' and skip
             command = self.job.device['commands']['power_off']
             if not self._run_command(command.split(' ')):
@@ -197,10 +202,13 @@ class FinalizeAction(Action):
             self.logger.debug('status: %s' % self.errors)
         elif self.job.pipeline.errors:
             self.results = {'status': "Incomplete"}
-            self.logger.debug("Status: Incomplete")
-            self.logger.debug(self.job.pipeline.errors)
+            self.errors = "Incomplete"
+            self.logger.error({
+                'Status': 'Incomplete',
+                'Errors': self.job.pipeline.errors})
         else:
             self.results = {'status': "Complete"}
+            self.logger.debug("Status: Complete")
         with open("%s/results.yaml" % self.job.parameters['output_dir'], 'w') as results:
             results.write(yaml.dump(self.job.pipeline.describe()))
         # from meliae import scanner

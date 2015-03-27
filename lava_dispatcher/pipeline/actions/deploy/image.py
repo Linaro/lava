@@ -64,11 +64,11 @@ class DeployImageAction(DeployAction):
         self.internal_pipeline.add_action(UnmountAction())
 
 
-# FIXME: may need to be renamed if it can only deal with KVM image deployment
+# FIXME: may need to be renamed if it can only deal with QEMU image deployment
 class DeployImage(Deployment):
     """
     Strategy class for an Image based Deployment.
-    Accepts parameters to deploy a KVM
+    Accepts parameters to deploy a QEMU
     Uses existing Actions to download and checksum
     as well as copying test files.
     Does not boot the device.
@@ -96,8 +96,7 @@ class DeployImage(Deployment):
         This is *not* the same as validation of the action
         which can use instance data.
         """
-        # FIXME: the device object has the device_types/*.conf - match against the job & support methods
-        if device['device_type'] != 'kvm':
+        if device['device_type'] != 'qemu':
             return False
         # lookup if the job parameters match the available device methods
         if 'image' not in parameters:

@@ -1,4 +1,4 @@
-device_type: kvm
+device_type: qemu
 
 job_name: kvm-server
 
@@ -55,3 +55,6 @@ actions:
 
     - submit_results:
         stream: /anonymous/codehelp/
+
+context:
+  arch: amd64

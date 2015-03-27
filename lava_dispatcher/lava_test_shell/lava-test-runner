@@ -88,8 +88,8 @@ for line in $(cat ${WORKFILE}); do
 	cp ${line}/run.sh ${odir}/attachments/
 	echo 'text/plain' > ${odir}/attachments/run.sh.mimetype
 	if [ -f ${line}/install.sh ]; then
-	    cp ${line}/install.sh ${odir}/attachments/
-	    echo 'text/plain' > ${odir}/attachments/install.sh.mimetype
+		cp ${line}/install.sh ${odir}/attachments/
+		echo 'text/plain' > ${odir}/attachments/install.sh.mimetype
 	fi
 	# run.sh includes a "read -t <timeout>" which isn't supported by dash
 	# so be sure to use bash (ash also works).

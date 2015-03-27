@@ -36,6 +36,8 @@ from lava_dispatcher.utils import (
     create_ramdisk
 )
 
+import pexpect
+
 
 class BaseDriver(object):
 
@@ -165,19 +167,37 @@ class stmc(BaseDriver):
 
     def connect(self, boot_cmds):
         if self.context.test_data.metadata.get('is_slave', 'false') == 'true':
-            # Wait for the STMC2 to be ready
-            self.context.transport.request_wait('lava_ms_ready')
+            # When booting in master-slave, the protocol is:
+            # 1/ self  : reboot the STMC2
+            # 2/ master: wait for the STMC2 prompt
+            # 3/ self  : reboot the board
+            # 4/ master: setup the serial relay
+            # 5/ self  : connect to the serial
+            # 6/ master: boot the board
+
+            # Reboot the STMC2 when the master is ready
+            self.context.transport.request_wait('lava_ms_reboot_STMC2')
+            logging.info("Hard resetting STMC2")
+            if not self.config.jtag_hard_reset_command:
+                raise CriticalError("'jtag_hard_reset_command' is required")
+            self.context.run_command(self.config.jtag_hard_reset_command)
+            self.context.transport.request_send('lava_ms_reboot_STMC2_done')
+
+            self.context.transport.request_wait('lava_ms_reboot_board')
+            logging.info("Hard resetting platform")
+            if not self.config.hard_reset_command:
+                raise CriticalError("'hard_reset_command' is required")
+            self.context.run_command(self.config.hard_reset_command)
+            self.context.transport.request_wait('lava_ms_reboot_board_done')
 
             # Connect to the STMC serial relay
+            self.context.transport.request_wait('lava_ms_ready')
             logging.info("Connecting to STMC serial relay")
             proc = connect_to_serial(self.context)
 
             # Ask the master to deliver the image
             self.context.transport.request_send('lava_ms_boot', None)
 
-            proc.expect(self.config.image_boot_msg,
-                        timeout=self.config.image_boot_msg_timeout)
-            return proc
         else:
             boot_cmds.insert(0, self._stmc_command)
             jtag_command = ' '.join(boot_cmds)
@@ -224,8 +244,17 @@ class stmc(BaseDriver):
 
             # Deliver images with STMC
             logging.info("Delivering images with STMC")
-            self.context.run_command(jtag_command, failok=False)
+            # Boot the board with a timeout on this command that MUST finish on
+            # time (the command block when failing to boot)
+            boot_proc = self.context.spawn(jtag_command, timeout=240)
+            try:
+                boot_proc.expect(pexpect.EOF)
+            except pexpect.TIMEOUT:
+                raise CriticalError("GDB is unable to boot the board")
 
-            proc.expect(self.config.image_boot_msg,
-                        timeout=self.config.image_boot_msg_timeout)
-            return proc
+            logging.info("GDB has finished, waiting for the board prompt")
+
+        # Wait for the prompt
+        proc.expect(self.config.image_boot_msg,
+                    timeout=self.config.image_boot_msg_timeout)
+        return proc

@@ -11,12 +11,10 @@ from lava.dispatcher.node import NodeDispatcher
 import lava_dispatcher.config
 from lava_dispatcher.config import get_config, get_device_config, list_devices
 from lava_dispatcher.job import LavaTestJob, validate_job_data
-from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.action import JobError
-from lava_dispatcher.pipeline.logical import PipelineContext
+from lava_dispatcher.pipeline.log import YAMLLogger
 from lava_dispatcher.pipeline.device import NewDevice
-from lava_dispatcher.pipeline.log import YamlLogger, get_yaml_handler
-from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
+from lava_dispatcher.pipeline.parser import JobParser
 
 
 class SetUserConfigDirAction(argparse.Action):
@@ -82,17 +80,18 @@ def get_pipeline_runner(job):
 
     # FIXME: drop outdated arguments, job_data, config and output_dir
     def run_pipeline_job(job_data, oob_file, config, output_dir, validate_only):
-        logger = YamlLogger('root')
-        logger.set_handler(handler=get_yaml_handler(oob_file))
-
         # always validate every pipeline before attempting to run.
+        exitcode = 0
         try:
             job.validate(simulate=validate_only)
             if not validate_only:
-                job.run()
+                exitcode = job.run()
         except JobError as exc:
-            logger.debug("%s" % exc)
+            print exc
+            logging.debug("%s" % exc)
             sys.exit(2)
+        if exitcode:
+            sys.exit(exitcode)
         # FIXME: should we call the cleanup function in the finally block?
     return run_pipeline_job
 
@@ -124,10 +123,14 @@ class dispatch(DispatcherCommand):
         parser.add_argument(
             "--validate", action='store_true',
             help="Just validate the job file, do not execute any steps.")
+        # TODO: this is required for the new dispatcher
         parser.add_argument(
             "--job-id", action='store', default=None,
             help=("Set the scheduler job identifier. "
                   "This alters process name for easier debugging"))
+        parser.add_argument(
+            "--socket-addr", default=None,
+            help="Address of the ZMQ socket used to send the logs to the master")
         parser.add_argument(
             "job_file",
             metavar="JOB",
@@ -143,6 +146,10 @@ class dispatch(DispatcherCommand):
         Entry point for lava dispatch, after the arguments have been parsed.
         """
 
+        if os.geteuid() != 0:
+            logging.error("You need to be root to run lava-dispatch.")
+            exit(1)
+
         if self.args.oob_fd:
             oob_file = os.fdopen(self.args.oob_fd, 'w')
         else:
@@ -154,15 +161,19 @@ class dispatch(DispatcherCommand):
         # done.
         del logging.root.handlers[:]
         del logging.root.filters[:]
-        FORMAT = '<LAVA_DISPATCHER>%(asctime)s %(levelname)s: %(message)s'
-        DATEFMT = '%Y-%m-%d %I:%M:%S %p'
-        logging.basicConfig(format=FORMAT, datefmt=DATEFMT)
         if is_pipeline_job(self.args.job_file):
             # Branch point for the pipeline code - currently reliant on a simple filename
             # extension match.
             self.config = None  # external config is loaded on-demand by the pipeline
             # pipeline *always* logs at debug level, so do not set from config.
+
+            # Pipeline always log as YAML so change the base logger.
+            # Every calls to logging.getLogger will now return a YAMLLogger.
+            logging.setLoggerClass(YAMLLogger)
         else:
+            FORMAT = '<LAVA_DISPATCHER>%(asctime)s %(levelname)s: %(message)s'
+            DATEFMT = '%Y-%m-%d %I:%M:%S %p'
+            logging.basicConfig(format=FORMAT, datefmt=DATEFMT)
             try:
                 self.config = get_config()
             except CommandError as e:
@@ -173,20 +184,19 @@ class dispatch(DispatcherCommand):
                 else:
                     print e
                 exit(1)
-            # pipeline *always* logs at debug level
+            # Set the logging level
             logging.root.setLevel(self.config.logging_level)
 
         # Set process id if job-id was passed to dispatcher
         if self.args.job_id:
             try:
-                from setproctitle import getproctitle, setproctitle
+                from setproctitle import setproctitle
             except ImportError:
                 logging.warning(
                     ("Unable to set import 'setproctitle', "
                      "process name cannot be changed"))
             else:
-                setproctitle("%s [job: %s]" % (
-                    getproctitle(), self.args.job_id))
+                setproctitle("lava-dispatch [job: %s]" % self.args.job_id)
 
         # Load the job file
         job_runner, job_data = self.parse_job_file(self.args.job_file, oob_file)
@@ -225,7 +235,10 @@ class dispatch(DispatcherCommand):
             job = None
             try:
                 with open(filename) as f_in:
-                    job = parser.parse(f_in, device, output_dir=self.args.output_dir)
+                    job = parser.parse(f_in, device, self.args.job_id,
+                                       socket_addr=self.args.socket_addr,
+                                       output_dir=self.args.output_dir)
+
             except JobError as exc:
                 logging.error("Invalid job submission: %s" % exc)
                 exit(1)
