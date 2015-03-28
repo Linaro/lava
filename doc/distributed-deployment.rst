@@ -165,7 +165,7 @@ remote workers is required.
 Also adjust the host allowed to connect to this database, so that the
 ``LAVA_DB_USER`` has access to the ``LAVA_DB_NAME`` database only by
 using the ``LAVA_DB_PASSWORD`` (which, in turn, is not sent in clear
-text).
+text). This configuration should be made in ``pg_hba.conf``::
 
 For a fresh install (no previous database records), the ``LAVA_DB_USER``
 and ``LAVA_DB_NAME`` would be::
