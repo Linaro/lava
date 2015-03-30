@@ -88,15 +88,16 @@ class QEMUTarget(Target):
         self._kernel = download_image(kernel, self.context)
 
         if ramdisk is not None:
-            ramdisk = download_image(ramdisk, self.context)
+            ramdisk = download_image(ramdisk, self.context,
+                                     decompress=False)
             if modules is not None:
                 modules = download_image(modules, self.context,
-                                         self._scratch_dir,
+                                         self.scratch_dir,
                                          decompress=False)
-                ramdisk_dir = extract_ramdisk(ramdisk, self._scratch_dir,
+                ramdisk_dir = extract_ramdisk(ramdisk, self.scratch_dir,
                                               is_uboot=self._is_uboot_ramdisk(ramdisk))
                 extract_modules(modules, ramdisk_dir)
-                ramdisk = create_ramdisk(ramdisk_dir, self._scratch_dir)
+                ramdisk = create_ramdisk(ramdisk_dir, self.scratch_dir)
             self._ramdisk = ramdisk
             if rootfs is None:
                 logging.debug("Attempting to set deployment data")
