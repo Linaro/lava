@@ -107,7 +107,7 @@ class QEMUTarget(Target):
             self._dtb = dtb
 
         if bootloadertype == 'uefi':
-            self._bootloadertype == 'uefi'
+            self._bootloadertype = 'uefi'
             self._download_needed_files()
 
         if firmware is not None:
@@ -117,7 +117,7 @@ class QEMUTarget(Target):
     def deploy_linaro(self, hwpack, rootfs, dtb, rootfstype, bootloadertype):
         odir = self.scratch_dir
         if bootloadertype == 'uefi':
-            self._bootloadertype == 'uefi'
+            self._bootloadertype = 'uefi'
             self._download_needed_files()
         self._sd_image = generate_image(self, hwpack, rootfs, dtb,
                                         odir, bootloadertype, rootfstype)
@@ -125,7 +125,7 @@ class QEMUTarget(Target):
 
     def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype):
         if bootloadertype == 'uefi':
-            self._bootloadertype == 'uefi'
+            self._bootloadertype = 'uefi'
             self._download_needed_files()
         self._sd_image = download_image(image, self.context)
         self.customize_image(self._sd_image)
