@@ -260,6 +260,22 @@ def select_device(job):
     return device
 
 
+def get_env_string(filename):
+    """
+    Returns the string after checking for YAML errors which would cause issues later.
+    """
+    if not os.path.exists(filename):
+        return ''
+    logger = logging.getLogger('dispatcher-master')
+    env_str = str(open(filename, 'r').read())
+    try:
+        yaml.load(env_str)
+    except yaml.ScannerError as exc:
+        logger.exception("%s is not valid YAML (%s) - skipping" % (filename, exc))
+        env_str = ''
+    return env_str
+
+
 class Command(BaseCommand):
     """
     worker_host is the hostname of the worker - under the old dispatcher, this was declared by
@@ -285,6 +301,9 @@ class Command(BaseCommand):
         make_option('--env',
                     default="/etc/lava-server/env.yaml",
                     help="Environment variables for the dispatcher processes"),
+        make_option('--env-dut',
+                    default="/etc/lava-server/env.dut.yaml",
+                    help="Environment variables for device under test"),
         make_option('--output-dir',
                     default='/var/lib/lava-server/default/media/job-output',
                     help="Directory where to store job outputs"),
@@ -634,7 +653,7 @@ class Command(BaseCommand):
                             [str(job.actual_device.worker_host.hostname),
                              'START', str(job.id), str(job.definition),
                              str(device_configuration),
-                             str(open(options['env'], 'r').read())])
+                             get_env_string(options['env']), get_env_string(options['env_dut'])])
 
                     except (jinja2.TemplateError, IOError, yaml.YAMLError) as exc:
                         if isinstance(exc, jinja2.TemplateNotFound):
