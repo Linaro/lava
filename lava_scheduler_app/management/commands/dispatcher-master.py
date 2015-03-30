@@ -325,6 +325,7 @@ class Command(BaseCommand):
                         if not store:
                             # create a new store
                             store = JobPipeline(job_id=job_id)
+                            store.pipeline = {}
                             # the store pipeline is a standard dict, not an OrderedDict
                         store.pipeline.update({name: scanned[0]['results']})
                         # too often to save the results?
