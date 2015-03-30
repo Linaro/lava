@@ -26,6 +26,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import BootAction
+from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 
@@ -66,6 +67,7 @@ class BootKexecAction(BootAction):
         # the configuration does not contain 'auto_login'
         self.internal_pipeline.add_action(AutoLoginAction())
         self.internal_pipeline.add_action(ExpectShellSession())
+        self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
 
 class KexecAction(Action):

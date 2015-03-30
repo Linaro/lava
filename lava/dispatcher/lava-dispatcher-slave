@@ -90,10 +90,12 @@ class Master(object):
 
 class Job(object):
     """Wrapper around a job process."""
-    def __init__(self, job_id, definition, device_definition, env, log_socket):
+    def __init__(self, job_id, definition, device_definition, env,
+                 log_socket, env_dut=None):
         self.job_id = job_id
         self.log_socket = log_socket
         self.env = env
+        self.env_dut = env_dut
         self.proc = None
         self.running = False
         self.base_dir = os.path.join(TMP_DIR, "%s/" % self.job_id)
@@ -128,6 +130,14 @@ class Job(object):
         """Start the process."""
         out_file = os.path.join(self.base_dir, "out")
         err_file = os.path.join(self.base_dir, "err")
+        env_dut_tmp_path = None
+
+        # Dump the environment variables in the tmp file.
+        if self.env_dut:
+            env_dut_file_handle, env_dut_tmp_path = tempfile.mkstemp()
+            with os.fdopen(env_dut_file_handle, 'wb') as f:
+                f.write(self.env_dut)
+
         try:
             LOG.debug("[%d] START", self.job_id)
             env = self.create_environ()
@@ -140,6 +150,9 @@ class Job(object):
                 "--job-id=%s" % self.job_id,
                 "--socket-addr=%s" % self.log_socket
             ]
+
+            if self.env_dut and env_dut_tmp_path:
+                args.append("--env-dut-path=%s" % env_dut_tmp_path)
 
             self.proc = subprocess.Popen(
                 args,
@@ -364,14 +377,16 @@ def main():
                     job_definition = msg[2]
                     device_definition = msg[3]
                     env = msg[4]
-                except (IndexError, ValueError):
-                    LOG.error("Invalid message '%s'", msg)
+                    env_dut = msg[5] if len(msg) == 6 else None
+                except (IndexError, ValueError) as exc:
+                    LOG.error("Invalid message '%s'. length=%d. %s", (msg, len(msg), exc))
                     continue
 
                 LOG.info("[%d] Starting job", job_id)
-                LOG.debug("[%d]       : %s", job_id, job_definition)
-                LOG.debug("[%d] device: %s", job_id, device_definition)
-                LOG.debug("[%d] env   : %s", job_id, env)
+                LOG.debug("[%d]        : %s", job_id, job_definition)
+                LOG.debug("[%d] device : %s", job_id, device_definition)
+                LOG.debug("[%d] env    : %s", job_id, env)
+                LOG.debug("[%d] env-dut: %s", job_id, env_dut)
 
                 # Check if the job is known and started. In this case, send
                 # back the right signal (ignoring the duplication or signaling
@@ -387,7 +402,7 @@ def main():
                 else:
                     jobs[job_id] = Job(job_id, job_definition,
                                        device_definition, env,
-                                       args.socket_addr)
+                                       args.socket_addr, env_dut=env_dut)
                     jobs[job_id].start()
                     sock.send_multipart(["START_OK", str(job_id)])
 
