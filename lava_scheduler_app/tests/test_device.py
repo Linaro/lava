@@ -6,11 +6,11 @@ from lava_scheduler_app.models import (
     DeviceType,
     DeviceDictionary,
     JobPipeline,
-    PipelineDevice,
 )
 from lava_scheduler_app.utils import devicedictionary_to_jinja2
 from django_testscenarios.ubertest import TestCase
 from django.contrib.auth.models import Group, Permission, User
+from lava_dispatcher.pipeline.device import PipelineDevice
 
 
 class ModelFactory(object):
