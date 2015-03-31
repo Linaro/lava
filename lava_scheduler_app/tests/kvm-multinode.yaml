@@ -27,7 +27,7 @@ protocols:
       server:
         device_type: qemu
         count: 1
-    timeouts:
+    timeout:
       seconds: 60
 
 priority: medium

@@ -565,7 +565,7 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
     snippets as are required to create TestJobs for the multinode submission.
     Each multinode YAML submission is only split once for all roles and all sub jobs.
     parameters:
-      submission_dict - the dictionary of the submission YAML.
+      submission - the dictionary of the submission YAML.
       device_dict - the dictionary mapping device hostnames to roles
       target_group - the uuid of the multinode group
     return:
@@ -631,13 +631,14 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
             for key, value in action.items():
                 value['role'] = role
 
-    jobs = []
+    # jobs dictionary lists the jobs per role,
+    jobs = {}
     for role in roles:
+        jobs[role] = []
         for _ in range(0, roles[role]['count']):
             job = {}
             job.update(actions[role])
             job.update(roles[role])
             del job['count']
-            del job['device_type']
-            jobs.append(job)
+            jobs[role].append(job)
     return jobs

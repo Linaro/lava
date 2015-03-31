@@ -188,6 +188,25 @@ def select_device(job):
         end_job(job, fail_msg=fail_msg, job_status=TestJob.INCOMPLETE)
         logger.error(fail_msg)
 
+    if job.is_multinode:
+        # inject the actual group hostnames into the roles for the dispatcher to populate in the overlay.
+        devices = {}
+        for multinode_job in job.sub_jobs_list:
+            # build a list of all devices in this group
+            definition = yaml.load(multinode_job.definition)
+            # devices are not necessarily assigned to all jobs in a group at the same time
+            # check all jobs in this multinode group before allowing any to start.
+            if not multinode_job.actual_device:
+                logger.debug("[%s] job has no device yet", multinode_job.sub_id)
+                return None
+            devices[str(multinode_job.actual_device.hostname)] = definition['protocols']['lava-multinode']['role']
+        for multinode_job in job.sub_jobs_list:
+            # apply the complete list to all jobs in this group
+            definition = yaml.load(multinode_job.definition)
+            definition['protocols']['lava-multinode']['roles'] = devices
+            multinode_job.definition = yaml.dump(definition)
+            multinode_job.save()
+
     # Load job definition to get the variables for template rendering
     job_def = yaml.load(job.definition)
     job_ctx = job_def.get('context', {})
@@ -362,7 +381,8 @@ class Command(BaseCommand):
 
                 try:
                     scanned = yaml.load(message)
-                except yaml.ScannerError:
+                except yaml.scanner.ScannerError:
+                    self.logger.error("Failed to scan: %s", message)
                     scanned = None
                 # the results logger wraps the OrderedDict in a dict called results, for identification,
                 # YAML then puts that into a list of one item for each call to log.results.
@@ -581,6 +601,8 @@ class Command(BaseCommand):
                     device = select_device(job)
                     if not device:
                         continue
+                    # selecting device can change the job
+                    job = TestJob.objects.get(id=job.id)
                     self.logger.info("[%d] Assigning %s device", job.id, device)
                     if job.actual_device is None:
                         device = job.requested_device

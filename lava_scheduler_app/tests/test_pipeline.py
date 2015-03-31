@@ -9,6 +9,7 @@ from lava_scheduler_app.models import (
     TestJob,
     Tag,
     DevicesUnavailableException,
+    _pipeline_protocols,
 )
 from django.db import models
 from django_testscenarios.ubertest import TestCase
@@ -290,8 +291,15 @@ class TestYamlMultinode(TestCaseWithFactory):
 
     def setUp(self):
         super(TestYamlMultinode, self).setUp()
+        self.factory = YamlFactory()
 
-    def test_multinode_group(self):
+    def test_multinode_split(self):
+        """
+        Test just the split of pipeline YAML
+
+        This function does not test the content of 'roles' as this needs information
+        which is only available after the devices have been reserved.
+        """
         server_check = os.path.join(os.path.dirname(__file__), 'kvm-multinode-server.yaml')
         client_check = os.path.join(os.path.dirname(__file__), 'kvm-multinode-client.yaml')
         submission = yaml.load(open(
@@ -300,10 +308,92 @@ class TestYamlMultinode(TestCaseWithFactory):
 
         jobs = split_multinode_yaml(submission, target_group)
         self.assertEqual(len(jobs), 2)
-        yaml.dump(jobs)  # ensure the jobs can be serialised as YAML
-        for job in jobs:
-            role = job['protocols']['lava-multinode']['role']
-            if role == 'client':
-                self.assertEqual(job, yaml.load(open(client_check, 'r')))
-            if role == 'server':
-                self.assertEqual(job, yaml.load(open(server_check, 'r')))
+        for role, job_list in jobs.items():
+            for job in job_list:
+                yaml.dump(job)  # ensure the jobs can be serialised as YAML
+                role = job['protocols']['lava-multinode']['role']
+                if role == 'client':
+                    self.assertEqual(job, yaml.load(open(client_check, 'r')))
+                if role == 'server':
+                    self.assertEqual(job, yaml.load(open(server_check, 'r')))
+
+    def test_multinode_protocols(self):
+        user = self.factory.make_user()
+        self.device_type = self.factory.make_device_type()
+        submission = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'kvm-multinode.yaml'), 'r'))
+        # no devices defined for the specified type
+        self.assertRaises(DevicesUnavailableException, _pipeline_protocols, submission, user)
+
+        self.factory.make_device(self.device_type, 'fakeqemu1')
+        # specified tags do not exist
+        self.assertRaises(yaml.YAMLError, _pipeline_protocols, submission, user)
+
+        tag_list = [
+            self.factory.ensure_tag('usb-flash'),
+            self.factory.ensure_tag('usb-eth')
+        ]
+        self.factory.make_device(self.device_type, 'fakeqemu2')
+        # no devices which have the required tags applied
+        self.assertRaises(DevicesUnavailableException, _pipeline_protocols, submission, user)
+
+        self.factory.make_device(self.device_type, 'fakeqemu3', tags=tag_list)
+        job_object_list = _pipeline_protocols(submission, user)
+        self.assertEqual(len(job_object_list), 2)
+        for job in job_object_list:
+            self.assertEqual(list(job.sub_jobs_list), job_object_list)
+            check = yaml.load(job.definition)
+            if check['protocols']['lava-multinode']['role'] == 'client':
+                self.assertEqual(
+                    check['protocols']['lava-multinode']['tags'],
+                    ['usb-flash', 'usb-eth'])
+                self.assertEqual(
+                    check['protocols']['lava-multinode']['interfaces'],
+                    [{'vlan': 'name_two', 'tags': ['10G']}, {'vlan': 'name_two', 'tags': ['1G']}]
+                )
+                self.assertEqual(set(tag_list), set(job.tags.all()))
+            if check['protocols']['lava-multinode']['role'] == 'server':
+                self.assertNotIn('tags', check['protocols']['lava-multinode'])
+                self.assertNotIn('interfaces', check['protocols']['lava-multinode'])
+                self.assertEqual(set([]), set(job.tags.all()))
+
+    def test_multinode_group(self):
+        user = self.factory.make_user()
+        self.device_type = self.factory.make_device_type()
+        submission = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'kvm-multinode.yaml'), 'r'))
+        self.factory.make_device(self.device_type, 'fakeqemu1')
+        tag_list = [
+            self.factory.ensure_tag('usb-flash'),
+            self.factory.ensure_tag('usb-eth')
+        ]
+        self.factory.make_device(self.device_type, 'fakeqemu2', tags=tag_list)
+        job_object_list = _pipeline_protocols(submission, user)
+        for job in job_object_list:
+            self.assertEqual(list(job.sub_jobs_list), job_object_list)
+        check_one = yaml.load(job_object_list[0].definition)
+        check_two = yaml.load(job_object_list[1].definition)
+        self.assertEqual(
+            job_object_list[0].target_group,
+            job_object_list[1].target_group
+        )
+        # job 0 needs to have a sub_id of <id>.0
+        # job 1 needs to have a sub_id of <id>.1 despite job 1 id being <id>+1
+        self.assertEqual(int(job_object_list[0].id), int(float(job_object_list[0].sub_id)))
+        self.assertEqual(int(job_object_list[0].id) + 1, int(job_object_list[1].id))
+        self.assertEqual(
+            job_object_list[0].sub_id,
+            "%d.%d" % (int(job_object_list[0].id), 0))
+        self.assertEqual(
+            job_object_list[1].sub_id,
+            "%d.%d" % (int(job_object_list[0].id), 1))
+        self.assertNotEqual(
+            job_object_list[1].sub_id,
+            "%d.%d" % (int(job_object_list[1].id), 0))
+        self.assertNotEqual(
+            job_object_list[1].sub_id,
+            "%d.%d" % (int(job_object_list[1].id), 1))
+        self.assertNotEqual(
+            check_one['protocols']['lava-multinode']['role'],
+            check_two['protocols']['lava-multinode']['role']
+        )

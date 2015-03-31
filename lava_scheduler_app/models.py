@@ -996,6 +996,149 @@ def _check_device_types(user):
     return all_devices
 
 
+def _create_pipeline_job(job_data, user, taglist, device=None, device_type=None, target_group=None):
+
+    if not device and not device_type:
+        # programming error
+        return None
+
+    if type(job_data) is not dict:
+        # programming error
+        raise RuntimeError("Invalid job data %s" % job_data)
+
+    if not taglist:
+        taglist = []
+
+    yaml_data = yaml.dump(job_data)
+    job = TestJob(definition=yaml_data, original_definition=yaml_data,
+                  submitter=user,
+                  requested_device=device,
+                  requested_device_type=device_type,
+                  target_group=target_group,
+                  description=job_data['job_name'],
+                  health_check=False,
+                  user=user,
+                  is_pipeline=True)
+    job.save()
+    # need a valid job before the tags can be assigned, then it needs to be saved again.
+    for tag in Tag.objects.filter(name__in=taglist):
+        job.tags.add(tag)
+
+    # add pipeline to jobpipeline, update with results later - needs the job.id.
+    dupe = JobPipeline.get(job.id)
+    if dupe:
+        # this should be impossible
+        # FIXME: needs a unit test
+        raise RuntimeError("Duplicate job id?")
+    store = JobPipeline(job_id=job.id)
+    store.pipeline = {}
+    store.save()
+    return job
+
+
+def _pipeline_protocols(job_data, user):
+    """
+    Handle supported pipeline protocols
+    Check supplied parameters and change the device selection if necessary.
+    This function has two stages - calculate the device_list, create the TestJobs.
+    Other protocols can affect the device_list before the jobs are created.
+    role_dictionary = {  # map of the multinode group
+        role: {
+            'devices': [],
+            'jobs': [],
+            'tags': []
+        }
+    }
+
+    Note: this function does *not* deal with the device state - this is a submission
+    check to add the job(s) to the queue. It is not a problem if devices for this
+    job are currently busy, only that there are enough devices which are not retired.
+    So despite doing the tag checks here, the job is created with just the device_type
+    and the checks are done again before the job starts.
+
+    Actual device assignment happens in lava_scheduler_daemon:dbjobsource.py until
+    this migrates into dispatcher-master.
+
+    params:
+      job_data - dictionary of the submission YAML
+      user: the user submitting the job
+    returns:
+      list of all jobs created using the specified type(s) which meet the protocol criteria,
+      specified device tags and which the user is able to submit.
+    exceptions:
+        DevicesUnavailableException if all criteria cannot be met.
+    """
+    device_list = []
+    if type(job_data) is dict and 'protocols' not in job_data:
+        return device_list
+
+    role_dictionary = {}  # map of the multinode group
+    if 'lava-multinode' in job_data['protocols']:
+        # create target_group uuid, just a label for the coordinator.
+        target_group = str(uuid.uuid4())
+
+        # Handle the requirements of the Multinode protocol
+        # FIXME: needs a schema check
+        # FIXME: the vland protocol will affect the device_list
+        if 'roles' in job_data['protocols']['lava-multinode']:
+            for role in job_data['protocols']['lava-multinode']['roles']:
+                role_dictionary[role] = {
+                    'devices': [],
+                    'tags': []
+                }
+                params = job_data['protocols']['lava-multinode']['roles'][role]
+                device_type = _get_device_type(user, params['device_type'])
+                role_dictionary[role]['device_type'] = device_type
+
+                device_list = Device.objects.filter(device_type=device_type)
+                allowed_devices = []
+                for device in device_list:
+                    if _check_submit_to_device([device], user):
+                        allowed_devices.append(device)
+
+                if len(allowed_devices) < params['count']:
+                    raise DevicesUnavailableException("Not enough devices of type %s are currently "
+                                                      "available to user %s"
+                                                      % (device_type, user))
+                role_dictionary[role]['tags'] = _get_tag_list(params.get('tags', []), True)
+                if role_dictionary[role]['tags']:
+                    supported = _check_tags(role_dictionary[role]['tags'], device_type=device_type)
+                    _check_tags_support(supported, allowed_devices)
+
+                # FIXME: other protocols could need to remove devices from 'supported' here
+
+                # the device_roles cannot be set here - only once the final group has been reserved
+
+        job_object_list = []
+
+        # so far, just checked availability, now create the data.
+        # Tags and device_type are tied to the role. The actual device is
+        # a combination of the device_type and the count. Devices from the
+        # supported list are allocated to jobs for the specified role.
+
+        # split the YAML - needs the full device group information
+        # returns a dict indexed by role, containing a list of jobs
+        job_dictionary = utils.split_multinode_yaml(job_data, target_group)
+
+        # structural changes done, now create the testjob.
+        sub_id = 0
+        parent = None  # track the zero id job as the parent of the group in the sub_id text field
+        for role, role_dict in role_dictionary.items():
+            for node_data in job_dictionary[role]:
+                job = _create_pipeline_job(
+                    node_data, user, target_group=target_group,
+                    taglist=role_dict['tags'], device_type=role_dict['device_type'])
+                if not parent:
+                    parent = job.id
+                job.sub_id = "%d.%d" % (parent, sub_id)
+                job.multinode_definition = yaml.dump(job_data)
+                job.save()
+                job_object_list.append(job)
+                sub_id += 1
+
+        return job_object_list
+
+
 class PipelineStore(models.Model):
     kee = models.CharField(max_length=255)
     value = models.TextField()
@@ -1269,6 +1412,15 @@ class TestJob(RestrictedResource):
     def device_role(self):
         if not (self.is_multinode or self.is_vmgroup):
             return "Error"
+        if self.is_pipeline:
+            data = yaml.load(self.definition)
+            if 'protocols' not in data:
+                return 'Error'
+            if 'lava-multinode' not in data['protocols']:
+                return 'Error'
+            if 'role' not in data['protocols']['lava-multinode']:
+                return 'Error'
+            return data['protocols']['lava-multinode']['role']
         json_data = simplejson.loads(self.definition)
         if 'role' not in json_data:
             return "Error"
@@ -1313,6 +1465,12 @@ class TestJob(RestrictedResource):
         'target' is not supported, so requested_device is always None at submission time.
         """
         job_data = yaml.load(yaml_data)
+
+        # pipeline protocol handling, e.g. lava-multinode
+        job_list = _pipeline_protocols(job_data, user)
+        if job_list:
+            return job_list
+
         device_type = _get_device_type(user, job_data['device_type'])
         allow = _check_submit_to_device(list(Device.objects.filter(
             device_type=device_type)), user)
@@ -1322,35 +1480,7 @@ class TestJob(RestrictedResource):
             supported = _check_tags(taglist, device_type=device_type)
             _check_tags_support(supported, allow)
 
-        # FIXME: multinode scheduling
-
-        job = TestJob(definition=yaml_data, original_definition=yaml_data,
-                      submitter=user,
-                      requested_device=None,
-                      requested_device_type=device_type,
-                      description=job_data['job_name'],
-                      health_check=False,
-                      user=user,
-                      is_pipeline=True)
-
-        job.save()
-
-        # need a valid job before the tags can be assigned, then it needs to be saved again.
-        for tag in Tag.objects.filter(name__in=taglist):
-            job.tags.add(tag)
-        job.save()
-
-        # add pipeline to jobpipeline, update with results later - needs the job.id.
-        dupe = JobPipeline.get(job.id)
-        if dupe:
-            # this should be impossible
-            # FIXME: needs a unit test
-            raise RuntimeError("Duplicate job id?")
-        store = JobPipeline(job_id=job.id)
-        store.pipeline = {}
-        store.save()
-
-        return job
+        return _create_pipeline_job(job_data, user, taglist, device=None, device_type=device_type)
 
     @classmethod
     def from_json_and_user(cls, json_data, user, health_check=False):
