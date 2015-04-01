@@ -195,8 +195,8 @@ IP address of the master running postgres is 192.168.100.175::
 
  $ psql -h 192.168.100.175 -U lavaserver
 
-Check the ``/var/log/lava-server/lava-scheduler.log`` for cnnection errors of a
-normal startup of lava-scheduler::
+Check the ``/var/log/lava-server/lava-scheduler.log`` for connection
+errors of a normal startup of lava-scheduler::
 
  2014-05-05 20:17:20,327 Running LAVA Daemon
  2014-05-05 20:17:20,345 lava-scheduler-daemon: /usr/bin/lava-server manage
