@@ -40,11 +40,12 @@ fi
 # $LAVA_RESULT_DIR is set by lava-test-shell
 case_attachment_dir="$LAVA_RESULT_DIR/results/$TEST_CASE_ID/attachments/$(dirname $FILE)"
 mkdir -p "$case_attachment_dir"
-cp "$FILE" "$case_attachment_dir"
 SIZE=`stat --format="%s" $FILE`
 if [ $SIZE -gt 26214400 ]; then
     echo "$FILE is too large, skipping"
-fi
-if [ ! -z "$MIMETYPE" ]; then
-    echo "$MIMETYPE" > "$case_attachment_dir/$(basename $FILE).mimetype"
+else
+    cp "$FILE" "$case_attachment_dir"
+    if [ ! -z "$MIMETYPE" ]; then
+        echo "$MIMETYPE" > "$case_attachment_dir/$(basename $FILE).mimetype"
+    fi
 fi
