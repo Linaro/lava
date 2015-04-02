@@ -259,7 +259,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             pipeline and allow cleanup actions to happen on all actions,
             not just the ones directly related to the currently running action.
             """
-            self.logger.info("Cancelled")
             self.cleanup_actions(None, "Cancelled")
             signal.signal(signal.SIGINT, signal.default_int_handler)
             raise KeyboardInterrupt
