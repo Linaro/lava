@@ -218,8 +218,7 @@ class Target(object):
     def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype):
         raise NotImplementedError('deploy_linaro_prebuilt')
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs,
-                             nfsrootfs, bootloader, firmware, bl1, bl2,
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
                              bl31, rootfstype, bootloadertype, target_type):
         raise NotImplementedError('deploy_linaro_kernel')
 

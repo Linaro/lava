@@ -83,8 +83,7 @@ class VexpressTarget(BootloaderTarget):
     # methods inherited from BootloaderTarget and overriden here
     ##################################################################
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs,
-                             nfsrootfs, bootloader, firmware, bl1, bl2,
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
                              bl31, rootfstype, bootloadertype, target_type):
         if bootloader is None:
             if self.config.vexpress_uefi_default is None:
@@ -112,9 +111,9 @@ class VexpressTarget(BootloaderTarget):
                                            decompress=False)
             bl1 = None
 
-        super(VexpressTarget, self).deploy_linaro_kernel(kernel, ramdisk, dtb, modules, rootfs,
-                                                         nfsrootfs, bootloader, firmware, bl1, bl2,
-                                                         bl31, rootfstype, bootloadertype, target_type)
+        super(VexpressTarget, self).deploy_linaro_kernel(kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader,
+                                                         firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
+                                                         target_type)
 
     def _load_test_firmware(self):
         with self._mcc_setup() as mount_point:

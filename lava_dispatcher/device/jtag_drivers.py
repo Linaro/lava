@@ -32,7 +32,7 @@ from lava_dispatcher.utils import (
     connect_to_serial,
     extract_rootfs,
     extract_ramdisk,
-    extract_modules,
+    extract_overlay,
     create_ramdisk
 )
 
@@ -47,7 +47,7 @@ class BaseDriver(object):
         self.config = device.config
         self._default_boot_cmds = 'boot_cmds_ramdisk'
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
                              bootloader, firmware, bl1, bl2, bl31, rootfstype,
                              bootloadertype, target_type, scratch_dir):
         """
@@ -71,7 +71,7 @@ class stmc(BaseDriver):
         self._boot_tags = {}
         self._booted = False
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
                              bootloader, firmware, bl1, bl2, bl31, rootfstype,
                              bootloadertype, target_type, scratch_dir):
         kernel_url = kernel
@@ -94,13 +94,14 @@ class stmc(BaseDriver):
             ramdisk = download_image(ramdisk, self.context,
                                      scratch_dir,
                                      decompress=False)
-            if modules is not None:
-                modules = download_image(modules, self.context,
-                                         scratch_dir,
-                                         decompress=False)
+            if overlays is not None:
                 ramdisk_dir = extract_ramdisk(ramdisk, scratch_dir,
                                               is_uboot=False)
-                extract_modules(modules, ramdisk_dir)
+                for overlay in overlays:
+                    overlay = download_image(overlay, self.context,
+                                             scratch_dir,
+                                             decompress=False)
+                    extract_overlay(overlay, ramdisk_dir)
                 ramdisk = create_ramdisk(ramdisk_dir, scratch_dir)
             stmc_command = ' '.join([stmc_command,
                                     self.config.jtag_stmc_ramdisk_command.format(RAMDISK=ramdisk)])
@@ -120,11 +121,12 @@ class stmc(BaseDriver):
             extract_rootfs(nfsrootfs, lava_nfsrootfs)
             self._boot_tags['{NFSROOTFS}'] = lava_nfsrootfs
             self._default_boot_cmds = 'boot_cmds_nfs'
-            if modules is not None and ramdisk is None:
-                modules = download_image(modules, self.context,
-                                         scratch_dir,
-                                         decompress=False)
-                extract_modules(modules, lava_nfsrootfs)
+            if overlays is not None and ramdisk is None:
+                for overlay in overlays:
+                    overlay = download_image(overlay, self.context,
+                                             scratch_dir,
+                                             decompress=False)
+                extract_overlay(overlay, lava_nfsrootfs)
 
         # Add suffix for boot commands
         self._stmc_command = stmc_command + ' --'

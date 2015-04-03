@@ -1,4 +1,5 @@
 # Copyright (C) 2012 Linaro Limited
+# Copyright (C) 2012 Linaro Limited
 #
 # Author: Andy Doan <andy.doan@linaro.org>
 #
@@ -54,7 +55,7 @@ from lava_dispatcher.utils import (
     extract_tar,
     DrainConsoleOutput,
     finalize_process,
-    extract_modules,
+    extract_overlay,
     extract_ramdisk,
     create_ramdisk,
     ensure_directory,
@@ -267,9 +268,8 @@ class FastModelTarget(Target):
         self._copy_needed_files_from_partition(self.config.root_part, 'boot')
         self._copy_needed_files_from_partition(self.config.root_part, 'lib')
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
-                             bootloader, firmware, bl1, bl2, bl31, rootfstype,
-                             bootloadertype, target_type):
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
+                             bl31, rootfstype, bootloadertype, target_type):
         # Required
         if kernel is None:
             raise CriticalError("A kernel image is required")
@@ -288,13 +288,14 @@ class FastModelTarget(Target):
         self._boot_tags['{KERNEL}'] = os.path.relpath(self._kernel, self._scratch_dir)
         self._initrd = download_image(ramdisk, self.context, self._scratch_dir,
                                       decompress=False)
-        if modules is not None:
-            modules = download_image(modules, self.context,
-                                     self._scratch_dir,
-                                     decompress=False)
+        if overlays is not None:
             ramdisk_dir = extract_ramdisk(self._initrd, self._scratch_dir,
                                           is_uboot=self._is_uboot_ramdisk(ramdisk))
-            extract_modules(modules, ramdisk_dir)
+            for overlay in overlays:
+                overlay = download_image(overlay, self.context,
+                                         self._scratch_dir,
+                                         decompress=False)
+                extract_overlay(overlay, ramdisk_dir)
             self._initrd = create_ramdisk(ramdisk_dir, self._scratch_dir)
         self._boot_tags['{RAMDISK}'] = os.path.relpath(self._initrd, self._scratch_dir)
         self._dtb = download_image(dtb, self.context, self._scratch_dir,
