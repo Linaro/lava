@@ -59,9 +59,8 @@ class FastbootTarget(Target):
 
         self.driver = driver_class(self)
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
-                             bootloader, firmware, bl1, bl2, bl31, rootfstype,
-                             bootloadertype, target_type):
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
+                             bl31, rootfstype, bootloadertype, target_type):
         self._target_type = target_type
         self._use_boot_cmds = True
         if rootfs is not None:
@@ -75,9 +74,9 @@ class FastbootTarget(Target):
         while (attempts < deploy_attempts) and (not deployed):
             logging.info("Deploying test image. Attempt: %d", attempts + 1)
             try:
-                self.driver.deploy_linaro_kernel(kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
-                                                 bootloader, firmware, bl1, bl2, bl31, rootfstype,
-                                                 bootloadertype, self._target_type, self.scratch_dir)
+                self.driver.deploy_linaro_kernel(kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader,
+                                                 firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
+                                                 self._target_type)
                 deployed = True
             except (subprocess.CalledProcessError, pexpect.TIMEOUT) as e:
                 msg = "Deployment failed: %s" % e

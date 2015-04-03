@@ -147,14 +147,14 @@ def extract_rootfs(rootfs, root):
         raise CriticalError('Unable to remove tarball: %s' % rootfs)
 
 
-def extract_modules(modules, root):
-    """ Extracts the contents of a modules .tar.(bz2, gz, xz, lzma, etc) to the filesystem root.
+def extract_overlay(overlay, root):
+    """ Extracts the contents of a compressed tar (bz2, gz, xz, lzma, etc) to the filesystem root.
     """
-    logging.info('Attempting to install modules onto the filesystem')
-    if logging_system('nice tar --selinux -C %s -xaf %s' % (root, modules)):
-        raise CriticalError('Unable to extract tarball: %s to %s' % (modules, root))
-    if logging_system('rm %s' % modules):
-        raise CriticalError('Unable to remove tarball: %s' % modules)
+    logging.info('Attempting to install overlay onto the filesystem')
+    if logging_system('nice tar --selinux -C %s -xaf %s' % (root, overlay)):
+        raise CriticalError('Unable to extract tarball: %s to %s' % (overlay, root))
+    if logging_system('rm %s' % overlay):
+        raise CriticalError('Unable to remove tarball: %s' % overlay)
 
 
 def extract_ramdisk(ramdisk, tmpdir, is_uboot=False):

@@ -31,7 +31,7 @@ from lava_dispatcher.client.base import (
 from lava_dispatcher.utils import (
     finalize_process,
     connect_to_serial,
-    extract_modules,
+    extract_overlay,
     extract_ramdisk,
     create_ramdisk,
     ensure_directory,
@@ -155,8 +155,7 @@ class BootloaderTarget(MasterImageTarget):
         else:
             raise CriticalError("Unknown bootloader type")
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs,
-                             nfsrootfs, bootloader, firmware, bl1, bl2,
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
                              bl31, rootfstype, bootloadertype, target_type):
         if self.__deployment_data__ is None:
             # Get deployment data
@@ -199,13 +198,14 @@ class BootloaderTarget(MasterImageTarget):
                 ramdisk = download_image(ramdisk, self.context,
                                          self._tmpdir,
                                          decompress=False)
-                if modules is not None:
-                    modules = download_image(modules, self.context,
-                                             self._tmpdir,
-                                             decompress=False)
+                if overlays is not None:
                     ramdisk_dir = extract_ramdisk(ramdisk, self._tmpdir,
                                                   is_uboot=self._is_uboot_ramdisk(ramdisk))
-                    extract_modules(modules, ramdisk_dir)
+                    for overlay in overlays:
+                        overlay = download_image(overlay, self.context,
+                                                 self._tmpdir,
+                                                 decompress=False)
+                        extract_overlay(overlay, ramdisk_dir)
                     ramdisk = create_ramdisk(ramdisk_dir, self._tmpdir)
                 if self._is_uboot():
                     # Ensure ramdisk has u-boot header
@@ -243,11 +243,12 @@ class BootloaderTarget(MasterImageTarget):
                 self._lava_nfsrootfs = self._setup_nfs(nfsrootfs, self._tmpdir)
                 self._default_boot_cmds = 'boot_cmds_nfs'
                 self._boot_tags['{NFSROOTFS}'] = self._lava_nfsrootfs
-                if modules is not None and ramdisk is None:
-                    modules = download_image(modules, self.context,
-                                             self._tmpdir,
-                                             decompress=False)
-                    extract_modules(modules, self._lava_nfsrootfs)
+                if overlays is not None and ramdisk is None:
+                    for overlay in overlays:
+                        overlay = download_image(overlay, self.context,
+                                                 self._tmpdir,
+                                                 decompress=False)
+                        extract_overlay(overlay, self._lava_nfsrootfs)
             if bootloader is not None:
                 # We have been passed a bootloader
                 bootloader = download_image(bootloader, self.context,

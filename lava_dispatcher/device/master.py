@@ -91,7 +91,7 @@ class MasterImageTarget(Target):
 
         self.master_kernel = None
         self.master_ramdisk = None
-        self.master_modules = None
+        self.master_overlays = None
         self.master_dtb = None
         self.master_firmware = None
         self.master_nfsrootfs = None
@@ -113,8 +113,11 @@ class MasterImageTarget(Target):
         return self.proc
 
     def power_off(self, proc):
-        if self.config.power_off_cmd:
+        if self.config.power_off != "":
             self.context.run_command(self.config.power_off_cmd)
+        else:
+            proc.send("~$")
+            proc.sendline("off")
         finalize_process(self.proc)
         self.proc = None
 

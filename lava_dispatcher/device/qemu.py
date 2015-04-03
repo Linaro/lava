@@ -39,7 +39,7 @@ from lava_dispatcher.utils import (
     extract_tar,
     finalize_process,
     extract_ramdisk,
-    extract_modules,
+    extract_overlay,
     create_ramdisk
 )
 from lava_dispatcher.errors import (
@@ -72,9 +72,8 @@ class QEMUTarget(Target):
                                                         self.context,
                                                         decompress=False))
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
-                             bootloader, firmware, bl1, bl2, bl31, rootfstype,
-                             bootloadertype, target_type):
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
+                             bl31, rootfstype, bootloadertype, target_type):
         # Check for errors
         if rootfs is None and ramdisk is None:
             raise CriticalError("You must specify a QEMU file system image or ramdisk")
@@ -88,15 +87,17 @@ class QEMUTarget(Target):
         self._kernel = download_image(kernel, self.context)
 
         if ramdisk is not None:
-            ramdisk = download_image(ramdisk, self.context)
-            if modules is not None:
-                modules = download_image(modules, self.context,
-                                         self._scratch_dir,
-                                         decompress=False)
-                ramdisk_dir = extract_ramdisk(ramdisk, self._scratch_dir,
+            ramdisk = download_image(ramdisk, self.context,
+                                     decompress=False)
+            if overlays is not None:
+                ramdisk_dir = extract_ramdisk(ramdisk, self.scratch_dir,
                                               is_uboot=self._is_uboot_ramdisk(ramdisk))
-                extract_modules(modules, ramdisk_dir)
-                ramdisk = create_ramdisk(ramdisk_dir, self._scratch_dir)
+                for overlay in overlays:
+                    overlay = download_image(overlay, self.context,
+                                             self.scratch_dir,
+                                             decompress=False)
+                    extract_overlay(overlay, ramdisk_dir)
+                ramdisk = create_ramdisk(ramdisk_dir, self.scratch_dir)
             self._ramdisk = ramdisk
             if rootfs is None:
                 logging.debug("Attempting to set deployment data")
