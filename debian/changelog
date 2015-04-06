@@ -1,7 +1,8 @@
-lava-server (2015.04-2) UNRELEASED; urgency=medium
+lava-server (2015.04.1-1) UNRELEASED; urgency=medium
 
   * Use Debian changelog date for sphinx timestamps. Patch from
     Reiner Herrmann <reiner@reiner-h.de> (Closes: #782386)
+  * Symlink the source files as well as minified js files
 
  -- Neil Williams <codehelp@debian.org>  Wed, 22 Apr 2015 13:56:16 +0100
 

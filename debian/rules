@@ -25,6 +25,18 @@ export DH_OPTIONS
 PYTHON2:=$(shell pyversions -r)
 install_dir=$(call py_libdir, $(PYTHON2))
 
+# embedded JS
+SOURCE=/usr/share/javascript/jquery-flot/
+# dashboard jquery-flot replacements
+DASHBOARD_DIR=$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/
+DASHBOARD_JS=jquery.flot.navigate.min.js jquery.flot.navigate.js jquery.flot.canvas.min.js jquery.flot.canvas.js
+DASHBOARD_JS+=jquery.flot.min.js jquery.flot.js jquery.flot.selection.min.js jquery.flot.selection.js
+DASHBOARD_JS+=jquery.flot.stack.min.js jquery.flot.stack.js jquery.flot.time.min.js jquery.flot.time.js
+
+# scheduler jquery-flot replacements
+SCHEDULER_DIR=$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/lava_scheduler_app/static/lava_scheduler_app/js/
+SCHEDULER_JS=jquery.flot.min.js jquery.flot.js jquery.flot.stack.min.js jquery.flot.stack.js
+
 %:
 	dh $@ --with sphinxdoc,python2
 
@@ -52,30 +64,19 @@ override_dh_auto_install:
 	mkdir debian/lava-server/usr/sbin/
 	mv debian/lava-server/usr/bin/lava-mount-masterfs debian/lava-server/usr/sbin/
 	# handle embedded JS
+	# jquery.flot
+	for file in $(DASHBOARD_JS); do \
+		$(RM) $(DASHBOARD_DIR)/$$file; \
+		ln -s $(SOURCE)/$$file $(DASHBOARD_DIR)/$$file; \
+	done
+	for file in $(SCHEDULER_JS); do \
+		$(RM) $(SCHEDULER_DIR)/$$file; \
+		ln -s $(SOURCE)/$$file $(SCHEDULER_DIR)/$$file; \
+	done
+	# other js libraries
 	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/lava-server/js/jquery.cookie.js
 	ln -s /usr/share/javascript/jquery-cookie/jquery.cookie.js \
 		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/lava-server/js/jquery.cookie.js
-	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.navigate.min.js
-	ln -s /usr/share/javascript/jquery-flot/jquery.flot.navigate.min.js \
-		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.navigate.min.js
-	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.canvas.min.js
-	ln -s /usr/share/javascript/jquery-flot/jquery.flot.canvas.min.js \
-		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.canvas.min.js
-	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.min.js
-	ln -s /usr/share/javascript/jquery-flot/jquery.flot.min.js \
-		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.min.js
-	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/lava_scheduler_app/static/lava_scheduler_app/js/jquery.flot.min.js
-	ln -s /usr/share/javascript/jquery-flot/jquery.flot.min.js \
-		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/lava_scheduler_app/static/lava_scheduler_app/js/jquery.flot.min.js
-	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.selection.min.js
-	ln -s /usr/share/javascript/jquery-flot/jquery.flot.selection.min.js \
-		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.selection.min.js
-	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.stack.min.js
-	ln -s /usr/share/javascript/jquery-flot/jquery.flot.stack.min.js \
-		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.stack.min.js
-	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.time.min.js
-	ln -s /usr/share/javascript/jquery-flot/jquery.flot.time.min.js \
-		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/jquery.flot.time.min.js
 	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/excanvas.js
 	ln -s /usr/share/javascript/excanvas/excanvas.js \
 		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/excanvas.js
