@@ -183,14 +183,14 @@ class stmc(BaseDriver):
             if not self.config.jtag_hard_reset_command:
                 raise CriticalError("'jtag_hard_reset_command' is required")
             self.context.run_command(self.config.jtag_hard_reset_command)
-            self.context.transport.request_send('lava_ms_reboot_STMC2_done')
+            self.context.transport.request_send('lava_ms_reboot_STMC2_done', None)
 
             self.context.transport.request_wait('lava_ms_reboot_board')
             logging.info("Hard resetting platform")
             if not self.config.hard_reset_command:
                 raise CriticalError("'hard_reset_command' is required")
             self.context.run_command(self.config.hard_reset_command)
-            self.context.transport.request_wait('lava_ms_reboot_board_done')
+            self.context.transport.request_send('lava_ms_reboot_board_done', None)
 
             # Connect to the STMC serial relay
             self.context.transport.request_wait('lava_ms_ready')

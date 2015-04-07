@@ -18,8 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import copy
-import ConfigParser
 import contextlib
 import logging
 import os
