@@ -213,7 +213,7 @@ class MultinodeProtocol(Protocol):
         if not os.path.exists(filename):
             raise InfrastructureError("Missing coordinator configuration")
         else:
-            self.settings = read_settings(filename)
+            self.settings = self.read_settings(filename)
         self.base_message = {
             "port": self.settings['port'],
             "blocksize": self.settings['blocksize'],
