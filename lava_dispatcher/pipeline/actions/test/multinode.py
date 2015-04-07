@@ -111,8 +111,8 @@ class MultinodeTestAction(TestShellAction):
                         data[detail[0]] = detail[1]
                 msg = {"request": "lava_send", "messageID": message_id, "message": data}
 
-            self.logger.debug("Handling signal <LAVA_SEND %s>" % msg)
-            reply = self.protocol(json.dumps(msg))
+            self.logger.debug(str("Handling signal <LAVA_SEND %s>" % json.dumps(msg)))
+            reply = self.protocol(msg)
             if reply == "nack":
                 # FIXME: does this deserve an automatic retry? Does it actually happen?
                 raise TestError("Coordinator was unable to accept LAVA_SEND")
@@ -120,7 +120,7 @@ class MultinodeTestAction(TestShellAction):
         def _on_sync(self, message_id):
             self.logger.debug("Handling signal <LAVA_SYNC %s>" % message_id)
             msg = {"request": "lava_sync", "messageID": message_id, "message": None}
-            reply = self.protocol(json.dumps(msg))
+            reply = self.protocol(msg)
             if reply == "nack":
                 message_str = " nack"
             else:
@@ -130,7 +130,7 @@ class MultinodeTestAction(TestShellAction):
         def _on_wait(self, message_id):
             self.logger.debug("Handling signal <LAVA_WAIT %s>" % message_id)
             msg = {"request": "lava_wait", "messageID": message_id, "message": None}
-            reply = self.protocol(json.dumps(msg))
+            reply = self.protocol(msg)
             self.logger.debug("reply=%s" % reply)
             message_str = ""
             if reply == "nack":
@@ -144,7 +144,7 @@ class MultinodeTestAction(TestShellAction):
         def _on_wait_all(self, message_id, role=None):
             self.logger.debug("Handling signal <LAVA_WAIT_ALL %s>" % message_id)
             msg = {"request": "lava_wait_all", "messageID": message_id, "role": role}
-            reply = self.protocol(json.dumps(msg))
+            reply = self.protocol(msg)
             message_str = ""
             if reply == "nack":
                 message_str = " nack"

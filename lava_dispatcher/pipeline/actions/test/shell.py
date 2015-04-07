@@ -246,8 +246,8 @@ class TestShellAction(TestAction):
                     handler(*params)  # pylint: disable=star-args
                 except KeyboardInterrupt:
                     raise KeyboardInterrupt
-                except JobError:
-                    self.logger.error("err: handling signal %s failed" % name)
+                except JobError as exc:
+                    self.logger.error("job error: handling signal %s failed: %s", name, exc)
                     return False
                 return True
 
