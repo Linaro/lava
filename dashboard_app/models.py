@@ -1559,7 +1559,7 @@ class TestRunFilterAttribute(models.Model):
 
 class TestRunFilterTest(models.Model):
 
-    test = models.ForeignKey(Test, related_name="+")
+    test = models.ForeignKey(Test, related_name="testrunfilters")
     filter = models.ForeignKey("TestRunFilter", related_name="tests")
     index = models.PositiveIntegerField(
         help_text=_(u"The index of this test in the filter"))
@@ -1570,7 +1570,7 @@ class TestRunFilterTest(models.Model):
 
 class TestRunFilterTestCase(models.Model):
 
-    test_case = models.ForeignKey(TestCase, related_name="+")
+    test_case = models.ForeignKey(TestCase, related_name="testrunfilters")
     test = models.ForeignKey(TestRunFilterTest, related_name="cases")
     index = models.PositiveIntegerField(
         help_text=_(u"The index of this case in the test"))
@@ -1979,6 +1979,8 @@ class ImageReport(models.Model):
         # access to this image report as well.
         for chart in self.imagereportchart_set.all():
             for chart_filter in chart.imagechartfilter_set.all():
+                if not chart_filter.filter:
+                    continue
                 for bundle_stream in chart_filter.filter.bundle_streams.all():
                     if not bundle_stream.is_accessible_by(user):
                         return False
@@ -2177,278 +2179,253 @@ class ImageReportChart(models.Model):
 
     def get_chart_test_data(self, user, image_chart_filter, filter_data,
                             chart_data):
-        from dashboard_app.filters import evaluate_filter
+        from dashboard_app.filters import get_filter_testruns
 
         # Prepare to filter the tests and test cases for the
         # evaluate_filter call.
         tests = []
 
-        selected_chart_tests = image_chart_filter.imagecharttest_set.all().prefetch_related('imagecharttestattribute_set')
+        selected_chart_tests = image_chart_filter.imagecharttest_set.all().\
+            prefetch_related('imagecharttestattribute_set')
 
         # Leave chart_data empty if there are no tests available.
         if not selected_chart_tests:
             return
 
-        for chart_test in selected_chart_tests:
-            tests.append({
-                'test': chart_test.test,
-                'test_cases': [],
-            })
-
-        filter_data['tests'] = tests
-
-        matches = list(evaluate_filter(user, filter_data,
-                                       prefetch_related=['bug_links'])[:50])
-        matches.reverse()
+        test_runs = get_filter_testruns(
+            user, image_chart_filter.filter, limit=200,
+            image_chart_filter=image_chart_filter)
 
         # Store metadata changes.
         metadata = {}
 
-        for match in matches:
-            for test_run in match.test_runs:
+        for test_run in test_runs:
 
-                denorm = test_run.denormalization
+            denorm = test_run.denormalization
 
-                bug_links = sorted(
-                    [b.bug_link for b in test_run.bug_links.all()])
+            bug_links = sorted(
+                [b.bug_link for b in test_run.bug_links.all()])
 
-                metadata_content = {}
+            metadata_content = {}
+            test_id = test_run.test.test_id
 
-                test_id = test_run.test.test_id
+            if not hasattr(test_run, 'build_number'):
+                test_run.build_number = str(test_run.bundle.uploaded_on)
 
-                # Find corresponding chart_test object.
-                chart_test = None
-                for ch_test in selected_chart_tests:
-                    if ch_test.test == test_run.test:
-                        chart_test = ch_test
-                        break
+            # Find corresponding chart_test object.
+            chart_test = None
+            for ch_test in selected_chart_tests:
+                if ch_test.test == test_run.test:
+                    chart_test = ch_test
+                    break
 
-                if test_id not in metadata.keys():
-                    metadata[test_id] = {}
+            if test_id not in metadata.keys():
+                metadata[test_id] = {}
 
-                alias = None
-                chart_test_id = None
-                if chart_test:
-                    chart_test_id = chart_test.id
-                    # Metadata delta content. Contains attribute names as keys
-                    # and value is tuple with old and new value.
-                    # If specific attribute's value didn't change since the
-                    # last test run, do not include that attr.
-                    for attr in chart_test.attributes:
-                        if attr not in metadata[test_id].keys():
-                            try:
-                                metadata[test_id][attr] = \
-                                    test_run.attributes.get(name=attr).value
-                            except NamedAttribute.DoesNotExist:
-                                # Skip this attribute.
-                                pass
-                        else:
-                            old_value = metadata[test_id][attr]
-                            new_value = test_run.attributes.get(
-                                name=attr).value
-                            if old_value != new_value:
-                                metadata_content[attr] = (old_value, new_value)
-                            metadata[test_id][attr] = new_value
+            alias = None
+            chart_test_id = None
+            if chart_test:
+                chart_test_id = chart_test.id
+                # Metadata delta content. Contains attribute names as keys
+                # and value is tuple with old and new value.
+                # If specific attribute's value didn't change since the
+                # last test run, do not include that attr.
+                for attr in chart_test.attributes:
+                    if attr not in metadata[test_id].keys():
+                        try:
+                            metadata[test_id][attr] = \
+                                test_run.attributes.get(name=attr).value
+                        except NamedAttribute.DoesNotExist:
+                            # Skip this attribute.
+                            pass
+                    else:
+                        old_value = metadata[test_id][attr]
+                        new_value = test_run.attributes.get(
+                            name=attr).value
+                        if old_value != new_value:
+                            metadata_content[attr] = (old_value, new_value)
+                        metadata[test_id][attr] = new_value
 
-                    alias = chart_test.name
+                alias = chart_test.name
 
-                if not alias:
-                    alias = "%s: %s" % (image_chart_filter.filter.name,
-                                        test_id)
+            if not alias:
+                alias = "%s: %s" % (image_chart_filter.filter.name,
+                                    test_id)
 
-                # Add comments flag to indicate whether comments do exist in
-                # any of the test result in this test run.
-                has_comments = test_run.test_results.exclude(
-                    comments__isnull=True).count() != 0
+            # Add comments flag to indicate whether comments do exist in
+            # any of the test result in this test run.
+            has_comments = test_run.test_results.exclude(
+                comments__isnull=True).count() != 0
 
-                test_filter_id = "%s-%s" % (test_id, image_chart_filter.id)
+            test_filter_id = "%s-%s" % (test_id, image_chart_filter.id)
 
-                # Calculate percentages.
-                percentage = 0
-                if self.is_percentage:
-                    if denorm.count_all() != 0:
-                        percentage = round(100 * float(denorm.count_pass) /
-                                           denorm.count_all(), 2)
+            # Calculate percentages.
+            percentage = 0
+            if self.is_percentage:
+                if denorm.count_all() != 0:
+                    percentage = round(100 * float(denorm.count_pass) /
+                                       denorm.count_all(), 2)
 
-                # Find already existing chart item (this happens if we're
-                # dealing with parametrized tests) and add the values instead
-                # of creating new chart item.
-                found = False
-                if image_chart_filter.image_chart.is_aggregate_results:
-                    for chart_item in chart_data["test_data"]:
-                        if chart_item["test_filter_id"] == test_filter_id and \
-                           chart_item["number"] == str(match.tag):
-                            chart_item["passes"] += denorm.count_pass
-                            chart_item["skip"] += denorm.count_skip
-                            chart_item["total"] += denorm.count_all()
-                            chart_item["link"] = image_chart_filter.filter.\
-                                get_absolute_url()
-                            chart_item["pass"] &= denorm.count_fail == 0
-                            found = True
+            # Find already existing chart item (this happens if we're
+            # dealing with parametrized tests) and add the values instead
+            # of creating new chart item.
+            found = False
+            if image_chart_filter.image_chart.is_aggregate_results:
+                for chart_item in chart_data["test_data"]:
+                    if chart_item["test_filter_id"] == test_filter_id and \
+                       chart_item["number"] == str(test_run.build_number):
+                        chart_item["passes"] += denorm.count_pass
+                        chart_item["skip"] += denorm.count_skip
+                        chart_item["total"] += denorm.count_all()
+                        chart_item["link"] = image_chart_filter.filter.\
+                            get_absolute_url()
+                        chart_item["pass"] &= denorm.count_fail == 0
+                        found = True
 
-                # Use dates or build numbers.
-                build_number = str(test_run.bundle.uploaded_on)
-                if self.is_build_number:
-                    build_number = str(match.tag)
+            # Set attribute based on xaxis_attribute.
+            attribute = None
+            if self.xaxis_attribute:
+                try:
+                    attribute = test_run.attributes.get(
+                        name=self.xaxis_attribute).value
+                except:
+                    pass
 
-                # Set attribute based on xaxis_attribute.
-                attribute = None
-                if self.xaxis_attribute:
-                    try:
-                        attribute = test_run.attributes.get(
-                            name=self.xaxis_attribute).value
-                    except:
-                        pass
+            # If no existing chart item was found, create a new one.
+            if not image_chart_filter.image_chart.is_aggregate_results or \
+               not found:
+                chart_item = {
+                    "filter_rep": image_chart_filter.representation,
+                    "test_filter_id": test_filter_id,
+                    "chart_test_id": chart_test_id,
+                    "link": test_run.get_absolute_url(),
+                    "bundle_link": test_run.bundle.get_absolute_url(),
+                    "alias": alias,
+                    "number": str(test_run.build_number),
+                    "date": str(test_run.bundle.uploaded_on),
+                    "attribute": attribute,
+                    "pass": denorm.count_fail == 0,
+                    "passes": denorm.count_pass,
+                    "percentage": percentage,
+                    "skip": denorm.count_skip,
+                    "total": denorm.count_all(),
+                    "test_run_uuid": test_run.analyzer_assigned_uuid,
+                    "bug_links": bug_links,
+                    "metadata_content": metadata_content,
+                    "comments": has_comments,
+                }
 
-                # If no existing chart item was found, create a new one.
-                if not image_chart_filter.image_chart.is_aggregate_results or \
-                   not found:
-                    chart_item = {
-                        "filter_rep": image_chart_filter.representation,
-                        "test_filter_id": test_filter_id,
-                        "chart_test_id": chart_test_id,
-                        "link": test_run.get_absolute_url(),
-                        "bundle_link": test_run.bundle.get_absolute_url(),
-                        "alias": alias,
-                        "number": build_number,
-                        "date": str(test_run.bundle.uploaded_on),
-                        "attribute": attribute,
-                        "pass": denorm.count_fail == 0,
-                        "passes": denorm.count_pass,
-                        "percentage": percentage,
-                        "skip": denorm.count_skip,
-                        "total": denorm.count_all(),
-                        "test_run_uuid": test_run.analyzer_assigned_uuid,
-                        "bug_links": bug_links,
-                        "metadata_content": metadata_content,
-                        "comments": has_comments,
-                    }
-
-                    chart_data["test_data"].append(chart_item)
+                chart_data["test_data"].append(chart_item)
 
     def get_chart_test_case_data(self, user, image_chart_filter, filter_data,
                                  chart_data):
-        from dashboard_app.filters import evaluate_filter
+        from dashboard_app.filters import get_filter_testresults
 
-        # Prepare to filter the tests and test cases for the
-        # evaluate_filter call.
-        tests = []
-        test_cases = TestCase.objects.filter(imagecharttestcase__image_chart_filter__image_chart=self).distinct('id')
-        tests_all = Test.objects.filter(test_cases__in=test_cases).distinct('id').prefetch_related('test_cases')
-
-        selected_chart_test_cases = image_chart_filter.imagecharttestcase_set.all().prefetch_related('imagecharttestcaseattribute_set')
+        test_cases = TestCase.objects.filter(
+            imagecharttestcase__image_chart_filter=image_chart_filter
+        ).distinct('id')
 
         # Leave chart_data empty if there are no test cases available.
         if not test_cases:
             return
 
-        for test in tests_all:
-            tests.append({
-                'test': test,
-                'test_cases': [test_case for test_case in test_cases if test_case in test.test_cases.all()],
-            })
-
-        filter_data['tests'] = tests
-        matches = list(evaluate_filter(user, filter_data,
-                                       prefetch_related=['bug_links'])[:50])
-        matches.reverse()
-
         # Store metadata changes.
         metadata = {}
 
-        for match in matches:
-            for test_result in match.specific_results:
+        selected_chart_test_cases = image_chart_filter.imagecharttestcase_set.\
+            all().prefetch_related('imagecharttestcaseattribute_set')
 
-                bug_links = sorted(
-                    [b.bug_link for b in test_result.bug_links.all()])
+        test_results = get_filter_testresults(
+            user, image_chart_filter.filter, limit=200,
+            image_chart_filter=image_chart_filter)
 
-                metadata_content = {}
+        for test_result in test_results:
 
-                test_case_id = test_result.test_case.test_case_id
-                if test_case_id not in metadata.keys():
-                    metadata[test_case_id] = {}
+            bug_links = sorted(
+                [b.bug_link for b in test_result.bug_links.all()])
 
-                # Find corresponding chart_test_case object.
-                chart_test_case = None
-                for ch_test_case in selected_chart_test_cases:
-                    if ch_test_case.test_case == test_result.test_case:
-                        chart_test_case = ch_test_case
-                        break
+            metadata_content = {}
 
-                alias = None
-                chart_test_id = None
-                if chart_test_case:
-                    chart_test_id = chart_test_case.id
-                    # Metadata delta content. Contains attribute names as
-                    # keys and value is tuple with old and new value.
-                    # If specific attribute's value didn't change since the
-                    # last test result, do not include that attr.
-                    for attr in chart_test_case.attributes:
-                        if attr not in metadata[test_case_id].keys():
-                            try:
-                                metadata[test_case_id][attr] = \
-                                    test_result.test_run.attributes.get(
-                                        name=attr).value
-                            except NamedAttribute.DoesNotExist:
-                                # Skip this attribute.
-                                pass
-                        else:
-                            old_value = metadata[test_case_id][attr]
-                            new_value = test_result.test_run.attributes.get(
-                                name=attr).value
-                            if old_value != new_value:
-                                metadata_content[attr] = (old_value, new_value)
-                                metadata[test_case_id][attr] = new_value
+            test_case_id = test_result.test_case.test_case_id
+            if test_case_id not in metadata.keys():
+                metadata[test_case_id] = {}
 
-                    alias = chart_test_case.name
+            # Find corresponding chart_test_case object.
+            chart_test_case = None
+            for ch_test_case in selected_chart_test_cases:
+                if ch_test_case.test_case == test_result.test_case:
+                    chart_test_case = ch_test_case
+                    break
 
-                if not alias:
-                    alias = "%s: %s: %s" % (
-                        image_chart_filter.filter.name,
-                        test_result.test.test_id,
-                        test_case_id
-                    )
+            alias = None
+            chart_test_id = None
+            if chart_test_case:
+                chart_test_id = chart_test_case.id
+                # Metadata delta content. Contains attribute names as
+                # keys and value is tuple with old and new value.
+                # If specific attribute's value didn't change since the
+                # last test result, do not include that attr.
+                for attr in chart_test_case.attributes:
+                    if attr not in metadata[test_case_id].keys():
+                        try:
+                            metadata[test_case_id][attr] = \
+                                test_result.test_run.attributes.get(
+                                    name=attr).value
+                        except NamedAttribute.DoesNotExist:
+                            # Skip this attribute.
+                            pass
+                    else:
+                        old_value = metadata[test_case_id][attr]
+                        new_value = test_result.test_run.attributes.get(
+                            name=attr).value
+                        if old_value != new_value:
+                            metadata_content[attr] = (old_value, new_value)
+                            metadata[test_case_id][attr] = new_value
 
-                test_filter_id = "%s-%s" % (test_case_id.replace(" ", ""),
-                                            image_chart_filter.id)
+                alias = chart_test_case.name
 
-                # Use dates or build numbers.
-                build_number = str(test_result.test_run.bundle.uploaded_on)
-                if self.is_build_number:
-                    build_number = str(match.tag)
+            if not alias:
+                alias = "%s: %s: %s" % (
+                    image_chart_filter.filter.name,
+                    test_result.test.test_id,
+                    test_case_id
+                )
 
-                # Set attribute based on xaxis_attribute.
-                attribute = None
-                if self.xaxis_attribute:
-                    attribute = test_run.attributes.get(
-                        name=self.xaxis_attribute).value
+            test_filter_id = "%s-%s" % (test_case_id.replace(" ", ""),
+                                        image_chart_filter.id)
 
-                chart_item = {
-                    "filter_rep": image_chart_filter.representation,
-                    "alias": alias,
-                    "test_filter_id": test_filter_id,
-                    "chart_test_id": chart_test_id,
-                    "units": test_result.units,
-                    "measurement": test_result.measurement,
-                    "link": test_result.get_absolute_url(),
-                    "pass": test_result.result == 0,
-                    "number": build_number,
-                    "date": str(test_result.test_run.bundle.uploaded_on),
-                    "attribute": attribute,
-                    "test_run_uuid": test_result.test_run.analyzer_assigned_uuid,
-                    "bug_links": bug_links,
-                    "metadata_content": metadata_content,
-                    "comments": test_result.comments,
-                }
-                chart_data["test_data"].append(chart_item)
+            if not hasattr(test_result, 'build_number'):
+                test_result.build_number = str(
+                    test_result.test_run.bundle.uploaded_on)
+
+            # Set attribute based on xaxis_attribute.
+            attribute = None
+            if self.xaxis_attribute:
+                attribute = test_run.attributes.get(
+                    name=self.xaxis_attribute).value
+
+            chart_item = {
+                "filter_rep": image_chart_filter.representation,
+                "alias": alias,
+                "test_filter_id": test_filter_id,
+                "chart_test_id": chart_test_id,
+                "units": test_result.units,
+                "measurement": test_result.measurement,
+                "link": test_result.get_absolute_url(),
+                "pass": test_result.result == 0,
+                "number": str(test_result.build_number),
+                "date": str(test_result.test_run.bundle.uploaded_on),
+                "attribute": attribute,
+                "test_run_uuid": test_result.test_run.analyzer_assigned_uuid,
+                "bug_links": bug_links,
+                "metadata_content": metadata_content,
+                "comments": test_result.comments,
+            }
+            chart_data["test_data"].append(chart_item)
 
     def get_chart_attributes_data(self, user, image_chart_filter, filter_data,
                                   chart_data):
-        from dashboard_app.filters import evaluate_filter
-
-        # Prepare to filter the tests and test cases for the
-        # evaluate_filter call.
-        tests = []
+        from dashboard_app.filters import get_filter_testruns
 
         selected_chart_tests = image_chart_filter.imagecharttest_set.all().prefetch_related('imagecharttestattribute_set')
 
@@ -2456,79 +2433,70 @@ class ImageReportChart(models.Model):
         if not selected_chart_tests:
             return
 
-        for chart_test in selected_chart_tests:
-            tests.append({
-                'test': chart_test.test,
-                'test_cases': [],
-            })
+        test_runs = get_filter_testruns(
+            user, image_chart_filter.filter, limit=200,
+            image_chart_filter=image_chart_filter)
 
-        filter_data['tests'] = tests
+        for test_run in test_runs:
 
-        matches = list(evaluate_filter(user, filter_data,
-                                       prefetch_related=['bug_links'])[:50])
-        matches.reverse()
+            denorm = test_run.denormalization
 
-        for match in matches:
-            for test_run in match.test_runs:
+            bug_links = sorted(
+                [b.bug_link for b in test_run.bug_links.all()])
 
-                denorm = test_run.denormalization
+            test_id = test_run.test.test_id
 
-                bug_links = sorted(
-                    [b.bug_link for b in test_run.bug_links.all()])
+            # Find corresponding chart_test object.
+            chart_test = None
+            for ch_test in selected_chart_tests:
+                if ch_test.test == test_run.test:
+                    chart_test = ch_test
+                    break
 
-                test_id = test_run.test.test_id
+            alias = None
+            chart_test_id = None
+            if chart_test:
+                chart_test_id = chart_test.id
+                for attr in chart_test.attributes:
+                    try:
+                        value = float(
+                            test_run.attributes.get(name=attr).value)
+                    except (NamedAttribute.DoesNotExist, ValueError):
+                        # Skip this attribute.
+                        continue
 
-                # Find corresponding chart_test object.
-                chart_test = None
-                for ch_test in selected_chart_tests:
-                    if ch_test.test == test_run.test:
-                        chart_test = ch_test
-                        break
+                    if chart_test.name:
+                        test_name = chart_test.name
+                    else:
+                        test_name = test_id
 
-                alias = None
-                chart_test_id = None
-                if chart_test:
-                    chart_test_id = chart_test.id
-                    for attr in chart_test.attributes:
-                        try:
-                            value = float(
-                                test_run.attributes.get(name=attr).value)
-                        except (NamedAttribute.DoesNotExist, ValueError):
-                            # Skip this attribute.
-                            continue
+                    alias = "%s: %s" % (test_name,
+                                        attr.replace(" ", ""))
 
-                        if chart_test.name:
-                            test_name = chart_test.name
-                        else:
-                            test_name = test_id
+                    test_filter_id = "%s-%s-%s" % (test_id,
+                                                   image_chart_filter.id,
+                                                   attr.replace(" ", ""))
 
-                        alias = "%s: %s" % (test_name,
-                                            attr.replace(" ", ""))
+                    # Use dates or build numbers.
+                    if not hasattr(test_run, 'build_number'):
+                        test_run.build_number = str(
+                            test_run.bundle.uploaded_on)
 
-                        test_filter_id = "%s-%s-%s" % (test_id,
-                                                       image_chart_filter.id,
-                                                       attr.replace(" ", ""))
+                    chart_item = {
+                        "filter_rep": image_chart_filter.representation,
+                        "test_filter_id": test_filter_id,
+                        "chart_test_id": "%s-%s" % (chart_test_id, attr),
+                        "link": test_run.get_absolute_url(),
+                        "alias": alias,
+                        "number": str(test_run.build_number),
+                        "date": str(test_run.bundle.uploaded_on),
+                        "pass": denorm.count_fail == 0,
+                        "attr_value": value,
+                        "test_run_uuid": test_run.analyzer_assigned_uuid,
+                        "bug_links": bug_links,
+                    }
 
-                        # Use dates or build numbers.
-                        build_number = str(test_run.bundle.uploaded_on)
-                        if self.is_build_number:
-                            build_number = str(match.tag)
-
-                        chart_item = {
-                            "filter_rep": image_chart_filter.representation,
-                            "test_filter_id": test_filter_id,
-                            "chart_test_id": "%s-%s" % (chart_test_id, attr),
-                            "link": test_run.get_absolute_url(),
-                            "alias": alias,
-                            "number": build_number,
-                            "date": str(test_run.bundle.uploaded_on),
-                            "pass": denorm.count_fail == 0,
-                            "attr_value": value,
-                            "test_run_uuid": test_run.analyzer_assigned_uuid,
-                            "bug_links": bug_links,
-                        }
-
-                        chart_data["test_data"].append(chart_item)
+                    chart_data["test_data"].append(chart_item)
 
     def get_supported_attributes(self, user):
 

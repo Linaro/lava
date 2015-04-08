@@ -80,7 +80,7 @@ A lava-test-shell is run by:
 
 * *compiling* the above test defintion into a shell script.
 
-   .. note:: This shell script will have a ``set -x`` at the top, so a
+   .. note:: This shell script will have a ``set -e`` at the top, so a
           failing step will abort the entire test run. If you need to specify
           a step that might fail, but should not cause the run to be aborted,
           make sure you finish the command with ``|| true``.

@@ -78,46 +78,48 @@ def image_report_list(request):
 def image_report_detail(request, name):
 
     image = get_object_or_404(Image, name=name)
-    filter_data = image.filter.as_data()
-    matches = evaluate_filter(request.user, filter_data, prefetch_related=['bug_links', 'test_results'])[:50]
+
+    from dashboard_app.filters import get_filter_testruns
+    test_runs = get_filter_testruns(request.user, image.filter)
 
     build_number_to_cols = {}
-
     test_run_names = set()
 
-    for match in matches:
-        for test_run in match.test_runs:
-            name = test_run.test.test_id
-            denorm = test_run.denormalization
-            if denorm.count_fail == 0:
-                cls = 'present pass'
-            else:
-                    cls = 'present fail'
-            bug_links = sorted([b.bug_link for b in test_run.bug_links.all()])
+    for test_run in test_runs:
+        name = test_run.test.test_id
+        denorm = test_run.denormalization
+        if denorm.count_fail == 0:
+            cls = 'present pass'
+        else:
+            cls = 'present fail'
+        bug_links = sorted([b.bug_link for b in test_run.bug_links.all()])
 
-            measurements = [{'measurement': str(item.measurement)}
-                            for item in test_run.test_results.all()]
+        measurements = [{'measurement': str(item.measurement)}
+                        for item in test_run.test_results.all()]
 
-            test_run_data = dict(
-                present=True,
-                cls=cls,
-                uuid=test_run.analyzer_assigned_uuid,
-                passes=denorm.count_pass,
-                total=denorm.count_pass + denorm.count_fail,
-                link=test_run.get_permalink(),
-                bug_links=bug_links,
-                measurements=measurements,
-            )
-            if (match.tag, test_run.bundle.uploaded_on) not in build_number_to_cols:
-                build_number_to_cols[(match.tag, test_run.bundle.uploaded_on)] = {
-                    'test_runs': {},
-                    'number': str(match.tag),
-                    'date': str(test_run.bundle.uploaded_on),
-                    'link': test_run.bundle.get_absolute_url(),
-                }
-            build_number_to_cols[(match.tag, test_run.bundle.uploaded_on)]['test_runs'][name] = test_run_data
-            if name != 'lava':
-                test_run_names.add(name)
+        if not hasattr(test_run, 'build_number'):
+            test_run.build_number = str(test_run.bundle.uploaded_on)
+
+        test_run_data = dict(
+            present=True,
+            cls=cls,
+            uuid=test_run.analyzer_assigned_uuid,
+            passes=denorm.count_pass,
+            total=denorm.count_pass + denorm.count_fail,
+            link=test_run.get_permalink(),
+            bug_links=bug_links,
+            measurements=measurements,
+        )
+        if (test_run.build_number, test_run.bundle.uploaded_on) not in build_number_to_cols:
+            build_number_to_cols[(test_run.build_number, test_run.bundle.uploaded_on)] = {
+                'test_runs': {},
+                'number': str(test_run.build_number),
+                'date': str(test_run.bundle.uploaded_on),
+                'link': test_run.bundle.get_absolute_url(),
+            }
+        build_number_to_cols[(test_run.build_number, test_run.bundle.uploaded_on)]['test_runs'][name] = test_run_data
+        if name != 'lava':
+            test_run_names.add(name)
 
     test_run_names = sorted(test_run_names)
     test_run_names.insert(0, 'lava')

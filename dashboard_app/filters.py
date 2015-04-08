@@ -293,7 +293,8 @@ class MatchMakingQuerySet(object):
         return iter(r)
 
     def _wrap(self, queryset, **kw):
-        return self.__class__(queryset, self.filter_data, self.prefetch_related, **kw)
+        return self.__class__(queryset, self.filter_data,
+                              self.prefetch_related, **kw)
 
     def order_by(self, *args):
         # the generic tables code calls this even when it shouldn't...
@@ -422,3 +423,119 @@ def evaluate_filter(user, filter_data, prefetch_related=[], descending=True):
             'bundle__uploaded_on').annotate(ArrayAgg('id'))
 
     return MatchMakingQuerySet(testruns, filter_data, prefetch_related)
+
+
+def get_named_attributes(filter, content_type):
+    # Returns the list of id's for specific content type objects
+    # which are selected by custom attribute in the filter.
+    object_attribute_ids = None
+    for attr in filter.attributes.all():
+        attrs = NamedAttribute.objects.filter(
+            name=attr.name, value=attr.value,
+            content_type_id=content_type.id).values_list(
+                'object_id', flat=True)
+        if object_attribute_ids is None:
+            object_attribute_ids = set(attrs)
+        else:
+            object_attribute_ids &= set(attrs)
+
+    return object_attribute_ids
+
+
+def get_filter_testruns(user, filter, prefetch_related=[], limit=100,
+                        descending=True, image_chart_filter=None):
+    # Return the list of test runs which meet the conditions specified in the
+    # filter.
+
+    testruns = TestRun.objects.filter(
+        bundle__bundle_stream__testrunfilter=filter
+    )
+
+    test_run_attributes_ids = get_named_attributes(
+        filter, ContentType.objects.get_for_model(TestRun))
+
+    if test_run_attributes_ids:
+        testruns = testruns.filter(id__in=test_run_attributes_ids)
+
+    if image_chart_filter:
+        testruns = testruns.filter(
+            test__imagecharttest__image_chart_filter=image_chart_filter)
+        use_build_number = image_chart_filter.image_chart.is_build_number and \
+            filter.build_number_attribute
+    elif filter.tests.all():
+        testruns = testruns.filter(test__testrunfilters__filter=filter)
+        use_build_number = filter.build_number_attribute
+
+    if use_build_number:
+        if descending:
+            ob = ['-build_number']
+        else:
+            ob = ['build_number']
+        testruns = testruns.filter(
+            attributes__name=filter.build_number_attribute)\
+            .extra(select={'build_number': 'convert_to_integer("dashboard_app_namedattribute"."value")', },
+                   where=['convert_to_integer("dashboard_app_namedattribute"."value") IS NOT NULL']).extra(order_by=ob,)
+    else:
+        if descending:
+            ob = '-bundle__uploaded_on'
+        else:
+            ob = 'bundle__uploaded_on'
+        testruns = testruns.order_by(ob)
+
+    testruns = testruns.prefetch_related(
+        'denormalization',
+        'bundle',
+        'bundle__bundle_stream',
+        'test'
+    )[:limit]
+
+    return reversed(testruns)
+
+
+def get_filter_testresults(user, filter, prefetch_related=[], limit=50,
+                           descending=True, image_chart_filter=None):
+    # Return the list of test results which meet the conditions specified in
+    # the filter.
+
+    testresults = TestResult.objects.filter(
+        test_run__bundle__bundle_stream__testrunfilter=filter
+    )
+
+    test_run_attributes_ids = get_named_attributes(
+        filter, ContentType.objects.get_for_model(TestRun))
+
+    if test_run_attributes_ids:
+        testresults = testresults.filter(
+            test_run__id__in=test_run_attributes_ids)
+
+    if image_chart_filter:
+        testresults = testresults.filter(
+            test_case__imagecharttestcase__image_chart_filter=image_chart_filter)
+    elif filter.testcases.all():
+        testresults = testresults.filter(
+            test_case__test__testrunfilters__filter=filter)
+
+    if filter.build_number_attribute:
+        if descending:
+            ob = ['-build_number']
+        else:
+            ob = ['build_number']
+        testresults = testresults.filter(
+            test_run__attributes__name=filter.build_number_attribute)\
+            .extra(select={'build_number': 'convert_to_integer("dashboard_app_namedattribute"."value")', },
+                   where=['convert_to_integer("dashboard_app_namedattribute"."value") IS NOT NULL']).extra(order_by=ob,)
+    else:
+        if descending:
+            ob = '-test_run__bundle__uploaded_on'
+        else:
+            ob = 'test_run__bundle__uploaded_on'
+        testresults = testresults.order_by(ob)
+
+    testresults = testresults.prefetch_related(
+        'test_run__denormalization',
+        'test_run__bundle',
+        'test_run__bundle__bundle_stream',
+        'test_run__test'
+    )[:limit]
+
+    return reversed(testresults)
