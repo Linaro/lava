@@ -23,29 +23,20 @@ import os
 import yaml
 
 
-class NewDevice(dict):
+class PipelineDevice(dict):
     """
-    YAML based Device class with clearer support for the pipeline overrides
-    and deployment types.
-    To simplify development and prepare for the dumb dispatcher model, the
-    development path is the current working directory. The system path
-    is the installed location of this python module and is overridden by
-    files in the development path.
+    Dictionary Device class which accepts data rather than a filename.
+    This allows the scheduler to use the same class without needing to write
+    out YAML files from database content.
     """
 
-    def __init__(self, target):
-        super(NewDevice, self).__init__()
-        # Parse the yaml configuration
-        try:
-            with open(target) as f_in:
-                self.update(yaml.load(f_in))
-        except yaml.parser.ParserError:
-            raise RuntimeError("%s could not be parsed" % device_file)
+    def __init__(self, config, hostname):
+        super(PipelineDevice, self).__init__()
+        self.update(config)
 
-        # Get the device name (/path/to/kvm01.yaml => kvm01)
-        self.target = os.path.splitext(os.path.basename(target))[0]
+        self.target = hostname
 
-        self['hostname'] = self.target
+        self['hostname'] = hostname
         self.setdefault('power_state', 'off')  # assume power is off at start of job
 
     def check_config(self, job):
@@ -91,3 +82,26 @@ class NewDevice(dict):
         if state is '' or state is not 'on' and state is not 'off':
             raise RuntimeError("Attempting to set an invalid power state")
         self['power_state'] = state
+
+
+class NewDevice(PipelineDevice):
+    """
+    YAML based PipelineDevice class with clearer support for the pipeline overrides
+    and deployment types. Simple change of init whilst allowing the scheduler and
+    the dispatcher to share the same functionality.
+    """
+
+    def __init__(self, target):
+        super(NewDevice, self).__init__({}, None)
+        # Parse the yaml configuration
+        try:
+            with open(target) as f_in:
+                self.update(yaml.load(f_in))
+        except yaml.parser.ParserError:
+            raise RuntimeError("%s could not be parsed" % device_file)
+
+        # Get the device name (/path/to/kvm01.yaml => kvm01)
+        self.target = os.path.splitext(os.path.basename(target))[0]
+
+        self['hostname'] = self.target
+        self.setdefault('power_state', 'off')  # assume power is off at start of job

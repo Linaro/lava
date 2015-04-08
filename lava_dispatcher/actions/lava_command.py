@@ -22,6 +22,7 @@ import logging
 import tempfile
 import re
 import os
+import pexpect
 
 from uuid import uuid4
 from lava_dispatcher.actions import BaseAction
@@ -52,6 +53,7 @@ class cmd_lava_command_run(BaseAction):
     _logfile = ""
     _parser = None
     _fixupdict = {}
+    _results_from_log_file = []
 
     def run(self, commands, parser=None, iterations=1, fixupdict=None, timeout=-1):
         target = self.client.target_device
@@ -68,9 +70,15 @@ class cmd_lava_command_run(BaseAction):
                 for command in commands:
                     logging.info("Executing lava_command_run: %s" % command)
                     try:
+                        res = {}
+                        res['test_case_id'] = command
                         session.run(command, timeout=timeout,
                                     log_in_host=self._logfile)
-                    except OperationFailed as e:
+                        res['result'] = 'pass'
+                        self._results_from_log_file.append(res)
+                    except (OperationFailed, RuntimeError, pexpect.TIMEOUT) as e:
+                        res['result'] = 'fail'
+                        self._results_from_log_file.append(res)
                         logging.error(e)
 
         bundle = self._get_bundle()
@@ -90,7 +98,6 @@ class cmd_lava_command_run(BaseAction):
 
     def _get_test_results(self):
         fixupdict = {}
-        results_from_log_file = []
         defpat = "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))"
         if self._parser is not None:
             pattern = re.compile(self._parser)
@@ -113,9 +120,9 @@ class cmd_lava_command_run(BaseAction):
                 res['log_lineno'] = lineno
                 res['log_filename'] = os.path.basename(self._logfile)
 
-                results_from_log_file.append(res)
+                self._results_from_log_file.append(res)
 
-        return results_from_log_file
+        return self._results_from_log_file
 
     def _get_test_runs(self):
         now = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')

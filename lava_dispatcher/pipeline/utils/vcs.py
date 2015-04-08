@@ -18,10 +18,10 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import logging
 import os
 import subprocess
 
-from lava_dispatcher.pipeline.log import YamlLogger
 from lava_dispatcher.pipeline.action import InfrastructureError
 
 
@@ -32,9 +32,8 @@ class VCSHelper(object):
 
     def __init__(self, url):
         self.url = url
-        self.logger = YamlLogger('root')
 
-    def clone(self, dest_path, revision=None, env=None):
+    def clone(self, dest_path, revision=None):
         raise NotImplementedError
 
 
@@ -44,11 +43,10 @@ class BzrHelper(VCSHelper):
         super(BzrHelper, self).__init__(url)
         self.binary = '/usr/bin/bzr'
 
-    def clone(self, dest_path, revision=None, env=None):
+    def clone(self, dest_path, revision=None):
         cwd = os.getcwd()
 
-        if env is None:
-            env = dict()
+        env = dict(os.environ)
         env.update({'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'})
 
         try:
@@ -67,7 +65,8 @@ class BzrHelper(VCSHelper):
                                                     env=env).strip()
 
         except subprocess.CalledProcessError as exc:
-            self.logger.debug({
+            logger = logging.getLogger('dispatcher')
+            logger.exception({
                 'command': [i.strip() for i in exc.cmd],
                 'message': [i.strip() for i in exc.message],
                 'output': exc.output.split('\n')})
@@ -95,24 +94,24 @@ class GitHelper(VCSHelper):
         super(GitHelper, self).__init__(url)
         self.binary = '/usr/bin/git'
 
-    def clone(self, dest_path, revision=None, env=None):
+    def clone(self, dest_path, revision=None):
         try:
             subprocess.check_output([self.binary, 'clone', self.url, dest_path],
-                                    stderr=subprocess.STDOUT, env=env)
+                                    stderr=subprocess.STDOUT)
 
             if revision is not None:
                 subprocess.check_output([self.binary, '--git-dir',
                                          os.path.join(dest_path, '.git'),
                                          'checkout', str(revision)],
-                                        stderr=subprocess.STDOUT, env=env)
+                                        stderr=subprocess.STDOUT)
 
             commit_id = subprocess.check_output([self.binary, '--git-dir',
                                                  os.path.join(dest_path, '.git'),
                                                  'log', '-1', '--pretty=%H'],
-                                                stderr=subprocess.STDOUT,
-                                                env=env).strip()
+                                                stderr=subprocess.STDOUT).strip()
         except subprocess.CalledProcessError as exc:
-            self.logger.debug({
+            logger = logging.getLogger('dispatcher')
+            logger.exception({
                 'command': [i.strip() for i in exc.cmd],
                 'message': [i.strip() for i in exc.message],
                 'output': exc.output.split('\n')})

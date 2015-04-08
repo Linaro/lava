@@ -36,6 +36,7 @@ setup(
             'default-config/lava-dispatcher/devices/*.conf',
             'pipeline/device_types/*.conf',
             'pipeline/devices/*.conf',
+            'pipeline/devices/*.yaml',
             'device/sdmux.sh',
             'device/dynamic_vm_keys/lava*',
             'lava_test_shell/lava-background-process-start',
@@ -72,7 +73,8 @@ setup(
         'pyliblzma >= 0.5.3',
         'requests',
         'netifaces >= 0.10.0',
-        'nose'
+        'nose',
+        'pyzmq'
     ],
     tests_require=[
         'pep8 >= 1.4.6',
@@ -87,8 +89,12 @@ setup(
             ['etc/lava-options.conf']),
         ('/etc/modules-load.d/',
             ['etc/lava-modules.conf']),
+        ('/etc/init.d/',
+            ['etc/lava-slave.init'])
     ],
     scripts=[
-        'lava-dispatch'
+        'lava-dispatch',
+        'lava/dispatcher/lava-dispatcher-slave',
+        'lava/dispatcher/lava-slave'
     ],
 )

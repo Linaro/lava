@@ -29,7 +29,7 @@ from lava_dispatcher.pipeline.action import Pipeline, Action, JobError
 from lava_dispatcher.pipeline.test.test_basic import Factory, pipeline_reference
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
-from lava_dispatcher.pipeline.actions.boot.kvm import BootAction
+from lava_dispatcher.pipeline.actions.boot.qemu import BootAction
 
 
 class TestBasicJob(unittest.TestCase):  # pylint: disable=too-many-public-methods

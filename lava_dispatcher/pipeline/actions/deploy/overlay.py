@@ -38,6 +38,7 @@ class CustomisationAction(DeployAction):
         self.summary = "customise image"
 
     def run(self, connection, args=None):
+        connection = super(CustomisationAction, self).run(connection, args)
         self.logger.debug("Customising image...")
         # FIXME: implement
         return connection
@@ -86,6 +87,8 @@ class OverlayAction(DeployAction):
             self.scripts_to_copy.append(script)
         if not self.scripts_to_copy:
             self.errors = "Unable to locate lava_test_shell support scripts."
+        if self.job.parameters.get('output_dir', None) is None:
+            self.errors = "Unable to use output directory."
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -218,8 +221,9 @@ class CompressOverlay(Action):
         if not os.path.exists(self.data['lava-overlay']['location']):
             raise RuntimeError("Unable to find overlay location")
         if not self.valid:
-            self.logger.debug(self.errors)
+            self.logger.error(self.errors)
             return connection
+        connection = super(CompressOverlay, self).run(connection, args)
         location = self.data['lava-overlay']['location']
         output = os.path.join(self.job.parameters['output_dir'], "overlay-%s.tar.gz" % self.level)
         cur_dir = os.getcwd()

@@ -18,8 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import copy
-import ConfigParser
 import contextlib
 import logging
 import os
@@ -70,13 +68,10 @@ class DynamicVmTarget(Target):
         self.backend_adapter.amend_config()
         return self.backend.power_on()
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, modules, rootfs, nfsrootfs,
-                             bootloader, firmware, bl1, bl2, bl31, rootfstype,
-                             bootloadertype, target_type):
-        self.backend.deploy_linaro_kernel(kernel, ramdisk, dtb, modules, rootfs,
-                                          nfsrootfs, bootloader, firmware,
-                                          bl1, bl2, bl31, rootfstype,
-                                          bootloadertype, target_type)
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
+                             bl31, rootfstype, bootloadertype, target_type):
+        self.backend.deploy_linaro_kernel(kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1,
+                                          bl2, bl31, rootfstype, bootloadertype, target_type)
         self.backend_adapter.copy_images()
 
     def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype):

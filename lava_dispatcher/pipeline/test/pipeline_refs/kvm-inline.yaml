@@ -29,13 +29,13 @@
     name: umount-retry
     pipeline:
     - {class: actions.deploy.mount.Unmount, name: umount}
-- class: actions.boot.kvm.BootQEMUImageAction
+- class: actions.boot.qemu.BootQEMUImageAction
   name: boot_image_retry
   pipeline:
-  - class: actions.boot.kvm.BootQemuRetry
+  - class: actions.boot.qemu.BootQemuRetry
     name: boot_qemu_image
     pipeline:
-    - {class: actions.boot.kvm.CallQemuAction, name: execute-qemu}
+    - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
 - class: actions.test.shell.TestShellRetry

@@ -20,7 +20,7 @@
 
 
 import unittest
-from lava_dispatcher.pipeline.actions.boot.kvm import BootQEMUImageAction
+from lava_dispatcher.pipeline.actions.boot.qemu import BootQEMUImageAction
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.test.test_basic import Factory, pipeline_reference

@@ -1,6 +1,6 @@
 # Sample JOB definition for a KVM
 
-device_type: kvm
+device_type: qemu
 
 job_name: kvm-pipeline
 timeouts:
@@ -50,3 +50,6 @@ actions:
 
     - submit_results:
         stream: /anonymous/codehelp/
+
+context:
+  arch: amd64

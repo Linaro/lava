@@ -54,6 +54,7 @@ class ApplyOverlayImage(Action):
         if not os.path.ismount(self.data['loop_mount']['mntdir']):
             raise RuntimeError("Image overlay requested to be applied but %s is not a mountpoint" %
                                self.data['loop_mount']['mntdir'])
+        connection = super(ApplyOverlayImage, self).run(connection, args)
         # use tarfile module - no SELinux support here yet
         try:
             tar = tarfile.open(self.data['compress-overlay'].get('output'))
@@ -84,7 +85,7 @@ class PrepareOverlayTftp(Action):
         self.internal_pipeline.add_action(CompressRamdisk())  # idempotent, checks for a ramdisk parameter
 
     def run(self, connection, args=None):
-        connection = self.internal_pipeline.run_actions(connection, args)
+        connection = super(PrepareOverlayTftp, self).run(connection, args)
         ramdisk = self.get_common_data('file', 'ramdisk')
         if ramdisk:  # nothing else to do
             return connection
@@ -102,6 +103,7 @@ class ApplyOverlayTftp(Action):
         self.description = "unpack the overlay into the nfsrootfs or ramdisk"
 
     def run(self, connection, args=None):
+        connection = super(ApplyOverlayTftp, self).run(connection, args)
         overlay_type = ''
         overlay_file = None
         directory = None
@@ -113,6 +115,9 @@ class ApplyOverlayTftp(Action):
             overlay_type = 'nfsrootfs'
             overlay_file = self.data['compress-overlay'].get('output')
             directory = self.get_common_data('file', 'nfsroot')
+        else:
+            self.logger.debug("No overlay directory")
+            self.logger.debug(self.parameters)
         try:
             tar = tarfile.open(overlay_file)
             tar.extractall(directory)
@@ -146,6 +151,7 @@ class ExtractNfsRootfs(Action):
     def run(self, connection, args=None):
         if not self.parameters.get('nfsrootfs', None):  # idempotency
             return connection
+        connection = super(ExtractNfsRootfs, self).run(connection, args)
         nfsroot = self.data['download_action']['nfsrootfs']['file']
         nfsroot_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
         try:
@@ -179,6 +185,7 @@ class ExtractModules(Action):
     def run(self, connection, args=None):
         if not self.parameters.get('modules', None):  # idempotency
             return connection
+        connection = super(ExtractModules, self).run(connection, args)
         if not self.parameters.get('ramdisk', None):
             if not self.parameters.get('nfsrootfs', None):
                 raise RuntimeError("Unable to identify unpack location")
@@ -223,6 +230,7 @@ class ExtractRamdisk(Action):
     def run(self, connection, args=None):
         if not self.parameters.get('ramdisk', None):  # idempotency
             return connection
+        connection = super(ExtractRamdisk, self).run(connection, args)
         ramdisk = self.data['download_action']['ramdisk']['file']
         ramdisk_dir = mkdtemp()
         extracted_ramdisk = os.path.join(ramdisk_dir, 'ramdisk')
@@ -278,6 +286,7 @@ class CompressRamdisk(Action):
     def run(self, connection, args=None):
         if not self.parameters.get('ramdisk', None):  # idempotency
             return connection
+        connection = super(CompressRamdisk, self).run(connection, args)
         if 'extracted_ramdisk' not in self.data['extract-overlay-ramdisk']:
             raise RuntimeError("Unable to find unpacked ramdisk")
         if 'ramdisk_file' not in self.data['extract-overlay-ramdisk']:
@@ -286,6 +295,9 @@ class CompressRamdisk(Action):
         ramdisk_data = self.data['extract-overlay-ramdisk']['ramdisk_file']
         pwd = os.getcwd()
         os.chdir(ramdisk_dir)
+        self.logger.debug("Building ramdisk %s containing %s" % (
+            ramdisk_data, ramdisk_dir
+        ))
         cmd = "find . | cpio --create --format='newc' > %s" % ramdisk_data
         try:
             # safe to use shell=True here, no external arguments
@@ -310,6 +322,9 @@ class CompressRamdisk(Action):
             final_file = ramdisk_uboot
 
         os.rename(final_file, os.path.join(tftp_dir, os.path.basename(final_file)))
+        self.logger.debug("rename %s to %s" % (
+            final_file, os.path.join(tftp_dir, os.path.basename(final_file))
+        ))
         if self.parameters['to'] == 'tftp':
             suffix = self.data['tftp-deploy'].get('suffix', '')
             self.set_common_data('file', 'ramdisk', os.path.join(suffix, os.path.basename(final_file)))

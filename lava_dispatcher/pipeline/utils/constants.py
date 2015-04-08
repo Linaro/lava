@@ -71,3 +71,6 @@ BOOT_MESSAGE = 'Booting Linux'
 
 # LAVA Coordinator setup and finalize timeout
 LAVA_MULTINODE_SYSTEM_TIMEOUT = 90
+
+# Default Action timeout
+ACTION_TIMEOUT = 30

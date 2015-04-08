@@ -2,8 +2,8 @@ device_type: cubietruck
 
 parameters:
   bootz:
-    kernel: '0x47000000'
-    ramdisk: '0x48000000'
+    kernel: '0x42000000'
+    ramdisk: '0x43300000'
     dtb: '0x43000000'
   media:  # two USB slots, only one SATA connector.
     usb:
@@ -12,10 +12,17 @@ parameters:
         uuid: "usb-SanDisk_Ultra_20060775320F43006019-0:0"  # /dev/disk/by-id/
         device_id: 0  # the bootloader device id for this media on the 'usb' interface
     sata:
-      UUID-required: False
+      ST160LM003:
+        uuid: ata-ST160LM003_HN-M160MBB_S2SYJ9KC102184
+        device_id: 0
+        uboot_interface: scsi
+        UUID-required: True
 
 commands:
-  connect: telnet localhost 6000
+  connect: telnet localhost 6002
+  #hard_reset: /usr/bin/pduclient --daemon snagglepuss --hostname pdu --command reboot --port 05
+  #power_off: /usr/bin/pduclient --daemon snagglepuss --hostname pdu --command off --port 05
+  #power_on: /usr/bin/pduclient --daemon snagglepuss --hostname pdu --command on --port 05
 
 # requires mainline u-boot, e.g. from Debian:
 # https://wiki.debian.org/InstallingDebianOn/Allwinner#U-boot_versions_for_sunxi-based_systems
@@ -35,7 +42,21 @@ actions:
           bootloader_prompt: sun7i
           boot_message: Booting Linux
           send_char: False
-        # method specific stanza
+        ramdisk:
+          commands:
+          - setenv autoload no
+          - setenv initrd_high '0xffffffff'
+          - setenv fdt_high '0xffffffff'
+          - setenv kernel_addr_r '{KERNEL_ADDR}'
+          - setenv initrd_addr_r '{RAMDISK_ADDR}'
+          - setenv fdt_addr_r '{DTB_ADDR}'
+          - setenv loadkernel 'tftp ${kernel_addr_r} {KERNEL}'
+          - setenv loadinitrd 'tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'
+          - setenv bootargs 'console=ttyS0,115200 debug rw root=/dev/ram0 ip=dhcp'
+          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+          - boot
+        # method specific stanzas
         usb:
           commands:
           - usb start
@@ -50,3 +71,46 @@ actions:
           - setenv bootargs 'console=ttyS0,115200n8 root={ROOT} ip=dhcp'
           - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
           - boot
+        sata:
+          commands:
+          - scsi scan
+          - setenv autoload no
+          - setenv autoload no
+          - setenv initrd_high '0xffffffff'
+          - setenv fdt_high '0xffffffff'
+          - setenv initrd_addr_r ${ramdisk_addr_r}
+          - setenv loadkernel 'load scsi {ROOT_PART} ${kernel_addr_r} {KERNEL}'
+          - setenv loadinitrd 'load scsi {ROOT_PART} ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'load scsi {ROOT_PART} ${fdt_addr_r} {DTB}'
+          - setenv bootargs 'console=ttyS0,115200n8 root={ROOT} ip=dhcp'
+          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+          - boot
+        nfs:
+          commands:
+          - setenv autoload no
+          - setenv initrd_high '0xffffffff'
+          - setenv fdt_high '0xffffffff'
+          - setenv kernel_addr_r '{KERNEL_ADDR}'
+          - setenv initrd_addr_r '{RAMDISK_ADDR}'
+          - setenv fdt_addr_r '{DTB_ADDR}'
+          - setenv loadkernel 'tftp ${kernel_addr_r} {KERNEL}'
+          - setenv loadinitrd 'tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'
+          - "setenv nfsargs 'setenv bootargs console=ttyS0,115200n8 root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp'"
+          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
+          - boot
+
+test_image_prompts:
+  # TODO: we should'nt need such a long list
+  - '\(initramfs\)'
+  - '/ #'
+  - 'root@android'
+  - 'root@linaro'
+  - 'root@master'
+  - 'root@debian'
+  - 'root@linaro-nano:~#'
+  - 'root@linaro-developer:~#'
+  - 'root@linaro-server:~#'
+  - 'root@genericarmv7a:~#'
+  - 'root@genericarmv8:~#'
+  - 'linaro-test'

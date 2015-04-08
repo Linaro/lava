@@ -34,7 +34,7 @@ from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 # FIXME: decide if root_partition is needed, supported or can be removed from YAML.
 # document it if it is retained/useful.
 # FIXME: decide if 'media: tmpfs' is necessary or remove from YAML. Only removable needs 'media'
-class BootKVM(Boot):
+class BootQEMU(Boot):
     """
     The Boot method prepares the command to run on the dispatcher but this
     command needs to start a new connection and then allow AutoLogin, if
@@ -45,7 +45,7 @@ class BootKVM(Boot):
     """
 
     def __init__(self, parent, parameters):
-        super(BootKVM, self).__init__(parent)
+        super(BootQEMU, self).__init__(parent)
         self.action = BootQEMUImageAction()
         self.action.job = self.job
         parent.add_action(self.action, parameters)
@@ -56,7 +56,7 @@ class BootKVM(Boot):
             return False
         if parameters['method'] != 'qemu':
             return False
-        if device['device_type'] == 'kvm':  # FIXME: device_type should likely be qemu - see also deploy
+        if device['device_type'] == 'qemu':
             return True
         return False
 
@@ -95,7 +95,8 @@ class BootQemuRetry(RetryAction):
             command = [qemu_binary]
             command.extend(boot['parameters'].get('options', []))
             self.set_common_data('qemu-command', 'command', command)
-        except (KeyError, TypeError):
+        # FIXME: AttributeError is an InfrastructureError in fact
+        except (KeyError, TypeError, AttributeError):
             self.errors = "Invalid parameters"
 
     def populate(self, parameters):
@@ -110,6 +111,11 @@ class CallQemuAction(Action):
         self.name = "execute-qemu"
         self.description = "call qemu to boot the image"
         self.summary = "execute qemu to boot the image"
+
+    def validate(self):
+        super(CallQemuAction, self).validate()
+        if 'test_image_prompts' not in self.job.device:
+            self.errors = "Unable to identify test image prompts from device configuration."
 
     def run(self, connection, args=None):
         """
@@ -128,7 +134,7 @@ class CallQemuAction(Action):
             raise RuntimeError("No image file setting from the download_action")
         command = self.get_common_data('qemu-command', 'command')
         command.extend(["-hda", self.data['download_action']['image']['file']])
-        self.logger.debug("Boot command: %s" % ' '.join(command))
+        self.logger.info("Boot command: %s" % ' '.join(command))
 
         # initialise the first Connection object, a command line shell into the running QEMU.
         shell = ShellCommand(' '.join(command), self.timeout)
@@ -138,6 +144,7 @@ class CallQemuAction(Action):
 
         shell_connection = ShellSession(self.job, shell)
         shell_connection.prompt_str = self.job.device['test_image_prompts']
+        shell_connection = super(CallQemuAction, self).run(shell_connection, args)
 
         # FIXME: tests with multiple boots need to be handled too.
         self.data['boot-result'] = 'failed' if self.errors else 'success'

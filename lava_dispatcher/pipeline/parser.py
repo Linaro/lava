@@ -109,15 +109,13 @@ class JobParser(object):
                 duration = Timeout.parse(data['timeouts']['job'])
                 job.timeout = Timeout(data['job_name'], duration)
             if 'action' in data['timeouts']:
-                # FIXME: never used !
                 self.context['default_action_duration'] = Timeout.parse(data['timeouts']['action'])
             if 'test' in data['timeouts']:
-                # FIXME: never used !
                 self.context['default_test_duration'] = Timeout.parse(data['timeouts']['test'])
 
     # FIXME: add a validate() function which checks against a Schema as a completely separate step.
     # pylint: disable=too-many-locals,too-many-statements
-    def parse(self, content, device, output_dir=None):
+    def parse(self, content, device, job_id, socket_addr, output_dir=None):
         self.loader = yaml.Loader(content)
         self.loader.compose_node = self.compose_node
         self.loader.construct_mapping = self.construct_mapping
@@ -125,7 +123,7 @@ class JobParser(object):
 
         self.context['default_action_duration'] = Timeout.default_duration()
         self.context['default_test_duration'] = Timeout.default_duration()
-        job = Job(data)
+        job = Job(job_id, socket_addr, data)
         counts = {}
         job.device = device
         job.parameters['output_dir'] = output_dir
@@ -163,7 +161,7 @@ class JobParser(object):
                 else:
                     # May only end up being used for submit as other actions all need strategy method objects
                     # select the specific action of this class for this job
-                    action = Action.find(name)()
+                    action = Action.select(name)()
                     action.job = job
                     # put parameters (like rootfs_type, results_dir) into the actions.
                     if type(action_data[name]) == dict:

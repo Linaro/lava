@@ -38,4 +38,6 @@ class ConnectToSerial(Action):
 
     def run(self, connection, args=None):
         telnet = ShellCommand(self.job.device['connection_command'], self.timeout)
-        return Connection(self.job, telnet)
+        connection = Connection(self.job, telnet)
+        connection = super(ConnectToSerial, self).run(connection, args)
+        return connection

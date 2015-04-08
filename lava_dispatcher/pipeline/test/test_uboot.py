@@ -35,7 +35,11 @@ from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.utils.strings import substitute
-from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR, SHUTDOWN_MESSAGE
+from lava_dispatcher.pipeline.utils.constants import (
+    DISPATCHER_DOWNLOAD_DIR,
+    SHUTDOWN_MESSAGE,
+    BOOT_MESSAGE,
+)
 
 
 class Factory(object):  # pylint: disable=too-few-public-methods
@@ -44,12 +48,12 @@ class Factory(object):  # pylint: disable=too-few-public-methods
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
-    def create_bbb_job(self, filename, output_dir=None):  # pylint: disable=no-self-use
+    def create_bbb_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(kvm_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, output_dir=output_dir)
         return job
 
 
@@ -107,6 +111,9 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn('u-boot', job.device['actions']['boot']['methods'])
+        params = job.device['actions']['boot']['methods']['u-boot']['parameters']
+        boot_message = params.get('boot_message', BOOT_MESSAGE)
+        self.assertIsNotNone(boot_message)
         for action in job.pipeline.actions:
             action.validate()
             if isinstance(action, UBootAction):
@@ -145,7 +152,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
             }
         }
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
-        job = Job(parameters)
+        job = Job(4212, None, parameters)
         job.device = device
         pipeline = Pipeline(job=job, parameters=parameters['actions']['boot'])
         job.set_pipeline(pipeline)
@@ -269,7 +276,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         sample_job_data = open(sample_job_file)
-        job = job_parser.parse(sample_job_data, cubie)
+        job = job_parser.parse(sample_job_data, cubie, 4212, None, output_dir='/tmp/')
         job.validate()
         u_boot_media = job.pipeline.actions[1].internal_pipeline.actions[0]
         self.assertIsInstance(u_boot_media, UBootSecondaryMedia)
