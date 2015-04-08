@@ -43,7 +43,7 @@ Creating master images can be done by using the
 
 ::
 
-    bzr branch lp:lava-master-image-scripts
+    git clone https://git.linaro.org/lava/lava-master-image-scripts.git
     cd lava-master-image-scripts
     ./lava-create-master <board>
 
