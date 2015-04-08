@@ -283,7 +283,11 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             # The ci-test does not set the default logging class
             if isinstance(action.logger, YAMLLogger):
                 action.logger.setMetadata(action.level, action.name)
-            msg = 'start: %s %s (max %ds)' % (action.level, action.name, action.timeout.duration)
+            # Add action start timestamp to the log message
+            msg = {'msg': 'start: %s %s (max %ds)' % (action.level,
+                                                      action.name,
+                                                      action.timeout.duration),
+                   'ts': datetime.datetime.utcnow()}
             if self.parent is None:
                 action.logger.info(msg)
             else:
@@ -303,7 +307,10 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     action.logger.exception(exc)
                     raise RuntimeError(exc)
                 action.elapsed_time = time.time() - start
-                msg = "%s duration: %.02f" % (action.name, action.elapsed_time)
+                # Add action end timestamp to the log message
+                msg = {'msg': "%s duration: %.02f" % (action.name,
+                                                      action.elapsed_time),
+                       'ts': datetime.datetime.utcnow()}
                 if self.parent is None:
                     action.logger.info(msg)
                 else:

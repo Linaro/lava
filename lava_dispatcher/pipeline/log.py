@@ -19,6 +19,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import datetime
 import logging
 import yaml
 import zmq
@@ -70,8 +71,16 @@ class YAMLLogger(logging.Logger):
             self.handler.setMetadata(level, name)
 
     def log_message(self, level, level_name, message, *args, **kwargs):
-        if message:
-            self._log(level, yaml.dump([{level_name: message}])[:-1], args, kwargs)
+        # If the received message is a dictionary then we look for specific log
+        # parameters such as timestamp, else we assume the log message is a
+        # string and dump the message.
+        if isinstance(message, dict) and 'ts' in message:
+                self._log(level, yaml.dump([{'ts': message['ts'],
+                                             level_name: message['msg']}])[:-1],
+                          args, kwargs)
+        else:
+            self._log(level, yaml.dump([{level_name: message}])[:-1], args,
+                      kwargs)
 
     def exception(self, exc, *args, **kwargs):
         self.log_message(logging.ERROR, 'exception', exc, *args, **kwargs)
