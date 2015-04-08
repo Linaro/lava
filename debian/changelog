@@ -1,3 +1,10 @@
+lava-dispatcher (2015.04-1) experimental; urgency=medium
+
+  * New production release
+  * Includes new slave daemon for refactoring support.
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 08 Apr 2015 10:33:46 +0100
+
 lava-dispatcher (2015.03-1) experimental; urgency=medium
 
   * New production release.
