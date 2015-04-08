@@ -457,14 +457,15 @@ def get_filter_testruns(user, filter, prefetch_related=[], limit=100,
     if test_run_attributes_ids:
         testruns = testruns.filter(id__in=test_run_attributes_ids)
 
+    # Set to False only if build number attr. is None or empty.
+    use_build_number = bool(filter.build_number_attribute)
     if image_chart_filter:
         testruns = testruns.filter(
             test__imagecharttest__image_chart_filter=image_chart_filter)
         use_build_number = image_chart_filter.image_chart.is_build_number and \
-            filter.build_number_attribute
+            use_build_number
     elif filter.tests.all():
         testruns = testruns.filter(test__testrunfilters__filter=filter)
-        use_build_number = filter.build_number_attribute
 
     if use_build_number:
         if descending:
@@ -508,14 +509,18 @@ def get_filter_testresults(user, filter, prefetch_related=[], limit=50,
         testresults = testresults.filter(
             test_run__id__in=test_run_attributes_ids)
 
+    # Set to False only if build number attr. is None or empty.
+    use_build_number = bool(filter.build_number_attribute)
     if image_chart_filter:
         testresults = testresults.filter(
             test_case__imagecharttestcase__image_chart_filter=image_chart_filter)
+        use_build_number = image_chart_filter.image_chart.is_build_number and \
+            use_build_number
     elif filter.testcases.all():
         testresults = testresults.filter(
             test_case__test__testrunfilters__filter=filter)
 
-    if filter.build_number_attribute:
+    if use_build_number:
         if descending:
             ob = ['-build_number']
         else:
