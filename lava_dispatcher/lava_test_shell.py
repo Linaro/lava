@@ -263,6 +263,18 @@ def _get_test_results(test_run_dir, testdef, stdout, err_log):
     pattern = None
     pattern_used = None
 
+    return_code = read_content(os.path.join(test_run_dir, 'install_return_code'), ignore_missing=True)
+    if return_code:
+        code = int(return_code)
+        res = {}
+        res['test_case_id'] = 'lava-test-shell-install'
+        if code == 0:
+            res['result'] = 'pass'
+        else:
+            res['result'] = 'fail'
+        res['message'] = 'exit code ' + return_code
+        results_from_log_file.append(res)
+
     if 'parse' in testdef:
         if 'fixupdict' in testdef['parse']:
             fixupdict.update(testdef['parse']['fixupdict'])
@@ -413,12 +425,20 @@ def get_testdef_obj_with_uuid(testdef_objs, uuid):
     return (td for td in testdef_objs if td.uuid == uuid).next()
 
 
-def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdef_objs, err_log):
+def _get_test_run(test_run_dir, testdef_objs, err_log):
     now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
     testdef = read_content(os.path.join(test_run_dir, 'testdef.yaml'))
     stdout = read_content(os.path.join(test_run_dir, 'stdout.log'))
     uuid = read_content(os.path.join(test_run_dir, 'analyzer_assigned_uuid'))
+
+    cpuinfo = read_content(os.path.join(test_run_dir, 'hwcontext/cpuinfo.txt'), ignore_missing=True)
+    meminfo = read_content(os.path.join(test_run_dir, 'hwcontext/meminfo.txt'), ignore_missing=True)
+    hwcontext = _get_hw_context(cpuinfo, meminfo)
+
+    build = read_content(os.path.join(test_run_dir, 'swcontext/build.txt'), ignore_missing=True)
+    pkginfo = read_content(os.path.join(test_run_dir, 'swcontext/pkgs.txt'), ignore_missing=True)
+
     attachments = _get_run_attachments(test_run_dir, testdef, stdout)
     attributes = _attributes_from_dir(os.path.join(test_run_dir, 'attributes'))
 
@@ -460,19 +480,12 @@ def get_bundle(results_dir, testdef_objs, err_log):
     the LAVA dashboard
     """
     testruns = []
-    cpuinfo = read_content(os.path.join(results_dir, 'hwcontext/cpuinfo.txt'), ignore_missing=True)
-    meminfo = read_content(os.path.join(results_dir, 'hwcontext/meminfo.txt'), ignore_missing=True)
-    hwctx = _get_hw_context(cpuinfo, meminfo)
-
-    build = read_content(os.path.join(results_dir, 'swcontext/build.txt'), ignore_missing=True)
-    pkginfo = read_content(os.path.join(results_dir, 'swcontext/pkgs.txt'), ignore_missing=True)
-
     for test_run_name, test_run_path in _directory_names_and_paths(results_dir):
         if test_run_name in ('hwcontext', 'swcontext'):
             continue
         if os.path.isdir(test_run_path):
             try:
-                testruns.append(_get_test_run(test_run_path, hwctx, build, pkginfo, testdef_objs, err_log))
+                testruns.append(_get_test_run(test_run_path, testdef_objs, err_log))
             except KeyboardInterrupt:
                 raise KeyboardInterrupt
             except:

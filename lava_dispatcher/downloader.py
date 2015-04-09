@@ -71,11 +71,14 @@ def _http_stream(url, proxy=None, cookies=None):
             url.params,
             url.query,
             url.fragment])
+
+        url_quoted = urllib2.quote(url_string, safe=":/")
+
         passmgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        passmgr.add_password(None, url_string, url.username, url.password)
+        passmgr.add_password(None, url_quoted, url.username, url.password)
         handlers.append(urllib2.HTTPBasicAuthHandler(passmgr))
     else:
-        url_string = url.geturl()
+        url_quoted = urllib2.quote(url.geturl(), safe=":/")
 
     opener = urllib2.build_opener(*handlers)
 
@@ -83,7 +86,6 @@ def _http_stream(url, proxy=None, cookies=None):
         opener.addheaders.append(('Cookie', cookies))
 
     try:
-        url_quoted = urllib2.quote(url_string, safe=":/")
         resp = opener.open(url_quoted, timeout=30)
         yield resp
     finally:
