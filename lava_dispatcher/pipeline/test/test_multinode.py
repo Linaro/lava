@@ -31,7 +31,7 @@ from lava_dispatcher.pipeline.actions.boot.qemu import BootQemuRetry, CallQemuAc
 from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.actions.test.multinode import MultinodeTestAction
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
-from lava_dispatcher.pipeline.action import TestError, JobError
+from lava_dispatcher.pipeline.action import TestError, JobError, Timeout
 from lava_dispatcher.pipeline.utils.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
 
 # pylint: disable=protected-access,superfluous-parens
@@ -158,21 +158,42 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertIsNotNone(testshell)
         testshell.validate()
         self.assertIsNotNone(testshell.protocols)
+        self.assertEqual(testshell.timeout.duration, 30)
         self.assertIn(MultinodeProtocol.name, [protocol.name for protocol in testshell.protocols])
-        protocol_names = [protocol for protocol in testshell.protocols if protocol in testshell.parameters]
+        protocol_names = [protocol.name for protocol in testshell.protocols if protocol in testshell.protocols]
+        self.assertNotEqual(protocol_names, [])
         protocols = [protocol for protocol in testshell.job.protocols if protocol.name in protocol_names]
+        self.assertNotEqual(protocols, [])
         for protocol in protocols:
             protocol.debug_setup()
             if isinstance(protocol, MultinodeProtocol):
                 self.assertIsNotNone(protocol.base_message)
+            else:
+                self.fail("Unexpected protocol")
             self.assertIs(True, protocol.valid)
         self.assertIsNone(self.coord.dataReceived({}))
+
+    def test_multinode_timeout(self):
+        """
+        Test the protocol timeout is assigned to the action
+        """
+        testshell = [action for action in self.client_job.pipeline.actions if isinstance(action, MultinodeTestAction)][0]
+        testshell.validate()
+        self.assertIn(30, [p.poll_timeout.duration for p in testshell.protocols])
+        self.assertIn('minutes', testshell.parameters['lava-multinode']['timeout'])
+        self.assertEqual(10, testshell.parameters['lava-multinode']['timeout']['minutes'])
+        self.assertEqual(
+            testshell.signal_director.base_message['timeout'],
+            Timeout.parse(testshell.parameters['lava-multinode']['timeout'])
+        )
 
     def test_signal_director(self):
         """
         Test the setup of the Multinode signal director
         """
         testshell = [action for action in self.server_job.pipeline.actions if isinstance(action, MultinodeTestAction)][0]
+        testshell.validate()
+        self.assertEqual(30, testshell.timeout.duration)
         self.assertIsNotNone(testshell.signal_director)
         self.assertIsNotNone(testshell.signal_director.protocol)
         self.assertIs(type(testshell.protocols), list)

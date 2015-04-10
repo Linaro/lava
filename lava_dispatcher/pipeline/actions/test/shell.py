@@ -232,6 +232,12 @@ class TestShellAction(TestAction):
             self.logger = logging.getLogger('dispatcher')
             self.test_uuid = None
 
+        def setup(self, parameters):
+            """
+            Allows the parent Action to pass extra data to a customised SignalDirector
+            """
+            pass
+
         def signal(self, name, params):
             handler = getattr(self, '_on_' + name.lower(), None)
             if not handler and self._cur_handler:
