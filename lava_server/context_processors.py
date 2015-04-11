@@ -60,6 +60,6 @@ def openid_available(request):
 
 def ldap_available(request):
     ldap_enabled = "django_auth_ldap.backend.LDAPBackend" in settings.AUTHENTICATION_BACKENDS
-    login_message_ldap = getattr(settings, "LOGIN_MESSAGE_LDAP")
+    login_message_ldap = getattr(settings, "LOGIN_MESSAGE_LDAP", "")
     return {"ldap_available": ldap_enabled,
             "login_message_ldap": login_message_ldap}
