@@ -148,12 +148,6 @@ if AUTH_LDAP_SERVER_URI:
     # read any LDAP login message to use from the settings.conf
     LOGIN_MESSAGE_LDAP = distro_settings.get_setting("LOGIN_MESSAGE_LDAP", "")
 
-    # Enable logging for LDAP auth
-    import logging
-    logger = logging.getLogger('django_auth_ldap')
-    logger.addHandler(logging.StreamHandler())
-    logger.setLevel(logging.DEBUG)
-
 # Load extensions
 loader.contribute_to_settings(locals(), distro_settings)
 

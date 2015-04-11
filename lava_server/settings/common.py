@@ -158,27 +158,9 @@ AUTHENTICATION_BACKENDS = (
     # Atlassian Crowd auth.
     # 'crowdrest.backend.CrowdRestBackend',
 
-    # Uncomment LDAPBackend and comment OpenIDBackend to enable LDAP auth and
-    # make sure LDAP auth parameters are set properly.
-    # 'django_auth_ldap.backend.LDAPBackend',
-
     'django_openid_auth.auth.OpenIDBackend',
     'django.contrib.auth.backends.ModelBackend',
 )
-
-# Uncomment the following lines to configure LDAP auth parameters. For details
-# on configuration parameters,
-# see: https://pythonhosted.org/django-auth-ldap/authentication.html
-# AUTH_LDAP_SERVER_URI = "ldap://yourldapservername"
-# AUTH_LDAP_BIND_DN = ""
-# AUTH_LDAP_BIND_PASSWORD = ""
-# AUTH_LDAP_USER_DN_TEMPLATE = "uid=%(user)s,ou=users,dc=example,dc=com"
-
-# Uncomment the following lines, if you need logging enabled for LDAP auth.
-# import logging
-# logger = logging.getLogger('django_auth_ldap')
-# logger.addHandler(logging.StreamHandler())
-# logger.setLevel(logging.DEBUG)
 
 OPENID_CREATE_USERS = True
 OPENID_LAUNCHPAD_TEAMS_MAPPING_AUTO = False
