@@ -46,9 +46,9 @@ actions:
           commands:
 {{ base_uboot_commands }}
 {{ base_uboot_addr_commands }}
-{{ base_ftp_commands }}
+{{ base_tftp_commands }}
           - setenv bootargs 'console={{ console_device }},{{ baud_rate }} debug rw root=/dev/ram0 ip=dhcp'
-{{ base_uboot_bootcmd }}
+{{ base_tftp_uboot_bootcmd }}
         # method specific stanzas
         usb:
           commands:
@@ -60,7 +60,7 @@ actions:
           - setenv loadinitrd 'load usb {ROOT_PART} ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
           - setenv loadfdt 'load usb {ROOT_PART} ${fdt_addr_r} {DTB}'
           - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root={ROOT} ip=dhcp'
-{{ base_uboot_bootcmd }}
+{{ base_tftp_uboot_bootcmd }}
         sata:
           commands:
           - scsi scan
