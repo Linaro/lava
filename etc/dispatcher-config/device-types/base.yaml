@@ -47,7 +47,7 @@ commands:
 
 {% block test_image_prompts %}
 test_image_prompts:
-  - '\(initramfs\)'
+  - '(initramfs)'
   - 'linaro-test'
   - '/ #'
   - 'root@android'
