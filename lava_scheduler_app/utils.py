@@ -576,6 +576,7 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
     # the list of devices cannot be definite here, only after devices have been reserved
 
     copies = [
+        'context',
         'job_name',
         'timeouts',
         'priority',

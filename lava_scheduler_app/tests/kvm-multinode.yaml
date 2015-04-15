@@ -82,3 +82,6 @@ actions:
         role:
         - client
         - server
+
+context:
+  arch: amd64

@@ -28,7 +28,7 @@ protocols:
 #      kvm02: server
     group_size: 2
     sub_id: 0
-    timeouts:
+    timeout:
       seconds: 60
 
 priority: medium
@@ -64,3 +64,6 @@ actions:
     - submit_results:
         stream: /anonymous/codehelp/
         role: client
+
+context:
+  arch: amd64
