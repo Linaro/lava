@@ -51,7 +51,7 @@ class UserImageReportTable(LavaTable):
     view.orderable = False
 
     remove = tables.TemplateColumn('''
-    <a href="{{ record.get_absolute_url }}/+delete">remove</a>
+    <a href="{{ record.get_absolute_url }}/+delete" onclick="return confirm('Are you sure you want to delete this Image Report?');">remove</a>
     ''')
     remove.orderable = False
 
