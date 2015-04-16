@@ -152,7 +152,7 @@ class QEMUTarget(Target):
 
         qemu_options = ''
 
-        if self._kernel:
+        if self._kernel and not self._firmware:
             qemu_options += ' -kernel %s' % self._kernel
             if self._sd_image is None:
                 kernel_args = ' '.join(self._load_boot_cmds(default='boot_cmds_ramdisk'))
