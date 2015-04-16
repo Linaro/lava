@@ -134,7 +134,11 @@
 {% block scripts %}
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script>
 <script>
-  $("#charts").sortable();
+  $("#charts").sortable({
+    cursor: "move",
+    placeholder: "sortable-placeholder",
+    forcePlaceholderSize: true
+  });
   $("#charts").disableSelection();
 
   $("#charts").on("sortstop", function(event, ui) {
