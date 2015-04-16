@@ -608,6 +608,11 @@ class DashboardAPI(ExposedAPI):
             else:
                 bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
             for bundle in bundle_stream.bundles.all().order_by("uploaded_on"):
+                try:
+                    content_size = bundle.content.size
+                except OSError:
+                    # Bug 713 left no file content for specific bundles.
+                    content_size = 0
                 job_id = 'NA'
                 try:
                     job = TestJob.objects.get(_results_bundle=bundle)
@@ -619,7 +624,7 @@ class DashboardAPI(ExposedAPI):
                     'uploaded_on': bundle.uploaded_on,
                     'content_filename': bundle.content_filename,
                     'content_sha1': bundle.content_sha1,
-                    'content_size': bundle.content.size,
+                    'content_size': content_size,
                     'is_deserialized': bundle.is_deserialized,
                     'associated_job': job_id
                 })
