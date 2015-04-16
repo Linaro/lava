@@ -7,6 +7,7 @@ LAVA Manual
    :maxdepth: 2
 
    overview.rst
+   glossary.rst
    installation.rst
    writing-tests.rst
    writing-multinode.rst
@@ -18,7 +19,6 @@ LAVA Manual
    vm-groups.rst
    process.rst
    faq.rst
-   glossary.rst
 
 LAVA Test Developer Guide
 #########################
