@@ -135,6 +135,7 @@ class BaseDriver(object):
         return self._default_boot_cmds
 
     def boot(self, boot_cmds=None):
+        logging.info("In Base Class boot()")
         if self.__boot_image__ is None:
             raise CriticalError('Deploy action must be run first')
         if self._kernel is not None:
@@ -256,6 +257,11 @@ class BaseDriver(object):
             return self.context.spawn(cmd, timeout=60)
         else:
             _call(self.context, cmd, ignore_failure, timeout)
+
+    def dummy_deploy(self, target_type, scratch_dir):
+        self.target_type = target_type
+        self.__boot_image__ = target_type
+        self.scratch_dir = scratch_dir
 
     @property
     def working_dir(self):
@@ -460,3 +466,40 @@ class tshark(fastboot):
 
     def erase_boot(self):
         pass
+
+
+class samsung_note(fastboot):
+
+    def __init__(self, device):
+        super(samsung_note, self).__init__(device)
+        self._isbooted = True
+
+    def boot(self, boot_cmds=None):
+        pass
+
+    def erase_boot(self):
+        pass
+
+    def on(self):
+        return True
+
+    def in_fastboot(self):
+        return False
+
+    def _get_partition_mount_point(self, partition):
+        lookup = {
+            self.config.data_part_android_org: '/data',
+            self.config.sys_part_android_org: '/system',
+        }
+        return lookup[partition]
+
+    def connect(self):
+        if self.target_type == 'android':
+            self.adb('wait-for-device')
+            logging.debug("Waiting 30 seconds for OS to properly come up")
+            sleep(30)
+            proc = self.adb('shell', spawn=True)
+        else:
+            raise CriticalError('This device only supports Android!')
+
+        return proc

@@ -408,6 +408,9 @@ class LavaClient(object):
         self.target_device.deploy_linaro_kernel(kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware,
                                                 bl1, bl2, bl31, rootfstype, bootloadertype, target_type)
 
+    def dummy_deploy(self, target_type):
+        self.target_device.dummy_deploy(target_type)
+
     @contextlib.contextmanager
     def runner(self):
         """

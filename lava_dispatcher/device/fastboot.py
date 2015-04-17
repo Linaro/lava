@@ -76,7 +76,7 @@ class FastbootTarget(Target):
             try:
                 self.driver.deploy_linaro_kernel(kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader,
                                                  firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
-                                                 self._target_type, self.scratch_dir)
+                                                 self._target_type)
                 deployed = True
             except (subprocess.CalledProcessError, pexpect.TIMEOUT) as e:
                 msg = "Deployment failed: %s" % e
@@ -117,6 +117,13 @@ class FastbootTarget(Target):
             msg = "Deployment Failed"
             logging.critical(msg)
             raise CriticalError(msg)
+
+    def dummy_deploy(self, target_type):
+        logging.info("Doing dummy deployment %s" % target_type)
+        self._image_deployment = True
+        self._target_type = target_type
+        self.deployment_data = deployment_data.get(self._target_type)
+        self.driver.dummy_deploy(target_type, self.scratch_dir)
 
     def get_device_version(self):
         # this is tricky, because fastboot does not have a visible version

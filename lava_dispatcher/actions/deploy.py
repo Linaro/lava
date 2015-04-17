@@ -300,3 +300,4 @@ class cmd_dummy_deploy(BaseAction):
     def run(self, target_type):
         device = self.client.target_device
         device.deployment_data = deployment_data.get(target_type)
+        self.client.dummy_deploy(target_type)

@@ -222,6 +222,9 @@ class Target(object):
                              bl31, rootfstype, bootloadertype, target_type):
         raise NotImplementedError('deploy_linaro_kernel')
 
+    def dummy_deploy(self, target_type):
+        pass
+
     def power_off(self, proc):
         if proc is not None:
             proc.close()
