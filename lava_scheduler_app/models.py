@@ -1018,7 +1018,7 @@ def _create_pipeline_job(job_data, user, taglist, device=None, device_type=None,
                   target_group=target_group,
                   description=job_data['job_name'],
                   health_check=False,
-                  user=user,
+                  user=user, is_public=True,
                   is_pipeline=True)
     job.save()
     # need a valid job before the tags can be assigned, then it needs to be saved again.
