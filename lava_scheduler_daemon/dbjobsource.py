@@ -160,10 +160,11 @@ class DatabaseJobSource(object):
         """
         Checks which devices need a health check job and submits the needed
         health checks.
+        Looping is only active once a device is offline.
         """
 
-        # FIXME: check if the health check is a pipeline YAML job
-        for device in Device.objects.filter(status=Device.IDLE).filter(is_pipeline=False):
+        for device in Device.objects.filter(
+                Q(status=Device.IDLE) | Q(status=Device.OFFLINE, health_status=Device.HEALTH_LOOPING)):
             if not device.device_type.health_check_job:
                 run_health_check = False
             elif device.health_status == Device.HEALTH_UNKNOWN:
@@ -431,6 +432,8 @@ class DatabaseJobSource(object):
                         new_device_status = Device.OFFLINE  # offlining job is complete.
                 elif job.status == TestJob.COMPLETE:
                     device.health_status = Device.HEALTH_PASS
+                    if old_device_status == Device.RUNNING:
+                        new_device_status = Device.IDLE
             self.logger.debug("new device health status %s" % Device.HEALTH_CHOICES[device.health_status][1])
 
         bundle_file = os.path.join(job.output_dir, 'result-bundle')

@@ -739,6 +739,7 @@ class Device(RestrictedResource):
             user = User.objects.get(username='lava-health')
             job_data = simplejson.loads(job_json)
             job_data['target'] = self.hostname
+            job_data['health-check'] = True
             job_json = simplejson.dumps(job_data)
             try:
                 return TestJob.from_json_and_user(job_json, user, True)
