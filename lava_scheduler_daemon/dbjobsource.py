@@ -60,6 +60,9 @@ def find_device_for_job(job, device_list):
     non-pipeline device for a pipeline job. Pipeline devices are explicitly
     allowed to run non-pipeline jobs..
     """
+    if job.dynamic_connection:
+        # secondary connection, the "host" has a real device
+        return None
     for device in device_list:
         if device.current_job:
             if device.device_type != job.requested_device_type:

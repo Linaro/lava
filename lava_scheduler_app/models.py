@@ -55,6 +55,10 @@ class DevicesUnavailableException(UserWarning):
     """Error raised when required number of devices are unavailable."""
 
 
+class SubmissionException(UserWarning):
+    """ Error raised if the submission is itself invalid. """
+
+
 class Tag(models.Model):
 
     name = models.SlugField(unique=True)
@@ -1042,13 +1046,15 @@ def _check_submit_to_device(device_list, user):
     if type(device_list) != list or len(device_list) == 0:
         # logic error
         return allow
+    device_type = None
     for device in device_list:
+        device_type = device.device_type
         if device.status != Device.RETIRED and device.can_submit(user):
             allow.append(device)
     if len(allow) == 0:
         raise DevicesUnavailableException(
-            "No devices of the requested type are currently available to user %s"
-            % user)
+            "No devices of type %s are currently available to user %s"
+            % (device_type, user))
     return allow
 
 
@@ -1128,13 +1134,15 @@ def _check_device_types(user):
 
 def _create_pipeline_job(job_data, user, taglist, device=None, device_type=None, target_group=None):
 
-    if not device and not device_type:
-        # programming error
-        return None
-
     if type(job_data) is not dict:
         # programming error
         raise RuntimeError("Invalid job data %s" % job_data)
+
+    if 'connection' in job_data:
+        device_type = None
+    elif not device and not device_type:
+        # programming error
+        return None
 
     if not taglist:
         taglist = []
@@ -1217,6 +1225,14 @@ def _pipeline_protocols(job_data, user):
                     'tags': []
                 }
                 params = job_data['protocols']['lava-multinode']['roles'][role]
+                if 'device_type' in params and 'connection' in params:
+                    raise SubmissionException(
+                        "lava-multinode protocol cannot support device_type and connection for a single role.")
+                if 'device_type' not in params and 'connection' in params:
+                    # always allow support for dynamic connections which have no devices.
+                    if 'host_role' not in params:
+                        raise SubmissionException("connection specified without a host_role")
+                    continue
                 device_type = _get_device_type(user, params['device_type'])
                 role_dictionary[role]['device_type'] = device_type
 
@@ -1250,21 +1266,25 @@ def _pipeline_protocols(job_data, user):
         # returns a dict indexed by role, containing a list of jobs
         job_dictionary = utils.split_multinode_yaml(job_data, target_group)
 
+        if not job_dictionary:
+            raise SubmissionException("Unable to split multinode job submission.")
+
         # structural changes done, now create the testjob.
-        sub_id = 0
         parent = None  # track the zero id job as the parent of the group in the sub_id text field
         for role, role_dict in role_dictionary.items():
             for node_data in job_dictionary[role]:
                 job = _create_pipeline_job(
                     node_data, user, target_group=target_group,
-                    taglist=role_dict['tags'], device_type=role_dict['device_type'])
+                    taglist=role_dict['tags'],
+                    device_type=role_dict.get('device_type', None))
+                if not job:
+                    raise SubmissionException("Unable to create job for %s" % node_data)
                 if not parent:
                     parent = job.id
-                job.sub_id = "%d.%d" % (parent, sub_id)
+                job.sub_id = "%d.%d" % (parent, node_data['protocols']['lava-multinode']['sub_id'])
                 job.multinode_definition = yaml.dump(job_data)
                 job.save()
                 job_object_list.append(job)
-                sub_id += 1
 
         return job_object_list
 
@@ -1373,11 +1393,25 @@ class TestJob(RestrictedResource):
 
     health_check = models.BooleanField(default=False)
 
-    # Only one of these two should be non-null.
+    # Only one of requested_device, requested_device_type or dynamic_connection
+    # should be non-null. requested_device is not supported for pipeline jobs,
+    # except health checks. Dynamic connections have no device.
     requested_device = models.ForeignKey(
         Device, null=True, default=None, related_name='+', blank=True)
     requested_device_type = models.ForeignKey(
         DeviceType, null=True, default=None, related_name='+', blank=True)
+
+    @property
+    def dynamic_connection(self):
+        """
+        Secondary connection detection - pipeline & multinode only.
+        (Enhanced version of vmgroups.)
+        A Primary connection needs a real device (persistence).
+        """
+        if not self.is_pipeline or not self.is_multinode or not self.definition:
+            return False
+        job_data = yaml.load(self.definition)
+        return 'connection' in job_data
 
     tags = models.ManyToManyField(Tag, blank=True)
 
@@ -2126,7 +2160,29 @@ class TestJob(RestrictedResource):
             return False
 
     @property
+    def lookup_worker(self):
+        if not self.is_multinode:
+            return None
+        try:
+            data = yaml.load(self.definition)
+        except yaml.YAMLError:
+            return None
+        if 'host_role' not in data:
+            return None
+        parent = None
+        # the protocol requires a count of 1 for any role specified as a host_role
+        for worker_job in self.sub_jobs_list:
+            if worker_job.device_role == data['host_role']:
+                parent = worker_job
+                break
+        if not parent or not parent.actual_device:
+            return None
+        return parent.actual_device.worker_host
+
+    @property
     def is_vmgroup(self):
+        if self.is_pipeline:
+            return False
         if self.vm_group:
             return True
         else:
@@ -2166,7 +2222,7 @@ class TestJob(RestrictedResource):
             return self.definition
 
     @property
-    def is_ready_to_start(self):
+    def is_ready_to_start(self):  # FIXME for secondary connections
         def device_ready(job):
             """
             job.actual_device is not None is insufficient.

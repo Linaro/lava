@@ -32,14 +32,14 @@ from subprocess import Popen
 # Daemonise support for lava-server daemons, copied from
 # lava-coordinator.
 
-# pylint: disable=superfluous-parens,invalid-name
+# pylint: disable=superfluous-parens,invalid-name,logging-not-lazy
 child = None
 
 
 def signal_handler(sig, frame):  # pylint: disable=unused-argument
     global child  # pylint: disable=global-statement
     try:
-        logging.info("Closing daemon and child %d", child.pid)
+        logging.info("Closing daemon and child %d" % child.pid)
         child.send_signal(sig)
         child = None
         sys.exit(os.EX_OK)

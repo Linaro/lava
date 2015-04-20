@@ -24,11 +24,20 @@ parameters:
 actions:
   deploy:
     methods:
-      tftp
-      usb
+      tftp:
+      usb:
+      ssh:
+        options:
+{{ ssh_options }}
+        host: {{ ssh_host|default(localhost) }}
+        identity_file: {{ ssh_identity_file }}
   boot:
+    connections:
+      serial:
+      ssh:
     methods:
       kexec:
+      ssh:
       u-boot:
         parameters:
           bootloader_prompt: {{ bootloader_prompt|default('U-Boot') }}

@@ -608,8 +608,10 @@ def get_restricted_job(user, pk):
         device_type = job.actual_device.device_type
     elif job.requested_device:
         device_type = job.requested_device.device_type
-    else:
+    elif job.requested_device_type:
         device_type = job.requested_device_type
+    else:
+        return job
     if len(device_type.devices_visible_to(user)) == 0:
             raise Http404()
     if not job.is_accessible_by(user) and not user.is_superuser:
@@ -1370,8 +1372,8 @@ def job_description_yaml(request, pk):
 def job_definition_plain(request, pk):
     job = get_restricted_job(request.user, pk)
     response = HttpResponse(job.display_definition, content_type='text/plain')
-    response['Content-Disposition'] = "attachment; filename=job_%d.json" % \
-        job.id
+    filename = "job_%d.yaml" % job.id if job.is_pipeline else "job_%d.json" % job.id
+    response['Content-Disposition'] = "attachment; filename=%s" % filename
     return response
 
 
@@ -1418,8 +1420,9 @@ def multinode_job_definition(request, pk):
 def multinode_job_definition_plain(request, pk):
     job = get_restricted_job(request.user, pk)
     response = HttpResponse(job.multinode_definition, content_type='text/plain')
+    filename = "job_%d.yaml" % job.id if job.is_pipeline else "job_%d.json" % job.id
     response['Content-Disposition'] = \
-        "attachment; filename=multinode_job_%d.json" % job.id
+        "attachment; filename=multinode_%s" % filename
     return response
 
 

@@ -583,7 +583,8 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
         'priority',
     ]
     skip = ['role', 'roles']
-    maps = ['device_type', 'count']
+    scheduling = ['device_type', 'connection', 'host_role']  # top level values to be preserved
+    maps = ['count']  # elements to be matched but not listed at top level.
 
     roles = {}
     actions = {}
@@ -591,16 +592,24 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
 
     # FIXME: check structure using a schema
 
-    group_size = len(submission['protocols']['lava-multinode']['roles'].keys())
+    role_data = submission['protocols']['lava-multinode']['roles']
+    group_size = sum(
+        [role_data[count]['count'] for count in role_data if 'count' in role_data[count]]
+    )
 
     # populate the lava-multinode protocol metadata
     for role, value in submission['protocols']['lava-multinode']['roles'].iteritems():
         roles[role] = {}
         for item in copies:
-            roles[role][item] = submission[item]
+            if item in submission:
+                roles[role][item] = submission[item]
         for name in maps:
-            roles[role][name] = value[name]
-        tags = set(value) - set(maps)
+            if name in value:
+                roles[role][name] = value[name]
+        for name in scheduling:
+            if name in value:
+                roles[role][name] = value[name]
+        tags = set(value) - set(maps) - set(scheduling)
         params = {
             'target_group': target_group,
             'role': role,
@@ -616,6 +625,10 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
     for role in roles:
         for action in submission['actions']:
             for key, value in action.items():
+                try:
+                    value['role']
+                except (KeyError, TypeError):
+                    raise models.SubmissionException("Invalid YAML - check for consistent use of whitespace indents.")
                 if role in value['role']:
                     actions.setdefault(role, {'actions': []})
                     actions[role]['actions'].append({copy.deepcopy(key): copy.deepcopy(value)})
@@ -635,12 +648,30 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
 
     # jobs dictionary lists the jobs per role,
     jobs = {}
+    count = 0
+    # check the count of the host_roles
+    check_count = None
+    for role in roles:
+        if 'host_role' in roles[role]:
+            check_count = roles[role]['host_role']
+    for role in roles:
+        if role == check_count:
+            if roles[role]['count'] != 1:
+                raise models.SubmissionException('The count for a role designated as a host_role must be 1.')
     for role in roles:
         jobs[role] = []
-        for _ in range(0, roles[role]['count']):
+        for sub in range(0, roles[role]['count']):
             job = {}
             job.update(actions[role])
             job.update(roles[role])
-            del job['count']
-            jobs[role].append(job)
+            # only here do multiple jobs for the same role differ
+            params = job['protocols']['lava-multinode']
+            params.update({'sub_id': sub + count})
+            job['protocols']['lava-multinode'].update(params)
+            del params
+            for item in maps:
+                if item in job:
+                    del job[item]
+            jobs[role].append(copy.deepcopy(job))
+        count += 1
     return jobs

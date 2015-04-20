@@ -27,6 +27,33 @@
 
 {% set base_nfsroot_args = ("nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr")%}
 
+{% set ssh_options = (
+"          - '-o'
+          - 'Compression=yes'
+          - '-o'
+          - 'UserKnownHostsFile=/dev/null'
+          - '-o'
+          - 'PasswordAuthentication=no'
+          - '-o'
+          - 'StrictHostKeyChecking=no'
+          - '-o'
+          - 'LogLevel=FATAL'
+          - '-l'
+          - 'root '
+          - '-p'
+          - 22"
+) %}
+
+{% set ssh_identity_file = 'device/dynamic_vm_keys/lava' %}
+
+{% set schroot_options = (
+"          - 'schroot'
+          - '-d'
+          - '/'
+          - '-u'
+          - 'root'"
+) %}
+
 {% block commands %}
 {% if connection_command %}
 commands:

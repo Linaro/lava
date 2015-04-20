@@ -16,7 +16,6 @@ from django.db import models
 from django_testscenarios.ubertest import TestCase
 from django.contrib.auth.models import Group, Permission, User
 from collections import OrderedDict
-from lava_scheduler_app.utils import jinja_template_path
 from lava_scheduler_app.utils import jinja_template_path, split_multinode_yaml
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
 from lava_dispatcher.pipeline.device import PipelineDevice
