@@ -317,14 +317,18 @@ class SchedulerAPI(ExposedAPI):
         This function returns an XML-RPC structures of job details, provided
         the user is authenticated with an username and token.
         """
+        if not self.user:
+            raise xmlrpclib.Fault(
+                401, "Authentication with user and token required for this API.")
+        if not job_id:
+            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not specified.")
 
         try:
             job = get_restricted_job(self.user, job_id)
             job.status = job.get_status_display()
         except PermissionDenied:
             raise xmlrpclib.Fault(
-                401, "Authentication with user and token required for job %s" %
-                job_id)
+                401, "Permission denied for user to job %s" % job_id)
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
