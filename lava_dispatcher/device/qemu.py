@@ -193,9 +193,6 @@ class QEMUTarget(Target):
             self._customize_bootloader(self.proc, boot_cmds)
 
         self._monitor_boot(self.proc, self.tester_ps1, self.tester_ps1_pattern)
-        if self._ramdisk and self._sd_image is None:
-            self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
-                               send_char=self.config.send_char)
 
         return self.proc
 

@@ -320,11 +320,6 @@ class BootloaderTarget(MasterImageTarget):
             else:
                 self._soft_reboot(self.proc)
                 self._run_boot()
-            # When the kernel does DHCP which is the case for NFS/Ramdisk boot
-            # the nameserver data does get populated by the DHCP
-            # daemon. Thus, LAVA will populate the name server data.
-            self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
-                               send_char=self.config.send_char)
             self._booted = True
         elif self._is_bootloader() and self._booted:
             self.proc.sendline('export PS1="%s"'

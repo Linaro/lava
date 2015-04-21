@@ -75,8 +75,6 @@ class JtagTarget(Target):
         self._wait_for_prompt(self.proc, self.config.test_image_prompts,
                               self.config.boot_linaro_timeout)
         self.proc.sendline("")
-        self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
-                           send_char=self.config.send_char)
         self.proc.sendline('export PS1="%s"' % self.tester_ps1,
                            send_char=self.config.send_char)
         self._booted = True

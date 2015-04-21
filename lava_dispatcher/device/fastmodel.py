@@ -511,8 +511,6 @@ class FastModelTarget(Target):
         self._auto_login(self.proc)
 
         if self._ramdisk_boot:
-            self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
-                               send_char=self.config.send_char)
             self._booted = True
 
         return self.proc

@@ -547,6 +547,15 @@ class LavaClient(object):
             logging.debug("Checking for vm-group host")
             self.vm_group.start_vms()
 
+            logging.debug("Setting up name resolution")
+            # Check if the kernel supports DHCP
+            kernel_dhcp = session.run('test -e /proc/net/pnp', failok=True)
+            # Check if /etc/resolv.conf file size is not zero
+            resolv_file = session.run('test -s /etc/resolv.conf', failok=True)
+            if kernel_dhcp == 0 and resolv_file != 0:
+                # Force name resolution
+                session.run('cat /proc/net/pnp > /etc/resolv.conf')
+
         if not in_linaro_image:
             raise CriticalError()
 
