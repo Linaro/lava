@@ -219,6 +219,12 @@ class ExposedAPI(object):
         else:
             return None
 
+    def _authenticate(self):
+        if self.user is None:
+            raise xmlrpclib.Fault(
+                401, "Authentication with user and token required for this "
+                "API.")
+
 
 class Mapper(object):
     """

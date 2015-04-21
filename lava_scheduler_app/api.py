@@ -42,10 +42,7 @@ class SchedulerAPI(ExposedAPI):
         job's id,  provided the user is authenticated with an username and
         token.
         """
-        if not self.user:
-            raise xmlrpclib.Fault(
-                401, "Authentication with user and token required for this "
-                "API.")
+        self._authenticate()
         if not self.user.has_perm('lava_scheduler_app.add_testjob'):
             raise xmlrpclib.Fault(
                 403, "Permission denied.  User %r does not have the "
@@ -91,6 +88,12 @@ class SchedulerAPI(ExposedAPI):
         job's id,  provided the user is authenticated with an username and
         token.
         """
+        self._authenticate()
+        if not self.user.has_perm('lava_scheduler_app.add_testjob'):
+            raise xmlrpclib.Fault(
+                403, "Permission denied.  User %r does not have the "
+                "'lava_scheduler_app.add_testjob' permission.  Contact "
+                "the administrators." % self.user.username)
         try:
             job = get_restricted_job(self.user, job_id)
         except TestJob.DoesNotExist:
@@ -121,12 +124,18 @@ class SchedulerAPI(ExposedAPI):
         ------------
         None. The user should be authenticated with an username and token.
         """
-        if not self.user:
-            raise xmlrpclib.Fault(401, "Authentication required.")
+        self._authenticate()
+        if not job_id:
+            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not "
+                                  "specified.")
         try:
             job = get_restricted_job(self.user, job_id)
         except PermissionDenied:
-            raise xmlrpclib.Fault(403, "Permission denied")
+            raise xmlrpclib.Fault(
+                401, "Permission denied for user to job %s" % job_id)
+        except TestJob.DoesNotExist:
+            raise xmlrpclib.Fault(404, "Specified job not found.")
+
         if not job.can_cancel(self.user):
             raise xmlrpclib.Fault(403, "Permission denied.")
         if job.is_multinode:
@@ -159,13 +168,15 @@ class SchedulerAPI(ExposedAPI):
         This function returns an XML-RPC binary data of output file, provided
         the user is authenticated with an username and token.
         """
-
+        self._authenticate()
+        if not job_id:
+            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not "
+                                  "specified.")
         try:
             job = get_restricted_job(self.user, job_id)
         except PermissionDenied:
             raise xmlrpclib.Fault(
-                401, "Authentication with user and token required for job %s" %
-                job_id)
+                401, "Permission denied for user to job %s" % job_id)
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
@@ -320,12 +331,10 @@ class SchedulerAPI(ExposedAPI):
         This function returns an XML-RPC structures of job details, provided
         the user is authenticated with an username and token.
         """
-        if not self.user:
-            raise xmlrpclib.Fault(
-                401, "Authentication with user and token required for this API.")
+        self._authenticate()
         if not job_id:
-            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not specified.")
-
+            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not "
+                                  "specified.")
         try:
             job = get_restricted_job(self.user, job_id)
             job.status = job.get_status_display()
@@ -365,14 +374,15 @@ class SchedulerAPI(ExposedAPI):
         The sha1 hash code of the bundle, if it existed. Otherwise it will be
         an empty string.
         """
-
-        if not self.user:
-            raise xmlrpclib.Fault(
-                401, "Authentication with user and token required for this "
-                "API.")
-
+        self._authenticate()
+        if not job_id:
+            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not "
+                                  "specified.")
         try:
             job = get_restricted_job(self.user, job_id)
+        except PermissionDenied:
+            raise xmlrpclib.Fault(
+                401, "Permission denied for user to job %s" % job_id)
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
@@ -440,13 +450,15 @@ class SchedulerAPI(ExposedAPI):
         ------------
         None. The user should be authenticated with a username and token.
         """
-        if not self.user:
-            raise xmlrpclib.Fault(
-                401, "Authentication with user and token required for this API.")
+        self._authenticate()
         if not job_id:
-            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not specified.")
+            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not "
+                                  "specified.")
         try:
             job = get_restricted_job(self.user, job_id)
+        except PermissionDenied:
+            raise xmlrpclib.Fault(
+                401, "Permission denied for user to job %s" % job_id)
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "TestJob with id '%s' was not found." % job_id)
         job.send_summary_mails()
