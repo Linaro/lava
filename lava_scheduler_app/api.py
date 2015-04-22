@@ -54,13 +54,11 @@ class SchedulerAPI(ExposedAPI):
 
         try:
             job = TestJob.from_json_and_user(job_data, self.user)
-        except JSONDecodeError as e:
+        except (JSONDataError, JSONDecodeError, ValueError) as exc:
             try:
                 job = TestJob.from_yaml_and_user(job_data, self.user)
             except yaml.YAMLError as e:
-                raise xmlrpclib.Fault(400, "Decoding YAML failed: %s." % e)
-        except (JSONDataError, ValueError) as e:
-            raise xmlrpclib.Fault(400, str(e))
+                raise xmlrpclib.Fault(400, "Decoding job submission failed: %s." % exc)
         except Device.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified device not found.")
         except DeviceType.DoesNotExist:
