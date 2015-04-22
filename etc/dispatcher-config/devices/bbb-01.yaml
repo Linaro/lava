@@ -1,0 +1,11 @@
+{% extends 'beaglebone-black.yaml' %}
+{% set usb_uuid = 'usb-SanDisk_Ultra_20060775320F43006019-0:0' %}
+{% set connection_command = "telnet localhost 6000" %}
+{% set hard_reset_command = (
+"/usr/bin/pduclient --daemon localhost --hostname pdu --command reboot --port 08") %}
+{% set power_off_command = (
+"/usr/bin/pduclient --daemon localhost --hostname pdu --command off --port 08") %}
+{% set power_on_command = (
+"/usr/bin/pduclient --daemon localhost --hostname pdu --command on --port 08") %}
+
+

@@ -1,0 +1,23 @@
+{% load utils %}
+
+<li>{{ key }}
+    {% if value|get_type == 'str' %}
+       : {{ value }}
+    {% elif value|get_type == 'dict' %}
+    <ul>
+        {% for newkey, newvalue in value.items %}
+            {% with value=newvalue key=newkey %}
+                {% include 'admin/lava_scheduler_app/recursive.html' %}
+            {% endwith %}
+        {% endfor %}
+    </ul>
+    {% else %}
+    <ul>
+        {% for item in value %}
+            {% with value=item %}
+                {% include 'admin/lava_scheduler_app/recursive.html' %}
+            {% endwith %}
+        {% endfor %}
+    </ul>
+    {% endif %}
+</li>

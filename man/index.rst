@@ -3,3 +3,4 @@
 
     lava-daemon.rst
     lava-server.rst
+    lava-master.rst

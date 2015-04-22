@@ -323,7 +323,10 @@ class RecentJobsTable(JobTable):
         self.length = 10
 
     def render_log_level(self, record):
-        data = json.loads(record.definition)
+        try:
+            data = json.loads(record.definition)
+        except ValueError:
+            return "debug"
         try:
             data['logging_level']
         except KeyError:

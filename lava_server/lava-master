@@ -27,8 +27,8 @@
 
 from lava_server.daemonise import daemonise
 
-PIDFILE = '/var/run/lava-server.pid'
-LOGFILE = '/var/log/lava-server/lava-scheduler.log'
+PIDFILE = '/var/run/lava-master.pid'
+LOGFILE = '/var/log/lava-server/lava-master.log'
 
 
 def main():

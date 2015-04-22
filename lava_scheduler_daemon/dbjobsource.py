@@ -54,16 +54,23 @@ def find_device_for_job(job, device_list):
     If the device has the same tags as the job or all the tags required
     for the job and some others which the job does not explicitly specify,
     check if this device be assigned to this job for this user.
+    Works for pipeline jobs and old-style jobs but refuses to select a
+    non-pipeline device for a pipeline job. Pipeline devices are explicitly
+    allowed to run non-pipeline jobs..
     """
     if job.health_check is True:
         if job.requested_device.status == Device.OFFLINE:
             return job.requested_device
     for device in device_list:
+        if job.is_pipeline and not device.is_pipeline:
+            continue
         if device == job.requested_device:
             if device.can_submit(job.submitter) and\
                     set(job.tags.all()) & set(device.tags.all()) == set(job.tags.all()):
                 return device
     for device in device_list:
+        if job.is_pipeline and not device.is_pipeline:
+            continue
         if device.device_type == job.requested_device_type:
             if device.can_submit(job.submitter) and\
                     set(job.tags.all()) & set(device.tags.all()) == set(job.tags.all()):
@@ -153,9 +160,11 @@ class DatabaseJobSource(object):
         """
         Checks which devices need a health check job and submits the needed
         health checks.
+        Looping is only active once a device is offline.
         """
 
-        for device in Device.objects.filter(status=Device.IDLE):
+        for device in Device.objects.filter(
+                Q(status=Device.IDLE) | Q(status=Device.OFFLINE, health_status=Device.HEALTH_LOOPING)):
             if not device.device_type.health_check_job:
                 run_health_check = False
             elif device.health_status == Device.HEALTH_UNKNOWN:
@@ -186,6 +195,9 @@ class DatabaseJobSource(object):
         we also sort by id to make sure we have a stable order and that jobs
         that came later into the system (as far as the DB is concerned) get
         later into the queue.
+
+        Pipeline jobs are allowed to be assigned but the actual running of
+        a job on a reserved pipeline device is down to the dispatcher-master.
         """
 
         jobs = TestJob.objects.filter(status=TestJob.SUBMITTED)
@@ -203,12 +215,11 @@ class DatabaseJobSource(object):
         using John Doe's private devices over using public devices that could
         be available for other users who don't have their own.
         """
-        devices = Device.objects.filter(status=Device.IDLE)
-        devices = devices.order_by('is_public')
-
+        devices = Device.objects.filter(status=Device.IDLE).order_by('is_public')
         return devices
 
     def _assign_jobs(self):
+        # FIXME: this function needs to be moved to dispatcher-master when lava_scheduler_daemon is disabled.
         jobs = list(self._get_job_queue())
         devices = list(self._get_available_devices())
         for job in jobs:
@@ -257,17 +268,23 @@ class DatabaseJobSource(object):
         """
         This method is called in a loop by the scheduler daemon service.
         It's goal is to return a list of jobs that are ready to be started.
+        Note: handles both old and pipeline jobs but only so far as putting
+        devices into a Reserved state. Running pipeline jobs from Reserved
+        is the sole concern of the dispatcher-master.
         """
         self._handle_cancelling_jobs()
 
         if utils.is_master():
+            # FIXME: move into dispatcher-master
             self._submit_health_check_jobs()
             self._assign_jobs()
 
+        # from here on, ignore pipeline jobs.
         my_devices = get_temporary_devices(self.my_devices())
         my_submitted_jobs = TestJob.objects.filter(
             status=TestJob.SUBMITTED,
             actual_device_id__in=my_devices,
+            is_pipeline=False
         )
 
         my_ready_jobs = filter(lambda job: job.is_ready_to_start, my_submitted_jobs)
@@ -415,6 +432,8 @@ class DatabaseJobSource(object):
                         new_device_status = Device.OFFLINE  # offlining job is complete.
                 elif job.status == TestJob.COMPLETE:
                     device.health_status = Device.HEALTH_PASS
+                    if old_device_status == Device.RUNNING:
+                        new_device_status = Device.IDLE
             self.logger.debug("new device health status %s" % Device.HEALTH_CHOICES[device.health_status][1])
 
         bundle_file = os.path.join(job.output_dir, 'result-bundle')
@@ -475,7 +494,7 @@ class DatabaseJobSource(object):
         return self.deferForDB(self.jobCheckForCancellation_impl, board_name)
 
     def _handle_cancelling_jobs(self):
-        cancel_list = TestJob.objects.filter(status=TestJob.CANCELING)
+        cancel_list = TestJob.objects.filter(status=TestJob.CANCELING, is_pipeline=False)
         # Pick up TestJob objects in Canceling and ensure that the cancel completes.
         # call _kill_canceling to terminate any lava-dispatch calls
         # Explicitly set a DeviceStatusTransition as jobs which are stuck in Canceling
