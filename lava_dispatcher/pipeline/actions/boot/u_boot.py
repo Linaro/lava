@@ -64,7 +64,7 @@ class UBoot(Boot):
     The UBoot method prepares the command to run on the dispatcher but this
     command needs to start a new connection and then interrupt u-boot.
     An expect shell session can then be handed over to the UBootAction.
-    self._run_command is a blocking call, so Boot needs to use
+    self.run_command is a blocking call, so Boot needs to use
     a direct spawn call via ShellCommand (which wraps pexpect.spawn) then
     hand this pexpect wrapper to subsequent actions as a shell connection.
     """

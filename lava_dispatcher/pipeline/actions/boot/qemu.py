@@ -39,7 +39,7 @@ class BootQEMU(Boot):
     The Boot method prepares the command to run on the dispatcher but this
     command needs to start a new connection and then allow AutoLogin, if
     enabled, and then expect a shell session which can be handed over to the
-    test method. self._run_command is a blocking call, so Boot needs to use
+    test method. self.run_command is a blocking call, so Boot needs to use
     a direct spawn call via ShellCommand (which wraps pexpect.spawn) then
     hand this pexpect wrapper to subsequent actions as a shell connection.
     """
