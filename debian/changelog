@@ -1,3 +1,9 @@
+lava-dispatcher (2015.04.1-1) UNRELEASED; urgency=medium
+
+  * Add support for using a static timestamp on manpage. 
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 22 Apr 2015 14:00:29 +0100
+
 lava-dispatcher (2015.04-1) experimental; urgency=medium
 
   * New production release
