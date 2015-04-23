@@ -29,6 +29,7 @@ from lava_scheduler_app.models import (
     Device,
     TestJob,
     TemporaryDevice,
+    JSONDataError,
 )
 from lava_scheduler_app import utils
 from lava_scheduler_daemon.worker import WorkerData
@@ -180,7 +181,11 @@ class DatabaseJobSource(object):
                     datetime.datetime.now() - datetime.timedelta(days=1)
 
             if run_health_check:
-                device.initiate_health_check_job()
+                try:
+                    device.initiate_health_check_job()
+                except JSONDataError:
+                    # already logged, don't allow the daemon to fail.
+                    pass
 
     def _get_job_queue(self):
         """

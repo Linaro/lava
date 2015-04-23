@@ -745,8 +745,8 @@ class Device(RestrictedResource):
                 return TestJob.from_json_and_user(job_json, user, True)
             except (JSONDataError, ValueError) as e:
                 self.put_into_maintenance_mode(
-                    None, "Job submission failed for health job: %s" % e)
-                raise JSONDataError("Health check job submission failed: %s" % e)
+                    None, "Job submission failed for health job for %s: %s" % (self, e))
+                raise JSONDataError("Health check job submission failed for %s: %s" % (self, e))
 
     def load_device_configuration(self, job_ctx=None):
         """
