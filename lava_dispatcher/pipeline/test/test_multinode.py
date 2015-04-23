@@ -79,6 +79,7 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
             msg.update(self.base_message)
             return json.dumps(self.coord.dataReceived(msg))
 
+    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_multinode_jobs(self):
         self.assertIsNotNone(self.client_job)
         self.assertIsNotNone(self.server_job)
@@ -87,6 +88,7 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.server_job.validate()
         self.assertEqual(self.server_job.pipeline.errors, [])
 
+    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_protocol(self):
         self.assertEqual(
             ['lava-multinode'],

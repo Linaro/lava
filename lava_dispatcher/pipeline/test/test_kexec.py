@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
+import os
 import unittest
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.test.test_uboot import Factory
@@ -30,6 +31,7 @@ from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry
 
 class TestKExec(unittest.TestCase):
 
+    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_deploy_parameters(self):
         factory = Factory()
         job = factory.create_bbb_job('sample_jobs/kexec.yaml')
