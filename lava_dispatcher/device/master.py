@@ -143,11 +143,11 @@ class MasterImageTarget(Target):
 
         for image in images:
             if 'boot' in image['partition']:
-                boot = download_image(image['url'], self.context, decompress=False)
+                boot = download_image(image['url'], self.context, sdir, decompress=False)
             elif 'system' in image['partition']:
-                system = download_image(image['url'], self.context, decompress=False)
+                system = download_image(image['url'], self.context, sdir, decompress=False)
             elif 'userdata' in image['partition']:
-                data = download_image(image['url'], self.context, decompress=False)
+                data = download_image(image['url'], self.context, sdir, decompress=False)
             else:
                 msg = 'Unsupported partition option: %s' % image['partition']
                 logging.warning(msg)
