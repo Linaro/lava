@@ -152,7 +152,7 @@ class QEMUTarget(Target):
 
         qemu_options = ''
 
-        if self._kernel and not self._firmware:
+        if self._kernel and not all([self._firmware, self._bootloadertype]):
             qemu_options += ' -kernel %s' % self._kernel
             if self._sd_image is None:
                 kernel_args = ' '.join(self._load_boot_cmds(default='boot_cmds_ramdisk'))
@@ -166,14 +166,15 @@ class QEMUTarget(Target):
         if self._dtb:
             qemu_options += ' -dtb %s' % self._dtb
 
-        if self._bootloadertype == 'uefi':
-            if self._firmware:
-                qemu_options += ' -bios %s' % self._firmware
+        if self._firmware:
+            qemu_options += ' -bios %s' % self._firmware
+            if self._bootloadertype == 'uefi':
                 self._enter_boot_loader = True
-            elif self._qemu_pflash:
-                for pflash in self._qemu_pflash:
-                    qemu_options += ' -pflash %s' % pflash
-                    self._enter_boot_loader = True
+        elif self._qemu_pflash:
+            if self._bootloadertype == 'uefi':
+                self._enter_boot_loader = True
+            for pflash in self._qemu_pflash:
+                qemu_options += ' -pflash %s' % pflash
 
         if self._sd_image:
             qemu_options += ' ' + self.config.qemu_drive_interface
