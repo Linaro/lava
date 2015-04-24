@@ -730,10 +730,6 @@ class DashboardAPI(ExposedAPI):
             Pathname does not designate an anonymous stream
         409
             Bundle stream with the specified pathname already exists
-
-        Available Since
-        ---------------
-        0.3
         """
         # Work around bug https://bugs.launchpad.net/lava-dashboard/+bug/771182
         # Older clients would send None as the name and this would trigger an
