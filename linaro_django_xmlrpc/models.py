@@ -455,9 +455,45 @@ class SystemAPI(ExposedAPI):
         super(SystemAPI, self).__init__(context)
 
     def listMethods(self):
+        """
+        Name
+        ----
+        `listMethods` ()
+
+        Description
+        -----------
+        List all available methods in this XML-RPC server.
+
+        Arguments
+        ---------
+        None
+
+        Return value
+        ------------
+        Returns a list of available methods.
+        """
         return self._context.mapper.list_methods()
 
     def methodSignature(self, method_name):
+        """
+        Name
+        ----
+        `methodSignature` (`method_name`)
+
+        Description
+        -----------
+        Provide signature for the specified method.
+
+        Arguments
+        ---------
+        `method_name`: string
+            Name of the method whose signature is required.
+
+        Return value
+        ------------
+        Returns the signature for specified method or undef if the signature is
+        unknown.
+        """
         impl = self._context.mapper.lookup(method_name, self._context)
         if impl is None:
             return ""
@@ -468,7 +504,22 @@ class SystemAPI(ExposedAPI):
     @xml_rpc_signature('str', 'str')
     def methodHelp(self, method_name):
         """
-        Return documentation for specified method
+        Name
+        ----
+        `methodHelp` (`method_name`)
+
+        Description
+        -----------
+        Provide documentation for specified method.
+
+        Arguments
+        ---------
+        `method_name`: string
+            Name of the method whose documentation is required.
+
+        Return value
+        ------------
+        Returns the documentation for specified method.
         """
         impl = self._context.mapper.lookup(method_name, self._context)
         if impl is None:
@@ -554,16 +605,49 @@ class SystemAPI(ExposedAPI):
 
     def getCapabilities(self):
         """
-        Return XML-RPC Server capabilities.
+        Name
+        ----
+        `getCapabilities` ()
 
-        See: http://groups.yahoo.com/group/xml-rpc/message/2897
+        Description
+        -----------
+        XML-RPC Server capabilities.
+
+        Arguments
+        ---------
+        None
+
+        Return value
+        ------------
+        Returns the XML-RPC Server capabilities which has the following format:
+
+        {
+          auth_token: {
+            'specUrl': 'xxxxxx',
+            'specVersion': xxxxxx
+          },
+          'introspect': {
+            'specUrl': 'xxxxxx',
+            'specVersion': x
+          },
+          'faults_interop': {
+            'specUrl': 'xxxxxx',
+            'specVersion': xxxxxx
+          }
+        }
+
+        Reference
+        ---------
+        * See: http://groups.yahoo.com/group/xml-rpc/message/2897
+
+        * http://xmlrpc-c.sourceforge.net/xmlrpc-c/introspection.html is dead,
+        the actual URL that works is:
+        http://xmlrpc-c.sourceforge.net/introspection.html This is, however,
+        what the spec mandates (visit the URL above to cross-reference the
+        relevant fragment).
         """
         return {
             "introspect": {
-                # XXX: This URL is dead, the actual URL that works is:
-                # http://xmlrpc-c.sourceforge.net/introspection.html This is,
-                # however, what the spec mandates (visit the URL above to
-                # cross-refernce the relevant fragment).
                 "specUrl": "http://xmlrpc-c.sourceforge.net/xmlrpc-c/introspection.html",
                 "specVersion": 1
             },
