@@ -1,4 +1,5 @@
 import xmlrpclib
+import json
 import yaml
 from django.core.exceptions import PermissionDenied
 from simplejson import JSONDecodeError
@@ -48,14 +49,35 @@ class SchedulerAPI(ExposedAPI):
                 403, "Permission denied.  User %r does not have the "
                 "'lava_scheduler_app.add_testjob' permission.  Contact "
                 "the administrators." % self.user.username)
-
+        is_json = True
+        is_yaml = False
         try:
-            job = TestJob.from_json_and_user(job_data, self.user)
-        except (JSONDataError, JSONDecodeError, ValueError) as exc:
+            json.loads(job_data)
+        except (AttributeError, JSONDecodeError, ValueError) as exc:
+            is_json = False
             try:
-                job = TestJob.from_yaml_and_user(job_data, self.user)
-            except yaml.YAMLError as e:
+                # only try YAML if this is not JSON
+                # YAML can parse JSON as YAML, JSON cannot parse YAML at all
+                yaml_data = yaml.load(job_data)
+            except yaml.YAMLError:
                 raise xmlrpclib.Fault(400, "Decoding job submission failed: %s." % exc)
+            if type(yaml_data) is not dict or 'actions' not in yaml_data:
+                raise xmlrpclib.Fault(400, "Decoding job submission failed.")
+            actions = [item for item in yaml_data['actions']]
+            # pipeline jobs only accept deploy, boot or test actions
+            # but only have to include one of the possible actions.
+            is_yaml = any(
+                [True for item in actions
+                 if 'deploy' in item or 'boot' in item or 'test' in item])
+        try:
+            if is_json:
+                job = TestJob.from_json_and_user(job_data, self.user)
+            elif is_yaml:
+                job = TestJob.from_yaml_and_user(job_data, self.user)
+            else:
+                raise xmlrpclib.Fault(400, "Decoding job submission failed")
+        except (JSONDataError, JSONDecodeError, ValueError) as exc:
+            raise xmlrpclib.Fault(400, "Decoding job submission failed: %s." % exc)
         except Device.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified device not found.")
         except DeviceType.DoesNotExist:
