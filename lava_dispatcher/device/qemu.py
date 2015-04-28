@@ -64,16 +64,21 @@ class QEMUTarget(Target):
         self._enter_boot_loader = False
         self._bootloadertype = None
 
-    def _download_needed_files(self):
-        if self.config.qemu_pflash:
-            self._qemu_pflash = []
+    def _download_qemu_pflash_files(self, qemu_pflash=None):
+        self._qemu_pflash = []
+        if qemu_pflash:
+            for pflash in qemu_pflash:
+                self._qemu_pflash.append(download_image(pflash,
+                                                        self.context))
+        elif self.config.qemu_pflash:
             for pflash in self.config.qemu_pflash:
                 self._qemu_pflash.append(download_image(pflash,
-                                                        self.context,
-                                                        decompress=False))
+                                                        self.context))
+        else:
+            self._qemu_pflash = None
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
-                             bl31, rootfstype, bootloadertype, target_type):
+                             bl31, rootfstype, bootloadertype, target_type, qemu_pflash):
         # Check for errors
         if rootfs is None and ramdisk is None:
             raise CriticalError("You must specify a QEMU file system image or ramdisk")
@@ -109,25 +114,30 @@ class QEMUTarget(Target):
 
         if bootloadertype == 'uefi':
             self._bootloadertype = 'uefi'
-            self._download_needed_files()
+            # Try downloading pflash files, if it exists.
+            self._download_qemu_pflash_files(qemu_pflash=qemu_pflash)
 
         if firmware is not None:
             firmware = download_image(firmware, self.context)
             self._firmware = firmware
 
-    def deploy_linaro(self, hwpack, rootfs, dtb, rootfstype, bootloadertype):
+    def deploy_linaro(self, hwpack, rootfs, dtb, rootfstype, bootloadertype,
+                      qemu_pflash):
         odir = self.scratch_dir
         if bootloadertype == 'uefi':
             self._bootloadertype = 'uefi'
-            self._download_needed_files()
+            # Try downloading pflash files, if it exists.
+            self._download_qemu_pflash_files(qemu_pflash=qemu_pflash)
         self._sd_image = generate_image(self, hwpack, rootfs, dtb,
                                         odir, bootloadertype, rootfstype)
         self.customize_image(self._sd_image)
 
-    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype):
+    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype,
+                               qemu_pflash):
         if bootloadertype == 'uefi':
             self._bootloadertype = 'uefi'
-            self._download_needed_files()
+            # Try downloading pflash files, if it exists.
+            self._download_qemu_pflash_files(qemu_pflash=qemu_pflash)
         self._sd_image = download_image(image, self.context)
         self.customize_image(self._sd_image)
 
