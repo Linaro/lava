@@ -225,6 +225,24 @@ class ExposedAPI(object):
                 401, "Authentication with user and token required for this "
                 "API.")
 
+    def _switch_user(self, username):
+        """
+        Allow a superuser to query a different user
+        """
+        if not username:
+            return self.user
+        if self.user.is_superuser:
+            try:
+                username = User.objects.get(username=username)
+            except User.DoesNotExist:
+                raise xmlrpclib.Fault(
+                    404, "Username %s not found" % username)
+        else:
+            raise xmlrpclib.Fault(
+                401,
+                "Permission denied for user '%s' to query other users" % self.user)
+        return username
+
 
 class Mapper(object):
     """
