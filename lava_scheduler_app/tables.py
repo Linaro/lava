@@ -239,6 +239,8 @@ class IndexJobTable(JobTable):
 
     id = RestrictedIDLinkColumn(verbose_name="ID", accessor="id")
     device = tables.Column(accessor='device_sort')
+    submit_time = DateColumn()
+    end_time = DateColumn()
 
     def __init__(self, *args, **kwargs):
         super(IndexJobTable, self).__init__(*args, **kwargs)
@@ -276,6 +278,8 @@ class FailedJobTable(JobTable):
     duration.orderable = False
     failure_tags = TagsColumn()
     failure_comment = tables.Column()
+    submit_time = DateColumn()
+    end_time = DateColumn()
 
     def __init__(self, *args, **kwargs):
         super(FailedJobTable, self).__init__(*args, **kwargs)
@@ -297,6 +301,8 @@ class OverviewJobsTable(JobTable):
     device = tables.Column(accessor='device_sort')
     duration = tables.Column(accessor='duration_sort')
     duration.orderable = False
+    submit_time = DateColumn()
+    end_time = DateColumn()
 
     def __init__(self, *args, **kwargs):
         super(OverviewJobsTable, self).__init__(*args, **kwargs)
@@ -317,6 +323,8 @@ class RecentJobsTable(JobTable):
     log_level = tables.Column(accessor="definition", verbose_name="Log level")
     duration = tables.Column(accessor='duration_sort')
     duration.orderable = False
+    submit_time = DateColumn()
+    end_time = DateColumn()
 
     def __init__(self, *args, **kwargs):
         super(RecentJobsTable, self).__init__(*args, **kwargs)
@@ -525,6 +533,8 @@ class WorkerTable(tables.Table):
         self.length = 10
         self.show_help = True
 
+    last_master_scheduler_tick = DateColumn()
+
     hostname = tables.TemplateColumn('''
     {% if record.too_long_since_last_heartbeat %}
     <span class="glyphicon glyphicon-thumbs-down text-danger"></span>
@@ -638,6 +648,8 @@ class QueueJobsTable(JobTable):
     for {{ record.submit_time|timesince }}
     ''')
     in_queue.orderable = False
+    submit_time = DateColumn()
+    end_time = DateColumn()
 
     def __init__(self, *args, **kwargs):
         super(QueueJobsTable, self).__init__(*args, **kwargs)
