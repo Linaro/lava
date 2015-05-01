@@ -76,7 +76,7 @@ class FastbootTarget(Target):
             try:
                 self.driver.deploy_linaro_kernel(kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader,
                                                  firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
-                                                 self._target_type)
+                                                 self._target_type, self.scratch_dir)
                 deployed = True
             except (subprocess.CalledProcessError, pexpect.TIMEOUT) as e:
                 msg = "Deployment failed: %s" % e
