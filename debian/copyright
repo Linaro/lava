@@ -2,17 +2,31 @@ Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: lava-server
 Source: http://git.linaro.org/lava/lava-server.git
  
+Files: *
+Copyright: 2010-2013, Linaro Limited
+License: AGPL-3.0
+ This package is free software: you can redistribute it and/or modify it
+ under the terms of the GNU Affero General Public License version 3 as
+ published by the Free Software Foundation
+ .
+ This package is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ more details.
+ .
+ You should have received a copy of the GNU Affero General Public License
+ along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
+
 Files: lava_scheduler_app/management/commands/crowd.py
  lava_scheduler_app/management/commands/migrate-users-to-crowd.py
  share/add_device.py lava_server/settings/secret_key.py
  lava_server/settings/getsettings.py lava_server/settings/config_file.py
- doc/examples/plugins/demo-action-plugin/demo_action_plugin/foo.py
  version.py share/lava-mount-masterfs
 Copyright: 2010-2014, Linaro Limited
 License: GPL-3.0+
 
 Files: dashboard_app/tests/import_prohibitor.py
- dashboard_app/tests/call_helper.py setup.py demo/setup.py
+ dashboard_app/tests/call_helper.py setup.py
 Copyright: 2010-2013, Linaro Limited
 License: LGPL-3.0
  This package is free software; you can redistribute it and/or
@@ -33,14 +47,7 @@ License: LGPL-3.0
 Files:
  lava_server/htdocs/js/jquery.watermark.js
 Copyright: 2009-2011 Todd Northrop
-License: MIT
-
-Files:
- lava_server/htdocs/js/jquery.watermark.js
-Copyright: 2009-2011 Todd Northrop
-License: GPL-2
-
-License: GPL-2
+License: GPL-2 or MIT
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation; either version 2 of the License.
@@ -69,30 +76,14 @@ Copyright: 2009 Brandon Aaron (http://brandonaaron.net)
            2004-2010 Alex Gorbatchev
            2010 Klaus Hartl (stilbuero.de)
            2007-2011 Jay Salvat
-License: MIT
+License: GPL-3.0+ or MIT
 
-Files:
- dashboard_app/static/dashboard_app/js/jquery.flot.navigate.js
- dashboard_app/static/dashboard_app/js/jquery.tooltip.js
- lava_scheduler_app/static/lava_scheduler_app/js/shCore.js
- lava_server/htdocs/js/jquery.cookie.js
- lava_markitup/static/lava_markitup/jquery.markitup.js
- lava_scheduler_app/static/lava_scheduler_app/js/shBrushJScript.js
- lava_scheduler_app/static/lava_scheduler_app/css/shCore.css
- lava_scheduler_app/static/lava_scheduler_app/css/shThemeDefault.css
-Copyright: 2009 Brandon Aaron (http://brandonaaron.net)
-           2006 - 2008 Jörn Zaefferer
-           2004-2010 Alex Gorbatchev
-           2010 Klaus Hartl (stilbuero.de)
-           2007-2011 Jay Salvat
-License: GPL-3.0+
-
-Files: dashboard_app/static/dashboard_app/js/ lava_server/lava-server/js/
- lava_scheduler_app/static/lava_scheulder_app/js/
+Files: dashboard_app/static/dashboard_app/js/* lava_server/htdocs/js/*
+ lava_scheduler_app/static/lava_scheduler_app/js/*
  lava_scheduler_app/static/lava_scheduler_app/css/shCore.css
  lava_scheduler_app/static/lava_scheduler_app/css/shThemeDefault.css
  lava_scheduler_app/static/lava_scheduler_app/css/jquery-linedtextarea.css
- lava_server/lava-server/css/smoothness/jquery-ui-1.10.4.custom.min.css
+ lava_server/htdocs/css/smoothness/jquery-ui-1.10.4.custom.min.css
 Copyright: 2014 Jörn Zaefferer
            2010 Alan Williamson
            2007-2011 Ariel Flesler - aflesler(at)gmail(dot)com
@@ -176,18 +167,3 @@ License: GPL-3.0+
  .
  On Debian systems, the complete text of the GNU General
  Public License version 2 can be found in "/usr/share/common-licenses/GPL-3".
-
-Files: *
-Copyright: 2010-2013, Linaro Limited
-License: AGPL-3.0
- This package is free software: you can redistribute it and/or modify it
- under the terms of the GNU Affero General Public License version 3 as
- published by the Free Software Foundation
- .
- This package is distributed in the hope that it will be useful, but
- WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- more details.
- .
- You should have received a copy of the GNU Affero General Public License
- along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
