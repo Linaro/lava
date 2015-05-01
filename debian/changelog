@@ -1,6 +1,7 @@
 lava-dispatcher (2015.04.1-1) UNRELEASED; urgency=medium
 
-  * Add support for using a static timestamp on manpage. 
+  * Add support for using a static timestamp on manpage.
+  * Tidy up dep-5 file listings in copyright
 
  -- Neil Williams <codehelp@debian.org>  Wed, 22 Apr 2015 14:00:29 +0100
 
