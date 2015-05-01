@@ -187,6 +187,8 @@ def create_ramdisk(ramdisk_dir, tmpdir):
         raise CriticalError('Unable to create cpio filesystem')
     if logging_system("cd %s && gzip %s" % (tmpdir, ramdisk_data)):
         raise CriticalError('Unable to compress cpio filesystem')
+    if logging_system("rm -rf %s" % ramdisk_dir):
+        raise CriticalError('Unable extracted ramdisk directory')
     return os.path.join(tmpdir, 'ramdisk.cpio.gz')
 
 
