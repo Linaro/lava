@@ -2,6 +2,10 @@ Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: lava-dispatcher
 Source: https://git.linaro.org/lava/lava-dispatcher.git
 
+Files: *
+Copyright: 2010-2013, Linaro Limited
+License: GPL-2.0+
+
 Files: linaro_dashboard_bundle/evolution.py
  linaro_dashboard_bundle/__init__.py
  linaro_dashboard_bundle/errors.py
@@ -23,11 +27,6 @@ License: LGPL-3.0+
  .
  On Debian systems, the complete text of the GNU Lesser General
  Public License can be found in "/usr/share/common-licenses/LGPL-3".
-
-
-Files: *
-Copyright: 2010-2013, Linaro Limited
-License: GPL-2.0+
 
 Files: debian/*
 Copyright: 2013 Neil Williams <codehelp@debian.org>
