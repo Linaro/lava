@@ -6,7 +6,7 @@ More information on iPXE is available here http://ipxe.org/start
 
 
 Preparing the target test device
--------------------------
+--------------------------------
 
 The target device will need the following:
 * serial port

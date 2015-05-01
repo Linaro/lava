@@ -16,7 +16,13 @@ Also, install the updated ``lava-dispatcher`` package and use it to
 inspect the output of the pipeline using the ``--validate`` switch to
 ``lava-dispatch``::
 
- $ sudo lava-dispatch --validate --target kvm01 lava_dispatcher/pipeline/test/sample_jobs/kvm.yaml --output-dir=/tmp/test
+ $ sudo lava-dispatch --validate --target ./devices/kvm01.yaml ./sample_jobs/kvm.yaml --output-dir=/tmp/test
+
+.. note:: The refactoring has changed the behaviour of ``target`` - the
+   value **must** be a path to a YAML file, not a hostname. This is
+   because the refactored dispatcher has no local configuration, so the
+   master sends the entire device configuration to the dispatcher as a
+   single YAML file.
 
 The structure of any one job will be the same each time it is run (subject
 to changes in the developing codebase). Each different job will have a

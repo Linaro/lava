@@ -25,6 +25,7 @@ include instance.template
 include doc/*
 include doc/examples/*
 include doc/_static/*
+include doc/linaro_dashboard_bundle/*
 include man/*
 include etc/debug.wsgi
 include etc/lava-default.conf
