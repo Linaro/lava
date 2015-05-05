@@ -23,6 +23,7 @@
 
 import logging
 import subprocess
+import os
 
 from contextlib import contextmanager
 from time import sleep
@@ -39,6 +40,7 @@ from lava_dispatcher.utils import (
     prepend_blob,
     create_multi_image,
     create_uimage,
+    create_fat_boot_image,
 )
 
 
@@ -110,9 +112,11 @@ class BaseDriver(object):
         self.target_type = None
         self.scratch_dir = None
         self.fastboot = FastBoot(self)
-        self._default_boot_cmds = 'boot_cmds_ramdisk'
+        self._default_boot_cmds = None
+        self._boot_tags = {}
         self._kernel = None
         self._ramdisk = None
+        self._dtb = None
         self._working_dir = None
         self.__boot_image__ = None
 
@@ -134,6 +138,9 @@ class BaseDriver(object):
     def get_default_boot_cmds(self):
         return self._default_boot_cmds
 
+    def get_boot_tags(self):
+        return self._boot_tags
+
     def boot(self, boot_cmds=None):
         logging.info("In Base Class boot()")
         if self.__boot_image__ is None:
@@ -141,6 +148,7 @@ class BaseDriver(object):
         if self._kernel is not None:
             if self._ramdisk is not None:
                 if self.config.fastboot_kernel_load_addr:
+                    boot_cmds = ''.join(boot_cmds)
                     self.fastboot('boot -c "%s" -b %s %s %s' % (boot_cmds,
                                                                 self.config.fastboot_kernel_load_addr,
                                                                 self._kernel, self._ramdisk), timeout=10)
@@ -148,6 +156,7 @@ class BaseDriver(object):
                     raise CriticalError('Kernel load address not defined!')
             else:
                 if self.config.fastboot_kernel_load_addr:
+                    boot_cmds = ''.join(boot_cmds)
                     self.fastboot('boot -c "%s" -b %s %s' % (boot_cmds,
                                                              self.config.fastboot_kernel_load_addr,
                                                              self._kernel), timeout=10)
@@ -187,6 +196,9 @@ class BaseDriver(object):
                 self._kernel = prepend_blob(self._kernel,
                                             blob,
                                             self.working_dir)
+            self._boot_tags['{SERVER_IP}'] = self.context.config.lava_server_ip
+            self._boot_tags['{KERNEL}'] = os.path.basename(self._kernel)
+            self._default_boot_cmds = 'boot_cmds_ramdisk'
         else:
             raise CriticalError('A kernel image is required!')
         if ramdisk is not None:
@@ -202,13 +214,15 @@ class BaseDriver(object):
                                              decompress=False)
                     extract_overlay(overlay, ramdisk_dir)
                 self._ramdisk = create_ramdisk(ramdisk_dir, self.working_dir)
+            self._boot_tags['{RAMDISK}'] = os.path.basename(self._ramdisk)
         if dtb is not None:
-            dtb = download_image(dtb, self.context,
-                                 self._working_dir,
-                                 decompress=False)
+            self._dtb = download_image(dtb, self.context,
+                                       self._working_dir,
+                                       decompress=False)
             if self.config.append_dtb:
-                self._kernel = append_dtb(self._kernel, dtb, self.working_dir)
+                self._kernel = append_dtb(self._kernel, self._dtb, self.working_dir)
                 logging.info('Appended dtb to kernel image successfully')
+            self._boot_tags['{DTB}'] = os.path.basename(self._dtb)
         if rootfs is not None:
             self._default_boot_cmds = 'boot_cmds_rootfs'
             rootfs = self._get_image(rootfs)
@@ -231,6 +245,17 @@ class BaseDriver(object):
                                                  self.config.uimage_xip)
             else:
                 raise CriticalError('Kernel load address not defined!')
+        elif self.config.boot_fat_image_only:
+            if self.config.fastboot_efi_image:
+                efi = download_image(self.config.fastboot_efi_image, self.context,
+                                     self._working_dir, decompress=False)
+                self._kernel = create_fat_boot_image(self._kernel,
+                                                     self.working_dir,
+                                                     efi,
+                                                     self._ramdisk,
+                                                     self._dtb)
+            else:
+                raise CriticalError("No fastboot image provided")
 
         self.__boot_image__ = 'kernel'
 
@@ -502,3 +527,30 @@ class k3v2(fastboot_serial):
     def boot(self, boot_cmds=None):
         self.fastboot.flash('boot', self.__boot_image__)
         self.fastboot('reboot')
+
+
+class hi6220_hikey(fastboot_serial):
+
+    def __init__(self, device):
+        super(hi6220_hikey, self).__init__(device)
+
+    def connect(self):
+        if self.config.connection_command:
+            proc = connect_to_serial(self.context)
+        else:
+            raise CriticalError('The connection_command is not defined!')
+
+        return proc
+
+    def erase_boot(self):
+        pass
+
+    def boot(self, boot_cmds=None):
+        if self.__boot_image__ is None:
+            raise CriticalError('Deploy action must be run first')
+        if self._kernel is not None:
+            self.fastboot.flash('boot', self._kernel)
+            self.fastboot('reboot-bootloader', ignore_failure=True)
+        else:
+            self.fastboot.flash('boot', self.__boot_image__)
+            self.fastboot('reboot-bootloader', ignore_failure=True)

@@ -99,7 +99,7 @@ class FastbootTarget(Target):
         attempts = 0
         deployed = False
         while (attempts < deploy_attempts) and (not deployed):
-            logging.info("Deploying test image. Attempt: %d", attempts + 1)
+            logging.info("Deploying test images image Attempt: %d", attempts + 1)
             try:
                 self._enter_fastboot()
                 self.driver.deploy_android(images, rootfstype,
@@ -147,12 +147,18 @@ class FastbootTarget(Target):
                 return self.proc
             self._enter_fastboot()
             if self._use_boot_cmds:
-                boot_cmds = ''.join(self._load_boot_cmds(default=self.driver.get_default_boot_cmds()))
+                boot_cmds = self._load_boot_cmds(default=self.driver.get_default_boot_cmds(),
+                                                 boot_tags=self.driver.get_boot_tags())
                 self.driver.boot(boot_cmds)
             else:
                 self.driver.boot()
             if self.proc is None:
                 self.proc = self.driver.connect()
+            if self.config.run_boot_cmds:
+                self._enter_bootloader(self.proc)
+                boot_cmds = self._load_boot_cmds(default=self.driver.get_default_boot_cmds(),
+                                                 boot_tags=self.driver.get_boot_tags())
+                self._customize_bootloader(self.proc, boot_cmds)
             self._monitor_boot(self.proc, self.tester_ps1, self.tester_ps1_pattern)
             if self.config.start_fastboot_command:
                 self.driver.wait_for_adb()
