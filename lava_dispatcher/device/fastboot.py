@@ -154,6 +154,8 @@ class FastbootTarget(Target):
             if self.proc is None:
                 self.proc = self.driver.connect()
             self._monitor_boot(self.proc, self.tester_ps1, self.tester_ps1_pattern)
+            if self.config.start_fastboot_command:
+                self.driver.wait_for_adb()
             self._booted = True
             return self.proc
         except subprocess.CalledProcessError:
@@ -206,9 +208,7 @@ class FastbootTarget(Target):
             self.proc = None
         # Device needs to be forced into fastboot mode
         if not self.driver.in_fastboot():
-            if self.config.fastboot_driver == 'capri' or \
-               self.config.fastboot_driver == 'pxa1928dkb' or \
-               self.config.fastboot_driver == 'optimusa80':
+            if self.config.start_fastboot_command:
                 # Connect to serial
                 self.proc = self.driver.connect()
                 # Hard reset the platform

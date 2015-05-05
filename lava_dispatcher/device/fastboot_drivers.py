@@ -156,6 +156,13 @@ class BaseDriver(object):
         else:
             self.fastboot.boot(self.__boot_image__)
 
+    def wait_for_adb(self):
+        if self.target_type == 'android':
+            self.adb('wait-for-device')
+            return True
+        else:
+            return False
+
     def in_fastboot(self):
         if self.fastboot.on():
             logging.debug("Device is in fastboot mode - no need to hard reset")
@@ -317,8 +324,7 @@ class fastboot(BaseDriver):
         self.fastboot.enter()
 
     def connect(self):
-        if self.target_type == 'android':
-            self.adb('wait-for-device')
+        if self.wait_for_adb():
             proc = self.adb('shell', spawn=True)
         else:
             raise CriticalError('This device only supports Android!')
@@ -341,6 +347,60 @@ class nexus10(fastboot):
         self.fastboot('reboot')
 
 
+class tshark(fastboot):
+
+    def __init__(self, device):
+        super(tshark, self).__init__(device)
+
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
+                             bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
+                             target_type, scratch_dir):
+        raise CriticalError('This platform does not support kernel deployment!')
+
+    def boot(self, boot_cmds=None):
+        self.fastboot.flash('boot', self.__boot_image__)
+        self.fastboot('reboot')
+
+    def erase_boot(self):
+        pass
+
+
+class samsung_note(fastboot):
+
+    def __init__(self, device):
+        super(samsung_note, self).__init__(device)
+        self._isbooted = True
+
+    def boot(self, boot_cmds=None):
+        pass
+
+    def erase_boot(self):
+        pass
+
+    def on(self):
+        return True
+
+    def in_fastboot(self):
+        return False
+
+    def _get_partition_mount_point(self, partition):
+        lookup = {
+            self.config.data_part_android_org: '/data',
+            self.config.sys_part_android_org: '/system',
+        }
+        return lookup[partition]
+
+    def connect(self):
+        if self.wait_for_adb():
+            logging.debug("Waiting 30 seconds for OS to properly come up")
+            sleep(30)
+            proc = self.adb('shell', spawn=True)
+        else:
+            raise CriticalError('This device only supports Android!')
+
+        return proc
+
+
 class fastboot_serial(BaseDriver):
 
     def __init__(self, device):
@@ -354,9 +414,6 @@ class fastboot_serial(BaseDriver):
             proc = connect_to_serial(self.context)
         else:
             raise CriticalError('The connection_command is not defined!')
-
-        if self.target_type == 'android':
-            self.adb('wait-for-device')
 
         return proc
 
@@ -426,9 +483,6 @@ class pxa1928dkb(fastboot_serial):
         self.fastboot.flash('boot', self.__boot_image__)
         self.fastboot('reboot')
 
-        if self.target_type == 'android':
-            self.adb('wait-for-device')
-
 
 class k3v2(fastboot_serial):
 
@@ -448,58 +502,3 @@ class k3v2(fastboot_serial):
     def boot(self, boot_cmds=None):
         self.fastboot.flash('boot', self.__boot_image__)
         self.fastboot('reboot')
-
-
-class tshark(fastboot):
-
-    def __init__(self, device):
-        super(tshark, self).__init__(device)
-
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
-                             bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
-                             target_type, scratch_dir):
-        raise CriticalError('This platform does not support kernel deployment!')
-
-    def boot(self, boot_cmds=None):
-        self.fastboot.flash('boot', self.__boot_image__)
-        self.fastboot('reboot')
-
-    def erase_boot(self):
-        pass
-
-
-class samsung_note(fastboot):
-
-    def __init__(self, device):
-        super(samsung_note, self).__init__(device)
-        self._isbooted = True
-
-    def boot(self, boot_cmds=None):
-        pass
-
-    def erase_boot(self):
-        pass
-
-    def on(self):
-        return True
-
-    def in_fastboot(self):
-        return False
-
-    def _get_partition_mount_point(self, partition):
-        lookup = {
-            self.config.data_part_android_org: '/data',
-            self.config.sys_part_android_org: '/system',
-        }
-        return lookup[partition]
-
-    def connect(self):
-        if self.target_type == 'android':
-            self.adb('wait-for-device')
-            logging.debug("Waiting 30 seconds for OS to properly come up")
-            sleep(30)
-            proc = self.adb('shell', spawn=True)
-        else:
-            raise CriticalError('This device only supports Android!')
-
-        return proc

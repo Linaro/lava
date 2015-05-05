@@ -268,7 +268,7 @@ class DeviceSchema(schema.Schema):
     fastboot_command = schema.StringOption()
     fastboot_kernel_load_addr = schema.StringOption()
     rootfs_partition = schema.StringOption(default='userdata')
-    start_fastboot_command = schema.StringOption(default='fastboot')
+    start_fastboot_command = schema.StringOption(default=None)
     shared_working_directory = schema.StringOption(default=None)
 
     # for bootloader devices
