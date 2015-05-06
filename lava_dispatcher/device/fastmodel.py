@@ -272,7 +272,7 @@ class FastModelTarget(Target):
         self._copy_needed_files_from_partition(self.config.root_part, 'boot')
         self._copy_needed_files_from_partition(self.config.root_part, 'lib')
 
-    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype):
+    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype, qemu_pflash=None):
         self._sd_image = download_image(image, self.context)
         self._bootloadertype = bootloadertype
         self.customize_image(self._sd_image)
@@ -285,7 +285,7 @@ class FastModelTarget(Target):
         self._copy_needed_files_from_partition(self.config.root_part, 'lib')
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
-                             bl31, rootfstype, bootloadertype, target_type):
+                             bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
         # Required
         if kernel is None:
             raise CriticalError("A kernel image is required")
