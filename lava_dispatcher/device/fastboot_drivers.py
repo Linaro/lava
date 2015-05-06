@@ -476,7 +476,7 @@ class optimusa80(fastboot_serial):
             self.fastboot('flash boot %s' % self._kernel)
             self.fastboot('reboot')
         else:
-            self.fastboot.boot(self.__boot_image__)
+            self.fastboot.flash('boot', self.__boot_image__)
             self.fastboot('reboot')
 
     def in_fastboot(self):
