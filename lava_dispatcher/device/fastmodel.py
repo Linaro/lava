@@ -256,7 +256,7 @@ class FastModelTarget(Target):
 
         self._customize_android()
 
-    def deploy_linaro(self, hwpack, rootfs, dtb, rootfstype, bootloadertype):
+    def deploy_linaro(self, hwpack, rootfs, dtb, rootfstype, bootloadertype, qemu_pflash=None):
         hwpack = download_image(hwpack, self.context, decompress=False)
         rootfs = download_image(rootfs, self.context, decompress=False)
         odir = os.path.dirname(rootfs)
