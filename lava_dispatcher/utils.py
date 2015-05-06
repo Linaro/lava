@@ -494,7 +494,7 @@ def connect_to_serial(context):
     logging.error(msg)
     context.test_data.add_result('connect_to_console', 'fail',
                                  message=msg)
-    raise CriticalError('could execute connection_command successfully')
+    raise CriticalError('could not execute connection_command successfully')
 
 
 def wait_for_prompt(connection, prompt_pattern, timeout):
