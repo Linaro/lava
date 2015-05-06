@@ -46,8 +46,10 @@ class RestrictedIDLinkColumn(IDLinkColumn):
             device_type = record.actual_device.device_type
         elif record.requested_device:
             device_type = record.requested_device.device_type
-        else:
+        elif record.requested_device_type:
             device_type = record.requested_device_type
+        else:
+            return pklink(record)
 
         if len(device_type.devices_visible_to(table.context.get('request').user)) == 0:
             return "Unavailable"

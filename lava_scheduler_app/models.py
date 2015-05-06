@@ -1474,8 +1474,9 @@ class TestJob(RestrictedResource):
 
         device_type = _get_device_type(user, job_data['device_type'])
         allow = _check_submit_to_device(list(Device.objects.filter(
-            device_type=device_type)), user)
-
+            device_type=device_type, is_pipeline=True)), user)
+        if not allow:
+            raise DevicesUnavailableException("No devices of type %s have pipeline support." % device_type)
         taglist = _get_tag_list(job_data.get('tags', []), True)
         if taglist:
             supported = _check_tags(taglist, device_type=device_type)
