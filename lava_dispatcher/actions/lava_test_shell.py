@@ -609,7 +609,10 @@ class URLTestDefinition(object):
         fout.write('%s=\'%s\'\n' % ('LAVA_SERVER_IP',
                                     self.context.config.lava_server_ip))
         fout.write('%s=\'%s\'\n' % ('TARGET_TYPE', target_type))
-        fout.write('%s=\'%s\'\n' % ('REPEAT_COUNT', repeat_cnt))
+        if repeat_cnt > 0:
+            fout.write('%s=\'%s\'\n' % ('REPEAT_COUNT', repeat_cnt))
+            fout.write('###save REPEAT_COUNT as named attribute###\n')
+            fout.write('echo %s > $LAVA_RESULT_DIR/attributes/repeat_count\n' % repeat_cnt)
         fout.write('######\n')
 
     def _create_target_install(self, hostdir, targetdir):

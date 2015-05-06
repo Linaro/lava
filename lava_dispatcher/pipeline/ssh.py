@@ -9,7 +9,7 @@ class ConnectViaSSH(Action):
         # invalid action, no self.name yet.
 
     def run(self, connection, args=None):
-        ssh = self._run_command(
+        ssh = self.run_command(
             'ssh -o Compression=yes -o UserKnownHostsFile=/dev/null '
             '-o PasswordAuthentication=no -o StrictHostKeyChecking=no '
             '-o LogLevel=FATAL -l root 192.168.1.100')  # FIXME

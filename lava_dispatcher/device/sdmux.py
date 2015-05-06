@@ -114,12 +114,21 @@ class SDMuxTarget(Target):
                 f.write('\n# LAVA CUSTOMIZATIONS\n')
                 f.write('PS1="%s"\n' % self.tester_ps1)
 
-    def deploy_android(self, boot, system, data, rootfstype, bootloadertype,
+    def deploy_android(self, images, rootfstype, bootloadertype,
                        target_type):
         scratch = self.scratch_dir
-        boot = download_image(boot, self.context, scratch, decompress=False)
-        data = download_image(data, self.context, scratch, decompress=False)
-        system = download_image(system, self.context, scratch, decompress=False)
+
+        for image in images:
+            if image['partition'] == 'boot':
+                boot = download_image(image['url'], self.context, scratch, decompress=False)
+            elif image['parition'] == 'system':
+                system = download_image(image['url'], self.context, scratch, decompress=False)
+            elif image['partition'] == 'userdata':
+                data = download_image(image['url'], self.context, scratch, decompress=False)
+            else:
+                msg = 'Unsupported partition option: %s' % image['partition']
+                logging.warning(msg)
+                raise CriticalError(msg)
 
         img = os.path.join(scratch, 'android.img')
         device_type = self.config.lmc_dev_arg

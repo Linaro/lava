@@ -22,6 +22,8 @@ protocols:
       kvm02: server
     group_size: 2
     sub_id: 0
+    timeout:
+      minutes: 10
 
 priority: medium
 

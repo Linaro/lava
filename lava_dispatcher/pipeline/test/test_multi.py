@@ -155,6 +155,7 @@ class TestMultiUBoot(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertIsNone(self.job.validate())
         self.assertEqual(self.job.device['device_type'], 'beaglebone-black')
 
+    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_multi_uboot(self):
         self.assertIsNotNone(self.job)
         description_ref = pipeline_reference('uboot-multiple.yaml')

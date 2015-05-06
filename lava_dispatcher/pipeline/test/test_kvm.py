@@ -155,6 +155,7 @@ class TestKVMBasicDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
         description_ref = pipeline_reference('kvm.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
+    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_validate(self):
         try:
             self.job.pipeline.validate_actions()
@@ -219,6 +220,7 @@ class TestKVMQcow2Deploy(unittest.TestCase):  # pylint: disable=too-many-public-
         description_ref = pipeline_reference('kvm-qcow2.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
+    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_validate(self):
         try:
             self.job.pipeline.validate_actions()
@@ -259,6 +261,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
             if isinstance(action, DeployAction):
                 self.assertEqual(action.job, self.job)
 
+    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_validate(self):
         try:
             self.job.pipeline.validate_actions()

@@ -187,6 +187,8 @@ def create_ramdisk(ramdisk_dir, tmpdir):
         raise CriticalError('Unable to create cpio filesystem')
     if logging_system("cd %s && gzip %s" % (tmpdir, ramdisk_data)):
         raise CriticalError('Unable to compress cpio filesystem')
+    if logging_system("rm -rf %s" % ramdisk_dir):
+        raise CriticalError('Unable extracted ramdisk directory')
     return os.path.join(tmpdir, 'ramdisk.cpio.gz')
 
 
@@ -243,6 +245,35 @@ def create_multi_image(kernel, ramdisk, load_addr, tmp_dir, arch='arm'):
         return uimage_path
     else:
         raise CriticalError("Multi Image creation failed")
+
+
+def create_fat_boot_image(kernel, tmpdir, fastboot, dtb=None, ramdisk=None):
+    logging.info("Attempting to fat boot image")
+    boot_fat_dir = os.path.join(tmpdir, 'boot-fat')
+    boot_fat_img = os.path.join(tmpdir, 'boot-fat.img')
+    if logging_system("mkdir -p %s" % boot_fat_dir):
+        raise CriticalError("Unable to create boot-fat directory")
+    if logging_system("dd if=/dev/zero of=%s bs=512 count=131072" % boot_fat_img):
+        raise CriticalError("Unable to create boot-fat image")
+    if logging_system("mkfs.fat -n \"BOOT IMG\" %s" % boot_fat_img):
+        raise CriticalError("Unable to format boot-fat image")
+    if logging_system("mount -o loop,rw,sync %s %s" % (boot_fat_img, boot_fat_dir)):
+        raise CriticalError("Unable to mount boot-fat image")
+    if logging_system("cp -a %s %s" % (kernel, boot_fat_dir)):
+        raise CriticalError('Unable copy kernel')
+    if logging_system("cp -a %s %s/fastboot.efi" % (fastboot, boot_fat_dir)):
+        raise CriticalError('Unable copy fastboot image')
+    if ramdisk:
+        if logging_system("cp -a %s %s" % (ramdisk, boot_fat_dir)):
+            raise CriticalError('Unable copy ramdisk')
+    if dtb:
+        if logging_system("cp -a %s %s" % (dtb, boot_fat_dir)):
+            raise CriticalError('Unable copy dtb')
+    if logging_system("umount %s" % boot_fat_dir):
+        raise CriticalError("Unable to unmount boot-fat directory")
+    if logging_system("rm -rf %s" % boot_fat_dir):
+        raise CriticalError('Unable remove boot-fat directory')
+    return boot_fat_img
 
 
 def append_dtb(kernel, dtb, tmp_dir):

@@ -64,16 +64,21 @@ class QEMUTarget(Target):
         self._enter_boot_loader = False
         self._bootloadertype = None
 
-    def _download_needed_files(self):
-        if self.config.qemu_pflash:
-            self._qemu_pflash = []
+    def _download_qemu_pflash_files(self, qemu_pflash=None):
+        self._qemu_pflash = []
+        if qemu_pflash:
+            for pflash in qemu_pflash:
+                self._qemu_pflash.append(download_image(pflash,
+                                                        self.context))
+        elif self.config.qemu_pflash:
             for pflash in self.config.qemu_pflash:
                 self._qemu_pflash.append(download_image(pflash,
-                                                        self.context,
-                                                        decompress=False))
+                                                        self.context))
+        else:
+            self._qemu_pflash = None
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
-                             bl31, rootfstype, bootloadertype, target_type):
+                             bl31, rootfstype, bootloadertype, target_type, qemu_pflash):
         # Check for errors
         if rootfs is None and ramdisk is None:
             raise CriticalError("You must specify a QEMU file system image or ramdisk")
@@ -109,25 +114,30 @@ class QEMUTarget(Target):
 
         if bootloadertype == 'uefi':
             self._bootloadertype = 'uefi'
-            self._download_needed_files()
+            # Try downloading pflash files, if it exists.
+            self._download_qemu_pflash_files(qemu_pflash=qemu_pflash)
 
         if firmware is not None:
             firmware = download_image(firmware, self.context)
             self._firmware = firmware
 
-    def deploy_linaro(self, hwpack, rootfs, dtb, rootfstype, bootloadertype):
+    def deploy_linaro(self, hwpack, rootfs, dtb, rootfstype, bootloadertype,
+                      qemu_pflash):
         odir = self.scratch_dir
         if bootloadertype == 'uefi':
             self._bootloadertype = 'uefi'
-            self._download_needed_files()
+            # Try downloading pflash files, if it exists.
+            self._download_qemu_pflash_files(qemu_pflash=qemu_pflash)
         self._sd_image = generate_image(self, hwpack, rootfs, dtb,
                                         odir, bootloadertype, rootfstype)
         self.customize_image(self._sd_image)
 
-    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype):
+    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype,
+                               qemu_pflash):
         if bootloadertype == 'uefi':
             self._bootloadertype = 'uefi'
-            self._download_needed_files()
+            # Try downloading pflash files, if it exists.
+            self._download_qemu_pflash_files(qemu_pflash=qemu_pflash)
         self._sd_image = download_image(image, self.context)
         self.customize_image(self._sd_image)
 
@@ -152,7 +162,7 @@ class QEMUTarget(Target):
 
         qemu_options = ''
 
-        if self._kernel:
+        if self._kernel and not all([self._firmware, self._bootloadertype]):
             qemu_options += ' -kernel %s' % self._kernel
             if self._sd_image is None:
                 kernel_args = ' '.join(self._load_boot_cmds(default='boot_cmds_ramdisk'))
@@ -166,14 +176,15 @@ class QEMUTarget(Target):
         if self._dtb:
             qemu_options += ' -dtb %s' % self._dtb
 
-        if self._bootloadertype == 'uefi':
-            if self._firmware:
-                qemu_options += ' -bios %s' % self._firmware
+        if self._firmware:
+            qemu_options += ' -bios %s' % self._firmware
+            if self._bootloadertype == 'uefi':
                 self._enter_boot_loader = True
-            elif self._qemu_pflash:
-                for pflash in self._qemu_pflash:
-                    qemu_options += ' -pflash %s' % pflash
-                    self._enter_boot_loader = True
+        elif self._qemu_pflash:
+            if self._bootloadertype == 'uefi':
+                self._enter_boot_loader = True
+            for pflash in self._qemu_pflash:
+                qemu_options += ' -pflash %s' % pflash
 
         if self._sd_image:
             qemu_options += ' ' + self.config.qemu_drive_interface
@@ -193,9 +204,6 @@ class QEMUTarget(Target):
             self._customize_bootloader(self.proc, boot_cmds)
 
         self._monitor_boot(self.proc, self.tester_ps1, self.tester_ps1_pattern)
-        if self._ramdisk and self._sd_image is None:
-            self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
-                               send_char=self.config.send_char)
 
         return self.proc
 

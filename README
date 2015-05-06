@@ -3,24 +3,15 @@ LAVA dispatcher - automated testing of Linaro images
 
 The LAVA dispatcher allows automated testing of Linaro images.
 
-Quickstart
-----------
+Documentation
+=============
 
-See doc/QUICKSTART.
+lava-dispatcher documentation is installed as part of the lava-server-doc
+package and is available on each LAVA instance,
+e.g. http://localhost/static/docs/ or http://validation.linaro.org/static/docs/
 
+Reporting Bugs
+==============
 
-Android Debug Bridge (adb) installation
----------------------------------------
-
-To run android test job, adb is common to be used.
-
-For installing adb, you can download the SDK from 
-http://developer.android.com/sdk/index.html
-
-By default, the SDK files are unpacked into a directory named 
-android-sdk-<machine-platform>.
-
-You can find the adb tool in <sdk>/platform-tools/.
-
-You might want to add the location of the SDK's tools/ and platform-tools 
-to your PATH environment variable, to provide easy access to the tools.
+All bugs should be reported to Linaro at - 
+https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework

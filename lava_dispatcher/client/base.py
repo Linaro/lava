@@ -380,12 +380,12 @@ class LavaClient(object):
         self.target_device = get_target(context, config)
         self.vm_group = VmGroupHandler(self)
 
-    def deploy_linaro_android(self, boot, system, data, rootfstype,
+    def deploy_linaro_android(self, images, rootfstype,
                               bootloadertype, target_type):
-        self.target_device.deploy_android(boot, system, data, rootfstype,
+        self.target_device.deploy_android(images, rootfstype,
                                           bootloadertype, target_type)
 
-    def deploy_linaro(self, hwpack, rootfs, image, dtb, rootfstype, bootloadertype):
+    def deploy_linaro(self, hwpack, rootfs, image, dtb, rootfstype, bootloadertype, qemu_pflash):
         if image is None:
             if hwpack is None or rootfs is None:
                 raise CriticalError(
@@ -397,16 +397,21 @@ class LavaClient(object):
 
         if image is None:
             self.target_device.deploy_linaro(hwpack, rootfs, dtb,
-                                             rootfstype, bootloadertype)
+                                             rootfstype, bootloadertype,
+                                             qemu_pflash)
         else:
             self.target_device.deploy_linaro_prebuilt(image, dtb, rootfstype,
-                                                      bootloadertype)
+                                                      bootloadertype,
+                                                      qemu_pflash)
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs,
                              nfsrootfs, bootloader, firmware, bl1, bl2, bl31,
-                             rootfstype, bootloadertype, target_type):
+                             rootfstype, bootloadertype, target_type, qemu_pflash):
         self.target_device.deploy_linaro_kernel(kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware,
-                                                bl1, bl2, bl31, rootfstype, bootloadertype, target_type)
+                                                bl1, bl2, bl31, rootfstype, bootloadertype, target_type, qemu_pflash)
+
+    def dummy_deploy(self, target_type):
+        self.target_device.dummy_deploy(target_type)
 
     @contextlib.contextmanager
     def runner(self):
@@ -546,6 +551,15 @@ class LavaClient(object):
 
             logging.debug("Checking for vm-group host")
             self.vm_group.start_vms()
+
+            logging.debug("Setting up name resolution")
+            # Check if the kernel supports DHCP
+            kernel_dhcp = session.run('test -e /proc/net/pnp', failok=True)
+            # Check if /etc/resolv.conf file size is not zero
+            resolv_file = session.run('test -s /etc/resolv.conf', failok=True)
+            if kernel_dhcp == 0 and resolv_file != 0:
+                # Force name resolution
+                session.run('cat /proc/net/pnp > /etc/resolv.conf')
 
         if not in_linaro_image:
             raise CriticalError()

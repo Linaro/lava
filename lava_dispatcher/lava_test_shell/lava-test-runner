@@ -65,9 +65,8 @@ for line in $(cat ${WORKFILE}); do
 	odir=${RESULTSDIR}/${test}-`date +%s`
 	mkdir ${odir}
 	mkdir ${odir}/attachments/
-
 	touch ${odir}/stdout.log
-
+	mkdir ${odir}/attributes/
 	cp ${line}/uuid ${odir}/analyzer_assigned_uuid
 	cp ${line}/testdef.yaml ${odir}/
 	cp ${line}/testdef_metadata ${odir}/

@@ -90,7 +90,7 @@ class FastbootTarget(Target):
             logging.critical(msg)
             raise CriticalError(msg)
 
-    def deploy_android(self, boot, system, userdata, rootfstype,
+    def deploy_android(self, images, rootfstype,
                        bootloadertype, target_type):
         self._target_type = target_type
         self._image_deployment = True
@@ -99,10 +99,10 @@ class FastbootTarget(Target):
         attempts = 0
         deployed = False
         while (attempts < deploy_attempts) and (not deployed):
-            logging.info("Deploying test image. Attempt: %d", attempts + 1)
+            logging.info("Deploying test images image Attempt: %d", attempts + 1)
             try:
                 self._enter_fastboot()
-                self.driver.deploy_android(boot, system, userdata, rootfstype,
+                self.driver.deploy_android(images, rootfstype,
                                            bootloadertype, self._target_type,
                                            self.scratch_dir)
                 deployed = True
@@ -117,6 +117,13 @@ class FastbootTarget(Target):
             msg = "Deployment Failed"
             logging.critical(msg)
             raise CriticalError(msg)
+
+    def dummy_deploy(self, target_type):
+        logging.info("Doing dummy deployment %s" % target_type)
+        self._image_deployment = True
+        self._target_type = target_type
+        self.deployment_data = deployment_data.get(self._target_type)
+        self.driver.dummy_deploy(target_type, self.scratch_dir)
 
     def get_device_version(self):
         # this is tricky, because fastboot does not have a visible version
@@ -140,13 +147,21 @@ class FastbootTarget(Target):
                 return self.proc
             self._enter_fastboot()
             if self._use_boot_cmds:
-                boot_cmds = ''.join(self._load_boot_cmds(default=self.driver.get_default_boot_cmds()))
+                boot_cmds = self._load_boot_cmds(default=self.driver.get_default_boot_cmds(),
+                                                 boot_tags=self.driver.get_boot_tags())
                 self.driver.boot(boot_cmds)
             else:
                 self.driver.boot()
             if self.proc is None:
                 self.proc = self.driver.connect()
+            if self.config.run_boot_cmds:
+                self._enter_bootloader(self.proc)
+                boot_cmds = self._load_boot_cmds(default=self.driver.get_default_boot_cmds(),
+                                                 boot_tags=self.driver.get_boot_tags())
+                self._customize_bootloader(self.proc, boot_cmds)
             self._monitor_boot(self.proc, self.tester_ps1, self.tester_ps1_pattern)
+            if self.config.start_fastboot_command:
+                self.driver.wait_for_adb()
             self._booted = True
             return self.proc
         except subprocess.CalledProcessError:
@@ -199,9 +214,7 @@ class FastbootTarget(Target):
             self.proc = None
         # Device needs to be forced into fastboot mode
         if not self.driver.in_fastboot():
-            if self.config.fastboot_driver == 'capri' or \
-               self.config.fastboot_driver == 'pxa1928dkb' or \
-               self.config.fastboot_driver == 'optimusa80':
+            if self.config.start_fastboot_command:
                 # Connect to serial
                 self.proc = self.driver.connect()
                 # Hard reset the platform

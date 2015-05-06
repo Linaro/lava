@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
+import os
 import unittest
 from lava_dispatcher.pipeline.actions.boot.qemu import BootQEMUImageAction
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry
@@ -36,6 +37,7 @@ class TestRepeatBootTest(unittest.TestCase):  # pylint: disable=too-many-public-
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-repeat.yaml', mkdtemp())
 
+    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_basic_structure(self):
         self.assertIsNotNone(self.job)
         self.job.validate()

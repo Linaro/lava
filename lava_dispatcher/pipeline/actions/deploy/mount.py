@@ -64,7 +64,7 @@ class OffsetAction(DeployAction):
         image = self.data['download_action'][self.key]['file']
         if not os.path.exists(image):
             raise RuntimeError("Not able to mount %s: file does not exist" % image)
-        part_data = self._run_command([
+        part_data = self.run_command([
             '/sbin/parted',
             image,
             '-m',
@@ -113,7 +113,7 @@ class LoopCheckAction(DeployAction):
         if 'available_loops' not in self.data['download_action']:
             raise RuntimeError("Unable to check available loop devices")
         args = ['/sbin/losetup', '-a']
-        pro = self._run_command(args)
+        pro = self.run_command(args)
         mounted_loops = len(pro.strip().split("\n")) if pro else 0
         available_loops = self.data['download_action']['available_loops']
         # FIXME: we should retry as this can happen and be fixed automatically
@@ -164,7 +164,7 @@ class LoopMountAction(RetryAction):
             self.data['download_action']['image']['file'],
             self.data[self.name]['mntdir']
         ]
-        command_output = self._run_command(mount_cmd)
+        command_output = self.run_command(mount_cmd)
         self.mntdir = self.data['loop_mount']['mntdir']
         self.data['mount_action']['mntdir'] = \
             os.path.abspath("%s/%s" % (self.data[self.name]['mntdir'], self.data['lava_test_results_dir']))
@@ -176,7 +176,7 @@ class LoopMountAction(RetryAction):
         self.logger.debug("%s cleanup" % self.name)
         if self.mntdir:
             if os.path.ismount(self.mntdir):
-                self._run_command(['umount', self.mntdir])
+                self.run_command(['umount', self.mntdir])
             if os.path.isdir(self.mntdir):
                 rmtree(self.mntdir)
             self.mntdir = None
@@ -244,7 +244,7 @@ class Unmount(Action):
         mntdir = self.data['loop_mount']['mntdir']
         self.logger.debug("umounting %s" % mntdir)
         if os.path.ismount(mntdir):
-            self._run_command(['umount', mntdir])
+            self.run_command(['umount', mntdir])
         if os.path.isdir(mntdir):
             rmtree(mntdir)
         return connection

@@ -211,7 +211,7 @@ class Target(object):
     def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootloadertype):
         raise NotImplementedError('deploy_image')
 
-    def deploy_android(self, boot, system, userdata, rootfstype,
+    def deploy_android(self, images, rootfstype,
                        bootloadertype, target_type):
         raise NotImplementedError('deploy_android_image')
 
@@ -221,6 +221,9 @@ class Target(object):
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
                              bl31, rootfstype, bootloadertype, target_type):
         raise NotImplementedError('deploy_linaro_kernel')
+
+    def dummy_deploy(self, target_type):
+        pass
 
     def power_off(self, proc):
         if proc is not None:
