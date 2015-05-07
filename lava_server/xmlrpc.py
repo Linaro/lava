@@ -204,19 +204,28 @@ class LavaSystemAPI(SystemAPI):
         Return value
         ------------
         Returns a nested dictionary where the top level key is the device type, the value is
-        a second dictionary. The key of the second dictionary is a hostname from the device_list
+        a list of dictionaries. The key of the second dictionary is a hostname from the device_list
         which exists in the queried instance. The value is a boolean
         for whether the user can access that device.
         If the device is visible, also includes a boolean denoting whether the specified
         device is a pipeline device which can run jobs designed in the dispatcher refactoring.
         {
-          'panda' {
-              'panda05': True
-           },
-           'mustang': {
-              'mustang01': False
-           }
+            'mustang': [
+                {
+                    'mustang01': {
+                        'visible': True
+                        }
+                }
+            ],
+            'panda': [
+                {
+                    'panda05': {
+                        'visible': True
+                        }
+                    }
+            ]
         }
+
         If the device type is hidden, that type and the nested dictionary for that type
         will be omitted.
         Retired devices will be omitted.
@@ -227,14 +236,19 @@ class LavaSystemAPI(SystemAPI):
         Example
         -------
 
-        server.system.user_can_view_devices(
-            ['mustang01', 'wandboard07', 'imx53-01', 'cubietruck02', 'black01']
-        )
-        {'cubietruck':
-            {'cubietruck02': True, 'is_pipeline': False},
-         'beaglebone-black': {
-            'is_pipeline': True, 'black01': True},
-         'imx6q-wandboard': {'wandboard': True, 'is_pipeline': False}
+        server.system.user_can_view_devices(['kvm014', 'kvm02'])
+        {'qemu':
+            [
+                {'kvm014': {
+                    'visible': True,
+                    'is_pipeline': True
+                    }
+                },
+                {'kvm02': {
+                    'visible': True,
+                    'is_pipeline': True}
+                }
+            ]
         }
 
         # if using the username and token of an admin, a different user can be queried:
@@ -259,13 +273,18 @@ class LavaSystemAPI(SystemAPI):
             device_type = device.device_type
             if device_type.owners_only and not device.is_owned_by(username):
                 continue
+            retval.setdefault(device_type.name, [])
             visible = device.is_visible_to(username)
-            retval[device_type.name] = {
-                hostname: visible
-            }
             if visible:
-                retval[device_type.name].update({
-                    'is_pipeline': device.is_pipeline
+                retval[device_type.name].append({
+                    hostname: {
+                        'is_pipeline': device.is_pipeline,
+                        'visible': visible
+                    }
+                })
+            else:
+                retval[device_type.name].append({
+                    hostname: {'visible': visible}
                 })
         return retval
 
