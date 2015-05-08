@@ -67,6 +67,8 @@ class cmd_deploy_linaro_image(BaseAction):
             'password': {'type': 'string', 'optional': True},
             'login_commands': {'type': 'array', 'items': {'type': 'string'},
                                'optional': True},
+            'qemu_pflash': {'type': 'array', 'items': {'type': 'string'},
+                            'optional': True},
             'role': {'type': 'string', 'optional': True},
         },
         'additionalProperties': False,
@@ -99,7 +101,7 @@ class cmd_deploy_linaro_image(BaseAction):
     def run(self, hwpack=None, rootfs=None, image=None, dtb=None,
             rootfstype='ext4', bootloadertype='u_boot', login_prompt=None,
             password_prompt=None, username=None, password=None,
-            login_commands=None, customize=None,
+            login_commands=None, customize=None, qemu_pflash=None,
             boot_part=None, root_part=None):
         if login_prompt is not None:
             self.client.config.login_prompt = login_prompt
@@ -119,7 +121,8 @@ class cmd_deploy_linaro_image(BaseAction):
             self.client.config.root_part = root_part
         self.client.deploy_linaro(
             hwpack=hwpack, rootfs=rootfs, image=image, dtb=dtb,
-            rootfstype=rootfstype, bootloadertype=bootloadertype,)
+            rootfstype=rootfstype, bootloadertype=bootloadertype,
+            qemu_pflash=qemu_pflash,)
 
 
 cmd_deploy_image = cmd_deploy_linaro_image
@@ -237,6 +240,8 @@ class cmd_deploy_linaro_kernel(BaseAction):
             'password': {'type': 'string', 'optional': True},
             'login_commands': {'type': 'array', 'items': {'type': 'string'},
                                'optional': True},
+            'qemu_pflash': {'type': 'array', 'items': {'type': 'string'},
+                            'optional': True},
             'role': {'type': 'string', 'optional': True},
         },
         'additionalProperties': False,
@@ -266,7 +271,7 @@ class cmd_deploy_linaro_kernel(BaseAction):
             nfsrootfs=None, bootloader=None, firmware=None, bl1=None, bl2=None,
             bl31=None, rootfstype='ext4', bootloadertype='u_boot', target_type='oe',
             login_prompt=None, password_prompt=None, username=None,
-            password=None, login_commands=None):
+            password=None, login_commands=None, qemu_pflash=None):
         if login_prompt is not None:
             self.client.config.login_prompt = login_prompt
         if password_prompt is not None:
@@ -280,7 +285,7 @@ class cmd_deploy_linaro_kernel(BaseAction):
         self.client.deploy_linaro_kernel(kernel=kernel, ramdisk=ramdisk, dtb=dtb, overlays=overlays, rootfs=rootfs,
                                          nfsrootfs=nfsrootfs, bootloader=bootloader, firmware=firmware, bl1=bl1,
                                          bl2=bl2, bl31=bl31, rootfstype=rootfstype, bootloadertype=bootloadertype,
-                                         target_type=target_type)
+                                         target_type=target_type, qemu_pflash=qemu_pflash)
 
 
 cmd_deploy_kernel = cmd_deploy_linaro_kernel

@@ -385,7 +385,7 @@ class LavaClient(object):
         self.target_device.deploy_android(images, rootfstype,
                                           bootloadertype, target_type)
 
-    def deploy_linaro(self, hwpack, rootfs, image, dtb, rootfstype, bootloadertype):
+    def deploy_linaro(self, hwpack, rootfs, image, dtb, rootfstype, bootloadertype, qemu_pflash):
         if image is None:
             if hwpack is None or rootfs is None:
                 raise CriticalError(
@@ -397,16 +397,18 @@ class LavaClient(object):
 
         if image is None:
             self.target_device.deploy_linaro(hwpack, rootfs, dtb,
-                                             rootfstype, bootloadertype)
+                                             rootfstype, bootloadertype,
+                                             qemu_pflash)
         else:
             self.target_device.deploy_linaro_prebuilt(image, dtb, rootfstype,
-                                                      bootloadertype)
+                                                      bootloadertype,
+                                                      qemu_pflash)
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs,
                              nfsrootfs, bootloader, firmware, bl1, bl2, bl31,
-                             rootfstype, bootloadertype, target_type):
+                             rootfstype, bootloadertype, target_type, qemu_pflash):
         self.target_device.deploy_linaro_kernel(kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware,
-                                                bl1, bl2, bl31, rootfstype, bootloadertype, target_type)
+                                                bl1, bl2, bl31, rootfstype, bootloadertype, target_type, qemu_pflash)
 
     def dummy_deploy(self, target_type):
         self.target_device.dummy_deploy(target_type)
