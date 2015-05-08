@@ -60,7 +60,10 @@ class LavaSystemAPI(SystemAPI):
         """
         Name
         ----
-        user_can_view_jobs ()
+        user_can_view_jobs (`job_list`)
+
+        Administrators only:
+        user_can_view_jobs (`job_list`, `username`)
 
         Description
         -----------
@@ -120,7 +123,10 @@ class LavaSystemAPI(SystemAPI):
         """
         Name
         ----
-        user_can_view_bundles ()
+        user_can_view_bundles (`bundle_list`)
+
+        Administrators only:
+        user_can_view_bundles (`bundle_list`, `username`)
 
         Description
         -----------
@@ -186,7 +192,10 @@ class LavaSystemAPI(SystemAPI):
         """
         Name
         ----
-        user_can_view_devices ()
+        user_can_view_devices (`device_list`)
+
+        Administrators only:
+        user_can_view_devices (`device_list`, `username`)
 
         Description
         -----------
@@ -292,7 +301,10 @@ class LavaSystemAPI(SystemAPI):
         """
         Name
         ----
-        user_can_submit_to_types ()
+        user_can_submit_to_types (`type_list`)
+
+        Administrators only:
+        user_can_submit_to_types (`type_list`, `username`)
 
         Description
         -----------
