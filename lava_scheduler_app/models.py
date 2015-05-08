@@ -1,13 +1,16 @@
+# pylint: disable=too-many-lines
+
 import logging
 import os
 import uuid
+import jinja2
 import simplejson
 import urlparse
 import datetime
 import smtplib
 import socket
 import sys
-
+import yaml
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.sites.models import Site
@@ -24,6 +27,8 @@ from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
+from django_kvstore import models as kvmodels
+from django_kvstore import get_kvstore
 
 from django_restricted_resource.models import RestrictedResource
 
@@ -34,11 +39,12 @@ from lava_scheduler_app import utils
 
 from linaro_django_xmlrpc.models import AuthToken
 
+# pylint: disable=invalid-name,no-self-use,too-many-public-methods,too-few-public-methods
 
 # Make the open function accept encodings in python < 3.x
 if sys.version_info[0] < 3:
     import codecs
-    open = codecs.open
+    open = codecs.open  # pylint: disable=redefined-builtin
 
 
 class JSONDataError(ValueError):
@@ -383,6 +389,63 @@ class Worker(models.Model):
             return datetime.datetime.utcnow()
 
 
+class DeviceDictionaryTable(models.Model):
+    kee = models.CharField(max_length=255)
+    value = models.TextField()
+
+    def __unicode__(self):
+        return self.kee.replace('__KV_STORE_::lava_scheduler_app.models.DeviceDictionary:', '')
+
+    def lookup_device_dictionary(self):
+        val = self.kee
+        msg = val.replace('__KV_STORE_::lava_scheduler_app.models.DeviceDictionary:', '')
+        return DeviceDictionary.get(msg)
+
+
+class ExtendedKVStore(kvmodels.Model):
+    """
+    Enhanced kvstore Model which allows to set the kvstore as a class variable
+    """
+    kvstore = None
+
+    def save(self):
+        d = self.to_dict()
+        self.kvstore.set(kvmodels.generate_key(self.__class__, self._get_pk_value()), d)
+
+    def delete(self):
+        self.kvstore.delete(kvmodels.generate_key(self.__class__, self._get_pk_value()))
+
+    @classmethod
+    def get(cls, kvstore_id):
+        fields = cls.kvstore.get(kvmodels.generate_key(cls, kvstore_id))
+        if fields is None:
+            return None
+        return cls.from_dict(fields)
+
+
+class DeviceKVStore(ExtendedKVStore):
+    kvstore = get_kvstore('db://lava_scheduler_app_devicedictionarytable')
+
+
+class PipelineKVStore(ExtendedKVStore):
+    """
+    Set a different backend table
+    """
+    kvstore = get_kvstore('db://lava_scheduler_app_pipelinestore')
+
+
+class DeviceDictionary(DeviceKVStore):
+    """
+    KeyValue store for Pipeline device support
+    Not a RestricedResource - may need a new class based on kvmodels
+    """
+    hostname = kvmodels.Field(pk=True)
+    parameters = kvmodels.Field()
+
+    class Meta:
+        app_label = 'pipeline'
+
+
 class Device(RestrictedResource):
     """
     A device that we can run tests on.
@@ -482,6 +545,12 @@ class Device(RestrictedResource):
         null=True,
         blank=True,
         default=None
+    )
+
+    is_pipeline = models.BooleanField(
+        verbose_name="Pipeline device?",
+        default=False,
+        editable=True
     )
 
     def clean(self):
@@ -670,13 +739,49 @@ class Device(RestrictedResource):
             user = User.objects.get(username='lava-health')
             job_data = simplejson.loads(job_json)
             job_data['target'] = self.hostname
+            job_data['health-check'] = True
             job_json = simplejson.dumps(job_data)
             try:
                 return TestJob.from_json_and_user(job_json, user, True)
             except (JSONDataError, ValueError) as e:
                 self.put_into_maintenance_mode(
-                    None, "Job submission failed for health job: %s" % e)
-                raise JSONDataError("Health check job submission failed: %s" % e)
+                    None, "Job submission failed for health job for %s: %s" % (self, e))
+                raise JSONDataError("Health check job submission failed for %s: %s" % (self, e))
+
+    def load_device_configuration(self, job_ctx=None):
+        """
+        Maps the DeviceDictionary to the static templates in /etc/.
+        Use lava-server manage device-dictionary --import <FILE>
+        to update the DeviceDictionary.
+        raise: this function can raise IOError, jinja2.TemplateError or yaml.YAMLError -
+            handling these exceptions may be context-dependent, users will need
+            useful messages based on these exceptions.
+        """
+        if self.is_pipeline is False:
+            return None
+
+        # The job_ctx should not be None while an empty dict is ok
+        if job_ctx is None:
+            job_ctx = {}
+
+        element = DeviceDictionary.get(self.hostname)
+        # TODO: hardcoded path (determined by setup.py)
+        path = utils.jinja_template_path()
+        if element is None:
+            return None
+        data = utils.devicedictionary_to_jinja2(
+            element.parameters,
+            element.parameters['extends']
+        )
+        string_loader = jinja2.DictLoader({'%s.yaml' % self.hostname: data})
+        type_loader = jinja2.FileSystemLoader([
+            os.path.join(path, 'device-types')])
+        env = jinja2.Environment(
+            loader=jinja2.ChoiceLoader([string_loader, type_loader]),
+            trim_blocks=True)
+        template = env.get_template("%s.yaml" % self.hostname)
+
+        return yaml.load(template.render(**job_ctx))
 
     def previous_state(self):
         """Returns the previous state which will not be any form of device
@@ -732,7 +837,7 @@ class JobFailureTag(models.Model):
         return self.name
 
 
-def _get_tag_list(tags):
+def _get_tag_list(tags, pipeline=False):
     """
     Creates a list of Tag objects for the specified device tags
     for singlenode and multinode jobs.
@@ -742,12 +847,15 @@ def _get_tag_list(tags):
     """
     taglist = []
     if type(tags) != list:
-        raise JSONDataError("'device_tags' needs to be a list - received %s" % type(tags))
+        msg = "'device_tags' needs to be a list - received %s" % type(tags)
+        raise yaml.YAMLError(msg) if pipeline else JSONDataError(msg)
     for tag_name in tags:
         try:
             taglist.append(Tag.objects.get(name=tag_name))
         except Tag.DoesNotExist:
-            raise JSONDataError("Device tag '%s' does not exist in the database." % tag_name)
+            msg = "Device tag '%s' does not exist in the database." % tag_name
+            raise yaml.YAMLError(msg) if pipeline else JSONDataError(msg)
+
     return taglist
 
 
@@ -887,6 +995,179 @@ def _check_device_types(user):
         if dt[1] > 0:
             all_devices[dt[0]] = dt[1]
     return all_devices
+
+
+def _create_pipeline_job(job_data, user, taglist, device=None, device_type=None, target_group=None):
+
+    if not device and not device_type:
+        # programming error
+        return None
+
+    if type(job_data) is not dict:
+        # programming error
+        raise RuntimeError("Invalid job data %s" % job_data)
+
+    if not taglist:
+        taglist = []
+
+    yaml_data = yaml.dump(job_data)
+    job = TestJob(definition=yaml_data, original_definition=yaml_data,
+                  submitter=user,
+                  requested_device=device,
+                  requested_device_type=device_type,
+                  target_group=target_group,
+                  description=job_data['job_name'],
+                  health_check=False,
+                  user=user, is_public=True,
+                  is_pipeline=True)
+    job.save()
+    # need a valid job before the tags can be assigned, then it needs to be saved again.
+    for tag in Tag.objects.filter(name__in=taglist):
+        job.tags.add(tag)
+
+    # add pipeline to jobpipeline, update with results later - needs the job.id.
+    dupe = JobPipeline.get(job.id)
+    if dupe:
+        # this should be impossible
+        # FIXME: needs a unit test
+        raise RuntimeError("Duplicate job id?")
+    store = JobPipeline(job_id=job.id)
+    store.pipeline = {}
+    store.save()
+    return job
+
+
+def _pipeline_protocols(job_data, user):
+    """
+    Handle supported pipeline protocols
+    Check supplied parameters and change the device selection if necessary.
+    This function has two stages - calculate the device_list, create the TestJobs.
+    Other protocols can affect the device_list before the jobs are created.
+    role_dictionary = {  # map of the multinode group
+        role: {
+            'devices': [],
+            'jobs': [],
+            'tags': []
+        }
+    }
+
+    Note: this function does *not* deal with the device state - this is a submission
+    check to add the job(s) to the queue. It is not a problem if devices for this
+    job are currently busy, only that there are enough devices which are not retired.
+    So despite doing the tag checks here, the job is created with just the device_type
+    and the checks are done again before the job starts.
+
+    Actual device assignment happens in lava_scheduler_daemon:dbjobsource.py until
+    this migrates into dispatcher-master.
+
+    params:
+      job_data - dictionary of the submission YAML
+      user: the user submitting the job
+    returns:
+      list of all jobs created using the specified type(s) which meet the protocol criteria,
+      specified device tags and which the user is able to submit.
+    exceptions:
+        DevicesUnavailableException if all criteria cannot be met.
+    """
+    device_list = []
+    if type(job_data) is dict and 'protocols' not in job_data:
+        return device_list
+
+    role_dictionary = {}  # map of the multinode group
+    if 'lava-multinode' in job_data['protocols']:
+        # create target_group uuid, just a label for the coordinator.
+        target_group = str(uuid.uuid4())
+
+        # Handle the requirements of the Multinode protocol
+        # FIXME: needs a schema check
+        # FIXME: the vland protocol will affect the device_list
+        if 'roles' in job_data['protocols']['lava-multinode']:
+            for role in job_data['protocols']['lava-multinode']['roles']:
+                role_dictionary[role] = {
+                    'devices': [],
+                    'tags': []
+                }
+                params = job_data['protocols']['lava-multinode']['roles'][role]
+                device_type = _get_device_type(user, params['device_type'])
+                role_dictionary[role]['device_type'] = device_type
+
+                device_list = Device.objects.filter(device_type=device_type)
+                allowed_devices = []
+                for device in device_list:
+                    if _check_submit_to_device([device], user):
+                        allowed_devices.append(device)
+
+                if len(allowed_devices) < params['count']:
+                    raise DevicesUnavailableException("Not enough devices of type %s are currently "
+                                                      "available to user %s"
+                                                      % (device_type, user))
+                role_dictionary[role]['tags'] = _get_tag_list(params.get('tags', []), True)
+                if role_dictionary[role]['tags']:
+                    supported = _check_tags(role_dictionary[role]['tags'], device_type=device_type)
+                    _check_tags_support(supported, allowed_devices)
+
+                # FIXME: other protocols could need to remove devices from 'supported' here
+
+                # the device_roles cannot be set here - only once the final group has been reserved
+
+        job_object_list = []
+
+        # so far, just checked availability, now create the data.
+        # Tags and device_type are tied to the role. The actual device is
+        # a combination of the device_type and the count. Devices from the
+        # supported list are allocated to jobs for the specified role.
+
+        # split the YAML - needs the full device group information
+        # returns a dict indexed by role, containing a list of jobs
+        job_dictionary = utils.split_multinode_yaml(job_data, target_group)
+
+        # structural changes done, now create the testjob.
+        sub_id = 0
+        parent = None  # track the zero id job as the parent of the group in the sub_id text field
+        for role, role_dict in role_dictionary.items():
+            for node_data in job_dictionary[role]:
+                job = _create_pipeline_job(
+                    node_data, user, target_group=target_group,
+                    taglist=role_dict['tags'], device_type=role_dict['device_type'])
+                if not parent:
+                    parent = job.id
+                job.sub_id = "%d.%d" % (parent, sub_id)
+                job.multinode_definition = yaml.dump(job_data)
+                job.save()
+                job_object_list.append(job)
+                sub_id += 1
+
+        return job_object_list
+
+
+class PipelineStore(models.Model):
+    kee = models.CharField(max_length=255)
+    value = models.TextField()
+
+    def lookup_job_pipeline(self):
+        """
+        Exports the pipeline as YAML
+        """
+        # FIXME: add a command line call to retrieve specific items - too slow to show in admin interface.
+        val = self.kee
+        msg = val.replace('__KV_STORE_::lava_scheduler_app.models.JobPipeline:', '')
+        data = JobPipeline.get(msg)
+        if type(data.pipeline) == str:
+            # if this fails, fix lava_dispatcher.pipeline.actions.explode()
+            data.pipeline = yaml.load(data.pipeline)
+        return data
+
+
+class JobPipeline(PipelineKVStore):
+    """
+    KeyValue store for Pipeline device support
+    Not a RestricedResource - may need a new class based on kvmodels
+    """
+    job_id = kvmodels.Field(pk=True)
+    pipeline = kvmodels.Field()
+
+    class Meta:
+        app_label = 'pipeline'
 
 
 class TestJob(RestrictedResource):
@@ -1034,6 +1315,12 @@ class TestJob(RestrictedResource):
         blank=True
     )
 
+    is_pipeline = models.BooleanField(
+        verbose_name="Pipeline job?",
+        default=False,
+        editable=False
+    )
+
     # only one value can be set as there is only one opportunity
     # to transition a device from Running to Offlining.
     admin_notifications = models.TextField(
@@ -1126,6 +1413,15 @@ class TestJob(RestrictedResource):
     def device_role(self):
         if not (self.is_multinode or self.is_vmgroup):
             return "Error"
+        if self.is_pipeline:
+            data = yaml.load(self.definition)
+            if 'protocols' not in data:
+                return 'Error'
+            if 'lava-multinode' not in data['protocols']:
+                return 'Error'
+            if 'role' not in data['protocols']['lava-multinode']:
+                return 'Error'
+            return data['protocols']['lava-multinode']['role']
         json_data = simplejson.loads(self.definition)
         if 'role' not in json_data:
             return "Error"
@@ -1159,6 +1455,34 @@ class TestJob(RestrictedResource):
     @models.permalink
     def get_absolute_url(self):
         return ("lava.scheduler.job.detail", [self.display_id])
+
+    @classmethod
+    def from_yaml_and_user(cls, yaml_data, user):
+        """
+        Runs the submission checks on incoming pipeline jobs.
+        Either rejects the job with a DevicesUnavailableException (which the caller is expected to handle), or
+        creates a TestJob object for the submission and saves that testjob into the database.
+        This function must *never* be involved in setting the state of this job or the state of any associated device.
+        'target' is not supported, so requested_device is always None at submission time.
+        """
+        job_data = yaml.load(yaml_data)
+
+        # pipeline protocol handling, e.g. lava-multinode
+        job_list = _pipeline_protocols(job_data, user)
+        if job_list:
+            return job_list
+
+        device_type = _get_device_type(user, job_data['device_type'])
+        allow = _check_submit_to_device(list(Device.objects.filter(
+            device_type=device_type, is_pipeline=True)), user)
+        if not allow:
+            raise DevicesUnavailableException("No devices of type %s have pipeline support." % device_type)
+        taglist = _get_tag_list(job_data.get('tags', []), True)
+        if taglist:
+            supported = _check_tags(taglist, device_type=device_type)
+            _check_tags_support(supported, allow)
+
+        return _create_pipeline_job(job_data, user, taglist, device=None, device_type=device_type)
 
     @classmethod
     def from_json_and_user(cls, json_data, user, health_check=False):
@@ -1534,6 +1858,9 @@ class TestJob(RestrictedResource):
         return self._can_admin(user) and self.status <= TestJob.RUNNING
 
     def can_resubmit(self, user):
+        if self.is_pipeline:
+            # FIXME: allow resubmission once UI submission of YAML is also supported.
+            return False
         return (user.is_superuser or
                 user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
 

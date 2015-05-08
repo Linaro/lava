@@ -2,6 +2,10 @@
 {% load i18n %}
 {% load humanize %}
 
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/bootstrap-editable.css"/>
+{% endblock %}
+
 {% block content %}
 <h2 class="modal-header">Test Result: {{ test_result.test_case|default:"<i>unknown test case</i>" }}</h2>
 <p>Each test result is part of a test run and multiple test runs can be part of the same test job.
@@ -44,12 +48,16 @@ shown as links. The same output can also be viewed in the attachments of the tes
   </div>
 
   <div class="col-md-4">
-    <h4 class="modal-header">Result Attributes</h4>
-  {% with test_result.attributes.values as attrs %}
-    <dl class="dl-horizontal">
-    {% for item in attrs|dictsort:"name" %}
-      <dt>{{ item.name }}</dt>
-      <dd>{{ item.value }}</dt>
+    <h4 class="modal-header">Result Attributes <button class="btn btn-xs btn-success" id="attribute_insert"><span class="glyphicon glyphicon-plus"></span></button></h4>
+
+    {% with test_result.attributes.values as attrs %}
+    <dl class="dl-horizontal" id="attributes_container">
+    {% for item in attrs|dictsort:"is_manual" %}
+    <dt><div class="editable pull-right" data-pk="{{item.id}}" data-name="name">{{ item.name }}</div></dt>
+    <dd><div class="editable pull-left" data-pk="{{item.id}}" data-name="value">{{ item.value }}</div>
+    <div class="text-right"><button class="btn btn-xs btn-danger attribute-remove" data-pk="{{item.id}}">
+      <span class="glyphicon glyphicon-remove"></span>
+    </button></div></dd>
     {% empty %}
       <i>none</i>
     {% endfor %}
@@ -139,7 +147,7 @@ shown as links. The same output can also be viewed in the attachments of the tes
       </div>
     </div>
     <div id="comments_container">
-    {% if test_result.comments %}
+    {% if test_result.comments or test_result.comments != "" %}
       {{ test_result.comments|linebreaksbr }}
     {% else %}
       <i>{% trans "no comments" %}</i>
@@ -181,31 +189,13 @@ shown as links. The same output can also be viewed in the attachments of the tes
 {% endblock %}
 
 {% block scripts %}
-<script>
-  $(function() {
-    $('#saveBtn').click(function(e) {
-      var comments = $('#comments_text').val();
-      var url_addition = "";
-      if (window.location.pathname[
-        window.location.pathname.length-1] != "/") {
-        url_addition = "/";
-      }
-      var url = window.location.pathname + url_addition + "+update-comments";
+<script src="{{ STATIC_URL }}dashboard_app/js/bootstrap-editable.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/test_result_detail.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/editable_attributes.js"></script>
 
-      $.ajax({
-          url: url,
-          type: "POST",
-          data: {
-            'csrfmiddlewaretoken': '{{ csrf_token }}',
-            'comments': comments,
-          },
-          success: function (data) {
-            $('#commentModal').modal('hide');
-            $('#comments_container').html(
-              data[0].fields.comments.replace(/\n/g, "<br/>"));
-            },
-        });
-    });
-  });
+<script>
+  csrf_token = '{{csrf_token}}';
+  remove_attribute_url = '+remove-result-attribute';
+  update_attribute_url = '+update-result-attribute';
 </script>
 {% endblock %}

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from lava_scheduler_app.models import (
     Device, DeviceStateTransition, DeviceType, TestJob, Tag, JobFailureTag,
-    User, Worker, DefaultDeviceOwner
+    User, Worker, DefaultDeviceOwner, DeviceDictionaryTable
 )
 
 
@@ -77,13 +77,13 @@ class DeviceAdmin(admin.ModelAdmin):
         ('Properties', {
             'fields': ('device_type', 'hostname', 'worker_host', 'device_version')}),
         ('Device owner', {
-            'fields': ('user', 'group', 'physical_owner', 'physical_group', 'is_public')}),
+            'fields': ('user', 'group', 'physical_owner', 'physical_group', 'is_public', 'is_pipeline')}),
         ('Advanced properties', {
             'fields': ('description', 'tags')}),
         ('Status', {
             'fields': ('status', 'health_status', 'last_health_report_job', 'current_job')}),
     )
-    list_display = ('hostname', 'device_type', 'worker_host', 'status', 'health_status', 'is_public')
+    list_display = ('hostname', 'device_type', 'worker_host', 'status', 'health_status', 'is_public', 'is_pipeline')
     search_fields = ('hostname', 'device_type__name')
 
 
@@ -156,6 +156,17 @@ class WorkerAdmin(admin.ModelAdmin):
                     'uptime', 'arch')
 
 
+class DeviceDictionaryAdmin(admin.ModelAdmin):
+
+    def device_hostname(self, obj):
+        device_dict = obj.lookup_device_dictionary()
+        return device_dict.hostname
+
+    list_display = ('device_hostname', )
+    ordering = ('kee', )  # django is unable to sort other than by database fields.
+    actions = []
+
+
 admin.site.register(Device, DeviceAdmin)
 admin.site.register(DeviceStateTransition, DeviceStateTransitionAdmin)
 admin.site.register(DeviceType, DeviceTypeAdmin)
@@ -163,3 +174,4 @@ admin.site.register(TestJob, TestJobAdmin)
 admin.site.register(Tag)
 admin.site.register(JobFailureTag)
 admin.site.register(Worker, WorkerAdmin)
+admin.site.register(DeviceDictionaryTable, DeviceDictionaryAdmin)

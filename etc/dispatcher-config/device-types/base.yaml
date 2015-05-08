@@ -1,0 +1,75 @@
+{% set base_uboot_commands = (
+"          - setenv autoload no
+          - setenv initrd_high '0xffffffff'
+          - setenv fdt_high '0xffffffff'") %}
+
+{% set base_uboot_addr_commands = (
+"          - setenv kernel_addr_r '{KERNEL_ADDR}'
+          - setenv initrd_addr_r '{RAMDISK_ADDR}'
+          - setenv fdt_addr_r '{DTB_ADDR}'") %}
+
+{% set base_tftp_commands = (
+"          - setenv loadkernel 'tftp ${kernel_addr_r} {KERNEL}'
+          - setenv loadinitrd 'tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'") %}
+
+{% set base_uboot_bootcmd = (
+"          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+          - boot") %}
+
+{% set base_tftp_uboot_bootcmd = (
+"          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+          - boot") %}
+
+{% set base_nfs_uboot_bootcmd = (
+"          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
+          - boot") %}
+
+{% set base_nfsroot_args = ("nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr")%}
+
+{% block commands %}
+{% if connection_command %}
+commands:
+    connect: {{ connection_command }}
+{% if hard_reset_command %}
+    hard_reset: {{ hard_reset_command }}
+{% endif %}
+{% if power_off_command %}
+    power_off: {{ power_off_command }}
+{% endif %}
+{% if power_on_command %}
+    power_on: {{ power_on_command }}
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block body %}{% endblock %}
+
+{% block test_image_prompts %}
+test_image_prompts:
+  - '(initramfs)'
+  - 'linaro-test'
+  - '/ #'
+  - 'root@android'
+  - 'root@linaro'
+  - 'root@master'
+  - 'root@debian'
+  - 'root@linaro-nano:~#'
+  - 'root@linaro-developer:~#'
+  - 'root@linaro-server:~#'
+  - 'root@genericarmv7a:~#'
+  - 'root@genericarmv8:~#'
+{% block extend_test_image_prompts %}{% endblock %}
+{% endblock %}
+
+{% block timeouts %}
+timeouts:
+  apply-overlay-image:
+    seconds: 120
+  umount-retry:
+    seconds: 45
+  lava-test-shell:
+    seconds: 30
+  power_off:
+    seconds: 5
+{% endblock %}

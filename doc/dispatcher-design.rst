@@ -909,6 +909,11 @@ connection methods.
 
 .. code-block:: yaml
 
+  deploy:
+    methods:
+      tftp
+      ssh
+
   boot:
     connections:
       - serial
@@ -921,39 +926,159 @@ Most devices are capable of supporting SSH connections, as long as:
 * the device can be configured to raise a usable network interface
 * the device is booted into a suitable software environment
 
+.. note:: A failure to connect to a :ref:`primary_connection` would
+   be an :ref:`infrastructure_error_exception`. A failure to connect
+   to a :ref:`secondary_connection` is a :ref:`test_error_exception`.
+
 USB connections are planned for Android support but are not yet
 implemented.
 
-SSH as the primary connection
-=============================
+Primary and Secondary connections
+=================================
 
-Certain devices can support SSH as the primary connection - such
-devices are not powered off at the end of a TestJob and provide
-persistence for certain tasks. (This is the equivalent of the
-dummy-ssh device in the old dispatcher.) These devices declare this
-support in the device configuration:
+.. _primary_connection:
+
+Primary connection
+------------------
+
+A Primary Connection is roughly equivalent to having an SSH login on a
+running machine. The device needs to be powered on, running an appropriate
+daemon and with appropriate keys enabled for access. The TestJob for
+a primary connection then skips the deploy stage and uses a boot method
+to establish the connection. A device providing a primary connection
+in LAVA only provides access to that connection via a single submitted
+TestJob at a time - a Multinode job can make multiple connections but
+other jobs will see the device as busy and not be able to start their
+connections.
+
+.. warning:: All primary connections raise issues of
+             :ref:`persistence` - the test writer is solely responsible
+             for deleting any sensitive data copied, prepared or
+             downloaded using a primary connection. Do not leave
+             sensitive data for the next TestJob to find.
+
+It is not necessarily required that a device offering a primary
+connection is permanently powered on as the only connections being
+made to the device are done via the scheduler which ensures that only
+one TestJob can use any one device at a time. Depending on the amount
+of time required to boot the device, it is supported to have a device
+offering primary connections which is powered down between jobs.
+
+A Primary Connection is established by the dispatcher and is therefore
+constrained in the options which are available to the client requesting
+the connection and the TestJob has **no** control over the arguments
+passed to the daemon.
+
+Both Primary and Secondary connections are affected by :ref:`security`
+issues due to the requirements of automation.
+
+.. _secondary_connection:
+
+Secondary connection
+--------------------
+
+Secondary connections are a way to have two simultaneous connections
+to the same physical device, equivalent to two logins. Each connection
+needs to be supported by a TestJob, so a Multinode group needs to be
+created so that the output of each connection can be viewed as the output
+of a single TestJob, just as if you had two terminals. The second
+connection does not have to use the same connection method as the current
+connection and many devices can only support secondary connections over
+a network interface, for example SSH or telnet.
+
+A Secondary Connection has a deploy step and the device is already
+providing output over the primary connection, typically serial, before
+the secondary connection is established. This is closer to having the
+machine on your desk. The TestJob supplies the kernel and rootfs or
+image to boot the device and can optionally use the secondary connection
+to push other files to the device (for example, an ``ssh`` secondary
+connection would use ``scp``).
+
+A Secondary Connection can have control over the daemon via the deployment
+using the primary connection. The client connection is still made by the
+dispatcher.
+
+Both Primary and Secondary connections are affected by :ref:`security`
+issues due to the requirements of automation.
+
+The device providing a Secondary Connection is running a TestJob and
+the deployment will be erased when the job completes.
+
+Connections and hacking sessions
+--------------------------------
+
+A hacking session using a :ref:`secondary_connection` is the only
+situation where the client is configurable by the user **and** the
+daemon can be controlled by the test image. It is possible to adjust
+the hacking session test definitions to use different commands and
+options - as long as both daemon and client use compatible options.
+As such, a hacking session user retains security over their private
+keys at the cost of the loss of automation.
+
+Hacking sessions can be used with primary or secondary connections,
+depending on the use case.
+
+.. warning:: Remember that in addition to issues related to the
+             :ref:`persistence` of a primary connection device, hacking
+             sessions on primary connections also have all of the issues
+             of a shared access device - do not copy, prepare or download
+             sensitive data when using a shared access device.
+
+.. _primary_connection_devices:
+
+Devices supporting Primary Connections
+======================================
+
+A device offering a primary connection needs a particular configuration
+in the device dictionary table:
+
+#. Only primary connection deployment methods defined in the
+   ``deploy_methods`` parameter, e,g, ``ssh``.
+#. Support in the device_type template to replace the list of deployment
+   methods with the list supplied in the ``deploy_methods`` parameter.
+#. No ``serial`` connection support in the ``boot`` connections list.
+#. No ``methods`` in the boot parameters.
+
+This prevents other jobs being submitted which would cause the device
+to be rebooted or have a different deployment prepared. This can be
+further enhanced with :term:`device tag` support.
+
+.. _secondary_connection_devices:
+
+Devices supporting Secondary Connections
+========================================
+
+There are fewer requirements of a device supporting secondary
+connections:
+
+#. Primary and Secondary connections are mutually exclusive, so one
+   device cannot serve primary and secondary.
+#. The physical device must support the connection hardware requirements.
+#. The test image deployed needs to install and run the software
+   requirements of the connection, this would be a
+   :ref:`job_error_exception`
+
+SSH as the primary connection
+-----------------------------
+
+Certain devices can support SSH as the primary connection - the
+filesystems on such devices are not erased at the end of a TestJob and
+provide :ref:`persistence` for certain tasks. (This is the equivalent
+of the dummy-ssh device in the old dispatcher.) These devices declare
+this support in the device configuration:
 
 .. code-block:: yaml
 
   deploy:
-    # list of deployment methods which this device supports
+    # primary connection device has only connections as deployment methods
     methods:
-      usb
-      sata
-      tftp
       ssh
   boot:
-    connections:
-      - serial
+    connections:  # not serial
       - ssh
-    methods:
-      qemu:
 
-.. note:: SSH as primary connection is a deployment method, the device
-          then supports SSH as the boot method which simply acts as a
-          login.
-
-The test job YAML would simply specify:
+TestJobs then use SSH as a boot method which simply acts as a login to
+establish a connection:
 
 .. code-block:: yaml
 
@@ -966,25 +1091,53 @@ The test job YAML would simply specify:
         connection: ssh
         failure_retry: 2
 
+The ``deploy`` action in this case simply prepares the LAVA overlay
+containing the test shell definitions and copies those to a
+pre-determined location on the device. This location will be removed
+at the end of the TestJob.
+
+.. _security:
+
 Security
 --------
 
-A primary SSH connection from the dispatcher can be controlled through
+A primary SSH connection from the dispatcher needs to be controlled through
 the device configuration, allowing the use of a private SSH key which
 is at least hidden from test writers. (:ref:`essential_components`).
 
 The key is declared as a path on the dispatcher, so is device-specific.
-Each device may have a unique key - all keys still need to not have
-any passphrase - as long as all devices supported by the SSH host have
-the relevant keys configured as authorized for login as root.
+Devices on the same dispatcher can share the same key or may have a
+unique key - all keys still need to not have any passphrase - as long
+as all devices supported by the SSH host have the relevant keys
+configured as authorized for login as root. [#admin1]_
+
+.. [#admin1] Securing such private keys when the admin process is managed
+   in a public VCS is left as an exercise for the admin teams.
+
+LAVA provides a default (completely insecure) private key which can be
+used for these connections. This key is installed within lava-dispatcher
+and is readable by anyone inspecting the lava-dispatcher codebase in git.
+(This has not been changed in the refactoring.)
+
+It is conceivable that a test image could be suitably configured before
+being submitted to LAVA, with a private key included inside a second job
+which deploys normally and executes the connection **instead** of
+running a test definition. However, anyone with access to the test image
+would still be able to obtain the private key. Keys generated on a per
+job basis would still be open for the lifetime of the test job itself,
+up to the job timeout specified. Whilst this could provide test writers
+with the ability to control the options and commands used to create the
+connection, any additional security is minimal and support for this has
+not been implemented, yet.
 
 .. _persistence:
 
 Persistence
 -----------
 
-SSH deployments are persistent and this has implications, some positive,
-some negative - depending on your use case.
+Devices supporting primary SSH connections have persistent deployments
+and this has implications, some positive, some negative - depending on
+your use case.
 
 #. **Fixed OS** - the OS you get is the OS of the device and this
    **must not** be changed or upgraded.
@@ -999,7 +1152,9 @@ some negative - depending on your use case.
    to wasted effort with false positives and false negatives.
 
 Only use persistent deployments when essential and **always** take
-great care to avoid interfering with other tests.
+great care to avoid interfering with other tests. Users who deliberately
+or frequently interfere with other tests can have their submit privilege
+revoked.
 
 Disposable chroot deployments
 =============================
@@ -1011,17 +1166,49 @@ suffer the same entanglement issues as simple SSH deployments and can
 provide multiple environments, not just the OS installed on the SSH
 host system.
 
+This support is similar to how distributions can offer "porter boxes"
+which allow upstream teams and community developers to debug platform
+issues in a native environment. It also allows tests to be run on a
+different operating system or different release of an operating system.
+Unlike distribution "porter boxes", LAVA does not allow more than one
+TestJob to have access to any one device at the same time.
+
+A device supporting disposable chroots will typically follow the
+configuration of :ref:`primary_connection_devices`. The device
+will show as busy whenever a job is active, but although it **is**
+possible to use a secondary connection as well, the deployment
+methods of the device would have to disallow access to the media upon
+which the chroots are installed or deployed or upon which the software
+to manage the chroots is installed. e.g. a device offering disposable
+chroots on SATA could offer ramdisk or NFS tests.
+
 LAVA support for disposable chroots is implemented via `schroot`_
 (forming the replacement for the dummy-schroot device in the old
 dispatcher).
+
+Typical device configuration
 
 .. code-block:: yaml
 
   deploy:
     # list of deployment methods which this device supports
     methods:
-      usb:
-      sata:
+      ssh:
+      schroot:
+        - unstable
+        - trusty
+        - jessie
+  boot:
+    connections:
+      - ssh
+
+Optional device configuration allowing secondary connections:
+
+.. code-block:: yaml
+
+  deploy:
+    # list of deployment methods which this device supports
+    methods:
       tftp:
       ssh:
       schroot:
@@ -1064,46 +1251,7 @@ as it avoids problems of :ref:`persistence`.
 .. _LVM Snapshots: https://www.debian-administration.org/article/410/A_simple_introduction_to_working_with_LVM
 .. _schroot: https://tracker.debian.org/pkg/schroot
 
-Secondary connections
-*********************
-
-Secondary connections are a way to have two simultaneous connections
-to the same physical device, equivalent to two logins. Each connection
-needs to be supported by a TestJob, so a Multinode group needs to be
-created so that the output of each connection can be viewed as the output
-of a single TestJob, just as if you had two terminals. The second
-connection does not have to use the same connection method as the current
-connection and many devices can only support secondary connections over
-a network interface, for example SSH or telnet.
-
-Connection access and permissions
-=================================
-
-Connections are typically initiated by the dispatcher, so come under
-the provisions of :ref:`essential_components` criteria. This means that
-the command and options used are controlled by LAVA.
-
-Automation of a test has implications for the keys used to provide SSH
-access as these need to be created without a passphrase and the private
-key itself needs to exist as a readable file, either inside LAVA or
-inside the test image. Use a temporary or disposable key, not a key you
-could end up using on any other system.
-
-LAVA provides a default (completely insecure) private key which can be
-used for these connections. This key is installed within lava-dispatcher
-and is readable by anyone inspecting the lava-dispatcher codebase in git.
-(This has not been changed in the refactoring.)
-
-It is conceivable that a test image could be suitably configured before
-being submitted to LAVA, with a private key included inside a second job
-which deploys normally and executes the connection **instead** of
-running a test definition. However, anyone with access to the test image
-would still be able to obtain the private key. Keys generated on a per
-job basis would still be open for the lifetime of the test job itself,
-up to the job timeout specified. Whilst this could provide test writers
-with the ability to control the options and commands used to create the
-connection, any additional security is minimal and support for this has
-not been implemented, yet.
+.. _using_secondary_connections:
 
 Using secondary connections with VM groups
 ==========================================
@@ -1291,33 +1439,76 @@ Sample job definition for the VM job
 Device configuration design
 ***************************
 
-Device configuration has moved to YAML and has a larger scope of possible
-methods, related to the pipeline strategies.
+Device configuration, as received by ``lava_dispatch`` has moved to YAML
+and the database device configuration has moved to `Jinja2`_ templates.
+This method has a much larger scope of possible methods, related to the
+pipeline strategies as well as allowing simple overrides and reuse of
+common device configuration stanzas.
 
-Changes from existing configuration
-===================================
+There is no need for the device configuration to include the
+hostname in the YAML as there is nothing on the dispatcher to check
+against - the dispatcher uses the command line arguments and the
+supplied device configuration. The configuration includes all the data
+the dispatcher needs to be able to run the job on the device attached
+to the specified ports.
 
-The device configuration is moving off the dispatcher and into the main
-LAVA server database. This simplifies the scheduler and is a step
-towards a dumb dispatcher model where the dispatcher receives all device
-configuration along with the job instead of deciding which jobs to run
-based on local configuration. There is then no need for the device
-configuration to include the hostname in the YAML as there is nothing
-on the dispatcher to check against - the dispatcher uses the command
-line arguments.
+The device type configuration on the dispatcher is replaced by a
+device type template on the server which is used to generate the
+YAML device configuration sent to the dispatcher.
 
-The device type configuration is dropped. In preparation for the server-side
-integration and templating support, each device configuration includes all
-of the configuration for the device type. During testing, this does mean
-more repetition inside the files used on the dispatcher command line.
+Device Dictionary
+=================
 
-It remains desirable that the final implementation will only provide a
-single YAML file to the dispatcher containing the job and all of the
-configuration, without reference to configuration which is not relevant
-to that job. This allows quicker prototyping of support for new devices.
+The normal admin flow for individual devices will be to make changes
+to the :term:`device dictionary` of that device. In time, an editable
+interface will exist within the admin interface. Initially, changes
+to the dictionary are made from the command line with details being
+available in a read-only view in the admin interface.
 
-Example device configuration
-----------------------------
+The device dictionary acts as a set of variables inside the template,
+in a very similar manner to how Django handles HTML templates. In turn,
+a device type template will extend a base template.
+
+It is a bug in the template if a missing value causes a broken device
+configuration to be generated. Values which are not included in the
+specified template will be ignored.
+
+Once the device dictionary has been populated, the scheduler can be
+told that the device is a ``pipeline device`` in the admin interface.
+
+.. note:: Several parts of this process still need helpers and tools
+          or may give unexpected errors - there is a lot of ongoing
+          work in this area.
+
+Exporting an existing device dictionary
+---------------------------------------
+
+If the local instance has a working pipeline device called ``mypanda``,
+the device dictionary can be exported::
+
+ $ sudo lava-server manage device-dictionary --hostname mypanda --export
+ {% extends 'panda.yaml' %}
+ {% set power_off_command = '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command off --port 08' %}
+ {% set hard_reset_command = '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command reboot --port 08' %}
+ {% set connection_command = 'telnet droopy 4001' %}
+ {% set power_on_command = '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command on --port 08' %}
+
+This dictionary declares that the device inherits the rest of the device
+configuration from the ``panda`` device type. Settings specific to this
+one device are then specified.
+
+Reviewing an existing device dictionary
+---------------------------------------
+
+To populate the full configuration using the device dictionary and the
+associated templates, use the ``review`` option::
+
+ $ sudo lava-server manage device-dictionary --hostname mypanda --review
+
+.. _Jinja2: http://jinja.pocoo.org/docs/dev/
+
+Example device configuration review
+-----------------------------------
 
 .. code-block:: yaml
 
@@ -1393,3 +1584,37 @@ Example device configuration
             - setenv bootargs 'console=ttyO0,115200n8 root=/dev/ram0 ip=dhcp'
             - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
             - boot
+
+Importing configuration using a known template
+-----------------------------------------------
+
+To add or update the device dictionary, a file using the same syntax as
+the ``export`` content can be imported into the database::
+
+ $ sudo lava-server manage device-dictionary --hostname mypanda --import mypanda.yaml
+
+(The file extension is unnecessary and the content is not actually YAML
+but will be rendered as YAML when the templates are used.)
+
+Creating a new template
+-----------------------
+
+Start with the ``base.yaml`` template and use the structure of that
+template to ensure that your template remains valid YAML.
+
+Start with a complete device configuration (in YAML) which works on the
+``lava-dispatch`` command line, then iterate over changes in the template
+to produce the same output.
+
+.. note:: A helper is being planned for this step.
+
+Running lava-dispatch directly
+==============================
+
+``lava-dispatch`` only accepts a YAML file for pipeline jobs - the old
+behaviour of looking up the file based on the device hostname has been
+dropped. The absolute or relative path to the YAML file must be
+specified to the ``--target`` option. ``--output-dir`` must also be
+specified::
+
+ sudo lava-dispatch --target devices/fred.conf panda-ramdisk.yaml --output-dir=/tmp/test

@@ -145,11 +145,8 @@ if AUTH_LDAP_SERVER_URI:
         AUTH_LDAP_USER_FLAGS_BY_GROUP = distro_settings.get_setting(
             "AUTH_LDAP_USER_FLAGS_BY_GROUP")
 
-    # Enable logging for LDAP auth
-    import logging
-    logger = logging.getLogger('django_auth_ldap')
-    logger.addHandler(logging.StreamHandler())
-    logger.setLevel(logging.DEBUG)
+    # read any LDAP login message to use from the settings.conf
+    LOGIN_MESSAGE_LDAP = distro_settings.get_setting("LOGIN_MESSAGE_LDAP", "")
 
 # Load extensions
 loader.contribute_to_settings(locals(), distro_settings)

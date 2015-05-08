@@ -25,11 +25,14 @@ include instance.template
 include doc/*
 include doc/examples/*
 include doc/_static/*
+include doc/linaro_dashboard_bundle/*
 include man/*
 include etc/debug.wsgi
 include etc/lava-default.conf
 include etc/lava-server.init
+include etc/lava-master.init
 include etc/lava-server.conf
+include etc/env.yaml
 include etc/logrotate.d/*
 include etc/lava-server.wsgi
 include etc/settings.conf
@@ -41,4 +44,5 @@ include contrib/virtualenv-install.sh
 include assets.src/icons.xcf
 include fake-dispatcher
 include version.py
+recursive-include etc/dispatcher-config README *.sh *.py *.yaml
 include share/*

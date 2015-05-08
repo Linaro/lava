@@ -31,6 +31,7 @@
     <form class="form-horizontal" method="post" action="{% url 'django.contrib.auth.views.login' %}">
       {% csrf_token %}
       <div class="form-group{% if form.errors %} has-error{% endif %}">
+        <p class="help-block">{{ login_message_ldap }}</p>
         <label class="col-md-2 control-label" for="id_username">{% trans "Username" %}</label>
         <div class="col-md-4">
           {{ form.username }}

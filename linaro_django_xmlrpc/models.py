@@ -2,19 +2,19 @@
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
-# This file is part of Launch Control.
+# This file is part of Linaro Django XMLRPC.
 #
-# Launch Control is free software: you can redistribute it and/or modify
+# Linaro Django XMLRPC is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License version 3
 # as published by the Free Software Foundation
 #
-# Launch Control is distributed in the hope that it will be useful,
+# Linaro Django XMLRPC is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU Affero General Public License
-# along with Launch Control.  If not, see <http://www.gnu.org/licenses/>.
+# along with Linaro Django XMLRPC.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 Empty module for Django to pick up this package as Django application
@@ -218,6 +218,30 @@ class ExposedAPI(object):
             return self._context.user
         else:
             return None
+
+    def _authenticate(self):
+        if self.user is None:
+            raise xmlrpclib.Fault(
+                401, "Authentication with user and token required for this "
+                "API.")
+
+    def _switch_user(self, username):
+        """
+        Allow a superuser to query a different user
+        """
+        if not username:
+            return self.user
+        if self.user.is_superuser:
+            try:
+                username = User.objects.get(username=username)
+            except User.DoesNotExist:
+                raise xmlrpclib.Fault(
+                    404, "Username %s not found" % username)
+        else:
+            raise xmlrpclib.Fault(
+                401,
+                "Permission denied for user '%s' to query other users" % self.user)
+        return username
 
 
 class Mapper(object):
@@ -449,9 +473,45 @@ class SystemAPI(ExposedAPI):
         super(SystemAPI, self).__init__(context)
 
     def listMethods(self):
+        """
+        Name
+        ----
+        `listMethods` ()
+
+        Description
+        -----------
+        List all available methods in this XML-RPC server.
+
+        Arguments
+        ---------
+        None
+
+        Return value
+        ------------
+        Returns a list of available methods.
+        """
         return self._context.mapper.list_methods()
 
     def methodSignature(self, method_name):
+        """
+        Name
+        ----
+        `methodSignature` (`method_name`)
+
+        Description
+        -----------
+        Provide signature for the specified method.
+
+        Arguments
+        ---------
+        `method_name`: string
+            Name of the method whose signature is required.
+
+        Return value
+        ------------
+        Returns the signature for specified method or undef if the signature is
+        unknown.
+        """
         impl = self._context.mapper.lookup(method_name, self._context)
         if impl is None:
             return ""
@@ -462,7 +522,22 @@ class SystemAPI(ExposedAPI):
     @xml_rpc_signature('str', 'str')
     def methodHelp(self, method_name):
         """
-        Return documentation for specified method
+        Name
+        ----
+        `methodHelp` (`method_name`)
+
+        Description
+        -----------
+        Provide documentation for specified method.
+
+        Arguments
+        ---------
+        `method_name`: string
+            Name of the method whose documentation is required.
+
+        Return value
+        ------------
+        Returns the documentation for specified method.
         """
         impl = self._context.mapper.lookup(method_name, self._context)
         if impl is None:
@@ -548,16 +623,49 @@ class SystemAPI(ExposedAPI):
 
     def getCapabilities(self):
         """
-        Return XML-RPC Server capabilities.
+        Name
+        ----
+        `getCapabilities` ()
 
-        See: http://groups.yahoo.com/group/xml-rpc/message/2897
+        Description
+        -----------
+        XML-RPC Server capabilities.
+
+        Arguments
+        ---------
+        None
+
+        Return value
+        ------------
+        Returns the XML-RPC Server capabilities which has the following format:
+
+        {
+          auth_token: {
+            'specUrl': 'xxxxxx',
+            'specVersion': xxxxxx
+          },
+          'introspect': {
+            'specUrl': 'xxxxxx',
+            'specVersion': x
+          },
+          'faults_interop': {
+            'specUrl': 'xxxxxx',
+            'specVersion': xxxxxx
+          }
+        }
+
+        Reference
+        ---------
+        * See: http://groups.yahoo.com/group/xml-rpc/message/2897
+
+        * http://xmlrpc-c.sourceforge.net/xmlrpc-c/introspection.html is dead,
+        the actual URL that works is:
+        http://xmlrpc-c.sourceforge.net/introspection.html This is, however,
+        what the spec mandates (visit the URL above to cross-reference the
+        relevant fragment).
         """
         return {
             "introspect": {
-                # XXX: This URL is dead, the actual URL that works is:
-                # http://xmlrpc-c.sourceforge.net/introspection.html This is,
-                # however, what the spec mandates (visit the URL above to
-                # cross-refernce the relevant fragment).
                 "specUrl": "http://xmlrpc-c.sourceforge.net/xmlrpc-c/introspection.html",
                 "specVersion": 1
             },

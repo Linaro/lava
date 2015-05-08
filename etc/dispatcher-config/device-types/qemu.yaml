@@ -1,0 +1,39 @@
+{% extends 'base.yaml' %}
+{% block body %}
+device_type: qemu
+
+actions:
+  deploy:
+    methods:
+      image:
+        parameters:
+          root_part: {{ root_part|default(1) }}
+  boot:
+    methods:
+      qemu:
+        parameters:
+          command:
+{% if arch == 'arm64' %}
+            qemu-system-aarch64
+{% elif arch == 'amd64' %}
+            qemu-system-x86_64
+{% elif arch == 'i386' %}
+            qemu-system-x86
+{% endif %}
+          boot_options:
+{% if arch == 'arm64' %}
+            {root: '{{ boot_root|default("/dev/vda2") }} rw rootwait', console: {{ boot_console|default('ttyAMA0 115200') }}, ip: dhcp, mem: 1024M}
+{% elif arch == 'amd64' %}
+            {root: {{ boot_root|default('/dev/sda1') }}, console: {{ boot_console|default('ttyS0,115200') }}}
+{% else %}
+            {root: {{ boot_root|default('/dev/sda1') }}, console: {{ boot_console|default('ttyS0,115200') }}}
+{% endif %}
+          options:
+{% block qemu_options %}
+          - -nographic
+          - -enable-kvm
+          - -cpu host
+          - -net nic,model=virtio,macaddr={{ mac_addr|default('52:54:00:12:34:58') }} -net user
+          - -m {{ memory|default(512) }}
+{% endblock %}
+{% endblock %}

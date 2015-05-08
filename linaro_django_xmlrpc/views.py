@@ -99,11 +99,41 @@ def help(request, mapper, template_name="linaro_django_xmlrpc/api.html"):
         user=None, mapper=mapper, dispatcher=None, request=request)
     system = SystemAPI(context)
     scheme = request.META.get('REQUEST_SCHEME', "http")
-    methods = [{
-        'name': method,
-        'signature': system.methodSignature(method),
-        'help': system.methodHelp(method)}
-        for method in system.listMethods()]
+    dashboard_methods = []
+    scheduler_methods = []
+    system_methods = []
+    for method in system.listMethods():
+        if 'dashboard' in method:
+            dashboard_methods.append(method)
+        elif 'scheduler' in method:
+            scheduler_methods.append(method)
+        else:
+            system_methods.append(method)
+    methods = {
+        'dashboard': [
+            {
+                'name': method,
+                'signature': system.methodSignature(method),
+                'help': system.methodHelp(method)
+            }
+            for method in dashboard_methods
+        ],
+        'scheduler': [
+            {
+                'name': method,
+                'signature': system.methodSignature(method),
+                'help': system.methodHelp(method)
+            }
+            for method in scheduler_methods
+        ],
+        'system': [
+            {
+                'name': method,
+                'signature': system.methodSignature(method),
+                'help': system.methodHelp(method)
+            }
+            for method in system_methods
+        ]}
     return render_to_response(template_name, {
         'methods': methods,
         'context_help': ['data-export'],

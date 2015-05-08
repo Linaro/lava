@@ -210,5 +210,7 @@ man_pages = [
     ('lava-daemon', 'lava-daemon', u'run the LAVA scheduler as a daemon',
      [u'Linaro Validation Team'], 1),
     ('lava-server', 'lava-server', u'lava-server command line support',
-     [u'Linaro Validation Team'], 1)
+     [u'Linaro Validation Team'], 1),
+    ('lava-master', 'lava-master', u'run the LAVA master dispatcher as a daemon',
+     [u'Linaro Validation Team'], 1),
 ]

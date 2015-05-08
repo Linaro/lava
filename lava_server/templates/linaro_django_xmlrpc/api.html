@@ -35,19 +35,71 @@ import xmlrpclib
 server = xmlrpclib.ServerProxy("{{ site_url }}{% url 'lava.api_handler' %}")
 print server.system.listMethods()
 </pre>
-<p><code>https://</code> scheme is preferred as some calls require authentication.</p>
+<p>The following python code shows how to authenticate using an
+  XML-RPC client, when a method requires authentication.</p>
+<pre>
+  import xmlrpclib
+  username = "USERNAME"
+  token = "TOKEN_STRING"
+  hostname = "HOSTNAME"
+  server = xmlrpclib.ServerProxy("http://%s:%s@%s{% url 'lava.api_handler' %}" % (username, token, hostname))
+  print server.system.listMethods()
+</pre>
+<p class="text-info">NOTE: <code>USERNAME</code> is a valid username
+  in this LAVA instance. <code>TOKEN_STRING</code> is a valid token
+  associated with the above username in this LAVA
+  instance. <code>HOSTNAME</code> is the fully qualified domain name
+  or IP address of this LAVA instance.
+</p>
+<p class="text-info"> In the above code snippet the ServerProxy string
+  is constructed from different components, with separators, which are
+  clearly illustrated as follows:<br>
+  <code>USERNAME:TOKEN_STRING@HOSTNAME/HANDLER</code>
+</p>
+<p class="text-warning"><strong>WARNING: <code>https://</code> scheme
+    is preferred as some calls require authentication.</strong></p>
 <h2 id="top">Available functions</h2>
 <div>
-  {% for method in methods %}
-  [&nbsp;<a href="#{{method.name}}">{{ method.name }}</a>&nbsp;]
-  {% endfor %}
+      <h2>Dashboard</h2>
+      {% for method in methods.dashboard %}
+        [&nbsp;<a href="#{{method.name}}">{{ method.name }}</a>&nbsp;]
+      {% endfor %}
+      <h2>Scheduler</h2>
+      {% for method in methods.scheduler %}
+        [&nbsp;<a href="#{{method.name}}">{{ method.name }}</a>&nbsp;]
+      {% endfor %}
+      <h2>System and Authentication</h2>
+      {% for method in methods.system %}
+        [&nbsp;<a href="#{{method.name}}">{{ method.name }}</a>&nbsp;]
+      {% endfor %}
 </div>
 
-{% for method in methods %}<hr/>
+{% for method in methods.dashboard %}
+    <hr/>
 <div id="{{ method.name }}">
   <h3><a href="#{{method.name}}">{{ method.name }}</a></h3>
   <div><pre>{{ method.help }}</pre></div>
   <a href="#top">Available functions</a>
 </div>
 {% endfor %}
+
+{% for method in methods.scheduler %}
+    <hr/>
+<div id="{{ method.name }}">
+  <h3><a href="#{{method.name}}">{{ method.name }}</a></h3>
+  <div><pre>{{ method.help }}</pre></div>
+  <a href="#top">Available functions</a>
+</div>
+{% endfor %}
+
+{% for method in methods.system %}
+    <hr/>
+<div id="{{ method.name }}">
+  <h3><a href="#{{method.name}}">{{ method.name }}</a></h3>
+  <div><pre>{{ method.help }}</pre></div>
+  <a href="#top">Available functions</a>
+</div>
+{% endfor %}
+
+
 {% endblock %}

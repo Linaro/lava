@@ -1,0 +1,42 @@
+{% extends "admin/change_form.html" %}
+{% load utils %}
+{% load i18n %}
+
+{% if not is_popup %}
+{% block content %}
+<div id="content-main">
+<h2>Device Dictionary key value store</h2>
+{% with dictionary=request.path|get_device_dictionary %}
+{% for key, value in dictionary.items %}
+    <ul>{% include "admin/lava_scheduler_app/recursive.html" %}</ul>
+{% endfor %}
+</div>
+
+    <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}"
+          method="post" id="devicedictionary_form" novalidate>{% csrf_token %}{% block form_top %}{% endblock %}
+
+    <fieldset class="module aligned">
+
+    <div class="form-row field-hostname">
+    <label class="required" for="id_hostname">Hostname:</label>
+        <input class="vTextField" id="id_hostname" maxlength="200" name="hostname" type="text"
+               value="{{ dictionary.hostname }}" /><br/>
+    </div>
+    <div class="form-row field-parameters">
+    <label class="required" id="id_parameters">Parameters:</label>
+        <textarea class="vLargeTextField" cols="80" id="id_parameters" name="parameters" rows="20">
+{{ dictionary.parameters|get_yaml_parameters }}</textarea>
+    </div>
+    </fieldset>
+</form>
+
+{% endwith %}
+<!--  Needs a custom submission form to convert &#39; to single quote, yaml.load and data.parameters = dictionary
+etc.
+<div class="submit-row">
+<input type="submit" value="Save" class="default" name="_save" />
+</div>
+-->
+{% endblock %}
+{% endif %}
+
