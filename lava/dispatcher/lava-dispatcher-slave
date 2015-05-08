@@ -161,7 +161,7 @@ class Job(object):
     def cancel(self):
         """Cancel the job and kill the process."""
         if self.proc is not None:
-            self.proc.kill()
+            self.proc.terminate()
             # TODO: be sure not to block here
             self.proc.wait()
             self.proc = None
