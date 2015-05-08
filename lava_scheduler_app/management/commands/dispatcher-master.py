@@ -115,6 +115,8 @@ def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
         # testjob has already ended and been marked as such
         return
     job.status = job_status
+    if job.status == TestJob.CANCELING:
+        job.status = TestJob.CANCELED
     if job.start_time and not job.end_time:
         job.end_time = datetime.datetime.utcnow()
     device = job.actual_device
@@ -123,7 +125,7 @@ def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
     if not device:
         job.save()
         return
-    msg = "Job %s has ended" % job.id
+    msg = "Job %s has ended. Setting %s" % (job.id, TestJob.STATUS_CHOICES[job.status])
     new_status = Device.IDLE
     device.state_transition_to(new_status, message=msg, job=job)
     device.status = new_status
@@ -530,7 +532,10 @@ class Command(BaseCommand):
                         with transaction.atomic():
                             job = TestJob.objects.select_for_update() \
                                                  .get(id=job_id)
-                            end_job(job, job_status=status)
+                            if job.status == TestJob.CANCELING:
+                                cancel_job(job)
+                            else:
+                                end_job(job, job_status=status)
                     except TestJob.DoesNotExist:
                         self.logger.error("[%d] Unknown job", job_id)
                     # ACK even if the job is unknown to let the dispatcher
