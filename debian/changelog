@@ -1,11 +1,12 @@
-lava-server (2015.04.1-1) UNRELEASED; urgency=medium
+lava-server (2015.05-1) unstable; urgency=medium
 
+  * New production release for unstable.
   * Use Debian changelog date for sphinx timestamps. Patch from
     Reiner Herrmann <reiner@reiner-h.de> (Closes: #782386)
   * Symlink the source files as well as minified js files
   * Tidy up lintian copyright Files matches.
 
- -- Neil Williams <codehelp@debian.org>  Wed, 22 Apr 2015 13:56:16 +0100
+ -- Neil Williams <codehelp@debian.org>  Fri, 08 May 2015 10:57:24 +0100
 
 lava-server (2015.04-1) experimental; urgency=medium
 
