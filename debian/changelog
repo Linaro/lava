@@ -1,5 +1,6 @@
-lava-dispatcher (2015.04.1-1) UNRELEASED; urgency=medium
+lava-dispatcher (2015.05-1) unstable; urgency=medium
 
+  * New production release for unstable.
   * Add support for using a static timestamp on manpage.
   * Tidy up dep-5 file listings in copyright
 
