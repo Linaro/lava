@@ -148,6 +148,13 @@ if AUTH_LDAP_SERVER_URI:
     # read any LDAP login message to use from the settings.conf
     LOGIN_MESSAGE_LDAP = distro_settings.get_setting("LOGIN_MESSAGE_LDAP", "")
 
+# read branding details
+BRANDING_ALT = distro_settings.get_setting("BRANDING_ALT", "Linaro logo")
+BRANDING_ICON = distro_settings.get_setting("BRANDING_ICON", 'lava-server/images/linaro-sprinkles.png')
+BRANDING_URL = distro_settings.get_setting("BRANDING_URL", 'http://www.linaro.org')
+BRANDING_HEIGHT = distro_settings.get_setting("BRANDING_HEIGHT", 22)
+BRANDING_WIDTH = distro_settings.get_setting("BRANDING_WIDTH", 22)
+
 # Load extensions
 loader.contribute_to_settings(locals(), distro_settings)
 

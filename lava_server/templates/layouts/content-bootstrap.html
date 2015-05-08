@@ -18,7 +18,13 @@
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand hidden-sm" href="http://www.linaro.org"><img src="{{ STATIC_URL }}lava-server/images/linaro-sprinkles.png" alt="Linaro logo" /> LAVA</a>
+          {% if 'lava-server/images' in lava.branding_icon %}
+        <a class="navbar-brand hidden-sm" href="{{ lava.branding_url }}"><img height={{ lava.branding_height }}
+                width={{ lava.branding_width }} src="{{ STATIC_URL }}{{ lava.branding_icon }}" alt="{{ lava.branding_alt }}" /> LAVA</a>
+          {% else %}
+        <a class="navbar-brand hidden-sm" href="{{ lava.branding_url }}"><img  height={{ lava.branding_height }}
+                width={{ lava.branding_width }} src="{{ lava.branding_icon }}" alt="{{ lava.branding_alt }}" /> LAVA</a>
+          {% endif %}
       </div>
       <div class="navbar-collapse collapse">
         <ul class="nav navbar-nav">

@@ -340,6 +340,30 @@ Other supported parameters are::
 
 Restart ``lava-server`` and ``apache2`` services if this is changed.
 
+LAVA server branding support
+============================
+
+The icon, link and alt text of the LAVA link on each page can be changed in the
+settings ``/etc/lava-server/settings.conf`` (JSON syntax)::
+
+   "BRANDING_URL": "http://www.example.org",
+   "BRANDING_ALT": "Example site",
+   "BRANDING_ICON": "https://www.example.org/logo/logo.png",
+   "BRANDING_HEIGHT": 26,
+   "BRANDING_WIDTH": 32
+
+If the icon is available under the django static files location, this location
+can be specified instead of a URL::
+
+   "BRANDING_ICON": "path/to/image.png",
+
+There are limits to the size of the image, approximately 32x32 pixels, to avoid
+overlap.
+
+The ``favicon`` is configurable via the Apache configuration::
+
+ Alias /favicon.ico /usr/share/lava-server/static/lava-server/images/linaro-sprinkles.png
+
 LAVA Dispatcher network configuration
 =====================================
 
