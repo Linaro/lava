@@ -1,0 +1,6 @@
+{% extends 'cubietruck.yaml' %}
+{% set usb_label = 'SanDisk_Ultra' %}
+{% set usb_uuid = "usb-SanDisk_Ultra_20060775320F43006019-0:0" %}
+{% set sata_label = 'ST160LM003' %}
+{% set sata_uuid = "ata-ST160LM003_HN-M160MBB_S2SYJ9KC102184" %}
+{% set connection_command = "telnet localhost 6002" %}

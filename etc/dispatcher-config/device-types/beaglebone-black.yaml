@@ -1,0 +1,83 @@
+{% extends 'base.yaml' %}
+{% block body %}
+device_type: beaglebone-black
+
+{% set console_device = console_device | default('ttyO0') %}
+{% set baud_rate = baud_rate | default(115200) %}
+
+
+parameters:
+  bootm:
+   kernel: '{{ bootm_kernel_addr|default('0x80200000') }}'
+   ramdisk: '{{ bootm_ramdisk_addr|default('0x81600000') }}'
+   dtb: '{{ bootm_dtb_addr|default('0x815f0000') }}'
+  bootz:
+   kernel: '{{ bootz_kernel_addr|default('0x81000000') }}'
+   ramdisk: '{{ bootz_ramdisk_addr|default('0x82000000') }}'
+   dtb: '{{ bootz_dtb_addr|default('0x81f00000') }}'
+  media:
+    usb:
+      {{ usb_label|default('SanDisk_Ultra') }}:
+        uuid: {{ usb_uuid }}  # /dev/disk/by-id/
+        device_id: {{ usb_device_id|default(0) }}  # the bootloader device id for this media on the 'usb' interface
+
+actions:
+  deploy:
+    methods:
+      tftp
+      usb
+  boot:
+    methods:
+      kexec:
+      u-boot:
+        parameters:
+          bootloader_prompt: {{ bootloader_prompt|default('U-Boot') }}
+          boot_message: {{ boot_message|default('Booting Linux') }}
+          send_char: False
+          # interrupt: # character needed to interrupt u-boot, single whitespace by default
+          # method specific stanza
+        oe:  # whether this stanza makes it into master is uncertain, it's "old-world" - if it does, handle root & 0:3 etc.
+          commands:
+{{ base_uboot_commands }}
+          - setenv bootcmd 'fatload mmc 0:3 {{ bootm_kernel_addr }} uImage; fatload mmc 0:3 {{ bootm_dtb_addr }} board.dtb;
+            bootm {{ bootm_kernel_addr }} - {{ bootm_dtb_addr }}'
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/mmcblk0p5 rootwait ro'
+          - boot
+        master:  # whether this stanza makes it into master is uncertain, it's "old-world" - if it does, handle root
+          commands:
+{{ base_uboot_commands }}
+          - setenv bootcmd 'fatload mmc 0:3 {{ bootm_kernel_addr }} uImage; fatload mmc 0:3 {{ bootm_ramdisk_addr }} uInitrd;
+             fatload mmc 0:3 {{ bootm_dtb_addr }} board.dtb; bootm {{ bootm_kernel_addr }} {{ bootm_ramdisk_addr }} {{ bootm_dtb_addr }}'
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=LABEL=testrootfs rootwait ro'
+          - boot
+        nfs:
+          commands:
+{{ base_uboot_commands }}
+{{ base_uboot_addr_commands }}
+{{ base_tftp_commands }}
+          # Always quote the entire string if the command includes a colon to support correct YAML.
+          - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw {{ base_nfsroot_args }} ip=dhcp'"
+{{ base_nfs_uboot_bootcmd }}
+        ramdisk:
+          commands:
+{{ base_uboot_commands }}
+{{ base_uboot_addr_commands }}
+{{ base_tftp_commands }}
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/ram0 ip=dhcp'
+{{ base_tftp_uboot_bootcmd }}
+        usb:
+          commands:
+          - usb start
+          - usb info
+{{ base_uboot_commands }}
+{{ base_uboot_addr_commands }}
+          - setenv loadkernel 'load usb 0:{ROOT_PART} ${kernel_addr_r} {KERNEL}'
+          - setenv loadinitrd 'load usb 0:{ROOT_PART} ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'load usb 0:{ROOT_PART} ${fdt_addr_r} {DTB}'
+          - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root={ROOT} ip=dhcp'
+{{ base_uboot_bootcmd }}
+{% endblock %}
+
+#timeouts:
+#  call-kexec:
+#    seconds: 45

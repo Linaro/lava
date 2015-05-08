@@ -165,7 +165,7 @@ remote workers is required.
 Also adjust the host allowed to connect to this database, so that the
 ``LAVA_DB_USER`` has access to the ``LAVA_DB_NAME`` database only by
 using the ``LAVA_DB_PASSWORD`` (which, in turn, is not sent in clear
-text).
+text). This configuration should be made in ``pg_hba.conf``.
 
 For a fresh install (no previous database records), the ``LAVA_DB_USER``
 and ``LAVA_DB_NAME`` would be::
@@ -195,8 +195,8 @@ IP address of the master running postgres is 192.168.100.175::
 
  $ psql -h 192.168.100.175 -U lavaserver
 
-Check the ``/var/log/lava-server/lava-scheduler.log`` for cnnection errors of a
-normal startup of lava-scheduler::
+Check the ``/var/log/lava-server/lava-scheduler.log`` for connection
+errors of a normal startup of lava-scheduler::
 
  2014-05-05 20:17:20,327 Running LAVA Daemon
  2014-05-05 20:17:20,345 lava-scheduler-daemon: /usr/bin/lava-server manage

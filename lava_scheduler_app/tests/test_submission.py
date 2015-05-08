@@ -748,6 +748,76 @@ class TestSchedulerAPI(TestCaseWithFactory):
         job = TestJob.objects.get(pk=job.pk)
         self.assertEqual(TestJob.CANCELED, job.status)
 
+    def test_json_vs_yaml(self):
+        """
+        Test that invalid JSON gets rejected but valid YAML is accepted as pipeline
+        """
+        user = User.objects.create_user('test', 'e@mail.invalid', 'test')
+        user.user_permissions.add(
+            Permission.objects.get(codename='add_testjob'))
+        user.save()
+        job = self.factory.make_testjob(submitter=user)
+        self.assertFalse(job.is_pipeline)
+        # "break" the JSON by dropping the closing } as JSON needs the complete file to validate
+        invalid_def = job.definition[:-2]
+        self.assertRaises(ValueError, json.loads, invalid_def)
+        server = self.server_proxy('test', 'test')
+        self.assertRaises(xmlrpclib.Fault, server.scheduler.submit_job, invalid_def)
+
+        invalid_yaml_def = """
+# Sample JOB definition for a KVM
+device_type: qemu
+job_name: kvm-pipeline
+priority: medium
+"""
+        self.assertRaises(ValueError, json.loads, invalid_yaml_def)
+        self.assertRaises(xmlrpclib.Fault, server.scheduler.submit_job, invalid_yaml_def)
+
+        yaml_def = """
+# Sample JOB definition for a KVM
+device_type: qemu
+job_name: kvm-pipeline
+priority: medium
+
+actions:
+
+    - deploy:
+        to: tmpfs
+        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        compression: gz
+        os: debian
+
+    - boot:
+        method: qemu
+        media: tmpfs
+        failure_retry: 2
+
+    - test:
+        name: kvm-basic-singlenode
+        definitions:
+            - repository: git://git.linaro.org/qa/test-definitions.git
+              from: git
+              path: ubuntu/smoke-tests-basic.yaml
+              # name: if not present, use the name from the YAML. The name can
+              # also be overriden from the actual commands being run by
+              # calling the lava-test-suite-name API call (e.g.
+              # `lava-test-suite-name FOO`).
+              name: smoke-tests
+"""
+        self.assertRaises(xmlrpclib.Fault, server.scheduler.submit_job, yaml_def)
+
+        device_type = self.factory.make_device_type('qemu')
+        device = self.factory.make_device(device_type=device_type, hostname="qemu1")
+        device.save()
+        self.assertFalse(device.is_pipeline)
+        self.assertRaises(xmlrpclib.Fault, server.scheduler.submit_job, yaml_def)
+        device = self.factory.make_device(device_type=device_type, hostname="qemu2", is_pipeline=True)
+        device.save()
+        self.assertTrue(device.is_pipeline)
+        job_id = server.scheduler.submit_job(yaml_def)
+        job = TestJob.objects.get(id=job_id)
+        self.assertTrue(job.is_pipeline)
+
 
 class TransactionTestCaseWithFactory(TransactionTestCase):
 

@@ -319,7 +319,11 @@ in ``/etc/lava-server/settings.conf`` (JSON syntax)::
   "DISABLE_OPENID_AUTH": true
 
 .. note:: ``DISABLE_OPENID_AUTH`` should be set in order to remove
-          OpenID based authentication support in the login page.
+   OpenID based authentication support in the login page.
+
+Use the following parameter to set a custom LDAP login page message::
+
+    "LOGIN_MESSAGE_LDAP": "If your Linaro email is first.second@linaro.org then use first.second as your username"
 
 Other supported parameters are::
 

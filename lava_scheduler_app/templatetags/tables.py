@@ -2,6 +2,7 @@ from django import template
 from django.db.models import fields
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
+from django_kvstore import models as kvmodels
 
 register = template.Library()
 

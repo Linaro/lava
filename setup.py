@@ -66,7 +66,9 @@ setup(
         'markupsafe',
         'mocker >= 1.0',
         'netifaces >= 0.10.4',
-
+        'django-kvstore',
+        'pyzmq',
+        'jinja2',
         # optional dependency; for authentication with Attlassian Crowd SSO
         # 'django-crowd-rest-backend >= 0.3,
 
@@ -84,19 +86,23 @@ setup(
                 'etc/uwsgi.ini',
                 'etc/debug.wsgi',
                 'etc/lava-server.wsgi',
-                'etc/uwsgi.reload']),
+                'etc/uwsgi.reload',
+                'etc/env.yaml']),
         ('/etc/apache2/sites-available',
             ['etc/lava-server.conf']),
         ('/etc/logrotate.d',
             ['etc/logrotate.d/lava-scheduler-log',
+                'etc/logrotate.d/lava-master-log',
                 'etc/logrotate.d/lava-server-uwsgi-log']),
         ('/usr/share/lava-server',
             ['instance.template']),
         ('/usr/share/lava-server',
-            ['share/add_device.py']),
+            ['share/add_device.py',
+             'share/render-template.py']),
     ],
     scripts=[
         'lava_server/lava-daemon',
+        'lava_server/lava-master',
         'share/lava-mount-masterfs',
     ],
     tests_require=[

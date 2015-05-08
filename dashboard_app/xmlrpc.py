@@ -4,17 +4,17 @@
 #
 # This file is part of LAVA Dashboard
 #
-# Launch Control is free software: you can redistribute it and/or modify
+# Lava Dashboard is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License version 3
 # as published by the Free Software Foundation
 #
-# Launch Control is distributed in the hope that it will be useful,
+# Lava Dashboard is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU Affero General Public License
-# along with Launch Control.  If not, see <http://www.gnu.org/licenses/>.
+# along with Lava Dashboard.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 XMP-RPC API
@@ -730,10 +730,6 @@ class DashboardAPI(ExposedAPI):
             Pathname does not designate an anonymous stream
         409
             Bundle stream with the specified pathname already exists
-
-        Available Since
-        ---------------
-        0.3
         """
         # Work around bug https://bugs.launchpad.net/lava-dashboard/+bug/771182
         # Older clients would send None as the name and this would trigger an

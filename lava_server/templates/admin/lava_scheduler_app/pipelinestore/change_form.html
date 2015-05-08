@@ -1,0 +1,25 @@
+{% extends "admin/change_form.html" %}
+{% load utils %}
+{% load i18n %}
+
+{% if not is_popup %}
+{% block title %}
+View Job Pipeline Store
+{% endblock %}
+{% block content_title %}
+<h1>View Job Pipeline Store</h1>
+{% endblock %}
+{% block content %}
+<div id="content-main">
+<h2>Job Pipeline key value store</h2>
+
+{% with dictionary=request.path|get_pipeline_store %}
+{% for key, value in dictionary.items %}
+    <ul>{% include "admin/lava_scheduler_app/recursive.html" %}</ul>
+{% endfor %}
+</div>
+
+{% endwith %}
+
+{% endblock %}
+{% endif %}
