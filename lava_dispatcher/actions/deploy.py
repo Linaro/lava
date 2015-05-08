@@ -67,6 +67,8 @@ class cmd_deploy_linaro_image(BaseAction):
             'password': {'type': 'string', 'optional': True},
             'login_commands': {'type': 'array', 'items': {'type': 'string'},
                                'optional': True},
+            'qemu_pflash': {'type': 'array', 'items': {'type': 'string'},
+                            'optional': True},
             'role': {'type': 'string', 'optional': True},
         },
         'additionalProperties': False,
@@ -99,7 +101,7 @@ class cmd_deploy_linaro_image(BaseAction):
     def run(self, hwpack=None, rootfs=None, image=None, dtb=None,
             rootfstype='ext4', bootloadertype='u_boot', login_prompt=None,
             password_prompt=None, username=None, password=None,
-            login_commands=None, customize=None,
+            login_commands=None, customize=None, qemu_pflash=None,
             boot_part=None, root_part=None):
         if login_prompt is not None:
             self.client.config.login_prompt = login_prompt
@@ -119,7 +121,8 @@ class cmd_deploy_linaro_image(BaseAction):
             self.client.config.root_part = root_part
         self.client.deploy_linaro(
             hwpack=hwpack, rootfs=rootfs, image=image, dtb=dtb,
-            rootfstype=rootfstype, bootloadertype=bootloadertype,)
+            rootfstype=rootfstype, bootloadertype=bootloadertype,
+            qemu_pflash=qemu_pflash,)
 
 
 cmd_deploy_image = cmd_deploy_linaro_image
@@ -130,9 +133,17 @@ class cmd_deploy_linaro_android_image(BaseAction):
     parameters_schema = {
         'type': 'object',
         'properties': {
-            'boot': {'type': 'string'},
-            'system': {'type': 'string', 'optional': True},
-            'data': {'type': 'string', 'optional': True},
+            'images': {'type': 'array',
+                       'items': {'type': 'object',
+                                 'properties':
+                                 {'url': {'type': 'string',
+                                          'optional': True},
+                                  'partition': {'type': 'string',
+                                                'optional': True},
+                                  'fastboot': {'type': 'array',
+                                               'items': {'type': 'string'},
+                                               'optional': True}},
+                                 'additionalProperties': False}},
             'rootfstype': {'type': 'string', 'optional': True,
                            'default': 'ext4'},
             'bootloadertype': {'type': 'string', 'optional': True,
@@ -166,8 +177,20 @@ class cmd_deploy_linaro_android_image(BaseAction):
             if 'login_commands' in parameters:
                 raise ValueError('must specify a login prompt or password \
                       prompt when specifying login commands')
+        if 'images' not in parameters:
+            raise ValueError('must specify an image')
+        else:
+            for image in parameters['images']:
+                if 'fastboot' in image:
+                    if 'url' in image or 'partition' in image:
+                        raise ValueError('must not specify a url or partition '
+                                         'when fastboot commands are defined')
+                if 'url' not in image and 'partition' in image:
+                    raise ValueError('must specify a url for a given partition')
+                if 'partition' not in image and 'url' in image:
+                    raise ValueError('must specify a partition for a given url')
 
-    def run(self, boot=None, system=None, data=None, rootfstype='ext4', bootloadertype='u_boot',
+    def run(self, images=None, rootfstype='ext4', bootloadertype='u_boot',
             target_type='android', login_prompt=None, password_prompt=None, username=None,
             password=None, login_commands=None):
         if login_prompt is not None:
@@ -180,7 +203,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
             self.client.config.password = password
         if login_commands is not None:
             self.client.config.login_commands = login_commands
-        self.client.deploy_linaro_android(boot=boot, system=system, data=data,
+        self.client.deploy_linaro_android(images=images,
                                           rootfstype=rootfstype,
                                           bootloadertype=bootloadertype,
                                           target_type=target_type)
@@ -217,6 +240,8 @@ class cmd_deploy_linaro_kernel(BaseAction):
             'password': {'type': 'string', 'optional': True},
             'login_commands': {'type': 'array', 'items': {'type': 'string'},
                                'optional': True},
+            'qemu_pflash': {'type': 'array', 'items': {'type': 'string'},
+                            'optional': True},
             'role': {'type': 'string', 'optional': True},
         },
         'additionalProperties': False,
@@ -246,7 +271,7 @@ class cmd_deploy_linaro_kernel(BaseAction):
             nfsrootfs=None, bootloader=None, firmware=None, bl1=None, bl2=None,
             bl31=None, rootfstype='ext4', bootloadertype='u_boot', target_type='oe',
             login_prompt=None, password_prompt=None, username=None,
-            password=None, login_commands=None):
+            password=None, login_commands=None, qemu_pflash=None):
         if login_prompt is not None:
             self.client.config.login_prompt = login_prompt
         if password_prompt is not None:
@@ -260,7 +285,7 @@ class cmd_deploy_linaro_kernel(BaseAction):
         self.client.deploy_linaro_kernel(kernel=kernel, ramdisk=ramdisk, dtb=dtb, overlays=overlays, rootfs=rootfs,
                                          nfsrootfs=nfsrootfs, bootloader=bootloader, firmware=firmware, bl1=bl1,
                                          bl2=bl2, bl31=bl31, rootfstype=rootfstype, bootloadertype=bootloadertype,
-                                         target_type=target_type)
+                                         target_type=target_type, qemu_pflash=qemu_pflash)
 
 
 cmd_deploy_kernel = cmd_deploy_linaro_kernel
@@ -280,3 +305,4 @@ class cmd_dummy_deploy(BaseAction):
     def run(self, target_type):
         device = self.client.target_device
         device.deployment_data = deployment_data.get(target_type)
+        self.client.dummy_deploy(target_type)

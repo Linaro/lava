@@ -121,7 +121,7 @@ class MasterImageTarget(Target):
         finalize_process(self.proc)
         self.proc = None
 
-    def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootloadertype):
+    def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootloadertype, qemu_pflash=None):
         self.boot_master_image()
 
         image_file = generate_image(self, hwpack, rfs, dtb, self.scratch_dir,
@@ -131,15 +131,32 @@ class MasterImageTarget(Target):
         self._read_boot_cmds(boot_tgz=boot_tgz)
         self._deploy_tarballs(boot_tgz, root_tgz, rootfstype)
 
-    def deploy_android(self, boot, system, userdata, rootfstype,
+    def deploy_android(self, images, rootfstype,
                        bootloadertype, target_type):
         self.deployment_data = deployment_data.android
         self.boot_master_image()
+        boot = None
+        system = None
+        data = None
 
         sdir = self.scratch_dir
-        boot = download_image(boot, self.context, sdir, decompress=False)
-        system = download_image(system, self.context, sdir, decompress=False)
-        data = download_image(userdata, self.context, sdir, decompress=False)
+
+        for image in images:
+            if 'boot' in image['partition']:
+                boot = download_image(image['url'], self.context, sdir, decompress=False)
+            elif 'system' in image['partition']:
+                system = download_image(image['url'], self.context, sdir, decompress=False)
+            elif 'userdata' in image['partition']:
+                data = download_image(image['url'], self.context, sdir, decompress=False)
+            else:
+                msg = 'Unsupported partition option: %s' % image['partition']
+                logging.warning(msg)
+                raise CriticalError(msg)
+
+        if not all([boot, system, data]):
+            msg = 'Must supply a boot, system, and userdata image for master image deployment'
+            logging.warning(msg)
+            raise CriticalError(msg)
 
         with self._as_master() as master:
             self._format_testpartition(master, rootfstype)
@@ -165,7 +182,7 @@ class MasterImageTarget(Target):
         self._deploy_linaro_android_system(master, system_url)
         self._deploy_linaro_android_data(master, data_url)
 
-    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype):
+    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype, qemu_pflash=None):
         self.boot_master_image()
 
         if self.context.job_data.get('health_check', False):
@@ -497,6 +514,9 @@ class MasterImageTarget(Target):
             if lava_proxy:
                 logging.info("Setting up http proxy")
                 runner.run("export http_proxy=%s" % lava_proxy, timeout=30)
+            lava_no_proxy = self.context.config.lava_no_proxy
+            if lava_no_proxy:
+                runner.run("export no_proxy=%s" % lava_no_proxy, timeout=30)
             logging.info("System is in master image now")
             self.context.test_data.add_result('boot_master_image',
                                               'pass')

@@ -36,11 +36,12 @@ import socket
 from tempfile import mkdtemp
 from lava_dispatcher.config import get_config_file
 from lava_dispatcher.utils import rmtree
+from lava_dispatcher.utils import search_substr_from_array
 import hashlib
 
 
 @contextlib.contextmanager
-def _scp_stream(url, proxy=None, cookies=None):
+def _scp_stream(url, proxy=None, no_proxy=None, cookies=None):
     process = None
     try:
         process = subprocess.Popen(
@@ -55,10 +56,10 @@ def _scp_stream(url, proxy=None, cookies=None):
 
 
 @contextlib.contextmanager
-def _http_stream(url, proxy=None, cookies=None):
+def _http_stream(url, proxy=None, no_proxy=None, cookies=None):
     resp = None
     handlers = []
-    if proxy:
+    if proxy and not search_substr_from_array(url.path, no_proxy):
         handlers = [urllib2.ProxyHandler({'http': '%s' % proxy})]
 
     if url.username is not None and url.password is not None:
@@ -71,11 +72,14 @@ def _http_stream(url, proxy=None, cookies=None):
             url.params,
             url.query,
             url.fragment])
+
+        url_quoted = urllib2.quote(url_string, safe=":/")
+
         passmgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        passmgr.add_password(None, url_string, url.username, url.password)
+        passmgr.add_password(None, url_quoted, url.username, url.password)
         handlers.append(urllib2.HTTPBasicAuthHandler(passmgr))
     else:
-        url_string = url.geturl()
+        url_quoted = urllib2.quote(url.geturl(), safe=":/")
 
     opener = urllib2.build_opener(*handlers)
 
@@ -83,7 +87,6 @@ def _http_stream(url, proxy=None, cookies=None):
         opener.addheaders.append(('Cookie', cookies))
 
     try:
-        url_quoted = urllib2.quote(url_string, safe=":/")
         resp = opener.open(url_quoted, timeout=30)
         yield resp
     finally:
@@ -92,7 +95,7 @@ def _http_stream(url, proxy=None, cookies=None):
 
 
 @contextlib.contextmanager
-def _file_stream(url, proxy=None, cookies=None):
+def _file_stream(url, proxy=None, no_proxy=None, cookies=None):
     fd = None
     try:
         fd = open(url.path, 'rb')
@@ -192,7 +195,7 @@ def download_image(url_string, context, imgdir=None,
                 raise Exception(msg)
 
             cookies = context.config.lava_cookies
-            with reader(url, context.config.lava_proxy, cookies) as r:
+            with reader(url, context.config.lava_proxy, context.config.lava_no_proxy, cookies) as r:
                 with _decompressor_stream(url, imgdir, decompress) as (writer, fname):
                     md5 = hashlib.md5()
                     sha256 = hashlib.sha256()

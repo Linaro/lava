@@ -168,6 +168,11 @@ class MultinodeOverlayAction(OverlayAction):
         location = self.data['lava-overlay']['location']
         shell = self.parameters['deployment_data']['lava_test_sh_cmd']
 
+        # the roles list can only be populated after the devices have been assigned
+        # therefore, cannot be checked in validate which is executed at submission.
+        if 'roles' not in self.job.parameters['protocols'][self.protocol]:
+            raise RuntimeError("multinode definition without complete list of roles after assignment")
+
         # Generic scripts
         lava_path = os.path.abspath("%s/%s" % (location, self.data['lava_test_results_dir']))
         scripts_to_copy = glob.glob(os.path.join(self.lava_multi_node_test_dir, 'lava-*'))

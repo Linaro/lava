@@ -232,6 +232,12 @@ class TestShellAction(TestAction):
             self.logger = logging.getLogger('dispatcher')
             self.test_uuid = None
 
+        def setup(self, parameters):
+            """
+            Allows the parent Action to pass extra data to a customised SignalDirector
+            """
+            pass
+
         def signal(self, name, params):
             handler = getattr(self, '_on_' + name.lower(), None)
             if not handler and self._cur_handler:
@@ -246,8 +252,8 @@ class TestShellAction(TestAction):
                     handler(*params)  # pylint: disable=star-args
                 except KeyboardInterrupt:
                     raise KeyboardInterrupt
-                except JobError:
-                    self.logger.error("err: handling signal %s failed" % name)
+                except JobError as exc:
+                    self.logger.error("job error: handling signal %s failed: %s", name, exc)
                     return False
                 return True
 

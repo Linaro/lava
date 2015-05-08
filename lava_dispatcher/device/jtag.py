@@ -56,12 +56,13 @@ class JtagTarget(Target):
         self.driver = driver_class(self)
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
-                             bl31, rootfstype, bootloadertype, target_type):
+                             bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
         # Get deployment data
         self.deployment_data = deployment_data.get(target_type)
         self._boot_tags, self._default_boot_cmds = \
             self.driver.deploy_linaro_kernel(kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware,
-                                             bl1, bl2, bl31, rootfstype, bootloadertype, target_type, self.scratch_dir)
+                                             bl1, bl2, bl31, rootfstype, bootloadertype, target_type,
+                                             self.scratch_dir, qemu_pflash=qemu_pflash)
 
     def power_on(self):
         self._boot_cmds = self._load_boot_cmds(default=self._default_boot_cmds,
@@ -75,8 +76,6 @@ class JtagTarget(Target):
         self._wait_for_prompt(self.proc, self.config.test_image_prompts,
                               self.config.boot_linaro_timeout)
         self.proc.sendline("")
-        self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
-                           send_char=self.config.send_char)
         self.proc.sendline('export PS1="%s"' % self.tester_ps1,
                            send_char=self.config.send_char)
         self._booted = True

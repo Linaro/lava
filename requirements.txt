@@ -1,7 +1,4 @@
-django
-django-openid-auth
 pexpect
-python-openid
 lockfile
 python-daemon
 setproctitle

@@ -72,17 +72,11 @@
 #
 # /lava-$(DEVICE_HOSTNAME)/
 #    results/
-#       hwcontext/                 Each test_run in the bundle has the same
-#                                  hw & sw context info attached to it.
-#          cpuinfo.txt             Hardware info.
-#          meminfo.txt             Ditto.
-#       swcontext/
-#          build.txt               Software info.
-#          pkgs.txt                Ditto
 #       ${IDX}_${TEST_ID}-${TIMESTAMP}/
 #          testdef.yml
 #          testdef_metadata
 #          stdout.log
+#          install_return_code             The exit code of install.sh.
 #          return_code             The exit code of run.sh.
 #          analyzer_assigned_uuid
 #          attachments/
@@ -107,6 +101,13 @@
 #                attachments/      Contains attachments for test results.
 #                   ${FILENAME}           The attached data.
 #                   ${FILENAME}.mimetype  The mime type of the attachment.
+#           hwcontext/                 Each test_run in the bundle has the same
+#                                  hw & sw context info attached to it.
+#               cpuinfo.txt             Hardware info.
+#               meminfo.txt             Ditto.
+#           swcontext/
+#               build.txt               Software info.
+#               pkgs.txt                Ditto
 #
 # After the test run has completed, the /lava-$(DEVICE_HOSTNAME)/results
 # directory is pulled over to the host and turned into a bundle for submission
@@ -185,7 +186,8 @@ def _validate_invalid_chars(parameter):
 
 def _get_lava_proxy(context):
     return {'http_proxy': context.config.lava_proxy,
-            'https_proxy': context.config.lava_proxy}
+            'https_proxy': context.config.lava_proxy,
+            'no_proxy': context.config.lava_no_proxy}
 
 
 def _get_testdef_git_repo(testdef_repo, tmpdir, revision, proxy_env):
@@ -608,7 +610,10 @@ class URLTestDefinition(object):
         fout.write('%s=\'%s\'\n' % ('LAVA_SERVER_IP',
                                     self.context.config.lava_server_ip))
         fout.write('%s=\'%s\'\n' % ('TARGET_TYPE', target_type))
-        fout.write('%s=\'%s\'\n' % ('REPEAT_COUNT', repeat_cnt))
+        if repeat_cnt > 0:
+            fout.write('%s=\'%s\'\n' % ('REPEAT_COUNT', repeat_cnt))
+            fout.write('###save REPEAT_COUNT as named attribute###\n')
+            fout.write('echo %s > $LAVA_RESULT_DIR/attributes/repeat_count\n' % repeat_cnt)
         fout.write('######\n')
 
     def _create_target_install(self, hostdir, targetdir):
@@ -836,6 +841,9 @@ class cmd_lava_test_shell(BaseAction):
             if self.context.config.lava_proxy:
                 runner._connection.sendline(
                     "export http_proxy=%s" % self.context.config.lava_proxy, delay)
+            if self.context.config.lava_no_proxy:
+                runner._connection.sendline(
+                    "export no_proxy=%s" % self.context.config.lava_no_proxy, delay)
             runner._connection.sendline(
                 "%s/bin/lava-test-runner %s" % (
                     target.lava_test_dir,

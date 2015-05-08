@@ -23,6 +23,7 @@
 
 import logging
 import subprocess
+import os
 
 from contextlib import contextmanager
 from time import sleep
@@ -39,6 +40,7 @@ from lava_dispatcher.utils import (
     prepend_blob,
     create_multi_image,
     create_uimage,
+    create_fat_boot_image,
 )
 
 
@@ -86,6 +88,9 @@ class FastBoot(object):
     def erase(self, partition):
         self('erase %s' % partition)
 
+    def format(self, partition):
+        self('format %s' % partition)
+
     def flash(self, partition, image):
         self('flash %s %s' % (partition, image))
 
@@ -107,9 +112,11 @@ class BaseDriver(object):
         self.target_type = None
         self.scratch_dir = None
         self.fastboot = FastBoot(self)
-        self._default_boot_cmds = 'boot_cmds_ramdisk'
+        self._default_boot_cmds = None
+        self._boot_tags = {}
         self._kernel = None
         self._ramdisk = None
+        self._dtb = None
         self._working_dir = None
         self.__boot_image__ = None
 
@@ -131,12 +138,17 @@ class BaseDriver(object):
     def get_default_boot_cmds(self):
         return self._default_boot_cmds
 
+    def get_boot_tags(self):
+        return self._boot_tags
+
     def boot(self, boot_cmds=None):
+        logging.info("In Base Class boot()")
         if self.__boot_image__ is None:
             raise CriticalError('Deploy action must be run first')
         if self._kernel is not None:
             if self._ramdisk is not None:
                 if self.config.fastboot_kernel_load_addr:
+                    boot_cmds = ''.join(boot_cmds)
                     self.fastboot('boot -c "%s" -b %s %s %s' % (boot_cmds,
                                                                 self.config.fastboot_kernel_load_addr,
                                                                 self._kernel, self._ramdisk), timeout=10)
@@ -144,6 +156,7 @@ class BaseDriver(object):
                     raise CriticalError('Kernel load address not defined!')
             else:
                 if self.config.fastboot_kernel_load_addr:
+                    boot_cmds = ''.join(boot_cmds)
                     self.fastboot('boot -c "%s" -b %s %s' % (boot_cmds,
                                                              self.config.fastboot_kernel_load_addr,
                                                              self._kernel), timeout=10)
@@ -151,6 +164,13 @@ class BaseDriver(object):
                     raise CriticalError('Kernel load address not defined!')
         else:
             self.fastboot.boot(self.__boot_image__)
+
+    def wait_for_adb(self):
+        if self.target_type == 'android':
+            self.adb('wait-for-device')
+            return True
+        else:
+            return False
 
     def in_fastboot(self):
         if self.fastboot.on():
@@ -164,7 +184,8 @@ class BaseDriver(object):
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
                              bootloader, firmware, bl1, bl2, bl31, rootfstype,
-                             bootloadertype, target_type, scratch_dir):
+                             bootloadertype, target_type, scratch_dir,
+                             qemu_pflash=None):
         self.target_type = target_type
         self.scratch_dir = scratch_dir
         if kernel is not None:
@@ -176,6 +197,9 @@ class BaseDriver(object):
                 self._kernel = prepend_blob(self._kernel,
                                             blob,
                                             self.working_dir)
+            self._boot_tags['{SERVER_IP}'] = self.context.config.lava_server_ip
+            self._boot_tags['{KERNEL}'] = os.path.basename(self._kernel)
+            self._default_boot_cmds = 'boot_cmds_ramdisk'
         else:
             raise CriticalError('A kernel image is required!')
         if ramdisk is not None:
@@ -191,13 +215,15 @@ class BaseDriver(object):
                                              decompress=False)
                     extract_overlay(overlay, ramdisk_dir)
                 self._ramdisk = create_ramdisk(ramdisk_dir, self.working_dir)
+            self._boot_tags['{RAMDISK}'] = os.path.basename(self._ramdisk)
         if dtb is not None:
-            dtb = download_image(dtb, self.context,
-                                 self._working_dir,
-                                 decompress=False)
+            self._dtb = download_image(dtb, self.context,
+                                       self._working_dir,
+                                       decompress=False)
             if self.config.append_dtb:
-                self._kernel = append_dtb(self._kernel, dtb, self.working_dir)
+                self._kernel = append_dtb(self._kernel, self._dtb, self.working_dir)
                 logging.info('Appended dtb to kernel image successfully')
+            self._boot_tags['{DTB}'] = os.path.basename(self._dtb)
         if rootfs is not None:
             self._default_boot_cmds = 'boot_cmds_rootfs'
             rootfs = self._get_image(rootfs)
@@ -220,24 +246,41 @@ class BaseDriver(object):
                                                  self.config.uimage_xip)
             else:
                 raise CriticalError('Kernel load address not defined!')
+        elif self.config.boot_fat_image_only:
+            if self.config.fastboot_efi_image:
+                efi = download_image(self.config.fastboot_efi_image, self.context,
+                                     self._working_dir, decompress=False)
+                self._kernel = create_fat_boot_image(self._kernel,
+                                                     self.working_dir,
+                                                     efi,
+                                                     self._ramdisk,
+                                                     self._dtb)
+            else:
+                raise CriticalError("No fastboot image provided")
 
         self.__boot_image__ = 'kernel'
 
-    def deploy_android(self, boot, system, userdata, rootfstype,
+    def deploy_android(self, images, rootfstype,
                        bootloadertype, target_type, scratch_dir):
         self.target_type = target_type
         self.scratch_dir = scratch_dir
         self.erase_boot()
+        boot = None
+
+        for image in images:
+            if 'fastboot' in image:
+                for command in image['fastboot']:
+                    self.fastboot(command)
+            if 'url' in image and 'partition' in image:
+                if image['partition'] == 'boot':
+                    boot = image['url']
+                else:
+                    self.fastboot.flash(image['partition'], self._get_image(image['url']))
+
         if boot is not None:
             boot = self._get_image(boot)
         else:
             raise CriticalError('A boot image is required!')
-        if system is not None:
-            system = self._get_image(system)
-            self.fastboot.flash('system', system)
-        if userdata is not None:
-            userdata = self._get_image(userdata)
-            self.fastboot.flash('userdata', userdata)
 
         self.__boot_image__ = boot
 
@@ -247,6 +290,11 @@ class BaseDriver(object):
             return self.context.spawn(cmd, timeout=60)
         else:
             _call(self.context, cmd, ignore_failure, timeout)
+
+    def dummy_deploy(self, target_type, scratch_dir):
+        self.target_type = target_type
+        self.__boot_image__ = target_type
+        self.scratch_dir = scratch_dir
 
     @property
     def working_dir(self):
@@ -295,15 +343,15 @@ class fastboot(BaseDriver):
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
                              bootloader, firmware, bl1, bl2, bl31, rootfstype,
-                             bootloadertype, target_type, scratch_dir):
+                             bootloadertype, target_type, scratch_dir,
+                             qemu_pflash=None):
         raise CriticalError('This platform does not support kernel deployment!')
 
     def enter_fastboot(self):
         self.fastboot.enter()
 
     def connect(self):
-        if self.target_type == 'android':
-            self.adb('wait-for-device')
+        if self.wait_for_adb():
             proc = self.adb('shell', spawn=True)
         else:
             raise CriticalError('This device only supports Android!')
@@ -318,12 +366,66 @@ class nexus10(fastboot):
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
                              bootloader, firmware, bl1, bl2, bl31, rootfstype,
-                             bootloadertype, target_type, scratch_dir):
+                             bootloadertype, target_type, scratch_dir, qemu_pflash=None):
         raise CriticalError('This platform does not support kernel deployment!')
 
     def boot(self, boot_cmds=None):
         self.fastboot.flash('boot', self.__boot_image__)
         self.fastboot('reboot')
+
+
+class tshark(fastboot):
+
+    def __init__(self, device):
+        super(tshark, self).__init__(device)
+
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
+                             bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
+                             target_type, scratch_dir, qemu_pflash=None):
+        raise CriticalError('This platform does not support kernel deployment!')
+
+    def boot(self, boot_cmds=None):
+        self.fastboot.flash('boot', self.__boot_image__)
+        self.fastboot('reboot')
+
+    def erase_boot(self):
+        pass
+
+
+class samsung_note(fastboot):
+
+    def __init__(self, device):
+        super(samsung_note, self).__init__(device)
+        self._isbooted = True
+
+    def boot(self, boot_cmds=None):
+        pass
+
+    def erase_boot(self):
+        pass
+
+    def on(self):
+        return True
+
+    def in_fastboot(self):
+        return False
+
+    def _get_partition_mount_point(self, partition):
+        lookup = {
+            self.config.data_part_android_org: '/data',
+            self.config.sys_part_android_org: '/system',
+        }
+        return lookup[partition]
+
+    def connect(self):
+        if self.wait_for_adb():
+            logging.debug("Waiting 30 seconds for OS to properly come up")
+            sleep(30)
+            proc = self.adb('shell', spawn=True)
+        else:
+            raise CriticalError('This device only supports Android!')
+
+        return proc
 
 
 class fastboot_serial(BaseDriver):
@@ -340,9 +442,6 @@ class fastboot_serial(BaseDriver):
         else:
             raise CriticalError('The connection_command is not defined!')
 
-        if self.target_type == 'android':
-            self.adb('wait-for-device')
-
         return proc
 
 
@@ -353,7 +452,7 @@ class capri(fastboot_serial):
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
                              bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
-                             target_type, scratch_dir):
+                             target_type, scratch_dir, qemu_pflash=None):
         raise CriticalError('This platform does not support kernel deployment!')
 
     def erase_boot(self):
@@ -379,7 +478,7 @@ class optimusa80(fastboot_serial):
             self.fastboot('flash boot %s' % self._kernel)
             self.fastboot('reboot')
         else:
-            self.fastboot.boot(self.__boot_image__)
+            self.fastboot.flash('boot', self.__boot_image__)
             self.fastboot('reboot')
 
     def in_fastboot(self):
@@ -393,7 +492,7 @@ class pxa1928dkb(fastboot_serial):
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
                              bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
-                             target_type, scratch_dir):
+                             target_type, scratch_dir, qemu_pflash=None):
         raise CriticalError('This platform does not support kernel deployment!')
 
     def connect(self):
@@ -411,9 +510,6 @@ class pxa1928dkb(fastboot_serial):
         self.fastboot.flash('boot', self.__boot_image__)
         self.fastboot('reboot')
 
-        if self.target_type == 'android':
-            self.adb('wait-for-device')
-
 
 class k3v2(fastboot_serial):
 
@@ -422,7 +518,7 @@ class k3v2(fastboot_serial):
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
                              bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
-                             target_type, scratch_dir):
+                             target_type, scratch_dir, qemu_pflash=None):
         raise CriticalError('This platform does not support kernel deployment!')
 
     def enter_fastboot(self):
@@ -435,19 +531,28 @@ class k3v2(fastboot_serial):
         self.fastboot('reboot')
 
 
-class tshark(fastboot):
+class hi6220_hikey(fastboot_serial):
 
     def __init__(self, device):
-        super(tshark, self).__init__(device)
+        super(hi6220_hikey, self).__init__(device)
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
-                             bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
-                             target_type, scratch_dir):
-        raise CriticalError('This platform does not support kernel deployment!')
+    def connect(self):
+        if self.config.connection_command:
+            proc = connect_to_serial(self.context)
+        else:
+            raise CriticalError('The connection_command is not defined!')
 
-    def boot(self, boot_cmds=None):
-        self.fastboot.flash('boot', self.__boot_image__)
-        self.fastboot('reboot')
+        return proc
 
     def erase_boot(self):
         pass
+
+    def boot(self, boot_cmds=None):
+        if self.__boot_image__ is None:
+            raise CriticalError('Deploy action must be run first')
+        if self._kernel is not None:
+            self.fastboot.flash('boot', self._kernel)
+            self.fastboot('reboot-bootloader', ignore_failure=True)
+        else:
+            self.fastboot.flash('boot', self.__boot_image__)
+            self.fastboot('reboot-bootloader', ignore_failure=True)

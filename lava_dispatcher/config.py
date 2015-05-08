@@ -267,8 +267,11 @@ class DeviceSchema(schema.Schema):
     adb_command = schema.StringOption()
     fastboot_command = schema.StringOption()
     fastboot_kernel_load_addr = schema.StringOption()
+    fastboot_efi_image = schema.StringOption(default=None)
+    run_boot_cmds = schema.BoolOption(default=False)
+    boot_fat_image_only = schema.BoolOption(default=False)
     rootfs_partition = schema.StringOption(default='userdata')
-    start_fastboot_command = schema.StringOption(default='fastboot')
+    start_fastboot_command = schema.StringOption(default=None)
     shared_working_directory = schema.StringOption(default=None)
 
     # for bootloader devices
@@ -330,6 +333,7 @@ class DispatcherSchema(schema.Schema):
     lava_image_tmpdir = schema.StringOption()
     lava_image_url = schema.StringOption()
     lava_proxy = schema.StringOption()
+    lava_no_proxy = schema.StringOption()
     lava_result_dir = schema.StringOption()
     lava_server_ip = schema.StringOption()
     lava_network_iface = schema.ListOption()

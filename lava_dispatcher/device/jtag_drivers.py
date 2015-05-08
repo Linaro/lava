@@ -49,7 +49,7 @@ class BaseDriver(object):
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
                              bootloader, firmware, bl1, bl2, bl31, rootfstype,
-                             bootloadertype, target_type, scratch_dir):
+                             bootloadertype, target_type, scratch_dir, qemu_pflash=None):
         """
         """
         raise NotImplementedError("deploy_linaro_kernel")
@@ -73,7 +73,7 @@ class stmc(BaseDriver):
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
                              bootloader, firmware, bl1, bl2, bl31, rootfstype,
-                             bootloadertype, target_type, scratch_dir):
+                             bootloadertype, target_type, scratch_dir, qemu_pflash=None):
         kernel_url = kernel
         dtb_url = dtb
         # At a minimum we must have a kernel

@@ -220,15 +220,31 @@ class FastModelTarget(Target):
             logging.warning('No SECURE FLASHLOADER found, %r',
                             self.config.simulator_bl31_files)
 
-    def deploy_android(self, boot, system, data, rootfstype, bootloadertype,
+    def deploy_android(self, images, rootfstype, bootloadertype,
                        target_type):
         logging.info("Deploying Android on %s", self.config.hostname)
 
         self._bootloadertype = bootloadertype
+        self._boot = None
+        self._system = None
+        self._data = None
 
-        self._boot = download_image(boot, self.context, decompress=False)
-        self._data = download_image(data, self.context, decompress=False)
-        self._system = download_image(system, self.context, decompress=False)
+        for image in images:
+            if 'boot' in image['partition']:
+                self._boot = download_image(image['url'], self.context, decompress=False)
+            elif 'system' in image['partition']:
+                self._system = download_image(image['url'], self.context, decompress=False)
+            elif 'userdata' in image['partition']:
+                self._data = download_image(image['url'], self.context, decompress=False)
+            else:
+                msg = 'Unsupported partition option: %s' % image['partition']
+                logging.warning(msg)
+                raise CriticalError(msg)
+
+        if not all([self._boot, self._system, self._data]):
+            msg = 'Must supply a boot, system, and userdata image for fastmodel image deployment'
+            logging.warning(msg)
+            raise CriticalError(msg)
 
         self._sd_image = '%s/android.img' % os.path.dirname(self._system)
 
@@ -240,7 +256,7 @@ class FastModelTarget(Target):
 
         self._customize_android()
 
-    def deploy_linaro(self, hwpack, rootfs, dtb, rootfstype, bootloadertype):
+    def deploy_linaro(self, hwpack, rootfs, dtb, rootfstype, bootloadertype, qemu_pflash=None):
         hwpack = download_image(hwpack, self.context, decompress=False)
         rootfs = download_image(rootfs, self.context, decompress=False)
         odir = os.path.dirname(rootfs)
@@ -256,7 +272,7 @@ class FastModelTarget(Target):
         self._copy_needed_files_from_partition(self.config.root_part, 'boot')
         self._copy_needed_files_from_partition(self.config.root_part, 'lib')
 
-    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype):
+    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype, qemu_pflash=None):
         self._sd_image = download_image(image, self.context)
         self._bootloadertype = bootloadertype
         self.customize_image(self._sd_image)
@@ -269,7 +285,7 @@ class FastModelTarget(Target):
         self._copy_needed_files_from_partition(self.config.root_part, 'lib')
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
-                             bl31, rootfstype, bootloadertype, target_type):
+                             bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
         # Required
         if kernel is None:
             raise CriticalError("A kernel image is required")
@@ -495,8 +511,6 @@ class FastModelTarget(Target):
         self._auto_login(self.proc)
 
         if self._ramdisk_boot:
-            self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
-                               send_char=self.config.send_char)
             self._booted = True
 
         return self.proc

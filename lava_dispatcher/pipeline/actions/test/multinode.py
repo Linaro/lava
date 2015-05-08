@@ -20,7 +20,7 @@
 
 import json
 from lava_dispatcher.pipeline.actions.test.shell import TestShellAction
-from lava_dispatcher.pipeline.action import TestError, JobError
+from lava_dispatcher.pipeline.action import TestError, JobError, Timeout
 from lava_dispatcher.pipeline.actions.test import LavaTest
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 
@@ -68,6 +68,7 @@ class MultinodeTestAction(TestShellAction):
         self.patterns.update({
             'multinode': r'<LAVA_MULTI_NODE> <LAVA_(\S+) ([^>]+)>',
         })
+        self.signal_director.setup(self.parameters)
 
     def populate(self, parameters):
         """
@@ -95,6 +96,21 @@ class MultinodeTestAction(TestShellAction):
 
     class SignalDirector(TestShellAction.SignalDirector):
 
+        def __init__(self, protocol):
+            super(MultinodeTestAction.SignalDirector, self).__init__(protocol)
+            self.base_message = {}
+
+        def setup(self, parameters):
+            """
+            Retrieve the poll_timeout from the protocol parameters which are set after init.
+            """
+            if MultinodeProtocol.name not in parameters:
+                return
+            if 'timeout' in parameters[MultinodeProtocol.name]:
+                self.base_message = {
+                    'timeout': Timeout.parse(parameters[MultinodeProtocol.name]['timeout'])
+                }
+
         def _on_send(self, *args):
             self.logger.debug("%s lava-send" % MultinodeProtocol.name)
             arg_length = len(args)
@@ -111,8 +127,9 @@ class MultinodeTestAction(TestShellAction):
                         data[detail[0]] = detail[1]
                 msg = {"request": "lava_send", "messageID": message_id, "message": data}
 
-            self.logger.debug("Handling signal <LAVA_SEND %s>" % msg)
-            reply = self.protocol(json.dumps(msg))
+            msg.update(self.base_message)
+            self.logger.debug(str("Handling signal <LAVA_SEND %s>" % json.dumps(msg)))
+            reply = self.protocol(msg)
             if reply == "nack":
                 # FIXME: does this deserve an automatic retry? Does it actually happen?
                 raise TestError("Coordinator was unable to accept LAVA_SEND")
@@ -120,7 +137,8 @@ class MultinodeTestAction(TestShellAction):
         def _on_sync(self, message_id):
             self.logger.debug("Handling signal <LAVA_SYNC %s>" % message_id)
             msg = {"request": "lava_sync", "messageID": message_id, "message": None}
-            reply = self.protocol(json.dumps(msg))
+            msg.update(self.base_message)
+            reply = self.protocol(msg)
             if reply == "nack":
                 message_str = " nack"
             else:
@@ -130,7 +148,8 @@ class MultinodeTestAction(TestShellAction):
         def _on_wait(self, message_id):
             self.logger.debug("Handling signal <LAVA_WAIT %s>" % message_id)
             msg = {"request": "lava_wait", "messageID": message_id, "message": None}
-            reply = self.protocol(json.dumps(msg))
+            msg.update(self.base_message)
+            reply = self.protocol(msg)
             self.logger.debug("reply=%s" % reply)
             message_str = ""
             if reply == "nack":
@@ -144,7 +163,8 @@ class MultinodeTestAction(TestShellAction):
         def _on_wait_all(self, message_id, role=None):
             self.logger.debug("Handling signal <LAVA_WAIT_ALL %s>" % message_id)
             msg = {"request": "lava_wait_all", "messageID": message_id, "role": role}
-            reply = self.protocol(json.dumps(msg))
+            msg.update(self.base_message)
+            reply = self.protocol(msg)
             message_str = ""
             if reply == "nack":
                 message_str = " nack"

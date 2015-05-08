@@ -240,7 +240,7 @@ class ExtractRamdisk(Action):
             # TODO: 64 bytes is empirical - may need to be configurable in the future
             cmd = ('dd if=%s of=%s ibs=64 skip=1' % (ramdisk, ramdisk_compressed_data)).split(' ')
             try:
-                self._run_command(cmd)
+                self.run_command(cmd)
             except:
                 raise RuntimeError('Unable to remove uboot header: %s' % ramdisk)
         else:
@@ -248,14 +248,14 @@ class ExtractRamdisk(Action):
             os.rename(ramdisk, ramdisk_compressed_data)
         self.logger.debug(os.system("file %s" % ramdisk_compressed_data))
         cmd = ('gzip -d -f %s' % ramdisk_compressed_data).split(' ')
-        if self._run_command(cmd) is not '':
+        if self.run_command(cmd) is not '':
             raise RuntimeError('Unable to uncompress: %s' % ramdisk_compressed_data)
         # filename has been changed by gzip
         ramdisk_data = os.path.join(ramdisk_dir, RAMDISK_FNAME)
         pwd = os.getcwd()
         os.chdir(extracted_ramdisk)
         cmd = ('cpio -i -F %s' % ramdisk_data).split(' ')
-        if not self._run_command(cmd):
+        if not self.run_command(cmd):
             raise RuntimeError('Unable to uncompress: %s' % ramdisk_data)
         os.chdir(pwd)
         # tell other actions where the unpacked ramdisk can be found
@@ -306,7 +306,7 @@ class CompressRamdisk(Action):
             raise RuntimeError('Unable to create cpio filesystem: %s' % exc)
         self.logger.debug("%s\n%s" % (cmd, log))
         os.chdir(os.path.dirname(ramdisk_data))
-        if self._run_command(("gzip %s" % ramdisk_data).split(' ')) is not '':
+        if self.run_command(("gzip %s" % ramdisk_data).split(' ')) is not '':
             raise RuntimeError('Unable to compress cpio filesystem')
         os.chdir(pwd)
         final_file = os.path.join(os.path.dirname(ramdisk_data), 'ramdisk.cpio.gz')
@@ -317,7 +317,7 @@ class CompressRamdisk(Action):
             self.logger.debug("Adding RAMdisk u-boot header.")
             # FIXME: hidden architecture assumption
             cmd = ("mkimage -A arm -T ramdisk -C none -d %s %s" % (final_file, ramdisk_uboot)).split(' ')
-            if not self._run_command(cmd):
+            if not self.run_command(cmd):
                 raise RuntimeError("Unable to add uboot header to ramdisk")
             final_file = ramdisk_uboot
 
