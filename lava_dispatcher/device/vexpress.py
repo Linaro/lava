@@ -84,7 +84,7 @@ class VexpressTarget(BootloaderTarget):
     ##################################################################
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
-                             bl31, rootfstype, bootloadertype, target_type):
+                             bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
         if bootloader is None:
             if self.config.vexpress_uefi_default is None:
                 raise CriticalError("UEFI image is required")
@@ -113,7 +113,7 @@ class VexpressTarget(BootloaderTarget):
 
         super(VexpressTarget, self).deploy_linaro_kernel(kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader,
                                                          firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
-                                                         target_type)
+                                                         target_type, qemu_pflash=qemu_pflash)
 
     def _load_test_firmware(self):
         with self._mcc_setup() as mount_point:

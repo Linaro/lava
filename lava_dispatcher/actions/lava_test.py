@@ -156,6 +156,10 @@ class cmd_lava_test_install(BaseAction):
             if lava_proxy:
                 session.run("sh -c 'export http_proxy=%s'" % lava_proxy)
 
+            lava_no_proxy = self.context.config.lava_no_proxy
+            if lava_no_proxy:
+                session.run("sh -c 'export no_proxy=%s'" % lava_no_proxy)
+
             if install_lava_test:
                 _install_lava_test(self.client, session)
 

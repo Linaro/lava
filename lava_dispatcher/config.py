@@ -333,6 +333,7 @@ class DispatcherSchema(schema.Schema):
     lava_image_tmpdir = schema.StringOption()
     lava_image_url = schema.StringOption()
     lava_proxy = schema.StringOption()
+    lava_no_proxy = schema.StringOption()
     lava_result_dir = schema.StringOption()
     lava_server_ip = schema.StringOption()
     lava_network_iface = schema.ListOption()

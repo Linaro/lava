@@ -69,13 +69,13 @@ class DynamicVmTarget(Target):
         return self.backend.power_on()
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
-                             bl31, rootfstype, bootloadertype, target_type):
+                             bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
         self.backend.deploy_linaro_kernel(kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1,
-                                          bl2, bl31, rootfstype, bootloadertype, target_type)
+                                          bl2, bl31, rootfstype, bootloadertype, target_type, qemu_pflash=qemu_pflash)
         self.backend_adapter.copy_images()
 
-    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype):
-        self.backend.deploy_linaro_prebuilt(image, dtb, rootfstype, bootloadertype)
+    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype, qemu_pflash=None):
+        self.backend.deploy_linaro_prebuilt(image, dtb, rootfstype, bootloadertype, qemu_pflash=qemu_pflash)
         self.backend_adapter.copy_images()
 
     def power_off(self, proc):

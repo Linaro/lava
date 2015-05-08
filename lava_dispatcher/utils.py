@@ -30,6 +30,7 @@ import threading
 import time
 import urlparse
 import subprocess
+import re
 
 from shlex import shlex
 
@@ -494,7 +495,7 @@ def connect_to_serial(context):
     logging.error(msg)
     context.test_data.add_result('connect_to_console', 'fail',
                                  message=msg)
-    raise CriticalError('could execute connection_command successfully')
+    raise CriticalError('could not execute connection_command successfully')
 
 
 def wait_for_prompt(connection, prompt_pattern, timeout):
@@ -559,3 +560,14 @@ def indices(string, char):
     Return an empty list if the character cannot be found.
     """
     return [i for i, c in enumerate(string) if c == char]
+
+
+def search_substr_from_array(string, array, sep=','):
+    """
+    Return True if any of the string in 'array' is a substring in 'string'
+    Strings in array are separated by default with ','
+    """
+    for obj in array.split(sep):
+        if re.search('.*' + str(obj) + '.*', str(string)):
+            return True
+    return False

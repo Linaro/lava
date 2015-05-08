@@ -208,18 +208,18 @@ class Target(object):
         """
         raise NotImplementedError('power_on')
 
-    def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootloadertype):
+    def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootloadertype, qemu_pflash=None):
         raise NotImplementedError('deploy_image')
 
     def deploy_android(self, images, rootfstype,
                        bootloadertype, target_type):
         raise NotImplementedError('deploy_android_image')
 
-    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype):
+    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype, qemu_pflash=None):
         raise NotImplementedError('deploy_linaro_prebuilt')
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
-                             bl31, rootfstype, bootloadertype, target_type):
+                             bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
         raise NotImplementedError('deploy_linaro_kernel')
 
     def dummy_deploy(self, target_type):
@@ -706,7 +706,7 @@ class Target(object):
             raise RuntimeError('bad file extension: %s' % tar_url)
 
         if busybox:
-            wget_options = ''
+            wget_options = '--proxy off'
         else:
             wget_options = '--no-check-certificate --no-proxy --connect-timeout=30 -S --progress=dot -e dotbytes=2M'
 

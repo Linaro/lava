@@ -121,7 +121,7 @@ class MasterImageTarget(Target):
         finalize_process(self.proc)
         self.proc = None
 
-    def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootloadertype):
+    def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootloadertype, qemu_pflash=None):
         self.boot_master_image()
 
         image_file = generate_image(self, hwpack, rfs, dtb, self.scratch_dir,
@@ -182,7 +182,7 @@ class MasterImageTarget(Target):
         self._deploy_linaro_android_system(master, system_url)
         self._deploy_linaro_android_data(master, data_url)
 
-    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype):
+    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype, qemu_pflash=None):
         self.boot_master_image()
 
         if self.context.job_data.get('health_check', False):
@@ -514,6 +514,9 @@ class MasterImageTarget(Target):
             if lava_proxy:
                 logging.info("Setting up http proxy")
                 runner.run("export http_proxy=%s" % lava_proxy, timeout=30)
+            lava_no_proxy = self.context.config.lava_no_proxy
+            if lava_no_proxy:
+                runner.run("export no_proxy=%s" % lava_no_proxy, timeout=30)
             logging.info("System is in master image now")
             self.context.test_data.add_result('boot_master_image',
                                               'pass')

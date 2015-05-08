@@ -156,7 +156,7 @@ class BootloaderTarget(MasterImageTarget):
             raise CriticalError("Unknown bootloader type")
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
-                             bl31, rootfstype, bootloadertype, target_type):
+                             bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
         if self.__deployment_data__ is None:
             # Get deployment data
             logging.debug("Attempting to set deployment data")
@@ -267,12 +267,12 @@ class BootloaderTarget(MasterImageTarget):
                                                                           ramdisk,
                                                                           dtb)
 
-    def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootloadertype):
+    def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootloadertype, qemu_pflash=None):
         self._uboot_boot = False
         super(BootloaderTarget, self).deploy_linaro(hwpack, rfs, dtb,
-                                                    rootfstype, bootloadertype)
+                                                    rootfstype, bootloadertype, qemu_pflash=qemu_pflash)
 
-    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype):
+    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype, qemu_pflash=None):
         self._uboot_boot = False
         if self._is_ipxe():
             if image is not None:
@@ -294,7 +294,8 @@ class BootloaderTarget(MasterImageTarget):
             super(BootloaderTarget, self).deploy_linaro_prebuilt(image,
                                                                  dtb,
                                                                  rootfstype,
-                                                                 bootloadertype)
+                                                                 bootloadertype,
+                                                                 qemu_pflash=qemu_pflash)
 
     def _run_boot(self):
         self._load_test_firmware()

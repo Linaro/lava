@@ -184,7 +184,8 @@ class BaseDriver(object):
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
                              bootloader, firmware, bl1, bl2, bl31, rootfstype,
-                             bootloadertype, target_type, scratch_dir):
+                             bootloadertype, target_type, scratch_dir,
+                             qemu_pflash=None):
         self.target_type = target_type
         self.scratch_dir = scratch_dir
         if kernel is not None:
@@ -342,7 +343,8 @@ class fastboot(BaseDriver):
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
                              bootloader, firmware, bl1, bl2, bl31, rootfstype,
-                             bootloadertype, target_type, scratch_dir):
+                             bootloadertype, target_type, scratch_dir,
+                             qemu_pflash=None):
         raise CriticalError('This platform does not support kernel deployment!')
 
     def enter_fastboot(self):
@@ -364,7 +366,7 @@ class nexus10(fastboot):
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
                              bootloader, firmware, bl1, bl2, bl31, rootfstype,
-                             bootloadertype, target_type, scratch_dir):
+                             bootloadertype, target_type, scratch_dir, qemu_pflash=None):
         raise CriticalError('This platform does not support kernel deployment!')
 
     def boot(self, boot_cmds=None):
@@ -379,7 +381,7 @@ class tshark(fastboot):
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
                              bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
-                             target_type, scratch_dir):
+                             target_type, scratch_dir, qemu_pflash=None):
         raise CriticalError('This platform does not support kernel deployment!')
 
     def boot(self, boot_cmds=None):
@@ -450,7 +452,7 @@ class capri(fastboot_serial):
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
                              bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
-                             target_type, scratch_dir):
+                             target_type, scratch_dir, qemu_pflash=None):
         raise CriticalError('This platform does not support kernel deployment!')
 
     def erase_boot(self):
@@ -490,7 +492,7 @@ class pxa1928dkb(fastboot_serial):
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
                              bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
-                             target_type, scratch_dir):
+                             target_type, scratch_dir, qemu_pflash=None):
         raise CriticalError('This platform does not support kernel deployment!')
 
     def connect(self):
@@ -516,7 +518,7 @@ class k3v2(fastboot_serial):
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
                              bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
-                             target_type, scratch_dir):
+                             target_type, scratch_dir, qemu_pflash=None):
         raise CriticalError('This platform does not support kernel deployment!')
 
     def enter_fastboot(self):
