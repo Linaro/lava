@@ -110,7 +110,7 @@ class TestJobAdmin(admin.ModelAdmin):
         ('Results & Failures', {
             'fields': ('failure_tags', 'failure_comment', '_results_link', '_results_bundle')}),
     )
-    list_display = ('status', 'submitter', 'requested_device_type_name', 'requested_device_hostname', 'health_check', 'submit_time', 'start_time', 'end_time')
+    list_display = ('id', 'status', 'submitter', 'requested_device_type_name', 'requested_device_hostname', 'health_check', 'submit_time', 'start_time', 'end_time')
 
 
 class DeviceStateTransitionAdmin(admin.ModelAdmin):
