@@ -246,7 +246,7 @@ def select_device(job):
 
     try:
         pipeline_job.pipeline.validate_actions()
-    except (AttributeError, JobError) as exc:
+    except (AttributeError, JobError, KeyError, TypeError) as exc:
         logger.error({device: exc})
         end_job(job, fail_msg=exc, job_status=TestJob.INCOMPLETE)
         return None
