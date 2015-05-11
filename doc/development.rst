@@ -438,6 +438,44 @@ To run the tests, use the ci-run / ci-build scripts::
 .. _`PEP 008`: http://www.python.org/dev/peps/pep-0008/
 .. _`Guido's style guide`: http://www.python.org/doc/essays/styleguide.html
 
+LAVA database model visualization
+---------------------------------
+LAVA database models can be visualized with the help of
+`django_extensions`_ along with tools such as `pydot`_. In debian
+based systems install the following packages to get the visualization
+of LAVA database models::
+
+  $ apt-get install python-django-extensions python-pydot
+
+Once the above packages are installed successfully, use the following
+command to get the visualization of ``lava-server`` models in PNG
+format::
+
+  $ sudo lava-server manage graph_models --pydot -a -g -o lava-server-model.png
+
+More documentation about graph models is available in
+http://django-extensions.readthedocs.org/en/latest/graph_models.html
+
+Other useful features from `django_exgtensions`_ are as follows:
+
+* `shell_plus`_ - similar to the built-in "shell" but autoloads all
+   models
+
+* `validate_templates`_ - check templates for rendering errors
+
+    $ sudo lava-server manage validate_templates
+
+* `runscript`_ - run arbitrary scripts inside ``lava-server``
+  environment
+
+    $ sudo lava-server manage runscript fix_user_names --script-args=all
+
+.. _`django_extensions`: https://django-extensions.readthedocs.org/en/latest/
+.. _`pydot`: https://pypi.python.org/pypi/pydot
+.. _`shell_plus`: http://django-extensions.readthedocs.org/en/latest/shell_plus.html
+.. _`validate_templates`: http://django-extensions.readthedocs.org/en/latest/validate_templates.html
+.. _`runscript`: http://django-extensions.readthedocs.org/en/latest/runscript.html
+
 Adding support for new devices
 ******************************
 

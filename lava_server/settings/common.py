@@ -140,6 +140,12 @@ try:
 except ImportError:
     pass
 
+try:
+    import django_extensions
+    INSTALLED_APPS += ['django_extensions']
+except ImportError:
+    pass
+
 TEMPLATE_CONTEXT_PROCESSORS = [
     "django.contrib.auth.context_processors.auth",
     "django.core.context_processors.debug",
