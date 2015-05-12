@@ -265,6 +265,9 @@ class cmd_deploy_linaro_kernel(BaseAction):
             if 'login_commands' in parameters:
                 raise ValueError('must specify a login prompt or password \
                       prompt when specifying login commands')
+        if 'firmware' in parameters and 'qemu_pflash' in parameters:
+            raise ValueError("firmware and qemu_pflash are mutually exclusive,"
+                             " specifiy either one")
 
     def run(self,
             kernel=None, ramdisk=None, dtb=None, overlays=None, rootfs=None,

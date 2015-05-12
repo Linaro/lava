@@ -84,6 +84,11 @@ class QEMUTarget(Target):
             raise CriticalError("You must specify a QEMU file system image or ramdisk")
         if kernel is None and firmware is None:
             raise CriticalError("No bootloader or kernel image to boot")
+        if bootloadertype == 'uefi':
+            if firmware is None and qemu_pflash is None \
+               and self.config.qemu_pflash is None:
+                raise CriticalError("No firmware or qemu_pflash specified with "
+                                    "bootloadertype UEFI")
 
         if rootfs:
             self._sd_image = download_image(rootfs, self.context)
@@ -114,12 +119,13 @@ class QEMUTarget(Target):
 
         if bootloadertype == 'uefi':
             self._bootloadertype = 'uefi'
-            # Try downloading pflash files, if it exists.
-            self._download_qemu_pflash_files(qemu_pflash=qemu_pflash)
 
         if firmware is not None:
             firmware = download_image(firmware, self.context)
             self._firmware = firmware
+        else:
+            # Try downloading pflash files, if it exists.
+            self._download_qemu_pflash_files(qemu_pflash=qemu_pflash)
 
     def deploy_linaro(self, hwpack, rootfs, dtb, rootfstype, bootloadertype,
                       qemu_pflash=None):
