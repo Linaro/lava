@@ -139,6 +139,7 @@ class kvm_adapter(object):
         device._dtb = self.copy_image(device._dtb)
         device._ramdisk = self.copy_image(device._ramdisk)
         device._firmware = self.copy_image(device._firmware)
+        device._qemu_pflash = map(self.copy_image, device._qemu_pflash)
 
     def copy_image(self, local_image):
         if local_image is None:
