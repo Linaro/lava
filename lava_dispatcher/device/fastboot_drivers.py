@@ -295,6 +295,7 @@ class BaseDriver(object):
         self.target_type = target_type
         self.__boot_image__ = target_type
         self.scratch_dir = scratch_dir
+        self.adb("shell rm -rf %s" % self.device.lava_test_dir, ignore_failure=True)
 
     @property
     def working_dir(self):
