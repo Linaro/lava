@@ -63,6 +63,8 @@ override_dh_auto_install:
 	# move ssfs script to /usr/sbin
 	mkdir debian/lava-server/usr/sbin/
 	mv debian/lava-server/usr/bin/lava-mount-masterfs debian/lava-server/usr/sbin/
+	# skip unwanted licence file specified in copyright
+	$(RM) google_analytics/LICENSE
 	# handle embedded JS
 	# jquery.flot
 	for file in $(DASHBOARD_JS); do \
