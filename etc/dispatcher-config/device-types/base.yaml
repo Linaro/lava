@@ -51,7 +51,6 @@ test_image_prompts:
   - 'linaro-test'
   - '/ #'
   - 'root@android'
-  - 'root@linaro'
   - 'root@master'
   - 'root@debian'
   - 'root@linaro-nano:~#'
