@@ -147,6 +147,10 @@ License: BSD-3-clause
  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+Files: google_analytics/
+Copyright: 2008, Clint Ecker
+License: BSD-3-clause
+
 Files: debian/*
 Copyright: 2013 Neil Williams <codehelp@debian.org>
 License: GPL-3.0+
