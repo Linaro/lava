@@ -20,6 +20,7 @@
 
 
 import os
+import yaml
 import unittest
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
@@ -294,3 +295,38 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         )
         self.assertEqual(part_reference, u_boot_media.get_common_data('uuid', 'boot_part'))
         self.assertEqual(part_reference, "0:1")
+
+    def test_prompt_from_job(self):
+        """
+        Support setting the prompt after login via the job
+
+        Loads a known YAML, adds a prompt to the dict and re-parses the job.
+        Checks that the prompt is available in the expect_shell_connection action.
+        """
+        factory = Factory()
+        job = factory.create_bbb_job('sample_jobs/uboot.yaml')
+        job.validate()
+        uboot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
+        retry = [action for action in uboot.internal_pipeline.actions
+                 if action.name == 'uboot-retry'][0]
+        expect = [action for action in retry.internal_pipeline.actions
+                  if action.name == 'expect-shell-connection'][0]
+        check = expect.parameters
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        extra_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot.yaml')
+        with open(extra_yaml) as data:
+            sample_job_string = data.read()
+        parser = JobParser()
+        sample_job_data = yaml.load(sample_job_string)
+        boot = [item['boot'] for item in sample_job_data['actions'] if 'boot' in item][0]
+        boot.update({'parameters': {'boot_prompt': 'root@bbb'}})
+        sample_job_string = yaml.dump(sample_job_data)
+        job = parser.parse(sample_job_string, device, 4212, None, output_dir='/tmp')
+        job.validate()
+        uboot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
+        retry = [action for action in uboot.internal_pipeline.actions
+                 if action.name == 'uboot-retry'][0]
+        expect = [action for action in retry.internal_pipeline.actions
+                  if action.name == 'expect-shell-connection'][0]
+        self.assertNotEqual(check, expect.parameters)
+        self.assertIn('root@bbb', expect.prompts)

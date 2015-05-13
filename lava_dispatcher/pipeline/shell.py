@@ -222,16 +222,21 @@ class ExpectShellSession(Action):
         self.name = "expect-shell-connection"
         self.summary = "Expect a shell prompt"
         self.description = "Wait for a shell"
+        self.prompts = []
 
     def validate(self):
         super(ExpectShellSession, self).validate()
         if 'test_image_prompts' not in self.job.device:
             self.errors = "Unable to identify test image prompts from device configuration."
+        self.prompts = self.job.device['test_image_prompts']
+        if 'parameters' in self.parameters:
+            if 'boot_prompt' in self.parameters['parameters']:
+                self.prompts.append(self.parameters['parameters']['boot_prompt'])
 
     def run(self, connection, args=None):
         connection = super(ExpectShellSession, self).run(connection, args)
-        connection.prompt_str = self.job.device['test_image_prompts']
-        self.logger.debug("%s: Waiting for prompt" % self.name)
+        connection.prompt_str = self.prompts
+        self.logger.debug("%s: Waiting for prompt", self.name)
         self.wait(connection)  # FIXME: should this be a regular RetryAction operation?
         return connection
 
