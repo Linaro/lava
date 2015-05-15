@@ -26,7 +26,12 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.logical import Boot, RetryAction
 from lava_dispatcher.pipeline.actions.boot import BootAction
-from lava_dispatcher.pipeline.shell import ExpectShellSession, ShellCommand, ShellSession
+from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
+from lava_dispatcher.pipeline.shell import (
+    ExpectShellSession,
+    ShellCommand,
+    ShellSession
+)
 from lava_dispatcher.pipeline.utils.shell import which
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 
@@ -76,6 +81,7 @@ class BootQEMUImageAction(BootAction):
         # the configuration does not contain 'auto_login'
         self.internal_pipeline.add_action(AutoLoginAction())
         self.internal_pipeline.add_action(ExpectShellSession())
+        self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
 
 class BootQemuRetry(RetryAction):

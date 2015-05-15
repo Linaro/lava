@@ -475,7 +475,7 @@ class optimusa80(fastboot_serial):
         if self.__boot_image__ is None:
             raise CriticalError('Deploy action must be run first')
         if self._kernel is not None:
-            self.fastboot('flash boot %s' % self._kernel)
+            self.fastboot('flash recovery %s' % self._kernel)
             self.fastboot('reboot')
         else:
             self.fastboot.flash('boot', self.__boot_image__)

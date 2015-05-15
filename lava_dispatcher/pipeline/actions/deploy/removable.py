@@ -35,6 +35,7 @@ from lava_dispatcher.pipeline.actions.deploy.overlay import (
     OverlayAction,
 )
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
+from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
 
@@ -200,3 +201,4 @@ class MassStorage(DeployAction):
         # FIXME: could support tarballs too
         self.internal_pipeline.add_action(CustomisationAction())
         self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
+        self.internal_pipeline.add_action(DeployDeviceEnvironment())

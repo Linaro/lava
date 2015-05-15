@@ -20,7 +20,7 @@
 
 import os
 import unittest
-from lava_dispatcher.pipeline.action import Action
+from lava_dispatcher.pipeline.action import Action, JobError
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
@@ -126,3 +126,79 @@ class TestJobDeviceParameters(unittest.TestCase):  # pylint: disable=too-many-pu
         with self.assertRaises(RuntimeError):
             device.power_state = ''
         self.assertEqual(device.power_command, '')
+
+
+class TestDeviceEnvironment(unittest.TestCase):  # pylint: disable=too-many-public-methods
+    """
+    Test parsing of device environment support
+    """
+
+    def test_empty_device_environment(self):
+        data = None
+        job_parser = JobParser()
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
+        with open(sample_job_file) as sample_job_data:
+            job = job_parser.parse(
+                sample_job_data, device, 4212, None,
+                output_dir='/tmp', env_dut=data)
+        self.assertEqual(
+            job.parameters['env_dut'],
+            None
+        )
+
+    def test_device_environment_validity(self):
+        """
+        Use non-YAML syntax a bit like existing device config syntax.
+        Ensure this syntax is picked up as invalid.
+        """
+        data = """
+# YAML syntax.
+overrides:
+ DEBEMAIL = "codehelp@debian.org"
+ DEBFULLNAME: "Neil Williams"
+        """
+        job_parser = JobParser()
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
+        with open(sample_job_file) as sample_job_data:
+            job = job_parser.parse(
+                sample_job_data, device, 4212, None,
+                output_dir='/tmp', env_dut=data)
+        self.assertEqual(
+            job.parameters['env_dut'],
+            data
+        )
+        with self.assertRaises(TypeError):
+            job.validate()
+
+    def test_device_environment(self):
+        data = """
+# YAML syntax.
+overrides:
+ DEBEMAIL: "codehelp@debian.org"
+ DEBFULLNAME: "Neil Williams"
+        """
+        job_parser = JobParser()
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
+        with open(sample_job_file) as sample_job_data:
+            job = job_parser.parse(
+                sample_job_data, device, 4212, None,
+                output_dir='/tmp', env_dut=data)
+        self.assertEqual(
+            job.parameters['env_dut'],
+            data
+        )
+        job.validate()
+        boot_actions = [
+            action.internal_pipeline.actions for action in job.pipeline.actions if action.name == 'uboot-action'][0]
+        retry = [action for action in boot_actions if action.name == 'uboot-retry'][0]
+        boot_env = [action for action in retry.internal_pipeline.actions if action.name == 'export-device-env'][0]
+        found = False
+        for line in boot_env.env:
+            if 'DEBFULLNAME' in line:
+                found = True
+                # assert that the string containing a space still contains that space and is quoted
+                self.assertIn('\\\'Neil Williams\\\'', line)
+        self.assertTrue(found)

@@ -255,7 +255,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
 
         def cancelling_handler(*args):  # pylint: disable=unused-argument
             """
-            Catches KeyboardInterrupt from anywhere below the top level
+            Catches KeyboardInterrupt or SIGTERM from anywhere below the top level
             pipeline and allow cleanup actions to happen on all actions,
             not just the ones directly related to the currently running action.
             """
@@ -295,6 +295,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             try:
                 if not self.parent:
                     signal.signal(signal.SIGINT, cancelling_handler)
+                    signal.signal(signal.SIGTERM, cancelling_handler)
                 start = time.time()
                 try:
                     # FIXME: not sure to understand why we have two cases here?

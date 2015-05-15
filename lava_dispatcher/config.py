@@ -64,7 +64,6 @@ class DeviceSchema(schema.Schema):
                                                     "linaro-test",
                                                     "/ #",
                                                     "root@android",
-                                                    "root@linaro",
                                                     "root@master",
                                                     "root@linaro-nano:~#",
                                                     "root@linaro-developer:~#",
@@ -308,6 +307,10 @@ class DeviceSchema(schema.Schema):
     vexpress_requires_trusted_firmware = schema.BoolOption(default=False)
     bridged_networking = schema.BoolOption(default=False)
     bridge_interface = schema.StringOption(default="br0")
+    vexpress_firmware_path_hwpack = schema.StringOption(default=None)
+    vexpress_firmware_path_android = schema.StringOption(default=None)
+    vexpress_complete_firmware = schema.BoolOption(default=False)
+    vexpress_firmware_default = schema.StringOption(default=None)
 
 
 class OptionDescriptor(object):

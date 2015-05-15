@@ -309,6 +309,25 @@ class Target(object):
                         return dest
         return dest
 
+    def _find_file(self, rootdir, pattern):
+        dest = None
+        for root, dirs, files in os.walk(rootdir, topdown=False):
+            for file_name in files:
+                if re.match(pattern, file_name):
+                    logging.debug("Found a match: %s" % file_name)
+                    dest = os.path.join(root, file_name)
+                    return dest
+        return dest
+
+    def _find_dir(self, rootdir, pattern):
+        dest = None
+        for root, dirs, files in os.walk(rootdir, topdown=False):
+            for dir_name in dirs:
+                if re.match(pattern, dir_name):
+                    dest = os.path.join(root, dir_name)
+                    return dest
+        return dest
+
     def _wait_for_prompt(self, connection, prompt_pattern, timeout):
         wait_for_prompt(connection, prompt_pattern, timeout)
 

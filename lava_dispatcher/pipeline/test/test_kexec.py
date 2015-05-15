@@ -26,6 +26,7 @@ from lava_dispatcher.pipeline.test.test_uboot import Factory
 from lava_dispatcher.pipeline.actions.boot.kexec import BootKexecAction, KexecAction
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 from lava_dispatcher.pipeline.shell import ExpectShellSession
+from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry
 
 
@@ -49,6 +50,8 @@ class TestKExec(unittest.TestCase):
         self.assertIsInstance(kexec.internal_pipeline.actions[0], KexecAction)
         self.assertIsInstance(kexec.internal_pipeline.actions[1], AutoLoginAction)
         self.assertIsInstance(kexec.internal_pipeline.actions[2], ExpectShellSession)
+        self.assertIsInstance(kexec.internal_pipeline.actions[3],
+                              ExportDeviceEnvironment)
         self.assertIn('kernel', kexec.parameters)
         self.assertIn('command', kexec.parameters)
         self.assertIn('method', kexec.parameters)

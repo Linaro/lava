@@ -79,7 +79,8 @@ def get_pipeline_runner(job):
     # additional arguments are now inside the context
 
     # FIXME: drop outdated arguments, job_data, config and output_dir
-    def run_pipeline_job(job_data, oob_file, config, output_dir, validate_only):
+    def run_pipeline_job(job_data, oob_file, config, output_dir,
+                         validate_only):
         # always validate every pipeline before attempting to run.
         exitcode = 0
         try:
@@ -139,6 +140,11 @@ class dispatch(DispatcherCommand):
             "--target",
             default=None,
             help="Run the job on a specific target device"
+        )
+        parser.add_argument(
+            "--env-dut-path",
+            default=None,
+            help="File with environment variables to be exported to the device"
         )
 
     def invoke(self):
@@ -219,7 +225,8 @@ class dispatch(DispatcherCommand):
         else:
             job_data['target'] = self.args.target
 
-        job_runner(job_data, oob_file, self.config, self.args.output_dir, self.args.validate)
+        job_runner(job_data, oob_file, self.config, self.args.output_dir,
+                   self.args.validate)
 
     def parse_job_file(self, filename, oob_file):
         """
@@ -234,10 +241,16 @@ class dispatch(DispatcherCommand):
             parser = JobParser()
             job = None
             try:
+                env_dut = str(open(self.args.env_dut_path, 'r').read())
+            except (TypeError, AttributeError):
+                env_dut = None
+
+            try:
                 with open(filename) as f_in:
                     job = parser.parse(f_in, device, self.args.job_id,
                                        socket_addr=self.args.socket_addr,
-                                       output_dir=self.args.output_dir)
+                                       output_dir=self.args.output_dir,
+                                       env_dut=env_dut)
 
             except JobError as exc:
                 logging.error("Invalid job submission: %s" % exc)

@@ -115,7 +115,8 @@ class JobParser(object):
 
     # FIXME: add a validate() function which checks against a Schema as a completely separate step.
     # pylint: disable=too-many-locals,too-many-statements
-    def parse(self, content, device, job_id, socket_addr, output_dir=None):
+    def parse(self, content, device, job_id, socket_addr, output_dir=None,
+              env_dut=None):
         self.loader = yaml.Loader(content)
         self.loader.compose_node = self.compose_node
         self.loader.construct_mapping = self.construct_mapping
@@ -127,6 +128,7 @@ class JobParser(object):
         counts = {}
         job.device = device
         job.parameters['output_dir'] = output_dir
+        job.parameters['env_dut'] = env_dut
         job.parameters['target'] = device.target
         for instance in Protocol.select_all(job.parameters):
             job.protocols.append(instance(job.parameters))
