@@ -64,7 +64,6 @@ class DeviceSchema(schema.Schema):
                                                     "linaro-test",
                                                     "/ #",
                                                     "root@android",
-                                                    "root@linaro",
                                                     "root@master",
                                                     "root@linaro-nano:~#",
                                                     "root@linaro-developer:~#",
