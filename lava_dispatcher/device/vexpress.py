@@ -44,8 +44,16 @@ class VexpressTarget(BootloaderTarget):
 
         self.test_uefi = None
         self.test_bl1 = None
+        self.complete_firmware = None
 
-        if self.config.vexpress_requires_trusted_firmware:
+        if self.config.vexpress_complete_firmware:
+            if (self.config.vexpress_firmware_path_hwpack is None or
+                    self.config.vexpress_firmware_path_android is None):
+                raise CriticalError(
+                    "Vexpress complete firmware devices must "
+                    "have vexpress_firmware_path_android and "
+                    "vexpress_firmware_hwpack specified")
+        elif self.config.vexpress_requires_trusted_firmware:
             if (self.config.vexpress_bl1_image_filename is None or
                     self.config.vexpress_bl1_image_files is None or
                     self.config.vexpress_uefi_image_filename is None or
@@ -85,31 +93,46 @@ class VexpressTarget(BootloaderTarget):
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
                              bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
-        if bootloader is None:
-            if self.config.vexpress_uefi_default is None:
-                raise CriticalError("UEFI image is required")
+        if self.config.vexpress_complete_firmware:
+            if firmware is None:
+                if self.config.vexpress_firmware_default is None:
+                    raise CriticalError("No default board recovery image defined")
+                else:
+                    tarball = download_image(self.config.vexpress_firmware_default, self.context,
+                                             self._tmpdir, decompress=False)
+                    self._extract_compressed_firmware(tarball)
             else:
-                self.test_uefi = download_image(self.config.vexpress_uefi_default, self.context,
+                tarball = download_image(firmware, self.context,
+                                         self._tmpdir,
+                                         decompress=False)
+                self._extract_compressed_firmware(tarball)
+            firmware = None
+        else:
+            if bootloader is None:
+                if self.config.vexpress_uefi_default is None:
+                    raise CriticalError("UEFI image is required")
+                else:
+                    self.test_uefi = download_image(self.config.vexpress_uefi_default, self.context,
+                                                    self._tmpdir,
+                                                    decompress=False)
+            else:
+                self.test_uefi = download_image(bootloader, self.context,
                                                 self._tmpdir,
                                                 decompress=False)
-        else:
-            self.test_uefi = download_image(bootloader, self.context,
-                                            self._tmpdir,
-                                            decompress=False)
-            bootloader = None
+                bootloader = None
 
-        if bl1 is None and self.config.vexpress_requires_trusted_firmware:
-            if self.config.vexpress_bl1_default is None:
-                raise CriticalError("BL1 firmware is required")
+            if bl1 is None and self.config.vexpress_requires_trusted_firmware:
+                if self.config.vexpress_bl1_default is None:
+                    raise CriticalError("BL1 firmware is required")
+                else:
+                    self.test_bl1 = download_image(self.config.vexpress_bl1_default, self.context,
+                                                   self._tmpdir,
+                                                   decompress=False)
             else:
-                self.test_bl1 = download_image(self.config.vexpress_bl1_default, self.context,
+                self.test_bl1 = download_image(bl1, self.context,
                                                self._tmpdir,
                                                decompress=False)
-        else:
-            self.test_bl1 = download_image(bl1, self.context,
-                                           self._tmpdir,
-                                           decompress=False)
-            bl1 = None
+                bl1 = None
 
         super(VexpressTarget, self).deploy_linaro_kernel(kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader,
                                                          firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
@@ -127,12 +150,18 @@ class VexpressTarget(BootloaderTarget):
         super(VexpressTarget, self)._deploy_android_tarballs(master, boot,
                                                              system, data)
         # android images have boot files inside boot/ in the tarball
-        self._extract_firmware_from_tarball(boot)
+        if self.config.vexpress_complete_firmware:
+            self._extract_android_firmware(boot)
+        else:
+            self._extract_firmware_from_tarball(boot)
 
     def _deploy_tarballs(self, boot_tgz, root_tgz, rootfstype):
         super(VexpressTarget, self)._deploy_tarballs(boot_tgz, root_tgz,
                                                      rootfstype)
-        self._extract_firmware_from_tarball(boot_tgz)
+        if self.config.vexpress_complete_firmware:
+            self._extract_uncompressed_firmware(root_tgz)
+        else:
+            self._extract_firmware_from_tarball(boot_tgz)
 
     ##################################################################
     # implementation-specific methods
@@ -230,51 +259,83 @@ class VexpressTarget(BootloaderTarget):
                                                          self.config.vexpress_uefi_image_files,
                                                          self.config.vexpress_uefi_image_filename)
 
+    def _extract_compressed_firmware(self, tarball):
+        firmdir = self.scratch_dir + "/board-recovery-image"
+        self.context.run_command('mkdir -p %s' % firmdir)
+        self.context.run_command('rm -r %s/*' % firmdir)
+        extract_tar(tarball, firmdir)
+        self.complete_firmware = firmdir
+
+    def _extract_uncompressed_firmware(self, tarball):
+        extract_tar(tarball, self.scratch_dir)
+        self.complete_firmware = self._find_dir(self.scratch_dir, self.config.vexpress_firmware_path_hwpack)
+
+    def _extract_android_firmware(self, tarball):
+        extract_tar(tarball, self.scratch_dir)
+        firmware_tarball = self._find_file(self.scratch_dir, self.config.vexpress_firmware_path_android)
+        self._extract_compressed_firmware(firmware_tarball)
+
+    def _copy_firmware_to_juno(self, firmware_dir, mount_point):
+        self.context.run_command('rm -r %s/*' % mount_point)
+        self.context.run_command('cp -r %s/* %s' % (firmware_dir, mount_point))
+
     def _restore_firmware_backup(self, mount_point):
-        uefi_path = self.config.vexpress_uefi_path
-        uefi = os.path.join(mount_point, uefi_path)
-        uefi_backup_path = self.config.vexpress_uefi_backup_path
-        uefi_backup = os.path.join(mount_point, uefi_backup_path)
-
-        if os.path.exists(uefi_backup):
-            # restore the uefi backup
-            self.context.run_command_with_retries('cp %s %s' % (uefi_backup, uefi))
+        if self.config.vexpress_complete_firmware:
+            tarball = download_image(self.config.vexpress_firmware_default, self.context,
+                                     self.scratch_dir, decompress=False)
+            self._extract_compressed_firmware(tarball)
+            self._copy_firmware_to_juno(self.complete_firmware, mount_point)
         else:
-            # no existing backup yet means that this is the first time ever;
-            # the uefi in there is the good one, and we backup it up.
-            self.context.run_command_with_retries('cp %s %s' % (uefi, uefi_backup))
+            uefi_path = self.config.vexpress_uefi_path
+            uefi = os.path.join(mount_point, uefi_path)
+            uefi_backup_path = self.config.vexpress_uefi_backup_path
+            uefi_backup = os.path.join(mount_point, uefi_backup_path)
 
-        if self.config.vexpress_requires_trusted_firmware:
-            bl1_path = self.config.vexpress_bl1_path
-            bl1 = os.path.join(mount_point, bl1_path)
-            bl1_backup_path = self.config.vexpress_bl1_backup_path
-            bl1_backup = os.path.join(mount_point, bl1_backup_path)
-
-            if os.path.exists(bl1_backup):
-                # restore the firmware backup
-                self.context.run_command_with_retries('cp %s %s' % (bl1_backup, bl1))
+            if os.path.exists(uefi_backup):
+                # restore the uefi backup
+                self.context.run_command_with_retries('cp %s %s' % (uefi_backup, uefi))
             else:
                 # no existing backup yet means that this is the first time ever;
-                # the firmware in there is the good one, and we backup it up.
-                self.context.run_command_with_retries('cp %s %s' % (bl1, bl1_backup))
+                # the uefi in there is the good one, and we backup it up.
+                self.context.run_command_with_retries('cp %s %s' % (uefi, uefi_backup))
+
+            if self.config.vexpress_requires_trusted_firmware:
+                bl1_path = self.config.vexpress_bl1_path
+                bl1 = os.path.join(mount_point, bl1_path)
+                bl1_backup_path = self.config.vexpress_bl1_backup_path
+                bl1_backup = os.path.join(mount_point, bl1_backup_path)
+
+                if os.path.exists(bl1_backup):
+                    # restore the firmware backup
+                    self.context.run_command_with_retries('cp %s %s' % (bl1_backup, bl1))
+                else:
+                    # no existing backup yet means that this is the first time ever;
+                    # the firmware in there is the good one, and we backup it up.
+                    self.context.run_command_with_retries('cp %s %s' % (bl1, bl1_backup))
 
     def _install_test_firmware(self, mount_point):
-        uefi_path = self.config.vexpress_uefi_path
-        uefi = os.path.join(mount_point, uefi_path)
-
-        if os.path.exists(self.test_uefi):
-            self.context.run_command('cp %s %s' % (self.test_uefi, uefi))
-        else:
-            raise CriticalError("No path to uefi firmware")
-
-        if self.config.vexpress_requires_trusted_firmware:
-            bl1_path = self.config.vexpress_bl1_path
-            bl1 = os.path.join(mount_point, bl1_path)
-
-            if os.path.exists(self.test_bl1):
-                self.context.run_command('cp %s %s' % (self.test_bl1, bl1))
+        if self.config.vexpress_complete_firmware:
+            if os.path.exists(self.complete_firmware):
+                self._copy_firmware_to_juno(self.complete_firmware, mount_point)
             else:
-                raise CriticalError("No path to bl1 firmware")
+                raise CriticalError("No path to complete firmware")
+        else:
+            uefi_path = self.config.vexpress_uefi_path
+            uefi = os.path.join(mount_point, uefi_path)
+
+            if os.path.exists(self.test_uefi):
+                self.context.run_command('cp %s %s' % (self.test_uefi, uefi))
+            else:
+                raise CriticalError("No path to uefi firmware")
+
+            if self.config.vexpress_requires_trusted_firmware:
+                bl1_path = self.config.vexpress_bl1_path
+                bl1 = os.path.join(mount_point, bl1_path)
+
+                if os.path.exists(self.test_bl1):
+                    self.context.run_command('cp %s %s' % (self.test_bl1, bl1))
+                else:
+                    raise CriticalError("No path to bl1 firmware")
 
 
 target_class = VexpressTarget

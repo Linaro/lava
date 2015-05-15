@@ -74,6 +74,8 @@ class FastbootTarget(Target):
         while (attempts < deploy_attempts) and (not deployed):
             logging.info("Deploying test image. Attempt: %d", attempts + 1)
             try:
+                if self._image_deployment:
+                    self._enter_fastboot()
                 self.driver.deploy_linaro_kernel(kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader,
                                                  firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
                                                  self._target_type, self.scratch_dir, qemu_pflash=qemu_pflash)

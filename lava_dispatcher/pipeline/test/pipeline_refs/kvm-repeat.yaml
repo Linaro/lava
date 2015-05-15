@@ -45,6 +45,7 @@
       - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
     - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
   - {class: actions.deploy.apply_overlay.ApplyOverlayImage, name: apply-overlay-image}
+  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
   - class: actions.deploy.mount.UnmountAction
     name: umount-retry
     pipeline:
@@ -58,6 +59,7 @@
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -71,6 +73,7 @@
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -84,6 +87,7 @@
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -97,6 +101,7 @@
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -110,6 +115,7 @@
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -123,6 +129,7 @@
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -136,6 +143,7 @@
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -149,6 +157,7 @@
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -162,6 +171,7 @@
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -175,6 +185,7 @@
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -188,6 +199,7 @@
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -201,6 +213,7 @@
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -214,6 +227,7 @@
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - {class: job.ResetContext, name: reset-context}
 - class: actions.deploy.image.DeployImageAction
   name: deployimage
@@ -262,6 +276,7 @@
       - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
     - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
   - {class: actions.deploy.apply_overlay.ApplyOverlayImage, name: apply-overlay-image}
+  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
   - class: actions.deploy.mount.UnmountAction
     name: umount-retry
     pipeline:
@@ -275,6 +290,7 @@
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:

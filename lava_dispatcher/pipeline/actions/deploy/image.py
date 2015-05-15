@@ -30,6 +30,7 @@ from lava_dispatcher.pipeline.actions.deploy.mount import (
     UnmountAction,
 )
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ApplyOverlayImage
+from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.pipeline.actions.deploy.overlay import (
     CustomisationAction,
     OverlayAction,
@@ -61,6 +62,7 @@ class DeployImageAction(DeployAction):
         self.internal_pipeline.add_action(CustomisationAction())
         self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
         self.internal_pipeline.add_action(ApplyOverlayImage())  # specific to image deployments
+        self.internal_pipeline.add_action(DeployDeviceEnvironment())
         self.internal_pipeline.add_action(UnmountAction())
 
 

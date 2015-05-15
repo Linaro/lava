@@ -55,6 +55,9 @@ class deployment_data_dict(object):  # pylint: disable=invalid-name, too-few-pub
     def get(self, key):
         return self.__data__.get(key)
 
+    def keys(self):
+        return self.__data__.keys()
+
 # FIXME: harmonise the prompt management to avoid duplication with device configuration
 android = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1': "root@linaro# ",
@@ -68,6 +71,7 @@ android = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_dir': '/data/lava-%s',
     'lava_test_results_part_attr': 'data_part_android_org',
     'lava_test_results_dir': '/lava-%s',
+    'lava_test_shell_file': None,
 })
 
 
@@ -83,6 +87,7 @@ ubuntu = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_dir': '/lava-%s',
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/lava-%s',
+    'lava_test_shell_file': '~/.bashrc',
 })
 
 debian = deployment_data_dict({  # pylint: disable=invalid-name
@@ -97,6 +102,7 @@ debian = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_dir': '/lava-%s',
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/lava-%s',
+    'lava_test_shell_file': '~/.bashrc',
 })
 
 oe = deployment_data_dict({  # pylint: disable=invalid-name
@@ -111,6 +117,7 @@ oe = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_dir': '/lava-%s',
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/lava-%s',
+    'lava_test_shell_file': None,
 })
 
 
@@ -126,4 +133,5 @@ fedora = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_dir': '/lava-%s',
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/lava-%s',
+    'lava_test_shell_file': None,
 })
