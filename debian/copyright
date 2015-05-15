@@ -125,6 +125,12 @@ Files: doc/_static/default.css
 Copyright: 2009, Stanislaus Madueke
            2007-2011 by the Sphinx team
 License: BSD-3-clause
+
+Files: google_analytics/
+Copyright: 2008, Clint Ecker
+License: BSD-3-clause
+
+License: BSD-3-clause
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions are met:
  .
