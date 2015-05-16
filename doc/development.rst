@@ -456,7 +456,7 @@ format::
 More documentation about graph models is available in
 http://django-extensions.readthedocs.org/en/latest/graph_models.html
 
-Other useful features from `django_exgtensions`_ are as follows:
+Other useful features from `django_extensions`_ are as follows:
 
 * `shell_plus`_ - similar to the built-in "shell" but autoloads all
    models
