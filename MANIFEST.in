@@ -18,6 +18,7 @@ recursive-include dashboard_app/static *.png *.js *.css *.gif
 recursive-include dashboard_app/templates *.html
 recursive-include examples *.xml *.json *html *.conf
 recursive-include lava_scheduler_app/templates *.html *.txt
+include lava_scheduler_app/tests/*.yaml
 recursive-include lava_scheduler_app/static *.js *.css *.gif *.png
 recursive-include doc/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg
 include entry_points.ini
