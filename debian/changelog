@@ -1,3 +1,10 @@
+lava-server (2015.06-1) unstable; urgency=medium
+
+  *  New upstream production release
+  *  Add unit test support files. (Closes: #785607)
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 18 May 2015 12:57:56 +0100
+
 lava-server (2015.05-1~bpo8+1) jessie-backports; urgency=medium
 
   * Rebuild for jessie-backports.
