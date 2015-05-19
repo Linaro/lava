@@ -21,6 +21,7 @@
 
 import os
 import unittest
+from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
@@ -28,6 +29,8 @@ from lava_dispatcher.pipeline.actions.boot.ssh import SchrootAction
 from lava_dispatcher.pipeline.actions.boot.qemu import BootVMAction
 from lava_dispatcher.pipeline.connections.ssh import ConnectDynamicSsh
 from lava_dispatcher.pipeline.utils.shell import which
+from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
+from lava_dispatcher.pipeline.utils.filesystem import check_ssh_identity_file
 
 
 class Factory(object):  # pylint: disable=too-few-public-methods
@@ -65,6 +68,35 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertIsNotNone(self.job)
         self.job.validate()
         self.assertEqual([], self.job.pipeline.errors)
+        # Check Pipeline
+        description_ref = pipeline_reference('ssh-deploy.yaml')
+        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+
+    def test_ssh_authorize(self):
+        overlay = [action for action in self.job.pipeline.actions if action.name == 'scp-overlay'][0]
+        prepare = [action for action in overlay.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        authorize = [action for action in prepare.internal_pipeline.actions if action.name == 'ssh-authorize'][0]
+        self.assertFalse(authorize.active)
+        self.job.validate()
+        # only secondary connections set 'active' which then copies the identity file into the overlay.
+        self.assertFalse(authorize.active)
+
+    def test_ssh_identity(self):
+        params = {
+            'tftp': 'None',
+            'usb': 'None',
+            'ssh': {
+                'host': '172.16.200.165', 'options': [
+                    '-o', 'Compression=yes', '-o', 'UserKnownHostsFile=/dev/null',
+                    '-o', 'PasswordAuthentication=no', '-o', 'StrictHostKeyChecking=no',
+                    '-o', 'LogLevel=FATAL', '-l', 'root ', '-p', 22],
+                'identity_file': 'device/dynamic_vm_keys/lava'
+            }
+        }
+        check = check_ssh_identity_file(params)
+        self.assertIsNone(check[0])
+        self.assertIsNotNone(check[1])
+        self.assertEqual(os.path.basename(check[1]), 'lava')
 
     def test_ssh_params(self):
         self.assertEqual(self.job.device['hostname'], 'ssh-host-01')
@@ -76,7 +108,7 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
             'ssh', '-o', 'Compression=yes', '-o', 'UserKnownHostsFile=/dev/null',
             '-o', 'PasswordAuthentication=no', '-o', 'StrictHostKeyChecking=no',
             '-o', 'LogLevel=FATAL', '-l', 'root ',
-            '-p', 8022]
+            '-p', '8022']
         self.job.validate()
         login = [action for action in self.job.pipeline.actions if action.name == 'login-ssh'][0]
         self.assertIn('primary-ssh', [action.name for action in login.internal_pipeline.actions])
@@ -88,6 +120,30 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.job.validate()
         self.assertEqual(identity, primary.identity_file)
         self.assertEqual(test_command, primary.command)
+        bad_port = {
+            'host': 'localhost',
+            'options': [
+                '-o', 'Compression=yes', '-o', 'UserKnownHostsFile=/dev/null',
+                '-o', 'PasswordAuthentication=no', '-o', 'StrictHostKeyChecking=no',
+                '-o', 'LogLevel=FATAL', '-l', 'root ', '-p', 8022
+            ],
+            'identity_file': 'device/dynamic_vm_keys/lava'}
+        self.job.device['actions']['deploy']['methods']['ssh'] = bad_port
+        with self.assertRaises(JobError):
+            self.job.validate()
+
+    def test_scp_command(self):
+        self.job.validate()
+        overlay = [action for action in self.job.pipeline.actions if action.name == 'scp-overlay'][0]
+        deploy = [action for action in overlay.internal_pipeline.actions if action.name == 'scp-deploy'][0]
+        scp = [action for action in overlay.internal_pipeline.actions if action.name == 'prepare-scp-overlay'][0]
+        self.assertIsNotNone(scp)
+        self.assertIn('scp', deploy.scp)
+        self.assertNotIn('ssh', deploy.scp)
+        self.assertIn('ssh', deploy.command)
+        self.assertNotIn('scp', deploy.command)
+        self.assertIn('lava_test_results_dir', deploy.data)
+        self.assertIn('/lava-', deploy.data['lava_test_results_dir'])
 
     @unittest.skipIf(not which('schroot'), "schroot not installed")
     def test_schroot_params(self):
@@ -116,10 +172,8 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         scp_overlay = [item for item in self.guest_job.pipeline.actions if item.name == 'scp-overlay']
         self.assertEqual(len(scp_overlay), 1)
         overlay = [item for item in scp_overlay[0].internal_pipeline.actions if item.name == 'lava-overlay']
-        print [(item.name, item.level) for item in overlay[0].internal_pipeline.actions]
-        prepare = [item for item in scp_overlay[0].internal_pipeline.actions if item.name == 'prepare-tftp-overlay']
-        print [(item.name, item.level) for item in prepare[0].internal_pipeline.actions]
-        self.assertEqual(len(overlay), 1)
-        self.assertEqual(len(prepare), 1)
         multinode = [item for item in overlay[0].internal_pipeline.actions if item.name == 'lava-multinode-overlay']
         self.assertEqual(len(multinode), 1)
+        # Check Pipeline
+        description_ref = pipeline_reference('ssh-guest.yaml')
+        self.assertEqual(description_ref, self.guest_job.pipeline.describe(False))

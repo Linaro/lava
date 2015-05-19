@@ -234,21 +234,10 @@ class MultinodeProtocol(Protocol):
             self.logger.debug("Delaying start for %s seconds, lava_wait_all for role %s" % (
                 self.system_timeout.duration, expect_role))
             # send using the system timeout
-            # FIXME: remove once lava_wait_all waitrole works.
-            sync_msg = {
-                "request": "lava_send",
-                "messageID": 'lava_start',
-                'message': {}}
-            self._send(sync_msg, True)
-            self.logger.debug("sent %s" % sync_msg)
-            # FIXME: LAVA-2096 - lava_wait_all waitrole support needs fixing.
             sync_msg = {
                 "request": "lava_wait_all",
                 "waitrole": expect_role,
                 "messageID": 'lava_start'}
-            # sync_msg = {
-            #     "request": "lava_sync",
-            #     "messageID": 'lava_start'}
             self._send(sync_msg, True)
             self.logger.debug("sent %s" % sync_msg)
         else:

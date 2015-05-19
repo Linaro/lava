@@ -237,6 +237,8 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
             for action in overlay.internal_pipeline.actions:
                 if action.name == 'extract-nfsrootfs':
                     extract = action
+        self.assertIn('lava_test_results_dir', overlay.data)
+        self.assertIn('/lava-', overlay.data['lava_test_results_dir'])
         self.assertIsNotNone(extract)
         self.assertEqual(extract.timeout.duration, job.parameters['timeouts'][extract.name]['seconds'])
 

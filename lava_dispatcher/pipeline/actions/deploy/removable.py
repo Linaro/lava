@@ -182,7 +182,7 @@ class MassStorage(DeployAction):
         if not self.valid:
             return
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.device['hostname']
+        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
         if 'device' in self.parameters:
             self.set_common_data('u-boot', 'device', self.parameters['device'])
 

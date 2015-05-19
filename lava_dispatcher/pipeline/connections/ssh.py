@@ -22,6 +22,7 @@
 import os
 import signal
 from lava_dispatcher.pipeline.action import JobError
+from lava_dispatcher.pipeline.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.action import Action
 from lava_dispatcher.pipeline.shell import ShellCommand, ShellSession
@@ -70,7 +71,10 @@ class ConnectSsh(Action):
         self.description = "login to a known device using ssh"
         self.command = None
         self.host = None
+        self.ssh_port = ["-p", "22"]
+        self.scp_port = ["-P", "22"]
         self.identity_file = None
+        self.ssh_user = 'root'
 
     def _check_params(self):
         # the deployment strategy ensures that this key exists
@@ -79,22 +83,27 @@ class ConnectSsh(Action):
             self.errors = "Invalid device configuration - no suitable deploy method for ssh"
             return
         params = self.job.device['actions']['deploy']['methods']
+        check = check_ssh_identity_file(params)
+        if check[0]:
+            self.errors = check[0]
+        elif check[1]:
+            self.identity_file = check[1]
         if 'ssh' not in params:
             self.errors = "Empty ssh parameter list in device configuration %s" % params
             return
+        if any([option for option in params['ssh']['options'] if type(option) != str]):
+            self.errors = "[%s] Invalid device configuration: all options must be only strings" % self.name
+            return
+        if 'port' in params['ssh']:
+            self.ssh_port = ["-p", "%s" % str(params['ssh']['port'])]
+            self.scp_port = ["-P", "%s" % str(params['ssh']['port'])]
         if 'options' not in params['ssh']:
             self.errors = "Missing ssh options in device configuration"
-        if 'identity_file' not in params['ssh']:
-            self.errors = "Missing entry for SSH private key"
-        if os.path.isabs(params['ssh']['identity_file']):
-            self.identity_file = params['ssh']['identity_file']
-        else:
-            self.identity_file = os.path.realpath(os.path.join(__file__, '../../../', params['ssh']['identity_file']))
-        if not os.path.exists(self.identity_file):
-            self.errors = "Cannot find SSH private key %s" % self.identity_file
         if 'host' in params['ssh'] and params['ssh']['host']:
             # get the value from the protocol later.
             self.host = params['ssh']['host']
+        if 'user' in params['ssh'] and params['ssh']['user']:
+            self.ssh_user = params['ssh']['user']
         return params['ssh']
 
     def validate(self):
@@ -120,7 +129,7 @@ class ConnectSsh(Action):
         command.extend(['-i', self.identity_file])
 
         if self.host:
-            command.append(str(self.host))
+            command.append("%s@%s" % (self.ssh_user, self.host))
         else:
             # get from the protocol
             pass
@@ -136,6 +145,7 @@ class ConnectSsh(Action):
         connection = super(ConnectSsh, self).run(connection, args)
         connection.prompt_str = self.job.device['test_image_prompts']
         connection.connected = True
+        self.wait(connection)
         self.data["boot-result"] = 'success'
         return connection
 
@@ -150,19 +160,19 @@ class Scp(ConnectSsh):
     """
     def __init__(self, key):
         super(Scp, self).__init__()
-        self.name = "scp-deploy"
+        self.name = "scp-deploy"  # FIXME: confusing name as this is in the connections folder, not actions/deploy.
         self.summary = "scp over the ssh connection"
         self.description = "copy a file to a known device using scp"
         self.key = key
+        self.scp = []
 
     def validate(self):
         super(Scp, self).validate()
         params = self._check_params()
         self.errors = infrastructure_error('scp')
         if self.valid:
-            # FIXME: this causes overwriting issues
-            self.command = ['scp']
-            self.command.extend(params['options'])
+            self.scp.append('scp')
+            self.scp.extend(params['options'])
 
     def run(self, connection, args=None):
         path = self.get_common_data(self.name, self.key)
@@ -170,19 +180,19 @@ class Scp(ConnectSsh):
             self.errors = "%s: could not find details of '%s'" % (self.name, self.key)
             self.logger.error("%s: could not find details of '%s'" % (self.name, self.key))
             return connection
-        # FIXME: being overwritten, why?
-        command = self.command[:]  # local copy
+        destination = "%s-%s" % (self.job.job_id, os.path.basename(path))
+        command = self.scp[:]  # local copy
         command.extend(['-i', self.identity_file])
         # add the local file as source
         command.append(path)
         # add the remote as destination, with :/ top level directory
-        command.append("%s:/" % self.host)
+        command.append("%s:/%s" % (self.host, destination))
         command_str = " ".join(str(item) for item in command)
         self.logger.info("Copying %s using %s" % (self.key, command_str))
         self.run_command(command)
         connection = super(Scp, self).run(connection, args)
         self.wait(connection)
-        connection.sendline('tar -C / -xzf /%s\n' % os.path.basename(path))
+        self.set_common_data('scp-overlay-unpack', 'overlay', destination)
         self.wait(connection)
         return connection
 

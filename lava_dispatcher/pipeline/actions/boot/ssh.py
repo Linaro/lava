@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+# pylint: disable=too-many-return-statements
 
 from lava_dispatcher.pipeline.action import Pipeline, Action
 from lava_dispatcher.pipeline.logical import Boot, RetryAction
@@ -73,6 +74,27 @@ class SshAction(RetryAction):
         self.internal_pipeline.add_action(ConnectSsh())
         self.internal_pipeline.add_action(AutoLoginAction())
         self.internal_pipeline.add_action(ExpectShellSession())
+        self.internal_pipeline.add_action(ScpOverlayUnpack())
+
+
+class ScpOverlayUnpack(Action):
+
+    def __init__(self):
+        super(ScpOverlayUnpack, self).__init__()
+        self.name = "scp-overlay-unpack"
+        self.summary = "unpack the overlay on the remote device"
+        self.description = "unpack the overlay over an existing ssh connection"
+
+    def run(self, connection, args=None):
+        connection = super(ScpOverlayUnpack, self).run(connection, args)
+        if not connection:
+            raise RuntimeError("Cannot unpack, no connection available.")
+        filename = self.get_common_data(self.name, 'overlay')
+        cmd = "tar --warning no-timestamp -C / -xaf /%s" % filename
+        connection.sendline(cmd)
+        self.wait(connection)
+        self.data['boot-result'] = 'failed' if self.errors else 'success'
+        return connection
 
 
 class Schroot(Boot):

@@ -210,6 +210,8 @@ class ShellSession(Connection):
 
     def wait(self):
         self.raw_connection.sendline("#")
+        if not self.prompt_str:
+            self.prompt_str = '#'
         try:
             self.runner.wait_for_prompt(self.timeout.duration)
         except pexpect.TIMEOUT:

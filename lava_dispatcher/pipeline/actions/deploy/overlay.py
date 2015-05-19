@@ -21,11 +21,12 @@
 import os
 import stat
 import glob
+import shutil
 import tarfile
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.action import Action, Pipeline
 from lava_dispatcher.pipeline.actions.deploy.testdef import TestDefinitionAction
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, check_ssh_identity_file
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 
 
@@ -92,6 +93,9 @@ class OverlayAction(DeployAction):
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        if any('ssh' in data for data in self.job.device['actions']['deploy']['methods']):
+            # only devices supporting ssh deployments add this action.
+            self.internal_pipeline.add_action(SshAuthorize())
         self.internal_pipeline.add_action(MultinodeOverlayAction())
         self.internal_pipeline.add_action(TestDefinitionAction())
         self.internal_pipeline.add_action(CompressOverlay())
@@ -104,12 +108,15 @@ class OverlayAction(DeployAction):
         """
         self.data[self.name].setdefault('location', mkdtemp())
         self.logger.debug("Preparing overlay tarball in %s" % self.data[self.name]['location'])
+        if 'lava_test_results_dir' not in self.data:
+            self.logger.error("Unable to identify lava test results directory - missing OS type?")
+            return connection
         lava_path = os.path.abspath("%s/%s" % (self.data[self.name]['location'], self.data['lava_test_results_dir']))
         for runner_dir in ['bin', 'tests', 'results']:
             # avoid os.path.join as lava_test_results_dir startswith / so location is *dropped* by join.
             path = os.path.abspath("%s/%s" % (lava_path, runner_dir))
             if not os.path.exists(path):
-                os.makedirs(path)
+                os.makedirs(path, 0755)
                 self.logger.debug("makedir: %s" % path)
         for fname in self.scripts_to_copy:
             with open(fname, 'r') as fin:
@@ -236,9 +243,88 @@ class CompressOverlay(Action):
             with tarfile.open(output, "w:gz") as tar:
                 os.chdir(location)
                 tar.add(".%s" % self.data['lava_test_results_dir'])
+                # ssh authorization support
+                if os.path.exists('./root/'):
+                    tar.add(".%s" % '/root/')
         except tarfile.TarError as exc:
             self.errors = "Unable to create lava overlay tarball: %s" % exc
             raise RuntimeError("Unable to create lava overlay tarball: %s" % exc)
         os.chdir(cur_dir)
         self.data[self.name]['output'] = output
+        return connection
+
+
+class SshAuthorize(Action):
+    """
+    Handle including the authorization (ssh public key) into the
+    deployment as a file in the overlay and writing to
+    /root/.ssh/authorized_keys.
+    if /root/.ssh/authorized_keys exists in the test image it will be overwritten
+    when the overlay tarball is unpacked onto the test image.
+    The key exists in the lava_test_results_dir to allow test writers to work around this
+    after logging in via the identity_file set here.
+    Hacking sessions already append to the existing file.
+    Used by secondary connections only.
+    Primary connections need the keys set up by admins.
+    """
+    def __init__(self):
+        super(SshAuthorize, self).__init__()
+        self.name = "ssh-authorize"
+        self.summary = 'add public key to authorized_keys'
+        self.description = 'include public key in overlay and authorize root user'
+        self.active = False
+        self.identity_file = None
+
+    def validate(self):
+        super(SshAuthorize, self).validate()
+        if 'to' in self.parameters:
+            if self.parameters['to'] == 'ssh':
+                return
+        if 'authorize' in self.parameters:
+            if self.parameters['authorize'] != 'ssh':
+                return
+        if not any('ssh' in data for data in self.job.device['actions']['deploy']['methods']):
+            # idempotency - leave self.identity_file as None
+            return
+        params = self.job.device['actions']['deploy']['methods']
+        check = check_ssh_identity_file(params)
+        if check[0]:
+            self.errors = check[0]
+        elif check[1]:
+            self.identity_file = check[1]
+        if self.valid:
+            self.set_common_data('authorize', 'identity_file', self.identity_file)
+            if 'authorize' in self.parameters:
+                # only secondary connections set active.
+                self.active = True
+
+    def run(self, connection, args=None):
+        connection = super(SshAuthorize, self).run(connection, args)
+        if not self.identity_file:
+            self.logger.debug("No authorisation required.")  # idempotency
+            return connection
+        # add the authorization keys to the overlay
+        if 'location' not in self.data['lava-overlay']:
+            raise RuntimeError("Missing lava overlay location")
+        if not os.path.exists(self.data['lava-overlay']['location']):
+            raise RuntimeError("Unable to find overlay location")
+        location = self.data['lava-overlay']['location']
+        lava_path = os.path.abspath("%s/%s" % (location, self.data['lava_test_results_dir']))
+        output_file = '%s/%s' % (lava_path, os.path.basename(self.identity_file))
+        shutil.copyfile(self.identity_file, output_file)
+        shutil.copyfile("%s.pub" % self.identity_file, "%s.pub" % output_file)
+        if not self.active:
+            # secondary connections only
+            return connection
+        self.logger.info("Adding SSH authorisation for %s.pub", os.path.basename(output_file))
+        user_sshdir = os.path.join(location, 'root', '.ssh')
+        if not os.path.exists(user_sshdir):
+            os.makedirs(user_sshdir, 0755)
+        # if /root/.ssh/authorized_keys exists in the test image it will be overwritten
+        # the key exists in the lava_test_results_dir to allow test writers to work around this
+        # after logging in via the identity_file set here
+        authorize = os.path.join(user_sshdir, 'authorized_keys')
+        self.logger.debug("Copying %s to %s" % ("%s.pub" % self.identity_file, authorize))
+        shutil.copyfile("%s.pub" % self.identity_file, authorize)
+        os.chmod(authorize, 0600)
         return connection

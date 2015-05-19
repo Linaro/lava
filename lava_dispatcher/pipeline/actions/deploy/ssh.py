@@ -21,23 +21,21 @@
 
 import os
 from lava_dispatcher.pipeline.logical import Deployment
-from lava_dispatcher.pipeline.action import Pipeline, Action
-from lava_dispatcher.pipeline.actions.deploy import DeployAction
-from lava_dispatcher.pipeline.actions.deploy.apply_overlay import (
-    ExtractRootfs,
-    ExtractModules,
-    OverlayAction,
-    ApplyOverlayTftp,
-)
-from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.connections.ssh import Scp
+from lava_dispatcher.pipeline.action import Pipeline, Action
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+from lava_dispatcher.pipeline.actions.deploy import DeployAction
+from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ExtractRootfs, ExtractModules
+from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
+from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
 
 # Deploy SSH can mean a few options:
 # for a primary connection, the device might need to be powered_on
 # for a secondary connection, the device must be deployed
 # In each case, files need to be copied to the device
+# For primary: to: ssh is used to implicitly copy the authorization
+# For secondary, authorize: ssh is needed as 'to' is already used.
 
 # pylint: disable=too-many-instance-attributes
 
@@ -89,9 +87,13 @@ class ScpOverlay(DeployAction):
         self.items = [
             'firmware', 'kernel', 'dtb', 'rootfs', 'modules'
         ]
+        lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
+        # FIXME: apply job_id to other overlay classes when settings lava_test_results_dir
+        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline.add_action(OverlayAction())
         for item in self.items:
             if item in parameters:
                 download = DownloaderAction(item, path=self.scp_dir)
@@ -99,7 +101,6 @@ class ScpOverlay(DeployAction):
                 self.internal_pipeline.add_action(download, parameters)
                 self.set_common_data('scp', item, True)
         # we might not have anything to download, just the overlay to push
-        self.internal_pipeline.add_action(OverlayAction())
         self.internal_pipeline.add_action(PrepareOverlayScp())
         scp = Scp('overlay')
         self.internal_pipeline.add_action(scp)
@@ -107,13 +108,15 @@ class ScpOverlay(DeployAction):
 
 class PrepareOverlayScp(Action):
     """
-    Extracts the ramdisk or nfsrootfs in preparation for the lava overlay
+    Copy the overlay to the device using scp and then unpack remotely.
+    Needs the device to be ready for SSH connection.
     """
+
     def __init__(self):
         super(PrepareOverlayScp, self).__init__()
-        self.name = "prepare-tftp-overlay"
-        self.summary = "extract ramdisk or nfsrootfs"
-        self.description = "extract ramdisk or nfsrootfs in preparation for lava overlay"
+        self.name = "prepare-scp-overlay"
+        self.summary = "scp the overlay to the remote device"
+        self.description = "copy the overlay over an existing ssh connection"
 
     def validate(self):
         super(PrepareOverlayScp, self).validate()

@@ -20,6 +20,7 @@
     - class: actions.deploy.overlay.OverlayAction
       name: lava-overlay
       pipeline:
+      - {'class': actions.deploy.overlay.SshAuthorize, 'name': ssh-authorize}
       - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
       - {class: actions.deploy.testdef.TestDefinitionAction, name: test-definition}
       - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
@@ -72,6 +73,7 @@
     - class: actions.deploy.overlay.OverlayAction
       name: lava-overlay
       pipeline:
+      - {'class': actions.deploy.overlay.SshAuthorize, 'name': ssh-authorize}
       - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
       - {class: actions.deploy.testdef.TestDefinitionAction, name: test-definition}
       - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}

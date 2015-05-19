@@ -18,7 +18,7 @@ actions:
           - '-l'
           - 'root '
           - '-p'
-          - 8022
+          - '8022'
         host: localhost
         identity_file: 'device/dynamic_vm_keys/lava'  # unit test support
 
