@@ -945,8 +945,8 @@ Primary and Secondary connections
 Primary connection
 ------------------
 
-A Primary Connection is roughly equivalent to having an SSH login on a
-running machine. The device needs to be powered on, running an appropriate
+A Primary Connection is roughly equivalent to having a **root** SSH login
+on a running machine. The device needs to be powered on, running an appropriate
 daemon and with appropriate keys enabled for access. The TestJob for
 a primary connection then skips the deploy stage and uses a boot method
 to establish the connection. A device providing a primary connection
@@ -955,11 +955,14 @@ TestJob at a time - a Multinode job can make multiple connections but
 other jobs will see the device as busy and not be able to start their
 connections.
 
-.. warning:: All primary connections raise issues of
-             :ref:`persistence` - the test writer is solely responsible
-             for deleting any sensitive data copied, prepared or
-             downloaded using a primary connection. Do not leave
-             sensitive data for the next TestJob to find.
+.. warning:: Primary connections can raise issues of
+   :ref:`persistence` - the test writer is solely responsible for
+   deleting any sensitive data copied, prepared or downloaded using a
+   primary connection. Do not leave sensitive data for the next TestJob
+   to find. Wherever possible, use primary connections with ``schroot``
+   support so that each job is kept within a
+   :ref:`temporary chroot <disposable_chroot>`, thereby also allowing
+   more than one primary (schroot) connection on a single machine.
 
 It is not necessarily required that a device offering a primary
 connection is permanently powered on as the only connections being
@@ -972,6 +975,9 @@ A Primary Connection is established by the dispatcher and is therefore
 constrained in the options which are available to the client requesting
 the connection and the TestJob has **no** control over the arguments
 passed to the daemon.
+
+Primary connections also enable the authorization via the deployment
+action and the overlay, where the connection method requires this.
 
 Both Primary and Secondary connections are affected by :ref:`security`
 issues due to the requirements of automation.
@@ -1001,6 +1007,27 @@ connection would use ``scp``).
 A Secondary Connection can have control over the daemon via the deployment
 using the primary connection. The client connection is still made by the
 dispatcher.
+
+Secondary connections require authorization to be configured, so the
+deployment must specify the authorization method. This allows the
+overlay for this deployment to contain a token (e.g. the ssh public key)
+which will allow the connection to be made. The token will be added to
+the overlay tarball alongside the directories containing the test
+definitions.
+
+.. code-block:: yaml
+
+    - deploy:
+        to: tmpfs
+        authorize: ssh
+        kernel: http://....
+        nfsrootfs: http://...
+        dtb: http://....
+
+Certain deployment Actions (like SSH) will also copy the token to a
+particular location (e.g. ``/root/.ssh/authorized_keys``) but test
+writers can also add a run step which enables authorization for a
+different user, if the test requires this.
 
 .. _host_role:
 
@@ -1041,6 +1068,19 @@ issues due to the requirements of automation.
 
 The device providing a Secondary Connection is running a TestJob and
 the deployment will be erased when the job completes.
+
+.. note:: Avoid confusing ``host_role`` with
+   :ref:`expect_role <lava_start>`. ``host_role`` is used by the
+   scheduler to ensure that the job assignment operates correctly and
+   does not affect the dispatcher or delayed start support. The two
+   values may often have the same value with secondary connections but
+   do not mean the same thing.
+
+.. note:: Avoid using constrained resources (like ``dpkg`` or ``apt``)
+   from multiple tests (unless you take care with synchronisation calls
+   to ensure that each operation happens independently). Check through the
+   test definitions for installation steps or direct calls to ``apt`` and
+   change the test definitions.
 
 Connections and hacking sessions
 --------------------------------
@@ -1140,7 +1180,10 @@ establish a connection:
 The ``deploy`` action in this case simply prepares the LAVA overlay
 containing the test shell definitions and copies those to a
 pre-determined location on the device. This location will be removed
-at the end of the TestJob.
+at the end of the TestJob. The ``os`` parameter is specified so that
+any LAVA overlay scripts are able to pick up the correct shell,
+package manager and other deployment data items in order to run the
+lava test shell definitions.
 
 .. _security:
 
@@ -1194,6 +1237,8 @@ your use case.
    package, your test can **fail**.
 #. **Process interference** - another process could restart (or crash)
    a daemon upon which your test relies, so your test will **fail**.
+#. **Contention** - another job could obtain a lock on a constrained
+   resource, e.g. ``dpkg`` or ``apt``, causing your test to **fail**.
 #. **Reusable scripts** - scripts and utilities your test leaves behind
    can be reused (or can interfere) with subsequent tests.
 #. **Lack of reproducibility** - an artifact from a previous test can

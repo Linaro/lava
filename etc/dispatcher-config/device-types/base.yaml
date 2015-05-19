@@ -27,6 +27,9 @@
 
 {% set base_nfsroot_args = ("nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr")%}
 
+# these options are used by both ssh and scp!
+# check the manpages *carefully* & ensure compatibility!
+# in particular, -p vs -P for port, -l is ok for ssh, not scp.
 {% set ssh_options = (
 "          - '-o'
           - 'Compression=yes'
@@ -38,11 +41,12 @@
           - 'StrictHostKeyChecking=no'
           - '-o'
           - 'LogLevel=FATAL'
-          - '-l'
-          - 'root '
-          - '-p'
-          - 22"
+"
 ) %}
+
+{% set ssh_user = 'root' %}
+
+{% set ssh_port = '22' %}
 
 {% set ssh_identity_file = 'device/dynamic_vm_keys/lava' %}
 
