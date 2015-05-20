@@ -18,7 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import datetime
 import errno
 import fcntl
 import jinja2
@@ -32,6 +31,7 @@ import zmq
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.utils import timezone
 from lava_scheduler_app.models import Device, TestJob, JobPipeline
 from lava_dispatcher.pipeline.device import PipelineDevice
 from lava_dispatcher.pipeline.parser import JobParser
@@ -99,7 +99,7 @@ def create_job(job, device):
 def start_job(job):
     job.status = TestJob.RUNNING
     # TODO: Only if that was not already the case !
-    job.start_time = datetime.datetime.utcnow()
+    job.start_time = timezone.now()
     device = job.actual_device
     msg = "Job %s running" % job.id
     new_status = Device.RUNNING
@@ -118,7 +118,7 @@ def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
     if job.status == TestJob.CANCELING:
         job.status = TestJob.CANCELED
     if job.start_time and not job.end_time:
-        job.end_time = datetime.datetime.utcnow()
+        job.end_time = timezone.now()
     device = job.actual_device
     if fail_msg:
         job.failure_comment = "%s %s" % (job.failure_comment, fail_msg) if job.failure_comment else fail_msg
@@ -137,7 +137,7 @@ def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
 
 def cancel_job(job):
     job.status = TestJob.CANCELED
-    job.end_time = datetime.datetime.utcnow()
+    job.end_time = timezone.now()
     device = job.actual_device
     msg = "Job %s cancelled" % job.id
     # TODO: what should be the new device status? health check should set

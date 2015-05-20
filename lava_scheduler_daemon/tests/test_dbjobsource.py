@@ -1,4 +1,5 @@
 import datetime
+from django.utils import timezone
 
 from lava_scheduler_app.models import (
     Device,
@@ -185,7 +186,7 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         # make it confusing by making both multinode jobs have the exact same
         # submit time
         # also set the target_group string to make the outcome predictable
-        now = datetime.datetime.now()
+        now = timezone.now()
         for job in [multi1a, multi1b]:
             job.submit_time = now
             job.target_group = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'

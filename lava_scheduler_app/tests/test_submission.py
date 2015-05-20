@@ -1,5 +1,4 @@
 import cStringIO
-import datetime
 import json
 import xmlrpclib
 import logging
@@ -12,6 +11,7 @@ from django.test import TransactionTestCase
 from django.test.client import Client
 from django.core.exceptions import ValidationError
 from django_testscenarios.ubertest import TestCase
+from django.utils import timezone
 
 from linaro_django_xmlrpc.models import AuthToken
 
@@ -195,11 +195,11 @@ class TestTestJob(TestCaseWithFactory):
         self.assertEqual(None, job.requested_device_type)
 
     def test_from_json_and_user_sets_date_submitted(self):
-        before = datetime.datetime.now()
+        before = timezone.now()
         job = TestJob.from_json_and_user(
             self.factory.make_job_json(),
             self.factory.make_user())
-        after = datetime.datetime.now()
+        after = timezone.now()
         self.assertTrue(before < job.submit_time < after)
 
     def test_from_json_and_user_sets_status_to_SUBMITTED(self):

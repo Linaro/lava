@@ -32,6 +32,7 @@ from django.utils.safestring import mark_safe
 from django.db import models
 from django.db.models import Q
 from django_kvstore import models as kvmodels
+from django.utils import timezone
 
 from django_tables2 import (
     Column,
@@ -227,7 +228,7 @@ class FailureTableView(JobTableView):
 
         start = self.request.GET.get('start', None)
         if start:
-            now = datetime.datetime.now()
+            now = timezone.now()
             start = now + datetime.timedelta(int(start))
 
             end = self.request.GET.get('end', None)
@@ -245,7 +246,7 @@ class WorkerView(JobTableView):
 
 def health_jobs_in_hr(hr=-24):
     return TestJob.objects.values('actual_device').filter(
-        health_check=True, start_time__gte=(datetime.datetime.now() +
+        health_check=True, start_time__gte=(timezone.now() +
                                             relativedelta(hours=hr))).\
         exclude(status__in=[TestJob.SUBMITTED, TestJob.RUNNING]).distinct()
 
@@ -345,7 +346,7 @@ def index(request):
 
 
 def type_report_data(start_day, end_day, dt, health_check):
-    now = datetime.datetime.now()
+    now = timezone.now()
     start_date = now + datetime.timedelta(start_day)
     end_date = now + datetime.timedelta(end_day)
 
@@ -365,7 +366,7 @@ def type_report_data(start_day, end_day, dt, health_check):
 
 
 def device_report_data(start_day, end_day, device, health_check):
-    now = datetime.datetime.now()
+    now = timezone.now()
     start_date = now + datetime.timedelta(start_day)
     end_date = now + datetime.timedelta(end_day)
 
@@ -384,7 +385,7 @@ def device_report_data(start_day, end_day, device, health_check):
 
 
 def job_report(start_day, end_day, health_check):
-    now = datetime.datetime.now()
+    now = timezone.now()
     start_date = now + datetime.timedelta(start_day)
     end_date = now + datetime.timedelta(end_day)
 
@@ -775,38 +776,38 @@ def device_type_detail(request, pk):
     daily_complete = TestJob.objects.filter(
         actual_device__in=Device.objects.filter(device_type=dt),
         health_check=True,
-        submit_time__gte=(datetime.datetime.now().date() - datetime.timedelta(days=1)),
-        submit_time__lt=datetime.datetime.now().date(),
+        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=1)),
+        submit_time__lt=timezone.now().date(),
         status=TestJob.COMPLETE).count()
     daily_failed = TestJob.objects.filter(
         actual_device__in=Device.objects.filter(device_type=dt),
         health_check=True,
-        submit_time__gte=(datetime.datetime.now().date() - datetime.timedelta(days=1)),
-        submit_time__lt=datetime.datetime.now().date(),
+        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=1)),
+        submit_time__lt=timezone.now().date(),
         status=TestJob.INCOMPLETE).count()
     weekly_complete = TestJob.objects.filter(
         actual_device__in=Device.objects.filter(device_type=dt),
         health_check=True,
-        submit_time__gte=(datetime.datetime.now().date() - datetime.timedelta(days=7)),
-        submit_time__lt=datetime.datetime.now().date(),
+        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=7)),
+        submit_time__lt=timezone.now().date(),
         status=TestJob.COMPLETE).count()
     weekly_failed = TestJob.objects.filter(
         actual_device__in=Device.objects.filter(device_type=dt),
         health_check=True,
-        submit_time__gte=(datetime.datetime.now().date() - datetime.timedelta(days=7)),
-        submit_time__lt=datetime.datetime.now().date(),
+        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=7)),
+        submit_time__lt=timezone.now().date(),
         status=TestJob.INCOMPLETE).count()
     monthly_complete = TestJob.objects.filter(
         actual_device__in=Device.objects.filter(device_type=dt),
         health_check=True,
-        submit_time__gte=(datetime.datetime.now().date() - datetime.timedelta(days=30)),
-        submit_time__lt=datetime.datetime.now().date(),
+        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=30)),
+        submit_time__lt=timezone.now().date(),
         status=TestJob.COMPLETE).count()
     monthly_failed = TestJob.objects.filter(
         actual_device__in=Device.objects.filter(device_type=dt),
         health_check=True,
-        submit_time__gte=(datetime.datetime.now().date() - datetime.timedelta(days=30)),
-        submit_time__lt=datetime.datetime.now().date(),
+        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=30)),
+        submit_time__lt=timezone.now().date(),
         status=TestJob.INCOMPLETE).count()
     health_summary_data = [{
         "Duration": "24hours",

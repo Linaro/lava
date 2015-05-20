@@ -14,6 +14,7 @@ from django.db import connection
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.db.utils import DatabaseError
+from django.utils import timezone
 
 from linaro_django_xmlrpc.models import AuthToken
 from psycopg2.extensions import TransactionRollbackError
@@ -193,7 +194,7 @@ class DatabaseJobSource(object):
                 run_health_check = True
             else:
                 run_health_check = device.last_health_report_job.end_time < \
-                    datetime.datetime.now() - datetime.timedelta(days=1)
+                    timezone.now() - datetime.timedelta(days=1)
 
             if run_health_check:
                 try:
@@ -364,7 +365,7 @@ class DatabaseJobSource(object):
             self.logger.info('%s started running job %s', device.hostname,
                              job.id)
         device.save()
-        job.start_time = datetime.datetime.utcnow()
+        job.start_time = timezone.now()
         shutil.rmtree(job.output_dir, ignore_errors=True)
         job.log_file.save('job-%s.log' % job.id, ContentFile(''), save=False)
         job.save()
@@ -466,7 +467,7 @@ class DatabaseJobSource(object):
             Device.STATUS_CHOICES[new_device_status][1],
             TestJob.STATUS_CHOICES[job.status][1]))
 
-        job.end_time = datetime.datetime.utcnow()
+        job.end_time = timezone.now()
 
         job.submit_token = None
 

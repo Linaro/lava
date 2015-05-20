@@ -20,7 +20,6 @@
 Empty module for Django to pick up this package as Django application
 """
 
-import datetime
 import inspect
 import logging
 import random
@@ -28,6 +27,7 @@ import xmlrpclib
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.utils import timezone
 
 
 class AuthToken(models.Model):
@@ -83,7 +83,7 @@ class AuthToken(models.Model):
         else:
             if token.user.username != username:
                 return None  # bad username for this secret
-            token.last_used_on = datetime.datetime.utcnow()
+            token.last_used_on = timezone.now()
             token.save()
             return token.user
 

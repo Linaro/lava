@@ -6,7 +6,6 @@ import uuid
 import jinja2
 import simplejson
 import urlparse
-import datetime
 import smtplib
 import socket
 import sys
@@ -29,6 +28,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
 from django_kvstore import models as kvmodels
 from django_kvstore import get_kvstore
+from django.utils import timezone
 
 from django_restricted_resource.models import RestrictedResource
 
@@ -282,12 +282,11 @@ class Worker(models.Model):
         if self.last_heartbeat is None:
             return False
 
-        utcnow = datetime.datetime.utcnow()
-        difference = utcnow - self.last_heartbeat
+        difference = timezone.now() - self.last_heartbeat
 
         # We deliberately add a 10% delay to scheduler tick in order to account
         # for network, processing, etc., overheads.
-        scheduler_tick = utcnow - self.master_scheduler_tick()
+        scheduler_tick = timezone.now() - self.master_scheduler_tick()
         scheduler_tick = scheduler_tick.total_seconds()
         scheduler_tick = scheduler_tick + (scheduler_tick * 0.1)
 
@@ -317,7 +316,7 @@ class Worker(models.Model):
 
         worker, created = Worker.objects.get_or_create(hostname=hostname)
         worker.uptime = heartbeat_data.get('uptime', None)
-        worker.last_heartbeat = datetime.datetime.utcnow()
+        worker.last_heartbeat = timezone.now()
 
         if info_size and info_size == 'complete':
             worker.arch = heartbeat_data.get('arch', None)
@@ -374,19 +373,19 @@ class Worker(models.Model):
         """Records the master's last scheduler tick timestamp.
         """
         master = Worker.get_master()
-        master.last_master_scheduler_tick = datetime.datetime.utcnow()
+        master.last_master_scheduler_tick = timezone.now()
         master.save()
 
     def master_scheduler_tick(self):
-        """Returns datetime.dateime object of master's last scheduler tick
+        """Returns django.utils.timezone object of master's last scheduler tick
         timestamp. If the master's last scheduler tick is not yet recorded
-        return the current timestamp in UTC.
+        return the current timestamp.
         """
         master = Worker.get_master()
         if master.last_master_scheduler_tick:
             return master.last_master_scheduler_tick
         else:
-            return datetime.datetime.utcnow()
+            return timezone.now()
 
 
 class DeviceDictionaryTable(models.Model):

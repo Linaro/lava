@@ -8,6 +8,9 @@ from lava_server.settings.production import *
 # Load application settings from lava_server.settings integration package
 distro_settings = Settings("lava-server")
 
+# Use timezone
+USE_TZ = True
+
 # Load the mount point from settings file
 MOUNT_POINT = distro_settings.mount_point
 
