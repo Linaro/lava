@@ -107,7 +107,10 @@ def mk_targz(tfname, rootdir, basedir='.', asroot=False):
 def _list_files(dirname):
     files = []
     for f in os.listdir(dirname):
-        f = os.path.join(dirname, f)
+        try:
+            f = os.path.join(dirname, f)
+        except UnicodeDecodeError:
+            f = os.path.join(dirname, f.decode('utf8', 'ignore'))
         if os.path.isdir(f):
             files.extend(_list_files(f))
         elif os.path.isfile(f):
