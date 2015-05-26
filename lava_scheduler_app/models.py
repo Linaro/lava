@@ -1386,6 +1386,8 @@ class TestJob(RestrictedResource):
             return self._results_bundle.get_permalink()
         elif self._results_link:
             return self._results_link
+        elif self.is_pipeline:
+            return u'/results/%s' % self.id
         else:
             return None
 

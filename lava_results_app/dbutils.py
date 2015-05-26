@@ -1,0 +1,212 @@
+# Copyright (C) 2015 Linaro Limited
+#
+# Author: Neil Williams <neil.williams@linaro.org>
+#
+# This file is part of Lava Server.
+#
+# Lava Server is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License version 3
+# as published by the Free Software Foundation
+#
+# Lava Server is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
+
+import yaml
+import logging
+from django.db import transaction
+from collections import OrderedDict
+from lava_results_app.models import (
+    TestSuite,
+    TestSet,
+    TestCase,
+    TestData,
+    ActionData,
+    MetaType,
+)
+from lava_dispatcher.pipeline.action import Timeout
+# pylint: disable=no-member
+
+
+def _test_case(name, suite, result, testset=None, testshell=False):
+    """
+    Create a TestCase for the specified name and result
+    :param name: name of the testcase to create
+    :param suite: current TestSuite
+    :param result: the result for this TestCase
+    :param testset: Use a TestSet if supplied.
+    :param testshell: handle lava-test-shell outside a TestSet.
+    :return:
+    """
+    logger = logging.getLogger('dispatcher-master')
+    if testshell:
+        TestCase.objects.create(
+            name=name,
+            suite=suite,
+            result=TestCase.RESULT_MAP[result]
+        ).save()
+    elif testset:
+        TestCase.objects.create(
+            name=name,
+            suite=suite,
+            test_set=testset,
+            result=TestCase.RESULT_MAP[result]
+        ).save()
+    else:
+        try:
+            metadata = yaml.dump(result)
+        except yaml.YAMLError:
+            # FIXME: this may need to be reported to the user
+            logger.warning("Unable to store metadata %s for %s as YAML", result, name)
+            metadata = None
+        match_action = None
+        # the action level should exist already
+        if 'level' in result and metadata:
+            match_action = ActionData.objects.filter(
+                action_level=str(result['level']),
+                testdata__testjob=suite.job)
+        case = TestCase.objects.create(
+            name=name,
+            suite=suite,
+            test_set=testset,
+            metadata=metadata,
+            result=TestCase.RESULT_UNKNOWN
+        )
+        with transaction.atomic():
+            if match_action:
+                action_level = match_action[0]
+                action_level.testcase = case
+                action_level.save(update_fields=['testcase'])
+            case.save()
+
+
+def _check_for_testset(result_dict, suite):
+    """
+    Within a lava-test-shell, an OrderedDict indicates the start of a
+    TestSet. Handle all results in the OrderedDict as part of that set.
+    Handle all other results within the lava-test-shell items without using a TestSet.
+    :param result_dict: lava-test-shell results
+    :param suite: current test suite
+    """
+    for shell_testcase, shell_result in result_dict.items():
+        if type(shell_result) == OrderedDict:
+            # catch the testset
+            testset = TestSet.objects.create(
+                name=shell_testcase,
+                suite=suite
+            )
+            testset.save()
+            for set_casename, set_result in shell_result.items():
+                _test_case(set_casename, suite, set_result, testset=testset)
+        elif shell_testcase == 'level':
+            # needs to be stored in the existing testcase, not a new one
+            pass
+        else:
+            _test_case(shell_testcase, suite, shell_result, testshell=True)
+
+
+def map_scanned_results(scanned_dict, job):
+    """
+    Sanity checker on the logged results dictionary
+    :param scanned_dict: results logged via the slave
+    :param suite: the current test suite
+    :return: False on error, else True
+    """
+    logger = logging.getLogger('dispatcher-master')
+    if type(scanned_dict) is not dict:
+        logger.debug("%s is not a dictionary", scanned_dict)
+        return False
+    if 'results' not in scanned_dict:
+        logger.debug("missing results in %s", scanned_dict.keys())
+        return False
+    results = scanned_dict['results']
+    if 'testsuite' in results:
+        logger.debug("changing suite to %s" % results['testsuite'])
+        suite = TestSuite.objects.get_or_create(name=results['testsuite'], job=job)[0]
+    else:
+        suite = TestSuite.objects.get_or_create(name='lava', job=job)[0]
+    for name, result in results.items():
+        if name == 'testsuite':
+            # already handled
+            pass
+        elif name == 'testset':
+            _check_for_testset(result, suite)
+        else:
+            logger.debug("suite: %s testcase: %s: %s" % (suite, name, result))
+            _test_case(name, suite, result, testshell=(suite.name != 'lava'))
+    return True
+
+
+def build_action(action_data, testdata, submission):
+    # test for a known section
+    logger = logging.getLogger('lava_results_app')
+    if 'section' not in action_data:
+        logger.warn("Invalid action data - missing section")
+        return
+
+    metatype = MetaType.get_section(action_data['section'])
+    if metatype is None:  # 0 is allowed
+        logger.debug("Unrecognised metatype in action_data: %s" % action_data['section'])
+        return
+    # lookup the type from the job definition.
+    type_name = MetaType.get_type_name(action_data['section'], submission)
+    if not type_name:
+        logger.debug(
+            "type_name failed for %s metatype %s" % (
+                action_data['section'], MetaType.TYPE_CHOICES[metatype]))
+        return
+    action_meta, created = MetaType.objects.get_or_create(
+        name=type_name, metatype=metatype)
+    if created:
+        action_meta.save()
+    max_retry = None
+    if 'max_retries' in action_data:
+        max_retry = action_data['max_retries']
+
+    action = ActionData.objects.create(
+        action_name=action_data['name'],
+        action_level=action_data['level'],
+        action_summary=action_data['summary'],
+        testdata=testdata,
+        action_description=action_data['description'],
+        meta_type=action_meta,
+        max_retries=max_retry,
+        timeout=int(Timeout.parse(action_data['timeout']))
+    )
+    with transaction.atomic():
+        action.save()
+
+
+def walk_actions(data, testdata, submission):
+    for action in data:
+        build_action(action, testdata, submission)
+        if 'pipeline' in action:
+            walk_actions(action['pipeline'], testdata, submission)
+
+
+def map_metadata(description, job):
+    """
+    Generate metadata from the combination of the pipeline definition
+    file (after any parsing for protocols) and the pipeline description
+    into static metadata (TestData) related to this specific job
+    The description itself remains outside the database - it will need
+    to be made available as a download link.
+    :param description: the pipeline description output
+    :param job: the TestJob to associate
+    :return: True on success, False on error
+    """
+    logger = logging.getLogger('dispatcher-master')
+    try:
+        submission_data = yaml.load(job.definition)
+        description_data = yaml.load(description)
+    except yaml.YAMLError as exc:
+        logger.exception("[%s] %s" % (job.id, exc))
+        return False
+    testdata = TestData.objects.create(testjob=job)
+    testdata.save()
+    walk_actions(description_data['pipeline'], testdata, submission_data)
+    return True

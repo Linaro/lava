@@ -33,6 +33,8 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 from lava_scheduler_app.models import Device, TestJob, JobPipeline
+from lava_results_app.models import TestSuite
+from lava_results_app.dbutils import map_scanned_results, map_metadata
 from lava_dispatcher.pipeline.device import PipelineDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.action import JobError
@@ -257,6 +259,7 @@ def select_device(job):
             os.makedirs(job.output_dir)
         with open(os.path.join(job.output_dir, 'description.yaml'), 'w') as describe_yaml:
             describe_yaml.write(yaml.dump(pipeline))
+        map_metadata(yaml.dump(pipeline), job)
     return device
 
 
@@ -409,6 +412,10 @@ class Command(BaseCommand):
                 # YAML then puts that into a list of one item for each call to log.results.
                 if type(scanned) is list and len(scanned) == 1:
                     if type(scanned[0]) is dict and 'results' in scanned[0]:
+                        job = TestJob.objects.get(id=job_id)
+                        ret = map_scanned_results(scanned_dict=scanned[0], job=job)
+                        if not ret:
+                            self.logger.warning("[%s] Unable to map scanned results: %s" % (job_id, yaml.dump(scanned[0])))
                         store = JobPipeline.get(job_id)
                         if not store:
                             # create a new store
@@ -450,7 +457,6 @@ class Command(BaseCommand):
                 logs[job_id].last_usage = time.time()
 
                 # Write data
-                self.logger.debug("[%s] %s -> %s", job_id, filename, message)
                 f_handler = logs[job_id].fd
                 f_handler.write(message)
                 f_handler.write('\n')

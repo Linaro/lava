@@ -192,6 +192,11 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
+        'lava_results_app': {
+            'handlers': ['logfile'],
+            'level': 'INFO',
+            'propagate': True,
+        },
         'dashboard_app': {
             'handlers': ['logfile'],
             'level': 'INFO',
@@ -205,6 +210,9 @@ LOGGING = {
     }
 }
 
+# pipeline results display
+# set to false in /etc/lava-server/settings.conf to hide the Results menu
+PIPELINE = distro_settings.get_setting("PIPELINE", True)
 
 # Load extensions
 loader.contribute_to_settings(locals(), distro_settings)

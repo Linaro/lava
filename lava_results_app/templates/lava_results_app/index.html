@@ -1,0 +1,13 @@
+{% extends "layouts/content-bootstrap.html" %}
+{% load i18n %}
+{% load django_tables2 %}
+
+
+{% block content %}
+<h2>LAVA Results overview</h2>
+
+{% render_table result_table %}
+{% endblock %}
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
+{% endblock %}
