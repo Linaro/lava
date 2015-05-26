@@ -44,7 +44,8 @@ class VexpressTarget(BootloaderTarget):
 
         self.test_uefi = None
         self.test_bl1 = None
-        self.complete_firmware = None
+        self.complete_firmware_master = None
+        self.complete_firmware_test = None
 
         if self.config.vexpress_complete_firmware:
             if (self.config.vexpress_firmware_path_hwpack is None or
@@ -259,16 +260,23 @@ class VexpressTarget(BootloaderTarget):
                                                          self.config.vexpress_uefi_image_files,
                                                          self.config.vexpress_uefi_image_filename)
 
-    def _extract_compressed_firmware(self, tarball):
-        firmdir = self.scratch_dir + "/board-recovery-image"
+    def _extract_compressed_firmware_master(self, tarball):
+        firmdir = self.scratch_dir + "/board-recovery-image-master"
         self.context.run_command('mkdir -p %s' % firmdir)
         self.context.run_command('rm -r %s/*' % firmdir)
         extract_tar(tarball, firmdir)
-        self.complete_firmware = firmdir
+        self.complete_firmware_master = firmdir
+
+    def _extract_compressed_firmware(self, tarball):
+        firmdir = self.scratch_dir + "/board-recovery-image-test"
+        self.context.run_command('mkdir -p %s' % firmdir)
+        self.context.run_command('rm -r %s/*' % firmdir)
+        extract_tar(tarball, firmdir)
+        self.complete_firmware_test = firmdir
 
     def _extract_uncompressed_firmware(self, tarball):
         extract_tar(tarball, self.scratch_dir)
-        self.complete_firmware = self._find_dir(self.scratch_dir, self.config.vexpress_firmware_path_hwpack)
+        self.complete_firmware_test = self._find_dir(self.scratch_dir, self.config.vexpress_firmware_path_hwpack)
 
     def _extract_android_firmware(self, tarball):
         extract_tar(tarball, self.scratch_dir)
@@ -283,8 +291,8 @@ class VexpressTarget(BootloaderTarget):
         if self.config.vexpress_complete_firmware:
             tarball = download_image(self.config.vexpress_firmware_default, self.context,
                                      self.scratch_dir, decompress=False)
-            self._extract_compressed_firmware(tarball)
-            self._copy_firmware_to_juno(self.complete_firmware, mount_point)
+            self._extract_compressed_firmware_master(tarball)
+            self._copy_firmware_to_juno(self.complete_firmware_master, mount_point)
         else:
             uefi_path = self.config.vexpress_uefi_path
             uefi = os.path.join(mount_point, uefi_path)
@@ -315,8 +323,8 @@ class VexpressTarget(BootloaderTarget):
 
     def _install_test_firmware(self, mount_point):
         if self.config.vexpress_complete_firmware:
-            if os.path.exists(self.complete_firmware):
-                self._copy_firmware_to_juno(self.complete_firmware, mount_point)
+            if os.path.exists(self.complete_firmware_test):
+                self._copy_firmware_to_juno(self.complete_firmware_test, mount_point)
             else:
                 raise CriticalError("No path to complete firmware")
         else:
