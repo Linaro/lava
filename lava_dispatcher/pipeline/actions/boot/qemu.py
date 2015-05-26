@@ -32,6 +32,7 @@ from lava_dispatcher.pipeline.shell import (
     ShellSession
 )
 from lava_dispatcher.pipeline.utils.shell import which
+from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 from lava_dispatcher.pipeline.connections.ssh import ConnectDynamicSsh
 
@@ -93,19 +94,6 @@ class BootQemuRetry(RetryAction):
         self.description = "boot image using QEMU command line"
         self.summary = "boot QEMU image"
 
-    def validate(self):
-        super(BootQemuRetry, self).validate()
-        try:
-            # FIXME: need a schema and do this inside the NewDevice with a QemuDevice class? (just for parsing)
-            boot = self.job.device['actions']['boot']['methods']['qemu']
-            qemu_binary = which(boot['parameters']['command'])
-            command = [qemu_binary]
-            command.extend(boot['parameters'].get('options', []))
-            self.set_common_data('qemu-command', 'command', command)
-        # FIXME: AttributeError is an InfrastructureError in fact
-        except (KeyError, TypeError, AttributeError):
-            self.errors = "Invalid parameters"
-
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(CallQemuAction())
@@ -118,11 +106,37 @@ class CallQemuAction(Action):
         self.name = "execute-qemu"
         self.description = "call qemu to boot the image"
         self.summary = "execute qemu to boot the image"
+        self.sub_command = []
 
     def validate(self):
         super(CallQemuAction, self).validate()
         if 'test_image_prompts' not in self.job.device:
             self.errors = "Unable to identify test image prompts from device configuration."
+        if 'download_action' not in self.data:
+            self.errors = "No download_action data"
+        try:
+            # FIXME: need a schema and do this inside the NewDevice with a QemuDevice class? (just for parsing)
+            boot = self.job.device['actions']['boot']['methods']['qemu']
+            qemu_binary = which(boot['parameters']['command'])
+            self.sub_command = [qemu_binary]
+            self.sub_command.extend(boot['parameters'].get('options', []))
+        # FIXME: AttributeError is an InfrastructureError in fact
+        except (KeyError, TypeError, AttributeError):
+            self.errors = "Invalid parameters"
+        substitutions = {}
+        commands = []
+        for action in self.data['download_action'].keys():
+            if action != 'offset' or action != 'available_loops':
+                image_arg = self.data['download_action'][action]['image_arg']
+                action_arg = self.data['download_action'][action]['file']
+                if not image_arg or not action_arg:
+                    self.errors = "Missing image_arg for %s. " % action
+                    continue
+                substitutions["{%s}" % action] = action_arg
+                commands.append(image_arg)
+        self.sub_command.extend(substitute(commands, substitutions))
+        if not self.sub_command:
+            self.errors = "No QEMU command to execute"
 
     def run(self, connection, args=None):
         """
@@ -135,18 +149,11 @@ class CallQemuAction(Action):
         to run commands issued *after* the device has booted.
         pexpect.spawn is one of the raw_connection objects for a Connection class.
         """
-        if 'download_action' not in self.data:
-            raise RuntimeError("Value for download_action is missing from %s" % self.name)
-        if 'image' not in self.data['download_action']:
-            raise RuntimeError("No image file setting from the download_action")
-        command = self.get_common_data('qemu-command', 'command')
-        command.extend(["-hda", self.data['download_action']['image']['file']])
-        self.logger.info("Boot command: %s", ' '.join(command))
-
         # initialise the first Connection object, a command line shell into the running QEMU.
-        shell = ShellCommand(' '.join(command), self.timeout, logger=self.logger)
+        self.logger.info("Boot command: %s", ' '.join(self.sub_command))
+        shell = ShellCommand(' '.join(self.sub_command), self.timeout, logger=self.logger)
         if shell.exitstatus:
-            raise JobError("%s command exited %d: %s" % (command, shell.exitstatus, shell.readlines()))
+            raise JobError("%s command exited %d: %s" % (self.sub_command, shell.exitstatus, shell.readlines()))
         self.logger.debug("started a shell command")
 
         shell_connection = ShellSession(self.job, shell)

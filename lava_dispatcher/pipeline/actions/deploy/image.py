@@ -38,36 +38,38 @@ from lava_dispatcher.pipeline.actions.deploy.overlay import (
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 
 
-class DeployImageAction(DeployAction):
+class DeployImagesAction(DeployAction):
 
     def __init__(self):
-        super(DeployImageAction, self).__init__()
-        self.name = 'deployimage'
-        self.description = "deploy image using loopback mounts"
-        self.summary = "deploy image"
+        super(DeployImagesAction, self).__init__()
+        self.name = 'deployimages'
+        self.description = "deploy images using loopback mounts"
+        self.summary = "deploy images"
 
     def validate(self):
         # Nothing to do at this stage. Everything is done by internal actions
-        super(DeployImageAction, self).validate()
+        super(DeployImagesAction, self).validate()
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         path = mkdtemp()
-        download = DownloaderAction('image', path)
-        download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
-        self.internal_pipeline.add_action(download)
-        if parameters.get('format', '') == 'qcow2':
-            self.internal_pipeline.add_action(QCowConversionAction('image'))
-        self.internal_pipeline.add_action(MountAction())
-        self.internal_pipeline.add_action(CustomisationAction())
-        self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
-        self.internal_pipeline.add_action(ApplyOverlayImage())  # specific to image deployments
-        self.internal_pipeline.add_action(DeployDeviceEnvironment())
-        self.internal_pipeline.add_action(UnmountAction())
+        for image in parameters['images'].keys():
+            if image != 'yaml_line':
+                download = DownloaderAction(image, path)
+                download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
+                self.internal_pipeline.add_action(download)
+                if parameters['images'][image].get('format', '') == 'qcow2':
+                    self.internal_pipeline.add_action(QCowConversionAction(image))
+                self.internal_pipeline.add_action(MountAction(image))
+                self.internal_pipeline.add_action(CustomisationAction())
+                self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
+                self.internal_pipeline.add_action(ApplyOverlayImage())  # specific to image deployments
+                self.internal_pipeline.add_action(DeployDeviceEnvironment())
+                self.internal_pipeline.add_action(UnmountAction())
 
 
 # FIXME: may need to be renamed if it can only deal with QEMU image deployment
-class DeployImage(Deployment):
+class DeployImages(Deployment):
     """
     Strategy class for an Image based Deployment.
     Accepts parameters to deploy a QEMU
@@ -85,8 +87,8 @@ class DeployImage(Deployment):
     """
 
     def __init__(self, parent, parameters):
-        super(DeployImage, self).__init__(parent)
-        self.action = DeployImageAction()
+        super(DeployImages, self).__init__(parent)
+        self.action = DeployImagesAction()
         self.action.section = self.action_type
         self.action.job = self.job
         parent.add_action(self.action, parameters)
@@ -102,7 +104,7 @@ class DeployImage(Deployment):
         if device['device_type'] != 'qemu':
             return False
         # lookup if the job parameters match the available device methods
-        if 'image' not in parameters:
+        if 'images' not in parameters:
             # python3 compatible
             # FIXME: too broad
             print("Parameters %s have not been implemented yet." % parameters.keys())  # pylint: disable=superfluous-parens

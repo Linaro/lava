@@ -16,9 +16,12 @@ actions:
         timeout:
           minutes: 20
         to: tmpfs
-        image: http://images.validation.linaro.org/kvm/debian-sid-2014_08_21-amd64.qcow2.xz
-        format: qcow2
-        compression: xz
+        images:
+          rootfs:
+            url: http://images.validation.linaro.org/kvm/debian-sid-2014_08_21-amd64.qcow2.xz
+            image_arg: -hda {rootfs}
+            format: qcow2
+            compression: xz
         os: debian
         # if root_partition partition is not present:
         # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)

@@ -35,8 +35,11 @@ actions:
         timeout:
           minutes: 2
         to: tmpfs
-        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
-        compression: gz
+        images:
+          rootfs:
+            url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+            image_arg: -hda {rootfs}
+            compression: gz
         os: debian
         root_partition: 1
         role: client

@@ -16,8 +16,11 @@ actions:
         timeout:
           minutes: 20
         to: tmpfs
-        image: file:///home/lava/kvm-debian-wheezy.img.bz2
-        compression: bz2
+        images:
+          rootfs:
+            url: file:///home/lava/kvm-debian-wheezy.img.bz2
+            image_arg: -hda {rootfs}
+            compression: bz2
         os: debian
         # if root_partition partition is not present:
         # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)

@@ -28,7 +28,10 @@ actions:
           minutes: 20
           seconds: 0
         to: sata
-        image: http://myimage.com/target.img.gz
+        images:
+          rootfs:
+            url: http://myimage.com/target.img.gz
+            compression: gz
         os: debian
         # if root_partition partition is not present:
         # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)

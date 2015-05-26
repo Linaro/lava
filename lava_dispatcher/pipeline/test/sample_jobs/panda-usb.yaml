@@ -32,6 +32,9 @@ actions:
       timeout:
         minutes: 10
       to: usb
-      image: http://images.validation.linaro.org/functional-test-images/panda/panda-raring_developer_20130723-408.img.gz
+      images:
+        rootfs:
+          url: http://images.validation.linaro.org/functional-test-images/panda/panda-raring_developer_20130723-408.img.gz
+          compression: gz
       os: debian
       device: SanDisk_Ultra # needs to be exposed in the device-specific UI

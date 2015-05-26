@@ -18,13 +18,21 @@ actions:
         timeout:
           minutes: 2
         to: tmpfs
-        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
-        compression: gz
         os: debian
         # if root_partition partition is not present:
         # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
         # - look into device configuration
         root_partition: 1
+        images:
+          disk1:
+            url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+            compression: gz
+            image_arg: -hda {disk1}
+            overlay: True
+          disk2:
+            url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+            compression: gz
+            image_arg: -hdb {disk2}
 
     - boot:
         method: qemu
@@ -34,6 +42,8 @@ actions:
 
     - test:
         failure_retry: 3
+        timeout:
+          minutes: 10
         name: kvm-basic-singlenode  # is not present, use "test $N"
         definitions:
             - repository: git://git.linaro.org/qa/test-definitions.git
