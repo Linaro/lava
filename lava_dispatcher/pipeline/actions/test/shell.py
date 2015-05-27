@@ -112,8 +112,6 @@ class TestShellAction(TestAction):
         connection.timeout = self.timeout
         self.wait(connection)
 
-        self.match = SignalMatch()
-
         # FIXME: a predictable UID could be calculated from existing data here.
         # instead, uuid is read from the params to set _current_handler
         # FIXME: can only be run once per TestAction, so collate all patterns for all test definitions.
