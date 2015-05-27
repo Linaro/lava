@@ -68,11 +68,27 @@ def health_unknown(modeladmin, request, queryset):
 health_unknown.short_description = "set health_status to unknown"
 
 
+class ActiveDevicesFilter(admin.SimpleListFilter):
+    title = 'Active devices'
+    parameter_name = 'status'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('NoRetired', 'Exclude retired'),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'NoRetired':
+            return queryset.exclude(status=Device.RETIRED)
+
+
 class DeviceAdmin(admin.ModelAdmin):
     actions = [online_action, online_action_without_health_check,
                offline_action, health_unknown, retire_action]
-    list_filter = ('device_type', 'status', 'health_status', 'worker_host')
+    list_filter = ('device_type', 'status', ActiveDevicesFilter,
+                   'health_status', 'worker_host')
     raw_id_fields = ['current_job', 'last_health_report_job']
+
     fieldsets = (
         ('Properties', {
             'fields': ('device_type', 'hostname', 'worker_host', 'device_version')}),
@@ -83,7 +99,8 @@ class DeviceAdmin(admin.ModelAdmin):
         ('Status', {
             'fields': ('status', 'health_status', 'last_health_report_job', 'current_job')}),
     )
-    list_display = ('hostname', 'device_type', 'worker_host', 'status', 'health_status', 'is_public', 'is_pipeline')
+    list_display = ('hostname', 'device_type', 'current_job', 'worker_host',
+                    'status', 'health_status', 'is_public', 'is_pipeline')
     search_fields = ('hostname', 'device_type__name')
 
 
