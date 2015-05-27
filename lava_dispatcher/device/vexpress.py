@@ -243,6 +243,12 @@ class VexpressTarget(BootloaderTarget):
         self.context.run_command_with_retries('umount %s' % mount_point)
         self.proc.sendline("USB_OFF")
         self.proc.expect(['Cmd>'])
+        self.proc.sendline("flash")
+        self.proc.expect(['Flash>'])
+        self.proc.sendline("eraserange %s %s" % (self.config.vexpress_flash_range_low, self.config.vexpress_flash_range_high))
+        self.proc.expect(['Flash>'])
+        self.proc.sendline("exit")
+        self.proc.expect(['Cmd>'])
 
     def _leave_mcc(self):
         self.proc.sendline("reboot")
