@@ -37,10 +37,18 @@ if [ -d .git ]; then
   LOG=`git log -n1 --pretty=format:"Last change %h by %an, %ar. %s%n" --no-merges`
 fi
 DIR=`mktemp -d`
-mv -v ./dist/${NAME}-${VERSION}.tar.gz ${DIR}/${NAME}_${VERSION}.orig.tar.gz
+if [ -f './dist/${NAME}-${VERSION}.tar.gz' ]; then
+  mv -v ./dist/${NAME}-${VERSION}.tar.gz ${DIR}/${NAME}_${VERSION}.orig.tar.gz
+else
+  echo "WARNING: broken setuptools tarball - Debian bug #786977"
+  mv -v ./dist/${NAME}*.tar.gz ${DIR}/${NAME}_${VERSION}.orig.tar.gz
+fi
 cd ${DIR}
 git clone https://github.com/Linaro/pkg-${NAME}.git
 tar -xzf ${NAME}_${VERSION}.orig.tar.gz
+if [ ! -d ${DIR}/${NAME}-${VERSION} ]; then
+  mv -v ${DIR}/${NAME}-* ${DIR}/${NAME}-${VERSION}
+fi
 cd ${DIR}/pkg-${NAME}/
 dpkg-checkbuilddeps
 git archive master debian | tar -x -C ../${NAME}-${VERSION}
