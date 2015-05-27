@@ -147,21 +147,19 @@ class TestShellAction(TestAction):
         Stores the results of testcases inside the TestAction
         Call from subclasses before checking subclass-specific events.
         """
+        ret_val = False
         if event == "exit":
             self.logger.info("ok: lava_test_shell seems to have completed")
-            return False
 
         elif event == "eof":
             self.logger.warning("err: lava_test_shell connection dropped")
             self.errors = "lava_test_shell connection dropped"
-            return False
 
         elif event == "timeout":
             # if target.is_booted():
             #    target.reset_boot()
             self.logger.warning("err: lava_test_shell has timed out")
             self.errors = "lava_test_shell has timed out"
-            return False
 
         elif event == "signal":
             name, params = test_connection.match.groups()
@@ -170,27 +168,31 @@ class TestShellAction(TestAction):
             if name == "STARTRUN":
                 self.signal_director.test_uuid = params[1]
             #    self._handle_testrun(params)
-            if name == "TESTCASE":
+            elif name == "TESTCASE":
                 data = handle_testcase(params)
                 res = self.match.match(data)  # FIXME: rename!
                 self.logger.debug("result: %s" % res)
-                self.data["test"][self.signal_director.test_uuid].setdefault("results", OrderedDict())
+
+                p_res = self.data["test"][
+                    self.signal_director.test_uuid
+                ].setdefault("results", OrderedDict())
 
                 # prevent losing data in the update
                 # FIXME: support parameters and retries
-                if res["test_case_id"] in self.data["test"][self.signal_director.test_uuid]["results"]:
+                if res["test_case_id"] in p_res:
                     raise JobError("Duplicate test_case_id in results: %s", res["test_case_id"])
                 # turn the result dict inside out to get the unique test_case_id as key and result as value
                 self.results.update({
                     res["test_case_id"]: res["result"]
                 })
+
             try:
                 self.signal_director.signal(name, params)
             except KeyboardInterrupt:
                 raise KeyboardInterrupt
             # force output in case there was none but minimal content to increase speed.
             test_connection.sendline("#")
-            return True
+            ret_val = True
 
         elif event == "test_case":
             match = test_connection.match
@@ -205,9 +207,9 @@ class TestShellAction(TestAction):
                 self.data["test"][self.signal_director.test_uuid]["results"].update({
                     {res["test_case_id"]: res}
                 })
-                return True
+                ret_val = True
 
-        return False
+        return ret_val
 
     def _keep_running(self, test_connection, timeout):
         self.logger.debug("test shell timeout: %d seconds" % timeout)
