@@ -311,6 +311,8 @@ class DeviceSchema(schema.Schema):
     vexpress_firmware_path_android = schema.StringOption(default=None)
     vexpress_complete_firmware = schema.BoolOption(default=False)
     vexpress_firmware_default = schema.StringOption(default=None)
+    vexpress_flash_range_low = schema.StringOption(default=None)
+    vexpress_flash_range_high = schema.StringOption(default=None)
 
 
 class OptionDescriptor(object):
