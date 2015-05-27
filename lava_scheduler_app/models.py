@@ -783,25 +783,6 @@ class Device(RestrictedResource):
 
         return yaml.load(template.render(**job_ctx))
 
-    def previous_state(self):
-        """Returns the previous state which will not be any form of device
-        busy status such as the following:
-            Device.RUNNING
-            Device.RESERVED
-            Device.OFFLINING
-
-        We find a non-busy state by back-tracking in status transition logs.
-        """
-        busy_states = [Device.RUNNING, Device.RESERVED, Device.OFFLINING]
-        previous_transitions = DeviceStateTransition.objects.filter(
-            device=self).order_by('-created_on')
-        if len(previous_transitions) > 0:
-            for previous_transition in previous_transitions:
-                if previous_transition.old_state not in busy_states:
-                    return previous_transition.old_state
-        else:
-            return None
-
 
 class TemporaryDevice(Device):
     """

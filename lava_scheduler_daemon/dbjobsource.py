@@ -369,19 +369,16 @@ class DatabaseJobSource(object):
         self.logger.debug('marking job as complete on %s', board_name)
         device = Device.objects.get(hostname=board_name)
         old_device_status = device.status
-        new_device_status = None
-        previous_state = device.previous_state()
-        self.logger.debug('old device status %s, previous device state %s, job state %s' % (
+        self.logger.debug('old device status %s, job state %s' % (
             Device.STATUS_CHOICES[old_device_status][1],
-            Device.STATUS_CHOICES[previous_state][1],
             TestJob.STATUS_CHOICES[job.status][1]))
 
         if old_device_status == Device.RUNNING:
-            new_device_status = previous_state
+            new_device_status = Device.IDLE
         elif old_device_status == Device.OFFLINING:
             new_device_status = Device.OFFLINE
         elif old_device_status == Device.RESERVED:
-            new_device_status = previous_state
+            new_device_status = Device.IDLE
         else:
             self.logger.error(
                 "Unexpected device state in jobCompleted: %s", device.status)
@@ -390,9 +387,8 @@ class DatabaseJobSource(object):
             self.logger.debug("unhandled old device state")
             new_device_status = Device.IDLE
 
-        self.logger.debug('new device status %s, previous device state %s, job state %s' % (
+        self.logger.debug('new device status %s, job state %s' % (
             Device.STATUS_CHOICES[new_device_status][1],
-            Device.STATUS_CHOICES[previous_state][1],
             TestJob.STATUS_CHOICES[job.status][1]))
 
         # Temporary devices should be marked as RETIRED once the job is
@@ -424,12 +420,8 @@ class DatabaseJobSource(object):
             if device.health_status != Device.HEALTH_LOOPING:
                 if job.status == TestJob.INCOMPLETE:
                     device.health_status = Device.HEALTH_FAIL
-                    if previous_state not in [Device.OFFLINE, Device.OFFLINING]:
-                        self.logger.debug("taking %s offline, failed health check job %s" % (
-                            device.hostname, job_id))
-                    else:
-                        self.logger.debug("%s is offline, failed health check job %s" % (
-                            device.hostname, job_id))
+                    self.logger.debug("taking %s offline, failed health check job %s" % (
+                        device.hostname, job_id))
                     device.put_into_maintenance_mode(None, "Health Check Job Failed")
                     # update the local variable to track the effect of the external function call
                     new_device_status = device.status
@@ -439,6 +431,7 @@ class DatabaseJobSource(object):
                     device.health_status = Device.HEALTH_PASS
                     if old_device_status == Device.RUNNING:
                         new_device_status = Device.IDLE
+                device.save()
             self.logger.debug("new device health status %s" % Device.HEALTH_CHOICES[device.health_status][1])
 
         bundle_file = os.path.join(job.output_dir, 'result-bundle')
@@ -454,9 +447,8 @@ class DatabaseJobSource(object):
             else:
                 job._results_bundle = bundle
 
-        self.logger.debug('new device status %s, previous device state %s, job state %s' % (
+        self.logger.debug('new device status %s, job state %s' % (
             Device.STATUS_CHOICES[new_device_status][1],
-            Device.STATUS_CHOICES[previous_state][1],
             TestJob.STATUS_CHOICES[job.status][1]))
 
         job.end_time = datetime.datetime.utcnow()
@@ -513,19 +505,17 @@ class DatabaseJobSource(object):
                     self._kill_canceling(job)
                     device = Device.objects.get(hostname=job.actual_device.hostname)
                     if device.status == Device.RUNNING:
-                        previous_state = device.previous_state()
-                        if previous_state is None:
-                            previous_state = Device.IDLE
+                        new_state = Device.IDLE
                         if job.is_vmgroup:
                             try:
                                 if device.temporarydevice:
-                                    previous_state = Device.RETIRED
+                                    new_state = Device.RETIRED
                             except TemporaryDevice.DoesNotExist:
                                 self.logger.debug("%s is not a tmp device", device.hostname)
-                        self.logger.debug("Transitioning %s to %s", device.hostname, previous_state)
+                        self.logger.debug("Transitioning %s to %s", device.hostname, new_state)
                         device.current_job = None
                         msg = "Job %s cancelled" % job.display_id
-                        device.state_transition_to(previous_state, message=msg,
+                        device.state_transition_to(new_state, message=msg,
                                                    job=job)
                         self._commit_transaction(src='%s state' % device.hostname)
                     self.logger.info('job %s cancelled on %s', job.id, job.actual_device)
