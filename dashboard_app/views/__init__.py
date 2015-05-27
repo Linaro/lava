@@ -857,6 +857,30 @@ def test_result_update_comments(request, pathname, content_sha1,
 
 
 @login_required
+def test_result_update_units(request, pathname, content_sha1,
+                             analyzer_assigned_uuid, relative_index):
+
+    if request.method != 'POST':
+        raise PermissionDenied
+
+    test_run = get_restricted_object(
+        TestRun,
+        lambda test_run: test_run.bundle.bundle_stream,
+        request.user,
+        analyzer_assigned_uuid=analyzer_assigned_uuid
+    )
+    try:
+        test_case = test_run.test_results.select_related('fig').get(
+            relative_index=relative_index).test_case
+    except TestResult.DoesNotExist:
+        raise Http404
+    test_case.units = request.POST.get('units')
+    test_case.save()
+    data = serializers.serialize('json', [test_case])
+    return HttpResponse(data, content_type='application/json')
+
+
+@login_required
 def test_result_update_attribute(request, pathname, content_sha1,
                                  analyzer_assigned_uuid, relative_index):
 
