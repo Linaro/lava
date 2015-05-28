@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import sys
 import atexit
 import datetime
 import errno
@@ -105,13 +106,29 @@ def mk_targz(tfname, rootdir, basedir='.', asroot=False):
 
 
 def _list_files(dirname):
+    default_encoding = sys.getdefaultencoding()
     files = []
     for f in os.listdir(dirname):
         # Encode filenames to prevent unicode surprises.
         try:
-            f = f.decode('utf8', 'ignore')
+            f = f.decode(default_encoding, 'replace')
         except UnicodeDecodeError:
-            f = f.encode('utf8', 'ignore')
+            try:
+                f = f.decode('utf8', 'replace')
+            except UnicodeDecodeError:
+                try:
+                    f = f.encode(default_encoding, 'replace')
+                except UnicodeEncodeError:
+                    f = f.encode('utf8', 'replace')
+        except UnicodeEncodeError:
+            try:
+                f = f.decode('utf8', 'replace')
+            except UnicodeEncodeError:
+                try:
+                    f = f.encode(default_encoding, 'replace')
+                except UnicodeEncodeError:
+                    f = f.encode('utf8', 'replace')
+
         f = os.path.join(dirname, f)
         if os.path.isdir(f):
             files.extend(_list_files(f))
