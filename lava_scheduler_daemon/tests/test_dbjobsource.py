@@ -494,3 +494,26 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
             ]
         })
         jobs = self.scheduler_tick()
+
+    def test_handle_cancelling_jobs(self):
+        """
+        tests whether handle_cancelling_jobs does the right thing.
+        """
+        job = self.submit_job(device_type='panda')
+        scheduled = self.scheduler_tick()
+        self.assertEqual([job], scheduled)
+        # self.job_started(job)
+        job = TestJob.objects.get(pk=job.id)  # reload
+        self.assertEqual(job.status, TestJob.RUNNING)
+        self.assertEqual(job.actual_device.status, Device.RUNNING)
+        self.assertTrue(job.actual_device.current_job)
+        job.status = TestJob.CANCELING
+        job.save()
+        self.assertEqual(job.status, TestJob.CANCELING)
+        self.assertEqual(job.actual_device.status, Device.RUNNING)
+        self.assertTrue(job.actual_device.current_job)
+        self.scheduler_tick()
+        job = TestJob.objects.get(pk=job.id)  # reload
+        self.assertEqual(job.status, TestJob.CANCELED)
+        self.assertEqual(job.actual_device.status, Device.IDLE)
+        self.assertFalse(job.actual_device.current_job)
