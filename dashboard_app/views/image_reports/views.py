@@ -22,6 +22,7 @@ import simplejson
 import tempfile
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import Group
 from django.core import serializers
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
@@ -415,6 +416,27 @@ def image_report_add_group(request, name):
 
 
 @login_required
+@ownership_required
+def image_report_select_group(request, name):
+
+    if request.method != 'POST':
+        raise PermissionDenied
+
+    group_name = request.POST.get("value")
+    image_report = get_object_or_404(ImageReport, name=name)
+
+    if not group_name:
+        image_report.group = None
+    else:
+        group = Group.objects.get(name=group_name)
+        image_report.group = group
+
+    image_report.save()
+
+    return HttpResponse(group_name, content_type='application/json')
+
+
+@login_required
 def image_report_order_update(request, name):
 
     if request.method != 'POST':
@@ -546,6 +568,21 @@ def get_chart_test_data(request):
     data["attributes"] = chart_test.attributes
     data["all_attributes"] = chart_test.get_available_attributes(request.user)
     return HttpResponse(simplejson.dumps([data]), content_type='application/json')
+
+
+@login_required
+def get_group_names(request):
+
+    term = request.GET['term']
+    groups = []
+    for group in Group.objects.filter(user=request.user,
+                                      name__istartswith=term):
+        groups.append(
+            {"id": group.id,
+             "name": group.name,
+             "label": group.name})
+    return HttpResponse(simplejson.dumps(groups),
+                        content_type='application/json')
 
 
 @public_filters_or_login_required

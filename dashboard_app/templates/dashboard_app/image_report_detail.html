@@ -26,6 +26,7 @@
   <div class="form-field">
     Description&#58;&nbsp;{{ image_report.description|keep_spacing|linebreaks }}
   </div>
+   <h4>Manage</h4>
   <div class="form-field">
     <a href="{{ image_report.get_absolute_url }}/+edit">Edit</a> this image report.
   </div>
@@ -34,17 +35,22 @@
   </div>
   <div class="form-field">
     {% if image_report.is_published %}
-    <a href="{{ image_report.get_absolute_url }}/+unpublish">Unpublish</a> this image report.
+    <a href="{{ image_report.get_absolute_url }}/+unpublish">Unpublish</a> this image report.&nbsp;&nbsp;
+    <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="Forbid other users from viewing this report.">?</button>
     {% else %}
-    <a href="{{ image_report.get_absolute_url }}/+publish">Publish</a> this image report.
+    <a href="{{ image_report.get_absolute_url }}/+publish">Publish</a> this image report.&nbsp;&nbsp;
+    <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="Let other users view this report.">?</button>
     {% endif %}
   </div>
 
   {% if image_report.is_published %}
+  <h4>Organise</h4>
   <div class="form-field" style="float: left;">
-    Image Report Group:&nbsp;&nbsp;
+    Image Report Group label:&nbsp;&nbsp;
   </div>
-  <div id="image_report_group" style="float: left;">{{ image_report.image_report_group|default:"Click here to select"}}</div>
+  <a href="#">
+    <div id="image_report_group" style="float: left;">{{ image_report.image_report_group|default:"Click here to select"}}</div>
+  </a>
 
   {% if image_report.image_report_group %}
   <div id="group_link" class="group-link">
@@ -55,9 +61,27 @@
     <a href="{% url 'dashboard_app.views.image_reports.views.image_report_list' %}#">Group link</a>
   </div>
   {% endif %}
+  &nbsp;&nbsp;
+  <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="Collect similar reports into a single table on the image reports list.">?</button>
 
   <div style="clear: both;"></div>
 
+  <h4>Ownership</h4>
+  <div class="form-field">
+    Maintainer:&nbsp;{{ image_report.user }}
+    &nbsp;&nbsp;
+    <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="User who created the report.">?</button>
+  </div>
+
+  <div class="form-field" style="float: left;">
+    Group edit permission:&nbsp;&nbsp;
+  </div>
+  <a href="#">
+    <div id="group" style="float: left;">{{ image_report.group|default:"Click here to select"}}</div>
+  </a>
+  &nbsp;&nbsp;
+  <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="A group of users already listed on the Profile page.">?</button>
+  <div style="clear: both;"></div>
   {% endif %}
 
 </div>
@@ -150,11 +174,34 @@
       {% if not image_report.image_report_group %}
         field.val("");
       {% endif %}
+      field.select();
       field.autocomplete({
         source: '{% url 'dashboard_app.views.image_reports.views.image_report_group_list' %}',
         minLength: 2,
       });
   });
+
+
+  $("#group").editable(
+  "{% url 'dashboard_app.views.image_reports.views.image_report_select_group' name=image_report.name %}",
+  {
+    onblur: "submit",
+    width: 200,
+    submitdata : {"csrfmiddlewaretoken": '{{csrf_token}}'},
+  });
+
+  $("#group").on("click", function(event) {
+      var field = $(this).find("input");
+      {% if not image_report.group %}
+        field.val("");
+      {% endif %}
+      field.select();
+      field.autocomplete({
+        source: '{% url 'dashboard_app.views.image_reports.views.get_group_names' %}',
+        minLength: 1,
+      });
+  });
+
 
 </script>
 {% endif %}

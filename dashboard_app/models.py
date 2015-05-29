@@ -1961,6 +1961,12 @@ class ImageReport(models.Model):
         default=None,
         on_delete=models.CASCADE)
 
+    group = models.ForeignKey(
+        Group,
+        default=None,
+        null=True,
+        on_delete=models.SET_NULL)
+
     description = models.TextField(blank=True, null=True)
 
     is_published = models.BooleanField(
