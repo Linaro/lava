@@ -12,8 +12,9 @@ def ownership_required(view_func):
     def wrapper(request, *args, **kwargs):
         report_name = kwargs.get('name', None)
         image_report = get_object_or_404(ImageReport, name=report_name)
-        if request.user.is_superuser or image_report.user == request.user:
-                return view_func(request, *args, **kwargs)
+        if request.user.is_superuser or image_report.user == request.user or \
+           image_report.group in request.user.groups.all():
+            return view_func(request, *args, **kwargs)
         else:
             raise PermissionDenied
     return wrapper
