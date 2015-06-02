@@ -53,18 +53,18 @@ filters_callback = function(chart_id, filter_id, name) {
             $("#id_filter").val(filter_id);
             add_filter_container(data, filter_id, name);
             filter_loaded_callback();
+
+            if ($("#id_is_all_tests_included").prop("checked") == true) {
+                $("#filter-container").hide();
+            } else {
+                $("#filter-container").show();
+            }
         },
         error: function(data, status, error) {
             $('#loading_dialog').dialog('close');
             alert('Filter could not be loaded, please try again.');
         }
     });
-
-    if ($("#id_is_all_tests_included").prop("checked") == true) {
-        $("#filter-container").hide();
-    } else {
-        $("#filter-container").show();
-    }
 }
 
 filter_loaded_callback = function() {

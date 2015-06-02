@@ -1925,7 +1925,7 @@ def update_image_charts(bundle):
 
     for filter in filter_matches:
         chart_filters = ImageChartFilter.objects.filter(
-            image_chart_filter=filter)
+            filter=filter)
         for chart_filter in chart_filters:
             chart_filter.save()
 
@@ -2574,10 +2574,11 @@ class ImageChartFilter(models.Model):
         flag is set.
         """
         result = super(ImageChartFilter, self).save(*args, **kwargs)
-        if self.image_chart.chart_type == "pass/fail":
+        if self.image_chart.chart_type == "pass/fail" and \
+           self.is_all_tests_included:
             tests = [chart_test.test.test_id for chart_test in self.chart_tests]
             all_filter_tests = Test.objects.filter(
-                test_runs__bundle__bundle_stream__testrunfilter__id=self.filter.id).distinct('test_id')
+                test_runs__bundle__bundle_stream__testrunfilter=self.filter).distinct('test_id')
             for test in all_filter_tests:
                 if test.test_id not in tests:
                     chart_test = ImageChartTest(image_chart_filter=self,
