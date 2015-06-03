@@ -130,6 +130,17 @@ class CommandRunner(object):
 
         return rc
 
+    def get_wget_options(self):
+        patterns = ["GNU Wget", "BusyBox", pexpect.EOF, pexpect.TIMEOUT]
+        cmd = "LANG=C wget --help 2>&1 | head -n1"
+        self.run(cmd, patterns, timeout=10)
+        wget_options = ""
+        if self.match_id == 0:
+            wget_options = "--no-check-certificate --no-proxy --connect-timeout=30 -S --progress=dot -e dotbytes=2M"
+        elif self.match_id == 1:
+            wget_options = "--proxy off"
+        return wget_options
+
 
 class NetworkCommandRunner(CommandRunner):
     """A CommandRunner with some networking utility methods."""
