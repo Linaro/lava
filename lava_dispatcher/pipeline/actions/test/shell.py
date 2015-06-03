@@ -39,6 +39,7 @@ class TestShell(LavaTest):
         super(TestShell, self).__init__(parent)
         self.action = TestShellRetry()
         self.action.job = self.job
+        self.action.section = self.action_type
         parent.add_action(self.action, parameters)
 
     @classmethod
@@ -69,6 +70,9 @@ class TestShellAction(TestAction):
         self.signal_director = self.SignalDirector(None)  # no default protocol
         self.patterns = {}
         self.match = SignalMatch()
+        self.suite = None
+        self.testset = None
+        self.report = {}
 
     def validate(self):
         if "test_image_prompts" not in self.job.device:
@@ -137,6 +141,7 @@ class TestShellAction(TestAction):
             while self._keep_running(test_connection, test_connection.timeout):
                 pass
 
+        self.logger.debug(self.report)
         return connection
 
     def check_patterns(self, event, test_connection):
@@ -165,12 +170,13 @@ class TestShellAction(TestAction):
             params = params.split()
             if name == "STARTRUN":
                 self.signal_director.test_uuid = params[1]
+                self.suite = params[0]
+                self.logger.debug("Starting test suite: %s" % self.suite)
             #    self._handle_testrun(params)
             elif name == "TESTCASE":
                 data = handle_testcase(params)
                 res = self.match.match(data)  # FIXME: rename!
-                self.logger.debug("result: %s" % res)
-
+                self.logger.debug("res: %s data: %s" % (res, data))
                 p_res = self.data["test"][
                     self.signal_director.test_uuid
                 ].setdefault("results", OrderedDict())
@@ -180,7 +186,10 @@ class TestShellAction(TestAction):
                 if res["test_case_id"] in p_res:
                     raise JobError("Duplicate test_case_id in results: %s", res["test_case_id"])
                 # turn the result dict inside out to get the unique test_case_id as key and result as value
-                self.results.update({
+                self.logger.results({
+                    'testsuite': self.suite,
+                    res["test_case_id"]: res["result"]})
+                self.report.update({
                     res["test_case_id"]: res["result"]
                 })
 
@@ -200,11 +209,11 @@ class TestShellAction(TestAction):
                 self.logger.warning("err: lava_test_shell has timed out (test_case)")
             else:
                 res = self.match.match(match.groupdict())  # FIXME: rename!
-                self.logger.debug("result: %s" % res)
-                self.data["test"][self.signal_director.test_uuid].setdefault("results", {})
-                self.data["test"][self.signal_director.test_uuid]["results"].update({
-                    {res["test_case_id"]: res}
-                })
+                self.logger.debug("outer_loop_result: %s" % res)
+                # self.data["test"][self.signal_director.test_uuid].setdefault("results", {})
+                # self.data["test"][self.signal_director.test_uuid]["results"].update({
+                #     {res["test_case_id"]: res}
+                # })
                 ret_val = True
 
         return ret_val

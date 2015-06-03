@@ -39,6 +39,7 @@ class BootKExec(Boot):
     def __init__(self, parent, parameters):
         super(BootKExec, self).__init__(parent)
         self.action = BootKexecAction()
+        self.action.section = self.action_type
         self.action.job = self.job
         parent.add_action(self.action, parameters)
 

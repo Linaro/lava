@@ -52,6 +52,7 @@ class BootQEMU(Boot):
     def __init__(self, parent, parameters):
         super(BootQEMU, self).__init__(parent)
         self.action = BootQEMUImageAction()
+        self.action.section = self.action_type
         self.action.job = self.job
         parent.add_action(self.action, parameters)
 

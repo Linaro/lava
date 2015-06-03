@@ -36,6 +36,7 @@ class MultinodeTestShell(LavaTest):
         super(MultinodeTestShell, self).__init__(parent)
         self.action = MultinodeTestAction()
         self.action.job = self.job
+        self.action.section = self.action_type
         parent.add_action(self.action, parameters)
 
     @classmethod

@@ -129,6 +129,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         if self.parent:  # action
             self.children[self] = self.actions
             self.parent.pipeline = self
+            action.section = self.parent.section
         else:
             action.level = "%s" % (len(self.actions))
         # create a log handler just for this action.
@@ -317,7 +318,11 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 else:
                     action.logger.debug(msg)
                 if action.results and isinstance(action.logger, YAMLLogger):
-                    action.logger.results(action.results)
+                    action.results.update({'level': action.level,
+                                           'duration': action.elapsed_time,
+                                           'timeout': action.timeout.duration,
+                                           })
+                    action.logger.results({action.name: action.results})
                 if new_connection:
                     connection = new_connection
             except KeyboardInterrupt:
@@ -369,6 +374,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         self.max_retries = 1  # unless the strategy or the job parameters change this, do not retry
         self.diagnostics = []
         self.protocols = []  # list of protocol objects supported by this action, full list in job.protocols
+        self.section = None
 
     # public actions (i.e. those who can be referenced from a job file) must
     # declare a 'class-type' name so they can be looked up.
@@ -532,6 +538,9 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
             self.errors = "%s action has no name set" % self
         if ' ' in self.name:
             self.errors = "Whitespace must not be used in action names, only descriptions or summaries: %s" % self.name
+
+        if not self.section:
+            self.errors = "%s action has no section set" % self
 
         # Collect errors from internal pipeline actions
         self.job.context.setdefault(self.name, {})

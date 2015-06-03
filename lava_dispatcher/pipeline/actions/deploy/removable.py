@@ -56,6 +56,7 @@ class Removable(Deployment):
         super(Removable, self).__init__(parent)
         self.action = MassStorage()
         self.action.job = self.job
+        self.action.section = self.action_type
         parent.add_action(self.action, parameters)
 
     @classmethod

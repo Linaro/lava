@@ -24,6 +24,11 @@ from lava_dispatcher.pipeline.action import Action
 class SubmitResultsAction(Action):
 
     name = 'submit_results'
+    # FIXME: there is no role for a submit action any longer - remove.
+
+    def __init__(self):
+        super(SubmitResultsAction, self).__init__()
+        self.section = 'submit'
 
     def validate(self):
         super(SubmitResultsAction, self).validate()
