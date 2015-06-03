@@ -869,10 +869,12 @@ class Target(object):
             # substitution.
             profile_path = profile_path % rootdir
 
-        with open(profile_path, 'a') as f:
-            f.write('export PS1="%s"\n' % self.tester_ps1)
-        with open('%s/etc/hostname' % rootdir, 'w') as f:
-            f.write('%s\n' % self.config.hostname)
+        if os.path.exists(profile_path):
+            with open(profile_path, 'a') as f:
+                f.write('export PS1="%s"\n' % self.tester_ps1)
+        if os.path.exists('%s/etc/hostname' % rootdir):
+            with open('%s/etc/hostname' % rootdir, 'w') as f:
+                f.write('%s\n' % self.config.hostname)
 
     @property
     def target_distro(self):
