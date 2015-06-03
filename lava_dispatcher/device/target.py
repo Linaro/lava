@@ -602,13 +602,8 @@ class Target(object):
                                                   good)
                 start = time.time()
             except pexpect.TIMEOUT:
-                # Get the last line from the pexpect buffer
-                last_kmsg = connection.before.rstrip().split('\r\n')[-1]
-                msg = "Kernel Error:  %s " % last_kmsg
-                logging.error(msg)
-                kernel_boot_time = 0.0
                 self.context.test_data.add_result(wait_for_kernel_boot,
-                                                  bad, message=msg)
+                                                  bad)
                 raise
 
         try:
