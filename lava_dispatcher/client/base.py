@@ -417,9 +417,9 @@ class LavaClient(object):
                                                       qemu_pflash=qemu_pflash)
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs,
-                             nfsrootfs, image, bootloader, firmware, bl1, bl2, bl31,
+                             nfsrootfs, image, bootloader, firmware, bl0, bl1, bl2, bl31,
                              rootfstype, bootloadertype, target_type, qemu_pflash=None):
-        self.target_device.deploy_linaro_kernel(kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, image, bootloader, firmware,
+        self.target_device.deploy_linaro_kernel(kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, image, bootloader, firmware, bl0,
                                                 bl1, bl2, bl31, rootfstype, bootloadertype, target_type, qemu_pflash=qemu_pflash)
 
     def dummy_deploy(self, target_type):

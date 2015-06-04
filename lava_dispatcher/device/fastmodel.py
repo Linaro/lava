@@ -79,6 +79,7 @@ class FastModelTarget(Target):
         self._initrd = None
         self._uefi = None
         self._uefi_vars = None
+        self._bl0 = None
         self._bl1 = None
         self._bl2 = None
         self._bl31 = None
@@ -283,8 +284,8 @@ class FastModelTarget(Target):
         self._copy_needed_files_from_partition(self.config.root_part, 'boot')
         self._copy_needed_files_from_partition(self.config.root_part, 'lib')
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, image, bootloader, firmware, bl1, bl2,
-                             bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, image, bootloader, firmware, bl0, bl1,
+                             bl2, bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
         # Required
         if kernel is None:
             raise CriticalError("A kernel image is required")
@@ -338,6 +339,9 @@ class FastModelTarget(Target):
             self._bl1 = download_image(bl1, self.context,
                                        self._scratch_dir, decompress=False)
 
+        if bl0 is not None:
+            self._bl0 = download_image(bl0, self.context, self._scratch_dir,
+                                       decompress=False)
         if bl2 is not None:
             self._bl2 = download_image(bl2, self.context, self._scratch_dir,
                                        decompress=False)
@@ -479,8 +483,8 @@ class FastModelTarget(Target):
         sim_cmd = '%s %s' % (self.config.simulator_command, options)
         sim_cmd = sim_cmd.format(
             AXF=self._axf, IMG=self._sd_image, KERNEL=self._kernel,
-            DTB=self._dtb, INITRD=self._initrd, UEFI=self._uefi, BL1=self._bl1,
-            UEFI_VARS=self._uefi_vars, INTERFACE=self._interface_name)
+            DTB=self._dtb, INITRD=self._initrd, UEFI=self._uefi, BL0=self._bl0,
+            BL1=self._bl1, UEFI_VARS=self._uefi_vars, INTERFACE=self._interface_name)
 
         # the simulator proc only has stdout/stderr about the simulator
         # we hook up into a telnet port which emulates a serial console

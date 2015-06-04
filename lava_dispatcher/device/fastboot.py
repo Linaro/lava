@@ -59,8 +59,8 @@ class FastbootTarget(Target):
 
         self.driver = driver_class(self)
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, image, bootloader, firmware, bl1, bl2,
-                             bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, image, bootloader, firmware, bl0,
+                             bl1, bl2, bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
         self._target_type = target_type
         self._use_boot_cmds = True
         if rootfs is not None:
@@ -77,7 +77,7 @@ class FastbootTarget(Target):
                 if self._image_deployment:
                     self._enter_fastboot()
                 self.driver.deploy_linaro_kernel(kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, image, bootloader,
-                                                 firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
+                                                 firmware, bl0, bl1, bl2, bl31, rootfstype, bootloadertype,
                                                  self._target_type, self.scratch_dir, qemu_pflash=qemu_pflash)
                 deployed = True
             except (subprocess.CalledProcessError, pexpect.TIMEOUT) as e:

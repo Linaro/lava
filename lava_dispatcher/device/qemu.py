@@ -77,8 +77,8 @@ class QEMUTarget(Target):
         else:
             self._qemu_pflash = None
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, image, bootloader, firmware, bl1, bl2,
-                             bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, image, bootloader, firmware, bl0, bl1,
+                             bl2, bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
         # Check for errors
         if rootfs is None and ramdisk is None:
             raise CriticalError("You must specify a QEMU file system image or ramdisk")
