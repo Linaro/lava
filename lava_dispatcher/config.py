@@ -63,6 +63,7 @@ class DeviceSchema(schema.Schema):
     test_image_prompts = schema.ListOption(default=["\(initramfs\)",
                                                     "linaro-test",
                                                     "/ #",
+                                                    "root@linaro#",
                                                     "root@android",
                                                     "root@master",
                                                     "root@linaro-nano:~#",
