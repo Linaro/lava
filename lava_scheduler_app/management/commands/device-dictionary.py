@@ -90,6 +90,7 @@ class Command(BaseCommand):
             if element is None:
                 self.stderr.write("Unable to export - no dictionary found for '%s'" %
                                   hostname)
+                sys.exit(2)
             else:
                 data = devicedictionary_to_jinja2(
                     element.parameters,
@@ -109,3 +110,4 @@ class Command(BaseCommand):
                 self.stdout.write(device_configuration)
         else:
             self.stderr.write("Please specify one of --import, --export or --review")
+            sys.exit(1)
