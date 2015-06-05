@@ -59,6 +59,21 @@ def find_device_for_job(job, device_list):
     non-pipeline device for a pipeline job. Pipeline devices are explicitly
     allowed to run non-pipeline jobs..
     """
+    for device in device_list:
+        if device.current_job:
+            if device.device_type != job.requested_device_type:
+                continue
+            if job.requested_device and device == job.requested_device:
+                continue
+            logger = logging.getLogger(__name__ + '.DatabaseJobSource')
+            # warn the admin that this needs human intervention
+            bad_job = TestJob.objects.get(id=device.current_job.id)
+            logger.warn("Refusing to reserve %s for %s - current job is %s" % (
+                device, job, bad_job
+            ))
+            device_list.remove(device)
+    if not device_list:
+        return None
     if job.health_check is True:
         if job.requested_device.status == Device.OFFLINE:
             return job.requested_device

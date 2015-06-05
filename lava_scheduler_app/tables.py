@@ -635,10 +635,10 @@ class DeviceTransitionTable(LavaTable):
     class Meta(LavaTable.Meta):
         model = DeviceStateTransition
         exclude = [
-            'id', 'device', 'job', 'old_state', 'new_state'
+            'device', 'job', 'old_state', 'new_state'
         ]
         sequence = [
-            'created_on', 'transition', 'created_by', 'message'
+            'id', 'created_on', 'transition', 'created_by', 'message'
         ]
         searches = {}
         queries = {}

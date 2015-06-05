@@ -1902,7 +1902,7 @@ class TransitionView(JobTableView):
         ).filter(
             device=self.device,
         ).order_by(
-            '-created_on'
+            '-id'
         )
 
 

@@ -931,7 +931,7 @@ def _get_device_type(user, name):
     the user is an owner of at least one of those devices.
     :param user: the user submitting the TestJob
     """
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger('lava_scheduler_app')
     try:
         device_type = DeviceType.objects.get(name=name)
     except (ObjectDoesNotExist, MultipleObjectsReturned) as e:
@@ -1477,7 +1477,7 @@ class TestJob(RestrictedResource):
         """
         job_data = simplejson.loads(json_data)
         validate_job_data(job_data)
-        logger = logging.getLogger(__name__)
+        logger = logging.getLogger('lava_scheduler_app')
 
         # Validate job, for parameters, specific to multinode that has been
         # input by the user. These parameters are reserved by LAVA and
@@ -1846,16 +1846,35 @@ class TestJob(RestrictedResource):
                 user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
 
     def cancel(self, user=None):
+        """
+        Sets the Canceling status and clears reserved status, if any.
+        Actual job cancellation (ending the lava-dispatch process)
+        is done by the scheduler daemon (or lava-slave).
+        :param user: user requesting the cancellation, or None.
+        """
+        logger = logging.getLogger('lava_scheduler_app')
         if not user:
+            logger.info("Unidentified user requested cancellation of job submitted by %s" % (
+                self.submitter
+            ))
             user = self.submitter
         # if SUBMITTED with actual_device - clear the actual_device back to idle.
         if self.status == TestJob.SUBMITTED and self.actual_device is not None:
+            logger.info("Cancel %s - clearing reserved status for device %s" % (
+                self, self.actual_device.hostname))
             self.actual_device.cancel_reserved_status(self.submitter, "job-cancel")
-            self._send_cancellation_mail(user)
-        if self.status == TestJob.RUNNING:
             self.status = TestJob.CANCELING
             self._send_cancellation_mail(user)
-        else:
+        elif self.status == TestJob.SUBMITTED:
+            logger.info("Cancel %s" % self)
+            self.status = TestJob.CANCELING
+            self._send_cancellation_mail(user)
+        elif self.status == TestJob.RUNNING:
+            logger.info("Cancel %s" % self)
+            self.status = TestJob.CANCELING
+            self._send_cancellation_mail(user)
+        elif self.status == TestJob.CANCELING:
+            logger.info("Completing cancel of %s" % self)
             self.status = TestJob.CANCELED
         if user:
             self.failure_comment = "Canceled by %s" % user.username
@@ -1897,7 +1916,7 @@ class TestJob(RestrictedResource):
         description = self.description.splitlines()[0]
         if len(description) > 200:
             description = description[197:] + '...'
-        logger = logging.getLogger(self.__class__.__name__ + '.' + str(self.pk))
+        logger = logging.getLogger('lava_scheduler_app')
         logger.info("sending mail to %s", recipient.email)
         try:
             send_mail(
@@ -1923,7 +1942,7 @@ class TestJob(RestrictedResource):
         description = self.description.splitlines()[0]
         if len(description) > 200:
             description = description[197:] + '...'
-        logger = logging.getLogger(self.__class__.__name__ + '.' + str(self.pk))
+        logger = logging.getLogger('lava_scheduler_app')
         logger.info("sending mail to %s", recipients)
         try:
             send_mail(

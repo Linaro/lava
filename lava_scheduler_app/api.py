@@ -168,7 +168,9 @@ class SchedulerAPI(ExposedAPI):
         if not job.can_cancel(self.user):
             raise xmlrpclib.Fault(403, "Permission denied.")
         if job.is_multinode:
-            for multinode_job in job.sub_jobs_list:
+            multinode_jobs = TestJob.objects.filter(
+                target_group=job.target_group)
+            for multinode_job in multinode_jobs:
                 multinode_job.cancel(self.user)
         elif job.is_vmgroup:
             for vmgroup_job in job.sub_jobs_list:
