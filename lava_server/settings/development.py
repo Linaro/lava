@@ -21,15 +21,6 @@ import os
 from lava_server.extension import loader
 from lava_server.settings.common import *
 
-# Top-level directory for volatile, re-buildable files originated from
-# installing components of a lava-dev-tool project. Here we assume the project
-# uses virtualenv and look for a variable virtualenv injects into the
-# environment.
-LOCALENV_DIR = os.getenv("VIRTUAL_ENV")
-if not LOCALENV_DIR:
-    print "Not using lava-dev-tool?"
-    print "Well okay, but just be careful with your imports and python path"
-
 # Top-level directory of the project.
 #
 # This directory MUST contain two sub-directories:
@@ -42,13 +33,8 @@ PROJECT_SRC_DIR = os.path.normpath(
             os.path.abspath(__file__)),
         ".."))
 
-# Top-level directory for nonvolatile files, as used by lava-dev-tool. It is a
-# sibling directory to localenv so it's easier to define its location as
-# relative to LOCALENV_DIR.
-if LOCALENV_DIR:
-    PRECIOUS_DIR = os.path.join(LOCALENV_DIR, "../precious")
-else:
-    PRECIOUS_DIR = os.path.join(PROJECT_SRC_DIR, "precious")
+# Top-level directory for nonvolatile files
+PRECIOUS_DIR = os.path.join(PROJECT_SRC_DIR, "precious")
 
 # Create precious directory if needed
 if not os.path.exists(PRECIOUS_DIR):
