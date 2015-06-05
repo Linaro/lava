@@ -74,7 +74,7 @@ class Command(BaseCommand):
                               " to copy and edit the python script '%s' to "
                               "work with other LDAP systems."
                               % _get_script_path())
-            return
+            sys.exit(1)
         bind_dn = settings.get_setting("AUTH_LDAP_BIND_DN", None)
         bind_password = settings.get_setting("AUTH_LDAP_BIND_PASSWORD", None)
 

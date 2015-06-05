@@ -72,7 +72,7 @@ class Command(BaseCommand):
         hostname = options['hostname']
         if hostname is None:
             self.stderr.write("Please specify a hostname")
-            return
+            sys.exit(2)
         if options['import'] is not None:
             data = parse_template(options['import'])
             element = DeviceDictionary.get(hostname)
