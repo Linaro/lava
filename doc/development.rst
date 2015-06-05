@@ -476,6 +476,25 @@ Other useful features from `django_extensions`_ are as follows:
 .. _`validate_templates`: http://django-extensions.readthedocs.org/en/latest/validate_templates.html
 .. _`runscript`: http://django-extensions.readthedocs.org/en/latest/runscript.html
 
+Developer access to django shell
+--------------------------------
+Default configurations use a side-effect of the logging behaviour to restrict access to the
+``lava-server manage`` operations which typical Django apps expose through the ``manage.py``
+interface. This is because ``lava-server manage shell`` provides read-write access to the database,
+so the command requires ``sudo``.
+
+On developer machines, this can be unnecessary. Set the location of the django log to a new location
+to allow easier access to the management commands to simplify debugging and to be able to run a Django
+Python Console inside a development environment. In ``/etc/lava-server/settings.conf`` add::
+
+ "DJANGO_LOGFILE": "/tmp/django.log"
+
+.. note:: ``settings.conf`` is JSON syntax, so ensure that the previous line ends with a comma
+   and that the resulting file validates as JSON. Use `JSONLINT <http://www.jsonlint.com>`_
+
+The new location needs to be writable by the ``lavaserver`` user (for use by localhost) and by the
+developer user (but would typically be writeable by anyone).
+
 Adding support for new devices
 ******************************
 
