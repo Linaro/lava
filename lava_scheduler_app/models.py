@@ -1867,7 +1867,7 @@ class TestJob(RestrictedResource):
             self._send_cancellation_mail(user)
         elif self.status == TestJob.SUBMITTED:
             logger.info("Cancel %s" % self)
-            self.status = TestJob.CANCELING
+            self.status = TestJob.CANCELED
             self._send_cancellation_mail(user)
         elif self.status == TestJob.RUNNING:
             logger.info("Cancel %s" % self)
