@@ -3,6 +3,10 @@
 Lava Dispatcher Design
 ######################
 
+This is the **developer** documentation for the new dispatcher design.
+See :ref:`refactoring_use_cases` for information for lab administrators
+and users of the new design.
+
 .. _objectives:
 
 Objectives

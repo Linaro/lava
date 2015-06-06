@@ -19,9 +19,9 @@ Software Requirements
 
 See :ref:`debian_installation` for instructions.
 
-We currently recommend installing LAVA on `Debian`_ unstable or jessie.
-Support for installing LAVA on Ubuntu and other :ref:`debian_installation` is
-provided via uploads to Debian.
+We currently recommend installing LAVA on `Debian`_ unstable, stretch
+or jessie. Support for installing LAVA on Ubuntu and other
+:ref:`debian_installation` is provided via uploads to Debian.
 
 Contributions to support other distributions are welcome.
 
@@ -151,6 +151,8 @@ USB or using serial cables.
 To install a single master instance and create a superuser, refer to
 :ref:`debian_installation` installation.
 
+.. _distributed_instance:
+
 Distributed Instance installation
 =================================
 
@@ -169,7 +171,6 @@ Remote workers are especially useful when the master instance is on a public ser
 or external virtual host, and the remote workers and the devices are
 hosted in a separate location.
 
-
 A note on Heartbeat
 ===================
 The heartbeat data of the dispatcher node is sent to the database via
@@ -185,6 +186,48 @@ except description is populated automatically. The following figure
 illustrates this:
 
 .. image:: ./images/lava-worker-rpc2-url.png
+
+.. _pipeline_install:
+
+What is the Pipeline?
+=====================
+
+.. warning:: Developers only
+
+There are various developments happening in parallel with the
+:ref:`single_instance` and :ref:`distributed_instance` models as
+part of the :ref:`dispatcher refactoring <dispatcher_design>`. These
+changes are currently for developers only but introduce new dependencies
+and new elements which should not be confused with the current
+production models. It is possible to install LAVA using the new design
+but a lot of helpers and wrappers are needed and the code is still
+evolving, so submission requirements and result handling are likely to
+change before a migration to the new design can be planned in detail.
+
+This documentation includes notes on the new design, so to make things
+clearer, the following terms refer exclusively to the new design and
+have no bearing on :ref:`single_instance` or :ref:`distributed_instance`
+installation methods which should still be used for all production
+instances.
+
+#. :term:`pipeline`
+#. :term:`refactoring`
+#. :term:`device dictionary`
+#. :term:`ZMQ`
+
+The pipeline model also changes the way that results are gathered,
+exported and queried, replacing the :term:`bundle stream`,
+:term:`result bundle` and :term:`filter` dashboard objects. This new
+:term:`results` functionality only operates on pipeline test jobs and is ongoing
+development, so some features are incomplete and likely to change in future
+releases. Admins can choose to not show the new results app, for example until
+pipeline devices are supported on that instance, by setting the ``PIPELINE`` to
+``false`` in :file:`/etc/lava-server/settings.conf` - make sure the file
+validates as JSON before restarting apache::
+
+ "PIPELINE": false
+
+If the value is not set or set to ``true``, the Results app will be displayed.
 
 A note on wsgi buffers
 ======================

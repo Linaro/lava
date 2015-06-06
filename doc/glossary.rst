@@ -6,8 +6,11 @@
    the item in the contents list. All terms are automatically
    added to the Sphinx index.
 
+Glossary of terms
+=================
+
 Contents
-========
+--------
 
 [ :term:`device dictionary` ]
 [ :term:`device group` ] [ :term:`device owner` ] [:term:`device status transition` ]
@@ -22,7 +25,14 @@ Contents
 [ :term:`remote worker`] [ :term:`result bundle` ] [ :term:`restricted device` ]
 [ :term:`retired` ]
 [ :term:`role` ] [ :term:`rootfs` ] [ :term:`rootfstype` ]
-[ :term:`stream` ]
+
+Terms specific to the refactoring
+---------------------------------
+
+[ :term:`device dictionary` ]
+[ :term:`pipeline` ]
+[ :term:`refactoring` ] [ :term:`results` ]
+[ :term:`ZMQ` ]
 
 Deprecated terms
 ----------------
@@ -31,11 +41,10 @@ These terms reflect objects and methods which will be removed after the
 migration to the new :ref:`dispatcher_design`.
 
 [ :term:`bundle stream` ]
+[ :term:`filter` ]
 [ :term:`hwpack` ]
 [ :term:`logging level` ]
-
-Glossary of terms
-=================
+[ :term:`stream` ]
 
 .. glossary::
 
@@ -49,7 +58,8 @@ Glossary of terms
 
   device dictionary
     A key:value store within the LAVA server database which admins can
-    modify to set configuration values for specific devices.
+    modify to set configuration values for specific devices, specific
+    to the :term:`pipeline` design.
 
   device group
     A set of devices, defined in the JSON of an individual test job,
@@ -93,16 +103,26 @@ Glossary of terms
     ``lava-dispatcher`` installed and passes the commands to the device
     and other processes involved in running the LAVA test. A dispatcher
     does not need to be at the same location as the server which runs
-    the scheduler.
+    the scheduler. [#replacement]_
 
   distributed deployment
     A method of installing LAVA such that the load of running tests on
     devices is spread across multiple machines (dispatchers) which each act
     as a :term:`remote worker` with a single machine providing the web
-    frontend, master scheduler and database connection
+    frontend, master scheduler and database connection. The design of
+    the worker is changing drastically in the :term:`refactoring`.
+    [#replacement]_
 
   DUT
     Device Under Test - a quick way to refer to the device in LAVA.
+
+  filter
+    Within the Dashboard, a filter identifies particular results from
+    a :term:`stream` or streams. Filters in LAVA can be used to combine
+    test results from multiple bundle streams in a single view and
+    provide the ability to apply attribute filtering as well include or
+    exclude particular tests or test cases.
+    [#deprecated]_
 
   health check
     A test job for one specific :term:`device type` which is automatically
@@ -233,6 +253,17 @@ Glossary of terms
     connections. The user or group with physical access is recommended
     to be one of the superusers.
 
+  pipeline
+    Within LAVA, the ``pipeline`` is the new model for the dispatcher
+    code as part of the :term:`refactoring` where submitted jobs are
+    converted to a pipeline of discrete actions - each pipeline is
+    specific to the structure of that submission and the entire pipeline
+    is validated before the job starts. The model integrates concepts
+    like fail-early, error identification, avoid defaults, fail and
+    diagnose later, as well as giving test writers more rope to make
+    LAVA more transparent. See :ref:`dispatcher_design` and
+    :ref:`refactoring_use_cases`.
+
   priority
     A job has a default priority of ``Medium``. This means that the job
     will be scheduled according to the submit time of the job, in a list
@@ -244,7 +275,13 @@ Glossary of terms
   remote worker
     A dispatcher with devices attached which does not have a web frontend
     but which uses a connection to a remote lava-server to retrieve the
-    list of jobs for supported boards.
+    list of jobs for supported boards. [#replacement]_
+
+  refactoring
+    Within LAVA, the process of developing the :term:`pipeline` code
+    in parallel with the existing code, resulting in new elements
+    alongside old code - possibly disabled on some instances.
+    See :ref:`dispatcher_design` and :ref:`refactoring_use_cases`.
 
   restricted device
     A restricted device can only accept job submissions from the device
@@ -254,7 +291,24 @@ Glossary of terms
   result bundle
     A set of results submitted after a testing session. It contains
     multiple test runs, as well as other information about the system
-    where the testing was performed. [#replacement]_
+    where the testing was performed. [#deprecated]_
+
+  results
+    Within the :term:`pipeline` changes, a new ``lava_results_app``
+    replaces :term:`result bundle` and :term:`stream` and provides
+    ``Query`` to replace :term:`filter`. This code is in ongoing
+    development but includes support for:
+
+    * viewing results so far whilst the test job is still running
+    * retaining results from earlier actions even if the test job
+      fails later
+    * allowing any action in the pipeline to generate results
+    * linking results with metadata from the test job
+    * all results are referenced solely using the test job ID, not
+      hashes or dates.
+
+    Queries will provide replacement functionality for the deprecated
+    :term:`filter` support, allowing queries to mix results and metadata.
 
   retired
     A device is retired when it can no longer be used by LAVA. A retired
@@ -275,12 +329,22 @@ Glossary of terms
 
   stream
     Shorthand for a :term:`bundle stream` used in the ``submit_results``
-    action in the JSON.
+    action in the JSON. [#deprecated]_
 
   test run
     The result from a single test definition execution. The individual
     id and result of a single test within a test run is called the
-    Test Case.
+    Test Case. [#replacement]_
+
+  ZMQ
+    Zero MQ (or `0MQ <http://en.wikipedia.org/wiki/%C3%98MQ>`_) is
+    the basis of the :term:`refactoring` to solve a lot of the problems
+    inherent in the :ref:`distributed_instance`. The detail of this
+    change is only relevant to developers but it allows LAVA to remove
+    the need for ``postgresql`` and ``sshfs`` connections between the
+    master and remote workers. It allows remote workers to no longer
+    need ``lava-server`` to be installed on the worker. Developers can
+    find more information in the :ref:`dispatcher_design` documentation.
 
 .. [#deprecated] These terms reflect objects and methods which will be
    removed after the migration to the new :ref:`dispatcher_design`.

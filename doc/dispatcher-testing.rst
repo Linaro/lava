@@ -1,3 +1,5 @@
+.. _testing_refactoring_code:
+
 Testing the new design
 **********************
 
