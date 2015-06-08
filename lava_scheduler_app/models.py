@@ -1862,7 +1862,7 @@ class TestJob(RestrictedResource):
         if self.status == TestJob.SUBMITTED and self.actual_device is not None:
             logger.info("Cancel %s - clearing reserved status for device %s" % (
                 self, self.actual_device.hostname))
-            self.actual_device.cancel_reserved_status(self.submitter, "job-cancel")
+            self.actual_device.cancel_reserved_status(user, "job-cancel")
             self.status = TestJob.CANCELING
             self._send_cancellation_mail(user)
         elif self.status == TestJob.SUBMITTED:
