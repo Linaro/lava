@@ -1,6 +1,8 @@
+import os
 import xmlrpclib
 import json
 import yaml
+import jinja2
 from django.core.exceptions import PermissionDenied
 from simplejson import JSONDecodeError
 from django.db.models import Count
@@ -12,10 +14,15 @@ from lava_scheduler_app.models import (
     DevicesUnavailableException,
     TestJob,
     Worker,
+    DeviceDictionary,
 )
 from lava_scheduler_app.views import (
     SumIf,
     get_restricted_job
+)
+from lava_scheduler_app.utils import (
+    devicedictionary_to_jinja2,
+    jinja_template_path,
 )
 
 
@@ -161,7 +168,9 @@ class SchedulerAPI(ExposedAPI):
         if not job.can_cancel(self.user):
             raise xmlrpclib.Fault(403, "Permission denied.")
         if job.is_multinode:
-            for multinode_job in job.sub_jobs_list:
+            multinode_jobs = TestJob.objects.filter(
+                target_group=job.target_group)
+            for multinode_job in multinode_jobs:
                 multinode_job.cancel(self.user)
         elif job.is_vmgroup:
             for vmgroup_job in job.sub_jobs_list:
@@ -517,3 +526,42 @@ class SchedulerAPI(ExposedAPI):
                      for job in jobs]
 
         return jobs_list
+
+    def get_pipeline_device_config(self, device_hostname):
+        """
+        Name
+        ----
+        `get_pipeline_device_config` (`device_hostname`)
+
+        Description
+        -----------
+        Get the pipeline device configuration for given device hostname.
+
+        Arguments
+        ---------
+        `device_hostname`: string
+            Device hostname for which the configuration is required.
+
+        Return value
+        ------------
+        This function returns an XML-RPC binary data of output file.
+        """
+        if not device_hostname:
+            raise xmlrpclib.Fault(400, "Bad request: Device hostname was not "
+                                  "specified.")
+
+        element = DeviceDictionary.get(device_hostname)
+        if element is None:
+            raise xmlrpclib.Fault(404, "Specified device not found.")
+
+        data = devicedictionary_to_jinja2(element.parameters,
+                                          element.parameters['extends'])
+        string_loader = jinja2.DictLoader({'%s.yaml' % device_hostname: data})
+        type_loader = jinja2.FileSystemLoader(
+            [os.path.join(jinja_template_path(), 'device-types')])
+        env = jinja2.Environment(loader=jinja2.ChoiceLoader([string_loader,
+                                                             type_loader]),
+                                 trim_blocks=True)
+        template = env.get_template("%s.yaml" % device_hostname)
+        device_configuration = template.render()
+        return xmlrpclib.Binary(device_configuration.encode('UTF-8'))

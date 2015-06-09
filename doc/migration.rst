@@ -346,7 +346,7 @@ Master instance upgrade
 
    The repository is at::
 
-    deb http://people.linaro.org/~neil.williams/ubuntu trusty main
+    deb http://images.validation.linaro.org/trusty-repo trusty main
 
 #. Migrate the instance configuration to the packaging location.
 
@@ -492,7 +492,7 @@ are all on the master.
 
    The repository is at::
 
-    deb http://people.linaro.org/~neil.williams/ubuntu trusty main
+    deb http://images.validation.linaro.org/trusty-repo trusty main
 
 #. Migrate the instance configuration to the packaging location.
 
@@ -642,17 +642,8 @@ packages.
 
 #. Add the LAVA packaging repository.
 
-   .. tip:: See :ref:`install_debian_jessie` - the packaging repository is
-            only necessary to ensure that all dependencies exist in Jessie.
-            See also :ref:`lava_archive_signing_key`.
-
-   ::
-
-    sudo vim /etc/apt/sources.list.d/lava.list
-
-   The repository is at::
-
-    deb http://people.linaro.org/~neil.williams/lava jessie main
+   All packages are in the Jessie release, this step is no longer
+   required.
 
 #. Migrate the instance configuration to the packaging location.
 
@@ -771,17 +762,8 @@ packages.
 
 #. Add the LAVA packaging repository.
 
-   .. tip:: See :ref:`install_debian_jessie` - the packaging repository is
-            only necessary to ensure that all dependencies exist in Jessie.
-            See also :ref:`lava_archive_signing_key`.
-
-   ::
-
-    sudo vim /etc/apt/sources.list.d/lava.list
-
-   The repository is at::
-
-    deb http://people.linaro.org/~neil.williams/lava jessie main
+   All packages are in the Jessie release, this step is no longer
+   required.
 
 #. Migrate the instance configuration to the packaging location.
 

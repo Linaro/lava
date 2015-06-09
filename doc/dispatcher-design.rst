@@ -333,10 +333,10 @@ When bundles are downloaded, the database query will need to assign a
 UUID to that downloaded file but the file will also include the job
 number and the query can also insert the source of the bundle in a
 comment in the YAML. This will allow bundles to be uploaded to a different
-instance using ``lava-tool`` without the risk of collisions. It is also
-possible that the results could provide a link back to the original
-job log file and other data - if the original server is visible to
-users of the server to which the bundle was later uploaded.
+instance using :ref:`lava-tool <lava_tool>` without the risk of collisions.
+It is also possible that the results could provide a link back to the
+original job log file and other data - if the original server is visible
+to users of the server to which the bundle was later uploaded.
 
 .. _criteria:
 

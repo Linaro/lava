@@ -43,8 +43,13 @@ def lava(request):
         'lava': {
             'extension_list': loader.extensions,
             'instance_name': instance_name,
-            'version': versiontools.format_version(
-                lava_server.__version__, hint=lava_server)}}
+            'branding_url': settings.BRANDING_URL,
+            'branding_icon': settings.BRANDING_ICON,
+            'branding_alt': settings.BRANDING_ALT,
+            'branding_height': settings.BRANDING_HEIGHT,
+            'branding_width': settings.BRANDING_WIDTH
+        }
+    }
 
 
 def openid_available(request):

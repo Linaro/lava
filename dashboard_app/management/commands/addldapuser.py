@@ -17,6 +17,7 @@
 # along with Lava Dashboard. If not, see <http://www.gnu.org/licenses/>.
 
 
+import sys
 import ldap
 
 from django.contrib.auth.models import User
@@ -33,7 +34,7 @@ class Command(BaseCommand):
             username = args[0]
         else:
             self.stderr.write("Username not specified")
-            return
+            sys.exit(2)
 
         settings = Settings("lava-server")
         server_uri = settings.get_setting("AUTH_LDAP_SERVER_URI", None)
@@ -62,11 +63,12 @@ class Command(BaseCommand):
                 except ldap.NO_SUCH_OBJECT:
                     self.stderr.write("User %s does not exist in LDAP"
                                       % username)
-                    return
+                    sys.exit(1)
                 try:
                     user = User.objects.get(username=username)
                     self.stderr.write('User "%s" exists, not overwriting' %
                                       username)
+                    sys.exit(1)
                 except User.DoesNotExist:
                     user = User.objects.create(username=username)
                     if mail:

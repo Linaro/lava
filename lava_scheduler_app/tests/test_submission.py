@@ -746,7 +746,10 @@ class TestSchedulerAPI(TestCaseWithFactory):
         server = self.server_proxy('test', 'test')
         server.scheduler.cancel_job(job.id)
         job = TestJob.objects.get(pk=job.pk)
-        self.assertEqual(TestJob.CANCELED, job.status)
+        self.assertIn(TestJob.STATUS_CHOICES[job.status], [
+            TestJob.STATUS_CHOICES[TestJob.CANCELED],
+            TestJob.STATUS_CHOICES[TestJob.CANCELING]
+        ])
 
     def test_json_vs_yaml(self):
         """

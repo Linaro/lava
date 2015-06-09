@@ -41,13 +41,13 @@ See :ref:`ubuntu_install`
 
 .. [#f1] `experimental`_ allows updates to be selected on top of
          unstable (or the current testing) during times when testing
-         is frozen ahead of a release of Debian stable.
+         is frozen ahead of a release of Debian stable. Experimental
+         will typically have no LAVA packages outside of a Debian
+         release freeze.
 .. [#f2] `stretch` is the name of the next Debian release after Jessie,
-         not yet open to package uploads but will be supported
-         automatically once opened.
-.. [#f3] As of Feb 2015, Jessie has not yet been released and updates
-         are still being made. Once released, updates to LAVA will be
-         made using `jessie-backports`_.
+         which is supported automatically via uploads to sid (unstable).
+.. [#f3] Jessie was released on April 25th, 2015. Uupdates to LAVA packages
+         for jessie will be made using `jessie-backports`_.
 .. [#f4] Ubuntu vivid vervet 15.04 is due for release in April 2015. LAVA
          packages automatically migrate from Debian into the current
          development release of Ubuntu. Once Ubuntu make a release, the
@@ -104,34 +104,39 @@ on some instances.
 Installing on Debian Jessie
 ---------------------------
 
-Debian Jessie is currently unreleased and is therefore a rolling suite
-called ``testing``. This means that some dependencies of LAVA may be
-temporarily removed from Jessie to assist in the development of the
-final release.
+Debian Jessie was released on April 25th, 2015, containing a full set
+of packages to install LAVA.
 
-The ``jessie`` suite of the ``people.linaro.org`` repository contains
-copies of all the dependencies, so add this apt source to allow LAVA
-to install on a system running Debian Jessie::
+Updates are uploaded to `jessie-backports <http://backports.debian.org/>`_
 
- deb http://people.linaro.org/~neil.williams/lava jessie main
+::
+
+ deb http://http.debian.net/debian jessie-backports main
 
 .. _lava_archive_signing_key:
 
 LAVA Archive signing key
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-This archive is signed using key 0x7C751B3F which can be
-downloaded_ and added to apt::
+::
 
- $ wget http://people.linaro.org/~neil.williams/lava/0x7C751B3F.asc
- $ sudo apt-key add 0x7C751B3F.asc
+ pub  2048R/C77102A9 2014-06-06 LAVA build daemon (Staging) <lava-lab@linaro.org>
+      Key fingerprint = 45AD 50DC 41AE D421 FF5B  33D4 ECF3 C05C C771 02A9
+ uid                  LAVA build daemon (Staging) <lava-lab@linaro.org>
+
+Each of the support archives on ``images.validation.linaro.org`` is
+signed using same key, 0xC77102A9, which can be downloaded_ and added to
+apt::
+
+ $ wget http://images.validation.linaro.org/staging-repo/staging-repo.key.asc
+ $ sudo apt-key add staging-repo.key.asc
  OK
 
 Then update to locate the required dependencies::
 
  $ sudo apt-get update
 
-.. _downloaded: http://people.linaro.org/~neil.williams/lava/0x7C751B3F.asc
+.. _downloaded: http://images.validation.linaro.org/staging-repo/staging-repo.key.asc
 
 Installing just lava-server
 ===========================
@@ -193,32 +198,11 @@ one set.
 Upgrading LAVA packages on Jessie
 ----------------------------------
 
-Debian Jessie has been in release freeze since November 2014. At this
-point, it will not be possible to update the version of lava packages
-in the Jessie release. During the release freeze, updates to lava packages
-are available using `experimental`_.
+Updates are uploaded to `jessie-backports <http://backports.debian.org/>`_
 
-Once Jessie is released, future updates of LAVA packages can be
-backported to Jessie.
+::
 
-Interim builds
-==============
-
-See also :ref:`lava_archive_signing_key`
-
-Interim packages can also be installed from ``people.linaro.org``::
-
- $ sudo apt-get update
-
-Add the ``people.linaro.org`` LAVA source. Usually, you can just create
-a file called ``lava.list`` in ``/etc/apt/sources.list.d/``
-containing::
-
- deb http://people.linaro.org/~neil.williams/lava sid main
-
-Update your apt sources to find the LAVA packages::
-
- $ sudo apt-get update
+ deb http://http.debian.net/debian jessie-backports main
 
 .. _linaro_tools_ppa:
 
@@ -275,17 +259,23 @@ Installing on Ubuntu Trusty Tahr 14.04 LTS
           to the repository.
 
 Various package dependencies are needed on Trusty. These can be installed
-from people.linaro.org but newer versions also exist in Ubuntu Unicorn.
+from the trusty repository on ``images.validation.linaro.org``
+but newer versions also exist in Ubuntu Unicorn and later.
 
-::
-
- deb http://people.linaro.org/~neil.williams/lava jessie main
-
-This repository contains an old version of LAVA but once this version
-is installed, updated versions of lava-server and lava-dispatcher can
+Updated versions of lava-server and lava-dispatcher can
 be obtained from::
 
  deb [arch=amd64] http://images.validation.linaro.org/trusty-repo trusty main
+
+.. note:: This repository is **not a Ubuntu PPA** - it has to be set up
+   manually by adding a file to :file`/etc/apt/sources.list.d/`
+   and adding the key to :command:`apt-key`. See :ref:`lava_archive_signing_key`
+
+::
+
+ $ wget http://images.validation.linaro.org/trusty-repo/trusty-repo.key.asc
+ $ sudo apt-key add trusty-repo.key.asc
+ $ sudo apt-get update
 
 Setting up a reverse proxy
 ==========================

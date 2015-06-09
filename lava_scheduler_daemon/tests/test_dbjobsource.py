@@ -1,7 +1,4 @@
-from contextlib import contextmanager
 import datetime
-import os
-from django_testscenarios.ubertest import TestCase
 
 from lava_scheduler_app.models import (
     Device,
@@ -10,15 +7,20 @@ from lava_scheduler_app.models import (
     Tag,
     DevicesUnavailableException,
 )
-from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource, find_device_for_job
+from lava_scheduler_daemon.tests.base import DatabaseJobSourceTestEngine
+from lava_scheduler_app.views import job_cancel
+
+# pylint: disable=attribute-defined-outside-init,superfluous-parens,too-many-ancestors,no-self-use,no-member
+# pylint: disable=invalid-name,too-few-public-methods,too-many-statements,unbalanced-tuple-unpacking
+# pylint: disable=protected-access,too-many-public-methods,unpacking-non-sequence
 
 
-class DatabaseJobSourceTest(TestCaseWithFactory):
+# noinspection PyAttributeOutsideInit
+class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
 
-    def setUp(self):
-        super(DatabaseJobSourceTest, self).setUp()
-
+    def restart(self, who):
+        self.report_start(who)
         DeviceType.objects.all().delete()
 
         self.panda = self.factory.ensure_device_type(name='panda')
@@ -51,65 +53,6 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
         self.user = self.factory.make_user()
 
         self.master = DatabaseJobSource(lambda: ['panda01', 'panda02'])
-
-    def submit_job(self, **kw):
-        job_definition = self.factory.make_job_json(**kw)
-        return TestJob.from_json_and_user(job_definition, self.user)
-
-    @contextmanager
-    def log_scheduler_state(self, event):
-        if 'DEBUG' in os.environ:
-            print("##############################################")
-            print('# Before %s' % event)
-            print('        Job queue: %r' % self.master._get_job_queue())
-            print('Available devices: %r' % self.master._get_available_devices())
-        yield
-        if 'DEBUG' in os.environ:
-            print('# After %s' % event)
-            print('        Job queue: %r' % self.master._get_job_queue())
-            print('Available devices: %r' % self.master._get_available_devices())
-
-    def scheduler_tick(self, worker=None):
-        if worker is None:
-            worker = self.master
-        with self.log_scheduler_state("scheduler ticks"):
-            jobs = worker.getJobList_impl()
-        if 'DEBUG' in os.environ:
-            print('Jobs ready to run: %r' % jobs)
-            print('   Submitted jobs: %r' % TestJob.objects.filter(status=TestJob.SUBMITTED))
-            print(' State of devices: %r' % Device.objects.all())
-        for job in jobs:
-            # simulates the actual daemon, which will start jobs just after it
-            # gets them from the scheduler
-            self.job_started(job, worker)
-        return jobs
-
-    def job_started(self, job, worker=None):
-        if worker is None:
-            worker = self.master
-        worker.jobStarted_impl(job)
-
-    def job_failed(self, job, worker=None):
-        if worker is None:
-            worker = self.master
-        with self.log_scheduler_state("job %d completes" % job.id):
-            worker.jobCompleted_impl(job.id, job.actual_device.hostname, 1,
-                                     None)
-
-    def job_finished(self, job, worker=None):
-        if worker is None:
-            worker = self.master
-        with self.log_scheduler_state("job %d completes" % job.id):
-            worker.jobCompleted_impl(job.id, job.actual_device.hostname, 0,
-                                     None)
-
-    def device_status(self, hostname, status=None, health_status=None):
-        device = Device.objects.get(pk=hostname)
-        if status is not None:
-            device.status = status
-        if health_status is not None:
-            device.health_status = health_status
-        device.save()
 
     def test_simple_single_node_scheduling(self):
         submitted = self.submit_job(device_type='panda')
@@ -219,6 +162,7 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
         self.assertEqual(1, len(worker_jobs))
         self.assertEqual(worker_jobs[0].actual_device, arndale01)
 
+    # noinspection PyShadowingNames
     def test_two_multinode_jobs_plus_two_singlenode_jobs(self):
 
         single1 = self.submit_job(device_type='panda')
@@ -417,7 +361,7 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
         chosen_device = find_device_for_job(job, devices)
         self.assertEqual(self.arndale02, chosen_device)
         try:
-            job = self.submit_job(device_type='arndale', tags=[
+            self.submit_job(device_type='arndale', tags=[
                 self.common_tag.name
             ])
         except DevicesUnavailableException:
@@ -493,4 +437,258 @@ class DatabaseJobSourceTest(TestCaseWithFactory):
                 }
             ]
         })
-        jobs = self.scheduler_tick()
+        self.scheduler_tick()
+
+    def test_handle_cancelling_jobs(self):
+        """
+        tests whether handle_cancelling_jobs does the right thing.
+        """
+        job = self.submit_job(device_type='panda')
+        scheduled = self.scheduler_tick()
+        self.assertEqual([job], scheduled)
+        # self.job_started(job)
+        job = TestJob.objects.get(pk=job.id)  # reload
+        self.assertEqual(job.status, TestJob.RUNNING)
+        self.assertEqual(job.actual_device.status, Device.RUNNING)
+        self.assertTrue(job.actual_device.current_job)
+        job.status = TestJob.CANCELING
+        job.save()
+        self.assertEqual(job.status, TestJob.CANCELING)
+        self.assertEqual(job.actual_device.status, Device.RUNNING)
+        self.assertTrue(job.actual_device.current_job)
+        self.scheduler_tick()
+        job = TestJob.objects.get(pk=job.id)  # reload
+        self.assertEqual(TestJob.STATUS_CHOICES[job.status], TestJob.STATUS_CHOICES[TestJob.CANCELED])
+        self.assertEqual(job.actual_device.status, Device.IDLE)
+        self.assertFalse(job.actual_device.current_job)
+
+    class FakeRequest(object):
+
+        def __init__(self, user):
+            self.user = user
+
+    def test_multinode_cancel(self):
+        """
+        Test cancel on a multinode group
+        """
+        self.restart(self.whoami())
+        submitted_jobs = self.submit_job(
+            device_group=[
+                {"device_type": "panda", "count": 1, "role": "client"},
+                {"device_type": "panda", "count": 1, "role": "server"},
+            ]
+        )
+
+        scheduled_jobs = self.scheduler_tick()
+
+        for job in submitted_jobs:
+            self.assertTrue(job in scheduled_jobs)
+        waiting_job = scheduled_jobs[0]
+        failed_job = scheduled_jobs[1]
+        waiting_job = TestJob.objects.get(pk=waiting_job.id)  # reload
+        failed_job = TestJob.objects.get(pk=failed_job.id)  # reload
+        fail_panda = failed_job.actual_device
+        wait_panda = waiting_job.actual_device
+
+        self.scheduler_tick()
+
+        fail_panda = Device.objects.get(hostname=fail_panda.hostname)
+        self.assertEqual(fail_panda.status, Device.RUNNING)
+        self.assertEqual(waiting_job.target_group, failed_job.target_group)
+        self.job_failed(failed_job)
+
+        self.scheduler_tick()
+
+        failed_job = TestJob.objects.get(pk=failed_job.id)  # reload
+        fail_panda = Device.objects.get(hostname=fail_panda.hostname)
+        self.assertTrue(failed_job.status, TestJob.INCOMPLETE)
+        self.assertTrue(waiting_job.status, TestJob.RUNNING)
+        self.assertEqual(fail_panda.status, Device.IDLE)
+
+        self.scheduler_tick()
+
+        self.report_status("second_job", self.whoami())
+        self.submit_job(
+            device_group=[
+                {"device_type": "panda", "count": 1, "role": "client"},
+                {"device_type": "arndale", "count": 1, "role": "server"},
+            ]
+        )
+
+        scheduled_jobs = self.scheduler_tick()
+        unconnected_group = [scheduled.target_group for scheduled in scheduled_jobs if scheduled.id != waiting_job.id]
+        self.assertNotEqual(unconnected_group[0], waiting_job.target_group)
+
+        self.report_status("cancel - first wait", self.whoami())
+        # fail_panda = submitted_job.actual_device -> Running
+        self.scheduler_tick()
+
+        fail_panda = Device.objects.get(hostname=fail_panda.hostname)
+        self.assertEqual(Device.STATUS_CHOICES[fail_panda.status], Device.STATUS_CHOICES[Device.RUNNING])
+
+        waiting_job = TestJob.objects.get(pk=waiting_job.id)  # reload
+        failed_job = TestJob.objects.get(pk=failed_job.id)  # reload
+        immutable_status = failed_job.status
+        self.assertIsNone(waiting_job.failure_comment)
+        self.assertIsNone(failed_job.failure_comment)
+        # the bare cancel operation works, it is the API which wraps with the multinode check
+        request = self.FakeRequest(user=self.user)
+        job_cancel(request, waiting_job.id)
+        # wait_panda = cancelled_job.actual_device -> Idle
+
+        self.submit_job(
+            device_group=[
+                {"device_type": "panda", "count": 1, "role": "client"},
+                {"device_type": "panda", "count": 1, "role": "server"},
+            ]
+        )
+
+        fail_panda = Device.objects.get(hostname=fail_panda.hostname)
+        self.assertEqual(Device.STATUS_CHOICES[fail_panda.status], Device.STATUS_CHOICES[Device.RUNNING])
+        waiting_job = TestJob.objects.get(pk=waiting_job.id)  # reload
+        failed_job = TestJob.objects.get(pk=failed_job.id)  # reload
+
+        # cancelling waiting_job must not change the status of a failed job in the same group
+        # this could cause the handle_cancelling_jobs function to change the Device state
+        # the waiting_job is the job which was cancelled, failed_job has already ended
+        # the failure_comment is preserved for all jobs in the target_group
+        self.assertEqual(TestJob.STATUS_CHOICES[failed_job.status], TestJob.STATUS_CHOICES[immutable_status])
+        self.assertIsNotNone(waiting_job.failure_comment)
+        self.assertIsNotNone(failed_job.failure_comment)
+        self.assertIn('Canceled', waiting_job.failure_comment)
+        self.assertIn(request.user.username, waiting_job.failure_comment)
+        self.assertIn('Canceled', failed_job.failure_comment)
+        self.assertIn(request.user.username, failed_job.failure_comment)
+        fail_panda = Device.objects.get(hostname=fail_panda.hostname)
+        wait_panda = Device.objects.get(hostname=wait_panda.hostname)
+        self.assertIn(wait_panda.hostname, str(wait_panda.current_job))
+        self.assertIn(fail_panda.hostname, str(fail_panda.current_job))
+
+        self.scheduler_tick()
+
+        self.report_status("cancel wait", self.whoami())
+
+        waiting_job = TestJob.objects.get(pk=waiting_job.id)  # reload
+        # fail_panda = unconnected_job.actual_device in unconnected_group
+        # wait_panda = cancelled_job.actual_device
+        fail_panda = Device.objects.get(hostname=fail_panda.hostname)
+        wait_panda = Device.objects.get(hostname=wait_panda.hostname)
+
+        waiting_job = TestJob.objects.get(pk=waiting_job.id)  # reload
+        self.assertIn(
+            TestJob.STATUS_CHOICES[waiting_job.status],
+            [
+                TestJob.STATUS_CHOICES[TestJob.CANCELED],
+                TestJob.STATUS_CHOICES[TestJob.CANCELING]
+            ])
+
+        self.scheduler_tick()
+
+        fail_panda = Device.objects.get(hostname=fail_panda.hostname)
+        wait_panda = Device.objects.get(hostname=wait_panda.hostname)
+        self.assertIn(wait_panda.hostname, str(wait_panda.current_job))
+        self.assertIn(fail_panda.hostname, str(fail_panda.current_job))
+
+        self.assertEqual(Device.STATUS_CHOICES[fail_panda.status], Device.STATUS_CHOICES[Device.RUNNING])
+        self.assertIn(
+            Device.STATUS_CHOICES[wait_panda.status],
+            [
+                Device.STATUS_CHOICES[Device.IDLE],
+                Device.STATUS_CHOICES[Device.RESERVED],
+                Device.STATUS_CHOICES[Device.RUNNING],
+            ])
+
+        self.assertIn(
+            TestJob.STATUS_CHOICES[waiting_job.status],
+            [
+                TestJob.STATUS_CHOICES[TestJob.CANCELED],
+                TestJob.STATUS_CHOICES[TestJob.CANCELING]
+            ])
+        self.cleanup(self.whoami())
+
+    def test_cleanup_state(self):
+        """
+        When reserving a device, if the current_job value for that Device is not None
+        then handle this.
+        """
+        self.restart(self.whoami())
+
+        for panda in Device.objects.filter(device_type=self.panda):
+            self.assertIsNone(panda.current_job)
+
+        self.submit_job(
+            device_group=[
+                {"device_type": "panda", "count": 1, "role": "client"},
+                {"device_type": "panda", "count": 1, "role": "server"},
+            ]
+        )
+
+        scheduled_jobs = self.scheduler_tick()
+
+        for panda in Device.objects.filter(device_type=self.panda):
+            self.assertIsNotNone(panda.current_job)
+
+        self.submit_job(
+            device_group=[
+                {"device_type": "panda", "count": 1, "role": "client"},
+                {"device_type": "panda", "count": 1, "role": "server"},
+            ]
+        )
+
+        self.report_status('deliberately setting broken job data', self.whoami())
+        incomplete_job = scheduled_jobs[0]
+        complete_job = scheduled_jobs[1]
+        good_panda = complete_job.actual_device
+        incomplete_job = TestJob.objects.get(pk=incomplete_job.id)  # reload
+        bad_panda = incomplete_job.actual_device
+        bad_panda = Device.objects.get(hostname=bad_panda.hostname)
+        bad_panda.current_job = incomplete_job
+        bad_panda.status = Device.IDLE
+        bad_panda.save()
+        bad_panda = Device.objects.get(hostname=bad_panda.hostname)
+        self.assertIsNotNone(bad_panda.current_job)
+        self.assertEqual(bad_panda.current_job, incomplete_job)
+        self.assertEqual(Device.STATUS_CHOICES[bad_panda.status], Device.STATUS_CHOICES[Device.IDLE])
+
+        self.scheduler_tick()
+
+        self.report_status("Should have seen refusal to reserve %s" % bad_panda, self.whoami())
+
+        bad_panda = Device.objects.get(hostname=bad_panda.hostname)
+        self.assertIsNotNone(bad_panda.current_job)
+        self.assertEqual(bad_panda.current_job, incomplete_job)
+        self.assertEqual(Device.STATUS_CHOICES[bad_panda.status], Device.STATUS_CHOICES[Device.IDLE])
+
+        self.report_status('faking admin action to clear broken job', self.whoami())
+        bad_panda.current_job = None
+        bad_panda.save()
+
+        self.scheduler_tick()
+
+        self.report_status("Successful reserve for %s" % bad_panda, self.whoami())
+        bad_panda = Device.objects.get(hostname=bad_panda.hostname)  # reload
+        self.assertIsNotNone(bad_panda.current_job)
+        self.assertNotEqual(bad_panda.current_job, incomplete_job)
+        self.assertEqual(Device.STATUS_CHOICES[bad_panda.status], Device.STATUS_CHOICES[Device.RESERVED])
+
+        self.scheduler_tick()
+
+        self.report_status('let the original multinode job finish to free up the other device', self.whoami())
+        complete_job = TestJob.objects.get(id=complete_job.id)  # reload
+        complete_job.status = TestJob.COMPLETE
+        good_panda = Device.objects.get(hostname=good_panda.hostname)  # reload
+        good_panda.status = Device.IDLE
+        good_panda.current_job = None
+        complete_job.save()
+        good_panda.save()
+
+        self.scheduler_tick()
+
+        bad_panda = Device.objects.get(hostname=bad_panda.hostname)  # reload
+        self.assertIsNotNone(bad_panda.current_job)
+        self.assertNotEqual(bad_panda.current_job, incomplete_job)
+        self.assertEqual(Device.STATUS_CHOICES[bad_panda.status], Device.STATUS_CHOICES[Device.RUNNING])
+
+        self.scheduler_tick()
+
+        self.cleanup(self.whoami())
