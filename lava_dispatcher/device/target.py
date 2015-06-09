@@ -602,13 +602,8 @@ class Target(object):
                                                   good)
                 start = time.time()
             except pexpect.TIMEOUT:
-                # Get the last line from the pexpect buffer
-                last_kmsg = connection.before.rstrip().split('\r\n')[-1]
-                msg = "Kernel Error:  %s " % last_kmsg
-                logging.error(msg)
-                kernel_boot_time = 0.0
                 self.context.test_data.add_result(wait_for_kernel_boot,
-                                                  bad, message=msg)
+                                                  bad)
                 raise
 
         try:
@@ -874,10 +869,12 @@ class Target(object):
             # substitution.
             profile_path = profile_path % rootdir
 
-        with open(profile_path, 'a') as f:
-            f.write('export PS1="%s"\n' % self.tester_ps1)
-        with open('%s/etc/hostname' % rootdir, 'w') as f:
-            f.write('%s\n' % self.config.hostname)
+        if os.path.exists(profile_path):
+            with open(profile_path, 'a') as f:
+                f.write('export PS1="%s"\n' % self.tester_ps1)
+        if os.path.exists('%s/etc/hostname' % rootdir):
+            with open('%s/etc/hostname' % rootdir, 'w') as f:
+                f.write('%s\n' % self.config.hostname)
 
     @property
     def target_distro(self):

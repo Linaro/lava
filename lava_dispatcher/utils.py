@@ -270,8 +270,49 @@ def create_multi_image(kernel, ramdisk, load_addr, tmp_dir, arch='arm'):
         raise CriticalError("Multi Image creation failed")
 
 
+def create_boot_image(mkbootimg, kernel, ramdisk, dtb, load_addr,
+                      cmdline, tmp_dir, page_size=2048):
+    load_addr = int(load_addr, 16)
+    image_path = os.path.join(tmp_dir, 'boot-lava.img')
+    cmd = '%s --kernel %s \
+           --ramdisk %s \
+           --output %s \
+           --dt %s \
+           --pagesize %s \
+           --base 0x%x \
+           --cmdline "%s"' % (mkbootimg,
+                              kernel, ramdisk,
+                              image_path, dtb,
+                              page_size, load_addr,
+                              cmdline)
+
+    logging.info('Creating boot image')
+    logging.debug(cmd)
+    r = subprocess.call(cmd, shell=True)
+
+    if r == 0:
+        return image_path
+    else:
+        raise CriticalError("Boot image creation failed")
+
+
+def create_dt_image(dtbtool, dtb, tmp_dir, size=2048):
+    image_path = os.path.join(tmp_dir, 'dt.img')
+    cmd = '%s -o %s \
+           -s %s %s' % (dtbtool, image_path, size, os.path.dirname(dtb))
+
+    logging.info('Creating DT image')
+    logging.debug(cmd)
+    r = subprocess.call(cmd, shell=True)
+
+    if r == 0:
+        return image_path
+    else:
+        raise CriticalError("DT image creation failed")
+
+
 def create_fat_boot_image(kernel, tmpdir, fastboot, dtb=None, ramdisk=None):
-    logging.info("Attempting to fat boot image")
+    logging.info("Attempting to create fat boot image")
     boot_fat_dir = os.path.join(tmpdir, 'boot-fat')
     boot_fat_img = os.path.join(tmpdir, 'boot-fat.img')
     if logging_system("mkdir -p %s" % boot_fat_dir):
