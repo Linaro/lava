@@ -82,7 +82,9 @@ class cmd_boot_linaro_android_image(BaseAction):
             client.config.android_wait_for_home_screen_activity = \
                 wait_for_home_screen_activity
         if test_image_prompt is not None:
-            client.config.test_image_prompts.append(test_image_prompt)
+            test_image_prompts = client.config.test_image_prompts
+            test_image_prompts.append(test_image_prompt)
+            client.config.test_image_prompts = test_image_prompts
         if enable_network_after_boot_android is not None:
             client.config.enable_network_after_boot_android = \
                 enable_network_after_boot_android
@@ -122,7 +124,9 @@ class cmd_boot_linaro_image(BaseAction):
         if boot_cmds is not None:
             client.config.boot_cmds = boot_cmds
         if test_image_prompt is not None:
-            client.config.test_image_prompts.append(test_image_prompt)
+            test_image_prompts = client.config.test_image_prompts
+            test_image_prompts.append(test_image_prompt)
+            client.config.test_image_prompts = test_image_prompts
         client.target_device.boot_options = options
         client.target_device.reset_boot(in_test_shell=False)
         status = 'pass'
