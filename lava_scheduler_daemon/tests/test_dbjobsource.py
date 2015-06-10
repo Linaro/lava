@@ -446,7 +446,6 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         job = self.submit_job(device_type='panda')
         scheduled = self.scheduler_tick()
         self.assertEqual([job], scheduled)
-        # self.job_started(job)
         job = TestJob.objects.get(pk=job.id)  # reload
         self.assertEqual(job.status, TestJob.RUNNING)
         self.assertEqual(job.actual_device.status, Device.RUNNING)
@@ -520,7 +519,6 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         self.assertNotEqual(unconnected_group[0], waiting_job.target_group)
 
         self.report_status("cancel - first wait", self.whoami())
-        # fail_panda = submitted_job.actual_device -> Running
         self.scheduler_tick()
 
         fail_panda = Device.objects.get(hostname=fail_panda.hostname)
@@ -534,7 +532,6 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         # the bare cancel operation works, it is the API which wraps with the multinode check
         request = self.FakeRequest(user=self.user)
         job_cancel(request, waiting_job.id)
-        # wait_panda = cancelled_job.actual_device -> Idle
 
         self.submit_job(
             device_group=[
@@ -569,8 +566,6 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         self.report_status("cancel wait", self.whoami())
 
         waiting_job = TestJob.objects.get(pk=waiting_job.id)  # reload
-        # fail_panda = unconnected_job.actual_device in unconnected_group
-        # wait_panda = cancelled_job.actual_device
         fail_panda = Device.objects.get(hostname=fail_panda.hostname)
         wait_panda = Device.objects.get(hostname=wait_panda.hostname)
 
