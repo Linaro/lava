@@ -751,6 +751,31 @@ class TestSchedulerAPI(TestCaseWithFactory):
             TestJob.STATUS_CHOICES[TestJob.CANCELING]
         ])
 
+    def test_cancel_job_user(self):
+        """
+        tests whether the user who canceled the job is reflected properly.
+
+        See: https://bugs.linaro.org/show_bug.cgi?id=650
+        """
+        user = User.objects.create_user('test', 'e@mail.invalid', 'test')
+        user.save()
+        cancel_user = User.objects.create_user('test_cancel',
+                                               'cancel@mail.invalid',
+                                               'test_cancel')
+        cancel_user.save()
+        job = self.factory.make_testjob(submitter=user)
+        job.description = "sample job"
+        job.save()
+        job.cancel(user=cancel_user)
+        job = TestJob.objects.get(pk=job.pk)
+        self.assertIn(TestJob.STATUS_CHOICES[job.status], [
+            TestJob.STATUS_CHOICES[TestJob.CANCELED],
+            TestJob.STATUS_CHOICES[TestJob.CANCELING]
+        ])
+        job = TestJob.objects.get(pk=job.pk)  # reload
+        self.assertEqual(job.failure_comment,
+                         "Canceled by %s" % cancel_user.username)
+
     def test_json_vs_yaml(self):
         """
         Test that invalid JSON gets rejected but valid YAML is accepted as pipeline
