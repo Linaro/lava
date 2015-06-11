@@ -1,3 +1,10 @@
+lava-dispatcher (2015.06-1) unstable; urgency=medium
+
+  * New upstream production release
+  * Ensure usable permissions for the vmgroups public key
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 11 Jun 2015 09:24:39 +0100
+
 lava-dispatcher (2015.05-1~bpo8+1) jessie-backports; urgency=medium
 
   * Rebuild for jessie-backports.
