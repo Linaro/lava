@@ -380,8 +380,19 @@ def string_to_list(string):
 
 
 def logging_system(cmd):
-    logging.debug("Executing on host : '%r'", cmd)
-    return os.system(cmd)
+    ret = 1
+    for i in range(1, 4):
+        logging.debug("Attempt %s: Executing on host : '%s'" % (i, cmd))
+        rc = os.system(cmd)
+        if rc == 0:
+            ret = rc
+            break
+        else:
+            ret = rc
+            time.sleep(20)
+    if ret != 0:
+        logging.error("Infrastructure Error: %s failed" % cmd)
+    return ret
 
 
 class DrainConsoleOutput(threading.Thread):
