@@ -41,6 +41,8 @@ from lava_dispatcher.utils import (
     create_multi_image,
     create_uimage,
     create_fat_boot_image,
+    create_boot_image,
+    create_dt_image,
 )
 
 
@@ -295,6 +297,7 @@ class BaseDriver(object):
         self.target_type = target_type
         self.__boot_image__ = target_type
         self.scratch_dir = scratch_dir
+        self.adb("shell rm -rf %s" % self.device.lava_test_dir, ignore_failure=True)
 
     @property
     def working_dir(self):
@@ -556,3 +559,47 @@ class hi6220_hikey(fastboot_serial):
         else:
             self.fastboot.flash('boot', self.__boot_image__)
             self.fastboot('reboot-bootloader', ignore_failure=True)
+
+
+class apq8016_sbc(fastboot_serial):
+
+    def __init__(self, device):
+        super(apq8016_sbc, self).__init__(device)
+
+    def connect(self):
+        if self.config.connection_command:
+            proc = connect_to_serial(self.context)
+        else:
+            raise CriticalError('The connection_command is not defined!')
+
+        return proc
+
+    def erase_boot(self):
+        pass
+
+    def boot(self, boot_cmds=None):
+        if self.__boot_image__ is None:
+            raise CriticalError('Deploy action must be run first')
+        if self._kernel is not None:
+            if self.config.mkbootimg_binary:
+                if self.config.dtbtool_binary:
+                    if self.config.fastboot_kernel_load_addr:
+                        self._dtb = create_dt_image(self.config.dtbtool_binary,
+                                                    self._dtb, self.working_dir)
+                        boot_cmds = ''.join(boot_cmds)
+                        self._kernel = create_boot_image(self.config.mkbootimg_binary,
+                                                         self._kernel,
+                                                         self._ramdisk,
+                                                         self._dtb,
+                                                         self.config.fastboot_kernel_load_addr,
+                                                         boot_cmds,
+                                                         self.working_dir)
+                    else:
+                        raise CriticalError('Kernel load address not defined!')
+                else:
+                    raise CriticalError('No dtbtool binary set')
+            else:
+                raise CriticalError('No mkbootimg binary set')
+            self.fastboot.boot(self._kernel)
+        else:
+            self.fastboot.boot(self.__boot_image__)

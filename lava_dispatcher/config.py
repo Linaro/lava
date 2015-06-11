@@ -63,6 +63,7 @@ class DeviceSchema(schema.Schema):
     test_image_prompts = schema.ListOption(default=["\(initramfs\)",
                                                     "linaro-test",
                                                     "/ #",
+                                                    "root@linaro#",
                                                     "root@android",
                                                     "root@master",
                                                     "root@linaro-nano:~#",
@@ -269,6 +270,8 @@ class DeviceSchema(schema.Schema):
     fastboot_efi_image = schema.StringOption(default=None)
     run_boot_cmds = schema.BoolOption(default=False)
     boot_fat_image_only = schema.BoolOption(default=False)
+    mkbootimg_binary = schema.StringOption(default=None)
+    dtbtool_binary = schema.StringOption(default=None)
     rootfs_partition = schema.StringOption(default='userdata')
     start_fastboot_command = schema.StringOption(default=None)
     shared_working_directory = schema.StringOption(default=None)
@@ -311,6 +314,8 @@ class DeviceSchema(schema.Schema):
     vexpress_firmware_path_android = schema.StringOption(default=None)
     vexpress_complete_firmware = schema.BoolOption(default=False)
     vexpress_firmware_default = schema.StringOption(default=None)
+    vexpress_flash_range_low = schema.StringOption(default=None)
+    vexpress_flash_range_high = schema.StringOption(default=None)
 
 
 class OptionDescriptor(object):

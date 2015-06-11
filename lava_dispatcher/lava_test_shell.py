@@ -251,7 +251,7 @@ def _merge_results(dest, src):
                         attrname, tc_id, dest[attrname], src[attrname])
         else:
             if attrname in src:
-                dest[attrname] = src
+                dest[attrname] = src[attrname]
     dest.setdefault('attachments', []).extend(src.get('attachments', []))
     dest.setdefault('attributes', {}).update(src.get('attributes', []))
 

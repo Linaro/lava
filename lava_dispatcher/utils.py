@@ -105,53 +105,33 @@ def mk_targz(tfname, rootdir, basedir='.', asroot=False):
         raise CriticalError('Unable to make tarball of: %s' % rootdir)
 
 
-def _list_files(dirname):
-    default_encoding = sys.getdefaultencoding()
-    files = []
-    for f in os.listdir(dirname):
-        # Encode filenames to prevent unicode surprises.
-        try:
-            f = f.decode(default_encoding, 'replace')
-        except UnicodeDecodeError:
-            try:
-                f = f.decode('utf8', 'replace')
-            except UnicodeDecodeError:
-                try:
-                    f = f.encode(default_encoding, 'replace')
-                except UnicodeEncodeError:
-                    f = f.encode('utf8', 'replace')
-        except UnicodeEncodeError:
-            try:
-                f = f.decode('utf8', 'replace')
-            except UnicodeEncodeError:
-                try:
-                    f = f.encode(default_encoding, 'replace')
-                except UnicodeEncodeError:
-                    f = f.encode('utf8', 'replace')
-
-        f = os.path.join(dirname, f)
-        if os.path.isdir(f):
-            files.extend(_list_files(f))
-        elif os.path.isfile(f):
-            files.append(f)
-    return files
-
-
 def extract_tar(tfname, tmpdir):
     """ Extracts the contents of a .tgz file to the tmpdir. It then returns
     a list of all the files (full path). This is being used to get around
     issues that python's tarfile seems to have with unicode
     """
+    file_list = []
     if tfname.endswith('.bz2'):
-        if logging_system('nice tar --selinux -C %s -jxf %s' % (tmpdir, tfname)):
+        try:
+            output = subprocess.check_output(['nice', 'tar', '--selinux', '-C',
+                                              tmpdir, '-jxvf', tfname])
+        except subprocess.CalledProcessError:
             raise CriticalError('Unable to extract tarball: %s' % tfname)
     elif tfname.endswith('.gz') or tfname.endswith('.tgz'):
-        if logging_system('nice tar --selinux -C %s -xzf %s' % (tmpdir, tfname)):
+        try:
+            output = subprocess.check_output(['nice', 'tar', '--selinux', '-C',
+                                              tmpdir, '-xvzf', tfname])
+        except subprocess.CalledProcessError:
             raise CriticalError('Unable to extract tarball: %s' % tfname)
     else:
         raise CriticalError('Unable to extract tarball: %s' % tfname)
+    if output:
+        files = output.split('\n')
+        for f in files:
+            fname = unicode(f[2:], "utf8")
+            file_list.append(tmpdir + '/' + fname)
 
-    return _list_files(tmpdir)
+    return file_list
 
 
 def extract_rootfs(rootfs, root):
@@ -270,8 +250,49 @@ def create_multi_image(kernel, ramdisk, load_addr, tmp_dir, arch='arm'):
         raise CriticalError("Multi Image creation failed")
 
 
+def create_boot_image(mkbootimg, kernel, ramdisk, dtb, load_addr,
+                      cmdline, tmp_dir, page_size=2048):
+    load_addr = int(load_addr, 16)
+    image_path = os.path.join(tmp_dir, 'boot-lava.img')
+    cmd = '%s --kernel %s \
+           --ramdisk %s \
+           --output %s \
+           --dt %s \
+           --pagesize %s \
+           --base 0x%x \
+           --cmdline "%s"' % (mkbootimg,
+                              kernel, ramdisk,
+                              image_path, dtb,
+                              page_size, load_addr,
+                              cmdline)
+
+    logging.info('Creating boot image')
+    logging.debug(cmd)
+    r = subprocess.call(cmd, shell=True)
+
+    if r == 0:
+        return image_path
+    else:
+        raise CriticalError("Boot image creation failed")
+
+
+def create_dt_image(dtbtool, dtb, tmp_dir, size=2048):
+    image_path = os.path.join(tmp_dir, 'dt.img')
+    cmd = '%s -o %s \
+           -s %s %s' % (dtbtool, image_path, size, os.path.dirname(dtb))
+
+    logging.info('Creating DT image')
+    logging.debug(cmd)
+    r = subprocess.call(cmd, shell=True)
+
+    if r == 0:
+        return image_path
+    else:
+        raise CriticalError("DT image creation failed")
+
+
 def create_fat_boot_image(kernel, tmpdir, fastboot, dtb=None, ramdisk=None):
-    logging.info("Attempting to fat boot image")
+    logging.info("Attempting to create fat boot image")
     boot_fat_dir = os.path.join(tmpdir, 'boot-fat')
     boot_fat_img = os.path.join(tmpdir, 'boot-fat.img')
     if logging_system("mkdir -p %s" % boot_fat_dir):
