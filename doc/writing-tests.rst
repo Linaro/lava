@@ -481,6 +481,7 @@ This syntax will result in the test results::
   test5 -> pass
   test6 -> fail
 
+
 .. _recording_test_measurements:
 
 Recording test case measurements and units
@@ -509,6 +510,21 @@ This syntax will result in the test results::
 
 The simplest way to use this with real data is to use a custom script
 which runs ``lava-test-case`` with the relevant arguments.
+
+
+.. _overwriting_units:
+
+Overwriting units in existing test cases
+****************************************
+
+Each time a units is passed to the lava-test-case in this fashion
+:ref:`recording_test_measurements`, the units get overwritten for the test
+cases if test case with the same name already exists in system. This will cause
+all previous test results to have the updated units string. To counteract this,
+you can set the units manually on the test result details page. Setting this
+unit manually will raise a warning, since this affects all the other test
+results in the system.
+
 
 .. _best_practices:
 

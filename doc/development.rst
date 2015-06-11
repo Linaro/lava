@@ -421,8 +421,8 @@ Unit-tests
 LAVA has set of unit tests which the developers can run on a regular
 basis for each change they make in order to check for regressions if
 any. Most of the LAVA components such as ``lava-server``,
-``lava-dispatcher``, ``lava-tool``, ``linaro-python-dashboard-bundle``
-have unit tests.
+``lava-dispatcher``, :ref:`lava-tool <lava_tool>`,
+``linaro-python-dashboard-bundle`` have unit tests.
 
 Extra dependencies are required to run the tests. On Debian based
 distributions, you can install lava-dev. (If you only need to run the
@@ -437,6 +437,63 @@ To run the tests, use the ci-run / ci-build scripts::
 .. _`refactoring book`: http://www.refactoring.com/
 .. _`PEP 008`: http://www.python.org/dev/peps/pep-0008/
 .. _`Guido's style guide`: http://www.python.org/doc/essays/styleguide.html
+
+LAVA database model visualization
+---------------------------------
+LAVA database models can be visualized with the help of
+`django_extensions`_ along with tools such as `pydot`_. In debian
+based systems install the following packages to get the visualization
+of LAVA database models::
+
+  $ apt-get install python-django-extensions python-pydot
+
+Once the above packages are installed successfully, use the following
+command to get the visualization of ``lava-server`` models in PNG
+format::
+
+  $ sudo lava-server manage graph_models --pydot -a -g -o lava-server-model.png
+
+More documentation about graph models is available in
+http://django-extensions.readthedocs.org/en/latest/graph_models.html
+
+Other useful features from `django_extensions`_ are as follows:
+
+* `shell_plus`_ - similar to the built-in "shell" but autoloads all
+   models
+
+* `validate_templates`_ - check templates for rendering errors
+
+    $ sudo lava-server manage validate_templates
+
+* `runscript`_ - run arbitrary scripts inside ``lava-server``
+  environment
+
+    $ sudo lava-server manage runscript fix_user_names --script-args=all
+
+.. _`django_extensions`: https://django-extensions.readthedocs.org/en/latest/
+.. _`pydot`: https://pypi.python.org/pypi/pydot
+.. _`shell_plus`: http://django-extensions.readthedocs.org/en/latest/shell_plus.html
+.. _`validate_templates`: http://django-extensions.readthedocs.org/en/latest/validate_templates.html
+.. _`runscript`: http://django-extensions.readthedocs.org/en/latest/runscript.html
+
+Developer access to django shell
+--------------------------------
+Default configurations use a side-effect of the logging behaviour to restrict access to the
+``lava-server manage`` operations which typical Django apps expose through the ``manage.py``
+interface. This is because ``lava-server manage shell`` provides read-write access to the database,
+so the command requires ``sudo``.
+
+On developer machines, this can be unnecessary. Set the location of the django log to a new location
+to allow easier access to the management commands to simplify debugging and to be able to run a Django
+Python Console inside a development environment. In ``/etc/lava-server/settings.conf`` add::
+
+ "DJANGO_LOGFILE": "/tmp/django.log"
+
+.. note:: ``settings.conf`` is JSON syntax, so ensure that the previous line ends with a comma
+   and that the resulting file validates as JSON. Use `JSONLINT <http://www.jsonlint.com>`_
+
+The new location needs to be writable by the ``lavaserver`` user (for use by localhost) and by the
+developer user (but would typically be writeable by anyone).
 
 Adding support for new devices
 ******************************

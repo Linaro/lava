@@ -148,6 +148,61 @@ if AUTH_LDAP_SERVER_URI:
     # read any LDAP login message to use from the settings.conf
     LOGIN_MESSAGE_LDAP = distro_settings.get_setting("LOGIN_MESSAGE_LDAP", "")
 
+# read branding details
+BRANDING_ALT = distro_settings.get_setting("BRANDING_ALT", "Linaro logo")
+BRANDING_ICON = distro_settings.get_setting("BRANDING_ICON", 'lava-server/images/linaro-sprinkles.png')
+BRANDING_URL = distro_settings.get_setting("BRANDING_URL", 'http://www.linaro.org')
+BRANDING_HEIGHT = distro_settings.get_setting("BRANDING_HEIGHT", 22)
+BRANDING_WIDTH = distro_settings.get_setting("BRANDING_WIDTH", 22)
+
+# Logging
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse'
+        }
+    },
+    'formatters': {
+        'lava': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(message)s'
+        }
+    },
+    'handlers': {
+        'logfile': {
+            'class': 'logging.handlers.WatchedFileHandler',
+            'filename': distro_settings.get_setting("DJANGO_LOGFILE", "/var/log/lava-server/django.log"),
+            'formatter': 'lava'
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['logfile'],
+            # DEBUG outputs all SQL statements
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'django_auth_ldap': {
+            'handlers': ['logfile'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'dashboard_app': {
+            'handlers': ['logfile'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'lava_scheduler_app': {
+            'handlers': ['logfile'],
+            'level': 'INFO',
+            'propagate': True,
+        }
+    }
+}
+
+
 # Load extensions
 loader.contribute_to_settings(locals(), distro_settings)
 

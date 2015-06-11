@@ -3,12 +3,13 @@ include HACKING
 include INSTALL 
 include NEWS 
 include README 
-recursive-include lava_server *.gif *.png *.js *.css *.svg *.ico
+recursive-include lava_server *.gif *.png *.js *.css *.svg *.ico *.woff
 recursive-include lava_server/templates *.html
-recursive-include lava_server/htdocs/fonts *.woff *.ttf *.svg
 recursive-include lava_projects/templates *.html
 recursive-include lava_markitup/templates *.html
 recursive-include google_analytics/templates *.html
+include google_analytics/LICENSE
+include google_analytics/USAGE
 recursive-include lava_markitup/static *.gif *.png *.js *.css *.html
 include setup-dev-env.sh
 recursive-include dashboard_app/fixtures *.json
@@ -18,12 +19,13 @@ recursive-include dashboard_app/static *.png *.js *.css *.gif
 recursive-include dashboard_app/templates *.html
 recursive-include examples *.xml *.json *html *.conf
 recursive-include lava_scheduler_app/templates *.html *.txt
+include lava_scheduler_app/tests/*.yaml
 recursive-include lava_scheduler_app/static *.js *.css *.gif *.png
 recursive-include doc/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg
 include entry_points.ini
 include instance.template
 include doc/*
-include doc/examples/*
+recursive-include doc/examples *.json * *.py
 include doc/_static/*
 include doc/linaro_dashboard_bundle/*
 include man/*
@@ -46,3 +48,4 @@ include fake-dispatcher
 include version.py
 recursive-include etc/dispatcher-config README *.sh *.py *.yaml
 include share/*
+include share/zmq/*

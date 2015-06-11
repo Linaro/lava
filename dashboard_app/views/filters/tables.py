@@ -233,6 +233,9 @@ class BundleColumn(tables.Column):
 class FilterPassTable(LavaTable):
 
     def __init__(self, data, match_maker, *args, **kwargs):
+        # Fix caching problem for columns by cleaning up all first.
+        for key in self.base_columns.keys():
+            del(self.base_columns[key])
         self.base_columns['tag'] = tables.Column()
         self.base_columns['tag'].verbose_name = match_maker.key_name
         tag_col = self.base_columns.pop('tag')

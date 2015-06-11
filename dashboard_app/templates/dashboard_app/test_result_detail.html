@@ -78,8 +78,27 @@ shown as links. The same output can also be viewed in the attachments of the tes
       </dd>
       <dt>{% trans "Measurement" %}</dt>
       <dd>
-      {% if test_result.measurement != None %}
-        {{ test_result.measurement }} {{ test_result.test_case.units }}
+      {% if test_result.measurement != None and test_result.measurement != "" %}
+      {{ test_result.measurement }} <span id="units">{{ test_result.test_case.units }}</span> <button class="btn btn-xs btn-info" data-toggle="modal" data-target="#unitsModal"><span class="glyphicon glyphicon-pencil"></span></button>
+      <div class="modal fade" id="unitsModal" tabindex="-1" role="dialog" aria-labelledby="unitsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="unitsModalLabel">Update units</h4>
+            </div>
+            <div class="modal-body">
+              <input id="units_edit" cols="40" rows="10" value="{{ test_result.test_case.units|default_if_none:'' }}" >
+              <a class="btn btn-info btn-xs" href="{{ STATIC_URL }}docs/writing-tests.html#overwriting-units" target="_blank">?</a>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" id="saveUnitsBtn">Save changes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {% else %}
         <i>{% trans "no measurement taken" %}</i>
       {% endif %}
@@ -141,7 +160,7 @@ shown as links. The same output can also be viewed in the attachments of the tes
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-primary" id="saveBtn">Save changes</button>
+            <button type="button" class="btn btn-primary" id="saveCommentBtn">Save changes</button>
           </div>
         </div>
       </div>
@@ -197,5 +216,6 @@ shown as links. The same output can also be viewed in the attachments of the tes
   csrf_token = '{{csrf_token}}';
   remove_attribute_url = '+remove-result-attribute';
   update_attribute_url = '+update-result-attribute';
+  test_case_name = '{{ test_result.test_case }}';
 </script>
 {% endblock %}

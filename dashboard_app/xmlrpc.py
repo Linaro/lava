@@ -29,6 +29,7 @@ import xmlrpclib
 import hashlib
 import json
 import os
+import subprocess
 from django.contrib.auth.models import User, Group
 from django.core.urlresolvers import reverse
 from django.db import IntegrityError, DatabaseError
@@ -88,28 +89,23 @@ class DashboardAPI(ExposedAPI):
 
         Description
         -----------
-        Return dashboard server version. The version is a string with
-        dots separating five components.
-
-        The components are:
-            1. major version
-            2. minor version
-            3. micro version
-            4. release level
-            5. serial
-
-        See: http://docs.python.org/library/sys.html#sys.version_info
-
-        Note that this version will change to reflect the new versioning
-        scheme, based on git tags named after release dates instead of
-        arbitrary major and minor versions, once the migration to packaging
-         is complete.
+        Return lava server version. The version is a string, which is the
+        Debian package version of lava-server pacakage.
 
         Return value
         -------------
-        Server version string
+        Lava server version string
         """
-        return ".".join(map(str, (0, 29, 0, "final", 0)))
+        cmd = ['dpkg-query', '-W', '-f', '${version}', 'lava-server']
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                stdin=subprocess.PIPE)
+        out, err = proc.communicate()
+
+        if not err:
+            return out
+        else:
+            return 'unknown'
 
     def _put(self, content, content_filename, pathname):
         try:
@@ -612,6 +608,11 @@ class DashboardAPI(ExposedAPI):
             else:
                 bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
             for bundle in bundle_stream.bundles.all().order_by("uploaded_on"):
+                try:
+                    content_size = bundle.content.size
+                except OSError:
+                    # Bug 713 left no file content for specific bundles.
+                    content_size = 0
                 job_id = 'NA'
                 try:
                     job = TestJob.objects.get(_results_bundle=bundle)
@@ -623,7 +624,7 @@ class DashboardAPI(ExposedAPI):
                     'uploaded_on': bundle.uploaded_on,
                     'content_filename': bundle.content_filename,
                     'content_sha1': bundle.content_sha1,
-                    'content_size': bundle.content.size,
+                    'content_size': content_size,
                     'is_deserialized': bundle.is_deserialized,
                     'associated_job': job_id
                 })

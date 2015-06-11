@@ -8,13 +8,16 @@ measurements over time combined from multiple filters per chart with the
 possibility of adding multiple charts per report.
 
 Each LAVA user can create his own image reports and update/remove those reports
-he(and only he) owns. Image reports can be published/unpublished, making them
+he owns. Image reports can be published/unpublished, making them
 visible/non-visible to all the users accross the system. Image reports can be
 assigned to image report groups which will be clearly distinguished on the
 image report list page.
 
 Image report list page will show table with reports user owns, table for each
 image report group and one additional non-grouped published image reports.
+
+Other users can also edit/view image report options, provided they have the
+permissions (see :ref:`image-report-permissions`).
 
 Example:
 
@@ -46,17 +49,37 @@ Once image report is published, you can assign it to a image report group:
 Image Report grouping
 ---------------------
 
-Once Image Report is published, you can see the "Image report group" field on
-the image report detail page.
-Clicking the field allows you to edit the group for that report.
-If you like to assign the existing group to this report, just start typing the
-group name and the autocomplete field will display all the existing group
-starting with that term. If you enter an unexisting group name into the field,
-the group will be automatically created and assigned to this report.
+Once Image Report is published, you can see the "Image report group label"
+field on the image report detail page.
+Clicking the field allows you to edit the grouping for that report.
+If you want to assign the existing image report groups to this report, just
+start typing the group name and the autocomplete field will display all the
+existing image report group starting with that term.
+If the image report group you enter does not exist, it will be
+automatically created and assigned to this report.
 
-Removing the group name from the image report group field will unassign this
-report from any group. At that point, if the group you just unassigned does not
-have any more reports assigned to it, it will be deleted.
+Removing the image report group label from the image report group field will
+unassign this report from any image report group. At that point, if the image
+report group you just unassigned does not have any more reports assigned to it,
+the image report group will be deleted.
+
+
+.. _image-report-permissions:
+
+Image Report permissions
+------------------------
+
+Once Image Report is published, you can see the "Ownership" options on the
+image report detail page.
+First field displays the "maintainer" username of the user who created this
+report (this field cannot be changed).
+The second field is where the system group editing rights can be added.
+All users belonging to this system group (you can check you group membership
+on the Profile page) will be able to edit/update this particular reports as if
+they were maintainers.
+This field cannot be used to enable users to see the data in the report if they
+are not able to for other authorization reasons (no bundle or filter
+permissions etc).
 
 
 Adding Image Report charts

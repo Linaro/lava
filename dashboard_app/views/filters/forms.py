@@ -27,6 +27,7 @@ from django.utils.safestring import mark_safe
 
 from dashboard_app.models import (
     BundleStream,
+    ImageChartFilter,
     Test,
     TestCase,
     TestRunFilter,
@@ -160,6 +161,11 @@ class TestRunFilterForm(forms.ModelForm):
                 for j, test_case_form in enumerate(test_form.test_case_formset.forms):
                     trf_test.cases.create(
                         test_case=test_case_form.cleaned_data['test_case'], index=j)
+            chart_filters = ImageChartFilter.objects.filter(
+                filter=instance)
+            for chart_filter in chart_filters:
+                chart_filter.save()
+
         return instance
 
     def is_valid(self):

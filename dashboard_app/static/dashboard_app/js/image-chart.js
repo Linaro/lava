@@ -829,13 +829,14 @@ $(document).ready(function () {
                 // Current iterator for plot_data[iter][data].
                 iter = plot_data[test_filter_id]["data"].length;
 
+                tooltip = row["alias"] + "<br>";
                 if (this.chart_data["chart_type"] == "pass/fail") {
                     if (this.chart_data["is_percentage"] == true) {
                         value = row["percentage"];
-                        tooltip = "Pass rate: " + value + "%";
+                        tooltip += "Pass rate: " + value + "%";
                     } else {
                         value = row["passes"];
-                        tooltip = "Pass: " + value + ", Total: " +
+                        tooltip += "Pass: " + value + ", Total: " +
                             row["total"] + ", Skip: " + row["skip"];
                     }
 
@@ -845,11 +846,11 @@ $(document).ready(function () {
                         // Ignore plot point where measurement is non-numeric.
                         continue;
                     }
-                    tooltip = "Value: " + value;
+                    tooltip += "Value: " + value;
 
                 } else if (this.chart_data["chart_type"] == "attributes") {
                     value = row["attr_value"];
-                    tooltip = "Value: " + value;
+                    tooltip += "Value: " + value;
                 }
 
                 tooltip += "<br>";

@@ -71,31 +71,33 @@ class Command(BaseCommand):
         """
         hostname = options['hostname']
         if hostname is None:
-            print "Error: please specify a hostname"
-            return
+            self.stderr.write("Please specify a hostname")
+            sys.exit(2)
         if options['import'] is not None:
             data = parse_template(options['import'])
             element = DeviceDictionary.get(hostname)
             if element is None:
-                print "Adding new device dictionary for %s" % hostname
+                self.stdout.write("Adding new device dictionary for %s" %
+                                  hostname)
                 element = DeviceDictionary(hostname=hostname)
                 element.hostname = hostname
             element.parameters = data
             element.save()
-            print "Device dictionary updated for %s" % hostname
-        elif options['export'] is not None\
-                or options['review'] is not None:
+            self.stdout.write("Device dictionary updated for %s" % hostname)
+        elif options['export'] is not None or options['review'] is not None:
             element = DeviceDictionary.get(hostname)
             data = None
             if element is None:
-                print "Unable to export - no dictionary found for '%s'" % hostname
+                self.stderr.write("Unable to export - no dictionary found for '%s'" %
+                                  hostname)
+                sys.exit(2)
             else:
                 data = devicedictionary_to_jinja2(
                     element.parameters,
                     element.parameters['extends']
                 )
             if options['review'] is None:
-                print data
+                self.stdout.write(data)
             else:
                 string_loader = jinja2.DictLoader({'%s.yaml' % hostname: data})
                 type_loader = jinja2.FileSystemLoader([
@@ -105,6 +107,7 @@ class Command(BaseCommand):
                     trim_blocks=True)
                 template = env.get_template("%s.yaml" % hostname)
                 device_configuration = template.render()
-                print device_configuration
+                self.stdout.write(device_configuration)
         else:
-            print "Error: please specify one of --import, --export or --review"
+            self.stderr.write("Please specify one of --import, --export or --review")
+            sys.exit(1)

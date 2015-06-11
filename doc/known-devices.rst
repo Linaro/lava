@@ -92,11 +92,13 @@ This command will:
 * add the hard_reset_command for port 05
 * create a default bundle stream /anonymous/lab-health/ if no streams exist
 
+.. _lava_connect:
+
 Checking the connection
 =======================
 
-Use the lava command (part of the ``lava-tool`` package) to test the
-connection to the device::
+Use the lava command (part of the :ref:`lava-tool <lava_tool>` package)
+to test the connection to the device::
 
  lava connect foo
 

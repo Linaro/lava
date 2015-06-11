@@ -115,6 +115,8 @@ def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
         # testjob has already ended and been marked as such
         return
     job.status = job_status
+    if job.status == TestJob.CANCELING:
+        job.status = TestJob.CANCELED
     if job.start_time and not job.end_time:
         job.end_time = datetime.datetime.utcnow()
     device = job.actual_device
@@ -123,7 +125,7 @@ def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
     if not device:
         job.save()
         return
-    msg = "Job %s has ended" % job.id
+    msg = "Job %s has ended. Setting %s" % (job.id, TestJob.STATUS_CHOICES[job.status])
     new_status = Device.IDLE
     device.state_transition_to(new_status, message=msg, job=job)
     device.status = new_status
@@ -244,7 +246,7 @@ def select_device(job):
 
     try:
         pipeline_job.pipeline.validate_actions()
-    except (AttributeError, JobError) as exc:
+    except (AttributeError, JobError, KeyError, TypeError) as exc:
         logger.error({device: exc})
         end_job(job, fail_msg=exc, job_status=TestJob.INCOMPLETE)
         return None
@@ -256,6 +258,22 @@ def select_device(job):
         with open(os.path.join(job.output_dir, 'description.yaml'), 'w') as describe_yaml:
             describe_yaml.write(yaml.dump(pipeline))
     return device
+
+
+def get_env_string(filename):
+    """
+    Returns the string after checking for YAML errors which would cause issues later.
+    """
+    if not os.path.exists(filename):
+        return ''
+    logger = logging.getLogger('dispatcher-master')
+    env_str = str(open(filename, 'r').read())
+    try:
+        yaml.load(env_str)
+    except yaml.ScannerError as exc:
+        logger.exception("%s is not valid YAML (%s) - skipping" % (filename, exc))
+        env_str = ''
+    return env_str
 
 
 class Command(BaseCommand):
@@ -283,6 +301,9 @@ class Command(BaseCommand):
         make_option('--env',
                     default="/etc/lava-server/env.yaml",
                     help="Environment variables for the dispatcher processes"),
+        make_option('--env-dut',
+                    default="/etc/lava-server/env.dut.yaml",
+                    help="Environment variables for device under test"),
         make_option('--output-dir',
                     default='/var/lib/lava-server/default/media/job-output',
                     help="Directory where to store job outputs"),
@@ -530,7 +551,10 @@ class Command(BaseCommand):
                         with transaction.atomic():
                             job = TestJob.objects.select_for_update() \
                                                  .get(id=job_id)
-                            end_job(job, job_status=status)
+                            if job.status == TestJob.CANCELING:
+                                cancel_job(job)
+                            else:
+                                end_job(job, job_status=status)
                     except TestJob.DoesNotExist:
                         self.logger.error("[%d] Unknown job", job_id)
                     # ACK even if the job is unknown to let the dispatcher
@@ -629,7 +653,7 @@ class Command(BaseCommand):
                             [str(job.actual_device.worker_host.hostname),
                              'START', str(job.id), str(job.definition),
                              str(device_configuration),
-                             str(open(options['env'], 'r').read())])
+                             get_env_string(options['env']), get_env_string(options['env_dut'])])
 
                     except (jinja2.TemplateError, IOError, yaml.YAMLError) as exc:
                         if isinstance(exc, jinja2.TemplateNotFound):

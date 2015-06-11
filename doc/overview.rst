@@ -163,6 +163,8 @@ for the server concerned::
 
 See :ref:`xml_rpc` for more information.
 
+.. _installing_lava_tool:
+
 Installing lava-tool
 --------------------
 
@@ -175,6 +177,8 @@ an account.::
 
   $ sudo apt-get update
   $ sudo apt-get install lava-tool
+
+.. _using_lava_tool:
 
 Using lava-tool
 ---------------

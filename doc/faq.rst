@@ -7,10 +7,10 @@ Jobs
 Jobs not submitting
 ^^^^^^^^^^^^^^^^^^^
 
-When using lava-tool submit-job manually, this error can be
-misleading:
+When using :ref:`lava-tool <lava_tool>` submit-job manually, this
+error can be misleading::
 
-ERROR: Username provided but no token found.
+ ERROR: Username provided but no token found.
 
 Check the URL in use - https://user@server/RPC2 will fail,
 https://user@server/RPC2/ should work. Note the trailing slash. Also
@@ -26,6 +26,8 @@ the request to submit uses http:// or vice versa.
 To avoid such problems, consider exporting a variable in your
 *~/.bashrc* to avoid typos.
 
+.. _scripted_job_submission:
+
 Submiting jobs from a script
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -35,6 +37,17 @@ When submiting a job from a script, the user can skip this step by adding the
 credentials in the link to the lava server. ::
 
   $ lava-tool submit-job http://<login>:<token>@localhost/RPC2/
+
+You can also use XMLRPC directly:
+
+.. code-block:: python
+
+  import xmlrpclib
+  username = "USERNAME"
+  token = "TOKEN_STRING"
+  hostname = "HOSTNAME"
+  server = xmlrpclib.ServerProxy("http://%s:%s@%s/RPC2" % (username, token, hostname))
+  print server.system.listMethods()
 
 Jobs submitted but not running
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

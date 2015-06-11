@@ -154,6 +154,7 @@ def tokens(request):
         "linaro_django_xmlrpc/tokens.html",
         {
             "token_list": tokens,
+            "context_help": ["lava-tool"],
         },
         RequestContext(request))
 
