@@ -2,7 +2,7 @@
 
 if [ -f /etc/issue ]
 then
-    cat /etc/issue | sed -e 's/\\n.\\l//' | tr -s '\n' '\n' | head -c100
+    cat /etc/issue | sed -e 's/\\n.\\l//' | tr -s '\n' '\n' | dd bs=100 count=1
     exit 0
 fi
 
@@ -18,9 +18,9 @@ then
     exit 0
 fi
 
-BUSYBOX=`find /bin -type l -print0|xargs -r0 file|grep busybox`
+SHELL=`readlink /proc/$$/exe`
 
-if [ -n "${BUSYBOX}" ]
+if [ "$SHELL" != "${SHELL%busybox*}" ]
 then
     echo "busybox system"
     exit 0
