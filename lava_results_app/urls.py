@@ -28,8 +28,18 @@ urlpatterns = patterns(
     url(r'^query$', 'query', name='lava.results.query'),
     url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)$',
         'testjob', name='lava.results.testjob'),
+    url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/csv$',
+        'testjob_csv', name='lava.results.testjob_csv'),
+    url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/yaml$',
+        'testjob_yaml', name='lava.results.testjob_yaml'),
     url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)$',
         'suite', name='lava.results.suite'),
+    url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/csv$',
+        'suite_csv', name='lava.results.suite_csv'),
+    url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/stream/csv$',
+        'suite_csv_stream', name='lava.results.suite_csv_stream'),
+    url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/yaml$',
+        'suite_yaml', name='lava.results.suite_yaml'),
     url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/(?P<case>[-_a-zA-Z0-9.]+)$',
         'testcase', name='lava.results.testcase')
 )

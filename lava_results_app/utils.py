@@ -6,3 +6,8 @@ def help_max_length(max_length):
         u"Maximum length: {0} character",
         u"Maximum length: {0} characters",
         max_length).format(max_length)
+
+
+class StreamEcho(object):
+    def write(self, value):
+        return value

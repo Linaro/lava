@@ -416,15 +416,6 @@ class Command(BaseCommand):
                         ret = map_scanned_results(scanned_dict=scanned[0], job=job)
                         if not ret:
                             self.logger.warning("[%s] Unable to map scanned results: %s" % (job_id, yaml.dump(scanned[0])))
-                        store = JobPipeline.get(job_id)
-                        if not store:
-                            # create a new store
-                            store = JobPipeline(job_id=job_id)
-                            store.pipeline = {}
-                            # the store pipeline is a standard dict, not an OrderedDict
-                        store.pipeline.update({name: scanned[0]['results']})
-                        # too often to save the results?
-                        store.save()
 
                 # Clear filename
                 if '/' in level or '/' in name:

@@ -69,6 +69,12 @@ def _test_case(name, suite, result, testset=None, testshell=False):
             match_action = ActionData.objects.filter(
                 action_level=str(result['level']),
                 testdata__testjob=suite.job)
+            if match_action:
+                match_action = match_action[0]
+                if 'duration' in result:
+                    match_action.duration = result['duration']
+                if 'timeout' in result:
+                    match_action.timeout = result['timeout']  # duration, positive integer
         case = TestCase.objects.create(
             name=name,
             suite=suite,
@@ -77,11 +83,10 @@ def _test_case(name, suite, result, testset=None, testshell=False):
             result=TestCase.RESULT_UNKNOWN
         )
         with transaction.atomic():
-            if match_action:
-                action_level = match_action[0]
-                action_level.testcase = case
-                action_level.save(update_fields=['testcase'])
             case.save()
+            if match_action:
+                match_action.testcase = case
+                match_action.save(update_fields=['testcase', 'duration', 'timeout'])
 
 
 def _check_for_testset(result_dict, suite):
@@ -125,8 +130,8 @@ def map_scanned_results(scanned_dict, job):
         return False
     results = scanned_dict['results']
     if 'testsuite' in results:
-        logger.debug("changing suite to %s" % results['testsuite'])
         suite = TestSuite.objects.get_or_create(name=results['testsuite'], job=job)[0]
+        logger.debug("%s" % suite)
     else:
         suite = TestSuite.objects.get_or_create(name='lava', job=job)[0]
     for name, result in results.items():
@@ -136,7 +141,6 @@ def map_scanned_results(scanned_dict, job):
         elif name == 'testset':
             _check_for_testset(result, suite)
         else:
-            logger.debug("suite: %s testcase: %s: %s" % (suite, name, result))
             _test_case(name, suite, result, testshell=(suite.name != 'lava'))
     return True
 
@@ -210,3 +214,43 @@ def map_metadata(description, job):
     testdata.save()
     walk_actions(description_data['pipeline'], testdata, submission_data)
     return True
+
+
+def testcase_export_fields():
+    """
+    Keep this list in sync with the keys in export_testcase
+    :return: list of fields used in export_testcase
+    """
+    return [
+        'job', 'suite', 'result', 'measurement', 'unit',
+        'duration', 'timeout',
+        'logged', 'level', 'metadata', 'url',
+    ]
+
+
+def export_testcase(testcase):
+    """
+    Returns string versions of selected elements of a TestCase
+    Unicode causes issues with CSV and can complicate YAML parsing
+    with non-python parsers.
+    :param testcases: list of TestCase objects
+    :return: Dictionary containing relevant information formatted for export
+    """
+    actiondata = testcase.action_data
+    duration = float(actiondata.duration) if actiondata else ''
+    timeout = actiondata.timeout if actiondata else ''
+    level = actiondata.action_level if actiondata else None
+    casedict = {
+        'job': str(testcase.suite.job_id),
+        'suite': str(testcase.suite.name),
+        'result': str(testcase.result_code),
+        'measurement': str(testcase.measurement),
+        'unit': str(testcase.units),
+        'duration': str(duration),
+        'timeout': str(timeout),
+        'logged': str(testcase.logged),
+        'level': str(level),
+        'metadata': dict(testcase.action_metadata) if testcase.action_metadata else {},
+        'url': str(testcase.get_absolute_url()),
+    }
+    return casedict

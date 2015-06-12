@@ -1,11 +1,12 @@
 import yaml
+import decimal
 from lava_results_app.tests.test_names import TestCaseWithFactory
 from lava_scheduler_app.models import (
     TestJob,
     Device,
 )
-from lava_results_app.dbutils import map_metadata
-from lava_results_app.models import ActionData, MetaType, TestData
+from lava_results_app.dbutils import map_metadata, testcase_export_fields, export_testcase
+from lava_results_app.models import ActionData, MetaType, TestData, TestCase, TestSuite
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.device import PipelineDevice
 
@@ -52,3 +53,37 @@ class TestMetaTypes(TestCaseWithFactory):
             meta_type__metatype=MetaType.DEPLOY_TYPE,
             testdata__testjob=job
         ).count(), count)
+
+    def test_export(self):
+        user = self.factory.make_user()
+        job = TestJob.from_yaml_and_user(
+            self.factory.make_job_yaml(), user)
+        test_suite = TestSuite.objects.get_or_create(name='lava', job=job)[0]
+        test_case = TestCase(
+            name='name',
+            suite=test_suite,
+            result=TestCase.RESULT_FAIL
+        )
+        self.assertTrue(
+            any(
+                map(lambda v: v in testcase_export_fields(), export_testcase(test_case).keys())
+            )
+        )
+
+    def test_duration(self):
+        user = self.factory.make_user()
+        job = TestJob.from_yaml_and_user(
+            self.factory.make_job_yaml(), user)
+        metatype = MetaType(name='fake', metatype=MetaType.DEPLOY_TYPE)
+        metatype.save()
+        action_data = ActionData(meta_type=metatype, action_level='1.2.3', action_name='fake')
+        action_data.save()
+        action_data.duration = '1.2'
+        action_data.save(update_fields=['duration'])
+        action_data = ActionData.objects.get(id=action_data.id)  # reload
+        self.assertIsInstance(action_data.duration, decimal.Decimal)
+        # unit tests check the instance as well as the value.
+        self.assertEqual(float(action_data.duration), 1.2)
+        action_data.timeout = 300
+        action_data.save(update_fields=['timeout'])
+        self.assertEqual(action_data.timeout, 300)

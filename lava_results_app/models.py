@@ -191,7 +191,7 @@ class TestCase(models.Model):
     )
 
     @property
-    def action_data(self):
+    def action_metadata(self):
         if not self.metadata:
             return None
         try:
@@ -201,13 +201,11 @@ class TestCase(models.Model):
         return ret
 
     @property
-    def action_level(self):
-        action_data = self.action_data
+    def action_data(self):
+        action_data = ActionData.objects.filter(testcase=self)
         if not action_data:
             return None
-        if 'level' not in action_data:
-            return None
-        return str(action_data['level'])
+        return action_data[0]
 
     def get_absolute_url(self):
         if self.test_set:
@@ -217,12 +215,7 @@ class TestCase(models.Model):
             return urllib.quote("/results/%s/%s/%s" % (
                 self.suite.job.id, self.suite.name, self.name))
 
-    def __unicode__(self):
-        """
-        results/<job-ID>/<lava-suite-name>/<lava-test-set>/<lava-test-case>
-        results/<job-ID>/<lava-suite-name>/<lava-test-case>
-        :return: a name acting as a mimic of the URL
-        """
+    def _get_value(self):
         if self.measurement:
             value = "%s" % self.measurement
             if self.units:
@@ -231,6 +224,15 @@ class TestCase(models.Model):
             value = self.metadata
         else:
             value = self.RESULT_REVERSE[self.result]
+        return value
+
+    def __unicode__(self):
+        """
+        results/<job-ID>/<lava-suite-name>/<lava-test-set>/<lava-test-case>
+        results/<job-ID>/<lava-suite-name>/<lava-test-case>
+        :return: a name acting as a mimic of the URL
+        """
+        value = self._get_value()
         if self.test_set:
             # the set already includes the job & suite in the set name
             return _(u"Test Case {0}/{1}/{2}/{3} {4}").format(
@@ -284,9 +286,11 @@ class MetaType(models.Model):
         'unknown': UNKNOWN_TYPE,
     }
 
+    # the YAML keys which determine the type as per the Strategy class.
+    # FIXME: lookup with classmethods?
     section_names = {
         DEPLOY_TYPE: 'to',
-        BOOT_TYPE: 'media',
+        BOOT_TYPE: 'method',
     }
 
     name = models.CharField(max_length=32)
@@ -385,7 +389,7 @@ class ActionData(models.Model):
     # action.duration - actual amount of time taken
     duration = models.DecimalField(
         decimal_places=2,
-        max_digits=8,
+        max_digits=8,  # enough for just over 11 days, 9 would be 115 days
         blank=True, null=True)
     # timeout.duration - amount of time allowed before timeout
     timeout = models.PositiveIntegerField(blank=True, null=True)

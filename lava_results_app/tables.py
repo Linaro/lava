@@ -23,7 +23,7 @@
 import django_tables2 as tables
 from django.utils.safestring import mark_safe
 from lava.utils.lavatable import LavaTable
-from lava_scheduler_app.tables import IDLinkColumn, pklink
+from lava_scheduler_app.tables import IDLinkColumn, pklink, DateColumn
 from lava_results_app.models import TestCase
 from django.templatetags.static import static
 
@@ -106,9 +106,11 @@ class SuiteTable(LavaTable):
         self.length = 10
 
     name = tables.Column()
+    testset = tables.Column()
     result = tables.Column()
     measurement = tables.Column()
     unit = tables.Column()
+    logged = DateColumn()
 
     def render_name(self, record):
         return mark_safe(
@@ -118,9 +120,9 @@ class SuiteTable(LavaTable):
     def render_result(self, record):
         if record.metadata:
             # FIXME: much more can be done here.
-            if type(record.action_data) == str:
-                return record.action_data
-            return "%s" % [key for key, _ in record.action_data.items() if key != 'level'][0]
+            if type(record.action_metadata) == str:
+                return record.action_metadata
+            return " ".join([key for key, _ in record.action_metadata.items() if key != 'level'])
         else:
             code = record.result_code
             image = static('lava_results_app/images/icon-%s.png' % code)

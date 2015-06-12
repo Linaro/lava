@@ -6,13 +6,13 @@
 {% for testcase in test_cases %}
     <h1>Test Job {{ job_link }}</h1>
     <h2>Test suite <a href="{{ suite.get_absolute_url }}">{{ suite.name }}</a></h2>
-    {% if testcase.action_level %}
-        <h3>Results for {{ testcase.name }}, level {{ testcase.action_level }}</h3>
+    {% if testcase.action_data %}
+        <h3>Results for {{ testcase.name }}, level {{ testcase.action_data.action_level }}</h3>
     {% else %}
         <h3>Results for {{ testcase.name }}</h3>
     {% endif %}
-    {% if testcase.action_data %}
-        {{ testcase.action_data }}
+    {% if testcase.action_metadata %}
+        {{ testcase.action_metadata }}
     {% else %}
         {{ testcase.result_code }}
     {% endif %}
