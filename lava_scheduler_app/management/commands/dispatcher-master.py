@@ -239,7 +239,7 @@ def select_device(job):
     # pass (unused) output_dir just for validation as there is no zmq socket either.
     try:
         pipeline_job = parser.parse(job.definition, obj, job.id, None, output_dir='/tmp')
-    except NotImplementedError as exc:
+    except (AttributeError, NotImplementedError, KeyError, TypeError) as exc:
         logger.error({'parser': exc})
         end_job(job, fail_msg=exc, job_status=TestJob.INCOMPLETE)
         return None

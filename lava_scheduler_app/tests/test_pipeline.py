@@ -1,5 +1,6 @@
 import os
 import yaml
+import jinja2
 import logging
 from lava_scheduler_app.models import (
     Device,
@@ -18,6 +19,8 @@ from collections import OrderedDict
 from lava_scheduler_app.utils import jinja_template_path
 from lava_scheduler_app.utils import jinja_template_path, split_multinode_yaml
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
+from lava_dispatcher.pipeline.device import PipelineDevice
+from lava_dispatcher.pipeline.parser import JobParser
 
 # pylint: disable=too-many-ancestors,too-many-public-methods,invalid-name,no-member
 
@@ -205,6 +208,19 @@ class TestPipelineSubmit(TestCaseWithFactory):
         job = TestJob.from_yaml_and_user(
             self.factory.make_job_json(), user)
         self.assertEqual(user, job.submitter)
+
+    def test_invalid_device(self):
+        user = self.factory.make_user()
+        job = TestJob.from_yaml_and_user(
+            self.factory.make_job_json(), user)
+        job_def = yaml.load(job.definition)
+        job_ctx = job_def.get('context', {})
+        device = Device.objects.get(hostname='fakeqemu1')
+        device_config = device.load_device_configuration(job_ctx)  # raw dict
+        del device_config['device_type']
+        parser = JobParser()
+        obj = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
+        self.assertRaises(KeyError, parser.parse, job.definition, obj, job.id, None, output_dir='/tmp')
 
 
 class TestPipelineStore(TestCaseWithFactory):
