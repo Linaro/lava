@@ -1,5 +1,4 @@
 # Copyright (C) 2012 Linaro Limited
-# Copyright (C) 2012 Linaro Limited
 #
 # Author: Andy Doan <andy.doan@linaro.org>
 #
