@@ -290,8 +290,6 @@ class FastModelTarget(Target):
             raise CriticalError("A kernel image is required")
         elif ramdisk is None:
             raise CriticalError("A ramdisk image is required")
-        elif dtb is None:
-            raise CriticalError("A dtb is required")
 
         if rootfs is not None or nfsrootfs is not None or firmware is not None:
             logging.warn("This platform only supports ramdisk booting, ignoring other parameters")
@@ -313,11 +311,13 @@ class FastModelTarget(Target):
                 extract_overlay(overlay, ramdisk_dir)
             self._initrd = create_ramdisk(ramdisk_dir, self._scratch_dir)
         self._boot_tags['{RAMDISK}'] = os.path.relpath(self._initrd, self._scratch_dir)
-        self._dtb = download_image(dtb, self.context, self._scratch_dir,
-                                   decompress=False)
         self._boot_tags['{DTB}'] = os.path.relpath(self._dtb, self._scratch_dir)
 
         # Optional
+        if dtb is not None:
+            self._dtb = download_image(dtb, self.context, self._scratch_dir,
+                                       decompress=False)
+
         if bootloader is None:
             if self.config.simulator_uefi_default is None:
                 raise CriticalError("UEFI image is required")
