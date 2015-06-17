@@ -95,14 +95,14 @@ class Poller(object):
                 delay = self.poll_delay
             except socket.error as e:
                 if e.errno == errno.ECONNREFUSED:
-                    logging.warn("Lava Coordinator refused connection on %s %s" %
-                                 (self.json_data['host'], self.json_data['port']))
+                    logging.warning("Lava Coordinator refused connection on %s %s" %
+                                    (self.json_data['host'], self.json_data['port']))
                 elif e.errno == errno.ECONNRESET:
-                    logging.warn("Connection to coordinator reset by peer on port %s" %
-                                 self.json_data['port'])
+                    logging.warning("Connection to coordinator reset by peer on port %s" %
+                                    self.json_data['port'])
                 else:
-                    logging.warn("socket error on connect: %d %s %s" %
-                                 (e.errno, self.json_data['host'], self.json_data['port']))
+                    logging.warning("socket error on connect: %d %s %s" %
+                                    (e.errno, self.json_data['host'], self.json_data['port']))
                 logging.debug("Trying again in %s seconds. Job will timeout in %s seconds" %
                               (delay, self.json_data['timeout'] - waited))
                 waited += delay
@@ -126,7 +126,7 @@ class Poller(object):
                     logging.debug("zero bytes sent for message - connection closed?")
                     continue
             except socket.error as e:
-                logging.warn("socket error '%d' on send", e.message)
+                logging.warning("socket error '%d' on send", e.message)
                 s.close()
                 continue
             s.shutdown(socket.SHUT_WR)
@@ -142,7 +142,7 @@ class Poller(object):
                     response += s.recv(self.blocks)
                     recv_count += self.blocks
             except socket.error as e:
-                logging.warn("socket error '%d' on response", e.errno)
+                logging.warning("socket error '%d' on response", e.errno)
                 s.close()
                 continue
             s.close()
@@ -315,7 +315,7 @@ class NodeDispatcher(object):
         try:
             return self._select(json.loads(args))
         except KeyError:
-            logging.warn("Unable to handle request for: %s", args)
+            logging.warning("Unable to handle request for: %s", args)
 
     def _select(self, json_data):
         """ Determines which API call has been requested, makes the call, blocks and returns the reply.

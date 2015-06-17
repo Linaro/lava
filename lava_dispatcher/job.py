@@ -431,13 +431,13 @@ class LavaTestJob(object):
                             time.sleep(5)
                             self.context.client.boot_linaro_android_image()
                     else:
-                        logging.warn("Unhandled timeout condition")
+                        logging.warning("Unhandled timeout condition")
                         continue
                 except CriticalError as err:
                     logging.info("CriticalError")
                     raise
                 except (pexpect.TIMEOUT, GeneralError) as err:
-                    logging.warn("pexpect timed out with status %s" % status)
+                    logging.warning("pexpect timed out with status %s" % status)
                     pass
                 except KeyboardInterrupt:
                     logging.info("Cancel operation")

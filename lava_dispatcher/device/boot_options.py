@@ -35,7 +35,7 @@ class BootOption(object):
             elif item[0] == 'allowed':
                 self.allowed = [x.strip() for x in item[1].split(',')]
             else:
-                logging.warn('section(%s) contains unknown item: %s', section, item)
+                logging.warning('section(%s) contains unknown item: %s', section, item)
         if defval:
             self.value = defval
 
@@ -67,16 +67,16 @@ def as_dict(target, defaults={}):
             defval = defaults.get(opt, None)
             options[opt] = BootOption(opt, target.config.cp.items(opt), defval)
         else:
-            logging.warn('no boot option config section for: %s', opt)
+            logging.warning('no boot option config section for: %s', opt)
 
     for opt in target.boot_options:
         keyval = opt.split('=')
         if len(keyval) != 2:
-            logging.warn("Invalid boot option format: %s", opt)
+            logging.warning("Invalid boot option format: %s", opt)
         elif keyval[0] not in options:
-            logging.warn("Invalid boot option: %s", keyval[0])
+            logging.warning("Invalid boot option: %s", keyval[0])
         elif not options[keyval[0]].valid(keyval[1]):
-            logging.warn("Invalid boot option value: %s", opt)
+            logging.warning("Invalid boot option value: %s", opt)
         else:
             user_option = True
             options[keyval[0]].value = keyval[1]
