@@ -20,8 +20,7 @@
 
 import logging
 import os
-import pexpect
-from lava_dispatcher.pipeline.action import InfrastructureError
+from lava_dispatcher.pipeline.action import InfrastructureError, TestError
 
 
 def which(path, match=os.path.isfile):
@@ -54,7 +53,7 @@ def wait_for_prompt(connection, prompt_pattern, timeout):
     while True:
         try:
             connection.expect(prompt_pattern, timeout=partial_timeout)
-        except pexpect.TIMEOUT:
+        except TestError:
             if prompt_wait_count < 6:
                 logger = logging.getLogger('dispatcher')
                 logger.warning('Sending newline in case of corruption.')
