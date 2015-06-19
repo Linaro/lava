@@ -83,6 +83,8 @@ below to generate html format files.::
 
 .. _RST: http://sphinx-doc.org/rest.html
 
+.. _contribute_upstream:
+
 Contributing Upstream
 *********************
 

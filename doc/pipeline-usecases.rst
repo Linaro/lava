@@ -12,5 +12,6 @@ evolve and feed into this section over time.
    :maxdepth: 3
 
    pipeline-admin.rst
+   pipeline-admin-example.rst
    pipeline-server.rst
    pipeline-writer.rst
