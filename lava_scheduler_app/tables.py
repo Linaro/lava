@@ -300,6 +300,44 @@ class FailedJobTable(JobTable):
         exclude = ('submitter', 'end_time', 'priority', 'description')
 
 
+class LongestJobTable(JobTable):
+
+    id = RestrictedIDLinkColumn(verbose_name="ID", accessor="id")
+    id.orderable = False
+    status = tables.Column()
+    status.orderable = False
+    device = tables.Column(accessor='actual_device')
+    device.orderable = False
+    priority = tables.Column()
+    priority.orderable = False
+    description = tables.Column()
+    description.orderable = False
+    submitter = tables.Column()
+    submitter.orderable = False
+    start_time = tables.Column()
+    start_time.orderable = True
+    submit_time = tables.Column()
+    submit_time.orderable = False
+
+    def __init__(self, *args, **kwargs):
+        super(LongestJobTable, self).__init__(*args, **kwargs)
+        self.length = 10
+
+    def render_device(self, record):
+        if record.actual_device:
+            return pklink(record.actual_device)
+        return ''
+
+    class Meta(JobTable.Meta):
+        fields = (
+            'id', 'status', 'device'
+        )
+        sequence = (
+            'id', 'status', 'device'
+        )
+        exclude = ('duration', 'end_time')
+
+
 class OverviewJobsTable(JobTable):
 
     id = RestrictedIDLinkColumn(verbose_name="ID", accessor="id")

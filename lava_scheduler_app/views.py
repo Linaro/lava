@@ -94,6 +94,7 @@ from lava_scheduler_app.tables import (
     all_jobs_with_custom_sort,
     IndexJobTable,
     FailedJobTable,
+    LongestJobTable,
     DeviceTable,
     NoDTDeviceTable,
     RecentJobsTable,
@@ -403,7 +404,7 @@ def job_report(start_day, end_day, health_check):
     }
 
 
-@BreadCrumb("Reports", parent=lava_index)
+@BreadCrumb("Reports", parent=index)
 def reports(request):
     health_day_report = []
     health_week_report = []
@@ -416,9 +417,6 @@ def reports(request):
         health_week_report.append(job_report(week * -7 - 7, week * -7, True))
         job_week_report.append(job_report(week * -7 - 7, week * -7, False))
 
-    long_running = TestJob.objects.filter(status__in=[TestJob.RUNNING,
-                                                      TestJob.CANCELING]).order_by('start_time')[:5]
-
     return render_to_response(
         "lava_scheduler_app/reports.html",
         {
@@ -426,7 +424,6 @@ def reports(request):
             'health_day_report': health_day_report,
             'job_week_report': job_week_report,
             'job_day_report': job_day_report,
-            'long_running': long_running,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
         },
         RequestContext(request))
@@ -1027,6 +1024,18 @@ class MyJobsView(JobTableView):
         return jobs.order_by('-submit_time')
 
 
+class LongestJobsView(JobTableView):
+
+    def get_queryset(self):
+        jobs = TestJob.objects.select_related("actual_device", "requested_device",
+                                              "requested_device_type", "group")\
+            .extra(select={'device_sort': 'coalesce(actual_device_id, '
+                                          'requested_device_id, requested_device_type_id)',
+                           'duration_sort': 'end_time - start_time'}).all()\
+            .filter(status__in=[TestJob.RUNNING, TestJob.CANCELING])
+        return jobs.order_by('-start_time')
+
+
 class FavoriteJobsView(JobTableView):
 
     def get_queryset(self):
@@ -1481,6 +1490,28 @@ def myjobs(request):
         {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(myjobs),
             'myjobs_table': ptable,
+            "terms_data": ptable.prepare_terms_data(data),
+            "search_data": ptable.prepare_search_data(data),
+            "discrete_data": ptable.prepare_discrete_data(data),
+            "times_data": ptable.prepare_times_data(data),
+        },
+        RequestContext(request))
+
+
+@BreadCrumb("Longest Running Jobs", parent=reports)
+def longest_jobs(request, username=None):
+
+    data = LongestJobsView(request, model=TestJob, table_class=LongestJobTable)
+    ptable = LongestJobTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(
+        ptable)
+
+    return render_to_response(
+        "lava_scheduler_app/longestjobs.html",
+        {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(longest_jobs),
+            'longestjobs_table': ptable,
+            "length": ptable.length,
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "discrete_data": ptable.prepare_discrete_data(data),
