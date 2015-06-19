@@ -73,12 +73,107 @@ def validate_job_json(data):
         raise ValidationError(e)
 
 
+class Architecture(models.Model):
+    name = models.CharField(
+        primary_key=True,
+        verbose_name=u'Architecture version',
+        help_text=u'e.g. ARMv7',
+        max_length=100,
+        editable=True,
+    )
+
+    def __unicode__(self):
+        return self.pk
+
+
+class ProcessorFamily(models.Model):
+    name = models.CharField(
+        primary_key=True,
+        verbose_name=u'Processor Family',
+        help_text=u'e.g. OMAP4, Exynos',
+        max_length=100,
+        editable=True,
+    )
+
+    def __unicode__(self):
+        return self.pk
+
+
+class BitWidth(models.Model):
+    width = models.PositiveSmallIntegerField(
+        primary_key=True,
+        verbose_name=u'Processor bit width',
+        help_text=u'integer: e.g. 32 or 64',
+        editable=True,
+    )
+
+    def __unicode__(self):
+        return "%d" % self.pk
+
+
+class Core(models.Model):
+    name = models.CharField(
+        primary_key=True,
+        verbose_name=u'CPU core',
+        help_text=u'Name of a specific CPU core, e.g. Cortex-A9',
+        editable=True,
+        max_length=100,
+    )
+
+    def __unicode__(self):
+        return self.pk
+
+
 class DeviceType(models.Model):
     """
     A class of device, for example a pandaboard or a snowball.
     """
 
     name = models.SlugField(primary_key=True)
+
+    architecture = models.ForeignKey(
+        Architecture,
+        related_name='device_types',
+        blank=True,
+        null=True,
+    )
+
+    processor = models.ForeignKey(
+        ProcessorFamily,
+        related_name='device_types',
+        blank=True,
+        null=True,
+    )
+
+    cpu_model = models.CharField(
+        verbose_name=u'CPU model',
+        help_text=u'e.g. a list of CPU model descriptive strings: OMAP4430 / OMAP4460',
+        max_length=100,
+        blank=True,
+        null=True,
+        editable=True,
+    )
+
+    bits = models.ForeignKey(
+        BitWidth,
+        related_name='device_types',
+        blank=True,
+        null=True,
+    )
+
+    cores = models.ManyToManyField(
+        Core,
+        related_name='device_types',
+        blank=True,
+        null=True,
+    )
+
+    core_count = models.PositiveSmallIntegerField(
+        verbose_name=u'Total number of cores',
+        help_text=u'Must be an equal number of each type(s) of core(s).',
+        blank=True,
+        null=True,
+    )
 
     def __unicode__(self):
         return self.name

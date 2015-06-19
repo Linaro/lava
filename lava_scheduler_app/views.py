@@ -672,97 +672,6 @@ class NoDTDeviceView(DeviceTableView):
                                      ).order_by('hostname')
 
 
-def populate_capabilities(device_name):
-    """
-    device capabilities data retrieved from health checks
-    param dt: a device type to check for capabilities.
-    return: dict of capabilities based on the most recent health check.
-    the returned dict contains a full set of empty values if no
-    capabilities could be determined.
-    """
-    capability = {
-        'capabilities_date': None,
-        'processor': None,
-        'models': None,
-        'cores': 0,
-        'emulated': False,
-        'flags': [],
-    }
-    hardware_flags = []
-    hardware_cpu_models = []
-    device = Device.objects.get(hostname=device_name)
-    use_health_job = device.device_type.health_check_job != ""
-    try:
-        health_job = TestJob.objects.filter(
-            actual_device=device,
-            health_check=use_health_job,
-            status=TestJob.COMPLETE).latest('submit_time')
-    except TestJob.DoesNotExist:
-        return capability
-    if not health_job:
-        return capability
-    job = TestJob.objects.filter(id=health_job.id)[0]
-    if not job:
-        return capability
-    bundle = job._results_bundle
-    if not bundle:
-        return capability
-    bundle_json = bundle.get_sanitized_bundle().get_human_readable_json()
-    if not bundle_json:
-        return capability
-    bundle_data = simplejson.loads(bundle_json)
-    if 'hardware_context' not in bundle_data['test_runs'][0]:
-        return capability
-    # ok, we finally have a hardware_context for this device type, populate.
-    devices = bundle_data['test_runs'][0]['hardware_context']['devices']
-    capability['capabilities_date'] = job.end_time
-    for device in devices:
-        # multiple core cpus have multiple device.cpu entries, each with attributes.
-        if device['device_type'] == 'device.cpu':
-            if 'cpu_type' in device['attributes']:
-                model = device['attributes']['cpu_type']
-            if 'cpu type' in device['attributes']:
-                    model = device['attributes']['cpu type']
-            if 'model name' in device['attributes']:
-                model = device['attributes']['model name']
-            if 'cpu_part' in device['attributes']:
-                cpu_part = int(device['attributes']['cpu_part'], 16)
-            elif 'CPU part' in device['attributes']:
-                cpu_part = int(device['attributes']['CPU part'], 16)
-            else:
-                cpu_part = None
-            if model.startswith("ARMv7") and cpu_part:
-                if hex(cpu_part) == hex(0xc05):
-                    model = "%s - %s" % (model, "Cortex A5")
-                if hex(cpu_part) == hex(0xc07):
-                    model = "%s - %s" % (model, "Cortex A7")
-                if hex(cpu_part) == hex(0xc08):
-                    model = "%s - %s" % (model, "Cortex A8")
-                if hex(cpu_part) == hex(0xc09):
-                    model = "%s - %s" % (model, "Cortex A9")
-                if hex(cpu_part) == hex(0xc0f):
-                    model = "%s - %s" % (model, "Cortex A15")
-            hardware_cpu_models.append(model)
-            if 'Features' in device['attributes']:
-                hardware_flags.append(device['attributes']['Features'])
-            elif 'flags' in device['attributes']:
-                hardware_flags.append(device['attributes']['flags'])
-            elif 'cpu flags' in device['attributes']:
-                hardware_flags.append(device['attributes']['cpu flags'])
-            if device['attributes']['cpu_type'].startswith("QEMU"):
-                capability['emulated'] = True
-            capability['cores'] += 1
-        if device['device_type'] == 'device.board':
-            capability['processor'] = device['description']
-    if len(hardware_flags) == 0:
-        hardware_flags.append("None")
-    if len(hardware_cpu_models) == 0:
-        hardware_cpu_models.append("None")
-    capability['models'] = ", ".join(hardware_cpu_models)
-    capability['flags'] = ", ".join(hardware_flags)
-    return capability
-
-
 @BreadCrumb("Device Type {pk}", parent=index, needs=['pk'])
 def device_type_detail(request, pk):
     dt = get_object_or_404(DeviceType, pk=pk)
@@ -861,10 +770,27 @@ def device_type_detail(request, pk):
     discrete_data = no_dt_ptable.prepare_discrete_data(no_dt_data)
     discrete_data.update(dt_jobs_ptable.prepare_discrete_data(dt_jobs_data))
 
+    if dt.cores.all():
+        core_string = "%s x %s" % (
+            dt.core_count if dt.core_count else 1,
+            ','.join([core.name for core in dt.cores.all().order_by('name')]))
+    else:
+        core_string = ''
+
+    processor_name = dt.processor if dt.processor else ''
+    architecture_name = dt.architecture if dt.architecture else ''
+    bits_width = dt.bits.width if dt.bits else ''
+    cpu_name = dt.cpu_model if dt.cpu_model else ''
+
     return render_to_response(
         "lava_scheduler_app/device_type.html",
         {
             'device_type': dt,
+            'arch_version': architecture_name,
+            'processor': processor_name,
+            'arch_bits': bits_width,
+            'cores': core_string,
+            'cpu_model': cpu_name,
             'search_data': search_data,
             "discrete_data": discrete_data,
             'terms_data': terms_data,
@@ -2056,9 +1982,6 @@ def device_detail(request, pk):
 
     visible = filter_device_types(request.user)
 
-    #  device capabilities data retrieved from health checks
-    capabilities = populate_capabilities(device.hostname)
-
     return render_to_response(
         "lava_scheduler_app/device.html",
         {
@@ -2088,12 +2011,6 @@ def device_detail(request, pk):
             'context_help': BreadCrumbTrail.show_help(device_detail, pk="help"),
             'next_device': next_device,
             'previous_device': previous_device,
-            'capabilities_date': capabilities['capabilities_date'],
-            'processor': capabilities['processor'],
-            'models': capabilities['models'],
-            'cores': capabilities['cores'],
-            'emulated': capabilities['emulated'],
-            'flags': capabilities['flags'],
         },
         RequestContext(request))
 

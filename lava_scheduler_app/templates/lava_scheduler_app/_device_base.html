@@ -118,26 +118,6 @@
   </div>
 </div>
 <div class="row">
-{% if device.device_type.name != 'dynamic-vm' %}
-  <div class="col-md-6">
-    <h4 class="modal-header">Capabilities{% if capabilities_date %} <small>({{ capabilities_date }})</small>{% endif %}</h4>
-    <dl class="dl-horizontal">
-      <dt>Processor</dt>
-      <dd>{{ processor|default:"<i>unknown</i>" }}</dd>
-      <dt>Model</dt>
-      <dd>{{ models|default:"<i>unknown</i>" }}</dd>
-      <dt>Flags</dt>
-      <dd>{{ flags|default:"<i>unknown</i>" }}</dd>
-      <dt>Cores</dt>
-      <dd>{{ cores|default:"<i>unknown</i>" }}</dd>
-      {% if emulated %}
-      <dt>Emulated</dt>
-      <dd>True</dd>
-      {% endif %}
-    </dl>
-  </div>
-{% endif %}
-
   <div class="col-md-6">
     <h4 class="modal-header">Actions</h4>
     <div class="row">

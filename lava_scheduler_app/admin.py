@@ -2,7 +2,8 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from lava_scheduler_app.models import (
     Device, DeviceStateTransition, DeviceType, TestJob, Tag, JobFailureTag,
-    User, Worker, DefaultDeviceOwner, DeviceDictionaryTable
+    User, Worker, DefaultDeviceOwner, DeviceDictionaryTable,
+    Architecture, ProcessorFamily, BitWidth, Core
 )
 
 
@@ -61,6 +62,13 @@ def retire_action(modeladmin, request, queryset):
 retire_action.short_description = "retire"
 
 
+def cancel_action(modeladmin, request, queryset):
+    for testjob in queryset:
+        if testjob.can_cancel(request.user):
+            testjob.cancel(request.user)
+cancel_action.short_description = 'cancel selected jobs'
+
+
 def health_unknown(modeladmin, request, queryset):
     for device in queryset.filter(health_status=Device.HEALTH_PASS):
         device.health_status = Device.HEALTH_UNKNOWN
@@ -113,6 +121,7 @@ class TestJobAdmin(admin.ModelAdmin):
         return '' if obj.requested_device_type is None else obj.requested_device_type
     requested_device_type_name.short_description = 'Request device type'
 
+    actions = [cancel_action]
     list_filter = ('status', 'requested_device_type', 'requested_device__hostname')
     raw_id_fields = ['_results_bundle']
     fieldsets = (
@@ -150,7 +159,38 @@ class DeviceTypeAdmin(admin.ModelAdmin):
         return obj.health_check_job != ""
     has_health_check.boolean = True
 
-    list_display = ('name', 'has_health_check', 'display', 'owners_only')
+    def architecture_name(self, obj):
+        if obj.architecture:
+            return obj.architecture
+        return ''
+
+    def processor_name(self, obj):
+        if obj.processor:
+            return obj.processor
+        return ''
+
+    def cpu_model_name(self, obj):
+        if obj.cpu_model:
+            return obj.cpu_model
+        return ''
+
+    def bit_count(self, obj):
+        if obj.bits:
+            return obj.bits
+        return ''
+
+    def list_of_cores(self, obj):
+        if obj.core_count:
+            return "%s x %s" % (
+                obj.core_count,
+                ','.join([core.name for core in obj.cores.all().order_by('name')]))
+        return ''
+
+    list_filter = ('name', 'display', 'cores',
+                   'architecture', 'processor')
+    list_display = ('name', 'has_health_check', 'display', 'owners_only',
+                    'architecture_name', 'processor_name', 'cpu_model_name',
+                    'list_of_cores', 'bit_count')
 
 
 def hide_worker_action(modeladmin, request, queryset):
@@ -189,6 +229,10 @@ admin.site.register(DeviceStateTransition, DeviceStateTransitionAdmin)
 admin.site.register(DeviceType, DeviceTypeAdmin)
 admin.site.register(TestJob, TestJobAdmin)
 admin.site.register(Tag)
+admin.site.register(Architecture)
+admin.site.register(ProcessorFamily)
+admin.site.register(BitWidth)
+admin.site.register(Core)
 admin.site.register(JobFailureTag)
 admin.site.register(Worker, WorkerAdmin)
 admin.site.register(DeviceDictionaryTable, DeviceDictionaryAdmin)

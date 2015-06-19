@@ -486,7 +486,8 @@ class DeviceTypeTable(LavaTable):
     class Meta(LavaTable.Meta):
         model = DeviceType
         exclude = [
-            'display', 'health_check_job', 'owners_only'
+            'display', 'health_check_job', 'owners_only', 'architecture',
+            'processor', 'cpu_model', 'bits', 'cores', 'core_count'
         ]
         searches = {
             'name': 'contains',
