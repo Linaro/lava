@@ -311,6 +311,8 @@ class BootloaderTarget(MasterImageTarget):
 
     def _boot_linaro_image(self):
         if self.proc:
+            if self.config.connection_command_terminate:
+                self.proc.sendline(self.config.connection_command_terminate)
             finalize_process(self.proc)
             self.proc = None
         self.proc = connect_to_serial(self.context)

@@ -67,6 +67,7 @@ class CommandRunner(object):
         self._prompt_str_includes_rc = prompt_str_includes_rc
         self.match_id = None
         self.match = None
+        self.delay = 0
 
     def wait_for_prompt(self, timeout=-1):
         wait_for_prompt(self._connection, self._prompt_str, timeout)
@@ -93,7 +94,7 @@ class CommandRunner(object):
         self._connection.empty_buffer()
         if log_in_host is not None:
             self._connection.logfile = open(log_in_host, "a")
-        self._connection.sendline(cmd)
+        self._connection.sendline(cmd, delay=self.delay)
         start = time.time()
         if response is not None:
             self.match_id = self._connection.expect(response, timeout=timeout)
