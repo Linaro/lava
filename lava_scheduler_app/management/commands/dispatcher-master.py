@@ -243,7 +243,7 @@ def select_device(job):
     # pass (unused) output_dir just for validation as there is no zmq socket either.
     try:
         pipeline_job = parser.parse(job.definition, obj, job.id, None, output_dir='/tmp')
-    except (AttributeError, NotImplementedError, KeyError, TypeError) as exc:
+    except (JobError, AttributeError, NotImplementedError, KeyError, TypeError) as exc:
         logger.error({'parser': exc})
         end_job(job, fail_msg=exc, job_status=TestJob.INCOMPLETE)
         return None
@@ -407,7 +407,7 @@ class Command(BaseCommand):
 
                 try:
                     scanned = yaml.load(message)
-                except yaml.scanner.ScannerError:
+                except yaml.YAMLError:
                     self.logger.error("Failed to scan: %s", message)
                     scanned = None
                 # the results logger wraps the OrderedDict in a dict called results, for identification,
