@@ -155,7 +155,7 @@ class BootloaderTarget(MasterImageTarget):
         else:
             raise CriticalError("Unknown bootloader type")
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, image, bootloader, firmware, bl1, bl2,
                              bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
         if self.__deployment_data__ is None:
             # Get deployment data

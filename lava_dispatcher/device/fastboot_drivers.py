@@ -185,7 +185,7 @@ class BaseDriver(object):
         finalize_process(proc)
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
-                             bootloader, firmware, bl1, bl2, bl31, rootfstype,
+                             image, bootloader, firmware, bl1, bl2, bl31, rootfstype,
                              bootloadertype, target_type, scratch_dir,
                              qemu_pflash=None):
         self.target_type = target_type
@@ -345,7 +345,7 @@ class fastboot(BaseDriver):
         super(fastboot, self).__init__(device)
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
-                             bootloader, firmware, bl1, bl2, bl31, rootfstype,
+                             image, bootloader, firmware, bl1, bl2, bl31, rootfstype,
                              bootloadertype, target_type, scratch_dir,
                              qemu_pflash=None):
         raise CriticalError('This platform does not support kernel deployment!')
@@ -368,7 +368,7 @@ class nexus10(fastboot):
         super(nexus10, self).__init__(device)
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
-                             bootloader, firmware, bl1, bl2, bl31, rootfstype,
+                             image, bootloader, firmware, bl1, bl2, bl31, rootfstype,
                              bootloadertype, target_type, scratch_dir, qemu_pflash=None):
         raise CriticalError('This platform does not support kernel deployment!')
 
@@ -383,7 +383,7 @@ class tshark(fastboot):
         super(tshark, self).__init__(device)
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
-                             bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
+                             image, bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
                              target_type, scratch_dir, qemu_pflash=None):
         raise CriticalError('This platform does not support kernel deployment!')
 
@@ -454,7 +454,7 @@ class capri(fastboot_serial):
         super(capri, self).__init__(device)
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
-                             bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
+                             image, bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
                              target_type, scratch_dir, qemu_pflash=None):
         raise CriticalError('This platform does not support kernel deployment!')
 
@@ -494,7 +494,7 @@ class pxa1928dkb(fastboot_serial):
         super(pxa1928dkb, self).__init__(device)
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
-                             bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
+                             image, bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
                              target_type, scratch_dir, qemu_pflash=None):
         raise CriticalError('This platform does not support kernel deployment!')
 
@@ -520,7 +520,7 @@ class k3v2(fastboot_serial):
         super(k3v2, self).__init__(device)
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
-                             bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
+                             image, bootloader, firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
                              target_type, scratch_dir, qemu_pflash=None):
         raise CriticalError('This platform does not support kernel deployment!')
 

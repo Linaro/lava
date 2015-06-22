@@ -48,7 +48,7 @@ class BaseDriver(object):
         self._default_boot_cmds = 'boot_cmds_ramdisk'
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
-                             bootloader, firmware, bl1, bl2, bl31, rootfstype,
+                             image, bootloader, firmware, bl1, bl2, bl31, rootfstype,
                              bootloadertype, target_type, scratch_dir, qemu_pflash=None):
         """
         """
@@ -72,7 +72,7 @@ class stmc(BaseDriver):
         self._booted = False
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs,
-                             bootloader, firmware, bl1, bl2, bl31, rootfstype,
+                             image, bootloader, firmware, bl1, bl2, bl31, rootfstype,
                              bootloadertype, target_type, scratch_dir, qemu_pflash=None):
         kernel_url = kernel
         dtb_url = dtb

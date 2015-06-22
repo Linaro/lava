@@ -283,7 +283,7 @@ class FastModelTarget(Target):
         self._copy_needed_files_from_partition(self.config.root_part, 'boot')
         self._copy_needed_files_from_partition(self.config.root_part, 'lib')
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, image, bootloader, firmware, bl1, bl2,
                              bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
         # Required
         if kernel is None:
@@ -311,12 +311,12 @@ class FastModelTarget(Target):
                 extract_overlay(overlay, ramdisk_dir)
             self._initrd = create_ramdisk(ramdisk_dir, self._scratch_dir)
         self._boot_tags['{RAMDISK}'] = os.path.relpath(self._initrd, self._scratch_dir)
-        self._boot_tags['{DTB}'] = os.path.relpath(self._dtb, self._scratch_dir)
 
         # Optional
         if dtb is not None:
             self._dtb = download_image(dtb, self.context, self._scratch_dir,
                                        decompress=False)
+            self._boot_tags['{DTB}'] = os.path.relpath(self._dtb, self._scratch_dir)
 
         if bootloader is None:
             if self.config.simulator_uefi_default is None:
@@ -353,8 +353,12 @@ class FastModelTarget(Target):
         # Get deployment data
         self.deployment_data = deployment_data.get(target_type)
 
-        # Booting is not supported without an _sd_image defined
-        self._sd_image = self._kernel
+        if image is not None:
+            self._sd_image = download_image(image, self.context, self._scratch_dir,
+                                            decompress=False)
+        else:
+            # Booting is not supported without an _sd_image defined
+            self._sd_image = self._kernel
 
         self._default_boot_cmds = 'boot_cmds_ramdisk'
 
@@ -461,9 +465,13 @@ class FastModelTarget(Target):
 
         self._fix_perms()
 
-        cli_pattern = self.config.simulator_command_flag + '%s=%s' + ' '
-
-        options = boot_options.as_string(self, join_pattern=cli_pattern)
+        if self.config.simulator_options is not None:
+            logging.info('Overriding default simulator options')
+            options = ' '.join(self.config.simulator_options)
+        else:
+            # If the user hasn't set their own flags then we should use the defaults
+            cli_pattern = self.config.simulator_command_flag + '%s=%s' + ' '
+            options = boot_options.as_string(self, join_pattern=cli_pattern)
 
         if self.config.simulator_boot_wrapper and self._uefi is None:
             options = '%s %s' % (self.config.simulator_boot_wrapper, options)
