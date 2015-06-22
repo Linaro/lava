@@ -75,9 +75,9 @@ class YAMLLogger(logging.Logger):
         # parameters such as timestamp, else we assume the log message is a
         # string and dump the message.
         if isinstance(message, dict) and 'ts' in message:
-                self._log(level, yaml.dump([{'ts': message['ts'],
-                                             level_name: message['msg']}])[:-1],
-                          args, kwargs)
+            self._log(level, yaml.dump([{'ts': message['ts'],
+                                         level_name: message['msg']}])[:-1],
+                      args, kwargs)
         else:
             self._log(level, yaml.dump([{level_name: message}])[:-1], args,
                       kwargs)

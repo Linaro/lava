@@ -288,7 +288,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             msg = {'msg': 'start: %s %s (max %ds)' % (action.level,
                                                       action.name,
                                                       action.timeout.duration),
-                   'ts': datetime.datetime.utcnow()}
+                   'ts': datetime.datetime.utcnow().isoformat()}
             if self.parent is None:
                 action.logger.info(msg)
             else:
@@ -312,7 +312,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 # Add action end timestamp to the log message
                 msg = {'msg': "%s duration: %.02f" % (action.name,
                                                       action.elapsed_time),
-                       'ts': datetime.datetime.utcnow()}
+                       'ts': datetime.datetime.utcnow().isoformat()}
                 if self.parent is None:
                     action.logger.info(msg)
                 else:
