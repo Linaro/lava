@@ -35,6 +35,7 @@ include etc/debug.wsgi
 include etc/lava-default.conf
 include etc/lava-server.init
 include etc/lava-master.init
+include etc/lava-master.service
 include etc/lava-server.conf
 include etc/env.yaml
 include etc/logrotate.d/*

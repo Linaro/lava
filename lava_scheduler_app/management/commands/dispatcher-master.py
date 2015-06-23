@@ -342,7 +342,7 @@ class Command(BaseCommand):
         del logging.root.filters[:]
         # Create the logger
         FORMAT = '%(asctime)-15s %(levelname)s %(message)s'  # pylint: disable=invalid-name
-        logging.basicConfig(format=FORMAT)
+        logging.basicConfig(format=FORMAT, filename='/var/log/lava-server/lava-master.log')
         self.logger = logging.getLogger('dispatcher-master')
 
         if options['level'] == 'ERROR':

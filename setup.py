@@ -99,6 +99,7 @@ setup(
          ['instance.template']),
         ('/usr/share/lava-server',
          ['share/add_device.py',
+          'etc/lava-master.service',
           'share/render-template.py']),
     ],
     scripts=[

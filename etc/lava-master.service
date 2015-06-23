@@ -1,0 +1,10 @@
+[Unit]
+Description=Pipeline lava-server manage dispatcher-master
+After=remote-fs.target
+
+[Service]
+ExecStart=/usr/bin/lava-server manage dispatcher-master
+Type=simple
+
+[Install]
+WantedBy=network.target
