@@ -1,6 +1,8 @@
 include etc/lava-coordinator.init
 include etc/lava-coordinator.conf
+include etc/lava-coordinator.service
 include etc/lavacoordinatorlog
+include status.py
 include tests/*
 #include coordinator.py
 #include testpoller.py

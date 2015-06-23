@@ -23,11 +23,12 @@ from setuptools import setup, find_packages
 
 setup(
     name='lava-coordinator',
-    version="0.1.6",
+    version="0.1.7",
     author="Neil Williams",
     author_email="neil.williams@linaro.org",
     license="GPL2+",
     description="LAVA Coordinator daemon for MultiNode",
+    url='http://www.linaro.org/engineering/engineering-groups/validation',
     packages=find_packages(),
     install_requires=[
         "daemon",
@@ -35,6 +36,10 @@ setup(
     ],
     data_files=[
         ("/etc/init.d/", ["etc/lava-coordinator.init"]),
+        ("/usr/share/lava-coordinator/", [
+            "status.py",
+            "etc/lava-coordinator.service"
+        ]),
         ("/etc/lava-coordinator/", ["etc/lava-coordinator.conf"]),
         ("/etc/logrotate.d/", ["etc/lavacoordinatorlog"])
     ],

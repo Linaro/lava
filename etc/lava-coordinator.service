@@ -1,0 +1,11 @@
+[Unit]
+Description=Coordinator daemon for LAVA MultiNode messaging API
+After=remote-fs.target
+
+[Service]
+ExecStart=/usr/bin/lava-coordinator
+Type=forking
+PIDFile=/var/run/lava-coordinator.pid
+
+[Install]
+WantedBy=network.target
