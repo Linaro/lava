@@ -1,0 +1,10 @@
+[Unit]
+Description=Pipeline daemon for LAVA
+After=remote-fs.target
+
+[Service]
+ExecStart=/usr/bin/lava-dispatcher-slave --master tcp://localhost:5556 --socket-addr tcp://localhost:5555 --level DEBUG
+Type=simple
+
+[Install]
+WantedBy=network.target

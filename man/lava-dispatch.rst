@@ -1,9 +1,9 @@
 
 Description
-============
+###########
 
 Summary
-#######
+*******
 
 ``lava-dispatch`` runs a LAVA test job on the reserved device, as
 scheduled by the ``lava-server`` and publish the test result back to
@@ -14,7 +14,7 @@ You can see an up-to-date list of supported target devices by looking
 at the device types on the relevant server.
 
 Usage
-#####
+*****
 
 lava dispatch [-h] [--config-dir CONFIG_DIR] [--oob-fd OOB_FD]
 [--output-dir OUTPUT_DIR] [--validate] [--job-id JOB_ID]
@@ -22,7 +22,7 @@ lava dispatch [-h] [--config-dir CONFIG_DIR] [--oob-fd OOB_FD]
 JOB
 
 Options
-########
+*******
 
 positional arguments:
   JOB                   Test scenario JSON file
