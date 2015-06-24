@@ -93,6 +93,16 @@
         {% endif %}
       </dd>
 {% endif %}
+    {% if exclusive %}
+        <dt>Exclusive</dt>
+        <dd><b>pipeline jobs only</b>.</dd>
+    {% elif pipeline %}
+        <dt>Pipeline</dt>
+        <dd>{{ device.hostname }} accepts both pipeline and JSON jobs.</dd>
+    {% else %}
+        <dt>Pipeline</dt>
+        <dd><b>False</b>. JSON jobs only.</dd>
+    {% endif %}
     </dl>
   </div>
   <div class="col-md-4">

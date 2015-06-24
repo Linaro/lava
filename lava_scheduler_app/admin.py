@@ -97,6 +97,9 @@ class DeviceAdmin(admin.ModelAdmin):
                    'health_status', 'worker_host')
     raw_id_fields = ['current_job', 'last_health_report_job']
 
+    def exclusive_device(self, obj):
+        return 'pipeline only' if obj.is_exclusive else ''
+
     fieldsets = (
         ('Properties', {
             'fields': ('device_type', 'hostname', 'worker_host', 'device_version')}),
@@ -108,7 +111,7 @@ class DeviceAdmin(admin.ModelAdmin):
             'fields': ('status', 'health_status', 'last_health_report_job', 'current_job')}),
     )
     list_display = ('hostname', 'device_type', 'current_job', 'worker_host',
-                    'status', 'health_status', 'is_public', 'is_pipeline')
+                    'status', 'health_status', 'is_public', 'is_pipeline', 'exclusive_device')
     search_fields = ('hostname', 'device_type__name')
 
 

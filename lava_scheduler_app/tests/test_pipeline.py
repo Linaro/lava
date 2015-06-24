@@ -222,6 +222,23 @@ class TestPipelineSubmit(TestCaseWithFactory):
         obj = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
         self.assertRaises(KeyError, parser.parse, job.definition, obj, job.id, None, output_dir='/tmp')
 
+    def test_exclusivity(self):
+        device = Device.objects.get(hostname="fakeqemu1")
+        self.assertTrue(device.is_pipeline)
+        self.assertFalse(device.is_exclusive)
+        self.assertIsNotNone(DeviceDictionary.get(device.hostname))
+        device_dict = DeviceDictionary(hostname=device.hostname)
+        device_dict.save()
+        device_dict = DeviceDictionary.get(device.hostname)
+        self.assertTrue(device.is_pipeline)
+        self.assertFalse(device.is_exclusive)
+        update = device_dict.to_dict()
+        update.update({'exclusive': 'True'})
+        device_dict.parameters = update
+        device_dict.save()
+        self.assertTrue(device.is_pipeline)
+        self.assertTrue(device.is_exclusive)
+
 
 class TestPipelineStore(TestCaseWithFactory):
 

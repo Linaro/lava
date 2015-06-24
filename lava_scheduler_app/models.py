@@ -877,6 +877,19 @@ class Device(RestrictedResource):
 
         return yaml.load(template.render(**job_ctx))
 
+    @property
+    def is_exclusive(self):
+        exclusive = False
+        # check the device dictionary if this is exclusively a pipeline device
+        device_dict = DeviceDictionary.get(self.hostname)
+        if device_dict:
+            device_dict = device_dict.to_dict()
+            if 'parameters' not in device_dict or device_dict['parameters'] is None:
+                return exclusive
+            if 'exclusive' in device_dict['parameters'] and device_dict['parameters']['exclusive'] == 'True':
+                exclusive = True
+        return exclusive
+
 
 class TemporaryDevice(Device):
     """
@@ -972,6 +985,31 @@ def _check_tags(taglist, device_type=None, hostname=None):
             "Device %s does not support all of the tags '%s'."
             % (hostname, ", ".join([x.name for x in taglist])))
     return list(set(matched_devices))
+
+
+def _check_exclusivity(device_list, pipeline=True):
+    """
+    Checks whether the device is exclusive to the pipeline.
+    :param device_list: A list of device objects to check
+    :param pipeline: whether the job being checked is a pipeline job
+    :return: a subset of the device_list to which the job can be submitted.
+    """
+    allow = []
+    check_type = "YAML" if pipeline else "JSON"
+    if len(device_list) == 0:
+        # logic error
+        return allow
+    for device in device_list:
+        if pipeline and not device.is_pipeline:
+            continue
+        if not pipeline and device.is_exclusive:
+            # devices which are exclusive to the pipeline cannot accept non-pipeline jobs.
+            continue
+        allow.append(device)
+    if len(allow) == 0:
+        raise DevicesUnavailableException(
+            "No devices of the requested type are currently available for %s submissions" % check_type)
+    return allow
 
 
 def _check_submit_to_device(device_list, user):
@@ -1166,8 +1204,8 @@ def _pipeline_protocols(job_data, user):
                 device_type = _get_device_type(user, params['device_type'])
                 role_dictionary[role]['device_type'] = device_type
 
-                device_list = Device.objects.filter(device_type=device_type)
                 allowed_devices = []
+                device_list = Device.objects.filter(device_type=device_type, is_pipeline=True)
                 for device in device_list:
                     if _check_submit_to_device([device], user):
                         allowed_devices.append(device)
@@ -1599,6 +1637,7 @@ class TestJob(RestrictedResource):
                 logger.debug("Requested device %s is unavailable." % job_data['target'])
                 raise DevicesUnavailableException(
                     "Requested device %s is unavailable." % job_data['target'])
+            _check_exclusivity([target], False)
             _check_submit_to_device([target], user)
             _check_tags_support(_check_tags(taglist, hostname=target), _check_submit_to_device([target], user))
         elif 'device_type' in job_data:
@@ -1606,6 +1645,7 @@ class TestJob(RestrictedResource):
             device_type = _get_device_type(user, job_data['device_type'])
             allow = _check_submit_to_device(list(Device.objects.filter(
                 device_type=device_type)), user)
+            allow = _check_exclusivity(allow, False)
             _check_tags_support(_check_tags(taglist, device_type=device_type), allow)
         elif 'device_group' in job_data:
             target = None
@@ -1619,6 +1659,7 @@ class TestJob(RestrictedResource):
                 taglist = _get_tag_list(device_group.get('tags', []))
                 allow = _check_submit_to_device(list(Device.objects.filter(
                     device_type=device_type)), user)
+                allow = _check_exclusivity(allow, False)
                 _check_tags_support(_check_tags(taglist, device_type=device_type), allow)
                 if device_type in requested_devices:
                     requested_devices[device_type] += count
@@ -1651,6 +1692,7 @@ class TestJob(RestrictedResource):
             role = vm_group['host'].get('role', None)
             allow = _check_submit_to_device(
                 list(Device.objects.filter(device_type=device_type)), user)
+            _check_exclusivity(allow, False)
             requested_devices[device_type.name] = (1, role)
 
             # Validate and get the list of vms requested. These are dynamic vms

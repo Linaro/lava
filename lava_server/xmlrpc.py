@@ -23,7 +23,7 @@ from dashboard_app.models import Bundle
 from dashboard_app.xmlrpc import errors
 from django.core.exceptions import PermissionDenied
 from lava_scheduler_app.views import get_restricted_job
-from lava_scheduler_app.models import Device, DeviceType
+from lava_scheduler_app.models import Device, DeviceType, DeviceDictionary
 from linaro_django_xmlrpc.models import Mapper, SystemAPI
 from django.contrib.auth.models import Group, Permission, User
 
@@ -218,6 +218,9 @@ class LavaSystemAPI(SystemAPI):
         for whether the user can access that device.
         If the device is visible, also includes a boolean denoting whether the specified
         device is a pipeline device which can run jobs designed in the dispatcher refactoring.
+        If a pipeline device, also includes a boolean denoting whether the specified pipeline
+        device exclusively accepts YAML submissions - JSON submissions are rejected if this
+        device is marked as exclusive.
         {
             'mustang': [
                 {
@@ -249,11 +252,13 @@ class LavaSystemAPI(SystemAPI):
         {'qemu':
             [
                 {'kvm014': {
+                    'exclusive': False,
                     'visible': True,
                     'is_pipeline': True
                     }
                 },
                 {'kvm02': {
+                    'exclusive': True,
                     'visible': True,
                     'is_pipeline': True}
                 }
@@ -288,7 +293,8 @@ class LavaSystemAPI(SystemAPI):
                 retval[device_type.name].append({
                     hostname: {
                         'is_pipeline': device.is_pipeline,
-                        'visible': visible
+                        'visible': visible,
+                        'exclusive': device.is_exclusive
                     }
                 })
             else:

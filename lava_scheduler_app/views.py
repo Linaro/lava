@@ -1996,6 +1996,8 @@ def device_detail(request, pk):
             'show_forcehealthcheck': device.can_admin(request.user) and
             device.status not in [Device.RETIRED] and device.device_type.health_check_job != "",
             'can_admin': device.can_admin(request.user),
+            'exclusive': device.is_exclusive,
+            'pipeline': device.is_pipeline,
             'show_maintenance': device.can_admin(request.user) and
             device.status in [Device.IDLE, Device.RUNNING, Device.RESERVED],
             'edit_description': device.can_admin(request.user),

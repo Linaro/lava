@@ -51,6 +51,17 @@ See also :ref:`device_capabilities`
     used by the :term:`device owner` to give more information about the device. See
     :ref:`edit_device_description`.
 
+  **Pipeline**
+    A :term:`pipeline` device can accept jobs using the dispatcher :term:`refactoring`
+    over `XMLRPC </api/help>`_. If **False**, the device only accepts JSON jobs. Some
+    pipeline devices can support JSON and pipeline jobs and will be indicated as such
+    here. Some pipeline devices are only supported by the changes
+    within the refactoring, these are shown as **Exclusive**.
+
+  **Exclusive**
+    Devices which only support :term:`pipeline` jobs and which will reject JSON submissions
+    are shown as exclusive.
+
 .. index:: status
 
 .. _device_status:
@@ -186,3 +197,15 @@ Restricted devices can be returned to the common LAVA pool so that anyone
 can submit jobs to the device. The device will be able to accept jobs
 from any authorised user along with devices which have no device owner
 assigned.
+
+Changing the pipeline support of a device
+=========================================
+
+Devices which support :term:`pipeline` jobs can be enabled in the admin interface.
+Devices which do not support JSON submissions can be set to **exclusive** by the admin
+setting the *exclusive* flag in the :term:`device dictionary` for that device::
+
+ {% set exclusive = 'True' %}
+
+Whether a device supports the pipeline and / or is exclusive to the pipeline can
+also be queried using `XMLRPC </api/help/#system.user_can_view_devices>`_

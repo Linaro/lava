@@ -530,16 +530,30 @@ class DeviceTable(LavaTable):
     health_status = tables.Column(verbose_name='Health')
     tags = TagsColumn()
 
+    json = tables.Column(accessor='is_pipeline', verbose_name='JSON jobs')
+
+    def render_json(self, record):
+        if record.is_exclusive:
+            return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span>')
+        return mark_safe('<span class="glyphicon glyphicon-ok"></span>')
+
+    pipeline = tables.Column(accessor='is_pipeline', verbose_name='Pipeline jobs')
+
+    def render_pipeline(self, record):
+        if record.is_pipeline:
+            return mark_safe('<span class="glyphicon glyphicon-ok"></span>')
+        return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span>')
+
     class Meta(LavaTable.Meta):
         model = Device
         exclude = [
             'user', 'group', 'is_public', 'device_version',
             'physical_owner', 'physical_group', 'description',
-            'current_job', 'last_health_report_job'
+            'current_job', 'last_health_report_job', 'is_pipeline'
         ]
         sequence = [
             'hostname', 'worker_host', 'device_type', 'status',
-            'owner', 'health_status'
+            'owner', 'health_status', 'json', 'pipeline'
         ]
         searches = {
             'hostname': 'contains',
