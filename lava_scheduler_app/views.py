@@ -66,6 +66,7 @@ from lava_scheduler_app import utils
 from dashboard_app.models import BundleStream
 
 from lava.utils.lavatable import LavaTable, LavaView
+from lava_results_app.utils import description_data, description_filename
 
 from lava_scheduler_app.template_helper import expand_template
 from lava_scheduler_app.job_templates import (
@@ -1246,6 +1247,13 @@ def job_detail(request, pk):
                                                             test_job=job)
         is_favorite = testjob_user.is_favorite
 
+    description = description_data(job.id)
+    job_data = description.get('job', {})
+    action_list = job_data.get('actions', [])
+    pipeline = description.get('pipeline', {})
+    deploy_list = [item['deploy'] for item in action_list if 'deploy' in item]
+    boot_list = [item['boot'] for item in action_list if 'boot' in item]
+    test_list = [item['test'] for item in action_list if 'test' in item]
     data = {
         'job': job,
         'show_cancel': job.can_cancel(request.user),
@@ -1256,6 +1264,13 @@ def job_detail(request, pk):
         'change_priority': job.can_change_priority(request.user),
         'context_help': BreadCrumbTrail.leading_to(job_detail, pk='detail'),
         'is_favorite': is_favorite,
+        'device_data': description.get('device', {}),
+        'job_data': job_data,
+        'pipeline_data': pipeline,
+        'deploy_list': deploy_list,
+        'boot_list': boot_list,
+        'test_list': test_list,
+        'description_file': description_filename(job.id)
     }
 
     log_file = job.output_file()
@@ -1323,6 +1338,21 @@ def job_definition(request, pk):
             'show_resubmit': job.can_resubmit(request.user),
         },
         RequestContext(request))
+
+
+def job_description_yaml(request, pk):
+    job = get_restricted_job(request.user, pk)
+    if not job.is_pipeline:
+        raise Http404()
+    filename = description_filename(job.id)
+    if not filename:
+        raise Http404()
+    with open(filename, 'r') as desc:
+        data = desc.read()
+    response = HttpResponse(data, content_type='text/yaml')
+    response['Content-Disposition'] = "attachment; filename=job_description_%d.yaml" % \
+        job.id
+    return response
 
 
 def job_definition_plain(request, pk):
