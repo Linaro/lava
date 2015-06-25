@@ -2,5 +2,6 @@ usr/lib/python2.7/dist-packages/django/contrib/admin/static/admin/ usr/share/lav
 usr/lib/python2.7/dist-packages/google_analytics/templatetags/analytics.py usr/lib/python2.7/dist-packages/lava_scheduler_app/templatetags/analytics.py
 usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app usr/share/lava-server/static/dashboard_app
 usr/lib/python2.7/dist-packages/lava_scheduler_app/static/lava_scheduler_app usr/share/lava-server/static/lava_scheduler_app
+usr/lib/python2.7/dist-packages/lava_results_app/static/lava_results_app usr/share/lava-server/static/lava_results_app
 usr/lib/python2.7/dist-packages/lava_server/lava-server usr/share/lava-server/static/lava-server
 usr/share/doc/lava-server-doc/html/ usr/share/lava-server/static/docs
