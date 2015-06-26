@@ -122,6 +122,12 @@ def extract_tar(tfname, tmpdir):
                                               tmpdir, '-xvzf', tfname])
         except subprocess.CalledProcessError:
             raise CriticalError('Unable to extract tarball: %s' % tfname)
+    elif tfname.endswith('.zip'):
+        try:
+            output = subprocess.check_output(['nice', 'unzip', tfname, '-d',
+                                              tmpdir])
+        except subprocess.CalledProcessError:
+            raise CriticalError('Unable to extract zipfile: %s' % tfname)
     else:
         raise CriticalError('Unable to extract tarball: %s' % tfname)
     if output:
