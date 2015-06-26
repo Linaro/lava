@@ -1,5 +1,7 @@
+import os
 import yaml
 import decimal
+import unittest
 from lava_results_app.tests.test_names import TestCaseWithFactory
 from lava_scheduler_app.models import (
     TestJob,
@@ -17,7 +19,9 @@ from lava_dispatcher.pipeline.device import PipelineDevice
 class TestMetaTypes(TestCaseWithFactory):
     """
     MetaType and ActionData generation
+    Needs to skip if no /dev/loop0 as it tests job validation
     """
+    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_job(self):
         user = self.factory.make_user()
         job = TestJob.from_yaml_and_user(
