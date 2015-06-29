@@ -147,6 +147,8 @@ def cancel_job(job):
     new_status = Device.IDLE
     device.state_transition_to(new_status, message=msg, job=job)
     device.status = new_status
+    if device.current_job and device.current_job == job:
+        device.current_job = None
     # Save the result
     job.save()
     device.save()
