@@ -20,6 +20,7 @@
 
 
 import os
+import yaml
 import uuid
 import json
 import unittest
@@ -174,6 +175,15 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
                 self.fail("Unexpected protocol")
             self.assertIs(True, protocol.valid)
         self.assertIsNone(self.coord.dataReceived({}))
+
+    def test_multinode_description(self):
+        self.assertIsNotNone(self.client_job)
+        self.client_job.validate()
+        # check that the description can be re-loaded as valid YAML
+        for action in self.client_job.pipeline.actions:
+            data = action.explode()
+            data_str = yaml.dump(data)
+            yaml.load(data_str)
 
     def test_multinode_timeout(self):
         """

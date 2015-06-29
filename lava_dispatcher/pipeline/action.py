@@ -673,6 +673,17 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
                 data['url'] = self.url.geturl()  # pylint: disable=no-member
             elif attr == 'vcs':
                 data[attr] = getattr(self, attr).url
+            elif attr == 'protocols':
+                data['protocols'] = {}
+                for protocol in getattr(self, attr):
+                    data['protocols'][protocol.name] = {}
+                    protocol_attrs = set([attr for attr in dir(protocol)
+                                          if not attr.startswith('_') and getattr(protocol, attr)
+                                          and not isinstance(getattr(protocol, attr), types.MethodType)
+                                          and not isinstance(getattr(protocol, attr), InternalObject)])
+                    for protocol_attr in protocol_attrs:
+                        if protocol_attr not in ['logger']:
+                            data['protocols'][protocol.name][protocol_attr] = getattr(protocol, protocol_attr)
             else:
                 data[attr] = getattr(self, attr)
         if 'deployment_data' in self.parameters:
