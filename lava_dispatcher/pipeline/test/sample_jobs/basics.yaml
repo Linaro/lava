@@ -164,6 +164,3 @@ actions:
                     - suspend
             - test:
                 commands:
-
-    - submit_results:
-        stream: /my/stream/

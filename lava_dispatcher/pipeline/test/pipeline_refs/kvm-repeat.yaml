@@ -295,7 +295,6 @@
   name: lava-test-retry
   pipeline:
   - {class: actions.test.shell.TestShellAction, name: lava-test-shell}
-- {class: actions.submit.SubmitResultsAction, name: submit_results}
 - class: power.FinalizeAction
   name: finalize
   pipeline:

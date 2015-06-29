@@ -68,8 +68,5 @@ actions:
               path: lava-test-shell/single-node/singlenode02.yaml
               name: singlenode-intermediate
 
-    - submit_results:
-        stream: /anonymous/codehelp/
-
 context:
   arch: amd64

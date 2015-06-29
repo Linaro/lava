@@ -42,7 +42,6 @@ import lava_dispatcher.pipeline.actions.deploy.strategies
 import lava_dispatcher.pipeline.actions.boot.strategies
 import lava_dispatcher.pipeline.actions.test.strategies
 import lava_dispatcher.pipeline.protocols.strategies
-from lava_dispatcher.pipeline.actions.submit import SubmitResultsAction
 
 
 def parse_action(job_data, name, device, pipeline):

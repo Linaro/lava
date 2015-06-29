@@ -26,8 +26,5 @@ actions:
         media: tmpfs
         failure_retry: 2
 
-    - submit_results:
-        stream: /anonymous/codehelp/
-
 context:
   arch: amd64

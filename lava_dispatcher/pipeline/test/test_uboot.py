@@ -76,7 +76,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
         self.assertEqual(
             [action.name for action in job.pipeline.actions],
-            ['tftp-deploy', 'uboot-action', 'lava-test-retry', 'submit_results', 'finalize']
+            ['tftp-deploy', 'uboot-action', 'lava-test-retry', 'finalize']
         )
         tftp = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         self.assertTrue(tftp.get_common_data('tftp', 'ramdisk'))
