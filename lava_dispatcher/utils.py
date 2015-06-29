@@ -33,6 +33,7 @@ import subprocess
 import re
 
 from shlex import shlex
+from distutils import spawn
 
 import pexpect
 
@@ -123,11 +124,14 @@ def extract_tar(tfname, tmpdir):
         except subprocess.CalledProcessError:
             raise CriticalError('Unable to extract tarball: %s' % tfname)
     elif tfname.endswith('.zip'):
-        try:
-            output = subprocess.check_output(['nice', 'unzip', tfname, '-d',
-                                              tmpdir])
-        except subprocess.CalledProcessError:
-            raise CriticalError('Unable to extract zipfile: %s' % tfname)
+        if spawn.find_executable('unzip'):
+            try:
+                output = subprocess.check_output(['nice', 'unzip', tfname,
+                                                  '-d', tmpdir])
+            except subprocess.CalledProcessError:
+                raise CriticalError('Unable to extract zipfile: %s' % tfname)
+        else:
+            logging.error("Infrastructure Error: 'unzip' command not found")
     else:
         raise CriticalError('Unable to extract tarball: %s' % tfname)
     if output:
