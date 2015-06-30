@@ -516,6 +516,14 @@ class ExtendedKVStore(kvmodels.Model):
             return None
         return cls.from_dict(fields)
 
+    @classmethod
+    def object_list(cls):
+        """
+        Not quite the same as a Django QuerySet, just a simple list of all entries.
+        Use the to_dict() method on each item in the list to see the key value pairs.
+        """
+        return [kv.lookup_device_dictionary() for kv in DeviceDictionaryTable.objects.all()]
+
 
 class DeviceKVStore(ExtendedKVStore):
     kvstore = get_kvstore('db://lava_scheduler_app_devicedictionarytable')

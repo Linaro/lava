@@ -32,6 +32,13 @@ class ModelFactory(object):
     def getUniqueString(self, prefix='generic'):
         return '%s-%d' % (prefix, self.getUniqueInteger())
 
+    def cleanup(self):
+        DeviceType.objects.all().delete()
+        # make sure the DB is in a clean state wrt devices and jobs
+        Device.objects.all().delete()
+        TestJob.objects.all().delete()
+        [item.delete() for item in DeviceDictionary.object_list()]
+
     def make_user(self):
         return User.objects.create_user(
             self.getUniqueString(),
@@ -54,9 +61,10 @@ class ModelFactory(object):
         qemu.save()
 
     def make_device_type(self, name='qemu', health_check_job=None):
-        device_type = DeviceType.objects.create(
+        (device_type, created) = DeviceType.objects.get_or_create(
             name=name, health_check_job=health_check_job)
-        device_type.save()
+        if created:
+            device_type.save()
         return device_type
 
     def make_device(self, device_type=None, hostname=None, tags=None, is_public=True, **kw):
@@ -99,6 +107,7 @@ class TestTestSuite(TestCaseWithFactory):
         self.assertIsNotNone(store)
         self.assertIsInstance(store, JobPipeline)
         self.assertIs(type(store.pipeline), dict)
+        self.factory.cleanup()
 
     def test_name(self):
         user = self.factory.make_user()
@@ -142,6 +151,7 @@ class TestTestSuite(TestCaseWithFactory):
             self.assertEqual(testcase.suite, suite)
             self.assertIsNotNone(testcase.name)
             self.assertIsNotNone(testcase.result)
+        self.factory.cleanup()
 
     def test_pipelinestore(self):
         user = self.factory.make_user()
@@ -188,6 +198,7 @@ class TestTestSuite(TestCaseWithFactory):
             if testcase.test_set:
                 val('http://localhost/%s' % testcase.get_absolute_url())
         self.assertIsNotNone(TestCase.objects.filter(name='ping-test'))
+        self.factory.cleanup()
 
     def test_level_input(self):
         user = self.factory.make_user()
@@ -217,6 +228,7 @@ results:
                 self.assertEqual(testcase.action_data['level'], 5.1)
                 self.assertEqual(testcase.action_level, '5.1')
                 self.assertEqual(testcase.result, TestCase.RESULT_UNKNOWN)
+        self.factory.cleanup()
 
     def test_bad_input(self):
         user = self.factory.make_user()
@@ -264,6 +276,7 @@ results:
                 self.assertEqual(testcase.result, TestCase.RESULT_FAIL)
             else:
                 self.fail("Unrecognised testcase name")
+        self.factory.cleanup()
 
     def test_set(self):
         user = self.factory.make_user()
@@ -314,3 +327,4 @@ results:
                 self.assertEqual(testcase.test_set.name, 'set-name')
                 self.assertTrue(testcase.name.startswith('linux-linaro'))
                 val('http://localhost/%s' % testcase.get_absolute_url())
+        self.factory.cleanup()
