@@ -6,6 +6,7 @@ from lava_scheduler_app.models import (
     DeviceType,
     TestJob,
     Tag,
+    DeviceDictionary,
     DevicesUnavailableException,
 )
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource, find_device_for_job
@@ -289,6 +290,30 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         devices = [self.panda02, self.panda01]
         chosen_device = find_device_for_job(job, devices)
         self.assertEqual(self.panda01, chosen_device)
+
+    def test_find_nonexclusive_device(self):
+        """
+        test that exclusive devices are not assigned JSON jobs
+        """
+        self.assertFalse(self.panda01.is_exclusive)
+        device_dict = DeviceDictionary.get(self.panda01.hostname)
+        self.assertIsNone(device_dict)
+        device_dict = DeviceDictionary(hostname=self.panda01.hostname)
+        device_dict.parameters = {'exclusive': 'True'}
+        device_dict.save()
+        self.assertTrue(self.panda01.is_exclusive)
+        self.assertRaises(
+            DevicesUnavailableException,
+            self.submit_job,
+            target='panda01', device_type='panda')
+        job = self.submit_job(device_type='panda')
+        devices = [self.panda02, self.panda01]
+        self.assertEqual(
+            find_device_for_job(job, devices),
+            self.panda02
+        )
+        device_dict.delete()
+        self.assertFalse(self.panda01.is_exclusive)
 
     def test_offline_health_check(self):
         """

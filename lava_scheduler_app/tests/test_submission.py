@@ -22,6 +22,8 @@ from lava_scheduler_app.models import (
     Tag,
     TestJob,
     DevicesUnavailableException,
+    DeviceDictionary,
+    _check_exclusivity,
 )
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 import simplejson
@@ -316,6 +318,24 @@ class TestTestJob(TestCaseWithFactory):
         self.assertRaises(
             ValueError, TestJob.from_json_and_user, '{}',
             self.factory.make_user())
+
+    def test_from_json_rejects_exclusive(self):
+        panda_type = self.factory.ensure_device_type(name='panda')
+        panda_board = self.factory.make_device(device_type=panda_type, hostname='panda01')
+        self.assertFalse(panda_board.is_exclusive)
+        job = TestJob.from_json_and_user(
+            self.factory.make_job_json(device_type='panda'),
+            self.factory.make_user())
+        self.assertEqual(panda_type, job.requested_device_type)
+        device_dict = DeviceDictionary.get(panda_board.hostname)
+        self.assertIsNone(device_dict)
+        device_dict = DeviceDictionary(hostname=panda_board.hostname)
+        device_dict.parameters = {'exclusive': 'True'}
+        device_dict.save()
+        self.assertTrue(panda_board.is_exclusive)
+        self.assertRaises(
+            DevicesUnavailableException, _check_exclusivity, [panda_board], pipeline=False
+        )
 
     def make_job_json_for_stream_name(self, stream_name, **kw):
         return self.factory.make_job_json(

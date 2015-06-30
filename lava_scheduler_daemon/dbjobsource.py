@@ -73,6 +73,8 @@ def find_device_for_job(job, device_list):
                 device, job, bad_job
             ))
             device_list.remove(device)
+        if device.is_exclusive and not job.is_pipeline:
+            device_list.remove(device)
     if not device_list:
         return None
     if job.health_check is True:
