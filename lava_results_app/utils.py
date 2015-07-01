@@ -36,4 +36,6 @@ def description_data(job_id):
     except yaml.YAMLError:
         logger.error("Unable to parse description for %s" % job_id)
         return {}
+    if not data:
+        return {}
     return data
