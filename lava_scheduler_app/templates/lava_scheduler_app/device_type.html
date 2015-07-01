@@ -27,19 +27,21 @@
     <div class="col-md-6">
         <dl class="dl-horizontal">
             <dt>Architecture version</dt>
-            <dd>{{ arch_version }}</dd>
+            <dd>{{ arch_version|default:'.' }}</dd>
             <dt>Processor Family</dt>
-            <dd>{{ processor }}</dd>
+            <dd>{{ processor|default:'.' }}</dd>
             <dt>CPU model</dt>
-            <dd>{{ cpu_model }}</dd>
+            <dd>{{ cpu_model|default:'.' }}</dd>
         </dl>
     </div>
     <div class="col-md-6">
         <dl class="dl-horizontal">
             <dt>Bit width</dt>
-            <dd>{{ arch_bits }}</dd>
+            <dd>{{ arch_bits|default:'.' }}</dd>
             <dt>Cores</dt>
-            <dd>{{ cores }}</dd>
+            <dd>{{ cores|default:'.' }}</dd>
+            <dt>Description</dt>
+            <dd>{{ description|default:'.' }}</dd>
         </dl>
     </div>
     </div>

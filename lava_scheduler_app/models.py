@@ -178,6 +178,14 @@ class DeviceType(models.Model):
     def __unicode__(self):
         return self.name
 
+    description = models.TextField(
+        verbose_name=_(u"Device Type Description"),
+        max_length=200,
+        null=True,
+        blank=True,
+        default=None
+    )
+
     health_check_job = models.TextField(
         null=True, blank=True, default=None, validators=[validate_job_json])
 

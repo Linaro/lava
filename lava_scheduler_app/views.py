@@ -782,6 +782,7 @@ def device_type_detail(request, pk):
     architecture_name = dt.architecture if dt.architecture else ''
     bits_width = dt.bits.width if dt.bits else ''
     cpu_name = dt.cpu_model if dt.cpu_model else ''
+    desc = dt.description if dt.description else ''
 
     return render_to_response(
         "lava_scheduler_app/device_type.html",
@@ -792,6 +793,7 @@ def device_type_detail(request, pk):
             'arch_bits': bits_width,
             'cores': core_string,
             'cpu_model': cpu_name,
+            'description': desc,
             'search_data': search_data,
             "discrete_data": discrete_data,
             'terms_data': terms_data,

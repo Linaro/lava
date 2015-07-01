@@ -487,7 +487,7 @@ class DeviceTypeTable(LavaTable):
         model = DeviceType
         exclude = [
             'display', 'health_check_job', 'owners_only', 'architecture',
-            'processor', 'cpu_model', 'bits', 'cores', 'core_count'
+            'processor', 'cpu_model', 'bits', 'cores', 'core_count', 'description'
         ]
         searches = {
             'name': 'contains',
