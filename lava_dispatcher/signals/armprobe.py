@@ -74,4 +74,4 @@ class ArmProbe(SignalHandler):
             args.extend(self.aep_channels)
 
             if subprocess.call(args, cwd=result_dir) != 0:
-                logging.warn('error calling post_process_script')
+                logging.warning('error calling post_process_script')

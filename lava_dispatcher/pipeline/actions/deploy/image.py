@@ -87,6 +87,7 @@ class DeployImage(Deployment):
     def __init__(self, parent, parameters):
         super(DeployImage, self).__init__(parent)
         self.action = DeployImageAction()
+        self.action.section = self.action_type
         self.action.job = self.job
         parent.add_action(self.action, parameters)
 

@@ -79,6 +79,7 @@ class TestMultiDeploy(unittest.TestCase):
             super(TestMultiDeploy.TestDeploy, self).__init__()
             self.action = TestMultiDeploy.TestDeployAction()
             self.action.job = job
+            self.action.section = 'internal'
             parent.add_action(self.action, parameters)
 
     class TestDeployAction(DeployAction):
@@ -114,7 +115,9 @@ class TestMultiDeploy(unittest.TestCase):
             for name in action_data:
                 counts.setdefault(name, 1)
                 if counts[name] >= 2:
-                    pipeline.add_action(ResetContext())
+                    reset_context = ResetContext()
+                    reset_context.section = 'deploy'
+                    pipeline.add_action(reset_context)
                 parameters = action_data[name]
                 test_deploy = TestMultiDeploy.TestDeploy(pipeline, parameters, job)
                 self.assertEqual(

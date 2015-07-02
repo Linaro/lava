@@ -33,6 +33,7 @@ import subprocess
 import re
 
 from shlex import shlex
+from distutils import spawn
 
 import pexpect
 
@@ -122,6 +123,15 @@ def extract_tar(tfname, tmpdir):
                                               tmpdir, '-xvzf', tfname])
         except subprocess.CalledProcessError:
             raise CriticalError('Unable to extract tarball: %s' % tfname)
+    elif tfname.endswith('.zip'):
+        if spawn.find_executable('unzip'):
+            try:
+                output = subprocess.check_output(['nice', 'unzip', tfname,
+                                                  '-d', tmpdir])
+            except subprocess.CalledProcessError:
+                raise CriticalError('Unable to extract zipfile: %s' % tfname)
+        else:
+            logging.error("Infrastructure Error: 'unzip' command not found")
     else:
         raise CriticalError('Unable to extract tarball: %s' % tfname)
     if output:
@@ -380,8 +390,19 @@ def string_to_list(string):
 
 
 def logging_system(cmd):
-    logging.debug("Executing on host : '%r'", cmd)
-    return os.system(cmd)
+    ret = 1
+    for i in range(1, 4):
+        logging.debug("Attempt %s: Executing on host : '%s'" % (i, cmd))
+        rc = os.system(cmd)
+        if rc == 0:
+            ret = rc
+            break
+        else:
+            ret = rc
+            time.sleep(20)
+    if ret != 0:
+        logging.error("Infrastructure Error: %s failed" % cmd)
+    return ret
 
 
 class DrainConsoleOutput(threading.Thread):
@@ -493,12 +514,14 @@ def connect_to_serial(context):
 
     port_stuck_message = 'Data Buffering Suspended\.'
     conn_closed_message = 'Connection closed by foreign host\.'
+    connection_refused_message = 'Connection refused'
 
     expectations = {
         port_stuck_message: 'reset-port',
         context.device_config.connection_command_pattern: 'all-good',
         conn_closed_message: 'retry',
         pexpect.TIMEOUT: 'all-good',
+        connection_refused_message: 'retry',
     }
     patterns = []
     results = []

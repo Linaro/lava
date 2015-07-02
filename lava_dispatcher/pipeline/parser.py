@@ -42,7 +42,6 @@ import lava_dispatcher.pipeline.actions.deploy.strategies
 import lava_dispatcher.pipeline.actions.boot.strategies
 import lava_dispatcher.pipeline.actions.test.strategies
 import lava_dispatcher.pipeline.protocols.strategies
-from lava_dispatcher.pipeline.actions.submit import SubmitResultsAction
 
 
 def parse_action(job_data, name, device, pipeline):
@@ -147,7 +146,9 @@ class JobParser(object):
                 if name == 'deploy' or name == 'boot' or name == 'test':
                     # reset the context before adding a second deployment and again before third etc.
                     if name == 'deploy' and counts[name] >= 2:
-                        pipeline.add_action(ResetContext())
+                        reset_context = ResetContext()
+                        reset_context.section = name
+                        pipeline.add_action(reset_context)
                     parse_action(action_data, name, device, pipeline)
                 elif name == 'repeat':
                     count = action_data[name]['count']  # first list entry must be the count dict

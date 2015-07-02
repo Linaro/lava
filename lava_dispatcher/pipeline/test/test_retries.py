@@ -98,6 +98,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
             super(TestAction.FakeTriggerAction, self).__init__()
             self.count = 1
             self.name = "trigger-action"
+            self.section = 'internal'
             self.summary = "fake trigger action for unit tests"
             self.description = "fake, do not use outside unit tests"
 
@@ -119,6 +120,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
         def __init__(self):
             super(TestAction.InternalRetryAction, self).__init__()
             self.name = "internal-retry-action"
+            self.section = 'internal'
             self.summary = "internal retry action for unit tests"
             self.description = "internal, do not use outside unit tests"
 
@@ -131,6 +133,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
         def __init__(self):
             super(TestAction.CleanupRetryAction, self).__init__()
             self.name = "internal-retry-action"
+            self.section = 'internal'
             self.summary = "internal retry action for unit tests"
             self.description = "internal, do not use outside unit tests"
 

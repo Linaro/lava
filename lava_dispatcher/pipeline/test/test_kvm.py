@@ -126,12 +126,11 @@ class TestKVMSimulation(unittest.TestCase):  # pylint: disable=too-many-public-m
         # which would handle the run.sh
         pipe.add_action(action)
         self.assertEqual(action.level, "3")
-        # a formal submit action would include an internal pipe to handle
-        # the XMLRPC, including possible failure states and retries.
+        # just a fake action
         action = Action()
-        action.name = "submit"
-        action.description = "submit results"
-        action.summary = "submit"
+        action.name = "fake"
+        action.description = "faking results"
+        action.summary = "fake action"
         action.job = job
         pipe.add_action(action)
         self.assertEqual(action.level, "4")
@@ -195,12 +194,6 @@ class TestKVMBasicDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
             if action.name == 'test':
                 # get the action & populate it
                 self.assertEqual(len(action.parameters['definitions']), 2)
-
-    def test_submit(self):
-        for action in self.job.pipeline.actions:
-            if action.name == "submit_results":
-                # get the action & populate it
-                self.assertEqual(action.parameters['stream'], "/anonymous/codehelp/")
 
 
 class TestKVMQcow2Deploy(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -274,7 +267,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         description_ref = pipeline_reference('kvm-inline.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
-        self.assertEqual(len(self.job.pipeline.describe()), 5)
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
                 overlay = action.pipeline.children[action.pipeline][3]

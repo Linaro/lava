@@ -118,6 +118,8 @@ class MasterImageTarget(Target):
         else:
             proc.send("~$")
             proc.sendline("off")
+        if self.config.connection_command_terminate:
+                self.proc.sendline(self.config.connection_command_terminate)
         finalize_process(self.proc)
         self.proc = None
 
@@ -482,6 +484,8 @@ class MasterImageTarget(Target):
                          attempts + 1)
             try:
                 if self.proc:
+                    if self.config.connection_command_terminate:
+                        self.proc.sendline(self.config.connection_command_terminate)
                     finalize_process(self.proc)
                     self.proc = None
                 self.proc = connect_to_serial(self.context)
@@ -768,6 +772,7 @@ class MasterCommandRunner(NetworkCommandRunner):
     def __init__(self, target):
         super(MasterCommandRunner, self).__init__(
             target, target.MASTER_PS1_PATTERN, prompt_str_includes_rc=True)
+        self.delay = target.config.master_image_serial_delay_ms
 
     def get_device_version(self):
         pattern = 'device_version=(\d+-\d+/\d+-\d+)'

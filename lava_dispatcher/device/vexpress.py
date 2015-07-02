@@ -43,6 +43,7 @@ class VexpressTarget(BootloaderTarget):
         super(VexpressTarget, self).__init__(context, config)
 
         self.test_uefi = None
+        self.test_bl0 = None
         self.test_bl1 = None
         self.complete_firmware_master = None
         self.complete_firmware_test = None
@@ -74,6 +75,16 @@ class VexpressTarget(BootloaderTarget):
                     "vexpress_bl1_path, vexpress_bl1_backup_path "
                     "vexpress_uefi_path, vexpress_uefi_backup_path and "
                     "vexpress_usb_mass_storage_device")
+
+            if self.config.vexpress_requires_bl0:
+                if (self.config.vexpress_bl0_path is None or
+                        self.config.vexpress_bl0_backup_path is None):
+
+                    raise CriticalError(
+                        "Versatile Express devices that use "
+                        "require bl0 must specify all "
+                        "of the following configuration variables: "
+                        "vexpress_bl0_path, vexpress_bl0_backup_path ")
         else:
             if (self.config.vexpress_uefi_image_filename is None or
                     self.config.vexpress_uefi_image_files is None or
@@ -92,8 +103,8 @@ class VexpressTarget(BootloaderTarget):
     # methods inherited from BootloaderTarget and overriden here
     ##################################################################
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
-                             bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, image, bootloader, firmware, bl0, bl1,
+                             bl2, bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
         if self.config.vexpress_complete_firmware:
             if firmware is None:
                 if self.config.vexpress_firmware_default is None:
@@ -122,21 +133,35 @@ class VexpressTarget(BootloaderTarget):
                                                 decompress=False)
                 bootloader = None
 
-            if bl1 is None and self.config.vexpress_requires_trusted_firmware:
-                if self.config.vexpress_bl1_default is None:
-                    raise CriticalError("BL1 firmware is required")
+            if self.config.vexpress_requires_trusted_firmware:
+                if bl1 is None and self.config.vexpress_requires_trusted_firmware:
+                    if self.config.vexpress_bl1_default is None:
+                        raise CriticalError("BL1 firmware is required")
+                    else:
+                        self.test_bl1 = download_image(self.config.vexpress_bl1_default, self.context,
+                                                       self._tmpdir,
+                                                       decompress=False)
                 else:
-                    self.test_bl1 = download_image(self.config.vexpress_bl1_default, self.context,
+                    self.test_bl1 = download_image(bl1, self.context,
                                                    self._tmpdir,
                                                    decompress=False)
-            else:
-                self.test_bl1 = download_image(bl1, self.context,
-                                               self._tmpdir,
-                                               decompress=False)
-                bl1 = None
+                    bl1 = None
 
-        super(VexpressTarget, self).deploy_linaro_kernel(kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader,
-                                                         firmware, bl1, bl2, bl31, rootfstype, bootloadertype,
+                if bl0 is None and self.config.vexpress_requires_bl0:
+                    if self.config.vexpress_bl0_default is None:
+                        raise CriticalError("BL0 firmware is required")
+                    else:
+                        self.test_bl0 = download_image(self.config.vexpress_bl0_default, self.context,
+                                                       self._tmpdir,
+                                                       decompress=False)
+                else:
+                    self.test_bl0 = download_image(bl0, self.context,
+                                                   self._tmpdir,
+                                                   decompress=False)
+                    bl0 = None
+
+        super(VexpressTarget, self).deploy_linaro_kernel(kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, image, bootloader,
+                                                         firmware, bl0, bl1, bl2, bl31, rootfstype, bootloadertype,
                                                          target_type, qemu_pflash=qemu_pflash)
 
     def _load_test_firmware(self):
@@ -150,6 +175,12 @@ class VexpressTarget(BootloaderTarget):
     def _deploy_android_tarballs(self, master, boot, system, data):
         super(VexpressTarget, self)._deploy_android_tarballs(master, boot,
                                                              system, data)
+        # for precanned images bl0 is only contained in the
+        # complete firmware tarball so error if the complete
+        # firmware flag is not set
+        if (self.config.vexpress_requires_bl0 and
+                not self.config.vexpress_complete_firmware):
+                    raise CriticalError("vexpress_complete_firmware flag must be set if BL0 firmware is required")
         # android images have boot files inside boot/ in the tarball
         if self.config.vexpress_complete_firmware:
             self._extract_android_firmware(boot)
@@ -159,6 +190,12 @@ class VexpressTarget(BootloaderTarget):
     def _deploy_tarballs(self, boot_tgz, root_tgz, rootfstype):
         super(VexpressTarget, self)._deploy_tarballs(boot_tgz, root_tgz,
                                                      rootfstype)
+        # for precanned images bl0 is only contained in the
+        # complete firmware tarball so error if the complete
+        # firmware flag is not set
+        if (self.config.vexpress_requires_bl0 and
+                not self.config.vexpress_complete_firmware):
+                    raise CriticalError("vexpress_complete_firmware flag must be set if BL0 firmware is required")
         if self.config.vexpress_complete_firmware:
             self._extract_uncompressed_firmware(root_tgz)
         else:
@@ -327,6 +364,20 @@ class VexpressTarget(BootloaderTarget):
                     # the firmware in there is the good one, and we backup it up.
                     self.context.run_command_with_retries('cp %s %s' % (bl1, bl1_backup))
 
+                if self.config.vexpress_requires_bl0:
+                    bl0_path = self.config.vexpress_bl0_path
+                    bl0 = os.path.join(mount_point, bl0_path)
+                    bl0_backup_path = self.config.vexpress_bl0_backup_path
+                    bl0_backup = os.path.join(mount_point, bl0_backup_path)
+
+                    if os.path.exists(bl0_backup):
+                        # restore the bl0 backup
+                        self.context.run_command_with_retries('cp %s %s' % (bl0_backup, bl0))
+                    else:
+                        # no existing backup yet means that this is the first time ever;
+                        # the bl0 in there is the good one, and we backup it up.
+                        self.context.run_command_with_retries('cp %s %s' % (bl0, bl0_backup))
+
     def _install_test_firmware(self, mount_point):
         if self.config.vexpress_complete_firmware:
             if os.path.exists(self.complete_firmware_test):
@@ -350,6 +401,15 @@ class VexpressTarget(BootloaderTarget):
                     self.context.run_command('cp %s %s' % (self.test_bl1, bl1))
                 else:
                     raise CriticalError("No path to bl1 firmware")
+
+                if self.config.vexpress_requires_bl0:
+                    bl0_path = self.config.vexpress_bl0_path
+                    bl0 = os.path.join(mount_point, bl0_path)
+
+                    if os.path.exists(self.test_bl0):
+                        self.context.run_command('cp %s %s' % (self.test_bl0, bl0))
+                    else:
+                        raise CriticalError("No path to bl0 firmware")
 
 
 target_class = VexpressTarget

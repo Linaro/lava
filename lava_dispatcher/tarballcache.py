@@ -91,7 +91,7 @@ def _get_distro(cachedir, distro_file):
         with open(distro_file, 'r') as f:
             return f.read()
     except IOError:
-        logging.warn('No distro found for cached tarballs in %s' % cachedir)
+        logging.warning('No distro found for cached tarballs in %s' % cachedir)
     return None
 
 

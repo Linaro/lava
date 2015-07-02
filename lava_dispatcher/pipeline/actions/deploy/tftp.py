@@ -64,6 +64,7 @@ class Tftp(Deployment):
     def __init__(self, parent, parameters):
         super(Tftp, self).__init__(parent)
         self.action = TftpAction()
+        self.action.section = self.action_type
         self.action.job = self.job
         parent.add_action(self.action, parameters)
 

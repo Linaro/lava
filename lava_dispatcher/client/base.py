@@ -67,6 +67,7 @@ class CommandRunner(object):
         self._prompt_str_includes_rc = prompt_str_includes_rc
         self.match_id = None
         self.match = None
+        self.delay = 0
 
     def wait_for_prompt(self, timeout=-1):
         wait_for_prompt(self._connection, self._prompt_str, timeout)
@@ -93,7 +94,7 @@ class CommandRunner(object):
         self._connection.empty_buffer()
         if log_in_host is not None:
             self._connection.logfile = open(log_in_host, "a")
-        self._connection.sendline(cmd)
+        self._connection.sendline(cmd, delay=self.delay)
         start = time.time()
         if response is not None:
             self.match_id = self._connection.expect(response, timeout=timeout)
@@ -129,6 +130,17 @@ class CommandRunner(object):
         self._connection.empty_buffer()
 
         return rc
+
+    def get_wget_options(self):
+        patterns = ["GNU Wget", "BusyBox", pexpect.EOF, pexpect.TIMEOUT]
+        cmd = "LANG=C wget --help 2>&1 | head -n1"
+        self.run(cmd, patterns, timeout=10)
+        wget_options = ""
+        if self.match_id == 0:
+            wget_options = "--no-check-certificate --no-proxy --connect-timeout=30 -S --progress=dot -e dotbytes=2M"
+        elif self.match_id == 1:
+            wget_options = "--proxy off"
+        return wget_options
 
 
 class NetworkCommandRunner(CommandRunner):
@@ -405,9 +417,9 @@ class LavaClient(object):
                                                       qemu_pflash=qemu_pflash)
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs,
-                             nfsrootfs, bootloader, firmware, bl1, bl2, bl31,
+                             nfsrootfs, image, bootloader, firmware, bl0, bl1, bl2, bl31,
                              rootfstype, bootloadertype, target_type, qemu_pflash=None):
-        self.target_device.deploy_linaro_kernel(kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware,
+        self.target_device.deploy_linaro_kernel(kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, image, bootloader, firmware, bl0,
                                                 bl1, bl2, bl31, rootfstype, bootloadertype, target_type, qemu_pflash=qemu_pflash)
 
     def dummy_deploy(self, target_type):
@@ -559,11 +571,17 @@ class LavaClient(object):
             logging.debug("Setting up name resolution")
             # Check if the kernel supports DHCP
             kernel_dhcp = session.run('test -e /proc/net/pnp', failok=True)
-            # Check if /etc/resolv.conf file size is not zero
-            resolv_file = session.run('test -s /etc/resolv.conf', failok=True)
-            if kernel_dhcp == 0 and resolv_file != 0:
-                # Force name resolution
-                session.run('cat /proc/net/pnp > /etc/resolv.conf')
+
+            # Check if /etc/resolv.conf exists
+            resolv_file = session.run('test -e /etc/resolv.conf', failok=True)
+
+            if resolv_file == 0:
+                # if /etc/resolv.conf exists, check if file size is not zero
+                resolv_file = session.run('test -s /etc/resolv.conf', failok=True)
+
+                if kernel_dhcp == 0 and resolv_file != 0:
+                    # Force name resolution
+                    session.run('cat /proc/net/pnp > /etc/resolv.conf')
 
         if not in_linaro_image:
             raise CriticalError()

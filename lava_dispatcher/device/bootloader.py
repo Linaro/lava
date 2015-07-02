@@ -155,8 +155,8 @@ class BootloaderTarget(MasterImageTarget):
         else:
             raise CriticalError("Unknown bootloader type")
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
-                             bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, image, bootloader, firmware, bl0, bl1,
+                             bl2, bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
         if self.__deployment_data__ is None:
             # Get deployment data
             logging.debug("Attempting to set deployment data")
@@ -218,7 +218,7 @@ class BootloaderTarget(MasterImageTarget):
                         if r == 0:
                             ramdisk = ramdisk_uboot
                         else:
-                            logging.warn("Unable to add u-boot header to ramdisk.  Tried %s", cmd)
+                            logging.warning("Unable to add u-boot header to ramdisk.  Tried %s", cmd)
                 self._boot_tags['{RAMDISK}'] = self._get_rel_path(ramdisk, self._base_tmpdir)
             if dtb is not None:
                 # We have been passed a device tree blob
@@ -311,6 +311,8 @@ class BootloaderTarget(MasterImageTarget):
 
     def _boot_linaro_image(self):
         if self.proc:
+            if self.config.connection_command_terminate:
+                self.proc.sendline(self.config.connection_command_terminate)
             finalize_process(self.proc)
             self.proc = None
         self.proc = connect_to_serial(self.context)
