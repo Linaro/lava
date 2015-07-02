@@ -373,25 +373,39 @@ class LavaCoordinator(object):
         Waits until all other devices in the group send a message with the given message ID.
         IF <role> is passed, only wait until all devices with that given role send a message.
         """
-        logging.debug("lavaWaitAll:json_data: %s" % json_data)
         messageID = self._getMessageID(json_data)
         if 'waitrole' in json_data:
+            expected = self.group['roles'][json_data['waitrole']]
+            expected = expected[0] if type(expected) == list else None
+            logging.debug(
+                "lavaWaitAll waiting for role:%s from %s" % (
+                    json_data['waitrole'],
+                    expected)
+            )
             for client in self.group['roles'][json_data['role']]:
+                logging.debug("checking %s for wait message" % client)
                 if messageID not in self.group['waits']:
                     logging.debug("messageID %s not yet seen" % messageID)
                     self._waitResponse()
                     return
+                if expected and expected in self.group['waits'][messageID]:
+                    logging.debug("Replying that %s has sent %s" % (client_name, messageID))
+                    self._sendWaitMessage(client_name, messageID)
+                    return
                 if client not in self.group['waits'][messageID]:
+                    logging.debug("FIXME: %s not in waits for %s: %s" % (
+                        client, messageID, self.group['waits'][messageID]))
                     # FIXME: bug? if this client has not sent the messageID yet,
                     # causing it to wait will simply force a timeout. node needs
                     # to output a warning, so maybe send a "nack" ?
                     self._waitResponse()
                     return
                 if client in self.group['waits']:
-                    logging.debug("replying: %s for %s" % (self.group['waits'][client][messageID], client))
+                    logging.debug("Replying: %s for %s" % (messageID, client_name))
             if client_name in self.group['waits']:
                 logging.debug("lavaWaitAll message: %s" % json.dumps(self.group['waits'][client_name][messageID]))
         else:
+            logging.debug("lavaWaitAll: no role.")
             for client in self.group['clients']:
                 logging.debug("checking %s for wait message" % client)
                 if messageID not in self.group['waits']:
@@ -465,8 +479,8 @@ class LavaCoordinator(object):
         Handles all incoming data for the singleton LAVA Coordinator
         :param json_data: the incoming data stream - expected to be JSON
         """
-        logging.debug("data=%s" % json.dumps(json_data))
         if 'request' not in json_data:
+            logging.debug("bad data=%s" % json.dumps(json_data))
             self._badRequest()
             return
         request = json_data['request']
