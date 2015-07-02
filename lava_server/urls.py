@@ -70,6 +70,11 @@ urlpatterns = patterns(
     url(r'^{mount_point}utils/markitup/'.format(mount_point=settings.MOUNT_POINT),
         include('lava_markitup.urls')))
 
+try:
+    import hijack
+    urlpatterns.append(url(r'^hijack/', include('hijack.urls')))
+except ImportError:
+    pass
 
 # Load URLs for extensions
 loader.contribute_to_urlpatterns(urlpatterns, settings.MOUNT_POINT)

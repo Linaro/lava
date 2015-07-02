@@ -21,6 +21,30 @@
   </div>
 {% endif %}
 
+    <h2><i>{{ device_type }}</i> information</h2>
+    <div class="row">
+    <h4 class="modal-header">Metadata</h4>
+    <div class="col-md-6">
+        <dl class="dl-horizontal">
+            <dt>Architecture version</dt>
+            <dd>{{ arch_version|default:'.' }}</dd>
+            <dt>Processor Family</dt>
+            <dd>{{ processor|default:'.' }}</dd>
+            <dt>CPU model</dt>
+            <dd>{{ cpu_model|default:'.' }}</dd>
+        </dl>
+    </div>
+    <div class="col-md-6">
+        <dl class="dl-horizontal">
+            <dt>Bit width</dt>
+            <dd>{{ arch_bits|default:'.' }}</dd>
+            <dt>Cores</dt>
+            <dd>{{ cores|default:'.' }}</dd>
+            <dt>Description</dt>
+            <dd>{{ description|default:'.' }}</dd>
+        </dl>
+    </div>
+    </div>
 <h2><i>{{device_type}}</i> status</h2>
 
 <div class="row">

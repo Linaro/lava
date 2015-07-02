@@ -1,10 +1,12 @@
 import datetime
+from django.utils import timezone
 
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
     TestJob,
     Tag,
+    DeviceDictionary,
     DevicesUnavailableException,
 )
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource, find_device_for_job
@@ -185,7 +187,7 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         # make it confusing by making both multinode jobs have the exact same
         # submit time
         # also set the target_group string to make the outcome predictable
-        now = datetime.datetime.now()
+        now = timezone.now()
         for job in [multi1a, multi1b]:
             job.submit_time = now
             job.target_group = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
@@ -288,6 +290,30 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         devices = [self.panda02, self.panda01]
         chosen_device = find_device_for_job(job, devices)
         self.assertEqual(self.panda01, chosen_device)
+
+    def test_find_nonexclusive_device(self):
+        """
+        test that exclusive devices are not assigned JSON jobs
+        """
+        self.assertFalse(self.panda01.is_exclusive)
+        device_dict = DeviceDictionary.get(self.panda01.hostname)
+        self.assertIsNone(device_dict)
+        device_dict = DeviceDictionary(hostname=self.panda01.hostname)
+        device_dict.parameters = {'exclusive': 'True'}
+        device_dict.save()
+        self.assertTrue(self.panda01.is_exclusive)
+        self.assertRaises(
+            DevicesUnavailableException,
+            self.submit_job,
+            target='panda01', device_type='panda')
+        job = self.submit_job(device_type='panda')
+        devices = [self.panda02, self.panda01]
+        self.assertEqual(
+            find_device_for_job(job, devices),
+            self.panda02
+        )
+        device_dict.delete()
+        self.assertFalse(self.panda01.is_exclusive)
 
     def test_offline_health_check(self):
         """
@@ -446,7 +472,6 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         job = self.submit_job(device_type='panda')
         scheduled = self.scheduler_tick()
         self.assertEqual([job], scheduled)
-        # self.job_started(job)
         job = TestJob.objects.get(pk=job.id)  # reload
         self.assertEqual(job.status, TestJob.RUNNING)
         self.assertEqual(job.actual_device.status, Device.RUNNING)
@@ -520,7 +545,6 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         self.assertNotEqual(unconnected_group[0], waiting_job.target_group)
 
         self.report_status("cancel - first wait", self.whoami())
-        # fail_panda = submitted_job.actual_device -> Running
         self.scheduler_tick()
 
         fail_panda = Device.objects.get(hostname=fail_panda.hostname)
@@ -534,7 +558,6 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         # the bare cancel operation works, it is the API which wraps with the multinode check
         request = self.FakeRequest(user=self.user)
         job_cancel(request, waiting_job.id)
-        # wait_panda = cancelled_job.actual_device -> Idle
 
         self.submit_job(
             device_group=[
@@ -569,8 +592,6 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         self.report_status("cancel wait", self.whoami())
 
         waiting_job = TestJob.objects.get(pk=waiting_job.id)  # reload
-        # fail_panda = unconnected_job.actual_device in unconnected_group
-        # wait_panda = cancelled_job.actual_device
         fail_panda = Device.objects.get(hostname=fail_panda.hostname)
         wait_panda = Device.objects.get(hostname=wait_panda.hostname)
 

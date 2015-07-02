@@ -32,6 +32,7 @@ from collections import OrderedDict
 
 from django.contrib.sites.models import Site
 from django.core.exceptions import ImproperlyConfigured
+from django.utils import timezone
 
 from lava_server.settings.getsettings import Settings
 from lava_server.settings.config_file import ConfigFile
@@ -430,7 +431,7 @@ def get_heartbeat_timeout():
 
 # Private variable to record scheduler tick, which shouldn't be accessed from
 # other modules, except via the following APIs.
-__last_scheduler_tick = datetime.datetime.utcnow()
+__last_scheduler_tick = timezone.now()
 
 
 def record_scheduler_tick():
@@ -438,11 +439,11 @@ def record_scheduler_tick():
     __last_scheduler_tick
     """
     global __last_scheduler_tick
-    __last_scheduler_tick = datetime.datetime.utcnow()
+    __last_scheduler_tick = timezone.now()
 
 
 def last_scheduler_tick():
-    """Returns datetime.dateime object of last scheduler tick timestamp.
+    """Returns django.utils.timezone object of last scheduler tick timestamp.
     """
     return __last_scheduler_tick
 

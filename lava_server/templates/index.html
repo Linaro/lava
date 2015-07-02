@@ -1,6 +1,6 @@
 {% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
-
+{% load utils %}
 
 {% block breadcrumb_container %}
 {% endblock %}
@@ -22,7 +22,18 @@ of each type are available for tests and currently running jobs.</p>
         <b><a href="{% url 'lava.dashboard' %}">Dashboard</a></b> - viewing
         results of tests run by you or others, depending on your group
         membership.
+{% if 'PIPELINE'|get_settings %}
+    (JSON submissions only)
+{% endif %}
     </li>
+{% if 'PIPELINE'|get_settings %}
+    <li>
+        <span class="glyphicon glyphicon-signal"></span>
+        <b><a href="{% url 'lava.results' %}">Results</a></b> - viewing
+        results of pipeline tests run by you or others. (YAML pipeline
+    submissions only.)
+    </li>
+{% endif %}
     <li>
         <span class="glyphicon glyphicon-calendar"></span>
         <b><a href="{% url 'lava.scheduler' %}">Scheduler</a></b> - jobs
@@ -142,6 +153,12 @@ of each type are available for tests and currently running jobs.</p>
         <a href="{% url 'dashboard_app.views.mybundlestreams' %}"><span
             class="glyphicon glyphicon-folder-open pull-right"></span> Your bundle streams</a>
       </li>
+{% if 'PIPELINE'|get_settings %}
+      <li>
+        <a href="{% url 'lava.results' %}"><span
+            class="glyphicon glyphicon-signal pull-right"></span> Your pipeline results</a>
+      </li>
+{% endif %}
       <li>
         <a href="{% url 'dashboard_app.views.my_subscriptions' %}"><span
             class="glyphicon glyphicon-pencil pull-right"></span> Your subscriptions</a>
@@ -149,14 +166,13 @@ of each type are available for tests and currently running jobs.</p>
      </ul>
     </div>
   </div>
-</div>
 {% endif %}
 
 {% comment %}
-Four extensions are defined as wrappers for other extensions:
-DashboardExtension, ProjectExtension, SchedulerExtension & SchedulerDaemonExtension
+Five extensions are defined as wrappers for other extensions:
+DashboardExtension, ProjectExtension, SchedulerExtension, ResultsExtension & SchedulerDaemonExtension
 {% endcomment %}
-{% if extension_list|length > 4 %}
+{% if extension_list|length > 5 %}
 <h2>LAVA Extensions</h2>
 {% for extension in extension_list %}
 {% if extension.front_page_template %}

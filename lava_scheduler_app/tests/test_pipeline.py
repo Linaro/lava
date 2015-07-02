@@ -1,5 +1,6 @@
 import os
 import yaml
+import jinja2
 import logging
 from lava_scheduler_app.models import (
     Device,
@@ -18,6 +19,8 @@ from collections import OrderedDict
 from lava_scheduler_app.utils import jinja_template_path
 from lava_scheduler_app.utils import jinja_template_path, split_multinode_yaml
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
+from lava_dispatcher.pipeline.device import PipelineDevice
+from lava_dispatcher.pipeline.parser import JobParser
 
 # pylint: disable=too-many-ancestors,too-many-public-methods,invalid-name,no-member
 
@@ -205,6 +208,36 @@ class TestPipelineSubmit(TestCaseWithFactory):
         job = TestJob.from_yaml_and_user(
             self.factory.make_job_json(), user)
         self.assertEqual(user, job.submitter)
+
+    def test_invalid_device(self):
+        user = self.factory.make_user()
+        job = TestJob.from_yaml_and_user(
+            self.factory.make_job_json(), user)
+        job_def = yaml.load(job.definition)
+        job_ctx = job_def.get('context', {})
+        device = Device.objects.get(hostname='fakeqemu1')
+        device_config = device.load_device_configuration(job_ctx)  # raw dict
+        del device_config['device_type']
+        parser = JobParser()
+        obj = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
+        self.assertRaises(KeyError, parser.parse, job.definition, obj, job.id, None, output_dir='/tmp')
+
+    def test_exclusivity(self):
+        device = Device.objects.get(hostname="fakeqemu1")
+        self.assertTrue(device.is_pipeline)
+        self.assertFalse(device.is_exclusive)
+        self.assertIsNotNone(DeviceDictionary.get(device.hostname))
+        device_dict = DeviceDictionary(hostname=device.hostname)
+        device_dict.save()
+        device_dict = DeviceDictionary.get(device.hostname)
+        self.assertTrue(device.is_pipeline)
+        self.assertFalse(device.is_exclusive)
+        update = device_dict.to_dict()
+        update.update({'exclusive': 'True'})
+        device_dict.parameters = update
+        device_dict.save()
+        self.assertTrue(device.is_pipeline)
+        self.assertTrue(device.is_exclusive)
 
 
 class TestPipelineStore(TestCaseWithFactory):

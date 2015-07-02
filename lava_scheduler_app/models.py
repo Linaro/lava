@@ -6,7 +6,6 @@ import uuid
 import jinja2
 import simplejson
 import urlparse
-import datetime
 import smtplib
 import socket
 import sys
@@ -29,6 +28,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
 from django_kvstore import models as kvmodels
 from django_kvstore import get_kvstore
+from django.utils import timezone
 
 from django_restricted_resource.models import RestrictedResource
 
@@ -73,6 +73,57 @@ def validate_job_json(data):
         raise ValidationError(e)
 
 
+class Architecture(models.Model):
+    name = models.CharField(
+        primary_key=True,
+        verbose_name=u'Architecture version',
+        help_text=u'e.g. ARMv7',
+        max_length=100,
+        editable=True,
+    )
+
+    def __unicode__(self):
+        return self.pk
+
+
+class ProcessorFamily(models.Model):
+    name = models.CharField(
+        primary_key=True,
+        verbose_name=u'Processor Family',
+        help_text=u'e.g. OMAP4, Exynos',
+        max_length=100,
+        editable=True,
+    )
+
+    def __unicode__(self):
+        return self.pk
+
+
+class BitWidth(models.Model):
+    width = models.PositiveSmallIntegerField(
+        primary_key=True,
+        verbose_name=u'Processor bit width',
+        help_text=u'integer: e.g. 32 or 64',
+        editable=True,
+    )
+
+    def __unicode__(self):
+        return "%d" % self.pk
+
+
+class Core(models.Model):
+    name = models.CharField(
+        primary_key=True,
+        verbose_name=u'CPU core',
+        help_text=u'Name of a specific CPU core, e.g. Cortex-A9',
+        editable=True,
+        max_length=100,
+    )
+
+    def __unicode__(self):
+        return self.pk
+
+
 class DeviceType(models.Model):
     """
     A class of device, for example a pandaboard or a snowball.
@@ -80,8 +131,60 @@ class DeviceType(models.Model):
 
     name = models.SlugField(primary_key=True)
 
+    architecture = models.ForeignKey(
+        Architecture,
+        related_name='device_types',
+        blank=True,
+        null=True,
+    )
+
+    processor = models.ForeignKey(
+        ProcessorFamily,
+        related_name='device_types',
+        blank=True,
+        null=True,
+    )
+
+    cpu_model = models.CharField(
+        verbose_name=u'CPU model',
+        help_text=u'e.g. a list of CPU model descriptive strings: OMAP4430 / OMAP4460',
+        max_length=100,
+        blank=True,
+        null=True,
+        editable=True,
+    )
+
+    bits = models.ForeignKey(
+        BitWidth,
+        related_name='device_types',
+        blank=True,
+        null=True,
+    )
+
+    cores = models.ManyToManyField(
+        Core,
+        related_name='device_types',
+        blank=True,
+        null=True,
+    )
+
+    core_count = models.PositiveSmallIntegerField(
+        verbose_name=u'Total number of cores',
+        help_text=u'Must be an equal number of each type(s) of core(s).',
+        blank=True,
+        null=True,
+    )
+
     def __unicode__(self):
         return self.name
+
+    description = models.TextField(
+        verbose_name=_(u"Device Type Description"),
+        max_length=200,
+        null=True,
+        blank=True,
+        default=None
+    )
 
     health_check_job = models.TextField(
         null=True, blank=True, default=None, validators=[validate_job_json])
@@ -282,12 +385,11 @@ class Worker(models.Model):
         if self.last_heartbeat is None:
             return False
 
-        utcnow = datetime.datetime.utcnow()
-        difference = utcnow - self.last_heartbeat
+        difference = timezone.now() - self.last_heartbeat
 
         # We deliberately add a 10% delay to scheduler tick in order to account
         # for network, processing, etc., overheads.
-        scheduler_tick = utcnow - self.master_scheduler_tick()
+        scheduler_tick = timezone.now() - self.master_scheduler_tick()
         scheduler_tick = scheduler_tick.total_seconds()
         scheduler_tick = scheduler_tick + (scheduler_tick * 0.1)
 
@@ -317,7 +419,7 @@ class Worker(models.Model):
 
         worker, created = Worker.objects.get_or_create(hostname=hostname)
         worker.uptime = heartbeat_data.get('uptime', None)
-        worker.last_heartbeat = datetime.datetime.utcnow()
+        worker.last_heartbeat = timezone.now()
 
         if info_size and info_size == 'complete':
             worker.arch = heartbeat_data.get('arch', None)
@@ -374,19 +476,19 @@ class Worker(models.Model):
         """Records the master's last scheduler tick timestamp.
         """
         master = Worker.get_master()
-        master.last_master_scheduler_tick = datetime.datetime.utcnow()
+        master.last_master_scheduler_tick = timezone.now()
         master.save()
 
     def master_scheduler_tick(self):
-        """Returns datetime.dateime object of master's last scheduler tick
+        """Returns django.utils.timezone object of master's last scheduler tick
         timestamp. If the master's last scheduler tick is not yet recorded
-        return the current timestamp in UTC.
+        return the current timestamp.
         """
         master = Worker.get_master()
         if master.last_master_scheduler_tick:
             return master.last_master_scheduler_tick
         else:
-            return datetime.datetime.utcnow()
+            return timezone.now()
 
 
 class DeviceDictionaryTable(models.Model):
@@ -421,6 +523,14 @@ class ExtendedKVStore(kvmodels.Model):
         if fields is None:
             return None
         return cls.from_dict(fields)
+
+    @classmethod
+    def object_list(cls):
+        """
+        Not quite the same as a Django QuerySet, just a simple list of all entries.
+        Use the to_dict() method on each item in the list to see the key value pairs.
+        """
+        return [kv.lookup_device_dictionary() for kv in DeviceDictionaryTable.objects.all()]
 
 
 class DeviceKVStore(ExtendedKVStore):
@@ -783,6 +893,19 @@ class Device(RestrictedResource):
 
         return yaml.load(template.render(**job_ctx))
 
+    @property
+    def is_exclusive(self):
+        exclusive = False
+        # check the device dictionary if this is exclusively a pipeline device
+        device_dict = DeviceDictionary.get(self.hostname)
+        if device_dict:
+            device_dict = device_dict.to_dict()
+            if 'parameters' not in device_dict or device_dict['parameters'] is None:
+                return exclusive
+            if 'exclusive' in device_dict['parameters'] and device_dict['parameters']['exclusive'] == 'True':
+                exclusive = True
+        return exclusive
+
 
 class TemporaryDevice(Device):
     """
@@ -878,6 +1001,31 @@ def _check_tags(taglist, device_type=None, hostname=None):
             "Device %s does not support all of the tags '%s'."
             % (hostname, ", ".join([x.name for x in taglist])))
     return list(set(matched_devices))
+
+
+def _check_exclusivity(device_list, pipeline=True):
+    """
+    Checks whether the device is exclusive to the pipeline.
+    :param device_list: A list of device objects to check
+    :param pipeline: whether the job being checked is a pipeline job
+    :return: a subset of the device_list to which the job can be submitted.
+    """
+    allow = []
+    check_type = "YAML" if pipeline else "JSON"
+    if len(device_list) == 0:
+        # logic error
+        return allow
+    for device in device_list:
+        if pipeline and not device.is_pipeline:
+            continue
+        if not pipeline and device.is_exclusive:
+            # devices which are exclusive to the pipeline cannot accept non-pipeline jobs.
+            continue
+        allow.append(device)
+    if len(allow) == 0:
+        raise DevicesUnavailableException(
+            "No devices of the requested type are currently available for %s submissions" % check_type)
+    return allow
 
 
 def _check_submit_to_device(device_list, user):
@@ -1072,8 +1220,8 @@ def _pipeline_protocols(job_data, user):
                 device_type = _get_device_type(user, params['device_type'])
                 role_dictionary[role]['device_type'] = device_type
 
-                device_list = Device.objects.filter(device_type=device_type)
                 allowed_devices = []
+                device_list = Device.objects.filter(device_type=device_type, is_pipeline=True)
                 for device in device_list:
                     if _check_submit_to_device([device], user):
                         allowed_devices.append(device)
@@ -1387,6 +1535,8 @@ class TestJob(RestrictedResource):
             return self._results_bundle.get_permalink()
         elif self._results_link:
             return self._results_link
+        elif self.is_pipeline:
+            return u'/results/%s' % self.id
         else:
             return None
 
@@ -1503,6 +1653,7 @@ class TestJob(RestrictedResource):
                 logger.debug("Requested device %s is unavailable." % job_data['target'])
                 raise DevicesUnavailableException(
                     "Requested device %s is unavailable." % job_data['target'])
+            _check_exclusivity([target], False)
             _check_submit_to_device([target], user)
             _check_tags_support(_check_tags(taglist, hostname=target), _check_submit_to_device([target], user))
         elif 'device_type' in job_data:
@@ -1510,6 +1661,7 @@ class TestJob(RestrictedResource):
             device_type = _get_device_type(user, job_data['device_type'])
             allow = _check_submit_to_device(list(Device.objects.filter(
                 device_type=device_type)), user)
+            allow = _check_exclusivity(allow, False)
             _check_tags_support(_check_tags(taglist, device_type=device_type), allow)
         elif 'device_group' in job_data:
             target = None
@@ -1523,6 +1675,7 @@ class TestJob(RestrictedResource):
                 taglist = _get_tag_list(device_group.get('tags', []))
                 allow = _check_submit_to_device(list(Device.objects.filter(
                     device_type=device_type)), user)
+                allow = _check_exclusivity(allow, False)
                 _check_tags_support(_check_tags(taglist, device_type=device_type), allow)
                 if device_type in requested_devices:
                     requested_devices[device_type] += count
@@ -1555,6 +1708,7 @@ class TestJob(RestrictedResource):
             role = vm_group['host'].get('role', None)
             allow = _check_submit_to_device(
                 list(Device.objects.filter(device_type=device_type)), user)
+            _check_exclusivity(allow, False)
             requested_devices[device_type.name] = (1, role)
 
             # Validate and get the list of vms requested. These are dynamic vms

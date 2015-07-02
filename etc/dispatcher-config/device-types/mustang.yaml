@@ -1,0 +1,33 @@
+{% extends 'base.yaml' %}
+{% block body %}
+
+device_type: mustang
+{% set console_device = console_device | default('ttyS0') %}
+{% set baud_rate = baud_rate | default(115200) %}
+
+parameters:
+   bootm:
+    kernel: '{{ bootm_kernel_addr|default('0x4002000000') }}'
+    ramdisk: '{{ bootm_ramdisk_addr|default('0x4004000000') }}'
+    dtb: '{{ bootm_dtb_addr|default('0x4003000000') }}'
+
+actions:
+   deploy:
+     methods:
+     - tftp
+   boot:
+     methods:
+       u-boot:
+        parameters:
+          bootloader_prompt: {{ bootloader_prompt|default('Mustang') }}
+          boot_message: {{ boot_message|default('Starting kernel') }}
+        nfs:
+          commands:
+          - setenv autoload no
+{{ base_uboot_addr_commands }}
+{{ base_tftp_commands }}
+          - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw {{ base_nfsroot_args }} panic=1 earlyprintk=uart8250-32bit,0x1c020000 debug ip=dhcp'"
+{{ base_nfs_uboot_bootcmd }}
+
+{% endblock %}
+

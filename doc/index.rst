@@ -76,6 +76,8 @@ Other Topics
    lava-scheduler-device-type-help.rst
    lava-scheduler-submit-job.rst
    lava-scheduler-job.rst
+   lava-tool.rst
+   pipeline-usecases.rst
 
 Developer guides
 ################

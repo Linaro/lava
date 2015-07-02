@@ -82,6 +82,7 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models.sql.aggregates import Aggregate as SQLAggregate
+from django.utils import timezone
 
 from dashboard_app.models import (
     BundleStream,
@@ -316,8 +317,13 @@ class MatchMakingQuerySet(object):
                 where=['convert_to_integer("dashboard_app_namedattribute"."value") in (%s, %s)' % (tag1, tag2)]
             )
         else:
-            tag1 = datetime.datetime.strptime(tag1, "%Y-%m-%d %H:%M:%S.%f")
-            tag2 = datetime.datetime.strptime(tag2, "%Y-%m-%d %H:%M:%S.%f")
+            tag1 = datetime.datetime.strptime(tag1,
+                                              "%Y-%m-%d %H:%M:%S.%f+00:00")
+            tag2 = datetime.datetime.strptime(tag2,
+                                              "%Y-%m-%d %H:%M:%S.%f+00:00")
+            tag1 = timezone.make_aware(tag1, timezone.get_current_timezone())
+            tag2 = timezone.make_aware(tag2, timezone.get_current_timezone())
+
             q = self.queryset.filter(bundle__uploaded_on__in=(tag1, tag2))
         matches = list(self._wrap(q))
         if matches[0].tag == tag1:

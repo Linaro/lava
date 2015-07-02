@@ -23,3 +23,14 @@ values::
 
  PIDFILE = '/var/run/lava-master.pid'
  LOGFILE = '/var/log/lava-server/lava-master.log'
+
+Systemd support
+###############
+
+The default install uses systemd translation of the sysvinit script
+but a systemd service file is available, if desired::
+
+ /usr/share/lava-server/lava-master.service
+
+This file can be copied to ``/lib/systemd/system/``.
+

@@ -16,3 +16,5 @@ fi
 ./lava_server/manage.py test $VERBOSE lava_scheduler_daemon
 
 ./lava_server/manage.py test $VERBOSE linaro_django_xmlrpc.tests
+
+./lava_server/manage.py test $VERBOSE lava_results_app

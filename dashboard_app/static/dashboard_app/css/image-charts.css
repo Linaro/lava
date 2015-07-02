@@ -171,6 +171,11 @@ div.selector .selector-chosen select {
     width: 100%;
     margin: 10px 0 10px 0;
     padding: 7px;
+    height: 130px;
+}
+
+.sortable-placeholder:hover {
+    cursor: row-resize;
 }
 
 .print-menu {

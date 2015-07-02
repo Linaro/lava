@@ -6,6 +6,12 @@ LAVA development
 Understanding the LAVA architecture
 ***********************************
 
+.. note:: This is the current architecture and differs
+   from the :ref:`dispatcher_design` which will replace it. The new
+   design isolates the database from the worker and replaces the
+   scheduler daemon with a slave dispatcher daemon which communicates
+   over :term:`ZMQ`.
+
 The first step for LAVA development is understanding its architecture.
 The major LAVA components are depicted below::
 
@@ -38,6 +44,7 @@ The major LAVA components are depicted below::
 * The *scheduler daemon* is responsible for allocating jobs that were
   submitted. It works by polling the database, reserving devices to run
   those jobs, and triggering the dispatcher to actually run the tests.
+  [#deprecated]_
 * The *dispatcher* is responsible for actually running the job. It will
   manage the serial connection to the :term:`DUT`, image downloads and
   collecting results etc. When doing local tests or developing new
@@ -75,6 +82,8 @@ below to generate html format files.::
  (or whatever browser you prefer)
 
 .. _RST: http://sphinx-doc.org/rest.html
+
+.. _contribute_upstream:
 
 Contributing Upstream
 *********************
@@ -159,6 +168,11 @@ There are two main components to LAVA, ``lava-server`` and
     git clone http://git.linaro.org/git/lava/lava-dispatcher.git
     cd lava-dispatcher
 
+There is also ``lava-tool`` which is gaining more support for
+operations involving the :ref:`dispatcher_design`::
+
+    git clone http://git.linaro.org/git/lava/lava-tool.git
+    cd lava-tool
 
 Setting up git-review
 ---------------------
@@ -193,6 +207,8 @@ unit tests, you can just install ``pep8`` and ``python-testscenarios``.)
 To run the tests, use the ``ci-run`` script::
 
  $ ./ci-run
+
+See also :ref:`testing_refactoring_code`.
 
 Functional testing
 ------------------
@@ -421,8 +437,7 @@ Unit-tests
 LAVA has set of unit tests which the developers can run on a regular
 basis for each change they make in order to check for regressions if
 any. Most of the LAVA components such as ``lava-server``,
-``lava-dispatcher``, :ref:`lava-tool <lava_tool>`,
-``linaro-python-dashboard-bundle`` have unit tests.
+``lava-dispatcher``, :ref:`lava-tool <lava_tool>` have unit tests.
 
 Extra dependencies are required to run the tests. On Debian based
 distributions, you can install lava-dev. (If you only need to run the
@@ -522,3 +537,5 @@ API Docs
   TODO determine with classes (and from which components) we want to document
   TODO figure out how to actually make the modules available in the l-d-t tree (or in the path)
 
+.. [#deprecated] These terms reflect objects and methods which will be
+   removed after the migration to the new :ref:`dispatcher_design`.

@@ -18,7 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import datetime
 import errno
 import fcntl
 import jinja2
@@ -32,7 +31,10 @@ import zmq
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.utils import timezone
 from lava_scheduler_app.models import Device, TestJob, JobPipeline
+from lava_results_app.models import TestSuite
+from lava_results_app.dbutils import map_scanned_results, map_metadata
 from lava_dispatcher.pipeline.device import PipelineDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.action import JobError
@@ -99,7 +101,7 @@ def create_job(job, device):
 def start_job(job):
     job.status = TestJob.RUNNING
     # TODO: Only if that was not already the case !
-    job.start_time = datetime.datetime.utcnow()
+    job.start_time = timezone.now()
     device = job.actual_device
     msg = "Job %s running" % job.id
     new_status = Device.RUNNING
@@ -118,7 +120,7 @@ def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
     if job.status == TestJob.CANCELING:
         job.status = TestJob.CANCELED
     if job.start_time and not job.end_time:
-        job.end_time = datetime.datetime.utcnow()
+        job.end_time = timezone.now()
     device = job.actual_device
     if fail_msg:
         job.failure_comment = "%s %s" % (job.failure_comment, fail_msg) if job.failure_comment else fail_msg
@@ -137,7 +139,7 @@ def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
 
 def cancel_job(job):
     job.status = TestJob.CANCELED
-    job.end_time = datetime.datetime.utcnow()
+    job.end_time = timezone.now()
     device = job.actual_device
     msg = "Job %s cancelled" % job.id
     # TODO: what should be the new device status? health check should set
@@ -145,6 +147,8 @@ def cancel_job(job):
     new_status = Device.IDLE
     device.state_transition_to(new_status, message=msg, job=job)
     device.status = new_status
+    if device.current_job and device.current_job == job:
+        device.current_job = None
     # Save the result
     job.save()
     device.save()
@@ -239,7 +243,7 @@ def select_device(job):
     # pass (unused) output_dir just for validation as there is no zmq socket either.
     try:
         pipeline_job = parser.parse(job.definition, obj, job.id, None, output_dir='/tmp')
-    except NotImplementedError as exc:
+    except (JobError, AttributeError, NotImplementedError, KeyError, TypeError) as exc:
         logger.error({'parser': exc})
         end_job(job, fail_msg=exc, job_status=TestJob.INCOMPLETE)
         return None
@@ -257,6 +261,7 @@ def select_device(job):
             os.makedirs(job.output_dir)
         with open(os.path.join(job.output_dir, 'description.yaml'), 'w') as describe_yaml:
             describe_yaml.write(yaml.dump(pipeline))
+        map_metadata(yaml.dump(pipeline), job)
     return device
 
 
@@ -337,7 +342,7 @@ class Command(BaseCommand):
         del logging.root.filters[:]
         # Create the logger
         FORMAT = '%(asctime)-15s %(levelname)s %(message)s'  # pylint: disable=invalid-name
-        logging.basicConfig(format=FORMAT)
+        logging.basicConfig(format=FORMAT, filename='/var/log/lava-server/lava-master.log')
         self.logger = logging.getLogger('dispatcher-master')
 
         if options['level'] == 'ERROR':
@@ -402,22 +407,17 @@ class Command(BaseCommand):
 
                 try:
                     scanned = yaml.load(message)
-                except yaml.scanner.ScannerError:
+                except yaml.YAMLError:
                     self.logger.error("Failed to scan: %s", message)
                     scanned = None
                 # the results logger wraps the OrderedDict in a dict called results, for identification,
                 # YAML then puts that into a list of one item for each call to log.results.
                 if type(scanned) is list and len(scanned) == 1:
                     if type(scanned[0]) is dict and 'results' in scanned[0]:
-                        store = JobPipeline.get(job_id)
-                        if not store:
-                            # create a new store
-                            store = JobPipeline(job_id=job_id)
-                            store.pipeline = {}
-                            # the store pipeline is a standard dict, not an OrderedDict
-                        store.pipeline.update({name: scanned[0]['results']})
-                        # too often to save the results?
-                        store.save()
+                        job = TestJob.objects.get(id=job_id)
+                        ret = map_scanned_results(scanned_dict=scanned[0], job=job)
+                        if not ret:
+                            self.logger.warning("[%s] Unable to map scanned results: %s" % (job_id, yaml.dump(scanned[0])))
 
                 # Clear filename
                 if '/' in level or '/' in name:
@@ -450,7 +450,6 @@ class Command(BaseCommand):
                 logs[job_id].last_usage = time.time()
 
                 # Write data
-                self.logger.debug("[%s] %s -> %s", job_id, filename, message)
                 f_handler = logs[job_id].fd
                 f_handler.write(message)
                 f_handler.write('\n')

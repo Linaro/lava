@@ -143,7 +143,11 @@
           <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary"{% if size_warning %} disabled="disabled"{% endif %}>Complete log</a></li>
         {% endif %}
         {% if job.results_link and not job.archived_bundle %}
+            {% if job.is_pipeline %}
+          <li><a href="{{ job.results_link }}" class="btn btn-success">Results</a></li>
+            {% else %}
           <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
+            {% endif %}
         {% endif %}
         </ul>
       </div>
@@ -218,6 +222,15 @@
 </div>
 {% endif %}
 
+{% if job.is_pipeline %}
+<ul class="nav nav-tabs">
+  <li class="active"><a href="#Log" data-toggle="tab">Job summary</a></li>
+  <li><a href="#Description" data-toggle="tab">Job description</a></li>
+</ul>
+<div class="tab-content">
+  <div class="tab-pane active" id="Log">
+{% endif %}
+
 {% if job.status < job.RUNNING %}
 <h4 class="modal-header">Dispatcher Log messages</h4>
 <i>No log file yet.</i>
@@ -280,6 +293,224 @@
 {% endif %}
 {% endif %}
 
+{% if job.is_pipeline %}
+  </div>
+  <div class="tab-pane" id="Description">
+      <h2>Job Description <a
+      class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.description.yaml' job.id %}"
+       title="Download YAML description"><span class="glyphicon glyphicon-download"></span> YAML</a></h2>
+       <p><a href="{{ STATIC_URL }}/docs/glossary.html#term-pipeline">Pipeline</a> jobs use
+       the job definition to generate a descriptive YAML file when the pipeline is validated.
+       The file represents the data sent to the dispatcher at the start of the job, including
+       details of the device as well as the job parameters and the details of the parameters
+       sent to each of the deploy, boot and test actions in the job pipeline.</p>
+       <p>Click on the Device or Job Actions headings below to see some of the information
+       from the description file for this job or download the complete file as YAML using
+       the link above.</p>
+ <div class="panel-group" id="job_accordion">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h4 class="panel-title"><a data-toggle="collapse" data-parent="#job_accordion" href="#device_collapse">
+                Device
+              </a></h4>
+            </div>
+            <div id="device_collapse" class="panel-collapse collapse in">
+              <div class="panel-body">
+                  <dl class="dl-horizontal">
+                      <dt>device type</dt>
+                      <dd>{{ device_data.device_type }}</dd>
+                      <dt>hostname</dt>
+                      <dd>{{ device_data.hostname }}</dd>
+                      <dt>timeouts</dt>
+                      <dd>
+                          <ul>
+                              {% for key, value in device_data.timeouts.items %}
+                              <li>{{ key }}: {{ value.values|join:'' }} {{ value.keys|join:'' }}</li>
+                              {% endfor %}
+                          </ul>
+                      </dd>
+                      <dt>device action methods</dt>
+                      <dd>
+                          {% for key, value in device_data.actions.items %}
+                          <li>{{ key }}: <ul>
+                            {% for itemkey, itemvalue in value.methods.items %}
+                                <li>{{ itemkey }}:<ul>
+                                {% for paramkey, paramvalue in itemvalue.parameters.items %}
+                                  <li>{{ paramkey }}: {{ paramvalue }}</li>
+                                {% endfor %}
+                                </ul></li>
+                          {% endfor %}
+                          </ul>
+                          </li>
+                          {% endfor %}
+                      </dd>
+                  </dl>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h4 class="panel-title"><a data-toggle="collapse" data-parent="#job_accordion" href="#job_actions">
+                Job Actions
+              </a></h4>
+            </div>
+            <div id="job_actions" class="panel-collapse collapse">
+              <div class="panel-body">
+
+                <!-- Here we insert another nested accordion -->
+                <dl class="dl-horizontal">
+                    <dt>target</dt>
+                    <dd>{{ job_data.target|default:'...' }}</dd>
+                    <dt>timeouts</dt>
+                      <dd>{% if job_data.timeouts %}
+                          <ul>
+                              {% for key, value in job_data.timeouts.items %}
+                              <li>{{ key }}: {{ value }}</li>
+                              {% endfor %}
+                          </ul>
+                      {% else %}...
+                      {% endif %}
+                      </dd>
+                </dl>
+                <div class="panel-group" id="action_list">
+                  <div class="panel panel-default">
+                    <div class="panel-heading">
+                      <h4 class="panel-title"><a data-toggle="collapse" data-parent="#action_list" href="#collapseInnerOne">
+                          Deploy
+                      </a></h4>
+                    </div>
+                    <div id="collapseInnerOne" class="panel-collapse collapse in">
+                      <div class="panel-body">
+                          <ol>
+                          {% for entry in deploy_list %}
+                          <li><br/>
+                            <dl class="dl-horizontal">
+                              {% for key, value in entry.items %}
+                                {% if key == 'timeout' %}
+                                <dt>Timeout</dt>
+                                <dd>
+                                  <ul>
+                                      {% for timekey, timevalue in value.items %}
+                                      {% if timekey == 'yaml_line' %}
+                                      <li>{{ timekey }} {{ timevalue }}</li>
+                                      {% else %}
+                                      <li>{{ timevalue }} {{ timekey }}</li>
+                                      {% endif %}
+                                      {% endfor %}
+                                  </ul>
+                                </dd>
+                              {% else %}
+                              <dt>{{ key }}</dt>
+                              <dd>{{ value }}</dd>
+                              {% endif %}
+                              {% endfor %}
+                            </dl>
+                          </li>
+                          {% endfor %}
+                          </ol>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="panel panel-default">
+                    <div class="panel-heading">
+                      <h4 class="panel-title"><a data-toggle="collapse" data-parent="#action_list" href="#collapseInnerTwo">
+                        Boot
+                      </a></h4>
+                    </div>
+                    <div id="collapseInnerTwo" class="panel-collapse collapse">
+                      <div class="panel-body">
+                          <ol>
+                          {% for entry in boot_list %}
+                          <li><br/>
+                            <dl class="dl-horizontal">
+                              {% for key, value in entry.items %}
+                                {% if key == 'timeout' %}
+                                <dt>Timeout</dt>
+                                <dd>
+                                  <ul>
+                                      {% for timekey, timevalue in value.items %}
+                                      {% if timekey == 'yaml_line' %}
+                                      <li>{{ timekey }} {{ timevalue }}</li>
+                                      {% else %}
+                                      <li>{{ timevalue }} {{ timekey }}</li>
+                                      {% endif %}
+                                      {% endfor %}
+                                  </ul>
+                                </dd>
+                              {% else %}
+                              <dt>{{ key }}</dt>
+                              <dd>{{ value }}</dd>
+                              {% endif %}
+                              {% endfor %}
+                            </dl>
+                          </li>
+                          {% endfor %}
+                          </ol>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="panel panel-default">
+                    <div class="panel-heading">
+                      <h4 class="panel-title"><a data-toggle="collapse" data-parent="#action_list" href="#collapseInnerThree">
+                        Test
+                      </a></h4>
+                    </div>
+                    <div id="collapseInnerThree" class="panel-collapse collapse">
+                      <div class="panel-body">
+                          <ol>
+                          {% for entry in test_list %}
+                          <li><br/>
+                            <dl class="dl-horizontal">
+                              {% for key, value in entry.items %}
+                                {% if key == 'timeout' %}
+                                <dt>Timeout</dt>
+                                <dd>
+                                  <ul>
+                                      {% for timekey, timevalue in value.items %}
+                                      {% if timekey == 'yaml_line' %}
+                                      <li>{{ timekey }} {{ timevalue }}</li>
+                                      {% else %}
+                                      <li>{{ timevalue }} {{ timekey }}</li>
+                                      {% endif %}
+                                      {% endfor %}
+                                  </ul>
+                                </dd>
+                                {% elif key == 'definitions' %}
+                                <dt>Definitions</dt>
+                                <dd><ol>
+                                {% for item in value %}
+                                <li><ul>
+                                    {% for elem_key, elem_value in item.items %}
+                                    <li>{{ elem_key }} {{ elem_value }}</li>
+                                    {% endfor %}
+                                </ul>
+                                </li>
+                                {% endfor %}
+                                </ol>
+                                </dd>
+                                {% else %}
+                                  <dt>{{ key }}</dt>
+                                  <dd>{{ value }}</dd>
+                                {% endif %}
+                              {% endfor %}
+                            </dl>
+                          </li>
+                          {% endfor %}
+                          </ol>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Inner accordion ends here -->
+
+              </div>
+            </div>
+          </div>
+        </div>
+  </div>
+{% endif %}
+
 {% if job.status >= job.RUNNING and job_file_present and job_file_size > 0 and not job.archived_job_file %}
 <a class="btn btn-sm btn-default" id="bottom" href="#top"><span class="glyphicon glyphicon-fast-backward"></span> Start of log file</a>
 <br/><br/>
@@ -310,7 +541,11 @@
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
         {% if job.results_link %}
+            {% if job.is_pipeline %}
+          <li><a href="{{ job.results_link }}" class="btn btn-success">Results</a></li>
+            {% else %}
           <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
+            {% endif %}
         {% endif %}
         </ul>
       </div>
