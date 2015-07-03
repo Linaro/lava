@@ -69,7 +69,7 @@ setup(
         'django-kvstore',
         'pyzmq',
         'jinja2',
-        'ldap',
+        'django-auth-ldap >= 1.1.8',
         # optional dependency; for authentication with Attlassian Crowd SSO
         # 'django-crowd-rest-backend >= 0.3,
 
