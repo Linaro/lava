@@ -359,7 +359,7 @@ class FastModelTarget(Target):
 
         if image is not None:
             self._sd_image = download_image(image, self.context, self._scratch_dir,
-                                            decompress=False)
+                                            decompress=True)
         else:
             # Booting is not supported without an _sd_image defined
             self._sd_image = self._kernel
