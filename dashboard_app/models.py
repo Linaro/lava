@@ -141,7 +141,7 @@ class NamedAttribute(models.Model):
             value=self.value)
 
     class Meta:
-        unique_together = (('object_id', 'name'))
+        unique_together = (('object_id', 'name', 'content_type'))
 
 
 class HardwareDevice(models.Model):
