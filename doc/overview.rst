@@ -83,12 +83,16 @@ instance of LAVA.
 
 .. image:: ./images/lava-scheduler-page.png
 
-The validation lab in Cambridge is currently accessed using Launchpad
-OpenID. In order to login with Launchpad click on "Sign in with OpenID"
-button, which will take you a Launchpad login screen in order to confirm
-that you want to allow LAVA to use your Launchpad profile to authenticate.
+The validation lab in Cambridge is now accessed using Linaro LDAP.
+In order to login with LDAP, enter your details in the LDAP login fields.
+
+
+.. note:: If your Linaro email is ``first.second@linaro.org`` then use
+   ``first.second`` as your username.
 
 A successful authentication will redirect you to http://validation.linaro.org/
+
+If you do not have a Linaro LDAP account, you can :ref:`register`.
 
 .. index:: token
 
