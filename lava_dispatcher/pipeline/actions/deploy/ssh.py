@@ -26,6 +26,7 @@ from lava_dispatcher.pipeline.action import Pipeline, Action
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ExtractRootfs, ExtractModules
+from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
@@ -102,6 +103,8 @@ class ScpOverlay(DeployAction):
                 self.set_common_data('scp', item, True)
         # we might not have anything to download, just the overlay to push
         self.internal_pipeline.add_action(PrepareOverlayScp())
+        # prepare the device environment settings in common data for enabling in the boot step
+        self.internal_pipeline.add_action(DeployDeviceEnvironment())
         scp = Scp('overlay')
         self.internal_pipeline.add_action(scp)
 
@@ -122,6 +125,11 @@ class PrepareOverlayScp(Action):
         super(PrepareOverlayScp, self).validate()
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
         self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
+        environment = self.get_common_data('environment', 'env_dict')
+        if not environment:
+            environment = {}
+        environment.update({"LC_ALL": "C.UTF-8", "LANG": "C"})
+        self.set_common_data('environment', 'env_dict', environment)
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)

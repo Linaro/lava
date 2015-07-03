@@ -23,6 +23,7 @@
     pipeline:
     - {class: actions.deploy.apply_overlay.ExtractRootfs, name: extract-rootfs}
     - {class: actions.deploy.apply_overlay.ExtractModules, name: extract-modules}
+  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
   - {class: connections.ssh.Scp, name: scp-deploy}
 - class: actions.boot.ssh.SshAction
   name: login-ssh
@@ -30,6 +31,7 @@
   - {class: connections.ssh.ConnectSsh, name: primary-ssh}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
   - {class: actions.boot.ssh.ScpOverlayUnpack, name: scp-overlay-unpack}
 - {class: actions.boot.ssh.SchrootAction, name: schroot-login}
 - class: actions.test.shell.TestShellRetry

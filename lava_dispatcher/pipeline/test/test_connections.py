@@ -170,6 +170,10 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.guest_job.validate()
         self.assertEqual([], self.guest_job.pipeline.errors)
         scp_overlay = [item for item in self.guest_job.pipeline.actions if item.name == 'scp-overlay']
+        environment = scp_overlay[0].get_common_data('environment', 'env_dict')
+        self.assertIsNotNone(environment)
+        self.assertIn('LANG', environment.keys())
+        self.assertIn('C', environment.values())
         self.assertEqual(len(scp_overlay), 1)
         overlay = [item for item in scp_overlay[0].internal_pipeline.actions if item.name == 'lava-overlay']
         multinode = [item for item in overlay[0].internal_pipeline.actions if item.name == 'lava-multinode-overlay']

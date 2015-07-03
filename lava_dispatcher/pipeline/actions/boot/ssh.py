@@ -23,6 +23,7 @@
 from lava_dispatcher.pipeline.action import Pipeline, Action
 from lava_dispatcher.pipeline.logical import Boot, RetryAction
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
+from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.connections.ssh import ConnectSsh
@@ -74,6 +75,7 @@ class SshAction(RetryAction):
         self.internal_pipeline.add_action(ConnectSsh())
         self.internal_pipeline.add_action(AutoLoginAction())
         self.internal_pipeline.add_action(ExpectShellSession())
+        self.internal_pipeline.add_action(ExportDeviceEnvironment())
         self.internal_pipeline.add_action(ScpOverlayUnpack())
 
 
