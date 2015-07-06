@@ -33,7 +33,7 @@ from dashboard_app.models import (
 class ImageReportEditorForm(forms.ModelForm):
     class Meta:
         model = ImageReport
-        exclude = ('is_published', 'image_report_group')
+        exclude = ('is_published', 'image_report_group', 'group')
         widgets = {'user': forms.HiddenInput}
 
     def __init__(self, user, *args, **kwargs):

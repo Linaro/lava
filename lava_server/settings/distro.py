@@ -8,6 +8,9 @@ from lava_server.settings.production import *
 # Load application settings from lava_server.settings integration package
 distro_settings = Settings("lava-server")
 
+# Use timezone
+USE_TZ = True
+
 # Load the mount point from settings file
 MOUNT_POINT = distro_settings.mount_point
 
@@ -189,6 +192,11 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
+        'lava_results_app': {
+            'handlers': ['logfile'],
+            'level': 'INFO',
+            'propagate': True,
+        },
         'dashboard_app': {
             'handlers': ['logfile'],
             'level': 'INFO',
@@ -202,6 +210,9 @@ LOGGING = {
     }
 }
 
+# pipeline results display
+# set to false in /etc/lava-server/settings.conf to hide the Results menu
+PIPELINE = distro_settings.get_setting("PIPELINE", True)
 
 # Load extensions
 loader.contribute_to_settings(locals(), distro_settings)

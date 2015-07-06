@@ -133,7 +133,11 @@
           <li><a href="{{ job.get_absolute_url }}" class="btn btn-primary">Summary</a></li>
         {% endif %}
         {% if job.results_link and not job.archived_bundle %}
+            {% if job.is_pipeline %}
+          <li><a href="{{ job.results_link }}" class="btn btn-success">Results</a></li>
+            {% else %}
           <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
+            {% endif %}
         {% endif %}
         </ul>
       </div>
@@ -256,7 +260,11 @@ Please contact the administrator for job log file.</p>
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
         {% if job.results_link and not job.archived_bundle %}
+            {% if job.is_pipeline %}
+          <li><a href="{{ job.results_link }}" class="btn btn-success">Results</a></li>
+            {% else %}
           <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
+            {% endif %}
         {% else %}
         {% if show_cancel %}
           <li><a href="{% url 'lava.scheduler.job.cancel' job.pk %}" class="btn btn-warning">Cancel</a></li>

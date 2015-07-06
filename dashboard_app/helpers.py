@@ -6,10 +6,12 @@ from uuid import UUID
 import base64
 import logging
 import time
+import ldap
 
 from django.core.files.base import ContentFile
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection, transaction, IntegrityError
+from lava_server.settings.getsettings import Settings
 from linaro_dashboard_bundle.errors import DocumentFormatError
 from linaro_dashboard_bundle.evolution import DocumentEvolution
 from linaro_dashboard_bundle.io import DocumentIO
@@ -924,3 +926,47 @@ class BundleDeserializer(object):
         except Exception as exc:
             logger.debug("Exception while importing document: %r", exc)
             raise
+
+
+def get_ldap_user_properties(ldap_user):
+    """Searches LDAP based on the parameters in settings.conf and returns LDAP
+    user properties as a dictionary, eg:
+
+    {uid: 'senthil.kumaran',
+     mail: 'senthil.kumaran@linaro.org',
+     sn: 'Kumaran',
+     given_name: 'Senthil'
+    }
+
+    If given ldap_user does not exist, then raise ldap.NO_SUCH_OBJECT
+    """
+    settings = Settings("lava-server")
+    server_uri = settings.get_setting("AUTH_LDAP_SERVER_URI", None)
+    bind_dn = settings.get_setting("AUTH_LDAP_BIND_DN", None)
+    bind_password = settings.get_setting("AUTH_LDAP_BIND_PASSWORD", None)
+    user_dn_template = settings.get_setting("AUTH_LDAP_USER_DN_TEMPLATE",
+                                            None)
+    user_dn = user_dn_template % {'user': ldap_user}
+    search_scope = ldap.SCOPE_SUBTREE
+    attributes = ['uid', 'givenName', 'sn', 'mail']
+    search_filter = "cn=*"
+
+    user_properties = {}
+    if server_uri is not None:
+        conn = ldap.initialize(server_uri)
+        if bind_dn and bind_password:
+            conn.simple_bind_s(bind_dn, bind_password)
+            try:
+                result = conn.search_s(user_dn, search_scope,
+                                       search_filter, attributes)
+                if len(result) == 1:
+                    result_type, result_data = result[0]
+                    user_properties['uid'] = result_data.get('uid', [None])[0]
+                    user_properties['mail'] = result_data.get('mail',
+                                                              [None])[0]
+                    user_properties['sn'] = result_data.get('sn', [None])[0]
+                    user_properties['given_name'] = result_data.get('givenName',
+                                                                    [None])[0]
+                    return user_properties
+            except ldap.NO_SUCH_OBJECT:
+                raise

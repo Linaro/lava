@@ -1,0 +1,26 @@
+{% extends "layouts/content-bootstrap.html" %}
+{% load i18n %}
+{% load django_tables2 %}
+
+{% block content %}
+{% for testcase in test_cases %}
+    <h1>Test Job {{ job_link }}</h1>
+    <h2>Test suite <a href="{{ suite.get_absolute_url }}">{{ suite.name }}</a></h2>
+    {% if testcase.action_data %}
+        <h3>Results for {{ testcase.name }}, level {{ testcase.action_data.action_level }}</h3>
+    {% else %}
+        <h3>Results for {{ testcase.name }}</h3>
+    {% endif %}
+    {% if testcase.action_metadata %}
+        {{ testcase.action_metadata }}
+    {% else %}
+        {{ testcase.result_code }}
+    {% endif %}
+{% endfor %}
+
+
+
+{% endblock %}
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
+{% endblock %}

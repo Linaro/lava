@@ -1,6 +1,7 @@
 import os
 import yaml
 from django import template
+from django.conf import settings
 from django.utils.safestring import mark_safe
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.models import (
@@ -89,3 +90,9 @@ def get_yaml_parameters(parameters):
     except:
         return parameters
     return ret
+
+
+@register.filter
+def get_settings(value):
+    if hasattr(settings, value):
+        return getattr(settings, value)

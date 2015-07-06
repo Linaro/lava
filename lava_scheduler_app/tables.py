@@ -300,6 +300,44 @@ class FailedJobTable(JobTable):
         exclude = ('submitter', 'end_time', 'priority', 'description')
 
 
+class LongestJobTable(JobTable):
+
+    id = RestrictedIDLinkColumn(verbose_name="ID", accessor="id")
+    id.orderable = False
+    status = tables.Column()
+    status.orderable = False
+    device = tables.Column(accessor='actual_device')
+    device.orderable = False
+    priority = tables.Column()
+    priority.orderable = False
+    description = tables.Column()
+    description.orderable = False
+    submitter = tables.Column()
+    submitter.orderable = False
+    start_time = tables.Column()
+    start_time.orderable = True
+    submit_time = tables.Column()
+    submit_time.orderable = False
+
+    def __init__(self, *args, **kwargs):
+        super(LongestJobTable, self).__init__(*args, **kwargs)
+        self.length = 10
+
+    def render_device(self, record):
+        if record.actual_device:
+            return pklink(record.actual_device)
+        return ''
+
+    class Meta(JobTable.Meta):
+        fields = (
+            'id', 'status', 'device'
+        )
+        sequence = (
+            'id', 'status', 'device'
+        )
+        exclude = ('duration', 'end_time')
+
+
 class OverviewJobsTable(JobTable):
 
     id = RestrictedIDLinkColumn(verbose_name="ID", accessor="id")
@@ -448,7 +486,8 @@ class DeviceTypeTable(LavaTable):
     class Meta(LavaTable.Meta):
         model = DeviceType
         exclude = [
-            'display', 'health_check_job', 'owners_only'
+            'display', 'health_check_job', 'owners_only', 'architecture',
+            'processor', 'cpu_model', 'bits', 'cores', 'core_count', 'description'
         ]
         searches = {
             'name': 'contains',
@@ -491,16 +530,30 @@ class DeviceTable(LavaTable):
     health_status = tables.Column(verbose_name='Health')
     tags = TagsColumn()
 
+    json = tables.Column(accessor='is_pipeline', verbose_name='JSON jobs')
+
+    def render_json(self, record):
+        if record.is_exclusive:
+            return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span>')
+        return mark_safe('<span class="glyphicon glyphicon-ok"></span>')
+
+    pipeline = tables.Column(accessor='is_pipeline', verbose_name='Pipeline jobs')
+
+    def render_pipeline(self, record):
+        if record.is_pipeline:
+            return mark_safe('<span class="glyphicon glyphicon-ok"></span>')
+        return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span>')
+
     class Meta(LavaTable.Meta):
         model = Device
         exclude = [
             'user', 'group', 'is_public', 'device_version',
             'physical_owner', 'physical_group', 'description',
-            'current_job', 'last_health_report_job'
+            'current_job', 'last_health_report_job', 'is_pipeline'
         ]
         sequence = [
             'hostname', 'worker_host', 'device_type', 'status',
-            'owner', 'health_status'
+            'owner', 'health_status', 'json', 'pipeline'
         ]
         searches = {
             'hostname': 'contains',

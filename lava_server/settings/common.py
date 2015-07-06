@@ -146,6 +146,12 @@ try:
 except ImportError:
     pass
 
+try:
+    import hijack
+    INSTALLED_APPS += ['hijack']
+except ImportError:
+    pass
+
 TEMPLATE_CONTEXT_PROCESSORS = [
     "django.contrib.auth.context_processors.auth",
     "django.core.context_processors.debug",

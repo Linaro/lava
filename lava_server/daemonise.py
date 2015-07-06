@@ -22,7 +22,10 @@ import signal
 import sys
 import logging
 import daemon
-import daemon.pidlockfile
+try:
+    import daemon.pidlockfile as pidlockfile
+except ImportError:
+    from lockfile import pidlockfile
 from logging.handlers import WatchedFileHandler
 from subprocess import Popen
 
@@ -64,11 +67,12 @@ def daemonise(pidfile, logfile):
         print("Fatal error creating client_logger: " + str(client_logger))
         sys.exit(os.EX_OSERR)
     # noinspection PyArgumentList
-    lockfile = daemon.pidlockfile.PIDLockFile(pidfile)
+    lockfile = pidlockfile.PIDLockFile(pidfile)
     if lockfile.is_locked():
         logging.error("PIDFile %s already locked", pidfile)
         sys.exit(os.EX_OSERR)
     context = daemon.DaemonContext(
+        detach_process=True,
         working_directory=os.getcwd(),
         pidfile=lockfile,
         files_preserve=[watched_file_handler.stream],
