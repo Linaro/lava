@@ -286,6 +286,15 @@
       </div>
 
       <div class="col-md-6">
+        {% if user.is_authenticated and user.is_superuser %}
+        <div class="btn-group btn-group-justified">
+          <div class="btn-group">
+            <a href="{% url 'admin:lava_scheduler_app_device_change' device.pk %}" class="btn btn-danger" title="Admin this device - {{ device.hostname }}">
+              Admin this device
+            </a>
+          </div>
+        </div>
+        {% endif %}
 {% if edit_description %}
         <div class="btn-group btn-group-justified">
           <div class="btn-group">
