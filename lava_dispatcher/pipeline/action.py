@@ -129,6 +129,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         if self.parent:  # action
             self.children[self] = self.actions
             self.parent.pipeline = self
+            action.section = self.parent.section
         else:
             action.level = "%s" % (len(self.actions))
         # create a log handler just for this action.
@@ -287,7 +288,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             msg = {'msg': 'start: %s %s (max %ds)' % (action.level,
                                                       action.name,
                                                       action.timeout.duration),
-                   'ts': datetime.datetime.utcnow()}
+                   'ts': datetime.datetime.utcnow().isoformat()}
             if self.parent is None:
                 action.logger.info(msg)
             else:
@@ -311,13 +312,17 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 # Add action end timestamp to the log message
                 msg = {'msg': "%s duration: %.02f" % (action.name,
                                                       action.elapsed_time),
-                       'ts': datetime.datetime.utcnow()}
+                       'ts': datetime.datetime.utcnow().isoformat()}
                 if self.parent is None:
                     action.logger.info(msg)
                 else:
                     action.logger.debug(msg)
                 if action.results and isinstance(action.logger, YAMLLogger):
-                    action.logger.results(action.results)
+                    action.results.update({'level': action.level,
+                                           'duration': action.elapsed_time,
+                                           'timeout': action.timeout.duration,
+                                           })
+                    action.logger.results({action.name: action.results})
                 if new_connection:
                     connection = new_connection
             except KeyboardInterrupt:
@@ -369,6 +374,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         self.max_retries = 1  # unless the strategy or the job parameters change this, do not retry
         self.diagnostics = []
         self.protocols = []  # list of protocol objects supported by this action, full list in job.protocols
+        self.section = None
 
     # public actions (i.e. those who can be referenced from a job file) must
     # declare a 'class-type' name so they can be looked up.
@@ -533,6 +539,9 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         if ' ' in self.name:
             self.errors = "Whitespace must not be used in action names, only descriptions or summaries: %s" % self.name
 
+        if not self.section:
+            self.errors = "%s action has no section set" % self
+
         # Collect errors from internal pipeline actions
         self.job.context.setdefault(self.name, {})
         if self.internal_pipeline:
@@ -664,6 +673,17 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
                 data['url'] = self.url.geturl()  # pylint: disable=no-member
             elif attr == 'vcs':
                 data[attr] = getattr(self, attr).url
+            elif attr == 'protocols':
+                data['protocols'] = {}
+                for protocol in getattr(self, attr):
+                    data['protocols'][protocol.name] = {}
+                    protocol_attrs = set([attr for attr in dir(protocol)
+                                          if not attr.startswith('_') and getattr(protocol, attr)
+                                          and not isinstance(getattr(protocol, attr), types.MethodType)
+                                          and not isinstance(getattr(protocol, attr), InternalObject)])
+                    for protocol_attr in protocol_attrs:
+                        if protocol_attr not in ['logger']:
+                            data['protocols'][protocol.name][protocol_attr] = getattr(protocol, protocol_attr)
             else:
                 data[attr] = getattr(self, attr)
         if 'deployment_data' in self.parameters:

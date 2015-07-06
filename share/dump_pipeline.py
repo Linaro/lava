@@ -40,6 +40,7 @@ if __name__ == '__main__':
         exit(1)
 
     # Create the device
+    device = None
     try:
         device = NewDevice(args[0])
     except RuntimeError:
@@ -49,6 +50,6 @@ if __name__ == '__main__':
     # Load the job definition
     with open(args[1], 'r') as job_data:
         parser = JobParser()
-        job = parser.parse(job_data, device)
+        job = parser.parse(job_data, device, 0, None)
 
     print yaml.dump(job.pipeline.describe(False))

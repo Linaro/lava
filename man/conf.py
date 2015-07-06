@@ -49,7 +49,7 @@ source_suffix = '.rst'
 # source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'lava-dispatch'
+master_doc = 'index'
 
 # General information about the project.
 project = u'LAVA Dispatcher'
@@ -225,5 +225,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('lava-dispatch', 'lava-dispatch', u'dispatch jobs to LAVA devices',
-     [u'Linaro Validation Team'], 1)
+     [u'Linaro Validation Team'], 1),
+    ('lava-slave', 'lava-slave', u'manage connections to lava master',
+     [u'Linaro Validation Team'], 8)
 ]

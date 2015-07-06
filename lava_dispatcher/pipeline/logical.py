@@ -83,6 +83,7 @@ class DiagnosticAction(Action):  # pylint: disable=abstract-class-not-used
         """
         super(DiagnosticAction, self).__init__()
         self.name = "diagnose"
+        self.section = 'diagnostic'
         self.summary = "diagnose action failure"
         self.description = "action-specific diagnostics in case of failure"
 
@@ -150,6 +151,7 @@ class Deployment(object):  # pylint: disable=abstract-class-not-used
     """
 
     priority = 0
+    action_type = 'deploy'
 
     def __init__(self, parent):
         self.__parameters__ = {}
@@ -211,6 +213,7 @@ class Boot(object):
     """
 
     priority = 0
+    action_type = 'boot'
 
     def __init__(self, parent):
         self.__parameters__ = {}
@@ -250,6 +253,7 @@ class LavaTest(object):  # pylint: disable=abstract-class-not-used
     """
 
     priority = 1
+    action_type = 'test'
 
     def __init__(self, parent):
         self.__parameters__ = {}

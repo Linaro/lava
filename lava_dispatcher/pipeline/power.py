@@ -179,6 +179,7 @@ class FinalizeAction(Action):
         """
         super(FinalizeAction, self).__init__()
         self.name = "finalize"
+        self.section = 'finalize'
         self.summary = "finalize the job"
         self.description = "finish the process and cleanup"
 

@@ -53,8 +53,8 @@ def _get_dashboard(server, token):
     # Fix it: it's going to be deleted after transition
     if server.endswith("dashboard/"):
         server = ''.join([server, "xml-rpc/"])
-        logging.warn("Please use whole endpoint URL not just end with 'dashboard/', "
-                     "'xml-rpc/' is added automatically now!!!")
+        logging.warning("Please use whole endpoint URL not just end with 'dashboard/', "
+                        "'xml-rpc/' is added automatically now!!!")
 
     parsed_server = urlparse.urlparse(server)
     auth_backend = MemoryAuthBackend([])
@@ -68,11 +68,11 @@ def _get_dashboard(server, token):
             auth_backend = MemoryAuthBackend(
                 [(parsed_server.username, userless_server, token)])
         else:
-            logging.warn(
+            logging.warning(
                 "specifying a user without a token is unlikely to work")
     else:
         if token:
-            logging.warn(
+            logging.warning(
                 "specifying a token without a user is probably useless")
 
     srv = AuthenticatingServerProxy(
@@ -84,7 +84,7 @@ def _get_dashboard(server, token):
         # include lava-server/RPC2/
         dashboard = srv.dashboard
     else:
-        logging.warn("The url seems not RPC2 or xml-rpc endpoints, please make sure it's a valid one!!!")
+        logging.warning("The url seems not RPC2 or xml-rpc endpoints, please make sure it's a valid one!!!")
         dashboard = srv.dashboard
 
     logging.debug("server RPC endpoint URL: %s" % server)

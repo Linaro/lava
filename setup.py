@@ -90,7 +90,9 @@ setup(
         ('/etc/modules-load.d/',
             ['etc/lava-modules.conf']),
         ('/etc/init.d/',
-            ['etc/lava-slave.init'])
+            ['etc/lava-slave.init']),
+        ('/usr/share/lava-dispatcher/',
+            ['etc/lava-slave.service'])
     ],
     scripts=[
         'lava-dispatch',

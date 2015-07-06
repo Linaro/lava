@@ -35,6 +35,8 @@ _boot_schema = {
                     'optional': True},
         'boot_cmds': {'type': 'array', 'items': {'type': 'string'},
                       'optional': True},
+        'sim_options': {'type': 'array', 'items': {'type': 'string'},
+                        'optional': True},
         'role': {'type': 'string', 'optional': True},
         'repeat': {'type': 'integer', 'optional': True},
         'repeat_count': {'type': 'integer', 'optional': True},
@@ -60,6 +62,9 @@ class cmd_boot_linaro_android_image(BaseAction):
     parameters_schema['properties']['test_image_prompt'] = {
         'type': 'string', 'optional': True
     }
+    parameters_schema['properties']['interrupt_boot_prompt'] = {
+        'type': 'string', 'optional': True
+    }
     parameters_schema['properties']['enable_network_after_boot_android'] = {
         'default': 'True', 'optional': True
     }
@@ -70,14 +75,16 @@ class cmd_boot_linaro_android_image(BaseAction):
         'type': 'array', 'items': {'type': 'string'}, 'optional': True
     }
 
-    def run(self, options=[], boot_cmds=None, adb_check=False,
+    def run(self, options=[], boot_cmds=None, sim_options=None, adb_check=False,
             wait_for_home_screen=True, wait_for_home_screen_activity=None,
-            test_image_prompt=None, enable_network_after_boot_android=None,
-            repeat_count=0, boot_uiautomator_jar=None,
-            boot_uiautomator_commands=None):
+            test_image_prompt=None, interrupt_boot_prompt=None,
+            enable_network_after_boot_android=None, repeat_count=0,
+            boot_uiautomator_jar=None, boot_uiautomator_commands=None):
         client = self.client
         if boot_cmds is not None:
             client.config.boot_cmds = boot_cmds
+        if sim_options is not None:
+            client.config.simulator_options = sim_options
         if wait_for_home_screen_activity is not None:
             client.config.android_wait_for_home_screen_activity = \
                 wait_for_home_screen_activity
@@ -85,6 +92,8 @@ class cmd_boot_linaro_android_image(BaseAction):
             test_image_prompts = client.config.test_image_prompts
             test_image_prompts.append(test_image_prompt)
             client.config.test_image_prompts = test_image_prompts
+        if interrupt_boot_prompt is not None:
+            client.config.interrupt_boot_prompt = interrupt_boot_prompt
         if enable_network_after_boot_android is not None:
             client.config.enable_network_after_boot_android = \
                 enable_network_after_boot_android
@@ -118,15 +127,23 @@ class cmd_boot_linaro_image(BaseAction):
     parameters_schema['properties']['test_image_prompt'] = {
         'type': 'string', 'optional': True
     }
+    parameters_schema['properties']['interrupt_boot_prompt'] = {
+        'type': 'string', 'optional': True
+    }
 
-    def run(self, options=[], boot_cmds=None, test_image_prompt=None, repeat_count=0):
+    def run(self, options=[], boot_cmds=None, sim_options=None, test_image_prompt=None,
+            interrupt_boot_prompt=None, repeat_count=0):
         client = self.client
         if boot_cmds is not None:
             client.config.boot_cmds = boot_cmds
+        if sim_options is not None:
+            client.config.simulator_options = sim_options
         if test_image_prompt is not None:
             test_image_prompts = client.config.test_image_prompts
             test_image_prompts.append(test_image_prompt)
             client.config.test_image_prompts = test_image_prompts
+        if interrupt_boot_prompt is not None:
+            client.config.interrupt_boot_prompt = interrupt_boot_prompt
         client.target_device.boot_options = options
         client.target_device.reset_boot(in_test_shell=False)
         status = 'pass'

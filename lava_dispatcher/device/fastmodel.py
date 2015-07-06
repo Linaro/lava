@@ -1,5 +1,4 @@
 # Copyright (C) 2012 Linaro Limited
-# Copyright (C) 2012 Linaro Limited
 #
 # Author: Andy Doan <andy.doan@linaro.org>
 #
@@ -80,6 +79,7 @@ class FastModelTarget(Target):
         self._initrd = None
         self._uefi = None
         self._uefi_vars = None
+        self._bl0 = None
         self._bl1 = None
         self._bl2 = None
         self._bl31 = None
@@ -284,18 +284,16 @@ class FastModelTarget(Target):
         self._copy_needed_files_from_partition(self.config.root_part, 'boot')
         self._copy_needed_files_from_partition(self.config.root_part, 'lib')
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
-                             bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, image, bootloader, firmware, bl0, bl1,
+                             bl2, bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
         # Required
         if kernel is None:
             raise CriticalError("A kernel image is required")
         elif ramdisk is None:
             raise CriticalError("A ramdisk image is required")
-        elif dtb is None:
-            raise CriticalError("A dtb is required")
 
         if rootfs is not None or nfsrootfs is not None or firmware is not None:
-            logging.warn("This platform only supports ramdisk booting, ignoring other parameters")
+            logging.warning("This platform only supports ramdisk booting, ignoring other parameters")
 
         self._ramdisk_boot = True
 
@@ -314,11 +312,13 @@ class FastModelTarget(Target):
                 extract_overlay(overlay, ramdisk_dir)
             self._initrd = create_ramdisk(ramdisk_dir, self._scratch_dir)
         self._boot_tags['{RAMDISK}'] = os.path.relpath(self._initrd, self._scratch_dir)
-        self._dtb = download_image(dtb, self.context, self._scratch_dir,
-                                   decompress=False)
-        self._boot_tags['{DTB}'] = os.path.relpath(self._dtb, self._scratch_dir)
 
         # Optional
+        if dtb is not None:
+            self._dtb = download_image(dtb, self.context, self._scratch_dir,
+                                       decompress=False)
+            self._boot_tags['{DTB}'] = os.path.relpath(self._dtb, self._scratch_dir)
+
         if bootloader is None:
             if self.config.simulator_uefi_default is None:
                 raise CriticalError("UEFI image is required")
@@ -339,6 +339,9 @@ class FastModelTarget(Target):
             self._bl1 = download_image(bl1, self.context,
                                        self._scratch_dir, decompress=False)
 
+        if bl0 is not None:
+            self._bl0 = download_image(bl0, self.context, self._scratch_dir,
+                                       decompress=False)
         if bl2 is not None:
             self._bl2 = download_image(bl2, self.context, self._scratch_dir,
                                        decompress=False)
@@ -354,8 +357,12 @@ class FastModelTarget(Target):
         # Get deployment data
         self.deployment_data = deployment_data.get(target_type)
 
-        # Booting is not supported without an _sd_image defined
-        self._sd_image = self._kernel
+        if image is not None:
+            self._sd_image = download_image(image, self.context, self._scratch_dir,
+                                            decompress=False)
+        else:
+            # Booting is not supported without an _sd_image defined
+            self._sd_image = self._kernel
 
         self._default_boot_cmds = 'boot_cmds_ramdisk'
 
@@ -462,9 +469,13 @@ class FastModelTarget(Target):
 
         self._fix_perms()
 
-        cli_pattern = self.config.simulator_command_flag + '%s=%s' + ' '
-
-        options = boot_options.as_string(self, join_pattern=cli_pattern)
+        if self.config.simulator_options is not None:
+            logging.info('Overriding default simulator options')
+            options = ' '.join(self.config.simulator_options)
+        else:
+            # If the user hasn't set their own flags then we should use the defaults
+            cli_pattern = self.config.simulator_command_flag + '%s=%s' + ' '
+            options = boot_options.as_string(self, join_pattern=cli_pattern)
 
         if self.config.simulator_boot_wrapper and self._uefi is None:
             options = '%s %s' % (self.config.simulator_boot_wrapper, options)
@@ -472,8 +483,8 @@ class FastModelTarget(Target):
         sim_cmd = '%s %s' % (self.config.simulator_command, options)
         sim_cmd = sim_cmd.format(
             AXF=self._axf, IMG=self._sd_image, KERNEL=self._kernel,
-            DTB=self._dtb, INITRD=self._initrd, UEFI=self._uefi, BL1=self._bl1,
-            UEFI_VARS=self._uefi_vars, INTERFACE=self._interface_name)
+            DTB=self._dtb, INITRD=self._initrd, UEFI=self._uefi, BL0=self._bl0,
+            BL1=self._bl1, UEFI_VARS=self._uefi_vars, INTERFACE=self._interface_name)
 
         # the simulator proc only has stdout/stderr about the simulator
         # we hook up into a telnet port which emulates a serial console

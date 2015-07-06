@@ -55,8 +55,5 @@ actions:
               path: lava-test-shell/multi-node/multinode01.yaml
               name: singlenode-advanced
 
-    - submit_results:
-        stream: /anonymous/codehelp/
-
 context:
   arch: amd64

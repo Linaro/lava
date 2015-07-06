@@ -241,7 +241,7 @@ def download_image(url_string, context, imgdir=None,
                 time.sleep(60)
         # add other exceptions to the above section and then remove the broad clause
         except Exception as e:
-            logging.warn("Unable to download: %r", traceback.format_exc())
+            logging.warning("Unable to download: %r", traceback.format_exc())
             tries += 1
             if time.time() >= now + timeout:
                 msg = 'Infrastructure Error: Downloading %s failed after %d tries: %s' % \

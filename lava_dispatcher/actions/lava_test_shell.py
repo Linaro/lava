@@ -892,12 +892,12 @@ class cmd_lava_test_shell(BaseAction):
             logging.info('lava_test_shell seems to have completed')
 
         elif event == EOF:
-            logging.warn('lava_test_shell connection dropped')
+            logging.warning('lava_test_shell connection dropped')
 
         elif event == TIMEOUT:
             if target.is_booted():
                 target.reset_boot()
-            logging.warn('lava_test_shell has timed out')
+            logging.warning('lava_test_shell has timed out')
             raise pexpect.TIMEOUT('Timeout')
 
         elif event == SIGNAL:
@@ -948,7 +948,7 @@ class cmd_lava_test_shell(BaseAction):
             if match is pexpect.TIMEOUT:
                 if target.is_booted():
                     target.reset_boot()
-                logging.warn('lava_test_shell has timed out')
+                logging.warning('lava_test_shell has timed out')
             else:
                 self._handle_parsed_testcase(match.groupdict())
                 return True
@@ -1162,7 +1162,7 @@ class cmd_lava_test_shell(BaseAction):
                 key = key.lower()
                 data[key] = value
             else:
-                logging.warn(
+                logging.warning(
                     "Ignoring malformed parameter for signal: \"%s\". " % param)
 
         test_result = parse_testcase_result(data)

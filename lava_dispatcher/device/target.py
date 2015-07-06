@@ -218,8 +218,8 @@ class Target(object):
     def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype, qemu_pflash=None):
         raise NotImplementedError('deploy_linaro_prebuilt')
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, bootloader, firmware, bl1, bl2,
-                             bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, image, bootloader, firmware, bl0, bl1,
+                             bl2, bl31, rootfstype, bootloadertype, target_type, qemu_pflash=None):
         raise NotImplementedError('deploy_linaro_kernel')
 
     def dummy_deploy(self, target_type):
@@ -719,16 +719,12 @@ class Target(object):
         else:
             raise RuntimeError('bad file extension: %s' % tar_url)
 
-        if busybox:
-            wget_options = '--proxy off'
-        else:
-            wget_options = '--no-check-certificate --no-proxy --connect-timeout=30 -S --progress=dot -e dotbytes=2M'
+        wget_options = runner.get_wget_options()
 
         if self._image_has_selinux_support(runner, 3):
             self.context.selinux = '--selinux'
         else:
             self.context.selinux = ''
-
         runner.run('wget %s -O - %s %s | /bin/tar %s -C %s -xmf -'
                    % (wget_options, tar_url, decompression_cmd, self.context.selinux, dest),
                    timeout=timeout)

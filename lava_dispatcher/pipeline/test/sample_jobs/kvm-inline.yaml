@@ -63,8 +63,5 @@ actions:
               name: smoke-tests-inline
               path: inline/smoke-tests-basic.yaml
 
-    - submit_results:
-        stream: /anonymous/codehelp/
-
 context:
   arch: amd64

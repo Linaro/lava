@@ -23,7 +23,6 @@ import glob
 import stat
 import unittest
 from lava_dispatcher.pipeline.power import FinalizeAction
-from lava_dispatcher.pipeline.actions.submit import SubmitResultsAction
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry
 from lava_dispatcher.pipeline.test.test_basic import Factory
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
@@ -138,20 +137,18 @@ class TestDefinitionSimple(unittest.TestCase):  # pylint: disable=too-many-publi
 
     @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_job_without_tests(self):
-        deploy = boot = submit = finalize = None
+        deploy = boot = finalize = None
         self.job.pipeline.validate_actions()
         for action in self.job.pipeline.actions:
             self.assertNotIsInstance(action, TestDefinitionAction)
             self.assertNotIsInstance(action, OverlayAction)
             deploy = self.job.pipeline.actions[0]
             boot = self.job.pipeline.actions[1]
-            submit = self.job.pipeline.actions[2]
-            finalize = self.job.pipeline.actions[3]
+            finalize = self.job.pipeline.actions[2]
         self.assertIsInstance(deploy, DeployAction)
         self.assertIsInstance(boot, BootAction)
-        self.assertIsInstance(submit, SubmitResultsAction)
         self.assertIsInstance(finalize, FinalizeAction)
-        self.assertEqual(len(self.job.pipeline.actions), 4)  # deploy, boot, submit, finalize
+        self.assertEqual(len(self.job.pipeline.actions), 3)  # deploy, boot, finalize
         apply_overlay = deploy.pipeline.children[deploy.pipeline][4]
 
 
@@ -164,15 +161,14 @@ class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-publi
 
     @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_job_without_tests(self):
-        deploy = boot = submit = finalize = overlay = test = None
+        deploy = boot = finalize = overlay = test = None
         self.job.pipeline.validate_actions()
         for action in self.job.pipeline.actions:
             self.assertNotIsInstance(action, TestDefinitionAction)
             self.assertNotIsInstance(action, OverlayAction)
             deploy = self.job.pipeline.actions[0]
             boot = self.job.pipeline.actions[1]
-            submit = self.job.pipeline.actions[3]
-            finalize = self.job.pipeline.actions[4]
+            finalize = self.job.pipeline.actions[3]
             overlay = deploy.internal_pipeline.actions[3]
         self.assertIsInstance(overlay, OverlayAction)
         testdef = overlay.internal_pipeline.actions[1]
@@ -182,9 +178,8 @@ class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-publi
         runsh = testdef.internal_pipeline.actions[3]
         self.assertIsInstance(deploy, DeployAction)
         self.assertIsInstance(boot, BootAction)
-        self.assertIsInstance(submit, SubmitResultsAction)
         self.assertIsInstance(finalize, FinalizeAction)
-        self.assertEqual(len(self.job.pipeline.actions), 5)  # deploy, boot, test, submit, finalize
+        self.assertEqual(len(self.job.pipeline.actions), 4)  # deploy, boot, test, finalize
         self.assertNotIn('test_params', testdef.parameters)
         self.assertIsInstance(install, TestInstallAction)
         self.assertIsInstance(runsh, TestRunnerAction)
@@ -211,7 +206,6 @@ class TestDefinitionRepeat(unittest.TestCase):  # pylint: disable=too-many-publi
     def test_multiple_tests(self):
         deploy = []
         boot = []
-        submit = []
         shell = []
         finalize = []
         for action in self.job.pipeline.actions:
@@ -219,8 +213,6 @@ class TestDefinitionRepeat(unittest.TestCase):  # pylint: disable=too-many-publi
                 deploy.append(action)
             elif isinstance(action, BootAction):
                 boot.append(action)
-            elif isinstance(action, SubmitResultsAction):
-                submit.append(action)
             elif isinstance(action, TestShellRetry):
                 shell.append(action)
             elif isinstance(action, FinalizeAction):
@@ -229,6 +221,5 @@ class TestDefinitionRepeat(unittest.TestCase):  # pylint: disable=too-many-publi
                 self.fail(action.name)
         self.assertEqual(len(deploy), 1)
         self.assertEqual(len(boot), 2)
-        self.assertEqual(len(submit), 1)
         self.assertEqual(len(shell), 2)
         self.assertEqual(len(finalize), 1)

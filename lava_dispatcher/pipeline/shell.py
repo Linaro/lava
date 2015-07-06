@@ -51,18 +51,19 @@ class ShellLogger(object):
         }
         for key, value in replacements.items():
             new_line = new_line.replace(key, value)
-
         line = self.line + new_line
-        # TODO: loop on the newline check
-        try:
-            index = line.index('\n')
-            self.logger.target(line[:index])
-            self.line = line[index + 1:]
-        except ValueError:
-            self.line = line
+        if '\n' in line:  # any number of newlines
+            for item in line.split('\n'):
+                self.logger.target(item)
+            self.line = ''
+        else:
+            # keep building until a newline is seen
+            self.line += new_line
+        return
 
     def flush(self):
-        pass
+        sys.stdout.flush()
+        sys.stderr.flush()
 
 
 class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
