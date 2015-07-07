@@ -155,13 +155,13 @@ class TestShellAction(TestAction):
             if self.timeout:
                 test_connection.timeout = self.timeout.duration
 
-            while self._keep_running(test_connection, test_connection.timeout):
+            while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
                 pass
 
         self.logger.debug(self.report)
         return connection
 
-    def check_patterns(self, event, test_connection):
+    def check_patterns(self, event, test_connection, check_char):
         """
         Defines the base set of pattern responses.
         Stores the results of testcases inside the TestAction
@@ -247,7 +247,7 @@ class TestShellAction(TestAction):
             except KeyboardInterrupt:
                 raise KeyboardInterrupt
             # force output in case there was none but minimal content to increase speed.
-            test_connection.sendline("#")
+            test_connection.sendline(check_char)
             ret_val = True
 
         elif event == "test_case":
@@ -267,10 +267,10 @@ class TestShellAction(TestAction):
 
         return ret_val
 
-    def _keep_running(self, test_connection, timeout):
+    def _keep_running(self, test_connection, timeout, check_char):
         self.logger.debug("test shell timeout: %d seconds" % timeout)
         retval = test_connection.expect(list(self.patterns.values()), timeout=timeout)
-        return self.check_patterns(list(self.patterns.keys())[retval], test_connection)
+        return self.check_patterns(list(self.patterns.keys())[retval], test_connection, check_char)
 
     class SignalDirector(object):
 

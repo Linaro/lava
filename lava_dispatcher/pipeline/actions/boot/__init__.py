@@ -101,17 +101,19 @@ class AutoLoginAction(Action):
         params = self.parameters.get('auto_login', None)
         if params is None:
             self.logger.debug("Skipping of auto login")
-
         else:
             self.logger.debug("Waiting for the login prompt")
-            wait_for_prompt(connection.raw_connection, params['login_prompt'], self.timeout.duration)
+            wait_for_prompt(
+                connection.raw_connection, params['login_prompt'],
+                self.timeout.duration, connection.check_char)
             connection.sendline(params['username'])
 
             if 'password_prompt' in params:
                 self.logger.debug("Waiting for password prompt")
-                wait_for_prompt(connection.raw_connection, params['password_prompt'], self.timeout.duration)
+                wait_for_prompt(
+                    connection.raw_connection, params['password_prompt'],
+                    self.timeout.duration, connection.check_char)
                 connection.sendline(params['password'])
-
         # prompt_str can be a list or str
         connection.prompt_str = [DEFAULT_SHELL_PROMPT]
 

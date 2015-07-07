@@ -107,6 +107,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
     def sendcontrol(self, char):
         return super(ShellCommand, self).sendcontrol(char)
 
+    # FIXME: no sense in sending delay and send_char - if delay is non-zero, send_char needs to be True
     def send(self, string, delay=0, send_char=True):  # pylint: disable=arguments-differ
         """
         Extends pexpect.send to support extra arguments, delay and send by character flags.
@@ -213,11 +214,11 @@ class ShellSession(Connection):
         yield self.__runner__.get_connection()
 
     def wait(self):
-        self.raw_connection.sendline("#")
+        self.raw_connection.sendline(self.check_char)
         if not self.prompt_str:
-            self.prompt_str = '#'
+            self.prompt_str = self.check_char
         try:
-            self.runner.wait_for_prompt(self.timeout.duration)
+            self.runner.wait_for_prompt(self.timeout.duration, self.check_char)
         except pexpect.TIMEOUT:
             raise JobError("wait for prompt timed out")
 

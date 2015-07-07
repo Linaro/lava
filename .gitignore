@@ -12,3 +12,4 @@ doc/html
 man/_build
 *.pyc
 tags
+*.log

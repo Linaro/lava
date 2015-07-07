@@ -33,12 +33,16 @@ class ConnectDevice(Action):
     """
     General purpose class to use the device commands to
     make a serial connection to the device. e.g. using ser2net
+    Inherit from this class and change the session_class and/or shell_class for different behaviour.
     """
+
     def __init__(self):
         super(ConnectDevice, self).__init__()
         self.name = "connect-device"
         self.summary = "run connection command"
         self.description = "use the configured command to connect serial to the device"
+        self.session_class = ShellSession  # wraps the pexpect and provides prompt_str access
+        self.shell_class = ShellCommand  # runs the command to initiate the connection
 
     def validate(self):
         super(ConnectDevice, self).validate()
@@ -67,11 +71,11 @@ class ConnectDevice(Action):
         self.logger.info("%s Connecting to device using '%s'", self.name, command)
         signal.alarm(0)  # clear the timeouts used without connections.
         # ShellCommand executes the connection command
-        shell = ShellCommand("%s\n" % command, self.timeout, logger=self.logger)
+        shell = self.shell_class("%s\n" % command, self.timeout, logger=self.logger)
         if shell.exitstatus:
             raise JobError("%s command exited %d: %s" % (command, shell.exitstatus, shell.readlines()))
         # ShellSession monitors the pexpect
-        connection = ShellSession(self.job, shell)
+        connection = self.session_class(self.job, shell)
         connection.connected = True
         connection = super(ConnectDevice, self).run(connection, args)
         # append ser2net port to the prompt_str
