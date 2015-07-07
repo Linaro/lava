@@ -47,6 +47,7 @@ LAVA Administrator Guide
 
    configuration.rst
    running.rst
+   devicetypes.rst
    hiddentypes.rst
    proxy.rst
    lava-image-creation.rst

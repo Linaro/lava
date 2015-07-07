@@ -96,7 +96,8 @@ migration to the new :ref:`dispatcher_design`.
   device type
     The common type of a number of devices in LAVA. The device type may
     have a :term:`health check` defined. Devices with the same device
-    type will run the same health check at regular intervals.
+    type will run the same health check at regular intervals. See
+    :ref:`device_types`.
 
   dispatcher
     A server to which multiple devices are connected. The dispatcher has
