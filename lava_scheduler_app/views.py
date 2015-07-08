@@ -972,7 +972,7 @@ class LongestJobsView(JobTableView):
                                           'requested_device_id, requested_device_type_id)',
                            'duration_sort': 'end_time - start_time'}).all()\
             .filter(status__in=[TestJob.RUNNING, TestJob.CANCELING])
-        return jobs.order_by('-start_time')
+        return jobs.order_by('start_time')
 
 
 class FavoriteJobsView(JobTableView):

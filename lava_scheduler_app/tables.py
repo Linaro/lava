@@ -15,6 +15,7 @@ from lava_scheduler_app.models import (
 from lava.utils.lavatable import LavaTable, LavaView
 from django.contrib.auth.models import User, Group
 from django.db.models import Q
+from django.utils import timezone
 from datetime import datetime, timedelta
 from markupsafe import escape
 
@@ -318,10 +319,17 @@ class LongestJobTable(JobTable):
     start_time.orderable = True
     submit_time = tables.Column()
     submit_time.orderable = False
+    running = tables.Column(accessor='start_time', verbose_name='Running')
+    running.orderable = False
 
     def __init__(self, *args, **kwargs):
         super(LongestJobTable, self).__init__(*args, **kwargs)
         self.length = 10
+
+    def render_running(self, record):
+        if not record.start_time:
+            return ''
+        return str(timezone.now() - record.start_time)
 
     def render_device(self, record):
         if record.actual_device:
