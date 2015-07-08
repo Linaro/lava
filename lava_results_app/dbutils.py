@@ -32,6 +32,17 @@ from lava_dispatcher.pipeline.action import Timeout
 # pylint: disable=no-member
 
 
+METADATA_MAPPING_DESCRIPTION = {
+    "boot.commands": ["job", "actions", "boot", "commands"],
+    "boot.method": ["job", "actions", "boot", "method"],
+    "boot.type": ["job", "actions", "boot", "type"],
+    "deploy.os": ["job", "actions", "deploy", "os"],
+    "deploy.ramdisk-type": ["job", "actions", "deploy", "ramdisk-type"],
+    "target.hostname": ["device", "hostname"],
+    "target.device_type": ["device", "device_type"]
+}
+
+
 def _test_case(name, suite, result, testset=None, testshell=False):
     """
     Create a TestCase for the specified name and result
@@ -145,6 +156,23 @@ def map_scanned_results(scanned_dict, job):
     return True
 
 
+def _get_nested_value(data, mapping):
+    # get the value from a nested dictionary based on keys given in 'mapping'.
+    value = data
+    for key in mapping:
+        try:
+            value = value[key]
+        except TypeError:
+            # check case when nested value is list and not dict.
+            for item in value:
+                if key in item:
+                    value = item[key]
+        except KeyError:
+            return None
+
+    return value
+
+
 def build_action(action_data, testdata, submission):
     # test for a known section
     logger = logging.getLogger('lava_results_app')
@@ -212,6 +240,21 @@ def map_metadata(description, job):
         return False
     testdata = TestData.objects.create(testjob=job)
     testdata.save()
+    # Add metadata from description data.
+    for key in METADATA_MAPPING_DESCRIPTION:
+        value = _get_nested_value(
+            description_data,
+            METADATA_MAPPING_DESCRIPTION[key]
+        )
+        if value:
+            testdata.attributes.create(name=key, value=value)
+
+    # Add metadata from job submission data.
+    if "metadata" in submission_data:
+        for key in submission_data["metadata"]:
+            testdata.attributes.create(name=key,
+                                       value=submission_data["metadata"][key])
+
     walk_actions(description_data['pipeline'], testdata, submission_data)
     return True
 
