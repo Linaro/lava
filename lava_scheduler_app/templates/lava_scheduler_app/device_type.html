@@ -69,9 +69,11 @@
   </div>
   <div class="col-md-6">
   <dl class="dl-horizontal">
-      <dt>Idle devices</dt>
+      <dt>Active devices</dt>
+      <dd>{{ active_num }}</dd>
+      <dt>Idle</dt>
       <dd>{{ idle_num }}</dd>
-      <dt>Offline or going offline</dt>
+      <dt>Offline</dt>
       <dd>{{ offline_num }}</dd>
 {% if device_type.name != 'dynamic-vm' %}
       <dt>Retired</dt>
