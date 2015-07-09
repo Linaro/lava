@@ -59,6 +59,7 @@ LAVA Administrator Guide
    ipmi-pxe-deploy.rst
    dummy-deploy.rst
    ipxe.rst
+   hijack-user.rst
 
 Other Topics
 ############
