@@ -83,11 +83,14 @@ class ActiveDevicesFilter(admin.SimpleListFilter):
     def lookups(self, request, model_admin):
         return (
             ('NoRetired', 'Exclude retired'),
+            ('CurrentJob', 'With a current Job')
         )
 
     def queryset(self, request, queryset):
         if self.value() == 'NoRetired':
             return queryset.exclude(status=Device.RETIRED)
+        if self.value() == 'CurrentJob':
+            return queryset.filter(current_job__isnull=False)
 
 
 class DeviceAdmin(admin.ModelAdmin):
@@ -125,7 +128,7 @@ class TestJobAdmin(admin.ModelAdmin):
     requested_device_type_name.short_description = 'Request device type'
 
     actions = [cancel_action]
-    list_filter = ('status', 'requested_device_type', 'requested_device__hostname')
+    list_filter = ('status', 'requested_device_type', 'requested_device__hostname', 'actual_device')
     raw_id_fields = ['_results_bundle']
     fieldsets = (
         ('Owner', {
@@ -139,7 +142,8 @@ class TestJobAdmin(admin.ModelAdmin):
         ('Results & Failures', {
             'fields': ('failure_tags', 'failure_comment', '_results_link', '_results_bundle')}),
     )
-    list_display = ('id', 'status', 'submitter', 'requested_device_type_name', 'requested_device_hostname', 'health_check', 'submit_time', 'start_time', 'end_time')
+    list_display = ('id', 'status', 'submitter', 'requested_device_type_name', 'requested_device_hostname',
+                    'actual_device', 'health_check', 'submit_time', 'start_time', 'end_time')
 
 
 class DeviceStateTransitionAdmin(admin.ModelAdmin):

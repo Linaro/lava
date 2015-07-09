@@ -326,6 +326,9 @@ def index(request):
     (num_online, num_not_retired) = _online_total()
     health_check_completed = health_jobs_in_hr().filter(status=TestJob.COMPLETE).count()
     health_check_total = health_jobs_in_hr().count()
+    idle_devices_check = Device.objects.filter(current_job__isnull=False, status=Device.IDLE)
+    running_jobs_count = TestJob.objects.filter(status=TestJob.RUNNING).count()
+    running_devices_count = Device.objects.filter(status=Device.RUNNING).count()
     return render(
         request,
         "lava_scheduler_app/index.html",
@@ -333,6 +336,9 @@ def index(request):
             'device_status': "%d/%d" % _online_total(),
             'num_online': num_online,
             'num_not_retired': num_not_retired,
+            'idle_device_warning': idle_devices_check,
+            'num_jobs_running': running_jobs_count,
+            'num_devices_running': running_devices_count,
             'hc_completed': health_check_completed,
             'hc_total': health_check_total,
             'device_type_table': dt_overview_table,
@@ -801,11 +807,15 @@ def device_type_detail(request, pk):
             'running_jobs_num': TestJob.objects.filter(
                 actual_device__in=Device.objects.filter(device_type=dt),
                 status=TestJob.RUNNING).count(),
+            # going offline are still active - number for comparison with running jobs.
+            'active_num': Device.objects.filter(
+                device_type=dt,
+                status__in=[Device.RUNNING, Device.RESERVED, Device.OFFLINING]).count(),
             'queued_jobs_num': TestJob.objects.filter(
                 Q(status=TestJob.SUBMITTED), Q(requested_device_type=dt)
                 | Q(requested_device__in=Device.objects.filter(device_type=dt))).count(),
             'idle_num': Device.objects.filter(device_type=dt, status=Device.IDLE).count(),
-            'offline_num': Device.objects.filter(device_type=dt, status__in=[Device.OFFLINE, Device.OFFLINING]).count(),
+            'offline_num': Device.objects.filter(device_type=dt, status__in=[Device.OFFLINE]).count(),
             'retired_num': Device.objects.filter(device_type=dt, status=Device.RETIRED).count(),
             'is_admin': request.user.has_perm('lava_scheduler_app.change_devicetype'),
             'health_job_summary_table': health_table,
