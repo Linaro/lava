@@ -9,6 +9,7 @@ from lava_scheduler_app.models import (
     DeviceDictionary,
     DevicesUnavailableException,
 )
+
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource, find_device_for_job
 from lava_scheduler_daemon.tests.base import DatabaseJobSourceTestEngine
 from lava_scheduler_app.views import job_cancel
@@ -143,6 +144,7 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
 
     def test_multinode_job_across_different_workers(self):
         master = self.master
+        # This is not a normal worker, it is just another database view
         worker = DatabaseJobSource(lambda: ['arndale01'])
         arndale01 = self.arndale01
         self.panda02.state_transition_to(Device.OFFLINE)
@@ -211,6 +213,7 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         self.assertEqual([multi1a, multi1b], scheduled)
 
     def test_two_multinode_and_multiworker_jobs_waiting_in_the_queue(self):
+        self.report_start(self.whoami())
         master = self.master
         worker = DatabaseJobSource(lambda: ['arndale01', 'arndale02'])
 
@@ -247,8 +250,10 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         self.job_finished(p1, master)
         self.job_finished(a1, worker)
 
+        self.report_status('bug', self.whoami())
         self.assertEqual([m1p], self.scheduler_tick(master))
         self.assertEqual([m1a], self.scheduler_tick(worker))
+        self.report_end(self.whoami())
 
     def test_looping_mode(self):
 
@@ -711,5 +716,174 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         self.assertEqual(Device.STATUS_CHOICES[bad_panda.status], Device.STATUS_CHOICES[Device.RUNNING])
 
         self.scheduler_tick()
+
+        self.cleanup(self.whoami())
+
+    def test_find_multinode_offline(self):
+        """
+        Test that a multinode job where one device is offline does not become running
+        """
+        self.restart(self.whoami())
+        # two pandas, two arndales, three blacks
+        for panda in Device.objects.filter(device_type=self.panda):
+            self.assertIsNone(panda.current_job)
+        devices = [self.panda01, self.arndale02, self.black01, self.black03]
+        for device in devices:
+            device.status = Device.OFFLINING
+            device.save(update_fields=['status'])
+        # leaves only one of each online
+        self.scheduler_tick()
+        self.assertEqual(
+            set([Device.STATUS_CHOICES[panda.status] for panda in Device.objects.filter(device_type=self.panda)]),
+            {Device.STATUS_CHOICES[Device.OFFLINING], Device.STATUS_CHOICES[Device.IDLE]}
+        )
+        self.assertEqual(
+            Device.objects.filter(device_type=self.panda, status=Device.OFFLINING).count(), 1
+        )
+        self.assertEqual(
+            Device.objects.filter(device_type=self.panda, status=Device.IDLE).count(), 1
+        )
+        self.assertEqual(
+            TestJob.objects.filter(status__in=[TestJob.SUBMITTED, TestJob.RUNNING]).count(), 0
+        )
+        self.submit_job(
+            device_group=[
+                {"device_type": "panda", "count": 1, "role": "client"},
+                {"device_type": "panda", "count": 1, "role": "server"},
+            ]
+        )
+        count = 0
+        while count <= 10:
+            self.scheduler_tick()
+            self.assertEqual(
+                Device.objects.filter(device_type=self.panda, status=Device.OFFLINING).count(), 1
+            )
+            self.assertEqual(
+                Device.objects.filter(device_type=self.panda, status__in=[Device.RESERVED, Device.IDLE]).count(), 1
+            )
+            self.assertEqual(
+                TestJob.objects.filter(status__in=[TestJob.RUNNING]).count(), 0
+            )
+            self.assertEqual(
+                TestJob.objects.filter(status__in=[TestJob.SUBMITTED]).count(), 2
+            )
+            count += 1
+
+        self.cleanup(self.whoami())
+
+    def test_failed_reservation(self):
+        """
+        Test is_ready_to_start
+        """
+        self.restart(self.whoami())
+        # two pandas, two arndales, three blacks
+        for panda in Device.objects.filter(device_type=self.panda):
+            self.assertIsNone(panda.current_job)
+        self.assertEqual(TestJob.objects.all().count(), 0)
+        job = self.submit_job(device_type='panda')
+        self.scheduler_tick()
+        job = TestJob.objects.get(id=job.id)  # reload
+        self.assertEqual(job.actual_device, self.panda01)
+        devices = [self.panda01]
+        for device in devices:
+            device.current_job = job
+            device.save(update_fields=['current_job'])
+        self.panda01 = Device.objects.get(hostname=self.panda01.hostname)  # reload
+        self.assertIsNotNone(self.panda01.current_job)
+        job.status = TestJob.INCOMPLETE
+        job.save(update_fields=['status'])
+        self.scheduler_tick()
+        self.panda02.put_into_maintenance_mode(self.user, 'unit test', None)
+        self.scheduler_tick()
+
+        # scheduler tick can clear the current job. This test is for when it fails to do so.
+        for device in devices:
+            device.current_job = job
+            device.save(update_fields=['current_job'])
+        self.panda01 = Device.objects.get(hostname=self.panda01.hostname)  # reload
+        self.assertIsNotNone(self.panda01.current_job)
+        job = self.submit_job(device_type='panda')
+        job = TestJob.objects.get(id=job.id)  # reload
+        self.assertIsNone(job.actual_device)
+        self.assertFalse(job.is_ready_to_start)
+        self.scheduler_tick()
+        job = TestJob.objects.get(id=job.id)  # reload
+        self.assertIsNone(job.actual_device)
+        self.assertFalse(job.is_ready_to_start)
+        self.cleanup(self.whoami())
+
+    def test_failed_reservation_multinode(self):
+        self.restart(self.whoami())
+        master = self.master
+        worker = DatabaseJobSource(lambda: ['arndale01'])
+        # two pandas, two arndales, three blacks
+        for panda in Device.objects.filter(device_type=self.panda):
+            self.assertIsNone(panda.current_job)
+        self.assertEqual(TestJob.objects.all().count(), 0)
+        self.panda02.put_into_maintenance_mode(self.user, 'unit test', None)
+        job1, job2 = self.submit_job(
+            device_group=[
+                {"device_type": "panda", "count": 1, "role": "client"},
+                {"device_type": "arndale", "count": 1, "role": "server"},
+            ]
+        )
+        # create a queue
+        job3, job4 = self.submit_job(
+            device_group=[
+                {"device_type": "panda", "count": 1, "role": "client"},
+                {"device_type": "arndale", "count": 1, "role": "server"},
+            ]
+        )
+        # master_jobs = self.scheduler_tick(master)
+        worker_jobs = self.scheduler_tick(worker)
+        # self.scheduler_tick()
+        job1 = TestJob.objects.get(id=job1.id)  # reload
+        job1.status = TestJob.INCOMPLETE
+        job1.save(update_fields=['status'])
+        self.panda01 = Device.objects.get(hostname=self.panda01.hostname)  # reload
+        self.panda01.status = Device.OFFLINING
+        self.panda01.current_job = job1
+        self.panda01.save(update_fields=['status', 'current_job'])
+
+        # master_jobs = self.scheduler_tick(master)
+        worker_jobs = self.scheduler_tick(worker)
+        # self.scheduler_tick()
+        job2 = TestJob.objects.get(id=job2.id)  # reload
+        job2.cancel(self.user)
+        master_jobs = self.scheduler_tick(master)
+        # worker_jobs = self.scheduler_tick(worker)
+        # self.scheduler_tick()
+
+        self.panda01 = Device.objects.get(hostname=self.panda01.hostname)  # reload
+        job3 = TestJob.objects.get(id=job3.id)  # reload
+
+        # FORCE the buggy status
+        job3.actual_device = self.panda01
+        job3.save(update_fields=['actual_device'])
+
+        job3 = TestJob.objects.get(id=job3.id)  # reload
+        self.assertFalse(job3.is_ready_to_start)
+        self.assertEqual(job3.actual_device, self.panda01)
+        self.assertNotEqual(job3.actual_device.current_job, job3)
+
+        job4 = TestJob.objects.get(id=job4.id)  # reload
+        if job4.actual_device:
+            self.assertNotEqual(job4.actual_device, self.panda01)
+        job3 = TestJob.objects.get(id=job3.id)  # reload
+        self.assertFalse(job4.is_ready_to_start)
+
+        master_jobs = self.scheduler_tick(master)
+        worker_jobs = self.scheduler_tick(worker)
+        # self.scheduler_tick()
+
+        job3 = TestJob.objects.get(id=job3.id)  # reload
+        # if job3.actual_device:
+        #     self.assertNotEqual(job3.actual_device, self.panda01)
+        self.assertFalse(job3.is_ready_to_start)
+
+        job4 = TestJob.objects.get(id=job4.id)  # reload
+        if job4.actual_device:
+            self.assertNotEqual(job4.actual_device, self.panda01)
+        self.assertFalse(job4.is_ready_to_start)
 
         self.cleanup(self.whoami())

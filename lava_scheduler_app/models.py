@@ -2167,11 +2167,37 @@ class TestJob(RestrictedResource):
 
     @property
     def is_ready_to_start(self):
+        def device_ready(job):
+            """
+            job.actual_device is not None is insufficient.
+            The device also needs to be reserved and not have
+            a different job set in device.current_job.
+            The device and the job update in different transactions, so, the following
+            *must* be allowed:
+              job.status in [SUBMITTED, RUNNING] and job.actual_device.status in [RESERVED, RUNNING]
+              *only as long as* if job.actual_device.current_job:
+                job == job.actual_device.current_job
+            :param device: the actual device for this job, or None
+            :return: True if there is a device and that device is status Reserved
+            """
+            logger = logging.getLogger('lava_scheduler_app')
+            if not job.actual_device:
+                return False
+            if job.actual_device.current_job and job.actual_device.current_job != job:
+                logger.debug(
+                    "%s current_job %s differs from job being checked: %s",
+                    job.actual_device, job.actual_device.current_job, job)
+                return False
+            if job.actual_device.status not in [Device.RESERVED, Device.RUNNING]:
+                logger.debug("%s is not ready to start a job", job.actual_device)
+                return False
+            return True
+
         def ready(job):
-            return job.status == TestJob.SUBMITTED and job.actual_device is not None
+            return job.status == TestJob.SUBMITTED and device_ready(job)
 
         def ready_or_running(job):
-            return job.status in [TestJob.SUBMITTED, TestJob.RUNNING] and job.actual_device is not None
+            return job.status in [TestJob.SUBMITTED, TestJob.RUNNING] and device_ready(job)
 
         if self.is_multinode or self.is_vmgroup:
             return ready(self) and all(map(ready_or_running, self.sub_jobs_list))
