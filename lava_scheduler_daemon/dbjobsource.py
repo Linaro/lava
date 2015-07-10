@@ -3,12 +3,10 @@ import logging
 import os
 import shutil
 import urlparse
-import copy
-import socket
 
 from dashboard_app.models import Bundle
 
-from django.contrib.auth.models import User
+import django
 from django.core.files.base import ContentFile
 from django.db import connection
 from django.db import IntegrityError, transaction
@@ -20,7 +18,7 @@ from linaro_django_xmlrpc.models import AuthToken
 from psycopg2.extensions import TransactionRollbackError
 import simplejson
 
-from twisted.internet.threads import deferToThread
+from twisted.internet.threads import deferToThread  # pylint: disable=unused-import
 
 from zope.interface import implements
 
@@ -35,8 +33,7 @@ from lava_scheduler_app.models import (
 from lava_scheduler_app import utils
 from lava_scheduler_daemon.worker import WorkerData
 from lava_scheduler_daemon.jobsource import IJobSource
-import signal
-import platform
+
 
 MAX_RETRIES = 3
 
@@ -63,16 +60,19 @@ def find_device_for_job(job, device_list):
     if job.dynamic_connection:
         # secondary connection, the "host" has a real device
         return None
+    # FIXME: specify the device_type and limit the DB query to that type only
     for device in device_list:
         if device.current_job:
             if device.device_type != job.requested_device_type:
                 continue
             if job.requested_device and device == job.requested_device:
+                # forced health checks complicate this condition as it would otherwise
+                # be an error to find the device here when it should not be IDLE.
                 continue
             logger = logging.getLogger(__name__ + '.DatabaseJobSource')
             # warn the admin that this needs human intervention
             bad_job = TestJob.objects.get(id=device.current_job.id)
-            logger.warn("Refusing to reserve %s for %s - current job is %s" % (
+            logger.warning("Refusing to reserve %s for %s - current job is %s" % (
                 device, job, bad_job
             ))
             device_list.remove(device)
@@ -80,6 +80,7 @@ def find_device_for_job(job, device_list):
             device_list.remove(device)
     if not device_list:
         return None
+    # forced health check support
     if job.health_check is True:
         if job.requested_device.status == Device.OFFLINE:
             return job.requested_device
@@ -146,11 +147,9 @@ class DatabaseJobSource(object):
                     return func(*args, **kw)
                 except (DatabaseError, OperationalError, InterfaceError), error:
                     message = str(error)
-                    if message == 'connection already closed' or \
-                            message.startswith(
-                            'terminating connection due to administrator command') or \
-                            message.startswith(
-                            'could not connect to server: Connection refused'):
+                    if message == 'connection already closed' or message.startswith(
+                            'terminating connection due to administrator command') or message.startswith(
+                                'could not connect to server: Connection refused'):
                         self.logger.warning(
                             'Forcing reconnection on next db access attempt')
                         if connection.connection:
@@ -231,6 +230,7 @@ class DatabaseJobSource(object):
         jobs = jobs.order_by('-health_check', '-priority', 'submit_time',
                              'vm_group', 'target_group', 'id')
 
+        self.logger.debug("Job queue length: %d", len(jobs))
         return jobs
 
     def _get_available_devices(self):
@@ -240,17 +240,63 @@ class DatabaseJobSource(object):
         This order is used so that a job submitted by John Doe will prefer
         using John Doe's private devices over using public devices that could
         be available for other users who don't have their own.
+
+        Forced health checks ignore this constraint.
         """
         devices = Device.objects.filter(status=Device.IDLE).order_by('is_public')
+        self.logger.info("Number of IDLE devices: %d", len(devices))
         return devices
+
+    def _valid_device_status(self, job, device):
+        """
+        The problem here is that instances with a lot of devices would spend a lot of time
+        refetching all of the device details every scheduler tick when it is only under
+        particular circumstances that an error is made. The safe option is always to refuse
+        to use a device which has changed status.
+        get() evaluates immediately.
+        :param job: job to have a device assigned
+        :param device: device to refresh and check
+        :return: True if device can be reserved
+        """
+        # FIXME: do this properly in the dispatcher master.
+        # FIXME: fold the find_device current_job check into this routine for clarity
+        # FIXME: isolate forced health check requirements
+        if django.VERSION >= (1, 8):
+            # https://docs.djangoproject.com/en/dev/ref/models/instances/#refreshing-objects-from-database
+            device.refresh_from_db()
+        else:
+            device = Device.objects.get(hostname=device.hostname)
+        # forced health check support
+        if job.health_check:
+            # only assign once the device is offline.
+            if device.status not in [Device.OFFLINE, Device.IDLE]:
+                self.logger.warning("Refusing to reserve %s for health check, not IDLE or OFFLINE", device)
+                return False
+        elif device.status is not Device.IDLE:
+            self.logger.warning("Refusing to reserve %s which is not IDLE", device)
+            return False
+        return True
 
     def _assign_jobs(self):
         # FIXME: this function needs to be moved to dispatcher-master when lava_scheduler_daemon is disabled.
+        # FIXME: in dispatcher-master, implement as in share/zmq/assign.[dia|png]
+        # FIXME: Make the forced health check constraint explicit
+        # evaluate the testjob query set using list()
         jobs = list(self._get_job_queue())
+        if not jobs:
+            return
+        self.logger.info("Starting to assign up to %d jobs" % len(jobs))
+        assigned_jobs = []
+        reserved_devices = []
+        # evaluate the devices query set using list()
         devices = list(self._get_available_devices())
+        # a forced health check can be assigned even if the device is not in the list of idle devices.
         for job in jobs:
             device = find_device_for_job(job, devices)
             if device:
+                if not self._valid_device_status(job, device):
+                    continue
+                self.logger.debug("Assigning %s to %s", device, job)
                 try:
                     # Make this sequence atomic
                     with transaction.atomic():
@@ -264,14 +310,20 @@ class DatabaseJobSource(object):
                         device.current_job = job
                         device.state_transition_to(Device.RESERVED, message="Reserved for job %s" % job.display_id)
                         job.save()
+                        assigned_jobs.append(job.id)
+                        reserved_devices.append(device.hostname)
                         device.save()
                     if device in devices:
+                        self.logger.debug("Removing %s from the list of available devices",
+                                          str(device.hostname))
                         devices.remove(device)
                     self.logger.info('%s reserved for job %s', device.hostname,
                                      job.id)
                 except IntegrityError:
                     # Retry in the next call to _assign_jobs
-                    self.logger.debug("Transaction failed for job %s" % job.display_id)
+                    self.logger.warning("Transaction failed for job %s" % job.display_id)
+        # worker heartbeat must not occur within this loop
+        self.logger.debug("Assigned %d jobs on %s devices", len(assigned_jobs), len(reserved_devices))
 
     def _kill_canceling(self, job):
         """
