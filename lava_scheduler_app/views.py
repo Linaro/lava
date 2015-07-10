@@ -110,6 +110,7 @@ from lava_scheduler_app.tables import (
     DeviceTypeTransitionTable,
     OnlineDeviceTable,
     PassingHealthTable,
+    RunningTable,
 )
 
 # The only functions which need to go in this file are those directly
@@ -326,9 +327,8 @@ def index(request):
     (num_online, num_not_retired) = _online_total()
     health_check_completed = health_jobs_in_hr().filter(status=TestJob.COMPLETE).count()
     health_check_total = health_jobs_in_hr().count()
-    idle_devices_check = Device.objects.filter(current_job__isnull=False, status=Device.IDLE)
     running_jobs_count = TestJob.objects.filter(status=TestJob.RUNNING).count()
-    running_devices_count = Device.objects.filter(status=Device.RUNNING).count()
+    active_devices_count = Device.objects.filter(status__in=[Device.RESERVED, Device.RUNNING]).count()
     return render(
         request,
         "lava_scheduler_app/index.html",
@@ -336,9 +336,8 @@ def index(request):
             'device_status': "%d/%d" % _online_total(),
             'num_online': num_online,
             'num_not_retired': num_not_retired,
-            'idle_device_warning': idle_devices_check,
             'num_jobs_running': running_jobs_count,
-            'num_devices_running': running_devices_count,
+            'num_devices_running': active_devices_count,
             'hc_completed': health_check_completed,
             'hc_total': health_check_total,
             'device_type_table': dt_overview_table,
@@ -2283,6 +2282,27 @@ def queue(request):
             "discrete_data": queue_ptable.prepare_discrete_data(queue_data),
             'queue_table': queue_ptable,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(queue),
+        },
+        RequestContext(request))
+
+
+class RunningView(LavaView):
+
+    def get_queryset(self):
+        return DeviceType.objects.all().order_by('name')
+
+
+@BreadCrumb("Running", parent=index)
+def running(request):
+    running_data = RunningView(request, model=DeviceType, table_class=RunningTable)
+    running_ptable = RunningTable(running_data.get_table_data())
+    config = RequestConfig(request, paginate={"per_page": running_ptable.length})
+    config.configure(running_ptable)
+    return render_to_response(
+        "lava_scheduler_app/running.html",
+        {
+            'running_table': running_ptable,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(running),
         },
         RequestContext(request))
 
