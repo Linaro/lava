@@ -120,6 +120,10 @@ AUTH_LDAP_SERVER_URI = distro_settings.get_setting("AUTH_LDAP_SERVER_URI")
 if AUTH_LDAP_SERVER_URI:
     INSTALLED_APPS.append('ldap')
     INSTALLED_APPS.append('django_auth_ldap')
+    import ldap
+    from django_auth_ldap.config import (
+        LDAPSearch, LDAPSearchUnion, GroupOfNamesType)
+
     AUTHENTICATION_BACKENDS = ['django_auth_ldap.backend.LDAPBackend',
                                'django.contrib.auth.backends.ModelBackend'] + \
         [x for x in AUTHENTICATION_BACKENDS]
@@ -140,9 +144,20 @@ if AUTH_LDAP_SERVER_URI:
     AUTH_LDAP_USER_ATTR_MAP = distro_settings.get_setting(
         "AUTH_LDAP_USER_ATTR_MAP")
 
+    if distro_settings.get_setting("AUTH_LDAP_USER_SEARCH"):
+        AUTH_LDAP_USER_SEARCH = eval(distro_settings.get_setting(
+            "AUTH_LDAP_USER_SEARCH"))
+        # AUTH_LDAP_USER_SEARCH and AUTH_LDAP_USER_DN_TEMPLATE are mutually
+        # exclusive, hence,
+        AUTH_LDAP_USER_DN_TEMPLATE = None
+
     if distro_settings.get_setting("AUTH_LDAP_GROUP_SEARCH"):
-        AUTH_LDAP_GROUP_SEARCH = distro_settings.get_setting(
-            "AUTH_LDAP_GROUP_SEARCH")
+        AUTH_LDAP_GROUP_SEARCH = eval(distro_settings.get_setting(
+            "AUTH_LDAP_GROUP_SEARCH"))
+
+    if distro_settings.get_setting("AUTH_LDAP_GROUP_TYPE"):
+        AUTH_LDAP_GROUP_TYPE = eval(distro_settings.get_setting(
+            "AUTH_LDAP_GROUP_TYPE"))
 
     if distro_settings.get_setting("AUTH_LDAP_USER_FLAGS_BY_GROUP"):
         AUTH_LDAP_USER_FLAGS_BY_GROUP = distro_settings.get_setting(
