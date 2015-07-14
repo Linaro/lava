@@ -20,6 +20,7 @@
 import sys
 import ldap
 
+from optparse import make_option
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
 from dashboard_app.helpers import get_ldap_user_properties
@@ -28,6 +29,13 @@ from dashboard_app.helpers import get_ldap_user_properties
 class Command(BaseCommand):
     args = '<username>'
     help = 'Add given username from the configured LDAP server'
+    option_list = BaseCommand.option_list + (
+        make_option('--superuser',
+                    action='store_true',
+                    dest='superuser',
+                    default=False,
+                    help='User added will be made as superuser'),
+    )
 
     def handle(self, *args, **options):
         if len(args) > 0:
@@ -54,5 +62,10 @@ class Command(BaseCommand):
             user.email = user_properties.get("mail", "")
             user.last_name = user_properties.get("sn", "")
             user.first_name = user_properties.get("given_name", "")
+            superuser_msg = ""
+            if options["superuser"]:
+                user.is_staff = True
+                user.is_superuser = True
+                superuser_msg = "with superuser status"
             user.save()
-            self.stdout.write('User "%s" added' % username)
+            self.stdout.write('User "%s" added %s' % (username, superuser_msg))
