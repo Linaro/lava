@@ -35,10 +35,9 @@ from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError, JobError
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, tftpd_dir
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.constants import (
-    DISPATCHER_DOWNLOAD_DIR,
     SHUTDOWN_MESSAGE,
     BOOT_MESSAGE,
 )
@@ -90,9 +89,11 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertIn('ramdisk', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
         self.assertIn('kernel', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
         self.assertIn('dtb', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
-        self.assertEqual(
-            [action.path for action in tftp.internal_pipeline.actions if hasattr(action, 'path')],
-            [DISPATCHER_DOWNLOAD_DIR for _ in range(len(tftp.internal_pipeline.actions) - 2)]
+        # allow root to compare the path (with the mkdtemp added)
+        paths = {action.path for action in tftp.internal_pipeline.actions if hasattr(action, 'path')}
+        self.assertIn(
+            tftpd_dir(),
+            [item for item in paths][0]
         )
 
     def test_device_bbb(self):

@@ -81,7 +81,7 @@ setup(
         'testscenarios >= 0.4'
     ],
     data_files=[
-        ('/etc/default',
+        ('/usr/share/lava-dispatcher/',
             ['etc/tftpd-hpa']),
         ('/etc/exports.d',
             ['etc/lava-dispatcher-nfs.exports']),

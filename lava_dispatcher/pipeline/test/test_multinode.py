@@ -176,6 +176,7 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
             self.assertIs(True, protocol.valid)
         self.assertIsNone(self.coord.dataReceived({}))
 
+    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_multinode_description(self):
         self.assertIsNotNone(self.client_job)
         self.client_job.validate()

@@ -78,3 +78,19 @@ def check_ssh_identity_file(params):  # pylint: disable=too-many-return-statemen
     if not os.path.exists("%s.pub" % identity_file):
         return "Cannot find SSH public key %s.pub" % identity_file, None
     return None, identity_file
+
+
+def tftpd_dir():
+    """
+    read in 'TFTP_DIRECTORY' from /etc/default/tftpd-hpa
+    Any file to be offered using tftp must use this directory or a
+    subdirectory of it. Default installation value: /srv/tftp/
+    :return: real path to the TFTP directory or raises RuntimeError
+    """
+    if os.path.exists('/etc/default/tftpd-hpa'):
+        with open('/etc/default/tftpd-hpa', 'r') as tftpd:
+            lines = tftpd.read()
+        for line in lines.split('\n'):
+            if 'TFTP_DIRECTORY' in line:
+                return os.path.realpath(line[15:].replace('"', ''))  # remove quote markers
+    raise RuntimeError("Unable to identify tftpd directory")

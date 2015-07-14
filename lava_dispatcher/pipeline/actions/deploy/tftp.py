@@ -29,7 +29,7 @@ from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import PrepareOverlayTftp
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.pipeline.utils.shell import which
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, tftpd_dir
 from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
 
 
@@ -84,13 +84,18 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         self.name = "tftp-deploy"
         self.description = "download files and deploy using tftp"
         self.summary = "tftp deploment"
-        self.tftp_dir = DISPATCHER_DOWNLOAD_DIR
+        self.tftp_dir = tftpd_dir()
         self.suffix = None
         try:
-            self.tftp_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
+            self.tftp_dir = mkdtemp(basedir=self.tftp_dir)
         except OSError:
             # allows for unit tests to operate as normal user.
             self.suffix = '/'
+        self.download_dir = DISPATCHER_DOWNLOAD_DIR  # used for NFS
+        try:
+            self.download_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
+        except OSError:
+            pass
 
     def validate(self):
         super(TftpAction, self).validate()
@@ -124,7 +129,7 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
             download.max_retries = 3
             self.internal_pipeline.add_action(download)
         if 'nfsrootfs' in parameters:
-            download = DownloaderAction('nfsrootfs', path=self.tftp_dir)
+            download = DownloaderAction('nfsrootfs', path=self.download_dir)
             download.max_retries = 3
             self.internal_pipeline.add_action(download)
         if 'modules' in parameters:
