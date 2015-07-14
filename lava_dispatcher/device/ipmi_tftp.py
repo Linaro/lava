@@ -71,7 +71,7 @@ class IpmiPxeTarget(Target):
         self.bootcontrol.power_off()
         finalize_process(self.proc)
 
-    def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootloadertype, qemu_pflash=None):
+    def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootfstype, bootloadertype, qemu_pflash=None):
         image_file = generate_image(self, hwpack, rfs, dtb, self.scratch_dir,
                                     bootloadertype, rootfstype,
                                     extra_boot_args='1', image_size='1G')
@@ -79,7 +79,7 @@ class IpmiPxeTarget(Target):
         self._deploy_image(image_file, '/dev/%s'
                            % self.config.sata_block_device)
 
-    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype, qemu_pflash=None):
+    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootfstype, bootloadertype, qemu_pflash=None):
         image_file = download_image(image, self.context, self.scratch_dir)
         self.customize_image(image_file)
         self._deploy_image(image_file, '/dev/%s'

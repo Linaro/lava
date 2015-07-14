@@ -59,6 +59,7 @@ class cmd_deploy_linaro_image(BaseAction):
             'dtb': {'type': 'string', 'optional': True},
             'customize': {'type': 'object', 'optional': True},
             'rootfstype': {'type': 'string', 'optional': True},
+            'bootfstype': {'type': 'string', 'optional': True},
             'bootloadertype': {'type': 'string', 'optional': True,
                                'default': 'u_boot'},
             'login_prompt': {'type': 'string', 'optional': True},
@@ -99,7 +100,8 @@ class cmd_deploy_linaro_image(BaseAction):
                       prompt when specifying login commands')
 
     def run(self, hwpack=None, rootfs=None, image=None, dtb=None,
-            rootfstype='ext4', bootloadertype='u_boot', login_prompt=None,
+            rootfstype='ext4', bootfstype='vfat',
+            bootloadertype='u_boot', login_prompt=None,
             password_prompt=None, username=None, password=None,
             login_commands=None, customize=None, qemu_pflash=None,
             boot_part=None, root_part=None):
@@ -121,8 +123,8 @@ class cmd_deploy_linaro_image(BaseAction):
             self.client.config.root_part = root_part
         self.client.deploy_linaro(
             hwpack=hwpack, rootfs=rootfs, image=image, dtb=dtb,
-            rootfstype=rootfstype, bootloadertype=bootloadertype,
-            qemu_pflash=qemu_pflash,)
+            rootfstype=rootfstype, bootfstype=bootfstype,
+            bootloadertype=bootloadertype, qemu_pflash=qemu_pflash,)
 
 
 cmd_deploy_image = cmd_deploy_linaro_image

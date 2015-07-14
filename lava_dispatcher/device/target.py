@@ -208,14 +208,16 @@ class Target(object):
         """
         raise NotImplementedError('power_on')
 
-    def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootloadertype, qemu_pflash=None):
+    def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootfstype,
+                      bootloadertype, qemu_pflash=None):
         raise NotImplementedError('deploy_image')
 
     def deploy_android(self, images, rootfstype,
                        bootloadertype, target_type):
         raise NotImplementedError('deploy_android_image')
 
-    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype, qemu_pflash=None):
+    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootfstype,
+                               bootloadertype, qemu_pflash=None):
         raise NotImplementedError('deploy_linaro_prebuilt')
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, image, bootloader, firmware, bl0, bl1,
