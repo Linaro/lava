@@ -318,7 +318,7 @@ granted superuser privileges on LAVA web UI. After logging in with
 OpenID or LDAP successfully, make use of the following command to make
 this user a superuser::
 
-  $ sudo lava-server manage authorise_superuser {username}
+  $ sudo lava-server manage authorize_superuser {username}
 
 .. note:: `{username}` is the username of OpenID or LDAP user.
 

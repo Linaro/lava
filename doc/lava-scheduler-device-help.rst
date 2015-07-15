@@ -195,7 +195,7 @@ Return a device to the pool
 
 Restricted devices can be returned to the common LAVA pool so that anyone
 can submit jobs to the device. The device will be able to accept jobs
-from any authorised user along with devices which have no device owner
+from any authorized user along with devices which have no device owner
 assigned.
 
 Changing the pipeline support of a device

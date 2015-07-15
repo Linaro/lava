@@ -25,7 +25,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 class Command(BaseCommand):
     args = '<username>'
-    help = 'Authorise superuser'
+    help = 'Authorize superuser'
 
     def handle(self, *args, **options):
         if len(args) > 0:
