@@ -1029,6 +1029,12 @@ particular location (e.g. ``/root/.ssh/authorized_keys``) but test
 writers can also add a run step which enables authorization for a
 different user, if the test requires this.
 
+.. note:: The ``/root/.ssh/authorized_keys`` file will be replaced
+   when the LAVA overlay is unpacked, if it exists in the test image
+   already. This is a security precaution (so that test images
+   can be shared easily without allowing unexpected access). Hacking
+   sessions append to this file after the overlay has been unpacked.
+
 .. _host_role:
 
 Considerations with a secondary connection
