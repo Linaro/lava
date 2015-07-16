@@ -1,7 +1,7 @@
 .. _lava_on_debian:
 
 Developing LAVA on Debian or Ubuntu
-***********************************
+###################################
 
 Packages for LAVA are available for:
 
@@ -21,7 +21,7 @@ the workflow compared to the old lava-deployment-tool buildouts.
 .. _dev_builds:
 
 Developer package build
-#######################
+***********************
 
 The ``lava-dev`` package includes a helper script which is also present
 in the source code in ``lava-server/share/``. The script requires a normal
@@ -69,10 +69,28 @@ these builds to be included in a local repository, e.g. using ``reprepro``.
 Helpers for other distributions may be added in due course. Patches
 welcome.
 
+.. _developer_build_version:
+
+Developer build versions
+========================
+
+LAVA uses git tags and the developer build adds a suffix to the tag
+for each local build - the suffix is formed from the ``git rev-list --count``
+(to get a sequential, unique, identifier) and the ``git rev-parse --short``
+hash to identify the latest git commit in the branch upon which this
+build is based. The git short hash can be looked up on the ``git.linaro.org``
+site, irrespective of which release tag is the current. For example,
+build version ``2015.07.5333.1521ddb-1`` relates directly to
+``http://git.linaro.org/lava/lava-server.git/1521ddb``
+
+From August 2015, LAVA uses git tags without a leading zero on the month
+number, in accordance with PEP440, so the git tag will be ``2015.8``
+instead of ``2015.07`` used for the previous release tag.
+
 .. _quick_fixes:
 
 Quick fixes and testing
-#######################
+***********************
 
 The paths to execute LAVA python scripts have changed and developing
 LAVA based on packages has a different workflow.
@@ -89,7 +107,7 @@ LAVA packages use python2.7, so the path is beneath
          files.
 
 Viewing changes
-===============
+***************
 
 Different actions are needed for local changes to take effect,
 depending on the type of file(s) updated:
@@ -101,7 +119,7 @@ templates/\*/\*.html     next browser refresh (F5/Ctrl-R)
 ==================== ==============================================
 
 Migrating postgresql versions
-#############################
+*****************************
 
 LAVA installs the ``postgresql`` package which installs the current
 default version of postgresql. When this default changes in Debian,
