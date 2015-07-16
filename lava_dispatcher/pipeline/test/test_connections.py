@@ -28,7 +28,7 @@ from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.boot.ssh import SchrootAction
 from lava_dispatcher.pipeline.actions.boot.qemu import BootVMAction
 from lava_dispatcher.pipeline.connections.ssh import ConnectDynamicSsh
-from lava_dispatcher.pipeline.utils.shell import which
+from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.utils.filesystem import check_ssh_identity_file
 
@@ -145,7 +145,7 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertIn('lava_test_results_dir', deploy.data)
         self.assertIn('/lava-', deploy.data['lava_test_results_dir'])
 
-    @unittest.skipIf(not which('schroot'), "schroot not installed")
+    @unittest.skipIf(not infrastructure_error('schroot'), "schroot not installed")
     def test_schroot_params(self):
         self.assertIn('schroot-login', [action.name for action in self.job.pipeline.actions])
         schroot = [action for action in self.job.pipeline.actions if action.name == "schroot-login"][0]
