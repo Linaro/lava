@@ -119,10 +119,24 @@ migration to the new :ref:`dispatcher_design`.
     Device Under Test - a quick way to refer to the device in LAVA.
 
   exclusive
-    A device can be marked as ``exclusive`` to the :term:`pipeline` and
-    the scheduler will then not assign JSON jobs to that device. If all
-    devices of that device type are exclusive, any JSON jobs submitted to
-    that type will be rejected. See :ref:`exclusive_pipeline_devices`.
+    The :term:`refactoring` and the consequent migration means that
+    devices can have **three** states:
+
+    * JSON only - current dispatcher jobs, pipeline jobs rejected.
+    * JSON and Pipeline support - both models supported.
+    * Pipeline only - JSON submissions would be rejected.
+
+    If the device is marked as ``pipeline`` in the admin interface and
+    has a :term:`device dictionary`, that device can support pipeline
+    submissions.
+    If the device dictionary marks the device as **exclusive**, then the
+    device can only support pipeline submissions::
+
+     {% set exclusive = "True" %}
+
+    The state of the device is indicated in the device type and device
+    detail pages. Accepted submissions are marked with a tick, rejected
+    submissions marked with a cross. See also :ref:`device_owner_help`.
 
   filter
     Within the Dashboard, a filter identifies particular results from
@@ -343,6 +357,13 @@ migration to the new :ref:`dispatcher_design`.
     The result from a single test definition execution. The individual
     id and result of a single test within a test run is called the
     Test Case. [#replacement]_
+
+  tftp
+    Trivial File Transfer Protocol (TFTP) is a file transfer protocol,
+    mainly to serve boot images over the network to other machines (PXE).
+    The protocol is managed by the
+    `tftpd-hpa package <https://tracker.debian.org/pkg/tftp-hpa>`_ and
+    **not** by LAVA directly. See :ref:`tftp_support`.
 
   ZMQ
     Zero MQ (or `0MQ <http://en.wikipedia.org/wiki/%C3%98MQ>`_) is

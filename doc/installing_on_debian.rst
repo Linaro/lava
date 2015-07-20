@@ -89,6 +89,58 @@ Edits to the ``/etc/apache2/sites-available/lava-server.conf`` file
 will not be overwritten by package upgrades unless the admin explicitly
 asks ``dpkg`` to do so.
 
+.. index:: tftpd-hpa
+
+.. _tftp_support:
+
+TFTP support requirement
+------------------------
+
+LAVA uses :term:`tftp` to serve files to a variety of device types.
+
+The current dispatcher **relies** on TFTP downloads, NFS share directories
+and master image downloads to **all** be made from a single directory:
+:file:`/var/lib/lava/dispatcher/tmp`. To do this, the configuration file
+for :command:`tftpd-hpa` needs to be modified to use the LAVA directory
+instead of the default, ``/srv/tftp``.
+
+.. note:: The TFTP support in LAVA has had to be changed from the
+   **2015.8 release** onwards to stop LAVA enforcing a configuration
+   change on the ``tftpd-hpa`` package without explicit configuration
+   by the admin. Previously, installation may have prompted about
+   changes in :file:`/etc/default/tftpd-hpa`, now this change needs
+   to be made manually as the configuration of the ``tftpd-hpa`` package
+   should not have been up to LAVA to impose. If you are already running
+   a version of LAVA installed prior to the **2015.8 release** (and
+   have working TFTP support), then the configuration change will have
+   been imposed by LAVA and then maintained by ``dpkg`` and
+   ``tftpd-hpa``. Check that your ``/etc/default/tftpd-hpa``
+   file references :file:`/var/lib/lava/dispatcher/tmp` and continue
+   as before.
+
+Admins can either manually change the :file:`/etc/default/tftpd-hpa`
+to set the ``TFTP_DIRECTORY`` to :file:`/var/lib/lava/dispatcher/tmp`
+or copy the file packaged by ``lava-dispatcher``::
+
+ $ sudo cp /usr/share/lava-dispatcher/tftpd-hpa /etc/default/tftpd-hpa
+
+The change is required whichever Debian-based distribution you use as
+your base install, including Ubuntu.
+
+This behaviour has been fixed in the :term:`refactoring` such that
+whatever location is configured for ``tftpd-hpa``, LAVA will use
+temporary subdirectories in that location for all TFTP operations and
+other LAVA operations will use the :file:`/var/lib/lava/dispatcher/tmp`
+directory. The equivalent change was not practical to implement in the
+current dispatcher. If **all** of your devices are :term:`exclusive`, to
+the :term:`pipeline`, then the ``tftpd-hpa`` configuration can be set to
+the tftpd original value (``/srv/tftp``), the LAVA historical value
+(``/var/lib/lava/dispatcher/tmp``) or another directory specified by
+the admin.
+
+Extra dependencies
+------------------
+
 The ``lava`` package brings in extra dependencies which may be useful
 on some instances.
 

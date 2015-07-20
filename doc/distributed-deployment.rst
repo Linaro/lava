@@ -20,6 +20,9 @@ can be used to spread the load. For example, a single LAVA server may
 struggle to cope with multiple high-IO process while dispatching images
 to a :term:`DUT`
 
+.. note:: After the LAVA **2015.8** release, the TFTP settings on
+   **each** remote worker need to be checked. See :ref:`tftp_support`.
+
 Configuring remote workers to work with the master
 --------------------------------------------------
 
