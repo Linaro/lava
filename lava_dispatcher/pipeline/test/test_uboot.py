@@ -21,6 +21,7 @@
 
 import os
 import yaml
+import tarfile
 import unittest
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
@@ -31,7 +32,7 @@ from lava_dispatcher.pipeline.actions.boot.u_boot import (
 )
 from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
-from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError
+from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError, JobError
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
@@ -332,3 +333,22 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
                   if action.name == 'expect-shell-connection'][0]
         self.assertNotEqual(check, expect.parameters)
         self.assertIn('root@bbb', expect.prompts)
+
+    def test_xz_nfs(self):
+        factory = Factory()
+        job = factory.create_bbb_job('sample_jobs/uboot-nfs.yaml')
+        # this job won't validate as the .xz nfsrootfs URL is a fiction
+        self.assertRaises(JobError, job.validate)
+        tftp_deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
+        nfs = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-nfsrootfs'][0]
+        self.assertIn('rootfs_compression', nfs.parameters)
+        self.assertEqual(nfs.parameters['rootfs_compression'], 'xz')
+        valid = tarfile.TarFile
+        if 'xz' not in valid.__dict__['OPEN_METH'].keys():
+            self.assertTrue(nfs.use_lzma)
+            self.assertFalse(nfs.use_tarfile)
+        else:
+            # python3 has xz support in tarfile.
+            self.assertFalse(nfs.use_lzma)
+            self.assertTrue(nfs.use_tarfile)

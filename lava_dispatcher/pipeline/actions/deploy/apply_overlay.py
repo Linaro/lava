@@ -19,7 +19,9 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+import lzma
 import tarfile
+import contextlib
 import subprocess
 from lava_dispatcher.pipeline.action import (
     Action,
@@ -142,11 +144,28 @@ class ExtractRootfs(Action):
         self.summary = "unpack rootfs, ready to apply lava overlay"
         self.param_key = 'rootfs'
         self.file_key = "root"
+        self.extra_compression = ['xz']
+        self.use_tarfile = True
+        self.use_lzma = False
 
     def validate(self):
         super(ExtractRootfs, self).validate()
         if not self.parameters.get(self.param_key, None):  # idempotency
             return
+        if 'rootfs_compression' not in self.parameters:
+            self.errors = "Missing compression value for the rootfs"
+        valid = tarfile.TarFile
+        compression = self.parameters['rootfs_compression']
+        # tarfile in 2.7 lacks xz support, it is present in 3.4
+        if compression not in valid.__dict__['OPEN_METH'].keys():
+            if compression not in self.extra_compression:
+                self.errors = "Unsupported compression method: %s" % compression
+            elif compression == 'xz':
+                self.use_lzma = True
+                self.use_tarfile = False
+            else:
+                self.use_tarfile = False
+                self.errors = "Unrecognised compression method: %s" % compression
 
     def run(self, connection, args=None):
         if not self.parameters.get(self.param_key, None):  # idempotency
@@ -154,12 +173,22 @@ class ExtractRootfs(Action):
         connection = super(ExtractRootfs, self).run(connection, args)
         root = self.data['download_action'][self.param_key]['file']
         root_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
-        try:
-            tar = tarfile.open(root)
-            tar.extractall(root_dir)
-            tar.close()
-        except tarfile.TarError as exc:
-            raise JobError("Unable to unpack %s: '%s' - %s" % (self.param_key, os.path.basename(root), exc))
+        if self.use_tarfile:
+            try:
+                tar = tarfile.open(root)
+                tar.extractall(root_dir)
+                tar.close()
+            except tarfile.TarError as exc:
+                raise JobError("Unable to unpack %s: '%s' - %s" % (self.param_key, os.path.basename(root), exc))
+        elif self.use_lzma:
+            with contextlib.closing(lzma.LZMAFile(root)) as xz:
+                with tarfile.open(fileobj=xz) as tarball:
+                    try:
+                        tarball.extractall(root_dir)
+                    except tarfile.TarError as exc:
+                        raise JobError("Unable to unpack %s: '%s' - %s" % (self.param_key, os.path.basename(root), exc))
+        else:
+            raise RuntimeError("Unable to decompress %s: '%s'" % (self.param_key, os.path.basename(root)))
         self.set_common_data('file', self.file_key, root_dir)
         self.logger.debug("Extracted %s to %s" % (self.file_key, root_dir))
         return connection
