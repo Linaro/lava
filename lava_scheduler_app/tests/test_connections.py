@@ -129,3 +129,27 @@ class SecondaryConnections(TestCaseWithFactory):
         self.assertRaises(
             SubmissionException, TestJob.from_yaml_and_user,
             yaml.dump(data), self.factory.make_user())
+
+    def test_broken_link_yaml(self):
+        hostname = 'fakeqemu3'
+        self.factory.make_device(self.device_type, hostname)
+        device_dict = DeviceDictionary(hostname=hostname)
+        device_dict.parameters = self.conf
+        device_dict.save()
+        # create a new device to allow the submission to reach the multinode YAML test.
+        hostname = 'fakeqemu4'
+        self.factory.make_device(self.device_type, hostname)
+        data = yaml.load(self.factory.make_job_json())
+        deploy = [action['deploy'] for action in data['actions'] if 'deploy' in action]
+        # replace working image with a broken URL
+        for block in deploy:
+            block['image'] = 'http://localhost/unknown/invalid.gz'
+        try:
+            jobs = TestJob.from_yaml_and_user(
+                self.factory.make_job_json(),
+                self.factory.make_user())
+        except DevicesUnavailableException as exc:
+            self.fail(exc)
+        self.assertEqual(
+            jobs[0].sub_id,
+            "%d.%d" % (int(jobs[0].id), 0))

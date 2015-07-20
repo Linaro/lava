@@ -77,11 +77,5 @@ actions:
         - server
         - client
 
-    - submit_results:
-        stream: /anonymous/codehelp/
-        role:
-        - client
-        - server
-
 context:
   arch: amd64
