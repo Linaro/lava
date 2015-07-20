@@ -24,7 +24,6 @@
 from lava_dispatcher.pipeline.action import (
     Action,
     Pipeline,
-    JobError,
     Timeout,
     InfrastructureError,
 )
@@ -38,7 +37,6 @@ from lava_dispatcher.pipeline.utils.constants import (
     UBOOT_AUTOBOOT_PROMPT,
     UBOOT_DEFAULT_CMD_TIMEOUT,
     BOOT_MESSAGE,
-    SHUTDOWN_MESSAGE,
 )
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
@@ -330,8 +328,14 @@ class UBootCommandOverlay(Action):
         substitutions['{KERNEL}'] = self.get_common_data('file', 'kernel')
         substitutions['{DTB}'] = self.get_common_data('file', 'dtb')
 
+        nfs_url = self.get_common_data('nfs_url', 'nfsroot')
         if 'download_action' in self.data and 'nfsrootfs' in self.data['download_action']:
             substitutions['{NFSROOTFS}'] = self.get_common_data('file', 'nfsroot')
+            substitutions['{NFS_SERVER_IP}'] = ip_addr
+        elif nfs_url:
+
+            substitutions['{NFSROOTFS}'] = nfs_url
+            substitutions['{NFS_SERVER_IP}'] = self.get_common_data('nfs_url', 'serverip')
 
         substitutions['{ROOT}'] = self.get_common_data('uuid', 'root')  # UUID label, not a file
         substitutions['{ROOT_PART}'] = self.get_common_data('uuid', 'boot_part')

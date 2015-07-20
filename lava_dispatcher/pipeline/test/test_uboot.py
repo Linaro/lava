@@ -152,7 +152,8 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
                 'boot': {
                     'method': 'u-boot',
                     'commands': 'ramdisk',
-                    'type': 'bootz'
+                    'type': 'bootz',
+                    'prompts': ['linaro-test', 'root@debian:~#']
                 },
                 'deploy': {
                     'ramdisk': 'initrd.gz',

@@ -153,6 +153,9 @@ class TestKVMBasicDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
 
     def test_pipeline(self):
         description_ref = pipeline_reference('kvm.yaml')
+        deploy = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
+        overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        self.assertIn('persistent-nfs-overlay', [action.name for action in overlay.internal_pipeline.actions])
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
     @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")

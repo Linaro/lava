@@ -27,6 +27,8 @@ from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.action import Action, Pipeline
 from lava_dispatcher.pipeline.actions.deploy.testdef import TestDefinitionAction
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, check_ssh_identity_file
+from lava_dispatcher.pipeline.utils.shell import infrastructure_error
+from lava_dispatcher.pipeline.utils.network import rpcinfo_nfs
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 
 
@@ -99,6 +101,7 @@ class OverlayAction(DeployAction):
         self.internal_pipeline.add_action(MultinodeOverlayAction())
         self.internal_pipeline.add_action(TestDefinitionAction())
         self.internal_pipeline.add_action(CompressOverlay())
+        self.internal_pipeline.add_action(PersistentNFSOverlay())  # idempotent
 
     def run(self, connection, args=None):
         """
@@ -328,3 +331,30 @@ class SshAuthorize(Action):
         shutil.copyfile("%s.pub" % self.identity_file, authorize)
         os.chmod(authorize, 0600)
         return connection
+
+
+class PersistentNFSOverlay(Action):
+    """
+    Instead of extracting, just populate the location of the persistent NFS
+    so that it can be mounted later when the overlay is applied.
+    """
+
+    def __init__(self):
+        super(PersistentNFSOverlay, self).__init__()
+        self.name = "persistent-nfs-overlay"
+        self.section = 'deploy'
+        self.summary = "add test overlay to NFS"
+        self.description = "unpack overlay into persistent NFS"
+
+    def validate(self):
+        super(PersistentNFSOverlay, self).validate()
+        if 'nfs_url' not in self.parameters:
+            return None
+        if ':' not in self.parameters['nfs_url']:
+            self.errors = "Unrecognised NFS URL: '%s'" % self.parameters['nfs_url']
+            return
+        nfs_server, dirname = self.parameters['nfs_url'].split(':')
+        self.errors = infrastructure_error('rpcinfo')
+        self.errors = rpcinfo_nfs(nfs_server)
+        self.set_common_data('nfs_url', 'nfsroot', dirname)
+        self.set_common_data('nfs_url', 'serverip', nfs_server)
