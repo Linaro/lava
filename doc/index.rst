@@ -80,6 +80,7 @@ Other Topics
    lava-scheduler-job.rst
    lava-tool.rst
    pipeline-usecases.rst
+   pipeline-schema.rst
 
 Developer guides
 ################

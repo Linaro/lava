@@ -24,11 +24,13 @@
 
 import os
 import sys
+import yaml
 import jinja2
 from optparse import make_option
 from django.core.management.base import BaseCommand
-from lava_scheduler_app.models import DeviceDictionary
+from lava_scheduler_app.models import DeviceDictionary, SubmissionException
 from lava_scheduler_app.utils import devicedictionary_to_jinja2, jinja2_to_devicedictionary
+from lava_scheduler_app.schema import validate_device
 
 
 def parse_template(device_file):
@@ -107,6 +109,13 @@ class Command(BaseCommand):
                     trim_blocks=True)
                 template = env.get_template("%s.yaml" % hostname)
                 device_configuration = template.render()
+
+                # validate against the device schema
+                try:
+                    validate_device(yaml.load(device_configuration))
+                except (yaml.YAMLError, SubmissionException) as exc:
+                    self.stderr.write("Invalid template: %s" % exc)
+
                 self.stdout.write(device_configuration)
         else:
             self.stderr.write("Please specify one of --import, --export or --review")

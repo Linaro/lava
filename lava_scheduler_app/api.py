@@ -15,6 +15,7 @@ from lava_scheduler_app.models import (
     TestJob,
     Worker,
     DeviceDictionary,
+    SubmissionException,
 )
 from lava_scheduler_app.views import (
     SumIf,
@@ -24,6 +25,7 @@ from lava_scheduler_app.utils import (
     devicedictionary_to_jinja2,
     jinja_template_path,
 )
+from lava_scheduler_app.schema import validate_submission, validate_device
 
 
 class SchedulerAPI(ExposedAPI):
@@ -66,23 +68,20 @@ class SchedulerAPI(ExposedAPI):
                 # only try YAML if this is not JSON
                 # YAML can parse JSON as YAML, JSON cannot parse YAML at all
                 yaml_data = yaml.load(job_data)
-            except yaml.YAMLError:
-                raise xmlrpclib.Fault(400, "Decoding job submission failed: %s." % exc)
-            if type(yaml_data) is not dict or 'actions' not in yaml_data:
-                raise xmlrpclib.Fault(400, "Decoding job submission failed.")
-            actions = [item for item in yaml_data['actions']]
-            # pipeline jobs only accept deploy, boot or test actions
-            # but only have to include one of the possible actions.
-            is_yaml = any(
-                [True for item in actions
-                 if 'deploy' in item or 'boot' in item or 'test' in item])
+            except yaml.YAMLError as exc:
+                # neither yaml nor json loaders were able to process the submission.
+                raise xmlrpclib.Fault(400, "Loading job submission failed: %s." % exc)
+
+            # validate against the submission schema.
+            is_yaml = validate_submission(yaml_data)  # raises SubmissionException if invalid.
+
         try:
             if is_json:
                 job = TestJob.from_json_and_user(job_data, self.user)
             elif is_yaml:
                 job = TestJob.from_yaml_and_user(job_data, self.user)
             else:
-                raise xmlrpclib.Fault(400, "Decoding job submission failed")
+                raise xmlrpclib.Fault(400, "Unable to determine whether job is JSON or YAML.")
         except (JSONDataError, JSONDecodeError, ValueError) as exc:
             raise xmlrpclib.Fault(400, "Decoding job submission failed: %s." % exc)
         except Device.DoesNotExist:
@@ -178,6 +177,41 @@ class SchedulerAPI(ExposedAPI):
         else:
             job.cancel(self.user)
         return True
+
+    def validate_yaml(self, yaml_string):
+        """
+        Name
+        ----
+        validate_yaml (yaml_job_data)
+
+        Description
+        -----------
+        Validate the supplied pipeline YAML against the submission schema.
+
+        Note: this does not validate the job itself, just the YAML against the
+        submission schema. A job which validates against the schema can still be
+        an invalid job for the dispatcher and such jobs will be accepted as Submitted,
+        scheduled and then marked as Incomplete with a failure comment. Full validation
+        only happens after a device has been assigned to the Submitted job.
+
+        Arguments
+        ---------
+        'yaml_job_data': string
+
+        Return value
+        ------------
+        Raises an Exception if the yaml_job_data is invalid.
+        """
+        try:
+            # YAML can parse JSON as YAML, JSON cannot parse YAML at all
+            yaml_data = yaml.load(yaml_string)
+        except yaml.YAMLError as exc:
+            raise xmlrpclib.Fault(400, "Decoding job submission failed: %s." % exc)
+        try:
+            # validate against the submission schema.
+            validate_submission(yaml_data)  # raises SubmissionException if invalid.
+        except SubmissionException as exc:
+            raise xmlrpclib.Fault(400, "Invalid YAML submission: %s" % exc)
 
     def job_output(self, job_id):
         """
@@ -564,4 +598,8 @@ class SchedulerAPI(ExposedAPI):
                                  trim_blocks=True)
         template = env.get_template("%s.yaml" % device_hostname)
         device_configuration = template.render()
+
+        # validate against the device schema
+        validate_device(device_configuration)
+
         return xmlrpclib.Binary(device_configuration.encode('UTF-8'))

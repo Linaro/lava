@@ -357,7 +357,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         submission = yaml.load(open(
             os.path.join(os.path.dirname(__file__), 'kvm-multinode.yaml'), 'r'))
         # no devices defined for the specified type
-        self.assertRaises(DevicesUnavailableException, _pipeline_protocols, submission, user)
+        self.assertRaises(DevicesUnavailableException, _pipeline_protocols, submission, user, yaml_data=None)
 
         self.factory.make_device(self.device_type, 'fakeqemu1')
         # specified tags do not exist
@@ -369,7 +369,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         ]
         self.factory.make_device(self.device_type, 'fakeqemu2')
         # no devices which have the required tags applied
-        self.assertRaises(DevicesUnavailableException, _pipeline_protocols, submission, user)
+        self.assertRaises(DevicesUnavailableException, _pipeline_protocols, submission, user, yaml_data=None)
 
         self.factory.make_device(self.device_type, 'fakeqemu3', tags=tag_list)
         job_object_list = _pipeline_protocols(submission, user)
@@ -402,7 +402,7 @@ class TestYamlMultinode(TestCaseWithFactory):
             self.factory.ensure_tag('usb-eth')
         ]
         self.factory.make_device(self.device_type, 'fakeqemu2', tags=tag_list)
-        job_object_list = _pipeline_protocols(submission, user)
+        job_object_list = _pipeline_protocols(submission, user, yaml.dump(submission))
         for job in job_object_list:
             self.assertEqual(list(job.sub_jobs_list), job_object_list)
         check_one = yaml.load(job_object_list[0].definition)
@@ -432,6 +432,30 @@ class TestYamlMultinode(TestCaseWithFactory):
             check_two['protocols']['lava-multinode']['role']
         )
 
+    def test_multinode_definition(self):
+        user = self.factory.make_user()
+        self.device_type = self.factory.make_device_type()
+        submission = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'kvm-multinode.yaml'), 'r'))
+        self.factory.make_device(self.device_type, 'fakeqemu1')
+        self.factory.make_device(self.device_type, 'fakeqemu2')
+        tag_list = [
+            self.factory.ensure_tag('usb-flash'),
+            self.factory.ensure_tag('usb-eth')
+        ]
+        self.factory.make_device(self.device_type, 'fakeqemu3', tags=tag_list)
+        job_object_list = _pipeline_protocols(submission, user, None)
+        for job in job_object_list:
+            self.assertIsNotNone(job.multinode_definition)
+            self.assertNotIn('#', job.multinode_definition)
+        with open(os.path.join(os.path.dirname(__file__), 'kvm-multinode.yaml'), 'r') as source:
+            yaml_str = source.read()
+        self.assertIn('# unit test support comment', yaml_str)
+        job_object_list = _pipeline_protocols(submission, user, yaml_str)
+        for job in job_object_list:
+            self.assertIsNotNone(job.multinode_definition)
+            self.assertIn('# unit test support comment', job.multinode_definition)
+
     def test_invalid_multinode(self):
         user = self.factory.make_user()
         self.device_type = self.factory.make_device_type()
@@ -449,7 +473,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         # replace working image with a broken URL
         for block in deploy:
             block['image'] = 'http://localhost/unknown/invalid.gz'
-        job_object_list = _pipeline_protocols(submission, user)
+        job_object_list = _pipeline_protocols(submission, user, yaml.dump(submission))
         self.assertEqual(len(job_object_list), 2)
         self.assertEqual(
             job_object_list[0].sub_id,

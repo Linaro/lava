@@ -1,7 +1,7 @@
 actions:
 - deploy:
     connection: ssh
-    method: ssh
+    to: ssh
     protocols:
       lava-multinode:
         api: lava-wait

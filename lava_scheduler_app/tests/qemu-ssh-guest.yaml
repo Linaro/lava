@@ -43,7 +43,7 @@ actions:
   - deploy:
      timeout:
        seconds: 30
-     method: ssh
+     to: ssh
      connection: ssh
      # FIXME: resolve the lava-start and data at startup examples
      protocols:

@@ -1132,7 +1132,7 @@ def _check_device_types(user):
     return all_devices
 
 
-def _create_pipeline_job(job_data, user, taglist, device=None, device_type=None, target_group=None):
+def _create_pipeline_job(job_data, user, taglist, device=None, device_type=None, target_group=None, orig=None):
 
     if type(job_data) is not dict:
         # programming error
@@ -1147,8 +1147,9 @@ def _create_pipeline_job(job_data, user, taglist, device=None, device_type=None,
     if not taglist:
         taglist = []
 
-    yaml_data = yaml.dump(job_data)
-    job = TestJob(definition=yaml_data, original_definition=yaml_data,
+    if not orig:
+        orig = yaml.dump(job_data)
+    job = TestJob(definition=orig, original_definition=orig,
                   submitter=user,
                   requested_device=device,
                   requested_device_type=device_type,
@@ -1174,7 +1175,7 @@ def _create_pipeline_job(job_data, user, taglist, device=None, device_type=None,
     return job
 
 
-def _pipeline_protocols(job_data, user):
+def _pipeline_protocols(job_data, user, yaml_data=None):
     """
     Handle supported pipeline protocols
     Check supplied parameters and change the device selection if necessary.
@@ -1210,6 +1211,8 @@ def _pipeline_protocols(job_data, user):
     if type(job_data) is dict and 'protocols' not in job_data:
         return device_list
 
+    if not yaml_data:
+        yaml_data = yaml.dump(job_data)
     role_dictionary = {}  # map of the multinode group
     if 'lava-multinode' in job_data['protocols']:
         # create target_group uuid, just a label for the coordinator.
@@ -1276,13 +1279,15 @@ def _pipeline_protocols(job_data, user):
                 job = _create_pipeline_job(
                     node_data, user, target_group=target_group,
                     taglist=role_dict['tags'],
-                    device_type=role_dict.get('device_type', None))
+                    device_type=role_dict.get('device_type', None),
+                    orig=None  # store the dump of the split yaml as the job definition
+                )
                 if not job:
                     raise SubmissionException("Unable to create job for %s" % node_data)
                 if not parent:
                     parent = job.id
                 job.sub_id = "%d.%d" % (parent, node_data['protocols']['lava-multinode']['sub_id'])
-                job.multinode_definition = yaml.dump(job_data)
+                job.multinode_definition = yaml_data  # store complete submisison, inc. comments
                 job.save()
                 job_object_list.append(job)
 
@@ -1629,11 +1634,12 @@ class TestJob(RestrictedResource):
         creates a TestJob object for the submission and saves that testjob into the database.
         This function must *never* be involved in setting the state of this job or the state of any associated device.
         'target' is not supported, so requested_device is always None at submission time.
+        Retains yaml_data as the original definition to retain comments.
         """
         job_data = yaml.load(yaml_data)
 
         # pipeline protocol handling, e.g. lava-multinode
-        job_list = _pipeline_protocols(job_data, user)
+        job_list = _pipeline_protocols(job_data, user, yaml_data)
         if job_list:
             return job_list
 
@@ -1647,7 +1653,7 @@ class TestJob(RestrictedResource):
             supported = _check_tags(taglist, device_type=device_type)
             _check_tags_support(supported, allow)
 
-        return _create_pipeline_job(job_data, user, taglist, device=None, device_type=device_type)
+        return _create_pipeline_job(job_data, user, taglist, device=None, device_type=device_type, orig=yaml_data)
 
     @classmethod
     def from_json_and_user(cls, json_data, user, health_check=False):
