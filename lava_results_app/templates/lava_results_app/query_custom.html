@@ -1,0 +1,17 @@
+{% extends "layouts/content-bootstrap.html" %}
+{% load i18n %}
+{% load keep_spacing %}
+{% load django_tables2 %}
+
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_results_app/css/query.css"/>
+{% endblock %}
+
+{% block content %}
+
+<h2 class="modal-header">Custom Query Matches <small><a href="{% url 'lava_results_app.views.query.views.query_add' %}?entity={{ request.GET.entity }}&conditions={{ request.GET.conditions }}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-import"></span> Save as new query</a></small></h2>
+
+{% render_table query_table %}
+
+{% endblock %}
+

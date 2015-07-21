@@ -1,0 +1,49 @@
+{% extends "layouts/content-bootstrap.html" %}
+
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_results_app/css/query.css"/>
+{% endblock %}
+
+{% block content %}
+<h1>Add new Query</h1>
+
+{% block content_form %}
+<form action="" method="post">{% csrf_token %}
+
+  {% if form.errors %}
+  <div class="errors">
+    <div>
+      {{ form.non_field_errors }}
+      <ul>
+	{% for field in form %}
+	{% if field.errors %}
+        <li>{{ field.label }}: {{ field.errors|striptags }}</li>
+        {% endif %}
+	{% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+
+<div class="form-field">
+  {{ form.name.label_tag }}
+  {{ form.name }}
+  {{ form.owner }}
+</div>
+<div class="form-field">
+  {{ form.content_type.label_tag }}
+  {{ form.content_type }}
+</div>
+<div class="form-field">
+  {{ form.description.label_tag }}
+  {{ form.description }}
+</div>
+
+<div class="submit-button">
+<input type="submit" value="Save" />
+</div>
+</form>
+
+{% endblock content_form %}
+
+{% endblock %}
