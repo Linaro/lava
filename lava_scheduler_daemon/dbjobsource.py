@@ -423,7 +423,8 @@ class DatabaseJobSource(object):
                              job.id)
         device.save()
         job.start_time = timezone.now()
-        shutil.rmtree(job.output_dir, ignore_errors=True)
+        if job.output_dir:
+            shutil.rmtree(job.output_dir, ignore_errors=True)
         job.log_file.save('job-%s.log' % job.id, ContentFile(''), save=False)
         job.save()
         self._commit_transaction(src='jobStarted_impl')
@@ -470,6 +471,7 @@ class DatabaseJobSource(object):
             try:
                 if device.temporarydevice:
                     new_device_status = Device.RETIRED
+                    device.current_job = None
             except TemporaryDevice.DoesNotExist:
                 self.logger.debug("%s is not a tmp device", device.hostname)
 
@@ -507,18 +509,22 @@ class DatabaseJobSource(object):
                 device.save()
             self.logger.debug("new device health status %s" % Device.HEALTH_CHOICES[device.health_status][1])
 
-        bundle_file = os.path.join(job.output_dir, 'result-bundle')
-        if os.path.exists(bundle_file):
-            with open(bundle_file) as f:
-                results_link = f.read().strip()
-            job._results_link = results_link
-            sha1 = results_link.strip('/').split('/')[-1]
-            try:
-                bundle = Bundle.objects.get(content_sha1=sha1)
-            except Bundle.DoesNotExist:
-                pass
-            else:
-                job._results_bundle = bundle
+        if job.output_dir and job.output_dir != '':
+            bundle_file = os.path.join(job.output_dir, 'result-bundle')
+            if os.path.exists(bundle_file):
+                with open(bundle_file) as f:
+                    results_link = f.read().strip()
+                job._results_link = results_link
+                sha1 = results_link.strip('/').split('/')[-1]
+                try:
+                    bundle = Bundle.objects.get(content_sha1=sha1)
+                except Bundle.DoesNotExist:
+                    pass
+                else:
+                    job._results_bundle = bundle
+                    device.device_version = _get_device_version(job.results_bundle)
+        else:
+            self.logger.warning("[%d] lacked a usable output_dir", job.id)
 
         self.logger.debug('new device status %s, job state %s' % (
             Device.STATUS_CHOICES[new_device_status][1],
@@ -528,8 +534,8 @@ class DatabaseJobSource(object):
 
         job.submit_token = None
 
-        device.device_version = _get_device_version(job.results_bundle)
         device.current_job = None
+
         msg = "Job %s completed" % job.display_id
         device.state_transition_to(new_device_status, message=msg, job=job)
         self._commit_transaction(src='%s state' % device.hostname)
