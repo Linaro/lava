@@ -323,8 +323,10 @@ class Target(object):
 
     def _find_dir(self, rootdir, pattern):
         dest = None
-        for root, dirs, files in os.walk(rootdir, topdown=False):
+        for root, dirs, files in os.walk(str(rootdir), topdown=False):
             for dir_name in dirs:
+                dir_name = str(dir_name)
+                root = str(root)
                 if re.match(pattern, dir_name):
                     dest = os.path.join(root, dir_name)
                     return dest
