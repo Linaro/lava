@@ -389,8 +389,9 @@ class LavaCoordinator(object):
                     self._waitResponse()
                     return
                 if expected and expected in self.group['waits'][messageID]:
+                    # Need to add the message to the receiving role
                     logging.debug("Replying that %s has sent %s" % (client_name, messageID))
-                    self._sendWaitMessage(client_name, messageID)
+                    self._sendMessage(client_name, messageID)
                     return
                 if client not in self.group['waits'][messageID]:
                     logging.debug("FIXME: %s not in waits for %s: %s" % (
@@ -455,7 +456,7 @@ class LavaCoordinator(object):
         if messageID not in self.group['messages'][client_name]:
             self.group['messages'][client_name][messageID] = {}
         self.group['messages'][client_name][messageID].update(msg_hash)
-        logging.debug("message %s for %s" % (json.dumps(self.group['messages'][client_name][messageID]), client_name))
+        logging.debug("message ID %s %s for %s" % (messageID, json.dumps(self.group['messages'][client_name][messageID]), client_name))
         # now broadcast the message into the other clients in this group
         for client in self.group['clients']:
             if client not in self.group['messages']:
@@ -463,7 +464,7 @@ class LavaCoordinator(object):
             if messageID not in self.group['messages'][client]:
                 self.group['messages'][client][messageID] = {}
             self.group['messages'][client][messageID].update(msg_hash)
-            logging.debug("broadcast %s for %s" % (json.dumps(self.group['messages'][client][messageID]), client))
+            logging.debug("broadcast ID %s %s for %s" % (messageID, json.dumps(self.group['messages'][client][messageID]), client))
         # separate the waits from the messages for wait-all support
         if messageID not in self.group['waits']:
             self.group['waits'][messageID] = {}
