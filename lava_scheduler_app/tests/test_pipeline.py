@@ -493,7 +493,8 @@ class TestYamlMultinode(TestCaseWithFactory):
                         check_job.id, None, output_dir=check_job.output_dir)
                 except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
                     self.fail('[%s] parser error: %s' % (check_job.sub_id, exc))
-                self.assertRaises(JobError, pipeline_job.pipeline.validate_actions)
+                if os.path.exists('/dev/loop0'):  # rather than skipping the entire test, just the validation.
+                    self.assertRaises(JobError, pipeline_job.pipeline.validate_actions)
         for job in job_object_list:
             job = TestJob.objects.get(id=job.id)
             self.assertNotEqual(job.sub_id, '')
