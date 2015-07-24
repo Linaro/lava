@@ -13,10 +13,13 @@ Initial considerations
    current JSON submissions. It is not yet possible to disable JSON
    submissions. If there is no relevant configuration for a device
    other than pipeline support, a JSON submission would be accepted
-   but would stay in Submitted state until cancelled.
+   but would stay in Submitted state until cancelled. See
+   :ref:`changing_existing_workers`.
 #. The default setup provides both mechanisms, the only step required
    to allow pipeline submissions to devices connected to ``http://localhost``
    is to have pipeline devices available.
+#. Distributed deployments need changes on each worker, see
+   :ref:`changing_existing_workers`.
 #. Helpers will be developed in due course but currently, pipeline
    setup is principally a manual task for admins.
 #. If only pipeline devices are to be supported, the dispatchers
@@ -84,3 +87,35 @@ device on that PDU and the port number of the serial connection for that
 device. The slave is responsible for ensuring that these ports are only
 visible to that slave. There is no need for any connections to be visible
 to the master.
+
+.. _changing_existing_workers:
+
+Changes for existing remote workers
+===================================
+
+On an existing remote worker, a ``lava-master`` daemon will already be
+running on localhost (doing nothing). Once the migration to the
+:term:`pipeline` is complete, the ``lava-server`` package can be removed
+from all workers, so the above information relates to this endpoint. In
+the meantime, remote workers should have ``lava-master`` disabled on
+localhost once the slave has been directed at the real master as above.
+
+Disabling lava-master on workers
+--------------------------------
+
+.. warning:: Only do this on the remote worker but make sure it is done
+   on **all** remote workers before submitting pipeline jobs which would
+   need the devices on those workers.
+
+If a **new** worker does not **need** to run jobs using the current dispatcher,
+i.e. if all devices on this worker are :term:`exclusive`, then
+``lava-server`` does not need to be installed and there is no ``lava-master``
+daemon to disable.
+
+For existing workers, pipeline jobs will be likely be mixed with JSON
+jobs. This leads to ``lava-server`` being installed on the workers (solely
+to manage the JSON jobs). On such workers, ``lava-master`` should be
+**disabled** once ``lava-slave`` has been reconfigured::
+
+ $ sudo invoke-rc.d lava-master stop
+ $ sudo update-rc.d lava-master remove

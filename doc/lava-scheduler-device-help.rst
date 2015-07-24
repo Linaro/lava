@@ -60,7 +60,7 @@ See also :ref:`device_capabilities`
 
   **Exclusive**
     Devices which only support :term:`pipeline` jobs and which will reject JSON submissions
-    are shown as exclusive.
+    are shown as :term:`exclusive`.
 
 .. index:: status
 
@@ -197,6 +197,8 @@ Restricted devices can be returned to the common LAVA pool so that anyone
 can submit jobs to the device. The device will be able to accept jobs
 from any authorized user along with devices which have no device owner
 assigned.
+
+.. _exclusive_pipeline_devices:
 
 Changing the pipeline support of a device
 =========================================

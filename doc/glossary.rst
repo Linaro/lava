@@ -30,6 +30,7 @@ Terms specific to the refactoring
 ---------------------------------
 
 [ :term:`device dictionary` ]
+[ :term:`exclusive` ]
 [ :term:`pipeline` ]
 [ :term:`refactoring` ] [ :term:`results` ]
 [ :term:`ZMQ` ]
@@ -116,6 +117,12 @@ migration to the new :ref:`dispatcher_design`.
 
   DUT
     Device Under Test - a quick way to refer to the device in LAVA.
+
+  exclusive
+    A device can be marked as ``exclusive`` to the :term:`pipeline` and
+    the scheduler will then not assign JSON jobs to that device. If all
+    devices of that device type are exclusive, any JSON jobs submitted to
+    that type will be rejected. See :ref:`exclusive_pipeline_devices`.
 
   filter
     Within the Dashboard, a filter identifies particular results from
