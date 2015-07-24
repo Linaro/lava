@@ -147,9 +147,21 @@ Currently, remote workers need to be able to access the master database,
 so postgres has to be manually configured to allow access from external
 clients over the network.
 
+The postgresql database installed by ``lava-server`` on the remote worker
+is redundant and has no data. There is no need to make any changes to the
+postgresql configuration on any remote worker. The ``lava-server`` daemon
+on each remote worker uses the configuration in :file:`/etc/lava-server/instance.conf`
+and :file:`/etc/lava-server/worker.conf` to make a read/write postgres
+connection to the master.
+
 .. note:: The communication between the remote worker and the master
-          is likely to be re-designed and this step may become unnecessary
-          in future. This section will be updated at that time.
+   has been re-designed as part of the :term:`refactoring`. This step
+   **will** become unnecessary in future, once the instance has migrated
+   all devices to the :term:`pipeline`.  The ``lava-server`` and
+   ``postgresql`` packages can be removed (and purged) from remote
+   workers when the migration is complete; the postgres configuration on
+   the master can be reset back to the packaging defaults, removing any
+   remote database access from any of the workers.
 
 The ``lava-server`` installation does not dictate how the remote database
 connection is configured but an example would be to adjust the
@@ -203,6 +215,11 @@ errors of a normal startup of lava-scheduler::
   --instance-template=/etc/lava-server/{{filename}}.conf
   --instance=default scheduler --logfile /var/log/lava-server/lava-scheduler.log
   --loglevel=info pid: 10036
+
+Watch the output of :file:`/var/log/lava-server/lava-scheduler.log` on the
+master and the worker to check that the connection is working. Use
+``tail -f`` or ``less`` (type shift-f in ``less``) to update the view as
+more messages is logged.
 
 Create a superuser
 ------------------
