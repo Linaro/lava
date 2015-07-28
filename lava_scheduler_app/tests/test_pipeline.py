@@ -98,6 +98,8 @@ class PipelineDeviceTags(TestCaseWithFactory):
         self.assertNotIn('timeout', data)
         self.assertIn('timeouts', data)
         self.assertIn('job', data['timeouts'])
+        self.assertIn('context', data)
+        self.assertEqual(data['context']['arch'], self.conf['arch'])
 
     def test_make_device(self):
         hostname = 'fakeqemu3'
@@ -239,6 +241,57 @@ class TestPipelineSubmit(TestCaseWithFactory):
         device_dict.save()
         self.assertTrue(device.is_pipeline)
         self.assertTrue(device.is_exclusive)
+
+    def test_context(self):
+        device = Device.objects.get(hostname="fakeqemu1")
+        user = self.factory.make_user()
+        job = TestJob.from_yaml_and_user(
+            self.factory.make_job_json(), user)
+        job_def = yaml.load(job.definition)
+        job_ctx = job_def.get('context', {})
+        device_config = device.load_device_configuration(job_ctx)  # raw dict
+        self.assertEqual(
+            device_config['actions']['boot']['methods']['qemu']['parameters']['command'],
+            'qemu-system-x86_64'
+        )
+        hostname = "fakemustang"
+        mustang_type = self.factory.make_device_type('mustang-uefi')
+        # this sets a qemu device dictionary, so replace it
+        self.factory.make_device(device_type=mustang_type, hostname=hostname)
+        mustang = DeviceDictionary(hostname=hostname)
+        mustang.parameters = {
+            'extends': 'mustang-uefi.yaml',
+            'console_device': 'ttyO0',  # takes precedence over the job context as the same var name is used.
+            'mac_address': '00:01:73:69:5A:EF'}
+        mustang.save()
+
+        device = Device.objects.get(hostname="fakemustang")
+        self.assertEqual('mustang-uefi', device.device_type.name)
+        self.assertTrue(device.is_pipeline)
+        job_ctx = {
+            'tftp_mac_address': 'FF:01:00:69:AA:CC',
+            'nfsroot_args': '172.164.56.2:/home/user/nfs/,tcp,hard,intr',
+            'console_device': 'ttyAMX0',
+        }
+        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+        self.assertIn('uefi-menu', device_config['actions']['boot']['methods'])
+        self.assertIn('nfs', device_config['actions']['boot']['methods']['uefi-menu'])
+        self.assertEqual(
+            [item['select']['items'][0] for item in device_config['actions']['boot']['methods']['uefi-menu']['nfs']
+             if 'select' in item and 'items' in item['select'] and 'TFTP' in item['select']['items'][0]][0],
+            'TFTP on MAC Address: FF:01:00:69:AA:CC'  # matches the job_ctx
+        )
+        # note: the console_device in the job_ctx has been *ignored* because the device type template
+        # has not allowed the job_ctx to use a different name for the variable and the variable is
+        # already defined in the device dictionary using the specified name. If the device dictionary lacked
+        # the variable, the job could set it to override the device type template default, as shown by the
+        # override of the base_nfsroot_args by allowing nfsroot_args in the device type template..
+        self.assertEqual(
+            [item['select']['enter'] for item in device_config['actions']['boot']['methods']['uefi-menu']['nfs']
+             if 'select' in item and 'wait' in item['select'] and 'Description' in item['select']['wait']][0],
+            'console=ttyO0,115200 earlyprintk=uart8250-32bit,0x1c020000 debug '
+            'root=/dev/nfs rw 172.164.56.2:/home/user/nfs/,tcp,hard,intr ip=dhcp'
+        )
 
 
 class TestPipelineStore(TestCaseWithFactory):

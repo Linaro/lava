@@ -1,0 +1,114 @@
+{% extends 'base.yaml' %}
+{% block body %}
+device_type: mustang-uefi
+
+# can overriden from the device dictionary, or if not set there, in the job context
+{% set console_device = console_device | default('ttyS0') %}
+{% set baud_rate = baud_rate | default(115200) %}
+
+# allow job context override - use a different variable name, undefined if not in job context
+{% set mac_address = tftp_mac_address | default(mac_address) %}
+{% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) %}
+
+actions:
+  deploy:
+    methods:
+      tftp:
+      ssh:
+        options:
+{{ ssh_options }}
+        host: {{ ssh_host|default(localhost) }}
+        port: '{{ ssh_port|default(22) }}'
+        user: {{ ssh_user|default(root) }}
+        identity_file: {{ ssh_identity_file }}
+  boot:
+    connections:
+      serial:
+      ssh:
+    methods:
+      ssh:
+      uefi-shell:
+        parameters:
+        master:
+          items:
+          - 'Shell'
+      uefi-menu:
+        parameters:
+          interrupt_prompt: {{ interrupt_prompt|default('The default boot selection will start in') }}
+          interrupt_string: ' '
+          item_markup:
+            - "{{ uefi_selector_markup_start|default("[") }}"
+            - "{{ uefi_selector_markup_end|default("]") }}"
+          item_class: {{ uefi_selector_class|default('0-9') }}
+          separator: {{ uefi_selector_separator|default(' ') }}
+          label_class: 'a-zA-Z0-9\s\:'
+          bootloader_prompt: '{{ bootloader_prompt|default("Start:") }}'
+          boot_message: "{{ boot_message|default("Loaded: LinuxImage") }}"
+          send_char: True  # redefine to take an integer? or drop and set True if the delay is defined?
+          character_delay: {{ character_delay|default(10) }}
+          # interrupt: # character needed to interrupt u-boot, single whitespace by default
+          # method specific stanza
+        nfs:
+        - select:
+            items:
+             - 'Boot Manager'
+            wait: "Choice:"
+        - select:
+            items:
+             - 'Remove Boot Device Entry'
+            fallback: Return to Main Menu
+            wait: Delete entry
+        - select:
+            items:
+             - '{TEST_MENU_NAME}'  # dependent on this particular command set
+            wait: "Choice:"
+        - select:
+            items:
+               - 'Add Boot Device Entry'
+            wait: "Select the Boot Device:"
+        - select:
+            items:
+               - 'TFTP on MAC Address: {{ mac_address }}'
+            wait: "Get the IP address from DHCP:"
+        - select:
+            enter: y
+            wait: "Get the TFTP server IP address:"
+        - select:
+            enter: '{SERVER_IP}'
+            wait: "File path of the EFI Application or the kernel :"
+        - select:
+            enter: '{KERNEL}'
+            wait: 'Is an EFI Application?'
+        - select:
+            enter: n
+            wait: "Boot Type:"
+        - select:
+            enter: f
+            wait: "Add an initrd:"
+        - select:
+            enter: n
+            wait: "Get the IP address from DHCP:"
+        - select:
+            enter: y
+            wait: "Get the TFTP server IP address:"
+        - select:
+            enter: '{SERVER_IP}'
+            wait: "File path of the FDT :"
+        - select:
+            enter: '{DTB}'
+            wait: 'Arguments to pass to the binary:'
+        - select:
+            enter: "console={{ console_device }},{{ baud_rate }} earlyprintk=uart8250-32bit,0x1c020000 debug root=/dev/nfs rw {{ base_nfsroot_args }} ip=dhcp"
+            wait: 'Description for this new Entry:'
+        - select:
+            enter: '{TEST_MENU_NAME}'
+            wait: "Choice:"
+        - select:
+            items:
+              - 'Return to main menu'
+            wait: "Start:"
+        - select:
+            items:
+              - LAVA NFS Test Image
+
+{% endblock %}

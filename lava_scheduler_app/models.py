@@ -862,7 +862,7 @@ class Device(RestrictedResource):
                     None, "Job submission failed for health job for %s: %s" % (self, e))
                 raise JSONDataError("Health check job submission failed for %s: %s" % (self, e))
 
-    def load_device_configuration(self, job_ctx=None):
+    def load_device_configuration(self, job_ctx=None, system=True):
         """
         Maps the DeviceDictionary to the static templates in /etc/.
         Use lava-server manage device-dictionary --import <FILE>
@@ -880,7 +880,7 @@ class Device(RestrictedResource):
 
         element = DeviceDictionary.get(self.hostname)
         # TODO: hardcoded path (determined by setup.py)
-        path = utils.jinja_template_path()
+        path = utils.jinja_template_path(system=system)
         if element is None:
             return None
         data = utils.devicedictionary_to_jinja2(

@@ -541,6 +541,8 @@ Other useful features from `django_extensions`_ are as follows:
 .. _`validate_templates`: http://django-extensions.readthedocs.org/en/latest/validate_templates.html
 .. _`runscript`: http://django-extensions.readthedocs.org/en/latest/runscript.html
 
+.. _developer_access_to_django_shell:
+
 Developer access to django shell
 --------------------------------
 Default configurations use a side-effect of the logging behaviour to restrict access to the
