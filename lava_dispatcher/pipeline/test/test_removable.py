@@ -27,6 +27,7 @@ from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.removable import MassStorage
 from lava_dispatcher.pipeline.utils.strings import substitute
+from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 
 
 class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -113,6 +114,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertTrue(type(dd_action.get_common_data('uuid', 'boot_part')) is str)
         self.assertEqual('0:1', dd_action.get_common_data('uuid', 'boot_part'))
 
+    @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
     def test_primary_media(self):
         """
         Test that definitions of secondary media do not block submissions using primary media

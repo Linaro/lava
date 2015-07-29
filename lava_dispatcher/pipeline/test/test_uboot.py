@@ -35,6 +35,7 @@ from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError, JobError
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
+from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, tftpd_dir
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.constants import (
@@ -60,6 +61,7 @@ class Factory(object):  # pylint: disable=too-few-public-methods
 
 class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
+    @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
     def test_simulated_action(self):
         factory = Factory()
         job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
@@ -108,6 +110,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertIn('u-boot', methods)
         self.assertEqual(methods['u-boot']['parameters'].get('bootloader_prompt', None), 'U-Boot')
 
+    @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
     def test_uboot_action(self):
         factory = Factory()
         job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
@@ -300,6 +303,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertEqual(part_reference, u_boot_media.get_common_data('uuid', 'boot_part'))
         self.assertEqual(part_reference, "0:1")
 
+    @unittest.skipIf(infrastructure_error('telnet'), "telnet not installed")
     def test_prompt_from_job(self):
         """
         Support setting the prompt after login via the job

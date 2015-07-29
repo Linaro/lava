@@ -64,6 +64,7 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.job = factory.create_ssh_job('sample_jobs/ssh-deploy.yaml', mkdtemp())
         self.guest_job = factory.create_bbb_job('sample_jobs/bbb-ssh-guest.yaml', mkdtemp())
 
+    @unittest.skipIf(infrastructure_error('schroot'), "schroot not installed")
     def test_ssh_job(self):
         self.assertIsNotNone(self.job)
         self.job.validate()
@@ -72,6 +73,7 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         description_ref = pipeline_reference('ssh-deploy.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
+    @unittest.skipIf(infrastructure_error('schroot'), "schroot not installed")
     def test_ssh_authorize(self):
         overlay = [action for action in self.job.pipeline.actions if action.name == 'scp-overlay'][0]
         prepare = [action for action in overlay.internal_pipeline.actions if action.name == 'lava-overlay'][0]
@@ -98,6 +100,7 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertIsNotNone(check[1])
         self.assertEqual(os.path.basename(check[1]), 'lava')
 
+    @unittest.skipIf(infrastructure_error('schroot'), "schroot not installed")
     def test_ssh_params(self):
         self.assertEqual(self.job.device['hostname'], 'ssh-host-01')
         self.assertTrue(any('ssh' in item for item in self.job.device['actions']['deploy']['methods']))
@@ -132,6 +135,7 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         with self.assertRaises(JobError):
             self.job.validate()
 
+    @unittest.skipIf(infrastructure_error('schroot'), "schroot not installed")
     def test_scp_command(self):
         self.job.validate()
         overlay = [action for action in self.job.pipeline.actions if action.name == 'scp-overlay'][0]

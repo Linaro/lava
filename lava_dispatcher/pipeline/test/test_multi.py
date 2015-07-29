@@ -175,4 +175,4 @@ class TestMultiUBoot(unittest.TestCase):  # pylint: disable=too-many-public-meth
                 # if using root, the path would be appended.
                 self.assertIn(DISPATCHER_DOWNLOAD_DIR, download.path)
             else:
-                self.assertIn(DISPATCHER_DOWNLOAD_DIR, tftpd_dir())
+                self.assertIn(tftpd_dir(), download.path)
