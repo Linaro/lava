@@ -68,6 +68,37 @@ Ubuntu suites by following links from the Debian package trackers for
 `lava-dispatcher <https://tracker.debian.org/pkg/lava-dispatcher>`_ and
 `lava-server <https://tracker.debian.org/pkg/lava-server>`_.
 
+.. _lava_repositories:
+
+LAVA repositories
+=================
+
+As well as being uploaded to Debian, :ref:`production_releases` of LAVA
+are uploaded to a Linaro `production-repo`_ repository which uses the
+:ref:`lava_archive_signing_key` - a copy of the key is available in
+the repository.
+
+.. _production-repo: http://images.validation.linaro.org/production-repo/
+
+In times when the current production release has not made it into
+``jessie-backports`` (e.g. due to a migration issue in Debian), this
+repository can be used instead. The apt source to use with Debian
+Jessie, Stretch or Sid is::
+
+ deb http://images.validation.linaro.org/production-repo sid main
+
+The codename ``sid`` is used simply as that is the codename for ``unstable``
+which is where all Debian uploads arrive, so to allow the production repo
+to include precisely the same upload as was made to Debian, we use
+``sid``. It makes no difference to how the packages get installed on
+Jessie, Stretch or Sid.
+
+The :file:`services-trace.txt` file in the repository shows the latest
+update timestamp and is accompanied by a GnuPG signature of the trace
+file, signed using the :ref:`lava_archive_signing_key`.
+
+.. _production_releases:
+
 Production releases
 ===================
 
