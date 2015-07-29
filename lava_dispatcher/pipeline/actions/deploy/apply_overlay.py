@@ -241,7 +241,7 @@ class ExtractModules(Action):
         connection = super(ExtractModules, self).run(connection, args)
         if not self.parameters.get('ramdisk', None):
             if not self.parameters.get('nfsrootfs', None):
-                raise RuntimeError("Unable to identify unpack location")
+                raise JobError("Unable to identify a location for the unpacked modules")
             else:
                 root = self.get_common_data('file', 'nfsroot')
         else:
