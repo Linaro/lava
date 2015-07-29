@@ -138,6 +138,14 @@ migration to the new :ref:`dispatcher_design`.
     detail pages. Accepted submissions are marked with a tick, rejected
     submissions marked with a cross. See also :ref:`device_owner_help`.
 
+    Exclusive devices are intended to allow admins and developers to make
+    changes in the refactoring without being limited by having to retain
+    compatibility with the current dispatcher, e.g. to update the
+    bootloader, to support new devices not supported by the current
+    dispatcher at all or to indicate that the devices have completed a
+    migration to the pipeline and prevent users mistakenly submitting
+    old jobs.
+
   filter
     Within the Dashboard, a filter identifies particular results from
     a :term:`stream` or streams. Filters in LAVA can be used to combine
