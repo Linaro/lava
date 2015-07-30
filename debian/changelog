@@ -1,5 +1,11 @@
 lava-server (2015.06-1) unstable; urgency=medium
 
+  *  Add lxc and bridge-utils as dependency to lava package.
+
+ -- Senthil Kumaran S (stylesen) <stylesen@gmail.com>  Thu, 30 Jul 2015 18:46:33 +0530
+
+lava-server (2015.06-1) unstable; urgency=medium
+
   *  New upstream production release
   *  Add unit test support files. (Closes: #785607)
 
