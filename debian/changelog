@@ -1,5 +1,11 @@
 lava-dispatcher (2015.07-1) unstable; urgency=medium
 
+  * Add lxc and bridge-utils to recommended dependency
+
+ -- Senthil Kumaran S (stylesen) <stylesen@gmail.com>  Thu, 30 Jul 2015 18:38:18 +0530
+
+lava-dispatcher (2015.07-1) unstable; urgency=medium
+
   * New production release
 
  -- Neil Williams <codehelp@debian.org>  Mon, 06 Jul 2015 09:19:46 +0100
