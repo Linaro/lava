@@ -348,6 +348,22 @@ Example code block:
               name: singlenode-advanced
 
 
+Metadata
+========
+
+This is an optional parameter that can be added to any YAML job definition.
+It takes a list of ``key: value`` arguments which can be used later to query
+the test results and find similar jobs (incoming features).
+
+Example:
+
+.. code-block:: yaml
+
+    metadata:
+        foo: bar
+        bar: foo
+
+
 Submit actions
 ==============
 

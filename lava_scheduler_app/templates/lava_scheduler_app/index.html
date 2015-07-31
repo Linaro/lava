@@ -32,8 +32,8 @@
         </a>
       </li>
       <li>
-          <a href="">
-          <span class="badge pull-right alert-{% if num_jobs_running == num_devices_running %}success{% else %}danger{% endif %}">
+          <a href="{% url 'lava.scheduler.running' %}">
+          <span class="badge pull-right alert-{% if num_jobs_running <= num_devices_running %}success{% else %}warning{% endif %}">
               {{ num_jobs_running }} / {{ num_devices_running }}
           </span>Running test jobs
           </a>

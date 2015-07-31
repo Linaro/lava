@@ -1,3 +1,4 @@
+# unit test support comment
 job_name: kvm-multinode
 
 timeouts:
@@ -76,12 +77,6 @@ actions:
         role:
         - server
         - client
-
-    - submit_results:
-        stream: /anonymous/codehelp/
-        role:
-        - client
-        - server
 
 context:
   arch: amd64

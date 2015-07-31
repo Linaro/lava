@@ -15,6 +15,7 @@ from lava_scheduler_app.models import (
 from lava.utils.lavatable import LavaTable, LavaView
 from django.contrib.auth.models import User, Group
 from django.db.models import Q
+from django.utils import timezone
 from datetime import datetime, timedelta
 from markupsafe import escape
 
@@ -318,10 +319,17 @@ class LongestJobTable(JobTable):
     start_time.orderable = True
     submit_time = tables.Column()
     submit_time.orderable = False
+    running = tables.Column(accessor='start_time', verbose_name='Running')
+    running.orderable = False
 
     def __init__(self, *args, **kwargs):
         super(LongestJobTable, self).__init__(*args, **kwargs)
         self.length = 10
+
+    def render_running(self, record):
+        if not record.start_time:
+            return ''
+        return str(timezone.now() - record.start_time)
 
     def render_device(self, record):
         if record.actual_device:
@@ -807,3 +815,51 @@ class PassingHealthTable(DeviceHealthTable):
         queries = {
             'health_status_query': 'health_status',
         }
+
+
+class RunningTable(LavaTable):
+    """
+    Provide the admins with some information on the activity of the instance.
+    Multinode jobs reserve devices whilst still in SUBMITITED
+    Except for dynamic connections, there should not be more active jobs than active devices of
+    any particular DeviceType.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(RunningTable, self).__init__(*args, **kwargs)
+        self.length = 50
+
+    # FIXME: dynamic connections are TestJob without a device, add extra column
+
+    def render_jobs(self, record):
+        count = TestJob.objects.filter(
+            Q(status=TestJob.RUNNING),
+            Q(requested_device_type=record.name) |
+            Q(requested_device__in=Device.objects.filter(device_type=record.name)) |
+            Q(actual_device__in=Device.objects.filter(device_type=record.name))
+        ).count()
+        return count if count > 0 else ""
+
+    def render_reserved(self, record):
+        count = Device.objects.filter(device_type=record.name, status=Device.RESERVED).count()
+        return count if count > 0 else ""
+
+    def render_running(self, record):
+        count = Device.objects.filter(device_type=record.name, status=Device.RUNNING).count()
+        return count if count > 0 else ""
+
+    name = IDLinkColumn(accessor='name')
+
+    reserved = tables.Column(accessor='display', orderable=False, verbose_name='Reserved')
+    running = tables.Column(accessor='display', orderable=False, verbose_name='Running')
+    jobs = tables.Column(accessor='display', orderable=False, verbose_name='Jobs')
+
+    class Meta(LavaTable.Meta):
+        model = DeviceType
+        sequence = [
+            'name', 'reserved', 'running', 'jobs'
+        ]
+        exclude = [
+            'display', 'health_check_job', 'owners_only', 'architecture',
+            'processor', 'cpu_model', 'bits', 'cores', 'core_count', 'description'
+        ]

@@ -1,9 +1,12 @@
+import os
+import yaml
 import cStringIO
 import json
 import xmlrpclib
 import logging
 import sys
 import warnings
+import unittest
 from dashboard_app.models import BundleStream
 
 from django.contrib.auth.models import Group, Permission, User
@@ -23,9 +26,11 @@ from lava_scheduler_app.models import (
     TestJob,
     DevicesUnavailableException,
     DeviceDictionary,
+    SubmissionException,
     _check_exclusivity,
 )
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
+from lava_scheduler_app.schema import validate_submission
 import simplejson
 
 logger = logging.getLogger()
@@ -825,6 +830,11 @@ priority: medium
 # Sample JOB definition for a KVM
 device_type: qemu
 job_name: kvm-pipeline
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
 priority: medium
 
 actions:
@@ -852,6 +862,8 @@ actions:
               # `lava-test-suite-name FOO`).
               name: smoke-tests
 """
+        yaml_data = yaml.load(yaml_def)
+        validate_submission(yaml_data)
         self.assertRaises(xmlrpclib.Fault, server.scheduler.submit_job, yaml_def)
 
         device_type = self.factory.make_device_type('qemu')
@@ -920,3 +932,71 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
 
     def assertBoardWithTagsDoesNotGetJobWithTags(self, board_tags, job_tags):
         pass
+
+
+class TestVoluptuous(unittest.TestCase):
+
+    def test_submission_schema(self):
+        files = []
+        path = os.path.normpath(os.path.dirname(__file__))
+        for name in os.listdir(path):
+            if name.endswith('.yaml'):
+                files.append(name)
+        # these files have already been split by utils as multinode sub_id jobs.
+        # FIXME: validate the schema of split files using lava-dispatcher.
+        split_files = [
+            'kvm-multinode-client.yaml',
+            'kvm-multinode-server.yaml',
+            'qemu-ssh-guest-1.yaml',
+            'qemu-ssh-guest-2.yaml',
+            'qemu-ssh-parent.yaml'
+        ]
+
+        for filename in files:
+            # some files are dispatcher-level test files, e.g. after the multinode split
+            try:
+                yaml_data = yaml.load(open(os.path.join(path, filename), 'r'))
+            except yaml.YAMLError as exc:
+                raise RuntimeError("Decoding YAML job submission failed: %s." % exc)
+            if filename in split_files:
+                self.assertRaises(SubmissionException, validate_submission, yaml_data)
+            else:
+                self.assertTrue(validate_submission(yaml_data))
+
+    def test_breakage_detection(self):
+        bad_submission = """
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+                """
+        self.assertRaises(SubmissionException, validate_submission, yaml.load(bad_submission))
+        try:
+            validate_submission(yaml.load(bad_submission))
+        except SubmissionException as exc:
+            # with more than one omission, which one gets mentioned is undefined
+            self.assertIn('required key not provided', str(exc))
+        bad_submission += """
+actions:
+  - deploy:
+      to: tmpfs
+                """
+        self.assertRaises(SubmissionException, validate_submission, yaml.load(bad_submission))
+        try:
+            validate_submission(yaml.load(bad_submission))
+        except SubmissionException as exc:
+            self.assertIn('required key not provided', str(exc))
+            self.assertIn('job_name', str(exc))
+        bad_submission += """
+job_name: qemu-pipeline
+                """
+        self.assertTrue(validate_submission(yaml.load(bad_submission)))
+        bad_yaml = yaml.load(bad_submission)
+        del bad_yaml['timeouts']['job']
+        try:
+            validate_submission(yaml.load(bad_submission))
+        except SubmissionException as exc:
+            self.assertIn('required key not provided', str(exc))
+            self.assertIn('job', str(exc))
+            self.assertIn('timeouts', str(exc))

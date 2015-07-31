@@ -7,6 +7,10 @@ from django.db import models
 
 class Migration(SchemaMigration):
 
+    depends_on = (
+        ("lava_scheduler_app", "0050_auto__add_field_devicetype_description"),
+    )
+
     def forwards(self, orm):
         # Adding model 'TestSuite'
         db.create_table(u'lava_results_app_testsuite', (

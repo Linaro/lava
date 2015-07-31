@@ -887,3 +887,28 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         self.assertFalse(job4.is_ready_to_start)
 
         self.cleanup(self.whoami())
+
+    def test_large_queues(self):
+        self.restart(self.whoami())
+        data = {}
+        for n in range(0, 20):
+            job = self.submit_job(device_type='panda')
+            data[n] = job
+        self.scheduler_tick()
+        self.assertEqual(
+            Device.objects.filter(device_type=self.panda).count(),
+            TestJob.objects.filter(status=TestJob.RUNNING).count()
+        )
+        for n in range(0, 4):
+            for job in TestJob.objects.filter(status=TestJob.RUNNING):
+                job.cancel(self.user)
+            self.assertEqual(TestJob.objects.filter(status=TestJob.RUNNING).count(), 0)
+
+            self.scheduler_tick()
+            self.assertEqual(
+                Device.objects.filter(device_type=self.panda).count(),
+                TestJob.objects.filter(status=TestJob.RUNNING).count()
+            )
+
+        self.assertEqual(TestJob.objects.filter(status=TestJob.SUBMITTED).count(), 10)
+        self.cleanup(self.whoami())

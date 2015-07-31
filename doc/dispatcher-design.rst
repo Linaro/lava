@@ -7,6 +7,30 @@ This is the **developer** documentation for the new dispatcher design.
 See :ref:`refactoring_use_cases` for information for lab administrators
 and users of the new design.
 
+The refactoring takes place alongside the current dispatcher and existing
+JSON jobs are unaffected. A migration will take place where individual
+devices are configured for
+:ref:`pipeline support <pipeline_device_requirements>` and individual jobs
+are then re-written using the :ref:`pipeline_schema <pipeline_schema>`.
+The administrator of each instance will be able to manage their own
+migration and at some point after ``validation.linaro.org`` has completed
+the migration of all devices to pipeline support, the support for the
+current dispatcher will be removed. Detailed planning for the migration
+of ``validation.linaro.org`` has not begun and details will be
+announced using the `Linaro Validation mailing list`_ before the migration
+itself starts on ``validation.linaro.org``.
+
+The LAVA developers use a `playground instance <http://playground.validation.linaro.org>`_
+which has already begun a migration.
+
+Devices indicate their support for pipeline jobs in the
+:ref:`detailed device information <device_owner_help>` for each device
+and device type.
+
+
+.. _Linaro Validation mailing list: http://lists.linaro.org/mailman/listinfo/linaro-validation
+
+
 .. _objectives:
 
 Objectives
@@ -24,10 +48,10 @@ flexibility into the hands of the test writer.
           specific code may well change independently. This documentation
           is aimed at LAVA developers - although some content covers user
           facing actions, the syntax and parameters for these actions
-          are still subject to change and do not constitute an API. In
-          particular, the sample jobs supporting the unit tests do not
-          represent a submission format, rather a generated format based
-          on (as yet unwritten) server-side conversions.
+          are still subject to change and do not constitute an API.
+
+From **2015.8 onwards** the sample jobs supporting the unit tests
+conform to the :ref:`pipeline_schema`.
 
 Design
 ******
@@ -945,8 +969,8 @@ Primary and Secondary connections
 Primary connection
 ------------------
 
-A Primary Connection is roughly equivalent to having an SSH login on a
-running machine. The device needs to be powered on, running an appropriate
+A Primary Connection is roughly equivalent to having a **root** SSH login
+on a running machine. The device needs to be powered on, running an appropriate
 daemon and with appropriate keys enabled for access. The TestJob for
 a primary connection then skips the deploy stage and uses a boot method
 to establish the connection. A device providing a primary connection
@@ -955,11 +979,14 @@ TestJob at a time - a Multinode job can make multiple connections but
 other jobs will see the device as busy and not be able to start their
 connections.
 
-.. warning:: All primary connections raise issues of
-             :ref:`persistence` - the test writer is solely responsible
-             for deleting any sensitive data copied, prepared or
-             downloaded using a primary connection. Do not leave
-             sensitive data for the next TestJob to find.
+.. warning:: Primary connections can raise issues of
+   :ref:`persistence` - the test writer is solely responsible for
+   deleting any sensitive data copied, prepared or downloaded using a
+   primary connection. Do not leave sensitive data for the next TestJob
+   to find. Wherever possible, use primary connections with ``schroot``
+   support so that each job is kept within a
+   :ref:`temporary chroot <disposable_chroot>`, thereby also allowing
+   more than one primary (schroot) connection on a single machine.
 
 It is not necessarily required that a device offering a primary
 connection is permanently powered on as the only connections being
@@ -972,6 +999,9 @@ A Primary Connection is established by the dispatcher and is therefore
 constrained in the options which are available to the client requesting
 the connection and the TestJob has **no** control over the arguments
 passed to the daemon.
+
+Primary connections also enable the authorization via the deployment
+action and the overlay, where the connection method requires this.
 
 Both Primary and Secondary connections are affected by :ref:`security`
 issues due to the requirements of automation.
@@ -1002,11 +1032,85 @@ A Secondary Connection can have control over the daemon via the deployment
 using the primary connection. The client connection is still made by the
 dispatcher.
 
+Secondary connections require authorization to be configured, so the
+deployment must specify the authorization method. This allows the
+overlay for this deployment to contain a token (e.g. the ssh public key)
+which will allow the connection to be made. The token will be added to
+the overlay tarball alongside the directories containing the test
+definitions.
+
+.. code-block:: yaml
+
+    - deploy:
+        to: tmpfs
+        authorize: ssh
+        kernel: http://....
+        nfsrootfs: http://...
+        dtb: http://....
+
+Certain deployment Actions (like SSH) will also copy the token to a
+particular location (e.g. ``/root/.ssh/authorized_keys``) but test
+writers can also add a run step which enables authorization for a
+different user, if the test requires this.
+
+.. note:: The ``/root/.ssh/authorized_keys`` file will be replaced
+   when the LAVA overlay is unpacked, if it exists in the test image
+   already. This is a security precaution (so that test images
+   can be shared easily without allowing unexpected access). Hacking
+   sessions append to this file after the overlay has been unpacked.
+
+.. _host_role:
+
+Considerations with a secondary connection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+#. The number of host devices
+#. Which secondary connections connect to which host device
+
+In LAVA, this is handled using the Multinode :term:`role` using the
+following rules:
+
+#. All connections declare a ``host_role`` which is the ``role`` label
+   for the host device for that connection. e.g. if the connection has
+   a declared role of ``client`` and declares a ``host_role`` of ``host``,
+   then every ``client`` connection will be expected to be able to connect
+   to the ``host`` device.
+#. The TestJob for each connection with the same ``role`` will be started
+   on a single dispatcher which is local to the device with the
+   ``role`` matching the specified ``host_role``.
+#. There is no guarantee that a connection will be possible to any other
+   device in the multinode group other than devices assigned to a ``role``
+   which matches the ``host_role`` requirement of the connection.
+
+.. note:: The ``count`` of any ``role`` acting as the ``host_role``
+   **must** be set to 1. Multiple roles can be defined, each set as a ``host_role``
+   by at least one of the other roles, if more than one device in the Multinode group
+   needs to host secondary connections in the one submission. Multiple connections
+   can be made to devices of any one ``host_role``.
+
+This allows for devices to be hosted in private networks where only a
+local dispatcher can access the device, without requiring that all devices
+are accessible (as root) from all dispatchers as that would require all
+devices to be publicly accessible.
+
 Both Primary and Secondary connections are affected by :ref:`security`
 issues due to the requirements of automation.
 
 The device providing a Secondary Connection is running a TestJob and
 the deployment will be erased when the job completes.
+
+.. note:: Avoid confusing ``host_role`` with
+   :ref:`expect_role <lava_start>`. ``host_role`` is used by the
+   scheduler to ensure that the job assignment operates correctly and
+   does not affect the dispatcher or delayed start support. The two
+   values may often have the same value with secondary connections but
+   do not mean the same thing.
+
+.. note:: Avoid using constrained resources (like ``dpkg`` or ``apt``)
+   from multiple tests (unless you take care with synchronisation calls
+   to ensure that each operation happens independently). Check through the
+   test definitions for installation steps or direct calls to ``apt`` and
+   change the test definitions.
 
 Connections and hacking sessions
 --------------------------------
@@ -1056,11 +1160,19 @@ There are fewer requirements of a device supporting secondary
 connections:
 
 #. Primary and Secondary connections are mutually exclusive, so one
-   device cannot serve primary and secondary.
+   device should not serve primary and secondary. (This can be done for
+   testing but the secondary connection then has the same
+   :ref:`persistence` issues as the primary.)
 #. The physical device must support the connection hardware requirements.
 #. The test image deployed needs to install and run the software
    requirements of the connection, this would be a
    :ref:`job_error_exception`
+#. The **options** supplied for the primary connection template are
+   also used for secondary connections, with the exception that the
+   destination of the connection is obtained at runtime via the
+   lava-multinode protocol. These options can be changed by the admin
+   and specify the identity file to use for the connection and turn
+   off password authentication on the connection, for example.
 
 SSH as the primary connection
 -----------------------------
@@ -1098,7 +1210,10 @@ establish a connection:
 The ``deploy`` action in this case simply prepares the LAVA overlay
 containing the test shell definitions and copies those to a
 pre-determined location on the device. This location will be removed
-at the end of the TestJob.
+at the end of the TestJob. The ``os`` parameter is specified so that
+any LAVA overlay scripts are able to pick up the correct shell,
+package manager and other deployment data items in order to run the
+lava test shell definitions.
 
 .. _security:
 
@@ -1134,6 +1249,9 @@ with the ability to control the options and commands used to create the
 connection, any additional security is minimal and support for this has
 not been implemented, yet.
 
+See also the :ref:`host_role` for information on how access to devices
+is managed.
+
 .. _persistence:
 
 Persistence
@@ -1143,12 +1261,14 @@ Devices supporting primary SSH connections have persistent deployments
 and this has implications, some positive, some negative - depending on
 your use case.
 
-#. **Fixed OS** - the OS you get is the OS of the device and this
-   **must not** be changed or upgraded.
+#. **Fixed OS** - the operating system (OS) you get is the OS of the
+   device and this **must not** be changed or upgraded.
 #. **Package interference** - if another user installs a conflicting
    package, your test can **fail**.
 #. **Process interference** - another process could restart (or crash)
    a daemon upon which your test relies, so your test will **fail**.
+#. **Contention** - another job could obtain a lock on a constrained
+   resource, e.g. ``dpkg`` or ``apt``, causing your test to **fail**.
 #. **Reusable scripts** - scripts and utilities your test leaves behind
    can be reused (or can interfere) with subsequent tests.
 #. **Lack of reproducibility** - an artifact from a previous test can
@@ -1159,6 +1279,14 @@ Only use persistent deployments when essential and **always** take
 great care to avoid interfering with other tests. Users who deliberately
 or frequently interfere with other tests can have their submit privilege
 revoked.
+
+See :ref:`disposable_chroot` for a solution to some of these issues but
+the choice of operating system (and the versions of that OS available)
+within the chroot is down to the lab admins, not the test writer. The
+principal way to get full control over the deployment is to use a
+:ref:`secondary_connection`.
+
+.. _disposable_chroot:
 
 Disposable chroot deployments
 =============================
@@ -1174,8 +1302,8 @@ This support is similar to how distributions can offer "porter boxes"
 which allow upstream teams and community developers to debug platform
 issues in a native environment. It also allows tests to be run on a
 different operating system or different release of an operating system.
-Unlike distribution "porter boxes", LAVA does not allow more than one
-TestJob to have access to any one device at the same time.
+Unlike distribution "porter boxes", however, LAVA does not allow more
+than one TestJob to have access to any one device at the same time.
 
 A device supporting disposable chroots will typically follow the
 configuration of :ref:`primary_connection_devices`. The device
@@ -1186,11 +1314,11 @@ which the chroots are installed or deployed or upon which the software
 to manage the chroots is installed. e.g. a device offering disposable
 chroots on SATA could offer ramdisk or NFS tests.
 
-LAVA support for disposable chroots is implemented via `schroot`_
+LAVA support for disposable chroots is implemented via ``schroot``
 (forming the replacement for the dummy-schroot device in the old
 dispatcher).
 
-Typical device configuration
+Typical device configuration:
 
 .. code-block:: yaml
 
@@ -1250,10 +1378,15 @@ if this step fails, for example if the volume group has insufficient
 available space.
 
 ``schroot`` also supports directories and tarballs but LVM is recommended
-as it avoids problems of :ref:`persistence`.
+as it avoids problems of :ref:`persistence`. See
+the `schroot manpage <http://manpages.debian.org/cgi-bin/man.cgi?query=schroot&apropos=0&sektion=0&manpath=Debian+unstable+sid&format=html&locale=en>`_
+for more information on ``schroot``.
+A common way to create an ``schroot`` is to use tools packaged with
+`sbuild`_ or you can `use debootstrap <https://wiki.debian.org/Schroot>`_.
 
 .. _LVM Snapshots: https://www.debian-administration.org/article/410/A_simple_introduction_to_working_with_LVM
 .. _schroot: https://tracker.debian.org/pkg/schroot
+.. _sbuild: https://tracker.debian.org/pkg/sbuild
 
 .. _using_secondary_connections:
 
@@ -1262,7 +1395,9 @@ Using secondary connections with VM groups
 
 One example of the use of a secondary connection is to launch a VM on
 a device already running a test image. This allows the test writer to
-control both the kernel on the bare metal and the kernel in the VM.
+control both the kernel on the bare metal and the kernel in the VM as
+well as having a connection on the host machine and the guest virtual
+machine.
 
 The implementation of VMGroups created a role for a delayed start
 Multinode job. This would allow one job to operate over serial, publish

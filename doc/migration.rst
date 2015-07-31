@@ -394,6 +394,8 @@ Master instance upgrade
    it affect the database name or database user. The instance name
    becomes a simple label with the packaging upgrade.
 
+#. Check your :term:`tftp` support - see :ref:`tftp_support`.
+
 #. Restart daemons affected by the installation::
 
     sudo service tftpd-hpa restart
@@ -542,6 +544,8 @@ are all on the master.
     sudo a2dissite 000-default
     sudo a2ensite lava-server
     sudo service apache2 restart
+
+#. Check your :term:`tftp` support - see :ref:`tftp_support`.
 
 #. Restart daemons affected by the installation::
 
@@ -693,6 +697,8 @@ packages.
     sudo a2ensite lava-server
     sudo service apache2 restart
 
+#. Check your :term:`tftp` support - see :ref:`tftp_support`.
+
 #. Restart daemons affected by the installation::
 
     sudo service tftpd-hpa restart
@@ -815,6 +821,8 @@ packages.
     sudo a2dissite 000-default
     sudo a2ensite lava-server
     sudo service apache2 restart
+
+#. Check your :term:`tftp` support - see :ref:`tftp_support`.
 
 #. Restart daemons affected by the installation::
 

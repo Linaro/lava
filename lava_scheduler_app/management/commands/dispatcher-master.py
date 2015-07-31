@@ -105,14 +105,32 @@ def start_job(job):
     device = job.actual_device
     msg = "Job %s running" % job.id
     new_status = Device.RUNNING
-    device.state_transition_to(new_status, message=msg, job=job)
-    device.status = new_status
-    # Save the result
     job.save()
-    device.save()
+    if not job.dynamic_connection:
+        device.state_transition_to(new_status, message=msg, job=job)
+        device.status = new_status
+        # Save the result
+        device.save()
+
+
+def fail_job(job, fail_msg=None, job_status=TestJob.INCOMPLETE):
+    """
+    Fail the job due to issues which would compromise any other jobs
+    in the same multinode group.
+    If not multinode, simply wraps end_job.
+    """
+    if not job.is_multinode:
+        end_job(job, fail_msg=fail_msg, job_status=job_status)
+        return
+    for failed_job in job.sub_jobs_list:
+        end_job(failed_job, fail_msg=fail_msg, job_status=job_status)
 
 
 def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
+    """
+    Controls the end of a single job..
+    If the job failed rather than simply ended with an exit code, use fail_job.
+    """
     if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
         # testjob has already ended and been marked as such
         return
@@ -140,6 +158,9 @@ def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
 def cancel_job(job):
     job.status = TestJob.CANCELED
     job.end_time = timezone.now()
+    if job.dynamic_connection:
+        job.save()
+        return
     device = job.actual_device
     msg = "Job %s cancelled" % job.id
     # TODO: what should be the new device status? health check should set
@@ -172,27 +193,25 @@ def select_device(job):
     Transitioning a device from Idle to Reserved is the responsibility of the scheduler_daemon (currently).
     This function just checks that the reserved device is valid for this job.
     Jobs will only enter this function if a device is already reserved for that job.
-    Storse the pipeline description
+    Stores the pipeline description
 
     To prevent cycling between lava_scheduler_daemon:assign_jobs and here, if a job
     fails validation, the job is incomplete. Issues with this need to be fixed using
     device tags.
     """
     logger = logging.getLogger('dispatcher-master')
-    if not job.actual_device:
-        # should not happen.
-        logger.error("[%d] no device reserved", job.id)
-        return None
+    if not job.dynamic_connection:
+        if not job.actual_device:
+            return None
+        if job.actual_device.status is not Device.RESERVED:
+            # should not happen
+            logger.error("[%d] device [%s] not in reserved state", job.id, job.actual_device)
+            return None
 
-    if job.actual_device.status is not Device.RESERVED:
-        # should not happen
-        logger.error("[%d] device [%s] not in reserved state", job.id, job.actual_device)
-        return None
-
-    if job.actual_device.worker_host is None:
-        fail_msg = "Misconfigured device configuration for %s - missing worker_host" % job.actual_device
-        end_job(job, fail_msg=fail_msg, job_status=TestJob.INCOMPLETE)
-        logger.error(fail_msg)
+        if job.actual_device.worker_host is None:
+            fail_msg = "Misconfigured device configuration for %s - missing worker_host" % job.actual_device
+            fail_job(job, fail_msg=fail_msg)
+            logger.error(fail_msg)
 
     if job.is_multinode:
         # inject the actual group hostnames into the roles for the dispatcher to populate in the overlay.
@@ -202,6 +221,9 @@ def select_device(job):
             definition = yaml.load(multinode_job.definition)
             # devices are not necessarily assigned to all jobs in a group at the same time
             # check all jobs in this multinode group before allowing any to start.
+            if multinode_job.dynamic_connection:
+                logger.debug("[%s] dynamic connection job", multinode_job.sub_id)
+                continue
             if not multinode_job.actual_device:
                 logger.debug("[%s] job has no device yet", multinode_job.sub_id)
                 return None
@@ -216,52 +238,61 @@ def select_device(job):
     # Load job definition to get the variables for template rendering
     job_def = yaml.load(job.definition)
     job_ctx = job_def.get('context', {})
-    device = job.actual_device
-
-    try:
-        device_config = device.load_device_configuration(job_ctx)  # raw dict
-    except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
-        # FIXME: report the exceptions as useful user messages
-        logger.error({'jinja2': exc})
-        return None
-    if not device_config or type(device_config) is not dict:
-        # it is an error to have a pipeline device without a device dictionary as it will never get any jobs.
-        msg = "Administrative error. Device '%s' has no device dictionary." % device.hostname
-        logger.error({'device-dictionary': msg})
-        # as we don't control the scheduler, yet, this has to be an error and an incomplete job.
-        # the scheduler_daemon sorts by a fixed order, so this would otherwise just keep on repeating.
-        end_job(job, fail_msg=msg, job_status=TestJob.INCOMPLETE)
-        return None
-
     parser = JobParser()
-    obj = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
-    # FIXME: drop this nasty hack once 'target' is dropped as a parameter
-    if 'target' not in obj:
-        obj.target = device.hostname
-    obj['hostname'] = device.hostname
+    device = None
+    device_object = None
+    if not job.dynamic_connection:
+        device = job.actual_device
 
-    # pass (unused) output_dir just for validation as there is no zmq socket either.
-    try:
-        pipeline_job = parser.parse(job.definition, obj, job.id, None, output_dir='/tmp')
-    except (JobError, AttributeError, NotImplementedError, KeyError, TypeError) as exc:
-        logger.error({'parser': exc})
-        end_job(job, fail_msg=exc, job_status=TestJob.INCOMPLETE)
-        return None
+        try:
+            device_config = device.load_device_configuration(job_ctx)  # raw dict
+        except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
+            # FIXME: report the exceptions as useful user messages
+            logger.error("[%d] jinja2 error: %s" % (job.id, exc))
+            return None
+        if not device_config or type(device_config) is not dict:
+            # it is an error to have a pipeline device without a device dictionary as it will never get any jobs.
+            msg = "Administrative error. Device '%s' has no device dictionary." % device.hostname
+            logger.error('[%d] device-dictionary error: %s' % (job.id, msg))
+            # as we don't control the scheduler, yet, this has to be an error and an incomplete job.
+            # the scheduler_daemon sorts by a fixed order, so this would otherwise just keep on repeating.
+            fail_job(job, fail_msg=msg)
+            return None
 
-    try:
-        pipeline_job.pipeline.validate_actions()
-    except (AttributeError, JobError, KeyError, TypeError) as exc:
-        logger.error({device: exc})
-        end_job(job, fail_msg=exc, job_status=TestJob.INCOMPLETE)
-        return None
-    if pipeline_job:
-        pipeline = pipeline_job.describe()
-        # write the pipeline description to the job output directory.
-        if not os.path.exists(job.output_dir):
-            os.makedirs(job.output_dir)
-        with open(os.path.join(job.output_dir, 'description.yaml'), 'w') as describe_yaml:
-            describe_yaml.write(yaml.dump(pipeline))
-        map_metadata(yaml.dump(pipeline), job)
+        device_object = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
+        # FIXME: drop this nasty hack once 'target' is dropped as a parameter
+        if 'target' not in device_object:
+            device_object.target = device.hostname
+        device_object['hostname'] = device.hostname
+
+    validate_list = job.sub_jobs_list if job.is_multinode else [job]
+    for check_job in validate_list:
+        parser_device = None if job.dynamic_connection else device_object
+        try:
+            logger.debug("[%d] parsing definition" % check_job.id)
+            # pass (unused) output_dir just for validation as there is no zmq socket either.
+            pipeline_job = parser.parse(
+                check_job.definition, parser_device,
+                check_job.id, None, output_dir=check_job.output_dir)
+        except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
+            logger.error('[%d] parser error: %s' % (check_job.id, exc))
+            fail_job(check_job, fail_msg=exc)
+            return None
+        try:
+            logger.debug("[%d] validating actions" % check_job.id)
+            pipeline_job.pipeline.validate_actions()
+        except (AttributeError, JobError, KeyError, TypeError) as exc:
+            logger.error({device: exc})
+            fail_job(check_job, fail_msg=exc)
+            return None
+        if pipeline_job:
+            pipeline = pipeline_job.describe()
+            # write the pipeline description to the job output directory.
+            if not os.path.exists(check_job.output_dir):
+                os.makedirs(check_job.output_dir)
+            with open(os.path.join(check_job.output_dir, 'description.yaml'), 'w') as describe_yaml:
+                describe_yaml.write(yaml.dump(pipeline))
+            map_metadata(yaml.dump(pipeline), job)
     return device
 
 
@@ -338,6 +369,7 @@ class Command(BaseCommand):
                 cancel_job(job)
 
     def handle(self, *args, **options):
+        # FIXME: this function is getting much too long and complex.
         del logging.root.handlers[:]
         del logging.root.filters[:]
         # Create the logger
@@ -448,6 +480,8 @@ class Command(BaseCommand):
                 # Mark the file handler as used
                 # TODO: try to use a more pythonnic way
                 logs[job_id].last_usage = time.time()
+
+                # n.b. logging here would produce a log entry for every message in every job.
 
                 # Write data
                 f_handler = logs[job_id].fd
@@ -620,25 +654,34 @@ class Command(BaseCommand):
                         is_pipeline=True,
                         actual_device__isnull=False).order_by(
                             '-health_check', '-priority', 'submit_time', 'target_group', 'id'):
-
-                    device = select_device(job)
-                    if not device:
-                        continue
-                    # selecting device can change the job
-                    job = TestJob.objects.get(id=job.id)
-                    self.logger.info("[%d] Assigning %s device", job.id, device)
-                    if job.actual_device is None:
-                        device = job.requested_device
-
-                        # Launch the job
-                        create_job(job, device)
-                        self.logger.info("[%d] START => %s (%s)", job.id,
-                                         device.worker_host.hostname, device.hostname)
-
+                    if job.dynamic_connection:
+                        # A secondary connection must be made from a dispatcher local to the host device
+                        # to allow for local firewalls etc. So the secondary connection is started on the
+                        # remote worker of the "nominated" host.
+                        # FIXME:
+                        worker_host = job.lookup_worker
+                        self.logger.info("[%d] START => %s (connection)", job.id,
+                                         worker_host.hostname)
                     else:
-                        device = job.actual_device
-                        self.logger.info("[%d] START => %s (%s) (retrying)", job.id,
-                                         device.worker_host.hostname, device.hostname)
+                        device = select_device(job)
+                        if not device:
+                            continue
+                        # selecting device can change the job
+                        job = TestJob.objects.get(id=job.id)
+                        self.logger.info("[%d] Assigning %s device", job.id, device)
+                        if job.actual_device is None:
+                            device = job.requested_device
+
+                            # Launch the job
+                            create_job(job, device)
+                            self.logger.info("[%d] START => %s (%s)", job.id,
+                                             device.worker_host.hostname, device.hostname)
+                            worker_host = device.worker_host
+                        else:
+                            device = job.actual_device
+                            self.logger.info("[%d] START => %s (%s) (retrying)", job.id,
+                                             device.worker_host.hostname, device.hostname)
+                            worker_host = device.worker_host
                     try:
                         # Load job definition to get the variables for template
                         # rendering
@@ -646,10 +689,23 @@ class Command(BaseCommand):
                         job_ctx = job_def.get('context', {})
 
                         # Load device configuration
-                        device_configuration = device.load_device_configuration(job_ctx)
+                        device_configuration = None \
+                            if job.dynamic_connection else device.load_device_configuration(job_ctx)
+
+                        if job.is_multinode:
+                            for group_job in job.sub_jobs_list:
+                                if group_job.dynamic_connection:
+                                    # to get this far, the rest of the multinode group must also be ready
+                                    # so start the dynamic connections
+                                    # FIXME: rationalise and streamline
+                                    controler.send_multipart(
+                                        [str(worker_host.hostname),
+                                         'START', str(group_job.id), str(group_job.definition),
+                                         str(device_configuration),
+                                         str(open(options['env'], 'r').read())])
 
                         controler.send_multipart(
-                            [str(job.actual_device.worker_host.hostname),
+                            [str(worker_host.hostname),
                              'START', str(job.id), str(job.definition),
                              str(device_configuration),
                              get_env_string(options['env']), get_env_string(options['env_dut'])])
@@ -680,25 +736,35 @@ class Command(BaseCommand):
 
                         self.logger.error("[%d] INCOMPLETE job", job.id)
                         job.status = TestJob.INCOMPLETE
-                        new_status = Device.IDLE
-                        device.state_transition_to(
-                            new_status,
-                            message=msg,
-                            job=job)
-                        device.status = new_status
-                        device.current_job = None
-                        job.failure_comment = msg
-                        job.save()
-                        device.save()
+                        if job.dynamic_connection:
+                            job.failure_comment = msg
+                            job.save()
+                        else:
+                            new_status = Device.IDLE
+                            device.state_transition_to(
+                                new_status,
+                                message=msg,
+                                job=job)
+                            device.status = new_status
+                            device.current_job = None
+                            job.failure_comment = msg
+                            job.save()
+                            device.save()
 
                 if not_allocated > 0:
                     self.logger.info("%d jobs not allocated yet", not_allocated)
 
                 # Handle canceling jobs
                 for job in TestJob.objects.filter(status=TestJob.CANCELING, is_pipeline=True):
+                    worker_host = job.lookup_worker if job.dynamic_connection else job.actual_device.worker_host
+                    if not worker_host:
+                        self.logger.warning("[%d] Invalid worker information" % job.id)
+                        # shouldn't happen
+                        fail_job(job, 'invalid worker information', TestJob.CANCELED)
+                        continue
                     self.logger.info("[%d] CANCEL => %s", job.id,
-                                     job.actual_device.worker_host.hostname)
-                    controler.send_multipart([str(job.actual_device.worker_host.hostname),
+                                     worker_host.hostname)
+                    controler.send_multipart([str(worker_host.hostname),
                                               'CANCEL', str(job.id)])
 
         # Closing sockets and droping messages.

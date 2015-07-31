@@ -1,0 +1,102 @@
+# submission YAML prototype for connecting to a BBB over ssh
+# as secondary connection.
+
+job_name: qemu-guest-ssh
+timeouts:
+  job:
+    minutes: 30
+  action:
+    minutes: 3
+
+context:
+  arch: amd64
+
+protocols:
+  lava-multinode:
+    roles:
+      host:
+        device_type: qemu
+        count: 1
+      guest:
+        connection: ssh
+        count: 2
+        # each ssh connection will attempt to connect to the device of role 'host'
+        host_role: host
+    timeout:
+      seconds: 60
+
+priority: medium
+
+actions:
+  - deploy:
+     timeout:
+       minutes: 4
+     to: tmpfs
+     image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+     compression: gz
+     os: debian
+     root_partition: 1
+     dtb: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+     role:
+     - host
+
+  - deploy:
+     timeout:
+       seconds: 30
+     to: ssh
+     connection: ssh
+     # FIXME: resolve the lava-start and data at startup examples
+     protocols:
+       lava-multinode:
+         api: lava-wait
+         id: ipv4
+         key: ipaddr
+         timeout:
+           minutes: 10
+     role:
+     - guest
+
+  - test:
+     failure_retry: 3
+     name: install-ssh-server
+     timeout:
+       minutes: 5
+     definitions:
+         - repository:
+                metadata:
+                    format: Lava-Test Test Definition 1.0
+                    name: install-ssh
+                    description: "install step"
+                    os:
+                        - debian
+                    scope:
+                        - functional
+                install:
+                    deps:
+                        - openssh-server
+                run:
+                    steps:
+                        # FIXME: shortcut. This needs to be calculated
+                        - lava-send ipv4 ipaddr=10.15.0.15
+           from: inline
+           name: ssh-inline
+           path: inline/ssh-install.yaml
+     role:
+     - host
+
+  - test:
+     failure_retry: 3
+     name: kvm-basic-singlenode
+     timeout:
+       minutes: 5
+     definitions:
+         - repository: git://git.linaro.org/qa/test-definitions.git
+           from: git
+           path: ubuntu/smoke-tests-basic.yaml
+           name: smoke-tests
+         - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+           from: git
+           path: lava-test-shell/single-node/singlenode02.yaml
+           name: singlenode-intermediate
+     role:
+     - guest

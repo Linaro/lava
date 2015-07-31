@@ -24,7 +24,7 @@ import inspect
 import logging
 import random
 import xmlrpclib
-
+import traceback
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
@@ -434,7 +434,9 @@ class Dispatcher(object):
         except xmlrpclib.Fault:
             # Forward XML-RPC Faults to the client
             raise
-        except Exception as e:
+        except Exception as exc:
+            # the traceback goes into the apache virtual host log file
+            self.logger.exception(traceback.format_exc())
             # Call a helper than can do more
             if self.handle_internal_error(method_name, params) is None:
                 # If there is no better handler we should log the problem
@@ -445,7 +447,7 @@ class Dispatcher(object):
             # TODO: figure out a way to get the error id from Raven if that is around
             raise xmlrpclib.Fault(
                 FaultCodes.ServerError.INTERNAL_XML_RPC_ERROR,
-                "Internal Server Error (details hidden :) %s" % e)
+                "Internal Server Error (details hidden :) %s" % exc)
 
     def handle_internal_error(self, method_name, params):
         """

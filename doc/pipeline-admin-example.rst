@@ -394,6 +394,7 @@ Untested at this point, but this is the start of the integration.
    power_off:
      seconds: 5
 
+.. _writing_job_submission_yaml:
 
 Writing a job submission in YAML
 ********************************

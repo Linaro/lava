@@ -178,48 +178,52 @@ class Job(object):
 
     def _run(self, output_dir):
         d = defer.Deferred()
-        json_data = self.job_data
-        custom_config = json_data.pop('config', None)
-        fd, self._json_file = tempfile.mkstemp()
-        with os.fdopen(fd, 'wb') as f:
-            json.dump(json_data, f)
-        self.output_dir = output_dir
-
-        args = [
-            argChecker(self.dispatcher),
-            argChecker(self._json_file),
-            argChecker('--output-dir'),
-            argChecker(output_dir)
-        ]
-
-        if custom_config:
-            fd, self._device_config = tempfile.mkstemp()
+        try:
+            if not output_dir:
+                raise ValueError("Missing output directory")
+            json_data = self.job_data
+            custom_config = json_data.pop('config', None)
+            fd, self._json_file = tempfile.mkstemp()
             with os.fdopen(fd, 'wb') as f:
-                for k in custom_config:
-                    f.write(k + '=' + custom_config[k] + "\n")
-            args.append(argChecker('--config'))
-            args.append(argChecker(self._device_config))
+                json.dump(json_data, f)
+            self.output_dir = output_dir
+            args = [
+                argChecker(self.dispatcher),
+                argChecker(self._json_file),
+                argChecker('--output-dir'),
+                argChecker(output_dir)
+            ]
 
-        # childFDs are given defaults ie., {0: 'w', 1:'r', 2:'r'}
-        # See https://twistedmatrix.com/documents/14.0.1/core/howto/process.html#running-another-process for details.
-        self._protocol = DispatcherProcessProtocol(d, self)
+            if custom_config:
+                fd, self._device_config = tempfile.mkstemp()
+                with os.fdopen(fd, 'wb') as f:
+                    for k in custom_config:
+                        f.write(k + '=' + custom_config[k] + "\n")
+                args.append(argChecker('--config'))
+                args.append(argChecker(self._device_config))
 
-        self.logger.info('executing "%s"', ' '.join(args))
+            # childFDs are given defaults ie., {0: 'w', 1:'r', 2:'r'}
+            # See https://twistedmatrix.com/documents/14.0.1/core/howto/process.html#running-another-process for details.
+            self._protocol = DispatcherProcessProtocol(d, self)
 
-        ret = self.reactor.spawnProcess(self._protocol, self.dispatcher,
-                                        args=args, env=None)
-        if ret:
-            self.logger.debug("reactor spawned process with status: %s", ret.status)
-            if not os.path.exists(output_dir):
-                os.mkdir(output_dir)
-            self._pidrecord = os.path.join(output_dir, "jobpid")
-            with open(self._pidrecord, 'w') as f:
-                f.write("%s\n" % os.getpgid(ret.pid))
-        self._checkCancel_call.start(10)
-        timeout = max(
-            json_data['timeout'], self.daemon_options['MIN_JOB_TIMEOUT'])
-        self._time_limit_call = self.reactor.callLater(
-            timeout, self._time_limit_exceeded)
+            self.logger.info('executing "%s"', ' '.join(args))
+
+            ret = self.reactor.spawnProcess(self._protocol, self.dispatcher,
+                                            args=args, env=None)
+            if ret:
+                self.logger.debug("reactor spawned process with status: %s", ret.status)
+                if not os.path.exists(output_dir):
+                    os.mkdir(output_dir)
+                self._pidrecord = os.path.join(output_dir, "jobpid")
+                with open(self._pidrecord, 'w') as f:
+                    f.write("%s\n" % os.getpgid(ret.pid))
+            self._checkCancel_call.start(10)
+            timeout = max(
+                json_data['timeout'], self.daemon_options['MIN_JOB_TIMEOUT'])
+            self._time_limit_call = self.reactor.callLater(
+                timeout, self._time_limit_exceeded)
+        except (ValueError, TypeError) as exc:
+            self.cancel(exc)
         d.addBoth(self._exited)
         return d
 
@@ -235,7 +239,10 @@ class Job(object):
             self.logger.info("job complete")
         if self._time_limit_call is not None:
             self._time_limit_call.cancel()
-        self._checkCancel_call.stop()
+        try:
+            self._checkCancel_call.stop()
+        except AssertionError:
+            self.logger.exception("Job did not start")
         return self._source_lock.run(
             self.source.jobCompleted,
             self.job_id,
@@ -294,7 +301,7 @@ class MonitorJob(object):
         if self.daemon_options['LOG_FILE_PATH']:
             args.extend(['-f', self.daemon_options['LOG_FILE_PATH']])
             childFDs = None
-        self.logger.info('executing "%s"', ' '.join(args))
+        self.logger.info('monitoring "%s"', ' '.join(args))
         self.reactor.spawnProcess(
             SchedulerMonitorPP(d, self.board_name), 'setsid',
             childFDs=childFDs, env=None, args=args)

@@ -11,8 +11,9 @@ as groups of devices (of any type) and devices within a group can operate
 independently or use the MultiNode API to communicate with other devices in the
 same group during tests.
 
-Within a MultiNode group, devices are assigned a role and a ``count`` of devices to
-include into that role. Each role has a ``device_type`` and any number of roles can
+Within a MultiNode group, devices of the same device type are assigned a role and a
+``count`` of devices to include into that role. Role labels must be unique across the
+entire multinode job. Each role has a ``device_type`` and any number of roles can
 have the same ``device_type``. Each role can be assigned device ``tags``.
 
 Once roles are defined, actions (including test images and test definitions) can be marked
