@@ -25,7 +25,7 @@
 "          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
           - boot") -%}
 
-{% set base_nfsroot_args = ("nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr") -%}
+{% set base_nfsroot_args = ("nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr") -%}
 
 {# these options are used by both ssh and scp! #}
 {# check the manpages *carefully* & ensure compatibility! #}

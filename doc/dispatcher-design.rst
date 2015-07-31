@@ -1372,6 +1372,12 @@ your use case.
 #. **Lack of reproducibility** - an artifact from a previous test can
    make it impossible to rely on the results of a subsquent test, leading
    to wasted effort with false positives and false negatives.
+#. **Maintenance** - using persistent filesystems in a test action
+   results in the overlay files being left in that filesystem. Depending
+   on the size of the test definition repositories, this could result in
+   an inevitable increase in used storage becoming a problem on the machine
+   hosting the persistent location. Changes made by the test action can also
+   require intermittent maintenance of the persistent location.
 
 Only use persistent deployments when essential and **always** take
 great care to avoid interfering with other tests. Users who deliberately

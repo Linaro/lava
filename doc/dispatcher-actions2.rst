@@ -136,12 +136,29 @@ deploy to the requested location.
        ramdisk: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
        ramdisk-type: u-boot
 
-    * **nfsrootfs** - **must** be a tarball and supports either ``gz`` or
-      ``bz2`` compression using the standard python ``tarfile`` support. The
-      NFS is unpacked into a temporary directory onto the dispatcher in a
-      location supported by NFS exports::
+    * **nfsrootfs** - **must** be a tarball and supports one of ``gz``, ``xz`` or
+      ``bz2`` compression. The NFS is unpacked into a temporary directory onto the
+      dispatcher in a location supported by NFS exports::
 
        nfsrootfs: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
+
+    * **rootfs_compression** - **must** be specified if ``nfsrootfs`` also specified.
+      Denotes the compression algorithm used by the ``nfsrootfs`` instead of assuming that
+      the file extension is somehow reliable.
+
+    * **nfs_url** - use a persistent NFS URL instead of a compressed tarball. See
+      :ref:`persistence` for the limitations of persistent storage. The creation and
+      maintenance of the persistent location is **solely** the responsibility of the
+      test writer. The ``nfs_url`` **must** include the IP address of the NFS server
+      and the full path to the directory which contains the root filesystem, separated
+      by a single colon. In the YAML, all values containing a colon **must** be quoted::
+
+       nfs_url: "127.0.0.1:/var/lib/lava/dispatcher/tmp/armhf/jessie"
+
+      .. note:: LAVA does not shutdown the device or attempt to unmount the NFS when the
+         job finishes, the device is simply powered off. The test writer needs to ensure
+         that any background processes started by the test have been stopped before the
+         test finishes.
 
     * **os** -  The operating system of the NFS **must** be specified so
       that the LAVA scripts can install packages and identify other
