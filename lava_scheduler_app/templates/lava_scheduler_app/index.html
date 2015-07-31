@@ -50,23 +50,6 @@
   </div>
 </div>
 
-{% if idle_device_warning %}
-  <div class="alert alert-danger">
-      <button type="button" class="close" data-dismiss="alert">&times;</button>
-          <strong>There are idle devices with a current job.</strong>
-      <ul>
-          {% for device in idle_device_warning %}
-              <li>
-                  <a href="{% url 'lava.scheduler.device.detail' device.hostname %}">{{ device.hostname }}</a> -
-                  current job: <a href="{% url 'lava.scheduler.job.detail' device.current_job.id %}">{{ device.current_job.id }}</a>
-              </li>
-          {% endfor %}
-      Please contact an administrator.
-      </ul>
-  </div>
-
-{% endif %}
-
 <h4 class="modal-header">Device types</h4>
 {% render_table device_type_table %}
 
