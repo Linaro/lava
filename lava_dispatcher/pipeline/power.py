@@ -72,6 +72,9 @@ class RebootDevice(Action):
         connection = super(RebootDevice, self).run(connection, args)
         connection.prompt_str = self.parameters.get('parameters', {}).get('shutdown-message', SHUTDOWN_MESSAGE)
         connection.sendline("reboot")
+        # FIXME: possibly deployment data, possibly separate actions, possibly adjuvants.
+        connection.sendline("reboot -n")  # initramfs may require -n for *now*
+        connection.sendline("reboot -n -f")  # initrd may require -n for *now* and -f for *force*
         self.results = {'status': "success"}
         self.data[PDUReboot.key()] = False
         if 'bootloader_prompt' in self.data['common']:

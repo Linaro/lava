@@ -245,7 +245,7 @@ class FileDownloadAction(DownloadHandler):
         try:
             self.size = os.stat(self.url.path).st_size
         except OSError:
-            self.errors = "Image file '%s' does not exists or is not readable" % (self.url.path)
+            self.errors = "Image file '%s' does not exist or is not readable" % (self.url.path)
 
     def reader(self):
         reader = None

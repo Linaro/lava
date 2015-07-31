@@ -20,10 +20,12 @@
 
 import logging
 import os
+import pexpect
+from stat import S_IXUSR
 from lava_dispatcher.pipeline.action import InfrastructureError, TestError
 
 
-def which(path, match=os.path.isfile):
+def _which_check(path, match):
     """
     Simple replacement for the `which` command found on
     Debian based systems. Allows ordinary users to query
@@ -37,7 +39,29 @@ def which(path, match=os.path.isfile):
         candidate = os.path.join(dirname, path)
         if match(candidate):
             return candidate
+    return None
+
+
+def which(path, match=os.path.isfile):
+    ret = _which_check(path, match)
+    if ret:
+        return ret
     raise InfrastructureError("Cannot find command '%s' in $PATH" % path)
+
+
+def infrastructure_error(path):
+    """
+    Extends which into a check which sets default messages for Action validation,
+    without needing to raise an Exception (which is slow).
+    Use for quick checks on whether essential tools are installed and usable.
+    """
+    exefile = _which_check(path, match=os.path.isfile)
+    if not exefile:
+        return "Cannot find command '%s' in $PATH" % path
+    # is the infrastructure call safe to make?
+    if exefile and not os.stat(exefile).st_mode & S_IXUSR == S_IXUSR:
+        return "%s is not executable" % exefile
+    return None
 
 
 def wait_for_prompt(connection, prompt_pattern, timeout):
@@ -46,6 +70,7 @@ def wait_for_prompt(connection, prompt_pattern, timeout):
     # we send a newline along to maybe provoke a new prompt.  We wait for
     # half the timeout period and then wait for one tenth of the timeout
     # 6 times (so we wait for 1.1 times the timeout period overall).
+    logger = logging.getLogger('dispatcher')
     prompt_wait_count = 0
     if timeout == -1:
         timeout = connection.timeout
@@ -53,15 +78,17 @@ def wait_for_prompt(connection, prompt_pattern, timeout):
     while True:
         try:
             connection.expect(prompt_pattern, timeout=partial_timeout)
-        except TestError:
+        except TestError as exc:
             if prompt_wait_count < 6:
                 logger = logging.getLogger('dispatcher')
-                logger.warning('Sending newline in case of corruption.')
+                logger.warning('%s: Sending newline in case of corruption.', exc)
                 prompt_wait_count += 1
                 partial_timeout = timeout / 10
-                connection.sendline('')
+                connection.sendline('#')
                 continue
             else:
                 raise
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
         else:
             break

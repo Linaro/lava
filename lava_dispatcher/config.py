@@ -245,6 +245,7 @@ class DeviceSchema(schema.Schema):
     dummy_ssh_port = schema.IntOption(default=22)
     dummy_ssh_username = schema.StringOption(default='root')
     dummy_ssh_identity_file = schema.StringOption(default=None)
+    dummy_lxc_container = schema.StringOption(default="default")
 
     # for qemu devices
     qemu_binary = schema.StringOption(default="qemu-system-arm")
@@ -323,6 +324,9 @@ class DeviceSchema(schema.Schema):
     vexpress_firmware_default = schema.StringOption(default=None)
     vexpress_flash_range_low = schema.StringOption(default=None)
     vexpress_flash_range_high = schema.StringOption(default=None)
+
+    # for lxc devices
+    lxc_driver = schema.StringOption(default=None)
 
 
 class OptionDescriptor(object):

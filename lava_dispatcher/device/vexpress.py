@@ -187,9 +187,9 @@ class VexpressTarget(BootloaderTarget):
         else:
             self._extract_firmware_from_tarball(boot)
 
-    def _deploy_tarballs(self, boot_tgz, root_tgz, rootfstype):
+    def _deploy_tarballs(self, boot_tgz, root_tgz, rootfstype, bootfstype):
         super(VexpressTarget, self)._deploy_tarballs(boot_tgz, root_tgz,
-                                                     rootfstype)
+                                                     rootfstype, bootfstype)
         # for precanned images bl0 is only contained in the
         # complete firmware tarball so error if the complete
         # firmware flag is not set

@@ -49,3 +49,48 @@ def mkdtemp(autoremove=True, basedir='/tmp'):
     if autoremove:
         atexit.register(rmtree, tmpdir)
     return tmpdir
+
+
+def check_ssh_identity_file(params):  # pylint: disable=too-many-return-statements
+    """
+    Return a tuple based on if an identity file can be determine in the params.
+    If the first value returned is not None, an error occurred.
+    If the first value is None, the second value contains the path to the identity_file
+    """
+    if not params or type(params) is not dict:
+        return "Invalid parameters", None
+    if 'ssh' not in params:
+        return "Empty ssh parameter list in device configuration %s" % params, None
+    if 'options' not in params['ssh']:
+        return "Missing ssh options in device configuration", None
+    if 'identity_file' not in params['ssh']:
+        return "Missing entry for SSH private key", None
+    if os.path.isabs(params['ssh']['identity_file']):
+        identity_file = params['ssh']['identity_file']
+    else:
+        identity_file = os.path.realpath(
+            os.path.join(
+                __file__,
+                '../' * 3,  # up three directories from this file - not a constant, a result of the layout.
+                params['ssh']['identity_file']))
+    if not os.path.exists(identity_file):
+        return "Cannot find SSH private key %s" % identity_file, None
+    if not os.path.exists("%s.pub" % identity_file):
+        return "Cannot find SSH public key %s.pub" % identity_file, None
+    return None, identity_file
+
+
+def tftpd_dir():
+    """
+    read in 'TFTP_DIRECTORY' from /etc/default/tftpd-hpa
+    Any file to be offered using tftp must use this directory or a
+    subdirectory of it. Default installation value: /srv/tftp/
+    :return: real path to the TFTP directory or raises RuntimeError
+    """
+    if os.path.exists('/etc/default/tftpd-hpa'):
+        with open('/etc/default/tftpd-hpa', 'r') as tftpd:
+            lines = tftpd.read()
+        for line in lines.split('\n'):
+            if 'TFTP_DIRECTORY' in line:
+                return os.path.realpath(line[15:].replace('"', ''))  # remove quote markers
+    raise RuntimeError("Unable to identify tftpd directory")

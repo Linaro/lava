@@ -123,7 +123,7 @@ class MasterImageTarget(Target):
         finalize_process(self.proc)
         self.proc = None
 
-    def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootloadertype, qemu_pflash=None):
+    def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootfstype, bootloadertype, qemu_pflash=None):
         self.boot_master_image()
 
         image_file = generate_image(self, hwpack, rfs, dtb, self.scratch_dir,
@@ -131,7 +131,7 @@ class MasterImageTarget(Target):
         (boot_tgz, root_tgz, distro) = self._generate_tarballs(image_file)
 
         self._read_boot_cmds(boot_tgz=boot_tgz)
-        self._deploy_tarballs(boot_tgz, root_tgz, rootfstype)
+        self._deploy_tarballs(boot_tgz, root_tgz, rootfstype, bootfstype)
 
     def deploy_android(self, images, rootfstype,
                        bootloadertype, target_type):
@@ -184,7 +184,7 @@ class MasterImageTarget(Target):
         self._deploy_linaro_android_system(master, system_url)
         self._deploy_linaro_android_data(master, data_url)
 
-    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype, qemu_pflash=None):
+    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootfstype, bootloadertype, qemu_pflash=None):
         self.boot_master_image()
 
         if self.context.job_data.get('health_check', False):
@@ -196,9 +196,9 @@ class MasterImageTarget(Target):
             (boot_tgz, root_tgz, distro) = self._generate_tarballs(image_file)
 
         self._read_boot_cmds(boot_tgz=boot_tgz)
-        self._deploy_tarballs(boot_tgz, root_tgz, rootfstype)
+        self._deploy_tarballs(boot_tgz, root_tgz, rootfstype, bootfstype)
 
-    def _deploy_tarballs(self, boot_tgz, root_tgz, rootfstype):
+    def _deploy_tarballs(self, boot_tgz, root_tgz, rootfstype, bootfstype):
         tmpdir = self.context.config.lava_image_tmpdir
         url = self.context.config.lava_image_url
 
@@ -207,9 +207,10 @@ class MasterImageTarget(Target):
         boot_url = '/'.join(u.strip('/') for u in [url, boot_tarball])
         root_url = '/'.join(u.strip('/') for u in [url, root_tarball])
         with self._as_master() as master:
-            self._format_testpartition(master, rootfstype)
+            self._format_testpartition(master, rootfstype, bootfstype)
             try:
-                self._deploy_linaro_rootfs(master, root_url, rootfstype)
+                self._deploy_linaro_rootfs(master, root_url, rootfstype,
+                                           bootfstype)
                 self._deploy_linaro_bootfs(master, boot_url)
             except KeyboardInterrupt:
                 raise KeyboardInterrupt
@@ -296,20 +297,21 @@ class MasterImageTarget(Target):
         else:
             logging.debug("Unable to read boot commands dynamically.")
 
-    def _format_testpartition(self, runner, fstype):
+    def _format_testpartition(self, runner, rootfstype, bootfstype="vfat"):
         try:
-            force = ""
             logging.info("Format testboot and testrootfs partitions")
-            if fstype.startswith("ext"):
-                force = "-F"
-            elif fstype == "btrfs":
-                force = "-f"
 
             runner.run('umount %s' % self.testrootfs_path, failok=True)
-            runner.run('nice mkfs %s -t %s -q %s -L %s'
-                       % (force, fstype, self.testrootfs_path, self.testrootfs_label), timeout=1800)
+            self._do_format_partition(runner, self.testrootfs_label,
+                                      self.testrootfs_path, rootfstype)
             runner.run('umount %s' % self.testboot_path, failok=True)
-            runner.run('nice mkfs.vfat %s -n %s' % (self.testboot_path, self.testboot_label))
+            if bootfstype == "vfat":
+                runner.run('nice mkfs.vfat %s -n %s'
+                           % (self.testboot_path, self.testboot_label))
+            else:
+                self._do_format_partition(runner, self.testboot_label,
+                                          self.testboot_path, bootfstype)
+
             self.context.test_data.add_result('format_test_partition_in_master_image',
                                               'pass')
         except:
@@ -318,6 +320,15 @@ class MasterImageTarget(Target):
             self.context.test_data.add_result('format_test_partition_in_master_image',
                                               'fail')
             raise
+
+    def _do_format_partition(self, runner, label, path, fstype):
+        force = ""
+        if fstype.startswith("ext"):
+            force = "-F"
+        elif fstype == "btrfs":
+            force = "-f"
+        runner.run('nice mkfs %s -t %s -q %s -L %s'
+                   % (force, fstype, path, label), timeout=1800)
 
     def _generate_tarballs(self, image_file):
         self.customize_image(image_file)
@@ -647,7 +658,7 @@ class MasterImageTarget(Target):
                                               'fail')
             raise
 
-    def _deploy_linaro_rootfs(self, session, rootfs, rootfstype):
+    def _deploy_linaro_rootfs(self, session, rootfs, rootfstype, bootfstype):
         try:
             logging.info("Deploying linaro image")
             session.run('udevadm trigger')
@@ -672,8 +683,8 @@ class MasterImageTarget(Target):
             if session.is_file_exist('/mnt/root/etc/fstab'):
                 logging.info("Rewriting /etc/fstab in test image")
                 session.run(
-                    'echo "LABEL=%s /boot vfat defaults 0 0" > /mnt/root/etc/fstab' %
-                    self.testboot_label)
+                    'echo "LABEL=%s /boot %s defaults 0 0" > /mnt/root/etc/fstab' %
+                    (self.testboot_label, bootfstype))
                 session.run(
                     'echo "LABEL=%s / %s defaults 0 1" >> /mnt/root/etc/fstab' %
                     (self.testrootfs_label, rootfstype))

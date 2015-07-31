@@ -60,6 +60,8 @@ OVERRIDE_CLAMP_DURATION = 300
 AUTOLOGIN_DEFAULT_TIMEOUT = 120
 
 # dispatcher temporary directory
+# This is distinct from the TFTP daemon directory
+# Files here are for download using the Apache /tmp alias.
 DISPATCHER_DOWNLOAD_DIR = "/var/lib/lava/dispatcher/tmp"
 
 # OS shutdown message

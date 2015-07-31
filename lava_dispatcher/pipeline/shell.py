@@ -162,6 +162,10 @@ class ShellSession(Connection):
         self.spawn = shell_command
         self.timeout = shell_command.lava_timeout
 
+    def disconnect(self, reason):
+        # FIXME
+        pass
+
     @property
     def prompt_str(self):
         return self.__prompt_str__
@@ -205,7 +209,9 @@ class ShellSession(Connection):
         yield self.__runner__.get_connection()
 
     def wait(self):
-        self.raw_connection.sendline("")
+        self.raw_connection.sendline("#")
+        if not self.prompt_str:
+            self.prompt_str = '#'
         try:
             self.runner.wait_for_prompt(self.timeout.duration)
         except pexpect.TIMEOUT:
@@ -215,6 +221,8 @@ class ShellSession(Connection):
 class ExpectShellSession(Action):
     """
     Waits for a shell connection to the device for the current job.
+    The shell connection can be over any particular connection,
+    all that is needed is a prompt.
     """
 
     def __init__(self):
@@ -222,16 +230,21 @@ class ExpectShellSession(Action):
         self.name = "expect-shell-connection"
         self.summary = "Expect a shell prompt"
         self.description = "Wait for a shell"
+        self.prompts = []
 
     def validate(self):
         super(ExpectShellSession, self).validate()
         if 'test_image_prompts' not in self.job.device:
             self.errors = "Unable to identify test image prompts from device configuration."
+        self.prompts = self.job.device['test_image_prompts']
+        if 'parameters' in self.parameters:
+            if 'boot_prompt' in self.parameters['parameters']:
+                self.prompts.append(self.parameters['parameters']['boot_prompt'])
 
     def run(self, connection, args=None):
         connection = super(ExpectShellSession, self).run(connection, args)
         connection.prompt_str = self.job.device['test_image_prompts']
-        self.logger.debug("%s: Waiting for prompt" % self.name)
+        self.logger.debug("%s: Waiting for prompt", self.name)
         self.wait(connection)  # FIXME: should this be a regular RetryAction operation?
         return connection
 
@@ -277,7 +290,7 @@ class ConnectDevice(Action):
             connection.prompt_str = self.job.device['test_image_prompts']
             return connection
         command = self.job.device['commands']['connect']
-        self.logger.info("connecting to device using '%s'" % command)
+        self.logger.info("%s Connecting to device using '%s'", self.name, command)
         signal.alarm(0)  # clear the timeouts used without connections.
         shell = ShellCommand("%s\n" % command, self.timeout)
         if shell.exitstatus:
@@ -291,6 +304,7 @@ class ConnectDevice(Action):
         try:
             self.wait(connection)
         except TestError:
-            self.errors = "%s wait expired" % self.name
-        self.logger.debug("matched %s" % connection.match)
+            self.errors = "%s wait expired", self.name
+            self.logger.debug("wait expired %s", self.elapsed_time)
+        self.logger.debug("matched %s", connection.match)
         return connection

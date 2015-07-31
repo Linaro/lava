@@ -1,0 +1,71 @@
+# This is not a usable job, it combines several jobs into one to support unit tests
+# a set of workable files will use the multinode protocol and also deploy the VM files
+# the tmpfs early so that the job can fail early if there is a 404.
+# See https://git.linaro.org/lava-team/refactoring.git
+
+
+job_name: ssh-deploy
+timeouts:
+  job:
+    minutes: 5
+  action:
+    minutes: 1
+  test:
+    minutes: 3
+
+actions:
+    - deploy:
+        timeout:
+          minutes: 2
+        to: ssh
+        os: debian
+
+    - boot:
+        method: ssh
+        connection: ssh
+        failure_retry: 2
+
+    - boot:
+        method: schroot
+        connection: ssh
+        failure_retry: 2
+        schroot: unstable
+        os: debian
+
+    - test:
+        failure_retry: 3
+        name: kvm-basic-singlenode
+        definitions:
+            - repository: git://git.linaro.org/qa/test-definitions.git
+              from: git
+              path: ubuntu/smoke-tests-basic.yaml
+              name: smoke-tests
+            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+              from: git
+              path: lava-test-shell/single-node/singlenode03.yaml
+              name: singlenode-advanced
+
+
+#    - deploy:
+#        to: ssh
+#        os: debian
+#        dtb: http://images.armcloud.us/misc/tyler-kvm/vexpress-v2p-ca15-tc1.dtb
+#        kernel: http://images.armcloud.us/misc/tyler-kvm/zImage
+#        ramdisk: http://images.armcloud.us/lava/common/buildroot.cpio.gz
+
+#    - boot:
+#        method: vm
+#        os: debian
+#        connection: ssh
+#        commands:
+#          - qemu-system-arm -smp 2,sockets=2,cores=1,threads=1
+#          - -realtime mlock=off
+#          - -m 768
+#          - -cpu host
+#          - -machine vexpress-a15,accel=kvm,usb=off
+#          - -nographic
+#          - -enable-kvm
+#          - -kernel {KERNEL}
+#          - -append "root=/dev/ram0 rw rootwait mem=768M console=ttyAMA0 38400n8 ip=dhcp"
+#          - -initrd {RAMDISK}
+#          - -dtb {DTB}

@@ -19,7 +19,9 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+import lzma
 import tarfile
+import contextlib
 import subprocess
 from lava_dispatcher.pipeline.action import (
     Action,
@@ -92,7 +94,7 @@ class PrepareOverlayTftp(Action):
         return connection
 
 
-class ApplyOverlayTftp(Action):
+class ApplyOverlayTftp(Action):  # FIXME: generic to more than just tftp
     """
     Unpacks the overlay on top of the ramdisk or nfsrootfs
     """
@@ -115,6 +117,10 @@ class ApplyOverlayTftp(Action):
             overlay_type = 'nfsrootfs'
             overlay_file = self.data['compress-overlay'].get('output')
             directory = self.get_common_data('file', 'nfsroot')
+        elif self.parameters.get('rootfs', None) is not None:
+            overlay_type = 'rootfs'
+            overlay_file = self.data['compress-overlay'].get('output')
+            directory = self.get_common_data('file', 'root')
         else:
             self.logger.debug("No overlay directory")
             self.logger.debug(self.parameters)
@@ -127,7 +133,68 @@ class ApplyOverlayTftp(Action):
         return connection
 
 
-class ExtractNfsRootfs(Action):
+class ExtractRootfs(Action):
+    """
+    Unpacks the rootfs and applies the overlay to it
+    """
+    def __init__(self):
+        super(ExtractRootfs, self).__init__()
+        self.name = "extract-rootfs"
+        self.description = "unpack rootfs"
+        self.summary = "unpack rootfs, ready to apply lava overlay"
+        self.param_key = 'rootfs'
+        self.file_key = "root"
+        self.extra_compression = ['xz']
+        self.use_tarfile = True
+        self.use_lzma = False
+
+    def validate(self):
+        super(ExtractRootfs, self).validate()
+        if not self.parameters.get(self.param_key, None):  # idempotency
+            return
+        if 'rootfs_compression' not in self.parameters:
+            self.errors = "Missing compression value for the rootfs"
+        valid = tarfile.TarFile
+        compression = self.parameters['rootfs_compression']
+        # tarfile in 2.7 lacks xz support, it is present in 3.4
+        if compression not in valid.__dict__['OPEN_METH'].keys():
+            if compression not in self.extra_compression:
+                self.errors = "Unsupported compression method: %s" % compression
+            elif compression == 'xz':
+                self.use_lzma = True
+                self.use_tarfile = False
+            else:
+                self.use_tarfile = False
+                self.errors = "Unrecognised compression method: %s" % compression
+
+    def run(self, connection, args=None):
+        if not self.parameters.get(self.param_key, None):  # idempotency
+            return connection
+        connection = super(ExtractRootfs, self).run(connection, args)
+        root = self.data['download_action'][self.param_key]['file']
+        root_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
+        if self.use_tarfile:
+            try:
+                tar = tarfile.open(root)
+                tar.extractall(root_dir)
+                tar.close()
+            except tarfile.TarError as exc:
+                raise JobError("Unable to unpack %s: '%s' - %s" % (self.param_key, os.path.basename(root), exc))
+        elif self.use_lzma:
+            with contextlib.closing(lzma.LZMAFile(root)) as xz:
+                with tarfile.open(fileobj=xz) as tarball:
+                    try:
+                        tarball.extractall(root_dir)
+                    except tarfile.TarError as exc:
+                        raise JobError("Unable to unpack %s: '%s' - %s" % (self.param_key, os.path.basename(root), exc))
+        else:
+            raise RuntimeError("Unable to decompress %s: '%s'" % (self.param_key, os.path.basename(root)))
+        self.set_common_data('file', self.file_key, root_dir)
+        self.logger.debug("Extracted %s to %s" % (self.file_key, root_dir))
+        return connection
+
+
+class ExtractNfsRootfs(ExtractRootfs):
     """
     Unpacks the nfsrootfs and applies the overlay to it
     """
@@ -136,34 +203,19 @@ class ExtractNfsRootfs(Action):
         self.name = "extract-nfsrootfs"
         self.description = "unpack nfsrootfs"
         self.summary = "unpack nfsrootfs, ready to apply lava overlay"
+        self.param_key = 'nfsrootfs'
+        self.file_key = "nfsroot"
 
     def validate(self):
         super(ExtractNfsRootfs, self).validate()
-        if not self.parameters.get('nfsrootfs', None):  # idempotency
+        if not self.parameters.get(self.param_key, None):  # idempotency
             return
         if 'download_action' not in self.data:
             self.errors = "missing download_action in parameters"
-        elif 'file' not in self.data['download_action']['nfsrootfs']:
-            self.errors = "no file specified extract as nfsrootfs"
+        elif 'file' not in self.data['download_action'][self.param_key]:
+            self.errors = "no file specified extract as %s" % self.param_key
         if not os.path.exists('/usr/sbin/exportfs'):
             raise InfrastructureError("NFS job requested but nfs-kernel-server not installed.")
-
-    def run(self, connection, args=None):
-        if not self.parameters.get('nfsrootfs', None):  # idempotency
-            return connection
-        connection = super(ExtractNfsRootfs, self).run(connection, args)
-        nfsroot = self.data['download_action']['nfsrootfs']['file']
-        nfsroot_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
-        try:
-            tar = tarfile.open(nfsroot)
-            tar.extractall(nfsroot_dir)
-            tar.close()
-        except tarfile.TarError as exc:
-            raise JobError("Unable to unpack nfsroot: '%s' - %s" % (os.path.basename(nfsroot), exc))
-        self.set_common_data('file', 'nfsroot', nfsroot_dir)
-        # self.data[self.name].setdefault('nfsroot', nfsroot_dir)
-        self.logger.debug("Extracted nfs root to %s" % nfsroot_dir)
-        return connection
 
 
 class ExtractModules(Action):
@@ -185,10 +237,11 @@ class ExtractModules(Action):
     def run(self, connection, args=None):
         if not self.parameters.get('modules', None):  # idempotency
             return connection
+        self.logger.info("extracting")
         connection = super(ExtractModules, self).run(connection, args)
         if not self.parameters.get('ramdisk', None):
             if not self.parameters.get('nfsrootfs', None):
-                raise RuntimeError("Unable to identify unpack location")
+                raise JobError("Unable to identify a location for the unpacked modules")
             else:
                 root = self.get_common_data('file', 'nfsroot')
         else:
@@ -249,14 +302,14 @@ class ExtractRamdisk(Action):
         self.logger.debug(os.system("file %s" % ramdisk_compressed_data))
         cmd = ('gzip -d -f %s' % ramdisk_compressed_data).split(' ')
         if self.run_command(cmd) is not '':
-            raise RuntimeError('Unable to uncompress: %s' % ramdisk_compressed_data)
+            raise JobError('Unable to uncompress: %s - missing ramdisk-type?' % ramdisk_compressed_data)
         # filename has been changed by gzip
         ramdisk_data = os.path.join(ramdisk_dir, RAMDISK_FNAME)
         pwd = os.getcwd()
         os.chdir(extracted_ramdisk)
         cmd = ('cpio -i -F %s' % ramdisk_data).split(' ')
         if not self.run_command(cmd):
-            raise RuntimeError('Unable to uncompress: %s' % ramdisk_data)
+            raise JobError('Unable to uncompress: %s - missing ramdisk-type?' % ramdisk_data)
         os.chdir(pwd)
         # tell other actions where the unpacked ramdisk can be found
         self.data[self.name]['extracted_ramdisk'] = extracted_ramdisk  # directory

@@ -29,6 +29,7 @@ actions:
     - boot:
         method: qemu
         media: tmpfs
+        connection: serial
         failure_retry: 2
 
     - test:

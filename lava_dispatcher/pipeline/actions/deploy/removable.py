@@ -63,15 +63,17 @@ class Removable(Deployment):
     def accepts(cls, device, parameters):
         job_device = None
         media = None
-        # Which deployment method to use?
-        if 'usb' == parameters['to']:
-            if 'device' in parameters:
-                job_device = parameters['device']
-                media = 'usb'
-        if 'sata' == parameters['to']:
-            if 'device' in parameters:
-                job_device = parameters['device']
-                media = 'sata'
+        if 'to' in parameters:
+            # connection support
+            # Which deployment method to use?
+            if 'usb' == parameters['to']:
+                if 'device' in parameters:
+                    job_device = parameters['device']
+                    media = 'usb'
+            if 'sata' == parameters['to']:
+                if 'device' in parameters:
+                    job_device = parameters['device']
+                    media = 'sata'
         # Matching a method ?
         if job_device is None:
             return False
@@ -180,7 +182,7 @@ class MassStorage(DeployAction):
         if not self.valid:
             return
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.device['hostname']
+        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
         if 'device' in self.parameters:
             self.set_common_data('u-boot', 'device', self.parameters['device'])
 

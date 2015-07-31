@@ -7,6 +7,9 @@ actions:
         parameters:
           root_part: 1
   boot:
+    connections:
+      serial:
+      ssh:
     methods:
       qemu:
         parameters:

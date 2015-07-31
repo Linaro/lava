@@ -23,6 +23,7 @@ actions:
      to: tftp
      kernel: http://images.validation.linaro.org/functional-test-images/bbb/zImage
      nfsrootfs: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
+     rootfs_compression: gz
      os: debian
      dtb: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 

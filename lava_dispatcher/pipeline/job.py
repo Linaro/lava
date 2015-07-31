@@ -123,18 +123,29 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         will have a default timeout which will use SIGALRM. So the overarching Job timeout
         can only stop processing actions if the job wide timeout is exceeded.
         """
-        for protocol in self.protocols:
-            protocol.set_up()
-            if not protocol.valid:
-                raise JobError("Unable to setup a valid %s protocol" % protocol.name)
-
         # Add the ZMQ handler now
         if self.socket_addr is not None:
             self.logger.addZMQHandler(self.socket_addr, self.job_id)  # pylint: disable=maybe-no-member
         else:
             self.logger.addHandler(logging.StreamHandler())
+
+        for protocol in self.protocols:
+            try:
+                protocol.set_up()
+            except KeyboardInterrupt:
+                self.pipeline.cleanup_actions(connection=None, message="Canceled")
+                self.logger.info("Canceled")
+                return 1  # equivalent to len(self.pipeline.errors)
+            except (JobError, RuntimeError, KeyError, TypeError) as exc:
+                raise JobError(exc)
+            if not protocol.valid:
+                msg = "protocol %s has errors: %s" % (protocol.name, protocol.errors)
+                self.logger.exception(msg)
+                raise JobError(msg)
+
         self.pipeline.run_actions(self.connection)
         if self.pipeline.errors:
+            self.logger.exception(self.pipeline.errors)
             return len(self.pipeline.errors)
         return 0
 

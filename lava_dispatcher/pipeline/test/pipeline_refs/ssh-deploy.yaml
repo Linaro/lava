@@ -1,0 +1,44 @@
+- class: actions.deploy.ssh.ScpOverlay
+  name: scp-overlay
+  pipeline:
+  - class: actions.deploy.overlay.OverlayAction
+    name: lava-overlay
+    pipeline:
+    - {class: actions.deploy.overlay.SshAuthorize, name: ssh-authorize}
+    - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
+    - class: actions.deploy.testdef.TestDefinitionAction
+      name: test-definition
+      pipeline:
+      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
+      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
+      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
+      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
+      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
+      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
+      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
+      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
+    - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
+  - class: actions.deploy.ssh.PrepareOverlayScp
+    name: prepare-scp-overlay
+    pipeline:
+    - {class: actions.deploy.apply_overlay.ExtractRootfs, name: extract-rootfs}
+    - {class: actions.deploy.apply_overlay.ExtractModules, name: extract-modules}
+  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
+  - {class: connections.ssh.Scp, name: scp-deploy}
+- class: actions.boot.ssh.SshAction
+  name: login-ssh
+  pipeline:
+  - {class: connections.ssh.ConnectSsh, name: primary-ssh}
+  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
+  - {class: actions.boot.ssh.ScpOverlayUnpack, name: scp-overlay-unpack}
+- {class: actions.boot.ssh.SchrootAction, name: schroot-login}
+- class: actions.test.shell.TestShellRetry
+  name: lava-test-retry
+  pipeline:
+  - {class: actions.test.shell.TestShellAction, name: lava-test-shell}
+- class: power.FinalizeAction
+  name: finalize
+  pipeline:
+  - {class: power.PowerOff, name: power_off}

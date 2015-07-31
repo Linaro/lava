@@ -1,0 +1,59 @@
+device_type: ssh-host
+
+actions:
+  deploy:
+    methods:
+      ssh:
+        options:
+          - '-o'
+          - 'Compression=yes'
+          - '-o'
+          - 'UserKnownHostsFile=/dev/null'
+          - '-o'
+          - 'PasswordAuthentication=no'
+          - '-o'
+          - 'StrictHostKeyChecking=no'
+          - '-o'
+          - 'LogLevel=FATAL'
+          - '-l'
+          - 'root '
+          - '-p'
+          - '8022'
+        host: localhost
+        identity_file: 'device/dynamic_vm_keys/lava'  # unit test support
+
+  boot:
+    connections:
+      ssh:
+    methods:
+      schroot:
+        command:
+          - 'schroot'
+          - '-d'
+          - '/'
+          - '-u'
+          - 'root'
+        name:
+          - unstable
+          - sid
+      ssh:
+      vm:
+
+timeouts:
+  lava-test-shell:
+    seconds: 30
+
+
+test_image_prompts:
+  # TODO: we should'nt need such a long list
+  - '(initramfs)'
+  - '/ #'
+  - 'root@android'
+  - 'root@linaro'
+  - 'root@master'
+  - 'root@debian'
+  - 'root@linaro-nano:~#'
+  - 'root@linaro-developer:~#'
+  - 'root@linaro-server:~#'
+  - 'root@genericarmv7a:~#'
+  - 'root@genericarmv8:~#'

@@ -88,7 +88,7 @@ class KexecAction(Action):
     def validate(self):
         super(KexecAction, self).validate()
         self.command = self.parameters.get('command', '/sbin/kexec')
-        self.load_command = self.command
+        self.load_command = self.command[:]  # local copy for idempotency
         self.command += ' -e'
         if 'kernel' in self.parameters:
             self.load_command += ' --load %s' % self.parameters['kernel']

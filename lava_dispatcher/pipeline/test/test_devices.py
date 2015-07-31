@@ -25,6 +25,7 @@ from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.boot import BootAction
+from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.actions.boot.u_boot import UBootInterrupt, UBootAction
 
 # Test the loading of test definitions within the deploy stage
@@ -147,6 +148,7 @@ class TestDeviceEnvironment(unittest.TestCase):  # pylint: disable=too-many-publ
             None
         )
 
+    @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
     def test_device_environment_validity(self):
         """
         Use non-YAML syntax a bit like existing device config syntax.
@@ -172,6 +174,7 @@ overrides:
         with self.assertRaises(TypeError):
             job.validate()
 
+    @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
     def test_device_environment(self):
         data = """
 # YAML syntax.
