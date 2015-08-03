@@ -1,3 +1,10 @@
+lava-server (2015.8-1) unstable; urgency=medium
+
+  * New production release
+  * Change from using return to exit in config script.
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 03 Aug 2015 08:32:45 +0100
+
 lava-server (2015.07-1) unstable; urgency=medium
 
   * New upstream production release.
