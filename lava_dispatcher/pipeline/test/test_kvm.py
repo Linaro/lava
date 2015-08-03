@@ -282,7 +282,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
                 overlay = action.pipeline.children[action.pipeline][3]
-                testdef = overlay.internal_pipeline.actions[1]
+                testdef = overlay.internal_pipeline.actions[2]
                 inline_repo = testdef.internal_pipeline.actions[0]
                 break
 

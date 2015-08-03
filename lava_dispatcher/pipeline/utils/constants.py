@@ -95,3 +95,7 @@ LXC_PATH = "/var/lib/lxc"
 
 # LXC finalize timeout
 LAVA_LXC_TIMEOUT = 30
+
+# Timeout used by the vland protocol when waiting for vland to
+# respond to the api.create_vlan request, in seconds.
+VLAND_DEPLOY_TIMEOUT = 120

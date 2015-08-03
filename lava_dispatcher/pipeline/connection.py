@@ -254,6 +254,7 @@ class Protocol(object):  # pylint: disable=abstract-class-not-used
         self.parameters = None
         self.__errors__ = []
         self.parameters = parameters
+        self.configured = False
 
     @classmethod
     def select_all(cls, parameters):
@@ -279,8 +280,22 @@ class Protocol(object):  # pylint: disable=abstract-class-not-used
     def set_up(self):
         raise NotImplementedError()
 
+    def configure(self, device, job):
+        self.configured = True
+
     def finalise_protocol(self):
         raise NotImplementedError()
+
+    def check_timeout(self, duration, data):
+        """
+        Use if particular protocol calls can require a connection timeout
+        larger than the default_connection_duration.
+        :param duration: A minimum number of seconds
+        :param data: the API call
+        :return: True if checked, False if no limit is specified by the protocol.
+        raises JobError if the API call is invalid.
+        """
+        return False
 
     def _api_select(self, data):
         if not data:

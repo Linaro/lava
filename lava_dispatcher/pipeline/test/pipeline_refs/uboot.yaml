@@ -21,6 +21,7 @@
       name: lava-overlay
       pipeline:
       - {'class': actions.deploy.overlay.SshAuthorize, 'name': ssh-authorize}
+      - {class: actions.deploy.overlay.VlandOverlayAction, name: lava-vland-overlay}
       - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
       - class: actions.deploy.testdef.TestDefinitionAction
         name: test-definition

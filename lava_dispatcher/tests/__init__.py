@@ -23,6 +23,7 @@ def test_suite():
         'lava_dispatcher.pipeline.test.test_repeat',
         'lava_dispatcher.pipeline.test.test_menus',
         'lava_dispatcher.pipeline.test.test_fastboot',
+        'lava_dispatcher.pipeline.test.test_vland',
     ]
     loader = unittest.TestLoader()
     return loader.loadTestsFromNames(module_names)

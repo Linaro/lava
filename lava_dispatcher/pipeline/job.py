@@ -111,6 +111,19 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         Then needs to validate the context
         Finally expose the context so that actions can see it.
         """
+        for protocol in self.protocols:
+            try:
+                protocol.configure(self.device, self)
+            except KeyboardInterrupt:
+                self.pipeline.cleanup_actions(connection=None, message="Canceled")
+                self.logger.info("Canceled")
+                return 1  # equivalent to len(self.pipeline.errors)
+            except (JobError, RuntimeError, KeyError, TypeError) as exc:
+                raise JobError(exc)
+            if not protocol.valid:
+                msg = "protocol %s has errors: %s" % (protocol.name, protocol.errors)
+                self.logger.exception(msg)
+                raise JobError(msg)
         if simulate:
             # output the content and then any validation errors (python3 compatible)
             print(yaml.dump(self.describe()))  # pylint: disable=superfluous-parens

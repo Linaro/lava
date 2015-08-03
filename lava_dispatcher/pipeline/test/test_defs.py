@@ -56,8 +56,8 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
             self.assertIsNotNone(action.name)
             if isinstance(action, DeployAction):
                 overlay = action.pipeline.children[action.pipeline][3]
-                testdef = overlay.internal_pipeline.actions[1]
-        self.assertEqual(len(overlay.internal_pipeline.actions), 4)
+                testdef = overlay.internal_pipeline.actions[2]
+        self.assertEqual(len(overlay.internal_pipeline.actions), 5)
         self.assertIsInstance(testdef, TestDefinitionAction)
         testdef.validate()
         if not testdef.valid:
@@ -172,7 +172,7 @@ class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-publi
             finalize = self.job.pipeline.actions[3]
             overlay = deploy.internal_pipeline.actions[3]
         self.assertIsInstance(overlay, OverlayAction)
-        testdef = overlay.internal_pipeline.actions[1]
+        testdef = overlay.internal_pipeline.actions[2]
         self.assertIsInstance(testdef, TestDefinitionAction)
         test = testdef.internal_pipeline.actions[1]
         install = testdef.internal_pipeline.actions[2]

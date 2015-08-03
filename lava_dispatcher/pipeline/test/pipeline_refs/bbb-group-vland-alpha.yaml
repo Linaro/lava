@@ -41,22 +41,6 @@
     - {class: actions.deploy.apply_overlay.ApplyOverlayTftp, name: apply-overlay-tftp}
     - {class: actions.deploy.apply_overlay.CompressRamdisk, name: compress-ramdisk}
   - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
-- class: actions.boot.uefi_menu.UefiMenuAction
-  name: uefi-menu-action
-  pipeline:
-  - {class: actions.boot.uefi_menu.UefiSubstituteCommands, name: uefi-commands}
-  - {class: menus.menus.MenuConnect, name: menu-connect}
-  - class: power.ResetDevice
-    name: reboot-device
-    pipeline:
-    - {class: power.RebootDevice, name: soft-reboot}
-    - {class: power.PDUReboot, name: pdu_reboot}
-    - {class: power.PowerOn, name: power_on}
-  - {class: actions.boot.uefi_menu.UEFIMenuInterrupt, name: menu-interrupt}
-  - {class: actions.boot.uefi_menu.UefiMenuSelector, name: uefi-menu-selector}
-  - {class: menus.menus.MenuReset, name: menu-reset}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
-  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:

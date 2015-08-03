@@ -344,7 +344,7 @@ class MultinodeProtocol(Protocol):
                 send_msg = json_data['message']
                 if type(send_msg) is not dict:
                     send_msg = {json_data['message']: None}
-                self.logger.debug("message: %s", send_msg)
+                self.logger.debug({"message": send_msg})
                 if 'yaml_line' in send_msg:
                     del send_msg['yaml_line']
                 self.logger.debug("requesting lava_send %s with args %s" % (message_id, send_msg))

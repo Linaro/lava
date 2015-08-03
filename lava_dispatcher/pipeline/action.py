@@ -649,16 +649,20 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         if 'protocols' not in self.parameters:
             return
         for protocol in self.job.protocols:
+            if 'protocols' not in self.parameters or protocol.name not in self.parameters['protocols']:
+                continue
             for params in self.parameters['protocols'][protocol.name]:
                 for call in [
                         params for name in params
                         if name == 'action' and params[name] == self.name]:
+                    protocol.check_timeout(self.connection_timeout.duration, call)
                     reply = protocol(call)
                     message = protocol.collate(reply, params)
-                    self.logger.debug(
-                        "Setting common data key %s to %s"
-                        % (message[0], message[1]))
-                    self.set_common_data(protocol.name, message[0], message[1])
+                    if message:
+                        self.logger.debug(
+                            "Setting common data key %s to %s"
+                            % (message[0], message[1]))
+                        self.set_common_data(protocol.name, message[0], message[1])
 
     def run(self, connection, args=None):
         """

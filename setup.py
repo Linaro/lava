@@ -52,6 +52,7 @@ setup(
             'lava_test_shell/lava-test-set',
             'lava_test_shell/lava-test-shell',
             'lava_test_shell/multi_node/*',
+            'lava_test_shell/vland/*',
             'lava_test_shell/lmp/*',
             'lava_test_shell/distro/fedora/*',
             'lava_test_shell/distro/android/*',
