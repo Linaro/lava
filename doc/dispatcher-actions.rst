@@ -546,16 +546,27 @@ onto a target. Typically this is the first command that runs in any
 LAVA job to test Android::
 
  {
-    "actions": [
-        {
-            "command": "deploy_linaro_android_image",
-            "parameters": {
-                "boot": "http://<server>/boot.bz2",
-                "data": "http://http://<server>/userdata.bz2",
-                "system": "http://http://<server>/system.bz2"
-            }
-        }
-    ]
+     "actions": [
+         {
+             "command": "deploy_linaro_android_image",
+             "parameters": {
+                 "images": [
+                     {
+                         "partition": "boot",
+                         "url": "http://<server>/boot.bz2"
+                     },
+                     {
+                         "partition": "userdata",
+                         "url": "http://http://<server>/userdata.bz2"
+                     },
+                     {
+                         "partition": "system",
+                         "url": "http://http://<server>/system.bz2"
+                     }
+                 ]
+             }
+         }
+     ]
  }
 
 Example functional test: **master-lava-android-test-multinode**:
@@ -565,33 +576,35 @@ http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/multi-node-
 Available parameters
 --------------------
 
-* ``boot``: Android ``boot.img`` or ``boot.bz2``. Typically this is
-  a kernel image and ramdisk. The parameter accepts http, local and
-  scp urls::
+* ``images``: The image parameter takes two parameters such as
+  ``partition`` and ``url``
 
-   http://myserver.com/boot.img
-   file:///home/user/boot.img
-   scp://username@myserver.com:/home/user/boot.img
-
-* ``system``: Android ``system.img`` or ``system.bz2``. Typically
-  this is the system partition. The parameter accepts http, local and
-  scp urls::
-
-   http://myserver.com/system.img
-   file:///home/user/system.img
-   scp://username@myserver.com:/home/user/system.img
-
-* ``data``: Android ``userdata.img`` or ``userdata.bz2``. Typically
-  this is the data partition. The parameter accepts http, local and
-  scp urls::
-
-   http://myserver.com/userdata.img
-   file:///home/user/userdata.img
-   scp://username@myserver.com:/home/user/userdata.img
+  * ``partition``: Android ``partition`` such as ``boot``,
+    ``userdata``, ``system``, etc. where the given image in ``url``
+    will be downloaded and deployed.
+  * ``url``: Download ``url`` of the image that should be deployed in
+    the ``partition`` given above.
 
 * :term:`rootfstype`: This is the filesystem type for the :term:`rootfs`.
   (i.e. ext2, ext3, ext4...). The parameter accepts any string and is
   optional. The default is ``ext4``.
+* `bootloadertype`: The type of bootloader a target is using. The
+  parameter accepts any string and is optional. The default is
+  ``u_boot``.
+* `target_type`: The type of distribution a target is using. This is
+  useful when using a ``nfsrootfs`` or a ramdisk that have
+  distribution specific dependencies. The default is ``android``.
+* `login_prompt`: A string that will match a login prompt. The
+  parameter accepts any string and is optional.
+* `username`: A string that represents a username. This will be sent
+  to the login prompt. The parameter accepts any string and is optional.
+* `password_prompt`: A string that will match a password prompt. The
+  parameter accepts any string and is optional.
+* `password`: A string that represents a password. This will be sent
+  to the password prompt. The parameter accepts any string and is optional.
+* `login_commands`: An array of strings that will be sent to the
+  target after login. The parameter accepts any strings and is
+  optional.
 * :term:`role`: Determines which devices in a MultiNode group will
   use this action. The parameter accepts any string, the string must
   exactly match one of the roles specified in the :term:`device group`.
@@ -605,24 +618,35 @@ Use ``boot_linaro_android_image`` to boot an Android test image
 that was deployed using the ``deploy_linaro_android_image`` action::
 
  {
-    "actions": [
-        {
-            "command": "deploy_linaro_android_image",
-            "parameters": {
-                "boot": "http: //<server>/boot.bz2",
-                "data": "http: //http: //<server>/userdata.bz2",
-                "system": "http: //http: //<server>/system.bz2"
-            }
-        },
-        {
-            "command": "boot_linaro_android_image"
-        }
-    ]
+     "actions": [
+         {
+             "command": "deploy_linaro_android_image",
+             "parameters": {
+                 "images": [
+                     {
+                         "partition": "boot",
+                         "url": "http://<server>/boot.bz2"
+                     },
+                     {
+                         "partition": "userdata",
+                         "url": "http://http://<server>/userdata.bz2"
+                     },
+                     {
+                         "partition": "system",
+                         "url": "http://http://<server>/system.bz2"
+                     }
+                 ]
+             }
+         },
+         {
+             "command": "boot_linaro_android_image"
+         }
+     ]
  }
 
-Example functional test: **master-job-defined-boot-cmds-android**:
+Example functional test: **master-boot-options-boot-cmds-android**:
 
-http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/single-node-job/master/master-job-defined-boot-cmds-android.json
+https://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/single-node-job/master/master-boot-options-boot-cmds-android.json
 
 Available parameters
 --------------------

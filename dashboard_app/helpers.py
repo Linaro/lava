@@ -944,12 +944,20 @@ def get_ldap_user_properties(ldap_user):
     server_uri = settings.get_setting("AUTH_LDAP_SERVER_URI", None)
     bind_dn = settings.get_setting("AUTH_LDAP_BIND_DN", None)
     bind_password = settings.get_setting("AUTH_LDAP_BIND_PASSWORD", None)
-    user_dn_template = settings.get_setting("AUTH_LDAP_USER_DN_TEMPLATE",
-                                            None)
-    user_dn = user_dn_template % {'user': ldap_user}
+    user_dn_template = settings.get_setting("AUTH_LDAP_USER_DN_TEMPLATE", None)
+    user_search = settings.get_setting("AUTH_LDAP_USER_SEARCH", None)
+
     search_scope = ldap.SCOPE_SUBTREE
     attributes = ['uid', 'givenName', 'sn', 'mail']
     search_filter = "cn=*"
+
+    if user_dn_template:
+        user_dn = user_dn_template % {'user': ldap_user}
+    if user_search:
+        from django_auth_ldap.config import LDAPSearch
+        search = eval(user_search)
+        user_dn = search.base_dn
+        search_filter = search.filterstr % {'user': ldap_user}
 
     user_properties = {}
     if server_uri is not None:

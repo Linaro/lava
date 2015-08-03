@@ -1,0 +1,36 @@
+actions:
+- deploy:
+    connection: ssh
+    to: ssh
+    protocols:
+      lava-multinode:
+        api: lava-wait
+        id: ipv4
+        key: ipaddr
+        timeout: {minutes: 10}
+    role: guest
+    timeout: {seconds: 30}
+- test:
+    definitions:
+    - {from: git, name: smoke-tests, path: ubuntu/smoke-tests-basic.yaml, repository: 'git://git.linaro.org/qa/test-definitions.git'}
+    - {from: git, name: singlenode-intermediate, path: lava-test-shell/single-node/singlenode02.yaml,
+      repository: 'http://git.linaro.org/lava-team/lava-functional-tests.git'}
+    failure_retry: 3
+    name: kvm-basic-singlenode
+    role: guest
+    timeout: {minutes: 5}
+context: {arch: amd64}
+job_name: qemu-guest-ssh
+connection: ssh
+host_role: host
+priority: medium
+protocols:
+  lava-multinode:
+    group_size: 3
+    role: guest
+    sub_id: 1
+    target_group: replaced
+    timeout: {seconds: 60}
+timeouts:
+  action: {minutes: 3}
+  job: {minutes: 30}

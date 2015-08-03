@@ -47,6 +47,7 @@ LAVA Administrator Guide
 
    configuration.rst
    running.rst
+   devicetypes.rst
    hiddentypes.rst
    proxy.rst
    lava-image-creation.rst
@@ -58,6 +59,8 @@ LAVA Administrator Guide
    ipmi-pxe-deploy.rst
    dummy-deploy.rst
    ipxe.rst
+   lxc-deploy.rst
+   hijack-user.rst
 
 Other Topics
 ############
@@ -78,6 +81,7 @@ Other Topics
    lava-scheduler-job.rst
    lava-tool.rst
    pipeline-usecases.rst
+   pipeline-schema.rst
 
 Developer guides
 ################

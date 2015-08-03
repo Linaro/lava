@@ -182,6 +182,11 @@
         {% if show_failure %}
         <ul class="nav nav-pills nav-stacked">
           <li><a href="{% url 'lava.scheduler.job.annotate_failure' job.pk %}" class="btn btn-default">Comment</a></li>
+        {% if user.is_authenticated and user.is_superuser %}
+        <li><a href="{% url 'admin:lava_scheduler_app_testjob_change' job.pk %}" class="btn btn-danger" title="Admin this TestJob - {{ job.pk }}">
+            Admin this TestJob
+        </a></li>
+        {% endif %}
         </ul>
         {% endif %}
         {% if change_priority %}

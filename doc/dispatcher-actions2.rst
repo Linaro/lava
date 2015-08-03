@@ -881,6 +881,12 @@ Internally, ``lava-start`` is implemented as a :ref:`lava_send` and a
 It is an error to specify the same ``role`` and ``expect_role`` to
 ``lava-start``.
 
+.. note:: Avoid confusing :ref:`host_role <host_role>` with ``expect_role``.
+   ``host_role`` is used by the scheduler to ensure that the job
+   assignment operates correctly and does not affect the dispatcher or
+   delayed start support. The two values may often have the same
+   value but do not mean the same thing.
+
 It is an error to specify ``lava-start`` on all roles within a job or
 on any action without a ``role`` specified.
 

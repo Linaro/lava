@@ -213,43 +213,43 @@ Deploying an Android image
 ::
 
  {
-    "job_name": "android_test",
-    "target": "panda01",
-    "timeout": 18000,
-    "actions": [
-        {
-            "command": "deploy_linaro_android_image",
-            "parameters": {
-                "boot": "http://releases.linaro.org/12.09/android/leb-panda/boot.tar.bz2",
-                "system": "http://releases.linaro.org/12.09/android/leb-panda/system.tar.bz2",
-                "data": "http://releases.linaro.org/12.09/android/leb-panda/userdata.tar.bz2"
-            }
-        },
-        {
-            "command": "boot_linaro_android_image"
-        },
-        {
-            "command": "lava_android_test_install",
-            "parameters": {
-                "tests": [
-                    "0xbench"
-                ]
-            }
-        },
-        {
-            "command": "lava_android_test_run",
-            "parameters": {
-                "test_name": "0xbench"
-            }
-        },
-        {
-            "command": "submit_results_on_host",
-            "parameters": {
-                "server": "http://validation.linaro.org/lava-server/RPC2/",
-                "stream": "/anonymous/lava-android-leb-panda/"
-            }
-        }
-    ]
+     "job_name": "android_test",
+     "device_type": "panda",
+     "timeout": 900
+     "actions": [
+         {
+             "command": "deploy_linaro_android_image",
+             "parameters": {
+                 "images": [
+                     {
+                         "partition": "boot",
+                         "url": "http://releases.linaro.org/12.07/android/leb-panda/boot.tar.bz2"
+                     },
+                     {
+                         "partition": "userdata",
+                         "url": "http://releases.linaro.org/12.07/android/leb-panda/userdata.tar.bz2"
+                     },
+                     {
+                         "partition": "system",
+                         "url": "http://releases.linaro.org/12.07/android/leb-panda/system.tar.bz2"
+                     }
+                 ]
+             }
+         },
+         {
+             "command": "boot_linaro_android_image",
+             "parameters": {
+                 "options": [ "boot_cmds=boot_cmds_android" ]
+             }
+         },
+         {
+             "command": "submit_results",
+             "parameters": {
+                 "server": "http://validation.linaro.org/RPC2/",
+                 "stream": "/anonymous/lava-android-leb-panda/"
+             }
+         }
+     ]
  }
 
 .. _device_tags_example:

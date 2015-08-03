@@ -11,14 +11,25 @@ LAVA deployment and make it able to accept job requests.
 Obtain an image
 ---------------
 
-A `pre-built image`_ is available for download::
+A variety of `pre-built images`_ are available for download::
 
- http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+ http://images.validation.linaro.org/kvm/
 
-.. _`pre-built image`: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+.. _`pre-built images`: http://images.validation.linaro.org/kvm/
 
 Building KVM images for LAVA
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If the prebuilt images are not suitable, new images can be built using
+``vmdebootstrap`` and a couple of custom overlay packages. However, image
+building tools are constantly developing and this guide can easily become
+out of date, so you will need to read the manpages for the tools and update
+the instructions appropiately.
+
+The overlays are only necessary if you are **not** going to use the
+automated login support in LAVA. See :ref:`deploy_linaro_image` for the
+current dispatcher and :ref:`writing_job_submission_yaml` for the
+:term:`pipeline` dispatcher.
 
 ::
 
@@ -31,6 +42,15 @@ so that you don't need to.
 
 .. _`vmdebootstrap`: http://packages.qa.debian.org/v/vmdebootstrap.html
 
+The default distribution is Debian stable. Add the ``--distribution=wheezy`
+option to change to wheezy.
+
+If you choose to use the installed ``vmdebootstrap`` package, tweak the
+file:`lava-vmdebootstrap` call to change ``./vmdebootstrap`` to ``vmdebootstrap``.
+
+To build wheezy images on Debian stable, you may need to install the
+``mbr`` package as well.
+
 Example invocation::
 
  $ sudo ./lava-vmdebootstrap --image=myimage.img
@@ -39,11 +59,14 @@ To run the test image, make sure it is writeable::
 
  $ sudo chmod a+w ./myimage.img
 
+(Newer versions of ``vmdebootstrap`` can do this for you if you pass the
+``--owner=$(whoami)`` option.
+
 Execute using qemu, e.g. on amd64 using qemu-system-x86_64::
 
  $ qemu-system-x86_64 ./myimage.img
 
-See ``man 1 vmdebootstrap``
+See ``man 1 vmdebootstrap`` and ``man qemu-system`` for more information.
 
 Once the overlay packages have been downloaded, you can call ``vmdebootstrap``
 directly to create other types of images without needing to modify

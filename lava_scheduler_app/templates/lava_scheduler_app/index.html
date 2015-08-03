@@ -31,6 +31,13 @@
             {{ hc_completed }} / {{ hc_total }}</span>Passing health checks
         </a>
       </li>
+      <li>
+          <a href="{% url 'lava.scheduler.running' %}">
+          <span class="badge pull-right alert-{% if num_jobs_running <= num_devices_running %}success{% else %}warning{% endif %}">
+              {{ num_jobs_running }} / {{ num_devices_running }}
+          </span>Running test jobs
+          </a>
+      </li>
     </ul>
   </div>
   <div class="col-md-6">

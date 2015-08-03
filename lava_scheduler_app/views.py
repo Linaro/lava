@@ -110,6 +110,7 @@ from lava_scheduler_app.tables import (
     DeviceTypeTransitionTable,
     OnlineDeviceTable,
     PassingHealthTable,
+    RunningTable,
 )
 
 # The only functions which need to go in this file are those directly
@@ -326,6 +327,8 @@ def index(request):
     (num_online, num_not_retired) = _online_total()
     health_check_completed = health_jobs_in_hr().filter(status=TestJob.COMPLETE).count()
     health_check_total = health_jobs_in_hr().count()
+    running_jobs_count = TestJob.objects.filter(status=TestJob.RUNNING).count()
+    active_devices_count = Device.objects.filter(status__in=[Device.RESERVED, Device.RUNNING]).count()
     return render(
         request,
         "lava_scheduler_app/index.html",
@@ -333,6 +336,8 @@ def index(request):
             'device_status': "%d/%d" % _online_total(),
             'num_online': num_online,
             'num_not_retired': num_not_retired,
+            'num_jobs_running': running_jobs_count,
+            'num_devices_running': active_devices_count,
             'hc_completed': health_check_completed,
             'hc_total': health_check_total,
             'device_type_table': dt_overview_table,
@@ -602,8 +607,10 @@ def get_restricted_job(user, pk):
         device_type = job.actual_device.device_type
     elif job.requested_device:
         device_type = job.requested_device.device_type
-    else:
+    elif job.requested_device_type:
         device_type = job.requested_device_type
+    else:
+        return job
     if len(device_type.devices_visible_to(user)) == 0:
             raise Http404()
     if not job.is_accessible_by(user) and not user.is_superuser:
@@ -801,11 +808,15 @@ def device_type_detail(request, pk):
             'running_jobs_num': TestJob.objects.filter(
                 actual_device__in=Device.objects.filter(device_type=dt),
                 status=TestJob.RUNNING).count(),
+            # going offline are still active - number for comparison with running jobs.
+            'active_num': Device.objects.filter(
+                device_type=dt,
+                status__in=[Device.RUNNING, Device.RESERVED, Device.OFFLINING]).count(),
             'queued_jobs_num': TestJob.objects.filter(
                 Q(status=TestJob.SUBMITTED), Q(requested_device_type=dt)
                 | Q(requested_device__in=Device.objects.filter(device_type=dt))).count(),
             'idle_num': Device.objects.filter(device_type=dt, status=Device.IDLE).count(),
-            'offline_num': Device.objects.filter(device_type=dt, status__in=[Device.OFFLINE, Device.OFFLINING]).count(),
+            'offline_num': Device.objects.filter(device_type=dt, status__in=[Device.OFFLINE]).count(),
             'retired_num': Device.objects.filter(device_type=dt, status=Device.RETIRED).count(),
             'is_admin': request.user.has_perm('lava_scheduler_app.change_devicetype'),
             'health_job_summary_table': health_table,
@@ -962,7 +973,7 @@ class LongestJobsView(JobTableView):
                                           'requested_device_id, requested_device_type_id)',
                            'duration_sort': 'end_time - start_time'}).all()\
             .filter(status__in=[TestJob.RUNNING, TestJob.CANCELING])
-        return jobs.order_by('-start_time')
+        return jobs.order_by('start_time')
 
 
 class FavoriteJobsView(JobTableView):
@@ -1360,8 +1371,8 @@ def job_description_yaml(request, pk):
 def job_definition_plain(request, pk):
     job = get_restricted_job(request.user, pk)
     response = HttpResponse(job.display_definition, content_type='text/plain')
-    response['Content-Disposition'] = "attachment; filename=job_%d.json" % \
-        job.id
+    filename = "job_%d.yaml" % job.id if job.is_pipeline else "job_%d.json" % job.id
+    response['Content-Disposition'] = "attachment; filename=%s" % filename
     return response
 
 
@@ -1408,8 +1419,9 @@ def multinode_job_definition(request, pk):
 def multinode_job_definition_plain(request, pk):
     job = get_restricted_job(request.user, pk)
     response = HttpResponse(job.multinode_definition, content_type='text/plain')
+    filename = "job_%d.yaml" % job.id if job.is_pipeline else "job_%d.json" % job.id
     response['Content-Disposition'] = \
-        "attachment; filename=multinode_job_%d.json" % job.id
+        "attachment; filename=multinode_%s" % filename
     return response
 
 
@@ -2270,6 +2282,27 @@ def queue(request):
             "discrete_data": queue_ptable.prepare_discrete_data(queue_data),
             'queue_table': queue_ptable,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(queue),
+        },
+        RequestContext(request))
+
+
+class RunningView(LavaView):
+
+    def get_queryset(self):
+        return DeviceType.objects.all().order_by('name')
+
+
+@BreadCrumb("Running", parent=index)
+def running(request):
+    running_data = RunningView(request, model=DeviceType, table_class=RunningTable)
+    running_ptable = RunningTable(running_data.get_table_data())
+    config = RequestConfig(request, paginate={"per_page": running_ptable.length})
+    config.configure(running_ptable)
+    return render_to_response(
+        "lava_scheduler_app/running.html",
+        {
+            'running_table': running_ptable,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(running),
         },
         RequestContext(request))
 

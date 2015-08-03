@@ -70,6 +70,7 @@ setup(
         'pyzmq',
         'jinja2',
         'django-auth-ldap >= 1.1.8',
+        'voluptuous',
         # optional dependency; for authentication with Attlassian Crowd SSO
         # 'django-crowd-rest-backend >= 0.3,
 

@@ -8,6 +8,7 @@ from lava_scheduler_app.models import (
     JobPipeline,
 )
 from lava_scheduler_app.utils import devicedictionary_to_jinja2
+from lava_scheduler_app.schema import validate_device
 from django_testscenarios.ubertest import TestCase
 from django.contrib.auth.models import Group, Permission, User
 from lava_dispatcher.pipeline.device import PipelineDevice
@@ -194,6 +195,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         template = env.get_template("%s.yaml" % 'cubie')
         device_configuration = template.render()
         yaml_data = yaml.load(device_configuration)
+        self.assertTrue(validate_device(yaml_data))
         self.assertIn('timeouts', yaml_data)
         self.assertIn('parameters', yaml_data)
         self.assertIn('bootz', yaml_data['parameters'])
@@ -234,6 +236,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         template = env.get_template("%s.yaml" % 'bbb')
         device_configuration = template.render()
         yaml_data = yaml.load(device_configuration)
+        self.assertTrue(validate_device(yaml_data))
         device = PipelineDevice(yaml_data, 'bbb')
         self.assertIn('power_state', device)
         # bbb has power_on_command defined above
@@ -275,6 +278,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         template = env.get_template("%s.yaml" % 'cubie')
         device_configuration = template.render()
         yaml_data = yaml.load(device_configuration)
+        self.assertTrue(validate_device(yaml_data))
         self.assertIn('timeouts', yaml_data)
         self.assertIn('parameters', yaml_data)
         self.assertIn('bootz', yaml_data['parameters'])

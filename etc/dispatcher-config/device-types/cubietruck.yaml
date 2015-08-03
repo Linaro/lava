@@ -15,7 +15,7 @@ parameters:
     usb:
       UUID-required: True
       {{ usb_label|default('SanDisk_Ultra') }}:
-        uuid: {{ usb_uuid }}  # /dev/disk/by-id/
+        uuid: "{{ usb_uuid }}"  # /dev/disk/by-id/
         device_id: {{ usb_device_id|default(0) }}  # the bootloader device id for this media on the 'usb' interface
     sata:
       UUID-required: False
@@ -29,14 +29,29 @@ parameters:
 
 actions:
   deploy:
+{% if not deploy_methods %}
     # list of deployment methods which this device supports
     methods:
-      usb
-      sata
-      tftp
+      usb:
+      sata:
+      tftp:
+      ssh:
+        options:
+{{ ssh_options }}
+{% if ssh_host %}
+        host: {{ ssh_host }}
+{% endif %}
+        user: {{ ssh_user|default(root) }}
+        port: {{ ssh_port|default(22) }}
+        identity_file: {{ ssh_identity_file }}
+{% endif %}
   boot:
+    connections:
+      serial:
+      ssh:
     # list of boot methods which this device supports.
     methods:
+      ssh:
       u-boot:
         parameters:
           bootloader_prompt: {{ bootloader_prompt|default('sun7i') }}

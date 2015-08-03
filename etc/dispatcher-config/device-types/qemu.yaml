@@ -9,6 +9,9 @@ actions:
         parameters:
           root_part: {{ root_part|default(1) }}
   boot:
+    connections:
+      serial:
+      ssh:
     methods:
       qemu:
         parameters:

@@ -27,6 +27,37 @@
 
 {% set base_nfsroot_args = ("nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr")%}
 
+# these options are used by both ssh and scp!
+# check the manpages *carefully* & ensure compatibility!
+# in particular, -p vs -P for port, -l is ok for ssh, not scp.
+{% set ssh_options = (
+"          - '-o'
+          - 'Compression=yes'
+          - '-o'
+          - 'UserKnownHostsFile=/dev/null'
+          - '-o'
+          - 'PasswordAuthentication=no'
+          - '-o'
+          - 'StrictHostKeyChecking=no'
+          - '-o'
+          - 'LogLevel=FATAL'
+"
+) %}
+
+{% set ssh_user = 'root' %}
+
+{% set ssh_port = '22' %}
+
+{% set ssh_identity_file = 'device/dynamic_vm_keys/lava' %}
+
+{% set schroot_options = (
+"          - 'schroot'
+          - '-d'
+          - '/'
+          - '-u'
+          - 'root'"
+) %}
+
 {% block commands %}
 {% if connection_command %}
 commands:
@@ -53,7 +84,7 @@ test_image_prompts:
   - 'root@android'
   - 'root@master'
   - 'root@debian'
-  - 'root@linaro#'
+  - 'root@linaro:~#'
   - 'root@linaro-nano:~#'
   - 'root@linaro-developer:~#'
   - 'root@linaro-server:~#'

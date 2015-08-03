@@ -1,0 +1,18 @@
+{% extends "layouts/content-bootstrap.html" %}
+{% load django_tables2 %}
+
+{% block content %}
+<h2>Running jobs and active devices <a
+class="btn btn-xs btn-info" href="{% url 'lava.scheduler.longest_jobs' %}"
+title="Longest Running Jobs"><span class="glyphicon glyphicon-time"></span> longest running jobs</a></h2>
+    <p>A submitted test job involves devices being reserved before the job is set to running,
+    so the number of active devices can exceed the number of running jobs. Multinode jobs,
+    in particular, may spend an appreciable amount of time as submitted jobs with reserved
+    devices. Those devices still count as active as these are not available to be assigned
+    to other submitted jobs.</p>
+    <p>This table gives more detail on how each type of device makes up the total number of
+    active devices and running jobs. Click on the device type to see details of which devices
+    and which jobs are active.</p>
+{% render_table running_table %}
+
+{% endblock %}

@@ -21,7 +21,13 @@
   </div>
 {% endif %}
 
-    <h2><i>{{ device_type }}</i> information</h2>
+  <h2><i>{{ device_type }}</i> information
+  {% if user.is_authenticated and user.is_superuser %}
+    <a href="{% url 'admin:lava_scheduler_app_devicetype_change' device_type %}" class="btn btn-xs btn-danger" title="Admin this device type - {{ device_type.name }}">
+      <span class="glyphicon glyphicon-wrench"></span> Admin this type
+    </a>
+  {% endif %}
+  </h2>
     <div class="row">
     <h4 class="modal-header">Metadata</h4>
     <div class="col-md-6">
@@ -63,9 +69,11 @@
   </div>
   <div class="col-md-6">
   <dl class="dl-horizontal">
-      <dt>Idle devices</dt>
+      <dt>Active devices</dt>
+      <dd>{{ active_num }}</dd>
+      <dt>Idle</dt>
       <dd>{{ idle_num }}</dd>
-      <dt>Offline or going offline</dt>
+      <dt>Offline</dt>
       <dd>{{ offline_num }}</dd>
 {% if device_type.name != 'dynamic-vm' %}
       <dt>Retired</dt>

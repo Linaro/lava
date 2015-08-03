@@ -1,0 +1,34 @@
+{% extends 'base.yaml' %}
+{% block body %}
+
+connection: ssh
+
+actions:
+  deploy:
+    methods:
+      ssh:
+        options:
+{{ ssh_options }}
+        # primary connections get this from the device dictionary.
+        # secondary connections get this from the lava-multinode protocol support.
+        host: {{ ssh_host|default('localhost') }}
+{{ ssh_identity}}
+
+  boot:
+    connections:
+      ssh:
+    methods:
+# can be removed by defining this block empty in the device config
+{% block schroot %}
+      schroot:
+        command:
+{{ schroot }}
+        name:
+{{ schroot_name_list|default(['unstable', 'sid']}}
+{% endblock schroot %}
+      ssh:
+#      vm:
+
+{{ timeouts }}
+{{ test_image_prompts }}
+{% endblock %}

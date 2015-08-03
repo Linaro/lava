@@ -3,6 +3,28 @@
 Device type information in LAVA Scheduler
 #########################################
 
+.. _device_type_metadata:
+
+Device type metadata
+********************
+
+The administrator is able to add metadata to a :term:`device type`
+which can later be used in queries for :term:`pipeline` results as well
+as providing basic information on the type of device.
+
+#. **Architecture version** (e.g. ARMv7 or ARMv8)
+#. **Processor Family** (e.g. OMAP4, Exynos)
+#. **CPU model** (often empty but may contain a list of model strings which
+   are all equivalent within this device type).
+#. **Bit width** - (e.g. 32 or 64)
+#. **Cores** - a string constructed from the total number of cores
+   specified and the list of cores selected for this device type. This
+   **does not** infer that there are equal numbers of the specified cores.
+#. **Description** - free text field which admins can use to clarify any
+   issues or notable features / bugs in the hardware. e.g. if hardware
+   floating point is not enabled when it would otherwise be expected
+   or to clarify the actual arrangement of cores.
+
 Device type status
 ******************
 

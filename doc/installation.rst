@@ -34,6 +34,9 @@ an extra repository to provide these packages.
 If you'd like to help us with other distributions feel free to contact
 us at linaro-validation (at) lists (dot) linaro (dot) org.
 
+.. note:: See :ref:`tftp_support` for changes in the :term:`tftp`
+   software requirements after the **2015.8 release**.
+
 Hardware Requirements
 =====================
 

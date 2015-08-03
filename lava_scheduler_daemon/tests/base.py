@@ -86,6 +86,7 @@ class DatabaseJobSourceTestEngine(TestCaseWithFactory):
         if 'DEBUG' in os.environ:
             print('Jobs ready to run: %r' % jobs)
             print('   Submitted jobs: %r' % TestJob.objects.filter(status=TestJob.SUBMITTED))
+            print('     Running jobs: %r' % TestJob.objects.filter(status=TestJob.RUNNING))
             print(' State of devices: %r' % Device.objects.all())
         for job in jobs:
             # simulates the actual daemon, which will start jobs just after it
