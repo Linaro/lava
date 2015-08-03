@@ -148,7 +148,7 @@ class LoopMountAction(RetryAction):
         if 'download_action' not in self.data:
             raise RuntimeError("download-action missing: %s" % self.name)
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.device['hostname']
+        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
         if 'file' not in self.data['download_action']['image']:
             self.errors = "no file specified to mount"
 

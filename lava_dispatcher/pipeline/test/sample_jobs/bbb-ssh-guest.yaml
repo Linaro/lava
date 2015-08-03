@@ -1,0 +1,54 @@
+actions:
+- deploy:
+    connection: ssh
+    os: debian
+    protocols:
+      lava-multinode:
+        api: lava-wait
+        id: ipv4
+        key: ipaddr
+        timeout: {minutes: 5}
+    role: guest
+    timeout: {seconds: 30}
+    to: ssh
+- boot:
+    method: ssh
+    role: guest
+    timeout: {minutes: 3}
+- test:
+    definitions:
+    - {from: git, name: smoke-tests, path: ubuntu/smoke-tests-basic.yaml, repository: 'git://git.linaro.org/qa/test-definitions.git'}
+    - {from: git, name: singlenode-intermediate, path: lava-test-shell/single-node/singlenode02.yaml,
+      repository: 'http://git.linaro.org/lava-team/lava-functional-tests.git'}
+    - from: inline
+      name: ssh-client
+      path: inline/ssh-client.yaml
+      repository:
+        metadata:
+          description: client complete
+          format: Lava-Test Test Definition 1.0
+          name: client-ssh
+          os: [debian]
+          scope: [functional]
+        run:
+          steps: [lava-sync clients]
+    name: kvm-basic-singlenode
+    role: guest
+    timeout: {minutes: 5}
+connection: ssh
+host_role: host
+job_name: bbb-guest-ssh
+priority: medium
+protocols:
+  lava-multinode:
+    expect_role: host
+    group_size: 2
+    request: lava-start
+    role: guest
+    roles: {black02: host}
+    sub_id: 1
+    target_group: 9edf3141-a8cd-4417-93fa-f933eb348bf3
+    timeout: {minutes: 15}
+timeouts:
+  action: {minutes: 3}
+  job: {minutes: 30}

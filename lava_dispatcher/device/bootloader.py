@@ -267,12 +267,14 @@ class BootloaderTarget(MasterImageTarget):
                                                                           ramdisk,
                                                                           dtb)
 
-    def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootloadertype, qemu_pflash=None):
+    def deploy_linaro(self, hwpack, rfs, dtb, rootfstype, bootfstype,
+                      bootloadertype, qemu_pflash=None):
         self._uboot_boot = False
         super(BootloaderTarget, self).deploy_linaro(hwpack, rfs, dtb,
-                                                    rootfstype, bootloadertype, qemu_pflash=qemu_pflash)
+                                                    rootfstype, bootfstype,
+                                                    bootloadertype, qemu_pflash=qemu_pflash)
 
-    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootloadertype, qemu_pflash=None):
+    def deploy_linaro_prebuilt(self, image, dtb, rootfstype, bootfstype, bootloadertype, qemu_pflash=None):
         self._uboot_boot = False
         if self._is_ipxe():
             if image is not None:
@@ -294,6 +296,7 @@ class BootloaderTarget(MasterImageTarget):
             super(BootloaderTarget, self).deploy_linaro_prebuilt(image,
                                                                  dtb,
                                                                  rootfstype,
+                                                                 bootfstype,
                                                                  bootloadertype,
                                                                  qemu_pflash=qemu_pflash)
 

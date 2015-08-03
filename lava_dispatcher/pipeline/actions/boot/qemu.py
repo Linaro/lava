@@ -22,7 +22,6 @@ from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,
     JobError,
-    Timeout
 )
 from lava_dispatcher.pipeline.logical import Boot, RetryAction
 from lava_dispatcher.pipeline.actions.boot import BootAction
@@ -34,6 +33,7 @@ from lava_dispatcher.pipeline.shell import (
 )
 from lava_dispatcher.pipeline.utils.shell import which
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
+from lava_dispatcher.pipeline.connections.ssh import ConnectDynamicSsh
 
 
 # FIXME: decide if root_partition is needed, supported or can be removed from YAML.
@@ -156,3 +156,43 @@ class CallQemuAction(Action):
         # FIXME: tests with multiple boots need to be handled too.
         self.data['boot-result'] = 'failed' if self.errors else 'success'
         return shell_connection
+
+
+class VirtualMachine(Boot):
+
+    def __init__(self, parent, parameters):
+        super(VirtualMachine, self).__init__(parent)
+        self.action = BootVMAction()
+        self.action.job = self.job
+        parent.add_action(self.action, parameters)
+
+    @classmethod
+    def accepts(cls, device, parameters):
+        if 'actions' not in device or 'boot' not in device['actions']:
+            return False
+        if 'methods' not in device['actions']['boot']:
+            return False
+        if 'vm' not in device['actions']['boot']['methods']:
+            return False
+        if 'vm' != parameters['method']:
+            return False
+        if 'commands' not in parameters:
+            return False
+        return True
+
+
+class BootVMAction(BootAction):
+
+    def __init__(self):
+        super(BootVMAction, self).__init__()
+        self.name = "boot-vm"
+        self.summary = "boot a VM on a host"
+        self.description = "Execute commands to boot a VM"
+
+    def populate(self, parameters):
+        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline.add_action(ConnectDynamicSsh())
+
+    def validate(self):
+        super(BootVMAction, self).validate()
+        print '###### FIXME ########', self.parameters['commands']

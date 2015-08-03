@@ -252,7 +252,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         # Diagnosis is not allowed to alter the connection, do not use the return value.
         return None
 
-    def run_actions(self, connection, args=None):  # pylint: disable=too-many-branches,too-many-statements
+    def run_actions(self, connection, args=None):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
 
         def cancelling_handler(*args):  # pylint: disable=unused-argument
             """
@@ -276,7 +276,9 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 if final.name == "finalize":
                     final.run(connection, None)
                 else:
-                    raise RuntimeError("Invalid job pipeline - no finalize action to run after job timeout.")
+                    msg = "Invalid job pipeline - no finalize action to run after job timeout."
+                    action.logger.error(msg)
+                    raise RuntimeError(msg)
                 raise JobError(msg)
 
             # Begin the action
@@ -298,6 +300,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     signal.signal(signal.SIGINT, cancelling_handler)
                     signal.signal(signal.SIGTERM, cancelling_handler)
                 start = time.time()
+                new_connection = None
                 try:
                     # FIXME: not sure to understand why we have two cases here?
                     if not connection:
@@ -305,9 +308,21 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                             new_connection = action.run(connection, args)
                     else:
                         new_connection = action.run(connection, args)
-                except (ValueError, KeyError, TypeError, RuntimeError) as exc:
-                    action.logger.exception(exc)
+                # overly broad exceptions will cause issues with RetryActions
+                # always ensure the unit tests continue to pass with changes here.
+                except (ValueError, KeyError, TypeError, RuntimeError, AttributeError) as exc:
+                    exc_type, exc_value, exc_traceback = sys.exc_info()
+                    traceback_details = {
+                        'filename': exc_traceback.tb_frame.f_code.co_filename,
+                        'lineno': exc_traceback.tb_lineno,
+                        'name': exc_traceback.tb_frame.f_code.co_name,
+                        'type': exc_type.__name__,
+                        'message': exc_value.message,
+                    }
+                    action.logger.exception(traceback_details)
                     raise RuntimeError(exc)
+                except KeyboardInterrupt:
+                    raise KeyboardInterrupt
                 action.elapsed_time = time.time() - start
                 # Add action end timestamp to the log message
                 msg = {'msg': "%s duration: %.02f" % (action.name,
@@ -566,6 +581,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         Includes default support for proxy settings in the environment.
         Blocks until the command returns then processes & logs the output.
         """
+        # FIXME: add option to only check stdout or stderr for failure output
         if type(command_list) != list:
             raise RuntimeError("commands to run_command need to be a list")
         log = None
@@ -715,6 +731,9 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
 
     def wait(self, connection):
         if not connection:
+            return
+        if not connection.connected:
+            self.logger.debug("Already disconnected")
             return
         self.logger.debug("%s: Wait for prompt. %s seconds" % (self.name, int(self.timeout.duration)))
         connection.wait()

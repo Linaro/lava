@@ -31,10 +31,8 @@ from lava_dispatcher.pipeline.action import (
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.pipeline.shell import (
-    ConnectDevice,
-    ExpectShellSession
-)
+from lava_dispatcher.pipeline.shell import ExpectShellSession
+from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.power import ResetDevice
 from lava_dispatcher.pipeline.utils.constants import (
     UBOOT_AUTOBOOT_PROMPT,
@@ -157,7 +155,10 @@ class UBootRetry(BootAction):
 
     def run(self, connection, args=None):
         connection = super(UBootRetry, self).run(connection, args)
-        # FIXME: tests with multiple boots need to be handled too.
+        self.logger.debug("Setting default test shell prompt")
+        connection.prompt_str = self.job.device['test_image_prompts']
+        connection.timeout = self.timeout
+        self.wait(connection)
         self.data['boot-result'] = 'failed' if self.errors else 'success'
         return connection
 

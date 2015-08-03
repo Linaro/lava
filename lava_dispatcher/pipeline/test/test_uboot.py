@@ -20,6 +20,8 @@
 
 
 import os
+import yaml
+import tarfile
 import unittest
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
@@ -30,13 +32,13 @@ from lava_dispatcher.pipeline.actions.boot.u_boot import (
 )
 from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
-from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError
+from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError, JobError
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+from lava_dispatcher.pipeline.utils.shell import infrastructure_error
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, tftpd_dir
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.constants import (
-    DISPATCHER_DOWNLOAD_DIR,
     SHUTDOWN_MESSAGE,
     BOOT_MESSAGE,
 )
@@ -59,6 +61,7 @@ class Factory(object):  # pylint: disable=too-few-public-methods
 
 class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
+    @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
     def test_simulated_action(self):
         factory = Factory()
         job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
@@ -88,9 +91,11 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertIn('ramdisk', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
         self.assertIn('kernel', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
         self.assertIn('dtb', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
-        self.assertEqual(
-            [action.path for action in tftp.internal_pipeline.actions if hasattr(action, 'path')],
-            [DISPATCHER_DOWNLOAD_DIR for _ in range(len(tftp.internal_pipeline.actions) - 2)]
+        # allow root to compare the path (with the mkdtemp added)
+        paths = {action.path for action in tftp.internal_pipeline.actions if hasattr(action, 'path')}
+        self.assertIn(
+            tftpd_dir(),
+            [item for item in paths][0]
         )
 
     def test_device_bbb(self):
@@ -105,6 +110,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertIn('u-boot', methods)
         self.assertEqual(methods['u-boot']['parameters'].get('bootloader_prompt', None), 'U-Boot')
 
+    @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
     def test_uboot_action(self):
         factory = Factory()
         job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
@@ -236,6 +242,8 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
             for action in overlay.internal_pipeline.actions:
                 if action.name == 'extract-nfsrootfs':
                     extract = action
+        self.assertIn('lava_test_results_dir', overlay.data)
+        self.assertIn('/lava-', overlay.data['lava_test_results_dir'])
         self.assertIsNotNone(extract)
         self.assertEqual(extract.timeout.duration, job.parameters['timeouts'][extract.name]['seconds'])
 
@@ -294,3 +302,58 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         )
         self.assertEqual(part_reference, u_boot_media.get_common_data('uuid', 'boot_part'))
         self.assertEqual(part_reference, "0:1")
+
+    @unittest.skipIf(infrastructure_error('telnet'), "telnet not installed")
+    def test_prompt_from_job(self):
+        """
+        Support setting the prompt after login via the job
+
+        Loads a known YAML, adds a prompt to the dict and re-parses the job.
+        Checks that the prompt is available in the expect_shell_connection action.
+        """
+        factory = Factory()
+        job = factory.create_bbb_job('sample_jobs/uboot.yaml')
+        job.validate()
+        uboot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
+        retry = [action for action in uboot.internal_pipeline.actions
+                 if action.name == 'uboot-retry'][0]
+        expect = [action for action in retry.internal_pipeline.actions
+                  if action.name == 'expect-shell-connection'][0]
+        check = expect.parameters
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        extra_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot.yaml')
+        with open(extra_yaml) as data:
+            sample_job_string = data.read()
+        parser = JobParser()
+        sample_job_data = yaml.load(sample_job_string)
+        boot = [item['boot'] for item in sample_job_data['actions'] if 'boot' in item][0]
+        boot.update({'parameters': {'boot_prompt': 'root@bbb'}})
+        sample_job_string = yaml.dump(sample_job_data)
+        job = parser.parse(sample_job_string, device, 4212, None, output_dir='/tmp')
+        job.validate()
+        uboot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
+        retry = [action for action in uboot.internal_pipeline.actions
+                 if action.name == 'uboot-retry'][0]
+        expect = [action for action in retry.internal_pipeline.actions
+                  if action.name == 'expect-shell-connection'][0]
+        self.assertNotEqual(check, expect.parameters)
+        self.assertIn('root@bbb', expect.prompts)
+
+    def test_xz_nfs(self):
+        factory = Factory()
+        job = factory.create_bbb_job('sample_jobs/uboot-nfs.yaml')
+        # this job won't validate as the .xz nfsrootfs URL is a fiction
+        self.assertRaises(JobError, job.validate)
+        tftp_deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
+        nfs = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-nfsrootfs'][0]
+        self.assertIn('rootfs_compression', nfs.parameters)
+        self.assertEqual(nfs.parameters['rootfs_compression'], 'xz')
+        valid = tarfile.TarFile
+        if 'xz' not in valid.__dict__['OPEN_METH'].keys():
+            self.assertTrue(nfs.use_lzma)
+            self.assertFalse(nfs.use_tarfile)
+        else:
+            # python3 has xz support in tarfile.
+            self.assertFalse(nfs.use_lzma)
+            self.assertTrue(nfs.use_tarfile)

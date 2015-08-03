@@ -25,7 +25,6 @@
 
 import subprocess
 import os
-import datetime
 
 
 def version_tag():
@@ -36,7 +35,7 @@ def version_tag():
     a directory created from the tarball created by setup.py when
     it uses this script and retrieves the original version string
     from that.
-    :return: a version string based on the tag and date
+    :return: a version string based on the tag and short hash
     """
     if not os.path.exists("./.git/"):
         base = os.path.basename(os.getcwd())
@@ -67,21 +66,17 @@ def version_tag():
     if tag_hash == clone_hash:
         return tag_name
     else:
-        dev_time = datetime.datetime.utcnow()
-        # production hot fixes can change the tag from year.month
-        # which would cause staging builds to be lower than the build
-        # before the tag. Drop the hot fix element of tag names.
+        # tag, month end and release are now out of sync.
+        # use the rev-list count to always ensure that we are building
+        # a newer version to cope with date changes at month end.
+        # use short git hash for reference.
         bits = tag_name.split('.')
-        delayed_tag = "%s.%s" % (bits[0], bits[1])
-        # our tags are one month behind, 04 is tagged in 05
-        # however, the tag is not necessarily made on the first day of 05
-        # so if out by two, allow for an "extended month" to ensure
-        # an incremental version
         tag_month = int(bits[1])
-        extended = dev_time.day
-        if int(dev_time.month) - 1 > tag_month:
-            extended = int(dev_time.day) + 31
-        return "%s.%02d.%02d" % (delayed_tag, extended, dev_time.hour)
+        dev_stamp = ['git', 'rev-list', '--count', 'HEAD']
+        dev_count = subprocess.check_output(dev_stamp).strip()
+        dev_short = ['git', 'rev-parse', '--short', 'HEAD']
+        dev_hash = subprocess.check_output(dev_short).strip()
+        return "%s.%s.%s" % (tag_name, dev_count, dev_hash)
 
 
 def main():

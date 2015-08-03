@@ -130,3 +130,63 @@ fedora = deployment_data_dict({
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/lava-%s',
 })
+
+
+centos = deployment_data_dict({
+    'TESTER_PS1': "linaro-test [rc=$(echo \$?)]# ",
+    'TESTER_PS1_PATTERN': "linaro-test \[rc=(\d+)\]# ",
+    'TESTER_PS1_INCLUDES_RC': True,
+    'boot_cmds': 'boot_cmds',
+
+    # for lava-test-shell
+    'distro': 'centos',
+    'lava_test_sh_cmd': '/bin/bash',
+    'lava_test_dir': '/lava-%s',
+    'lava_test_results_part_attr': 'root_part',
+    'lava_test_results_dir': '/lava-%s',
+})
+
+
+gentoo = deployment_data_dict({
+    'TESTER_PS1': "linaro-test [rc=$(echo \$?)]# ",
+    'TESTER_PS1_PATTERN': "linaro-test \[rc=(\d+)\]# ",
+    'TESTER_PS1_INCLUDES_RC': True,
+    'boot_cmds': 'boot_cmds',
+
+    # for lava-test-shell
+    'distro': 'gentoo',
+    'lava_test_sh_cmd': '/bin/bash',
+    'lava_test_dir': '/lava-%s',
+    'lava_test_results_part_attr': 'root_part',
+    'lava_test_results_dir': '/lava-%s',
+})
+
+
+oracle = deployment_data_dict({
+    'TESTER_PS1': "linaro-test [rc=$(echo \$?)]# ",
+    'TESTER_PS1_PATTERN': "linaro-test \[rc=(\d+)\]# ",
+    'TESTER_PS1_INCLUDES_RC': True,
+    'boot_cmds': 'boot_cmds',
+
+    # for lava-test-shell
+    'distro': 'oracle',
+    'lava_test_sh_cmd': '/bin/bash',
+    'lava_test_dir': '/lava-%s',
+    'lava_test_results_part_attr': 'root_part',
+    'lava_test_results_dir': '/lava-%s',
+})
+
+
+plamo = deployment_data_dict({
+    'TESTER_PS1': "linaro-test [rc=$(echo \$?)]# ",
+    'TESTER_PS1_PATTERN': "linaro-test \[rc=(\d+)\]# ",
+    'TESTER_PS1_INCLUDES_RC': True,
+    'boot_cmds': 'boot_cmds',
+
+    # for lava-test-shell
+    'distro': 'plamo',
+    'lava_test_sh_cmd': '/bin/bash',
+    'lava_test_dir': '/lava-%s',
+    'lava_test_results_part_attr': 'root_part',
+    'lava_test_results_dir': '/lava-%s',
+})

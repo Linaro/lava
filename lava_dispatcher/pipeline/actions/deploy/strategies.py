@@ -21,6 +21,9 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
-from lava_dispatcher.pipeline.actions.deploy.image import DeployImage  # pylint: disable=unused-import
-from lava_dispatcher.pipeline.actions.deploy.tftp import Tftp  # pylint: disable=unused-import
-from lava_dispatcher.pipeline.actions.deploy.removable import MassStorage  # pylint: disable=unused-import
+# pylint: disable=unused-import
+
+from lava_dispatcher.pipeline.actions.deploy.image import DeployImage
+from lava_dispatcher.pipeline.actions.deploy.tftp import Tftp
+from lava_dispatcher.pipeline.actions.deploy.removable import MassStorage
+from lava_dispatcher.pipeline.actions.deploy.ssh import Ssh

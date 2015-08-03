@@ -31,10 +31,14 @@ actions:
   deploy:
     # list of deployment methods which this device supports
     methods:
-      usb
-      sata
-      tftp
+      usb:
+      sata:
+      tftp:
   boot:
+    # list of connection methods which this device supports
+    connections:
+      serial:
+      ssh:
     # list of boot methods which this device supports.
     methods:
       u-boot:

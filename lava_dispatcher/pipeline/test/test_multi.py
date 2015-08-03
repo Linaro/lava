@@ -28,7 +28,8 @@ from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.power import FinalizeAction
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, tftpd_dir
+from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_dispatcher.pipeline.test.test_uboot import Factory
 
 # pylint: disable=too-many-public-methods,too-few-public-methods
@@ -69,7 +70,11 @@ class TestMultiDeploy(unittest.TestCase):
             ]
         }
 
-    class FakeDevice(NewDevice):  # pylint:disable=abstract-method
+    class FakeDevice(NewDevice):
+
+        def check_config(self, job):
+            pass
+
         def __init__(self):
             filename = os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml')
             super(TestMultiDeploy.FakeDevice, self).__init__(filename)
@@ -99,7 +104,7 @@ class TestMultiDeploy(unittest.TestCase):
 
     class TestJob(Job):
         def __init__(self):
-            super(TestMultiDeploy.TestJob, self).__init__(self.parameters)
+            super(TestMultiDeploy.TestJob, self).__init__(4122, 0, self.parameters)
 
     def test_multi_deploy(self):
         self.assertIsNotNone(self.parsed_data)
@@ -163,3 +168,11 @@ class TestMultiUBoot(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertIsNotNone(self.job)
         description_ref = pipeline_reference('uboot-multiple.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        deploy = [action for action in self.job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        downloads = [action for action in deploy.internal_pipeline.actions if action.name == 'download_retry']
+        for download in downloads:
+            if download.key == 'nfsrootfs':
+                # if using root, the path would be appended.
+                self.assertIn(DISPATCHER_DOWNLOAD_DIR, download.path)
+            else:
+                self.assertIn(tftpd_dir(), download.path)

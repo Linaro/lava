@@ -168,7 +168,7 @@ class RepoAction(Action):
 
         # runner_path is the path to read and execute from to run the tests after boot
         self.data['test'][self.uuid]['runner_path'][args['test_name']] = os.path.join(
-            args['deployment_data']['lava_test_results_dir'] % self.job.device['hostname'],
+            args['deployment_data']['lava_test_results_dir'] % self.job.job_id,
             'tests',
             args['test_name']
         )
@@ -259,7 +259,8 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
         # NOTE: the runner_path dir must remain empty until after the VCS clone, so let the VCS clone create the final dir
         runner_path = self.data['test'][self.uuid]['overlay_path'][self.parameters['test_name']]
-
+        if os.path.exists(runner_path) and os.listdir(runner_path) == []:
+            raise RuntimeError("Directory already exists and is not empty - duplicate Action?")
         commit_id = self.vcs.clone(runner_path, self.parameters.get('revision', None))
         if commit_id is None:
             raise RuntimeError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))

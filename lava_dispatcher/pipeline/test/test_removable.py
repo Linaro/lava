@@ -27,6 +27,7 @@ from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.removable import MassStorage
 from lava_dispatcher.pipeline.utils.strings import substitute
+from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 
 
 class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -56,7 +57,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         """
         Test that the job parameters match expected structure
         """
-        self.maxDiff = None
+        self.maxDiff = None  # pylint: disable=invalid-name
         job_parser = JobParser()
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
@@ -101,6 +102,8 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertIn('device_id', cubie['parameters']['media']['usb'][deploy_params['device']])
         self.assertNotIn('boot_part', cubie['parameters']['media']['usb'][deploy_params['device']])
         deploy_action = job.pipeline.actions[0]
+        self.assertIn('lava_test_results_dir', deploy_action.data)
+        self.assertIn('/lava-', deploy_action.data['lava_test_results_dir'])
         self.assertIsInstance(deploy_action, MassStorage)
         self.assertIn('image', deploy_action.parameters.keys())
         dd_action = deploy_action.internal_pipeline.actions[1]
@@ -111,6 +114,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertTrue(type(dd_action.get_common_data('uuid', 'boot_part')) is str)
         self.assertEqual('0:1', dd_action.get_common_data('uuid', 'boot_part'))
 
+    @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
     def test_primary_media(self):
         """
         Test that definitions of secondary media do not block submissions using primary media

@@ -103,7 +103,7 @@ class JobParser(object):
         return mapping
 
     def _timeouts(self, data, job):
-        if 'timeouts' in data:
+        if 'timeouts' in data and data['timeouts']:
             if 'job' in data['timeouts']:
                 duration = Timeout.parse(data['timeouts']['job'])
                 job.timeout = Timeout(data['job_name'], duration)
