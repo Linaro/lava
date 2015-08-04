@@ -3,7 +3,7 @@ import logging
 import os
 import shutil
 import urlparse
-
+import signal
 from dashboard_app.models import Bundle
 
 import django
@@ -55,12 +55,15 @@ def find_device_for_job(job, device_list):
     check if this device be assigned to this job for this user.
     Works for pipeline jobs and old-style jobs but refuses to select a
     non-pipeline device for a pipeline job. Pipeline devices are explicitly
-    allowed to run non-pipeline jobs..
+    allowed to run non-pipeline jobs.
+
+    Note: with a large queue and a lot of devices, this function can be a
+    significant delay.
     """
     if job.dynamic_connection:
         # secondary connection, the "host" has a real device
         return None
-    # FIXME: specify the device_type and limit the DB query to that type only
+    logger = logging.getLogger(__name__ + '.DatabaseJobSource')
     for device in device_list:
         if device.current_job:
             if device.device_type != job.requested_device_type:
@@ -69,7 +72,6 @@ def find_device_for_job(job, device_list):
                 # forced health checks complicate this condition as it would otherwise
                 # be an error to find the device here when it should not be IDLE.
                 continue
-            logger = logging.getLogger(__name__ + '.DatabaseJobSource')
             # warn the admin that this needs human intervention
             bad_job = TestJob.objects.get(id=device.current_job.id)
             logger.warning("Refusing to reserve %s for %s - current job is %s" % (
@@ -85,15 +87,18 @@ def find_device_for_job(job, device_list):
         if job.requested_device.status == Device.OFFLINE:
             return job.requested_device
     for device in device_list:
+        if job.is_vmgroup:
+            # special handling, tied directly to the TestJob within the vmgroup
+            # mask to a Temporary Device to be able to see vm_group of the device
+            tmp_dev = TemporaryDevice.objects.filter(hostname=device.hostname)
+            if tmp_dev and job.vm_group != tmp_dev[0].vm_group:
+                continue
         if job.is_pipeline and not device.is_pipeline:
             continue
         if device == job.requested_device:
             if device.can_submit(job.submitter) and\
                     set(job.tags.all()) & set(device.tags.all()) == set(job.tags.all()):
                 return device
-    for device in device_list:
-        if job.is_pipeline and not device.is_pipeline:
-            continue
         if device.device_type == job.requested_device_type:
             if device.can_submit(job.submitter) and\
                     set(job.tags.all()) & set(device.tags.all()) == set(job.tags.all()):
@@ -106,7 +111,15 @@ def get_configured_devices():
 
 
 def get_temporary_devices(devices):
+    """
+    :param devices: list of device HOSTNAMES
+    :return: list of HOSTNAMES with hostnames of temporary devices appended
+    """
     tmp_device_list = set()
+    logger = logging.getLogger(__name__ + '.DatabaseJobSource')
+    if type(devices) is not list:
+        logger.warning("Programming error: %s needs to be a list", devices)
+        return None
     for dev in devices:
         try:
             device = Device.objects.get(hostname=dev)
@@ -119,6 +132,11 @@ def get_temporary_devices(devices):
             # this will happen when you have configuration files for devices
             # that are not in the database. You don't want the entire thing to
             # crash if that is the case.
+            # can also happen if a programming error results in sending
+            # a list of devices, not a list of hostnames.
+            if type(dev) not in [unicode, str]:
+                logger.warning("Programming error: %s needs to be a list of hostnames")
+                return None
             pass
     return devices + list(tmp_device_list)
 
@@ -236,7 +254,8 @@ class DatabaseJobSource(object):
         jobs = jobs.order_by('-health_check', '-priority', 'submit_time',
                              'vm_group', 'target_group', 'id')
 
-        self.logger.debug("Job queue length: %d", len(jobs))
+        if len(jobs):
+            self.logger.info("Job queue length: %d", len(jobs))
         return jobs
 
     def _get_available_devices(self):
@@ -250,10 +269,35 @@ class DatabaseJobSource(object):
         Forced health checks ignore this constraint.
         """
         devices = Device.objects.filter(status=Device.IDLE).order_by('is_public')
-        self.logger.info("Number of IDLE devices: %d", len(devices))
         return devices
 
-    def _valid_device_status(self, job, device):
+    def _validate_non_idle_devices(self, reserved_devices, idle_devices):
+        """
+        only check those devices which we *know* should have been changed
+        and check that the changes are correct.
+        """
+        errors = []
+        for device_name in reserved_devices:
+            device = Device.objects.get(hostname=device_name)  # force re-load
+            if device.status not in [Device.RESERVED, Device.RUNNING]:
+                self.logger.warning("Failed to properly reserve %s", device)
+                errors.append('r')
+            if device in idle_devices:
+                self.logger.warning("%s is still listed as available!", device)
+                errors.append('a')
+            if not device.current_job:
+                self.logger.warning("Invalid reservation, %s has no current job.", device)
+                return False
+            if not device.current_job.actual_device:
+                self.logger.warning("Invalid reservation, %s has no actual device.", device.current_job)
+                return False
+            if device.hostname != device.current_job.actual_device.hostname:
+                self.logger.warning(
+                    "%s is not the same device as %s", device, device.current_job.actual_device)
+                errors.append('j')
+        return errors == []
+
+    def _validate_idle_device(self, job, device):
         """
         The problem here is that instances with a lot of devices would spend a lot of time
         refetching all of the device details every scheduler tick when it is only under
@@ -272,6 +316,22 @@ class DatabaseJobSource(object):
             device.refresh_from_db()
         else:
             device = Device.objects.get(hostname=device.hostname)
+        # to be valid for reservation, no queued TestJob can reference this device
+        jobs = TestJob.objects.filter(
+            status__in=[TestJob.RUNNING, TestJob.SUBMITTED, TestJob.CANCELING],
+            actual_device=device)
+        if jobs:
+            self.logger.warning(
+                "%s (which has current_job %s) is already referenced by %d jobs %s",
+                device.hostname, device.current_job, len(jobs), [job.id for job in jobs])
+            if len(jobs) == 1:
+                self.logger.warning(
+                    "Fixing up a broken device reservation for %s on %s",
+                    jobs[0], device.hostname)
+                device.status = Device.RESERVED
+                device.current_job = jobs[0]
+                device.save(update_fields=['status', 'current_job'])
+                return False
         # forced health check support
         if job.health_check:
             # only assign once the device is offline.
@@ -281,9 +341,27 @@ class DatabaseJobSource(object):
         elif device.status is not Device.IDLE:
             self.logger.warning("Refusing to reserve %s which is not IDLE", device)
             return False
+        if device.current_job:
+            self.logger.warning("Device %s already has a current job", device)
+            return False
         return True
 
     def _assign_jobs(self):
+        """
+        Check all jobs against all available devices and assign only if all conditions are met
+        This routine needs to remain fast, so has to manage local cache variables of device status but
+        still cope with a job queue over 1,000 and a device matrix of over 100. The main load is in
+        find_device_for_job as *all* jobs in the queue must be checked at each tick. (A job far back in
+        the queue may be the only job which exactly matches the most recent devices to become available.)
+
+        When viewing the logs of these operations, the device will be Idle when Assigning to a Submitted
+        job. That job may be for a device_type or a specific device (typically health checks use a specific
+        device). The device will be Reserved when Assigned to a Submitted job on that device - the type will
+        not be mentioned. The total number of assigned jobs and devices will be output at the end of each tick.
+        Finally, the reserved device is removed from the local cache of available devices.
+
+        Warnings are emitted if the device states are not as expected, before or after assignment.
+        """
         # FIXME: this function needs to be moved to dispatcher-master when lava_scheduler_daemon is disabled.
         # FIXME: in dispatcher-master, implement as in share/zmq/assign.[dia|png]
         # FIXME: Make the forced health check constraint explicit
@@ -291,45 +369,54 @@ class DatabaseJobSource(object):
         jobs = list(self._get_job_queue())
         if not jobs:
             return
-        self.logger.info("Starting to assign up to %d jobs" % len(jobs))
         assigned_jobs = []
         reserved_devices = []
-        # evaluate the devices query set using list()
+        # this takes a significant amount of time when under load, only do it once per tick
         devices = list(self._get_available_devices())
         # a forced health check can be assigned even if the device is not in the list of idle devices.
         for job in jobs:
             device = find_device_for_job(job, devices)
             if device:
-                if not self._valid_device_status(job, device):
+                if not self._validate_idle_device(job, device):
+                    self.logger.debug("Removing %s from the list of available devices",
+                                      str(device.hostname))
+                    devices.remove(device)
                     continue
-                self.logger.debug("Assigning %s to %s", device, job)
+                self.logger.info("Assigning %s for %s", device, job)
+                # avoid catching exceptions inside atomic (exceptions are slow too)
+                # https://docs.djangoproject.com/en/1.7/topics/db/transactions/#controlling-transactions-explicitly
+                if AuthToken.objects.filter(user=job.submitter).count():
+                    job.submit_token = AuthToken.objects.filter(user=job.submitter).first()
+                else:
+                    job.submit_token = AuthToken.objects.create(user=job.submitter)
                 try:
                     # Make this sequence atomic
                     with transaction.atomic():
                         job.actual_device = device
-                        try:
-                            job.submit_token = AuthToken.objects.filter(
-                                user=job.submitter)[0]
-                        except IndexError:
-                            job.submit_token = AuthToken.objects.create(
-                                user=job.submitter)
-                        device.current_job = job
-                        device.state_transition_to(Device.RESERVED, message="Reserved for job %s" % job.display_id)
                         job.save()
-                        assigned_jobs.append(job.id)
-                        reserved_devices.append(device.hostname)
-                        device.save()
-                    if device in devices:
-                        self.logger.debug("Removing %s from the list of available devices",
-                                          str(device.hostname))
-                        devices.remove(device)
-                    self.logger.info('%s reserved for job %s', device.hostname,
-                                     job.id)
+                        device.current_job = job
+                        # implicit device save in state_transition_to()
+                        device.state_transition_to(
+                            Device.RESERVED, message="Reserved for job %s" % job.display_id, job=job)
                 except IntegrityError:
                     # Retry in the next call to _assign_jobs
-                    self.logger.warning("Transaction failed for job %s" % job.display_id)
+                    self.logger.warning(
+                        "Transaction failed for job %s, device %s", job.display_id, device.hostname)
+                assigned_jobs.append(job.id)
+                reserved_devices.append(device.hostname)
+                self.logger.info("Assigned %s to %s", device, job)
+                if device in devices:
+                    self.logger.debug("Removing %s from the list of available devices",
+                                      str(device.hostname))
+                    devices.remove(device)
+        # re-evaluate the devices query set using list() now that the job loop is complete
+        devices = list(self._get_available_devices())
+        postprocess = self._validate_non_idle_devices(reserved_devices, devices)
+        if postprocess and reserved_devices:
+            self.logger.debug("All queued jobs checked, %d devices reserved and validated", len(reserved_devices))
+
         # worker heartbeat must not occur within this loop
-        self.logger.debug("Assigned %d jobs on %s devices", len(assigned_jobs), len(reserved_devices))
+        self.logger.info("Assigned %d jobs on %s devices", len(assigned_jobs), len(reserved_devices))
 
     def _kill_canceling(self, job):
         """
@@ -585,25 +672,34 @@ class DatabaseJobSource(object):
         if len(cancel_list) > 0:
             self.logger.debug("Number of jobs in cancelling status %d", len(cancel_list))
             for job in cancel_list:
-                if job.actual_device and job.actual_device.hostname in self.my_devices():
+                device_list = get_temporary_devices(self.my_devices())
+                if job.actual_device and job.actual_device.hostname in device_list:
                     self.logger.debug("Looking for pid of dispatch job %s in %s", job.id, job.output_dir)
                     self._kill_canceling(job)
                     device = Device.objects.get(hostname=job.actual_device.hostname)
-                    if device.status == Device.RUNNING:
+                    transition_device = False
+                    if device.status == Device.OFFLINING:
+                        new_state = Device.OFFLINE
+                        transition_device = True
+                    if device.status in [Device.RESERVED, Device.RUNNING]:
                         new_state = Device.IDLE
-                        if job.is_vmgroup:
-                            try:
-                                if device.temporarydevice:
-                                    new_state = Device.RETIRED
-                            except TemporaryDevice.DoesNotExist:
-                                self.logger.debug("%s is not a tmp device", device.hostname)
+                        transition_device = True
+                    if job.is_vmgroup:
+                        try:
+                            # any canceled temporary device always goes to RETIRED
+                            # irrespective of previous state or code above
+                            if device.temporarydevice:
+                                new_state = Device.RETIRED
+                                transition_device = True
+                        except TemporaryDevice.DoesNotExist:
+                            self.logger.debug("%s is not a tmp device", device.hostname)
+                    if transition_device:
+                        device.current_job = None  # creating the transition calls save()
                         self.logger.debug("Transitioning %s to %s", device.hostname, new_state)
-                        device.current_job = None
                         msg = "Job %s cancelled" % job.display_id
-                        device.state_transition_to(new_state, message=msg,
-                                                   job=job)
+                        device.state_transition_to(new_state, message=msg, job=job)
                         self._commit_transaction(src='%s state' % device.hostname)
-                    self.logger.info('job %s cancelled on %s', job.id, job.actual_device)
+                        self.logger.info('job %s cancelled on %s', job.id, job.actual_device)
                     job.cancel()
                     self._commit_transaction(src='_handle_cancelling_jobs')
 

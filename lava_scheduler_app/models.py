@@ -2262,7 +2262,7 @@ class TestJob(RestrictedResource):
             return job.status in [TestJob.SUBMITTED, TestJob.RUNNING] and device_ready(job)
 
         if self.is_multinode or self.is_vmgroup:
-            return ready(self) and all(map(ready_or_running, self.sub_jobs_list))
+            return ready_or_running(self) and all(map(ready_or_running, self.sub_jobs_list))
         else:
             return ready(self)
 
