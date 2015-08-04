@@ -129,8 +129,9 @@ class JobParser(object):
         job.parameters['output_dir'] = output_dir
         job.parameters['env_dut'] = env_dut
         job.parameters['target'] = device.target
-        for instance in Protocol.select_all(job.parameters):
-            job.protocols.append(instance(job.parameters))
+        level_tuple = Protocol.select_all(job.parameters)
+        # sort the list of protocol objects by the protocol class level.
+        job.protocols = [item[0](job.parameters) for item in sorted(level_tuple, key=lambda level_tuple: level_tuple[1])]
         pipeline = Pipeline(job=job)
         self._timeouts(data, job)
 
