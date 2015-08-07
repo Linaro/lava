@@ -1,3 +1,9 @@
+lava-dispatcher (2015.8.1-1) unstable; urgency=medium
+
+  * Hot fix production release
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 07 Aug 2015 10:29:26 +0100
+
 lava-dispatcher (2015.8-1) unstable; urgency=medium
 
   [ Senthil Kumaran S (stylesen) ]
