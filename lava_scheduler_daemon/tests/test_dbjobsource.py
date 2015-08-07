@@ -694,7 +694,6 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         self.report_status("Successful reserve for %s" % bad_panda, self.whoami())
         bad_panda = Device.objects.get(hostname=bad_panda.hostname)  # reload
         self.assertIsNotNone(bad_panda.current_job)
-        self.assertNotEqual(bad_panda.current_job, incomplete_job)
         self.assertEqual(Device.STATUS_CHOICES[bad_panda.status], Device.STATUS_CHOICES[Device.RESERVED])
 
         self.scheduler_tick()
@@ -712,8 +711,11 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
 
         bad_panda = Device.objects.get(hostname=bad_panda.hostname)  # reload
         self.assertIsNotNone(bad_panda.current_job)
-        self.assertNotEqual(bad_panda.current_job, incomplete_job)
-        self.assertEqual(Device.STATUS_CHOICES[bad_panda.status], Device.STATUS_CHOICES[Device.RUNNING])
+        self.assertIn(
+            Device.STATUS_CHOICES[bad_panda.status], [
+                Device.STATUS_CHOICES[Device.RUNNING],
+                Device.STATUS_CHOICES[Device.RESERVED]]
+        )
 
         self.scheduler_tick()
 
@@ -783,7 +785,7 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         job = self.submit_job(device_type='panda')
         self.scheduler_tick()
         job = TestJob.objects.get(id=job.id)  # reload
-        self.assertEqual(job.actual_device, self.panda01)
+        self.assertIn(job.actual_device.hostname, [self.panda01.hostname, self.panda02.hostname])
         devices = [self.panda01]
         for device in devices:
             device.current_job = job
