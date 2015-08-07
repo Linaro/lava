@@ -297,6 +297,25 @@ class DatabaseJobSource(object):
                 errors.append('j')
         return errors == []
 
+    def _validate_queue(self):
+        """
+        Invalid reservation states can leave zombies which are SUBMITTED with an actual device.
+        These jobs get ignored by the get_job_queue function and therfore by assign_jobs *unless*
+        another job happens to reference that specific device.
+        """
+        jobs = TestJob.objects.filter(status=TestJob.SUBMITTED)
+        jobs = jobs.filter(actual_device__isnull=False)
+        for job in jobs:
+            if not job.actual_device.current_job:
+                device = Device.objects.get(hostname=job.actual_device.hostname)
+                if device.status != Device.IDLE:
+                    continue
+                self.logger.warning(
+                    "Fixing up a broken device reservation for queued %s on %s", job, device.hostname)
+                device.status = Device.RESERVED
+                device.current_job = job
+                device.save(update_fields=['status', 'current_job'])
+
     def _validate_idle_device(self, job, device):
         """
         The problem here is that instances with a lot of devices would spend a lot of time
@@ -366,6 +385,7 @@ class DatabaseJobSource(object):
         # FIXME: in dispatcher-master, implement as in share/zmq/assign.[dia|png]
         # FIXME: Make the forced health check constraint explicit
         # evaluate the testjob query set using list()
+        self._validate_queue()
         jobs = list(self._get_job_queue())
         if not jobs:
             return
