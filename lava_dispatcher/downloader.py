@@ -23,6 +23,7 @@ import bz2
 import contextlib
 import logging
 import lzma
+import tarfile
 import os
 import re
 import subprocess
@@ -210,6 +211,13 @@ def download_image(url_string, context, imgdir=None,
                         sha256.update(buff)
             logging.info("md5sum of downloaded content: %s", md5.hexdigest())
             logging.debug("sha256sum of downloaded content: %s", sha256.hexdigest())
+
+            if fname.endswith('.img.tar'):
+                orig = fname
+                with tarfile.open(fname, 'r') as f:
+                    f.extractall(imgdir)
+                fname = '.'.join(orig.split('.')[:-1])
+                os.remove(orig)
 
             if fname.endswith('.qcow2'):
                 orig = fname
