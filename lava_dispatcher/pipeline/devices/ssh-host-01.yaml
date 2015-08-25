@@ -34,8 +34,8 @@ actions:
           - '-u'
           - 'root'
         name:
-          - unstable
-          - sid
+          - raring
+          - ringtail
       ssh:
       vm:
 

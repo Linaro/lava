@@ -20,14 +20,18 @@
 
 
 import os
+import json
 import signal
 from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.action import Action
 from lava_dispatcher.pipeline.shell import ShellCommand, ShellSession
+from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
+from lava_dispatcher.pipeline.utils.constants import DEFAULT_SHELL_PROMPT
 
-# pylint: disable=too-many-public-methods
+
+# pylint: disable=too-many-public-methods,too-many-instance-attributes
 
 
 class SShSession(ShellSession):
@@ -51,9 +55,8 @@ class ConnectSsh(Action):
     """
     Initiate an SSH connection from the dispatcher to a device.
     Connections from test images can be done in test definitions.
-    This class reads the destination data directly from the device configuration.
-    For SSH connections based on protocols and dynamic data from a test image,
-    use ConnectDynamicSsh.
+    If hostID and host_key are not specified as parameters,
+    this class reads the destination data directly from the device configuration.
     This is a Boot action with Retry support.
 
     Note the syntax requirements of methods:
@@ -66,8 +69,8 @@ class ConnectSsh(Action):
 
     def __init__(self):
         super(ConnectSsh, self).__init__()
-        self.name = "primary-ssh"
-        self.summary = "make an ssh connection to a known device"
+        self.name = "ssh-connection"
+        self.summary = "make an ssh connection to a device"
         self.description = "login to a known device using ssh"
         self.command = None
         self.host = None
@@ -75,6 +78,8 @@ class ConnectSsh(Action):
         self.scp_port = ["-P", "22"]
         self.identity_file = None
         self.ssh_user = 'root'
+        self.primary = False
+        self.scp_prompt = None
 
     def _check_params(self):
         # the deployment strategy ensures that this key exists
@@ -91,8 +96,8 @@ class ConnectSsh(Action):
         if 'ssh' not in params:
             self.errors = "Empty ssh parameter list in device configuration %s" % params
             return
-        if any([option for option in params['ssh']['options'] if type(option) != str]):
-            msg = [(option, type(option)) for option in params['ssh']['options'] if type(option) != str]
+        if any([option for option in params['ssh']['options'] if not isinstance(option, str)]):
+            msg = [(option, type(option)) for option in params['ssh']['options'] if not isinstance(option, str)]
             self.errors = "[%s] Invalid device configuration: all options must be only strings: %s" % (self.name, msg)
             return
         if 'port' in params['ssh']:
@@ -111,6 +116,9 @@ class ConnectSsh(Action):
         super(ConnectSsh, self).validate()
         params = self._check_params()
         self.errors = infrastructure_error('ssh')
+        if 'host' in self.job.device['actions']['deploy']['methods']['ssh']:
+            self.primary = True
+            self.host = self.job.device['actions']['deploy']['methods']['ssh']['host']
         if self.valid:
             self.command = ['ssh']
             self.command.extend(params['options'])
@@ -129,90 +137,27 @@ class ConnectSsh(Action):
         command = self.command[:]  # local copy for idempotency
         command.extend(['-i', self.identity_file])
 
-        if self.host:
+        host_address = self.get_common_data('ssh-connection', 'host_address')
+        if host_address:
+            self.logger.info("Using common data to retrieve host_address for secondary connection.")
+            self.host = host_address
+        elif self.host and not self.primary:
+            self.logger.info("Using device data host_address for primary connection.")
             command.append("%s@%s" % (self.ssh_user, self.host))
         else:
-            # get from the protocol
-            pass
+            raise JobError("Unable to identify host address. Primary? %s", self.primary)
         command_str = " ".join(str(item) for item in command)
-        # use device data for destination
         self.logger.info("%s Connecting to device %s using '%s'", self.name, self.host, command_str)
-        shell = ShellCommand("%s\n" % command_str, self.timeout)
+        shell = ShellCommand("%s\n" % command_str, self.timeout, logger=self.logger)
         if shell.exitstatus:
             raise JobError("%s command exited %d: %s" % (
                 self.command, shell.exitstatus, shell.readlines()))
         # SshSession monitors the pexpect
         connection = SShSession(self.job, shell)
         connection = super(ConnectSsh, self).run(connection, args)
-        if not connection.prompt_str:
-            connection.prompt_str = self.parameters['prompts']
+        connection.sendline('export PS1="%s"' % DEFAULT_SHELL_PROMPT)
+        connection.prompt_str = [DEFAULT_SHELL_PROMPT]
         connection.connected = True
         self.wait(connection)
         self.data["boot-result"] = 'success'
         return connection
-
-
-class Scp(ConnectSsh):
-    """
-    Use the SSH connection options to copy files over SSH
-    One action per scp operation, just as with download action
-    Needs the reference into the common data for each file to copy
-    This is a Deploy action. lava-start is managed by the protocol,
-    when this action starts, the device is in the "receiving" state.
-    """
-    def __init__(self, key):
-        super(Scp, self).__init__()
-        self.name = "scp-deploy"  # FIXME: confusing name as this is in the connections folder, not actions/deploy.
-        self.summary = "scp over the ssh connection"
-        self.description = "copy a file to a known device using scp"
-        self.key = key
-        self.scp = []
-
-    def validate(self):
-        super(Scp, self).validate()
-        params = self._check_params()
-        self.errors = infrastructure_error('scp')
-        if self.valid:
-            self.scp.append('scp')
-            self.scp.extend(params['options'])
-
-    def run(self, connection, args=None):
-        path = self.get_common_data(self.name, self.key)
-        if not path:
-            self.errors = "%s: could not find details of '%s'" % (self.name, self.key)
-            self.logger.error("%s: could not find details of '%s'" % (self.name, self.key))
-            return connection
-        destination = "%s-%s" % (self.job.job_id, os.path.basename(path))
-        command = self.scp[:]  # local copy
-        command.extend(['-i', self.identity_file])
-        # add the local file as source
-        command.append(path)
-        # add the remote as destination, with :/ top level directory
-        command.append("%s:/%s" % (self.host, destination))
-        command_str = " ".join(str(item) for item in command)
-        self.logger.info("Copying %s using %s" % (self.key, command_str))
-        self.run_command(command)
-        connection = super(Scp, self).run(connection, args)
-        self.wait(connection)
-        self.set_common_data('scp-overlay-unpack', 'overlay', destination)
-        self.wait(connection)
-        return connection
-
-
-class ConnectDynamicSsh(ConnectSsh):
-    """
-    Adaptation to read the destination from common data / protocol
-    Connect from the dispatcher to a dynamically provisioned ssh server
-    Returns a new Connection.
-    """
-    def __init__(self):
-        super(ConnectDynamicSsh, self).__init__()
-        self.name = "ssh-connect"
-        self.summary = "connect to a test image using ssh"
-        self.description = "login to a test image using a declared IP address"
-
-    def run(self, connection, args=None):
-        if connection:
-            self.logger.debug("Already connected")
-            return connection
-        # FIXME

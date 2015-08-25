@@ -18,8 +18,10 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-# pylint: disable=too-many-return-statements
+# pylint: disable=too-many-return-statements,too-many-instance-attributes
 
+import os
+import yaml
 from lava_dispatcher.pipeline.action import Pipeline, Action
 from lava_dispatcher.pipeline.logical import Boot, RetryAction
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
@@ -27,6 +29,7 @@ from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnviro
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.connections.ssh import ConnectSsh
+from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 
 
 class SshLogin(Boot):
@@ -75,11 +78,112 @@ class SshAction(RetryAction):
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        scp = Scp('overlay')
+        self.internal_pipeline.add_action(scp)
+        self.internal_pipeline.add_action(PrepareSsh())
         self.internal_pipeline.add_action(ConnectSsh())
         self.internal_pipeline.add_action(AutoLoginAction())
         self.internal_pipeline.add_action(ExpectShellSession())
         self.internal_pipeline.add_action(ExportDeviceEnvironment())
         self.internal_pipeline.add_action(ScpOverlayUnpack())
+
+
+class Scp(ConnectSsh):
+    """
+    Use the SSH connection options to copy files over SSH
+    One action per scp operation, just as with download action
+    Needs the reference into the common data for each file to copy
+    This is a Deploy action. lava-start is managed by the protocol,
+    when this action starts, the device is in the "receiving" state.
+    """
+    def __init__(self, key):
+        super(Scp, self).__init__()
+        self.name = "scp-deploy"
+        self.summary = "scp over the ssh connection"
+        self.description = "copy a file to a known device using scp"
+        self.key = key
+        self.scp = []
+
+    def validate(self):
+        super(Scp, self).validate()
+        params = self._check_params()
+        self.errors = infrastructure_error('scp')
+        if 'ssh' not in self.job.device['actions']['deploy']['methods']:
+            self.errors = "Unable to use %s without ssh deployment" % self.name
+        if 'ssh' not in self.job.device['actions']['boot']['methods']:
+            self.errors = "Unable to use %s without ssh boot" % self.name
+        if self.get_common_data("prepare-scp-overlay", self.key):
+            self.primary = False
+        elif 'host' not in self.job.device['actions']['deploy']['methods']['ssh']:
+            self.errors = "Invalid device or job configuration, missing host."
+        if not self.primary and len(
+                self.get_common_data("prepare-scp-overlay", self.key)) != 1:
+            self.errors = "Invalid number of host_keys"
+        if self.valid:
+            self.scp.append('scp')
+            self.scp.extend(params['options'])
+
+    def run(self, connection, args=None):
+        path = self.get_common_data(self.name, self.key)
+        if not path:
+            self.errors = "%s: could not find details of '%s'" % (self.name, self.key)
+            self.logger.error("%s: could not find details of '%s'", self.name, self.key)
+            return connection
+        overrides = self.get_common_data("prepare-scp-overlay", self.key)
+        if not self.primary:
+            self.logger.info("Retrieving common data for prepare-scp-overlay using %s", ','.join(overrides))
+            self.host = str(self.get_common_data("prepare-scp-overlay", overrides[0]))
+            self.logger.debug("Using common data for host: %s", self.host)
+        elif not self.host:
+            self.errors = "%s: could not find host for deployment" % self.name
+            self.logger.error("%s: could not find host for deployment", self.name)
+            return connection
+        destination = "%s-%s" % (self.job.job_id, os.path.basename(path))
+        command = self.scp[:]  # local copy
+        command.extend(['-i', self.identity_file])
+        command.extend(['-v'])
+        # add the local file as source
+        command.append(path)
+        command_str = " ".join(str(item) for item in command)
+        self.logger.info("Copying %s using %s to %s", self.key, command_str, self.host)
+        # add the remote as destination, with :/ top level directory
+        command.extend(["%s@%s:/%s" % (self.ssh_user, self.host, destination)])
+        self.logger.info(yaml.dump(command))
+        self.run_command(command)
+        connection = super(Scp, self).run(connection, args)
+        self.results = {'success': 'ssh deployment'}
+        self.set_common_data('scp-overlay-unpack', 'overlay', destination)
+        self.data['boot-result'] = 'failed' if self.errors else 'success'
+        return connection
+
+
+class PrepareSsh(Action):
+    """
+    Sets the host for the ConnectSsh
+    """
+    def __init__(self):
+        super(PrepareSsh, self).__init__()
+        self.name = "prepare-ssh"
+        self.summary = "set the host address of the ssh connection"
+        self.description = "determine which address to use for primary or secondary connections"
+        self.primary = False
+
+    def validate(self):
+        if 'parameters' in self.parameters and 'hostID' in self.parameters['parameters']:
+            self.set_common_data('ssh-connection', 'host', True)
+        else:
+            self.set_common_data('ssh-connection', 'host', False)
+            self.primary = True
+
+    def run(self, connection, args=None):
+        connection = super(PrepareSsh, self).run(connection, args)
+        if not self.primary:
+            host_data = self.get_common_data(MultinodeProtocol.name, self.parameters['parameters']['hostID'])
+            self.set_common_data(
+                'ssh-connection', 'host_address',
+                host_data[self.parameters['parameters']['host_key']]
+            )
+        return connection
 
 
 class ScpOverlayUnpack(Action):

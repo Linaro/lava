@@ -471,6 +471,12 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
 
         # now pretend that another job has called lava-send with the same messageID, this would be the reply to the
         # :lava-wait
+        reply = {"/tmp/lava-dispatcher/slave/8833/device.yaml": {"ipaddr": "10.15.206.133"}}
+        cparams = {'timeout': {'minutes': 5, 'yaml_line': 11}, 'messageID': 'ipv4', 'action': 'prepare-scp-overlay', 'message': {'ipaddr': '$ipaddr'}, 'request': 'lava-wait'}
+        self.assertEqual(
+            ('ipv4', {'ipaddr': '10.15.206.133'}),
+            mn_protocol.collate(reply, cparams)
+        )
         reply = {
             "message": {
                 "kvm01": {

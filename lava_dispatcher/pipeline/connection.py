@@ -248,8 +248,7 @@ class Protocol(object):  # pylint: disable=abstract-class-not-used
     level = 0
 
     def __init__(self, parameters):
-        # FIXME: allow the bare logger to use the zmq socket
-        self.logger = logging.getLogger("root")
+        self.logger = logging.getLogger("dispatcher")
         self.poll_timeout = Timeout(self.name)
         self.parameters = None
         self.__errors__ = []

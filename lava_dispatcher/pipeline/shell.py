@@ -23,6 +23,7 @@ import os
 import pexpect
 import sys
 import time
+import logging
 from lava_dispatcher.pipeline.action import (
     Action,
     JobError,
@@ -80,6 +81,8 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
     def __init__(self, command, lava_timeout, logger=None, cwd=None):
         if not lava_timeout or not isinstance(lava_timeout, Timeout):
             raise RuntimeError("ShellCommand needs a timeout set by the calling Action")
+        if not logger:
+            raise RuntimeError("ShellCommand needs a logger")
         pexpect.spawn.__init__(
             self, command,
             timeout=lava_timeout.duration,

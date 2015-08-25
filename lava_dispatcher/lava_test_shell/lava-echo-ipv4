@@ -1,0 +1,20 @@
+#NOTE the lava_test_shell_action fills in the proper interpreter path
+# above during target deployment
+
+usage () {
+    echo "Usage: lava-echo-ipv4 INTERFACE"
+    echo ""
+    echo "Runs ifconfig for the specified interface and outputs the ipv4 IP address, if any."
+}
+
+_NETWORK_INTERFACE=$1
+
+if [ -z "$_NETWORK_INTERFACE" ]; then
+    echo "Specify the interface to query"
+    exit
+fi
+
+if [ -x /sbin/ifconfig ]; then
+    _RAW_STREAM_V4=`/sbin/ifconfig $_NETWORK_INTERFACE |grep -o -E '([[:xdigit:]]{1,3}\.){3}[[:xdigit:]]{1,3}'`
+    echo $_RAW_STREAM_V4 | awk '{print$1}'
+fi

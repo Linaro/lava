@@ -90,6 +90,7 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
         script_list = [
             'lava-test-case',
             'lava-add-keys',
+            'lava-echo-ipv4',
             'lava-install-packages',
             'lava-test-case-attach',
             'lava-os-build',
