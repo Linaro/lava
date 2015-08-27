@@ -10,9 +10,14 @@ To test the new design, use the increasing number of unit tests::
 To run a single test, use the test class name as output by a failing test,
 without the call to ``discover``::
 
- $ python -m unittest lava_dispatcher.pipeline.test.test_job.TestKVMBasicDeploy.test_kvm_basic_test
+ $ python -m unittest lava_dispatcher.pipeline.test.test_basic.TestPipelineInit.test_pipeline_init
 
- $ python -m unittest -v -c -f lava_dispatcher.pipeline.test.test_job.TestKVMBasicDeploy.test_kvm_basic_test
+ $ python -m unittest -v -c -f lava_dispatcher.pipeline.test.test_basic.TestPipelineInit.test_pipeline_init
+
+Sets of tests can also be executed from the :file:`./ci-run` script
+of ``lava-dispatcher`` as well::
+
+ $ ./ci-run --test-suite lava_dispatcher.pipeline.test.test_basic.TestPipelineInit.test_pipeline_init
 
 Also, install the updated ``lava-dispatcher`` package and use it to
 inspect the output of the pipeline using the ``--validate`` switch to
