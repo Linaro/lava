@@ -1152,6 +1152,20 @@ different user, if the test requires this.
    can be shared easily without allowing unexpected access). Hacking
    sessions append to this file after the overlay has been unpacked.
 
+Deployment can also include delivering the LAVA overlay files, including
+the LAVA test shell support scripts and the test definitions specified
+by the submitter, to the **host** device to be executed over the
+secondary connection. So for SSH, the secondary connection typically
+has a test action defined and uses :file:`scp` to put the overlay into
+place before connecting using :file:`ssh` and executing the tests. The
+creation of the overlay is part of the deployment, the delivery of the
+overlay is part of the boot process of the secondary connection, i.e.
+deploy is passive, boot is active. To support this, use the Multinode
+protocol on the host to declare the IP address of the host and communicate
+that to the guest as part of the guest deployment. Then the guest
+uses the data to copy the files and make the connection as part of the
+boot action. See :ref:`writing_secondary_connection_jobs`.
+
 .. _host_role:
 
 Considerations with a secondary connection
