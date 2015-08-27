@@ -201,8 +201,7 @@ class Deployment(object):  # pylint: disable=abstract-class-not-used
                 "device '%s'. %s" % (device['hostname'], cls))
 
         # higher priority first
-        compare = lambda x, y: cmp(y.priority, x.priority)
-        prioritized = sorted(willing, compare)
+        prioritized = sorted(willing, lambda x, y: cmp(y.priority, x.priority))
 
         return prioritized[0]
 
@@ -241,8 +240,7 @@ class Boot(object):
             )
 
         # higher priority first
-        compare = lambda x, y: cmp(y.priority, x.priority)
-        prioritized = sorted(willing, compare)
+        prioritized = sorted(willing, lambda x, y: cmp(y.priority, x.priority))
 
         return prioritized[0]
 
@@ -283,8 +281,7 @@ class LavaTest(object):  # pylint: disable=abstract-class-not-used
             raise NotImplementedError(msg)
 
         # higher priority first
-        compare = lambda x, y: cmp(y.priority, x.priority)
-        prioritized = sorted(willing, compare)
+        prioritized = sorted(willing, lambda x, y: cmp(y.priority, x.priority))
 
         return prioritized[0]
 
