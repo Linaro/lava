@@ -22,8 +22,8 @@ PROFILE_LOGGING = False
 
 
 def is_postgres():
-    return (connection.settings_dict['ENGINE']
-            == 'django.db.backends.postgresql_psycopg2')
+    return (connection.settings_dict['ENGINE'] ==
+            'django.db.backends.postgresql_psycopg2')
 
 
 class IBundleFormatImporter(object):

@@ -675,9 +675,9 @@ class DeviceTypeOverView(JobTableView):
 class NoDTDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        return Device.objects.filter(Q(temporarydevice=None) and
-                                     ~Q(status__in=[Device.RETIRED])
-                                     ).order_by('hostname')
+        return Device.objects.filter(
+            Q(temporarydevice=None) and ~Q(status__in=[Device.RETIRED])
+        ).order_by('hostname')
 
 
 @BreadCrumb("Device Type {pk}", parent=index, needs=['pk'])
@@ -813,8 +813,9 @@ def device_type_detail(request, pk):
                 device_type=dt,
                 status__in=[Device.RUNNING, Device.RESERVED, Device.OFFLINING]).count(),
             'queued_jobs_num': TestJob.objects.filter(
-                Q(status=TestJob.SUBMITTED), Q(requested_device_type=dt)
-                | Q(requested_device__in=Device.objects.filter(device_type=dt))).count(),
+                Q(status=TestJob.SUBMITTED),
+                Q(requested_device_type=dt) |
+                Q(requested_device__in=Device.objects.filter(device_type=dt))).count(),
             'idle_num': Device.objects.filter(device_type=dt, status=Device.IDLE).count(),
             'offline_num': Device.objects.filter(device_type=dt, status__in=[Device.OFFLINE]).count(),
             'retired_num': Device.objects.filter(device_type=dt, status=Device.RETIRED).count(),
@@ -2050,11 +2051,11 @@ def device_detail(request, pk):
             'edit_description': device.can_admin(request.user),
             'show_online': (device.can_admin(request.user) and
                             device.status in [Device.OFFLINE, Device.OFFLINING]),
-            'show_restrict': (device.is_public and device.can_admin(request.user)
-                              and device.status not in [Device.RETIRED]),
-            'show_pool': (not device.is_public and device.can_admin(request.user)
-                          and device.status not in [Device.RETIRED]
-                          and not device.device_type.owners_only),
+            'show_restrict': (device.is_public and device.can_admin(request.user) and
+                              device.status not in [Device.RETIRED]),
+            'show_pool': (not device.is_public and device.can_admin(request.user) and
+                          device.status not in [Device.RETIRED] and not
+                          device.device_type.owners_only),
             'cancel_looping': device.health_status == Device.HEALTH_LOOPING,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_detail, pk=pk),
             'context_help': BreadCrumbTrail.show_help(device_detail, pk="help"),

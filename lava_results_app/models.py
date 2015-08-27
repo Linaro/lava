@@ -146,8 +146,8 @@ class TestCase(models.Model):
         help_text=(_("""Units in which measurement value should be
                      interpreted, for example <q>ms</q>, <q>MB/s</q> etc.
                      There is no semantic meaning inferred from the value of
-                     this field, free form text is allowed. <br/>""")
-                   + help_max_length(100)),
+                     this field, free form text is allowed. <br/>""") +
+                   help_max_length(100)),
         verbose_name=_(u"Units"))
 
     result = models.PositiveSmallIntegerField(
