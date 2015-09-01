@@ -50,6 +50,7 @@ from lava_dispatcher.utils import (
     mkdtemp,
     extract_tar,
     finalize_process,
+    unicode_path_check,
 )
 from lava_dispatcher.client.lmc_utils import (
     generate_image,
@@ -293,7 +294,7 @@ class MasterImageTarget(Target):
             with image_partition_mounted(image, boot_part) as mnt:
                 for boot_file in self.config.boot_files:
                     boot_path = os.path.join(mnt, boot_file)
-                    if os.path.exists(boot_path):
+                    if unicode_path_check(boot_path):
                         boot_file_path = boot_path
                         break
 
@@ -306,7 +307,7 @@ class MasterImageTarget(Target):
                         boot_file_path = file_path
                         break
 
-        if boot_file_path and os.path.exists(boot_file_path):
+        if boot_file_path and unicode_path_check(boot_file_path):
             with open(boot_file_path, 'r') as f:
                 boot_cmds = self._rewrite_boot_cmds(f.read())
                 self.__boot_cmds_dynamic__ = boot_cmds

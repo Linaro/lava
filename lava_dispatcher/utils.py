@@ -636,3 +636,14 @@ def search_substr_from_array(string, array, sep=','):
         if re.search('.*' + str(obj) + '.*', str(string)):
             return True
     return False
+
+
+def unicode_path_check(path):
+    """
+    Safe check for paths which may include unicode characters
+    :param path: path to check with exists.
+    :return: False if None, else return value of os.path.exists
+    """
+    if not path:
+        return False
+    return os.path.exists(path)

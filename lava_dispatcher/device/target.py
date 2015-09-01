@@ -31,7 +31,8 @@ import lava_dispatcher.utils as utils
 from lava_dispatcher.device import boot_options
 from lava_dispatcher import deployment_data
 from lava_dispatcher.utils import (
-    wait_for_prompt
+    wait_for_prompt,
+    unicode_path_check,
 )
 from lava_dispatcher.client.lmc_utils import (
     image_partition_mounted
@@ -77,10 +78,10 @@ class ImagePathHandle(object):
             local_path = utils.mkdtemp(basedir=context.config.lava_image_tmpdir)
 
         src_path = '%s/%s' % (self.part_mntdir, self.path)
-        if not os.path.exists(src_path):
+        if not unicode_path_check(src_path):
             raise CriticalError('Can not find source in image (%s at part %s)!' % (self.path, self.part))
         if os.path.isdir(src_path):
-            if not os.path.exists(local_path):
+            if not unicode_path_check(local_path):
                 des_path = local_path
             else:
                 if self.file_name == '':
@@ -91,13 +92,13 @@ class ImagePathHandle(object):
             logging.debug("Copying dir from #%s:%s(%s) to %s!", self.part, self.path, src_path, des_path)
             shutil.copytree(src_path, des_path)
         elif os.path.isfile(src_path):
-            if not os.path.exists(local_path):
+            if not unicode_path_check(local_path):
                 if os.path.basename(local_path) == '':
                     des_name = os.path.basename(src_path)
                     des_path = os.path.join(local_path, des_name)
                     os.makedirs(local_path)
                 else:
-                    if not os.path.exists(os.path.dirname(local_path)):
+                    if not unicode_path_check(os.path.dirname(local_path)):
                         os.makedirs(os.path.dirname(local_path))
                     des_path = local_path
             else:
@@ -116,12 +117,12 @@ class ImagePathHandle(object):
     def copy_from(self, local_path):
         # copy file from local path into image
         src_path = local_path
-        if not os.path.exists(src_path):
+        if not unicode_path_check(src_path):
             raise CriticalError('Can not find source in local server (%s)!' % src_path)
 
         if os.path.isdir(src_path):
             des_path = '%s/%s' % (self.part_mntdir, self.path)
-            if os.path.exists(des_path):
+            if unicode_path_check(des_path):
                 if os.path.basename(src_path) == '':
                     des_name = os.path.basename(os.path.dirname(src_path))
                 else:
@@ -131,13 +132,13 @@ class ImagePathHandle(object):
             shutil.copytree(src_path, des_path)
         elif os.path.isfile(src_path):
             des_path = '%s/%s' % (self.part_mntdir, self.path)
-            if not os.path.exists(des_path):
+            if not unicode_path_check(des_path):
                 if os.path.basename(des_path) == '':
                     os.makedirs(des_path)
                     des_name = os.path.basename(src_path)
                     des_path = os.path.join(des_path, des_name)
                 else:
-                    if not os.path.exists(os.path.dirname(des_path)):
+                    if not unicode_path_check(os.path.dirname(des_path)):
                         os.makedirs(os.path.dirname(des_path))
             else:
                 if os.path.isdir(des_path):
@@ -869,10 +870,10 @@ class Target(object):
             # substitution.
             profile_path = profile_path % rootdir
 
-        if os.path.exists(profile_path):
+        if unicode_path_check(profile_path):
             with open(profile_path, 'a') as f:
                 f.write('export PS1="%s"\n' % self.tester_ps1)
-        if os.path.exists('%s/etc/hostname' % rootdir):
+        if unicode_path_check('%s/etc/hostname' % rootdir):
             with open('%s/etc/hostname' % rootdir, 'w') as f:
                 f.write('%s\n' % self.config.hostname)
 
@@ -947,7 +948,7 @@ class Target(object):
         os_release_id = 'linux'
         mnt = self.mount_info['rootfs']
         os_release_file = '%s/etc/os-release' % mnt
-        if os.path.exists(os_release_file):
+        if unicode_path_check(os_release_file):
             for line in open(os_release_file):
                 if line.startswith('ID='):
                     os_release_id = line[(len('ID=')):]
@@ -956,7 +957,7 @@ class Target(object):
 
         profile_path = "%s/etc/profile" % mnt
         if os_release_id == 'debian' or os_release_id == 'ubuntu' or \
-                os.path.exists('%s/etc/debian_version' % mnt):
+                unicode_path_check('%s/etc/debian_version' % mnt):
             self.deployment_data = deployment_data.ubuntu
             profile_path = '%s/root/.bashrc' % mnt
         elif os_release_id == 'fedora':
