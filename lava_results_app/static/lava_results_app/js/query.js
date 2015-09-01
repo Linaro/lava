@@ -82,4 +82,38 @@ $(document).ready(function () {
         submit_modal_dialog('#condition_form', '#condition_modal',
                             'invalid_form')
     });
+
+
+    init_loading_dialog = function() {
+	// Setup the loading image dialog.
+        $("#refresh_loading_dialog").append('<img src="/static/dashboard_app/images/ajax-progress.gif" alt="Loading..." />');
+	if (is_updating == "False") {
+            $('#refresh_loading_dialog').hide();
+	}
+    }
+    init_loading_dialog();
+
+    $("#query_refresh").click(function() {
+        $.ajax({
+            url: "+refresh",
+            type: 'POST',
+	    data: {csrfmiddlewaretoken: csrf_token},
+	    beforeSend: function () {
+                $('#refresh_loading_dialog').show();
+            },
+            success: function(data, textStatus, jqXHR){
+		$('#refresh_loading_dialog').hide();
+		if (data[0] == true) {
+		    $('#last_updated').html(data[1]);
+		} else {
+		    alert("Update failed: " + data[2]);
+		}
+            },
+	    error: function(data, status, error) {
+                $('#refresh_loading_dialog').hide();
+                alert('Operation failed, please try again or contact system administrator.');
+            }
+        });
+    });
+
 });

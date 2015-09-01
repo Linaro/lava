@@ -29,11 +29,18 @@ from lava_results_app.models import (
 class QueryForm(forms.ModelForm):
     class Meta:
         model = Query
-        exclude = ('is_published', 'query_group', 'group')
+        exclude = ('is_published', 'query_group', 'group', 'is_changed',
+                   'is_updating')
         widgets = {'owner': forms.HiddenInput}
 
     def __init__(self, owner, *args, **kwargs):
+        is_copy = kwargs.pop('is_copy', None)
         super(QueryForm, self).__init__(*args, **kwargs)
+        if is_copy:
+            from copy import deepcopy
+            self.instance = deepcopy(self.instance)
+            self.instance.id = None
+            self.instance.pk = None
 
     def save(self, commit=True, **kwargs):
         instance = super(QueryForm, self).save(commit=commit, **kwargs)
@@ -42,9 +49,9 @@ class QueryForm(forms.ModelForm):
 
 FIELD_CHOICES = {
     "testjob": ["submitter", "start_time", "end_time", "status",
-                "actual_device", "health_check", "user", "group", "priority"],
+                "actual_device", "health_check", "user", "group", "priority",
+                "is_pipeline"],
     "testsuite": ["name"],
-    "testset": ["name"],
     "testcase": ["name", "result", "measurement"],
     "namedattribute": []
 }
@@ -68,8 +75,16 @@ class QueryConditionForm(forms.ModelForm):
         form_data = self.cleaned_data
         # TODO: do field 'field' validation here based on selected table
         # FIELD_CHOICES
-        if FIELD_CHOICES[form_data["table"].model]:
-            if form_data["field"] not in FIELD_CHOICES[form_data["table"].model]:
-                self.add_error("field", "Allowed choices for 'field' are: %s" %
-                               (",".join(FIELD_CHOICES[form_data["table"].model])))
+        try:
+            if FIELD_CHOICES[form_data["table"].model]:
+                if form_data["field"] not in \
+                   FIELD_CHOICES[form_data["table"].model]:
+                    self.add_error("field",
+                                   "Allowed choices for 'field' are: %s" %
+                                   (", ".join(FIELD_CHOICES[form_data[
+                                       "table"].model])))
+        except KeyError:
+            # form_data will pick up the validation errors by itself.
+            pass
+
         return form_data

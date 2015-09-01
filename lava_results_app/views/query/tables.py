@@ -24,7 +24,6 @@ from lava_results_app.models import (
     QueryCondition,
     TestCase,
     TestSuite,
-    TestSet,
 )
 
 from lava_scheduler_app.models import TestJob
@@ -33,6 +32,10 @@ from lava_scheduler_app.tables import (
     DateColumn,
     TagsColumn,
     RestrictedIDLinkColumn
+)
+from lava_results_app.tables import (
+    ResultsTable,
+    SuiteTable
 )
 
 
@@ -156,7 +159,7 @@ class QueryTestJobTable(JobTable):
         queries = {}
 
 
-class QueryTestCaseTable(LavaTable):
+class QueryTestCaseTable(SuiteTable):
 
     name = tables.TemplateColumn('''
     <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
@@ -166,7 +169,7 @@ class QueryTestCaseTable(LavaTable):
         super(QueryTestCaseTable, self).__init__(data, *args, **kwargs)
         self.length = 25
 
-    class Meta:
+    class Meta(SuiteTable.Meta):
         model = TestCase
         attrs = {"class": "table table-hover", "id": "query-results-table"}
         per_page_field = "length"
@@ -175,7 +178,7 @@ class QueryTestCaseTable(LavaTable):
         ]
 
 
-class QueryTestSuiteTable(LavaTable):
+class QueryTestSuiteTable(ResultsTable):
 
     name = tables.TemplateColumn('''
     <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
@@ -185,23 +188,7 @@ class QueryTestSuiteTable(LavaTable):
         super(QueryTestSuiteTable, self).__init__(data, *args, **kwargs)
         self.length = 25
 
-    class Meta:
+    class Meta(ResultsTable.Meta):
         model = TestSuite
-        attrs = {"class": "table table-hover", "id": "query-results-table"}
-        per_page_field = "length"
-
-
-class QueryTestSetTable(LavaTable):
-
-    name = tables.TemplateColumn('''
-    <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
-    ''')
-
-    def __init__(self, data, *args, **kwargs):
-        super(QueryTestSetTable, self).__init__(data, *args, **kwargs)
-        self.length = 25
-
-    class Meta:
-        model = TestSet
         attrs = {"class": "table table-hover", "id": "query-results-table"}
         per_page_field = "length"

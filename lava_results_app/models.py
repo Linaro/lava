@@ -32,19 +32,82 @@ import yaml
 import urllib
 import logging
 
+from datetime import datetime, timedelta
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
-from django.db import models, IntegrityError
+from django.db import models, connection, IntegrityError
 from django.db.models import Q
 from django_restricted_resource.models import RestrictedResource
 from django.utils.translation import ugettext_lazy as _
+from django.utils import timezone
 
-from lava_scheduler_app.models import TestJob
+from lava.utils.managers import MaterializedView
+from lava_scheduler_app.models import (
+    TestJob,
+    Device,
+    DeviceType
+)
 from lava_results_app.utils import help_max_length
 
 # TODO: this may need to be ported - clashes if redefined
 from dashboard_app.models import NamedAttribute
+
+
+class QueryUpdatedError(Exception):
+    """ Error raised if query is updating or recently updated. """
+
+
+class QueryMaterializedView(MaterializedView):
+
+    class Meta:
+        abstract = True
+
+    CREATE_VIEW = "CREATE MATERIALIZED VIEW %s%s AS %s;"
+    DROP_VIEW = "DROP MATERIALIZED VIEW IF EXISTS %s%s;"
+    REFRESH_VIEW = "REFRESH MATERIALIZED VIEW %s%s;"
+    VIEW_EXISTS = "SELECT EXISTS(SELECT * FROM pg_class WHERE relname='%s%s');"
+    QUERY_VIEW_PREFIX = "query_"
+
+    @classmethod
+    def create(cls, query):
+        # Check if view for this query exists.
+        cursor = connection.cursor()
+        query_str = cls.VIEW_EXISTS % (cls.QUERY_VIEW_PREFIX, query.id)
+        cursor.execute(cls.VIEW_EXISTS % (cls.QUERY_VIEW_PREFIX, query.id))
+        view_exists = cursor.fetchone()[0]
+        if not view_exists:  # create view
+            sql, params = Query.get_queryset(
+                query.content_type,
+                query.querycondition_set.all()).query.sql_with_params()
+
+            # TODO: check for possibility for sql injections.
+            # possible solution
+            # params = tuple([("'%s'" % unicode(p).replace('%', '%%')) for p in params])
+            # raw_query = raw_query.replace('%s', '{}').format(*params).replace('%', '%%')
+            sql = sql.replace("%s", "'%s'")
+            query_str = sql % params
+
+            # TODO: handle potential exceptions here. what to do if query
+            # view is not created?
+            query_str = cls.CREATE_VIEW % (cls.QUERY_VIEW_PREFIX,
+                                           query.id, query_str)
+            cursor.execute(query_str)
+
+    @classmethod
+    def refresh(cls, query_id):
+        refresh_sql = cls.REFRESH_VIEW % (cls.QUERY_VIEW_PREFIX, query_id)
+        cursor = connection.cursor()
+        cursor.execute(refresh_sql)
+
+    @classmethod
+    def drop(cls, query_id):
+        drop_sql = cls.DROP_VIEW % (cls.QUERY_VIEW_PREFIX, query_id)
+        cursor = connection.cursor()
+        cursor.execute(drop_sql)
+
+    def get_queryset(self):
+        return QueryMaterializedView.objects.all()
 
 
 class TestSuite(models.Model):
@@ -136,6 +199,13 @@ class TestCase(models.Model):
         'unknown': RESULT_UNKNOWN
     }
 
+    RESULT_CHOICES = (
+        (RESULT_PASS, _(u"Test passed")),
+        (RESULT_FAIL, _(u"Test failed")),
+        (RESULT_SKIP, _(u"Test skipped")),
+        (RESULT_UNKNOWN, _(u"Unknown outcome"))
+    )
+
     name = models.TextField(
         blank=True,
         help_text=help_max_length(100),
@@ -153,11 +223,7 @@ class TestCase(models.Model):
     result = models.PositiveSmallIntegerField(
         verbose_name=_(u"Result"),
         help_text=_(u"Result classification to pass/fail group"),
-        choices=(
-            (RESULT_PASS, _(u"Test passed")),
-            (RESULT_FAIL, _(u"Test failed")),
-            (RESULT_SKIP, _(u"Test skipped")),
-            (RESULT_UNKNOWN, _(u"Unknown outcome")))
+        choices=RESULT_CHOICES
     )
 
     measurement = models.CharField(
@@ -424,9 +490,41 @@ class QueryGroup(models.Model):
 QUERY_CONTENT_TYPES = (
     ("testjob", "lava_scheduler_app"),
     ("testcase", "lava_results_app"),
-    ("testsuite", "lava_results_app"),
-    ("testset", "lava_results_app")
+    ("testsuite", "lava_results_app")
 )
+
+
+def TestJobViewFactory(query):
+
+    class TestJobMaterializedView(QueryMaterializedView, TestJob):
+
+        class Meta(QueryMaterializedView.Meta):
+            db_table = '%s%s' % (QueryMaterializedView.QUERY_VIEW_PREFIX,
+                                 query.id)
+
+    return TestJobMaterializedView()
+
+
+def TestCaseViewFactory(query):
+
+    class TestCaseMaterializedView(QueryMaterializedView, TestCase):
+
+        class Meta(QueryMaterializedView.Meta):
+            db_table = '%s%s' % (QueryMaterializedView.QUERY_VIEW_PREFIX,
+                                 query.id)
+
+    return TestCaseMaterializedView()
+
+
+def TestSuiteViewFactory(query):
+
+    class TestSuiteMaterializedView(QueryMaterializedView, TestSuite):
+
+        class Meta(QueryMaterializedView.Meta):
+            db_table = '%s%s' % (QueryMaterializedView.QUERY_VIEW_PREFIX,
+                                 query.id)
+
+    return TestSuiteMaterializedView()
 
 
 class Query(models.Model):
@@ -454,7 +552,7 @@ class Query(models.Model):
 
     content_type = models.ForeignKey(
         ContentType,
-        limit_choices_to=Q(model__in=['testsuite', 'testset', 'testjob']) | (Q(app_label='lava_results_app') & Q(model='testcase')),
+        limit_choices_to=Q(model__in=['testsuite', 'testjob']) | (Q(app_label='lava_results_app') & Q(model='testcase')),
         verbose_name='Query object set'
     )
 
@@ -468,6 +566,23 @@ class Query(models.Model):
     is_published = models.BooleanField(
         default=False,
         verbose_name='Published')
+
+    is_live = models.BooleanField(
+        default=False,
+        verbose_name='Live query')
+
+    is_changed = models.BooleanField(
+        default=False,
+        verbose_name='Live query')
+
+    is_updating = models.BooleanField(
+        default=False,
+        verbose_name='Live query')
+
+    last_updated = models.DateTimeField(
+        blank=True,
+        null=True
+    )
 
     # TODO: Check how this is done in image reports 2.0.
     group_by_attribute = models.CharField(
@@ -486,9 +601,24 @@ class Query(models.Model):
     def __unicode__(self):
         return "<Query ~%s/%s>" % (self.owner.username, self.name)
 
-    @classmethod
-    def get_results(cls, content_type, conditions):
+    def get_results(self):
+        if self.is_live:
+            return Query.get_queryset(self.content_type,
+                                      self.querycondition_set.all())
+        else:
+            if self.content_type.name == TestJob._meta.verbose_name:
+                view = TestJobViewFactory(self)
+            elif self.content_type.name == TestCase._meta.verbose_name:
+                view = TestCaseViewFactory(self)
+            elif self.content_type.name == TestSuite._meta.verbose_name:
+                view = TestSuiteViewFactory(self)
 
+            return view.__class__.objects.all()
+
+    @classmethod
+    def get_queryset(cls, content_type, conditions):
+
+        logger = logging.getLogger('lava_results_app')
         filters = {}
 
         for condition in conditions:
@@ -514,23 +644,73 @@ class Query(models.Model):
                     filter_key = '{0}__name'.format(filter_key)
 
             # Handle conditions with choice fields.
-            condition_field_cls = condition.table.model_class()._meta.get_field_by_name(condition.field)[0]
-            if condition_field_cls.choices:
+            condition_field_obj = condition.table.model_class()._meta.get_field_by_name(condition.field)[0]
+            if condition_field_obj.choices:
                 choices_reverse = dict(
                     (value, key) for key, value in dict(
-                        condition_field_cls.choices).items())
+                        condition_field_obj.choices).items())
                 try:
                     condition.value = choices_reverse[condition.value]
                 except KeyError:
-                    raise QueryConditionChoiceError()
+                    logger.debug('skip condition due to unsupported choice'
+                                 % condition)
+                    continue
+
+            # Handle boolean conditions.
+            if condition_field_obj.__class__ == models.BooleanField:
+                if condition.value == "False":
+                    condition.value = False
+                else:
+                    condition.value = True
 
             # Add operator.
             filter_key = '{0}__{1}'.format(filter_key, condition.operator)
 
             filters[filter_key] = condition.value
         query_results = content_type.model_class().objects.filter(
-            **filters)
+            **filters).extra(
+                select={'%s_ptr_id' % content_type.model:
+                        '%s.id' % content_type.model_class()._meta.db_table})
+
         return query_results
+
+    def refresh_view(self):
+
+        if not self.is_live:  # ignore otherwise.
+            hour_ago = timezone.now() - timedelta(hours=1)
+            if self.is_updating:
+                raise QueryUpdatedError("query is currently updating")
+            # TODO: commented out because of testing purposes.
+            # elif self.last_updated and self.last_updated > hour_ago:
+            #    raise QueryUpdatedError("query was recently updated (less then hour ago)")
+            else:
+                self.is_updating = True
+                self.save()
+
+            try:
+                if self.is_changed:
+                    QueryMaterializedView.drop(self.id)
+                    QueryMaterializedView.create(self)
+                else:
+                    QueryMaterializedView.refresh(self.id)
+
+                self.last_updated = datetime.now()
+
+            finally:
+                self.is_updating = False
+                self.save()
+
+    def save(self, *args, **kwargs):
+        super(Query, self).save(*args, **kwargs)
+        if not self.is_live:
+            # Create the view. This method does nothing if view already exists.
+            QueryMaterializedView.create(self)
+
+    def delete(self, *args, **kwargs):
+        if not self.is_live:
+            # Drop the view.
+            QueryMaterializedView.drop(self.id)
+        super(Query, self).delete(*args, **kwargs)
 
     @models.permalink
     def get_absolute_url(self):
@@ -571,9 +751,21 @@ class QueryCondition(models.Model):
     )
 
     value = models.CharField(
-        max_length=50,
+        max_length=20,
         verbose_name='Field value',
     )
+
+    def save(self, *args, **kwargs):
+        super(QueryCondition, self).save(*args, **kwargs)
+        if not self.query.is_live:
+            self.query.is_changed = True
+            self.query.save()
+
+    def delete(self, *args, **kwargs):
+        super(QueryCondition, self).delete(*args, **kwargs)
+        if not self.query.is_live:
+            self.query.is_changed = True
+            self.query.save()
 
 
 def _get_foreign_key_model(model, fieldname):

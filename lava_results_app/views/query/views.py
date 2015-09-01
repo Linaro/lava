@@ -17,8 +17,9 @@
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
 import csv
-import simplejson
 import os
+import shutil
+import simplejson
 import tempfile
 
 from django.contrib.auth.decorators import login_required
@@ -32,7 +33,7 @@ from django.http import (
     HttpResponseRedirect
 )
 from django.shortcuts import get_object_or_404, render_to_response
-from django.template import RequestContext
+from django.template import RequestContext, defaultfilters
 from django.utils.safestring import mark_safe
 
 from lava_server.bread_crumbs import (
@@ -51,6 +52,7 @@ from lava_results_app.models import (
     Query,
     QueryGroup,
     QueryCondition,
+    QueryUpdatedError,
 )
 
 from lava_results_app.views.query.tables import (
@@ -60,7 +62,6 @@ from lava_results_app.views.query.tables import (
     QueryTestJobTable,
     QueryTestCaseTable,
     QueryTestSuiteTable,
-    QueryTestSetTable,
 )
 
 from lava_scheduler_app.models import TestJob
@@ -73,9 +74,16 @@ from django_tables2 import (
 from lava.utils.lavatable import LavaView
 
 
+CONDITIONS_SEPARATOR = ','
+CONDITION_DIVIDER = '__'
+
+
 class InvalidConditionsError(Exception):
-    ''' Raise when querying by URL has incorrect condition arguments. '''
-    pass
+    """ Raise when querying by URL has incorrect condition arguments. """
+
+
+class InvalidContentTypeError(Exception):
+    """ Raise when querying by URL content type (table name). """
 
 
 class UserQueryView(LavaView):
@@ -114,21 +122,31 @@ QUERY_CONTENT_TYPE_TABLE = {
     "testjob": QueryTestJobTable,
     "testcase": QueryTestCaseTable,
     "testsuite": QueryTestSuiteTable,
-    "testset": QueryTestSetTable
 }
 
 
-class QueryResultView(LavaView):
+class QueryCustomResultView(LavaView):
 
     def __init__(self, content_type, conditions,
                  request, **kwargs):
         self.content_type = content_type
         self.conditions = conditions
         self.request = request
+        super(QueryCustomResultView, self).__init__(request, **kwargs)
+
+    def get_queryset(self):
+        return Query.get_queryset(self.content_type, self.conditions)
+
+
+class QueryResultView(LavaView):
+
+    def __init__(self, query, request, **kwargs):
+        self.query = query
+        self.request = request
         super(QueryResultView, self).__init__(request, **kwargs)
 
     def get_queryset(self):
-        return Query.get_results(self.content_type, self.conditions)
+        return self.query.get_results()
 
 
 @BreadCrumb("Queries", parent=index)
@@ -194,14 +212,12 @@ def query_list(request):
 @BreadCrumb("Query ~{username}/{name}", parent=query_list,
             needs=['username', 'name'])
 @login_required
-@ownership_required
 def query_display(request, username, name):
 
     query = get_object_or_404(Query, owner__username=username, name=name)
 
     view = QueryResultView(
-        content_type=query.content_type,
-        conditions=query.querycondition_set.all(),
+        query=query,
         request=request,
         model=query.content_type.model_class(),
         table_class=QUERY_CONTENT_TYPE_TABLE[query.content_type.model]
@@ -218,7 +234,7 @@ def query_display(request, username, name):
         'lava_results_app/query_display.html', {
             'query': query,
             'entity': query.content_type.model,
-            'conditions': _join_conditions(query),
+            'conditions': _serialize_conditions(query),
             'query_table': table,
             'terms_data': table.prepare_terms_data(view),
             'search_data': table.prepare_search_data(view),
@@ -237,12 +253,16 @@ def query_custom(request):
     # TODO: validate entity as content_type
     # TODO: validate conditions
 
-    content_type = ContentType.objects.get(
-        model=request.GET.get("entity"),
-        app_label=_get_app_label_for_model(request.GET.get("entity"))
-    )
+    try:
+        content_type = ContentType.objects.get(
+            model=request.GET.get("entity"),
+            app_label=_get_app_label_for_model(request.GET.get("entity"))
+        )
+    except ContentType.DoesNotExist:
+        raise InvalidContentTypeError(
+            "Wrong table name in entity param. Please refer to query docs.")
 
-    view = QueryResultView(
+    view = QueryCustomResultView(
         content_type=content_type,
         conditions=_parse_conditions(content_type,
                                      request.GET.get("conditions")),
@@ -265,22 +285,32 @@ def query_custom(request):
 
 
 def _parse_conditions(content_type, conditions):
-    # Parse conditions from request.
+    # Parse conditions from text representation.
+
+    if not conditions:
+        return []
 
     conditions_objects = []
-    for condition_str in conditions.split(","):
+    for condition_str in conditions.split(CONDITIONS_SEPARATOR):
         condition = QueryCondition()
-        condition_fields = condition_str.split("__")
+        condition_fields = condition_str.split(CONDITION_DIVIDER)
         if len(condition_fields) == 3:
             condition.table = content_type
             condition.field = condition_fields[0]
             condition.operator = condition_fields[1]
             condition.value = condition_fields[2]
         elif len(condition_fields) == 4:
-            content_type = ContentType.objects.get(
-                model=condition_fields[0],
-                app_label=_get_app_label_for_model(condition_fields[0])
-            )
+
+            try:
+                content_type = ContentType.objects.get(
+                    model=condition_fields[0],
+                    app_label=_get_app_label_for_model(condition_fields[0])
+                )
+            except ContentType.DoesNotExist:
+                raise InvalidContentTypeError(
+                    "Wrong table name in conditions parameter. " +
+                    "Please refer to query docs.")
+
             condition.table = content_type
             condition.field = condition_fields[1]
             condition.operator = condition_fields[2]
@@ -295,22 +325,22 @@ def _parse_conditions(content_type, conditions):
     return conditions_objects
 
 
-def _join_conditions(query):
-    # Join conditions for query by URL.
-    conditions = None
-    for condition in query.querycondition_set.all():
-        if conditions:
-            conditions += ','
-        else:
-            conditions = ''
-        conditions += '{0}__{1}__{2}__{3}'.format(
-            condition.table.model,
-            condition.field,
-            condition.operator,
-            condition.value
-        )
+def _serialize_conditions(query):
+    # Serialize conditions into string.
 
-    return conditions
+    conditions_list = []
+    for condition in query.querycondition_set.all():
+        conditions_list.append("%s%s%s%s%s%s%s" % (
+            condition.table.model,
+            CONDITION_DIVIDER,
+            condition.field,
+            CONDITION_DIVIDER,
+            condition.operator,
+            CONDITION_DIVIDER,
+            condition.value
+        ))
+
+    return CONDITIONS_SEPARATOR.join(conditions_list)
 
 
 def _get_app_label_for_model(model_name):
@@ -331,10 +361,12 @@ def _get_app_label_for_model(model_name):
 def query_detail(request, username, name):
 
     query = get_object_or_404(Query, owner__username=username, name=name)
+    query_conditions = _serialize_conditions(query)
 
     return render_to_response(
         'lava_results_app/query_detail.html', {
             'query': query,
+            'query_conditions': query_conditions,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 query_detail, username=username, name=name),
             'context_help': BreadCrumbTrail.leading_to(query_list),
@@ -390,6 +422,75 @@ def query_delete(request, username, name):
 
 
 @login_required
+def query_export(request, username, name):
+    """
+    Create and serve the CSV file.
+    """
+
+    query = get_object_or_404(Query, owner__username=username, name=name)
+
+    file_name = "%s_%s" % (username, name)
+    tmp_dir = tempfile.mkdtemp()
+    file_path = os.path.join(tmp_dir, "%s.csv" % file_name)
+
+    query_keys = query.content_type.model_class()._meta.get_all_field_names()
+
+    query_keys.sort()
+    # Remove non-relevant columns for CSV file.
+    removed_fields = [
+        # TestJob fields:
+        "_results_bundle", "_results_bundle_id", "_results_link", "user_id",
+        "actual_device_id", "definition", "group_id", "id",
+        "original_definition", "requested_device_id", "sub_id", "submit_token",
+        "submit_token_id", "submitter_id", "test_data", "test_suites",
+        # TestSuite fields:
+        "job_id",
+        # TestCase fields:
+        "actionlevels", "suite_id", "test_set_id"
+    ]
+    for field in removed_fields:
+        if field in query_keys:
+            query_keys.remove(field)
+
+    # TODO: Add results columns from denormalization object.
+    # query_keys.extend(["pass", "fail", "total"])
+
+    with open(file_path, 'wb+') as csv_file:
+        out = csv.DictWriter(csv_file, quoting=csv.QUOTE_ALL,
+                             extrasaction='ignore',
+                             fieldnames=query_keys)
+        out.writeheader()
+
+        for result in query.get_queryset(query.content_type,
+                                         query.querycondition_set.all()):
+            # Add results columns from summary results.
+            result_dict = result.__dict__.copy()
+
+            # summary_results = result.get_summary_results()
+            # if summary_results:
+            #    query_dict.update(summary_results)
+            # else:
+            #    query_dict["pass"] = 0
+            #    query_dict["fail"] = 0
+            #    query_dict["total"] = 0
+            # try:
+            #    query_dict["uploaded_by_id"] = User.objects.get(
+            #        pk=query.uploaded_by_id).username
+            # except User.DoesNotExist:
+            #    query_dict["uploaded_by_id"] = None
+
+            out.writerow(result_dict)
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = "attachment; filename=%s.csv" % file_name
+    with open(file_path, 'r') as csv_file:
+        response.write(csv_file.read())
+
+    _remove_dir(tmp_dir)
+    return response
+
+
+@login_required
 @ownership_required
 def query_toggle_published(request, username, name):
 
@@ -399,6 +500,117 @@ def query_toggle_published(request, username, name):
     query.save()
 
     return HttpResponseRedirect(query.get_absolute_url() + "/+detail")
+
+
+@BreadCrumb("Copy", parent=query_detail, needs=['username', 'name'])
+@login_required
+@ownership_required
+def query_copy(request, username, name):
+    query = get_object_or_404(Query, owner__username=username, name=name)
+
+    if not request.user.is_superuser:
+        if query.owner != request.user:
+            if not query.group or not request.user.groups.filter(
+                    name=query.group.name).exists():
+                raise PermissionDenied()
+
+    return query_form(
+        request,
+        BreadCrumbTrail.leading_to(query_copy, name=name, username=username),
+        instance=query,
+        is_copy=True)
+
+
+@login_required
+def query_refresh(request, name, username):
+
+    query = get_object_or_404(Query, owner__username=username, name=name)
+
+    success = True
+    error_msg = None
+    try:
+        query.refresh_view()
+    except QueryUpdatedError as e:
+        error_msg = str(e)
+        success = False
+    except Exception as e:
+        raise
+
+    last_updated = defaultfilters.date(query.last_updated, "DATETIME_FORMAT")
+    return HttpResponse(simplejson.dumps([success, str(last_updated),
+                                          error_msg]),
+                        content_type='application/json')
+
+
+@login_required
+def query_group_list(request):
+
+    term = request.GET['term']
+    groups = [str(group.name) for group in QueryGroup.objects.filter(
+        name__istartswith=term)]
+    return HttpResponse(simplejson.dumps(groups),
+                        content_type='application/json')
+
+
+@login_required
+def query_add_group(request, username, name):
+
+    if request.method != 'POST':
+        raise PermissionDenied
+
+    group_name = request.POST.get("value")
+    query = get_object_or_404(Query, owner__username=username, name=name)
+    old_group = query.query_group
+
+    if not group_name:
+        query.query_group = None
+    else:
+        new_group = QueryGroup.objects.get_or_create(name=group_name)[0]
+        query.query_group = new_group
+
+    query.save()
+
+    if old_group:
+        if not old_group.query_set.count():
+            old_group.delete()
+
+    return HttpResponse(group_name, content_type='application/json')
+
+
+@login_required
+@ownership_required
+def query_select_group(request, username, name):
+
+    if request.method != 'POST':
+        raise PermissionDenied
+
+    group_name = request.POST.get("value")
+    query = get_object_or_404(Query, owner__username=username, name=name)
+
+    if not group_name:
+        query.group = None
+    else:
+        group = Group.objects.get(name=group_name)
+        query.group = group
+
+    query.save()
+
+    return HttpResponse(group_name, content_type='application/json')
+
+
+@login_required
+def get_group_names(request):
+
+    term = request.GET['term']
+    groups = []
+    for group in Group.objects.filter(user=request.user,
+                                      name__istartswith=term):
+        groups.append(
+            {"id": group.id,
+             "name": group.name,
+             "label": group.name})
+    return HttpResponse(simplejson.dumps(groups),
+                        content_type='application/json')
 
 
 @login_required
@@ -436,12 +648,12 @@ def query_remove_condition(request, username, name, id):
     return HttpResponseRedirect(query.get_absolute_url() + "/+detail")
 
 
-def query_form(request, bread_crumb_trail, instance=None):
+def query_form(request, bread_crumb_trail, instance=None, is_copy=False):
 
     if request.method == 'POST':
 
         form = QueryForm(request.user, request.POST,
-                         instance=instance)
+                         instance=instance, is_copy=is_copy)
         if form.is_valid():
             query = form.save()
             if request.GET.get("conditions"):
@@ -454,12 +666,19 @@ def query_form(request, bread_crumb_trail, instance=None):
             return HttpResponseRedirect(query.get_absolute_url() + "/+detail")
 
     else:
-        form = QueryForm(request.user, instance=instance)
+        form = QueryForm(request.user, instance=instance, is_copy=is_copy)
         form.fields['owner'].initial = request.user
+
+    query_name = None
+    if is_copy:
+        query_name = instance.name
+        instance.name = None
 
     return render_to_response(
         'lava_results_app/query_form.html', {
             'bread_crumb_trail': bread_crumb_trail,
+            'is_copy': is_copy,
+            'query_name': query_name,
             'form': form,
         }, RequestContext(request))
 
@@ -479,3 +698,14 @@ def query_condition_form(request, query,
     else:
         return HttpResponse(simplejson.dumps(["fail", form.errors]),
                             content_type='application/json')
+
+
+def _remove_dir(path):
+    """ Removes directory @path. Doesn't raise exceptions. """
+    try:
+        # Delete directory.
+        shutil.rmtree(path)
+    except OSError as exception:
+        # Silent exception whatever happens. If it's unexisting dir, we don't
+        # care.
+        pass
