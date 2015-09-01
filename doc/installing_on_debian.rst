@@ -82,10 +82,14 @@ the repository.
 
 In times when the current production release has not made it into
 ``jessie-backports`` (e.g. due to a migration issue in Debian), this
-repository can be used instead. The apt source to use with Debian
-Jessie, Stretch or Sid is::
+repository can be used instead. The **only** apt source to use with Debian
+Jessie, Stretch or Sid is the `production-repo`_ for ``sid`` because the
+same LAVA packages are used on Jessie and Stretch as on Sid::
 
  deb http://images.validation.linaro.org/production-repo sid main
+
+.. note:: There are no packages currently in the repository
+   except in ``sid``.
 
 The codename ``sid`` is used simply as that is the codename for ``unstable``
 which is where all Debian uploads arrive, so to allow the production repo
