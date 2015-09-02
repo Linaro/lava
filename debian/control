@@ -6,11 +6,13 @@ Uploaders: Antonio Terceiro <terceiro@debian.org>,
  Neil Williams <codehelp@debian.org>,
  Fathi Boudra <fabo@debian.org>, Jordi Mallach <jordi@debian.org>
 Build-Depends: debhelper (>= 8.0.0), dh-python,
+ libjs-excanvas, libjs-jquery-cookie, libjs-jquery (>= 1.10),
+ libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), libjs-jquery-ui,
  python | python-all | python-dev | python-all-dev,
  python-sphinx (>= 1.0.7+dfsg) | python3-sphinx, po-debconf,
- python-mocker, python-setuptools (>= 3)
+ python-mocker, python-setuptools (>= 3), python-yaml
 X-Python-Version: 2.7
-XS-Testsuite: autopkgtest
+Testsuite: autopkgtest
 Standards-Version: 3.9.6
 Homepage: http://www.linaro.org/projects/test-validation/
 Vcs-Git: https://github.com/Linaro/pkg-lava-server.git
@@ -25,8 +27,9 @@ Depends: apache2, adduser, diffstat, fuse, iproute2,
  libapache2-mod-uwsgi, libapache2-mod-wsgi, lshw,
  python-daemon, python-dateutil,
  python-django-auth-ldap | python-django-auth-openid (>= 0.5-2),
- python-setuptools, libjs-excanvas,
- libjs-jquery-cookie, libjs-jquery-flot (>= 0.8.2), openssh-client,
+ python-setuptools, libjs-excanvas, libjs-jquery-cookie,
+ libjs-jquery (>= 1.10), libjs-jquery-ui,
+ libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), openssh-client,
  postgresql, postgresql-client, postgresql-common,
  ${python:Depends}, ${misc:Depends}
 Recommends: ntp, lava-coordinator, lava-server-doc
