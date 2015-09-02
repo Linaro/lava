@@ -25,18 +25,6 @@ export DH_OPTIONS
 PYTHON2:=$(shell pyversions -r)
 install_dir=$(call py_libdir, $(PYTHON2))
 
-# embedded JS
-SOURCE=/usr/share/javascript/jquery-flot/
-# dashboard jquery-flot replacements
-DASHBOARD_DIR=$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/
-DASHBOARD_JS=jquery.flot.navigate.min.js jquery.flot.navigate.js jquery.flot.canvas.min.js jquery.flot.canvas.js
-DASHBOARD_JS+=jquery.flot.min.js jquery.flot.js jquery.flot.selection.min.js jquery.flot.selection.js
-DASHBOARD_JS+=jquery.flot.stack.min.js jquery.flot.stack.js jquery.flot.time.min.js jquery.flot.time.js
-
-# scheduler jquery-flot replacements
-SCHEDULER_DIR=$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/lava_scheduler_app/static/lava_scheduler_app/js/
-SCHEDULER_JS=jquery.flot.min.js jquery.flot.js jquery.flot.stack.min.js jquery.flot.stack.js
-
 %:
 	dh $@ --with sphinxdoc,python2
 
@@ -66,25 +54,10 @@ override_dh_auto_install:
 	# skip unwanted licence file specified in copyright
 	$(RM) debian/lava-server/usr/lib/python2.7/dist-packages/google_analytics/LICENSE
 	# handle embedded JS
-	# jquery.flot
-	for file in $(DASHBOARD_JS); do \
-		$(RM) $(DASHBOARD_DIR)/$$file; \
-		ln -s $(SOURCE)/$$file $(DASHBOARD_DIR)/$$file; \
-	done
-	for file in $(SCHEDULER_JS); do \
-		$(RM) $(SCHEDULER_DIR)/$$file; \
-		ln -s $(SOURCE)/$$file $(SCHEDULER_DIR)/$$file; \
-	done
-	# other js libraries
-	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/lava-server/js/jquery.cookie.js
-	ln -s /usr/share/javascript/jquery-cookie/jquery.cookie.js \
-		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/lava-server/js/jquery.cookie.js
-	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/excanvas.js
-	ln -s /usr/share/javascript/excanvas/excanvas.js \
-		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/excanvas.js
-	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/excanvas.min.js
-	ln -s /usr/share/javascript/excanvas/excanvas.min.js \
-		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/dashboard_app/static/dashboard_app/js/excanvas.min.js
+	python ./share/javascript.py -f ./share/javascript.yaml
+	# handle symlink breakage
+	$(RM) -r ./debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/lava-server/htdocs
+	ln -s ./debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/lava-server/htdocs ./debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/lava-server/
 
 override_dh_auto_clean:
 	dh_auto_clean
