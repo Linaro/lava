@@ -90,13 +90,13 @@ class MasterImageTarget(Target):
             self.testboot_path = '%s%s%s' % (self.testboot_dir,
                                              self.config.master_testdisk_id,
                                              self.config.master_testboot_part)
-            self.testrootfs_dir = '%s%s%s' % (self.testboot_dir,
+            self.testrootfs_path = '%s%s%s' % (self.testboot_dir,
                                               self.config.master_testdisk_id,
                                               self.config.master_testrootfs_part)
-            self.sdcard_dir = '%s%s%s' % (self.testboot_dir,
+            self.sdcard_path = '%s%s%s' % (self.testboot_dir,
                                           self.config.master_testdisk_id,
                                           self.config.master_sdcard_part)
-            self.userdata_dir = '%s%s%s' % (self.testboot_dir,
+            self.userdata_path = '%s%s%s' % (self.testboot_dir,
                                             self.config.master_testdisk_id,
                                             self.config.master_userdata_part)
 
