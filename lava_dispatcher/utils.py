@@ -380,13 +380,20 @@ def url_to_cache(url, cachedir):
     return path
 
 
+def _newlines_to_spaces(string):
+    string = string.replace('\r\n', ' ')
+    return string.replace('\n', ' ')
+
+
+def _strip_newlines(string):
+    return _newlines_to_spaces(string).strip(' ')
+
+
 def string_to_list(string):
     splitter = shlex(string, posix=True)
     splitter.whitespace = ","
     splitter.whitespace_split = True
-    newlines_to_spaces = lambda x: x.replace('\n', ' ')
-    strip_newlines = lambda x: newlines_to_spaces(x).strip(' ')
-    return map(strip_newlines, list(splitter))
+    return map(_strip_newlines, list(splitter))
 
 
 def logging_system(cmd):
