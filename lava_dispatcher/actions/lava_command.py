@@ -140,7 +140,7 @@ class cmd_lava_command_run(BaseAction):
     def _get_bundle(self):
         return {
             'test_runs': [self._get_test_runs()],
-            'format': 'Dashboard Bundle Format 1.6'
+            'format': 'Dashboard Bundle Format 1.7.1'
         }
 
     def _write_results_bundle(self, bundle):

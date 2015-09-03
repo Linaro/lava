@@ -4,4 +4,4 @@ set -e
 
 pep8 --ignore E501 .
 
-TMPDIR=. python setup.py test
+TMPDIR=. python setup.py test "$@"

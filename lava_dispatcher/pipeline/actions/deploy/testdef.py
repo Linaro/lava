@@ -128,8 +128,7 @@ class RepoAction(Action):
                 " '%s'." % repo_type)
 
         # higher priority first
-        compare = lambda x, y: cmp(y.priority, x.priority)
-        prioritized = sorted(willing, compare)
+        prioritized = sorted(willing, lambda x, y: cmp(y.priority, x.priority))
 
         return prioritized[0]
 
