@@ -13,3 +13,7 @@ man/_build
 *.pyc
 tags
 *.log
+*~
+*.swp
+tmp*/
+_build/
