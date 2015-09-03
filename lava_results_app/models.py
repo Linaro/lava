@@ -31,16 +31,19 @@ TestCase is a single lava-test-case record or Action result.
 import yaml
 import urllib
 import logging
+
 from django.contrib.auth.models import User, Group
-from django.db import models, IntegrityError
-from django_restricted_resource.models import RestrictedResource
-from django.utils.translation import ugettext_lazy as _
-from lava_scheduler_app.models import TestJob
-from lava_results_app.utils import help_max_length
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
+from django.db import models, IntegrityError
+from django.db.models import Q
+from django_restricted_resource.models import RestrictedResource
+from django.utils.translation import ugettext_lazy as _
 
-# this may need to be ported - clashes if redefined
+from lava_scheduler_app.models import TestJob
+from lava_results_app.utils import help_max_length
+
+# TODO: this may need to be ported - clashes if redefined
 from dashboard_app.models import NamedAttribute
 
 
@@ -143,8 +146,8 @@ class TestCase(models.Model):
         help_text=(_("""Units in which measurement value should be
                      interpreted, for example <q>ms</q>, <q>MB/s</q> etc.
                      There is no semantic meaning inferred from the value of
-                     this field, free form text is allowed. <br/>""")
-                   + help_max_length(100)),
+                     this field, free form text is allowed. <br/>""") +
+                   help_max_length(100)),
         verbose_name=_(u"Units"))
 
     result = models.PositiveSmallIntegerField(
@@ -408,3 +411,174 @@ class ActionData(models.Model):
             self.action_name,
             self.action_level,
             self.meta_type)
+
+
+class QueryGroup(models.Model):
+
+    name = models.SlugField(max_length=1024, unique=True)
+
+    def __unicode__(self):
+        return self.name
+
+
+QUERY_CONTENT_TYPES = (
+    ("testjob", "lava_scheduler_app"),
+    ("testcase", "lava_results_app"),
+    ("testsuite", "lava_results_app"),
+    ("testset", "lava_results_app")
+)
+
+
+class Query(models.Model):
+
+    owner = models.ForeignKey(User)
+
+    group = models.ForeignKey(
+        Group,
+        default=None,
+        null=True,
+        on_delete=models.SET_NULL)
+
+    name = models.SlugField(
+        max_length=1024,
+        help_text=("The <b>name</b> of a query is used to refer to it in the "
+                   "web UI."))
+
+    description = models.TextField(blank=True, null=True)
+
+    query_group = models.ForeignKey(
+        QueryGroup,
+        default=None,
+        null=True,
+        on_delete=models.CASCADE)
+
+    content_type = models.ForeignKey(
+        ContentType,
+        limit_choices_to=Q(model__in=['testsuite', 'testset', 'testjob']) | (Q(app_label='lava_results_app') & Q(model='testcase')),
+        verbose_name='Query object set'
+    )
+
+    @property
+    def owner_name(self):
+        return '~%s/%s' % (self.owner.username, self.name)
+
+    class Meta:
+        unique_together = (('owner', 'name'))
+
+    is_published = models.BooleanField(
+        default=False,
+        verbose_name='Published')
+
+    # TODO: Check how this is done in image reports 2.0.
+    group_by_attribute = models.CharField(
+        blank=True,
+        null=True,
+        max_length=20,
+        verbose_name='group by attribute')
+
+    target_goal = models.DecimalField(
+        blank=True,
+        decimal_places=5,
+        max_digits=10,
+        null=True,
+        verbose_name='Target goal')
+
+    def __unicode__(self):
+        return "<Query ~%s/%s>" % (self.owner.username, self.name)
+
+    @classmethod
+    def get_results(cls, content_type, conditions):
+
+        filters = {}
+
+        for condition in conditions:
+
+            # Handle different table conditions.
+            if condition.table != content_type:
+                filter_key = '{0}__{1}'.format(condition.table.model,
+                                               condition.field)
+            else:
+                filter_key = condition.field
+
+            # Handle conditions through foreign key.
+            fk_model = _get_foreign_key_model(condition.table.model_class(),
+                                              condition.field)
+            # FIXME: There might be some other models which don't have 'name'
+            # as the default search field.
+            if fk_model:
+                if fk_model.__name__ == "User":
+                    filter_key = '{0}__username'.format(filter_key)
+                elif fk_model.__name__ == "Device":
+                    filter_key = '{0}__hostname'.format(filter_key)
+                else:
+                    filter_key = '{0}__name'.format(filter_key)
+
+            # Handle conditions with choice fields.
+            condition_field_cls = condition.table.model_class()._meta.get_field_by_name(condition.field)[0]
+            if condition_field_cls.choices:
+                choices_reverse = dict(
+                    (value, key) for key, value in dict(
+                        condition_field_cls.choices).items())
+                try:
+                    condition.value = choices_reverse[condition.value]
+                except KeyError:
+                    raise QueryConditionChoiceError()
+
+            # Add operator.
+            filter_key = '{0}__{1}'.format(filter_key, condition.operator)
+
+            filters[filter_key] = condition.value
+        query_results = content_type.model_class().objects.filter(
+            **filters)
+        return query_results
+
+    @models.permalink
+    def get_absolute_url(self):
+        return (
+            "lava_results_app.views.query.views.query_display",
+            [self.owner.username, self.name])
+
+
+class QueryCondition(models.Model):
+
+    table = models.ForeignKey(
+        ContentType,
+        limit_choices_to=Q(model__in=[
+            'testsuite', 'testset', 'testjob', 'namedattribute']) | (
+                Q(app_label='lava_results_app') & Q(model='testcase')),
+        verbose_name='Condition model'
+    )
+
+    query = models.ForeignKey(
+        Query,
+    )
+
+    field = models.CharField(
+        max_length=50,
+        verbose_name='Field name'
+    )
+
+    operator = models.CharField(
+        verbose_name=_(u"Operator"),
+        max_length=20,
+        choices=(
+            (u"exact", _(u"Exact match")),
+            (u"iexact", _(u"Case-insensitive match")),
+            (u"icontains", _(u"Contains")),
+            (u"gt", _(u"Greater than")),
+            (u"lt", _(u"Less than")),
+        )
+    )
+
+    value = models.CharField(
+        max_length=50,
+        verbose_name='Field value',
+    )
+
+
+def _get_foreign_key_model(model, fieldname):
+    """ Returns model if field is foreign key, otherwise None. """
+    field_object, model, direct, m2m = model._meta.get_field_by_name(fieldname)
+    if not m2m and direct and isinstance(field_object, models.ForeignKey):
+        return field_object.rel.to
+    return None

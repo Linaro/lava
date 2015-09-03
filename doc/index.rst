@@ -97,3 +97,4 @@ Developer guides
    dispatcher-format.rst
    dispatcher-testing.rst
    dispatcher-actions2.rst
+   lava-results-queries.rst

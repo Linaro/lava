@@ -155,6 +155,8 @@ that data will continue to be added to the data for that message ID and
 will be returned by subsequent calls to ``lava-wait`` for that message
 ID. Use a different message ID to collate different message data.
 
+See also :ref:`flow_tables`
+
 .. index:: lava-wait-all
 
 .. _lava_wait_all:
@@ -162,28 +164,17 @@ ID. Use a different message ID to collate different message data.
 lava-wait-all
 -------------
 
-Waits until **all** other devices in the group send a message with the
-given message ID. IF ``<role>`` is passed, only wait until all devices
-with that given role send a message.
+``lava-wait-all`` operates in two distinct ways - with or without a role.
 
 ``lava-wait-all <message-id> [<role>]``
 
 If data was sent by the other devices with the message, the key-value
 pairs will be printed in the cache file (/tmp/lava_multi_node_cache.txt
-in default),each in one line, prefixed with the target name and
+in default), each in one line, prefixed with the target name and
 a colon.
 
 Some examples for ``lava-send``, ``lava-wait`` and
 ``lava-wait-all`` are given below.
-
-Using ``lava-sync`` or ``lava-wait-all`` in a test definition effectively
-makes all boards in the group run at the speed of the slowest board in
-the group up to the point where the sync or wait is called.
-
-Ensure that the message-id matches an existing call to ``lava-send`` for
-each relevant test definition **before** that test definition calls
-``lava-wait-all`` or any device using that test definition will wait forever
-(and eventually timeout, failing the job).
 
 The message returned can include data from other devices which sent a
 message with the relevant message ID, only the wait is dependent on
@@ -191,6 +182,42 @@ particular devices with a specified role.
 
 As with ``lava-wait``, the message ID is persistent for the duration of
 the MultiNode group.
+
+lava-wait-all <message-id>
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``lava-wait-all <message-id>``
+
+``lava-wait-all`` waits until **all** other devices in the group send a message
+with the given message ID. Every device in the group **must** use ``lava-send``
+with the same message ID before entering ``lava-wait-all`` or any device using
+that test definition will wait forever (and eventually timeout, failing the job).
+
+Using ``lava-sync`` or ``lava-wait-all`` in a test definition effectively
+makes all boards in the group run at the speed of the slowest board in
+the group up to the point where the sync or wait is called.
+
+See also :ref:`flow_tables`
+
+lava-wait-all <message-id> <role>
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``lava-wait-all <message-id> <role>``
+
+If ``<role>`` is used, only wait until all devices with that given role
+send a message with the matching message ID. Devices of the given role do **not**
+enter ``lava-wait``, but just send the message and continue the test definition.
+Ensure the test continues for long enough for the devices using ``lava-wait-all``
+to pick up the message and act on it. Typically, this involves using a ``lava-sync``
+after the ``lava-send`` on devices with the given role and after the completion of
+the task on the devices which were waiting for the message.
+
+Not all roles in the group need to send a message or wait for a message. One role
+will act as a sender, at least one role will act as a receiver and any other roles
+can continue as normal. This level of complexity is not usually needed. It is advisable
+to draw out the sequence in a table to ensure that the correct calls are made.
+
+See also :ref:`flow_tables`
 
 .. index:: lava-sync
 
@@ -206,6 +233,8 @@ Usage: ``lava-sync <message>``
 
 ``lava-sync foo`` is effectively the same as ``lava-send foo`` followed
 by ``lava-wait-all foo``.
+
+See also :ref:`flow_tables`
 
 .. index:: lava-network
 
@@ -454,3 +483,56 @@ If the available roles include ``server`` and there is a board named
    lava-network collect eth0 server
    # continue with tests and get the information.
    lava-network query database ipv4
+
+.. _flow_tables:
+
+Using a flow table to plan the job
+----------------------------------
+
+Synchronisation of any type needs to be planned and the simplest way
+to manage the messages between roles within a group is to set out a
+strict table of the flow.
+
+Set out the call and leave blank rows until that call is matched by
+the appropriate roles, to represent the time that the devices with
+that role will block in a wait loop with the coordinator.
+
++-----------------+----------------------------+-----------------+
+| Server          | Client                     | Observer        |
++=================+============================+=================+
+| deploy & boot   | deploy & boot              | deploy & boot   |
++-----------------+----------------------------+-----------------+
+| lava-sync start | lava-sync start            | lava-sync start |
++-----------------+----------------------------+-----------------+
+| server_start.sh | lava-wait-all ready server | lava-sync fin   |
++-----------------+----------------------------+-----------------+
+| lava-send ready |                            |                 |
++-----------------+----------------------------+-----------------+
+| lava-sync fin   | client-tasks.sh            |                 |
++-----------------+----------------------------+-----------------+
+|                 | lava-sync fin              |                 |
++-----------------+----------------------------+-----------------+
+
+In this overly simplistic table, the Observer role really has nothing
+useful to do but to demonstrate that it will spend most of it's time
+in ``lava-sync fin``.
+
+All roles will wait in ``lava-sync start`` until all deploy and boot
+operations (or whatever other tasks are put ahead of the call to ``lava-sync``)
+are complete. The flow table does not include this delay.
+
+The Server role runs a script to start a service, sending ready when
+the script returns.
+
+The Client role waits until all devices with the Server role have
+completed ``lava-send ready`` - Observer is unaffected and Server
+moves directly into the ``lava-sync fin``. Once the Client completes
+``lava-wait-all ready server``, the Client can run the client tasks
+script. That script finally puts the devices with the Client role
+into ``lava-sync fin`` at which point, the Client role receives the
+message that everyone else is already in that sync, the sync completes
+and the flow table ends.
+
+Tables like this also help visualize how long the timeouts need to be
+to allow the Observer role to wait for all the server tasks and all
+the client tasks to complete.

@@ -306,8 +306,8 @@ def image_report_form(request, bread_crumb_trail, instance=None):
                                      instance=instance)
         if form.is_valid():
             image_report = form.save()
-            return HttpResponseRedirect(image_report.get_absolute_url()
-                                        + "/+detail")
+            return HttpResponseRedirect(image_report.get_absolute_url() +
+                                        "/+detail")
 
     else:
         form = ImageReportEditorForm(request.user, instance=instance)

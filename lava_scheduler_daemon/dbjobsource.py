@@ -204,6 +204,10 @@ class DatabaseJobSource(object):
 
         for device in Device.objects.filter(
                 Q(status=Device.IDLE) | Q(status=Device.OFFLINE, health_status=Device.HEALTH_LOOPING)):
+            # FIXME: We do not support health check job for pipeline devices
+            #        yet, hence remove exclusive pipeline devices.
+            if device.is_exclusive:
+                continue
             if not device.device_type.health_check_job:
                 run_health_check = False
             elif device.health_status == Device.HEALTH_UNKNOWN:
@@ -219,6 +223,8 @@ class DatabaseJobSource(object):
                     timezone.now() - datetime.timedelta(days=1)
 
             if run_health_check:
+                self.logger.debug('submit health check for %s',
+                                  device.hostname)
                 try:
                     device.initiate_health_check_job()
                 except JSONDataError:

@@ -177,9 +177,9 @@ class SpecificCaseColumn(tables.Column):
                 s = '%s %s' % (result.measurement, result.units)
             else:
                 s = result.RESULT_MAP[result.result]
-            r.append('<a href="'
-                     + result.get_absolute_url() + '">'
-                     + escape(s) + '</a>')
+            r.append('<a href="' +
+                     result.get_absolute_url() + '">' +
+                     escape(s) + '</a>')
         return mark_safe(', '.join(r))
 
 
@@ -194,10 +194,10 @@ class BundleTestColumn(tables.Column):
         if 'id__arrayagg' in record:
             runs = TestRun.objects.filter(id__in=record['id__arrayagg'])
             for run in runs:
-                r.append('<a href="'
-                         + run.bundle.get_absolute_url() + '">'
-                         + run.bundle.content_filename
-                         + '</a>')
+                r.append('<a href="' +
+                         run.bundle.get_absolute_url() + '">' +
+                         run.bundle.content_filename +
+                         '</a>')
         descriptions = sorted(set(r))
         return mark_safe(', '.join(descriptions))
 
@@ -225,9 +225,9 @@ class TestSummaryColumn(tables.Column):
 class BundleColumn(tables.Column):
 
     def render(self, record):
-        return mark_safe('<a href="'
-                         + record.bundle.get_absolute_url() + '">'
-                         + escape(record.bundle.content_filename) + '</a>')
+        return mark_safe('<a href="' +
+                         record.bundle.get_absolute_url() + '">' +
+                         escape(record.bundle.content_filename) + '</a>')
 
 
 class FilterPassTable(LavaTable):

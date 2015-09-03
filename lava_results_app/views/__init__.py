@@ -19,10 +19,7 @@
 """
 Views for the Results application
 Keep to just the response rendering functions
-Use results.py for View classes and dbutils for data handling.
 """
-
-
 import csv
 import yaml
 from django.template import RequestContext
@@ -34,7 +31,6 @@ from lava_server.bread_crumbs import (
     BreadCrumbTrail,
 )
 from django.shortcuts import get_object_or_404
-from lava_results_app.results import ResultsView, SuiteView
 from lava_results_app.models import TestSuite, TestCase
 from lava_results_app.tables import ResultsTable, SuiteTable
 from lava_results_app.utils import StreamEcho
@@ -42,6 +38,25 @@ from lava_results_app.dbutils import export_testcase, testcase_export_fields
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.tables import pklink
 from django_tables2 import RequestConfig
+
+from lava_results_app.models import TestSuite, TestCase
+from lava.utils.lavatable import LavaView
+
+
+class ResultsView(LavaView):
+    """
+    Base results view
+    """
+    def get_queryset(self):
+        return TestSuite.objects.all().order_by('-job__id')
+
+
+class SuiteView(LavaView):
+    """
+    View of a test suite
+    """
+    def get_queryset(self):
+        return TestCase.objects.all().order_by('logged')
 
 
 @BreadCrumb("Results", parent=lava_index)
@@ -61,7 +76,7 @@ def index(request):
 @BreadCrumb("Query", parent=index)
 def query(request):
     return render_to_response(
-        "lava_results_app/query.html", {
+        "lava_results_app/query_list.html", {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
         }, RequestContext(request))
 

@@ -128,8 +128,8 @@
     <h4 class="modal-header">Tips</h4>
     <p>You can download this bundle with the following command:</p>
     <div class="console">
-    {% if bundle.private %}
-      <code>lava-tool get --dashboard-url=http://{{request.user.username}}@{{site.domain}}{% url 'lava.api_handler' %}
+    {% if not bundle.testjob.is_public %}
+      <code>lava-tool get --dashboard-url={{ request.scheme }}://{{ request.user.username }}@{{site.domain}}{% url 'lava.api_handler' %}/
       {{bundle.content_sha1}}</code>
     {% else %}
       <code>lava-tool get --dashboard-url=http://{{site.domain}}{% url 'lava.api_handler' %}

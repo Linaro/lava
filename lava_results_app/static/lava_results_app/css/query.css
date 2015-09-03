@@ -1,0 +1,11 @@
+.form-field, #condition_form p {
+    margin-bottom: 5px;
+    vertical-align: top;
+}
+
+.form-field label, #condition_form p label {
+    vertical-align: top;
+    width: 120px;
+    display: inline-block;
+    margin-left: 10px;
+}
