@@ -74,6 +74,11 @@ class MasterImageTarget(Target):
         self.master_ip = None
         self.device_version = None
 
+        self.testboot_label = self.config.master_testboot_label
+        self.testrootfs_label = self.config.master_testrootfs_label
+        self.sdcard_label = self.config.master_sdcard_label
+        self.userdata_label = self.config.master_userdata_label
+
         if self.config.master_testdisk_id is None:
             self.testboot_dir = self.config.master_testboot_dir
             self.testboot_path = '%s%s' % (self.testboot_dir, self.testboot_label)
@@ -100,11 +105,6 @@ class MasterImageTarget(Target):
             self.userdata_path = '%s%s%s' % (self.testboot_dir,
                                              self.config.master_testdisk_id,
                                              self.config.master_userdata_part)
-
-        self.testboot_label = self.config.master_testboot_label
-        self.testrootfs_label = self.config.master_testrootfs_label
-        self.sdcard_label = self.config.master_sdcard_label
-        self.userdata_label = self.config.master_userdata_label
 
         self.master_kernel = None
         self.master_ramdisk = None
