@@ -289,8 +289,7 @@ Lava-Test-Shell Test Definitions although the submission format has changed:
 
   - test:
      failure_retry: 3
-     name: kvm-basic-singlenode  # is not present, use "test $N"
-
+     name: kvm-basic-singlenode
 
 Definitions
 ===========
@@ -340,6 +339,65 @@ Test example
               path: ubuntu/smoke-tests-basic.yaml
               name: smoke-tests
 
+Additional support
+==================
+
+The refactoring supports some additional elements in Lava Test Shell
+which will not be supported in the current dispatcher.
+
+TestSets
+--------
+
+A TestSet is a group of lava test cases which will be collated within
+the LAVA Results. This allows queries to look at a set of related
+test cases within a single definition.
+
+.. code-block:: yaml
+
+  name: testset-def
+    run:
+        steps:
+            - lava-test-set start first_set
+            - lava-test-case date --shell ntpdate-debian
+            - ls /
+            - lava-test-case mount --shell mount
+            - lava-test-set stop
+            - lava-test-case uname --shell uname -a
+
+This results in the ``date`` and ``mount`` test cases being included
+into a ``first_set`` TestSet, independent of other test cases. The
+TestSet is concluded with the ``lava-test-set stop`` command, meaning
+that the ``uname`` test case has no test set, providing a structure
+like:
+
+.. code-block:: yaml
+
+ results:
+   first_set:
+     date: pass
+     mount: pass
+   uname: pass
+
+.. code-block:: python
+
+ {'results': {'first_set': {'date': 'pass', 'mount': 'pass'}, 'uname': 'pass'}}
+
+Each TestSet name must be valid as a URL, which is consistent with the
+requirements for test definition names and test case names in the
+current dispatcher.
+
+For TestJob ``1234``, the ``uname`` test case would appear as::
+
+ results/1234/testset-def/uname
+
+The ``date`` and ``mount`` test cases are referenced via the TestSet::
+
+ results/1234/testset-def/first_set/date
+ results/1234/testset-def/first_set/mount
+
+A single test definition can start and stop different TestSets in
+sequence, as long as the name of each TestSet is unique for that
+test definition.
 
 .. _repeat_action:
 

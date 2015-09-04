@@ -2071,7 +2071,7 @@ class TestJob(RestrictedResource):
             logger.info("Completing cancel of %s" % self)
             self.status = TestJob.CANCELED
         if user:
-            self.failure_comment = "Canceled by %s" % user.username
+            self.set_failure_comment("Canceled by %s" % user.username)
         self.save()
 
     def _generate_summary_mail(self):
@@ -2144,6 +2144,15 @@ class TestJob(RestrictedResource):
                 settings.SERVER_EMAIL, recipients)
         except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused, socket.error):
             logger.info("unable to send email - recipient refused")
+
+    def set_failure_comment(self, message):
+        if not self.failure_comment:
+            self.failure_comment = message
+        elif message not in self.failure_comment:
+            self.failure_comment += message
+        else:
+            return
+        self.save(update_fields=['failure_comment'])
 
     @property
     def sub_jobs_list(self):

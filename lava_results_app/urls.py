@@ -58,6 +58,8 @@ urlpatterns = patterns(
         'testjob_yaml', name='lava.results.testjob_yaml'),
     url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)$',
         'suite', name='lava.results.suite'),
+    url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/(?P<ts>[-_a-zA-Z0-9.]+)/(?P<case>[-_a-zA-Z0-9.]+)$',
+        'testset', name='lava.results.testset'),
     url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/csv$',
         'suite_csv', name='lava.results.suite_csv'),
     url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/stream/csv$',

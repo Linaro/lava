@@ -39,7 +39,7 @@ from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.tables import pklink
 from django_tables2 import RequestConfig
 
-from lava_results_app.models import TestSuite, TestCase
+from lava_results_app.models import TestSuite, TestCase, TestSet
 from lava.utils.lavatable import LavaView
 
 
@@ -198,6 +198,23 @@ def suite_yaml(request, job, pk):
         yaml_list.append(export_testcase(test_case))
     yaml.dump(yaml_list, response)
     return response
+
+
+@BreadCrumb("TestSet {case}", parent=testjob, needs=['job', 'pk', 'ts', 'case'])
+def testset(request, job, ts, pk, case):
+    job = get_object_or_404(TestJob, pk=job)
+    test_suite = get_object_or_404(TestSuite, name=pk, job=job)
+    test_set = get_object_or_404(TestSet, name=ts, suite=test_suite)
+    test_cases = TestCase.objects.filter(name=case, test_set=test_set)
+    return render_to_response(
+        "lava_results_app/case.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                testset, pk=pk, job=job.id, ts=ts, case=case),
+            'job': job,
+            'suite': test_suite,
+            'job_link': pklink(job),
+            'test_cases': test_cases,
+        }, RequestContext(request))
 
 
 @BreadCrumb("Test case {case}", parent=suite, needs=['job', 'pk', 'case'])
