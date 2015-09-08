@@ -25,8 +25,9 @@ import unittest
 import yaml
 
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.action import Pipeline, Action, JobError
+from lava_dispatcher.pipeline.action import Pipeline, Action, JobError, Timeout
 from lava_dispatcher.pipeline.test.test_basic import Factory, pipeline_reference
+from lava_dispatcher.pipeline.shell import ShellSession
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.boot.qemu import BootAction
@@ -188,6 +189,13 @@ class TestKVMBasicDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
             if isinstance(action, BootAction):
                 # get the action & populate it
                 self.assertEqual(action.parameters['method'], 'qemu')
+                self.assertEqual(action.parameters['prompts'], ['linaro-test', 'root@debian:~#'])
+                params = action.parameters.get('auto_login', None)
+
+                if 'login_prompt' in params:
+                    self.assertEqual(params['login_prompt'], 'login:')
+                if 'username' in params:
+                    self.assertEqual(params['username'], 'root')
 
     def test_testdefinitions(self):
         for action in self.job.pipeline.actions:
@@ -303,3 +311,123 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
                                         'yaml_line': 53},
                                 'yaml_line': 38}
             self.assertEqual(testdef, expected_testdef)
+
+    def test_autologin_prompt_patterns(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+
+        autologinaction.parameters.update({'auto_login': {'login_prompt': 'login:',
+                                                          'username': 'root'},
+                                           'prompts': ['root@debian:~#']})
+
+        # initialise the first Connection object, a command line shell
+        shell_command = FakeCommand(autologinaction.timeout)
+        shell_connection = ShellSession(self.job, shell_command)
+
+        # Test the AutoLoginAction directly
+        conn = autologinaction.run(shell_connection)
+
+        self.assertEqual(conn.prompt_str, ['lava-test: # ', 'root@debian:~#'])
+
+    def test_autologin_void_login_prompt(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+
+        autologinaction.parameters.update({'auto_login': {'login_prompt': '',
+                                                          'username': 'root'},
+                                           'prompts': ['root@debian:~#']})
+
+        self.assertRaises(JobError, self.job.validate)
+
+    def test_missing_autologin_void_prompts_list(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+
+        autologinaction.parameters.update({'prompts': []})
+
+        self.assertRaises(JobError, self.job.validate)
+
+    def test_missing_autologin_void_prompts_list_item(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+
+        autologinaction.parameters.update({'prompts': ['']})
+
+        self.assertRaises(JobError, self.job.validate)
+
+    def test_missing_autologin_void_prompts_list_item2(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+
+        autologinaction.parameters.update({'prompts': ['root@debian:~#', '']})
+
+        self.assertRaises(JobError, self.job.validate)
+
+    def test_missing_autologin_prompts_list(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+
+        autologinaction.parameters.update({'prompts': ['root@debian:~#']})
+
+        # initialise the first Connection object, a command line shell
+        shell_command = FakeCommand(autologinaction.timeout)
+        shell_connection = ShellSession(self.job, shell_command)
+
+        # Test the AutoLoginAction directly
+        conn = autologinaction.run(shell_connection)
+
+        self.assertEqual(conn.prompt_str, ['lava-test: # ', 'root@debian:~#'])
+
+    def test_missing_autologin_void_prompts_str(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+
+        autologinaction.parameters.update({'prompts': ''})
+
+        self.assertRaises(JobError, self.job.validate)
+
+    def test_missing_autologin_prompts_str(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+
+        autologinaction.parameters.update({'prompts': 'root@debian:~#'})
+
+        # initialise the first Connection object, a command line shell
+        shell_command = FakeCommand(autologinaction.timeout)
+        shell_connection = ShellSession(self.job, shell_command)
+
+        # Test the AutoLoginAction directly
+        conn = autologinaction.run(shell_connection)
+
+        self.assertEqual(conn.prompt_str, ['lava-test: # ', 'root@debian:~#'])
+
+
+class FakeCommand(object):
+
+    def __init__(self, lava_timeout):
+        if not lava_timeout or not isinstance(lava_timeout, Timeout):
+            raise RuntimeError("FakeCommand needs a timeout set by the calling Action")
+        self.name = "FakeCommand"
+        self.lava_timeout = lava_timeout
+
+    def sendline(self, s='', delay=0, send_char=True):  # pylint: disable=invalid-name
+        pass
+
+    def expect(self, *args, **kw):
+        pass

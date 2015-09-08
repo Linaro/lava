@@ -60,7 +60,8 @@ class ConnectDevice(Action):
     def run(self, connection, args=None):
         if connection:
             self.logger.debug("Already connected")
-            connection.prompt_str = self.job.device['test_image_prompts']
+            if not connection.prompt_str:
+                connection.prompt_str = self.job.device['test_image_prompts']
             return connection
         command = self.job.device['commands']['connect'][:]  # local copy to retain idempotency.
         self.logger.info("%s Connecting to device using '%s'", self.name, command)
@@ -75,7 +76,9 @@ class ConnectDevice(Action):
         connection = super(ConnectDevice, self).run(connection, args)
         # append ser2net port to the prompt_str
         # FIXME: this improves speed but relies on using ser2net
-        connection.prompt_str = self.job.device['test_image_prompts'].append('ser2net port')
+        if not connection.prompt_str:
+            connection.prompt_str = self.job.device['test_image_prompts']
+        connection.prompt_str.append('ser2net port')
         return connection
         # # if the board is running, wait for a prompt - if not, skip.
         # if self.job.device.power_state is 'off':

@@ -331,7 +331,6 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         parser = JobParser()
         sample_job_data = yaml.load(sample_job_string)
         boot = [item['boot'] for item in sample_job_data['actions'] if 'boot' in item][0]
-        boot.update({'parameters': {'boot_prompt': 'root@bbb'}})
         sample_job_string = yaml.dump(sample_job_data)
         job = parser.parse(sample_job_string, device, 4212, None, output_dir='/tmp')
         job.validate()
@@ -341,7 +340,6 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         expect = [action for action in retry.internal_pipeline.actions
                   if action.name == 'expect-shell-connection'][0]
         self.assertNotEqual(check, expect.parameters)
-        self.assertIn('root@bbb', expect.prompts)
 
     def test_xz_nfs(self):
         factory = Factory()

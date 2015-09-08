@@ -31,6 +31,9 @@ actions:
      method: u-boot
      commands: nfs
      type: bootz
+     prompts:
+       - 'linaro-test'
+       - 'root@debian:~#'
 
   - test:
      failure_retry: 3

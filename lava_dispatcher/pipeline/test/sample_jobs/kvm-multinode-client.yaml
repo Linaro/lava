@@ -56,6 +56,9 @@ actions:
         media: tmpfs
         failure_retry: 2
         role: client
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
         protocols:
           lava-multinode:
             - action: execute-qemu

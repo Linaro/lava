@@ -32,6 +32,9 @@ actions:
      method: u-boot
      commands: nfs
      type: bootz
+     prompts:
+       - 'linaro-test'
+       - 'root@debian:~#'
 
   - test:
       failure_retry: 3
@@ -69,3 +72,6 @@ actions:
      boot_message: Booting Linux
      options:
        - "--reuse-cmdline"
+     prompts:
+       - 'linaro-test'
+       - 'root@debian:~#'

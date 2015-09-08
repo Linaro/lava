@@ -22,6 +22,9 @@ actions:
         - boot:
             method: qemu
             media: tmpfs
+            prompts:
+              - 'linaro-test'
+              - 'root@debian:~#'
 
         - test:
             failure_retry: 3
@@ -43,6 +46,9 @@ actions:
             media: tmpfs
             failure_retry: 2  # deliberately invalid action,
             # combines failure_retry and repeat
+            prompts:
+              - 'linaro-test'
+              - 'root@debian:~#'
 
         - test:
            name: kvm-intermediate-singlenode
@@ -62,6 +68,9 @@ actions:
         method: qemu
         media: tmpfs
         repeat: 4
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
     - deploy:
         timeout:
@@ -79,6 +88,9 @@ actions:
         method: qemu
         media: tmpfs
         repeat: 4
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
     - test:
         failure_retry: 3

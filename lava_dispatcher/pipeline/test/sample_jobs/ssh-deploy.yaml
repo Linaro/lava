@@ -24,6 +24,9 @@ actions:
         method: ssh
         connection: ssh
         failure_retry: 2
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
     - boot:
         method: schroot
@@ -31,6 +34,9 @@ actions:
         failure_retry: 2
         schroot: unstable
         os: debian
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
     - test:
         failure_retry: 3

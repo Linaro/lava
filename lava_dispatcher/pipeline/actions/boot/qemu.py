@@ -159,7 +159,8 @@ class CallQemuAction(Action):
         self.logger.debug("started a shell command")
 
         shell_connection = ShellSession(self.job, shell)
-        shell_connection.prompt_str = self.job.device['test_image_prompts']
+        if not shell_connection.prompt_str:
+            shell_connection.prompt_str = self.job.device['test_image_prompts']
         shell_connection = super(CallQemuAction, self).run(shell_connection, args)
 
         # FIXME: tests with multiple boots need to be handled too.

@@ -31,6 +31,9 @@ actions:
      type: bootz
      parameters:
        shutdown-message: "reboot: Restarting system"
+     prompts:
+       - 'linaro-test'
+       - 'root@debian:~#'
 
   - test:
      failure_retry: 3
