@@ -83,7 +83,7 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         super(TftpAction, self).__init__()
         self.name = "tftp-deploy"
         self.description = "download files and deploy using tftp"
-        self.summary = "tftp deploment"
+        self.summary = "tftp deployment"
         self.tftp_dir = tftpd_dir()
         self.suffix = None
         try:
