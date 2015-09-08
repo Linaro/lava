@@ -76,3 +76,9 @@ LAVA_MULTINODE_SYSTEM_TIMEOUT = 90
 
 # Default Action timeout
 ACTION_TIMEOUT = 30
+
+# Android tmp directory
+ANDROID_TMP_DIR = '/data/local/tmp'
+
+# Default timeout for fastboot reboot
+FASTBOOT_REBOOT_TIMEOUT = 10

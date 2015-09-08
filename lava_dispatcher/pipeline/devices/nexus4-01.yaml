@@ -1,0 +1,25 @@
+device_type: nexus4
+serial_number: 04f228d1d9c76f39
+
+commands:
+  connect: adb -s 04f228d1d9c76f39 shell
+  soft_reboot: adb -s 04f228d1d9c76f39 reboot bootloader
+
+actions:
+  deploy:
+    # list of deployment methods which this device supports
+    methods:
+      fastboot:
+    connections:
+      serial:
+      adb:
+  boot:
+    connections:
+      adb:
+    methods:
+      fastboot:
+
+test_image_prompts:
+  - 'shell@mako:/ $'
+  - 'shell@mako'
+

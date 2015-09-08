@@ -68,9 +68,9 @@ android = deployment_data_dict({  # pylint: disable=invalid-name
     # for lava-test-shell
     'distro': 'android',
     'lava_test_sh_cmd': '/system/bin/sh',
-    'lava_test_dir': '/data/lava-%s',
+    'lava_test_dir': '/data/local/tmp/lava-%s',
     'lava_test_results_part_attr': 'data_part_android_org',
-    'lava_test_results_dir': '/lava-%s',
+    'lava_test_results_dir': '/data/local/tmp/lava-%s',
     'lava_test_shell_file': None,
 })
 
