@@ -243,6 +243,13 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.assertTrue(device.is_exclusive)
 
     def test_context(self):
+        """
+        Test overrides using the job context
+
+        Defaults in the device-type can be overridden by the device dictionary.
+        If not overridden by the device dictionary, can be overridden by the job context.
+        If the
+        """
         device = Device.objects.get(hostname="fakeqemu1")
         user = self.factory.make_user()
         job = TestJob.from_yaml_and_user(
@@ -261,34 +268,41 @@ class TestPipelineSubmit(TestCaseWithFactory):
         mustang = DeviceDictionary(hostname=hostname)
         mustang.parameters = {
             'extends': 'mustang-uefi.yaml',
+            'base_nfsroot_args': '10.16.56.2:/home/lava/debian/nfs/,tcp,hard,intr',
             'console_device': 'ttyO0',  # takes precedence over the job context as the same var name is used.
-            'mac_address': '00:01:73:69:5A:EF'}
+        }
         mustang.save()
 
         device = Device.objects.get(hostname="fakemustang")
         self.assertEqual('mustang-uefi', device.device_type.name)
         self.assertTrue(device.is_pipeline)
         job_ctx = {
-            'tftp_mac_address': 'FF:01:00:69:AA:CC',
+            'tftp_mac': 'FF:01:00:69:AA:CC',
             'nfsroot_args': '172.164.56.2:/home/user/nfs/,tcp,hard,intr',
             'console_device': 'ttyAMX0',
         }
         device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
         self.assertIn('uefi-menu', device_config['actions']['boot']['methods'])
         self.assertIn('nfs', device_config['actions']['boot']['methods']['uefi-menu'])
+        menu_data = device_config['actions']['boot']['methods']['uefi-menu']['nfs']
+        self.assertIn(
+            job_ctx['nfsroot_args'],
+            [item['select']['enter'] for item in menu_data if 'enter' in item['select'] and
+                'new Entry' in item['select']['wait']][0]
+        )
         self.assertEqual(
-            [item['select']['items'][0] for item in device_config['actions']['boot']['methods']['uefi-menu']['nfs']
-             if 'select' in item and 'items' in item['select'] and 'TFTP' in item['select']['items'][0]][0],
+            [item['select']['items'][0] for item in menu_data if 'select' in item and
+                'items' in item['select'] and 'TFTP' in item['select']['items'][0]][0],
             'TFTP on MAC Address: FF:01:00:69:AA:CC'  # matches the job_ctx
         )
-        # note: the console_device in the job_ctx has been *ignored* because the device type template
+        # note: the console_device and tftp_mac in the job_ctx has been *ignored* because the device type template
         # has not allowed the job_ctx to use a different name for the variable and the variable is
         # already defined in the device dictionary using the specified name. If the device dictionary lacked
         # the variable, the job could set it to override the device type template default, as shown by the
         # override of the base_nfsroot_args by allowing nfsroot_args in the device type template..
         self.assertEqual(
-            [item['select']['enter'] for item in device_config['actions']['boot']['methods']['uefi-menu']['nfs']
-             if 'select' in item and 'wait' in item['select'] and 'Description' in item['select']['wait']][0],
+            [item['select']['enter'] for item in menu_data if 'select' in item and
+                'wait' in item['select'] and 'Description' in item['select']['wait']][0],
             'console=ttyO0,115200 earlyprintk=uart8250-32bit,0x1c020000 debug '
             'root=/dev/nfs rw 172.164.56.2:/home/user/nfs/,tcp,hard,intr ip=dhcp'
         )

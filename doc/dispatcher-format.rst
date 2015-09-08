@@ -275,7 +275,7 @@ Example Two
 -----------
 
 If the device dictionary contains no setting for ``console_device``, then
-the job context value can override the device type template default.::
+the job context value can override the device type template default::
 
  context:
    console_device: /dev/ttyAMX0
