@@ -175,9 +175,13 @@ class JobTable(LavaTable):
         elif record.requested_device:
             device_type = record.requested_device.device_type
             retval = pklink(record.requested_device)
-        else:
+        elif record.requested_device_type:
             device_type = record.requested_device_type
             retval = mark_safe('<i>%s</i>' % escape(record.requested_device_type.pk))
+        elif record.dynamic_connection:
+            return 'connection'
+        else:
+            return '-'
         if len(device_type.devices_visible_to(self.context.get('request').user)) == 0:
             return "Unavailable"
         return retval
