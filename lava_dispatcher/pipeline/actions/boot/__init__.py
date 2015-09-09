@@ -20,7 +20,6 @@
 
 from lava_dispatcher.pipeline.action import Action
 from lava_dispatcher.pipeline.logical import RetryAction
-from lava_dispatcher.pipeline.connection import wait_for_prompt
 from lava_dispatcher.pipeline.utils.constants import (
     AUTOLOGIN_DEFAULT_TIMEOUT,
     DEFAULT_SHELL_PROMPT,
@@ -103,16 +102,14 @@ class AutoLoginAction(Action):
             self.logger.debug("Skipping of auto login")
         else:
             self.logger.debug("Waiting for the login prompt")
-            wait_for_prompt(
-                connection.raw_connection, params['login_prompt'],
-                self.timeout.duration, connection.check_char)
+            connection.prompt_str = params['login_prompt']
+            self.wait(connection)
             connection.sendline(params['username'])
 
             if 'password_prompt' in params:
                 self.logger.debug("Waiting for password prompt")
-                wait_for_prompt(
-                    connection.raw_connection, params['password_prompt'],
-                    self.timeout.duration, connection.check_char)
+                connection.prompt_str = params['password_prompt']
+                self.wait(connection)
                 connection.sendline(params['password'])
         # prompt_str can be a list or str
         connection.prompt_str = [DEFAULT_SHELL_PROMPT]
