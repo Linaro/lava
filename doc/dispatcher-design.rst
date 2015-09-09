@@ -27,9 +27,49 @@ Devices indicate their support for pipeline jobs in the
 :ref:`detailed device information <device_owner_help>` for each device
 and device type.
 
-
 .. _Linaro Validation mailing list: http://lists.linaro.org/mailman/listinfo/linaro-validation
 
+Pipeline Architecture
+*********************
+
+Compare with the :ref:`current architecture <lava_architecture>`::
+
+   +------------------[master]-------------+
+   |  +-------------+      +----------+    |
+   |  |web interface| ---> | database |    |
+   |  +-------------+      +----------+    |
+   |                           |           |
+   |  +--------------------------+         |
+   |  | dispatcher-master daemon |         |
+   |  +--------------------------+         |
+   +-----------+---------------------------+
+               |
+              ZMQ
+               |
+   +-----------+------[worker]-------------+
+   |           |                           |
+   |  +-----------------+    +----------+  |
+   |  |lava-slave daemon| -> |dispatcher|  |
+   |  +-----------------+    +----------+  |
+   |                              |        |
+   +------------------------------+--------+
+                                  |
+                                  V
+                        +-------------------+
+                        | device under test |
+                        +-------------------+
+
+Principal changes
+=================
+
+#. **Database isolation** - only one daemon has a connection to the
+   database, the master daemon. This simplifies the architecture and
+   avoids the use of fault-intolerant database connections to remote
+   workers.
+#. **Drop use of SSHFS** between workers and master - this was awkward
+   to configure and problematic over external connections.
+#. **Move configuration onto the master** - the worker becomes a simple
+   slave which receives all configuration and tasks from the master.
 
 .. _objectives:
 
@@ -195,6 +235,47 @@ deployment. See also :ref:`dispatcher_actions`.
 Pipeline construction and flow
 ******************************
 
+The pipeline is a FIFO_ and has branches which are handled as a `tree walk`_. The top level
+object is the job, based on the YAML definition supplied by the
+**dispatcher-master**. The definition is processed by the scheduler and the
+submission interface with information specific to the actual device. The
+processed definition is parsed to generate the top level pipeline and
+:ref:`strategy classes <using_strategy_classes>`. Each strategy class
+adds a top level action to the top level pipeline. The top level action
+then populates branches containing more actions.
+
+Actions are populated, validated and executed in strict order. The next
+action in any branch waits until all branches of the preceding action
+have completed. Populating an action in a pipeline creates a **level**
+string, e.g. all actions in level 1.2.1, including all actions in sublevel
+1.2.1.2 are executed before the pipeline moves on to processing level
+1.3 or 2::
+
+    Deploy (1)
+       |
+       \___ 1.1
+       |
+       \ __ 1.2
+       |     |
+       |     \_ 1.2.1
+       |     |   |
+       |     |   \_ 1.2.1.1
+       |     |   |
+       |     |   \_ 1.2.1.2
+       |     |         |
+       |     |         \__ 1.2.1.2.1
+       |     |
+       |     \__1.2.2
+       |
+       \____1.3
+       |
+      Boot (2)
+       |
+       \_ 2.1
+       |
+       \_ 2.2
+
+
 #. One device per job. One top level pipeline per job
 
    * loads only the configuration required for this one job.
@@ -211,8 +292,10 @@ Pipeline construction and flow
       #. Each ``Action.populate()`` function may construct one internal
          pipeline, based on parameters.
       #. internal pipelines call ``populate()`` on each Action added.
+      #. A sublevel is set for each action in the internal pipeline.
+         Level 1 creates 1.1 and level 2.3.2 creates 2.3.2.1.
 
-#. Parser iterates over each Strategy
+#. Parser waits whilst each Strategy completes branch population.
 #. Parser adds the FinalizeAction to the top-level pipeline
 #. Loghandlers are set up
 #. Job validates the completed pipeline
@@ -223,10 +306,13 @@ Pipeline construction and flow
 
    #. Each ``run()`` function can add dynamic data to the context and/or
       results to the pipeline.
-   #. Pipeline iterates through actions
+   #. Pipeline walks along the branches, executing actions.
 
 #. Job ends, check for errors
 #. Completed pipeline is available.
+
+.. _FIFO: https://en.wikipedia.org/wiki/FIFO_(computing_and_electronics)
+.. _tree walk: https://en.wikipedia.org/wiki/Tree_traversal
 
 .. _using_strategy_classes:
 
