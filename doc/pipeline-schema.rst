@@ -1,9 +1,9 @@
-Pipeline schema
-###############
-
 .. index:: pipeline schema
 
 .. _pipeline_schema:
+
+Pipeline schema
+###############
 
 In general, the schema used for the pipeline are constrained, not
 strict or free form. This means that the schema requires that specific
