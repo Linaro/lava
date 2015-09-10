@@ -380,13 +380,20 @@ def url_to_cache(url, cachedir):
     return path
 
 
+def _newlines_to_spaces(string):
+    string = string.replace('\r\n', ' ')
+    return string.replace('\n', ' ')
+
+
+def _strip_newlines(string):
+    return _newlines_to_spaces(string).strip(' ')
+
+
 def string_to_list(string):
     splitter = shlex(string, posix=True)
     splitter.whitespace = ","
     splitter.whitespace_split = True
-    newlines_to_spaces = lambda x: x.replace('\n', ' ')
-    strip_newlines = lambda x: newlines_to_spaces(x).strip(' ')
-    return map(strip_newlines, list(splitter))
+    return map(_strip_newlines, list(splitter))
 
 
 def logging_system(cmd):
@@ -636,3 +643,14 @@ def search_substr_from_array(string, array, sep=','):
         if re.search('.*' + str(obj) + '.*', str(string)):
             return True
     return False
+
+
+def unicode_path_check(path):
+    """
+    Safe check for paths which may include unicode characters
+    :param path: path to check with exists.
+    :return: False if None, else return value of os.path.exists
+    """
+    if not path:
+        return False
+    return os.path.exists(path)

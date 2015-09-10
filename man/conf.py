@@ -13,6 +13,8 @@
 
 import sys
 import os
+import subprocess
+
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -59,7 +61,6 @@ copyright = u'2011-2013, Linaro Validation Team'
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-import subprocess
 # The short X.Y version.
 version = subprocess.Popen(r'./version.py', cwd=r'..', stdout=subprocess.PIPE).stdout.read()
 # The full version, including alpha/beta/rc tags.

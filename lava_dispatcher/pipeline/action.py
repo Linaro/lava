@@ -333,10 +333,13 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 else:
                     action.logger.debug(msg)
                 if action.results and isinstance(action.logger, YAMLLogger):
-                    action.results.update({'level': action.level,
-                                           'duration': action.elapsed_time,
-                                           'timeout': action.timeout.duration,
-                                           })
+                    action.results.update(
+                        {
+                            'level': action.level,
+                            'duration': action.elapsed_time,
+                            'timeout': action.timeout.duration,
+                        }
+                    )
                     action.logger.results({action.name: action.results})
                 if new_connection:
                     connection = new_connection
@@ -675,9 +678,9 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         """
         data = {}
         attrs = set([attr for attr in dir(self)
-                     if not attr.startswith('_') and getattr(self, attr)
-                     and not isinstance(getattr(self, attr), types.MethodType)
-                     and not isinstance(getattr(self, attr), InternalObject)])
+                     if not attr.startswith('_') and getattr(self, attr) and not
+                     isinstance(getattr(self, attr), types.MethodType) and not
+                     isinstance(getattr(self, attr), InternalObject)])
 
         # noinspection PySetFunctionToLiteral
         for attr in attrs - set([
@@ -694,9 +697,9 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
                 for protocol in getattr(self, attr):
                     data['protocols'][protocol.name] = {}
                     protocol_attrs = set([attr for attr in dir(protocol)
-                                          if not attr.startswith('_') and getattr(protocol, attr)
-                                          and not isinstance(getattr(protocol, attr), types.MethodType)
-                                          and not isinstance(getattr(protocol, attr), InternalObject)])
+                                          if not attr.startswith('_') and getattr(protocol, attr) and not
+                                          isinstance(getattr(protocol, attr), types.MethodType) and not
+                                          isinstance(getattr(protocol, attr), InternalObject)])
                     for protocol_attr in protocol_attrs:
                         if protocol_attr not in ['logger']:
                             data['protocols'][protocol.name][protocol_attr] = getattr(protocol, protocol_attr)
@@ -803,5 +806,4 @@ class Timeout(object):
         """
         if self.protected:
             raise JobError("Trying to modify a protected timeout: %s.", self.name)
-        clamp = lambda n, minn, maxn: max(min(maxn, n), minn)
-        self.duration = clamp(duration, 1, OVERRIDE_CLAMP_DURATION)  # FIXME: needs support in /etc/
+        self.duration = max(min(OVERRIDE_CLAMP_DURATION, duration), 1)  # FIXME: needs support in /etc/

@@ -27,7 +27,7 @@ from time import sleep
 from contextlib import contextmanager
 
 from lava_dispatcher.device.bootloader import BootloaderTarget
-from lava_dispatcher.utils import extract_tar
+from lava_dispatcher.utils import extract_tar, unicode_path_check
 from lava_dispatcher.downloader import (
     download_image,
 )
@@ -224,7 +224,7 @@ class VexpressTarget(BootloaderTarget):
         """
 
         mount_point = os.path.join(self.scratch_dir, 'vexpress-usb')
-        if not os.path.exists(mount_point):
+        if not unicode_path_check(mount_point):
             os.makedirs(mount_point)
 
         self._enter_mcc()
@@ -342,7 +342,7 @@ class VexpressTarget(BootloaderTarget):
             uefi_backup_path = self.config.vexpress_uefi_backup_path
             uefi_backup = os.path.join(mount_point, uefi_backup_path)
 
-            if os.path.exists(uefi_backup):
+            if unicode_path_check(uefi_backup):
                 # restore the uefi backup
                 self.context.run_command_with_retries('cp %s %s' % (uefi_backup, uefi))
             else:
@@ -356,7 +356,7 @@ class VexpressTarget(BootloaderTarget):
                 bl1_backup_path = self.config.vexpress_bl1_backup_path
                 bl1_backup = os.path.join(mount_point, bl1_backup_path)
 
-                if os.path.exists(bl1_backup):
+                if unicode_path_check(bl1_backup):
                     # restore the firmware backup
                     self.context.run_command_with_retries('cp %s %s' % (bl1_backup, bl1))
                 else:
@@ -370,7 +370,7 @@ class VexpressTarget(BootloaderTarget):
                     bl0_backup_path = self.config.vexpress_bl0_backup_path
                     bl0_backup = os.path.join(mount_point, bl0_backup_path)
 
-                    if os.path.exists(bl0_backup):
+                    if unicode_path_check(bl0_backup):
                         # restore the bl0 backup
                         self.context.run_command_with_retries('cp %s %s' % (bl0_backup, bl0))
                     else:
@@ -380,7 +380,7 @@ class VexpressTarget(BootloaderTarget):
 
     def _install_test_firmware(self, mount_point):
         if self.config.vexpress_complete_firmware:
-            if os.path.exists(self.complete_firmware_test):
+            if unicode_path_check(self.complete_firmware_test):
                 self._copy_firmware_to_juno(self.complete_firmware_test, mount_point)
             else:
                 raise CriticalError("No path to complete firmware")
@@ -388,7 +388,7 @@ class VexpressTarget(BootloaderTarget):
             uefi_path = self.config.vexpress_uefi_path
             uefi = os.path.join(mount_point, uefi_path)
 
-            if os.path.exists(self.test_uefi):
+            if unicode_path_check(self.test_uefi):
                 self.context.run_command('cp %s %s' % (self.test_uefi, uefi))
             else:
                 raise CriticalError("No path to uefi firmware")
@@ -397,7 +397,7 @@ class VexpressTarget(BootloaderTarget):
                 bl1_path = self.config.vexpress_bl1_path
                 bl1 = os.path.join(mount_point, bl1_path)
 
-                if os.path.exists(self.test_bl1):
+                if unicode_path_check(self.test_bl1):
                     self.context.run_command('cp %s %s' % (self.test_bl1, bl1))
                 else:
                     raise CriticalError("No path to bl1 firmware")
@@ -406,7 +406,7 @@ class VexpressTarget(BootloaderTarget):
                     bl0_path = self.config.vexpress_bl0_path
                     bl0 = os.path.join(mount_point, bl0_path)
 
-                    if os.path.exists(self.test_bl0):
+                    if unicode_path_check(self.test_bl0):
                         self.context.run_command('cp %s %s' % (self.test_bl0, bl0))
                     else:
                         raise CriticalError("No path to bl0 firmware")

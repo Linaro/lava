@@ -313,10 +313,12 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
         except:
             logging.warning(traceback.format_exc())
             return None
-        ip_pattern = "%s: ip (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) mask" % nic_name
+        ip_pattern1 = "%s: ip (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) mask" % nic_name
+        ip_pattern2 = "inet addr:(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)"
         try:
-            self.run(
-                "ifconfig %s" % nic_name, [ip_pattern, pexpect.EOF], timeout=60)
+            self.run("ifconfig %s" % nic_name,
+                     [ip_pattern1, ip_pattern2, pexpect.EOF],
+                     timeout=60)
         except Exception as e:
             raise NetworkError("ifconfig can not match ip pattern for %s:%s" % (nic_name, e))
 
@@ -337,22 +339,24 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
 
     def wait_home_screen(self):
         timeout = self._client.config.android_home_screen_timeout
+        decrement = self._client.config.android_home_screen_timeout_decrement
         activity_pat = self._client.config.android_wait_for_home_screen_activity
+        homescreen_displayed = False
         # waiting for the home screen displayed
-        try:
-            self.run('logcat -s ActivityManager:I',
-                     response=[activity_pat],
-                     timeout=timeout, wait_prompt=False)
-        except pexpect.TIMEOUT:
+
+        while timeout > 0:
+            try:
+                self.run('logcat -sd ActivityManager:I',
+                         response=[activity_pat], timeout=decrement, wait_prompt=True)
+                homescreen_displayed = True
+                break
+            except pexpect.TIMEOUT:
+                timeout -= decrement
+
+        if not homescreen_displayed:
             msg = "The home screen was not displayed"
             logging.critical(msg)
             raise CriticalError(msg)
-        finally:
-            # send ctrl+c to exit the logcat command,
-            # and make the latter command can be run on the normal
-            # command line session, instead of the session of logcat command
-            self._connection.sendcontrol("c")
-            self.run('')
 
     def check_device_state(self):
         (rc, output) = commands.getstatusoutput('adb devices')

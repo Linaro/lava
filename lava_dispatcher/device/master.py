@@ -50,6 +50,7 @@ from lava_dispatcher.utils import (
     mkdtemp,
     extract_tar,
     finalize_process,
+    unicode_path_check,
 )
 from lava_dispatcher.client.lmc_utils import (
     generate_image,
@@ -73,21 +74,37 @@ class MasterImageTarget(Target):
         self.master_ip = None
         self.device_version = None
 
-        self.testboot_dir = self.config.master_testboot_dir
         self.testboot_label = self.config.master_testboot_label
-        self.testboot_path = '%s%s' % (self.testboot_dir, self.testboot_label)
-
-        self.testrootfs_dir = self.config.master_testrootfs_dir
         self.testrootfs_label = self.config.master_testrootfs_label
-        self.testrootfs_path = '%s%s' % (self.testrootfs_dir, self.testrootfs_label)
-
-        self.sdcard_dir = self.config.master_sdcard_dir
         self.sdcard_label = self.config.master_sdcard_label
-        self.sdcard_path = '%s%s' % (self.sdcard_dir, self.sdcard_label)
-
-        self.userdata_dir = self.config.master_userdata_dir
         self.userdata_label = self.config.master_userdata_label
-        self.userdata_path = '%s%s' % (self.userdata_dir, self.userdata_label)
+
+        if self.config.master_testdisk_id is None:
+            self.testboot_dir = self.config.master_testboot_dir
+            self.testboot_path = '%s%s' % (self.testboot_dir, self.testboot_label)
+            self.testrootfs_dir = self.config.master_testrootfs_dir
+            self.testrootfs_path = '%s%s' % (self.testrootfs_dir, self.testrootfs_label)
+            self.sdcard_dir = self.config.master_sdcard_dir
+            self.sdcard_path = '%s%s' % (self.sdcard_dir, self.sdcard_label)
+            self.userdata_dir = self.config.master_userdata_dir
+            self.userdata_path = '%s%s' % (self.userdata_dir, self.userdata_label)
+        else:
+            self.testboot_dir = self.config.master_testdisk_dir
+            self.testrootfs_dir = self.config.master_testdisk_dir
+            self.sdcard_dir = self.config.master_testdisk_dir
+            self.userdata_dir = self.config.master_testdisk_dir
+            self.testboot_path = '%s%s%s' % (self.testboot_dir,
+                                             self.config.master_testdisk_id,
+                                             self.config.master_testboot_part)
+            self.testrootfs_path = '%s%s%s' % (self.testboot_dir,
+                                               self.config.master_testdisk_id,
+                                               self.config.master_testrootfs_part)
+            self.sdcard_path = '%s%s%s' % (self.testboot_dir,
+                                           self.config.master_testdisk_id,
+                                           self.config.master_sdcard_part)
+            self.userdata_path = '%s%s%s' % (self.testboot_dir,
+                                             self.config.master_testdisk_id,
+                                             self.config.master_userdata_part)
 
         self.master_kernel = None
         self.master_ramdisk = None
@@ -277,7 +294,7 @@ class MasterImageTarget(Target):
             with image_partition_mounted(image, boot_part) as mnt:
                 for boot_file in self.config.boot_files:
                     boot_path = os.path.join(mnt, boot_file)
-                    if os.path.exists(boot_path):
+                    if unicode_path_check(boot_path):
                         boot_file_path = boot_path
                         break
 
@@ -290,7 +307,7 @@ class MasterImageTarget(Target):
                         boot_file_path = file_path
                         break
 
-        if boot_file_path and os.path.exists(boot_file_path):
+        if boot_file_path and unicode_path_check(boot_file_path):
             with open(boot_file_path, 'r') as f:
                 boot_cmds = self._rewrite_boot_cmds(f.read())
                 self.__boot_cmds_dynamic__ = boot_cmds

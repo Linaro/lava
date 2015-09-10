@@ -37,6 +37,14 @@ class DeviceSchema(schema.Schema):
     master_sdcard_label = schema.StringOption()
     master_userdata_dir = schema.StringOption()
     master_userdata_label = schema.StringOption()
+
+    master_testdisk_dir = schema.StringOption(default="/dev/disk/by-id/")
+    master_testdisk_id = schema.StringOption(default=None)
+    master_testboot_part = schema.StringOption(default="-part3")
+    master_testrootfs_part = schema.StringOption(default="-part5")
+    master_userdata_part = schema.StringOption(default="-part6")
+    master_sdcard_part = schema.StringOption(default="-part7")
+
     android_binary_drivers = schema.StringOption(default=None)
     android_ramdisk_files = schema.ListOption(default=["uInitrd",
                                                        "ramdisk.img"])
@@ -181,6 +189,7 @@ class DeviceSchema(schema.Schema):
     android_wait_for_home_screen_activity = schema.StringOption(
         default="Displayed com.android.launcher/com.android.launcher2.Launcher:")
     android_home_screen_timeout = schema.IntOption(default=1800)
+    android_home_screen_timeout_decrement = schema.IntOption(default=10)
     android_boot_prompt_timeout = schema.IntOption(default=1200)
     android_orig_block_device = schema.StringOption(default="mmcblk0")
     android_lava_block_device = schema.StringOption(default="mmcblk0")
