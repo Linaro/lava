@@ -4,7 +4,8 @@ Priority: optional
 Maintainer: Debian LAVA team <pkg-linaro-lava-devel@lists.alioth.debian.org>
 Uploaders: Antonio Terceiro <terceiro@debian.org>,
  Neil Williams <codehelp@debian.org>,
- Fathi Boudra <fabo@debian.org>, Jordi Mallach <jordi@debian.org>
+ Fathi Boudra <fabo@debian.org>, Jordi Mallach <jordi@debian.org>,
+ Senthil Kumaran S (stylesen) <stylesen@gmail.com>
 Build-Depends: debhelper (>= 8.0.0), dh-python,
  libjs-excanvas, libjs-jquery-cookie, libjs-jquery,
  libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), libjs-jquery-ui,
