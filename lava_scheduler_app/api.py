@@ -213,11 +213,11 @@ class SchedulerAPI(ExposedAPI):
         except SubmissionException as exc:
             raise xmlrpclib.Fault(400, "Invalid YAML submission: %s" % exc)
 
-    def job_output(self, job_id):
+    def job_output(self, job_id, offset=0):
         """
         Name
         ----
-        `job_output` (`job_id`)
+        `job_output` (`job_id`, `offset=0`)
 
         Description
         -----------
@@ -227,6 +227,9 @@ class SchedulerAPI(ExposedAPI):
         ---------
         `job_id`: string
             Job id for which the output is required.
+        `offset`: integer
+            Offset from which to start reading the output file specified in bytes.
+            It defaults to 0.
 
         Return value
         ------------
@@ -247,6 +250,7 @@ class SchedulerAPI(ExposedAPI):
 
         output_file = job.output_file()
         if output_file:
+            output_file.seek(offset)
             return xmlrpclib.Binary(output_file.read().encode('UTF-8'))
         else:
             raise xmlrpclib.Fault(404, "Job output not found.")

@@ -40,8 +40,8 @@ import lava_server.urls
 class TestOpenIDLogin(TestCase):
 
     urls = tuple(
-        django_openid_auth.tests.urls.urlpatterns
-        + lava_server.urls.urlpatterns)
+        django_openid_auth.tests.urls.urlpatterns +
+        lava_server.urls.urlpatterns)
     _username = 'someuser'
     _identity_url = 'http://example.com/identity'
 

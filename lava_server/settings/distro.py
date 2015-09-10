@@ -4,6 +4,7 @@ import os
 from lava_server.settings.getsettings import Settings
 from lava_server.extension import loader
 from lava_server.settings.production import *
+from django.db.backends.signals import connection_created
 
 # Load application settings from lava_server.settings integration package
 distro_settings = Settings("lava-server")
@@ -231,8 +232,6 @@ PIPELINE = distro_settings.get_setting("PIPELINE", True)
 
 # Load extensions
 loader.contribute_to_settings(locals(), distro_settings)
-
-from django.db.backends.signals import connection_created
 
 
 def set_timeout(connection, **kw):

@@ -1,20 +1,19 @@
-#!/bin/sh
+#!/bin/bash
 
 set -x
 set -e
 
 pep8 --ignore E501 .
 
-if [ -n "$1" ]; then
+if [[ (-z "$1") || (("$1" == -v*) && ($# -eq 1)) ]]; then
   VERBOSE=$1
+
+  ./lava_server/manage.py test $VERBOSE \
+	dashboard_app \
+	lava_scheduler_app \
+	lava_scheduler_daemon \
+	linaro_django_xmlrpc.tests \
+	lava_results_app
+else
+  ./lava_server/manage.py test "$@"
 fi
-
-./lava_server/manage.py test $VERBOSE dashboard_app
-
-./lava_server/manage.py test $VERBOSE lava_scheduler_app
-
-./lava_server/manage.py test $VERBOSE lava_scheduler_daemon
-
-./lava_server/manage.py test $VERBOSE linaro_django_xmlrpc.tests
-
-./lava_server/manage.py test $VERBOSE lava_results_app

@@ -26,6 +26,22 @@
 # reference.
 
 import django
+try:
+    import devserver
+    devserver_import = True
+except ImportError:
+    devserver_import = False
+try:
+    import django_extensions
+    django_extensions_import = True
+except ImportError:
+    django_extensions_import = False
+try:
+    import hijack
+    hijack_import = True
+except ImportError:
+    hijack_import = False
+from openid import oidutil
 
 # Administrator contact, used for sending
 # emergency email when something breaks
@@ -134,23 +150,14 @@ if django.VERSION < (1, 7):
 else:
     TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
-try:
-    import devserver
+if devserver_import:
     INSTALLED_APPS += ['devserver']
-except ImportError:
-    pass
 
-try:
-    import django_extensions
+if django_extensions_import:
     INSTALLED_APPS += ['django_extensions']
-except ImportError:
-    pass
 
-try:
-    import hijack
+if hijack_import:
     INSTALLED_APPS += ['hijack']
-except ImportError:
-    pass
 
 TEMPLATE_CONTEXT_PROCESSORS = [
     "django.contrib.auth.context_processors.auth",
@@ -180,7 +187,6 @@ OPENID_UPDATE_DETAILS_FROM_SREG = True
 OPENID_SSO_SERVER_URL = 'https://login.ubuntu.com/'
 
 # python-openid is too noisy, so we silence it.
-from openid import oidutil
 oidutil.log = lambda msg, level=0: None
 
 RESTRUCTUREDTEXT_FILTER_SETTINGS = {"initial_header_level": 4}

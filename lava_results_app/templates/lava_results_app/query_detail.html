@@ -1,0 +1,148 @@
+{% extends "layouts/content-bootstrap.html" %}
+{% load i18n %}
+{% load keep_spacing %}
+{% load django_tables2 %}
+
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_results_app/css/query.css"/>
+{% endblock %}
+
+{% block content %}
+
+<h1>Query {{ query.name }} <small><a href="{% url 'lava_results_app.views.query.views.query_display' query.owner.username query.name %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-th-list"></span> Results</a></small></h1>
+
+<div class="row">
+  <div class="col-md-6">
+    <h4 class="modal-header">Summary</h4>
+
+    <dl class="dl-horizontal">
+
+    <dt>Status</dt>
+    <dd>
+      {% if query.is_published %}
+      Published
+      {% else %}
+      Unpublished
+      {% endif %}
+    </dd>
+    <dt>Description</dt>
+    <dd>
+    {{ query.description|keep_spacing|linebreaks }}
+    </dd>
+    </dl>    
+  </div>
+
+  <div class="col-md-6">
+    <h4 class="modal-header">Actions</h4>
+    <div class="btn-group btn-group-justified">
+      {% if query.owner == request.user or request.user.is_superuser %}
+      <div class="btn-group">
+        <a href="{{ query.get_absolute_url }}/+edit" class="btn btn-info"><span class="glyphicon glyphicon-pencil"></span> Edit</a>
+      </div>
+      <div class="btn-group">
+        <a href="{{ query.get_absolute_url }}/+delete" class="btn btn-danger"><span class="glyphicon glyphicon-trash"></span> Delete</a>
+      </div>
+      {% endif %}
+      {% if request.user.is_authenticated %}
+      <div class="btn-group">
+        <a href="{{ query.get_absolute_url }}/+copy" class="btn btn-default"><span class="glyphicon glyphicon-share"></span> Copy</a>
+      </div>
+      {% endif %}
+      {% if query.owner == request.user or request.user.is_superuser %}
+      <div class="btn-group">
+        <a href="{{ query.get_absolute_url }}/+toggle-published" class="btn btn-default"><span class="glyphicon glyphicon-share"></span>
+	  {% if query.is_published %}
+	  Unpublish
+	  {% else %}
+	  Publish
+	  {% endif %}
+	</a>
+      </div>      
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+
+<h4 class="modal-header">Conditions</h4>
+
+<dl class="dl-horizontal">
+
+<div class="fields-container">
+  <table id="conditions_container" class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Entity</th>
+            <th>Field</th>
+            <th>Operator</th>
+            <th>Value</th>
+            <th>Edit</th>
+            <th>Remove</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for condition in query.querycondition_set.all %}
+    <tr id="condition_row_{{ condition.id }}">
+      <td>
+	{{ condition.table }}
+      </td>
+      <td>
+	{{ condition.field }}
+      </td>
+      <td>
+	{{ condition.operator }}
+      </td>
+      <td>
+	{{ condition.value }}
+      </td>
+      <td>
+	<a class="glyphicon glyphicon-edit" aria-hidden="true" href="javascript: void(0);" onclick="open_condition_modal('{{ query.name }}','{{ condition.id }}','{{ condition.table.id }}','{{ condition.field }}','{{ condition.operator }}','{{ condition.value }}');">
+	</a>
+      </td>
+      <td>
+	<a class="glyphicon glyphicon-remove" aria-hidden="true" href="{% url 'lava_results_app.views.query.views.query_remove_condition' query.owner.username query.name condition.id %}">
+	</a>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <a onclick="open_condition_modal('{{ query.name }}');" class="btn btn-sm btn-primary" href="javascript: void(0);" >
+    Add new condition
+  </a>
+</div>
+    
+<!-- Modal HTML -->
+<div id="condition_modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Add condition</h4>
+      </div>
+      <div class="modal-body">
+	<div id="condition_errors" class="errorlist" style="color: red;"></div>
+	<form class="well" id="condition_form" method="post" action="/+add-condition">
+	  {% csrf_token %}
+	  <input type="hidden" id="condition_id" name="id" />
+	  {{ condition_form.as_p }}
+	</form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button id="save_condition" type="button" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_results_app/js/query.js"></script>
+<script type="text/javascript">
+  csrf_token = '{{csrf_token}}';
+  query_name = '{{ query.name }}';
+  query_user = '{{ query.owner.username }}';
+</script>
+{% endblock %}
+

@@ -1,0 +1,56 @@
+debian:
+  - python_dir: debian/lava-server/usr/lib/python2.7/dist-packages/
+  - package: libjs-jquery
+    directory: /usr/share/javascript/jquery/
+    lava_directory: lava_server/lava-server/js/
+    replacements:
+      # our name first, external name second
+      jquery-1.11.0.js: jquery.js
+      jquery-1.11.0.min.js: jquery.min.js
+    version: '1.10'
+  - package: libjs-jquery-cookie
+    directory: /usr/share/javascript/jquery-cookie/
+    lava_directory: lava_server/lava-server/js/
+    replacements:
+      jquery.cookie.js: jquery.cookie.js
+  - package: libjs-jquery-watermark
+    directory: /usr/share/javascript/jquery-watermark/
+    lava_directory: lava_server/lava-server/js/
+    replacements:
+      jquery.watermark.js: jquery.watermark.js
+      jquery.watermark.min.js: jquery.watermark.min.js
+  - package: libjs-jquery-flot
+    directory: /usr/share/javascript/jquery-flot/
+    lava_directory: dashboard_app/static/dashboard_app/js/
+    replacements:
+      jquery.flot.navigate.min.js: jquery.flot.navigate.min.js
+      jquery.flot.navigate.js: jquery.flot.navigate.js
+      jquery.flot.canvas.min.js: jquery.flot.canvas.min.js
+      jquery.flot.canvas.js: jquery.flot.canvas.js
+      jquery.flot.min.js: jquery.flot.min.js
+      jquery.flot.js: jquery.flot.js
+      jquery.flot.selection.min.js: jquery.flot.selection.min.js
+      jquery.flot.selection.js: jquery.flot.selection.js
+      jquery.flot.stack.min.js: jquery.flot.stack.min.js
+      jquery.flot.stack.js: jquery.flot.stack.js
+      jquery.flot.time.js: jquery.flot.time.js
+  - package: libjs-jquery-flot
+    directory: /usr/share/javascript/jquery-flot/
+    lava_directory: lava_scheduler_app/static/lava_scheduler_app/js/
+    replacements:
+      jquery.flot.min.js: jquery.flot.min.js
+      jquery.flot.js: jquery.flot.js
+      jquery.flot.stack.js: jquery.flot.stack.js
+  - package: libjs-excanvas
+    directory: /usr/share/javascript/excanvas/
+    lava_directory: dashboard_app/static/dashboard_app/js/
+    replacements:
+      excanvas.js: excanvas.js
+      excanvas.min.js: excanvas.min.js
+  - package: libjs-jquery-ui
+    directory: /usr/share/javascript/jquery-ui/ui/
+    lava_directory: lava_server/lava-server/js/
+    replacements:
+      jquery-ui-1.10.4.custom.js: jquery-ui.custom.js
+      jquery-ui-1.10.4.custom.min.js: jquery-ui.custom.min.js
+    version: '1.10.4'

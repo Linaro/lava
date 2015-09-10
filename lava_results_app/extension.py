@@ -45,7 +45,7 @@ class ResultsExtension(LavaServerExtension):
         menu = super(ResultsExtension, self).get_menu()
         menu.sub_menu = [
             Menu("Results", reverse("lava.results")),
-            Menu("Queries", reverse("lava.results.query"))
+            Menu("Queries", reverse("lava.results.query_list"))
         ]
         return menu
 

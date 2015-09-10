@@ -194,8 +194,8 @@ class BundleStream(RestrictedResource):
 
     slug = models.CharField(
         blank=True,
-        help_text=(_(u"Name that you will use when uploading bundles.")
-                   + " " + _help_max_length(64)),
+        help_text=(_(u"Name that you will use when uploading bundles.") +
+                   " " + _help_max_length(64)),
         max_length=64,
         verbose_name=_(u"Slug"),
     )
@@ -758,8 +758,8 @@ class TestCase(models.Model):
         help_text=(_("""Units in which measurement value should be
                      interpreted in, for example <q>ms</q>, <q>MB/s</q> etc.
                      There is no semantical meaning inferred from the value of
-                     this field, free form text is allowed. <br/>""")
-                   + _help_max_length(100)),
+                     this field, free form text is allowed. <br/>""") +
+                   _help_max_length(100)),
         verbose_name=_("Units"))
 
     class Meta:

@@ -23,18 +23,16 @@
 # Pre install some usefull tools when stating a python script with:
 # PYTHONSTARTUP=./share/startup.py python
 #
-print("=============================")
-print("Startup script for LAVA")
-print(" - Importing django")
 import django
-print(" - Importing the models")
 from dashboard_app.models import *
 from lava_scheduler_app.models import *
 from linaro_django_xmlrpc.models import *
+from django.db import transaction
+print("=============================")
+print("Startup script for LAVA")
 
 
 print(" - Entering transaction mode")
-from django.db import transaction
 transaction.set_autocommit(False)
 
 print(" - creating rollback function")

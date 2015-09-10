@@ -1,0 +1,21 @@
+{% extends "layouts/content-bootstrap.html" %}
+{% load i18n %}
+{% load keep_spacing %}
+{% load django_tables2 %}
+
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_results_app/css/query.css"/>
+{% endblock %}
+
+{% block content %}
+
+<h2 class="modal-header">Query matches - {{ query.content_type.name }} <small><a href="{% url 'lava_results_app.views.query.views.query_detail' query.owner.username query.name %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-edit"></span> Query details</a></small> <small><a href="{% url 'lava_results_app.views.query.views.query_custom' %}?entity={{ entity }}&conditions={{ conditions }}" class="btn btn-xs btn-success"><span class="glyphicon glyphicon-link"></span> This query by URL</a></small></h2>
+
+{% render_table query_table %}
+
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
+{% endblock %}
+

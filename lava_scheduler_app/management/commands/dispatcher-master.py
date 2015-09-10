@@ -435,12 +435,17 @@ class Command(BaseCommand):
             # Logging socket
             if sockets.get(pull_socket) == zmq.POLLIN:
                 msg = pull_socket.recv_multipart()
-                (job_id, level, name, message) = msg
+                try:
+                    (job_id, level, name, message) = msg
+                except ValueError:
+                    # do not let a bad message stop the master.
+                    self.logger.error("Failed to parse log message, skipping: %s", msg)
+                    continue
 
                 try:
                     scanned = yaml.load(message)
                 except yaml.YAMLError:
-                    self.logger.error("Failed to scan: %s", message)
+                    # failure to scan is not an error here, it just means the message is not a result
                     scanned = None
                 # the results logger wraps the OrderedDict in a dict called results, for identification,
                 # YAML then puts that into a list of one item for each call to log.results.
