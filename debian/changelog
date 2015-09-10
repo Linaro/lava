@@ -1,8 +1,9 @@
 lava-server (2015.9-1) unstable; urgency=medium
 
+  * New production release
   * Add Senthil Kumaran S (stylesen) as an uploader.
 
- -- Senthil Kumaran S (stylesen) <stylesen@gmail.com>  Tue, 08 Sep 2015 21:58:23 +0530
+ -- Senthil Kumaran S (stylesen) <stylesen@gmail.com>  Thu, 10 Sep 2015 14:08:50 +0530
 
 lava-server (2015.8.1-1) unstable; urgency=medium
 
