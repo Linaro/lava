@@ -3,6 +3,8 @@ LAVA development
 
 .. Resource: Various places in the wiki
 
+.. _lava_architecture:
+
 Understanding the LAVA architecture
 ***********************************
 

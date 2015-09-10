@@ -224,3 +224,74 @@ Drop the old cluster::
 Now the old database package can be removed::
 
  $ sudo apt-get remove postgresql-9.3
+
+.. index:: javascript
+
+Javascript handling
+*******************
+
+Javascript has particular issues in distributions, often the version of
+a Javascript file is out of step with the version available in the
+distribution or not packaged at all. ``lava-server`` embeds javascript
+files in the ``static/js`` directories and maintains a list of files
+which are replaced with symlinks during a Debian package build. The
+list is in :file:`share/javascript.yaml` and the replacement of matching
+files is done using :file:`share/javascript.py`. Other distribution
+builds are invited to use the same script or provide patches if the
+paths within the script need modification.
+
+.. _javascript_security:
+
+Javascript and security
+=======================
+
+The primary concern is security fixes. Distributions release with a
+particular release of LAVA and may need to fix security problems in that
+release. If the file is replaced by a symlink to an external package
+in the distribution, then the security problem and fix migrate to that package.
+LAVA tracks these files in :file:`share/javascript.yaml`. Files which
+only exist in LAVA or exist at a different version to the one available
+in the distribution, need to be patched within LAVA. Javascript files
+created by LAVA are packaged as editable source code and patches to these
+files will take effect in LAVA after a simple restart of apache and a
+clearing of any browser cache. Problems arise when the javascript
+files in the LAVA source code have been minified_, resulting in a
+:file:`.min.js` file which is **not** suitable for editing or patching.
+
+The source code for the minified JS used in LAVA is provided in the
+LAVA source code, alongside the minified version. **However**, there
+is a lack of suitable tools to convert changes to the source file into
+a comparable minified file. If these files need changes, the correct
+fix would be to patch the unminified javascript and copy the modified
+file over the top of the minified version. This loses the advantages of
+minification but gains the benefit of a known security fix.
+
+.. _javascript_maintenance:
+
+Javascript maintenance
+======================
+
+Work is ongoing upstream to resolve the remaining minified javascript
+files:
+
+#. **Identify** the upstream location of all javascript not listed in
+   :file:`share/javascript.yaml` and not written by LAVA, specify
+   this location in a :file:`README` in the relevant :file:`js/` directory
+   along with details, if any, of how a modified file can be
+   minified or whether a modified file should simply replace the
+   minified file.
+#. **Replace** the use of the remaining minified JS where the change to
+   unminified has a negligible or acceptable performance change. If
+   no upstream can be identified, LAVA will need to take over
+   maintenance of the javascript itself, at which point minified files
+   will be dropped until other LAVA javascript can also be minified.
+#. **Monitor** availability of packages for all javascript files not written
+   by LAVA and add to the listing in :file:`share/javascript.yaml` when
+   packages become available.
+#. **Maintain** - only minify javascript written by LAVA **if** a
+   suitable minify tool is available to be used during the build of the
+   packages and to add such support to :file:`share/javascript.py` so
+   that minification happens at the same point as replacement of embedded
+   javascript with symlinks to externally provided files.
+
+.. _minified: https://en.wikipedia.org/wiki/Minification_(programming)
