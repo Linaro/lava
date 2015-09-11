@@ -603,16 +603,14 @@ def get_restricted_job(user, pk):
     accessibility to the object.
     """
     job = TestJob.get_by_job_number(pk)
-    if job.actual_device:
-        device_type = job.actual_device.device_type
-    elif job.requested_device:
-        device_type = job.requested_device.device_type
-    elif job.requested_device_type:
-        device_type = job.requested_device_type
-    else:
+    device_type = job.job_device_type()
+    if not device_type:
+        # dynamic connection - might need to still be restricted?
         return job
     if len(device_type.devices_visible_to(user)) == 0:
-            raise Http404()
+        raise Http404()
+    if job.can_view(user):
+        return job
     if not job.is_accessible_by(user) and not user.is_superuser:
         raise PermissionDenied()
     return job

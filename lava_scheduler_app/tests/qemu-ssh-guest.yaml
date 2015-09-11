@@ -8,6 +8,7 @@ timeouts:
   action:
     minutes: 3
 
+visibility: public
 context:
   arch: amd64
 

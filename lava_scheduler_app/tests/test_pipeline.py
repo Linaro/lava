@@ -13,6 +13,7 @@ from lava_scheduler_app.models import (
     _pipeline_protocols,
 )
 from django.db import models
+from django.core.exceptions import ValidationError
 from django_testscenarios.ubertest import TestCase
 from django.contrib.auth.models import Group, Permission, User
 from collections import OrderedDict
@@ -306,6 +307,43 @@ class TestPipelineSubmit(TestCaseWithFactory):
             'console=ttyO0,115200 earlyprintk=uart8250-32bit,0x1c020000 debug '
             'root=/dev/nfs rw 172.164.56.2:/home/user/nfs/,tcp,hard,intr ip=dhcp'
         )
+
+    def test_visibility(self):
+        user = self.factory.make_user()
+        user2 = self.factory.make_user()
+        user3 = self.factory.make_user()
+
+        # public set in the YAML
+        yaml_str = self.factory.make_job_json()
+        yaml_data = yaml.load(yaml_str)
+        job = TestJob.from_yaml_and_user(
+            yaml_str, user)
+        self.assertTrue(job.is_public)
+        self.assertTrue(job.can_view(user))
+        self.assertTrue(job.can_view(user2))
+        self.assertTrue(job.can_view(user3))
+
+        yaml_data['visibility'] = 'personal'
+        self.assertEqual(yaml_data['visibility'], 'personal')
+        job2 = TestJob.from_yaml_and_user(
+            yaml.dump(yaml_data), user3)
+        self.assertFalse(job2.is_public)
+        self.assertFalse(job2.can_view(user))
+        self.assertFalse(job2.can_view(user2))
+        self.assertTrue(job2.can_view(user3))
+
+        group1, _ = Group.objects.get_or_create(name='group1')
+        group1.user_set.add(user2)
+        job2.viewing_groups.add(group1)
+        job2.visibility = TestJob.VISIBLE_GROUP
+        job2.save()
+        self.assertFalse(job2.is_public)
+        self.assertEqual(job2.visibility, TestJob.VISIBLE_GROUP)
+        self.assertEqual(len(job2.viewing_groups.all()), 1)
+        self.assertIn(group1, job2.viewing_groups.all())
+        self.assertTrue(job.can_view(user2))
+        self.assertFalse(job2.can_view(user))
+        self.assertTrue(job2.can_view(user3))
 
 
 class TestPipelineStore(TestCaseWithFactory):

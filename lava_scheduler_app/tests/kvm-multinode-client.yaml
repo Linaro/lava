@@ -8,6 +8,7 @@ timeouts:
     minutes: 1
   test:
     minutes: 3
+visibility: public
 
 protocols:
   lava-multinode:

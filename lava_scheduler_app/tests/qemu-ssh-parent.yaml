@@ -32,6 +32,7 @@ context: {arch: amd64}
 device_type: qemu
 job_name: qemu-guest-ssh
 priority: medium
+visibility: public
 protocols:
   lava-multinode:
     group_size: 3

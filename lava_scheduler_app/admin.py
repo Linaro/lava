@@ -1,3 +1,5 @@
+from django import forms
+from django.core.exceptions import ValidationError
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from lava_scheduler_app.models import (
@@ -198,6 +200,20 @@ class DeviceAdmin(admin.ModelAdmin):
     ordering = ['hostname']
 
 
+class VisibilityForm(forms.ModelForm):
+
+    def clean_viewing_groups(self):
+        viewing_groups = self.cleaned_data['viewing_groups']
+        visibility = self.cleaned_data['visibility']
+        if len(viewing_groups) != 1 and visibility == TestJob.VISIBLE_GROUP:
+            raise ValidationError("Group visibility must have exactly one viewing group.")
+        elif len(viewing_groups) != 0 and visibility == TestJob.VISIBLE_PERSONAL:
+            raise ValidationError("Personal visibility cannot have any viewing groups assigned.")
+        elif len(viewing_groups) != 0 and visibility == TestJob.VISIBLE_PUBLIC:
+            raise ValidationError("Pulibc visibility cannot have any viewing groups assigned.")
+        return self.cleaned_data['viewing_groups']
+
+
 class TestJobAdmin(admin.ModelAdmin):
     def requested_device_hostname(self, obj):
         return '' if obj.requested_device is None else obj.requested_device.hostname
@@ -206,13 +222,13 @@ class TestJobAdmin(admin.ModelAdmin):
     def requested_device_type_name(self, obj):
         return '' if obj.requested_device_type is None else obj.requested_device_type
     requested_device_type_name.short_description = 'Request device type'
-
+    form = VisibilityForm
     actions = [cancel_action]
     list_filter = ('status', RequestedDeviceTypeFilter, RequestedDeviceFilter, ActualDeviceFilter)
     raw_id_fields = ['_results_bundle']
     fieldsets = (
         ('Owner', {
-            'fields': ('user', 'group', 'submitter', 'submit_token', 'is_public')}),
+            'fields': ('user', 'group', 'submitter', 'submit_token', 'is_public', 'visibility', 'viewing_groups')}),
         ('Request', {
             'fields': ('requested_device', 'requested_device_type', 'priority', 'health_check')}),
         ('Advanced properties', {

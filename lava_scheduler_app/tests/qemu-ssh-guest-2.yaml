@@ -24,6 +24,7 @@ job_name: qemu-guest-ssh
 connection: ssh
 host_role: host
 priority: medium
+visibility: public
 protocols:
   lava-multinode:
     group_size: 3

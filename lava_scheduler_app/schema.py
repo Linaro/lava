@@ -93,6 +93,11 @@ def _job_timeout_schema():
     }, extra=True)
 
 
+def visibility_schema():
+    # possible values - 1 of 2 strings or a specified dict
+    return Schema(Any('public', 'personal', {'group': str}))
+
+
 def _job_schema():
     return Schema(
         {
@@ -101,6 +106,7 @@ def _job_schema():
             'priority': Any('high', 'medium', 'low'),
             'protocols': _job_protocols_schema(),
             'context': _simple_params(),
+            Required('visibility'): visibility_schema(),
             Required('timeouts'): _job_timeout_schema(),
             Required('actions'): _job_actions_schema()
         }
