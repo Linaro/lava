@@ -1,4 +1,4 @@
-# Copyright (C) 2014 Linaro Limited
+# Copyright (C) 2014,2015 Linaro Limited
 #
 # Author: Neil Williams <neil.williams@linaro.org>
 #
@@ -152,11 +152,14 @@ class Deployment(object):  # pylint: disable=abstract-class-not-used
 
     priority = 0
     action_type = 'deploy'
+    compatibility = 0
 
     def __init__(self, parent):
         self.__parameters__ = {}
         self.pipeline = parent
         self.job = parent.job
+        if self.compatibility > self.job.compatibility:
+            self.job.compatibility = self.compatibility
 
     @property
     def parameters(self):
@@ -213,11 +216,14 @@ class Boot(object):
 
     priority = 0
     action_type = 'boot'
+    compatibility = 0
 
     def __init__(self, parent):
         self.__parameters__ = {}
         self.pipeline = parent
         self.job = parent.job
+        if self.compatibility > self.job.compatibility:
+            self.job.compatibility = self.compatibility
 
     @classmethod
     def accepts(cls, device, parameters):  # pylint: disable=unused-argument
@@ -252,11 +258,14 @@ class LavaTest(object):  # pylint: disable=abstract-class-not-used
 
     priority = 1
     action_type = 'test'
+    compatibility = 1  # used directly
 
     def __init__(self, parent):
         self.__parameters__ = {}
         self.pipeline = parent
         self.job = parent.job
+        if self.compatibility > self.job.compatibility:
+            self.job.compatibility = self.compatibility
 
     @classmethod
     def accepts(cls, device, parameters):  # pylint: disable=unused-argument

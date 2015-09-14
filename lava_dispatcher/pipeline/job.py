@@ -60,6 +60,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         ]
         self.timeout = None
         self.protocols = []
+        self.compatibility = 0
         # TODO: we are now able to create the logger when the job is started,
         # allowing the functions that are called before run() to log.
         # Do we want to do something with this?
@@ -101,6 +102,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
     def describe(self):
         return {'device': self.device,
                 'job': self.parameters,
+                'compatibility': self.compatibility,
                 'pipeline': self.pipeline.describe()}
 
     def validate(self, simulate=False):

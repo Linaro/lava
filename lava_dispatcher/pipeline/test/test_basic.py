@@ -25,10 +25,11 @@ import simplejson
 import yaml
 
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.action import Pipeline, Action
+from lava_dispatcher.pipeline.action import Pipeline, Action, JobError
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.device import NewDevice
+from lava_dispatcher.pipeline.actions.deploy.image import DeployImages
 
 
 class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -284,6 +285,35 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
             if 'pipeline' in item:
                 for element in item['pipeline']:
                     self.assertNotIn('match', element)
+
+    def test_compatibility(self):
+        factory = Factory()
+        job = factory.create_kvm_job('sample_jobs/kvm.yaml', mkdtemp())
+        pipe = job.describe()
+        self.assertEqual(pipe['compatibility'], DeployImages.compatibility)
+        self.assertEqual(job.compatibility, DeployImages.compatibility)
+        kvm_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/kvm.yaml')
+        job_def = yaml.load(open(kvm_yaml, 'r'))
+        job_def['compatibility'] = job.compatibility
+        parser = JobParser()
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
+        try:
+            job = parser.parse(yaml.dump(job_def), device, 4212, None, output_dir=mkdtemp())
+        except NotImplementedError:
+            # some deployments listed in basics.yaml are not implemented yet
+            pass
+        self.assertIsNotNone(job)
+        job_def['compatibility'] = job.compatibility + 1
+        self.assertRaises(
+            JobError, parser.parse, yaml.dump(job_def), device, 4212, None, mkdtemp()
+        )
+        job_def['compatibility'] = 0
+        try:
+            job = parser.parse(yaml.dump(job_def), device, 4212, None, output_dir=mkdtemp())
+        except NotImplementedError:
+            # some deployments listed in basics.yaml are not implemented yet
+            pass
+        self.assertIsNotNone(job)
 
 
 class TestFakeActions(unittest.TestCase):  # pylint: disable=too-many-public-methods

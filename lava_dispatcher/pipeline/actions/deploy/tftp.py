@@ -1,4 +1,4 @@
-# Copyright (C) 2014 Linaro Limited
+# Copyright (C) 2014,2015 Linaro Limited
 #
 # Author: Neil Williams <neil.williams@linaro.org>
 #
@@ -61,6 +61,9 @@ class Tftp(Deployment):
     Limited to what the bootloader can deploy which means ramdisk or nfsrootfs.
     rootfs deployments would format the device and create a single partition for the rootfs.
     """
+
+    compatibility = 1
+
     def __init__(self, parent, parameters):
         super(Tftp, self).__init__(parent)
         self.action = TftpAction()

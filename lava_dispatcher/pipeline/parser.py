@@ -26,6 +26,7 @@ from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,
     Timeout,
+    JobError,
 )
 from lava_dispatcher.pipeline.logical import (
     Deployment,
@@ -185,4 +186,12 @@ class JobParser(object):
         pipeline.add_action(FinalizeAction())
         data['output_dir'] = output_dir
         job.set_pipeline(pipeline)
+        if 'compatibility' in data:
+            try:
+                job_c = int(job.compatibility)
+                data_c = int(data['compatibility'])
+            except ValueError as exc:
+                raise JobError('invalid compatibility value: %s' % exc)
+            if job_c < data_c:
+                raise JobError('Dispatcher unable to meet job compatibility requirement. %d > %d' % (job_c, data_c))
         return job

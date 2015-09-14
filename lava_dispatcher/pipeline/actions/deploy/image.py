@@ -85,6 +85,7 @@ class DeployImages(Deployment):
             test_definitions_action
         umount action
     """
+    compatibility = 1
 
     def __init__(self, parent, parameters):
         super(DeployImages, self).__init__(parent)
