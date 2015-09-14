@@ -23,7 +23,6 @@ from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.action import (
     Action,
     JobError,
-    TestError,
 )
 from lava_dispatcher.pipeline.shell import ShellCommand, ShellSession
 
@@ -67,7 +66,7 @@ class ConnectDevice(Action):
         self.logger.info("%s Connecting to device using '%s'", self.name, command)
         signal.alarm(0)  # clear the timeouts used without connections.
         # ShellCommand executes the connection command
-        shell = ShellCommand("%s\n" % command, self.timeout)
+        shell = ShellCommand("%s\n" % command, self.timeout, logger=self.logger)
         if shell.exitstatus:
             raise JobError("%s command exited %d: %s" % (command, shell.exitstatus, shell.readlines()))
         # ShellSession monitors the pexpect

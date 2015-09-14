@@ -19,10 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import contextlib
-import logging
 import os
 import pexpect
-import signal
 import sys
 import time
 from lava_dispatcher.pipeline.action import (
@@ -34,13 +32,17 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.connection import Connection, CommandRunner
 from lava_dispatcher.pipeline.utils.constants import SHELL_SEND_DELAY
-from lava_dispatcher.pipeline.utils.shell import which
 
 
 class ShellLogger(object):
-    def __init__(self):
+    """
+    Builds a YAML log message out of the incremental output of the pexpect.spawn
+    using the logfile support built into pexpect.
+    """
+
+    def __init__(self, logger):
         self.line = ''
-        self.logger = logging.getLogger('dispatcher')
+        self.logger = logger
 
     def write(self, new_line):
         replacements = {
@@ -61,7 +63,7 @@ class ShellLogger(object):
             self.line += new_line
         return
 
-    def flush(self):
+    def flush(self):  # pylint: disable=no-self-use
         sys.stdout.flush()
         sys.stderr.flush()
 
@@ -75,14 +77,14 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
     A ShellCommand is a raw_connection for a ShellConnection instance.
     """
 
-    def __init__(self, command, lava_timeout, cwd=None):
-        if not lava_timeout or type(lava_timeout) is not Timeout:
+    def __init__(self, command, lava_timeout, logger=None, cwd=None):
+        if not lava_timeout or not isinstance(lava_timeout, Timeout):
             raise RuntimeError("ShellCommand needs a timeout set by the calling Action")
         pexpect.spawn.__init__(
             self, command,
             timeout=lava_timeout.duration,
             cwd=cwd,
-            logfile=ShellLogger(),
+            logfile=ShellLogger(logger),
         )
         self.name = "ShellCommand"
         # serial can be slow, races do funny things, so allow for a delay
@@ -246,65 +248,4 @@ class ExpectShellSession(Action):
         connection.prompt_str = self.job.device['test_image_prompts']
         self.logger.debug("%s: Waiting for prompt", self.name)
         self.wait(connection)  # FIXME: should this be a regular RetryAction operation?
-        return connection
-
-
-class ConnectDevice(Action):
-    """
-    General purpose class to use the device commands to
-    make a connection to the device. e.g. using ser2net
-    """
-    def __init__(self):
-        super(ConnectDevice, self).__init__()
-        self.name = "connect-device"
-        self.summary = "run connection command"
-        self.description = "use the configured command to connect to the device"
-
-    def validate(self):
-        super(ConnectDevice, self).validate()
-        if 'connect' not in self.job.device['commands']:
-            self.errors = "Unable to connect to device %s - missing connect command." % self.job.device.hostname
-            return
-        if 'test_image_prompts' not in self.job.device:
-            self.errors = "Unable to identify test image prompts from device configuration."
-        command = self.job.device['commands']['connect']
-        exe = ''
-        try:
-            exe = command.split(' ')[0]
-        except AttributeError:
-            self.errors = "Unable to parse the connection command %s" % command
-        try:
-            which(exe)
-        except InfrastructureError:
-            if exe != '':
-                self.errors = "Unable to find %s - is it installed?" % exe
-        # FIXME: check the executable is safe to call?
-        # from stat import S_IXUSR
-        # import os
-        # os.stat(exe).st_mode & S_IXUSR == S_IXUSR  # should be True
-        # does require that telnet is always installed.
-
-    def run(self, connection, args=None):
-        if connection:
-            self.logger.debug("Already connected")
-            connection.prompt_str = self.job.device['test_image_prompts']
-            return connection
-        command = self.job.device['commands']['connect']
-        self.logger.info("%s Connecting to device using '%s'", self.name, command)
-        signal.alarm(0)  # clear the timeouts used without connections.
-        shell = ShellCommand("%s\n" % command, self.timeout)
-        if shell.exitstatus:
-            raise JobError("%s command exited %d: %s" % (command, shell.exitstatus, shell.readlines()))
-        connection = ShellSession(self.job, shell)
-        connection = super(ConnectDevice, self).run(connection, args)
-        connection.prompt_str = self.job.device['test_image_prompts']
-        # if the board is running, wait for a prompt - if not, skip.
-        if self.job.device.power_state is 'off':
-            return connection
-        try:
-            self.wait(connection)
-        except TestError:
-            self.errors = "%s wait expired", self.name
-            self.logger.debug("wait expired %s", self.elapsed_time)
-        self.logger.debug("matched %s", connection.match)
         return connection
