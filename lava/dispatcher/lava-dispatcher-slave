@@ -127,6 +127,15 @@ class Job(object):
         environ.update(conf.get("overrides", {}))
         return environ
 
+    def log_errors(self):
+        err_file = os.path.join(self.base_dir, "err")
+        msg = None
+        if os.stat(err_file).st_size != 0:
+            with open(err_file, 'r') as errlog:
+                msg = errlog.read()
+            LOG.exception(msg)
+        return msg
+
     def start(self):
         """Start the process."""
         out_file = os.path.join(self.base_dir, "out")
@@ -493,6 +502,9 @@ def main():
                     job_status = jobs[job_id].proc.returncode
                     if job_status:
                         LOG.info("[%d] Job returned non-zero", job_id)
+                        errs = jobs[job_id].log_errors()
+                        if errs:
+                            sock.send_multipart(["ERROR", str(job_id), str(errs)])
 
                     jobs[job_id].running = False
                     sock.send_multipart(["END", str(job_id), str(job_status)])
