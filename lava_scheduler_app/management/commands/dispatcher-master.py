@@ -269,7 +269,7 @@ def select_device(job):
     for check_job in validate_list:
         parser_device = None if job.dynamic_connection else device_object
         try:
-            logger.debug("[%d] parsing definition" % check_job.id)
+            logger.info("[%d] Parsing definition" % check_job.id)
             # pass (unused) output_dir just for validation as there is no zmq socket either.
             pipeline_job = parser.parse(
                 check_job.definition, parser_device,
@@ -279,7 +279,7 @@ def select_device(job):
             fail_job(check_job, fail_msg=exc)
             return None
         try:
-            logger.debug("[%d] validating actions" % check_job.id)
+            logger.info("[%d] Validating actions" % check_job.id)
             pipeline_job.pipeline.validate_actions()
         except (AttributeError, JobError, KeyError, TypeError) as exc:
             logger.error({device: exc})
@@ -293,6 +293,21 @@ def select_device(job):
             with open(os.path.join(check_job.output_dir, 'description.yaml'), 'w') as describe_yaml:
                 describe_yaml.write(yaml.dump(pipeline))
             map_metadata(yaml.dump(pipeline), job)
+            # add the compatibility result from the master to the definition for comparison on the slave.
+            if 'compatibility' in pipeline:
+                try:
+                    compat = int(pipeline['compatibility'])
+                except ValueError:
+                    logger.error("[%d] Unable to parse job compatibility: %s",
+                                 check_job.id, pipeline['compatibility'])
+                    compat = 0
+                check_job.pipeline_compatibility = compat
+                check_job.save(update_fields=['pipeline_compatibility'])
+            else:
+                logger.error("[%d] Unable to identify job compatibility.", check_job.id)
+                fail_job(check_job, fail_msg='Unknown compatibility')
+                return None
+
     return device
 
 
@@ -368,6 +383,13 @@ class Command(BaseCommand):
                 self.logger.info("[%d] Canceling", job.id)
                 cancel_job(job)
 
+    def export_definition(self, job):
+        job_def = yaml.load(job.definition)
+        job_def['compatibility'] = job.pipeline_compatibility
+
+        # no need for the dispatcher to retain comments
+        return str(yaml.dump(job_def))
+
     def handle(self, *args, **options):
         # FIXME: this function is getting much too long and complex.
         del logging.root.handlers[:]
@@ -395,7 +417,7 @@ class Command(BaseCommand):
 
         # List of logs
         logs = {}
-        # List of known dispatchers. At startup do not laod this from the
+        # List of known dispatchers. At startup do not load this from the
         # database. This will help to know if the slave as restarted or not.
         dispatchers = {}
         # Last access to the database for new jobs and cancelations
@@ -494,8 +516,7 @@ class Command(BaseCommand):
                 f_handler.write('\n')
                 f_handler.flush()
 
-                # FIXME: to be removed when the web UI knows how to deal with
-                # pipeline logs
+                # FIXME: to be removed when the web UI knows how to deal with pipeline logs
                 filename = os.path.join(options['output_dir'],
                                         "job-%s" % job_id,
                                         'output.txt')
@@ -507,8 +528,7 @@ class Command(BaseCommand):
             now = time.time()
             for job_id in logs.keys():
                 if now - logs[job_id].last_usage > FD_TIMEOUT:
-                    self.logger.info("[%s] Collecting file handler '%s'",
-                                     job_id, logs[job_id].filename)
+                    self.logger.info("[%s] Closing log file", job_id)
                     logs[job_id].close()
                     del logs[job_id]
 
@@ -523,7 +543,7 @@ class Command(BaseCommand):
                 action = msg[1]
                 # Handle the actions
                 if action == 'HELLO':
-                    self.logger.info("%s => HELLO", hostname)
+                    self.logger.info("%s => %s", hostname, action)
                     controler.send_multipart([hostname, 'HELLO_OK'])
                     # If the dispatcher is known and sent an HELLO, means that
                     # the slave has restarted
@@ -532,7 +552,8 @@ class Command(BaseCommand):
                     else:
                         self.logger.warning("New dispatcher <%s>", hostname)
                         dispatchers[hostname] = SlaveDispatcher(hostname, online=True)
-
+                    # FIXME: slaves need to be allowed to restart cleanly without affecting jobs
+                    # as well as handling unexpected crashes.
                     self._cancel_slave_dispatcher_jobs(hostname)
 
                     # Mark the dispatcher as alive
@@ -724,13 +745,13 @@ class Command(BaseCommand):
                                     # FIXME: rationalise and streamline
                                     controler.send_multipart(
                                         [str(worker_host.hostname),
-                                         'START', str(group_job.id), str(group_job.definition),
+                                         'START', str(group_job.id), self.export_definition(group_job),
                                          str(device_configuration),
                                          str(open(options['env'], 'r').read())])
 
                         controler.send_multipart(
                             [str(worker_host.hostname),
-                             'START', str(job.id), str(job.definition),
+                             'START', str(job.id), self.export_definition(job),
                              str(device_configuration),
                              get_env_string(options['env']), get_env_string(options['env_dut'])])
 

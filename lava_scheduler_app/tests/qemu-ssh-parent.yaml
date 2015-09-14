@@ -2,7 +2,10 @@ actions:
 - deploy:
     compression: gz
     dtb: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
-    image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+    images:
+      rootfs:
+        url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        image_args: -drive format=raw,file={rootfs}
     os: debian
     role: host
     root_partition: 1
