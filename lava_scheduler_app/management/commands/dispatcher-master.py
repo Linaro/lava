@@ -572,6 +572,25 @@ class Command(BaseCommand):
                     # Mark the dispatcher as alive
                     dispatchers[hostname].alive()
 
+                elif action == "ERROR":
+                    try:
+                        job_id = int(msg[2])
+                        error_msg = str(msg[3])
+                    except (IndexError, ValueError):
+                        self.logger.error("Invalid message from <%s> '%s'", hostname, msg[:50])
+                        continue
+                    try:
+                        with transaction.atomic():
+                            job = TestJob.objects.select_for_update().get(id=job_id)
+                            job.failure_comment = error_msg
+                            job.save()
+                            self.logger.debug("[%d] Set failure comment: %s", job.id, job.failure_comment[:50])
+                    except TestJob.DoesNotExist:
+                        self.logger.error("[%d] Unknown job", job_id)
+
+                    # Mark the dispatcher as alive
+                    dispatchers[hostname].alive()
+
                 elif action == 'END':
                     status = TestJob.COMPLETE
                     try:
