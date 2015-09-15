@@ -139,7 +139,11 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
 
         def write(buff):
             if decompressor:
-                buff = decompressor.decompress(buff)
+                try:
+                    buff = decompressor.decompress(buff)
+                except zlib.error as exc:
+                    self.logger.exception(exc)
+                    raise JobError(exc)
             dwnld_file.write(buff)
 
         try:
