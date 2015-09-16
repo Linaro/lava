@@ -608,6 +608,24 @@ Examples
   ('ping-test', 'fail'), ('realpath-check', 'fail'), ('ntpdate-check', 'pass'),
   ('curl-ftp', 'pass'), ('tar-tgz', 'pass'), ('remove-tgz', 'pass')])"}]
 
+.. _debugging_slaves:
+
+Debugging on the slave dispatcher
+*********************************
+
+Pipeline jobs are sent to the slave dispatcher over ZMQ as fully formatted
+YAML files. These files are then passed to :file:`lava-dispatch` when
+the job starts. To reproduce issues on the slave, the original files
+are retained in a temporary directory after the job has completed. As
+long as the slave has not been rebooted since the job started, the files
+will be retained in :file:`/tmp/lava-dispatcher/slave/<JOB_ID>/`. These
+can then be used to re-run the job on the command line. Also in this
+directory, there is an ``err`` file which tracks any exceptions caught
+by the slave during the job run - these are sent back to the master and
+appear as a failure comment. Exceptions of this kind can then generate
+bug reports so that the dispatcher code handles the issue instead of it
+falling back to the slave daemon to handle.
+
 .. _adding_new_classes:
 
 Adding new classes
