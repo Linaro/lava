@@ -154,7 +154,7 @@ class VexpressTarget(BootloaderTarget):
                         self.test_bl0 = download_image(self.config.vexpress_bl0_default, self.context,
                                                        self._tmpdir,
                                                        decompress=False)
-                else:
+                elif bl0 is not None:
                     self.test_bl0 = download_image(bl0, self.context,
                                                    self._tmpdir,
                                                    decompress=False)
