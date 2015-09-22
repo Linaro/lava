@@ -25,7 +25,11 @@ import tempfile
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, User
 from django.core import serializers
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import (
+    PermissionDenied,
+    ValidationError,
+    FieldError
+)
 from django.core.urlresolvers import reverse
 from django.http import (
     HttpResponse,
@@ -36,6 +40,7 @@ from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext, defaultfilters
 from django.utils.safestring import mark_safe
 
+from dashboard_app.models import NamedAttribute
 from lava_server.bread_crumbs import (
     BreadCrumb,
     BreadCrumbTrail,
@@ -53,6 +58,8 @@ from lava_results_app.models import (
     QueryGroup,
     QueryCondition,
     QueryUpdatedError,
+    TestCase,
+    TestSuite
 )
 
 from lava_results_app.views.query.tables import (
@@ -119,9 +126,9 @@ class GroupQueryView(LavaView):
 
 
 QUERY_CONTENT_TYPE_TABLE = {
-    "testjob": QueryTestJobTable,
-    "testcase": QueryTestCaseTable,
-    "testsuite": QueryTestSuiteTable,
+    TestJob: QueryTestJobTable,
+    TestCase: QueryTestCaseTable,
+    TestSuite: QueryTestSuiteTable,
 }
 
 
@@ -220,10 +227,10 @@ def query_display(request, username, name):
         query=query,
         request=request,
         model=query.content_type.model_class(),
-        table_class=QUERY_CONTENT_TYPE_TABLE[query.content_type.model]
+        table_class=QUERY_CONTENT_TYPE_TABLE[query.content_type.model_class()]
     )
 
-    table = QUERY_CONTENT_TYPE_TABLE[query.content_type.model](
+    table = QUERY_CONTENT_TYPE_TABLE[query.content_type.model_class()](
         view.get_table_data()
     )
 
@@ -250,15 +257,9 @@ def query_display(request, username, name):
 @login_required
 def query_custom(request):
 
-    # TODO: validate entity as content_type
-    # TODO: validate conditions
+    content_type = _get_content_type(request.GET.get("entity"))
 
-    try:
-        content_type = ContentType.objects.get(
-            model=request.GET.get("entity"),
-            app_label=_get_app_label_for_model(request.GET.get("entity"))
-        )
-    except ContentType.DoesNotExist:
+    if content_type.model_class() not in QueryCondition.RELATION_MAP:
         raise InvalidContentTypeError(
             "Wrong table name in entity param. Please refer to query docs.")
 
@@ -268,16 +269,28 @@ def query_custom(request):
                                      request.GET.get("conditions")),
         request=request,
         model=content_type.model_class(),
-        table_class=QUERY_CONTENT_TYPE_TABLE[content_type.model]
+        table_class=QUERY_CONTENT_TYPE_TABLE[content_type.model_class()]
     )
 
-    table = QUERY_CONTENT_TYPE_TABLE[content_type.model](
-        view.get_table_data()
-    )
+    try:
+        table = QUERY_CONTENT_TYPE_TABLE[content_type.model_class()](
+            view.get_table_data()
+        )
+    except FieldError:
+        raise InvalidConditionsError("Conditions URL incorrect: Field does "
+                                     "not exist. Please refer to query docs.")
+
+    config = RequestConfig(request, paginate={"per_page": table.length})
+    config.configure(table)
 
     return render_to_response(
         'lava_results_app/query_custom.html', {
             'query_table': table,
+
+            'terms_data': table.prepare_terms_data(view),
+            'search_data': table.prepare_search_data(view),
+            'discrete_data': table.prepare_discrete_data(view),
+
             'bread_crumb_trail': BreadCrumbTrail.leading_to(query_custom),
             'context_help': BreadCrumbTrail.leading_to(query_list),
         }, RequestContext(request)
@@ -302,10 +315,7 @@ def _parse_conditions(content_type, conditions):
         elif len(condition_fields) == 4:
 
             try:
-                content_type = ContentType.objects.get(
-                    model=condition_fields[0],
-                    app_label=_get_app_label_for_model(condition_fields[0])
-                )
+                content_type = _get_content_type(condition_fields[0])
             except ContentType.DoesNotExist:
                 raise InvalidContentTypeError(
                     "Wrong table name in conditions parameter. " +
@@ -318,7 +328,8 @@ def _parse_conditions(content_type, conditions):
 
         else:
             # TODO: more validation for conditions?.
-            raise InvalidConditionsError("Conditions URL incorrect.")
+            raise InvalidConditionsError("Conditions URL incorrect. Please "
+                                         "refer to query docs.")
 
         conditions_objects.append(condition)
 
@@ -343,15 +354,16 @@ def _serialize_conditions(query):
     return CONDITIONS_SEPARATOR.join(conditions_list)
 
 
-def _get_app_label_for_model(model_name):
-    # Every model currently used is in 'lava_results_app', except the
-    # TestJob, hence the hack.
+def _get_content_type(model_name):
+    if (model_name == ContentType.objects.get_for_model(TestCase).model):
+        return ContentType.objects.get_for_model(TestCase)
 
-    app_label = Query._meta.app_label
-    if model_name == "testjob":
-        app_label = TestJob._meta.app_label
-
-    return app_label
+    content_types = ContentType.objects.filter(model=model_name)
+    if (len(content_types) == 0):
+        raise InvalidContentTypeError(
+            "Wrong table name in entity param. Please refer to query docs.")
+    else:
+        return ContentType.objects.filter(model=model_name)[0]
 
 
 @BreadCrumb("Query ~{username}/{name}", parent=query_list,
@@ -371,7 +383,7 @@ def query_detail(request, username, name):
                 query_detail, username=username, name=name),
             'context_help': BreadCrumbTrail.leading_to(query_list),
             'condition_form': QueryConditionForm(
-                request.user, instance=None,
+                instance=None,
                 initial={'query': query, 'table': query.content_type}),
         }, RequestContext(request)
     )
@@ -385,10 +397,7 @@ def query_add(request):
     query.owner = request.user
 
     if request.GET.get("entity"):
-        query.content_type = ContentType.objects.get(
-            model=request.GET.get("entity"),
-            app_label=_get_app_label_for_model(request.GET.get("entity"))
-        )
+        query.content_type = _get_content_type(request.GET.get("entity"))
 
     return query_form(
         request,
@@ -426,68 +435,40 @@ def query_export(request, username, name):
     """
     Create and serve the CSV file.
     """
-
     query = get_object_or_404(Query, owner__username=username, name=name)
 
-    file_name = "%s_%s" % (username, name)
-    tmp_dir = tempfile.mkdtemp()
-    file_path = os.path.join(tmp_dir, "%s.csv" % file_name)
+    results = query.get_results()
+    filename = "query_%s_%s_export" % (query.owner.username, query.name)
+    return _export_query(results, query.content_type, filename)
 
-    query_keys = query.content_type.model_class()._meta.get_all_field_names()
 
-    query_keys.sort()
-    # Remove non-relevant columns for CSV file.
-    removed_fields = [
-        # TestJob fields:
-        "_results_bundle", "_results_bundle_id", "_results_link", "user_id",
-        "actual_device_id", "definition", "group_id", "id",
-        "original_definition", "requested_device_id", "sub_id", "submit_token",
-        "submit_token_id", "submitter_id", "test_data", "test_suites",
-        # TestSuite fields:
-        "job_id",
-        # TestCase fields:
-        "actionlevels", "suite_id", "test_set_id"
-    ]
-    for field in removed_fields:
-        if field in query_keys:
-            query_keys.remove(field)
+@login_required
+def query_export_custom(request):
+    """
+    Create and serve the CSV file.
+    """
 
-    # TODO: Add results columns from denormalization object.
-    # query_keys.extend(["pass", "fail", "total"])
+    try:
+        content_type = _get_content_type(request.GET.get("entity"))
+    except ContentType.DoesNotExist:
+        raise InvalidContentTypeError(
+            "Wrong table name in entity param. Please refer to query docs.")
 
-    with open(file_path, 'wb+') as csv_file:
-        out = csv.DictWriter(csv_file, quoting=csv.QUOTE_ALL,
-                             extrasaction='ignore',
-                             fieldnames=query_keys)
-        out.writeheader()
+    if content_type.model_class() not in QueryCondition.RELATION_MAP:
+        raise InvalidContentTypeError(
+            "Wrong table name in entity param. Please refer to query docs.")
 
-        for result in query.get_queryset(query.content_type,
-                                         query.querycondition_set.all()):
-            # Add results columns from summary results.
-            result_dict = result.__dict__.copy()
+    conditions = _parse_conditions(content_type, request.GET.get("conditions"))
 
-            # summary_results = result.get_summary_results()
-            # if summary_results:
-            #    query_dict.update(summary_results)
-            # else:
-            #    query_dict["pass"] = 0
-            #    query_dict["fail"] = 0
-            #    query_dict["total"] = 0
-            # try:
-            #    query_dict["uploaded_by_id"] = User.objects.get(
-            #        pk=query.uploaded_by_id).username
-            # except User.DoesNotExist:
-            #    query_dict["uploaded_by_id"] = None
+    filename = "query_%s_export" % (content_type)
 
-            out.writerow(result_dict)
+    try:
+        results = Query.get_queryset(content_type, conditions)
+    except FieldError:
+        raise InvalidConditionsError("Conditions URL incorrect: Field does "
+                                     "not exist. Please refer to query docs.")
 
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = "attachment; filename=%s.csv" % file_name
-    with open(file_path, 'r') as csv_file:
-        response.write(csv_file.read())
-
-    _remove_dir(tmp_dir)
-    return response
+    return _export_query(results, content_type, filename)
 
 
 @login_required
@@ -686,7 +667,7 @@ def query_form(request, bread_crumb_trail, instance=None, is_copy=False):
 def query_condition_form(request, query,
                          bread_crumb_trail, instance=None):
 
-    form = QueryConditionForm(request.user, request.POST, instance=instance)
+    form = QueryConditionForm(request.POST, instance=instance)
 
     if form.is_valid():
         query_condition = form.save()
@@ -709,3 +690,47 @@ def _remove_dir(path):
         # Silent exception whatever happens. If it's unexisting dir, we don't
         # care.
         pass
+
+
+def _export_query(query_results, content_type, filename):
+
+    tmp_dir = tempfile.mkdtemp()
+    file_path = os.path.join(tmp_dir, "%s.csv" % filename)
+
+    query_keys = content_type.model_class()._meta.get_all_field_names()
+
+    query_keys.sort()
+    # Remove non-relevant columns for CSV file.
+    removed_fields = [
+        # TestJob fields:
+        "_results_bundle", "_results_bundle_id", "_results_link", "user_id",
+        "actual_device_id", "definition", "group_id", "id",
+        "original_definition", "requested_device_id", "sub_id", "submit_token",
+        "submit_token_id", "submitter_id", "testdata", "testsuite",
+        # TestSuite fields:
+        "job_id",
+        # TestCase fields:
+        "actionlevels", "suite_id", "test_set_id"
+    ]
+    for field in removed_fields:
+        if field in query_keys:
+            query_keys.remove(field)
+
+    with open(file_path, 'wb+') as csv_file:
+        out = csv.DictWriter(csv_file, quoting=csv.QUOTE_ALL,
+                             extrasaction='ignore',
+                             fieldnames=query_keys)
+        out.writeheader()
+
+        for result in query_results:
+
+            result_dict = result.__dict__.copy()
+            out.writerow(result_dict)
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = "attachment; filename=%s.csv" % filename
+    with open(file_path, 'r') as csv_file:
+        response.write(csv_file.read())
+
+    _remove_dir(tmp_dir)
+    return response

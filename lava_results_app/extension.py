@@ -37,6 +37,11 @@ class ResultsExtension(LavaServerExtension):
         return ""
 
     @property
+    def api_class(self):
+        from lava_results_app.xmlrpc import ResultsAPI
+        return ResultsAPI
+
+    @property
     def main_view_name(self):
         return "lava_results_app.views.index"
 

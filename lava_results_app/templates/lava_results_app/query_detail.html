@@ -31,8 +31,14 @@
     </dd>
     <dt>Last updated</dt>
     <dd id="last_updated">
+      {% if query.is_live %}
+      Live query
+      {% else %}
       {{ query.last_updated | default:"Never" }}
+      {% endif %}
     </dd>
+
+    {% if query.is_published %}
     <dt>Query Group label</dt>
     <dd>
       <a href="#">
@@ -67,7 +73,7 @@
       <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="A group of users already listed on the Profile page.">?</button>
       <div style="clear: both;"></div>
     </dd>
-
+    {% endif %}
     <dt>Description</dt>
     <dd>
     {{ query.description|keep_spacing|linebreaks }}
@@ -146,7 +152,7 @@
 	{{ condition.operator }}
       </td>
       <td>
-	{{ condition.value }}
+	{{ condition.value|safe }}
       </td>
       <td>
 	<a class="glyphicon glyphicon-edit" aria-hidden="true" href="javascript: void(0);" onclick="open_condition_modal('{{ query.name }}','{{ condition.id }}','{{ condition.table.id }}','{{ condition.field }}','{{ condition.operator }}','{{ condition.value }}');">
@@ -198,6 +204,11 @@
   query_name = '{{ query.name }}';
   query_user = '{{ query.owner.username }}';
   is_updating = '{{ query.is_updating }}';
+  condition_choices = JSON.parse($("#id_condition_choices").val());
+  initial_operators = Object();
+  $("#id_operator option").each(function() {
+    initial_operators[$(this).val()] = $(this).html();
+  });
 </script>
 
 {% if query.is_published %}
@@ -221,7 +232,7 @@
 
   $("#query_group").on("click", function(event) {
       var field = $(this).find("input");
-      {% if not query.query_group %}
+      {% if query.query_group == None %}
         field.val("");
       {% endif %}
       field.select();
@@ -242,7 +253,7 @@
 
   $("#group").on("click", function(event) {
       var field = $(this).find("input");
-      {% if not query.group %}
+      {% if query.group == None %}
         field.val("");
       {% endif %}
       field.select();

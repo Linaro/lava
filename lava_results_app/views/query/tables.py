@@ -57,8 +57,8 @@ class UserQueryTable(LavaTable):
         value = ' '.join(value.split(" ")[:15])
         return value.split("\n")[0]
 
-    user = tables.TemplateColumn('''
-    {{ record.user.username }}
+    owner = tables.TemplateColumn('''
+    {{ record.owner.username }}
     ''')
 
     query_group = tables.Column()
@@ -73,11 +73,15 @@ class UserQueryTable(LavaTable):
     ''')
     remove.orderable = False
 
+    last_updated = tables.TemplateColumn('''
+    {% if record.is_live %}{% now "DATETIME_FORMAT" %}_live{% elif not record.last_updated %}Never{% else %}{{ record.last_updated }}{% endif %}
+    ''')
+
     class Meta(LavaTable.Meta):
         model = Query
         fields = (
             'name', 'is_published', 'description',
-            'query_group', 'user', 'view', 'remove'
+            'query_group', 'owner', 'last_updated', 'view', 'remove'
         )
         sequence = fields
         searches = {
@@ -104,7 +108,7 @@ class OtherQueryTable(UserQueryTable):
 
     class Meta(UserQueryTable.Meta):
         fields = (
-            'name', 'description', 'user',
+            'name', 'description', 'owner',
         )
         sequence = fields
         exclude = (
@@ -131,7 +135,7 @@ class GroupQueryTable(UserQueryTable):
 
     class Meta(UserQueryTable.Meta):
         fields = (
-            'name', 'description', 'user',
+            'name', 'description', 'owner',
         )
         sequence = fields
 

@@ -40,6 +40,8 @@ urlpatterns = patterns(
         'query.views.query_delete', name='lava.results.query_delete'),
     url(r'^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+export$',
         'query.views.query_export', name='lava.results.query_export'),
+    url(r'^query/\+export-custom$', 'query.views.query_export_custom',
+        name='lava.results.query_export_custom'),
     url(r'^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+toggle-published$', 'query.views.query_toggle_published', name='lava.results.query_toggle_published'),
     url(r'^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+copy$', 'query.views.query_copy'),
     url(r'^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+refresh$', 'query.views.query_refresh', name='lava.results.query_refresh'),

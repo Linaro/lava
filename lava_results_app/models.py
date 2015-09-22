@@ -38,6 +38,7 @@ from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, connection, IntegrityError
 from django.db.models import Q
+from django.db.models.fields import FieldDoesNotExist
 from django_restricted_resource.models import RestrictedResource
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
@@ -56,6 +57,10 @@ from dashboard_app.models import NamedAttribute
 
 class QueryUpdatedError(Exception):
     """ Error raised if query is updating or recently updated. """
+
+
+class RefreshLiveQueryError(Exception):
+    """ Error raised if refreshing the live query is attempted. """
 
 
 class QueryMaterializedView(MaterializedView):
@@ -81,15 +86,11 @@ class QueryMaterializedView(MaterializedView):
                 query.content_type,
                 query.querycondition_set.all()).query.sql_with_params()
 
-            # TODO: check for possibility for sql injections.
-            # possible solution
-            # params = tuple([("'%s'" % unicode(p).replace('%', '%%')) for p in params])
-            # raw_query = raw_query.replace('%s', '{}').format(*params).replace('%', '%%')
             sql = sql.replace("%s", "'%s'")
             query_str = sql % params
 
             # TODO: handle potential exceptions here. what to do if query
-            # view is not created?
+            # view is not created? - new field update_status?
             query_str = cls.CREATE_VIEW % (cls.QUERY_VIEW_PREFIX,
                                            query.id, query_str)
             cursor.execute(query_str)
@@ -118,7 +119,6 @@ class TestSuite(models.Model):
     """
     job = models.ForeignKey(
         TestJob,
-        related_name='test_suites'
     )
     name = models.CharField(
         verbose_name=u'Suite name',
@@ -244,7 +244,6 @@ class TestCase(models.Model):
 
     suite = models.ForeignKey(
         TestSuite,
-        related_name='test_cases'
     )
 
     test_set = models.ForeignKey(
@@ -407,7 +406,7 @@ class TestData(models.Model):
     available for result processing when the job is running.
     """
 
-    testjob = models.ForeignKey(TestJob, related_name='test_data')
+    testjob = models.ForeignKey(TestJob)
 
     # Attributes
 
@@ -485,13 +484,6 @@ class QueryGroup(models.Model):
 
     def __unicode__(self):
         return self.name
-
-
-QUERY_CONTENT_TYPES = (
-    ("testjob", "lava_scheduler_app"),
-    ("testcase", "lava_results_app"),
-    ("testsuite", "lava_results_app")
-)
 
 
 def TestJobViewFactory(query):
@@ -584,7 +576,6 @@ class Query(models.Model):
         null=True
     )
 
-    # TODO: Check how this is done in image reports 2.0.
     group_by_attribute = models.CharField(
         blank=True,
         null=True,
@@ -606,11 +597,11 @@ class Query(models.Model):
             return Query.get_queryset(self.content_type,
                                       self.querycondition_set.all())
         else:
-            if self.content_type.name == TestJob._meta.verbose_name:
+            if self.content_type.model_class() == TestJob:
                 view = TestJobViewFactory(self)
-            elif self.content_type.name == TestCase._meta.verbose_name:
+            elif self.content_type.model_class() == TestCase:
                 view = TestCaseViewFactory(self)
-            elif self.content_type.name == TestSuite._meta.verbose_name:
+            elif self.content_type.model_class() == TestSuite:
                 view = TestSuiteViewFactory(self)
 
             return view.__class__.objects.all()
@@ -623,52 +614,76 @@ class Query(models.Model):
 
         for condition in conditions:
 
-            # Handle different table conditions.
-            if condition.table != content_type:
-                filter_key = '{0}__{1}'.format(condition.table.model,
-                                               condition.field)
+            try:
+                relation_string = QueryCondition.RELATION_MAP[
+                    content_type.model_class()][condition.table.model_class()]
+            except KeyError:
+                logger.info('mapping unsupported for content types %s and %s!'
+                            % (content_type.model_class(),
+                               condition.table.model_class()))
+                raise
+
+            if condition.table.model_class() == NamedAttribute:
+                # For custom attributes, need two filters since
+                # we're comparing the key(name) and the value.
+                filter_key_name = '{0}__name'.format(relation_string,
+                                                     condition.field)
+                filter_key_value = '{0}__value'.format(relation_string,
+                                                       condition.field)
+
+                filter_key = '{0}__{1}'.format(filter_key, condition.operator)
+                filters[filter_key_name] = condition.field
+                filters[filter_key_value] = condition.value
+
             else:
-                filter_key = condition.field
-
-            # Handle conditions through foreign key.
-            fk_model = _get_foreign_key_model(condition.table.model_class(),
-                                              condition.field)
-            # FIXME: There might be some other models which don't have 'name'
-            # as the default search field.
-            if fk_model:
-                if fk_model.__name__ == "User":
-                    filter_key = '{0}__username'.format(filter_key)
-                elif fk_model.__name__ == "Device":
-                    filter_key = '{0}__hostname'.format(filter_key)
+                if condition.table == content_type:
+                    filter_key = condition.field
                 else:
-                    filter_key = '{0}__name'.format(filter_key)
+                    filter_key = '{0}__{1}'.format(relation_string,
+                                                   condition.field)
+                # Handle conditions through relations.
+                fk_model = _get_foreign_key_model(
+                    condition.table.model_class(),
+                    condition.field)
+                # FIXME: There might be some other related models which don't
+                # have 'name' as the default search field.
+                if fk_model:
+                    if fk_model == User:
+                        filter_key = '{0}__username'.format(filter_key)
+                    elif fk_model == Device:
+                        filter_key = '{0}__hostname'.format(filter_key)
+                    else:
+                        filter_key = '{0}__name'.format(filter_key)
 
-            # Handle conditions with choice fields.
-            condition_field_obj = condition.table.model_class()._meta.get_field_by_name(condition.field)[0]
-            if condition_field_obj.choices:
-                choices_reverse = dict(
-                    (value, key) for key, value in dict(
-                        condition_field_obj.choices).items())
-                try:
-                    condition.value = choices_reverse[condition.value]
-                except KeyError:
-                    logger.debug('skip condition due to unsupported choice'
-                                 % condition)
-                    continue
+                # Handle conditions with choice fields.
+                condition_field_obj = condition.table.model_class()._meta.\
+                    get_field_by_name(condition.field)[0]
+                if condition_field_obj.choices:
+                    choices_reverse = dict(
+                        (value, key) for key, value in dict(
+                            condition_field_obj.choices).items())
+                    try:
+                        condition.value = choices_reverse[condition.value]
+                    except KeyError:
+                        logger.error(
+                            'skip condition %s due to unsupported choice'
+                            % condition)
+                        continue
 
-            # Handle boolean conditions.
-            if condition_field_obj.__class__ == models.BooleanField:
-                if condition.value == "False":
-                    condition.value = False
-                else:
-                    condition.value = True
+                # Handle boolean conditions.
+                if condition_field_obj.__class__ == models.BooleanField:
+                    if condition.value == "False":
+                        condition.value = False
+                    else:
+                        condition.value = True
 
-            # Add operator.
-            filter_key = '{0}__{1}'.format(filter_key, condition.operator)
+                # Add operator.
+                filter_key = '{0}__{1}'.format(filter_key, condition.operator)
 
-            filters[filter_key] = condition.value
+                filters[filter_key] = condition.value
+
         query_results = content_type.model_class().objects.filter(
-            **filters).extra(
+            **filters).distinct().extra(
                 select={'%s_ptr_id' % content_type.model:
                         '%s.id' % content_type.model_class()._meta.db_table})
 
@@ -676,7 +691,7 @@ class Query(models.Model):
 
     def refresh_view(self):
 
-        if not self.is_live:  # ignore otherwise.
+        if not self.is_live:
             hour_ago = timezone.now() - timedelta(hours=1)
             if self.is_updating:
                 raise QueryUpdatedError("query is currently updating")
@@ -694,11 +709,14 @@ class Query(models.Model):
                 else:
                     QueryMaterializedView.refresh(self.id)
 
-                self.last_updated = datetime.now()
+                self.last_updated = datetime.utcnow()
+                self.is_changed = False
 
             finally:
                 self.is_updating = False
                 self.save()
+        else:
+            raise RefreshLiveQueryError("Refreshing live query not permitted.")
 
     def save(self, *args, **kwargs):
         super(Query, self).save(*args, **kwargs)
@@ -712,6 +730,12 @@ class Query(models.Model):
             QueryMaterializedView.drop(self.id)
         super(Query, self).delete(*args, **kwargs)
 
+    def is_accessible_by(self, user):
+        if user.is_superuser or query.user == user or \
+           query.group in user.groups.all():
+            return True
+        return False
+
     @models.permalink
     def get_absolute_url(self):
         return (
@@ -724,10 +748,34 @@ class QueryCondition(models.Model):
     table = models.ForeignKey(
         ContentType,
         limit_choices_to=Q(model__in=[
-            'testsuite', 'testset', 'testjob', 'namedattribute']) | (
+            'testsuite', 'testjob', 'namedattribute']) | (
                 Q(app_label='lava_results_app') & Q(model='testcase')),
         verbose_name='Condition model'
     )
+
+    # Map the relationship spanning.
+    RELATION_MAP = {
+        TestJob: {
+            TestJob: None,
+            TestSuite: 'testsuite',
+            TestCase: 'testsuite__testcase',
+            NamedAttribute: 'testdata__attributes',
+        },
+        TestSuite: {
+            TestJob: 'job',
+            TestCase: 'testcase',
+            TestSuite: None,
+            NamedAttribute:
+                'job__testdata__attributes',
+        },
+        TestCase: {
+            TestCase: None,
+            TestJob: 'suite__job',
+            TestSuite: 'suite',
+            NamedAttribute:
+                'suite__job__testdata__attributes',
+        }
+    }
 
     query = models.ForeignKey(
         Query,
@@ -738,20 +786,30 @@ class QueryCondition(models.Model):
         verbose_name='Field name'
     )
 
+    EXACT = 'exact'
+    IEXACT = 'iexact'
+    ICONTAINS = 'icontains'
+    GT = 'gt'
+    LT = 'lt'
+
+    OPERATOR_CHOICES = (
+        (EXACT, u"Exact match"),
+        (IEXACT, u"Case-insensitive match"),
+        (ICONTAINS, u"Contains"),
+        (GT, u"Greater than"),
+        (LT, u"Less than"),
+    )
+
     operator = models.CharField(
+        blank=False,
+        default=EXACT,
         verbose_name=_(u"Operator"),
         max_length=20,
-        choices=(
-            (u"exact", _(u"Exact match")),
-            (u"iexact", _(u"Case-insensitive match")),
-            (u"icontains", _(u"Contains")),
-            (u"gt", _(u"Greater than")),
-            (u"lt", _(u"Less than")),
-        )
+        choices=OPERATOR_CHOICES
     )
 
     value = models.CharField(
-        max_length=20,
+        max_length=40,
         verbose_name='Field value',
     )
 
@@ -769,7 +827,7 @@ class QueryCondition(models.Model):
 
 
 def _get_foreign_key_model(model, fieldname):
-    """ Returns model if field is foreign key, otherwise None. """
+    """ Returns model if field is a foreign key, otherwise None. """
     field_object, model, direct, m2m = model._meta.get_field_by_name(fieldname)
     if not m2m and direct and isinstance(field_object, models.ForeignKey):
         return field_object.rel.to

@@ -13,15 +13,38 @@ Current features include querying following object sets:
 
 * Test cases
 
-* Test sets
-
 * Test suites
 
-One can add multiple conditions to each query where the query results must
+Cached queries:
+
+Queries can be live or cached. Cached queries data can be refreshed either
+through UI or via the XMLRPC API call by creator or someone in group assigned
+to the query.
+Please keep in mind, live queries are executed whenever someone visits the
+query page or refreshes it. Viewing a live query will usually take longer than
+a cached query, sometimes markedly longer. Live queries can stress the LAVA
+server which can cause the query to timeout.
+
+When adding/updating and removing conditions, query is **not** automatically
+updated. This needs to be done either through UI after updating the conditions
+or via XMLRPC.
+
+Conditions:
+
+You can add multiple conditions to each query where the query results must
 satisfy **all** conditions in order to be displayed.
-Conditions are currently limited only to fields in the object set which is
-queried (i.e. if test jobs are query object set user can add conditions such
-as submitter, device, priority, status..., but not fields from other objects).
+Conditions can span through multiple object sets so for example user can query
+the Jobs that have test cases in which particular field satisfies a condition.
+You can also add conditions with fields in the object set which is queried
+(i.e. if test jobs are query object set user can add conditions such as
+submitter, device, priority, status...).
+
+It is also possible to add conditions using custom metadata. Since metadata can
+contain custom field names, keep in mind that the query might not return
+desired results since those field names are not validated when adding
+conditions.
+This also means you can add the condition even if the field in the metadata is
+is not yet present in the system.
 
 Query by URL
 ************
@@ -34,7 +57,7 @@ The query string format looks like this::
 
   entity=$(object_name)&conditions=$(object_name)__$(field_name)__$(operator)__$value,$(object_name)__$(field_name)__$(operator)__$value,...
 
-.. note:: object_name can be ommited if it's the same as the query object set.
+.. note:: object_name can be omitted if it's the same as the query object set.
 	  Operator is one of the following - exact, iexact, contains, gt, lt.
 
 
