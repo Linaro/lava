@@ -63,13 +63,31 @@ deploy to the requested location.
 
   * **tmpfs**: Used to support QEMU device types which run on a dispatcher.
     The file is downloaded to a temporary directory and made available as
-    an image to a predetermined QEMU command line::
+    one or more images, appending specified arguments to a predetermined
+    QEMU command line::
 
      to: tmpfs
 
-    * Requires an ``image`` parameter::
+    * Requires an ``images`` parameter, e.g.::
 
-        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        images:
+          rootfs:
+              image_arg: -drive format=raw,file={rootfs}
+              url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+              compression: gz
+
+      * The ``image_arg`` determines how QEMU handles the image. The
+        arguments **must** include a placeholder which exactly matches
+        the key of the same block in the list of images. The actual
+        location of the downloaded file will then replace the placeholder.
+        Multiple images can be supplied but the test writer is responsible
+        for ensuring that the ``image_arg`` make sense to QEMU.
+
+      * If the image is compressed, the compression method **must** be
+        specified if any ``test`` actions are defined in the job. Supported
+        values are ``gz``, ``bz2`` and ``xz``::
+
+         compression: gz
 
     * The operating system of the image **must** be specified so that the
       LAVA scripts can install packages and identify other defaults in the
@@ -77,12 +95,6 @@ deploy to the requested location.
       ``debian`` or ``oe``::
 
         os: debian
-
-    * If the image is compressed, the compression method **must** be
-      specified if any ``test`` actions are defined in the job. Supported
-      values are ``gz``, ``bz2`` and ``xz``::
-
-       compression: gz
 
   * **tftp**: Used to support TFTP deployments, e.g. using UBoot. Files
     are downloaded to a temporary directory in the TFTP tree and the

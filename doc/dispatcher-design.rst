@@ -173,30 +173,30 @@ being handed off to cope with particular tools:
 Following the code flow
 ***********************
 
-+------------------------------------------+-------------------------------------------------+
-|                Filename                  |   Role                                          |
-+==========================================+=================================================+
-| lava/dispatcher/commands.py              | Command line arguments, call to YAML parser     |
-+------------------------------------------+-------------------------------------------------+
-| lava_dispatcher/pipeline/device.py       | YAML Parser to create the Device object         |
-+------------------------------------------+-------------------------------------------------+
-| lava_dispatcher/pipeline/parser.py       | YAML Parser to create the Job object            |
-+------------------------------------------+-------------------------------------------------+
-| ....pipeline/actions/deploy/             | Handlers for different deployment strategies    |
-+------------------------------------------+-------------------------------------------------+
-| ....pipeline/actions/boot/               | Handlers for different boot strategies          |
-+------------------------------------------+-------------------------------------------------+
-| ....pipeline/actions/test/               | Handlers for different LavaTestShell strategies |
-+------------------------------------------+-------------------------------------------------+
-| ....pipeline/actions/deploy/image.py     | DeployImage strategy creates DeployImageAction  |
-+------------------------------------------+-------------------------------------------------+
-| ....pipeline/actions/deploy/image.py     | DeployImageAction.populate adds deployment      |
-|                                          | actions to the Job pipeline                     |
-+------------------------------------------+-------------------------------------------------+
-|   ***repeat for each strategy***         | each ``populate`` function adds more Actions    |
-+------------------------------------------+-------------------------------------------------+
-| ....pipeline/action.py                   | ``Pipeline.run_actions()`` to start             |
-+------------------------------------------+-------------------------------------------------+
++------------------------------------------+---------------------------------------------------+
+|                Filename                  |   Role                                            |
++==========================================+===================================================+
+| lava/dispatcher/commands.py              | Command line arguments, call to YAML parser       |
++------------------------------------------+---------------------------------------------------+
+| lava_dispatcher/pipeline/device.py       | YAML Parser to create the Device object           |
++------------------------------------------+---------------------------------------------------+
+| lava_dispatcher/pipeline/parser.py       | YAML Parser to create the Job object              |
++------------------------------------------+---------------------------------------------------+
+| ....pipeline/actions/deploy/             | Handlers for different deployment strategies      |
++------------------------------------------+---------------------------------------------------+
+| ....pipeline/actions/boot/               | Handlers for different boot strategies            |
++------------------------------------------+---------------------------------------------------+
+| ....pipeline/actions/test/               | Handlers for different LavaTestShell strategies   |
++------------------------------------------+---------------------------------------------------+
+| ....pipeline/actions/deploy/image.py     | DeployImages strategy creates DeployImagesAction  |
++------------------------------------------+---------------------------------------------------+
+| ....pipeline/actions/deploy/image.py     | DeployImagesAction.populate adds deployment       |
+|                                          | actions to the Job pipeline                       |
++------------------------------------------+---------------------------------------------------+
+|   ***repeat for each strategy***         | each ``populate`` function adds more Actions      |
++------------------------------------------+---------------------------------------------------+
+| ....pipeline/action.py                   | ``Pipeline.run_actions()`` to start               |
++------------------------------------------+---------------------------------------------------+
 
 The deployment is determined from the device_type specified in the Job
 (or the device_type of the specified target) by reading the list of
