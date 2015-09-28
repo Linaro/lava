@@ -122,13 +122,11 @@ the LAVA team, etc. Register at the following url:
 https://register.linaro.org/
 
 If you are considering large changes, it is best to register and also
-to subscribe to the `Linaro Validation mailing list`_ and talk
+to subscribe to the :ref:`lava_devel` mailing list and talk
 to us on IRC::
 
  irc.oftc.net
  #linaro-lava
-
-.. _Linaro Validation mailing list: http://lists.linaro.org/mailman/listinfo/linaro-validation
 
 Contributing via GitHub
 -----------------------
@@ -137,10 +135,8 @@ You can use GitHub to fork the LAVA packages and make pull requests.
 
 https://github.com/Linaro
 
-It is worth sending an email to the Linaro Validation mailing list, so
-that someone can migrate the pull request to a review:
-
-linaro-validation@lists.linaro.org
+It is worth sending an email to the :ref:`lava_devel` mailing list, so
+that someone can migrate the pull request to a review.
 
 Patch Submissions and workflow
 ==============================

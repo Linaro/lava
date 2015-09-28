@@ -8,6 +8,7 @@ LAVA Manual
 
    overview.rst
    glossary.rst
+   support.rst
    installation.rst
    writing-tests.rst
    writing-multinode.rst

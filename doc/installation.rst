@@ -32,7 +32,7 @@ an extra repository to provide these packages.
 .. _Debian: http://www.debian.org/
 
 If you'd like to help us with other distributions feel free to contact
-us at linaro-validation (at) lists (dot) linaro (dot) org.
+us using the :ref:`lava_devel` mailing list.
 
 .. note:: See :ref:`tftp_support` for changes in the :term:`tftp`
    software requirements after the **2015.8 release**.
