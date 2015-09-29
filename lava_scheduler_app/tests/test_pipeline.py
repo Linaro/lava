@@ -525,7 +525,12 @@ class TestYamlMultinode(TestCaseWithFactory):
         deploy = [action['deploy'] for action in submission['actions'] if 'deploy' in action]
         # replace working image with a broken URL
         for block in deploy:
-            block['image'] = 'http://localhost/unknown/invalid.gz'
+            block['images'] = {
+                'rootfs': {
+                    'url': 'http://localhost/unknown/invalid.gz',
+                    'image_arg': '{rootfs}'
+                }
+            }
         job_object_list = _pipeline_protocols(submission, user, yaml.dump(submission))
         self.assertEqual(len(job_object_list), 2)
         self.assertEqual(
