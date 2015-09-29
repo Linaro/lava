@@ -7,7 +7,7 @@ from lava_scheduler_app.models import (
     DeviceDictionary,
     JobPipeline,
 )
-from lava_scheduler_app.utils import devicedictionary_to_jinja2
+from lava_scheduler_app.utils import devicedictionary_to_jinja2, jinja2_to_devicedictionary
 from lava_scheduler_app.schema import validate_device
 from django_testscenarios.ubertest import TestCase
 from django.contrib.auth.models import Group, Permission, User
@@ -302,6 +302,54 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         self.assertTrue(hasattr(device, 'power_state'))
         self.assertFalse(hasattr(device, 'hostname'))
         self.assertIn('hostname', device)
+
+    def test_vland_jinja2(self):
+        """
+        Test complex device dictionary values
+
+        The reference data can cross lines but cannot be indented as the pprint
+        object in utils uses indent=0, width=80 for YAML compatibility.
+        The strings read in from config files can have indenting spaces, these
+        are removed in the pprint.
+        """
+        data = """{% extends 'vland.yaml' %}
+{% set interfaces = ['eth0', 'eth1'] %}
+{% set sysfs = {'eth0': '/sys/devices/pci0000:00/0000:00:19.0/net/eth0',
+'eth1': '/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1'} %}
+{% set mac_addr = {'eth0': 'f0:de:f1:46:8c:21', 'eth1': '00:24:d7:9b:c0:8c'} %}
+{% set tags = {'eth0': ['1G', '10G'], 'eth1': ['1G']} %}
+"""
+        result = {
+            'interfaces': ['eth0', 'eth1'],
+            'sysfs': {
+                'eth1': '/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1',
+                'eth0': '/sys/devices/pci0000:00/0000:00:19.0/net/eth0'
+            },
+            'extends': 'vland.yaml',
+            'mac_addr': {
+                'eth1': '00:24:d7:9b:c0:8c',
+                'eth0': 'f0:de:f1:46:8c:21'
+            },
+            'tags': {
+                'eth1': ['1G'],
+                'eth0': ['1G', '10G']
+            }
+        }
+        dictionary = jinja2_to_devicedictionary(data_dict=data)
+        self.assertEqual(result, dictionary)
+        jinja2_str = devicedictionary_to_jinja2(data_dict=dictionary, extends='vland.yaml')
+        self.assertEqual(str(data), str(jinja2_str))
+
+        # create a DeviceDictionary for this test
+        vlan = DeviceDictionary(hostname='vlanned1')
+        vlan.parameters = dictionary
+        vlan.save()
+        del vlan
+        vlan = DeviceDictionary.get('vlanned1')
+        self.assertEqual(
+            str(data),
+            str(devicedictionary_to_jinja2(vlan.parameters, 'vland.yaml'))
+        )
 
 
 class JobPipelineTest(TestCaseWithFactory):

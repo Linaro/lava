@@ -20,6 +20,8 @@
 import os
 import re
 import copy
+import yaml
+import pprint
 import socket
 import urlparse
 import simplejson
@@ -514,11 +516,12 @@ def devicedictionary_to_jinja2(data_dict, extends):
     """
     if type(data_dict) is not dict:
         return None
+    pp = pprint.PrettyPrinter(indent=0, width=80)  # simulate human readable input
     data = u'{%% extends \'%s\' %%}\n' % extends
     for key, value in data_dict.items():
         if key == 'extends':
             continue
-        data += u'{%% set %s = \'%s\' %%}\n' % (key, value)
+        data += u'{%% set %s = %s %%}\n' % (str(key), pp.pformat(value).strip())
     return data
 
 
@@ -530,6 +533,8 @@ def jinja2_to_devicedictionary(data_dict):
     if type(data_dict) is not str:
         return None
     data = {}
+    data_dict = data_dict.replace('\n', '')
+    data_dict = data_dict.replace('%}', '%}\n')
     for line in data_dict.replace('{% ', '').replace(' %}', '').split('\n'):
         if line == '':
             continue
@@ -541,8 +546,7 @@ def jinja2_to_devicedictionary(data_dict):
             key = line.replace('set ', '')
             key = re.sub(' = .*$', '', key)
             value = re.sub('^.* = ', '', line)
-            value = value.replace('"', "'").replace("'", '')
-            data[key] = value
+            data[key] = yaml.load(value)
     return data
 
 
