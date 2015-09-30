@@ -313,17 +313,18 @@ class BaseDriver(object):
     @contextmanager
     def adb_file_system(self, partition, directory):
 
-        mount_point = self._get_partition_mount_point(partition)
+        with self.context.client.android_tester_session() as session:
+            mount_point = self._get_partition_mount_point(partition)
 
-        host_dir = '%s/mnt/%s' % (self.working_dir, directory)
-        target_dir = '%s/%s' % (mount_point, directory)
+            host_dir = '%s/mnt/%s' % (self.working_dir, directory)
+            target_dir = '%s/%s' % (mount_point, directory)
 
-        subprocess.check_call(['mkdir', '-p', host_dir])
-        self.adb('pull %s %s' % (target_dir, host_dir), ignore_failure=True)
+            subprocess.check_call(['mkdir', '-p', host_dir])
+            self.adb('pull %s %s' % (target_dir, host_dir), ignore_failure=True)
 
-        yield host_dir
+            yield host_dir
 
-        self.adb('push %s %s' % (host_dir, target_dir))
+            self.adb('push %s %s' % (host_dir, target_dir))
 
     # Private Methods
 
