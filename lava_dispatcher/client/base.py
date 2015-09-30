@@ -284,6 +284,11 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
         else:
             raise ADBConnectError(('Failed to connected to device with'
                                    ' command:%s') % cmd)
+        # Users can define 'android_adb_over_tcp' dynamically, so we must set
+        # the adb_command dynamically as well. This also allows us to re-use
+        # the existing code in the fastboot classes seamlessly.
+        self._client.target_device.config.adb_command = \
+            'adb -s %s:%s' % (dev_ip, adb_port)
 
     def android_adb_over_tcp_disconnect(self):
         dev_ip = self.dev_ip
