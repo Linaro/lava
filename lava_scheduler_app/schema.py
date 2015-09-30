@@ -1,6 +1,7 @@
+import re
 from voluptuous import (
     Schema, Required, All, Length,
-    Any, Optional, MultipleInvalid
+    Any, Invalid, Optional, MultipleInvalid
 )
 from lava_scheduler_app.models import SubmissionException
 
@@ -78,11 +79,27 @@ def _job_actions_schema():
     ])
 
 
+def vlan_name(value):
+    if re.match("^[_a-zA-Z0-9]+$", str(value)):
+        return str(value)
+    else:
+        raise Invalid(value)
+
+
 def _job_protocols_schema():
     return Schema({
         'lava-multinode': {
             'timeout': _timeout_schema(),
             'roles': dict
+        },
+        'lava-vland': {
+            str: {
+                vlan_name: {
+                    'tags': [
+                        str
+                    ],
+                }
+            }
         }
     })
 

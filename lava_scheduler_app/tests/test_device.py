@@ -315,6 +315,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
 'eth1': '/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1'} %}
 {% set mac_addr = {'eth0': 'f0:de:f1:46:8c:21', 'eth1': '00:24:d7:9b:c0:8c'} %}
 {% set tags = {'eth0': ['1G', '10G'], 'eth1': ['1G']} %}
+{% set map = {'eth0': {'192.168.0.2': 5}, 'eth1': {'192.168.0.2': 7}} %}
 """
         result = {
             'interfaces': ['eth0', 'eth1'],
@@ -330,12 +331,22 @@ class DeviceDictionaryTest(TestCaseWithFactory):
             'tags': {
                 'eth1': ['1G'],
                 'eth0': ['1G', '10G']
+            },
+            'map': {
+                'eth0': {
+                    '192.168.0.2': 5
+                },
+                'eth1': {
+                    '192.168.0.2': 7
+                }
             }
         }
         dictionary = jinja2_to_devicedictionary(data_dict=data)
         self.assertEqual(result, dictionary)
         jinja2_str = devicedictionary_to_jinja2(data_dict=dictionary, extends='vland.jinja2')
-        self.assertEqual(str(data), str(jinja2_str))
+        # ordering within the dict can change but each line needs to still appear
+        for line in str(data).split('\n'):
+            self.assertIn(line, str(jinja2_str))
 
         # create a DeviceDictionary for this test
         vlan = DeviceDictionary(hostname='vlanned1')
@@ -343,10 +354,70 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         vlan.save()
         del vlan
         vlan = DeviceDictionary.get('vlanned1')
-        self.assertEqual(
-            str(data),
-            str(devicedictionary_to_jinja2(vlan.parameters, 'vland.jinja2'))
-        )
+        cmp = str(devicedictionary_to_jinja2(vlan.parameters, 'vland.jinja2'))
+        for line in str(data).split('\n'):
+            self.assertIn(line, cmp)
+
+    def test_network_map(self):
+        """
+        Convert a device dictionary into the output suitable for XMLRPC
+        """
+        map_yaml = """
+switches:
+  '192.168.0.2':
+  - port: 5
+    device:
+      interface: eth0
+      sysfs: "/sys/devices/pci0000:00/0000:00:19.0/net/eth0"
+      mac: "f0:de:f1:46:8c:21"
+      hostname: bbb1
+  - port: 7
+    device:
+      interface: eth1
+      sysfs: "/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1"
+      mac: "00:24:d7:9b:c0:8c"
+      hostname: bbb1
+        """
+        device_dict = {
+            'interfaces': ['eth0', 'eth1'],
+            'sysfs': {
+                'eth1': '/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1',
+                'eth0': '/sys/devices/pci0000:00/0000:00:19.0/net/eth0'
+            },
+            'extends': 'vland.jinja2',
+            'mac_addr': {
+                'eth1': '00:24:d7:9b:c0:8c',
+                'eth0': 'f0:de:f1:46:8c:21'
+            },
+            'tags': {
+                'eth1': ['1G'],
+                'eth0': ['1G', '10G']
+            },
+            'map': {
+                'eth0': {
+                    '192.168.0.2': 5
+                },
+                'eth1': {
+                    '192.168.0.2': 7
+                }
+            }
+        }
+        chk_map = yaml.load(map_yaml)
+        if 'interfaces' not in device_dict:
+            self.fail("Not a vland device dictionary")
+        network_map = {}
+        port_list = []
+        for interface in device_dict['interfaces']:
+            for switch, port in device_dict['map'][interface].iteritems():
+                device = {
+                    'interface': interface,
+                    'mac': device_dict['mac_addr'][interface],
+                    'sysfs': device_dict['sysfs'][interface],
+                    'hostname': 'bbb1'
+                }
+                port_list.append({'port': port, 'device': device})
+                network_map['switches'] = {switch: port_list}
+        self.assertEqual(chk_map, network_map)
 
 
 class JobPipelineTest(TestCaseWithFactory):

@@ -8,7 +8,10 @@ device_type: beaglebone-black
 {# allow job context override - use a different variable name, undefined if not in job context #}
 {% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) -%}
 
-parameters:
+{# adds the parameters: top level block #}
+{% block vland %}
+{{ super() }}
+{% endblock %}
   bootm:
    kernel: '{{ bootm_kernel_addr|default('0x80200000') }}'
    ramdisk: '{{ bootm_ramdisk_addr|default('0x81600000') }}'

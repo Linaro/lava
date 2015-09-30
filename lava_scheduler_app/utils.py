@@ -713,6 +713,16 @@ def allowed_overrides(device_dict, system=True):
     return sorted(allowed)
 
 
+def _split_multinode_vland(submission, jobs):
+
+    for role, _ in jobs.iteritems():
+        # populate the lava-vland protocol metadata
+        if len(jobs[role]) != 1:
+            raise models.SubmissionException("vland protocol only supports one device per role.")
+        jobs[role][0]['protocols'].update({'lava-vland': submission['protocols']['lava-vland'][role]})
+    return jobs
+
+
 def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-branches,too-many-locals
     """
     Handles the lava-multinode protocol requirements.
@@ -729,6 +739,8 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
       value: list of jobs to be created for that role.
      """
     # the list of devices cannot be definite here, only after devices have been reserved
+
+    # FIXME: needs a Protocol base class in the server and protocol-specific split handlers
 
     copies = [
         'context',
@@ -829,4 +841,8 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
                     del job[item]
             jobs[role].append(copy.deepcopy(job))
         count += 1
+
+    # populate the lava-vland protocol metadata
+    if 'lava-vland' in submission['protocols']:
+        _split_multinode_vland(submission, jobs)
     return jobs

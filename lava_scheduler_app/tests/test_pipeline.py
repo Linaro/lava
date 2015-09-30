@@ -12,7 +12,11 @@ from lava_scheduler_app.models import (
     DevicesUnavailableException,
     _pipeline_protocols,
 )
-from django.contrib.auth.models import Group
+from lava_scheduler_app.dbutils import match_vlan_interface
+from django.db import models
+from django.core.exceptions import ValidationError
+from django_testscenarios.ubertest import TestCase
+from django.contrib.auth.models import Group, Permission, User
 from collections import OrderedDict
 from lava_scheduler_app.utils import (
     jinja_template_path,
@@ -763,3 +767,101 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.assertEqual(len(job_list), 2)
         for job in job_list:
             self.assertEqual(job.requested_device_type, device_type)
+
+
+class VlanInterfaces(TestCaseWithFactory):
+
+    def setUp(self):
+        super(VlanInterfaces, self).setUp()
+        # YAML, pipeline only
+        user = User.objects.create_user('test', 'e@mail.invalid', 'test')
+        user.user_permissions.add(
+            Permission.objects.get(codename='add_testjob'))
+        user.save()
+        bbb_type = self.factory.make_device_type('beaglebone-black')
+        bbb_1 = self.factory.make_device(hostname='bbb-01', device_type=bbb_type)
+        device_dict = DeviceDictionary.get(bbb_1.hostname)
+        self.assertIsNone(device_dict)
+        device_dict = DeviceDictionary(hostname=bbb_1.hostname)
+        device_dict.parameters = {
+            'interfaces': ['eth0', 'eth1'],
+            'sysfs': {
+                'eth0': "/sys/devices/pci0000:00/0000:00:19.0/net/eth0",
+                'eth1': "/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1"},
+            'mac_addr': {'eth0': "f0:de:f1:46:8c:21", 'eth1': "00:24:d7:9b:c0:8c"},
+            'tags': {'eth0': ['1G', '10G'], 'eth1': ['1G']},
+            'map': {'eth0': {'192.168.0.2': 5}, 'eth1': {'192.168.0.2': 7}}
+        }
+        device_dict.save()
+        ct_type = self.factory.make_device_type('cubietruck')
+        cubie = self.factory.make_device(hostname='ct-01', device_type=ct_type)
+        device_dict = DeviceDictionary.get(cubie.hostname)
+        self.assertIsNone(device_dict)
+        device_dict = DeviceDictionary(hostname=cubie.hostname)
+        device_dict.parameters = {
+            'interfaces': ['eth0', 'eth1'],
+            'sysfs': {
+                'eth0': "/sys/devices/pci0000:00/0000:00:19.0/net/eth0",
+                'eth1': "/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1"},
+            'mac_addr': {'eth0': "f0:de:f1:46:8c:21", 'eth1': "00:24:d7:9b:c0:8c"},
+            'tags': {'eth0': ['1G', '10G'], 'eth1': ['1G']},
+            'map': {'eth0': {'192.168.0.2': 4}, 'eth1': {'192.168.0.2': 6}}
+        }
+        device_dict.save()
+        self.filename = os.path.join(os.path.dirname(__file__), 'bbb-cubie-vlan-group.yaml')
+
+    def test_vlan_interface(self):
+        device_dict = DeviceDictionary.get('bbb-01')
+        chk = {
+            'hostname': 'bbb-01',
+            'parameters': {
+                'map': {'eth1': {'192.168.0.2': 7}, 'eth0': {'192.168.0.2': 5}},
+                'interfaces': ['eth0', 'eth1'],
+                'sysfs': {
+                    'eth1': '/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1',
+                    'eth0': '/sys/devices/pci0000:00/0000:00:19.0/net/eth0'
+                },
+                'mac_addr': {'eth1': '00:24:d7:9b:c0:8c', 'eth0': 'f0:de:f1:46:8c:21'},
+                'tags': {'eth1': ['1G'], 'eth0': ['1G', '10G']}}
+        }
+        self.assertEqual(chk, device_dict.to_dict())
+        submission = yaml.load(open(self.filename, 'r'))
+        self.assertIn('protocols', submission)
+        self.assertIn('lava-vland', submission['protocols'])
+        roles = [role for role, _ in submission['protocols']['lava-vland'].iteritems()]
+        params = submission['protocols']['lava-vland']
+        vlans = {}
+        for role in roles:
+            for name, tags in params[role].iteritems():
+                vlans[name] = tags
+        self.assertIn('vlan_one', vlans)
+        self.assertIn('vlan_two', vlans)
+        jobs = split_multinode_yaml(submission, 'abcdefghijkl')
+        job_roles = {}
+        for role in roles:
+            self.assertEqual(len(jobs[role]), 1)
+            job_roles[role] = jobs[role][0]
+        for role in roles:
+            self.assertIn('device_type', job_roles[role])
+            self.assertIn('protocols', job_roles[role])
+            self.assertIn('lava-vland', job_roles[role]['protocols'])
+        client_job = job_roles['client']
+        server_job = job_roles['server']
+        self.assertIn('vlan_one', client_job['protocols']['lava-vland'])
+        self.assertIn('10G', client_job['protocols']['lava-vland']['vlan_one']['tags'])
+        self.assertIn('vlan_two', server_job['protocols']['lava-vland'])
+        self.assertIn('1G', server_job['protocols']['lava-vland']['vlan_two']['tags'])
+        client_tags = client_job['protocols']['lava-vland']['vlan_one']
+        client_dict = DeviceDictionary.get('bbb-01').to_dict()
+        for interface, tags in client_dict['parameters']['tags'].iteritems():
+            if any(set(tags).intersection(client_tags)):
+                self.assertEqual(interface, 'eth0')
+                self.assertEqual(
+                    client_dict['parameters']['map'][interface],
+                    {'192.168.0.2': 5}
+                )
+        # find_device_for_job would have a call to match_vlan_interface(device, job.definition) added
+        bbb1 = Device.objects.get(hostname='bbb-01')
+        self.assertTrue(match_vlan_interface(bbb1, client_job))
+        cubie1 = Device.objects.get(hostname='ct-01')
+        self.assertTrue(match_vlan_interface(cubie1, server_job))

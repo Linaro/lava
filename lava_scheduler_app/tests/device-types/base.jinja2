@@ -92,6 +92,28 @@ commands:
 {% endif %}
 {% endblock -%}
 
+{% block vland %}
+parameters:
+{% if interfaces %}
+  interfaces:
+{% for interface in interfaces %}
+   {{ interface }}:
+     sysfs: "{{ sysfs.get(interface) }}"
+     mac: "{{ mac_addr.get(interface) }}"
+{% for switch, port in map.get(interface).iteritems() %}
+     switch: "{{ switch }}"
+     port: {{ port }}
+{% endfor %}
+     tags:
+{% if tags.get(interface) %}
+{% for tag in tags.get(interface) %}
+     - {{ tag }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endblock -%}
+
 {% block body %}{% endblock -%}
 
 {% block timeouts %}

@@ -30,7 +30,7 @@ from lava_scheduler_app.models import (
     _check_exclusivity,
 )
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
-from lava_scheduler_app.schema import validate_submission
+from lava_scheduler_app.schema import validate_submission, validate_device
 import simplejson
 
 logger = logging.getLogger()
@@ -992,6 +992,10 @@ class TestVoluptuous(unittest.TestCase):
         for name in os.listdir(path):
             if name.endswith('.yaml'):
                 files.append(name)
+        device_files = [
+            # device files supporting unit tests
+            'bbb-01.yaml'
+        ]
         # these files have already been split by utils as multinode sub_id jobs.
         # FIXME: validate the schema of split files using lava-dispatcher.
         split_files = [
@@ -1008,10 +1012,18 @@ class TestVoluptuous(unittest.TestCase):
                 yaml_data = yaml.load(open(os.path.join(path, filename), 'r'))
             except yaml.YAMLError as exc:
                 raise RuntimeError("Decoding YAML job submission failed: %s." % exc)
+            if filename in device_files:
+                validate_device(yaml_data)
+                continue
             if filename in split_files:
                 self.assertRaises(SubmissionException, validate_submission, yaml_data)
             else:
-                self.assertTrue(validate_submission(yaml_data))
+                try:
+                    ret = validate_submission(yaml_data)
+                    self.assertTrue(ret)
+                except SubmissionException as exc:
+                    msg = '########## %s ###########\n%s' % (filename, exc)
+                    self.fail(msg)
 
     def test_breakage_detection(self):
         bad_submission = """

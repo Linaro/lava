@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import yaml
 import shutil
 import urlparse
 import signal
@@ -31,6 +32,7 @@ from lava_scheduler_app.models import (
     JSONDataError,
 )
 from lava_scheduler_app import utils
+from lava_scheduler_app.dbutils import match_vlan_interface
 from lava_scheduler_daemon.worker import WorkerData
 from lava_scheduler_daemon.jobsource import IJobSource
 
@@ -399,6 +401,13 @@ class DatabaseJobSource(object):
         for job in jobs:
             device = find_device_for_job(job, devices)
             if device:
+                if job.is_pipeline:
+                    job_dict = yaml.load(job.definition)
+                    if 'protocols' in job_dict and 'lava-vland' in job_dict['protocols']:
+                        if not match_vlan_interface(device, job_dict):
+                            self.logger.debug("%s does not match vland tags", str(device.hostname))
+                            devices.remove(device)
+                            continue
                 if not self._validate_idle_device(job, device):
                     self.logger.debug("Removing %s from the list of available devices",
                                       str(device.hostname))

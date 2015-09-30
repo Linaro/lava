@@ -76,6 +76,7 @@ LAVA Test Developer Guide
    dispatcher-actions2.rst
    hacking-session.rst
    bootimages.rst
+   vland.rst
 
 LAVA Administrator Guide
 ########################
@@ -93,6 +94,7 @@ LAVA Administrator Guide
    lxc-deploy.rst
    hijack-user.rst
    migrate-lava.rst
+   vland-admin.rst
 
 Other Topics
 ############

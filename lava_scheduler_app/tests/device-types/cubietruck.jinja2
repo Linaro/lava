@@ -25,6 +25,20 @@ parameters:
         uuid: {{ sata_uuid }}
         device_id: {{ sata_id|default(0) }}
         uboot_interface: {{ sata_interface|default('scsi') }}
+{% if interfaces %}
+  interfaces:
+{% for interface in interfaces %}
+   {{ interface }}:
+     sysfs: "{{ sysfs.get(interface) }}"
+     mac: "{{ mac_addr.get(interface) }}"
+     tags:
+{% if tags.get(interface) %}
+{% for tag in tags.get(interface) %}
+     - {{ tag }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
 
 # requires mainline u-boot, e.g. from Debian:
 # https://wiki.debian.org/InstallingDebianOn/Allwinner#U-boot_versions_for_sunxi-based_systems

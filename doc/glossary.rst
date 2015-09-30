@@ -33,8 +33,10 @@ Terms specific to the refactoring
 [ :term:`action level` ]
 [ :term:`device dictionary` ]
 [ :term:`exclusive` ]
+[ :term:`interface tag` ]
 [ :term:`pipeline` ]
 [ :term:`refactoring` ] [ :term:`results` ]
+[ :term:`VLANd` ]
 [ :term:`ZMQ` ]
 
 Deprecated terms
@@ -194,6 +196,12 @@ migration to the new :ref:`dispatcher_design`.
   hwpack
      Linaro style hardware pack. Usually contains a boot loader(s),
      kernel, device tree blob and ramdisk. [#deprecated]_
+
+  interface tag
+     An interface tag is similar to :term:`device tag` but operate **solely** within
+     the :term:`VLANd` support. An interface tag may be related to the link
+     speed which is achievable on a particular switch and port - it may also
+     embed information about that link. See :ref:`vland_device_tags`.
 
   job definition
     The original JSON submitted to create a job in LAVA is retained in
@@ -387,6 +395,13 @@ migration to the new :ref:`dispatcher_design`.
     The protocol is managed by the
     `tftpd-hpa package <https://tracker.debian.org/pkg/tftp-hpa>`_ and
     **not** by LAVA directly. See :ref:`tftp_support`.
+
+  VLANd
+    VLANd is a daemon to support virtual local area networks in LAVA. This
+    support is specialised and requires careful configuration of the
+    entire LAVA instance, including the physical layout of the switches
+    and the devices of that instance. See :ref:`vland_in_lava` or
+    :ref:`admin_vland_lava`.
 
   ZMQ
     Zero MQ (or `0MQ <http://en.wikipedia.org/wiki/%C3%98MQ>`_) is

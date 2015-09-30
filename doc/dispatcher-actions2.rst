@@ -1149,3 +1149,8 @@ for the ``server`` role. See :ref:`inline_test_definition_example`)
             roles:
               - client
 
+VLANd protocol
+**************
+
+See :ref:`VLANd protocol <vland_in_lava>` - which uses the multinode protocol
+to interface with :term:`VLANd` to support virtual local area networks in LAVA.
