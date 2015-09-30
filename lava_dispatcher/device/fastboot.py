@@ -162,7 +162,8 @@ class FastbootTarget(Target):
                                                  boot_tags=self.driver.get_boot_tags())
                 self._customize_bootloader(self.proc, boot_cmds)
             self._monitor_boot(self.proc, self.tester_ps1, self.tester_ps1_pattern)
-            if self.config.start_fastboot_command:
+            if self.config.start_fastboot_command and not \
+               self.config.android_adb_over_tcp:
                 self.driver.wait_for_adb()
             self._booted = True
             return self.proc
