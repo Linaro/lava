@@ -108,7 +108,6 @@ class LoopCheckAction(DeployAction):
                                       "Is the 'loop' kernel module activated?")
         available_loops = len(glob.glob('/sys/block/loop*'))
         self.data['download_action'][self.key]['available_loops'] = available_loops
-        print self.data['download_action']
 
     def run(self, connection, args=None):
         connection = super(LoopCheckAction, self).run(connection, args)
