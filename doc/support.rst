@@ -79,12 +79,10 @@ encouraged to contribute to answer queries from other users.
 lava-devel
 ==========
 
-Formerly known as **linaro-validation**, the
-`lava-devel <https://lists.linaro.org/mailman/listinfo/lava-devel>`_
-list is aimed at supporting test writers and admins who are adapting to
-the :term:`pipeline` support and discussions relating to announcements
-from the LAVA developers. Replies to the :ref:`lava_announce` list
-are directed here.
+``lava-devel`` is an alias to `linaro-validation <https://lists.linaro.org/mailman/listinfo/linaro-validation>`_
+and is aimed at supporting test writers and admins who are adapting to the
+:term:`pipeline` support and discussions relating to announcements from the
+LAVA developers. Replies to the :ref:`lava_announce` list are directed here.
 
 .. index:: lava-announce list
 
