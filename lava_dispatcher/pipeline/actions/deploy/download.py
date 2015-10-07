@@ -126,7 +126,9 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
     @contextlib.contextmanager
     def _decompressor_stream(self):
         dwnld_file = None
-        compression = self.parameters['images'][self.key].get('compression', False)
+        compression = False
+        if 'images' in self.parameters:
+            compression = self.parameters['images'][self.key].get('compression', False)
         fname, _ = self._url_to_fname_suffix(self.path, compression)
 
         if os.path.exists(fname):
@@ -208,7 +210,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         md5 = hashlib.md5()
         sha256 = hashlib.sha256()
         with self._decompressor_stream() as (writer, fname):
-            self.logger.info("downloading %s as %s" % (self.parameters['images'][self.key], fname))
+            remote = self.parameters['images'][self.key] if 'images' in self.parameters else self.parameters[self.key]
+            self.logger.info("downloading %s as %s" % (remote, fname))
 
             downloaded_size = 0
             beginning = time.time()
