@@ -36,7 +36,7 @@ from lava_dispatcher.pipeline.utils.constants import (
     DISPATCHER_DOWNLOAD_DIR,
 )
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.utils.shell import which
+from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 
 
 class ApplyOverlayImage(Action):
@@ -331,10 +331,7 @@ class CompressRamdisk(Action):
         super(CompressRamdisk, self).validate()
         if not self.parameters.get('ramdisk', None):  # idempotency
             return
-        try:
-            which('mkimage')
-        except InfrastructureError:
-            raise InfrastructureError("Unable to find mkimage - is u-boot-tools installed?")
+        self.errors = infrastructure_error('mkimage')
 
     def run(self, connection, args=None):
         if not self.parameters.get('ramdisk', None):  # idempotency

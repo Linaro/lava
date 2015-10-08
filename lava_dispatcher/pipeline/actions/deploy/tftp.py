@@ -22,13 +22,13 @@
 # imported by the parser to populate the list of subclasses.
 
 import os
-from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError
+from lava_dispatcher.pipeline.action import Pipeline
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import PrepareOverlayTftp
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
-from lava_dispatcher.pipeline.utils.shell import which
+from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, tftpd_dir
 from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
 
@@ -108,10 +108,7 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         if self.suffix:
             self.data[self.name].setdefault('suffix', self.suffix)
         self.data[self.name].setdefault('suffix', os.path.basename(self.tftp_dir))
-        try:
-            which("in.tftpd")
-        except InfrastructureError as exc:
-            self.errors = str(exc)
+        self.errors = infrastructure_error('in.tftpd')
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
