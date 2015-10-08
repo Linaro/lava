@@ -879,22 +879,13 @@ class Device(RestrictedResource):
             job_ctx = {}
 
         element = DeviceDictionary.get(self.hostname)
-        # TODO: hardcoded path (determined by setup.py)
-        path = utils.jinja_template_path(system=system)
         if element is None:
             return None
         data = utils.devicedictionary_to_jinja2(
             element.parameters,
             element.parameters['extends']
         )
-        string_loader = jinja2.DictLoader({'%s.yaml' % self.hostname: data})
-        type_loader = jinja2.FileSystemLoader([
-            os.path.join(path, 'device-types')])
-        env = jinja2.Environment(
-            loader=jinja2.ChoiceLoader([string_loader, type_loader]),
-            trim_blocks=True)
-        template = env.get_template("%s.yaml" % self.hostname)
-
+        template = utils.prepare_jinja_template(self.hostname, data, system_path=system)
         return yaml.load(template.render(**job_ctx))
 
     @property
@@ -909,6 +900,27 @@ class Device(RestrictedResource):
             if 'exclusive' in device_dict['parameters'] and device_dict['parameters']['exclusive'] == 'True':
                 exclusive = True
         return exclusive
+
+    @property
+    def device_dictionary_yaml(self):
+        if not self.is_pipeline:
+            return ''
+        device_dict = DeviceDictionary.get(self.hostname)
+        if device_dict:
+            device_dict = device_dict.to_dict()
+        return yaml.dump(device_dict['parameters'], default_flow_style=False)
+
+    @property
+    def device_dictionary_jinja(self):
+        jinja_str = ''
+        if not self.is_pipeline:
+            return jinja_str
+        device_dict = DeviceDictionary.get(self.hostname)
+        if device_dict:
+            device_dict = device_dict.to_dict()
+            jinja_str = utils.devicedictionary_to_jinja2(
+                device_dict['parameters'], device_dict['parameters']['extends'])
+        return jinja_str
 
 
 class TemporaryDevice(Device):

@@ -1,20 +1,18 @@
 import os
 import yaml
-import jinja2
-from lava_scheduler_app.models import (
-    Device,
-    DeviceType,
-    DeviceDictionary,
-    TestJob,
+from lava_scheduler_app.models import DeviceDictionary
+from lava_scheduler_app.utils import (
+    jinja_template_path,
+    devicedictionary_to_jinja2,
+    prepare_jinja_template,
 )
-from lava_scheduler_app.utils import jinja_template_path, devicedictionary_to_jinja2
 from lava_scheduler_app.tests.test_pipeline import YamlFactory
 from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
 
 
 class YamlMenuFactory(YamlFactory):
 
-    def make_fake_mustang_device(self, hostname='fakemustang1'):
+    def make_fake_mustang_device(self, hostname='fakemustang1'):  # pylint: disable=no-self-use
         mustang = DeviceDictionary(hostname=hostname)
         mustang.parameters = {'extends': 'mustang-uefi.yaml'}
         mustang.save()
@@ -62,15 +60,7 @@ class TestPipelineMenu(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
             device_dict.parameters,
             device_dict.parameters['extends']
         )
-
-        # FIXME: dispatcher-master code needs to be more accessible
-        string_loader = jinja2.DictLoader({'%s.yaml' % hostname: device_data})
-        type_loader = jinja2.FileSystemLoader([
-            os.path.join(self.jinja_path, 'device-types')])
-        env = jinja2.Environment(
-            loader=jinja2.ChoiceLoader([string_loader, type_loader]),
-            trim_blocks=True)
-        template = env.get_template("%s.yaml" % hostname)
+        template = prepare_jinja_template(hostname, device_data, system_path=False, path=self.jinja_path)
         config_str = template.render(**job_ctx)
         self.assertIsNotNone(config_str)
         config = yaml.load(config_str)
@@ -95,15 +85,7 @@ class TestPipelineMenu(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
             device_dict.parameters,
             device_dict.parameters['extends']
         )
-
-        # FIXME: dispatcher-master code needs to be more accessible
-        string_loader = jinja2.DictLoader({'%s.yaml' % hostname: device_data})
-        type_loader = jinja2.FileSystemLoader([
-            os.path.join(self.jinja_path, 'device-types')])
-        env = jinja2.Environment(
-            loader=jinja2.ChoiceLoader([string_loader, type_loader]),
-            trim_blocks=True)
-        template = env.get_template("%s.yaml" % hostname)
+        template = prepare_jinja_template(hostname, device_data, system_path=False, path=self.jinja_path)
         config_str = template.render(**job_ctx)
         self.assertIsNotNone(config_str)
         config = yaml.load(config_str)

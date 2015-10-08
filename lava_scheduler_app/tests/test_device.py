@@ -7,11 +7,17 @@ from lava_scheduler_app.models import (
     DeviceDictionary,
     JobPipeline,
 )
-from lava_scheduler_app.utils import devicedictionary_to_jinja2, jinja2_to_devicedictionary
+from lava_scheduler_app.utils import (
+    devicedictionary_to_jinja2,
+    jinja2_to_devicedictionary,
+    prepare_jinja_template,
+)
 from lava_scheduler_app.schema import validate_device
 from django_testscenarios.ubertest import TestCase
-from django.contrib.auth.models import Group, Permission, User
+from django.contrib.auth.models import User
 from lava_dispatcher.pipeline.device import PipelineDevice
+
+# pylint: disable=blacklisted-name,too-many-ancestors,invalid-name
 
 
 class ModelFactory(object):
@@ -187,12 +193,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
             'baud_rate': 56
         }
         data = devicedictionary_to_jinja2(device_dictionary, 'cubietruck.yaml')
-        string_loader = jinja2.DictLoader({'cubie.yaml': data})
-        type_loader = jinja2.FileSystemLoader([os.path.join(jinja2_path, 'device-types')])
-        env = jinja2.Environment(
-            loader=jinja2.ChoiceLoader([string_loader, type_loader]),
-            trim_blocks=True)
-        template = env.get_template("%s.yaml" % 'cubie')
+        template = prepare_jinja_template('cubie', data, system_path=False, path=jinja2_path)
         device_configuration = template.render()
         yaml_data = yaml.load(device_configuration)
         self.assertTrue(validate_device(yaml_data))
@@ -228,12 +229,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         )
 
         data = devicedictionary_to_jinja2(device_dictionary, 'beaglebone-black.yaml')
-        string_loader = jinja2.DictLoader({'bbb.yaml': data})
-        type_loader = jinja2.FileSystemLoader([os.path.join(jinja2_path, 'device-types')])
-        env = jinja2.Environment(
-            loader=jinja2.ChoiceLoader([string_loader, type_loader]),
-            trim_blocks=True)
-        template = env.get_template("%s.yaml" % 'bbb')
+        template = prepare_jinja_template('bbb', data, system_path=False, path=jinja2_path)
         device_configuration = template.render()
         yaml_data = yaml.load(device_configuration)
         self.assertTrue(validate_device(yaml_data))
@@ -263,20 +259,17 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         cubie = DeviceDictionary(hostname='cubie')
         cubie.parameters = device_dictionary
         cubie.save()
-
-        dict_loader = jinja2.DictLoader(
-            {
-                'cubie.yaml':
-                devicedictionary_to_jinja2(cubie.parameters, '%s.yaml' % device_type)
-            }
-        )
-
+        jinja_data = devicedictionary_to_jinja2(cubie.parameters, '%s.yaml' % device_type)
+        dict_loader = jinja2.DictLoader({'cubie.yaml': jinja_data})
         type_loader = jinja2.FileSystemLoader([os.path.join(jinja2_path, 'device-types')])
         env = jinja2.Environment(
             loader=jinja2.ChoiceLoader([dict_loader, type_loader]),
             trim_blocks=True)
         template = env.get_template("%s.yaml" % 'cubie')
         device_configuration = template.render()
+
+        chk_template = prepare_jinja_template('cubie', jinja_data, system_path=False, path=jinja2_path)
+        self.assertEqual(template.render(), chk_template.render())
         yaml_data = yaml.load(device_configuration)
         self.assertTrue(validate_device(yaml_data))
         self.assertIn('timeouts', yaml_data)

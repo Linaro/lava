@@ -22,6 +22,7 @@ import re
 import copy
 import yaml
 import pprint
+import jinja2
 import socket
 import urlparse
 import simplejson
@@ -332,7 +333,7 @@ def installed_packages(prefix=None, package_name=None):
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         package_out, package_err = proc.communicate()
-        pack_re = re.compile("ii\s+(?P<package>\S+)\s+(?P<version>\S+)\s+.*",
+        pack_re = re.compile(r"ii\s+(?P<package>\S+)\s+(?P<version>\S+)\s+.*",
                              re.MULTILINE)
         for package in pack_re.findall(package_out):
             packages[package[0]] = package[1]
@@ -547,6 +548,8 @@ def jinja2_to_devicedictionary(data_dict):
             key = re.sub(' = .*$', '', key)
             value = re.sub('^.* = ', '', line)
             data[key] = yaml.load(value)
+    if 'extends' not in data:
+        return None
     return data
 
 
@@ -561,6 +564,17 @@ def jinja_template_path(system=True):
     if not os.path.exists(path):
         raise RuntimeError("Misconfiguration of jinja templates")
     return path
+
+
+def prepare_jinja_template(hostname, jinja_data, system_path=True, path=None):
+    string_loader = jinja2.DictLoader({'%s.yaml' % hostname: jinja_data})
+    if not path:
+        path = jinja_template_path(system=system_path)
+    type_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
+    env = jinja2.Environment(
+        loader=jinja2.ChoiceLoader([string_loader, type_loader]),
+        trim_blocks=True)
+    return env.get_template("%s.yaml" % hostname)
 
 
 def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-branches,too-many-locals

@@ -60,7 +60,8 @@ migration to the new :ref:`dispatcher_design`.
   device dictionary
     A key:value store within the LAVA server database which admins can
     modify to set configuration values for specific devices, specific
-    to the :term:`pipeline` design.
+    to the :term:`pipeline` design. See :ref:`create_device_dictionary`
+    and :ref:`viewing_device_dictionary_content`.
 
   device group
     A set of devices, defined in the JSON of an individual test job,

@@ -1,19 +1,19 @@
 Administrator use cases
-***********************
+#######################
 
 .. index:: pipeline device requirements
 
 .. _pipeline_device_requirements:
 
 Requirements for a pipeline device
-==================================
+**********************************
 
 The new design makes less assumptions about the software support on the
 device - principally only a *working* bootloader is required. The detail
 of *working* includes but is not restricted to:
 
 Hardware Requirements
----------------------
+=====================
 
 * **Serial** - the principle method for connecting to any device during
   an automated test is serial. If a specific baud rate or particular
@@ -28,7 +28,7 @@ Hardware Requirements
   need to be modified to remove that barrier.
 
 Software Requirements
----------------------
+=====================
 
 * **Interruptable** - for example, ``uBoot`` must be configured to emit
   a recognisable message and wait for a sufficient number of seconds for
@@ -62,7 +62,7 @@ wide range of possible deployments and boot methods.
 .. _adding_known_device:
 
 Adding support for a device of a known type
-===========================================
+*******************************************
 
 .. note:: Not all devices supported by the old dispatcher are currently
    supported in the pipeline. The configuration for the old dispatcher
@@ -90,7 +90,7 @@ interface. See :ref:`create_entry_known_type`.
 .. _obtain_known_device_config:
 
 Obtaining configuration of a known device
------------------------------------------
+=========================================
 
 The simplest way to start is to download the working configuration of
 a device of the same known device type using
@@ -170,7 +170,7 @@ as a word diff::
 .. _create_entry_known_type:
 
 Creating a new device entry for a known device type
----------------------------------------------------
+===================================================
 
 If this device does not already exist in the database of the instance,
 it will need to be created by the admins. This step is similar to
@@ -193,7 +193,7 @@ correct, then save the changes.
 .. _create_device_dictionary:
 
 Creating a device dictionary for the device
--------------------------------------------
+===========================================
 
 The local YAML file downloaded using :command:`get-pipeline-device-config`,
 whether XMLRPC or :file:`lava-tool` is the result of combining a device
@@ -224,8 +224,64 @@ Now modify the dictionary (jinja2 format) to set the values required::
  {% set connection_command = 'telnet playgroundmaster 7018' %}
  {% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 04' %}
 
-Finally, the populated dictionary needs to be updated in the database
-of the instance::
+.. _viewing_device_dictionary_content:
+
+Viewing current device dictionary content
+-----------------------------------------
+
+The admin interface displays the current device dictionary contents
+in the Advanced Properties drop-down section of the Device detail view.
+e.g. for a device called ``kvm01``, the URL in the admin interface would be
+``/admin/lava_scheduler_app/device/kvm01/``, click Show on the Advanced
+Properties section.
+
+The Advanced Properties includes the device description and the device tags
+as well as showing both the YAML formatting as it will be sent
+to the dispatcher and the Jinja2 formatting used to update the device
+dictionary.
+
+.. note:: The device dictionary is **not** editable in the Django admin
+   interface due to constraints of the key value store and the django
+   admin forms. This means that the device configuration for pipeline
+   devices is managed using external files updating the details in the
+   database using hooks. However, this does provide a simple mechanism
+   to have version control over the device configuration with a simple
+   mechanism to update the database and verify the database content.
+
+Updating a device dictionary using XMLRPC
+-----------------------------------------
+
+The populated dictionary now needs to be updated in the database
+of the instance. Superusers can update the device dictionary over
+XMLPRC or developers can use :ref:`developer_access_to_django_shell`
+to update the dictionary on the command line.
+
+.. note:: Newer version of :ref:`lava_tool <lava_tool>` (>= 0.14) support
+   the ``import-device-dictionary`` and ``export-device-dictionary``
+   functions.
+
+Superusers can use ``import_device_dictionary`` to update a Jinja2 string
+for a specified Device hostname (the Device must already exist in the
+database - see :ref:`adding_known_devices`).
+
+If the dictionary did not exist for this hostname, it will be created.
+You should see output::
+
+ Adding new device dictionary for black01
+
+The dictionary is then updated. If the file is valid, you should see output::
+
+ Device dictionary updated for black01
+
+Superusers can also export the existing jinja2 device information using
+``export_device_dictionary`` for a known device hostname. This output
+can then be edited and imported to update the device dictionary
+information.
+
+Updating a device dictionary on the command line
+-------------------------------------------------
+
+::
 
  $ lava-server manage device-dictionary --hostname black01 --import black01.txt
 
@@ -238,4 +294,6 @@ If the dictionary does exist and the file is valid, you should see output::
  Device dictionary updated for black01
 
 .. note:: The file itself has no particular need for an extension,
-   :file:`.txt`, :file:`.conf` and :file:`.yaml` are common.
+   :file:`.txt`, :file:`.jinja2`, :file:`.conf` and :file:`.yaml` are
+   common, depending on your preferred editor / syntax / highlighting
+   configuration.
