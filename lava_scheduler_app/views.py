@@ -1345,10 +1345,12 @@ def job_detail(request, pk):
 def job_definition(request, pk):
     job = get_restricted_job(request.user, pk)
     log_file = job.output_file()
+    description = description_data(job.id) if job.is_pipeline else {}
     return render_to_response(
         "lava_scheduler_app/job_definition.html",
         {
             'job': job,
+            'pipeline': description.get('pipeline', []),
             'job_file_present': bool(log_file),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(job_definition, pk=pk),
             'show_cancel': job.can_cancel(request.user),
