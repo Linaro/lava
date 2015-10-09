@@ -245,7 +245,8 @@ class BaseDriver(object):
                     self._kernel = create_uimage(self._kernel,
                                                  load_addr,
                                                  self.working_dir,
-                                                 self.config.uimage_xip)
+                                                 self.config.uimage_xip,
+                                                 self.config.uimage_arch)
             else:
                 raise CriticalError('Kernel load address not defined!')
         elif self.config.boot_fat_image_only:

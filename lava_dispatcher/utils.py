@@ -216,7 +216,7 @@ def is_uimage(kernel, context):
         return False
 
 
-def create_uimage(kernel, load_addr, tmp_dir, xip, arch='arm'):
+def create_uimage(kernel, load_addr, tmp_dir, xip, arch):
     load_addr = int(load_addr, 16)
     uimage_path = '%s/uImage' % tmp_dir
     if xip:
