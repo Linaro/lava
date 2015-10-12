@@ -322,7 +322,8 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
         except Exception as e:
             raise NetworkError("ifconfig can not match ip pattern for %s:%s" % (nic_name, e))
 
-        if self.match_id == 0:
+        # keep the match_id range in line with the number of patterns.
+        if self.match_id in [0, 1]:
             match_group = self.match.groups()
             if len(match_group) > 0:
                 return match_group[0]
