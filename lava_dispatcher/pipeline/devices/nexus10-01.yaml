@@ -1,0 +1,23 @@
+device_type: nexus10
+serial_number: R32D300FRYP
+
+commands:
+  connect: adb -s R32D300FRYP shell
+  soft_reboot: adb -s R32D300FRYP reboot bootloader
+
+actions:
+  deploy:
+    # list of deployment methods which this device supports
+    methods:
+      fastboot:
+    connections:
+      serial:
+      adb:
+  boot:
+    connections:
+      adb:
+    methods:
+      fastboot:
+
+test_image_prompts:
+  - 'shell@manta'
