@@ -104,30 +104,19 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(OverlayAction())
         self.internal_pipeline.add_action(EnterFastbootAction())
-        if 'image' in parameters:
-            download = DownloaderAction('image', path=self.fastboot_dir)
-            download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
-            self.internal_pipeline.add_action(download)
-            self.set_common_data('fastboot', 'image', True)
-            self.internal_pipeline.add_action(FastbootUpdateAction())
-        if 'boot' in parameters:
-            download = DownloaderAction('boot', path=self.fastboot_dir)
-            download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
-            self.internal_pipeline.add_action(download)
-            self.set_common_data('fastboot', 'boot', True)
-            self.internal_pipeline.add_action(ApplyBootAction())
-        if 'userdata' in parameters:
-            download = DownloaderAction('userdata', path=self.fastboot_dir)
-            download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
-            self.internal_pipeline.add_action(download)
-            self.set_common_data('fastboot', 'userdata', True)
-            self.internal_pipeline.add_action(ApplyUserdataAction())
-        if 'system' in parameters:
-            download = DownloaderAction('system', path=self.fastboot_dir)
-            download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
-            self.internal_pipeline.add_action(download)
-            self.set_common_data('fastboot', 'system', True)
-            self.internal_pipeline.add_action(ApplySystemAction())
+        for image in parameters['images'].keys():
+            if image != 'yaml_line':
+                download = DownloaderAction(image, self.fastboot_dir)
+                download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
+                self.internal_pipeline.add_action(download)
+            if image == 'image':
+                self.internal_pipeline.add_action(FastbootUpdateAction())
+            if image == 'boot':
+                self.internal_pipeline.add_action(ApplyBootAction())
+            if image == 'userdata':
+                self.internal_pipeline.add_action(ApplyUserdataAction())
+            if image == 'system':
+                self.internal_pipeline.add_action(ApplySystemAction())
 
 
 class EnterFastbootAction(DeployAction):
