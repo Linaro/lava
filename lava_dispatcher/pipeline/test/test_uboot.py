@@ -30,6 +30,7 @@ from lava_dispatcher.pipeline.actions.boot.u_boot import (
     UBootCommandOverlay,
     UBootSecondaryMedia
 )
+from lava_dispatcher.pipeline.actions.deploy.apply_overlay import CompressRamdisk
 from lava_dispatcher.pipeline.actions.deploy.tftp import TftpAction
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import Pipeline, InfrastructureError, JobError
@@ -118,6 +119,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn('u-boot', job.device['actions']['boot']['methods'])
         params = job.device['actions']['boot']['methods']['u-boot']['parameters']
+        self.assertIn('mkimage_arch', params)
         boot_message = params.get('boot_message', BOOT_MESSAGE)
         self.assertIsNotNone(boot_message)
         for action in job.pipeline.actions:
@@ -134,6 +136,8 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
                 self.assertIn('kernel', action.parameters)
                 self.assertIn('to', action.parameters)
                 self.assertEqual('tftp', action.parameters['to'])
+            if isinstance(action, CompressRamdisk):
+                self.assertEqual(action.mkimage_arch, 'arm')
             self.assertTrue(action.valid)
 
     def test_overlay_action(self):  # pylint: disable=too-many-locals

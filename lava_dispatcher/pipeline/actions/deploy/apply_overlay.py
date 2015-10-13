@@ -326,12 +326,17 @@ class CompressRamdisk(Action):
         self.name = "compress-ramdisk"
         self.summary = "compress ramdisk with overlay"
         self.description = "recreate a ramdisk with the overlay applied."
+        self.mkimage_arch = None
 
     def validate(self):
         super(CompressRamdisk, self).validate()
         if not self.parameters.get('ramdisk', None):  # idempotency
             return
         self.errors = infrastructure_error('mkimage')
+        if 'mkimage_arch' not in self.job.device['actions']['boot']['methods']['u-boot']['parameters']:
+            self.errors = "Missing architecture string for uboot mkimage support"
+            return
+        self.mkimage_arch = self.job.device['actions']['boot']['methods']['u-boot']['parameters']['mkimage_arch']
 
     def run(self, connection, args=None):
         if not self.parameters.get('ramdisk', None):  # idempotency
@@ -365,8 +370,7 @@ class CompressRamdisk(Action):
         if self.parameters.get('ramdisk-type', None) == 'u-boot':
             ramdisk_uboot = final_file + ".uboot"
             self.logger.debug("Adding RAMdisk u-boot header.")
-            # FIXME: hidden architecture assumption
-            cmd = ("mkimage -A arm -T ramdisk -C none -d %s %s" % (final_file, ramdisk_uboot)).split(' ')
+            cmd = ("mkimage -A %s -T ramdisk -C none -d %s %s" % (self.mkimage_arch, final_file, ramdisk_uboot)).split(' ')
             if not self.run_command(cmd):
                 raise RuntimeError("Unable to add uboot header to ramdisk")
             final_file = ramdisk_uboot
