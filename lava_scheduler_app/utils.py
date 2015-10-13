@@ -639,6 +639,80 @@ def folded_logs(job, section_name, sections, summary=False, increment=False):
     return log_data
 
 
+def map_context_overrides(base_template, devicetype_template, system=True):  # pylint: disable=too-many-locals
+    """
+    The problem here is that this function needs to reproduce how
+    jinja2 handles templates and overrides.
+
+    :param base_template: filename of the base template
+    :param devicetype_template: filename of the device type template which
+           extends the base_template (and only the base_template)
+    :param system: Whether to use system paths
+    :return: sorted list of keys which can be overridden by the
+            device dictionary or, if not specified in the device dictionary,
+            by the job context.
+    """
+    path = jinja_template_path(system)
+    base_file = os.path.join(path, 'device-types', base_template)
+    if not os.path.exists(base_file):
+        return None
+    devicetype_file = os.path.join(path, 'device-types', devicetype_template)
+    if not os.path.exists(devicetype_file):
+        return None
+    with open(base_file, 'r') as content:
+        base_data = content.read()
+    with open(devicetype_file, 'r') as content:
+        devicetype_data = content.read()
+    base_keys = []
+    devicetype_keys = []
+    base_pattern = '{%\s+set\s+(?P<key>\w+)'
+    devicetype_pattern = '{{\s+(?P<key>\w+)'
+    for line in base_data.split('\n'):
+        match = re.match(base_pattern, line)
+        if match:
+            base_keys.append(match.group('key'))
+    for line in devicetype_data.split('\n'):
+        match = re.search(devicetype_pattern, line)
+        if match:
+            key = match.group('key')
+            if key not in base_keys and key not in devicetype_keys:
+                devicetype_keys.append(match.group('key'))
+    for line in devicetype_data.split('\n'):
+        match = re.match(base_pattern, line)
+        if match:
+            key = match.group('key')
+            if key not in devicetype_keys:
+                devicetype_keys.append(match.group('key'))
+    return sorted(devicetype_keys)
+
+
+def allowed_overrides(device_dict, system=True):
+    """
+    Returns the list of keys which can be overridden in a job context
+    :param device_dict: dict created using DeviceDictionary.to_dict()
+    :return: a sorted list of keys which can be overridden in the job context
+    """
+    path = jinja_template_path(system)
+    devicedict_template = device_dict['parameters']['extends']
+    devicetype_file = os.path.join(path, 'device-types', devicedict_template)
+    if not os.path.exists(devicetype_file):
+        return None
+    with open(devicetype_file, 'r') as content:
+        devicetype_data = content.read()
+    extends_pattern = "{%\s+extends\s+'(?P<key>\S+)'"
+    base_template = None
+    for line in devicetype_data.split('\n'):
+        match = re.search(extends_pattern, line)
+        if match:
+            base_template = match.group('key')
+    override_map = map_context_overrides(base_template, devicedict_template, system)
+    allowed = []
+    for key in override_map:
+        if key is not 'extends' and key not in device_dict['parameters'].keys():
+            allowed.append(key)
+    return sorted(allowed)
+
+
 def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-branches,too-many-locals
     """
     Handles the lava-multinode protocol requirements.

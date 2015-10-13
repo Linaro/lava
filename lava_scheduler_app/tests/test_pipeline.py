@@ -14,7 +14,12 @@ from lava_scheduler_app.models import (
 )
 from django.contrib.auth.models import Group
 from collections import OrderedDict
-from lava_scheduler_app.utils import jinja_template_path, split_multinode_yaml
+from lava_scheduler_app.utils import (
+    jinja_template_path,
+    map_context_overrides,
+    allowed_overrides,
+    split_multinode_yaml,
+)
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
 from lava_dispatcher.pipeline.device import PipelineDevice
 from lava_dispatcher.pipeline.parser import JobParser
@@ -396,6 +401,50 @@ class TestPipelineSubmit(TestCaseWithFactory):
         description = pipeline_job.describe()
         self.assertIn('compatibility', description)
         self.assertGreaterEqual(description['compatibility'], BootQEMU.compatibility)
+
+    def test_identify_context(self):
+        hostname = "fakebbb"
+        mustang_type = self.factory.make_device_type('beaglebone-black')
+        # this sets a qemu device dictionary, so replace it
+        self.factory.make_device(device_type=mustang_type, hostname=hostname)
+        mustang = DeviceDictionary(hostname=hostname)
+        mustang.parameters = {
+            'extends': 'beaglebone-black.jinja2',
+            'base_nfsroot_args': '10.16.56.2:/home/lava/debian/nfs/,tcp,hard,intr',
+            'console_device': 'ttyO0',  # takes precedence over the job context as the same var name is used.
+        }
+        mustang.save()
+        mustang_dict = mustang.to_dict()
+        device = Device.objects.get(hostname="fakebbb")
+        self.assertEqual('beaglebone-black', device.device_type.name)
+        self.assertTrue(device.is_pipeline)
+        context_overrides = map_context_overrides('base.jinja2', 'beaglebone-black.jinja2', system=False)
+        job_ctx = {
+            'base_uboot_commands': 'dummy commands',
+            'usb_uuid': 'dummy usb uuid',
+            'console_device': 'ttyAMA0',
+            'usb_device_id': 1111111111111111
+        }
+        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+        self.assertIsNotNone(device_config)
+        devicetype_blocks = []
+        devicedict_blocks = []
+        allowed = []
+        for key, _ in job_ctx.items():
+            if key in context_overrides:
+                if key is not 'extends' and key not in mustang_dict['parameters'].keys():
+                    allowed.append(key)
+                else:
+                    devicedict_blocks.append(key)
+            else:
+                devicetype_blocks.append(key)
+        # only values set in job_ctx are checked
+        self.assertEqual(set(allowed), {'usb_device_id', 'usb_uuid'})
+        self.assertEqual(set(devicedict_blocks), {'console_device'})
+        self.assertEqual(set(devicetype_blocks), {'base_uboot_commands'})
+        full_list = allowed_overrides(mustang_dict, system=False)
+        for key in allowed:
+            self.assertIn(key, full_list)
 
 
 class TestPipelineStore(TestCaseWithFactory):

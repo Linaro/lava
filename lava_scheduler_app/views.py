@@ -2204,6 +2204,10 @@ def device_detail(request, pk):
 
     visible = filter_device_types(request.user)
 
+    overrides = None
+    if device.is_pipeline:
+        overrides = []
+
     return render_to_response(
         "lava_scheduler_app/device.html",
         {
@@ -2235,6 +2239,7 @@ def device_detail(request, pk):
             'context_help': BreadCrumbTrail.show_help(device_detail, pk="help"),
             'next_device': next_device,
             'previous_device': previous_device,
+            'overrides': overrides,
         },
         RequestContext(request))
 
