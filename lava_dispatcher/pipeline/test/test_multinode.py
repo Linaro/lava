@@ -20,6 +20,7 @@
 
 
 import os
+import glob
 import yaml
 import uuid
 import json
@@ -80,7 +81,7 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
             msg.update(self.base_message)
             return json.dumps(self.coord.dataReceived(msg))
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
+    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_multinode_jobs(self):
         self.assertIsNotNone(self.client_job)
         self.assertIsNotNone(self.server_job)
@@ -89,7 +90,7 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.server_job.validate()
         self.assertEqual(self.server_job.pipeline.errors, [])
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
+    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_protocol(self):
         self.assertEqual(
             ['lava-multinode'],
@@ -176,7 +177,7 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
             self.assertIs(True, protocol.valid)
         self.assertIsNone(self.coord.dataReceived({}))
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
+    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_multinode_description(self):
         self.assertIsNotNone(self.client_job)
         self.client_job.validate()

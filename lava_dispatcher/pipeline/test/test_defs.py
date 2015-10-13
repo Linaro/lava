@@ -136,7 +136,7 @@ class TestDefinitionSimple(unittest.TestCase):  # pylint: disable=too-many-publi
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-notest.yaml')
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
+    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_job_without_tests(self):
         deploy = boot = finalize = None
         self.job.pipeline.validate_actions()
@@ -160,7 +160,7 @@ class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-publi
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-params.yaml')
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
+    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_job_without_tests(self):
         deploy = boot = finalize = overlay = test = None
         self.job.pipeline.validate_actions()
