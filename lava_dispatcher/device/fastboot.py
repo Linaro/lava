@@ -173,9 +173,12 @@ class FastbootTarget(Target):
             raise OperationFailed(msg)
 
     def power_off(self, proc):
-        super(FastbootTarget, self).power_off(proc)
-        if self.config.power_off_cmd:
+        if self.config.power_off_cmd != "":
             self.context.run_command(self.config.power_off_cmd)
+        else:
+            proc.send("~$")
+            proc.sendline("off")
+        super(FastbootTarget, self).power_off(proc)
         self.driver.finalize(proc)
 
     @contextlib.contextmanager
@@ -221,7 +224,8 @@ class FastbootTarget(Target):
                 # Connect to serial
                 self.proc = self.driver.connect()
                 # Hard reset the platform
-                if self.config.hard_reset_command:
+                if self.config.hard_reset_command or \
+                   self.config.hard_reset_command == "":
                     self._hard_reboot(self.proc)
                 else:
                     self._soft_reboot(self.proc)
