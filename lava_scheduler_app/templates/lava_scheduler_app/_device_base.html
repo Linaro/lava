@@ -39,6 +39,30 @@
       <dd>{{ device.hostname }}</dd>
       <dt>Type</dt>
       <dd><a href="{{ device.device_type.get_absolute_url }}">{{ device.device_type }}</a></dd>
+{% if device.is_pipeline %}
+    <dt>Configuration</dt>
+  <dd><a href="#" data-toggle="modal" id="devicedict-modal"
+         data-target="#devicedictModal"> Device Dictionary</a>
+    <div class="modal fade" id="devicedictModal" tabindex="-1" role="dialog" aria-labelledby="devicedictLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title" id="devicedictLabel">Device Dictionary for {{ device.hostname }}</h4>
+          </div>
+          <div class="modal-body">
+            <div id="devicedict-content">
+            <pre>{{ device.device_dictionary_yaml }}</pre>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </dd>
+{% endif %}
       <dt>Description</dt>
       <dd>{{ device.get_description|default:"<i>None</i>"|truncatewords_html:200|wordwrap:80|linebreaksbr }}</dd>
       <dt>Tags</dt>
@@ -401,9 +425,11 @@
         </div>
 {% endif %}
       </div>
-    </div>
+
+  </div>
   </div>
 </div>
+
 
 {% block content_columns %}
 {% endblock %}
