@@ -491,6 +491,9 @@ class Target(object):
 
     def _hard_reboot(self, connection):
         logging.info("Perform hard reset on the system")
+        if self.config.pre_power_cmd:
+            self.context.run_command(self.config.pre_power_cmd,
+                                     failok=True)
         if self.config.hard_reset_command != "":
             self.context.run_command(self.config.hard_reset_command)
         else:
@@ -541,6 +544,10 @@ class Target(object):
         return boot_cmds
 
     def _monitor_boot(self, connection, ps1, ps1_pattern, is_master=False):
+
+        if self.config.pre_os_cmd:
+            self.context.run_command(self.config.pre_os_cmd,
+                                     failok=True)
 
         good = 'pass'
         bad = 'fail'

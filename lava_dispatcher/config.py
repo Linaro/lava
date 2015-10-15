@@ -106,6 +106,8 @@ class DeviceSchema(schema.Schema):
     pre_connect_command = schema.StringOption()
     power_on_cmd = schema.StringOption()  # for sdmux
     power_off_cmd = schema.StringOption()  # for sdmux
+    pre_os_cmd = schema.StringOption(default=None)
+    pre_power_cmd = schema.StringOption(default=None)
     reset_port_command = schema.StringOption()
     root_part = schema.IntOption()
     sata_block_device = schema.StringOption(default="sda")
