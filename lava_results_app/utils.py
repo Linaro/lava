@@ -18,10 +18,8 @@ class StreamEcho(object):
 
 
 def description_filename(job_id):
-    logger = logging.getLogger('lava_results_app')
     filename = os.path.join(settings.MEDIA_ROOT, 'job-output', 'job-%s' % job_id, 'description.yaml')
     if not os.path.exists(filename):
-        logger.error("No description.yaml for job %s" % job_id)
         return None
     return filename
 

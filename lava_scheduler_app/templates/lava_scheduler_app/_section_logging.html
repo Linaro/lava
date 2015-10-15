@@ -1,0 +1,50 @@
+{% load utils %}
+{% load django_tables2 %}
+{% spaceless %}
+  {% get_pipeline_sections pipeline_data as sections %}
+      <div class="col-md-6">
+      <h4>Sections</h4>
+        <ul class="nav nav-pills">
+  {% for item in sections %}
+      {% if 'section' in request.GET %}
+          {% for section, level in item.items %}
+              {% if section in request.GET.section %}
+          <li><a href="{% querystring "section"=section %}" class="btn btn-primary">{{ section }}</a></li>
+              {% else %}
+          <li><a href="{% querystring "section"=section %}" class="btn btn-info">{{ section }}</a></li>
+              {% endif %}
+          {% endfor %}
+      {% else %}
+          {% for section, level in item.items %}
+              {% if section == default_section %}
+          <li><a href="{% querystring "section"=section %}" class="btn btn-primary">{{ section }}</a></li>
+              {% else %}
+          <li><a href="{% querystring "section"=section %}" class="btn btn-info">{{ section }}</a></li>
+              {% endif %}
+          {% endfor %}
+      {% endif %}
+  {% endfor %}
+        </ul>
+      </div>
+    <div class="col-md-6">
+    <h4>Logging levels</h4>
+      <ul class="nav nav-pills">
+      <li>&nbsp;</li>
+    {% if 'off' in request.GET.warning %}
+      <li><a href="{% querystring "warning"="" %}" class="btn btn-info">Warning</a></li>
+    {% else %}
+      <li><a href="{% querystring "warning"="off" %}" class="btn btn-warning">Warning</a></li>
+    {% endif %}
+    {% if 'off' in request.GET.info %}
+      <li><a href="{% querystring "info"="" %}" class="btn btn-info">Info</a></li>
+    {% else %}
+      <li><a href="{% querystring "info"="off" %}" class="btn btn-primary">Info</a></li>
+    {% endif %}
+    {% if 'on' in request.GET.debug %}
+      <li><a href="{% querystring "debug"="" %}" class="btn btn-primary">Debug</a></li>
+    {% else %}
+      <li><a href="{% querystring "debug"="on" %}" class="btn btn-info">Debug</a></li>
+    {% endif %}
+        </ul>
+      </div>
+{% endspaceless %}

@@ -1,7 +1,10 @@
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 import copy
+import yaml
+import json
 import logging
 import os
+from argcomplete import debug
 import simplejson
 import StringIO
 import datetime
@@ -12,6 +15,7 @@ from django import forms
 
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.template.loader import render_to_string
 from django.db.models import Count
 from django.http import (
     HttpResponse,
@@ -1296,6 +1300,19 @@ def job_detail(request, pk):
         deploy_list = [item['deploy'] for item in action_list if 'deploy' in item]
         boot_list = [item['boot'] for item in action_list if 'boot' in item]
         test_list = [item['test'] for item in action_list if 'test' in item]
+        sections = []
+        for action in pipeline:
+            if 'section' in action:
+                sections.append({action['section']: action['level']})
+        default_section = 'boot'  # to come from user profile later.
+        if 'section' in request.GET:
+            log_data = utils.folded_logs(job, request.GET['section'], sections, summary=True)
+        else:
+            log_data = utils.folded_logs(job, default_section, sections, summary=True)
+            if not log_data:
+                default_section = 'deploy'
+                log_data = utils.folded_logs(job, default_section, sections, summary=True)
+
         data.update({
             'device_data': description.get('device', {}),
             'job_data': job_data,
@@ -1303,7 +1320,9 @@ def job_detail(request, pk):
             'deploy_list': deploy_list,
             'boot_list': boot_list,
             'test_list': test_list,
-            'description_file': description_filename(job.id)
+            'description_file': description_filename(job.id),
+            'log_data': log_data,
+            'default_section': default_section,
         })
 
     log_file = job.output_file()
@@ -1537,8 +1556,146 @@ def favorite_jobs(request, username=None):
 
 
 @BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
+def job_complete_log(request, pk):
+    job = get_restricted_job(request.user, pk)
+    if not job.is_pipeline:
+        raise Http404
+    description = description_data(job.id)
+    pipeline = description.get('pipeline', {})
+    sections = []
+    for action in pipeline:
+        sections.append({action['section']: action['level']})
+    default_section = 'boot'  # to come from user profile later.
+    if 'section' in request.GET:
+        log_data = utils.folded_logs(job, request.GET['section'], sections, summary=False)
+    else:
+        log_data = utils.folded_logs(job, default_section, sections, summary=False)
+        if not log_data:
+            default_section = 'deploy'
+            log_data = utils.folded_logs(job, default_section, sections, summary=False)
+
+    return render_to_response(
+        "lava_scheduler_app/pipeline_complete.html",
+        {
+            'show_cancel': job.can_cancel(request.user),
+            'show_resubmit': job.can_resubmit(request.user),
+            'show_failure': job.can_annotate(request.user),
+            'job': TestJob.objects.get(pk=pk),
+            'sections': sections,
+            'default_section': default_section,
+            'log_data': log_data,
+            'pipeline_data': pipeline,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_log_file, pk=pk),
+            # 'context_help': BreadCrumbTrail.leading_to(job_detail, pk='detail'),
+        },
+        RequestContext(request))
+
+
+def job_section_log(request, job, log_name):
+    job = get_restricted_job(request.user, job)
+    if not job.is_pipeline:
+        raise Http404
+    path = os.path.join(job.output_dir, 'pipeline', log_name[0], log_name)
+    if not os.path.exists(path):
+        raise Http404
+    with open(path, 'r') as data:
+        log_content = yaml.load(data)
+    log_target = []
+    for logitem in log_content:
+        for key, value in logitem.items():
+            if key == 'target':
+                log_target.append(value)
+    # FIXME: decide if this should be a separate URL
+    if not log_target:
+        for logitem in log_content:
+            for key, value in logitem.items():
+                log_target.append(yaml.dump(value))
+
+    response = HttpResponse('\n'.join(log_target), content_type='text/plain; charset=utf-8')
+    response['Content-Transfer-Encoding'] = 'quoted-printable'
+    response['Content-Disposition'] = "attachment; filename=job-%s_%s" % (job.id, log_name)
+    return response
+
+
+def job_status(request, pk):
+    job = get_restricted_job(request.user, pk)
+    response_dict = {'job_status': job.get_status_display()}
+    if (job.actual_device and job.actual_device.status not in [Device.RESERVED, Device.RUNNING]) or \
+            job.status not in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
+        response_dict['device'] = render_to_string(
+            "lava_scheduler_app/_device_refresh.html", {'job': job}, RequestContext(request))
+    response_dict['timing'] = render_to_string(
+        "lava_scheduler_app/_job_timing.html", {'job': job}, RequestContext(request))
+    if job.status == TestJob.SUBMITTED and not job.actual_device:
+        response_dict['priority'] = job.priority
+    if job.failure_comment:
+        response_dict['failure'] = job.failure_comment
+    if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
+        response_dict['X-JobStatus'] = '1'
+    response = HttpResponse(json.dumps(response_dict), content_type='text/json')
+    return response
+
+
+def job_pipeline_sections(request, pk):
+    job = get_restricted_job(request.user, pk)
+    if not job.is_pipeline:
+        raise Http404
+    description = description_data(job.id)
+    pipeline = description.get('pipeline', {})
+    sections = []
+    for action in pipeline:
+        if 'section' in action:
+            sections.append({action['section']: action['level']})
+    response = render_to_response(
+        "lava_scheduler_app/_section_logging.html", {
+            'job': job,
+            'pipeline_data': pipeline,
+            'sections': sections,
+            'default_section': 'any',
+        }, RequestContext(request))
+    if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
+        response['X-Sections'] = '1'
+    return response
+
+
+def job_pipeline_incremental(request, pk):
+    # FIXME: LAVA-375 - monitor the logfile and possibly the count to send less data per poll.
+    job = get_restricted_job(request.user, pk)
+    summary = int(request.GET.get('summary', 0)) == 1
+    description = description_data(job.id)
+    pipeline = description.get('pipeline', {})
+    sections = []
+    for action in pipeline:
+        if 'section' in action:
+            sections.append({action['section']: action['level']})
+    default_section = str(request.GET.get('section', 'deploy'))
+    if 'section' in request.GET:
+        log_data = utils.folded_logs(job, request.GET['section'], sections, summary=summary)
+    else:
+        log_data = utils.folded_logs(job, default_section, sections, summary=summary, increment=True)
+        if not log_data:
+            default_section = 'deploy'
+            log_data = utils.folded_logs(job, default_section, sections, summary=summary)
+
+    response = render_to_response(
+        "lava_scheduler_app/_structured_logdata.html",
+        {
+            'job': TestJob.objects.get(pk=pk),
+            'sections': sections,
+            'default_section': 'any',
+            'log_data': log_data,
+        },
+        RequestContext(request))
+    if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
+        response['X-Is-Finished'] = '1'
+    return response
+
+
+@BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
 def job_log_file(request, pk):
     job = get_restricted_job(request.user, pk)
+    if job.is_pipeline:
+        return redirect(job_complete_log, pk=pk)
     log_file = job.output_file()
     if not log_file:
         raise Http404

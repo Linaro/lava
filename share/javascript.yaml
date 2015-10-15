@@ -61,6 +61,7 @@ debian:
       tables.js: tables.min.js
       jquery-linedtextarea.js: jquery-linedtextarea.min.js
       job-submit.js: job-submit.min.js
+      lava-job-polling.js: lava-job-polling.min.js
       shCore.js: shCore.min.js
       shBrushJScript.js: shBrushJScript.min.js
       beautify.js: beautify.min.js

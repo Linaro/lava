@@ -1,0 +1,13 @@
+    <h4 class="modal-header">Timing</h4>
+    <dl class="dl-horizontal">
+      <dt>Submitted</dt>
+      <dd title="{{ job.submit_time }}">{{ job.submit_time|timesince }}</dd>
+      <dt>Started</dt>
+      <dd title="{{ job.start_time|default:"not started" }}">{% if job.start_time %}{{ job.start_time|timesince }}{% else %}<i>not started</i>{% endif %}</dd>
+      <dt>Finished</dt>
+      <dd title="{{ job.end_time|default:"not finished" }}">{% if job.end_time %}{{ job.end_time|timesince }}{% else %}<i>not finished</i>{% endif %}</dd>
+      {% if job.start_time and job.end_time %}
+      <dt>Duration</dt>
+      <dd>{{ job.end_time|timeuntil:job.start_time }}</dd>
+      {% endif %}
+    </dl>
