@@ -54,6 +54,9 @@ take out some of the noise.)::
   dictitems:
     actions:
       boot:
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
         connections: {serial: null, ssh: null}
         methods:
           u-boot:
@@ -260,6 +263,9 @@ The boot support is where things become more detailed.
 .. code-block:: yaml
 
     boot:
+     prompts:
+       - 'linaro-test'
+       - 'root@debian:~#'
      methods:
        u-boot:
          parameters:
@@ -360,6 +366,9 @@ Untested at this point, but this is the start of the integration.
      methods:
      - tftp
    boot:
+     prompts:
+       - 'linaro-test'
+       - 'root@debian:~#'
      methods:
        u-boot:
          parameters:
@@ -501,6 +510,9 @@ at the end of the boot action.
 .. code-block:: yaml
 
    - boot:
+     prompts:
+       - 'linaro-test'
+       - 'root@debian:~#'
      method: u-boot
      commands: nfs
      type: bootm
@@ -544,6 +556,9 @@ Complete YAML submission
        dtb: http://images-internal/mustang/mustang.dtb_1.11
        os: debian
    - boot:
+     prompts:
+       - 'linaro-test'
+       - 'root@debian:~#'
      method: u-boot
      commands: nfs
      type: bootm
@@ -626,6 +641,9 @@ more support can be added later.
         tftp
 
   boot:
+    prompts:
+      - 'linaro-test'
+      - 'root@debian:~#'
     methods:
       u-boot:
         parameters:
@@ -664,6 +682,9 @@ Completed mustang template
       - tftp
 
     boot:
+      prompts:
+        - 'linaro-test'
+        - 'root@debian:~#'
       methods:
         u-boot:
           parameters:

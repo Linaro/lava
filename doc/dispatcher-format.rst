@@ -133,6 +133,9 @@ Sample JOB definition for a KVM
         method: kvm
         media: tmpfs
         failure_retry: 2
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
     - test:
         failure_retry: 3
@@ -184,6 +187,9 @@ by this device type appear as a list.
     # no need for root-part, the MountAction will need to sort that out.
 
   boot:
+    prompts:
+      - 'linaro-test'
+      - 'root@debian:~#'
     # list of boot methods which this device supports.
     methods:
       - qemu
@@ -399,6 +405,9 @@ Supported methods
         method: kvm
         media: tmpfs
         failure_retry: 2
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
 
 

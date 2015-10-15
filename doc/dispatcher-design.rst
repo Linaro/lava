@@ -964,6 +964,9 @@ Boot commands
         root_uuid: UUID=159d17cc-697c-4125-95a0-a3775e1deabe  # comes from the supplied image.
         boot_part: 1  # the partition on the media from which the bootloader can read the kernel, ramdisk & dtb
         type: bootz
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
 The ``kernel`` and (if specified) the ``ramdisk`` and ``dtb`` paths are
 the paths used by the bootloader to load the files in order to boot the
@@ -1016,6 +1019,9 @@ specify the connection method.
         media: tmpfs
         connection: serial
         failure_retry: 2
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
 Support for particular connection methods needs to be implemented at a
 device level, so the device also declares support for particular
@@ -1034,6 +1040,9 @@ connection methods.
       - ssh
     methods:
       qemu:
+    prompts:
+      - 'linaro-test'
+      - 'root@debian:~#'
 
 Most devices are capable of supporting SSH connections, as long as:
 
@@ -1292,6 +1301,9 @@ establish a connection:
         method: ssh
         connection: ssh
         failure_retry: 2
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
 The ``deploy`` action in this case simply prepares the LAVA overlay
 containing the test shell definitions and copies those to a
@@ -1451,6 +1463,9 @@ The test job YAML would simply specify:
         method: ssh
         connection: ssh
         failure_retry: 2
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
 .. note:: The OS still needs to be specified, LAVA
           :ref:`does not guess <keep_dispatcher_dumb>` based
@@ -1649,6 +1664,9 @@ Sample job definition for the VM job
        # full access to the commands to run on the other device
        - qemu-system-arm -hda {IMAGE}
      type: qemu
+     prompts:
+       - 'linaro-test'
+       - 'root@debian:~#'
 
   - test:
      name: kvm-basic-singlenode

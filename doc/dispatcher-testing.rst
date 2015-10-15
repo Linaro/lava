@@ -51,6 +51,7 @@ Sample pipeline description output
     - parameters:
         actions:
           boot:
+            prompts: ['linaro-test', 'root@debian:~#']
             command:
               amd64: {qemu_binary: qemu-system-x86_64}
             methods: [qemu]

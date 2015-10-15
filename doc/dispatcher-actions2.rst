@@ -235,6 +235,19 @@ Every ``boot`` action **must** specify a method which is used by the
 Strategy classes to determine how to boot the deployed files on the
 device. Depending on the method, other parameters will be required.
 
+Boot actions which result in a POSIX type login or shell must specify a list
+of expected prompts which will be matched against the output to determine the
+endpoint of the boot process.
+
+* **prompts**
+
+  ::
+
+     - boot:
+         prompts:
+           - 'linaro-test'
+           - 'root@debian:~#'
+
 * **method**
 
   * **qemu** - boot the downloaded ``image`` from the deployment action
@@ -265,6 +278,9 @@ device. Depending on the method, other parameters will be required.
        method: u-boot
        commands: nfs
        type: bootz
+       prompts:
+         - 'linaro-test'
+         - 'root@debian:~#'
 
 Boot example
 ============
@@ -275,6 +291,9 @@ Boot example
         method: qemu
         media: tmpfs
         failure_retry: 2
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
 
 .. _test_action:
@@ -499,6 +518,9 @@ repeatedly. This repetition takes the form:
         method: qemu
         media: tmpfs
         repeat: 3
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
     - test:
         # test parameters
 
@@ -532,6 +554,9 @@ To repeat a specific boot and a specific test definition as one block
         - boot:
             method: qemu
             media: tmpfs
+            prompts:
+              - 'linaro-test'
+              - 'root@debian:~#'
 
         - test:
             failure_retry: 3
@@ -735,6 +760,9 @@ https://git.linaro.org/lava/lava-dispatcher.git/blob/HEAD:/lava_dispatcher/pipel
         method: qemu
         media: tmpfs
         failure_retry: 2
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
     - test:
         failure_retry: 3
