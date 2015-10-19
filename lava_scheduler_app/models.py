@@ -30,7 +30,12 @@ from django_kvstore import models as kvmodels
 from django_kvstore import get_kvstore
 from django.utils import timezone
 
-from django_restricted_resource.models import RestrictedResource
+from django_restricted_resource.models import (
+    RestrictedResource,
+    RestrictedResourceManager
+)
+from lava_scheduler_app.managers import RestrictedTestJobQuerySet
+
 
 from dashboard_app.models import Bundle, BundleStream
 
@@ -1359,6 +1364,8 @@ class TestJob(RestrictedResource):
     """
     A test job is a test process that will be run on a Device.
     """
+    objects = RestrictedResourceManager.from_queryset(
+        RestrictedTestJobQuerySet)()
 
     SUBMITTED = 0
     RUNNING = 1

@@ -142,7 +142,8 @@ class QueryCustomResultView(LavaView):
         super(QueryCustomResultView, self).__init__(request, **kwargs)
 
     def get_queryset(self):
-        return Query.get_queryset(self.content_type, self.conditions)
+        return Query.get_queryset(self.content_type,
+                                  self.conditions).visible_by_user(user)
 
 
 class QueryResultView(LavaView):
@@ -153,7 +154,7 @@ class QueryResultView(LavaView):
         super(QueryResultView, self).__init__(request, **kwargs)
 
     def get_queryset(self):
-        return self.query.get_results()
+        return self.query.get_results(self.request.user)
 
 
 @BreadCrumb("Queries", parent=index)
@@ -437,7 +438,7 @@ def query_export(request, username, name):
     """
     query = get_object_or_404(Query, owner__username=username, name=name)
 
-    results = query.get_results()
+    results = query.get_results(request.user)
     filename = "query_%s_%s_export" % (query.owner.username, query.name)
     return _export_query(results, query.content_type, filename)
 
@@ -463,7 +464,8 @@ def query_export_custom(request):
     filename = "query_%s_export" % (content_type)
 
     try:
-        results = Query.get_queryset(content_type, conditions)
+        results = Query.get_queryset(content_type, conditions).visible_by_user(
+            user)
     except FieldError:
         raise InvalidConditionsError("Conditions URL incorrect: Field does "
                                      "not exist. Please refer to query docs.")

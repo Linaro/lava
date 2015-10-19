@@ -49,6 +49,12 @@ from lava_scheduler_app.models import (
     Device,
     DeviceType
 )
+from lava_scheduler_app.managers import (
+    RestrictedTestJobQuerySet,
+    RestrictedTestCaseQuerySet,
+    RestrictedTestSuiteQuerySet
+)
+
 from lava_results_app.utils import help_max_length
 
 # TODO: this may need to be ported - clashes if redefined
@@ -117,6 +123,9 @@ class TestSuite(models.Model):
     Top level grouping of results from a job.
     Directly linked to a single TestJob, the job can have multiple TestSets.
     """
+
+    objects = models.Manager.from_queryset(RestrictedTestSuiteQuerySet)()
+
     job = models.ForeignKey(
         TestJob,
     )
@@ -180,6 +189,9 @@ class TestCase(models.Model):
     Result of an individual test case.
     lava-test-case or action result
     """
+
+    objects = models.Manager.from_queryset(RestrictedTestCaseQuerySet)()
+
     RESULT_PASS = 0
     RESULT_FAIL = 1
     RESULT_SKIP = 2
@@ -490,6 +502,8 @@ def TestJobViewFactory(query):
 
     class TestJobMaterializedView(QueryMaterializedView, TestJob):
 
+        objects = models.Manager.from_queryset(RestrictedTestJobQuerySet)()
+
         class Meta(QueryMaterializedView.Meta):
             db_table = '%s%s' % (QueryMaterializedView.QUERY_VIEW_PREFIX,
                                  query.id)
@@ -501,6 +515,8 @@ def TestCaseViewFactory(query):
 
     class TestCaseMaterializedView(QueryMaterializedView, TestCase):
 
+        objects = models.Manager.from_queryset(RestrictedTestCaseQuerySet)()
+
         class Meta(QueryMaterializedView.Meta):
             db_table = '%s%s' % (QueryMaterializedView.QUERY_VIEW_PREFIX,
                                  query.id)
@@ -511,6 +527,8 @@ def TestCaseViewFactory(query):
 def TestSuiteViewFactory(query):
 
     class TestSuiteMaterializedView(QueryMaterializedView, TestSuite):
+
+        objects = models.Manager.from_queryset(RestrictedTestSuiteQuerySet)()
 
         class Meta(QueryMaterializedView.Meta):
             db_table = '%s%s' % (QueryMaterializedView.QUERY_VIEW_PREFIX,
@@ -592,10 +610,10 @@ class Query(models.Model):
     def __unicode__(self):
         return "<Query ~%s/%s>" % (self.owner.username, self.name)
 
-    def get_results(self):
+    def get_results(self, user):
         if self.is_live:
             return Query.get_queryset(self.content_type,
-                                      self.querycondition_set.all())
+                                      self.querycondition_set.all()).visible_by_user(user)
         else:
             if self.content_type.model_class() == TestJob:
                 view = TestJobViewFactory(self)
@@ -604,10 +622,15 @@ class Query(models.Model):
             elif self.content_type.model_class() == TestSuite:
                 view = TestSuiteViewFactory(self)
 
-            return view.__class__.objects.all()
+            return view.__class__.objects.all().visible_by_user(user)
 
     @classmethod
     def get_queryset(cls, content_type, conditions):
+        """ Return list of QuerySet objects for class 'content_type'.
+
+        Be mindful when using this method directly as it does not apply the
+        visibility rules.
+        """
 
         logger = logging.getLogger('lava_results_app')
         filters = {}
@@ -731,8 +754,8 @@ class Query(models.Model):
         super(Query, self).delete(*args, **kwargs)
 
     def is_accessible_by(self, user):
-        if user.is_superuser or query.user == user or \
-           query.group in user.groups.all():
+        if user.is_superuser or self.owner == user or \
+           self.group in user.groups.all():
             return True
         return False
 
