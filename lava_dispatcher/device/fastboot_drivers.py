@@ -69,6 +69,9 @@ class FastBoot(object):
         except subprocess.CalledProcessError:
             # Now a more brute force attempt. In this case the device is
             # probably hung.
+            if self.device.config.pre_power_cmd:
+                self.context.run_command(self.device.config.pre_power_cmd,
+                                         failok=True)
             if self.device.config.hard_reset_command:
                 logging.debug("Will hard reset the device")
                 self.context.run_command(self.device.config.hard_reset_command)
