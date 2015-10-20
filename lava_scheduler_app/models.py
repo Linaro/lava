@@ -2144,7 +2144,7 @@ class TestJob(RestrictedResource):
         Permission and state required to change job priority.
         Multinode jobs cannot have their priority changed.
         """
-        return (user.is_superuser or user == self.submitter or owner or
+        return (user.is_superuser or user == self.submitter or
                 user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
 
     def can_annotate(self, user):
