@@ -224,6 +224,13 @@ Now modify the dictionary (jinja2 format) to set the values required::
  {% set connection_command = 'telnet playgroundmaster 7018' %}
  {% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 04' %}
 
+.. warning:: the device dictionary parameters are **replaced** when the
+   dictionary is updated, which is why the ``extends`` field is required.
+   Be sure to merge any existing dictionary with the settings you need to
+   change or the existing settings will be lost. LAVA does not preserve history
+   of a device dictionary, it is recommended that the files used to create the
+   dictionaries are kept under version control.
+
 .. _viewing_device_dictionary_content:
 
 Viewing current device dictionary content
