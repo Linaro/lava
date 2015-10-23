@@ -18,7 +18,7 @@ actions:
           minutes: 10
         to: usb
         os: debian
-        image: http://releases.linaro.org/12.02/ubuntu/leb-panda/panda-ubuntu-desktop.img.gz
+        image: http://images.validation.linaro.org/functional-test-images/panda/panda-raring_developer_20130723-408.img.gz
         device: SanDisk_Ultra # needs to be exposed in the device-specific UI
         download: /usr/bin/wget
 

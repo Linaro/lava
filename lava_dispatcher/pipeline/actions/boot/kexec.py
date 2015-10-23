@@ -36,6 +36,9 @@ class BootKExec(Boot):
     Expects a shell session, checks for kexec executable and
     prepares the arguments to run kexec,
     """
+
+    compatibility = 1
+
     def __init__(self, parent, parameters):
         super(BootKExec, self).__init__(parent)
         self.action = BootKexecAction()

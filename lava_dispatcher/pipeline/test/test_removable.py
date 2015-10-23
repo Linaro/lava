@@ -106,7 +106,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertIn('/lava-', deploy_action.data['lava_test_results_dir'])
         self.assertIsInstance(deploy_action, MassStorage)
         self.assertIn('image', deploy_action.parameters.keys())
-        dd_action = deploy_action.internal_pipeline.actions[1]
+        dd_action = [action for action in deploy_action.internal_pipeline.actions if action.name == 'dd-image'][0]
         self.assertEqual(
             dd_action.boot_params[dd_action.parameters['device']]['uuid'],
             'usb-SanDisk_Ultra_20060775320F43006019-0:0')

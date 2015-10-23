@@ -16,8 +16,11 @@ actions:
         timeout:
           minutes: 20
         to: tmpfs
-        image: file:///home/lava/kvm-debian-wheezy.img.bz2
-        compression: bz2
+        images:
+          rootfs:
+            url: file:///home/lava/kvm-debian-wheezy.img.bz2
+            image_arg: -hda {rootfs}
+            compression: bz2
         os: debian
         # if root_partition partition is not present:
         # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
@@ -39,10 +42,6 @@ actions:
             - repository: git://git.linaro.org/qa/test-definitions.git
               from: git
               path: ubuntu/smoke-tests-basic.yaml
-              # name: if not present, use the name from the YAML. The name can
-              # also be overriden from the actual commands being run by
-              # calling the lava-test-suite-name API call (e.g.
-              # `lava-test-suite-name FOO`).
               name: smoke-tests
             - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
               from: git

@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import re
 import logging
 import os
 import sys
@@ -26,6 +27,7 @@ import time
 import types
 import signal
 import datetime
+import traceback
 import subprocess
 from collections import OrderedDict
 from contextlib import contextmanager
@@ -300,7 +302,6 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     signal.signal(signal.SIGINT, cancelling_handler)
                     signal.signal(signal.SIGTERM, cancelling_handler)
                 start = time.time()
-                new_connection = None
                 try:
                     # FIXME: not sure to understand why we have two cases here?
                     if not connection:
@@ -310,17 +311,15 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                         new_connection = action.run(connection, args)
                 # overly broad exceptions will cause issues with RetryActions
                 # always ensure the unit tests continue to pass with changes here.
-                except (ValueError, KeyError, TypeError, RuntimeError, AttributeError) as exc:
-                    exc_type, exc_value, exc_traceback = sys.exc_info()
-                    traceback_details = {
-                        'filename': exc_traceback.tb_frame.f_code.co_filename,
-                        'lineno': exc_traceback.tb_lineno,
-                        'name': exc_traceback.tb_frame.f_code.co_name,
-                        'type': exc_type.__name__,
-                        'message': exc_value.message,
-                    }
-                    action.logger.exception(traceback_details)
-                    raise RuntimeError(exc)
+                except (ValueError, KeyError, NameError, SyntaxError, OSError,
+                        TypeError, RuntimeError, AttributeError):
+                    msg = re.sub('\s+', ' ', ''.join(traceback.format_exc().split('\n')))
+                    action.logger.exception(msg)
+                    action.errors = msg
+                    action.cleanup()
+                    self.cleanup_actions(connection, None)
+                    # report action errors so that the last part of the message is the most relevant.
+                    raise RuntimeError(action.errors)
                 except KeyboardInterrupt:
                     raise KeyboardInterrupt
                 action.elapsed_time = time.time() - start

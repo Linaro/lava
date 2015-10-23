@@ -1,6 +1,6 @@
-# Copyright (C) 2014 Linaro Limited
+# Copyright (C) 2015 Linaro Limited
 #
-# Author: Neil Williams <neil.williams@linaro.org>
+# Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
 #
 # This file is part of LAVA Dispatcher.
 #
@@ -29,19 +29,19 @@ from lava_dispatcher.pipeline.shell import ShellCommand, ShellSession
 # pylint: disable=too-many-public-methods
 
 
-class ConnectDevice(Action):
+class ConnectAdb(Action):
     """
-    General purpose class to use the device commands to
-    make a serial connection to the device. e.g. using ser2net
+    Class to use the device commands to make a adb shell connection to the
+    device.
     """
     def __init__(self):
-        super(ConnectDevice, self).__init__()
-        self.name = "connect-device"
+        super(ConnectAdb, self).__init__()
+        self.name = "connect-adb"
         self.summary = "run connection command"
-        self.description = "use the configured command to connect serial to the device"
+        self.description = "use the configured command to connect adb to the device"
 
     def validate(self):
-        super(ConnectDevice, self).validate()
+        super(ConnectAdb, self).validate()
         if 'connect' not in self.job.device['commands']:
             self.errors = "Unable to connect to device %s - missing connect command." % self.job.device.hostname
             return
@@ -54,8 +54,6 @@ class ConnectDevice(Action):
         except AttributeError:
             self.errors = "Unable to parse the connection command %s" % command
         self.errors = infrastructure_error(exe)
-        # FIXME: this improves speed but relies on using ser2net
-        # self.job.device['test_image_prompts'].append('ser2net port')
 
     def run(self, connection, args=None):
         if connection:
@@ -72,19 +70,59 @@ class ConnectDevice(Action):
         # ShellSession monitors the pexpect
         connection = ShellSession(self.job, shell)
         connection.connected = True
-        connection = super(ConnectDevice, self).run(connection, args)
-        # append ser2net port to the prompt_str
-        # FIXME: this improves speed but relies on using ser2net
-        connection.prompt_str = self.job.device['test_image_prompts'].append('ser2net port')
+        connection = super(ConnectAdb, self).run(connection, args)
+        connection.prompt_str = self.job.device['test_image_prompts']
+        self.data['boot-result'] = 'failed' if self.errors else 'success'
         return connection
-        # # if the board is running, wait for a prompt - if not, skip.
-        # if self.job.device.power_state is 'off':
-        #     return connection
-        # try:
-        #     self.logger.debug("power_state is on")
-        #     connection.sendline('echo echo')
-        #     self.wait(connection)
-        # except TestError:
-        #     self.errors = "%s wait expired" % self.name
-        # self.logger.debug("matched %s", connection.match)
-        # return connection
+
+
+class WaitForAdbDevice(Action):
+    """
+    Waits for device that gets connected using adb.
+    """
+
+    def __init__(self):
+        super(WaitForAdbDevice, self).__init__()
+        self.name = "wait-for-adb-device"
+        self.summary = "Waits for adb device"
+        self.description = "Waits for availability of adb device"
+        self.prompts = []
+
+    def validate(self):
+        super(WaitForAdbDevice, self).validate()
+        if 'serial_number' not in self.job.device:
+            self.errors = "device serial number missing"
+
+    def run(self, connection, args=None):
+        connection = super(WaitForAdbDevice, self).run(connection, args)
+        serial_number = self.job.device['serial_number']
+        adb_cmd = ['adb', '-s', serial_number, 'wait-for-device']
+        self.run_command(adb_cmd)
+        self.logger.debug("%s: Waiting for device", serial_number)
+        return connection
+
+
+class WaitForFastbootDevice(Action):
+    """
+    Waits for device that gets connected using fastboot.
+    """
+
+    def __init__(self):
+        super(WaitForFastbootDevice, self).__init__()
+        self.name = "wait-for-fastboot-device"
+        self.summary = "Waits for fastboot device"
+        self.description = "Waits for availability of fastboot device"
+        self.prompts = []
+
+    def validate(self):
+        super(WaitForAdbDevice, self).validate()
+        if 'serial_number' not in self.job.device:
+            self.errors = "device serial number missing"
+
+    def run(self, connection, args=None):
+        connection = super(WaitForFastbootDevice, self).run(connection, args)
+        serial_number = self.job.device['serial_number']
+        fastboot_cmd = ['fastboot', '-s', serial_number, 'wait-for-device']
+        self.run_command(fastboot_cmd)
+        self.logger.debug("%s: Waiting for device", serial_number)
+        return connection

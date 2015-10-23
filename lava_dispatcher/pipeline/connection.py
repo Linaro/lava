@@ -234,8 +234,14 @@ class Protocol(object):  # pylint: disable=abstract-class-not-used
     or adding a main function in the protocol python file and including a demo server script which
     can be run on the command line - using a different port to the default. However, this is likely
     to be of limited use because testing the actual API calls will need a functional test.
+
+    If a Protocol requires another Protocol to be available in order to run, the depending
+    Protocol *must* specify a higher level. All Protocol objects of a lower level are setup and
+    run before Protocol objects of a higher level. Protocols with the same level can be setup or run
+    in an arbitrary order (as the original source data is a dictionary).
     """
     name = 'protocol'
+    level = 0
 
     def __init__(self, parameters):
         # FIXME: allow the bare logger to use the zmq socket
@@ -252,7 +258,7 @@ class Protocol(object):  # pylint: disable=abstract-class-not-used
         Jobs may have zero or more protocols selected.
         """
         candidates = cls.__subclasses__()  # pylint: disable=no-member
-        return [c for c in candidates if c.accepts(parameters)]
+        return [(c, c.level) for c in candidates if c.accepts(parameters)]
 
     @property
     def errors(self):

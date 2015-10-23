@@ -26,7 +26,7 @@ import json
 import unittest
 from lava_dispatcher.pipeline.test.fake_coordinator import TestCoordinator
 from lava_dispatcher.pipeline.test.test_basic import Factory
-from lava_dispatcher.pipeline.actions.deploy.image import DeployImageAction
+from lava_dispatcher.pipeline.actions.deploy.image import DeployImagesAction
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction, MultinodeOverlayAction, CustomisationAction
 from lava_dispatcher.pipeline.actions.boot.qemu import BootQemuRetry, CallQemuAction
 from lava_dispatcher.pipeline.actions.boot import BootAction
@@ -119,7 +119,7 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertIn("coordinator_hostname", settings)
 
     def test_multinode_pipeline(self):
-        deploy = [action for action in self.client_job.pipeline.actions if isinstance(action, DeployImageAction)][0]
+        deploy = [action for action in self.client_job.pipeline.actions if isinstance(action, DeployImagesAction)][0]
         self.assertIsNotNone(deploy)
         overlay = [action for action in deploy.internal_pipeline.actions if isinstance(action, OverlayAction)][0]
         self.assertIsNotNone(overlay)
@@ -130,7 +130,7 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
         client_multinode.validate()
         self.assertEqual(client_multinode.role, 'client')
 
-        deploy = [action for action in self.server_job.pipeline.actions if isinstance(action, DeployImageAction)][0]
+        deploy = [action for action in self.server_job.pipeline.actions if isinstance(action, DeployImagesAction)][0]
         self.assertIsNotNone(deploy)
         overlay = [action for action in deploy.internal_pipeline.actions if isinstance(action, OverlayAction)][0]
         self.assertIsNotNone(overlay)
@@ -385,7 +385,7 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
         }))
 
     def test_protocol_action(self):
-        deploy = [action for action in self.client_job.pipeline.actions if isinstance(action, DeployImageAction)][0]
+        deploy = [action for action in self.client_job.pipeline.actions if isinstance(action, DeployImagesAction)][0]
         customise = [action for action in deploy.internal_pipeline.actions if isinstance(action, CustomisationAction)][0]
         self.assertIn('protocols', deploy.parameters)
         self.assertIn('protocols', customise.parameters)
@@ -405,10 +405,10 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
                 'action': customise.name,
                 'request': 'lava-send',
                 'messageID': 'test',
-                'yaml_line': 45,
+                'yaml_line': 48,
                 'message': {
                     'key': 'value',
-                    'yaml_line': 47
+                    'yaml_line': 50
                 },
             }
         )
@@ -426,11 +426,11 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
                 'action': 'customise',
                 'message': {
                     'key': 'value',
-                    'yaml_line': 47
+                    'yaml_line': 50
                 },
                 'messageID': 'test',
                 'request': 'lava-send',
-                'yaml_line': 45
+                'yaml_line': 48
             }
         )
 
@@ -452,11 +452,11 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
                 'action': 'execute-qemu',
                 'message': {
                     'ipv4': '$IPV4',
-                    'yaml_line': 61
+                    'yaml_line': 64
                 },
                 'messageID': 'test',
                 'request': 'lava-wait',
-                'yaml_line': 58
+                'yaml_line': 61
             }])
         client_calls = {}
         for action in retry.internal_pipeline.actions:
@@ -494,9 +494,9 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
                 'action': 'execute-qemu',
                 'message': {
                     'ipv4': reply['message'][self.client_job.device.target]['ipv4'],
-                    'yaml_line': 61
+                    'yaml_line': 64
                 },
-                'yaml_line': 58,
+                'yaml_line': 61,
                 'request': 'lava-wait',
                 'messageID': 'test'
             }

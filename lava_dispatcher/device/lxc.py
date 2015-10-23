@@ -93,7 +93,7 @@ class LxcTarget(Target):
     def power_off(self, proc):
         if self.proc:
             try:
-                subprocess.check_call(['lxc-stop', '-n', self.name])
+                subprocess.check_call(['lxc-stop', '-n', self.name, '-k'])
                 if not self.persist:
                     subprocess.check_call(['lxc-destroy', '-n', self.name])
                     logging.info('Destroyed container %s' % self.name)

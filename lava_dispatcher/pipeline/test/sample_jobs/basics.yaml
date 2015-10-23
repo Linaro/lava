@@ -28,7 +28,10 @@ actions:
           minutes: 20
           seconds: 0
         to: sata
-        image: http://myimage.com/target.img.gz
+        images:
+          rootfs:
+            url: http://myimage.com/target.img.gz
+            compression: gz
         os: debian
         # if root_partition partition is not present:
         # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
@@ -69,10 +72,6 @@ actions:
         definitions:
             - from: url
               path: file:///path/to/testdef.yaml
-              # name: if not present, use the name from the YAML. The name can
-              # also be overriden from the actualy commands being run by
-              # calling the lava-test-suite-name API call (e.g.
-              # `lava-test-suite-name FOO`).
               name: ptest-dbus
             - from: url
               path: http:///url.to/testdef.yaml

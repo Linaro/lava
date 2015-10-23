@@ -39,7 +39,7 @@ child = None
 def signal_handler(sig, frame):  # pylint: disable=unused-argument
     global child  # pylint: disable=global-statement
     try:
-        logging.info("Closing daemon and child %d", child.pid)
+        logging.info("Closing daemon and child %d" % child.pid)  # pylint: disable=logging-not-lazy
         child.send_signal(sig)
         child = None
         sys.exit(os.EX_OK)

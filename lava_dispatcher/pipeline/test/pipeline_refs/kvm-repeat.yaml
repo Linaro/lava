@@ -1,5 +1,5 @@
-- class: actions.deploy.image.DeployImageAction
-  name: deployimage
+- class: actions.deploy.image.DeployImagesAction
+  name: deployimages
   pipeline:
   - class: actions.deploy.download.DownloaderAction
     name: download_retry
@@ -229,8 +229,8 @@
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - {class: job.ResetContext, name: reset-context}
-- class: actions.deploy.image.DeployImageAction
-  name: deployimage
+- class: actions.deploy.image.DeployImagesAction
+  name: deployimages
   pipeline:
   - class: actions.deploy.download.DownloaderAction
     name: download_retry
@@ -299,4 +299,3 @@
   name: finalize
   pipeline:
   - {class: power.PowerOff, name: power_off}
-

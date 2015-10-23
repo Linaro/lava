@@ -1,5 +1,5 @@
-- class: actions.deploy.image.DeployImageAction
-  name: deployimage
+- class: actions.deploy.image.DeployImagesAction
+  name: deployimages
   pipeline:
   - class: actions.deploy.download.DownloaderAction
     name: download_retry

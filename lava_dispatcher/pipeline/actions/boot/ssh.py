@@ -34,6 +34,9 @@ class SshLogin(Boot):
     Ssh boot strategy is a login process, without actually booting a kernel
     but still needs AutoLoginAction.
     """
+
+    compatibility = 1
+
     def __init__(self, parent, parameters):
         super(SshLogin, self).__init__(parent)
         self.action = SshAction()

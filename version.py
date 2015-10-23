@@ -26,6 +26,8 @@
 import subprocess
 import os
 
+# pylint: disable=superfluous-parens,too-many-locals
+
 
 def version_tag():
     """
@@ -70,8 +72,6 @@ def version_tag():
         # use the rev-list count to always ensure that we are building
         # a newer version to cope with date changes at month end.
         # use short git hash for reference.
-        bits = tag_name.split('.')
-        tag_month = int(bits[1])
         dev_stamp = ['git', 'rev-list', '--count', 'HEAD']
         dev_count = subprocess.check_output(dev_stamp).strip()
         dev_short = ['git', 'rev-parse', '--short', 'HEAD']

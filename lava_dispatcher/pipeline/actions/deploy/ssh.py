@@ -47,6 +47,8 @@ class Ssh(Deployment):
     typically the overlay.
     """
 
+    compatibility = 1
+
     def __init__(self, parent, parameters):
         super(Ssh, self).__init__(parent)
         self.action = ScpOverlay()
