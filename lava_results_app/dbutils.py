@@ -17,9 +17,9 @@
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
 import yaml
+import urllib
 import logging
 from django.db import transaction
-from collections import OrderedDict
 from lava_results_app.models import (
     TestSuite,
     TestSet,
@@ -71,8 +71,9 @@ def _test_case(name, suite, result, testset=None, testshell=False):
         try:
             metadata = yaml.dump(result)
         except yaml.YAMLError:
-            # FIXME: this may need to be reported to the user
-            logger.warning("Unable to store metadata %s for %s as YAML", result, name)
+            msg = "Unable to store metadata %s for %s as YAML" % (result, name)
+            suite.job.set_failure_comment(msg)
+            logger.warning(msg)
             metadata = None
         match_action = None
         # the action level should exist already
@@ -102,27 +103,26 @@ def _test_case(name, suite, result, testset=None, testshell=False):
 
 def _check_for_testset(result_dict, suite):
     """
-    Within a lava-test-shell, an OrderedDict indicates the start of a
-    TestSet. Handle all results in the OrderedDict as part of that set.
-    Handle all other results within the lava-test-shell items without using a TestSet.
+    The presence of the test_set key indicates the start and usage of a TestSet.
+    Get or create and populate the definition based on that set.
+    # {date: pass, test_definition: install-ssh, test_set: first_set}
     :param result_dict: lava-test-shell results
     :param suite: current test suite
     """
-    for shell_testcase, shell_result in result_dict.items():
-        if type(shell_result) == OrderedDict:
-            # catch the testset
-            testset = TestSet.objects.create(
-                name=shell_testcase,
-                suite=suite
-            )
+    logger = logging.getLogger('dispatcher-master')
+    testset = None
+    if 'test_set' in result_dict:
+        set_name = result_dict['test_set']
+        if set_name != urllib.quote(set_name):
+            msg = "Invalid testset name '%s', ignoring." % set_name
+            suite.job.set_failure_comment(msg)
+            logger.warning(msg)
+            return None
+        testset, created = TestSet.objects.get_or_create(name=set_name, suite=suite)
+        if created:
             testset.save()
-            for set_casename, set_result in shell_result.items():
-                _test_case(set_casename, suite, set_result, testset=testset)
-        elif shell_testcase == 'level':
-            # needs to be stored in the existing testcase, not a new one
-            pass
-        else:
-            _test_case(shell_testcase, suite, shell_result, testshell=True)
+        logger.debug("%s", testset)
+    return testset
 
 
 def map_scanned_results(scanned_dict, job):
@@ -133,25 +133,38 @@ def map_scanned_results(scanned_dict, job):
     :return: False on error, else True
     """
     logger = logging.getLogger('dispatcher-master')
-    if type(scanned_dict) is not dict:
+    if not isinstance(scanned_dict, dict):
         logger.debug("%s is not a dictionary", scanned_dict)
         return False
     if 'results' not in scanned_dict:
         logger.debug("missing results in %s", scanned_dict.keys())
         return False
     results = scanned_dict['results']
-    if 'testsuite' in results:
-        suite = TestSuite.objects.get_or_create(name=results['testsuite'], job=job)[0]
-        logger.debug("%s" % suite)
+    if 'test_definition' in results and 'test_set' in results:
+        suite, created = TestSuite.objects.get_or_create(name=results['test_definition'], job=job)
+        if created:
+            suite.save()
+        testset = _check_for_testset(results, suite)
+    elif 'test_definition' in results:
+        suite, created = TestSuite.objects.get_or_create(name=results['test_definition'], job=job)
+        if created:
+            suite.save()
+        logger.debug("%s", suite)
+        testset = None
     else:
-        suite = TestSuite.objects.get_or_create(name='lava', job=job)[0]
+        suite, created = TestSuite.objects.get_or_create(name='lava', job=job)
+        if created:
+            suite.save()
+        testset = None
     for name, result in results.items():
-        if name == 'testsuite':
+        if name == 'test_definition' or name == 'test_set':
             # already handled
-            pass
-        elif name == 'testset':
-            _check_for_testset(result, suite)
+            continue
+        if testset:
+            logger.debug("%s/%s %s", testset, name, result)
+            _test_case(name, suite, result, testset=testset)
         else:
+            logger.debug("%s/%s %s", suite, name, result)
             _test_case(name, suite, result, testshell=(suite.name != 'lava'))
     return True
 
@@ -182,14 +195,14 @@ def build_action(action_data, testdata, submission):
 
     metatype = MetaType.get_section(action_data['section'])
     if metatype is None:  # 0 is allowed
-        logger.debug("Unrecognised metatype in action_data: %s" % action_data['section'])
+        logger.debug("Unrecognised metatype in action_data: %s", action_data['section'])
         return
     # lookup the type from the job definition.
     type_name = MetaType.get_type_name(action_data['section'], submission)
     if not type_name:
         logger.debug(
-            "type_name failed for %s metatype %s" % (
-                action_data['section'], MetaType.TYPE_CHOICES[metatype]))
+            "type_name failed for %s metatype %s",
+            action_data['section'], MetaType.TYPE_CHOICES[metatype])
         return
     action_meta, created = MetaType.objects.get_or_create(
         name=type_name, metatype=metatype)
@@ -236,7 +249,7 @@ def map_metadata(description, job):
         submission_data = yaml.load(job.definition)
         description_data = yaml.load(description)
     except yaml.YAMLError as exc:
-        logger.exception("[%s] %s" % (job.id, exc))
+        logger.exception("[%s] %s", job.id, exc)
         return False
     testdata = TestData.objects.create(testjob=job)
     testdata.save()

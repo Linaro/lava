@@ -153,9 +153,6 @@ Sample JOB definition for a KVM
               path: lava-test-shell/single-node/singlenode03.yaml
               name: singlenode-advanced
 
-    - submit_results:
-        stream: /anonymous/codehelp/
-
 To see an example of how the sample YAML would look as a python snippet,
 use the `Online YAML`_ Parser.
 
@@ -225,6 +222,95 @@ A device can only have one device_type.
  root_part: 1
  architecture: amd64
  memory: 512
+
+.. _override_support:
+
+Overriding values in device type, device dictionary and the job context
+=======================================================================
+
+Administrators have full control over which values allow overrides, in
+the following sequence:
+
+#. the :term:`device dictionary` can always override variables in the device-type template
+   by setting the variable name to a new value.
+#. the job definition **can** override the device dictionary if the device dictionary has
+   no value set for that variable.
+#. job definition can be **allowed** to override a variable from the device dictionary
+   **only** if the device type template specifically allows this by allowing a variable
+   from the job context to override a variable from the device dictionary **and only**
+   if the variable name in the job context differs from the name used in the device dictionary.
+#. Variables which should never be overridden can be included as simple text in the
+   device type template **or** always defined in the device dictionary for all devices
+   of that type. Remember to :ref:`essential_components`.
+
+Where there is no sane default available for a device type template, the validation of the
+pipeline **must** invalidate a job submission which results in a missing value.
+
+Currently, these override rules are not clearly visible from the UI, this will change as
+development continues.
+
+Device type templates exist as files in :file:`/etc/lava-server/dispatcher-config/device-types`
+and can be modified by the local administrators without losing changes when the packages are
+updated.
+
+Device dictionaries exist in the database of the instance and can be modified from the command
+line on the server - typically this will require ``sudo``. See :ref:`developer_access_to_django_shell`.
+
+Example One
+-----------
+
+For a device dictionary containing::
+
+ {% set console_device: '/dev/ttyO0' %}
+
+The job is unable to set an override using the same variable name, so this
+will fail to set :file:`/dev/ttyAMX0`::
+
+ context:
+   console_device: /dev/ttyAMX0
+
+The final device configuration for that job will use :file:`/dev/ttyO0`.
+
+Example Two
+-----------
+
+If the device dictionary contains no setting for ``console_device``, then
+the job context value can override the device type template default::
+
+ context:
+   console_device: /dev/ttyAMX0
+
+The final device configuration for that job will use :file:`/dev/ttyAMX0`.
+
+Example Three
+-------------
+
+If the device type template supports a specific job context variable, the job
+can override the device dictionary. If the device type template contains::
+
+ {% set mac_address = tftp_mac_address | default(mac_address) %}
+
+The device dictionary can set::
+
+ {% set mac_address: '00:01:73:69:5A:EF' %}
+
+If the job context sets::
+
+ context:
+   tftp_mac_address: 'FF:01:00:69:AA:CC'
+
+Then the final device configuration for that job will use::
+
+ 'TFTP on MAC Address: FF:01:00:69:AA:CC'
+
+If the job context does not define ``tftp_mac_address``, the final device
+configuration for that job will use::
+
+ 'TFTP on MAC Address: 00:01:73:69:5A:EF'
+
+This mechanism holds for variables set by the base template as well::
+
+ {% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) %}
 
 .. _dispatcher_actions:
 

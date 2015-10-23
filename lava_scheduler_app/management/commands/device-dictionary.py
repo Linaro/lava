@@ -29,7 +29,11 @@ import jinja2
 from optparse import make_option
 from django.core.management.base import BaseCommand
 from lava_scheduler_app.models import DeviceDictionary, SubmissionException
-from lava_scheduler_app.utils import devicedictionary_to_jinja2, jinja2_to_devicedictionary
+from lava_scheduler_app.utils import (
+    devicedictionary_to_jinja2,
+    jinja2_to_devicedictionary,
+    prepare_jinja_template,
+)
 from lava_scheduler_app.schema import validate_device
 
 
@@ -101,13 +105,7 @@ class Command(BaseCommand):
             if options['review'] is None:
                 self.stdout.write(data)
             else:
-                string_loader = jinja2.DictLoader({'%s.yaml' % hostname: data})
-                type_loader = jinja2.FileSystemLoader([
-                    os.path.join(options['path'], 'device-types')])
-                env = jinja2.Environment(
-                    loader=jinja2.ChoiceLoader([string_loader, type_loader]),
-                    trim_blocks=True)
-                template = env.get_template("%s.yaml" % hostname)
+                template = prepare_jinja_template(hostname, data, system_path=False, path=options['path'])
                 device_configuration = template.render()
 
                 # validate against the device schema

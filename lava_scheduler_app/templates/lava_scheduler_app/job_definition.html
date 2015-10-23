@@ -1,5 +1,5 @@
 {% extends "layouts/content-bootstrap.html" %}
-
+{% load utils %}
 {% block styles %}
   <link href="{{ STATIC_URL }}lava_scheduler_app/css/shCore.css" rel="stylesheet" type="text/css" />
   <link href="{{ STATIC_URL }}lava_scheduler_app/css/shThemeDefault.css" rel="stylesheet" type="text/css" />
@@ -111,10 +111,96 @@
 </div>
 {% endif %}
 
+{% if job.is_pipeline %}
+<ul class="nav nav-tabs">
+  <li class="active"><a href="#YAML" data-toggle="tab">Definition</a></li>
+  <li><a href="#pipeline" data-toggle="tab">Pipeline</a></li>
+</ul>
+<div class="tab-content">
 
+  <div class="tab-pane active" id="YAML">
 <h4 class="modal-header">Definition</h4>
 <pre class="brush: js">{{ job.display_definition }}</pre>
+ </div>
+  <div class="tab-pane" id="pipeline">
+      <h2>Pipeline Description <a
+      class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.description.yaml' job.id %}"
+       title="Download YAML description"><span class="glyphicon glyphicon-download"></span> YAML</a></h2>
+       <p><a href="{{ STATIC_URL }}/docs/glossary.html#term-pipeline">Pipeline</a> jobs use
+       the job definition to generate a descriptive YAML file when the pipeline is validated.
+       The file represents the data sent to the dispatcher at the start of the job, including
+       details of the device as well as the job parameters and the details of the parameters
+       sent to each of the deploy, boot and test actions in the job pipeline.</p>
+       <p>Click on the Action headings below to see some of the structural information
+       from the description file for this job or download the complete file as YAML using
+       the link above. The name of the action can be used to change the timeout of that
+       specific action. e.g.</p>
+  <pre>
+timeouts:
+  apply-overlay-image:
+    minutes: 5</pre>
+       <p>The information in this pane is based on the validation step prior to the job starting
+       to run. This includes checks on remote URLs but does not operations which are only done at
+       runtime. Therefore, the filesize of remote downloads can be displayed, based on the headers
+       when checking that the URL was correct - checksums of the actual download will not appear
+       as the actual download only happens after the job has started.</p>
+  {% get_pipeline_levels pipeline as levels %}
+  {% get_pipeline_sections pipeline as sections %}
 
+    <h4 id="sections" class="modal-header">Sections</h4>
+    <div class="row">
+      <div class="col-md-6">
+        <ul class="nav nav-pills">
+  {% for item in sections %}
+      {% for section, level in item.items %}
+      <li><a href="#{{ level }}" class="btn btn-primary">{{ section }}</a></li>
+      {% endfor %}
+  {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+<h2>Pipeline</h2>
+{% for level, data in levels.items %}
+  [ <a href="#sections">Sections</a> ] [ <a href="#action-list">List of actions</a> ]
+      <h3 id="{{ level }}">{{ level }}: {{ data.summary }}</h3>
+        <dl class="dl-horizontal">
+            <dt>name</dt>
+            <dd>{{ data.name }}</dd>
+            <dt>description</dt>
+            <dd>{{ data.description }}</dd>
+        {% if data.timeout %}
+            <dt>timeout</dt>{% comment %}
+            add a link to help content of this topic
+            {% endcomment %}
+            <dd>{{ data.timeout.duration|floatformat:"0" }} seconds</dd>
+        {% if data.url %}
+            <dt>URL</dt>
+            <dd>{{ data.url|urlize }}</dd>
+        {% endif %}
+        {% if data.size %}
+            <dt>size</dt>
+            <dd>{{ data.size|filesizeformat }}</dd>
+        {% endif %}
+        {% endif %}
+        </dl>
+  {% endfor %}
+
+    <h2 id="action-list">Pipeline actions</h2>
+  <ul>
+  {% for level, data in levels.items %}
+      <li><a href="#{{ level }}">{{ level }} {{ data.name }}</a></li>
+  {% endfor %}
+  </ul>
+  <a href="#sections">Pipeline sections</a>
+
+
+  </div>
+</div>
+{% else %}
+<h4 class="modal-header">Definition</h4>
+<pre class="brush: js">{{ job.display_definition }}</pre>
+{% endif %}
 {% endblock content %}
 
 {% block scripts %}

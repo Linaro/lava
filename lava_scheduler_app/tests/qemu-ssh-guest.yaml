@@ -8,6 +8,7 @@ timeouts:
   action:
     minutes: 3
 
+visibility: public
 context:
   arch: amd64
 
@@ -32,7 +33,10 @@ actions:
      timeout:
        minutes: 4
      to: tmpfs
-     image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+     images:
+       rootfs:
+         url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+         image_args: -drive format=raw,file={rootfs}
      compression: gz
      os: debian
      root_partition: 1

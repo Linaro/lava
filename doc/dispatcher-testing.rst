@@ -324,16 +324,7 @@ The code can be executed::
 
  $ sudo lava-dispatch --target kvm01 lava_dispatcher/pipeline/test/sample_jobs/kvm.yaml --output-dir=/tmp/test
 
-* There is a developer shortcut which uses ``/tmp/`` to store the downloaded
-  image instead of a fresh ``mkdtemp`` each time. This saves re-downloading
-  the same image but as the image is modified in place, a second run using
-  the image will fail.
-
- * Either change the YAML locally to refer to a ``file://``
-   URL and comment out the developer shortcut or copy a decompressed image
-   over the modified one in ``tmp`` before each run.
-
-* During development, there may also be images left mounted at the end of
+* During development, there may be images left mounted at the end of
   the run. Always check the output of ``mount``.
 * Files in ``/tmp/test`` are not removed at the start or end of a job as
   these would eventually form part of the result bundle and would also be
@@ -502,6 +493,44 @@ within each Connection. Unlike the old model, Connections have their
 own directors which takes the multinode and LMP workload out of the
 singlenode operations.
 
+Detecting power state
+=====================
+
+Devices on your desk can behave differently to those in the lab under
+full automation. Under automation, the ``hard_reset`` and ``power_off``
+support means that the device is likely to be powered off when the first
+connection atttempt is made. On the desk, the device may spend more time
+powered on (even if the device is not running a usable system, for example
+the NFS location will be deleted when the previous job ends). So when
+writing connection classes and actions which initiate connections,
+check the power state of the device first.
+
+#. An Action initiating a connection needs to know if it should wait
+   for a prompt. In the run function, add::
+
+     if self.job.device.power_state not in ['on', 'off']:
+         self.wait(connection)
+
+#. The next Action should be a ResetDevice action which understands the
+   power state and determines whether to call the ``hard_reset`` commands
+   or to attempt a soft reboot. In the populate function, ensure the
+   correct ordering is in place::
+
+     self.internal_pipeline.add_action(MenuConnect())
+     self.internal_pipeline.add_action(ResetDevice())
+
+#. Warn if the device has no automation support in the validate function::
+
+    if self.job.device.power_state in ['on', 'off']:
+        # to enable power to a device, either power_on or hard_reset are needed.
+        if self.job.device.power_command is '':
+            self.errors = "Unable to power on or reset the device %s" % hostname
+        if self.job.device.connect_command is '':
+            self.errors = "Unable to connect to device %s" % hostname
+    else:
+        self.logger.warning("%s may need manual intervention to reboot" % hostname)
+
+
 Using connections
 =================
 
@@ -548,65 +577,82 @@ The refactored dispatcher has a different approach to logging:
 #. Actions log to discrete log files
 #. Results are logged for each action separately
 #. Log messages use appropriate YAML syntax.
-
-Check the output of the log files in a YAML parser
-(e.g. http://yaml-online-parser.appspot.com/). General steps for YAML
-logs include:
-
-* Three spaces at the start of strings (this matches the indent appropriate
-  for the default ``id:`` tag which preceds the log entry).
-* Careful use of colon ``:`` - YAML assigns special meaning to a colon
-  in a string, so use it to separate the label from the message.
-
-.. code-block:: python
-
-    yaml_log.debug('results:', res)
-
-(where ``res`` is a python dict).
-
-.. code-block:: python
-
-    yaml_log.debug('   err: lava_test_shell has timed out')
-
-Three spaces, a label and then the message.
+#. Messages received from the device are prefixed with ``target``.
+#. YAML wrapping handled by the dedicated logger. Always use
+   ``self.logger.<LEVEL>`` in an action.
 
 Examples
 ========
 
+Actual representation of the logs in the UI will change - these examples
+are the raw content of the output YAML.
+
 .. code-block:: yaml
 
- - id: "<LAVA_DISPATCHER>2014-10-22 15:10:56,666"
-   ok: lava_test_shell seems to have completed
- - id: "<LAVA_DISPATCHER>2014-10-22 15:10:56,666"
-   log: "duration: 45.80"
- - id: "<LAVA_DISPATCHER>2014-10-22 15:10:56,666"
-   results: OrderedDict([('linux-linaro-ubuntu-pwd', 'pass'),
-   ('linux-linaro-ubuntu-uname', 'pass'), ('linux-linaro-ubuntu-vmstat', 'pass'),
-   ('linux-linaro-ubuntu-ifconfig', 'pass'), ('linux-linaro-ubuntu-lscpu', 'pass'),
-   ('linux-linaro-ubuntu-lsusb', 'fail'), ('linux-linaro-ubuntu-lsb_release', 'pass'),
-   ('linux-linaro-ubuntu-netstat', 'pass'), ('linux-linaro-ubuntu-ifconfig-dump', 'pass'),
-   ('linux-linaro-ubuntu-route-dump-a', 'pass'), ('linux-linaro-ubuntu-route-ifconfig-up-lo', 'pass'),
-   ('linux-linaro-ubuntu-route-dump-b', 'pass'), ('linux-linaro-ubuntu-route-ifconfig-up', 'pass'),
-   ('ping-test', 'fail'), ('realpath-check', 'fail'), ('ntpdate-check', 'pass'),
-   ('curl-ftp', 'pass'), ('tar-tgz', 'pass'), ('remove-tgz', 'pass')])
+ - {debug: 'start: 1.4.2.3.7 test-install-overlay (max 300s)', ts: '2015-09-07T09:40:46.720450'}
+ - {debug: 'test-install-overlay duration: 0.02', ts: '2015-09-07T09:40:46.746036'}
+ - results:
+     test-install-overlay: !!python/object/apply:collections.OrderedDict
+     - - [success, a9b2300d-0864-4f9c-ba78-c2594b567fc5]
+       - [skipped, a9b2300d-0864-4f9c-ba78-c2594b567fc5]
+       - [duration, 0.024679899215698242]
+       - [timeout, 300.0]
+       - [level, 1.4.2.3.7]
 
+.. code-block:: yaml
 
-.. code-block:: python
+ - {debug: 'Received signal: <STARTTC> linux-linaro-ubuntu-pwd'}
+ - {target: ''}
+ - {target: ''}
+ - {target: ''}
+ - {target: ''}
+ - {debug: 'test shell timeout: 300 seconds'}
+ - {target: ''}
+ - {target: /lava-None/tests/0_smoke-tests}
+ - {target: <LAVA_SIGNAL_ENDTC linux-linaro-ubuntu-pwd>}
+ - {target: <LAVA_SIGNAL_TESTCASE TEST_CASE_ID=linux-linaro-ubuntu-pwd RESULT=pass>}
+ - {target: <LAVA_SIGNAL_STARTTC linux-linaro-ubuntu-uname>}
+ - {target: ''}
+ - {debug: 'Received signal: <ENDTC> linux-linaro-ubuntu-pwd'}
+ - {target: ''}
+ - {target: ''}
+ - {target: ''}
+ - {target: ''}
+ - {debug: 'test shell timeout: 300 seconds'}
+ - {debug: 'Received signal: <TESTCASE> TEST_CASE_ID=linux-linaro-ubuntu-pwd RESULT=pass'}
+ - {debug: 'res: {''test_case_id'': ''linux-linaro-ubuntu-pwd'', ''result'': ''pass''}
+     data: {''test_case_id'': ''linux-linaro-ubuntu-pwd'', ''result'': ''pass''}'}
+ - results: {linux-linaro-ubuntu-pwd: pass, testsuite: smoke-tests-basic}
 
- [{'expect timeout': 300, 'id': '<LAVA_DISPATCHER>2014-10-22 15:34:21,487'},
- {'id': '<LAVA_DISPATCHER>2014-10-22 15:34:21,488',
-  'ok': 'lava_test_shell seems to have completed'},
- {'id': '<LAVA_DISPATCHER>2014-10-22 15:34:21,488', 'log': 'duration: 34.19'},
- {'id': '<LAVA_DISPATCHER>2014-10-22 15:34:21,489',
-  'results': "OrderedDict([('linux-linaro-ubuntu-pwd', 'pass'),
-  ('linux-linaro-ubuntu-uname', 'pass'), ('linux-linaro-ubuntu-vmstat', 'pass'),
-  ('linux-linaro-ubuntu-ifconfig', 'pass'), ('linux-linaro-ubuntu-lscpu', 'pass'),
-  ('linux-linaro-ubuntu-lsusb', 'fail'), ('linux-linaro-ubuntu-lsb_release', 'pass'),
-  ('linux-linaro-ubuntu-netstat', 'pass'), ('linux-linaro-ubuntu-ifconfig-dump', 'pass'),
-  ('linux-linaro-ubuntu-route-dump-a', 'pass'), ('linux-linaro-ubuntu-route-ifconfig-up-lo', 'pass'),
-  ('linux-linaro-ubuntu-route-dump-b', 'pass'), ('linux-linaro-ubuntu-route-ifconfig-up', 'pass'),
-  ('ping-test', 'fail'), ('realpath-check', 'fail'), ('ntpdate-check', 'pass'),
-  ('curl-ftp', 'pass'), ('tar-tgz', 'pass'), ('remove-tgz', 'pass')])"}]
+.. code-block:: yaml
+
+ - {info: 'ok: lava_test_shell seems to have completed'}
+ - debug: {curl-http: pass, direct-install: pass, direct-update: pass, linux-linaro-ubuntu-ifconfig: pass,
+     linux-linaro-ubuntu-ifconfig-dump: pass, linux-linaro-ubuntu-lsb_release: fail,
+     linux-linaro-ubuntu-lscpu: pass, linux-linaro-ubuntu-netstat: pass, linux-linaro-ubuntu-pwd: pass,
+     linux-linaro-ubuntu-route-dump-a: pass, linux-linaro-ubuntu-route-dump-b: pass,
+     linux-linaro-ubuntu-route-ifconfig-up: pass, linux-linaro-ubuntu-route-ifconfig-up-lo: pass,
+     linux-linaro-ubuntu-uname: pass, linux-linaro-ubuntu-vmstat: pass, ping-test: pass,
+     remove-tgz: pass, tar-tgz: pass}
+ - {debug: 'lava-test-shell duration: 26.88', ts: '2015-09-07T09:43:14.065956'}
+
+.. _debugging_slaves:
+
+Debugging on the slave dispatcher
+*********************************
+
+Pipeline jobs are sent to the slave dispatcher over ZMQ as fully formatted
+YAML files. These files are then passed to :file:`lava-dispatch` when
+the job starts. To reproduce issues on the slave, the original files
+are retained in a temporary directory after the job has completed. As
+long as the slave has not been rebooted since the job started, the files
+will be retained in :file:`/tmp/lava-dispatcher/slave/<JOB_ID>/`. These
+can then be used to re-run the job on the command line. Also in this
+directory, there is an ``err`` file which tracks any exceptions caught
+by the slave during the job run - these are sent back to the master and
+appear as a failure comment. Exceptions of this kind can then generate
+bug reports so that the dispatcher code handles the issue instead of it
+falling back to the slave daemon to handle.
 
 .. _adding_new_classes:
 

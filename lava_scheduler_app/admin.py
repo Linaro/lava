@@ -1,3 +1,5 @@
+from django import forms
+from django.core.exceptions import ValidationError
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from lava_scheduler_app.models import (
@@ -88,15 +90,91 @@ class ActiveDevicesFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value() == 'NoRetired':
-            return queryset.exclude(status=Device.RETIRED)
+            return queryset.exclude(status=Device.RETIRED).order_by('hostname')
         if self.value() == 'CurrentJob':
-            return queryset.filter(current_job__isnull=False)
+            return queryset.filter(current_job__isnull=False).order_by('hostname')
+
+
+class RequestedDeviceFilter(admin.SimpleListFilter):
+    title = 'Requested Device (except retired)'
+    parameter_name = 'requested_device'
+
+    def lookups(self, request, model_admin):
+        list_of_types = []
+        queryset = Device.objects.exclude(status=Device.RETIRED).order_by('hostname')
+        for dev_type in queryset:
+            list_of_types.append(
+                (str(dev_type.hostname), dev_type.hostname)
+            )
+        return sorted(list_of_types, key=lambda tp: tp[1])
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(requested_device__hostname=self.value())
+        return queryset.order_by('requested_device__hostname')
+
+
+class ActualDeviceFilter(admin.SimpleListFilter):
+    title = 'Actual Device (except retired)'
+    parameter_name = 'actual_device'
+
+    def lookups(self, request, model_admin):
+        list_of_types = []
+        queryset = Device.objects.exclude(status=Device.RETIRED).order_by('hostname')
+        for dev_type in queryset:
+            list_of_types.append(
+                (str(dev_type.hostname), dev_type.hostname)
+            )
+        return sorted(list_of_types, key=lambda tp: tp[1])
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(actual_device__hostname=self.value())
+        return queryset.order_by('actual_device__hostname')
+
+
+class DeviceTypeFilter(admin.SimpleListFilter):
+    title = 'Device Type'
+    parameter_name = 'device_type'
+
+    def lookups(self, request, model_admin):
+        list_of_types = []
+        queryset = DeviceType.objects.all()
+        for dev_type in queryset:
+            list_of_types.append(
+                (str(dev_type.name), dev_type.name)
+            )
+        return sorted(list_of_types, key=lambda tp: tp[1])
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(device_type__name=self.value())
+        return queryset.order_by('device_type__name')
+
+
+class RequestedDeviceTypeFilter(admin.SimpleListFilter):
+    title = 'Requested Device Type'
+    parameter_name = 'requested_device_type'
+
+    def lookups(self, request, model_admin):
+        list_of_types = []
+        queryset = DeviceType.objects.order_by('name')
+        for dev_type in queryset:
+            list_of_types.append(
+                (str(dev_type.name), dev_type.name)
+            )
+        return sorted(list_of_types, key=lambda tp: tp[1])
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(device_type__name=self.value())
+        return queryset.order_by('requested_device_type__name')
 
 
 class DeviceAdmin(admin.ModelAdmin):
     actions = [online_action, online_action_without_health_check,
                offline_action, health_unknown, retire_action]
-    list_filter = ('device_type', 'status', ActiveDevicesFilter,
+    list_filter = (DeviceTypeFilter, 'status', ActiveDevicesFilter,
                    'health_status', 'worker_host')
     raw_id_fields = ['current_job', 'last_health_report_job']
 
@@ -105,17 +183,35 @@ class DeviceAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Properties', {
-            'fields': ('device_type', 'hostname', 'worker_host', 'device_version')}),
+            'fields': (['device_type', 'hostname'], 'worker_host', 'device_version')}),
         ('Device owner', {
-            'fields': ('user', 'group', 'physical_owner', 'physical_group', 'is_public', 'is_pipeline')}),
-        ('Advanced properties', {
-            'fields': ('description', 'tags')}),
+            'fields': (['user', 'group'], ['physical_owner', 'physical_group'], 'is_public', 'is_pipeline')}),
         ('Status', {
-            'fields': ('status', 'health_status', 'last_health_report_job', 'current_job')}),
+            'fields': (['status', 'health_status'], ['last_health_report_job', 'current_job'])}),
+        ('Advanced properties', {
+            'fields': ('description', 'tags', ['device_dictionary_yaml', 'device_dictionary_jinja']),
+            'classes': ('collapse', )
+        }),
     )
+    readonly_fields = ['device_dictionary_yaml', 'device_dictionary_jinja']
     list_display = ('hostname', 'device_type', 'current_job', 'worker_host',
                     'status', 'health_status', 'is_public', 'is_pipeline', 'exclusive_device')
     search_fields = ('hostname', 'device_type__name')
+    ordering = ['hostname']
+
+
+class VisibilityForm(forms.ModelForm):
+
+    def clean_viewing_groups(self):
+        viewing_groups = self.cleaned_data['viewing_groups']
+        visibility = self.cleaned_data['visibility']
+        if len(viewing_groups) != 1 and visibility == TestJob.VISIBLE_GROUP:
+            raise ValidationError("Group visibility must have exactly one viewing group.")
+        elif len(viewing_groups) != 0 and visibility == TestJob.VISIBLE_PERSONAL:
+            raise ValidationError("Personal visibility cannot have any viewing groups assigned.")
+        elif len(viewing_groups) != 0 and visibility == TestJob.VISIBLE_PUBLIC:
+            raise ValidationError("Pulibc visibility cannot have any viewing groups assigned.")
+        return self.cleaned_data['viewing_groups']
 
 
 class TestJobAdmin(admin.ModelAdmin):
@@ -126,13 +222,13 @@ class TestJobAdmin(admin.ModelAdmin):
     def requested_device_type_name(self, obj):
         return '' if obj.requested_device_type is None else obj.requested_device_type
     requested_device_type_name.short_description = 'Request device type'
-
+    form = VisibilityForm
     actions = [cancel_action]
-    list_filter = ('status', 'requested_device_type', 'requested_device__hostname', 'actual_device')
+    list_filter = ('status', RequestedDeviceTypeFilter, RequestedDeviceFilter, ActualDeviceFilter)
     raw_id_fields = ['_results_bundle']
     fieldsets = (
         ('Owner', {
-            'fields': ('user', 'group', 'submitter', 'submit_token', 'is_public')}),
+            'fields': ('user', 'group', 'submitter', 'submit_token', 'is_public', 'visibility', 'viewing_groups')}),
         ('Request', {
             'fields': ('requested_device', 'requested_device_type', 'priority', 'health_check')}),
         ('Advanced properties', {
@@ -144,6 +240,7 @@ class TestJobAdmin(admin.ModelAdmin):
     )
     list_display = ('id', 'status', 'submitter', 'requested_device_type_name', 'requested_device_hostname',
                     'actual_device', 'health_check', 'submit_time', 'start_time', 'end_time')
+    ordering = ['-submit_time']
 
 
 class DeviceStateTransitionAdmin(admin.ModelAdmin):
@@ -198,6 +295,7 @@ class DeviceTypeAdmin(admin.ModelAdmin):
     list_display = ('name', 'has_health_check', 'display', 'owners_only',
                     'architecture_name', 'processor_name', 'cpu_model_name',
                     'list_of_cores', 'bit_count')
+    ordering = ['name']
 
 
 def hide_worker_action(modeladmin, request, queryset):
@@ -218,17 +316,7 @@ class WorkerAdmin(admin.ModelAdmin):
     actions = [hide_worker_action, show_worker_action]
     list_display = ('hostname', 'display', 'ip_address', 'is_master',
                     'uptime', 'arch')
-
-
-class DeviceDictionaryAdmin(admin.ModelAdmin):
-
-    def device_hostname(self, obj):
-        device_dict = obj.lookup_device_dictionary()
-        return device_dict.hostname
-
-    list_display = ('device_hostname', )
-    ordering = ('kee', )  # django is unable to sort other than by database fields.
-    actions = []
+    ordering = ['hostname']
 
 
 admin.site.register(Device, DeviceAdmin)
@@ -242,4 +330,3 @@ admin.site.register(BitWidth)
 admin.site.register(Core)
 admin.site.register(JobFailureTag)
 admin.site.register(Worker, WorkerAdmin)
-admin.site.register(DeviceDictionaryTable, DeviceDictionaryAdmin)

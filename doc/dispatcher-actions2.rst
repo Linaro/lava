@@ -63,13 +63,31 @@ deploy to the requested location.
 
   * **tmpfs**: Used to support QEMU device types which run on a dispatcher.
     The file is downloaded to a temporary directory and made available as
-    an image to a predetermined QEMU command line::
+    one or more images, appending specified arguments to a predetermined
+    QEMU command line::
 
      to: tmpfs
 
-    * Requires an ``image`` parameter::
+    * Requires an ``images`` parameter, e.g.::
 
-        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        images:
+          rootfs:
+              image_arg: -drive format=raw,file={rootfs}
+              url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+              compression: gz
+
+      * The ``image_arg`` determines how QEMU handles the image. The
+        arguments **must** include a placeholder which exactly matches
+        the key of the same block in the list of images. The actual
+        location of the downloaded file will then replace the placeholder.
+        Multiple images can be supplied but the test writer is responsible
+        for ensuring that the ``image_arg`` make sense to QEMU.
+
+      * If the image is compressed, the compression method **must** be
+        specified if any ``test`` actions are defined in the job. Supported
+        values are ``gz``, ``bz2`` and ``xz``::
+
+         compression: gz
 
     * The operating system of the image **must** be specified so that the
       LAVA scripts can install packages and identify other defaults in the
@@ -77,12 +95,6 @@ deploy to the requested location.
       ``debian`` or ``oe``::
 
         os: debian
-
-    * If the image is compressed, the compression method **must** be
-      specified if any ``test`` actions are defined in the job. Supported
-      values are ``gz``, ``bz2`` and ``xz``::
-
-       compression: gz
 
   * **tftp**: Used to support TFTP deployments, e.g. using UBoot. Files
     are downloaded to a temporary directory in the TFTP tree and the
@@ -289,8 +301,7 @@ Lava-Test-Shell Test Definitions although the submission format has changed:
 
   - test:
      failure_retry: 3
-     name: kvm-basic-singlenode  # is not present, use "test $N"
-
+     name: kvm-basic-singlenode
 
 Definitions
 ===========
@@ -340,6 +351,65 @@ Test example
               path: ubuntu/smoke-tests-basic.yaml
               name: smoke-tests
 
+Additional support
+==================
+
+The refactoring supports some additional elements in Lava Test Shell
+which will not be supported in the current dispatcher.
+
+TestSets
+--------
+
+A TestSet is a group of lava test cases which will be collated within
+the LAVA Results. This allows queries to look at a set of related
+test cases within a single definition.
+
+.. code-block:: yaml
+
+  name: testset-def
+    run:
+        steps:
+            - lava-test-set start first_set
+            - lava-test-case date --shell ntpdate-debian
+            - ls /
+            - lava-test-case mount --shell mount
+            - lava-test-set stop
+            - lava-test-case uname --shell uname -a
+
+This results in the ``date`` and ``mount`` test cases being included
+into a ``first_set`` TestSet, independent of other test cases. The
+TestSet is concluded with the ``lava-test-set stop`` command, meaning
+that the ``uname`` test case has no test set, providing a structure
+like:
+
+.. code-block:: yaml
+
+ results:
+   first_set:
+     date: pass
+     mount: pass
+   uname: pass
+
+.. code-block:: python
+
+ {'results': {'first_set': {'date': 'pass', 'mount': 'pass'}, 'uname': 'pass'}}
+
+Each TestSet name must be valid as a URL, which is consistent with the
+requirements for test definition names and test case names in the
+current dispatcher.
+
+For TestJob ``1234``, the ``uname`` test case would appear as::
+
+ results/1234/testset-def/uname
+
+The ``date`` and ``mount`` test cases are referenced via the TestSet::
+
+ results/1234/testset-def/first_set/date
+ results/1234/testset-def/first_set/mount
+
+A single test definition can start and stop different TestSets in
+sequence, as long as the name of each TestSet is unique for that
+test definition.
 
 .. _repeat_action:
 

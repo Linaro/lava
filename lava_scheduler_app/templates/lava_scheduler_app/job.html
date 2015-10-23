@@ -50,6 +50,16 @@
       <dd>{{ job.get_priority_display }}</dd>
       <dt>Submitter</dt>
       <dd>{{ job.submitter }}</dd>
+      <dt>Visibility</dt>
+      <dd>{{ job.get_visibility_display }}</dd>
+      {% if job.visibility == 2 %}
+      <dt>Visibility groups</dt>
+      <dd>
+	{% for group in job.viewing_groups.all %}
+	{{ group }}&nbsp;
+	{% endfor %}
+      </dd>
+      {% endif %}
     </dl>
   </div>
   <div class="col-md-4">

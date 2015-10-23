@@ -23,7 +23,9 @@ from lava_scheduler_app.views import (
 )
 from lava_scheduler_app.utils import (
     devicedictionary_to_jinja2,
+    jinja2_to_devicedictionary,
     jinja_template_path,
+    prepare_jinja_template,
 )
 from lava_scheduler_app.schema import validate_submission, validate_device
 
@@ -594,16 +596,120 @@ class SchedulerAPI(ExposedAPI):
 
         data = devicedictionary_to_jinja2(element.parameters,
                                           element.parameters['extends'])
-        string_loader = jinja2.DictLoader({'%s.yaml' % device_hostname: data})
-        type_loader = jinja2.FileSystemLoader(
-            [os.path.join(jinja_template_path(), 'device-types')])
-        env = jinja2.Environment(loader=jinja2.ChoiceLoader([string_loader,
-                                                             type_loader]),
-                                 trim_blocks=True)
-        template = env.get_template("%s.yaml" % device_hostname)
+        template = prepare_jinja_template(device.hostname, data, system_path=True)
         device_configuration = template.render()
 
         # validate against the device schema
         validate_device(device_configuration)
 
         return xmlrpclib.Binary(device_configuration.encode('UTF-8'))
+
+    def import_device_dictionary(self, hostname, jinja_str):
+        """
+        Name
+        ----
+        `import_device_dictionary` (`device_hostname`, `jinja_string`)
+
+        Description
+        -----------
+        [superuser only]
+        Import or update the device dictionary key value store for a
+        pipeline device.
+
+        Arguments
+        ---------
+        `device_hostname`: string
+            Device hostname to update.
+        `jinja_str`: string
+            Jinja2 settings to store in the DeviceDictionary
+
+        Return value
+        ------------
+        This function returns an XML-RPC binary data of output file.
+        """
+        self._authenticate()
+        if not self.user.is_superuser:
+            raise xmlrpclib.Fault(
+                403,
+                "User '%s' is not superuser." % username
+            )
+        try:
+            Device.objects.get(hostname=hostname)
+        except DeviceType.DoesNotExist:
+            raise xmlrpclib.Fault(
+                404, "Device '%s' was not found." % hostname
+            )
+        try:
+            device_data = jinja2_to_devicedictionary(jinja_str)
+        except (ValueError, KeyError, TypeError):
+            raise xmlrpclib.Fault(
+                400, "Unable to parse specified jinja string"
+            )
+        if not device_data or 'extends' not in device_data:
+            raise xmlrpclib.Fault(
+                400, "Invalid device dictionary content - %s - not updating." % jinja_str
+            )
+        try:
+            template = prepare_jinja_template(hostname, jinja_str, system_path=True)
+        except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
+            raise xmlrpclib.Fault(
+                400, "Template error: %s" % exc
+            )
+        if not template:
+            raise xmlrpclib.Fault(400, "Empty template")
+        element = DeviceDictionary.get(hostname)
+        msg = ''
+        if element is None:
+            msg = "Adding new device dictionary for %s\n" % hostname
+            element = DeviceDictionary(hostname=hostname)
+            element.hostname = hostname
+        element.parameters = device_data
+        element.save()
+        msg += "Device dictionary updated for %s\n" % hostname
+        return msg
+
+    def export_device_dictionary(self, hostname):
+        """
+        Name
+        ----
+        `export_device_dictionary` (`device_hostname`)
+
+        Description
+        -----------
+        [superuser only]
+        Export the device dictionary key value store for a
+        pipeline device.
+
+        See also get_pipeline_device_config
+
+        Arguments
+        ---------
+        `device_hostname`: string
+            Device hostname to update.
+
+        Return value
+        ------------
+        This function returns an XML-RPC binary data of output file.
+        """
+        self._authenticate()
+        if not self.user.is_superuser:
+            raise xmlrpclib.Fault(
+                403, "User '%s' is not superuser." % username
+            )
+        try:
+            device = Device.objects.get(hostname=hostname)
+        except DeviceType.DoesNotExist:
+            raise xmlrpclib.Fault(
+                404, "Device '%s' was not found." % hostname
+            )
+        if not device.is_pipeline:
+            raise xmlrpclib.Fault(
+                400, "Device '%s' is not a pipeline device" % hostname
+            )
+        device_dict = DeviceDictionary.get(hostname).to_dict()
+        if not device_dict:
+            raise xmlrpclib.Fault(
+                404, "Device '%s' does not have a device dictionary" % hostname
+            )
+        jinja_str = devicedictionary_to_jinja2(device_dict['parameters'], device_dict['parameters']['extends'])
+        return xmlrpclib.Binary(jinja_str.encode('UTF-8'))

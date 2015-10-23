@@ -1,35 +1,35 @@
 {% set base_uboot_commands = (
 "          - setenv autoload no
           - setenv initrd_high '0xffffffff'
-          - setenv fdt_high '0xffffffff'") %}
+          - setenv fdt_high '0xffffffff'") -%}
 
 {% set base_uboot_addr_commands = (
 "          - setenv kernel_addr_r '{KERNEL_ADDR}'
           - setenv initrd_addr_r '{RAMDISK_ADDR}'
-          - setenv fdt_addr_r '{DTB_ADDR}'") %}
+          - setenv fdt_addr_r '{DTB_ADDR}'") -%}
 
 {% set base_tftp_commands = (
 "          - setenv loadkernel 'tftp ${kernel_addr_r} {KERNEL}'
           - setenv loadinitrd 'tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
-          - setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'") %}
+          - setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'") -%}
 
 {% set base_uboot_bootcmd = (
 "          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
-          - boot") %}
+          - boot") -%}
 
 {% set base_tftp_uboot_bootcmd = (
 "          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
-          - boot") %}
+          - boot") -%}
 
 {% set base_nfs_uboot_bootcmd = (
 "          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
-          - boot") %}
+          - boot") -%}
 
-{% set base_nfsroot_args = ("nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr")%}
+{% set base_nfsroot_args = ("nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr") -%}
 
-# these options are used by both ssh and scp!
-# check the manpages *carefully* & ensure compatibility!
-# in particular, -p vs -P for port, -l is ok for ssh, not scp.
+{# these options are used by both ssh and scp! #}
+{# check the manpages *carefully* & ensure compatibility! #}
+{# in particular, -p vs -P for port, -l is ok for ssh, not scp. #}
 {% set ssh_options = (
 "          - '-o'
           - 'Compression=yes'
@@ -42,13 +42,13 @@
           - '-o'
           - 'LogLevel=FATAL'
 "
-) %}
+) -%}
 
-{% set ssh_user = 'root' %}
+{% set ssh_user = 'root' -%}
 
-{% set ssh_port = '22' %}
+{% set ssh_port = '22' -%}
 
-{% set ssh_identity_file = 'device/dynamic_vm_keys/lava' %}
+{% set ssh_identity_file = 'device/dynamic_vm_keys/lava' -%}
 
 {% set schroot_options = (
 "          - 'schroot'
@@ -56,7 +56,22 @@
           - '/'
           - '-u'
           - 'root'"
-) %}
+) -%}
+
+{# UEFI menu support #}
+{% set base_menu_interrupt_prompt = 'The default boot selection will start in' -%}
+{% set base_menu_interrupt_string = ' ' -%}
+{% set base_item_markup_list = (
+'            - "["
+            - "]"'
+) -%}
+{% set base_item_class = '0-9' -%}
+{% set base_item_separator = ' ' -%}
+{% set base_label_class = 'a-zA-Z0-9\s\:' -%}
+{% set base_menu_bootloader_prompt = 'Start:' -%}
+{% set base_menu_boot_message = "Loaded: LinuxImage" -%}
+{% set base_menu_dictionary = {} -%}
+
 
 {% block commands %}
 {% if connection_command %}
@@ -64,7 +79,7 @@ commands:
     connect: {{ connection_command }}
 {% if hard_reset_command %}
     hard_reset: {{ hard_reset_command }}
-{% endif %}
+{% endif -%}
 {% if power_off_command %}
     power_off: {{ power_off_command }}
 {% endif %}
@@ -72,9 +87,9 @@ commands:
     power_on: {{ power_on_command }}
 {% endif %}
 {% endif %}
-{% endblock %}
+{% endblock -%}
 
-{% block body %}{% endblock %}
+{% block body %}{% endblock -%}
 
 {% block test_image_prompts %}
 test_image_prompts:
@@ -90,8 +105,8 @@ test_image_prompts:
   - 'root@linaro-server:~#'
   - 'root@genericarmv7a:~#'
   - 'root@genericarmv8:~#'
-{% block extend_test_image_prompts %}{% endblock %}
-{% endblock %}
+{% block extend_test_image_prompts %}{% endblock -%}
+{% endblock -%}
 
 {% block timeouts %}
 timeouts:
@@ -103,4 +118,4 @@ timeouts:
     seconds: 30
   power_off:
     seconds: 5
-{% endblock %}
+{% endblock -%}

@@ -2,6 +2,7 @@ import os
 import yaml
 from django import template
 from django.conf import settings
+from collections import OrderedDict
 from django.utils.safestring import mark_safe
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.models import (
@@ -96,3 +97,41 @@ def get_yaml_parameters(parameters):
 def get_settings(value):
     if hasattr(settings, value):
         return getattr(settings, value)
+
+
+def _get_pipeline_data(pipeline, levels):
+    """
+    Recursive check on the pipeline description dictionary
+    """
+    for action in pipeline:
+        levels[action['level']] = {
+            'name': action['name'],
+            'description': action['description'],
+            'summary': action['summary'],
+            'timeout': action['timeout'],
+        }
+        if 'url' in action:
+            levels[action['level']].update({'url': action['url']})
+        if 'pipeline' in action:
+            _get_pipeline_data(action['pipeline'], levels)
+
+
+@register.assignment_tag()
+def get_pipeline_sections(pipeline):
+    """
+    Just a top level view of the pipeline sections
+    """
+    sections = []
+    for action in pipeline:
+        sections.append({action['section']: action['level']})
+    return sections
+
+
+@register.assignment_tag()
+def get_pipeline_levels(pipeline):
+    """
+    Retrieve the full set of action levels in this pipeline.
+    """
+    levels = OrderedDict()
+    _get_pipeline_data(pipeline, levels)
+    return levels

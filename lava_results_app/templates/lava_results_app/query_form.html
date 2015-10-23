@@ -5,7 +5,13 @@
 {% endblock %}
 
 {% block content %}
-<h1>Add new Query</h1>
+{% if form.instance.id %}
+<h1>Edit query &ldquo;{{ form.instance.name }}&rdquo;…</h1>
+{% elif is_copy %}
+<h1>Copy query &ldquo;{{ query_name }}&rdquo;…</h1>
+{% else %}
+<h1>Add new query…</h1>
+{% endif %}
 
 {% block content_form %}
 <form action="" method="post">{% csrf_token %}
@@ -31,8 +37,19 @@
   {{ form.owner }}
 </div>
 <div class="form-field">
-  {{ form.content_type.label_tag }}
-  {{ form.content_type }}
+{{ form.content_type.label_tag }}
+{% if form.content_type.value %}
+{{ form.content_type.as_hidden }}
+{{ form.instance.content_type.name }}
+{% else %}
+{{ form.content_type }}
+{% endif %}
+</div>
+<div class="form-field">
+  {{ form.is_live.label_tag }}
+  {{ form.is_live }}
+  &nbsp;&nbsp;
+  <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="Query will display latest results always. Keep in mind that live queries take a lot more time to load and can also affect the system performance as each time someone go to query result page the results are updated.">?</button>
 </div>
 <div class="form-field">
   {{ form.description.label_tag }}

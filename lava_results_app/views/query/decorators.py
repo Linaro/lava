@@ -31,8 +31,7 @@ def ownership_required(view_func):
     def wrapper(request, *args, **kwargs):
         report_name = kwargs.get('name', None)
         query = get_object_or_404(Query, name=report_name)
-        if request.user.is_superuser or query.user == request.user or \
-           query.group in request.user.groups.all():
+        if query.is_accessible_by(request.user):
             return view_func(request, *args, **kwargs)
         else:
             raise PermissionDenied

@@ -9,6 +9,9 @@
 <div class="row">
   <div class="col-md-6">
   <form class="form-inline" id="{{ table.prefix }}search_form" action="{% querystring %}#{{ table.prefix|default:"table" }}" method="GET" role="form">
+    {% for key,value in request.GET.iteritems %}
+    <input type="hidden" name="{{ table.prefix }}{{ key }}" value="{{ value }}">
+    {% endfor %}
     <input type="hidden" name="{{ table.prefix }}search" value="{{ request.GET.search }}">
     {% if request.GET.end %}<input type="hidden" name="{{ table.prefix }}end" value="{{ request.GET.end }}">{% endif %}
     {% if request.GET.start %}<input type="hidden" name="{{ table.prefix }}start" value="{{ request.GET.start }}">{% endif %}
@@ -23,6 +26,9 @@
 {%  if search_data|get_search_data:table.prefix %}
   <div class="col-md-5">
     <form class="form-inline pull-right" action="{% querystring "search"="" %}#{{ table.prefix|default:"table" }}" method="GET" role="form">
+      {% for key,value in request.GET.iteritems %}
+      <input type="hidden" name="{{ table.prefix }}{{ key }}" value="{{ value }}">
+      {% endfor %}
       <input type="hidden" name="{{ table.prefix }}length" value="{{ table|get_prefix_length:request.GET }}">
       <div class="form-group">
         <label>Search</label>

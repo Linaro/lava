@@ -8,6 +8,7 @@ timeouts:
     minutes: 1
   test:
     minutes: 3
+visibility: public
 
 protocols:
   lava-multinode:
@@ -29,7 +30,10 @@ actions:
         timeout:
           minutes: 2
         to: tmpfs
-        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        images:
+          rootfs:
+            url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+            image_args: -drive format=raw,file={rootfs}
         compression: gz
         os: debian
         root_partition: 1

@@ -836,7 +836,7 @@ timeouts:
   action:
     minutes: 5
 priority: medium
-
+visibility: public
 actions:
 
     - deploy:
@@ -981,6 +981,16 @@ timeouts:
 actions:
   - deploy:
       to: tmpfs
+                """
+        self.assertRaises(SubmissionException, validate_submission, yaml.load(bad_submission))
+        try:
+            validate_submission(yaml.load(bad_submission))
+        except SubmissionException as exc:
+            self.assertIn('required key not provided', str(exc))
+            # with more than one omission, which one gets mentioned is undefined
+            self.assertTrue('visibility' in str(exc) or 'job_name' in str(exc))
+        bad_submission += """
+visibility: public
                 """
         self.assertRaises(SubmissionException, validate_submission, yaml.load(bad_submission))
         try:

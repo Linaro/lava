@@ -56,6 +56,7 @@ actions:
         parameters:
           bootloader_prompt: {{ bootloader_prompt|default('sun7i') }}
           boot_message: {{ boot_message|default('Booting Linux') }}
+          mkimage_arch: {{ uboot_mkimage_arch|default('arm') }} # string to pass to mkimage -A when adding UBoot headers
           send_char: False
         ramdisk:
           commands:

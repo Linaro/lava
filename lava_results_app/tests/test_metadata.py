@@ -45,7 +45,7 @@ class TestMetaTypes(TestCaseWithFactory):
         for actionlevel in ActionData.objects.all():
             self.assertEqual(actionlevel.testdata, testdata)
         action_levels = []
-        for testdata in job.test_data.all():
+        for testdata in job.testdata_set.all():
             action_levels.extend(testdata.actionlevels.all())
         self.assertEqual(count, len(action_levels))
         count = ActionData.objects.filter(meta_type__metatype=MetaType.DEPLOY_TYPE).count()

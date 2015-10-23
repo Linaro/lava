@@ -9,9 +9,14 @@
 
 {% block content %}
 
-<h2 class="modal-header">Custom Query Matches <small><a href="{% url 'lava_results_app.views.query.views.query_add' %}?entity={{ request.GET.entity }}&conditions={{ request.GET.conditions }}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-import"></span> Save as new query</a></small></h2>
+<h2 class="modal-header">Custom Query Matches
+  <small><a href="{% url 'lava_results_app.views.query.views.query_add' %}?entity={{ request.GET.entity }}&conditions={{ request.GET.conditions }}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-import"></span> Save as new query</a></small>
+  <small><a href="{% url 'lava_results_app.views.query.views.query_export_custom' %}?entity={{ request.GET.entity }}&conditions={{ request.GET.conditions }}" class="btn btn-xs btn-primary"><span class="glyphicon glyphicon-export"></span>  Export as CSV</a></small></h2>
 
 {% render_table query_table %}
 
 {% endblock %}
 
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
+{% endblock %}
