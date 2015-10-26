@@ -148,7 +148,6 @@ def _device_schema():
         'device_type': All(str, Length(min=1)),
         'parameters': dict,
         'actions': _device_actions_schema(),
-        'test_image_prompts': list,
         'timeouts': _device_timeouts_schema()
     })
 
