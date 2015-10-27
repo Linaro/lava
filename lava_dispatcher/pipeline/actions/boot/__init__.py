@@ -23,6 +23,7 @@ from lava_dispatcher.pipeline.logical import RetryAction
 from lava_dispatcher.pipeline.utils.constants import (
     AUTOLOGIN_DEFAULT_TIMEOUT,
     DEFAULT_SHELL_PROMPT,
+    DISTINCTIVE_PROMPT_CHARACTERS,
 )
 
 
@@ -58,6 +59,12 @@ class AutoLoginAction(Action):
         self.name = 'auto-login-action'
         self.description = "automatically login after boot using job parameters"
         self.summary = "Auto-login after boot"
+        self.check_prompt_characters_warning = (
+            "The string '%s' does not look like a typical prompt and"
+            " could match status messages instead. Please check the"
+            " job log files and use a prompt string which matches the"
+            " actual prompt string more closely."
+        )
         # FIXME: self.timeout.duration = AUTOLOGIN_DEFAULT_TIMEOUT
 
     def validate(self):
@@ -96,6 +103,10 @@ class AutoLoginAction(Action):
                     self.errors = "Items of 'prompts' can't be empty"
 
     def run(self, connection, args=None):
+        def check_prompt_characters(prompt):
+            if not any([True for c in DISTINCTIVE_PROMPT_CHARACTERS if c in prompt]):
+                self.logger.warning(self.check_prompt_characters_warning % prompt)
+
         # Skip auto login if the configuration is not found
         params = self.parameters.get('auto_login', None)
         if params is None:
@@ -117,8 +128,11 @@ class AutoLoginAction(Action):
         prompts = self.parameters.get('prompts', None)
         if isinstance(prompts, list):
             connection.prompt_str.extend(prompts)
+            for prompt in prompts:
+                check_prompt_characters(prompt)
         else:
             connection.prompt_str.extend([prompts])
+            check_prompt_characters(prompts)
 
         self.logger.debug("Setting shell prompt")
         # FIXME: by fact we need to wait here not a prompt but *something*
