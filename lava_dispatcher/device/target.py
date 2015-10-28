@@ -333,8 +333,8 @@ class Target(object):
                     return dest
         return dest
 
-    def _wait_for_prompt(self, connection, prompt_pattern, timeout):
-        wait_for_prompt(connection, prompt_pattern, timeout)
+    def _wait_for_prompt(self, connection, prompt_pattern, timeout, skip_newlines=False):
+        wait_for_prompt(connection, prompt_pattern, timeout, skip_newlines=skip_newlines)
 
     def _is_job_defined_boot_cmds(self, boot_cmds):
         if isinstance(self.config.boot_cmds, basestring):
@@ -352,11 +352,13 @@ class Target(object):
             return True
 
     def _auto_login(self, connection, is_master=False):
+        logging.info("Starting auto_login")
+        logging.info("timeout: %s" % self.boot_linaro_timeout)
         if is_master:
             if self.config.master_login_prompt is not None:
                 self._wait_for_prompt(connection,
                                       self.config.master_login_prompt,
-                                      timeout=self.config.boot_linaro_timeout)
+                                      timeout=self.boot_linaro_timeout, skip_newlines=True)
                 connection.sendline(self.config.master_username)
             if self.config.master_password_prompt is not None:
                 self._wait_for_prompt(connection,
@@ -369,7 +371,7 @@ class Target(object):
             if self.config.login_prompt is not None:
                 self._wait_for_prompt(connection,
                                       self.config.login_prompt,
-                                      timeout=self.config.boot_linaro_timeout)
+                                      timeout=self.boot_linaro_timeout, skip_newlines=True)
                 connection.sendline(self.config.username)
             if self.config.password_prompt is not None:
                 self._wait_for_prompt(connection,
@@ -621,7 +623,7 @@ class Target(object):
         try:
             self._auto_login(connection, is_master)
         except pexpect.TIMEOUT:
-            msg = "Userspace Error: auto login prompt not found."
+            msg = "Userspace Error: auto login prompt not found. %s" % self.boot_linaro_timeout
             logging.error(msg)
             self.context.test_data.add_result(wait_for_login_prompt,
                                               bad, message=msg)
@@ -633,7 +635,7 @@ class Target(object):
             else:
                 pattern = self.config.test_image_prompts
 
-            self._wait_for_prompt(connection, pattern, self.config.boot_linaro_timeout)
+            self._wait_for_prompt(connection, pattern, self.boot_linaro_timeout)
             if not is_master:
                 if self.target_distro == 'android':
                     # Gain root access
@@ -894,6 +896,27 @@ class Target(object):
     @property
     def target_distro(self):
         return self.deployment_data['distro']
+
+    @property
+    def boot_linaro_timeout(self):
+        """
+        Reversed version of _get_from_config_or_deployment_data.
+        If deployment_data defines the key with the value of extended,
+        then the extended key will be retrieved from config instead.
+        The value itself still needs to come from config as it is
+        device dependent.
+        :return: timeout, extended if deployment_data sets boot_linaro_timeout
+        """
+        key = 'boot_linaro_timeout'
+        extended = 'extended_boot_timeout'
+        value_str = self.deployment_data.get(key)
+        if value_str == extended:
+            extended_value = getattr(self.config, extended.lower())
+            if extended_value:
+                logging.info("Using extended boot timeout: %s" % extended_value)
+                return extended_value
+        value = getattr(self.config, key.lower())
+        return value
 
     @property
     def tester_ps1(self):
