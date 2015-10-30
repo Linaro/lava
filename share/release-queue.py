@@ -78,7 +78,9 @@ def main():
     parser.add_argument('-c', '--changelog', dest='changelog', action='store_true',
                         default=False, help='Print the changelog')
     parser.add_argument('-b', '--branch', dest='branch',
-                        default='release', help='branch to compare with master')
+                        default='release', help='branch to compare with base branch')
+    parser.add_argument('-s', '--staging', dest='staging', action='store_true',
+                        default=False, help='compare branch against staging')
     args = parser.parse_args()
 
     # Check the current working directory
@@ -88,14 +90,15 @@ def main():
         print "Ensure this script is run from the git working copy."
         return 1
 
-    # Get all change ids in master and release
-    master = get_change_ids('master')
+    master_branch = 'staging' if args.staging else 'master'
+    # Get all change ids between master_branch and release
+    master = get_change_ids(master_branch)
     release = get_change_ids(args.branch)
 
     diff = list(set(master) - set(release))
 
     # Go back to master
-    subprocess.check_output(["git", "checkout", "master"], stderr=subprocess.STDOUT)
+    subprocess.check_output(["git", "checkout", master_branch], stderr=subprocess.STDOUT)
     lines = subprocess.check_output(["git", "log"])
 
     # List the missing commits
