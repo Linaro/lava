@@ -213,6 +213,9 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             remote = self.parameters['images'][self.key] if 'images' in self.parameters else self.parameters[self.key]
             self.logger.info("downloading %s as %s" % (remote, fname))
 
+            md5sum = remote.get('md5sum', None)
+            sha256sum = remote.get('sha256sum', None)
+
             downloaded_size = 0
             beginning = time.time()
             # Choose the progress bar (is the size known?)
@@ -246,14 +249,25 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         self.data['download_action'][self.key]['file'] = fname
         self.data['download_action'][self.key]['md5'] = md5.hexdigest()
         self.data['download_action'][self.key]['sha256'] = sha256.hexdigest()
+
+        if md5sum and md5sum != self.data['download_action'][self.key]['md5']:
+            self.logger.error("md5sum of downloaded content: %s" % (self.data['download_action'][self.key]['md5']))
+            self.logger.error("sha256sum of downloaded content: %s" % (self.data['download_action'][self.key]['sha256']))
+            raise JobError("MD5 checksum for '%s' does not match." % fname)
+
+        if sha256sum and sha256sum != self.data['download_action'][self.key]['sha256']:
+            self.logger.error("md5sum of downloaded content: %s" % (self.data['download_action'][self.key]['md5']))
+            self.logger.error("sha256sum of downloaded content: %s" % (self.data['download_action'][self.key]['sha256']))
+            raise JobError("SHA256 checksum for '%s' does not match." % fname)
+
         # certain deployments need prefixes set
         if self.parameters['to'] == 'tftp':
             suffix = self.data['tftp-deploy'].get('suffix', '')
             self.set_common_data('file', self.key, os.path.join(suffix, os.path.basename(fname)))
         else:
             self.set_common_data('file', self.key, fname)
-        self.logger.info("md5sum of downloaded content: %s" % (md5.hexdigest()))
-        self.logger.info("sha256sum of downloaded content: %s" % (sha256.hexdigest()))
+        self.logger.info("md5sum of downloaded content: %s" % (self.data['download_action'][self.key]['md5']))
+        self.logger.info("sha256sum of downloaded content: %s" % (self.data['download_action'][self.key]['sha256']))
         return connection
 
 

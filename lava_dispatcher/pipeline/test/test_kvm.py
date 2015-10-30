@@ -417,6 +417,38 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
 
         self.assertEqual(conn.prompt_str, ['lava-test: # ', 'root@debian:~#'])
 
+    def test_download_checksum_match_success(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        deployimagesaction = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
+        downloadretryaction = [action for action in deployimagesaction.internal_pipeline.actions if action.name == 'download_retry'][0]
+        httpdownloadaction = [action for action in downloadretryaction.internal_pipeline.actions if action.name == 'http_download'][0]
+
+        # Just a small image
+        httpdownloadaction.url = 'http://images.validation.linaro.org/unit-tests/rootfs.gz'
+        httpdownloadaction.parameters.update({'images': {'rootfs': {
+            'url': httpdownloadaction.url,
+            'md5sum': '6ea432ac3c23210c816551782346ed1c',
+            'sha256sum': '1a76b17701b9fdf6346b88eb49b0143a9c6912701b742a6e5826d6856edccd21'}}})
+        httpdownloadaction.validate()
+
+    def test_download_checksum_match_fail(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        deployimagesaction = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
+        downloadretryaction = [action for action in deployimagesaction.internal_pipeline.actions if action.name == 'download_retry'][0]
+        httpdownloadaction = [action for action in downloadretryaction.internal_pipeline.actions if action.name == 'http_download'][0]
+
+        # Just a small image
+        httpdownloadaction.url = 'http://images.validation.linaro.org/unit-tests/rootfs.gz'
+        httpdownloadaction.parameters.update({'images': {'rootfs': {
+            'url': httpdownloadaction.url,
+            'md5sum': 'df1bd1598699e7a89d2e111111111111',
+            'sha256sum': '92d6ff900d0c3656ab3f214ce6efd708f898fc5e259111111111111111111111'}}})
+        httpdownloadaction.validate()
+
+        self.assertRaises(JobError, httpdownloadaction.run, None)
+
 
 class FakeCommand(object):
 
