@@ -1,0 +1,43 @@
+# Sample JOB definition for a fastboot device such as Nexus4
+device_type: nexus4
+job_name: nexus4-pipeline
+timeouts:
+  job:
+    minutes: 60            # timeout for the whole job (default: ??h)
+  action:
+    minutes: 15         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+priority: medium
+
+actions:
+  - deploy:
+      timeout:
+        minutes: 15
+      to: fastboot
+      images:
+        boot:
+          url: http://images.validation.linaro.org/functional-test-images/nexus4/boot.img
+
+        userdata:
+          url: http://images.validation.linaro.org/functional-test-images/nexus4/userdata.img
+        system:
+          url: http://images.validation.linaro.org/functional-test-images/nexus4/system.img
+      os: android
+
+  - boot:
+      timeout:
+        minutes: 15
+      method: fastboot
+      prompts:
+        - 'shell@mako:/ $'
+        - 'shell@mako'
+
+  - test:
+      failure_retry: 3
+      name: nexus4-basic
+      timeout:
+        minutes: 5
+      definitions:
+        - repository: git://git.linaro.org/people/senthil.kumaran/test-definitions.git
+          from: git
+          path: android/echo-pass-fail-error-test.yaml
+          name: echo-pass-fail-error-test
