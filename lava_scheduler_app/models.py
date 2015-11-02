@@ -30,7 +30,12 @@ from django_kvstore import models as kvmodels
 from django_kvstore import get_kvstore
 from django.utils import timezone
 
-from django_restricted_resource.models import RestrictedResource
+from django_restricted_resource.models import (
+    RestrictedResource,
+    RestrictedResourceManager
+)
+from lava_scheduler_app.managers import RestrictedTestJobQuerySet
+
 
 from dashboard_app.models import Bundle, BundleStream
 
@@ -862,7 +867,7 @@ class Device(RestrictedResource):
                     None, "Job submission failed for health job for %s: %s" % (self, e))
                 raise JSONDataError("Health check job submission failed for %s: %s" % (self, e))
 
-    def load_device_configuration(self, job_ctx=None):
+    def load_device_configuration(self, job_ctx=None, system=True):
         """
         Maps the DeviceDictionary to the static templates in /etc/.
         Use lava-server manage device-dictionary --import <FILE>
@@ -879,22 +884,13 @@ class Device(RestrictedResource):
             job_ctx = {}
 
         element = DeviceDictionary.get(self.hostname)
-        # TODO: hardcoded path (determined by setup.py)
-        path = utils.jinja_template_path()
         if element is None:
             return None
         data = utils.devicedictionary_to_jinja2(
             element.parameters,
             element.parameters['extends']
         )
-        string_loader = jinja2.DictLoader({'%s.yaml' % self.hostname: data})
-        type_loader = jinja2.FileSystemLoader([
-            os.path.join(path, 'device-types')])
-        env = jinja2.Environment(
-            loader=jinja2.ChoiceLoader([string_loader, type_loader]),
-            trim_blocks=True)
-        template = env.get_template("%s.yaml" % self.hostname)
-
+        template = utils.prepare_jinja_template(self.hostname, data, system_path=system)
         return yaml.load(template.render(**job_ctx))
 
     @property
@@ -909,6 +905,27 @@ class Device(RestrictedResource):
             if 'exclusive' in device_dict['parameters'] and device_dict['parameters']['exclusive'] == 'True':
                 exclusive = True
         return exclusive
+
+    @property
+    def device_dictionary_yaml(self):
+        if not self.is_pipeline:
+            return ''
+        device_dict = DeviceDictionary.get(self.hostname)
+        if device_dict:
+            device_dict = device_dict.to_dict()
+        return yaml.dump(device_dict['parameters'], default_flow_style=False)
+
+    @property
+    def device_dictionary_jinja(self):
+        jinja_str = ''
+        if not self.is_pipeline:
+            return jinja_str
+        device_dict = DeviceDictionary.get(self.hostname)
+        if device_dict:
+            device_dict = device_dict.to_dict()
+            jinja_str = utils.devicedictionary_to_jinja2(
+                device_dict['parameters'], device_dict['parameters']['extends'])
+        return jinja_str
 
 
 class TemporaryDevice(Device):
@@ -1132,7 +1149,8 @@ def _check_device_types(user):
     return all_devices
 
 
-def _create_pipeline_job(job_data, user, taglist, device=None, device_type=None, target_group=None, orig=None):
+def _create_pipeline_job(job_data, user, taglist, device=None,
+                         device_type=None, target_group=None, orig=None):
 
     if type(job_data) is not dict:
         # programming error
@@ -1147,6 +1165,20 @@ def _create_pipeline_job(job_data, user, taglist, device=None, device_type=None,
     if not taglist:
         taglist = []
 
+    public = True,
+    visibility = TestJob.VISIBLE_PUBLIC
+    viewing_groups = []
+    param = job_data['visibility']
+    if isinstance(param, str):
+        if param == 'personal':
+            public = False
+            visibility = TestJob.VISIBLE_PERSONAL
+    elif isinstance(param, dict):
+        public = False
+        if 'group' in param:
+            visibility = TestJob.VISIBLE_GROUP
+            viewing_groups.extend(Group.objects.filter(name__in=param['group']))
+
     if not orig:
         orig = yaml.dump(job_data)
     job = TestJob(definition=orig, original_definition=orig,
@@ -1156,12 +1188,16 @@ def _create_pipeline_job(job_data, user, taglist, device=None, device_type=None,
                   target_group=target_group,
                   description=job_data['job_name'],
                   health_check=False,
-                  user=user, is_public=True,
+                  user=user, is_public=public,
+                  visibility=visibility,
                   is_pipeline=True)
     job.save()
     # need a valid job before the tags can be assigned, then it needs to be saved again.
     for tag in Tag.objects.filter(name__in=taglist):
         job.tags.add(tag)
+
+    for grp in viewing_groups:
+        job.viewing_groups.add(grp)
 
     # add pipeline to jobpipeline, update with results later - needs the job.id.
     dupe = JobPipeline.get(job.id)
@@ -1328,6 +1364,8 @@ class TestJob(RestrictedResource):
     """
     A test job is a test process that will be run on a Device.
     """
+    objects = RestrictedResourceManager.from_queryset(
+        RestrictedTestJobQuerySet)()
 
     SUBMITTED = 0
     RUNNING = 1
@@ -1353,6 +1391,17 @@ class TestJob(RestrictedResource):
         (LOW, 'Low'),
         (MEDIUM, 'Medium'),
         (HIGH, 'High'),
+    )
+
+    # VISIBILITY levels are subject to any device restrictions and hidden device type rules
+    VISIBLE_PUBLIC = 0  # anyone can view, submit or resubmit
+    VISIBLE_PERSONAL = 1  # only the submitter can view, submit or resubmit
+    VISIBLE_GROUP = 2  # A single group is specified, all users in that group (and that group only) can view.
+
+    VISIBLE_CHOICES = (
+        (VISIBLE_PUBLIC, 'Publicly visible'),  # publicly and publically are equivalent meaning
+        (VISIBLE_PERSONAL, 'Personal only'),
+        (VISIBLE_GROUP, 'Group only'),
     )
 
     id = models.AutoField(primary_key=True)
@@ -1383,6 +1432,29 @@ class TestJob(RestrictedResource):
         User,
         verbose_name=_(u"Submitter"),
         related_name='+',
+    )
+
+    visibility = models.IntegerField(
+        verbose_name=_(u'Visibility type'),
+        help_text=_(u'Visibility affects the TestJob and all results arising from that job, '
+                    u'including Queries and Reports.'),
+        choices=VISIBLE_CHOICES,
+        default=VISIBLE_PUBLIC,
+        editable=True
+    )
+
+    viewing_groups = models.ManyToManyField(
+        # functionally, may be restricted to only one group at a time
+        # depending on implementation complexity
+        Group,
+        verbose_name=_(u'Viewing groups'),
+        help_text=_(u'Adding groups to an intersection of groups reduces visibility.'
+                    u'Adding groups to a union of groups expands visibility.'),
+        related_name='viewing_groups',
+        null=True,
+        blank=True,
+        default=None,
+        editable=True
     )
 
     submit_token = models.ForeignKey(
@@ -1486,6 +1558,12 @@ class TestJob(RestrictedResource):
     is_pipeline = models.BooleanField(
         verbose_name="Pipeline job?",
         default=False,
+        editable=False
+    )
+
+    # calculated by the master validation process.
+    pipeline_compatibility = models.IntegerField(
+        default=0,
         editable=False
     )
 
@@ -1637,6 +1715,11 @@ class TestJob(RestrictedResource):
         Retains yaml_data as the original definition to retain comments.
         """
         job_data = yaml.load(yaml_data)
+
+        # visibility checks
+        if 'visibility' not in job_data:
+            raise SubmissionException("Job visibility must be specified.")
+            # handle view and admin users and groups
 
         # pipeline protocol handling, e.g. lava-multinode
         job_list = _pipeline_protocols(job_data, user, yaml_data)
@@ -2005,9 +2088,63 @@ class TestJob(RestrictedResource):
                 job.tags.add(tag)
             return job
 
+    def clean(self):
+        """
+        Implement the schema constraints for visibility for pipeline jobs so that
+        admins cannot set a job into a logically inconsistent state.
+        """
+        if self.is_pipeline:
+            # public settings must match
+            if self.is_public and self.visibility != TestJob.VISIBLE_PUBLIC:
+                raise ValidationError("is_public is set but visibility is not public.")
+            elif not self.is_public and self.visibility == TestJob.VISIBLE_PUBLIC:
+                raise ValidationError("is_public is not set but visibility is public.")
+        else:
+            if self.visibility != TestJob.VISIBLE_PUBLIC:
+                raise ValidationError("Only pipeline jobs support any value of visibility except the default "
+                                      "PUBLIC, even if the job and bundle are private.")
+        return super(TestJob, self).clean()
+
+    def can_view(self, user):
+        """
+        Take over the checks behind RestrictedIDLinkColumn, for
+        pipeline jobs which support a view user list or view group.
+        For speed, the lookups on the user/group tables are only by id
+        Any elements which would need admin access must be checked
+        separately using can_admin instead.
+        :param user:  the user making the request
+        :return: True or False
+        """
+        if self.is_public:
+            return True
+        if not self.is_pipeline:
+            # old jobs will be private, only pipeline extends beyond this level
+            return self.is_accessible_by(user)
+        if self._can_admin(user):
+            return True
+        logger = logging.getLogger('lava_scheduler_app')
+        if self.visibility == self.VISIBLE_PUBLIC:
+            # logical error
+            logger.exception("job [%s] visibility is public but job is not public.", self.id)
+        elif self.visibility == self.VISIBLE_PERSONAL:
+            return user == self.submitter
+        elif self.visibility == self.VISIBLE_GROUP:
+            # only one group allowed, only first group matters.
+            if len(self.viewing_groups.all()) > 1:
+                logger.exception("job [%s] is %s but has multiple groups %s",
+                                 self.id, self.VISIBLE_CHOICES[self.visibility], self.viewing_groups.all())
+            return self.viewing_groups.all()[0] in user.groups.all()
+
+        return False
+
     def _can_admin(self, user):
-        """ used to check for things like if the user can cancel or annotate
-        a job failure
+        """
+        used to check for things like if the user can cancel or annotate
+        a job failure.
+        Failure to allow admin access returns HIDE_ACCESS or DENY_ACCESS
+        For speed, the lookups on the user/group tables are only by id
+        :param user:  the user making the request
+        :return: access level, up to a maximum of FULL_ACCESS
         """
         owner = False
         if self.actual_device is not None:
@@ -2020,7 +2157,8 @@ class TestJob(RestrictedResource):
         Permission and state required to change job priority.
         Multinode jobs cannot have their priority changed.
         """
-        return self._can_admin(user) and self.status == TestJob.SUBMITTED and not self.is_multinode
+        return (user.is_superuser or user == self.submitter or
+                user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
 
     def can_annotate(self, user):
         """
@@ -2038,6 +2176,16 @@ class TestJob(RestrictedResource):
             return False
         return (user.is_superuser or
                 user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
+
+    def job_device_type(self):
+        device_type = None
+        if self.actual_device:
+            device_type = self.actual_device.device_type
+        elif self.requested_device:
+            device_type = self.requested_device.device_type
+        elif self.requested_device_type:
+            device_type = self.requested_device_type
+        return device_type
 
     def cancel(self, user=None):
         """
@@ -2071,7 +2219,7 @@ class TestJob(RestrictedResource):
             logger.info("Completing cancel of %s" % self)
             self.status = TestJob.CANCELED
         if user:
-            self.failure_comment = "Canceled by %s" % user.username
+            self.set_failure_comment("Canceled by %s" % user.username)
         self.save()
 
     def _generate_summary_mail(self):
@@ -2144,6 +2292,15 @@ class TestJob(RestrictedResource):
                 settings.SERVER_EMAIL, recipients)
         except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused, socket.error):
             logger.info("unable to send email - recipient refused")
+
+    def set_failure_comment(self, message):
+        if not self.failure_comment:
+            self.failure_comment = message
+        elif message not in self.failure_comment:
+            self.failure_comment += message
+        else:
+            return
+        self.save(update_fields=['failure_comment'])
 
     @property
     def sub_jobs_list(self):

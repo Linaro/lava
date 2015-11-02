@@ -12,15 +12,14 @@ from lava_scheduler_app.models import (
     DevicesUnavailableException,
     _pipeline_protocols,
 )
-from django.db import models
-from django_testscenarios.ubertest import TestCase
-from django.contrib.auth.models import Group, Permission, User
+from django.contrib.auth.models import Group
 from collections import OrderedDict
 from lava_scheduler_app.utils import jinja_template_path, split_multinode_yaml
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
 from lava_dispatcher.pipeline.device import PipelineDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.action import JobError
+from lava_dispatcher.pipeline.actions.boot.qemu import BootQEMU
 
 
 # pylint: disable=too-many-ancestors,too-many-public-methods,invalid-name,no-member
@@ -49,15 +48,15 @@ class YamlFactory(ModelFactory):
             device_type = self.ensure_device_type()
         if hostname is None:
             hostname = self.getUniqueString()
-        if tags and type(tags) != list:
+        if tags and not isinstance(tags, list):
             tags = []
         # a hidden device type will override is_public
         device = Device(device_type=device_type, is_public=is_public, hostname=hostname, is_pipeline=True, **kw)
         self.make_fake_qemu_device(hostname)
         if tags:
             device.tags = tags
-        logging.debug("making a device of type %s %s %s with tags '%s'"
-                      % (device_type, device.is_public, device.hostname, ", ".join([x.name for x in device.tags.all()])))
+        logging.debug("making a device of type %s %s %s with tags '%s'",
+                      device_type, device.is_public, device.hostname, ", ".join([x.name for x in device.tags.all()]))
         device.save()
         return device
 
@@ -98,6 +97,8 @@ class PipelineDeviceTags(TestCaseWithFactory):
         self.assertNotIn('timeout', data)
         self.assertIn('timeouts', data)
         self.assertIn('job', data['timeouts'])
+        self.assertIn('context', data)
+        self.assertEqual(data['context']['arch'], self.conf['arch'])
 
     def test_make_device(self):
         hostname = 'fakeqemu3'
@@ -240,6 +241,158 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.assertTrue(device.is_pipeline)
         self.assertTrue(device.is_exclusive)
 
+    def test_context(self):
+        """
+        Test overrides using the job context
+
+        Defaults in the device-type can be overridden by the device dictionary.
+        If not overridden by the device dictionary, can be overridden by the job context.
+        If the
+        """
+        device = Device.objects.get(hostname="fakeqemu1")
+        user = self.factory.make_user()
+        job = TestJob.from_yaml_and_user(
+            self.factory.make_job_json(), user)
+        job_def = yaml.load(job.definition)
+        job_ctx = job_def.get('context', {})
+        device_config = device.load_device_configuration(job_ctx)  # raw dict
+        self.assertEqual(
+            device_config['actions']['boot']['methods']['qemu']['parameters']['command'],
+            'qemu-system-x86_64'
+        )
+        hostname = "fakemustang"
+        mustang_type = self.factory.make_device_type('mustang-uefi')
+        # this sets a qemu device dictionary, so replace it
+        self.factory.make_device(device_type=mustang_type, hostname=hostname)
+        mustang = DeviceDictionary(hostname=hostname)
+        mustang.parameters = {
+            'extends': 'mustang-uefi.yaml',
+            'base_nfsroot_args': '10.16.56.2:/home/lava/debian/nfs/,tcp,hard,intr',
+            'console_device': 'ttyO0',  # takes precedence over the job context as the same var name is used.
+        }
+        mustang.save()
+
+        device = Device.objects.get(hostname="fakemustang")
+        self.assertEqual('mustang-uefi', device.device_type.name)
+        self.assertTrue(device.is_pipeline)
+        job_ctx = {
+            'tftp_mac': 'FF:01:00:69:AA:CC',
+            'nfsroot_args': '172.164.56.2:/home/user/nfs/,tcp,hard,intr',
+            'console_device': 'ttyAMX0',
+        }
+        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+        self.assertIn('uefi-menu', device_config['actions']['boot']['methods'])
+        self.assertIn('nfs', device_config['actions']['boot']['methods']['uefi-menu'])
+        menu_data = device_config['actions']['boot']['methods']['uefi-menu']['nfs']
+        self.assertIn(
+            job_ctx['nfsroot_args'],
+            [item['select']['enter'] for item in menu_data if 'enter' in item['select'] and
+                'new Entry' in item['select']['wait']][0]
+        )
+        self.assertEqual(
+            [item['select']['items'][0] for item in menu_data if 'select' in item and
+                'items' in item['select'] and 'TFTP' in item['select']['items'][0]][0],
+            'TFTP on MAC Address: FF:01:00:69:AA:CC'  # matches the job_ctx
+        )
+        # note: the console_device and tftp_mac in the job_ctx has been *ignored* because the device type template
+        # has not allowed the job_ctx to use a different name for the variable and the variable is
+        # already defined in the device dictionary using the specified name. If the device dictionary lacked
+        # the variable, the job could set it to override the device type template default, as shown by the
+        # override of the base_nfsroot_args by allowing nfsroot_args in the device type template..
+        self.assertEqual(
+            [item['select']['enter'] for item in menu_data if 'select' in item and
+                'wait' in item['select'] and 'Description' in item['select']['wait']][0],
+            'console=ttyO0,115200 earlyprintk=uart8250-32bit,0x1c020000 debug '
+            'root=/dev/nfs rw 172.164.56.2:/home/user/nfs/,tcp,hard,intr ip=dhcp'
+        )
+
+    def test_visibility(self):
+        user = self.factory.make_user()
+        user2 = self.factory.make_user()
+        user3 = self.factory.make_user()
+
+        # public set in the YAML
+        yaml_str = self.factory.make_job_json()
+        yaml_data = yaml.load(yaml_str)
+        job = TestJob.from_yaml_and_user(
+            yaml_str, user)
+        self.assertTrue(job.is_public)
+        self.assertTrue(job.can_view(user))
+        self.assertTrue(job.can_view(user2))
+        self.assertTrue(job.can_view(user3))
+
+        yaml_data['visibility'] = 'personal'
+        self.assertEqual(yaml_data['visibility'], 'personal')
+        job2 = TestJob.from_yaml_and_user(
+            yaml.dump(yaml_data), user3)
+        self.assertFalse(job2.is_public)
+        self.assertFalse(job2.can_view(user))
+        self.assertFalse(job2.can_view(user2))
+        self.assertTrue(job2.can_view(user3))
+
+        group1, _ = Group.objects.get_or_create(name='group1')
+        group1.user_set.add(user2)
+        job2.viewing_groups.add(group1)
+        job2.visibility = TestJob.VISIBLE_GROUP
+        job2.save()
+        self.assertFalse(job2.is_public)
+        self.assertEqual(job2.visibility, TestJob.VISIBLE_GROUP)
+        self.assertEqual(len(job2.viewing_groups.all()), 1)
+        self.assertIn(group1, job2.viewing_groups.all())
+        self.assertTrue(job.can_view(user2))
+        self.assertFalse(job2.can_view(user))
+        self.assertTrue(job2.can_view(user3))
+
+    # FIXME: extend once the master validation code is exposed for unit tests
+    def test_compatibility(self):  # pylint: disable=too-many-locals
+        user = self.factory.make_user()
+        # public set in the YAML
+        yaml_str = self.factory.make_job_json()
+        yaml_data = yaml.load(yaml_str)
+        job = TestJob.from_yaml_and_user(
+            yaml_str, user)
+        self.assertTrue(job.is_public)
+        self.assertTrue(job.can_view(user))
+        # initial state prior to validation
+        self.assertEqual(job.pipeline_compatibility, 0)
+        self.assertNotIn('compatibility', yaml_data)
+        # FIXME: dispatcher master needs to make this kind of test more accessible.
+        definition = yaml.load(job.definition)
+        self.assertNotIn('protocols', definition)
+        job.actual_device = Device.objects.get(hostname='fakeqemu1')
+        job_def = yaml.load(job.definition)
+        job_ctx = job_def.get('context', {})
+        parser = JobParser()
+        device = job.actual_device
+
+        try:
+            device_config = device.load_device_configuration(job_ctx)  # raw dict
+        except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
+            # FIXME: report the exceptions as useful user messages
+            self.fail("[%d] jinja2 error: %s" % (job.id, exc))
+        if not device_config or not isinstance(device_config, dict):
+            # it is an error to have a pipeline device without a device dictionary as it will never get any jobs.
+            msg = "Administrative error. Device '%s' has no device dictionary." % device.hostname
+            self.fail('[%d] device-dictionary error: %s' % (job.id, msg))
+
+        device_object = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
+        # FIXME: drop this nasty hack once 'target' is dropped as a parameter
+        if 'target' not in device_object:
+            device_object.target = device.hostname
+        device_object['hostname'] = device.hostname
+
+        parser_device = device_object
+        try:
+            # pass (unused) output_dir just for validation as there is no zmq socket either.
+            pipeline_job = parser.parse(
+                job.definition, parser_device,
+                job.id, None, output_dir=job.output_dir)
+        except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
+            self.fail('[%s] parser error: %s' % (job.sub_id, exc))
+        description = pipeline_job.describe()
+        self.assertIn('compatibility', description)
+        self.assertEqual(description['compatibility'], BootQEMU.compatibility)
+
 
 class TestPipelineStore(TestCaseWithFactory):
 
@@ -308,8 +461,8 @@ class TestPipelineStore(TestCaseWithFactory):
             self.factory.make_job_json(), user)
         store = JobPipeline.get(job.id)
         scanned = yaml.load(result_sample)
-        if type(scanned) is list and len(scanned) == 1:
-            if 'results' in scanned[0] and type(scanned[0]) is dict:
+        if isinstance(scanned, list) and len(scanned) == 1:
+            if 'results' in scanned[0] and isinstance(scanned[0], dict):
                 store.pipeline.update({name: scanned[0]['results']})
                 # too often to save the results?
                 store.save()
@@ -353,13 +506,13 @@ class TestYamlMultinode(TestCaseWithFactory):
 
     def test_multinode_protocols(self):
         user = self.factory.make_user()
-        self.device_type = self.factory.make_device_type()
+        device_type = self.factory.make_device_type()
         submission = yaml.load(open(
             os.path.join(os.path.dirname(__file__), 'kvm-multinode.yaml'), 'r'))
         # no devices defined for the specified type
         self.assertRaises(DevicesUnavailableException, _pipeline_protocols, submission, user, yaml_data=None)
 
-        self.factory.make_device(self.device_type, 'fakeqemu1')
+        self.factory.make_device(device_type, 'fakeqemu1')
         # specified tags do not exist
         self.assertRaises(yaml.YAMLError, _pipeline_protocols, submission, user)
 
@@ -367,11 +520,11 @@ class TestYamlMultinode(TestCaseWithFactory):
             self.factory.ensure_tag('usb-flash'),
             self.factory.ensure_tag('usb-eth')
         ]
-        self.factory.make_device(self.device_type, 'fakeqemu2')
+        self.factory.make_device(device_type, 'fakeqemu2')
         # no devices which have the required tags applied
         self.assertRaises(DevicesUnavailableException, _pipeline_protocols, submission, user, yaml_data=None)
 
-        self.factory.make_device(self.device_type, 'fakeqemu3', tags=tag_list)
+        self.factory.make_device(device_type, 'fakeqemu3', tags=tag_list)
         job_object_list = _pipeline_protocols(submission, user)
         self.assertEqual(len(job_object_list), 2)
         for job in job_object_list:
@@ -393,15 +546,15 @@ class TestYamlMultinode(TestCaseWithFactory):
 
     def test_multinode_group(self):
         user = self.factory.make_user()
-        self.device_type = self.factory.make_device_type()
+        device_type = self.factory.make_device_type()
         submission = yaml.load(open(
             os.path.join(os.path.dirname(__file__), 'kvm-multinode.yaml'), 'r'))
-        self.factory.make_device(self.device_type, 'fakeqemu1')
+        self.factory.make_device(device_type, 'fakeqemu1')
         tag_list = [
             self.factory.ensure_tag('usb-flash'),
             self.factory.ensure_tag('usb-eth')
         ]
-        self.factory.make_device(self.device_type, 'fakeqemu2', tags=tag_list)
+        self.factory.make_device(device_type, 'fakeqemu2', tags=tag_list)
         job_object_list = _pipeline_protocols(submission, user, yaml.dump(submission))
         for job in job_object_list:
             self.assertEqual(list(job.sub_jobs_list), job_object_list)
@@ -434,16 +587,16 @@ class TestYamlMultinode(TestCaseWithFactory):
 
     def test_multinode_definition(self):
         user = self.factory.make_user()
-        self.device_type = self.factory.make_device_type()
+        device_type = self.factory.make_device_type()
         submission = yaml.load(open(
             os.path.join(os.path.dirname(__file__), 'kvm-multinode.yaml'), 'r'))
-        self.factory.make_device(self.device_type, 'fakeqemu1')
-        self.factory.make_device(self.device_type, 'fakeqemu2')
+        self.factory.make_device(device_type, 'fakeqemu1')
+        self.factory.make_device(device_type, 'fakeqemu2')
         tag_list = [
             self.factory.ensure_tag('usb-flash'),
             self.factory.ensure_tag('usb-eth')
         ]
-        self.factory.make_device(self.device_type, 'fakeqemu3', tags=tag_list)
+        self.factory.make_device(device_type, 'fakeqemu3', tags=tag_list)
         job_object_list = _pipeline_protocols(submission, user, None)
         for job in job_object_list:
             self.assertIsNotNone(job.multinode_definition)
@@ -456,9 +609,9 @@ class TestYamlMultinode(TestCaseWithFactory):
             self.assertIsNotNone(job.multinode_definition)
             self.assertIn('# unit test support comment', job.multinode_definition)
 
-    def test_invalid_multinode(self):
+    def test_invalid_multinode(self):  # pylint: disable=too-many-locals
         user = self.factory.make_user()
-        self.device_type = self.factory.make_device_type()
+        device_type = self.factory.make_device_type()
         submission = yaml.load(open(
             os.path.join(os.path.dirname(__file__), 'kvm-multinode.yaml'), 'r'))
 
@@ -466,13 +619,18 @@ class TestYamlMultinode(TestCaseWithFactory):
             self.factory.ensure_tag('usb-flash'),
             self.factory.ensure_tag('usb-eth')
         ]
-        self.factory.make_device(self.device_type, 'fakeqemu1')
-        self.factory.make_device(self.device_type, 'fakeqemu2')
-        self.factory.make_device(self.device_type, 'fakeqemu3', tags=tag_list)
+        self.factory.make_device(device_type, 'fakeqemu1')
+        self.factory.make_device(device_type, 'fakeqemu2')
+        self.factory.make_device(device_type, 'fakeqemu3', tags=tag_list)
         deploy = [action['deploy'] for action in submission['actions'] if 'deploy' in action]
         # replace working image with a broken URL
         for block in deploy:
-            block['image'] = 'http://localhost/unknown/invalid.gz'
+            block['images'] = {
+                'rootfs': {
+                    'url': 'http://localhost/unknown/invalid.gz',
+                    'image_arg': '{rootfs}'
+                }
+            }
         job_object_list = _pipeline_protocols(submission, user, yaml.dump(submission))
         self.assertEqual(len(job_object_list), 2)
         self.assertEqual(
@@ -496,7 +654,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                 except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
                     # FIXME: report the exceptions as useful user messages
                     self.fail("[%d] jinja2 error: %s" % (job.id, exc))
-                if not device_config or type(device_config) is not dict:
+                if not device_config or not isinstance(device_config, dict):
                     # it is an error to have a pipeline device without a device dictionary as it will never get any jobs.
                     msg = "Administrative error. Device '%s' has no device dictionary." % device.hostname
                     self.fail('[%d] device-dictionary error: %s' % (job.id, msg))

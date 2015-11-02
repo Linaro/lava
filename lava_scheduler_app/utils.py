@@ -20,6 +20,9 @@
 import os
 import re
 import copy
+import yaml
+import pprint
+import jinja2
 import socket
 import urlparse
 import simplejson
@@ -330,7 +333,7 @@ def installed_packages(prefix=None, package_name=None):
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         package_out, package_err = proc.communicate()
-        pack_re = re.compile("ii\s+(?P<package>\S+)\s+(?P<version>\S+)\s+.*",
+        pack_re = re.compile(r"ii\s+(?P<package>\S+)\s+(?P<version>\S+)\s+.*",
                              re.MULTILINE)
         for package in pack_re.findall(package_out):
             packages[package[0]] = package[1]
@@ -514,11 +517,12 @@ def devicedictionary_to_jinja2(data_dict, extends):
     """
     if type(data_dict) is not dict:
         return None
+    pp = pprint.PrettyPrinter(indent=0, width=80)  # simulate human readable input
     data = u'{%% extends \'%s\' %%}\n' % extends
     for key, value in data_dict.items():
         if key == 'extends':
             continue
-        data += u'{%% set %s = \'%s\' %%}\n' % (key, value)
+        data += u'{%% set %s = %s %%}\n' % (str(key), pp.pformat(value).strip())
     return data
 
 
@@ -530,6 +534,8 @@ def jinja2_to_devicedictionary(data_dict):
     if type(data_dict) is not str:
         return None
     data = {}
+    data_dict = data_dict.replace('\n', '')
+    data_dict = data_dict.replace('%}', '%}\n')
     for line in data_dict.replace('{% ', '').replace(' %}', '').split('\n'):
         if line == '':
             continue
@@ -541,8 +547,9 @@ def jinja2_to_devicedictionary(data_dict):
             key = line.replace('set ', '')
             key = re.sub(' = .*$', '', key)
             value = re.sub('^.* = ', '', line)
-            value = value.replace('"', "'").replace("'", '')
-            data[key] = value
+            data[key] = yaml.load(value)
+    if 'extends' not in data:
+        return None
     return data
 
 
@@ -557,6 +564,17 @@ def jinja_template_path(system=True):
     if not os.path.exists(path):
         raise RuntimeError("Misconfiguration of jinja templates")
     return path
+
+
+def prepare_jinja_template(hostname, jinja_data, system_path=True, path=None):
+    string_loader = jinja2.DictLoader({'%s.yaml' % hostname: jinja_data})
+    if not path:
+        path = jinja_template_path(system=system_path)
+    type_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
+    env = jinja2.Environment(
+        loader=jinja2.ChoiceLoader([string_loader, type_loader]),
+        trim_blocks=True)
+    return env.get_template("%s.yaml" % hostname)
 
 
 def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-branches,too-many-locals
@@ -581,6 +599,7 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
         'job_name',
         'timeouts',
         'priority',
+        'visibility',
     ]
     skip = ['role', 'roles']
     scheduling = ['device_type', 'connection', 'host_role']  # top level values to be preserved

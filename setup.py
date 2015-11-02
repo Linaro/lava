@@ -55,7 +55,7 @@ setup(
     install_requires=[
         'django >= 1.6.1',
         'django-openid-auth >= 0.5',
-        'django-restricted-resource >= 0.2.7',
+        'django-restricted-resource >= 2015.09',
         'django-tables2 >= 0.13.0',
         'docutils >= 0.6',
         'lava-tool >= 0.2',

@@ -25,11 +25,60 @@
       Unpublished
       {% endif %}
     </dd>
+    <dt>Content Type</dt>
+    <dd>
+      {{ query.content_type.name }}
+    </dd>
+    <dt>Last updated</dt>
+    <dd id="last_updated">
+      {% if query.is_live %}
+      Live query
+      {% else %}
+      {{ query.last_updated | default:"Never" }}
+      {% endif %}
+    </dd>
+
+    {% if query.is_published %}
+    <dt>Query Group label</dt>
+    <dd>
+      <a href="#">
+	<div id="query_group" style="float: left;">{{ query.query_group|default:"Click here to select"}}</div>
+      </a>
+
+      {% if query.query_group %}
+      <div id="group_link" class="group-link">
+	<a href="{% url 'lava_results_app.views.query.views.query_list' %}#{{ query.query_group|iriencode }}">Group link</a>
+      </div>
+      {% else %}
+      <div id="group_link" class="group-link" style="display: none;">
+	<a href="{% url 'lava_results_app.views.query.views.query_list' %}#">Group link</a>
+      </div>
+      {% endif %}
+      &nbsp;&nbsp;
+      <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="Collect similar reports into a single table on the image reports list.">?</button>
+
+    </dd>
+    <dt>Maintainer</dt>
+    <dd>
+      {{ query.owner }}&nbsp;&nbsp;
+      <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="User who created the query.">?</button>
+    </dd>
+
+    <dt>Group edit permission</dt>
+    <dd>
+      <a href="#">
+	<div id="group" style="float: left;">{{ query.group|default:"Click here to select"}}</div>
+      </a>
+      &nbsp;&nbsp;
+      <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="A group of users already listed on the Profile page.">?</button>
+      <div style="clear: both;"></div>
+    </dd>
+    {% endif %}
     <dt>Description</dt>
     <dd>
     {{ query.description|keep_spacing|linebreaks }}
     </dd>
-    </dl>    
+    </dl>
   </div>
 
   <div class="col-md-6">
@@ -45,7 +94,7 @@
       {% endif %}
       {% if request.user.is_authenticated %}
       <div class="btn-group">
-        <a href="{{ query.get_absolute_url }}/+copy" class="btn btn-default"><span class="glyphicon glyphicon-share"></span> Copy</a>
+        <a href="{{ query.get_absolute_url }}/+copy?conditions={{query_conditions}}" class="btn btn-success"><span class="glyphicon glyphicon-save"></span> Copy</a>
       </div>
       {% endif %}
       {% if query.owner == request.user or request.user.is_superuser %}
@@ -57,9 +106,19 @@
 	  Publish
 	  {% endif %}
 	</a>
-      </div>      
+      </div>
+      {% if not query.is_live %}
+      <div class="btn-group">
+        <a id="query_refresh" href="javascript: void(0);" class="btn btn-warning"><span class="glyphicon glyphicon-refresh"></span> Refresh</a>
+      </div>
+      {% endif %}
       {% endif %}
     </div>
+
+    <div id="refresh_loading_dialog">
+      <div>Refreshing query. Please wait.</div>
+    </div>
+
   </div>
 </div>
 
@@ -93,7 +152,7 @@
 	{{ condition.operator }}
       </td>
       <td>
-	{{ condition.value }}
+	{{ condition.value|safe }}
       </td>
       <td>
 	<a class="glyphicon glyphicon-edit" aria-hidden="true" href="javascript: void(0);" onclick="open_condition_modal('{{ query.name }}','{{ condition.id }}','{{ condition.table.id }}','{{ condition.field }}','{{ condition.operator }}','{{ condition.value }}');">
@@ -139,10 +198,73 @@
 
 {% block scripts %}
 <script type="text/javascript" src="{{ STATIC_URL }}lava_results_app/js/query.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script>
 <script type="text/javascript">
   csrf_token = '{{csrf_token}}';
   query_name = '{{ query.name }}';
   query_user = '{{ query.owner.username }}';
+  is_updating = '{{ query.is_updating }}';
+  condition_choices = JSON.parse($("#id_condition_choices").val());
+  initial_operators = Object();
+  $("#id_operator option").each(function() {
+    initial_operators[$(this).val()] = $(this).html();
+  });
 </script>
-{% endblock %}
 
+{% if query.is_published %}
+<script>
+  $("#query_group").editable(
+  "{% url 'lava_results_app.views.query.views.query_add_group' username=query.owner.username name=query.name %}",
+  {
+    onblur: "submit",
+    width: 200,
+    submitdata : {"csrfmiddlewaretoken": '{{csrf_token}}'},
+    callback: function(data) {
+      if(data != "") {
+        $("#group_link").show();
+        href = $("#group_link a:first-child").attr("href").split("#")[0] + "#";
+        $("#group_link a:first-child").attr("href", href + data);
+      } else {
+        $("#group_link").hide();
+      }
+    }
+  });
+
+  $("#query_group").on("click", function(event) {
+      var field = $(this).find("input");
+      {% if query.query_group == None %}
+        field.val("");
+      {% endif %}
+      field.select();
+      field.autocomplete({
+        source: '{% url 'lava_results_app.views.query.views.query_group_list' %}',
+        minLength: 2,
+      });
+  });
+
+
+  $("#group").editable(
+  "{% url 'lava_results_app.views.query.views.query_select_group' username=query.owner.username name=query.name %}",
+  {
+    onblur: "submit",
+    width: 200,
+    submitdata : {"csrfmiddlewaretoken": '{{csrf_token}}'},
+  });
+
+  $("#group").on("click", function(event) {
+      var field = $(this).find("input");
+      {% if query.group == None %}
+        field.val("");
+      {% endif %}
+      field.select();
+      field.autocomplete({
+        source: '{% url 'lava_results_app.views.query.views.get_group_names' %}',
+        minLength: 1,
+      });
+  });
+
+
+</script>
+{% endif %}
+
+{% endblock %}

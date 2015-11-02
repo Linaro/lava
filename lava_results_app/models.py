@@ -32,19 +32,89 @@ import yaml
 import urllib
 import logging
 
+from datetime import datetime, timedelta
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
-from django.db import models, IntegrityError
+from django.db import models, connection, IntegrityError
 from django.db.models import Q
+from django.db.models.fields import FieldDoesNotExist
 from django_restricted_resource.models import RestrictedResource
 from django.utils.translation import ugettext_lazy as _
+from django.utils import timezone
 
-from lava_scheduler_app.models import TestJob
+from lava.utils.managers import MaterializedView
+from lava_scheduler_app.models import (
+    TestJob,
+    Device,
+    DeviceType
+)
+from lava_scheduler_app.managers import (
+    RestrictedTestJobQuerySet,
+    RestrictedTestCaseQuerySet,
+    RestrictedTestSuiteQuerySet
+)
+
 from lava_results_app.utils import help_max_length
 
 # TODO: this may need to be ported - clashes if redefined
 from dashboard_app.models import NamedAttribute
+
+
+class QueryUpdatedError(Exception):
+    """ Error raised if query is updating or recently updated. """
+
+
+class RefreshLiveQueryError(Exception):
+    """ Error raised if refreshing the live query is attempted. """
+
+
+class QueryMaterializedView(MaterializedView):
+
+    class Meta:
+        abstract = True
+
+    CREATE_VIEW = "CREATE MATERIALIZED VIEW %s%s AS %s;"
+    DROP_VIEW = "DROP MATERIALIZED VIEW IF EXISTS %s%s;"
+    REFRESH_VIEW = "REFRESH MATERIALIZED VIEW %s%s;"
+    VIEW_EXISTS = "SELECT EXISTS(SELECT * FROM pg_class WHERE relname='%s%s');"
+    QUERY_VIEW_PREFIX = "query_"
+
+    @classmethod
+    def create(cls, query):
+        # Check if view for this query exists.
+        cursor = connection.cursor()
+        query_str = cls.VIEW_EXISTS % (cls.QUERY_VIEW_PREFIX, query.id)
+        cursor.execute(cls.VIEW_EXISTS % (cls.QUERY_VIEW_PREFIX, query.id))
+        view_exists = cursor.fetchone()[0]
+        if not view_exists:  # create view
+            sql, params = Query.get_queryset(
+                query.content_type,
+                query.querycondition_set.all()).query.sql_with_params()
+
+            sql = sql.replace("%s", "'%s'")
+            query_str = sql % params
+
+            # TODO: handle potential exceptions here. what to do if query
+            # view is not created? - new field update_status?
+            query_str = cls.CREATE_VIEW % (cls.QUERY_VIEW_PREFIX,
+                                           query.id, query_str)
+            cursor.execute(query_str)
+
+    @classmethod
+    def refresh(cls, query_id):
+        refresh_sql = cls.REFRESH_VIEW % (cls.QUERY_VIEW_PREFIX, query_id)
+        cursor = connection.cursor()
+        cursor.execute(refresh_sql)
+
+    @classmethod
+    def drop(cls, query_id):
+        drop_sql = cls.DROP_VIEW % (cls.QUERY_VIEW_PREFIX, query_id)
+        cursor = connection.cursor()
+        cursor.execute(drop_sql)
+
+    def get_queryset(self):
+        return QueryMaterializedView.objects.all()
 
 
 class TestSuite(models.Model):
@@ -53,9 +123,11 @@ class TestSuite(models.Model):
     Top level grouping of results from a job.
     Directly linked to a single TestJob, the job can have multiple TestSets.
     """
+
+    objects = models.Manager.from_queryset(RestrictedTestSuiteQuerySet)()
+
     job = models.ForeignKey(
         TestJob,
-        related_name='test_suites'
     )
     name = models.CharField(
         verbose_name=u'Suite name',
@@ -117,6 +189,9 @@ class TestCase(models.Model):
     Result of an individual test case.
     lava-test-case or action result
     """
+
+    objects = models.Manager.from_queryset(RestrictedTestCaseQuerySet)()
+
     RESULT_PASS = 0
     RESULT_FAIL = 1
     RESULT_SKIP = 2
@@ -136,6 +211,13 @@ class TestCase(models.Model):
         'unknown': RESULT_UNKNOWN
     }
 
+    RESULT_CHOICES = (
+        (RESULT_PASS, _(u"Test passed")),
+        (RESULT_FAIL, _(u"Test failed")),
+        (RESULT_SKIP, _(u"Test skipped")),
+        (RESULT_UNKNOWN, _(u"Unknown outcome"))
+    )
+
     name = models.TextField(
         blank=True,
         help_text=help_max_length(100),
@@ -153,11 +235,7 @@ class TestCase(models.Model):
     result = models.PositiveSmallIntegerField(
         verbose_name=_(u"Result"),
         help_text=_(u"Result classification to pass/fail group"),
-        choices=(
-            (RESULT_PASS, _(u"Test passed")),
-            (RESULT_FAIL, _(u"Test failed")),
-            (RESULT_SKIP, _(u"Test skipped")),
-            (RESULT_UNKNOWN, _(u"Unknown outcome")))
+        choices=RESULT_CHOICES
     )
 
     measurement = models.CharField(
@@ -178,7 +256,6 @@ class TestCase(models.Model):
 
     suite = models.ForeignKey(
         TestSuite,
-        related_name='test_cases'
     )
 
     test_set = models.ForeignKey(
@@ -341,7 +418,7 @@ class TestData(models.Model):
     available for result processing when the job is running.
     """
 
-    testjob = models.ForeignKey(TestJob, related_name='test_data')
+    testjob = models.ForeignKey(TestJob)
 
     # Attributes
 
@@ -421,12 +498,43 @@ class QueryGroup(models.Model):
         return self.name
 
 
-QUERY_CONTENT_TYPES = (
-    ("testjob", "lava_scheduler_app"),
-    ("testcase", "lava_results_app"),
-    ("testsuite", "lava_results_app"),
-    ("testset", "lava_results_app")
-)
+def TestJobViewFactory(query):
+
+    class TestJobMaterializedView(QueryMaterializedView, TestJob):
+
+        objects = models.Manager.from_queryset(RestrictedTestJobQuerySet)()
+
+        class Meta(QueryMaterializedView.Meta):
+            db_table = '%s%s' % (QueryMaterializedView.QUERY_VIEW_PREFIX,
+                                 query.id)
+
+    return TestJobMaterializedView()
+
+
+def TestCaseViewFactory(query):
+
+    class TestCaseMaterializedView(QueryMaterializedView, TestCase):
+
+        objects = models.Manager.from_queryset(RestrictedTestCaseQuerySet)()
+
+        class Meta(QueryMaterializedView.Meta):
+            db_table = '%s%s' % (QueryMaterializedView.QUERY_VIEW_PREFIX,
+                                 query.id)
+
+    return TestCaseMaterializedView()
+
+
+def TestSuiteViewFactory(query):
+
+    class TestSuiteMaterializedView(QueryMaterializedView, TestSuite):
+
+        objects = models.Manager.from_queryset(RestrictedTestSuiteQuerySet)()
+
+        class Meta(QueryMaterializedView.Meta):
+            db_table = '%s%s' % (QueryMaterializedView.QUERY_VIEW_PREFIX,
+                                 query.id)
+
+    return TestSuiteMaterializedView()
 
 
 class Query(models.Model):
@@ -454,7 +562,7 @@ class Query(models.Model):
 
     content_type = models.ForeignKey(
         ContentType,
-        limit_choices_to=Q(model__in=['testsuite', 'testset', 'testjob']) | (Q(app_label='lava_results_app') & Q(model='testcase')),
+        limit_choices_to=Q(model__in=['testsuite', 'testjob']) | (Q(app_label='lava_results_app') & Q(model='testcase')),
         verbose_name='Query object set'
     )
 
@@ -469,7 +577,23 @@ class Query(models.Model):
         default=False,
         verbose_name='Published')
 
-    # TODO: Check how this is done in image reports 2.0.
+    is_live = models.BooleanField(
+        default=False,
+        verbose_name='Live query')
+
+    is_changed = models.BooleanField(
+        default=False,
+        verbose_name='Live query')
+
+    is_updating = models.BooleanField(
+        default=False,
+        verbose_name='Live query')
+
+    last_updated = models.DateTimeField(
+        blank=True,
+        null=True
+    )
+
     group_by_attribute = models.CharField(
         blank=True,
         null=True,
@@ -486,51 +610,154 @@ class Query(models.Model):
     def __unicode__(self):
         return "<Query ~%s/%s>" % (self.owner.username, self.name)
 
-    @classmethod
-    def get_results(cls, content_type, conditions):
+    def get_results(self, user):
+        if self.is_live:
+            return Query.get_queryset(self.content_type,
+                                      self.querycondition_set.all()).visible_by_user(user)
+        else:
+            if self.content_type.model_class() == TestJob:
+                view = TestJobViewFactory(self)
+            elif self.content_type.model_class() == TestCase:
+                view = TestCaseViewFactory(self)
+            elif self.content_type.model_class() == TestSuite:
+                view = TestSuiteViewFactory(self)
 
+            return view.__class__.objects.all().visible_by_user(user)
+
+    @classmethod
+    def get_queryset(cls, content_type, conditions):
+        """ Return list of QuerySet objects for class 'content_type'.
+
+        Be mindful when using this method directly as it does not apply the
+        visibility rules.
+        """
+
+        logger = logging.getLogger('lava_results_app')
         filters = {}
 
         for condition in conditions:
 
-            # Handle different table conditions.
-            if condition.table != content_type:
-                filter_key = '{0}__{1}'.format(condition.table.model,
-                                               condition.field)
+            try:
+                relation_string = QueryCondition.RELATION_MAP[
+                    content_type.model_class()][condition.table.model_class()]
+            except KeyError:
+                logger.info('mapping unsupported for content types %s and %s!'
+                            % (content_type.model_class(),
+                               condition.table.model_class()))
+                raise
+
+            if condition.table.model_class() == NamedAttribute:
+                # For custom attributes, need two filters since
+                # we're comparing the key(name) and the value.
+                filter_key_name = '{0}__name'.format(relation_string,
+                                                     condition.field)
+                filter_key_value = '{0}__value'.format(relation_string,
+                                                       condition.field)
+
+                filter_key = '{0}__{1}'.format(filter_key, condition.operator)
+                filters[filter_key_name] = condition.field
+                filters[filter_key_value] = condition.value
+
             else:
-                filter_key = condition.field
-
-            # Handle conditions through foreign key.
-            fk_model = _get_foreign_key_model(condition.table.model_class(),
-                                              condition.field)
-            # FIXME: There might be some other models which don't have 'name'
-            # as the default search field.
-            if fk_model:
-                if fk_model.__name__ == "User":
-                    filter_key = '{0}__username'.format(filter_key)
-                elif fk_model.__name__ == "Device":
-                    filter_key = '{0}__hostname'.format(filter_key)
+                if condition.table == content_type:
+                    filter_key = condition.field
                 else:
-                    filter_key = '{0}__name'.format(filter_key)
+                    filter_key = '{0}__{1}'.format(relation_string,
+                                                   condition.field)
+                # Handle conditions through relations.
+                fk_model = _get_foreign_key_model(
+                    condition.table.model_class(),
+                    condition.field)
+                # FIXME: There might be some other related models which don't
+                # have 'name' as the default search field.
+                if fk_model:
+                    if fk_model == User:
+                        filter_key = '{0}__username'.format(filter_key)
+                    elif fk_model == Device:
+                        filter_key = '{0}__hostname'.format(filter_key)
+                    else:
+                        filter_key = '{0}__name'.format(filter_key)
 
-            # Handle conditions with choice fields.
-            condition_field_cls = condition.table.model_class()._meta.get_field_by_name(condition.field)[0]
-            if condition_field_cls.choices:
-                choices_reverse = dict(
-                    (value, key) for key, value in dict(
-                        condition_field_cls.choices).items())
-                try:
-                    condition.value = choices_reverse[condition.value]
-                except KeyError:
-                    raise QueryConditionChoiceError()
+                # Handle conditions with choice fields.
+                condition_field_obj = condition.table.model_class()._meta.\
+                    get_field_by_name(condition.field)[0]
+                if condition_field_obj.choices:
+                    choices_reverse = dict(
+                        (value, key) for key, value in dict(
+                            condition_field_obj.choices).items())
+                    try:
+                        condition.value = choices_reverse[condition.value]
+                    except KeyError:
+                        logger.error(
+                            'skip condition %s due to unsupported choice'
+                            % condition)
+                        continue
 
-            # Add operator.
-            filter_key = '{0}__{1}'.format(filter_key, condition.operator)
+                # Handle boolean conditions.
+                if condition_field_obj.__class__ == models.BooleanField:
+                    if condition.value == "False":
+                        condition.value = False
+                    else:
+                        condition.value = True
 
-            filters[filter_key] = condition.value
+                # Add operator.
+                filter_key = '{0}__{1}'.format(filter_key, condition.operator)
+
+                filters[filter_key] = condition.value
+
         query_results = content_type.model_class().objects.filter(
-            **filters)
+            **filters).distinct().extra(
+                select={'%s_ptr_id' % content_type.model:
+                        '%s.id' % content_type.model_class()._meta.db_table})
+
         return query_results
+
+    def refresh_view(self):
+
+        if not self.is_live:
+            hour_ago = timezone.now() - timedelta(hours=1)
+            if self.is_updating:
+                raise QueryUpdatedError("query is currently updating")
+            # TODO: commented out because of testing purposes.
+            # elif self.last_updated and self.last_updated > hour_ago:
+            #    raise QueryUpdatedError("query was recently updated (less then hour ago)")
+            else:
+                self.is_updating = True
+                self.save()
+
+            try:
+                if self.is_changed:
+                    QueryMaterializedView.drop(self.id)
+                    QueryMaterializedView.create(self)
+                else:
+                    QueryMaterializedView.refresh(self.id)
+
+                self.last_updated = datetime.utcnow()
+                self.is_changed = False
+
+            finally:
+                self.is_updating = False
+                self.save()
+        else:
+            raise RefreshLiveQueryError("Refreshing live query not permitted.")
+
+    def save(self, *args, **kwargs):
+        super(Query, self).save(*args, **kwargs)
+        if not self.is_live:
+            # Create the view. This method does nothing if view already exists.
+            QueryMaterializedView.create(self)
+
+    def delete(self, *args, **kwargs):
+        if not self.is_live:
+            # Drop the view.
+            QueryMaterializedView.drop(self.id)
+        super(Query, self).delete(*args, **kwargs)
+
+    def is_accessible_by(self, user):
+        if user.is_superuser or self.owner == user or \
+           self.group in user.groups.all():
+            return True
+        return False
 
     @models.permalink
     def get_absolute_url(self):
@@ -544,10 +771,34 @@ class QueryCondition(models.Model):
     table = models.ForeignKey(
         ContentType,
         limit_choices_to=Q(model__in=[
-            'testsuite', 'testset', 'testjob', 'namedattribute']) | (
+            'testsuite', 'testjob', 'namedattribute']) | (
                 Q(app_label='lava_results_app') & Q(model='testcase')),
         verbose_name='Condition model'
     )
+
+    # Map the relationship spanning.
+    RELATION_MAP = {
+        TestJob: {
+            TestJob: None,
+            TestSuite: 'testsuite',
+            TestCase: 'testsuite__testcase',
+            NamedAttribute: 'testdata__attributes',
+        },
+        TestSuite: {
+            TestJob: 'job',
+            TestCase: 'testcase',
+            TestSuite: None,
+            NamedAttribute:
+                'job__testdata__attributes',
+        },
+        TestCase: {
+            TestCase: None,
+            TestJob: 'suite__job',
+            TestSuite: 'suite',
+            NamedAttribute:
+                'suite__job__testdata__attributes',
+        }
+    }
 
     query = models.ForeignKey(
         Query,
@@ -558,26 +809,48 @@ class QueryCondition(models.Model):
         verbose_name='Field name'
     )
 
+    EXACT = 'exact'
+    IEXACT = 'iexact'
+    ICONTAINS = 'icontains'
+    GT = 'gt'
+    LT = 'lt'
+
+    OPERATOR_CHOICES = (
+        (EXACT, u"Exact match"),
+        (IEXACT, u"Case-insensitive match"),
+        (ICONTAINS, u"Contains"),
+        (GT, u"Greater than"),
+        (LT, u"Less than"),
+    )
+
     operator = models.CharField(
+        blank=False,
+        default=EXACT,
         verbose_name=_(u"Operator"),
         max_length=20,
-        choices=(
-            (u"exact", _(u"Exact match")),
-            (u"iexact", _(u"Case-insensitive match")),
-            (u"icontains", _(u"Contains")),
-            (u"gt", _(u"Greater than")),
-            (u"lt", _(u"Less than")),
-        )
+        choices=OPERATOR_CHOICES
     )
 
     value = models.CharField(
-        max_length=50,
+        max_length=40,
         verbose_name='Field value',
     )
 
+    def save(self, *args, **kwargs):
+        super(QueryCondition, self).save(*args, **kwargs)
+        if not self.query.is_live:
+            self.query.is_changed = True
+            self.query.save()
+
+    def delete(self, *args, **kwargs):
+        super(QueryCondition, self).delete(*args, **kwargs)
+        if not self.query.is_live:
+            self.query.is_changed = True
+            self.query.save()
+
 
 def _get_foreign_key_model(model, fieldname):
-    """ Returns model if field is foreign key, otherwise None. """
+    """ Returns model if field is a foreign key, otherwise None. """
     field_object, model, direct, m2m = model._meta.get_field_by_name(fieldname)
     if not m2m and direct and isinstance(field_object, models.ForeignKey):
         return field_object.rel.to

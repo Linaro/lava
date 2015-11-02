@@ -101,12 +101,15 @@ def help(request, mapper, template_name="linaro_django_xmlrpc/api.html"):
     scheme = request.META.get('REQUEST_SCHEME', "http")
     dashboard_methods = []
     scheduler_methods = []
+    results_methods = []
     system_methods = []
     for method in system.listMethods():
         if 'dashboard' in method:
             dashboard_methods.append(method)
         elif 'scheduler' in method:
             scheduler_methods.append(method)
+        elif 'results' in method:
+            results_methods.append(method)
         else:
             system_methods.append(method)
     methods = {
@@ -125,6 +128,14 @@ def help(request, mapper, template_name="linaro_django_xmlrpc/api.html"):
                 'help': system.methodHelp(method)
             }
             for method in scheduler_methods
+        ],
+        'results': [
+            {
+                'name': method,
+                'signature': system.methodSignature(method),
+                'help': system.methodHelp(method)
+            }
+            for method in results_methods
         ],
         'system': [
             {

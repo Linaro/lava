@@ -345,7 +345,7 @@ $(document).ready(function () {
             '<table id="outer-table"><tr><td>' +
                 '<table id="test-run-names_' + this.chart_id +
                 '" class="inner-table-names"><thead>' +
-                '<tr><th>Build Number</th></tr>' +
+                '<tr><th>Date</th></tr>' +
                 '</thead>' +
                 '<tbody></tbody></table></td>' +
                 '<td><div class="scroller">' +
@@ -378,7 +378,12 @@ $(document).ready(function () {
     ImageChart.prototype.add_table_data = function() {
 
         // Create row headlines.
-        table_rows = "<tr><td>Date</td></tr>";
+	has_build_number = this.chart_data.test_data[0]["number"].split(' ') > 1;
+	if (has_build_number) {
+            table_rows = "<tr><td>Build Number</td></tr>";
+	} else {
+	    table_rows = "";
+	}
 
         // Array with row names.
         rows = [];
@@ -464,8 +469,11 @@ $(document).ready(function () {
             table[number]["max_size"] = max_same_date_size;
             table[number]["date"] = test_data["date"];
             for (var i = 0; i < max_same_date_size; i++) {
-                table_head += '<th>' + number + '</th>';
-                table_body += '<td>' + number + '</td>';
+                table_head += '<th>' + table[number]["date"].split(' ')[0] +
+		    '</th>';
+		if (has_build_number) {
+                    table_body += '<td>' + number + '</td>';
+		}
             }
         }
 

@@ -603,16 +603,14 @@ def get_restricted_job(user, pk):
     accessibility to the object.
     """
     job = TestJob.get_by_job_number(pk)
-    if job.actual_device:
-        device_type = job.actual_device.device_type
-    elif job.requested_device:
-        device_type = job.requested_device.device_type
-    elif job.requested_device_type:
-        device_type = job.requested_device_type
-    else:
+    device_type = job.job_device_type()
+    if not device_type:
+        # dynamic connection - might need to still be restricted?
         return job
     if len(device_type.devices_visible_to(user)) == 0:
-            raise Http404()
+        raise Http404()
+    if job.can_view(user):
+        return job
     if not job.is_accessible_by(user) and not user.is_superuser:
         raise PermissionDenied()
     return job
@@ -1345,10 +1343,12 @@ def job_detail(request, pk):
 def job_definition(request, pk):
     job = get_restricted_job(request.user, pk)
     log_file = job.output_file()
+    description = description_data(job.id) if job.is_pipeline else {}
     return render_to_response(
         "lava_scheduler_app/job_definition.html",
         {
             'job': job,
+            'pipeline': description.get('pipeline', []),
             'job_file_present': bool(log_file),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(job_definition, pk=pk),
             'show_cancel': job.can_cancel(request.user),

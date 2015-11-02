@@ -68,6 +68,10 @@ print server.system.listMethods()
       {% for method in methods.scheduler %}
         [&nbsp;<a href="#{{method.name}}">{{ method.name }}</a>&nbsp;]
       {% endfor %}
+      <h2>Results</h2>
+      {% for method in methods.results %}
+        [&nbsp;<a href="#{{method.name}}">{{ method.name }}</a>&nbsp;]
+      {% endfor %}
       <h2>System and Authentication</h2>
       {% for method in methods.system %}
         [&nbsp;<a href="#{{method.name}}">{{ method.name }}</a>&nbsp;]
@@ -84,6 +88,15 @@ print server.system.listMethods()
 {% endfor %}
 
 {% for method in methods.scheduler %}
+    <hr/>
+<div id="{{ method.name }}">
+  <h3><a href="#{{method.name}}">{{ method.name }}</a></h3>
+  <div><pre>{{ method.help }}</pre></div>
+  <a href="#top">Available functions</a>
+</div>
+{% endfor %}
+
+{% for method in methods.results %}
     <hr/>
 <div id="{{ method.name }}">
   <h3><a href="#{{method.name}}">{{ method.name }}</a></h3>

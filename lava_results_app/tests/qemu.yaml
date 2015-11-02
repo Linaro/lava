@@ -9,6 +9,7 @@ timeouts:
   action:
     minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
 priority: medium
+visibility: public
 
 actions:
 
@@ -16,7 +17,10 @@ actions:
         timeout:
           minutes: 20
         to: tmpfs
-        image: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+        images:
+          rootfs:
+            url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+            image_arg: -drive format=raw,file={rootfs}
         compression: gz
         os: debian
         # if root_partition partition is not present:

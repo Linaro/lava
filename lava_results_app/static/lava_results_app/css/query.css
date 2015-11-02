@@ -9,3 +9,8 @@
     display: inline-block;
     margin-left: 10px;
 }
+
+.group-link {
+    margin: 0 0 0 10px;
+    float: left;
+}

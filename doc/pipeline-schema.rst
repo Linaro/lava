@@ -245,9 +245,40 @@ Same as the existing :term:`priority` support.
 Context
 -------
 
-.. warning:: Context handling may yet change. Currently, only QEMU
-   devices use a context where it is used to dictate which architecture
-   QEMU binary should be launched.
+Context allows individual jobs to override selected device configuration
+values. The fields which can and cannot be overridden are not (yet)
+obvious but include the architecture of the QEMU command and the console
+device and/or baud rate of other devices. It is also possible to override
+the NFS args and UEFI Menu selections. See :ref:`override_support`
+
+  context:
+    menu_interrupt_prompt: 'Default boot will start in'
+
+(The default values and which values can be overridden will be exposed
+in the next stages of development.)
+
+Some menu selections may embed device-specific information, e.g.::
+
+ -  'TFTP on MAC Address: 00:01:73:69:5A:EF'
+
+The MAC address is a fixed part of the device configuration for a
+particular physical interface on that device and therefore needs to be
+retained even if an update causes other elements of the menu to change.
+
+This is handled by asking the template to retain the MAC address
+specified for that device using a placeholder in the context specified
+in the job submission::
+
+  context:
+    mustang_menu_list:
+    # ... other menu entries
+    - 'item': "TFTP on MAC Address: tftp_mac"
+    # ... other menu entries
+
+Always take care to quote all strings containing a colon when using YAML.
+
+Details of which placeholders are available for which devices and which
+values has not yet been collated.
 
 .. _protocols_element:
 
