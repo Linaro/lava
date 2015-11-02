@@ -19,7 +19,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-"""Start the lava dispatcher and the zmq messager."""
+"""
+Start the lava dispatcher and the zmq messager.
+
+Slaves are allowed to connect over ZMQ but devices can only
+be assigned to known slaves by the admin of the instance
+(by selecting the worker_host for each pipeline device.
+Initially, the details of the workers will be configured
+via the current dispatcher support.
+"""
 
 import argparse
 import atexit
@@ -52,8 +60,9 @@ import zmq
 TIMEOUT = 5
 SEND_QUEUE = 10
 
-# FIXME: This is a temporary fix and the dir contents need to be assessed
-# whether they are useful (logs should go into /tmp or tmpfs) or not.
+# FIXME: This is a temporary fix until the overlay is sent to the master
+# The job.yaml and device.yaml are retained so that lava-dispatch can be re-run manually
+# (at least until the slave is rebooted).
 TMP_DIR = os.path.join(tempfile.gettempdir(), "lava-dispatcher/slave/")
 
 # Setup the log.
@@ -127,6 +136,15 @@ class Job(object):
         environ.update(conf.get("overrides", {}))
         return environ
 
+    def log_errors(self):
+        err_file = os.path.join(self.base_dir, "err")
+        msg = None
+        if os.stat(err_file).st_size != 0:
+            with open(err_file, 'r') as errlog:
+                msg = errlog.read()
+            LOG.exception(msg)
+        return msg
+
     def start(self):
         """Start the process."""
         out_file = os.path.join(self.base_dir, "out")
@@ -168,7 +186,6 @@ class Job(object):
             else:
                 LOG.exception(exc)
             with open(err_file, "a") as errlog:
-                # TODO: send something to the zmq LOG
                 errlog.write("%s\n%s\n" % (exc, traceback.format_exc()))
             self.cancel()
 
@@ -302,8 +319,10 @@ def main():
     jobs = {}
 
     LOG.info("Connecting to master as <%s>", host_name)
-    LOG.debug("Greeting the master => 'HELLO'")
-    sock.send_multipart(["HELLO"])
+    hello_msg = "HELLO"
+    retry_msg = "HELLO_RETRY"
+    LOG.debug("Greeting the master => '%s'", hello_msg)
+    sock.send_multipart([hello_msg])
 
     while True:
         try:
@@ -334,8 +353,8 @@ def main():
                 else:
                     LOG.info("Unexpected message from the master: %s", message)
 
-        LOG.debug("Sending new HELLO_RETRY message to the master")
-        sock.send_multipart(["HELLO_RETRY"])
+        LOG.debug("Sending new %s message to the master", retry_msg)
+        sock.send_multipart([retry_msg])
 
     # Loop for server instructions
     LOG.info("Waiting for master instructions")
@@ -359,7 +378,7 @@ def main():
             except (IndexError, TypeError):
                 LOG.error("Invalid message from the master: %s", msg)
                 continue
-            LOG.debug("Received action=%s, args=(%s)", action, msg[1:])
+            LOG.debug("Received action=%s", action)
 
             # Parse the action
             if action == "HELLO_OK":
@@ -493,6 +512,9 @@ def main():
                     job_status = jobs[job_id].proc.returncode
                     if job_status:
                         LOG.info("[%d] Job returned non-zero", job_id)
+                        errs = jobs[job_id].log_errors()
+                        if errs:
+                            sock.send_multipart(["ERROR", str(job_id), str(errs)])
 
                     jobs[job_id].running = False
                     sock.send_multipart(["END", str(job_id), str(job_status)])

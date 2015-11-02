@@ -1,0 +1,55 @@
+# Sample JOB definition for a KVM
+
+device_type: qemu
+
+job_name: qemu-arm-android-pipeline
+timeouts:
+  job:
+    minutes: 10            # timeout for the whole job (default: ??h)
+  action:
+    minutes: 2         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+
+priority: medium
+
+actions:
+
+    - deploy:
+        timeout:
+          minutes: 2
+        to: tmpfs
+        os: android
+        # if root_partition partition is not present:
+        # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
+        # - look into device configuration
+        root_partition: 1
+        images:
+          kernel:
+            url: http://images.validation.linaro.org/pipeline/vexpress/zImage
+            image_arg: -kernel {kernel} -append "root=/dev/ram0 console=ttyAMA0 115200 androidboot.hardware=vexpress qemu=1"
+          ramdisk:
+            url: http://images.validation.linaro.org/pipeline/vexpress/ramdisk.img
+            image_arg: -initrd {ramdisk}
+          dtb:
+            url: http://images.validation.linaro.org/pipeline/vexpress/vexpress-v2p-ca15-tc1.dtb
+            image_arg: -dtb {dtb}
+          system:
+            url: http://images.validation.linaro.org/pipeline/vexpress/system.img
+            image_arg: -device virtio-blk-device,drive=system -drive if=mtd,id=system,file={system}
+          userdata:
+            url: http://images.validation.linaro.org/pipeline/vexpress/userdata.img
+            image_arg: -device virtio-blk-device,drive=userdata -drive if=mtd,id=userdata,file={userdata}
+          cache:
+            url: http://images.validation.linaro.org/pipeline/vexpress/cache.img
+            image_arg: -device virtio-blk-device,drive=cache -drive if=mtd,id=cache,file={cache}
+
+    - boot:
+        method: qemu
+        media: tmpfs
+        timeout:
+          minutes: 5
+
+    - submit_results:
+        stream: /anonymous/codehelp/
+
+context:
+  arch: arm

@@ -187,7 +187,8 @@ class BootloaderTarget(MasterImageTarget):
                         else:
                             load_addr = self.config.u_load_addrs[0]
                         kernel = create_uimage(kernel, load_addr,
-                                               self._tmpdir, self.config.uimage_xip)
+                                               self._tmpdir, self.config.uimage_xip,
+                                               self.config.uimage_arch)
                         logging.info('uImage created successfully')
                     else:
                         logging.error('Undefined u_load_addrs, aborting uImage creation')
@@ -212,8 +213,8 @@ class BootloaderTarget(MasterImageTarget):
                     if not self._is_uboot_ramdisk(ramdisk):
                         ramdisk_uboot = ramdisk + ".uboot"
                         logging.info("RAMdisk needs u-boot header.  Adding.")
-                        cmd = "mkimage -A arm -T ramdisk -C none -d %s %s > /dev/null" \
-                            % (ramdisk, ramdisk_uboot)
+                        cmd = "mkimage -A %s -T ramdisk -C none -d %s %s > /dev/null" \
+                            % (self.config.uimage_arch, ramdisk, ramdisk_uboot)
                         r = subprocess.call(cmd, shell=True)
                         if r == 0:
                             ramdisk = ramdisk_uboot

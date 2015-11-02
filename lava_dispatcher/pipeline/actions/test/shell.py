@@ -18,17 +18,30 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import copy
 import logging
 import pexpect
 from collections import OrderedDict
-from lava_dispatcher.pipeline.actions.test import handle_testcase, TestAction
+
+from lava_dispatcher.pipeline.actions.test import (
+    TestAction,
+    handle_testcase
+)
 from lava_dispatcher.pipeline.action import (
     InfrastructureError,
     Pipeline,
     JobError,
 )
-from lava_dispatcher.pipeline.logical import LavaTest, RetryAction
-from lava_dispatcher.pipeline.connection import BaseSignalHandler, SignalMatch
+from lava_dispatcher.pipeline.logical import (
+    LavaTest,
+    RetryAction
+)
+from lava_dispatcher.pipeline.connection import (
+    BaseSignalHandler,
+    SignalMatch
+)
+
+# pylint: disable=too-many-branches,too-many-statements,too-many-instance-attributes
 
 
 class TestShell(LavaTest):
@@ -70,8 +83,8 @@ class TestShellAction(TestAction):
         self.signal_director = self.SignalDirector(None)  # no default protocol
         self.patterns = {}
         self.match = SignalMatch()
-        self.suite = None
-        self.testset = None
+        self.definition = None
+        self.testset_name = None  # FIXME
         self.report = {}
 
     def validate(self):
@@ -156,16 +169,19 @@ class TestShellAction(TestAction):
         ret_val = False
         if event == "exit":
             self.logger.info("ok: lava_test_shell seems to have completed")
+            self.testset_name = None
 
         elif event == "eof":
             self.logger.warning("err: lava_test_shell connection dropped")
             self.errors = "lava_test_shell connection dropped"
+            self.testset_name = None
 
         elif event == "timeout":
             # if target.is_booted():
             #    target.reset_boot()
             self.logger.warning("err: lava_test_shell has timed out")
             self.errors = "lava_test_shell has timed out"
+            self.testset_name = None
 
         elif event == "signal":
             name, params = test_connection.match.groups()
@@ -173,8 +189,8 @@ class TestShellAction(TestAction):
             params = params.split()
             if name == "STARTRUN":
                 self.signal_director.test_uuid = params[1]
-                self.suite = params[0]
-                self.logger.debug("Starting test suite: %s" % self.suite)
+                self.definition = params[0]
+                self.logger.debug("Starting test definition: %s" % self.definition)
             #    self._handle_testrun(params)
             elif name == "TESTCASE":
                 data = handle_testcase(params)
@@ -187,14 +203,43 @@ class TestShellAction(TestAction):
                 # prevent losing data in the update
                 # FIXME: support parameters and retries
                 if res["test_case_id"] in p_res:
-                    raise JobError("Duplicate test_case_id in results: %s", res["test_case_id"])
-                # turn the result dict inside out to get the unique test_case_id as key and result as value
-                self.logger.results({
-                    'testsuite': self.suite,
-                    res["test_case_id"]: res["result"]})
-                self.report.update({
-                    res["test_case_id"]: res["result"]
-                })
+                    raise JobError(
+                        "Duplicate test_case_id in results: %s",
+                        res["test_case_id"])
+
+                # turn the result dict inside out to get the unique
+                # test_case_id/testset_name as key and result as value
+                if self.testset_name:
+                    self.logger.debug("result: %s" % res)
+                    self.logger.results({
+                        'test_definition': self.definition,
+                        'test_set': self.testset_name,
+                        res["test_case_id"]: res["result"]})
+                    self.report.update({
+                        'test_set': self.testset_name,
+                        res["test_case_id"]: res["result"]
+                    })
+                else:
+                    self.logger.debug("result: %s" % res)
+                    self.logger.results({
+                        'test_definition': self.definition,
+                        res["test_case_id"]: res["result"]})
+                    self.report.update({
+                        res["test_case_id"]: res["result"]
+                    })
+            elif name == "TESTSET":
+                action = params.pop(0)
+                if action == "START":
+                    name = "testset_" + action.lower()
+                    try:
+                        self.testset_name = params[0]
+                    except IndexError:
+                        raise JobError("Test set declared without a name")
+                    self.logger.info("Starting test_set %s", self.testset_name)
+                elif action == "STOP":
+                    self.logger.info("Closing test_set %s", self.testset_name)
+                    self.testset_name = None
+                    name = "testset_" + action.lower()
 
             try:
                 self.signal_director.signal(name, params)
@@ -261,7 +306,7 @@ class TestShellAction(TestAction):
                     # Without python support for switch, this gets harder to read than using
                     # a getattr lookup for the callable (codehelp). So disable checkers:
                     # noinspection PyCallingNonCallable
-                    handler(*params)  # pylint: disable=star-args
+                    handler(*params)
                 except KeyboardInterrupt:
                     raise KeyboardInterrupt
                 except TypeError as exc:
@@ -273,6 +318,12 @@ class TestShellAction(TestAction):
                 return True
 
         def postprocess_bundle(self, bundle):
+            pass
+
+        def _on_testset_start(self, set_name):
+            pass
+
+        def _on_testset_stop(self):
             pass
 
         def _on_startrun(self, test_run_id, uuid):  # pylint: disable=unused-argument

@@ -215,4 +215,4 @@ class lxc(BaseDriver):
 
     def finalize(self, proc):
         logging.info("Finalizing lxc session %s", self.session)
-        subprocess.check_call(['lxc-stop', '-n', self.container])
+        subprocess.check_call(['lxc-stop', '-n', self.container, '-k'])

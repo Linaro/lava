@@ -33,6 +33,7 @@ import bz2
 import contextlib
 import lzma
 import zlib
+import shutil
 from lava_dispatcher.pipeline.action import (
     Action,
     JobError,
@@ -68,7 +69,10 @@ class DownloaderAction(RetryAction):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
 
         # Find the right action according to the url
-        url = urlparse.urlparse(parameters[self.key])
+        if 'images' in parameters:
+            url = urlparse.urlparse(parameters['images'][self.key]['url'])
+        else:
+            url = urlparse.urlparse(parameters[self.key])
         if url.scheme == 'scp':
             action = ScpDownloadAction(self.key, self.path, url)
         elif url.scheme == 'http' or url.scheme == 'https':
@@ -122,8 +126,15 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
     @contextlib.contextmanager
     def _decompressor_stream(self):
         dwnld_file = None
-        compression = self.parameters.get('compression', False)
+        compression = False
+        if 'images' in self.parameters:
+            compression = self.parameters['images'][self.key].get('compression', False)
         fname, _ = self._url_to_fname_suffix(self.path, compression)
+
+        if os.path.exists(fname):
+            nested_tmp_dir = os.path.join(self.path, self.key)
+            os.makedirs(nested_tmp_dir)
+            fname = os.path.join(nested_tmp_dir, os.path.basename(fname))
 
         decompressor = None
         if compression:
@@ -139,7 +150,11 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
 
         def write(buff):
             if decompressor:
-                buff = decompressor.decompress(buff)
+                try:
+                    buff = decompressor.decompress(buff)
+                except zlib.error as exc:
+                    self.logger.exception(exc)
+                    raise JobError(exc)
             dwnld_file.write(buff)
 
         try:
@@ -151,13 +166,27 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
 
     def validate(self):
         super(DownloadHandler, self).validate()
-        self.url = urlparse.urlparse(self.parameters[self.key])
-        compression = self.parameters.get('compression', False)
-        fname, _ = self._url_to_fname_suffix(self.path, compression)
-
         self.data.setdefault('download_action', {self.key: {}})
-        self.data['download_action'][self.key] = {'file': fname}
+        if 'images' in self.parameters:
+            image = self.parameters['images'][self.key]
+            self.url = urlparse.urlparse(image['url'])
+            compression = image.get('compression', None)
+            image_name, _ = self._url_to_fname_suffix(self.path, compression)
+            image_arg = image.get('image_arg', None)
+            overlay = image.get('overlay', False)
 
+            self.data['download_action'].setdefault(self.key, {})
+            self.data['download_action'][self.key]['file'] = image_name
+            self.data['download_action'][self.key]['image_arg'] = image_arg
+        else:
+            self.url = urlparse.urlparse(self.parameters[self.key])
+            compression = self.parameters.get('compression', False)
+            overlay = self.parameters.get('overlay', False)
+            fname, _ = self._url_to_fname_suffix(self.path, compression)
+            self.data['download_action'][self.key] = {'file': fname}
+
+        if overlay:
+            self.data['download_action'][self.key]['overlay'] = overlay
         if compression:
             if compression not in ['gz', 'bz2', 'xz']:
                 self.errors = "Unknown 'compression' format '%s'" % compression
@@ -181,7 +210,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         md5 = hashlib.md5()
         sha256 = hashlib.sha256()
         with self._decompressor_stream() as (writer, fname):
-            self.logger.info("downloading %s as %s" % (self.parameters[self.key], fname))
+            remote = self.parameters['images'][self.key] if 'images' in self.parameters else self.parameters[self.key]
+            self.logger.info("downloading %s as %s" % (remote, fname))
 
             downloaded_size = 0
             beginning = time.time()
@@ -213,11 +243,9 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                               round(downloaded_size / (1024 * 1024 * (ending - beginning)), 2)))
 
         # set the dynamic data into the context
-        self.data['download_action'][self.key] = {
-            'file': fname,
-            'md5': md5.hexdigest(),
-            'sha256': sha256.hexdigest()
-        }
+        self.data['download_action'][self.key]['file'] = fname
+        self.data['download_action'][self.key]['md5'] = md5.hexdigest()
+        self.data['download_action'][self.key]['sha256'] = sha256.hexdigest()
         # certain deployments need prefixes set
         if self.parameters['to'] == 'tftp':
             suffix = self.data['tftp-deploy'].get('suffix', '')

@@ -25,6 +25,7 @@ import yaml
 import base64
 import hashlib
 import tarfile
+import shutil
 from uuid import uuid4
 from collections import OrderedDict
 from nose.tools import nottest
@@ -260,6 +261,11 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         runner_path = self.data['test'][self.uuid]['overlay_path'][self.parameters['test_name']]
         if os.path.exists(runner_path) and os.listdir(runner_path) == []:
             raise RuntimeError("Directory already exists and is not empty - duplicate Action?")
+
+        # Clear the data
+        if os.path.exists(runner_path):
+            shutil.rmtree(runner_path)
+
         commit_id = self.vcs.clone(runner_path, self.parameters.get('revision', None))
         if commit_id is None:
             raise RuntimeError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))

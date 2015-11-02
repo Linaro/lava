@@ -1,0 +1,48 @@
+device_type: qemu
+
+actions:
+  deploy:
+    methods:
+      image:
+        parameters:
+          root_part: 1
+  boot:
+    methods:
+      qemu:
+        parameters:
+          command:
+            qemu-system-arm
+          boot_options:
+            root: /dev/ram0
+            console: console=ttyAMA0 115200 androidboot.hardware=vexpress qemu=1
+          options:
+            - -nographic
+            - -M vexpress-a15
+            - -smp 2
+            - -net nic -net user
+            - -m 1024
+            - -no-reboot
+
+timeouts:
+  apply-overlay-image:
+    minutes: 2
+  umount-retry:
+    seconds: 57
+  lava-test-shell:
+    seconds: 30
+
+
+test_image_prompts:
+  # TODO: we should'nt need such a long list
+  - '\(initramfs\)'
+  - '/ #'
+  - 'root@android'
+  - 'root@linaro'
+  - 'root@master'
+  - 'root@debian'
+  - 'root@linaro-nano:~#'
+  - 'root@linaro-developer:~#'
+  - 'root@linaro-server:~#'
+  - 'root@genericarmv7a:~#'
+  - 'root@genericarmv8:~#'
+  - 'shell@vexpress'

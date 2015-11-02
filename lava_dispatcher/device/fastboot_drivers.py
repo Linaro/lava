@@ -69,6 +69,9 @@ class FastBoot(object):
         except subprocess.CalledProcessError:
             # Now a more brute force attempt. In this case the device is
             # probably hung.
+            if self.device.config.pre_power_cmd:
+                self.context.run_command(self.device.config.pre_power_cmd,
+                                         failok=True)
             if self.device.config.hard_reset_command:
                 logging.debug("Will hard reset the device")
                 self.context.run_command(self.device.config.hard_reset_command)
@@ -245,7 +248,8 @@ class BaseDriver(object):
                     self._kernel = create_uimage(self._kernel,
                                                  load_addr,
                                                  self.working_dir,
-                                                 self.config.uimage_xip)
+                                                 self.config.uimage_xip,
+                                                 self.config.uimage_arch)
             else:
                 raise CriticalError('Kernel load address not defined!')
         elif self.config.boot_fat_image_only:
@@ -312,17 +316,18 @@ class BaseDriver(object):
     @contextmanager
     def adb_file_system(self, partition, directory):
 
-        mount_point = self._get_partition_mount_point(partition)
+        with self.context.client.android_tester_session() as session:
+            mount_point = self._get_partition_mount_point(partition)
 
-        host_dir = '%s/mnt/%s' % (self.working_dir, directory)
-        target_dir = '%s/%s' % (mount_point, directory)
+            host_dir = '%s/mnt/%s' % (self.working_dir, directory)
+            target_dir = '%s/%s' % (mount_point, directory)
 
-        subprocess.check_call(['mkdir', '-p', host_dir])
-        self.adb('pull %s %s' % (target_dir, host_dir), ignore_failure=True)
+            subprocess.check_call(['mkdir', '-p', host_dir])
+            self.adb('pull %s %s' % (target_dir, host_dir), ignore_failure=True)
 
-        yield host_dir
+            yield host_dir
 
-        self.adb('push %s %s' % (host_dir, target_dir))
+            self.adb('push %s %s' % (host_dir, target_dir))
 
     # Private Methods
 

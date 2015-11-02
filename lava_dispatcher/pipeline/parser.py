@@ -26,6 +26,7 @@ from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,
     Timeout,
+    JobError,
 )
 from lava_dispatcher.pipeline.logical import (
     Deployment,
@@ -129,8 +130,9 @@ class JobParser(object):
         job.parameters['output_dir'] = output_dir
         job.parameters['env_dut'] = env_dut
         job.parameters['target'] = device.target
-        for instance in Protocol.select_all(job.parameters):
-            job.protocols.append(instance(job.parameters))
+        level_tuple = Protocol.select_all(job.parameters)
+        # sort the list of protocol objects by the protocol class level.
+        job.protocols = [item[0](job.parameters) for item in sorted(level_tuple, key=lambda level_tuple: level_tuple[1])]
         pipeline = Pipeline(job=job)
         self._timeouts(data, job)
 
@@ -184,4 +186,12 @@ class JobParser(object):
         pipeline.add_action(FinalizeAction())
         data['output_dir'] = output_dir
         job.set_pipeline(pipeline)
+        if 'compatibility' in data:
+            try:
+                job_c = int(job.compatibility)
+                data_c = int(data['compatibility'])
+            except ValueError as exc:
+                raise JobError('invalid compatibility value: %s' % exc)
+            if job_c < data_c:
+                raise JobError('Dispatcher unable to meet job compatibility requirement. %d > %d' % (job_c, data_c))
         return job

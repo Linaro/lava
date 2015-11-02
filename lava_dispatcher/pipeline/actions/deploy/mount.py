@@ -51,13 +51,13 @@ class OffsetAction(DeployAction):
     def validate(self):
         if 'download_action' not in self.data:
             self.errors = "missing download_action in parameters"
-        elif 'file' not in self.data['download_action']['image']:
+        elif 'file' not in self.data['download_action'][self.key]:
             self.errors = "no file specified to calculate offset"
 
     def run(self, connection, args=None):
         if 'download_action' not in self.data:
             raise RuntimeError("Missing download action")
-        if 'offset' in self.data['download_action']:
+        if 'offset' in self.data['download_action'][self.key]:
             # idempotency
             return connection
         connection = super(OffsetAction, self).run(connection, args)
@@ -82,8 +82,8 @@ class OffsetAction(DeployAction):
         for line in part_data.splitlines():
             found = re.match(pattern, line)
             if found:
-                self.data['download_action']['offset'] = found.group(1)
-        if 'offset' not in self.data['download_action']:
+                self.data['download_action'][self.key]['offset'] = found.group(1)
+        if 'offset' not in self.data['download_action'][self.key]:
             raise JobError(  # FIXME: JobError needs a unit test
                 "Unable to determine offset for %s" % image
             )
@@ -92,11 +92,12 @@ class OffsetAction(DeployAction):
 
 class LoopCheckAction(DeployAction):
 
-    def __init__(self):
+    def __init__(self, key):
         super(LoopCheckAction, self).__init__()
         self.name = "loop_check"
         self.description = "ensure a loop back mount operation is possible"
         self.summary = "check available loop back support"
+        self.key = key
 
     def validate(self):
         if 'download_action' not in self.data:
@@ -106,16 +107,16 @@ class LoopCheckAction(DeployAction):
             raise InfrastructureError("Could not mount the image without loopback devices. "
                                       "Is the 'loop' kernel module activated?")
         available_loops = len(glob.glob('/sys/block/loop*'))
-        self.data['download_action']['available_loops'] = available_loops
+        self.data['download_action'][self.key]['available_loops'] = available_loops
 
     def run(self, connection, args=None):
         connection = super(LoopCheckAction, self).run(connection, args)
-        if 'available_loops' not in self.data['download_action']:
+        if 'available_loops' not in self.data['download_action'][self.key]:
             raise RuntimeError("Unable to check available loop devices")
         args = ['/sbin/losetup', '-a']
         pro = self.run_command(args)
         mounted_loops = len(pro.strip().split("\n")) if pro else 0
-        available_loops = self.data['download_action']['available_loops']
+        available_loops = self.data['download_action'][self.key]['available_loops']
         # FIXME: we should retry as this can happen and be fixed automatically
         # when one is unmounted
         if mounted_loops >= available_loops:
@@ -133,7 +134,7 @@ class LoopMountAction(RetryAction):
     again in the test shell.
     """
 
-    def __init__(self):
+    def __init__(self, key):
         super(LoopMountAction, self).__init__()
         self.name = "loop_mount"
         self.description = "Mount using a loopback device and offset"
@@ -141,6 +142,7 @@ class LoopMountAction(RetryAction):
         self.retries = 10
         self.sleep = 10
         self.mntdir = None
+        self.key = key
 
     def validate(self):
         self.data[self.name] = {}
@@ -149,7 +151,7 @@ class LoopMountAction(RetryAction):
             raise RuntimeError("download-action missing: %s" % self.name)
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
         self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
-        if 'file' not in self.data['download_action']['image']:
+        if 'file' not in self.data['download_action'][self.key]:
             self.errors = "no file specified to mount"
 
     def run(self, connection, args=None):
@@ -160,8 +162,8 @@ class LoopMountAction(RetryAction):
         mount_cmd = [
             'mount',
             '-o',
-            'loop,offset=%s' % self.data['download_action']['offset'],
-            self.data['download_action']['image']['file'],
+            'loop,offset=%s' % self.data['download_action'][self.key]['offset'],
+            self.data['download_action'][self.key]['file'],
             self.data[self.name]['mntdir']
         ]
         command_output = self.run_command(mount_cmd)
@@ -188,11 +190,12 @@ class MountAction(DeployAction):
     an OffsetAction, LoopCheckAction, LoopMountAction
     """
 
-    def __init__(self):
+    def __init__(self, key):
         super(MountAction, self).__init__()
         self.name = "mount_action"
         self.description = "mount with offset"
         self.summary = "mount loop"
+        self.key = key
 
     def validate(self):
         if not self.job:
@@ -209,10 +212,10 @@ class MountAction(DeployAction):
             raise RuntimeError("No job object supplied to action")
         # FIXME: not all mount operations will need these actions
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.internal_pipeline.add_action(OffsetAction('image'))
+        self.internal_pipeline.add_action(OffsetAction(self.key))
         # FIXME: LoopCheckAction and LoopMountAction should be in only one Action
-        self.internal_pipeline.add_action(LoopCheckAction())
-        self.internal_pipeline.add_action(LoopMountAction())
+        self.internal_pipeline.add_action(LoopCheckAction(self.key))
+        self.internal_pipeline.add_action(LoopMountAction(self.key))
 
 
 class UnmountAction(RetryAction):

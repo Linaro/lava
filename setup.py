@@ -49,6 +49,7 @@ setup(
             'lava_test_shell/lava-test-case-metadata',
             'lava_test_shell/lava-test-run-attach',
             'lava_test_shell/lava-test-runner',
+            'lava_test_shell/lava-test-set',
             'lava_test_shell/lava-test-shell',
             'lava_test_shell/multi_node/*',
             'lava_test_shell/lmp/*',

@@ -52,6 +52,9 @@ class Removable(Deployment):
     configuration and specifying a restricted UUID will invalidate the job to protect the bootloader.
 
     """
+
+    compatibility = 1
+
     def __init__(self, parent, parameters):
         super(Removable, self).__init__(parent)
         self.action = MassStorage()
