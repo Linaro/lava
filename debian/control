@@ -29,6 +29,7 @@ Multi-Arch: foreign
 Recommends: ntp, bzr, git, htop, tftpd-hpa, openbsd-inetd,
  qemu-system-x86 (>= 2.0.0) [amd64], qemu-system-x86 (>= 2.0.0) [i386],
  qemu-system-arm (>= 2.0.0) [armhf],
+ android-tools-adb, android-tools-fastboot,
  libguestfs-tools [amd64], libguestfs-tools [i386],
  nfs-kernel-server, python-launchpadlib, rpcbind,
  python-setproctitle, u-boot-tools, unzip, xz-utils, lxc, bridge-utils
