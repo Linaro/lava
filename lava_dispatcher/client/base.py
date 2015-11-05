@@ -234,7 +234,9 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
         if self._client.target_device.config.android_adb_over_tcp:
             self._setup_adb_over_tcp()
         elif self._client.target_device.config.android_adb_over_usb:
-            self._setup_adb_over_usb()
+            # Nothing to do here. If in the future we decide to dynamically
+            # determine a usb serial number, this would be the place to do it.
+            pass
         else:
             raise CriticalError('ADB not configured for TCP or USB')
 
@@ -256,12 +258,6 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
             pass
         self.android_adb_over_tcp_connect()
         self.wait_until_attached()
-
-    def _setup_adb_over_usb(self):
-        self.run(
-            'getprop ro.serialno',
-            response=self._client.target_device.config.android_serialno_patterns)
-        self.dev_name = self.match.group(0)
 
     def disconnect(self):
         if self._client.target_device.config.android_adb_over_tcp:
