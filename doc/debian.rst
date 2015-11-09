@@ -240,6 +240,11 @@ files is done using :file:`share/javascript.py`. Other distribution
 builds are invited to use the same script or provide patches if the
 paths within the script need modification.
 
+After 2015.12 release, all of the .min.js files in the package are removed from
+VCS and minified files are created at build time. Templates in the system use
+only minified versions of the javascript files so after the release package
+rebuild will be mandatory.
+
 .. _javascript_security:
 
 Javascript and security

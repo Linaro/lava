@@ -197,8 +197,8 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_results_app/js/query.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_results_app/js/query.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.min.js"></script>
 <script type="text/javascript">
   csrf_token = '{{csrf_token}}';
   query_name = '{{ query.name }}';

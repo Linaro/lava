@@ -80,10 +80,10 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery-linedtextarea.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery-linedtextarea.min.js"></script>
 <script type="text/javascript">
   var remote_json_url = '{% url 'lava.scheduler.get_remote_json' %}';
 </script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/beautify.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/job-submit.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/beautify.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/job-submit.min.js"></script>
 {% endblock %}

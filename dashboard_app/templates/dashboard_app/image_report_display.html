@@ -33,14 +33,14 @@ Report Group:&nbsp;&nbsp;<a href="{% url 'dashboard_app.views.image_reports.view
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ STATIC_URL }}dashboard_app/js/image-chart.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/image-chart.min.js"></script>
 <script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.min.js"></script>
 <script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.canvas.min.js"></script>
 <script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.dashes.min.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.axislabels.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.axislabels.min.js"></script>
 <script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.navigate.js"></script>
 <script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.time.js"></script>
-<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.labels.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.labels.min.js"></script>
 
 <script>
   chart_data = $.parseJSON($('<div/>').html('{{chart_data|make_jquery_safe|escapejs}}').text());
