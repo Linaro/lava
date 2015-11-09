@@ -247,8 +247,9 @@ def select_device(job):
         try:
             device_config = device.load_device_configuration(job_ctx)  # raw dict
         except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
-            # FIXME: report the exceptions as useful user messages
             logger.error("[%d] jinja2 error: %s" % (job.id, exc))
+            msg = "Administrative error. Unable to parse '%s'" % exc
+            fail_job(job, fail_msg=msg)
             return None
         if not device_config or type(device_config) is not dict:
             # it is an error to have a pipeline device without a device dictionary as it will never get any jobs.
