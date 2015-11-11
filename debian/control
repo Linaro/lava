@@ -81,7 +81,7 @@ Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
  django-testscenarios, pep8, android-tools-adb, android-tools-fastboot,
  python | python-all | python-dev | python-all-dev,
  python-sphinx (>= 1.0.7+dfsg) | python3-sphinx, po-debconf,
- python-mocker, python-setuptools, python-versiontools,
+ python-mocker, python-setuptools, python-versiontools, python-yaml,
  docbook-xsl, xsltproc,
  ${misc:Depends}
 Recommends: sbuild, python-django-extensions, python-pydot
