@@ -564,7 +564,6 @@ class TestRunView(BundleStreamView):
             "test",
             "bundle",
             "bundle__bundle_stream",
-            "test_results"
         ).only(
             "analyzer_assigned_uuid",  # needed by TestRun.__unicode__
             "analyzer_assigned_date",  # used by the view
@@ -817,7 +816,7 @@ def test_result_detail(request, pathname, content_sha1, analyzer_assigned_uuid, 
         analyzer_assigned_uuid=analyzer_assigned_uuid
     )
     try:
-        test_result = test_run.test_results.select_related('fig').get(relative_index=relative_index)
+        test_result = test_run.test_results.select_related('test_run').get(relative_index=relative_index)
     except TestResult.DoesNotExist:
         raise Http404
     return render_to_response(
@@ -846,7 +845,7 @@ def test_result_update_comments(request, pathname, content_sha1,
         analyzer_assigned_uuid=analyzer_assigned_uuid
     )
     try:
-        test_result = test_run.test_results.select_related('fig').get(
+        test_result = test_run.test_results.select_related('test').get(
             relative_index=relative_index)
     except TestResult.DoesNotExist:
         raise Http404
@@ -870,7 +869,7 @@ def test_result_update_units(request, pathname, content_sha1,
         analyzer_assigned_uuid=analyzer_assigned_uuid
     )
     try:
-        test_case = test_run.test_results.select_related('fig').get(
+        test_case = test_run.test_results.select_related('test').get(
             relative_index=relative_index).test_case
     except TestResult.DoesNotExist:
         raise Http404
@@ -894,7 +893,7 @@ def test_result_update_attribute(request, pathname, content_sha1,
         analyzer_assigned_uuid=analyzer_assigned_uuid
     )
     try:
-        test_result = test_run.test_results.select_related('fig').get(
+        test_result = test_run.test_results.select_related('test').get(
             relative_index=relative_index)
     except TestResult.DoesNotExist:
         raise Http404

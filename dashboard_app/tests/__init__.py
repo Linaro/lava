@@ -6,7 +6,6 @@ import logging
 import unittest
 
 TEST_MODULES = [
-    'models.test_attachment',
     'models.test_bundle',
     'models.test_bundle_deserialization_error',
     'models.test_bundle_stream',

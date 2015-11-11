@@ -186,6 +186,8 @@ class DatabaseJobSource(object):
         return self.deferToThread(wrapper, *args, **kw)
 
     def _commit_transaction(self, src=None):
+        if connection.in_atomic_block:
+            return
         for retry in range(MAX_RETRIES):
             try:
                 transaction.commit()
@@ -480,7 +482,8 @@ class DatabaseJobSource(object):
 
         my_ready_jobs = filter(lambda job: job.is_ready_to_start, my_submitted_jobs)
 
-        self._commit_transaction(src='getJobList_impl')
+        if not connection.in_atomic_block:
+            self._commit_transaction(src='getJobList_impl')
         return my_ready_jobs
 
     def getJobList(self):

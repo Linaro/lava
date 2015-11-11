@@ -632,7 +632,7 @@ def filter_device_types(user):
     return visible
 
 
-class SumIfSQL(models.sql.aggregates.Aggregate):
+class SumIfSQL(models.aggregates.Aggregate):
     is_ordinal = True
     sql_function = 'SUM'
     sql_template = 'SUM((%(condition)s)::int)'
