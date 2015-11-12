@@ -63,7 +63,7 @@ class QueryConditionForm(forms.ModelForm):
 
     class Meta:
         model = QueryCondition
-        fields = []
+        fields = ('table', 'query', 'field', 'operator', 'value')
         widgets = {
             'query': forms.HiddenInput,
         }
