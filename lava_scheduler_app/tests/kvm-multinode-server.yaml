@@ -44,6 +44,7 @@ actions:
         media: tmpfs
         failure_retry: 2
         role: server
+        prompts: "root@debian:"
 
     - test:
         failure_retry: 3
