@@ -42,7 +42,7 @@ class CSRFConfigurationTestCase(CSRFTestCase):
 
     def setUp(self):
         super(CSRFConfigurationTestCase, self).setUp()
-        self.form_path = reverse(test_form)
+        self.form_path = reverse(test_form, urlconf=self.urls)
 
     def test_csrf_token_present_in_form(self):
         if django.VERSION[:2] == (1, 1):

@@ -38,8 +38,9 @@ class YamlFactory(ModelFactory):
         qemu.save()
 
     def make_device_type(self, name='qemu', health_check_job=None):
-        device_type = DeviceType.objects.create(
-            name=name, health_check_job=health_check_job)
+
+        device_type = DeviceType.objects.get_or_create(
+            name=name, health_check_job=health_check_job)[0]
         device_type.save()
         return device_type
 
@@ -123,6 +124,7 @@ class PipelineDeviceTags(TestCaseWithFactory):
         self.assertIn('usb', data['tags'])
 
     def test_undefined_tags(self):
+        Tag.objects.all().delete()
         self.factory.make_device(self.device_type, 'fakeqemu1')
         self.assertRaises(
             yaml.YAMLError,
@@ -507,6 +509,8 @@ class TestYamlMultinode(TestCaseWithFactory):
     def test_multinode_protocols(self):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type()
+        Device.objects.filter(device_type=device_type).delete()
+        Tag.objects.all().delete()
         submission = yaml.load(open(
             os.path.join(os.path.dirname(__file__), 'kvm-multinode.yaml'), 'r'))
         # no devices defined for the specified type

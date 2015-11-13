@@ -709,6 +709,7 @@ class BundleDeserializerAtomicityTestCase(TransactionTestCase):
 
     def setUp(self):
         super(BundleDeserializerAtomicityTestCase, self).setUp()
+        Bundle.objects.all().delete()
         self.s_bundle = fixtures.create_bundle(
             '/anonymous/', self.json_text, 'bundle.json')
 

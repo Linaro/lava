@@ -181,6 +181,10 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 
+MIGRATION_MODULES = {
+    'django_openid_auth': 'django_openid_auth.migrations'
+}
+
 OPENID_CREATE_USERS = True
 OPENID_LAUNCHPAD_TEAMS_MAPPING_AUTO = False
 OPENID_UPDATE_DETAILS_FROM_SREG = True

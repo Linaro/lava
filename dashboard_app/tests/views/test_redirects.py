@@ -51,12 +51,15 @@ class RedirectTests(TestCase):
         self.bundle = fixtures.create_bundle(self._PATHNAME, self._BUNDLE_TEXT, self._BUNDLE_NAME)
         self.bundle.deserialize()
         self.assertTrue(self.bundle.is_deserialized)
+        if not hasattr(self, 'client') and hasattr(self, 'client_class'):
+            self.client = self.client_class()
 
     def test_bundle_permalink(self):
         response = self.client.get(
             reverse("dashboard_app.views.redirect_to_bundle",
                     args=(self.bundle.content_sha1, )))
         self.assertRedirects(response, self.bundle.get_absolute_url())
+        self.bundle.delete()
 
     def test_bundle_permalink_trailing(self):
         response = self.client.get(
@@ -65,6 +68,7 @@ class RedirectTests(TestCase):
         self.assertRedirects(
             response, self.bundle.get_absolute_url() + 'trailing/',
             target_status_code=404)
+        self.bundle.delete()
 
     def test_bundle_permalink_query_string(self):
         response = self.client.get(
@@ -72,6 +76,7 @@ class RedirectTests(TestCase):
                     args=(self.bundle.content_sha1, )), data={'foo': 'bar'})
         self.assertRedirects(
             response, self.bundle.get_absolute_url() + '?foo=bar')
+        self.bundle.delete()
 
     def test_test_run_permalink(self):
         test_run = self.bundle.test_runs.all()[0]
@@ -79,6 +84,7 @@ class RedirectTests(TestCase):
             reverse("dashboard_app.views.redirect_to_test_run",
                     args=(test_run.analyzer_assigned_uuid, )))
         self.assertRedirects(response, test_run.get_absolute_url())
+        self.bundle.delete()
 
     def test_test_run_permalink_trailing(self):
         test_run = self.bundle.test_runs.all()[0]
@@ -88,6 +94,7 @@ class RedirectTests(TestCase):
         self.assertRedirects(
             response, test_run.get_absolute_url() + 'trailing/',
             target_status_code=404)
+        self.bundle.delete()
 
     def test_test_run_permalink_query_string(self):
         test_run = self.bundle.test_runs.all()[0]
@@ -97,6 +104,7 @@ class RedirectTests(TestCase):
             data={'foo': 'bar'})
         self.assertRedirects(
             response, test_run.get_absolute_url() + '?foo=bar')
+        self.bundle.delete()
 
     def test_test_result_permalink(self):
         test_run = self.bundle.test_runs.all()[0]
@@ -106,6 +114,7 @@ class RedirectTests(TestCase):
                     args=(test_run.analyzer_assigned_uuid,
                           test_result.relative_index)))
         self.assertRedirects(response, test_result.get_absolute_url())
+        self.bundle.delete()
 
     def test_test_result_permalink_trailing(self):
         test_run = self.bundle.test_runs.all()[0]
@@ -117,6 +126,7 @@ class RedirectTests(TestCase):
         self.assertRedirects(
             response, test_result.get_absolute_url() + 'trailing/',
             target_status_code=404)
+        self.bundle.delete()
 
     def test_test_result_permalink_query_string(self):
         test_run = self.bundle.test_runs.all()[0]
@@ -128,3 +138,4 @@ class RedirectTests(TestCase):
             data={'foo': 'bar'})
         self.assertRedirects(
             response, test_result.get_absolute_url() + '?foo=bar')
+        self.bundle.delete()
