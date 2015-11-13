@@ -1,13 +1,12 @@
+commands:
+    connect: adb -s R32D300FRYP shell
+    soft_reboot: adb -s R32D300FRYP reboot bootloader
 device_type: nexus10
 serial_number: R32D300FRYP
 
-commands:
-  connect: adb -s R32D300FRYP shell
-  soft_reboot: adb -s R32D300FRYP reboot bootloader
 
 actions:
   deploy:
-    # list of deployment methods which this device supports
     methods:
       fastboot:
     connections:
@@ -18,3 +17,13 @@ actions:
       adb:
     methods:
       fastboot:
+
+timeouts:
+  apply-overlay-image:
+    seconds: 120
+  umount-retry:
+    seconds: 45
+  lava-test-shell:
+    seconds: 30
+  power_off:
+    seconds: 5
