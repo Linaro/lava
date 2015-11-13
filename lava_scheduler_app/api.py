@@ -596,11 +596,11 @@ class SchedulerAPI(ExposedAPI):
 
         data = devicedictionary_to_jinja2(element.parameters,
                                           element.parameters['extends'])
-        template = prepare_jinja_template(device.hostname, data, system_path=True)
+        template = prepare_jinja_template(device_hostname, data, system_path=True)
         device_configuration = template.render()
 
         # validate against the device schema
-        validate_device(device_configuration)
+        validate_device(yaml.load(device_configuration))
 
         return xmlrpclib.Binary(device_configuration.encode('UTF-8'))
 
