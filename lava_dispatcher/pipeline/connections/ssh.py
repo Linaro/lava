@@ -145,7 +145,7 @@ class ConnectSsh(Action):
         connection = SShSession(self.job, shell)
         connection = super(ConnectSsh, self).run(connection, args)
         if not connection.prompt_str:
-            connection.prompt_str = self.job.device['test_image_prompts']
+            connection.prompt_str = self.parameters['prompts']
         connection.connected = True
         self.wait(connection)
         self.data["boot-result"] = 'success'

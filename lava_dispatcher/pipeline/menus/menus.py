@@ -132,7 +132,7 @@ class MenuConnect(ConnectDevice):
             raise RuntimeError("%s needs a Connection")
         connection.check_char = '\n'
         connection.sendline('\n')  # to catch the first prompt (remove for PDU?)
-        connection.prompt_str = self.job.device['test_image_prompts']
+        connection.prompt_str = self.parameters['prompts']
         if self.job.device.power_state not in ['on', 'off']:
             self.wait(connection)
         return connection

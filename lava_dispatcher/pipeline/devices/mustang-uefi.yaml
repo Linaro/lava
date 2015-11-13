@@ -120,17 +120,3 @@ actions:
         - select:
             items:
               - LAVA NFS Test Image
-
-test_image_prompts:
-  - '(initramfs)'
-  - 'linaro-test'
-  - '/ #'
-  - 'root@android'
-  - 'root@linaro'
-  - 'root@master'
-  - 'root@debian'
-  - 'root@linaro-nano:~#'
-  - 'root@linaro-developer:~#'
-  - 'root@linaro-server:~#'
-  - 'root@genericarmv7a:~#'
-  - 'root@genericarmv8:~#'

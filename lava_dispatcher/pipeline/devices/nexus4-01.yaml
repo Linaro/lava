@@ -19,7 +19,3 @@ actions:
     methods:
       fastboot:
 
-test_image_prompts:
-  - 'shell@mako:/ $'
-  - 'shell@mako'
-

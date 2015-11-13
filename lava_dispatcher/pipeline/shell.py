@@ -187,7 +187,7 @@ class ShellSession(Connection):
             # device = self.device
             spawned_shell = self.raw_connection  # ShellCommand(pexpect.spawn)
             # FIXME: the prompts should not be needed here, only kvm uses these. Remove.
-            # prompt_str = device['test_image_prompts']  # FIXME: deployment_data?
+            # prompt_str = parameters['prompts']
             prompt_str_includes_rc = True  # FIXME - parameters['deployment_data']['TESTER_PS1_INCLUDES_RC']?
 #            prompt_str_includes_rc = device.config.tester_ps1_includes_rc
             # The Connection for a CommandRunner in the pipeline needs to be a ShellCommand, not logging_spawn
@@ -203,9 +203,8 @@ class ShellSession(Connection):
         Yields the actual connection which can be used to interact inside this shell.
         """
         if self.__runner__ is None:
-            # device = self.device
             spawned_shell = self.raw_connection  # ShellCommand(pexpect.spawn)
-            # prompt_str = device['test_image_prompts']
+            # prompt_str = parameters['prompts']
             prompt_str_includes_rc = True  # FIXME - do we need this?
 #            prompt_str_includes_rc = device.config.tester_ps1_includes_rc
             # The Connection for a CommandRunner in the pipeline needs to be a ShellCommand, not logging_spawn
@@ -238,14 +237,13 @@ class ExpectShellSession(Action):
 
     def validate(self):
         super(ExpectShellSession, self).validate()
-        if 'test_image_prompts' not in self.job.device:
-            self.errors = "Unable to identify test image prompts from device configuration."
+        if 'prompts' not in self.parameters:
+            self.errors = "Unable to identify test image prompts from parameters."
 
     def run(self, connection, args=None):
         connection = super(ExpectShellSession, self).run(connection, args)
-        # FIXME: It should be deleted as fast as we remove test_image_prompts.
         if not connection.prompt_str:
-            connection.prompt_str = self.job.device['test_image_prompts']
+            connection.prompt_str = self.parameters['prompts']
         self.logger.debug("%s: Waiting for prompt", self.name)
         self.wait(connection)  # FIXME: should this be a regular RetryAction operation?
         return connection

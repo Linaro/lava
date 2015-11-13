@@ -20,6 +20,7 @@
 
 import signal
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
+from lava_dispatcher.pipeline.utils.constants import DEFAULT_SHELL_PROMPT
 from lava_dispatcher.pipeline.action import (
     Action,
     JobError,
@@ -49,8 +50,6 @@ class ConnectDevice(Action):
         if 'connect' not in self.job.device['commands']:
             self.errors = "Unable to connect to device %s - missing connect command." % self.job.device.hostname
             return
-        if 'test_image_prompts' not in self.job.device:
-            self.errors = "Unable to identify test image prompts from device configuration."
         command = self.job.device['commands']['connect']
         exe = ''
         try:
@@ -58,14 +57,13 @@ class ConnectDevice(Action):
         except AttributeError:
             self.errors = "Unable to parse the connection command %s" % command
         self.errors = infrastructure_error(exe)
-        # FIXME: this improves speed but relies on using ser2net
-        # self.job.device['test_image_prompts'].append('ser2net port')
 
     def run(self, connection, args=None):
         if connection:
             self.logger.debug("Already connected")
             if not connection.prompt_str:
-                connection.prompt_str = self.job.device['test_image_prompts']
+                # prompt_str can be a list or str
+                connection.prompt_str = [DEFAULT_SHELL_PROMPT]
             return connection
         command = self.job.device['commands']['connect'][:]  # local copy to retain idempotency.
         self.logger.info("%s Connecting to device using '%s'", self.name, command)
@@ -78,11 +76,8 @@ class ConnectDevice(Action):
         connection = self.session_class(self.job, shell)
         connection.connected = True
         connection = super(ConnectDevice, self).run(connection, args)
-        # append ser2net port to the prompt_str
-        # FIXME: this improves speed but relies on using ser2net
         if not connection.prompt_str:
-            connection.prompt_str = self.job.device['test_image_prompts']
-        connection.prompt_str.append('ser2net port')
+            connection.prompt_str = [DEFAULT_SHELL_PROMPT]
         return connection
         # # if the board is running, wait for a prompt - if not, skip.
         # if self.job.device.power_state is 'off':

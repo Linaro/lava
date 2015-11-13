@@ -40,6 +40,7 @@ from lava_dispatcher.pipeline.connection import (
     BaseSignalHandler,
     SignalMatch
 )
+from lava_dispatcher.pipeline.utils.constants import DEFAULT_SHELL_PROMPT
 
 # pylint: disable=too-many-branches,too-many-statements,too-many-instance-attributes
 
@@ -88,8 +89,6 @@ class TestShellAction(TestAction):
         self.report = {}
 
     def validate(self):
-        if "test_image_prompts" not in self.job.device:
-            self.errors = "Unable to identify test image prompts from device configuration."
         if "definitions" in self.parameters:
             for testdef in self.parameters["definitions"]:
                 if "repository" not in testdef:
@@ -128,7 +127,7 @@ class TestShellAction(TestAction):
         self.logger.info("Executing test definitions using %s" % connection.name)
         self.logger.debug("Setting default test shell prompt")
         if not connection.prompt_str:
-            connection.prompt_str = self.job.device["test_image_prompts"]
+            connection.prompt_str = [DEFAULT_SHELL_PROMPT]
         self.logger.debug("Setting default timeout: %s" % self.timeout.duration)
         connection.timeout = self.timeout
         self.wait(connection)

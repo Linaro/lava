@@ -112,8 +112,8 @@ class CallQemuAction(Action):
 
     def validate(self):
         super(CallQemuAction, self).validate()
-        if 'test_image_prompts' not in self.job.device:
-            self.errors = "Unable to identify test image prompts from device configuration."
+        if 'prompts' not in self.parameters:
+            self.errors = "Unable to identify boot prompts from job definition."
         if 'download_action' not in self.data:
             self.errors = "No download_action data"
         try:
@@ -160,7 +160,7 @@ class CallQemuAction(Action):
 
         shell_connection = ShellSession(self.job, shell)
         if not shell_connection.prompt_str:
-            shell_connection.prompt_str = self.job.device['test_image_prompts']
+            shell_connection.prompt_str = self.parameters['prompts']
         shell_connection = super(CallQemuAction, self).run(shell_connection, args)
 
         # FIXME: tests with multiple boots need to be handled too.

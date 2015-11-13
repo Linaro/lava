@@ -18,6 +18,3 @@ actions:
       adb:
     methods:
       fastboot:
-
-test_image_prompts:
-  - 'shell@manta'
