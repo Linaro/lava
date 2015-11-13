@@ -20,6 +20,7 @@
 
 import os
 import lzma
+import shutil
 import tarfile
 import contextlib
 import subprocess
@@ -375,7 +376,7 @@ class CompressRamdisk(Action):
                 raise RuntimeError("Unable to add uboot header to ramdisk")
             final_file = ramdisk_uboot
 
-        os.rename(final_file, os.path.join(tftp_dir, os.path.basename(final_file)))
+        shutil.move(final_file, os.path.join(tftp_dir, os.path.basename(final_file)))
         self.logger.debug("rename %s to %s" % (
             final_file, os.path.join(tftp_dir, os.path.basename(final_file))
         ))
