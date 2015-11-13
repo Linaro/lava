@@ -80,6 +80,9 @@ commands:
 {% if hard_reset_command %}
     hard_reset: {{ hard_reset_command }}
 {% endif -%}
+{% if soft_reboot_command %}
+    soft_reboot: {{ soft_reboot_command }}
+{% endif -%}
 {% if power_off_command %}
     power_off: {{ power_off_command }}
 {% endif %}
