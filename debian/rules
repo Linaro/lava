@@ -51,15 +51,8 @@ override_dh_auto_install:
 	mv debian/lava-server/usr/bin/lava-mount-masterfs debian/lava-server/usr/sbin/
 	# skip unwanted licence file specified in copyright
 	$(RM) debian/lava-server/usr/lib/python2.7/dist-packages/google_analytics/LICENSE
-	# handle setuptools symlink breakage
-	mv debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/htdocs/ debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/lava-server
 	# handle embedded JS
 	python ./share/javascript.py -f ./share/javascript.yaml --remove
-	# Remove obsolete htdocs
-	$(RM) -r debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/htdocs/
-	# handle symlink breakage
-	$(RM) -r ./debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/lava-server/htdocs
-	ln -s ./debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/lava-server/htdocs ./debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/lava-server/
 
 override_dh_auto_clean:
 	dh_auto_clean
