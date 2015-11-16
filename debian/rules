@@ -46,8 +46,6 @@ override_dh_auto_install:
 	dh_installman -plava-server man/_build/man/lava-server.1
 	dh_installman -plava-server man/_build/man/lava-daemon.1
 	[ ! -f man/_build/man/lava-master.1 ] || dh_installman -plava-server man/_build/man/lava-master.1
-	# Remove obsolete htdocs
-	$(RM) -r mv debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/htdocs/
 	# move ssfs script to /usr/sbin
 	mkdir debian/lava-server/usr/sbin/
 	mv debian/lava-server/usr/bin/lava-mount-masterfs debian/lava-server/usr/sbin/
@@ -55,6 +53,8 @@ override_dh_auto_install:
 	$(RM) debian/lava-server/usr/lib/python2.7/dist-packages/google_analytics/LICENSE
 	# handle embedded JS
 	python ./share/javascript.py -f ./share/javascript.yaml --remove
+	# Remove obsolete htdocs
+	$(RM) -r debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/htdocs/
 	# handle symlink breakage
 	$(RM) -r ./debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/lava-server/htdocs
 	ln -s ./debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/lava-server/htdocs ./debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/lava-server/
