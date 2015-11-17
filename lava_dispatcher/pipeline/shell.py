@@ -228,6 +228,7 @@ class ExpectShellSession(Action):
     The shell connection can be over any particular connection,
     all that is needed is a prompt.
     """
+    compatibility = 2
 
     def __init__(self):
         super(ExpectShellSession, self).__init__()

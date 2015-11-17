@@ -29,7 +29,7 @@ from lava_dispatcher.pipeline.action import Pipeline, Action, JobError
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.device import NewDevice
-from lava_dispatcher.pipeline.actions.deploy.image import DeployImages
+from lava_dispatcher.pipeline.shell import ExpectShellSession
 
 
 class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -287,11 +287,17 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
                     self.assertNotIn('match', element)
 
     def test_compatibility(self):
+        """
+        Test compatibility support.
+
+        The class to use in the comparison will change according to which class
+        is related to the change which caused the compatibility to be modified.
+        """
         factory = Factory()
         job = factory.create_kvm_job('sample_jobs/kvm.yaml', mkdtemp())
         pipe = job.describe()
-        self.assertEqual(pipe['compatibility'], DeployImages.compatibility)
-        self.assertEqual(job.compatibility, DeployImages.compatibility)
+        self.assertEqual(pipe['compatibility'], ExpectShellSession.compatibility)
+        self.assertEqual(job.compatibility, ExpectShellSession.compatibility)
         kvm_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/kvm.yaml')
         job_def = yaml.load(open(kvm_yaml, 'r'))
         job_def['compatibility'] = job.compatibility

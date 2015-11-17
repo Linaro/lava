@@ -54,12 +54,13 @@ class TestRepeatBootTest(unittest.TestCase):  # pylint: disable=too-many-public-
         self.assertIn('repeat', self.job.parameters['actions'][1])
         repeat_block = self.job.parameters['actions'][1]['repeat']
         self.assertIn('count', repeat_block)
-        actions = [action for action in repeat_block if 'count' not in action]
+        # params is a list of default params for the actions, not a list of actions.
+        params = [param for param in repeat_block if 'count' not in param]
         self.assertIn('boot', repeat_block['actions'][0])
         self.assertIn('test', repeat_block['actions'][1])
         self.assertIn('boot', repeat_block['actions'][2])
         self.assertIn('test', repeat_block['actions'][3])
-        self.assertEqual(len(actions), 4)
+        self.assertEqual(len(params), 5)
 
     def test_nested_structure(self):
         self.assertIn(['repeat'], [actions.keys() for actions in self.job.parameters['actions']])

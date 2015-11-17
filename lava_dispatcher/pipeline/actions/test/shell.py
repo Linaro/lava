@@ -129,7 +129,7 @@ class TestShellAction(TestAction):
         if not connection.prompt_str:
             connection.prompt_str = [DEFAULT_SHELL_PROMPT]
         self.logger.debug("Setting default timeout: %s" % self.timeout.duration)
-        connection.timeout = self.timeout
+        connection.timeout = self.connection_timeout
         self.wait(connection)
 
         # FIXME: a predictable UID could be calculated from existing data here.

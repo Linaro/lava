@@ -20,14 +20,14 @@
 
 
 import os
+import yaml
 import unittest
 from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.device import NewDevice
+from lava_dispatcher.pipeline.action import Timeout
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.actions.boot.ssh import SchrootAction
-from lava_dispatcher.pipeline.actions.boot.qemu import BootVMAction
-from lava_dispatcher.pipeline.connections.ssh import ConnectDynamicSsh
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.utils.filesystem import check_ssh_identity_file
@@ -185,3 +185,59 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         # Check Pipeline
         description_ref = pipeline_reference('ssh-guest.yaml')
         self.assertEqual(description_ref, self.guest_job.pipeline.describe(False))
+
+
+class TestTimeouts(unittest.TestCase):
+    """
+    Test action and connection timeout parsing.
+    """
+
+    def create_custom_job(self, data, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        parser = JobParser()
+        job = parser.parse(data, device, 4212, None, output_dir=output_dir)
+        return job
+
+    def test_action_timeout(self):
+        factory = Factory()
+        job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
+        deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        test_action = [action for action in job.pipeline.actions if action.name == 'lava-test-retry'][0]
+        self.assertEqual(deploy.timeout.duration, 120)  # job specifies 2 minutes
+        self.assertEqual(deploy.connection_timeout.duration, Timeout.default_duration())
+        self.assertEqual(test_action.timeout.duration, 300)
+        self.assertEqual(test_action.connection_timeout.duration, Timeout.default_duration())
+
+    def test_job_connection_timeout(self):
+        """
+        Test connection timeout specified in the submission YAML
+        """
+        data = yaml.load(
+            open(os.path.join(
+                os.path.dirname(__file__), './sample_jobs/uboot-ramdisk.yaml'), 'r'))
+        data['timeouts']['connection'] = {'seconds': 20}
+        job = self.create_custom_job(yaml.dump(data))
+        for action in job.pipeline.actions:
+            if action.internal_pipeline:
+                for action in action.internal_pipeline.actions:
+                    if action.connection_timeout and action.name != 'uboot-retry':
+                        # uboot-retry has an override in this sample job
+                        self.assertEqual(action.connection_timeout.duration, 20)
+
+    def test_action_connection_timeout(self):
+        """
+        Test connection timeout specified for a particular action
+        """
+        data = yaml.load(
+            open(os.path.join(
+                os.path.dirname(__file__), './sample_jobs/uboot-ramdisk.yaml'), 'r'))
+        data['timeouts']['connections'] = {'uboot-retry': {}}
+        data['timeouts']['connections']['uboot-retry'] = {'seconds': 20}
+        job = self.create_custom_job(yaml.dump(data))
+        boot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
+        retry = [action for action in boot.internal_pipeline.actions if action.name == 'uboot-retry'][0]
+        self.assertEqual(retry.timeout.duration, Timeout.parse(job.device['timeouts']['actions'][retry.name]))
+        self.assertEqual(
+            Timeout.parse(job.device['timeouts']['connections'][retry.name]),
+            retry.connection_timeout.duration
+        )
