@@ -1,0 +1,19 @@
+{% extends "layouts/content-bootstrap.html" %}
+{% load django_tables2 %}
+
+{% block content %}
+
+<h2>Workers</h2>
+
+{% render_table worker_table %}
+
+<span class="glyphicon glyphicon-thumbs-up text-success"></span>
+indicates the worker is <b>up</b>,
+<span class="glyphicon glyphicon-thumbs-down text-danger"></span>
+indicates the worker is <b>down</b>.
+
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.min.js"></script>
+{% endblock %}

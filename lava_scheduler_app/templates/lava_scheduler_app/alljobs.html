@@ -5,6 +5,15 @@
 {% block content %}
 <h2>All Jobs</h2>
 
+<ul class="pager">
+    <li class="btn btn-sm disabled"><span class="glyphicon glyphicon-asterisk">
+        <a href="{% url 'lava.scheduler.job.list' %}">All Jobs</a></span></li>
+    <li class="btn btn-sm"><span class="glyphicon glyphicon-play">
+        <a href="{% url 'lava.scheduler.job.active' %}">Active Jobs</a></span></li>
+    <li class="btn btn-sm"><span class="glyphicon glyphicon-pause">
+        <a href="{% url 'lava.scheduler.queue' %}">Queued Jobs</a></span></li>
+</ul>
+
 {% render_table alljobs_table %}
 
 {% endblock %}

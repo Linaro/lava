@@ -272,7 +272,7 @@ class IndexTableView(JobTableView):
 
     def get_queryset(self):
         return all_jobs_with_custom_sort()\
-            .filter(status__in=[TestJob.SUBMITTED, TestJob.RUNNING])
+            .filter(status__in=[TestJob.CANCELING, TestJob.RUNNING])
 
 
 class DeviceTableView(JobTableView):
@@ -286,44 +286,9 @@ class DeviceTableView(JobTableView):
 
 @BreadCrumb("Scheduler", parent=lava_index)
 def index(request):
-
-    index_data = IndexTableView(request, model=TestJob, table_class=IndexJobTable)
-    prefix = 'index_'
-    index_table = IndexJobTable(
-        index_data.get_table_data(prefix),
-        prefix=prefix,
-    )
-    config = RequestConfig(request, paginate={"per_page": index_table.length})
-    config.configure(index_table)
-
-    prefix = 'device_'
-    dt_overview_data = DeviceTypeOverView(request, model=DeviceType, table_class=DeviceTypeTable)
-    dt_overview_table = DeviceTypeTable(
-        dt_overview_data.get_table_data(prefix),
-        prefix=prefix,
-    )
-    config = RequestConfig(request, paginate={"per_page": dt_overview_table.length})
-    config.configure(dt_overview_table)
-
-    prefix = 'worker_'
-    worker_data = WorkerView(request, model=None, table_class=WorkerTable)
-    worker_table = WorkerTable(
-        worker_data.get_table_data(prefix),
-        prefix=prefix,
-    )
-    config = RequestConfig(request, paginate={"per_page": worker_table.length})
-    config.configure(worker_table)
-
-    search_data = index_table.prepare_search_data(index_data)
-    search_data.update(dt_overview_table.prepare_search_data(dt_overview_data))
-
-    terms_data = index_table.prepare_terms_data(index_data)
-    terms_data.update(dt_overview_table.prepare_terms_data(dt_overview_data))
-
-    times_data = index_table.prepare_times_data(index_data)
-
-    discrete_data = index_table.prepare_discrete_data(index_data)
-    discrete_data.update(dt_overview_table.prepare_discrete_data(dt_overview_data))
+    data = DeviceTypeOverView(request, model=DeviceType, table_class=DeviceTypeTable)
+    ptable = DeviceTypeTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
 
     (num_online, num_not_retired) = _online_total()
     health_check_completed = health_jobs_in_hr().filter(status=TestJob.COMPLETE).count()
@@ -341,15 +306,46 @@ def index(request):
             'num_devices_running': active_devices_count,
             'hc_completed': health_check_completed,
             'hc_total': health_check_total,
-            'device_type_table': dt_overview_table,
-            'worker_table': worker_table,
-            'active_jobs_table': index_table,
+            'device_type_table': ptable,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
             'context_help': BreadCrumbTrail.leading_to(index),
-            "terms_data": terms_data,
-            "search_data": search_data,
-            "discrete_data": discrete_data,
-            "times_data": times_data,
+            "terms_data": ptable.prepare_terms_data(data),
+            "search_data": ptable.prepare_search_data(data),
+            "discrete_data": ptable.prepare_discrete_data(data),
+        })
+
+
+@BreadCrumb("Active jobs", parent=index)
+def active_jobs(request):
+    data = IndexTableView(request, model=TestJob, table_class=IndexJobTable)
+    ptable = IndexJobTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+
+    return render(
+        request,
+        "lava_scheduler_app/active_jobs.html",
+        {
+            'active_jobs_table': ptable,
+            "sort": '-submit_time',
+            "terms_data": ptable.prepare_terms_data(data),
+            "search_data": ptable.prepare_search_data(data),
+            "discrete_data": ptable.prepare_discrete_data(data),
+            "times_data": ptable.prepare_times_data(data),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(active_jobs),
+        })
+
+
+@BreadCrumb("Workers", parent=index)
+def workers(request):
+    data = WorkerView(request, model=None, table_class=WorkerTable)
+    ptable = WorkerTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    return render(
+        request,
+        "lava_scheduler_app/allworkers.html",
+        {
+            'worker_table': ptable,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(workers),
         })
 
 
