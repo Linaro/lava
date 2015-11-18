@@ -717,6 +717,11 @@ class Command(BaseCommand):
                         self.logger.info("[%d] Assigning %s device", job.id, device)
                         if job.actual_device is None:
                             device = job.requested_device
+                            if not device.worker_host:
+                                msg = "Infrastructure error: Invalid worker information"
+                                self.logger.error("[%d] %s", job.id, msg)
+                                fail_job(job, msg, TestJob.INCOMPLETE)
+                                continue
 
                             # Launch the job
                             create_job(job, device)
@@ -725,6 +730,11 @@ class Command(BaseCommand):
                             worker_host = device.worker_host
                         else:
                             device = job.actual_device
+                            if not device.worker_host:
+                                msg = "Infrastructure error: Invalid worker information"
+                                self.logger.error("[%d] %s", job.id, msg)
+                                fail_job(job, msg, TestJob.INCOMPLETE)
+                                continue
                             self.logger.info("[%d] START => %s (%s) (retrying)", job.id,
                                              device.worker_host.hostname, device.hostname)
                             worker_host = device.worker_host
