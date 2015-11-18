@@ -1,5 +1,6 @@
 from voluptuous import (
-    Schema, Required, All, Length, Any, Optional, MultipleInvalid
+    Schema, Required, All, Length,
+    Any, Optional, MultipleInvalid
 )
 from lava_scheduler_app.models import SubmissionException
 
@@ -90,6 +91,7 @@ def _job_timeout_schema():
     return Schema({
         Required('job'): _timeout_schema(),
         Required('action'): _timeout_schema(),
+        'connection': _timeout_schema(),
     }, extra=True)
 
 
@@ -135,8 +137,13 @@ def _device_actions_schema():
 
 def _device_timeouts_schema():
     return Schema({
-        Any(str): _timeout_schema()
-    })
+        'actions': {
+            All(str): _timeout_schema()
+        },
+        'connections': {
+            All(str): _timeout_schema()
+        },
+    }, extra=True)
 
 
 def _device_schema():

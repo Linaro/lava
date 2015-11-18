@@ -91,7 +91,3 @@ actions:
           - setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root={ROOT} ip=dhcp'
 {{ base_uboot_bootcmd }}
 {% endblock %}
-
-#timeouts:
-#  call-kexec:
-#    seconds: 45

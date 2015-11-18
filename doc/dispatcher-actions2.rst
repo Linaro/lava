@@ -601,6 +601,13 @@ a deployment and (in this case) 6 identical blocks of boot and test.
 Timeouts
 ********
 
+.. note:: The behaviour of actions and connections has changed during the
+   development of the refactoring. See :ref:`connection_timeout` and
+   :ref:`default_action_timeout`. Action timeouts can be specified for
+   the default for all actions or for a specific action. Connection timeouts
+   can be specified as the default for all connections or for the
+   connections made by a specific action.
+
 Refactored timeouts now provide more detailed support. Individual actions
 have uniquely addressable timeouts.
 
@@ -638,21 +645,20 @@ Action timeout
 Each action has a default timeout which is handled differently according
 to whether the action has a current connection to the device.
 
-.. note:: This is per call made by each action class, not per top level
+.. note:: This timeout covers each action class, not per top level
           action. i.e. the top level ``boot`` action includes many actions,
           from interrupting the bootloader and substituting commands to
           waiting for a shell session or login prompt once the boot starts.
           Each action class within the pipeline is given the action timeout
           unless overridden using :ref:`individual_action_timeout`.
 
-Think of the action timeout as:
+Think of the action timeout as::
 
-* no single operation of this class should possibly take longer than ...
+  "no single operation of this class should possibly take longer than ..."
 
-along with
+along with::
 
-* the pipeline should wait no longer than ... to determine that the device is
-  not responding.
+  "the pipeline should wait no longer than ... to determine that the device is not responding."
 
 When changing timeouts, review the pipeline logs for each top level action,
 ``deploy``, ``boot`` and ``test``.  Check the duration of each action
@@ -660,45 +666,20 @@ within each section and set the timeout for that top level action. Specific
 actions can be extended using the :ref:`individual_action_timeout`
 support.
 
-Action timeouts behave differently, depending on whether the action has
-a connection or not. This allows quicker determination of whether the
-device has failed to respond. The type of action timeout can be determined
-from the logs.
+Action timeouts only determine the operation of the action, not the operation of
+any connection used by the action. See :ref:`connection_timeout`.
 
 If no action timeout is given in the job, the default action timeout
 of 30 seconds will be used.
 
-Actions with connections
-------------------------
-
-These actions use the timeout to wait for a prompt after sending a
-command over the connection. If the action times out, no further commands
-are sent and the job is marked as Incomplete.
-
-* Log message: ``${name}: Wait for prompt``::
-
-   log: "expect-shell-connection: Wait for prompt. 24 seconds"
-
-If the action has an active connection to a device, the timeout is set
-for each operation on that connection. e.g. ``u-boot-commands`` uses
-the same timeout for each line sent to UBoot.
-
-Individual actions may make multiple calls on the connection - different
-actions are used when a particular operation is expected to take longer
-than other calls, e.g. boot.
-
-Actions without connections
----------------------------
-
 A timeout for these actions interrupts the executing action and marks
 the job as Incomplete.
 
-* Log message: ``${name}: timeout``::
+* Log message is of the form: ``${name}: timeout``::
 
    log: "git-repo-action: timeout. 45 seconds"
 
-If the action has no connection (for example a deployment action), the
-timeout covers the entire operation of that action and the action will
+The action timeout covers the entire operation of that action and the action will
 be terminated if the timeout is exceeded.
 
 The log structure shows the action responsible for the command running
@@ -709,24 +690,26 @@ within the specified timeout.
    action:
      seconds: 45
 
-.. note:: Actions which create a connection operate as actions **without**
-          a connection. ``boot_qemu_image`` and similar actions will
-          use the specified timeout for the complete operation, which is
-          typically followed by an action (with a connection) which
-          explicitly waits for the prompt (or performs an automatic
-          login).
 
 .. _individual_action_timeout:
 
 Individual action timeouts
-==========================
+--------------------------
 
 Individual actions can also be specified by name - see the pipeline
-description output by the ``validate`` command to see the full name of
-action classes::
+description output by the ``validate`` command or the Pipeline Description
+on the job definition page to see the full name of action classes::
 
    extract-nfsrootfs:
     seconds: 60
+
+Individual actions can be referenced by the :term:`action level` and the job ID,
+in the form::
+
+ http://<INSTANCE_URL>/scheduler/job/<JOB_ID>/definition#<ACTION_LEVEL>
+
+The level string represents the sequence within the pipeline and is a key
+component of how the pipeline data is organised. See also :ref:`pipeline_construction`.
 
 This allows typical action timeouts to be as short as practical, so that
 jobs fail quickly, whilst allowing for individual actions to take longer.
@@ -743,6 +726,69 @@ Typical actions which may need timeout extensions:
    prompt or shell prompt if no login is offered). If the device is
    expected to raise a network interface at boot using DHCP, this could
    add an appreciable amount of time.
+
+.. _connection_timeout:
+
+Connection timeout
+==================
+
+Actions retain the action timeout for the complete duration of the action
+``run()`` function. If that function uses a connection to interact with the
+device, each connection operation uses the **connection_timeout**, so the
+action timeout **must** allow enough time for all the connection operations
+to complete within expectations of normal latency.
+
+* Log message is of the form: ``${name}: Wait for prompt``::
+
+   log: "expect-shell-connection: Wait for prompt. 24 seconds"
+
+Before the connection times out, a message will be sent to help prevent serial
+corruption from interfering with the expected prompt.
+
+ * Warning message is of the form:
+
+ Warning command timed out: Sending ... in case of corruption
+
+The character used depends on the type of connection - a connection which expects
+a POSIX shell will use ``#`` as this is a neutral / comment operation.
+
+A timeout for the connection interrupts the executing action and marks
+the job as Incomplete.
+
+* Log message is of the form: ``${name}: timeout``::
+
+   log: "git-repo-action: timeout. 45 seconds"
+
+Individual actions may make multiple calls on the connection - different
+actions are used when a particular operation is expected to take longer
+than other calls, e.g. boot.
+
+Set the default connection timeout which all actions will use when using
+a connection:
+
+.. code-block:: yaml
+
+ timeouts:
+   connection:
+     seconds: 20
+
+Individual connection timeouts
+------------------------------
+
+A specific action can be given an individual connection timeout which will
+be used by whenever that action uses a connection: If the action does not
+use a connection, this timeout will have no effect.
+
+.. code-block:: yaml
+
+ timeouts:
+   connections:
+     uboot-retry:
+       seconds: 120
+
+.. note:: Note the difference between ``connection`` followed by a value for the
+   default connection timeout and ``connections``, ``<action_name>`` followed
+   by a value for the individual connection timeout for that action.
 
 Examples
 ********
