@@ -89,6 +89,17 @@ deploy to the requested location.
 
          compression: gz
 
+      * The checksum of the file to download can be provided to be checked
+        against the downloaded content. This can help if there is a transparent
+        proxy between the dispatcher as a proxy might return a cached file if
+        the content of the URL has changed without changing the URL itself.
+        If compression is used, the checksum to specify is the checksum of the
+        compressed file, irrespective of whether that file is decompressed
+        later.::
+
+         md5sum: 6ea432ac3c23210c816551782346ed1c
+         sha256sum: 1a76b17701b9fdf6346b88eb49b0143a9c6912701b742a6e5826d6856edccd21
+
     * The operating system of the image **must** be specified so that the
       LAVA scripts can install packages and identify other defaults in the
       deployment data. Supported values are ``android``, ``ubuntu``,
