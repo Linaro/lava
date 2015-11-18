@@ -112,7 +112,7 @@ See also :ref:`development_process`.
 
 `IRC <https://en.wikipedia.org/wiki/Internet_Relay_Chat>`_ is a common
 support method for developers. Our team is spread geographically around
-the world, with some members in Europe, America, Asia and Oceania. We
+the world, with some members in Europe, America, Asia. We
 are usually talking on our IRC channel ``#linaro-lava`` on
 ``irc.freenode.net``.
 
