@@ -52,13 +52,18 @@
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-calendar"></span> Scheduler <b class="caret"></b></a>
             <ul class="dropdown-menu">
               <li><a href="{% url 'lava.scheduler' %}">Status</a></li>
+              <li role="separator" class="divider"></li>
+              <li><a href="{% url 'lava.scheduler.job.submit' %}">Submit Job</a></li>
               <li><a href="{% url 'lava.scheduler.job.active' %}">Active Jobs</a></li>
               <li><a href="{% url 'lava.scheduler.queue' %}">Queued Jobs</a></li>
+              <li><a href="{% url 'lava.scheduler.pipeline' %}">Pipeline Jobs</a></li>
+              <li><a href="{% url 'lava.scheduler.healthcheck' %}">Healthcheck Jobs</a></li>
               <li><a href="{% url 'lava.scheduler.job.list' %}">All Jobs</a></li>
+              <li role="separator" class="divider"></li>
               <li><a href="{% url 'lava.scheduler.active_devices' %}">Active Devices</a></li>
               <li><a href="{% url 'lava.scheduler.alldevices' %}">All Devices</a></li>
+              <li role="separator" class="divider"></li>
               <li><a href="{% url 'lava.scheduler.reports' %}">Reports</a></li>
-              <li><a href="{% url 'lava.scheduler.job.submit' %}">Submit Job</a></li>
               <li><a href="{% url 'lava.scheduler.workers' %}">Workers</a></li>
             </ul>
           </li>

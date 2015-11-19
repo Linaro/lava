@@ -2280,6 +2280,62 @@ def username_list_json(request):
     return HttpResponse(simplejson.dumps(users), content_type='application/json')
 
 
+class HealthCheckJobsView(JobTableView):
+
+    def get_queryset(self):
+        return all_jobs_with_custom_sort().filter(health_check=True)
+
+
+@BreadCrumb("Healthcheck", parent=index)
+def healthcheck(request):
+    health_check_data = HealthCheckJobsView(request, model=TestJob,
+                                            table_class=JobTable)
+    health_check_ptable = JobTable(health_check_data.get_table_data(),)
+    config = RequestConfig(request,
+                           paginate={"per_page": health_check_ptable.length})
+    config.configure(health_check_ptable)
+
+    return render_to_response(
+        "lava_scheduler_app/health_check_jobs.html",
+        {
+            "times_data": health_check_ptable.prepare_times_data(health_check_data),
+            "terms_data": health_check_ptable.prepare_terms_data(health_check_data),
+            "search_data": health_check_ptable.prepare_search_data(health_check_data),
+            "discrete_data": health_check_ptable.prepare_discrete_data(health_check_data),
+            'health_check_table': health_check_ptable,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(healthcheck),
+        },
+        RequestContext(request))
+
+
+class PipelineJobsView(JobTableView):
+
+    def get_queryset(self):
+        return all_jobs_with_custom_sort().filter(is_pipeline=True)
+
+
+@BreadCrumb("Pipeline", parent=index)
+def pipeline(request):
+    pipeline_data = PipelineJobsView(request, model=TestJob,
+                                     table_class=JobTable)
+    pipeline_ptable = JobTable(pipeline_data.get_table_data(),)
+    config = RequestConfig(request,
+                           paginate={"per_page": pipeline_ptable.length})
+    config.configure(pipeline_ptable)
+
+    return render_to_response(
+        "lava_scheduler_app/pipelinejobs.html",
+        {
+            "times_data": pipeline_ptable.prepare_times_data(pipeline_data),
+            "terms_data": pipeline_ptable.prepare_terms_data(pipeline_data),
+            "search_data": pipeline_ptable.prepare_search_data(pipeline_data),
+            "discrete_data": pipeline_ptable.prepare_discrete_data(pipeline_data),
+            'pipeline_table': pipeline_ptable,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(pipeline),
+        },
+        RequestContext(request))
+
+
 class QueueJobsView(JobTableView):
 
     def get_queryset(self):
