@@ -81,18 +81,21 @@ The validation lab in Cambridge is accessible via
 http://validation.linaro.org/ which is the official production
 instance of LAVA.
 
-.. image:: ./images/lava-scheduler-page.png
-
 The validation lab in Cambridge is now accessed using Linaro LDAP.
 In order to login with LDAP, enter your details in the LDAP login fields.
-
 
 .. note:: If your Linaro email is ``first.second@linaro.org`` then use
    ``first.second`` as your username.
 
+.. image:: ./images/ldap-user-login.png
+
 A successful authentication will redirect you to http://validation.linaro.org/
 
 If you do not have a Linaro LDAP account, you can :ref:`register`.
+
+The LAVA scheduler page looks like the following,
+
+.. image:: ./images/lava-scheduler-page.png
 
 .. index:: token
 
