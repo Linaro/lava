@@ -433,6 +433,7 @@ $(document).ready(function () {
                 "pass": test_data["pass"],
                 "skip": test_data["skip"],
                 "total": test_data["total"],
+		"date": test_data["date"],
                 "measurement": measurement,
                 "attr_value": test_data["attr_value"],
                 "link": test_data["link"].replace("\\\\\\", ""),
@@ -458,18 +459,20 @@ $(document).ready(function () {
 
         // Add table header, list of build numbers/dates.
         for (number in table) {
-            max_same_date_size = 0;
+	    // Row id with most fields in the table.
+	    relevant_filter_id = rows[0];
+	    // Number of fields in that row.
+	    max_same_date_size = 0;
             for (cnt in rows) {
-
                 filter_id = rows[cnt];
                 if (table[number][filter_id].length > max_same_date_size) {
-                    max_same_date_size = table[number][filter_id].length;
+		    relevant_filter_id = filter_id;
+		    max_same_date_size = table[number][filter_id].length;
                 }
             }
             table[number]["max_size"] = max_same_date_size;
-            table[number]["date"] = test_data["date"];
-            for (var i = 0; i < max_same_date_size; i++) {
-                table_head += '<th>' + table[number]["date"].split(' ')[0] +
+            for (var i=0; i < table[number][relevant_filter_id].length; i++) {
+                table_head += '<th>' + table[number][relevant_filter_id][i]["date"].split(' ')[0] +
 		    '</th>';
 		if (has_build_number) {
                     table_body += '<td>' + number + '</td>';
