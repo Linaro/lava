@@ -34,7 +34,7 @@ import logging
 
 from datetime import datetime, timedelta
 from django.contrib.auth.models import User, Group
-from django.contrib.contenttypes import generic
+from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, connection, IntegrityError
 from django.db.models import Q
@@ -422,11 +422,11 @@ class TestData(models.Model):
 
     # Attributes
 
-    attributes = generic.GenericRelation(NamedAttribute)
+    attributes = fields.GenericRelation(NamedAttribute)
 
     # Attachments
 
-    attachments = generic.GenericRelation('Attachment')
+    attachments = fields.GenericRelation('Attachment')
 
     def __unicode__(self):
         return _(u"TestJob {0}").format(self.testjob.id)

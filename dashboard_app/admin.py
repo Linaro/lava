@@ -23,7 +23,7 @@ Administration interface of the Dashboard application
 from django import forms
 from django.contrib import admin
 from django.contrib.admin.actions import delete_selected
-from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.admin import GenericTabularInline
 from django.utils.translation import ugettext_lazy as _
 
 from dashboard_app.models import (
@@ -161,7 +161,7 @@ class SoftwareSourceAdmin(admin.ModelAdmin):
 
 
 class HardwareDeviceAdmin(admin.ModelAdmin):
-    class NamedAttributeInline(generic.GenericTabularInline):
+    class NamedAttributeInline(GenericTabularInline):
         model = NamedAttribute
     list_display = ('description', 'device_type')
     list_filter = ('device_type',)
@@ -180,7 +180,7 @@ class TestAdmin(admin.ModelAdmin):
 
 
 class TestResultAdmin(admin.ModelAdmin):
-    class NamedAttributeInline(generic.GenericTabularInline):
+    class NamedAttributeInline(GenericTabularInline):
         model = NamedAttribute
     list_display = ('__unicode__', 'test', 'test_case', 'result',
                     'measurement')
@@ -197,7 +197,7 @@ class TestResultAdmin(admin.ModelAdmin):
 
 
 class TestRunAdmin(admin.ModelAdmin):
-    class NamedAttributeInline(generic.GenericTabularInline):
+    class NamedAttributeInline(GenericTabularInline):
         model = NamedAttribute
     list_filter = ('test'),
     list_display = (

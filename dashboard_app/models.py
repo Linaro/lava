@@ -33,7 +33,7 @@ import contextlib
 
 from django.conf import settings
 from django.contrib.auth.models import User, Group
-from django.contrib.contenttypes import generic
+from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core.exceptions import (
@@ -118,12 +118,11 @@ class SoftwarePackageScratch(models.Model):
 
 class NamedAttribute(models.Model):
     """
-    Model for adding generic named attributes
-    to arbitrary other model instances.
+    Model for adding named attributes to arbitrary other model instances.
 
     Example:
         class Foo(Model):
-            attributes = generic.GenericRelation(NamedAttribute)
+            attributes = fields.GenericRelation(NamedAttribute)
     """
     name = models.TextField()
 
@@ -132,7 +131,7 @@ class NamedAttribute(models.Model):
     # Content type plumbing
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
-    content_object = generic.GenericForeignKey('content_type', 'object_id')
+    content_object = fields.GenericForeignKey('content_type', 'object_id')
     is_manual = models.NullBooleanField(null=True)
 
     def __unicode__(self):
@@ -169,7 +168,7 @@ class HardwareDevice(models.Model):
         verbose_name=_(u"Description"),
     )
 
-    attributes = generic.GenericRelation(NamedAttribute)
+    attributes = fields.GenericRelation(NamedAttribute)
 
     def __unicode__(self):
         return self.description
@@ -1019,7 +1018,7 @@ class TestRun(models.Model):
 
     # Attributes
 
-    attributes = generic.GenericRelation(NamedAttribute)
+    attributes = fields.GenericRelation(NamedAttribute)
 
     # Tags
 
@@ -1031,7 +1030,7 @@ class TestRun(models.Model):
 
     # Attachments
 
-    attachments = generic.GenericRelation('Attachment')
+    attachments = fields.GenericRelation('Attachment')
 
     def __unicode__(self):
         return _(u"Test run {0}").format(self.analyzer_assigned_uuid)
@@ -1207,7 +1206,7 @@ class Attachment(models.Model):
     # Content type plumbing
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
-    content_object = generic.GenericForeignKey('content_type', 'object_id')
+    content_object = fields.GenericForeignKey('content_type', 'object_id')
 
     def __unicode__(self):
         return self.content_filename
@@ -1408,11 +1407,11 @@ class TestResult(models.Model):
 
     # Attributes
 
-    attributes = generic.GenericRelation(NamedAttribute)
+    attributes = fields.GenericRelation(NamedAttribute)
 
     # Attachments
 
-    attachments = generic.GenericRelation(Attachment)
+    attachments = fields.GenericRelation(Attachment)
 
     # Duration property
 
