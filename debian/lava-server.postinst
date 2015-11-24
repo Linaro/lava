@@ -186,7 +186,6 @@ install_database()
         su postgres -c "createdb devel --owner devel"
     fi
     # syncdb
-    lava-server manage syncdb --noinput
     lava-server manage migrate --noinput
     # superuser - password must be changed
     if ! su postgres -c "psql \"-c SELECT usename FROM pg_user WHERE usename='$LAVA_SYS_USER'\"" | grep "$LAVA_SYS_USER"; then
