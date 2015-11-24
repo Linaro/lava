@@ -315,7 +315,7 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
             logging.warning(traceback.format_exc())
             return None
         ip_pattern1 = "%s: ip (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) mask" % nic_name
-        ip_pattern2 = "inet addr:(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)"
+        ip_pattern2 = "inet addr:(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?) +Bcast:"
         try:
             self.run("ifconfig %s" % nic_name,
                      [ip_pattern1, ip_pattern2, pexpect.EOF],
