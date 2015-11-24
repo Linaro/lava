@@ -498,6 +498,19 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         httpdownloadaction.validate()
         self.assertRaises(JobError, httpdownloadaction.run, None)
 
+    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
+    def test_no_test_action_validate(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        del self.job.pipeline.actions[2]
+
+        try:
+            self.job.pipeline.validate_actions()
+        except JobError as exc:
+            self.fail(exc)
+        for action in self.job.pipeline.actions:
+            self.assertEqual([], action.errors)
+
 
 class FakeCommand(object):
 
