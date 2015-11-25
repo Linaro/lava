@@ -1953,6 +1953,7 @@ class ImageReport(models.Model):
         ImageReportGroup,
         default=None,
         null=True,
+        blank=True,
         on_delete=models.CASCADE)
 
     user = models.ForeignKey(
@@ -1964,6 +1965,7 @@ class ImageReport(models.Model):
         Group,
         default=None,
         null=True,
+        blank=True,
         on_delete=models.SET_NULL)
 
     description = models.TextField(blank=True, null=True)
@@ -1971,6 +1973,10 @@ class ImageReport(models.Model):
     is_published = models.BooleanField(
         default=False,
         verbose_name='Published')
+
+    is_archived = models.BooleanField(
+        default=False,
+        verbose_name='Archived')
 
     def __unicode__(self):
         return self.name

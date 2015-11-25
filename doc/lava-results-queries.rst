@@ -29,12 +29,30 @@ When adding/updating and removing conditions, query is **not** automatically
 updated. This needs to be done either through UI after updating the conditions
 or via XMLRPC.
 
+Authorization and admin:
+
+Queries which are not published are visible exclusively to the query owner.
+When query is published, it's results are generally visible to all users,
+permitting the user has access to the jobs which provide the results.
+All the authorization is managed through test jobs visibility rules,  meaning
+that individual results will be omitted in the query display list depending on
+user authorization to see the specific jobs.
+
+Besides owner of the specific query, administration of the query can be allowed
+to a group in the system as well, through the 'Group edit permission' option.
+Note that this can be done only after the query is published.
+
+Queries can be organized in 'query groups' which is visible only in the query
+listing page, via 'query group label' option.
+
 Conditions:
 
 You can add multiple conditions to each query where the query results must
 satisfy **all** conditions in order to be displayed.
 Conditions can span through multiple object sets so for example user can query
 the Jobs that have test cases in which particular field satisfies a condition.
+List of supported fields which can be used as condition field is available
+as autocomplete list in the condition 'Field name' field.
 You can also add conditions with fields in the object set which is queried
 (i.e. if test jobs are query object set user can add conditions such as
 submitter, device, priority, status...).

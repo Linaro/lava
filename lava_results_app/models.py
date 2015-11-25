@@ -84,10 +84,7 @@ class QueryMaterializedView(MaterializedView):
     def create(cls, query):
         # Check if view for this query exists.
         cursor = connection.cursor()
-        query_str = cls.VIEW_EXISTS % (cls.QUERY_VIEW_PREFIX, query.id)
-        cursor.execute(cls.VIEW_EXISTS % (cls.QUERY_VIEW_PREFIX, query.id))
-        view_exists = cursor.fetchone()[0]
-        if not view_exists:  # create view
+        if not cls.view_exists(query.id):  # create view
             sql, params = Query.get_queryset(
                 query.content_type,
                 query.querycondition_set.all()).query.sql_with_params()
@@ -112,6 +109,12 @@ class QueryMaterializedView(MaterializedView):
         drop_sql = cls.DROP_VIEW % (cls.QUERY_VIEW_PREFIX, query_id)
         cursor = connection.cursor()
         cursor.execute(drop_sql)
+
+    @classmethod
+    def view_exists(cls, query_id):
+        cursor = connection.cursor()
+        cursor.execute(cls.VIEW_EXISTS % (cls.QUERY_VIEW_PREFIX, query_id))
+        return cursor.fetchone()[0]
 
     def get_queryset(self):
         return QueryMaterializedView.objects.all()
@@ -545,6 +548,7 @@ class Query(models.Model):
         Group,
         default=None,
         null=True,
+        blank=True,
         on_delete=models.SET_NULL)
 
     name = models.SlugField(
@@ -558,6 +562,7 @@ class Query(models.Model):
         QueryGroup,
         default=None,
         null=True,
+        blank=True,
         on_delete=models.CASCADE)
 
     content_type = models.ForeignKey(
@@ -572,6 +577,8 @@ class Query(models.Model):
 
     class Meta:
         unique_together = (('owner', 'name'))
+        verbose_name = "query"
+        verbose_name_plural = "queries"
 
     is_published = models.BooleanField(
         default=False,
@@ -606,6 +613,10 @@ class Query(models.Model):
         max_digits=10,
         null=True,
         verbose_name='Target goal')
+
+    is_archived = models.BooleanField(
+        default=False,
+        verbose_name='Archived')
 
     def __unicode__(self):
         return "<Query ~%s/%s>" % (self.owner.username, self.name)
@@ -726,7 +737,9 @@ class Query(models.Model):
                 self.save()
 
             try:
-                if self.is_changed:
+                if not QueryMaterializedView.view_exists(self.id):
+                    QueryMaterializedView.create(self)
+                elif self.is_changed:
                     QueryMaterializedView.drop(self.id)
                     QueryMaterializedView.create(self)
                 else:
@@ -743,9 +756,9 @@ class Query(models.Model):
 
     def save(self, *args, **kwargs):
         super(Query, self).save(*args, **kwargs)
-        if not self.is_live:
-            # Create the view. This method does nothing if view already exists.
-            QueryMaterializedView.create(self)
+        if self.is_live:
+            # Drop the view.
+            QueryMaterializedView.drop(self.id)
 
     def delete(self, *args, **kwargs):
         if not self.is_live:

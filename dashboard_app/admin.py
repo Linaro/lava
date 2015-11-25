@@ -34,6 +34,7 @@ from dashboard_app.models import (
     HardwareDevice,
     Image,
     ImageSet,
+    ImageReport,
     BugLink,
     NamedAttribute,
     PMQABundleStream,
@@ -230,6 +231,10 @@ class ImageSetAdmin(admin.ModelAdmin):
     save_as = True
 
 
+class ImageReportAdmin(admin.ModelAdmin):
+    save_as = True
+
+
 class BugLinkAdmin(admin.ModelAdmin):
     raw_id_fields = ['test_runs']
 
@@ -276,6 +281,7 @@ admin.site.register(BundleStream, BundleStreamAdmin)
 admin.site.register(HardwareDevice, HardwareDeviceAdmin)
 admin.site.register(Image, ImageAdmin)
 admin.site.register(ImageSet, ImageSetAdmin)
+admin.site.register(ImageReport, ImageReportAdmin)
 admin.site.register(BugLink, BugLinkAdmin)
 admin.site.register(PMQABundleStream)
 admin.site.register(SoftwarePackage, SoftwarePackageAdmin)

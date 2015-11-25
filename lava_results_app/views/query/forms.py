@@ -106,24 +106,26 @@ class QueryConditionForm(forms.ModelForm):
                     self.add_error("field",
                                    "Valid choices for 'field' are: %s" %
                                    (", ".join(field_choices)))
-            # Choices validation
-            field_object = form_data["table"].model_class()._meta.\
-                get_field_by_name(form_data["field"])[0]
-            choices = field_object.choices
-            if choices and form_data["value"] not in dict(choices).values():
-                self.add_error("value",
-                               "Valid choices for 'value' are: %s" %
-                               (", ".join(dict(choices).values())))
 
-            if isinstance(field_object, models.DateTimeField):
-                try:
-                    datetime.datetime.strptime(
-                        form_data["value"],
-                        settings.DATETIME_INPUT_FORMATS[0])
-                except ValueError:
+                # Choices validation
+                field_object = form_data["table"].model_class()._meta.\
+                    get_field_by_name(form_data["field"])[0]
+                choices = field_object.choices
+                if choices and form_data["value"] not in \
+                   dict(choices).values():
                     self.add_error("value",
-                                   "Incorrect format for 'value', try: %s" %
-                                   settings.DATETIME_INPUT_FORMATS[0])
+                                   "Valid choices for 'value' are: %s" %
+                                   (", ".join(dict(choices).values())))
+
+                if isinstance(field_object, models.DateTimeField):
+                    try:
+                        datetime.datetime.strptime(
+                            form_data["value"],
+                            settings.DATETIME_INPUT_FORMATS[0])
+                    except ValueError:
+                        self.add_error("value",
+                                       "Incorrect format for 'value', try: %s" %
+                                       settings.DATETIME_INPUT_FORMATS[0])
         except KeyError:
             # form_data will pick up the rest of validation errors.
             pass
