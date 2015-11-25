@@ -26,8 +26,7 @@ or jessie. Support for installing LAVA on Ubuntu and other
 Contributions to support other distributions are welcome.
 
 LAVA packages and dependencies of LAVA migrate automatically into the
-current Ubuntu development release. :ref:`trusty_tahr_install` needs
-an extra repository to provide these packages.
+current Ubuntu development release.
 
 .. _Debian: http://www.debian.org/
 
@@ -68,8 +67,8 @@ Device requirements
 
 Devices you wish to deploy in LAVA need to be:
  * Physically connected to the server via usb, usb-serial,
-   or serial [#f1]_ or
- * connected over the network via a serial console server [#f1]_ or
+   or serial or
+ * connected over the network via a serial console server or
  * a fastboot capable device accessible from the server or
  * an emulated virtual machines and/or simulators that allow a
    serial connection
@@ -466,7 +465,7 @@ W.I.P
 This will create a symlink in /dev called rack-usb01 etc. which can then be addressed in the :ref:`ser2net` config file.
 
 Contact and bug reports
-========================
+=======================
 
 Please report bugs using bugzilla:
 https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework

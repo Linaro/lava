@@ -113,7 +113,7 @@ forward bug reports and patches into the upstream LAVA systems.
 .. _register:
 
 Register with Linaro as a Community contributor
-------------------------------------------------
+-----------------------------------------------
 
 If you, or anyone on your team, would like to register with Linaro directly,
 this will allow you to file an upstream bug, submit code for review by
@@ -397,11 +397,10 @@ LAVA recommends Debian Jessie but also supports Ubuntu Trusty which has
 an older version of `python-django <https://tracker.debian.org/pkg/python-django>`_.
 
 Database migrations on Debian Jessie and later are managed within
-django. Migrations in Trusty require
+django. Support for
 `python-django-south <https://tracker.debian.org/pkg/python-django-south>`_
-and have a different syntax. **Both** migration types **must** accompany
-any reviews which involve a database migration, so you will need a
-VM running Ubuntu Trusty, with lava installed. See :ref:`trusty_tahr_install`.
+has been **dropped**. **Only django** migration types should be included
+in any reviews which involve a database migration.
 
 Once modified, the updated ``models.py`` file needs to be copied into
 the system location for the relevant extension, e.g. ``lava_scheduler_app``.
