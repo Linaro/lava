@@ -6,23 +6,25 @@ Debian-based distributions
 These instructions cover Debian and all distributions based upon Debian,
 including Ubuntu. The supported versions of Debian and Ubuntu are:
 
-+---------------+------------------------+--------+------------+
-| Distribution  | Codename               | Number | Support    |
-+===============+========================+========+============+
-| Debian        | experimental           | n/a    | Yes [#f1]_ |
-+---------------+------------------------+--------+------------+
-| Debian        | sid                    | n/a    | Yes        |
-+---------------+------------------------+--------+------------+
-| Debian        | stretch                | n/a    | [#f2]_     |
-+---------------+------------------------+--------+------------+
-| Debian        | jessie                 | 8.0    | Yes [#f3]_ |
-+---------------+------------------------+--------+------------+
-| Ubuntu        | vivid vervet (& later) | 15.04  | Yes [#f4]_ |
-+---------------+------------------------+--------+------------+
-| Ubuntu        | utopic unicorn         | 14.10  | Yes [#f5]_ |
-+---------------+------------------------+--------+------------+
-| Ubuntu        | trusty tahr LTS        | 14.04  | Yes [#f6]_ |
-+---------------+------------------------+--------+------------+
++---------------+-------------------------+--------+---------------+
+| Distribution  | Codename                | Number | Support       |
++===============+=========================+========+===============+
+| Debian        | experimental            | n/a    | Yes [#f1]_    |
++---------------+-------------------------+--------+---------------+
+| Debian        | sid                     | n/a    | Yes           |
++---------------+-------------------------+--------+---------------+
+| Debian        | stretch                 | n/a    | [#f2]_        |
++---------------+-------------------------+--------+---------------+
+| Debian        | jessie                  | 8.0    | Yes [#f3]_    |
++---------------+-------------------------+--------+---------------+
+| Ubuntu        | xenial xerus (planned)  | 16.04  | Yes [#f7]_    |
++---------------+-------------------------+--------+---------------+
+| Ubuntu        | vivid vervet (& later)  | 15.04  | Yes [#f4]_    |
++---------------+-------------------------+--------+---------------+
+| Ubuntu        | utopic unicorn          | 14.10  | Yes [#f5]_    |
++---------------+-------------------------+--------+---------------+
+| Ubuntu        | trusty tahr LTS         | 14.04  | Frozen [#f6]_ |
++---------------+-------------------------+--------+---------------+
 
 Debian uses names for `suites`_ (unstable, testing, stable & oldstable)
 but the content of all suites except unstable will change codename once
@@ -46,7 +48,7 @@ See :ref:`ubuntu_install`
          release freeze.
 .. [#f2] `stretch` is the name of the next Debian release after Jessie,
          which is supported automatically via uploads to sid (unstable).
-.. [#f3] Jessie was released on April 25th, 2015. Uupdates to LAVA packages
+.. [#f3] Jessie was released on April 25th, 2015. Updates to LAVA packages
          for jessie will be made using `jessie-backports`_.
 .. [#f4] Ubuntu vivid vervet 15.04 is due for release in April 2015. LAVA
          packages automatically migrate from Debian into the current
@@ -55,7 +57,17 @@ See :ref:`ubuntu_install`
 .. [#f5] To install on Ubuntu, ensure the universe_ repository is enabled.
 
 .. [#f6] See :ref:`trusty_tahr_install` - a secondary trusty-repo needs to
-         be enabled to add dependencies which are not present in trusty.
+         be enabled to add dependencies which are not present in trusty. No
+         further updates are to be made for Trusty after 2015.9.post1 for
+         ``lava-server`` and 2015.9 for ``lava-dispatcher``.
+
+.. [#f7] Xenial Xerus had not been released at the time that Trusty was
+         frozen. Migrations from Trusty to Xenial have caused issues during
+         initial testing. See :ref:`trusty_tahr_install` for migrations or
+         :ref:`ubuntu_unicorn` for fresh installs. Xenial is due to pick up
+         the last update of LAVA packages by
+         `February 18th 2016 <https://wiki.ubuntu.com/XenialXerus/ReleaseSchedule>`_,
+         so this is likely to be the 2016.1 release.
 
 .. _experimental: https://wiki.debian.org/DebianExperimental
 
@@ -283,7 +295,7 @@ one set.
  $ sudo service apache2 restart
 
 Upgrading LAVA packages on Jessie
-----------------------------------
+---------------------------------
 
 Updates are uploaded to `jessie-backports <http://backports.debian.org/>`_
 
@@ -341,15 +353,26 @@ packages on your own, LAVA will not be making backports to Ubuntu.
 Installing on Ubuntu Trusty Tahr 14.04 LTS
 ------------------------------------------
 
-.. note:: Only 64bit installations are supported for Ubuntu Trusty
-          and not all production hot fixes may actually get uploaded
-          to the repository.
+Trusty only provides django1.6 and lava-server has had to continue development
+based on newer versions of django as in Debian Jessie (django1.7) and Debian
+Stretch (likely to be django1.8 or django1.9). It has proved impractical for
+the LAVA software team to maintain support for so many changes in django.
+
+.. warning:: Trusty support has been **frozen** at version ``2015.9.post1``
+          for ``lava-server`` and 2015.9 for ``lava-dispatcher``.
+          Only 64bit installations were supported for Ubuntu Trusty. It is
+          **strongly** recommended to take a backup of the current postgresql
+          database dump before attempting any upgrades of a Trusty instance to
+          Ubuntu Xenial Xerus 16.04LTS. See also the
+          `call made to Trusty users <https://lists.linaro.org/pipermail/lava-announce/2015-November/000002.html>`_.
+          For these reasons, future builds of lava-server will **prevent**
+          installation if django1.6 is installed.
 
 Various package dependencies are needed on Trusty. These can be installed
 from the trusty repository on ``images.validation.linaro.org``
 but newer versions also exist in Ubuntu Unicorn and later.
 
-Updated versions of lava-server and lava-dispatcher can
+The last supported versions of lava-server and lava-dispatcher can
 be obtained from::
 
  deb [arch=amd64] http://images.validation.linaro.org/trusty-repo trusty main
@@ -363,6 +386,93 @@ be obtained from::
  $ wget http://images.validation.linaro.org/trusty-repo/trusty-repo.key.asc
  $ sudo apt-key add trusty-repo.key.asc
  $ sudo apt-get update
+
+Options for instances currently using Trusty
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. note:: Whichever method is chosen to move off Trusty, a period of downtime
+   **must** be expected. Ensure that a maintenance window is created and publicised,
+   take **all** devices offline, stop all remote workers and disable the lava-server
+   host in apache to prevent any database access. Stop the ``lava-server`` service on
+   the master (and the ``lava-master`` service, if running) and update your backup of
+   the postgresql database dump.
+
+Initial testing has demonstrated that migrating a Trusty install to django1.7 is
+problematic.
+
+The principle problems affect ``lava-server`` and the database migrations on the
+master instance. However, ``lava-server`` and ``lava-dispatcher`` are inter-related
+and ``lava-dispatcher`` was also frozen at 2015.9.
+
+.. warning:: It is **strongly** recommended to have a backup of your postgresql
+   database dump before considering **any** upgrade of a LAVA instance currently
+   using Trusty. Complete the migration to the updated django support in Ubuntu
+   **before** attempting to install updated LAVA packages as these will contain
+   further database migrations.
+
+Trusty relies on ``south`` to do the database migrations. Jessie and
+`Ubuntu releases after Trusty <https://launchpad.net/ubuntu/+source/python-django>`_
+use django migrations which make the same changes in the database but which are a
+completely different structure and migration process. To maintain Trusty support
+as far as ``lava-server 2015.9.post1``, LAVA provided both south and django migrations for the
+same database changes. The django migrations for these changes will need to be
+**faked** when using a database where the changes have already been made using
+south. See `the Django documentation <https://docs.djangoproject.com/en/1.8/topics/migrations/>`_.
+
+.. _migrate_trusty_to_xenial:
+
+Migrating to Ubuntu Xenial Xerus 16.04LTS
+"""""""""""""""""""""""""""""""""""""""""
+
+The LAVA software team is unable to provide detailed advice on the migration of a
+Trusty database to Xenial. Potential problems include:
+
+* Mismatch between the state of the database at the last south migration and the
+  set of django migrations which include the changes made by south and then extend
+  to changes which depend on those changes being made using a django migration, not
+  south.
+* Lack of testing of the upgrade path, as the
+  `call to Trusty users <https://lists.linaro.org/pipermail/lava-announce/2015-November/000002.html>`_.
+  has not resulted in anyone offering to test the upgrade. This means that there may be
+  other issues beyond the known database migration issues which have yet to be revealed.
+
+.. warning:: The LAVA software team are unable to help on migrations to Xenial. Please
+   join the `lava-users mailing list <https://lists.linaro.org/mailman/listinfo/lava-users>`_
+   if you have any contributions to make regarding the migration process.
+
+In the same way as :ref:`migrate_trusty_to_jessie`, the equivalent 2015.9 release is the
+best point to choose for the migration. Sadly, the different release time frames between
+Debian and Ubuntu mean that lava-server 2015.9 did not make it into
+`Wily Werewolf <https://launchpad.net/ubuntu/+source/lava-server>`_ which only got 2015.8.
+Migrating from 2015.9 to 2015.8 does involve a database migration, potentially causing loss
+of data if the migrations added in 2015.9 are unapplied to go to 2015.8. Upgrading django
+to 1.7 or later whilst still running Trusty has been known to cause database corruption. It
+**may** be possible to take a backup and drop the database on Trusty, upgrade the rest of the
+system, reinstall the Trusty build of lava-server, import the database and **fake** the
+django migrations already in the 2015.9.post1 Trusty build of lava-server. However, this route
+has **not** been tested.
+
+If the upgrade to Xenial fails, your database backup can still be used to :ref:`migrate_trusty_to_jessie`.
+
+.. _migrate_trusty_to_jessie:
+
+Migrating to Debian Jessie
+""""""""""""""""""""""""""
+
+Migration to
+`Debian Jessie at version 2015.9 <http://snapshot.debian.org/package/lava-server/2015.9-1~bpo8%2B1/#lava-server_2015.9-1:7e:bpo8:2b:1>`_
+from `snapshot.debian.org <http://snapshot.debian.org/>`_ is recommended as
+the south and django migrations are synchronised at that point.
+
+Once 2015.9 is installed, the django migrations in 2015.9 will need to be faked before
+further upgrades are made to get to a current version of LAVA.
+
+After you have a Debian Jessie system with lava-server 2015.9 installed, it should be
+a lot easier to fix any database migration issues. Please join the
+`lava-users mailing list <https://lists.linaro.org/mailman/listinfo/lava-users>`_.
+
+.. note:: Ensure that all database migrations are complete before moving off lava-server 2015.9 or
+   upgrading Debian Jessie to Stretch, Sid or any subsequent Debian release.
 
 Setting up a reverse proxy
 ==========================
