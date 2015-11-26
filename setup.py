@@ -24,7 +24,7 @@ from version import version_tag
 
 setup(
     name='lava-server',
-    version=version_tag(),
+    version='2015.9.post1',
     author="Zygmunt Krynicki",
     author_email="lava-team@linaro.org",
     namespace_packages=['lava', ],
