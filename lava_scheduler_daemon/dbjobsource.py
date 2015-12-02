@@ -79,7 +79,7 @@ def find_device_for_job(job, device_list):
             ))
             device_list.remove(device)
         if device.is_exclusive and not job.is_pipeline:
-            device_list.remove(device)
+            continue
     if not device_list:
         return None
     # forced health check support
