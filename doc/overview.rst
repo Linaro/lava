@@ -53,6 +53,16 @@ to offer an alternative authentication method:
 * :ref:`google_openid`
 * :ref:`ldap_authentication`
 
+OpenID is no longer available for all installs of LAVA. The OpenID
+support changed in the 2015.12 release due to incompatible
+changes in the underlying django support. See :ref:`user_authentication`
+for more information.
+
+LDAP authentication relies on local configuration and may involve obtaining
+a privileged access token from the LDAP administrators.
+
+Local accounts remain available for all instances.
+
 Whichever authentication method is used, there is no difference in how
 users interact with LAVA, once logged in.
 

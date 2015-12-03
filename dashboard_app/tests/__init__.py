@@ -2,8 +2,10 @@
 Package with all tests for dashboard_app
 """
 
+import imp
 import logging
 import unittest
+
 
 TEST_MODULES = [
     'models.test_bundle',
@@ -19,7 +21,6 @@ TEST_MODULES = [
     'other.test_csrf',
     'other.test_dashboard_api',
     'other.test_deserialization',
-    'other.test_login',
     'other.test_client',
     'regressions.test_LP658917',
     'views.test_bundle_stream_list_view',
@@ -27,6 +28,13 @@ TEST_MODULES = [
     'views.test_run_list_view',
     'views.test_redirects',
 ]
+
+
+try:
+    imp.find_module('django_openid_auth')
+    TEST_MODULES += ['other.test_login']
+except ImportError:
+    pass
 
 
 def load_tests_from_submodules(_locals):

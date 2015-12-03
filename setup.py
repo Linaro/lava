@@ -54,7 +54,6 @@ setup(
     ],
     install_requires=[
         'django >= 1.6.1',
-        'django-openid-auth >= 0.5',
         'django-restricted-resource >= 2015.09',
         'django-tables2 >= 0.13.0',
         'docutils >= 0.6',
@@ -71,9 +70,6 @@ setup(
         'jinja2',
         'django-auth-ldap >= 1.1.8',
         'voluptuous',
-        # optional dependency; for authentication with Attlassian Crowd SSO
-        # 'django-crowd-rest-backend >= 0.3,
-
         # dashboard
         'pygments >= 1.2',
 

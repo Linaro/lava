@@ -19,33 +19,44 @@
 """
 Tests for the login bits of Lava Dashboard.
 """
+import imp
 import cgi
 import httplib
 
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import TestCase
+try:
+    imp.find_module('django_openid_auth')
+    from django_openid_auth.models import UserOpenID
+    from django_openid_auth.tests.test_views import StubOpenIDProvider
+    import django_openid_auth.tests.urls
 
-from django_openid_auth.models import UserOpenID
-from django_openid_auth.tests.test_views import StubOpenIDProvider
-import django_openid_auth.tests.urls
+    from openid.fetchers import setDefaultFetcher
 
-from openid.fetchers import setDefaultFetcher
+    from dashboard_app.tests.utils import TestClient
 
-from dashboard_app.tests.utils import TestClient
-
-import lava_server.urls
+    import lava_server.urls
+    USE_OPENID_AUTH = True
+except ImportError:
+    USE_OPENID_AUTH = False
 
 
 class TestOpenIDLogin(TestCase):
 
-    urls = tuple(
-        django_openid_auth.tests.urls.urlpatterns +
-        lava_server.urls.urlpatterns)
     _username = 'someuser'
     _identity_url = 'http://example.com/identity'
 
+    if not USE_OPENID_AUTH:
+        urls = None
+    else:
+        urls = tuple(
+            django_openid_auth.tests.urls.urlpatterns +
+            lava_server.urls.urlpatterns)
+
     def test_positive_response_from_provider(self):
+        if not USE_OPENID_AUTH:
+            return
         self.create_user()
         openid_request = self.initiate_login()
 
@@ -60,6 +71,8 @@ class TestOpenIDLogin(TestCase):
         self.assertEquals(response.content, self._username)
 
     def test_negative_response_from_provider(self):
+        if not USE_OPENID_AUTH:
+            return
         openid_request = self.initiate_login()
 
         # Simulate a negative assertion from the server.
@@ -74,6 +87,8 @@ class TestOpenIDLogin(TestCase):
         self.assertEquals(response.content, '')
 
     def setUp(self):
+        if not USE_OPENID_AUTH:
+            return
         super(TestOpenIDLogin, self).setUp()
         # Use StubOpenIDProvider and _identity_url as our fixed SSO so that
         # we always get a successful OpenID response for _identity_url.
@@ -86,6 +101,8 @@ class TestOpenIDLogin(TestCase):
         self.client = TestClient()
 
     def tearDown(self):
+        if not USE_OPENID_AUTH:
+            return
         super(TestOpenIDLogin, self).tearDown()
         setDefaultFetcher(None)
         if self.orig_sso_server_url == self.missing_sso_server_url:
@@ -94,6 +111,8 @@ class TestOpenIDLogin(TestCase):
             settings.OPENID_SSO_SERVER_URL = self.orig_sso_server_url
 
     def create_user(self):
+        if not USE_OPENID_AUTH:
+            return
         user = User(username=self._username)
         user.save()
         # Associate our newly created user with the identity URL.
@@ -103,6 +122,8 @@ class TestOpenIDLogin(TestCase):
         useropenid.save()
 
     def initiate_login(self):
+        if not USE_OPENID_AUTH:
+            return
         response = self.client.get('/openid/login/')
         self.assertEqual(httplib.OK, response.status_code)
         openid_request = self.provider.parseFormPost(response.content)
@@ -112,6 +133,8 @@ class TestOpenIDLogin(TestCase):
 
     def complete(self, openid_response):
         """Complete an OpenID authentication request."""
+        if not USE_OPENID_AUTH:
+            return
         webresponse = self.provider.server.encodeResponse(openid_response)
         self.assertEquals(webresponse.code, 302)
         redirect_to = webresponse.headers['location']
