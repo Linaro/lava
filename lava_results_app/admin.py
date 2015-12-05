@@ -23,7 +23,7 @@ Administration interface of the LAVA Results application.
 from django import forms
 from django.contrib import admin
 from django.contrib.admin.actions import delete_selected
-from django.contrib.contenttypes import generic
+from django.contrib.contenttypes import fields
 from django.utils.translation import ugettext_lazy as _
 
 from lava_results_app.models import (
