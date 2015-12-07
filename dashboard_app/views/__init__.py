@@ -673,7 +673,7 @@ def test_run_export(request, pathname, content_sha1, analyzer_assigned_uuid):
 
     test_result_keys.sort()
     # Remove non-relevant columns for CSV file.
-    removed_fields = ["_state", "_order", "id", "test_run_id", "test_case_id"]
+    removed_fields = ["_state", "id", "test_run_id", "test_case_id"]
     for field in removed_fields:
         if field in test_result_keys:
             test_result_keys.remove(field)

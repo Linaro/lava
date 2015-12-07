@@ -30,7 +30,7 @@ import os
 import simplejson
 import traceback
 import contextlib
-
+import django
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes import fields
@@ -1450,7 +1450,6 @@ class TestResult(models.Model):
 
     class Meta:
         ordering = ['relative_index']
-        order_with_respect_to = 'test_run'
 
 
 class Tag(models.Model):

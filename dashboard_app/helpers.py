@@ -202,8 +202,9 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
     def _import_test_results_sqlite(self, c_test_results, s_test_run):
         cursor = connection.cursor()
 
-        # XXX I don't understand how the _order column that Django adds is
-        # supposed to work.  I just set it to 0 here.
+        # _order has been removed as order_with_respect_to and ordering
+        # where never compatible for the same Meta object in Django and
+        # django1.9 blocks use of the two elements together.
 
         data = []
 
@@ -246,7 +247,6 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                 measurement,
                 message,
                 lineno,
-                _order,
                 test_case_id
             ) select
                 %s,
@@ -258,7 +258,6 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                 %s,
                 %s,
                 %s,
-                0,
                 dashboard_app_testcase.id
                 FROM dashboard_app_testcase
                   WHERE dashboard_app_testcase.test_id = %s
@@ -271,8 +270,9 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
     def _import_test_results_pgsql(self, c_test_results, s_test_run):
         cursor = connection.cursor()
 
-        # XXX I don't understand how the _order column that Django adds is
-        # supposed to work.  I just let it default to 0 here.
+        # _order has been removed as order_with_respect_to and ordering
+        # where never compatible for the same Meta object in Django and
+        # django1.9 blocks use of the two elements together.
 
         data = []
 
@@ -341,7 +341,6 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                 """
                 INSERT INTO dashboard_app_testresult (
                     test_run_id,
-                    _order,
                     relative_index,
                     timestamp,
                     microseconds,
@@ -352,7 +351,6 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                     test_case_id,
                     lineno
                 ) SELECT
-                    %s,
                     %s,
                     relative_index,
                     timestamp,
@@ -367,7 +365,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                       WHERE dashboard_app_testcase.test_id = %s
                         AND dashboard_app_testcase.test_case_id
                           = newtestresults.test_case_id
-                """ % (s_test_run.id, 0, s_test_run.test.id))
+                """ % (s_test_run.id, s_test_run.test.id))
 
             cursor.execute(
                 """
