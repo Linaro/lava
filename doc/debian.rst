@@ -5,18 +5,27 @@ Developing LAVA on Debian or Ubuntu
 
 Packages for LAVA are available for:
 
-======================== =============================
-Debian                    Ubuntu
-Debian Jessie (testing)   Ubuntu Trusty Tahr 14.04LTS
-Debian Sid (unstable)     Ubuntu Utopic Unicorn
-======================== =============================
+* Debian Jessie (stable)
+* Debian Stretch (testing)
+* Debian Sid (unstable)
 
+Packages migrate into the current Ubuntu development release from Debian.
+See `Ubuntu package status <https://launchpad.net/ubuntu/+source/lava-server>`_.
 To install on Ubuntu, ensure the universe_ repository is enabled.
 
 .. _universe: https://help.ubuntu.com/community/Repositories/CommandLine#Adding_the_Universe_and_Multiverse_Repositories
 
 When using the packages to develop LAVA, there is a change to
 the workflow compared to the old lava-deployment-tool buildouts.
+
+.. note:: Changes to build dependencies between Debian unstable and
+   Debian stable can cause changes to the builds for each suite. Always
+   ensure that you build packages for unstable using unstable and build
+   packages for stable using a chroot or VM or other stable environment.
+   If a package built on unstable does not install on stable, rebuild
+   the same changes in a stable environment and re-install. Backports to
+   stable in Debian are always built in a stable chroot or VM for this
+   reason.
 
 .. _dev_builds:
 
