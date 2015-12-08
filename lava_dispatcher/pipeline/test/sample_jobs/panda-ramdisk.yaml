@@ -25,6 +25,9 @@ actions:
      method: u-boot
      commands: ramdisk
      type: bootm
+     prompts:
+       - 'linaro-test'
+       - 'root@debian:~#'
 
   - test:
      failure_retry: 3

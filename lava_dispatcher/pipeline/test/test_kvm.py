@@ -25,8 +25,9 @@ import unittest
 import yaml
 
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.action import Pipeline, Action, JobError
+from lava_dispatcher.pipeline.action import Pipeline, Action, JobError, Timeout
 from lava_dispatcher.pipeline.test.test_basic import Factory, pipeline_reference
+from lava_dispatcher.pipeline.shell import ShellSession
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.boot.qemu import BootAction
@@ -152,6 +153,9 @@ class TestKVMBasicDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
 
     def test_pipeline(self):
         description_ref = pipeline_reference('kvm.yaml')
+        deploy = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
+        overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        self.assertIn('persistent-nfs-overlay', [action.name for action in overlay.internal_pipeline.actions])
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
     @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
@@ -188,6 +192,13 @@ class TestKVMBasicDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
             if isinstance(action, BootAction):
                 # get the action & populate it
                 self.assertEqual(action.parameters['method'], 'qemu')
+                self.assertEqual(action.parameters['prompts'], ['linaro-test', 'root@debian:~#'])
+                params = action.parameters.get('auto_login', None)
+
+                if 'login_prompt' in params:
+                    self.assertEqual(params['login_prompt'], 'login:')
+                if 'username' in params:
+                    self.assertEqual(params['username'], 'root')
 
     def test_testdefinitions(self):
         for action in self.job.pipeline.actions:
@@ -303,3 +314,217 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
                                         'yaml_line': 53},
                                 'yaml_line': 38}
             self.assertEqual(testdef, expected_testdef)
+
+    def test_autologin_prompt_patterns(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+
+        autologinaction.parameters.update({'auto_login': {'login_prompt': 'login:',
+                                                          'username': 'root'},
+                                           'prompts': ['root@debian:~#']})
+
+        # initialise the first Connection object, a command line shell
+        shell_command = FakeCommand(autologinaction.timeout)
+        shell_connection = ShellSession(self.job, shell_command)
+
+        # Test the AutoLoginAction directly
+        conn = autologinaction.run(shell_connection)
+
+        self.assertEqual(conn.prompt_str, ['lava-test: # ', 'root@debian:~#'])
+
+    def test_autologin_void_login_prompt(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+
+        autologinaction.parameters.update({'auto_login': {'login_prompt': '',
+                                                          'username': 'root'},
+                                           'prompts': ['root@debian:~#']})
+
+        self.assertRaises(JobError, self.job.validate)
+
+    def test_missing_autologin_void_prompts_list(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+
+        autologinaction.parameters.update({'prompts': []})
+
+        self.assertRaises(JobError, self.job.validate)
+
+    def test_missing_autologin_void_prompts_list_item(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+
+        autologinaction.parameters.update({'prompts': ['']})
+
+        self.assertRaises(JobError, self.job.validate)
+
+    def test_missing_autologin_void_prompts_list_item2(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+
+        autologinaction.parameters.update({'prompts': ['root@debian:~#', '']})
+
+        self.assertRaises(JobError, self.job.validate)
+
+    def test_missing_autologin_prompts_list(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+
+        autologinaction.parameters.update({'prompts': ['root@debian:~#']})
+
+        # initialise the first Connection object, a command line shell
+        shell_command = FakeCommand(autologinaction.timeout)
+        shell_connection = ShellSession(self.job, shell_command)
+
+        # Test the AutoLoginAction directly
+        conn = autologinaction.run(shell_connection)
+
+        self.assertEqual(conn.prompt_str, ['lava-test: # ', 'root@debian:~#'])
+
+    def test_missing_autologin_void_prompts_str(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+
+        autologinaction.parameters.update({'prompts': ''})
+
+        self.assertRaises(JobError, self.job.validate)
+
+    def test_missing_autologin_prompts_str(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        autologinaction = [action for action in bootaction.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+
+        autologinaction.parameters.update({'prompts': 'root@debian:~#'})
+
+        # initialise the first Connection object, a command line shell
+        shell_command = FakeCommand(autologinaction.timeout)
+        shell_connection = ShellSession(self.job, shell_command)
+
+        # Test the AutoLoginAction directly
+        conn = autologinaction.run(shell_connection)
+
+        self.assertEqual(conn.prompt_str, ['lava-test: # ', 'root@debian:~#'])
+
+    def test_download_checksum_match_success(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        deployimagesaction = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
+        downloadretryaction = [action for action in deployimagesaction.internal_pipeline.actions if action.name == 'download_retry'][0]
+        httpdownloadaction = [action for action in downloadretryaction.internal_pipeline.actions if action.name == 'http_download'][0]
+
+        # Just a small image
+        httpdownloadaction.url = 'http://images.validation.linaro.org/unit-tests/rootfs.gz'
+        httpdownloadaction.parameters.update({'images': {'rootfs': {
+            'url': httpdownloadaction.url,
+            'md5sum': '6ea432ac3c23210c816551782346ed1c',
+            'sha256sum': '1a76b17701b9fdf6346b88eb49b0143a9c6912701b742a6e5826d6856edccd21'}}})
+        httpdownloadaction.validate()
+        httpdownloadaction.run(None)
+
+    def test_download_checksum_match_fail(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        deployimagesaction = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
+        downloadretryaction = [action for action in deployimagesaction.internal_pipeline.actions if action.name == 'download_retry'][0]
+        httpdownloadaction = [action for action in downloadretryaction.internal_pipeline.actions if action.name == 'http_download'][0]
+
+        # Just a small image
+        httpdownloadaction.url = 'http://images.validation.linaro.org/unit-tests/rootfs.gz'
+        httpdownloadaction.parameters.update({'images': {'rootfs': {
+            'url': httpdownloadaction.url,
+            'md5sum': 'df1bd1598699e7a89d2e111111111111',
+            'sha256sum': '92d6ff900d0c3656ab3f214ce6efd708f898fc5e259111111111111111111111'}}})
+        httpdownloadaction.validate()
+
+        self.assertRaises(JobError, httpdownloadaction.run, None)
+
+    def test_download_no_images_no_checksum(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        deployimagesaction = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
+        downloadretryaction = [action for action in deployimagesaction.internal_pipeline.actions if action.name == 'download_retry'][0]
+        httpdownloadaction = [action for action in downloadretryaction.internal_pipeline.actions if action.name == 'http_download'][0]
+
+        # Just a small image
+        httpdownloadaction.url = 'http://images.validation.linaro.org/unit-tests/rootfs.gz'
+        del httpdownloadaction.parameters['images']
+        httpdownloadaction.parameters.update({'rootfs': httpdownloadaction.url})
+        httpdownloadaction.validate()
+        httpdownloadaction.run(None)
+
+    def test_download_no_images_match_success(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        deployimagesaction = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
+        downloadretryaction = [action for action in deployimagesaction.internal_pipeline.actions if action.name == 'download_retry'][0]
+        httpdownloadaction = [action for action in downloadretryaction.internal_pipeline.actions if action.name == 'http_download'][0]
+
+        # Just a small image
+        httpdownloadaction.url = 'http://images.validation.linaro.org/unit-tests/rootfs.gz'
+        del httpdownloadaction.parameters['images']
+        httpdownloadaction.parameters.update({
+            'rootfs': httpdownloadaction.url,
+            'md5sum': {'rootfs': '6ea432ac3c23210c816551782346ed1c'},
+            'sha256sum': {'rootfs': '1a76b17701b9fdf6346b88eb49b0143a9c6912701b742a6e5826d6856edccd21'}})
+        httpdownloadaction.validate()
+        httpdownloadaction.run(None)
+
+    def test_download_no_images_match_fail(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        deployimagesaction = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
+        downloadretryaction = [action for action in deployimagesaction.internal_pipeline.actions if action.name == 'download_retry'][0]
+        httpdownloadaction = [action for action in downloadretryaction.internal_pipeline.actions if action.name == 'http_download'][0]
+
+        # Just a small image
+        httpdownloadaction.url = 'http://images.validation.linaro.org/unit-tests/rootfs.gz'
+        del httpdownloadaction.parameters['images']
+        httpdownloadaction.parameters.update({
+            'rootfs': httpdownloadaction.url,
+            'md5sum': {'rootfs': '6ea432ac3c232122222221782346ed1c'},
+            'sha256sum': {'rootfs': '1a76b17701b9fdf63444444444444444446912701b742a6e5826d6856edccd21'}})
+        httpdownloadaction.validate()
+        self.assertRaises(JobError, httpdownloadaction.run, None)
+
+    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
+    def test_no_test_action_validate(self):
+        self.assertEqual(len(self.job.pipeline.describe()), 4)
+
+        del self.job.pipeline.actions[2]
+
+        try:
+            self.job.pipeline.validate_actions()
+        except JobError as exc:
+            self.fail(exc)
+        for action in self.job.pipeline.actions:
+            self.assertEqual([], action.errors)
+
+
+class FakeCommand(object):
+
+    def __init__(self, lava_timeout):
+        if not lava_timeout or not isinstance(lava_timeout, Timeout):
+            raise RuntimeError("FakeCommand needs a timeout set by the calling Action")
+        self.name = "FakeCommand"
+        self.lava_timeout = lava_timeout
+
+    def sendline(self, s='', delay=0, send_char=True):  # pylint: disable=invalid-name
+        pass
+
+    def expect(self, *args, **kw):
+        pass

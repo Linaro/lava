@@ -59,7 +59,7 @@ class FastBoot(object):
 
     def __call__(self, args, ignore_failure=False, timeout=600):
         command = self.device.config.fastboot_command + ' ' + args
-        command = "flock /var/lock/lava-fastboot.lck " + command
+        command = "flock -o /var/lock/lava-fastboot.lck " + command
         _call(self.context, command, ignore_failure, timeout)
 
     def enter(self):

@@ -124,19 +124,11 @@ actions:
           - boot
 
 timeouts:
-  call-kexec:
-    seconds: 45
-
-test_image_prompts:
-  - '(initramfs)'
-  - 'linaro-test'
-  - '/ #'
-  - 'root@android'
-  - 'root@linaro'
-  - 'root@master'
-  - 'root@debian'
-  - 'root@linaro-nano:~#'
-  - 'root@linaro-developer:~#'
-  - 'root@linaro-server:~#'
-  - 'root@genericarmv7a:~#'
-  - 'root@genericarmv8:~#'
+  actions:
+    call-kexec:
+      seconds: 45
+    uboot-retry:
+      seconds: 90
+  connections:
+    uboot-retry:
+      seconds: 45

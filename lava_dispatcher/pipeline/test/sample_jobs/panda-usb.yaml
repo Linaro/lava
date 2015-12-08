@@ -27,6 +27,9 @@ actions:
      method: u-boot
      commands: nfs
      type: bootm
+     prompts:
+       - 'linaro-test'
+       - 'root@debian:~#'
 
   - deploy:
       timeout:

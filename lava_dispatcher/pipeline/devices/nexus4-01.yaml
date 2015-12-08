@@ -1,13 +1,12 @@
+commands:
+    connect: adb -s 04f228d1d9c76f39 shell
+    soft_reboot: adb -s 04f228d1d9c76f39 reboot bootloader
 device_type: nexus4
 serial_number: 04f228d1d9c76f39
 
-commands:
-  connect: adb -s 04f228d1d9c76f39 shell
-  soft_reboot: adb -s 04f228d1d9c76f39 reboot bootloader
 
 actions:
   deploy:
-    # list of deployment methods which this device supports
     methods:
       fastboot:
     connections:
@@ -19,7 +18,12 @@ actions:
     methods:
       fastboot:
 
-test_image_prompts:
-  - 'shell@mako:/ $'
-  - 'shell@mako'
-
+timeouts:
+  apply-overlay-image:
+    seconds: 120
+  umount-retry:
+    seconds: 45
+  lava-test-shell:
+    seconds: 30
+  power_off:
+    seconds: 5

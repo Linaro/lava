@@ -137,6 +137,8 @@ class MasterImageTarget(Target):
             proc.sendline("off")
         if self.config.connection_command_terminate:
                 self.proc.sendline(self.config.connection_command_terminate)
+        else:
+            self._politely_close_console(self.proc)
         finalize_process(self.proc)
         self.proc = None
 
@@ -514,6 +516,8 @@ class MasterImageTarget(Target):
                 if self.proc:
                     if self.config.connection_command_terminate:
                         self.proc.sendline(self.config.connection_command_terminate)
+                    else:
+                        self._politely_close_console(self.proc)
                     finalize_process(self.proc)
                     self.proc = None
                 self.proc = connect_to_serial(self.context)

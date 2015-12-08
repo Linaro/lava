@@ -39,6 +39,10 @@ actions:
         media: tmpfs
         connection: serial
         failure_retry: 2
+        auto_login: {login_prompt: 'login:', username: root}
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
     - test:
         failure_retry: 3

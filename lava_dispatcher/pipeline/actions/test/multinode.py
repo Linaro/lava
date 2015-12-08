@@ -78,11 +78,11 @@ class MultinodeTestAction(TestShellAction):
         self.protocols = [protocol for protocol in self.job.protocols if protocol.name == MultinodeProtocol.name]
         self.signal_director = self.SignalDirector(self.protocols[0])
 
-    def check_patterns(self, event, test_connection):
+    def check_patterns(self, event, test_connection, check_char):
         """
         Calls the parent check_patterns first, then checks for subclass pattern.
         """
-        ret = super(MultinodeTestAction, self).check_patterns(event, test_connection)
+        ret = super(MultinodeTestAction, self).check_patterns(event, test_connection, check_char)
         if event == 'multinode':
             name, params = test_connection.match.groups()
             self.logger.debug("Received Multi_Node API <LAVA_%s>" % name)

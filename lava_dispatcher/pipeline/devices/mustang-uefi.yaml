@@ -1,0 +1,122 @@
+device_type: mustang-uefi
+
+commands:
+  connect: telnet localhost 6002
+  #hard_reset: /usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 05
+  #power_off: /usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 05
+  #power_on: /usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 05
+
+
+actions:
+  deploy:
+    methods:
+      tftp:
+      usb:
+      ssh:
+        options:
+          - '-o'
+          - 'Compression=yes'
+          - '-o'
+          - 'UserKnownHostsFile=/dev/null'
+          - '-o'
+          - 'PasswordAuthentication=no'
+          - '-o'
+          - 'StrictHostKeyChecking=no'
+          - '-o'
+          - 'LogLevel=FATAL'
+          - '-l'
+          - 'root '
+          - '-p'
+          - '22'
+        host: 172.16.200.165
+        identity_file: device/dynamic_vm_keys/lava
+  boot:
+    connections:
+      serial:
+      ssh:
+    methods:
+      kexec:
+      ssh:
+      uefi-shell:
+        parameters:
+        master:
+          items:
+          - 'Shell'
+      uefi-menu:
+        parameters:
+          interrupt_prompt: The default boot selection will start in
+          interrupt_string: ' '
+          item_markup:
+            - "["
+            - "]"
+          item_class: '0-9'
+          separator: ' '
+          label_class: 'a-zA-Z0-9\s\:'
+          bootloader_prompt: 'Start:'
+          boot_message: "Loaded: LinuxImage"
+          send_char: True  # redefine to take an integer? or drop and set True if the delay is defined?
+          character_delay: 10
+          # interrupt: # character needed to interrupt u-boot, single whitespace by default
+          # method specific stanza
+        nfs:
+        - select:
+            items:
+             - 'Boot Manager'
+            wait: "Choice:"
+        - select:
+            items:
+             - 'Remove Boot Device Entry'
+            fallback: Return to Main Menu
+            wait: Delete entry
+        - select:
+            items:
+             - '{TEST_MENU_NAME}'
+            wait: "Choice:"
+        - select:
+            items:
+               - 'Add Boot Device Entry'
+            wait: "Select the Boot Device:"
+        - select:
+            items:
+               - 'TFTP on MAC Address: 00:01:73:69:5A:EF'  # substitute the MAC in the template
+            wait: "Get the IP address from DHCP:"
+        - select:
+            enter: y
+            wait: "Get the TFTP server IP address:"
+        - select:
+            enter: '{SERVER_IP}'
+            wait: "File path of the EFI Application or the kernel :"
+        - select:
+            enter: '{KERNEL}'
+            wait: 'Is an EFI Application?'
+        - select:
+            enter: n
+            wait: "Boot Type:"
+        - select:
+            enter: f
+            wait: "Add an initrd:"
+        - select:
+            enter: n
+            wait: "Get the IP address from DHCP:"
+        - select:
+            enter: y
+            wait: "Get the TFTP server IP address:"
+        - select:
+            enter: '{SERVER_IP}'
+            wait: "File path of the FDT :"
+        - select:
+            enter: '{DTB}'
+            wait: 'Arguments to pass to the binary:'
+        - select:
+            enter: "console=ttyS0,115200 earlyprintk=uart8250-32bit,0x1c020000 debug root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp"
+            wait: 'Description for this new Entry:'
+        - select:
+            enter: '{TEST_MENU_NAME}'
+            wait: "Choice:"
+        - select:
+            items:
+              - 'Return to main menu'
+            wait: "Start:"
+        - select:
+            items:
+              - LAVA NFS Test Image

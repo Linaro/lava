@@ -20,8 +20,11 @@
 
 from lava_dispatcher.pipeline.action import Action
 from lava_dispatcher.pipeline.logical import RetryAction
-from lava_dispatcher.pipeline.connection import wait_for_prompt
-from lava_dispatcher.pipeline.utils.constants import AUTOLOGIN_DEFAULT_TIMEOUT
+from lava_dispatcher.pipeline.utils.constants import (
+    AUTOLOGIN_DEFAULT_TIMEOUT,
+    DEFAULT_SHELL_PROMPT,
+    DISTINCTIVE_PROMPT_CHARACTERS,
+)
 
 
 class BootAction(RetryAction):
@@ -48,47 +51,93 @@ class AutoLoginAction(Action):
     """
     Automatically login on the device.
     If 'auto_login' is not present in the parameters, this action does nothing.
+
+    This Action expect POSIX-compatible support of PS1 from shell
     """
     def __init__(self):
         super(AutoLoginAction, self).__init__()
         self.name = 'auto-login-action'
         self.description = "automatically login after boot using job parameters"
         self.summary = "Auto-login after boot"
+        self.check_prompt_characters_warning = (
+            "The string '%s' does not look like a typical prompt and"
+            " could match status messages instead. Please check the"
+            " job log files and use a prompt string which matches the"
+            " actual prompt string more closely."
+        )
         # FIXME: self.timeout.duration = AUTOLOGIN_DEFAULT_TIMEOUT
 
     def validate(self):
         super(AutoLoginAction, self).validate()
         # Skip auto login if the configuration is not found
         params = self.parameters.get('auto_login', None)
-        if params is None:
-            return
+        if params:
+            if not isinstance(params, dict):
+                self.errors = "'auto_login' should be a dictionary"
+                return
 
-        if not isinstance(params, dict):
-            self.errors = "'auto_login' should be a dictionary"
-            return
+            if 'login_prompt' not in params:
+                self.errors = "'login_prompt' is mandatory for auto_login"
+            if not params['login_prompt']:
+                self.errors = "Value for 'login_prompt' cannot be empty"
+            if 'username' not in params:
+                self.errors = "'username' is mandatory for auto_login"
 
-        if 'login_prompt' not in params:
-            self.errors = "'login_prompt' is mandatory for auto_login"
-        if 'username' not in params:
-            self.errors = "'username' is mandatory for auto_login"
+            if 'password_prompt' in params:
+                if 'password' not in params:
+                    self.errors = "'password' is mandatory if 'password_prompt' is used in auto_login"
 
-        if 'password_prompt' in params:
-            if 'password' not in params:
-                self.errors = "'password' is mandatory if 'password_prompt' is used in auto_login"
+        prompts = self.parameters.get('prompts', None)
+        if prompts is None:
+            self.errors = "'prompts' is mandatory for AutoLoginAction"
+
+        if not isinstance(prompts, (list, str)):
+            self.errors = "'prompts' should be a list or a str"
+
+        if not prompts:
+            self.errors = "Value for 'prompts' cannot be empty"
+
+        if isinstance(prompts, list):
+            for prompt in prompts:
+                if not prompt:
+                    self.errors = "Items of 'prompts' can't be empty"
 
     def run(self, connection, args=None):
+        def check_prompt_characters(prompt):
+            if not any([True for c in DISTINCTIVE_PROMPT_CHARACTERS if c in prompt]):
+                self.logger.warning(self.check_prompt_characters_warning % prompt)
+
         # Skip auto login if the configuration is not found
         params = self.parameters.get('auto_login', None)
         if params is None:
-            self.logger.debug("Skipping auto login")
-            return connection
+            self.logger.debug("Skipping of auto login")
+        else:
+            self.logger.debug("Waiting for the login prompt")
+            connection.prompt_str = params['login_prompt']
+            self.wait(connection)
+            connection.sendline(params['username'])
 
-        self.logger.debug("Waiting for the login prompt")
-        wait_for_prompt(connection.raw_connection, params['login_prompt'], self.timeout.duration)
-        connection.sendline(params['username'])
+            if 'password_prompt' in params:
+                self.logger.debug("Waiting for password prompt")
+                connection.prompt_str = params['password_prompt']
+                self.wait(connection)
+                connection.sendline(params['password'])
+        # prompt_str can be a list or str
+        connection.prompt_str = [DEFAULT_SHELL_PROMPT]
 
-        if 'password_prompt' in params:
-            self.logger.debug("Waiting for password prompt")
-            wait_for_prompt(connection.raw_connection, params['password_prompt'], self.timeout.duration)
-            connection.sendline(params['password'])
+        prompts = self.parameters.get('prompts', None)
+        if isinstance(prompts, list):
+            connection.prompt_str.extend(prompts)
+            for prompt in prompts:
+                check_prompt_characters(prompt)
+        else:
+            connection.prompt_str.extend([prompts])
+            check_prompt_characters(prompts)
+
+        self.logger.debug("Setting shell prompt")
+        # FIXME: by fact we need to wait here not a prompt but *something*
+        #        which looks like a successful login
+        self.wait(connection)
+        connection.sendline('export PS1="%s"' % DEFAULT_SHELL_PROMPT)
+
         return connection

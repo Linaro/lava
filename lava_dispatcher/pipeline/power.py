@@ -71,6 +71,7 @@ class RebootDevice(Action):
             return connection
         connection = super(RebootDevice, self).run(connection, args)
         connection.prompt_str = self.parameters.get('parameters', {}).get('shutdown-message', SHUTDOWN_MESSAGE)
+        connection.timeout = self.connection_timeout
         connection.sendline("reboot")
         # FIXME: possibly deployment data, possibly separate actions, possibly adjuvants.
         connection.sendline("reboot -n")  # initramfs may require -n for *now*

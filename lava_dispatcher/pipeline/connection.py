@@ -125,6 +125,10 @@ class Connection(object):
         self.results = {}
         self.match = None
         self.connected = True
+        self.check_char = '#'
+
+    def corruption_check(self):
+        self.sendline(self.check_char)
 
     def sendline(self, line):
         if self.connected:
@@ -172,8 +176,8 @@ class CommandRunner(object):
         # self.logger.debug("Changing prompt to %s" % string)
         self._prompt_str = string
 
-    def wait_for_prompt(self, timeout=-1):
-        wait_for_prompt(self._connection, self._prompt_str, timeout)
+    def wait_for_prompt(self, timeout=-1, check_char='#'):
+        wait_for_prompt(self._connection, self._prompt_str, timeout, check_char)
 
     def get_connection(self):
         return self._connection

@@ -35,6 +35,9 @@ actions:
           minutes: 5
         media: tmpfs
         failure_retry: 2
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
     - test:
         failure_retry: 3

@@ -121,6 +121,26 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         if not action:
             raise RuntimeError("Unable to add empty action to pipeline")
 
+    def _override_action_timeout(self, action, override):
+        if not isinstance(override, dict):
+            return
+        action.timeout = Timeout(
+            action.name,
+            Timeout.parse(
+                override[action.name]
+            )
+        )
+
+    def _override_connection_timeout(self, action, override):
+        if not isinstance(override, dict):
+            return
+        action.connection_timeout = Timeout(
+            action.name,
+            Timeout.parse(
+                override[action.name]
+            )
+        )
+
     def add_action(self, action, parameters=None):
         self._check_action(action)
         self.actions.append(action)
@@ -151,26 +171,36 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             parameters = self.parameters
         # if the action has an internal pipeline, initialise that here.
         action.populate(parameters)
+        if 'default_connection_timeout' in parameters:
+            # some action handlers do not need to pass all parameters to their children.
+            action.connection_timeout.duration = parameters['default_connection_timeout']
         # Set the timeout
         # FIXME: only the last test is really useful. The first ones are only
         # needed to run the tests that do not use a device and job.
-        if self.job is not None and \
-           self.job.device is not None and \
-           action.name in self.job.device.get('timeouts', {}):
-            action.timeout = Timeout(
-                action.name,
-                Timeout.parse(
-                    self.job.device['timeouts'][action.name]
-                )
-            )
+        if self.job is not None and self.job.device is not None:
+            # set device level overrides
+            overrides = self.job.device.get('timeouts', {})
+            if 'actions' in overrides and action.name in overrides['actions']:
+                self._override_action_timeout(action, overrides['actions'])
+            elif action.name in overrides:
+                self._override_action_timeout(action, overrides)
+            if 'connections' in overrides and action.name in overrides['connections']:
+                self._override_connection_timeout(action, overrides['connections'])
         # Set the parameters after populate so the sub-actions are also
         # getting the parameters.
         # Also set the parameters after the creation of the default timeout
         # so timeouts specified in the job override the defaults.
         # job overrides device timeouts:
-        # FIXME: this shouldn't be needed once the device configuration is generated using the job definition
-        if self.job and 'timeouts' in self.job.parameters and action.name in self.job.parameters['timeouts']:
-            parameters['timeout'] = self.job.parameters['timeouts'][action.name]
+        if self.job and 'timeouts' in self.job.parameters:
+            overrides = self.job.parameters['timeouts']
+            if 'actions' in overrides and action.name in overrides:
+                # set job level overrides
+                self._override_action_timeout(action, overrides['actions'])
+            elif action.name in overrides:
+                self._override_action_timeout(action, overrides)
+                parameters['timeout'] = overrides[action.name]
+            if 'connections' in overrides and action.name in overrides:
+                self._override_connection_timeout(action, overrides['connections'])
 
         action.parameters = parameters
 
@@ -303,11 +333,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     signal.signal(signal.SIGTERM, cancelling_handler)
                 start = time.time()
                 try:
-                    # FIXME: not sure to understand why we have two cases here?
-                    if not connection:
-                        with action.timeout.action_timeout():
-                            new_connection = action.run(connection, args)
-                    else:
+                    with action.timeout.action_timeout():
                         new_connection = action.run(connection, args)
                 # overly broad exceptions will cause issues with RetryActions
                 # always ensure the unit tests continue to pass with changes here.
@@ -392,6 +418,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         self.diagnostics = []
         self.protocols = []  # list of protocol objects supported by this action, full list in job.protocols
         self.section = None
+        self.connection_timeout = Timeout(self.name)
 
     # public actions (i.e. those who can be referenced from a job file) must
     # declare a 'class-type' name so they can be looked up.
@@ -513,6 +540,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         # Overide the duration if needed
         if 'timeout' in self.parameters:
             self.timeout.duration = Timeout.parse(self.parameters['timeout'])
+        if 'connection_timeout' in self.parameters:
+            self.connection_timeout.duration = Timeout.parse(self.parameters['connection_timeout'])
 
         # only unit tests should have actions without a pointer to the job.
         if 'failure_retry' in self.parameters and 'repeat' in self.parameters:
@@ -651,7 +680,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         if self.internal_pipeline:
             return self.internal_pipeline.run_actions(connection, args)
         if connection:
-            connection.timeout = self.timeout
+            connection.timeout = self.connection_timeout
         return connection
 
     def cleanup(self):

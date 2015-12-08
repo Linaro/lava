@@ -31,6 +31,9 @@ actions:
      method: u-boot
      commands: nfs
      type: bootz
+     prompts:
+       - 'linaro-test'
+       - 'root@debian:~#'
 
   # needs to be a list of hashes to retain the order
   - deploy:
@@ -47,3 +50,6 @@ actions:
      method: u-boot
      commands: ramdisk
      type: bootz
+     prompts:
+       - 'linaro-test'
+       - 'root@debian:~#'

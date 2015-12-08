@@ -53,8 +53,8 @@ class Factory(object):  # pylint: disable=too-few-public-methods
     """
     def create_bbb_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
-        kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(kvm_yaml) as sample_job_data:
+        bbb_yaml = os.path.join(os.path.dirname(__file__), filename)
+        with open(bbb_yaml) as sample_job_data:
             parser = JobParser()
             job = parser.parse(sample_job_data, device, 4212, None, output_dir=output_dir)
         return job
@@ -152,7 +152,8 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
                 'boot': {
                     'method': 'u-boot',
                     'commands': 'ramdisk',
-                    'type': 'bootz'
+                    'type': 'bootz',
+                    'prompts': ['linaro-test', 'root@debian:~#']
                 },
                 'deploy': {
                     'ramdisk': 'initrd.gz',
@@ -331,7 +332,6 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         parser = JobParser()
         sample_job_data = yaml.load(sample_job_string)
         boot = [item['boot'] for item in sample_job_data['actions'] if 'boot' in item][0]
-        boot.update({'parameters': {'boot_prompt': 'root@bbb'}})
         sample_job_string = yaml.dump(sample_job_data)
         job = parser.parse(sample_job_string, device, 4212, None, output_dir='/tmp')
         job.validate()
@@ -341,7 +341,6 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         expect = [action for action in retry.internal_pipeline.actions
                   if action.name == 'expect-shell-connection'][0]
         self.assertNotEqual(check, expect.parameters)
-        self.assertIn('root@bbb', expect.prompts)
 
     def test_xz_nfs(self):
         factory = Factory()

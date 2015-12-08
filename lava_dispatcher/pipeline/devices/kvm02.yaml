@@ -30,19 +30,3 @@ timeouts:
     seconds: 57
   lava-test-shell:
     seconds: 30
-
-
-test_image_prompts:
-  # TODO: we should'nt need such a long list
-  - '\(initramfs\)'
-  - '/ #'
-  - 'root@android'
-  - 'root@linaro'
-  - 'root@master'
-  - 'root@debian'
-  - 'root@linaro-nano:~#'
-  - 'root@linaro-developer:~#'
-  - 'root@linaro-server:~#'
-  - 'root@genericarmv7a:~#'
-  - 'root@genericarmv8:~#'
-  - 'shell@vexpress'

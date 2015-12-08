@@ -107,6 +107,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
     def sendcontrol(self, char):
         return super(ShellCommand, self).sendcontrol(char)
 
+    # FIXME: no sense in sending delay and send_char - if delay is non-zero, send_char needs to be True
     def send(self, string, delay=0, send_char=True):  # pylint: disable=arguments-differ
         """
         Extends pexpect.send to support extra arguments, delay and send by character flags.
@@ -160,6 +161,7 @@ class ShellSession(Connection):
         self.__runner__ = None
         self.name = "ShellSession"
         self.data = job.context
+        # FIXME: rename __prompt_str__ to indicate it can be a list or str
         self.__prompt_str__ = None
         self.spawn = shell_command
         self.timeout = shell_command.lava_timeout
@@ -168,6 +170,7 @@ class ShellSession(Connection):
         # FIXME
         pass
 
+    # FIXME: rename prompt_str to indicate it can be a list or str
     @property
     def prompt_str(self):
         return self.__prompt_str__
@@ -184,7 +187,7 @@ class ShellSession(Connection):
             # device = self.device
             spawned_shell = self.raw_connection  # ShellCommand(pexpect.spawn)
             # FIXME: the prompts should not be needed here, only kvm uses these. Remove.
-            # prompt_str = device['test_image_prompts']  # FIXME: deployment_data?
+            # prompt_str = parameters['prompts']
             prompt_str_includes_rc = True  # FIXME - parameters['deployment_data']['TESTER_PS1_INCLUDES_RC']?
 #            prompt_str_includes_rc = device.config.tester_ps1_includes_rc
             # The Connection for a CommandRunner in the pipeline needs to be a ShellCommand, not logging_spawn
@@ -200,9 +203,8 @@ class ShellSession(Connection):
         Yields the actual connection which can be used to interact inside this shell.
         """
         if self.__runner__ is None:
-            # device = self.device
             spawned_shell = self.raw_connection  # ShellCommand(pexpect.spawn)
-            # prompt_str = device['test_image_prompts']
+            # prompt_str = parameters['prompts']
             prompt_str_includes_rc = True  # FIXME - do we need this?
 #            prompt_str_includes_rc = device.config.tester_ps1_includes_rc
             # The Connection for a CommandRunner in the pipeline needs to be a ShellCommand, not logging_spawn
@@ -211,11 +213,11 @@ class ShellSession(Connection):
         yield self.__runner__.get_connection()
 
     def wait(self):
-        self.raw_connection.sendline("#")
+        self.raw_connection.sendline(self.check_char)
         if not self.prompt_str:
-            self.prompt_str = '#'
+            self.prompt_str = self.check_char
         try:
-            self.runner.wait_for_prompt(self.timeout.duration)
+            self.runner.wait_for_prompt(self.timeout.duration, self.check_char)
         except pexpect.TIMEOUT:
             raise JobError("wait for prompt timed out")
 
@@ -226,26 +228,23 @@ class ExpectShellSession(Action):
     The shell connection can be over any particular connection,
     all that is needed is a prompt.
     """
+    compatibility = 2
 
     def __init__(self):
         super(ExpectShellSession, self).__init__()
         self.name = "expect-shell-connection"
         self.summary = "Expect a shell prompt"
         self.description = "Wait for a shell"
-        self.prompts = []
 
     def validate(self):
         super(ExpectShellSession, self).validate()
-        if 'test_image_prompts' not in self.job.device:
-            self.errors = "Unable to identify test image prompts from device configuration."
-        self.prompts = self.job.device['test_image_prompts']
-        if 'parameters' in self.parameters:
-            if 'boot_prompt' in self.parameters['parameters']:
-                self.prompts.append(self.parameters['parameters']['boot_prompt'])
+        if 'prompts' not in self.parameters:
+            self.errors = "Unable to identify test image prompts from parameters."
 
     def run(self, connection, args=None):
         connection = super(ExpectShellSession, self).run(connection, args)
-        connection.prompt_str = self.job.device['test_image_prompts']
+        if not connection.prompt_str:
+            connection.prompt_str = self.parameters['prompts']
         self.logger.debug("%s: Waiting for prompt", self.name)
         self.wait(connection)  # FIXME: should this be a regular RetryAction operation?
         return connection

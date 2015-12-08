@@ -136,6 +136,8 @@ class EnterFastbootAction(DeployAction):
         super(EnterFastbootAction, self).validate()
         if 'serial_number' not in self.job.device:
             self.errors = "device serial number missing"
+            if self.job.device['serial_number'] == '0000000000':
+                self.errors = "device serial number unset"
 
     def run(self, connection, args=None):
         connection = super(EnterFastbootAction, self).run(connection, args)
@@ -183,6 +185,8 @@ class FastbootUpdateAction(DeployAction):
             self.errors = "no file specified for fastboot"
         if 'serial_number' not in self.job.device:
             self.errors = "device serial number missing"
+            if self.job.device['serial_number'] == '0000000000':
+                self.errors = "device serial number unset"
 
     def run(self, connection, args=None):
         connection = super(FastbootUpdateAction, self).run(connection, args)
@@ -213,6 +217,8 @@ class FastbootRebootAction(DeployAction):
         super(FastbootRebootAction, self).validate()
         if 'serial_number' not in self.job.device:
             self.errors = "device serial number missing"
+            if self.job.device['serial_number'] == '0000000000':
+                self.errors = "device serial number unset"
 
     def run(self, connection, args=None):
         connection = super(FastbootRebootAction, self).run(connection, args)
@@ -246,6 +252,8 @@ class ApplyBootAction(DeployAction):
             self.errors = "no file specified for fastboot boot image"
         if 'serial_number' not in self.job.device:
             self.errors = "device serial number missing"
+            if self.job.device['serial_number'] == '0000000000':
+                self.errors = "device serial number unset"
 
     def run(self, connection, args=None):
         connection = super(ApplyBootAction, self).run(connection, args)
@@ -280,6 +288,8 @@ class ApplyUserdataAction(DeployAction):
             self.errors = "no file specified for fastboot userdata image"
         if 'serial_number' not in self.job.device:
             self.errors = "device serial number missing"
+            if self.job.device['serial_number'] == '0000000000':
+                self.errors = "device serial number unset"
 
     def run(self, connection, args=None):
         connection = super(ApplyUserdataAction, self).run(connection, args)
@@ -315,6 +325,8 @@ class ApplySystemAction(DeployAction):
             self.errors = "no file specified for fastboot system image"
         if 'serial_number' not in self.job.device:
             self.errors = "device serial number missing"
+            if self.job.device['serial_number'] == '0000000000':
+                self.errors = "device serial number unset"
 
     def run(self, connection, args=None):
         connection = super(ApplySystemAction, self).run(connection, args)

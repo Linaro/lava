@@ -21,7 +21,9 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
+import os
 import netifaces
+import subprocess
 from lava_dispatcher.pipeline.action import InfrastructureError
 
 
@@ -49,3 +51,18 @@ def dispatcher_ip():
     iface = gateways['default'][netifaces.AF_INET][1]
     addr = netifaces.ifaddresses(iface)
     return addr[netifaces.AF_INET][0]['addr']
+
+
+def rpcinfo_nfs(server):
+    """
+    Calls rpcinfo nfs on the specified server.
+    Only stderr matters
+    :param server: the NFS server to check
+    :return: None if success, message if fail
+    """
+    with open(os.devnull, 'w') as devnull:
+        proc = subprocess.Popen(['/usr/sbin/rpcinfo', '-u', server, 'nfs'], stdout=devnull, stderr=subprocess.PIPE)
+        msg = proc.communicate()
+        if msg[1]:
+            return "%s %s" % (server, msg[1])
+    return None

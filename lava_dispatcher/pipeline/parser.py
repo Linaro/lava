@@ -110,10 +110,18 @@ class JobParser(object):
                 job.timeout = Timeout(data['job_name'], duration)
             if 'action' in data['timeouts']:
                 self.context['default_action_duration'] = Timeout.parse(data['timeouts']['action'])
+            if 'connection' in data['timeouts']:
+                self.context['default_connection_duration'] = Timeout.parse(data['timeouts']['connection'])
             if 'test' in data['timeouts']:
                 self.context['default_test_duration'] = Timeout.parse(data['timeouts']['test'])
 
-    # FIXME: add a validate() function which checks against a Schema as a completely separate step.
+    def _map_context_defaults(self):
+        return {
+            'default_action_timeout': self.context['default_action_duration'],
+            'default_test_timeout': self.context['default_test_duration'],
+            'default_connection_timeout': self.context['default_connection_duration']
+        }
+
     # pylint: disable=too-many-locals,too-many-statements
     def parse(self, content, device, job_id, socket_addr, output_dir=None,
               env_dut=None):
@@ -124,6 +132,7 @@ class JobParser(object):
 
         self.context['default_action_duration'] = Timeout.default_duration()
         self.context['default_test_duration'] = Timeout.default_duration()
+        self.context['default_connection_duration'] = Timeout.default_duration()
         job = Job(job_id, socket_addr, data)
         counts = {}
         job.device = device
@@ -142,8 +151,7 @@ class JobParser(object):
             action_data.pop('yaml_line', None)
             for name in action_data:
                 if type(action_data[name]) is dict:  # FIXME: commands are not fully implemented & may produce a list
-                    action_data[name]['default_action_timeout'] = self.context['default_action_duration']
-                    action_data[name]['default_test_timeout'] = self.context['default_test_duration']
+                    action_data[name].update(self._map_context_defaults())
                 counts.setdefault(name, 1)
                 if name == 'deploy' or name == 'boot' or name == 'test':
                     # reset the context before adding a second deployment and again before third etc.
@@ -179,11 +187,14 @@ class JobParser(object):
                             action.parameters = param
                     action.summary = name
                     action.timeout = Timeout(action.name, self.context['default_action_duration'])
+                    action.connection_timeout = Timeout(action.name, self.context['default_connection_duration'])
                     pipeline.add_action(action)
                 counts[name] += 1
 
         # there's always going to need to be a finalize_process action
-        pipeline.add_action(FinalizeAction())
+        finalize = FinalizeAction()
+        pipeline.add_action(finalize)
+        finalize.populate(self._map_context_defaults())
         data['output_dir'] = output_dir
         job.set_pipeline(pipeline)
         if 'compatibility' in data:

@@ -29,6 +29,9 @@ actions:
         method: qemu
         media: tmpfs
         failure_retry: 2
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
 context:
   arch: amd64

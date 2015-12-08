@@ -71,6 +71,13 @@ SHUTDOWN_MESSAGE = 'The system is going down for reboot NOW'
 # Kernel starting message
 BOOT_MESSAGE = 'Booting Linux'
 
+# Default shell prompt for AutoLogin
+DEFAULT_SHELL_PROMPT = 'lava-test: # '
+
+# Distinctive prompt characters which can
+# help distinguish status messages from shell prompts.
+DISTINCTIVE_PROMPT_CHARACTERS = ":"
+
 # LAVA Coordinator setup and finalize timeout
 LAVA_MULTINODE_SYSTEM_TIMEOUT = 90
 

@@ -47,6 +47,9 @@ actions:
         media: tmpfs
         failure_retry: 2
         role: server
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
     - test:
         failure_retry: 3
