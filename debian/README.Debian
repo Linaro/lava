@@ -1,0 +1,18 @@
+lava-server 2015.12
+===================
+
+Support for Ubuntu Trusty 14.04LTS has been frozen upstream.
+The master branch and uploads to Debian are no longer
+supportable with django1.6 or older.
+
+For Trusty support, see the frozen release at
+http://images.validation.linaro.org/trusty-repo/
+
+See the documentation in the lava-server-doc package
+which is also available online at:
+https://validation.linaro.org/static/docs/installing_on_debian.html#debian-installation
+
+2015.12 includes support for django releases from 1.7 (Jessie)
+to 1.9 (Stretch) and LAVA will continue to track for support of
+django 1.10.
+
