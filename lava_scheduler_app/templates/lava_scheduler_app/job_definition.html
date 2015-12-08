@@ -45,7 +45,9 @@
       </div>
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
-        {% if job_file_present %}
+        {% if job.is_pipeline %}
+          <li><a href="{% url 'lava.scheduler.job.complete_log' job.pk %}" class="btn btn-primary">Complete log</a></li>
+        {% elif job_file_present %}
           <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary">Complete log</a></li>
         {% endif %}
         {% if job.results_link %}
@@ -205,7 +207,7 @@ timeouts:
 
 {% block scripts %}
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/shCore.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/shBrushJScript.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/shBrushJScript.min.js"></script>
 
 <script type="text/javascript">
   $(function() {

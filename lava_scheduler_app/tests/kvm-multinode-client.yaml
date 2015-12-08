@@ -54,6 +54,7 @@ actions:
         media: tmpfs
         failure_retry: 2
         role: client
+        prompts: "root@debian:"
 
     - test:
         role: client

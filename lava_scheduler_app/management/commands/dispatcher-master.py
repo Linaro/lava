@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import sys
 import errno
 import fcntl
 import jinja2
@@ -32,8 +33,7 @@ import zmq
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
-from lava_scheduler_app.models import Device, TestJob, JobPipeline
-from lava_results_app.models import TestSuite
+from lava_scheduler_app.models import Device, TestJob
 from lava_results_app.dbutils import map_scanned_results, map_metadata
 from lava_dispatcher.pipeline.device import PipelineDevice
 from lava_dispatcher.pipeline.parser import JobParser
@@ -177,7 +177,7 @@ def cancel_job(job):
 
 def send_status(hostname, socket, logger):
     """
-    The master crashed, send a STATUS message to get the curren state of jobs
+    The master crashed, send a STATUS message to get the current state of jobs
     """
     jobs = TestJob.objects.filter(actual_device__worker_host__hostname=hostname,
                                   is_pipeline=True,
@@ -188,7 +188,7 @@ def send_status(hostname, socket, logger):
         socket.send_multipart([hostname, 'STATUS', str(job.id)])
 
 
-def select_device(job):
+def select_device(job, dispatchers):
     """
     Transitioning a device from Idle to Reserved is the responsibility of the scheduler_daemon (currently).
     This function just checks that the reserved device is valid for this job.
@@ -199,6 +199,7 @@ def select_device(job):
     fails validation, the job is incomplete. Issues with this need to be fixed using
     device tags.
     """
+    # FIXME: split out dynamic_connection, multinode and validation
     logger = logging.getLogger('dispatcher-master')
     if not job.dynamic_connection:
         if not job.actual_device:
@@ -212,6 +213,7 @@ def select_device(job):
             fail_msg = "Misconfigured device configuration for %s - missing worker_host" % job.actual_device
             fail_job(job, fail_msg=fail_msg)
             logger.error(fail_msg)
+            return None
 
     if job.is_multinode:
         # inject the actual group hostnames into the roles for the dispatcher to populate in the overlay.
@@ -247,8 +249,9 @@ def select_device(job):
         try:
             device_config = device.load_device_configuration(job_ctx)  # raw dict
         except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
-            # FIXME: report the exceptions as useful user messages
             logger.error("[%d] jinja2 error: %s" % (job.id, exc))
+            msg = "Administrative error. Unable to parse '%s'" % exc
+            fail_job(job, fail_msg=msg)
             return None
         if not device_config or type(device_config) is not dict:
             # it is an error to have a pipeline device without a device dictionary as it will never get any jobs.
@@ -256,6 +259,21 @@ def select_device(job):
             logger.error('[%d] device-dictionary error: %s' % (job.id, msg))
             # as we don't control the scheduler, yet, this has to be an error and an incomplete job.
             # the scheduler_daemon sorts by a fixed order, so this would otherwise just keep on repeating.
+            fail_job(job, fail_msg=msg)
+            return None
+        if not device.worker_host or not device.worker_host.hostname:
+            msg = "Administrative error. Device '%s' has no worker host." % device.hostname
+            logger.error('[%d] worker host error: %s', job.id, msg)
+            fail_job(job, fail_msg=msg)
+            return None
+        if device.worker_host.hostname not in dispatchers:
+            # a configured worker has not called in to this master
+            # likely that the worker is misconfigured - polling the wrong master
+            # or simply not running at all.
+            msg = """Administrative error. Device '{0}' has a worker_host setting of
+ '{1}' but no slave has registered with this master
+ using that FQDN.""".format(device.hostname, device.worker_host.hostname)
+            logger.error('[%d] worker-hostname error: %s', job.id, msg)
             fail_job(job, fail_msg=msg)
             return None
 
@@ -383,7 +401,7 @@ class Command(BaseCommand):
                 self.logger.info("[%d] Canceling", job.id)
                 cancel_job(job)
 
-    def export_definition(self, job):
+    def export_definition(self, job):  # pylint: disable=no-self-use
         job_def = yaml.load(job.definition)
         job_def['compatibility'] = job.pipeline_compatibility
 
@@ -440,6 +458,14 @@ class Command(BaseCommand):
         signal.signal(signal.SIGTERM, lambda x, y: None)
         signal.signal(signal.SIGQUIT, lambda x, y: None)
         poller.register(pipe_r, zmq.POLLIN)
+
+        if os.path.exists('/etc/lava-server/worker.conf'):
+            self.logger.error("FAIL: lava-master must not be run on a remote worker!")
+            controler.close(linger=0)
+            pull_socket.close(linger=0)
+            context.term()
+            sys.exit(2)
+
         self.logger.info("[INIT] LAVA dispatcher-master has started.")
 
         while True:
@@ -600,14 +626,7 @@ class Command(BaseCommand):
                     except (IndexError, ValueError):
                         self.logger.error("Invalid message from <%s> '%s'", hostname, msg[:50])
                         continue
-                    try:
-                        with transaction.atomic():
-                            job = TestJob.objects.select_for_update().get(id=job_id)
-                            job.failure_comment = error_msg
-                            job.save()
-                            self.logger.debug("[%d] Set failure comment: %s", job.id, job.failure_comment[:50])
-                    except TestJob.DoesNotExist:
-                        self.logger.error("[%d] Unknown job", job_id)
+                    self.logger.error("[%d] Error: %s", job_id, error_msg)
 
                     # Mark the dispatcher as alive
                     dispatchers[hostname].alive()
@@ -708,7 +727,7 @@ class Command(BaseCommand):
                         self.logger.info("[%d] START => %s (connection)", job.id,
                                          worker_host.hostname)
                     else:
-                        device = select_device(job)
+                        device = select_device(job, dispatchers)
                         if not device:
                             continue
                         # selecting device can change the job
@@ -716,6 +735,11 @@ class Command(BaseCommand):
                         self.logger.info("[%d] Assigning %s device", job.id, device)
                         if job.actual_device is None:
                             device = job.requested_device
+                            if not device.worker_host:
+                                msg = "Infrastructure error: Invalid worker information"
+                                self.logger.error("[%d] %s", job.id, msg)
+                                fail_job(job, msg, TestJob.INCOMPLETE)
+                                continue
 
                             # Launch the job
                             create_job(job, device)
@@ -724,6 +748,11 @@ class Command(BaseCommand):
                             worker_host = device.worker_host
                         else:
                             device = job.actual_device
+                            if not device.worker_host:
+                                msg = "Infrastructure error: Invalid worker information"
+                                self.logger.error("[%d] %s", job.id, msg)
+                                fail_job(job, msg, TestJob.INCOMPLETE)
+                                continue
                             self.logger.info("[%d] START => %s (%s) (retrying)", job.id,
                                              device.worker_host.hostname, device.hostname)
                             worker_host = device.worker_host

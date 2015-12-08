@@ -30,6 +30,19 @@ from django.db import models
 from django.utils import timezone
 
 
+def _make_secret():
+    """
+    A default value for a django field cannot be lambda, it won't serialize.
+    It can be a callable with no arguments.
+    :return: a random secret token string
+    """
+
+    # Set of valid characters for secret
+    _SECRET_CHARS = "01234567890abcdefghijklmnopqrtsuwxyz"
+    return ''.join((random.choice(_SECRET_CHARS)
+                    for i in xrange(128)))
+
+
 class AuthToken(models.Model):
     """
     Authentication token.
@@ -38,16 +51,12 @@ class AuthToken(models.Model):
     OAuth resource token but much more primitive, based on HTTP Basic Auth.
     """
 
-    # Set of valid characters for secret
-    _SECRET_CHARS = "01234567890abcdefghijklmnopqrtsuwxyz"
-
     secret = models.CharField(
         max_length=128,
         help_text=("Secret randomly generated text that grants user access "
                    "instead of their regular password"),
         unique=True,
-        default=lambda: ''.join((random.choice(AuthToken._SECRET_CHARS)
-                                 for i in xrange(128))))
+        default=_make_secret)
 
     description = models.TextField(
         default="",

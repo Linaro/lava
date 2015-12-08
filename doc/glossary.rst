@@ -12,6 +12,7 @@ Glossary of terms
 Contents
 --------
 
+[ :term:`action level` ]
 [ :term:`device dictionary` ]
 [ :term:`device group` ] [ :term:`device owner` ] [:term:`device status transition` ]
 [ :term:`device tag` ][ :term:`device type` ] [ :term:`dispatcher` ]
@@ -29,6 +30,7 @@ Contents
 Terms specific to the refactoring
 ---------------------------------
 
+[ :term:`action level` ]
 [ :term:`device dictionary` ]
 [ :term:`exclusive` ]
 [ :term:`pipeline` ]
@@ -48,6 +50,18 @@ migration to the new :ref:`dispatcher_design`.
 [ :term:`stream` ]
 
 .. glossary::
+
+  action level
+    The :term:`pipeline` is organised into sections and levels. The first
+    section of the pipeline is given level 1. Sub tasks of that section start
+    with level 1.1 and so on. Log files and job definitions will refer to
+    actions using the level, e.g. to download the boot log of a job, the link
+    will include the job ID, the action name and action level.
+    e.g. ``job/8360/download/2.4.5-auto-login-action.log`` - job ID 8360, action
+    level 2.4.5, action name auto-login-action.
+    (The keyword ``download`` is used to separate the jobID from the action level.)
+    Details of the action can then be accessed as: ``job/8360/definition#2.4.5``
+    See also :ref:`pipeline_construction`
 
   bundle stream
     A way of organizing the :term:`result bundle`. A bundle stream could be

@@ -255,6 +255,8 @@ dictionary.
    to have version control over the device configuration with a simple
    mechanism to update the database and verify the database content.
 
+.. _updating_device_dictionary_using_xmlrpc:
+
 Updating a device dictionary using XMLRPC
 -----------------------------------------
 

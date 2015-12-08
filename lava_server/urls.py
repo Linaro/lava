@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
+import imp
 from django.conf import settings
 from django.conf.urls import (
     handler404, include, patterns, url)
@@ -49,8 +50,6 @@ urlpatterns = patterns(
     url(r'^admin/jsi18n', 'django.views.i18n.javascript_catalog'),
     url(r'^{mount_point}admin/'.format(mount_point=settings.MOUNT_POINT),
         include(admin.site.urls)),
-    url(r'^{mount_point}openid/'.format(mount_point=settings.MOUNT_POINT),
-        include('django_openid_auth.urls')),
     url(r'^{mount_point}RPC2/?'.format(mount_point=settings.MOUNT_POINT),
         'linaro_django_xmlrpc.views.handler',
         name='lava.api_handler',
@@ -75,6 +74,16 @@ try:
     urlpatterns.append(url(r'^hijack/', include('hijack.urls')))
 except ImportError:
     pass
+
+try:
+    imp.find_module('django_openid_auth')
+    urlpatterns.append(
+        url(r'^{mount_point}openid/'.format(mount_point=settings.MOUNT_POINT),
+            include('django_openid_auth.urls')),
+    )
+except ImportError:
+    pass
+
 
 # Load URLs for extensions
 loader.contribute_to_urlpatterns(urlpatterns, settings.MOUNT_POINT)

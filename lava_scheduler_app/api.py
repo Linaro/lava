@@ -1,4 +1,3 @@
-import os
 import xmlrpclib
 import json
 import yaml
@@ -24,7 +23,6 @@ from lava_scheduler_app.views import (
 from lava_scheduler_app.utils import (
     devicedictionary_to_jinja2,
     jinja2_to_devicedictionary,
-    jinja_template_path,
     prepare_jinja_template,
 )
 from lava_scheduler_app.schema import validate_submission, validate_device
@@ -90,8 +88,8 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(404, "Specified device not found.")
         except DeviceType.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified device type not found.")
-        except DevicesUnavailableException as e:
-            raise xmlrpclib.Fault(400, str(e))
+        except DevicesUnavailableException as exc:
+            raise xmlrpclib.Fault(400, str(exc))
         if isinstance(job, type(list())):
             return [j.sub_id for j in job]
         else:
@@ -596,11 +594,11 @@ class SchedulerAPI(ExposedAPI):
 
         data = devicedictionary_to_jinja2(element.parameters,
                                           element.parameters['extends'])
-        template = prepare_jinja_template(device.hostname, data, system_path=True)
+        template = prepare_jinja_template(device_hostname, data, system_path=True)
         device_configuration = template.render()
 
         # validate against the device schema
-        validate_device(device_configuration)
+        validate_device(yaml.load(device_configuration))
 
         return xmlrpclib.Binary(device_configuration.encode('UTF-8'))
 
@@ -631,7 +629,7 @@ class SchedulerAPI(ExposedAPI):
         if not self.user.is_superuser:
             raise xmlrpclib.Fault(
                 403,
-                "User '%s' is not superuser." % username
+                "User '%s' is not superuser." % self.user.username
             )
         try:
             Device.objects.get(hostname=hostname)
@@ -694,7 +692,7 @@ class SchedulerAPI(ExposedAPI):
         self._authenticate()
         if not self.user.is_superuser:
             raise xmlrpclib.Fault(
-                403, "User '%s' is not superuser." % username
+                403, "User '%s' is not superuser." % self.user.username
             )
         try:
             device = Device.objects.get(hostname=hostname)

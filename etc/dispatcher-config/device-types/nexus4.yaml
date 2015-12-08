@@ -1,0 +1,20 @@
+{% extends 'base.yaml' %}
+{% block body %}
+device_type: nexus4
+serial_number: {{ serial_number|default('0000000000') }}
+
+
+actions:
+  deploy:
+    methods:
+      fastboot:
+    connections:
+      serial:
+      adb:
+  boot:
+    connections:
+      adb:
+    methods:
+      fastboot:
+
+{% endblock %}

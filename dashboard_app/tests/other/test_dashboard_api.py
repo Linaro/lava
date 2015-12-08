@@ -336,6 +336,8 @@ class DashboardAPIPutFailureTransactionTests(TransactionTestCase):
         super(DashboardAPIPutFailureTransactionTests, self).setUp()
         self.endpoint_path = 'http://localhost/RPC2'
         self.content_sha1 = None
+        if not hasattr(self, 'client') and hasattr(self, 'client_class'):
+            self.client = self.client_class()
 
     def tearDown(self):
         if self.content_sha1:
@@ -349,6 +351,8 @@ class DashboardAPIPutFailureTransactionTests(TransactionTestCase):
         return xmlrpclib.loads(response.content)[0][0]
 
     def test_deserialize_failure_does_not_kill_the_bundle(self):
+        if Bundle.objects.all().count():
+            Bundle.objects.all().delete()
         _pathname = '/anonymous/'
         _content = '"unterminated string'
         _content_filename = 'bad.json'

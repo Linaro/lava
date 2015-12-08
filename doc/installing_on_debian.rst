@@ -6,23 +6,23 @@ Debian-based distributions
 These instructions cover Debian and all distributions based upon Debian,
 including Ubuntu. The supported versions of Debian and Ubuntu are:
 
-+---------------+------------------------+--------+------------+
-| Distribution  | Codename               | Number | Support    |
-+===============+========================+========+============+
-| Debian        | experimental           | n/a    | Yes [#f1]_ |
-+---------------+------------------------+--------+------------+
-| Debian        | sid                    | n/a    | Yes        |
-+---------------+------------------------+--------+------------+
-| Debian        | stretch                | n/a    | [#f2]_     |
-+---------------+------------------------+--------+------------+
-| Debian        | jessie                 | 8.0    | Yes [#f3]_ |
-+---------------+------------------------+--------+------------+
-| Ubuntu        | vivid vervet (& later) | 15.04  | Yes [#f4]_ |
-+---------------+------------------------+--------+------------+
-| Ubuntu        | utopic unicorn         | 14.10  | Yes [#f5]_ |
-+---------------+------------------------+--------+------------+
-| Ubuntu        | trusty tahr LTS        | 14.04  | Yes [#f6]_ |
-+---------------+------------------------+--------+------------+
++---------------+------------------------+--------+---------------+
+| Distribution  | Codename               | Number | Support       |
++===============+========================+========+===============+
+| Debian        | experimental           | n/a    | Yes [#f1]_    |
++---------------+------------------------+--------+---------------+
+| Debian        | sid                    | n/a    | Yes           |
++---------------+------------------------+--------+---------------+
+| Debian        | stretch                | n/a    | [#f2]_        |
++---------------+------------------------+--------+---------------+
+| Debian        | jessie                 | 8.0    | Yes [#f3]_    |
++---------------+------------------------+--------+---------------+
+| Ubuntu        | vivid vervet (& later) | 15.04  | Yes [#f4]_    |
++---------------+------------------------+--------+---------------+
+| Ubuntu        | utopic unicorn         | 14.10  | Yes [#f5]_    |
++---------------+------------------------+--------+---------------+
+| Ubuntu        | trusty tahr LTS        | 14.04  | **No** [#f6]_ |
++---------------+------------------------+--------+---------------+
 
 Debian uses names for `suites`_ (unstable, testing, stable & oldstable)
 but the content of all suites except unstable will change codename once
@@ -48,14 +48,16 @@ See :ref:`ubuntu_install`
          which is supported automatically via uploads to sid (unstable).
 .. [#f3] Jessie was released on April 25th, 2015. Uupdates to LAVA packages
          for jessie will be made using `jessie-backports`_.
-.. [#f4] Ubuntu vivid vervet 15.04 is due for release in April 2015. LAVA
-         packages automatically migrate from Debian into the current
-         development release of Ubuntu. Once Ubuntu make a release, the
-         LAVA packages in that release do not receive updates.
+.. [#f4] Ubuntu vivid vervet 15.04 was released on April
+         23rd, 2015. LAVA packages automatically migrate from Debian
+         into the current development release of Ubuntu. Once Ubuntu
+         makes a release, the LAVA packages in that release do not
+         receive updates.
 .. [#f5] To install on Ubuntu, ensure the universe_ repository is enabled.
 
-.. [#f6] See :ref:`trusty_tahr_install` - a secondary trusty-repo needs to
-         be enabled to add dependencies which are not present in trusty.
+.. [#f6] Support for ``lava-server`` on Ubuntu Trusty 14.04LTS stopped at
+         2015.9.post1. See :ref:`trusty_tahr_install`. Support for
+         ``lava-dispatcher``on Ubuntu Trusty 14.04LTS stopped at 2015.9.
 
 .. _experimental: https://wiki.debian.org/DebianExperimental
 
@@ -283,7 +285,7 @@ one set.
  $ sudo service apache2 restart
 
 Upgrading LAVA packages on Jessie
-----------------------------------
+---------------------------------
 
 Updates are uploaded to `jessie-backports <http://backports.debian.org/>`_
 
@@ -338,31 +340,13 @@ packages on your own, LAVA will not be making backports to Ubuntu.
 
 .. _trusty_tahr_install:
 
-Installing on Ubuntu Trusty Tahr 14.04 LTS
-------------------------------------------
+Ubuntu Trusty Tahr 14.04 LTS
+----------------------------
 
-.. note:: Only 64bit installations are supported for Ubuntu Trusty
-          and not all production hot fixes may actually get uploaded
-          to the repository.
-
-Various package dependencies are needed on Trusty. These can be installed
-from the trusty repository on ``images.validation.linaro.org``
-but newer versions also exist in Ubuntu Unicorn and later.
-
-Updated versions of lava-server and lava-dispatcher can
-be obtained from::
-
- deb [arch=amd64] http://images.validation.linaro.org/trusty-repo trusty main
-
-.. note:: This repository is **not a Ubuntu PPA** - it has to be set up
-   manually by adding a file to :file`/etc/apt/sources.list.d/`
-   and adding the key to :command:`apt-key`. See :ref:`lava_archive_signing_key`
-
-::
-
- $ wget http://images.validation.linaro.org/trusty-repo/trusty-repo.key.asc
- $ sudo apt-key add trusty-repo.key.asc
- $ sudo apt-get update
+.. warning:: Support for Ubuntu Trusty 14.04LTS was **frozen** at
+   2015.9.post1 for ``lava-server`` and 2015.9 for ``lava-dispatcher``.
+   **No** further updates will be made for Trusty and no new installs
+   (master or remote worker) should be made on Trusty.
 
 Setting up a reverse proxy
 ==========================
@@ -454,3 +438,4 @@ provided the LDAP username does not already exist in the LAVA
 instance::
 
   $ sudo lava-server manage mergeldapuser <lava_user> <ldap_user>
+

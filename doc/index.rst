@@ -62,6 +62,7 @@ LAVA Administrator Guide
    ipxe.rst
    lxc-deploy.rst
    hijack-user.rst
+   migrate-lava.rst
 
 Other Topics
 ############

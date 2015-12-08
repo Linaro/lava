@@ -8,7 +8,7 @@ from django.contrib.auth import login
 from django.core.urlresolvers import reverse
 from django.http import HttpRequest
 from django.test.client import Client
-from django.utils.importlib import import_module
+from importlib import import_module
 
 from django_testscenarios.ubertest import (TestCase, TestCaseWithScenarios)
 
@@ -24,7 +24,10 @@ class CSRFTestCase(TestCase):
 
     def setUp(self):
         super(CSRFTestCase, self).setUp()
-        self.client = Client(enforce_csrf_checks=True)
+        if not hasattr(self, 'client') and hasattr(self, 'client_class'):
+            self.client = self.client_class(enforce_csrf_checks=True)
+        else:
+            self.client = Client(enforce_csrf_checks=True)
 
 
 class TestClient(Client):

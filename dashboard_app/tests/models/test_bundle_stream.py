@@ -156,6 +156,9 @@ class BundleStreamPermissionTests(TestCase):
         bundle_stream = fixtures.create_bundle_stream("/anonymous/")
         self.assertTrue(bundle_stream.can_upload(user))
 
+
+class BundleStreamUploadPermissionTests(TestCase):
+
     def test_can_upload_to_owned_stream(self):
         bundle_stream = fixtures.create_bundle_stream("/public/personal/owner/")
         user = User.objects.get(username='owner')
@@ -165,6 +168,10 @@ class BundleStreamPermissionTests(TestCase):
         bundle_stream = fixtures.create_bundle_stream("/public/personal/owner/")
         user = User.objects.create(username='non-owner')
         self.assertFalse(bundle_stream.can_upload(user))
+        user.delete()
+
+
+class BundleStreamPermissionOwnedTests(TestCase):
 
     def test_group_can_upload_to_owned(self):
         group = Group.objects.create(name='group')
@@ -175,6 +182,9 @@ class BundleStreamPermissionTests(TestCase):
         self.assertTrue(bundle_stream.can_upload(member))
         self.assertFalse(bundle_stream.can_upload(other))
 
+
+class BundleStreamPermissionDeniedTests(TestCase):
+
     def test_create_from_pathname_permission_denied_user(self):
         user = User.objects.get_or_create(username="non-owner")[0]
         self.assertRaises(
@@ -182,18 +192,28 @@ class BundleStreamPermissionTests(TestCase):
             BundleStream.create_from_pathname,
             "/private/personal/owner/name/", user)
 
+
+class BundleStreamGroupPermissionTests(TestCase):
+
     def test_create_from_pathname_permission_denied_group(self):
-        user = User.objects.get_or_create(username="non-owner")[0]
+        user = User.objects.create(username="non-owner")
         self.assertRaises(
             PermissionDenied,
             BundleStream.create_from_pathname,
             "/public/team/group/name/", user)
+        user.delete()
+
+
+class BundleStreamAnonymousPermissionTests(TestCase):
 
     def test_create_from_pathname_permission_denied_anonymous(self):
         self.assertRaises(
             PermissionDenied,
             BundleStream.create_from_pathname,
             "/public/team/group/name/", user=None)
+
+
+class BundleStreamPathnameTests(TestCase):
 
     def test_create_from_pathname(self):
         user = User.objects.get_or_create(username="owner")[0]
@@ -209,8 +229,13 @@ class BundleStreamPermissionTests(TestCase):
         bundle_stream = BundleStream.create_from_pathname(
             "/anonymous/name/", user=None)
         self.assertEqual(bundle_stream.pathname, "/anonymous/name/")
+        group.delete()
+
+
+class BundleStreamIntegrityTests(TestCase):
 
     def test_create_from_pathname_permission_denied_integrity(self):
+        BundleStream.objects.all().delete()
         BundleStream.create_from_pathname("/anonymous/name/", user=None)
         self.assertRaises(
             IntegrityError,

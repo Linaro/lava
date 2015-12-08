@@ -1,0 +1,50 @@
+    <dl class="dl-horizontal">
+    {% if job.actual_device %}
+      <dt>Name</dt>
+      <dd><a href="{{ job.actual_device.get_absolute_url }}">{{ job.actual_device.hostname }}</a> <a
+      href="{% url 'lava.scheduler.device_report' job.actual_device.pk %}">(reports)</a></dd>
+    {% endif %}
+
+    {% if job.requested_device %}
+      <dt>Type</dt>
+      <dd><a href="{{ job.requested_device.device_type.get_absolute_url }}">{{ job.requested_device.device_type }}</a> <a
+      href="{% url 'lava.scheduler.device_type_report' job.requested_device.device_type %}">(reports)</a></dd>
+    {% elif job.requested_device_type %}
+      <dt>Requested type</dt>
+      <dd><a href="{{ job.requested_device_type.get_absolute_url }}">{{ job.requested_device_type }}</a>
+          <a href="{% url 'lava.scheduler.device_type_report' job.requested_device_type %}">(reports)</a></dd>
+    {% endif %}
+    {% for tag in job.tags.all %}
+      {% if forloop.first %}
+      {% if forloop.revcounter > 1 %}
+      <dt>Required Tags</dt>
+      {% else %}
+      <dt>Required Tag</dt>
+      {% endif %}
+      {% endif %}
+      <dd>{{ tag.name }}<abbr title="{{ tag.description }}">(?)</abbr></dd>
+    {% endfor %}
+
+    {% if job.actual_device %}
+      <dt>Owner</dt>
+      <dd>
+      {% if job.actual_device.user %}
+        <a href="mailto:{{ job.actual_device.user.email }}">{{ job.actual_device.user.email }}</a>
+      {% elif job.actual_device.group %}
+        Group <em>{{ job.actual_device.group }}</em>
+      {% else %}
+        <i>Unrestricted</i>
+      {% endif %}
+      </dd>
+      <dt>Physical access</dt>
+      <dd>
+      {% if job.actual_device.physical_owner %}
+        <a href="mailto:{{ job.actual_device.physical_owner.email }}">{{ job.actual_device.physical_owner.email }}</a>
+      {% elif job.actual_device.physical_group %}
+        Group <em>{{ job.actual_device.physical_group }}</em>
+      {% else %}
+        <i>Unknown</i>
+      {% endif %}
+      </dd>
+    {% endif %}
+    </dl>

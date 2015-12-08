@@ -32,9 +32,12 @@ class ModelFactory(object):
     def getUniqueString(self, prefix='generic'):
         return '%s-%d' % (prefix, self.getUniqueInteger())
 
+    def get_unique_user(self, prefix='generic'):
+        return "%s-%d" % (prefix, User.objects.count() + 1)
+
     def make_user(self):
         return User.objects.create_user(
-            self.getUniqueString(),
+            self.get_unique_user(),
             '%s@mail.invalid' % (self.getUniqueString(),),
             self.getUniqueString())
 

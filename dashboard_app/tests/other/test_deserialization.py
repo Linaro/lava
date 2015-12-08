@@ -372,7 +372,7 @@ class BundleDeserializerSuccessTests(TestCaseWithScenarios):
         # Decompose the data here
         self.s_bundle.deserialize(prefer_evolution=self.prefer_evolution)
         if not self.s_bundle.is_deserialized:
-            raise AssertionError("Deserialzation failed:" + self.s_bundle.deserialization_error.get().traceback)
+            raise AssertionError("Deserialzation failed:" + self.s_bundle.deserialization_error.traceback)
         # Here we trick a little, since there is just one of each of
         # those models we can select them like this, the tests below
         # validate that we did not pick up some random object by
@@ -386,6 +386,7 @@ class BundleDeserializerSuccessTests(TestCaseWithScenarios):
     def tearDown(self):
         self.s_bundle.delete_files()
         super(BundleDeserializerSuccessTests, self).tearDown()
+        Bundle.objects.all().delete()
 
     def test_Test__test_id(self):
         self.assertEqual(self.s_test.test_id, "some_test_id")
@@ -709,6 +710,7 @@ class BundleDeserializerAtomicityTestCase(TransactionTestCase):
 
     def setUp(self):
         super(BundleDeserializerAtomicityTestCase, self).setUp()
+        Bundle.objects.all().delete()
         self.s_bundle = fixtures.create_bundle(
             '/anonymous/', self.json_text, 'bundle.json')
 

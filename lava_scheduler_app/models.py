@@ -174,7 +174,6 @@ class DeviceType(models.Model):
         Core,
         related_name='device_types',
         blank=True,
-        null=True,
     )
 
     core_count = models.PositiveSmallIntegerField(
@@ -613,7 +612,7 @@ class Device(RestrictedResource):
     )
 
     physical_owner = models.ForeignKey(
-        User, related_name='physical-owner',
+        User, related_name='physicalowner',
         null=True,
         blank=True,
         default=None,
@@ -621,7 +620,7 @@ class Device(RestrictedResource):
     )
 
     physical_group = models.ForeignKey(
-        Group, related_name='physical-group',
+        Group, related_name='physicalgroup',
         null=True,
         blank=True,
         default=None,
@@ -636,7 +635,7 @@ class Device(RestrictedResource):
         default=None
     )
 
-    current_job = models.ForeignKey(
+    current_job = models.OneToOneField(
         "TestJob", blank=True, unique=True, null=True, related_name='+',
         on_delete=models.SET_NULL)
 
@@ -654,7 +653,7 @@ class Device(RestrictedResource):
         verbose_name=_(u"Device Health"),
     )
 
-    last_health_report_job = models.ForeignKey(
+    last_health_report_job = models.OneToOneField(
         "TestJob", blank=True, unique=True, null=True, related_name='+',
         on_delete=models.SET_NULL)
 
@@ -1451,7 +1450,6 @@ class TestJob(RestrictedResource):
         help_text=_(u'Adding groups to an intersection of groups reduces visibility.'
                     u'Adding groups to a union of groups expands visibility.'),
         related_name='viewing_groups',
-        null=True,
         blank=True,
         default=None,
         editable=True

@@ -80,7 +80,9 @@ from lava.utils.lavatable import LavaView
 class UserImageReportView(LavaView):
 
     def get_queryset(self):
-        return ImageReport.objects.filter(user=self.request.user).order_by('name')
+        return ImageReport.objects.filter(
+            is_archived=False,
+            user=self.request.user).order_by('name')
 
 
 class OtherImageReportView(LavaView):
@@ -89,8 +91,10 @@ class OtherImageReportView(LavaView):
         # All public reports for authenticated users which are not part
         # of any group.
         # Only reports containing all public filters for non-authenticated.
-        other_reports = ImageReport.objects.filter(is_published=True,
-                                                   image_report_group=None).order_by('name')
+        other_reports = ImageReport.objects.filter(
+            is_archived=False,
+            is_published=True,
+            image_report_group=None).order_by('name')
 
         non_accessible_reports = []
         for report in other_reports:
@@ -115,6 +119,7 @@ class GroupImageReportView(LavaView):
         # Specific group reports for authenticated users.
         # Only reports containing all public filters for non-authenticated.
         group_reports = ImageReport.objects.filter(
+            is_archived=False,
             is_published=True,
             image_report_group=self.image_report_group).order_by('name')
 
@@ -258,7 +263,8 @@ def image_report_edit(request, name):
 def image_report_delete(request, name):
 
     image_report = get_object_or_404(ImageReport, name=name)
-    image_report.delete()
+    image_report.is_archived = True
+    image_report.save()
     return HttpResponseRedirect(reverse(
         'lava.dashboard.image_report.report_list'))
 

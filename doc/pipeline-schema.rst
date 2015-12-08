@@ -79,6 +79,9 @@ An example pipeline job for a QEMU device looks like:
         root_partition: 1
 
     - boot:
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
         method: qemu
         media: tmpfs
         failure_retry: 2
@@ -128,6 +131,8 @@ The submission schema for pipeline jobs can be represented as follows:
           minutes: integer
         to: string Required
     - boot: Extra
+        prompts: Required
+          - string Required
         method: string Required
     - test: Extra
         timeout:
@@ -326,6 +331,11 @@ in preparation for the test.
 
 Boot Action
 ^^^^^^^^^^^
+
+* **prompts** element is Required.
+
+The boot action prompts is a list of strings or a single string which will be
+matched against the prompt of the booted system.
 
 * **method** element is Required.
 

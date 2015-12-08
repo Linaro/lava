@@ -23,9 +23,9 @@ class TestMetaTypes(TestCaseWithFactory):
     """
     @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_job(self):
-        user = self.factory.make_user()
+        MetaType.objects.all().delete()
         job = TestJob.from_yaml_and_user(
-            self.factory.make_job_yaml(), user)
+            self.factory.make_job_yaml(), self.user)
         job_def = yaml.load(job.definition)
         job_ctx = job_def.get('context', {})
         device = Device.objects.get(hostname='fakeqemu1')
@@ -59,9 +59,8 @@ class TestMetaTypes(TestCaseWithFactory):
         ).count(), count)
 
     def test_export(self):
-        user = self.factory.make_user()
         job = TestJob.from_yaml_and_user(
-            self.factory.make_job_yaml(), user)
+            self.factory.make_job_yaml(), self.user)
         test_suite = TestSuite.objects.get_or_create(name='lava', job=job)[0]
         test_case = TestCase(
             name='name',
@@ -75,9 +74,8 @@ class TestMetaTypes(TestCaseWithFactory):
         )
 
     def test_duration(self):
-        user = self.factory.make_user()
         job = TestJob.from_yaml_and_user(
-            self.factory.make_job_yaml(), user)
+            self.factory.make_job_yaml(), self.user)
         metatype = MetaType(name='fake', metatype=MetaType.DEPLOY_TYPE)
         metatype.save()
         action_data = ActionData(meta_type=metatype, action_level='1.2.3', action_name='fake')

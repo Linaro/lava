@@ -99,5 +99,5 @@ class TestPipelineMenu(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
         # assert that menu_early_printk replaces the default earlyprintk default
         self.assertEqual(
             [e for e in menu_data['nfs'] if 'enter' in e['select'] and 'new Entry' in e['select']['wait']][0]['select']['enter'],
-            'console=ttyS0,115200  debug root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp'
+            'console=ttyS0,115200  debug root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp'
         )

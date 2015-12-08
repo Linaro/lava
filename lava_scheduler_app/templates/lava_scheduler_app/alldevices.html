@@ -3,12 +3,19 @@
 
 {% block content %}
 
-<h2>All Devices <small><a href="{% url 'lava.scheduler.active_devices' %}">(see active)</a></small></h2>
+<h2>All Devices</h2>
+
+<ul class="pager">
+    <li class="btn btn-sm disabled"><span class="glyphicon glyphicon-move">
+        <a href="{% url 'lava.scheduler.alldevices' %}">All Devices</a></span></li>
+    <li class="btn btn-sm"><span class="glyphicon glyphicon-play">
+        <a href="{% url 'lava.scheduler.active_devices' %}">Active Devices</a></span></li>
+</ul>
 
 {% render_table devices_table %}
 
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.min.js"></script>
 {% endblock %}

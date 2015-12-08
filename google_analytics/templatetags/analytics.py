@@ -1,12 +1,12 @@
 from django import template
 from django.db import models
 from django.contrib.sites.models import Site
-
+from django.apps import apps
 from django.template import Context, loader
 
 
 register = template.Library()
-Analytics = models.get_model('google_analytics', 'analytic')
+Analytics = apps.get_app_config('google_analytics').models['analytic']
 
 
 def do_get_analytics(parser, token):
