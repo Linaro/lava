@@ -196,31 +196,31 @@ http://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/single-node
 Available parameters
 --------------------
 
-* ``kernel``: A kernel image. The :term:`boot tag` for this parameter is `{KERNEL}`.
+* ``kernel``: A kernel image. The boot tag for this parameter is `{KERNEL}`.
   The parameter accepts any string and is required.
 
-* ``ramdisk``: A ramdisk image. The :term:`boot tag` for this parameter is `{RAMDISK}`.
+* ``ramdisk``: A ramdisk image. The boot tag for this parameter is `{RAMDISK}`.
   The parameter accepts any string and is optional.
 
-* ``dtb``: A flattened device tree blob. The :term:`boot tag` for this parameter is `{DTB}`.
+* ``dtb``: A flattened device tree blob. The boot tag for this parameter is `{DTB}`.
   The parameter accepts any string and is optional.
 
 * :term:`rootfs`: A root filesystem image. This parameter assumes that
-  the target's boot loader can deliver the image to a storage device. The :term:`boot tag`
+  the target's boot loader can deliver the image to a storage device. The boot tag
   for this parameter is `{ROOTFS}`. The parameter accepts any string and is optional.
 
 * ``nfsrootfs``: A tarball for the root file system. LAVA will extract
-  this tarball and create an NFS mount point dynamically. The :term:`boot tag` for this
+  this tarball and create an NFS mount point dynamically. The boot tag for this
   parameter is `{NFSROOTFS}`. The parameter accepts any string and is optional.
 
 * ``bootloader``: A boot loader image. This parameter assumes that
   the target's boot loader can deliver the boot loader image to a storage device.
-  The :term:`boot tag` for this parameter is `{BOOTLOADER}`. The parameter accepts
+  The boot tag for this parameter is `{BOOTLOADER}`. The parameter accepts
   any string and is optional.
 
 * ``firmware``: A firmware image. This parameter assumes that
   the target's boot loader can deliver the firmware image to a storage device.
-  The :term:`boot tag` for this parameter is `{FIRMWARE}`. The parameter accepts
+  The boot tag for this parameter is `{FIRMWARE}`. The parameter accepts
   any string and is optional.
 
 * ``rootfstype``: This is the filesystem type for the rootfs.

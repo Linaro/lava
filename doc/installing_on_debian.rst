@@ -57,7 +57,7 @@ See :ref:`ubuntu_install`
 
 .. [#f6] Support for ``lava-server`` on Ubuntu Trusty 14.04LTS stopped at
          2015.9.post1. See :ref:`trusty_tahr_install`. Support for
-         ``lava-dispatcher``on Ubuntu Trusty 14.04LTS stopped at 2015.9.
+         ``lava-dispatcher`` on Ubuntu Trusty 14.04LTS stopped at 2015.9.
 
 .. _experimental: https://wiki.debian.org/DebianExperimental
 
