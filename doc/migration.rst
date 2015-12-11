@@ -178,7 +178,7 @@ Preparing for the upgrade
    for a copy of the test job output directories.
 #. Incorporate into the plan for the upgrade that the master will need
    to be upgraded but then work will need to concentrate on all the
-   :ref:`remote_worker_upgrade` tasks before restarting the ``lava-server``
+   remote_worker_upgrade tasks before restarting the ``lava-server``
    service on the master instance or putting any devices back online.
 #. Exit out of all shells currently using the ``/srv/lava/instances/<INSTANCE>/bin/activate``
    virtual environment settings.
@@ -360,6 +360,8 @@ on the master. e.g.::
 #. Return devices to ``Online`` status.
 
 #. Complete scheduler maintenance.
+
+.. _fhs: http://www.pathname.com/fhs/
 
 .. _remote_worker_debian:
 
