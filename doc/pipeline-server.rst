@@ -1,3 +1,5 @@
+.. _setting_up_pipeline_instance:
+
 Setting up a LAVA pipeline instance
 ###################################
 
@@ -5,7 +7,7 @@ Initial considerations
 ======================
 
 #. The default setup of the LAVA packages and codebase is for the current
-   dispatcher and :ref:`distributed_deployment`.
+   dispatcher and :ref:`distributed_deployment` but this will change in 2016.
 #. A LAVA pipeline instance can have existing remote worker support
    alongside but uses a completely different mechanism to identify
    remote workers and run jobs on pipeline devices.
@@ -19,9 +21,10 @@ Initial considerations
    to allow pipeline submissions to devices connected to ``http://localhost``
    is to have pipeline devices available.
 #. Distributed deployments need changes on each worker, see
-   :ref:`changing_existing_workers`.
-#. Helpers will be developed in due course but currently, pipeline
-   setup is principally a manual task for admins.
+   :ref:`changing_existing_workers` but this can be avoided if all
+   devices on the instance are suitable for the pipeline.
+#. Guides will be addedin due course but pipeline setup is a much simplified
+   manual task for admins.
 #. If only pipeline devices are to be supported, the dispatchers
    running ``lava-slave`` do **not** need to have the ``lava-server``
    package installed. Each dispatcher does need to be able to connect

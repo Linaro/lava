@@ -1,5 +1,7 @@
 .. index:: support
 
+.. _getting_support:
+
 Getting support
 ###############
 

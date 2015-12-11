@@ -3,6 +3,9 @@
 Adding known devices using the LAVA admin helpers
 *************************************************
 
+.. warning:: This chapter discusses a model of device support
+   which is being superceded by the :term:`pipeline` model.
+
 LAVA provides helper scripts to automate the creation of the initial
 devices and bundle streams for the new instance. Devices added in this
 way need to be already known to LAVA, i.e. a suitable device type

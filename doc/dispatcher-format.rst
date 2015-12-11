@@ -17,10 +17,9 @@ so take care when preparing new files.
 
 .. warning:: This code is in ongoing development and the formats may
              change without notice. Only a very restricted set of
-             actions and device types are supported. The refactored
-             code can only be used from the command line and requires
-             ``sudo`` access on the dispatcher. No-one except LAVA
-             developers should be expecting to use any of these files.
+             actions and device types are supported. Jobs using the
+             refactored code can only be submitted from the command
+             line (using XMLRPC or :ref:`lava_tool`).
 
 .. _yaml_job:
 
@@ -582,5 +581,8 @@ Example:
 Submit actions
 ==============
 
-The submission back to the server web frontend will include the entire
-pipeline but the methods for doing this have not yet been written.
+There is no submit action in the pipeline. Results are transmitted live
+from any class in the pipeline with support for declaring a result.
+
+There is no meta-format for the results, results are based on the test
+job and do not exist without reference to the test job.

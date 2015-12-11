@@ -22,7 +22,7 @@ To submit a VM group test job, you need:
 A VM group test job consists of a ``vm_group`` attribute, specifying
 the host machine and a list of VM's that will spawned on the host.
 
-See :ref:`writing_multinode` for more information on VMGroup test
+See :ref:`writing_json_multinode` for more information on VMGroup test
 definitions. Virtual Machine groups are an extension of MultiNode, so
 the definition which would be resubmitted as a new VMGroup job will
 be the VMGroup Definition.
@@ -156,7 +156,7 @@ The VMs will run on the host device and LAVA supports running
   to be run to check for a successful clean up on the host device.
 * If the host device needs to run tests from multiple repositories,
   see :ref:`tests_and_reboots`.
-* See :ref:`writing_multinode` for more on how to communicate between
+* See :ref:`writing_json_multinode` for more on how to communicate between
   the VM and the host using the :ref:`multinode_api`.
 * It is not possible to list one test shell for multiple roles, only
   for a single role or all roles. If you have multiple tests to run on

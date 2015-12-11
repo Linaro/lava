@@ -16,7 +16,12 @@ table length can be selected.
 Table search support
 ====================
 
-Unless specified explicitly, all searches are case-sensitive.
+.. note:: Tables are only the base representation of the data available
+   in LAVA and whenever the table search support seems incomplete, the
+   solution is to create a :ref:`Query <result_queries>` which can also
+   be :ref:`represented as a simple URL <query_by_url>`.
+
+Unless specified explicitly, all table searches are case-sensitive.
 
 Simple text search
 ------------------

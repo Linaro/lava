@@ -1,2 +1,0 @@
-listener panda01
-application console 'panda01 console' 'sg dialout "cu -l ttyUSB0 -s 115200"'

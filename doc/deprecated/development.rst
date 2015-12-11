@@ -1,5 +1,5 @@
-LAVA development
-################
+LAVA development (Deprecated model)
+###################################
 
 .. Resource: Various places in the wiki
 

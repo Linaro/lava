@@ -3,6 +3,9 @@
 Deploying Distributed Instances
 *******************************
 
+.. warning:: This chapter discusses a model of distributed workers
+   which is being superceded by the :term:`pipeline` model.
+
 When deploying a large LAVA "lab" instance with many :term:`DUT` it is
 suggested to use one machine for the web frontend and the master
 scheduler with separate machines to act as remote worker nodes.
@@ -389,12 +392,14 @@ customised frontend.
 Refactored Dispatcher
 ^^^^^^^^^^^^^^^^^^^^^
 
-The :term:`pipeline` dispatcher is currently *developer only* but will
-begin to be used in production during 2016. The new model has been
-designed to prevent the problems of the current remote worker configuration
-by using a single connection between the master and the slave. This
-connection uses :term:`ZMQ` which is designed to recover from connectivity
-issues without data loss.
+The migration to the :term:`pipeline` dispatcher in production has begun.
+The new model has been designed to prevent the problems of the current
+remote worker configuration by using a single connection between the
+master and the slave. This connection uses :term:`ZMQ` which is designed
+to recover from connectivity issues without data loss.
+
+The deprecated method needs to remain in use until all devices on any
+one dispatcher only need to support pipeline test jobs.
 
 Scaling Deployments
 ===================

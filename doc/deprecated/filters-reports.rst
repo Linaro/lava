@@ -5,6 +5,9 @@
 Filters
 =======
 
+.. warning:: This chapter discusses a model
+   which is being superceded by the :term:`pipeline` model.
+
 What is a Filter?
 -----------------
 
@@ -20,7 +23,7 @@ the users which created it.
 How to create a Filter?
 -----------------------
 
-.. image:: ./images/create-filter.png
+.. image:: ../images/create-filter.png
     :width: 800
     :height: 480
 

@@ -64,6 +64,8 @@ conditions.
 This also means you can add the condition even if the field in the metadata is
 is not yet present in the system.
 
+.. _query_by_url:
+
 Query by URL
 ************
 

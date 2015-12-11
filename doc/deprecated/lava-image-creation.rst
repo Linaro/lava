@@ -1,5 +1,8 @@
 .. _deploy_boards:
 
+.. warning:: This chapter discusses a model of deployment
+   which is being superceded by the :term:`pipeline` model.
+
 Deploying a board in LAVA
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 

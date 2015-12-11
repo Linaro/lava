@@ -17,14 +17,12 @@ Our team is spread geographically around the world, with some members in
 Europe, America, Asia and Oceania. We are usually talking on our IRC channel
 #linaro-lava on irc.freenode.net.
 
-
 Release process
 ^^^^^^^^^^^^^^^
 
-LAVA is being developed on a monthly release schedule. Each release is tagged
-around 25th of each month.
+LAVA is being developed on a monthly release schedule.
 
-Launchpad release tarballs are following our YYYY.MM (year, month) pattern.
+Release tarballs are following our YYYY.MM (year, month) pattern.
 Should we need to release an upgrade to any existing release (such as a
 critical bug fix) we append a sequential number preceded by a dash
 (YYYY.MM-NN).
@@ -45,7 +43,6 @@ describe the problem and the version of LAVA you are using.
 If you were using our public LAVA instance, the one used by Linaro for daily
 activities (http://validation.linaro.org) try to include a link to a page
 that manifests the problem as that makes debugging easier.
-
 
 Patches, fixes and code
 ^^^^^^^^^^^^^^^^^^^^^^^

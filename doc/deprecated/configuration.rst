@@ -3,6 +3,9 @@
 Configuration files for lava-dispatcher
 =======================================
 
+.. warning:: This chapter discusses a model of configuration
+   which is being superceded by the :term:`pipeline` model.
+
 lava-dispatcher looks for files in:
 
  * Alongside the installation/source tree for the default values

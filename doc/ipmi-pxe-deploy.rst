@@ -211,26 +211,26 @@ first interface is set up for tftp boot.
   dhcp-host=set:lava-master,fc:2f:40:08:7e:4c,calxeda02-02-00,192.168.2.79
   dhcp-host=fc:2f:40:08:7e:4d,calxeda02-02-01,192.168.2.80
   dhcp-host=fc:2f:40:08:7e:4e,calxeda02-02-02,192.168.2.81
-  
+
   ...
-  
+
   # Set the boot filename for netboot/PXE. You will only need
   # this if you want to boot machines over the network and you will need
   # a TFTP server; either dnsmasq's built in TFTP server or an
   # external one. (See below for how to enable the TFTP server.)
-  
+
   dhcp-boot=tag:lava-master,master/pxelinux.0
   dhcp-boot=tag:netinstall,netinstaller/pxelinux.0
-                
+
   ...
-  
-  # Enable dnsmasq's built-in TFTP server  
+
+  # Enable dnsmasq's built-in TFTP server
   enable-tftp
-  
+
   # Set the root directory for files available via FTP.
   tftp-root=/var/lib/tftpboot
-  
-  
+
+
 tftpboot Directory
 ..................
 
@@ -269,7 +269,7 @@ An initrd can be created from a running ubuntu system
 
 1. Install ubuntu on a target server.
 
-2. Set up busybox for initrd. 
+2. Set up busybox for initrd.
 
 Note: It is important to include a full-featured version of busybox. This version
 must support the 'busybox --install -s' command to automatically install links
@@ -352,7 +352,7 @@ used for debugging issues.
   copy_exec /bin/nc
   copy_exec /sbin/dhclient
   copy_exec /sbin/fdisk
-  
+
   # support dhclient
   copy_exec /sbin/dhclient
   copy_exec /sbin/dhclient-script
@@ -361,7 +361,7 @@ used for debugging issues.
   copy_exec /bin/rm
   copy_exec /bin/mv
   copy_exec /etc/fstab
-  
+
   copy_exec /lib/arm-linux-gnueabihf/libnss_compat-2.15.so
   copy_exec /lib/arm-linux-gnueabihf/libnss_compat.so.2
   copy_exec /lib/arm-linux-gnueabihf/libnss_dns-2.15.so
@@ -374,7 +374,7 @@ used for debugging issues.
   copy_exec /lib/arm-linux-gnueabihf/libnss_nisplus-2.15.so
   copy_exec /lib/arm-linux-gnueabihf/libnss_nisplus.so.2
   copy_exec /lib/arm-linux-gnueabihf/libnss_nis.so.2
-  
+
   # Add bash
   copy_exec /bin/bash
   copy_exec /lib/arm-linux-gnueabihf/libtinfo.so.5
@@ -382,7 +382,7 @@ used for debugging issues.
   copy_exec /lib/arm-linux-gnueabihf/libgcc_s.so.1
   copy_exec /lib/arm-linux-gnueabihf/libc.so.6
   copy_exec /lib/ld-linux-armhf.so.3
-  
+
   # Create version info for this image
   echo '#!/bin/sh' > /tmp/lava-master-image-info
   echo "echo $(date +%Y.%m.%d-%H.%M.%S)" > /tmp/lava-master-image-info
@@ -441,26 +441,3 @@ Chrooting into an installed image (optional) is not really necessary,
 however, it may be useful for debugging issues::
 
   (initrd) chroot /mnt
-
-
-Adding a highbank device
-------------------------
-
-sample device config file
-.........................
-
-*highbank01.conf*
-
-::
-
-  device_type = highbank
-  hostname = calxeda01-01
-  ecmeip = calxeda01-01-02
-  test_shell_serial_delay_ms = 100
-
-**hostname** refers to the first ethernet port that is accessible from the target OS.
-
-**ecmeip** refers to the address of the control port used for sending ipmi commands.
-
-**test_shell_serial_delay_ms** refers to the delay between characters
-sent over the serial link. See :ref:`sol_closed_bmc`

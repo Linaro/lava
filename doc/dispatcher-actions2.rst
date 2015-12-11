@@ -350,6 +350,8 @@ Lava-Test-Shell Test Definitions although the submission format has changed:
      failure_retry: 3
      name: kvm-basic-singlenode
 
+.. _test_action_definitions:
+
 Definitions
 ===========
 
@@ -371,6 +373,21 @@ Definitions
 * **name** (optional) if not present, use the name from the YAML. The
   name can also be overriden from the actual commands being run by
   calling the lava-test-suite-name API call (e.g. `lava-test-suite-name FOO`).
+* **parameters** (optional): Pass parameters to the Lava Test Shell
+  Definition. The format is a YAML dictionary - the key is the name of
+  the variable to be made available to the test shell, the value is the
+  value of that variable.
+
+  .. code-block:: yaml
+
+     definitions:
+         - repository: http://git.linaro.org/lava-team/hacking-session.git
+           from: git
+           path: hacking-session-debian.yaml
+           name: hacking
+           parameters:
+            IRC_USER: ""
+            PUB_KEY: ""
 
 .. code-block:: yaml
 
@@ -464,14 +481,6 @@ Repeat
 ******
 
 See :ref:`repeats`.
-
-.. _submit_action:
-
-Submit
-******
-
-.. warning:: As yet, pipeline data cannot be submitted - any details here are
-             ignored.
 
 .. _repeats:
 

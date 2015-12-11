@@ -1,7 +1,7 @@
 .. _available_actions:
 
-List of available dispatcher actions
-####################################
+List of available JSON dispatcher actions
+#########################################
 
 Dispatcher actions are of two main types:
 

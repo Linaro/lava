@@ -3,6 +3,9 @@
 Image Reports 2.0
 =================
 
+.. warning:: This chapter discusses a model which is being updated by
+   the :term:`pipeline` model.
+
 Image reports 2.0 allow you to view test run pass/fail results or test result
 measurements over time combined from multiple filters per chart with the
 possibility of adding multiple charts per report.

@@ -2,8 +2,13 @@
 
 .. _multinode:
 
-Multi-Node LAVA
-###############
+Multi-Node LAVA (JSON)
+######################
+
+.. warning:: This chapter discusses a model
+   which is being superceded by the :term:`pipeline` model.
+
+.. seealso:: :ref:`Using the multinode protocol <writing_multinode>`
 
 LAVA multi-node support allows users to use LAVA to schedule, synchronise and
 combine the results from tests that span multiple targets. Jobs can be arranged
@@ -19,10 +24,6 @@ have the same ``device_type``. Each role can be assigned device ``tags``.
 Once roles are defined, actions (including test images and test definitions) can be marked
 as applying to specific roles (if no role is specified, all roles use the action).
 
-A role can be marked as `slave` (thanks to the ``is_slave`` argument). A
-slave role will not be booted by LAVA directly but by another device within the
-MultiNode group.
-
 If insufficient boards exist to meet the combined requirements of all the roles specified
 in the job, the job will be rejected.
 
@@ -36,8 +37,8 @@ the test definition in the default PATH.
 .. toctree::
    :maxdepth: 3
 
-   multinodeapi.rst
-   debugging.rst
+   ../multinodeapi.rst
+   ../debugging.rst
 
 Hardware requirements and virtualisation
 ****************************************

@@ -1,6 +1,9 @@
 Deploying a QEMU Device
 =======================
 
+.. warning:: This chapter discusses a model of device support
+   which is being superceded by the :term:`pipeline` model.
+
 Adding a QEMU device to LAVA is an easy way to make sure things work without
 having to worry about connecting to a physical device and setting up a master
 image. This page outlines the steps required to add a new QEMU device to your

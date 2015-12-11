@@ -44,23 +44,3 @@ If you intend to use an NFS rootfs, your kernel will need NFS and networking sup
 an accompanying ramdisk with the modules/scripts to support NFS root devices.
 
 In any case, either your kernel or your ramdisk will need networking support for LAVA jobs to complete.
-
-
-Adding an iPXE device
-------------------------
-
-sample device config file
-.........................
-
-*x86-01.conf*
-
-::
-
-  connection_command = telnet serial02 7020
-  device_type = x86
-  soft_boot_cmd = reboot
-  hard_reset_command = /usr/local/lab-scripts/pduclient --daemon services --port 01 --hostname pdu03 --command reboot
-  power_off_cmd = /usr/local/lab-scripts/pduclient --daemon services --port 01 --hostname pdu03 --command off
-  lava_network_info=lava_mac=00:22:19:d6:b3:ec
-
-**lava_network_info** can contain any extra kernel command line arguments you would like to be passed to the kernel

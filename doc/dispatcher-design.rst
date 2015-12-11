@@ -96,8 +96,8 @@ conform to the :ref:`pipeline_schema`.
 Design
 ******
 
-Start with a Job which is broken up into a Deployment, a Boot, a Test
-and a Submit class:
+Start with a Job which is broken up into a Deployment, a Boot and a
+Test class. Results are transmitted live during any part of the job.
 
 +-------------+--------------------+------------------+-------------------+
 |     Job     |                    |                  |                   |
@@ -121,8 +121,6 @@ and a Submit class:
 |             |                    |   BootAction     |                   |
 +-------------+--------------------+------------------+-------------------+
 |             |                    |   TestAction     |                   |
-+-------------+--------------------+------------------+-------------------+
-|             |                    |   SubmitAction   |                   |
 +-------------+--------------------+------------------+-------------------+
 
 The Job manages the Actions using a Pipeline structure. Actions

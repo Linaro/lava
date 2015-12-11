@@ -1,20 +1,17 @@
-.. index: hacking session
+.. _json_hacking:
 
-.. _hacking_session:
+LAVA Hacking Sessions (JSON)
+****************************
 
-LAVA Hacking Sessions
-*********************
+.. warning:: This chapter discusses a model
+   which is being superceded by the :term:`pipeline` model.
 
-A LAVA hacking session is a lava-test-shell test that provides interactive
-ssh access to a LAVA device inside a defined test environment. This support
-differs from the SSH protocol support in that the job waits for a real
-user to login instead of expecting a dynamic connection to run a test shell.
+A LAVA hacking session is a lava-test-shell test that provides remote
+ssh access to a LAVA device.
 
 Assumptions
 ===========
-
- * The user has TCP/IP access to the device (this may require a VPN or
-   other access if firewalls exist between the user and the device).
+ * The user has TCP/IP access to the device
  * The test job deployment raises a usable networking interface.
 
 Parameters
@@ -50,7 +47,7 @@ Options
 
 .. _hacking-session-oe.yaml: https://git.linaro.org/lava-team/hacking-session.git/blob_plain/HEAD:/hacking-session-oe.yaml
 
-.. _example: https://staging.validation.linaro.org/scheduler/job/138105/definition
+.. _example: https://staging.validation.linaro.org/scheduler/job/125107/definition
 
 Starting a Hacking Session
 ==========================
@@ -58,21 +55,24 @@ Starting a Hacking Session
 * Create a LAVA job file with your desired target and image
 * Add a lava-test-shell action to your LAVA json job file where you want hacking access
 
-.. code-block:: yaml
+::
 
-  - test:
-        failure_retry: 3
-        name: kvm-basic-hacking-session
-        timeout:
-          minutes: 5
-        definitions:
-         - repository: http://git.linaro.org/lava-team/hacking-session.git
-           from: git
-           path: hacking-session-debian.yaml
-           name: hacking
-           parameters:
-              "IRC_USER": "TYPE YOUR IRC NICK HERE",
-              "PUB_KEY": "PASTE_PUBKEY(S) HERE"
+    {
+        "command": "lava_test_shell",
+        "parameters": {
+            "testdef_repos": [
+                {
+                    "git-repo": "http://git.linaro.org/lava-team/hacking-session.git",
+                    "testdef": "hacking-session-debian.yaml",
+                    "parameters": {
+                        "IRC_USER": "TYPE YOUR IRC NICK HERE",
+                        "PUB_KEY": "PASTE_PUBKEY(S) HERE"
+                    }
+                }
+            ],
+            "timeout": 3600
+        }
+    }
 
 See :ref:`inactivity_termination` for clarification of the timeout
 support.
@@ -125,7 +125,7 @@ echo to ``/dev/ttyS0`` will be recorded within LAVA.
 
    https://validation.linaro.org/scheduler/job/116632/log_file#L_5_12
 
-.. _stop_hacking:
+.. _json_stop_hacking:
 
 Stopping a Hacking Session
 ==========================
@@ -136,7 +136,7 @@ the device. Your session is monitored for :ref:`inactivity_termination`,
 or you can complete your session immediately:
 
  * **logout** of your session (you can avoid closing the session on logout
-   using the :ref:`continue_hacking` support).
+   using the :ref:`json_continue_hacking` support).
  * **Cancel** the job in the LAVA using the link in the job detail or
    job log pages.
  * **Stop** - Use the helper function ``stop_hacking`` from the command-line
@@ -146,7 +146,7 @@ or you can complete your session immediately:
    to process the :term:`result bundle`. Use ``stop_hacking`` to close the
    session and complete normal job processing.
 
-.. _inactivity_termination:
+.. _json_inactivity_termination:
 
 Hacking Session timeouts
 ========================
@@ -160,13 +160,13 @@ session, that user will get another IRC private message explaining
 the termination.
 
 The timer is running for the lifetime of the hacking session, so if you
-use :ref:`continue_hacking` and logout, you will still need to log back
+use :ref:`json_continue_hacking` and logout, you will still need to log back
 in within one hour.
 
 The session will timeout, regardless of activity, when the timeout
 specified in the job is reached.
 
-.. _continue_hacking:
+.. _json_continue_hacking:
 
 Continuing a Hacking Session
 ============================
@@ -174,5 +174,5 @@ Continuing a Hacking Session
 If you want to be able to logout of a hacking session and log back in
 within the inactivity timeout, call the ``continue_hacking`` script from
 the command line within the hacking session. The hacking session is still
-monitored for :ref:`inactivity_termination`, so do remember to log back
+monitored for :ref:`json_inactivity_termination`, so do remember to log back
 in.

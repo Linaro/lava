@@ -1,6 +1,9 @@
 Deploying dummy devices
 =======================
 
+.. warning:: This chapter discusses a model of deployment
+   which is being superceded by the :term:`pipeline` model.
+
 Dummy devices are not proper devices, but rather interactive sessions in
 existing machines. There are 3 types of dummy devices:
 

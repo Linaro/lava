@@ -1,3 +1,6 @@
+.. warning:: This chapter discusses a model of distributed workers
+   which is being superceded by the :term:`pipeline` model.
+
 Dashboard Bundle Schema
 #######################
 
