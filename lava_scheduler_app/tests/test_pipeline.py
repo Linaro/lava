@@ -393,7 +393,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
             self.fail('[%s] parser error: %s' % (job.sub_id, exc))
         description = pipeline_job.describe()
         self.assertIn('compatibility', description)
-        self.assertEqual(description['compatibility'], BootQEMU.compatibility)
+        self.assertGreaterEqual(description['compatibility'], BootQEMU.compatibility)
 
 
 class TestPipelineStore(TestCaseWithFactory):
