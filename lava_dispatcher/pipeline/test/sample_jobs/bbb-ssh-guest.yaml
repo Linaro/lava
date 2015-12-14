@@ -15,6 +15,9 @@ actions:
     method: ssh
     role: guest
     timeout: {minutes: 3}
+    prompts:
+      - 'linaro-test'
+      - 'root@debian:~#'
 - test:
     definitions:
     - {from: git, name: smoke-tests, path: ubuntu/smoke-tests-basic.yaml, repository: 'git://git.linaro.org/qa/test-definitions.git'}

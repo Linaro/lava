@@ -20,6 +20,7 @@
 
 import os
 import lzma
+import shutil
 import tarfile
 import contextlib
 import subprocess
@@ -109,6 +110,7 @@ class ApplyOverlayTftp(Action):  # FIXME: generic to more than just tftp
         overlay_type = ''
         overlay_file = None
         directory = None
+        nfs_url = None
         if self.parameters.get('ramdisk', None) is not None:
             overlay_type = 'ramdisk'
             overlay_file = self.data['compress-overlay'].get('output')
@@ -121,6 +123,15 @@ class ApplyOverlayTftp(Action):  # FIXME: generic to more than just tftp
             overlay_type = 'rootfs'
             overlay_file = self.data['compress-overlay'].get('output')
             directory = self.get_common_data('file', 'root')
+        elif self.parameters.get('nfs_url', None) is not None:
+            nfs_url = self.parameters.get('nfs_url')
+            overlay_file = self.data['compress-overlay'].get('output')
+            # need to mount the persistent NFS here.
+            directory = mkdtemp(autoremove=False)
+            try:
+                subprocess.check_output(['mount', '-t', 'nfs', nfs_url, directory])
+            except subprocess.CalledProcessError as exc:
+                raise JobError(exc)
         else:
             self.logger.debug("No overlay directory")
             self.logger.debug(self.parameters)
@@ -130,10 +141,14 @@ class ApplyOverlayTftp(Action):  # FIXME: generic to more than just tftp
             tar.close()
         except tarfile.TarError as exc:
             raise RuntimeError("Unable to unpack %s overlay: %s" % (overlay_type, exc))
+        finally:
+            if nfs_url:
+                subprocess.check_output(['umount', directory])
+                os.rmdir(directory)  # fails if the umount fails
         return connection
 
 
-class ExtractRootfs(Action):
+class ExtractRootfs(Action):  # pylint: disable=too-many-instance-attributes
     """
     Unpacks the rootfs and applies the overlay to it
     """
@@ -181,7 +196,7 @@ class ExtractRootfs(Action):
             except tarfile.TarError as exc:
                 raise JobError("Unable to unpack %s: '%s' - %s" % (self.param_key, os.path.basename(root), exc))
         elif self.use_lzma:
-            with contextlib.closing(lzma.LZMAFile(root)) as xz:
+            with contextlib.closing(lzma.LZMAFile(root)) as xz:  # pylint: disable=no-member,invalid-name
                 with tarfile.open(fileobj=xz) as tarball:
                     try:
                         tarball.extractall(root_dir)
@@ -375,7 +390,7 @@ class CompressRamdisk(Action):
                 raise RuntimeError("Unable to add uboot header to ramdisk")
             final_file = ramdisk_uboot
 
-        os.rename(final_file, os.path.join(tftp_dir, os.path.basename(final_file)))
+        shutil.move(final_file, os.path.join(tftp_dir, os.path.basename(final_file)))
         self.logger.debug("rename %s to %s" % (
             final_file, os.path.join(tftp_dir, os.path.basename(final_file))
         ))

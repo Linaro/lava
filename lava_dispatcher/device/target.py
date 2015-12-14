@@ -862,6 +862,13 @@ class Target(object):
             if mounted:
                 runner.run('umount /mnt')
 
+    def _politely_close_console(self, connection):
+        if "telnet" in self.config.connection_command:
+            logging.debug("Telnet connection: Closing connection nicely")
+            connection.sendcontrol("]")
+            connection.expect("telnet> ", timeout=2)
+            connection.send("quit")
+
     def _start_busybox_http_server(self, runner, ip):
         runner.run('busybox httpd -f -p %d &' % self.config.busybox_http_port)
         runner.run('echo $! > /tmp/httpd.pid')

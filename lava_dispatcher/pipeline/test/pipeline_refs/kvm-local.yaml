@@ -28,6 +28,7 @@
       - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
       - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
     - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
+    - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
   - {class: actions.deploy.apply_overlay.ApplyOverlayImage, name: apply-overlay-image}
   - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
   - class: actions.deploy.mount.UnmountAction

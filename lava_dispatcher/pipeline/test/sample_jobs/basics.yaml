@@ -65,6 +65,9 @@ actions:
         kernel: http://myimage.com/zImage
         kernel_args: "bla bla bla"
         failure_retry: 10
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
     - test:
         failure_retry: 6
@@ -86,6 +89,9 @@ actions:
           minutes: 20
         method: block
         media: sata
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
     - boot:
         timeout:
@@ -94,10 +100,16 @@ actions:
         media: usb
         kernel: http://myimage.com/zImage
         boot_cmds: “blah blah blah”
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
     - boot:
         method: fastboot
         media: whatever
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
     - repeat:
         count: 10
@@ -106,6 +118,9 @@ actions:
         - boot:
             method: block
             media: sata
+            prompts:
+              - 'linaro-test'
+              - 'root@debian:~#'
         - test:
             definitions:
               - from: url
@@ -116,6 +131,9 @@ actions:
         - boot:
             method: fastboot
             media: whatever
+            prompts:
+              - 'linaro-test'
+              - 'root@debian:~#'
 
 
     # includes other YAML test definitions at this point

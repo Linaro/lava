@@ -57,7 +57,7 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
             if isinstance(action, DeployAction):
                 overlay = action.pipeline.children[action.pipeline][3]
                 testdef = overlay.internal_pipeline.actions[1]
-        self.assertEqual(len(overlay.internal_pipeline.actions), 3)
+        self.assertEqual(len(overlay.internal_pipeline.actions), 4)
         self.assertIsInstance(testdef, TestDefinitionAction)
         testdef.validate()
         if not testdef.valid:

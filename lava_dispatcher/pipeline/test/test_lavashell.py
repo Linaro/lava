@@ -68,9 +68,9 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
                 testshell = action.pipeline.children[action.pipeline][0]
                 break
         self.assertTrue(testshell.valid)
-        self.assertFalse(testshell.check_patterns('exit', None))
-        self.assertFalse(testshell.check_patterns('eof', None))
-        self.assertFalse(testshell.check_patterns('timeout', None))
+        self.assertFalse(testshell.check_patterns('exit', None, ''))
+        self.assertFalse(testshell.check_patterns('eof', None, ''))
+        self.assertFalse(testshell.check_patterns('timeout', None, ''))
 
 
 class TestShellResults(unittest.TestCase):   # pylint: disable=too-many-public-methods

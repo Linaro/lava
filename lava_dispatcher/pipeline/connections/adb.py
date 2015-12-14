@@ -45,8 +45,8 @@ class ConnectAdb(Action):
         if 'connect' not in self.job.device['commands']:
             self.errors = "Unable to connect to device %s - missing connect command." % self.job.device.hostname
             return
-        if 'test_image_prompts' not in self.job.device:
-            self.errors = "Unable to identify test image prompts from device configuration."
+        if 'prompts' not in self.parameters:
+            self.errors = "Unable to identify test image prompts from parameters."
         command = self.job.device['commands']['connect']
         exe = ''
         try:
@@ -58,7 +58,7 @@ class ConnectAdb(Action):
     def run(self, connection, args=None):
         if connection:
             self.logger.debug("Already connected")
-            connection.prompt_str = self.job.device['test_image_prompts']
+            connection.prompt_str = self.parameters['prompts']
             return connection
         command = self.job.device['commands']['connect'][:]  # local copy to retain idempotency.
         self.logger.info("%s Connecting to device using '%s'", self.name, command)
@@ -71,7 +71,7 @@ class ConnectAdb(Action):
         connection = ShellSession(self.job, shell)
         connection.connected = True
         connection = super(ConnectAdb, self).run(connection, args)
-        connection.prompt_str = self.job.device['test_image_prompts']
+        connection.prompt_str = self.parameters['prompts']
         self.data['boot-result'] = 'failed' if self.errors else 'success'
         return connection
 
@@ -92,6 +92,8 @@ class WaitForAdbDevice(Action):
         super(WaitForAdbDevice, self).validate()
         if 'serial_number' not in self.job.device:
             self.errors = "device serial number missing"
+            if self.job.device['serial_number'] == '0000000000':
+                self.errors = "device serial number unset"
 
     def run(self, connection, args=None):
         connection = super(WaitForAdbDevice, self).run(connection, args)
@@ -118,6 +120,8 @@ class WaitForFastbootDevice(Action):
         super(WaitForAdbDevice, self).validate()
         if 'serial_number' not in self.job.device:
             self.errors = "device serial number missing"
+            if self.job.device['serial_number'] == '0000000000':
+                self.errors = "device serial number unset"
 
     def run(self, connection, args=None):
         connection = super(WaitForFastbootDevice, self).run(connection, args)

@@ -64,13 +64,12 @@ def infrastructure_error(path):
     return None
 
 
-def wait_for_prompt(connection, prompt_pattern, timeout):
+def wait_for_prompt(connection, prompt_pattern, timeout, check_char):
     # One of the challenges we face is that kernel log messages can appear
     # half way through a shell prompt.  So, if things are taking a while,
     # we send a newline along to maybe provoke a new prompt.  We wait for
     # half the timeout period and then wait for one tenth of the timeout
     # 6 times (so we wait for 1.1 times the timeout period overall).
-    logger = logging.getLogger('dispatcher')
     prompt_wait_count = 0
     if timeout == -1:
         timeout = connection.timeout
@@ -81,10 +80,10 @@ def wait_for_prompt(connection, prompt_pattern, timeout):
         except TestError as exc:
             if prompt_wait_count < 6:
                 logger = logging.getLogger('dispatcher')
-                logger.warning('%s: Sending newline in case of corruption.', exc)
+                logger.warning('%s: Sending %s in case of corruption.', exc, check_char)
                 prompt_wait_count += 1
                 partial_timeout = timeout / 10
-                connection.sendline('#')
+                connection.sendline(check_char)
                 continue
             else:
                 raise

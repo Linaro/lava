@@ -47,6 +47,9 @@ actions:
         media: tmpfs
         timeout:
           minutes: 5
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
     - submit_results:
         stream: /anonymous/codehelp/

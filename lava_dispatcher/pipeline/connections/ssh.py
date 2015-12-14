@@ -144,7 +144,8 @@ class ConnectSsh(Action):
         # SshSession monitors the pexpect
         connection = SShSession(self.job, shell)
         connection = super(ConnectSsh, self).run(connection, args)
-        connection.prompt_str = self.job.device['test_image_prompts']
+        if not connection.prompt_str:
+            connection.prompt_str = self.parameters['prompts']
         connection.connected = True
         self.wait(connection)
         self.data["boot-result"] = 'success'

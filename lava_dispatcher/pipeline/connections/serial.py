@@ -20,6 +20,7 @@
 
 import signal
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
+from lava_dispatcher.pipeline.utils.constants import DEFAULT_SHELL_PROMPT
 from lava_dispatcher.pipeline.action import (
     Action,
     JobError,
@@ -33,20 +34,22 @@ class ConnectDevice(Action):
     """
     General purpose class to use the device commands to
     make a serial connection to the device. e.g. using ser2net
+    Inherit from this class and change the session_class and/or shell_class for different behaviour.
     """
+
     def __init__(self):
         super(ConnectDevice, self).__init__()
         self.name = "connect-device"
         self.summary = "run connection command"
         self.description = "use the configured command to connect serial to the device"
+        self.session_class = ShellSession  # wraps the pexpect and provides prompt_str access
+        self.shell_class = ShellCommand  # runs the command to initiate the connection
 
     def validate(self):
         super(ConnectDevice, self).validate()
         if 'connect' not in self.job.device['commands']:
             self.errors = "Unable to connect to device %s - missing connect command." % self.job.device.hostname
             return
-        if 'test_image_prompts' not in self.job.device:
-            self.errors = "Unable to identify test image prompts from device configuration."
         command = self.job.device['commands']['connect']
         exe = ''
         try:
@@ -54,28 +57,27 @@ class ConnectDevice(Action):
         except AttributeError:
             self.errors = "Unable to parse the connection command %s" % command
         self.errors = infrastructure_error(exe)
-        # FIXME: this improves speed but relies on using ser2net
-        # self.job.device['test_image_prompts'].append('ser2net port')
 
     def run(self, connection, args=None):
         if connection:
             self.logger.debug("Already connected")
-            connection.prompt_str = self.job.device['test_image_prompts']
+            if not connection.prompt_str:
+                # prompt_str can be a list or str
+                connection.prompt_str = [DEFAULT_SHELL_PROMPT]
             return connection
         command = self.job.device['commands']['connect'][:]  # local copy to retain idempotency.
         self.logger.info("%s Connecting to device using '%s'", self.name, command)
         signal.alarm(0)  # clear the timeouts used without connections.
         # ShellCommand executes the connection command
-        shell = ShellCommand("%s\n" % command, self.timeout, logger=self.logger)
+        shell = self.shell_class("%s\n" % command, self.timeout, logger=self.logger)
         if shell.exitstatus:
             raise JobError("%s command exited %d: %s" % (command, shell.exitstatus, shell.readlines()))
         # ShellSession monitors the pexpect
-        connection = ShellSession(self.job, shell)
+        connection = self.session_class(self.job, shell)
         connection.connected = True
         connection = super(ConnectDevice, self).run(connection, args)
-        # append ser2net port to the prompt_str
-        # FIXME: this improves speed but relies on using ser2net
-        connection.prompt_str = self.job.device['test_image_prompts'].append('ser2net port')
+        if not connection.prompt_str:
+            connection.prompt_str = [DEFAULT_SHELL_PROMPT]
         return connection
         # # if the board is running, wait for a prompt - if not, skip.
         # if self.job.device.power_state is 'off':

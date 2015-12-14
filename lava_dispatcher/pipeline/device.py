@@ -98,7 +98,7 @@ class NewDevice(PipelineDevice):
             with open(target) as f_in:
                 self.update(yaml.load(f_in))
         except yaml.parser.ParserError:
-            raise RuntimeError("%s could not be parsed" % device_file)
+            raise RuntimeError("%s could not be parsed" % target)
 
         # Get the device name (/path/to/kvm01.yaml => kvm01)
         self.target = os.path.splitext(os.path.basename(target))[0]
