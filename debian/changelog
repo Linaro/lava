@@ -1,3 +1,10 @@
+lava-server (2015.12-1) unstable; urgency=medium
+
+  * New production release
+  * Migrates to django1.9 support (Closes: #804111)
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 14 Dec 2015 09:40:37 +0000
+
 lava-server (2015.11-1) unstable; urgency=medium
 
   * New production release
