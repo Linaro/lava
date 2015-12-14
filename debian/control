@@ -26,7 +26,7 @@ Conflicts: lava-scheduler, lava-dashboard, linaro-django-xmlrpc,
  python-django-hijack (<= 1.0.10-1), python-django (<< 1.7)
 Replaces: lava-scheduler, lava-dashboard, linaro-django-xmlrpc
 Depends: apache2, adduser, diffstat, fuse, iproute2,
- libapache2-mod-uwsgi, libapache2-mod-wsgi, lshw,
+ libapache2-mod-uwsgi, libapache2-mod-wsgi, lshw, python-tz,
  python-daemon, python-dateutil, python-django-auth-ldap,
  python-setuptools, libjs-excanvas, libjs-jquery-cookie,
  libjs-jquery, libjs-jquery-ui, python-django (>= 1.7),

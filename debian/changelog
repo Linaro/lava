@@ -1,8 +1,10 @@
-lava-server (2015.12-2) UNRELEASED; urgency=medium
+lava-server (2015.12-2) unstable; urgency=medium
 
   * Add extra autopkgtest dependency: python-tz
+    Also add to main Depends to avoid issues if python-django
+    is installed without Recommends.
 
- -- Neil Williams <codehelp@debian.org>  Mon, 14 Dec 2015 20:46:04 +0000
+ -- Neil Williams <codehelp@debian.org>  Mon, 14 Dec 2015 21:24:35 +0000
 
 lava-server (2015.12-1) unstable; urgency=medium
 
