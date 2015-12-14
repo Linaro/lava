@@ -31,7 +31,7 @@ class RestrictedTestJobQuerySet(RestrictedResourceQuerySet):
         from lava_scheduler_app.models import TestJob
         # Legacy jobs.
         conditions_legacy = Q(is_pipeline=False)
-        if not user:
+        if not user or user.is_anonymous():
             conditions_legacy &= Q(is_public=True)
         elif not user.is_superuser and not user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'):
             # continue adding conditions only if user is not superuser and
@@ -43,7 +43,7 @@ class RestrictedTestJobQuerySet(RestrictedResourceQuerySet):
 
         # Pipeline jobs.
         conditions = Q(is_pipeline=True)
-        if not user:
+        if not user or user.is_anonymous():
             conditions_legacy &= Q(is_public=True)
         elif not user.is_superuser and not user.has_perm('lava_scheduler_app.cancel_resubmit_testjob') and not user.has_perm('lava_scheduler_app.change_device'):
             # continue adding conditions only if user is not superuser and

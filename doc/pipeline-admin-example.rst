@@ -54,6 +54,9 @@ take out some of the noise.)::
   dictitems:
     actions:
       boot:
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
         connections: {serial: null, ssh: null}
         methods:
           u-boot:
@@ -79,9 +82,6 @@ take out some of the noise.)::
       bootm: {dtb: '0x815f0000', kernel: '0x80200000', ramdisk: '0x81600000'}
       bootz: {dtb: '0x81f00000', kernel: '0x81000000', ramdisk: '0x82000000'}
     power_state: 'off'
-    test_image_prompts: [(initramfs), linaro-test, '/ #', root@android, root@linaro,
-      root@master, root@debian, 'root@linaro-nano:~#', 'root@linaro-developer:~#',
-      'root@linaro-server:~#', 'root@genericarmv7a:~#', 'root@genericarmv8:~#']
     timeouts:
       apply-overlay-image: {seconds: 120}
       lava-test-shell: {seconds: 30}
@@ -260,6 +260,9 @@ The boot support is where things become more detailed.
 .. code-block:: yaml
 
     boot:
+     prompts:
+       - 'linaro-test'
+       - 'root@debian:~#'
      methods:
        u-boot:
          parameters:
@@ -297,28 +300,6 @@ what the device needs to be able to boot.
 #. Remove one level of quote marks **unless** the command embeds a colon
    (e.g. NFS), in which case the **whole line** is quoted.
 #. Make each line part of a list by prefixing with a hyphen and a space.
-
-Prompts
--------
-
-This support is likely to change, for now the test image prompt list
-is in the device configuration.
-
-.. code-block:: yaml
-
- test_image_prompts:
-   - '(initramfs)'
-   - 'linaro-test'
-   - '/ #'
-   - 'root@android'
-   - 'root@master'
-   - 'root@debian'
-   - 'root@linaro#'
-   - 'root@linaro-nano:~#'
-   - 'root@linaro-developer:~#'
-   - 'root@linaro-server:~#'
-   - 'root@genericarmv7a:~#'
-   - 'root@genericarmv8:~#'
 
 Timeouts
 --------
@@ -360,6 +341,9 @@ Untested at this point, but this is the start of the integration.
      methods:
      - tftp
    boot:
+     prompts:
+       - 'linaro-test'
+       - 'root@debian:~#'
      methods:
        u-boot:
          parameters:
@@ -377,18 +361,6 @@ Untested at this point, but this is the start of the integration.
            - "setenv nfsargs 'setenv bootargs root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr panic=1 console=ttyS0,115200 earlyprintk=uart8250-32bit,0x1c020000 debug ip=dhcp'"
            - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
            - boot
-
- test_image_prompts:
-   - '(initramfs)'
-   - 'linaro-test'
-   - '/ #'
-   - 'root@android'
-   - 'root@linaro'
-   - 'root@master'
-   - 'root@debian'
-   - 'root@linaro-nano:~#'
-   - 'root@linaro-developer:~#'
-   - 'root@linaro-server:~#'
 
  timeouts:
    power_off:
@@ -501,6 +473,9 @@ at the end of the boot action.
 .. code-block:: yaml
 
    - boot:
+     prompts:
+       - 'linaro-test'
+       - 'root@debian:~#'
      method: u-boot
      commands: nfs
      type: bootm
@@ -544,6 +519,9 @@ Complete YAML submission
        dtb: http://images-internal/mustang/mustang.dtb_1.11
        os: debian
    - boot:
+     prompts:
+       - 'linaro-test'
+       - 'root@debian:~#'
      method: u-boot
      commands: nfs
      type: bootm
@@ -626,6 +604,9 @@ more support can be added later.
         tftp
 
   boot:
+    prompts:
+      - 'linaro-test'
+      - 'root@debian:~#'
     methods:
       u-boot:
         parameters:
@@ -664,6 +645,9 @@ Completed mustang template
       - tftp
 
     boot:
+      prompts:
+        - 'linaro-test'
+        - 'root@debian:~#'
       methods:
         u-boot:
           parameters:

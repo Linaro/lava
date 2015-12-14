@@ -99,7 +99,7 @@
   <div id="{{ image_chart.id }}" class="sortable-placeholder">
     <div class="chart-title">
       {{ image_chart.name }}
-      <a style="font-size: 13px;" href="{{ image_chart.get_absolute_url }}/+delete">
+      <a style="font-size: 13px;" href="{{ image_chart.get_absolute_url }}/+delete" onclick="return confirm('Are you sure you want to delete this chart?');">
         remove
       </a>
       <a style="font-size: 13px;" href="{{ image_chart.get_absolute_url }}">
@@ -132,7 +132,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.mini.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.min.js"></script>
 <script>
   $("#charts").sortable({
     cursor: "move",

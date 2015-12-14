@@ -72,6 +72,7 @@ actions:
         role:
         - server
         - client
+        prompts: "root@debian:"
 
     - test:
         failure_retry: 3

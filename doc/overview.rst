@@ -53,6 +53,16 @@ to offer an alternative authentication method:
 * :ref:`google_openid`
 * :ref:`ldap_authentication`
 
+OpenID is no longer available for all installs of LAVA. The OpenID
+support changed in the 2015.12 release due to incompatible
+changes in the underlying django support. See :ref:`user_authentication`
+for more information.
+
+LDAP authentication relies on local configuration and may involve obtaining
+a privileged access token from the LDAP administrators.
+
+Local accounts remain available for all instances.
+
 Whichever authentication method is used, there is no difference in how
 users interact with LAVA, once logged in.
 
@@ -81,18 +91,21 @@ The validation lab in Cambridge is accessible via
 http://validation.linaro.org/ which is the official production
 instance of LAVA.
 
-.. image:: ./images/lava-scheduler-page.png
-
 The validation lab in Cambridge is now accessed using Linaro LDAP.
 In order to login with LDAP, enter your details in the LDAP login fields.
-
 
 .. note:: If your Linaro email is ``first.second@linaro.org`` then use
    ``first.second`` as your username.
 
+.. image:: ./images/ldap-user-login.png
+
 A successful authentication will redirect you to http://validation.linaro.org/
 
 If you do not have a Linaro LDAP account, you can :ref:`register`.
+
+The LAVA scheduler page looks like the following,
+
+.. image:: ./images/lava-scheduler-page.png
 
 .. index:: token
 

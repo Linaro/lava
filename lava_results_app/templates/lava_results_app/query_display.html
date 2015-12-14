@@ -10,7 +10,9 @@
 {% block content %}
 
 <h2 class="modal-header">Query {{ query.name }} matches ({{ query.content_type.name }})
+  {% if query.owner == request.user or request.user.is_superuser or query.group in request.user.groups.all %}
   <small><a href="{% url 'lava_results_app.views.query.views.query_detail' query.owner.username query.name %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-edit"></span> Query details</a></small>
+  {% endif %}
   <small><a href="{% url 'lava_results_app.views.query.views.query_custom' %}?entity={{ entity }}&conditions={{ conditions }}" class="btn btn-xs btn-success"><span class="glyphicon glyphicon-link"></span> This query by URL</a></small>
   <small><a href="{% url 'lava_results_app.views.query.views.query_export'  query.owner.username query.name %}" class="btn btn-xs btn-primary"><span class="glyphicon glyphicon-export"></span> Export as CSV</a></small>
 </h2>
@@ -21,5 +23,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.min.js"></script>
 {% endblock %}

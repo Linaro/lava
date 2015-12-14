@@ -51,6 +51,7 @@ Sample pipeline description output
     - parameters:
         actions:
           boot:
+            prompts: ['linaro-test', 'root@debian:~#']
             command:
               amd64: {qemu_binary: qemu-system-x86_64}
             methods: [qemu]
@@ -69,9 +70,6 @@ Sample pipeline description output
         hostname: kvm01
         memory: 512
         root_part: 1
-        test_image_prompts: [\(initramfs\), linaro-test, '/ #', root@android, root@linaro,
-          root@master, root@debian, 'root@linaro-nano:~#', 'root@linaro-developer:~#',
-          'root@linaro-server:~#', 'root@genericarmv7a:~#', 'root@genericarmv8:~#']
   - - job
     - parameters: {action_timeout: 5m, device_type: kvm, job_name: kvm-pipeline, job_timeout: 15m,
         output_dir: /tmp/codehelp, priority: medium, target: kvm01, yaml_line: 3}

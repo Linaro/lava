@@ -183,17 +183,17 @@ class DeviceAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Properties', {
-            'fields': (['device_type', 'hostname'], 'worker_host', 'device_version')}),
+            'fields': (('device_type', 'hostname'), 'worker_host', 'device_version')}),
         ('Device owner', {
-            'fields': (['user', 'group'], ['physical_owner', 'physical_group'], 'is_public', 'is_pipeline')}),
+            'fields': (('user', 'group'), ('physical_owner', 'physical_group'), 'is_public', 'is_pipeline')}),
         ('Status', {
-            'fields': (['status', 'health_status'], ['last_health_report_job', 'current_job'])}),
+            'fields': (('status', 'health_status'), ('last_health_report_job', 'current_job'))}),
         ('Advanced properties', {
-            'fields': ('description', 'tags', ['device_dictionary_yaml', 'device_dictionary_jinja']),
+            'fields': ('description', 'tags', ('device_dictionary_yaml', 'device_dictionary_jinja')),
             'classes': ('collapse', )
         }),
     )
-    readonly_fields = ['device_dictionary_yaml', 'device_dictionary_jinja']
+    readonly_fields = ('device_dictionary_yaml', 'device_dictionary_jinja')
     list_display = ('hostname', 'device_type', 'current_job', 'worker_host',
                     'status', 'health_status', 'is_public', 'is_pipeline', 'exclusive_device')
     search_fields = ('hostname', 'device_type__name')

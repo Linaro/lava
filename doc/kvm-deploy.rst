@@ -21,78 +21,41 @@ Building KVM images for LAVA
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If the prebuilt images are not suitable, new images can be built using
-``vmdebootstrap`` and a couple of custom overlay packages. However, image
-building tools are constantly developing and this guide can easily become
-out of date, so you will need to read the manpages for the tools and update
-the instructions appropiately.
-
-The overlays are only necessary if you are **not** going to use the
-automated login support in LAVA. See :ref:`deploy_linaro_image` for the
+`vmdebootstrap`_. See also :ref:`deploy_linaro_image` for the
 current dispatcher and :ref:`writing_job_submission_yaml` for the
 :term:`pipeline` dispatcher.
 
+.. note:: image building tools are constantly developing and this
+   guide can easily become out of date, so you will need to read the
+   manpages for the tools and update the instructions appropiately.
+
 ::
 
- git clone git://git.linaro.org/lava/lava-vmdebootstrap.git
-
-``lava-vmdebootstrap`` is just a small wrapper around `vmdebootstrap`_ which
-does all the hard work. What ``lava-vmdebootstrap`` does is download
-the Linaro image overlays and pass some options that we will always need
-so that you don't need to.
+ sudo apt install vmdebootstrap
 
 .. _`vmdebootstrap`: http://packages.qa.debian.org/v/vmdebootstrap.html
 
-The default distribution is Debian stable. Add the ``--distribution=wheezy`
-option to change to wheezy.
-
-If you choose to use the installed ``vmdebootstrap`` package, tweak the
-file:`lava-vmdebootstrap` call to change ``./vmdebootstrap`` to ``vmdebootstrap``.
-
-To build wheezy images on Debian stable, you may need to install the
-``mbr`` package as well.
+The default distribution is Debian stable.
 
 Example invocation::
 
- $ sudo ./lava-vmdebootstrap --image=myimage.img
+ $ sudo vmdebootstrap --image=myimage.img --verbose --serial-console --enable-dhcp
 
-To run the test image, make sure it is writeable::
+To run the test image, use the ``--owner=$(whoami)`` option to
+``vmdebootstrap`` or make sure it is writeable::
 
  $ sudo chmod a+w ./myimage.img
-
-(Newer versions of ``vmdebootstrap`` can do this for you if you pass the
-``--owner=$(whoami)`` option.
 
 Execute using qemu, e.g. on amd64 using qemu-system-x86_64::
 
  $ qemu-system-x86_64 ./myimage.img
 
+Newer versions of qemu will complain about the format, so check the
+manpage and use something like::
+
+ $ qemu-system-x86_64 -m 1024 -enable-kvm -drive format=raw,file=./myimage.img
+
 See ``man 1 vmdebootstrap`` and ``man qemu-system`` for more information.
-
-Once the overlay packages have been downloaded, you can call ``vmdebootstrap``
-directly to create other types of images without needing to modify
-``lava-vmdebootstrap``. e.g. this is a call to ``vmdebootstrap`` to create a
-KVM image based on Ubuntu::
-
- sudo vmdebootstrap \
-  --custom-package='linaro-overlay_1112.2_all.deb' \
-  --custom-package='linaro-overlay-minimal_1112.2_all.deb' \
-  --enable-dhcp --no-kernel --package=linux-image \
-  --serial-console --serial-console-command='/bin/auto-serial-console' \
-  --root-password='root' --hostname='ubuntu' --user=linaro/linaro --sudo \
-  --verbose --image=myimage.img
-
-This command extends ``lava-vmdebootstrap`` to make a 4G LAVA KVM image
-based on Debian testing using the UK Debian mirror::
-
- sudo vmdebootstrap \
-  --custom-package='linaro-overlay_1112.2_all.deb' \
-  --custom-package='linaro-overlay-minimal_1112.2_all.deb' \
-  --enable-dhcp \
-  --serial-console --serial-console-command='/bin/auto-serial-console' \
-  --root-password='root' \
-  --distribution testing --size 4g \
-  --mirror http://ftp.uk.debian.org/debian \
-  --verbose --image=myimage.img
 
 Adding a KVM device to LAVA
 ============================

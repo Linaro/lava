@@ -133,6 +133,9 @@ Sample JOB definition for a KVM
         method: kvm
         media: tmpfs
         failure_retry: 2
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
     - test:
         failure_retry: 3
@@ -184,6 +187,9 @@ by this device type appear as a list.
     # no need for root-part, the MountAction will need to sort that out.
 
   boot:
+    prompts:
+      - 'linaro-test'
+      - 'root@debian:~#'
     # list of boot methods which this device supports.
     methods:
       - qemu
@@ -312,6 +318,126 @@ This mechanism holds for variables set by the base template as well::
 
  {% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) %}
 
+Pipeline Device Configuration
+=============================
+
+Device configuration is a combination of the :term:`device dictionary`
+and the :term:`device type` template. A sample :term:`device
+dictionary` (jinja syntax) for nexus 10 will look like the following::
+
+ {% extends 'nexus10.yaml' %}
+ {% set serial_number = 'R32D300FRYP' %}
+ {% set connection_command = 'adb -s R32D300FRYP shell' %}
+ {% set soft_reboot_command = 'adb -s R32D300FRYP reboot bootloader' %}
+
+The corresponding :term:`device type` template for nexus 10 is as
+follows::
+
+ {% extends 'base.yaml' %}
+ {% block body %}
+ device_type: nexus10
+ serial_number: {{ serial_number|default('0000000000') }}
+
+
+ actions:
+   deploy:
+     methods:
+       fastboot:
+     connections:
+       serial:
+       adb:
+   boot:
+     connections:
+       adb:
+     methods:
+       fastboot:
+
+ {% endblock %}
+
+The :term:`device type` template extends `base.yaml` which is the base
+template used by all devices and has logic to replace some of the
+values provided in the :term:`device dictionary`. For example, the
+following lines within `base.yaml` will add connection command to the
+device::
+
+ {% if connection_command %}
+ commands:
+     connect: {{ connection_command }}
+ {% endif %}
+
+See :file:`/etc/lava-server/dispatcher-config/device-types/base.yaml
+for the complete content of `base.yaml`
+
+The above :term:`device dictionary` and the :term:`device type`
+template are combined together in order to form the device
+configuration which will look like the following for a nexus 10
+device::
+
+    commands:
+        connect: adb -s R32D300FRYP shell
+        soft_reboot: adb -s R32D300FRYP reboot bootloader
+    device_type: nexus10
+    serial_number: R32D300FRYP
+
+
+    actions:
+      deploy:
+        methods:
+          fastboot:
+        connections:
+          serial:
+          adb:
+      boot:
+        connections:
+          adb:
+        methods:
+          fastboot:
+
+    timeouts:
+      apply-overlay-image:
+        seconds: 120
+      umount-retry:
+        seconds: 45
+      lava-test-shell:
+        seconds: 30
+      power_off:
+        seconds: 5
+
+Use the following :ref:`lava_tool <lava_tool>` command to get the
+device configuration in the command line::
+
+  lava-tool get-pipeline-device-config http://localhost/RPC2 qemu01
+
+which will download the device configuration to a file called
+`qemu01_config.yaml`, alternatively the following command can be used
+in order to print the device configuration to stdout::
+
+  lava-tool get-pipeline-device-config http://localhost/RPC2 qemu01 --stdout
+
+Viewing the Device Dictionary
+=============================
+
+On scheduler device detail page
+-------------------------------
+The current :term:`device dictionary` content is available on the
+scheduler device detail page, under the `Configuration` property as a
+link called `Device Dictionary`, e.g. for a device called ``qemu01``,
+the URL to view this page would be ``/scheduler/device/qemu01/``.
+
+On Job Description Tab
+----------------------
+The information from :term:`device dictionary` is also available from
+the ``Job Description`` tab of a pipeline device. On the job details
+page e.g. https://staging.validation.linaro.org/scheduler/job/136847
+click on ``Job Description`` tab, in which the first section gives
+information about the device.
+
+As Admin
+--------
+
+#. See :ref:`viewing_device_dictionary_content`
+#. See also :ref:`updating_device_dictionary_using_xmlrpc`
+
 .. _dispatcher_actions:
 
 Dispatcher actions
@@ -399,6 +525,9 @@ Supported methods
         method: kvm
         media: tmpfs
         failure_retry: 2
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
 
 
 

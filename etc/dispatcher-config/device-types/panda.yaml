@@ -5,6 +5,8 @@ device_type: panda
 {% set console_device = console_device | default('ttyO2') %}
 {% set baud_rate = baud_rate | default(115200) %}
 
+{# allow job context override - use a different variable name, undefined if not in job context #}
+{% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) -%}
 
 parameters:
   bootm:
@@ -39,7 +41,7 @@ actions:
 {{ base_uboot_addr_commands }}
 {{ base_tftp_commands }}
           # Always quote the entire string if the command includes a colon to support correct YAML.
-          - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw
+          - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw {{ base_nfsroot_args }}
             ip=dhcp fixrtc nocompcache vram=48M omapfb.vram=0:24M mem=456M@0x80000000 mem=512M@0xA0000000 init=init'"
           - setenv bootcmd 'usb start; dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
           - boot

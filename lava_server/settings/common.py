@@ -25,6 +25,7 @@
 # All comments below are strictly for development usage and
 # reference.
 
+import imp
 import django
 try:
     import devserver
@@ -41,7 +42,16 @@ try:
     hijack_import = True
 except ImportError:
     hijack_import = False
-from openid import oidutil
+try:
+    # test the import without actually importing
+    # as the rest of the settings are not ready yet.
+    imp.find_module('django_openid_auth')
+    USE_OPENID_AUTH = True
+except ImportError:
+    USE_OPENID_AUTH = False
+
+if USE_OPENID_AUTH:
+    from openid import oidutil
 
 # Administrator contact, used for sending
 # emergency email when something breaks
@@ -130,19 +140,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.humanize',
-    'django_openid_auth',
     'django_tables2',
     'django.contrib.staticfiles',
-    # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
-    # Admin docs disabled due to: https://code.djangoproject.com/ticket/6681
-    # 'longerusername',
     'linaro_django_xmlrpc',
     'lava_markitup',  # Support app for MarkItUp in LAVA
     'google_analytics',
 ]
+
+if USE_OPENID_AUTH:
+    INSTALLED_APPS += ['django_openid_auth']
 
 if django.VERSION < (1, 7):
     # Django 1.7 has built-in migration suppport
@@ -167,27 +176,29 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     "django.core.context_processors.request",
     "django.core.context_processors.static",
     "lava_server.context_processors.lava",
-    "lava_server.context_processors.openid_available",
     "lava_server.context_processors.ldap_available",
 ]
 
+if USE_OPENID_AUTH:
+    TEMPLATE_CONTEXT_PROCESSORS += ['lava_server.context_processors.openid_available']
 
 AUTHENTICATION_BACKENDS = (
-    # Uncomment CrowdRestBackend and comment OpenIDBackend to enable
-    # Atlassian Crowd auth.
-    # 'crowdrest.backend.CrowdRestBackend',
-
-    'django_openid_auth.auth.OpenIDBackend',
     'django.contrib.auth.backends.ModelBackend',
 )
 
-OPENID_CREATE_USERS = True
-OPENID_LAUNCHPAD_TEAMS_MAPPING_AUTO = False
-OPENID_UPDATE_DETAILS_FROM_SREG = True
-OPENID_SSO_SERVER_URL = 'https://login.ubuntu.com/'
+if USE_OPENID_AUTH:
+    AUTHENTICATION_BACKENDS += ('django_openid_auth.auth.OpenIDBackend',)
+    MIGRATION_MODULES = {
+        'django_openid_auth': 'django_openid_auth.migrations'
+    }
 
-# python-openid is too noisy, so we silence it.
-oidutil.log = lambda msg, level=0: None
+    OPENID_CREATE_USERS = True
+    OPENID_LAUNCHPAD_TEAMS_MAPPING_AUTO = False
+    OPENID_UPDATE_DETAILS_FROM_SREG = True
+    OPENID_SSO_SERVER_URL = 'https://login.ubuntu.com/'
+
+    # python-openid is too noisy, so we silence it.
+    oidutil.log = lambda msg, level=0: None
 
 RESTRUCTUREDTEXT_FILTER_SETTINGS = {"initial_header_level": 4}
 

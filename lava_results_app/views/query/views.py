@@ -18,10 +18,12 @@
 
 import csv
 import os
+import psycopg2
 import shutil
 import simplejson
 import tempfile
 
+from django.db.utils import ProgrammingError
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, User
 from django.core import serializers
@@ -57,6 +59,7 @@ from lava_results_app.models import (
     Query,
     QueryGroup,
     QueryCondition,
+    QueryMaterializedView,
     QueryUpdatedError,
     TestCase,
     TestSuite
@@ -93,10 +96,16 @@ class InvalidContentTypeError(Exception):
     """ Raise when querying by URL content type (table name). """
 
 
+class QueryViewDoesNotExistError(Exception):
+    """ Raise when corresponding query materialized view does not exist. """
+
+
 class UserQueryView(LavaView):
 
     def get_queryset(self):
-        return Query.objects.filter(owner=self.request.user).order_by('name')
+        return Query.objects.filter(
+            is_archived=False,
+            owner=self.request.user).order_by('name')
 
 
 class OtherQueryView(LavaView):
@@ -104,8 +113,10 @@ class OtherQueryView(LavaView):
     def get_queryset(self):
         # All published queries which are not part
         # of any group.
-        other_queries = Query.objects.filter(is_published=True,
-                                             query_group=None).order_by('name')
+        other_queries = Query.objects.filter(
+            is_archived=False,
+            is_published=True,
+            query_group=None).order_by('name')
 
         return other_queries
 
@@ -119,6 +130,7 @@ class GroupQueryView(LavaView):
     def get_queryset(self):
         # Specific group queries.
         group_queries = Query.objects.filter(
+            is_archived=False,
             is_published=True,
             query_group=self.query_group).order_by('name')
 
@@ -219,7 +231,6 @@ def query_list(request):
 
 @BreadCrumb("Query ~{username}/{name}", parent=query_list,
             needs=['username', 'name'])
-@login_required
 def query_display(request, username, name):
 
     query = get_object_or_404(Query, owner__username=username, name=name)
@@ -235,8 +246,13 @@ def query_display(request, username, name):
         view.get_table_data()
     )
 
-    config = RequestConfig(request, paginate={"per_page": table.length})
-    config.configure(table)
+    try:
+        config = RequestConfig(request, paginate={"per_page": table.length})
+        config.configure(table)
+    except ProgrammingError:
+        raise QueryViewDoesNotExistError(
+            "Query view does not exist. Please contact query owner or system "
+            "administrator.")
 
     return render_to_response(
         'lava_results_app/query_display.html', {
@@ -375,11 +391,13 @@ def query_detail(request, username, name):
 
     query = get_object_or_404(Query, owner__username=username, name=name)
     query_conditions = _serialize_conditions(query)
+    view_exists = QueryMaterializedView.view_exists(query.id)
 
     return render_to_response(
         'lava_results_app/query_detail.html', {
             'query': query,
             'query_conditions': query_conditions,
+            'view_exists': view_exists,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 query_detail, username=username, name=name),
             'context_help': BreadCrumbTrail.leading_to(query_list),
@@ -425,8 +443,8 @@ def query_edit(request, username, name):
 def query_delete(request, username, name):
 
     query = get_object_or_404(Query, owner__username=username, name=name)
-
-    query.delete()
+    query.is_archived = True
+    query.save()
     return HttpResponseRedirect(reverse(
         'lava.results.query_list'))
 

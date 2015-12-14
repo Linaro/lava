@@ -646,5 +646,5 @@ class AuthTokenTests(TestCase):
         token = AuthToken.objects.create(user=self.user)
         AuthToken.get_user_for_secret(self.user.username, token.secret)
         # Refresh token
-        token = AuthToken.objects.get(user=self.user)
+        token = AuthToken.objects.get(id=token.id, user=self.user)
         self.assertNotEqual(token.last_used_on, None)

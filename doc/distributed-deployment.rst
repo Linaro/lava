@@ -366,6 +366,36 @@ is behind a firewall.
 * Log file update speed
 * Port forwarding behind firewalls
 
+Alternatives
+------------
+
+Customised frontends
+^^^^^^^^^^^^^^^^^^^^
+
+The raw LAVA results and logs need to be generic for all users but it is
+usually much more useful to pull data from LAVA into a customised frontend
+which makes the raw data more accessible to developers. This is how
+`KernelCI <http://kernelci.org/>`_ works. Jobs are submitted to multiple
+labs (not exclusively LAVA), data is pulled over XMLRPC and collated into
+a set of interfaces designed specifically for the KernelCI audience.
+
+It can be a significant amount of work to maintain such a system but there
+are also significant benefits by "closing the CI loop".
+
+The :term:`refactoring` is also designed to offer a wider range of data to be
+retrieved using XMLRPC and REST API queries to make it easier to make a
+customised frontend.
+
+Refactored Dispatcher
+^^^^^^^^^^^^^^^^^^^^^
+
+The :term:`pipeline` dispatcher is currently *developer only* but will
+begin to be used in production during 2016. The new model has been
+designed to prevent the problems of the current remote worker configuration
+by using a single connection between the master and the slave. This
+connection uses :term:`ZMQ` which is designed to recover from connectivity
+issues without data loss.
+
 Scaling Deployments
 ===================
 

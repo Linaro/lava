@@ -76,9 +76,29 @@ class ModelFactory(object):
     def getUniqueString(self, prefix='generic'):
         return '%s-%d' % (prefix, self.getUniqueInteger())
 
+    def get_unique_user(self, prefix='generic'):
+        return "%s-%d" % (prefix, User.objects.count() + 1)
+
+    def cleanup(self):
+        DeviceType.objects.all().delete()
+        # make sure the DB is in a clean state wrt devices and jobs
+        Device.objects.all().delete()
+        TestJob.objects.all().delete()
+        [item.delete() for item in DeviceDictionary.object_list()]
+        User.objects.all().delete()
+        Group.objects.all().delete()
+
+    def ensure_user(self, username, email, password):
+        if User.objects.filter(username=username):
+            user = User.objects.get(username=username)
+        else:
+            user = User.objects.create_user(username, email, password)
+            user.save()
+        return user
+
     def make_user(self):
         return User.objects.create_user(
-            self.getUniqueString(),
+            self.get_unique_user(),
             '%s@mail.invalid' % (self.getUniqueString(),),
             self.getUniqueString())
 
@@ -98,19 +118,21 @@ class ModelFactory(object):
     def make_device_type(self, name=None, health_check_job=None):
         if name is None:
             name = self.getUniqueString('name')
-        device_type = DeviceType.objects.create(
+        device_type, created = DeviceType.objects.get_or_create(
             name=name, health_check_job=health_check_job)
-        device_type.save()
+        if created:
+            device_type.save()
         logging.debug("asking for a device of type %s" % device_type.name)
         return device_type
 
     def make_hidden_device_type(self, name=None, health_check_job=None):
         if name is None:
             name = self.getUniqueString('name')
-        device_type = DeviceType.objects.create(
+        device_type, created = DeviceType.objects.get_or_create(
             owners_only=True,
             name=name, health_check_job=health_check_job)
-        device_type.save()
+        if created:
+            device_type.save()
         logging.debug("asking for a device of type %s" % device_type.name)
         return device_type
 
@@ -172,12 +194,14 @@ class TestTestJob(TestCaseWithFactory):
         definition = self.factory.make_job_json()
         job = TestJob.from_json_and_user(definition, self.factory.make_user())
         self.assertEqual(definition, job.definition)
+        self.factory.cleanup()
 
     def test_from_json_and_user_sets_submitter(self):
         user = self.factory.make_user()
         job = TestJob.from_json_and_user(
             self.factory.make_job_json(), user)
         self.assertEqual(user, job.submitter)
+        self.factory.cleanup()
 
     def test_from_json_and_user_sets_device_type(self):
         panda_type = self.factory.ensure_device_type(name='panda')
@@ -185,6 +209,7 @@ class TestTestJob(TestCaseWithFactory):
             self.factory.make_job_json(device_type='panda'),
             self.factory.make_user())
         self.assertEqual(panda_type, job.requested_device_type)
+        self.factory.cleanup()
 
     def test_from_json_and_user_sets_target(self):
         panda_board = self.factory.make_device(hostname='panda01')
@@ -192,6 +217,7 @@ class TestTestJob(TestCaseWithFactory):
             self.factory.make_job_json(target='panda01'),
             self.factory.make_user())
         self.assertEqual(panda_board, job.requested_device)
+        self.factory.cleanup()
 
     def test_from_json_and_user_does_not_set_device_type_from_target(self):
         panda_type = self.factory.ensure_device_type(name='panda')
@@ -200,6 +226,7 @@ class TestTestJob(TestCaseWithFactory):
             self.factory.make_job_json(target='panda01'),
             self.factory.make_user())
         self.assertEqual(None, job.requested_device_type)
+        self.factory.cleanup()
 
     def test_from_json_and_user_sets_date_submitted(self):
         before = timezone.now()
@@ -208,18 +235,21 @@ class TestTestJob(TestCaseWithFactory):
             self.factory.make_user())
         after = timezone.now()
         self.assertTrue(before < job.submit_time < after)
+        self.factory.cleanup()
 
     def test_from_json_and_user_sets_status_to_SUBMITTED(self):
         job = TestJob.from_json_and_user(
             self.factory.make_job_json(),
             self.factory.make_user())
         self.assertEqual(job.status, TestJob.SUBMITTED)
+        self.factory.cleanup()
 
     def test_from_json_and_user_sets_no_tags_if_no_tags(self):
         job = TestJob.from_json_and_user(
             self.factory.make_job_json(device_tags=[]),
             self.factory.make_user())
         self.assertEqual(set(job.tags.all()), set([]))
+        self.factory.cleanup()
 
     def test_from_json_and_user_errors_on_unknown_tags(self):
         """
@@ -230,6 +260,7 @@ class TestTestJob(TestCaseWithFactory):
             JSONDataError, TestJob.from_json_and_user,
             self.factory.make_job_json(tags=['unknown']),
             self.factory.make_user())
+        self.factory.cleanup()
 
     def test_from_json_and_user_errors_on_unsupported_tags(self):
         """
@@ -249,6 +280,7 @@ class TestTestJob(TestCaseWithFactory):
             pass
         else:
             self.fail("Device tags failure: job submitted without any devices supporting the requested tags")
+        self.factory.cleanup()
 
     def test_from_json_and_user_sets_tag_from_device_tags(self):
         device_type = self.factory.ensure_device_type(name='panda')
@@ -260,6 +292,7 @@ class TestTestJob(TestCaseWithFactory):
             self.factory.make_user())
         self.assertEqual(
             set(tag.name for tag in job.tags.all()), {'tag'})
+        self.factory.cleanup()
 
     def test_from_json_and_user_sets_multiple_tag_from_device_tags(self):
         device_type = self.factory.ensure_device_type(name='panda')
@@ -273,6 +306,7 @@ class TestTestJob(TestCaseWithFactory):
             self.factory.make_user())
         self.assertEqual(
             set(tag.name for tag in job.tags.all()), {'tag1', 'tag2'})
+        self.factory.cleanup()
 
     def test_from_json_and_user_reuses_tag_objects(self):
         device_type = self.factory.ensure_device_type(name='panda')
@@ -288,6 +322,7 @@ class TestTestJob(TestCaseWithFactory):
         self.assertEqual(
             set(tag.pk for tag in job1.tags.all()),
             set(tag.pk for tag in job2.tags.all()))
+        self.factory.cleanup()
 
     def test_from_json_and_user_matches_available_tags(self):
         """
@@ -311,11 +346,13 @@ class TestTestJob(TestCaseWithFactory):
             set(tag for tag in job.tags.all()),
             set(tag_list)
         )
+        self.factory.cleanup()
 
     def test_from_json_and_user_rejects_invalid_json(self):
         self.assertRaises(
             ValueError, TestJob.from_json_and_user, '{',
             self.factory.make_user())
+        self.factory.cleanup()
 
     def test_from_json_and_user_rejects_invalid_job(self):
         # job data must have the 'actions' and 'timeout' properties, so this
@@ -323,6 +360,7 @@ class TestTestJob(TestCaseWithFactory):
         self.assertRaises(
             ValueError, TestJob.from_json_and_user, '{}',
             self.factory.make_user())
+        self.factory.cleanup()
 
     def test_from_json_rejects_exclusive(self):
         panda_type = self.factory.ensure_device_type(name='panda')
@@ -341,6 +379,7 @@ class TestTestJob(TestCaseWithFactory):
         self.assertRaises(
             DevicesUnavailableException, _check_exclusivity, [panda_board], pipeline=False
         )
+        self.factory.cleanup()
 
     def make_job_json_for_stream_name(self, stream_name, **kw):
         return self.factory.make_job_json(
@@ -365,6 +404,7 @@ class TestTestJob(TestCaseWithFactory):
         j = self.make_job_json_for_stream_name(b.pathname)
         job = TestJob.from_json_and_user(j, user)
         self.assertEqual(group, job.group)
+        self.factory.cleanup()
 
     def test_from_json_and_user_can_submit_to_anonymous(self):
         user = self.factory.make_user()
@@ -376,6 +416,7 @@ class TestTestJob(TestCaseWithFactory):
         j = self.make_job_json_for_stream_name('/anonymous/anonymous/')
         job = TestJob.from_json_and_user(j, user)
         self.assertEqual(user, job.submitter)
+        self.factory.cleanup()
 
     def test_from_json_and_user_sets_is_public_from_bundlestream(self):
         group = Group.objects.create(name='group')
@@ -387,11 +428,13 @@ class TestTestJob(TestCaseWithFactory):
         j = self.make_job_json_for_stream_name(b.pathname)
         job = TestJob.from_json_and_user(j, user)
         self.assertEqual(False, job.is_public)
+        self.factory.cleanup()
 
     def test_from_json_and_user_rejects_missing_bundlestream(self):
         user = self.factory.make_user()
         j = self.make_job_json_for_stream_name('no such stream')
         self.assertRaises(ValueError, TestJob.from_json_and_user, j, user)
+        self.factory.cleanup()
 
     def test_from_json_and_user_rejects_inaccessible_bundlestream(self):
         stream_user = self.factory.make_user()
@@ -401,12 +444,14 @@ class TestTestJob(TestCaseWithFactory):
         b.save()
         j = self.make_job_json_for_stream_name(b.pathname)
         self.assertRaises(ValueError, TestJob.from_json_and_user, j, job_user)
+        self.factory.cleanup()
 
     def test_anonymous_public_validation(self):
         # Anonymous streams must be public
         stream_user = self.factory.make_user()
         self.assertRaises(ValidationError, BundleStream.objects.create,
                           user=stream_user, slug='invalid', is_public=False, is_anonymous=True)
+        self.factory.cleanup()
 
     def test_from_json_and_user_can_submit_to_group_stream(self):
         user = self.factory.make_user()
@@ -425,6 +470,7 @@ class TestTestJob(TestCaseWithFactory):
         self.assertEqual(user, job.submitter)
         self.assertEqual(True, job.is_public)
         self.assertRaises(ValueError, TestJob.from_json_and_user, j, anon_user)
+        self.factory.cleanup()
 
     def test_restricted_submitted_job_with_group_bundle_and_multinode(self):
         """
@@ -492,6 +538,7 @@ class TestTestJob(TestCaseWithFactory):
         self.assertEqual(len(job), 2)
         self.assertEqual(job[0].is_public, True)
         self.assertEqual(job[1].is_public, True)
+        self.factory.cleanup()
 
     def test_device_type_with_target(self):
         """
@@ -531,6 +578,7 @@ class TestTestJob(TestCaseWithFactory):
         self.assertEqual(definition_data['target'], job_data['target'])
         self.assertEqual(definition_data['timeout'], job_data['timeout'])
         self.assertEqual(definition_data['health_check'], job_data['health_check'])
+        self.factory.cleanup()
 
     def test_from_json_and_user_repeat_parameter_expansion(self):
         device_type = self.factory.make_device_type('base')
@@ -559,6 +607,7 @@ class TestTestJob(TestCaseWithFactory):
         definition_data = simplejson.loads(job.definition)
         self.assertEqual(len(definition_data['actions']), repeat)
         self.assertEqual(job.status, TestJob.SUBMITTED)
+        self.factory.cleanup()
 
     def test_from_json_and_user_repeat_parameter_replace_with_repeat_count(self):
         device_type = self.factory.make_device_type('base')
@@ -590,6 +639,7 @@ class TestTestJob(TestCaseWithFactory):
             self.assertEqual(definition_data['actions'][i]['parameters']['repeat_count'], i)
             self.assertNotIn('repeat', definition_data['actions'][i]['parameters'])
         self.assertEqual(job.status, TestJob.SUBMITTED)
+        self.factory.cleanup()
 
     def test_from_json_and_user_repeat_parameter_zero(self):
         device_type = self.factory.make_device_type('base')
@@ -620,6 +670,7 @@ class TestTestJob(TestCaseWithFactory):
         self.assertNotIn('repeat_count', definition_data['actions'][0]['parameters'])
         self.assertNotIn('repeat', definition_data['actions'][0]['parameters'])
         self.assertEqual(job.status, TestJob.SUBMITTED)
+        self.factory.cleanup()
 
     def test_from_json_and_user_repeat_parameter_not_supported(self):
         device_type = self.factory.make_device_type('base')
@@ -642,6 +693,7 @@ class TestTestJob(TestCaseWithFactory):
         self.assertRaises(
             ValueError, TestJob.from_json_and_user, job_json,
             self.factory.make_user())
+        self.factory.cleanup()
 
 
 class TestHiddenTestJob(TestCaseWithFactory):
@@ -698,7 +750,7 @@ class TestHiddenTestJob(TestCaseWithFactory):
             is_public=False)
         b.save()
         self.assertEqual(b.is_public, False)
-        j = self.make_job_json_for_stream_name('/private/personal/generic-1/hidden/', target='hidden1')
+        j = self.make_job_json_for_stream_name('/private/personal/%s/hidden/' % user.username, target='hidden1')
         job = TestJob.from_json_and_user(j, user)
         self.assertEqual(job.user, device.user)
         self.assertEqual(job.is_public, False)
@@ -723,8 +775,8 @@ class TestSchedulerAPI(TestCaseWithFactory):
             self.fail("fault not raised")
 
     def test_submit_job_rejects_unpriv_user(self):
-        User.objects.create_user('test', 'e@mail.invalid', 'test').save()
-        server = self.server_proxy('test', 'test')
+        self.factory.ensure_user('unpriv-test', 'e@mail.invalid', 'test')
+        server = self.server_proxy('unpriv-test', 'test')
         try:
             server.scheduler.submit_job("{}")
         except xmlrpclib.Fault as f:
@@ -733,7 +785,7 @@ class TestSchedulerAPI(TestCaseWithFactory):
             self.fail("fault not raised")
 
     def test_submit_job_sets_definition(self):
-        user = User.objects.create_user('test', 'e@mail.invalid', 'test')
+        user = self.factory.ensure_user('test', 'e@mail.invalid', 'test')
         user.user_permissions.add(
             Permission.objects.get(codename='add_testjob'))
         user.save()
@@ -755,7 +807,7 @@ class TestSchedulerAPI(TestCaseWithFactory):
 
     def test_cancel_job_rejects_unpriv_user(self):
         job = self.factory.make_testjob()
-        User.objects.create_user('test', 'e@mail.invalid', 'test').save()
+        self.factory.ensure_user('test', 'e@mail.invalid', 'test')
         server = self.server_proxy('test', 'test')
         try:
             server.scheduler.cancel_job(job.id)
@@ -765,8 +817,7 @@ class TestSchedulerAPI(TestCaseWithFactory):
             self.fail("fault not raised")
 
     def test_cancel_job_cancels_job(self):
-        user = User.objects.create_user('test', 'e@mail.invalid', 'test')
-        user.save()
+        user = self.factory.ensure_user('test', 'e@mail.invalid', 'test')
         job = self.factory.make_testjob(submitter=user)
         server = self.server_proxy('test', 'test')
         server.scheduler.cancel_job(job.id)
@@ -782,8 +833,7 @@ class TestSchedulerAPI(TestCaseWithFactory):
 
         See: https://bugs.linaro.org/show_bug.cgi?id=650
         """
-        user = User.objects.create_user('test', 'e@mail.invalid', 'test')
-        user.save()
+        user = self.factory.ensure_user('test', 'e@mail.invalid', 'test')
         cancel_user = User.objects.create_user('test_cancel',
                                                'cancel@mail.invalid',
                                                'test_cancel')
@@ -805,7 +855,7 @@ class TestSchedulerAPI(TestCaseWithFactory):
         """
         Test that invalid JSON gets rejected but valid YAML is accepted as pipeline
         """
-        user = User.objects.create_user('test', 'e@mail.invalid', 'test')
+        user = self.factory.ensure_user('test', 'e@mail.invalid', 'test')
         user.user_permissions.add(
             Permission.objects.get(codename='add_testjob'))
         user.save()

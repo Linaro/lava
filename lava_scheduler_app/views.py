@@ -1,16 +1,21 @@
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 import copy
+import yaml
+import json
 import logging
 import os
+from argcomplete import debug
 import simplejson
 import StringIO
 import datetime
 import urllib2
+import django
 from dateutil.relativedelta import relativedelta
 from django import forms
 
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.template.loader import render_to_string
 from django.db.models import Count
 from django.http import (
     HttpResponse,
@@ -271,7 +276,7 @@ class IndexTableView(JobTableView):
 
     def get_queryset(self):
         return all_jobs_with_custom_sort()\
-            .filter(status__in=[TestJob.SUBMITTED, TestJob.RUNNING])
+            .filter(status__in=[TestJob.CANCELING, TestJob.RUNNING])
 
 
 class DeviceTableView(JobTableView):
@@ -285,44 +290,9 @@ class DeviceTableView(JobTableView):
 
 @BreadCrumb("Scheduler", parent=lava_index)
 def index(request):
-
-    index_data = IndexTableView(request, model=TestJob, table_class=IndexJobTable)
-    prefix = 'index_'
-    index_table = IndexJobTable(
-        index_data.get_table_data(prefix),
-        prefix=prefix,
-    )
-    config = RequestConfig(request, paginate={"per_page": index_table.length})
-    config.configure(index_table)
-
-    prefix = 'device_'
-    dt_overview_data = DeviceTypeOverView(request, model=DeviceType, table_class=DeviceTypeTable)
-    dt_overview_table = DeviceTypeTable(
-        dt_overview_data.get_table_data(prefix),
-        prefix=prefix,
-    )
-    config = RequestConfig(request, paginate={"per_page": dt_overview_table.length})
-    config.configure(dt_overview_table)
-
-    prefix = 'worker_'
-    worker_data = WorkerView(request, model=None, table_class=WorkerTable)
-    worker_table = WorkerTable(
-        worker_data.get_table_data(prefix),
-        prefix=prefix,
-    )
-    config = RequestConfig(request, paginate={"per_page": worker_table.length})
-    config.configure(worker_table)
-
-    search_data = index_table.prepare_search_data(index_data)
-    search_data.update(dt_overview_table.prepare_search_data(dt_overview_data))
-
-    terms_data = index_table.prepare_terms_data(index_data)
-    terms_data.update(dt_overview_table.prepare_terms_data(dt_overview_data))
-
-    times_data = index_table.prepare_times_data(index_data)
-
-    discrete_data = index_table.prepare_discrete_data(index_data)
-    discrete_data.update(dt_overview_table.prepare_discrete_data(dt_overview_data))
+    data = DeviceTypeOverView(request, model=DeviceType, table_class=DeviceTypeTable)
+    ptable = DeviceTypeTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
 
     (num_online, num_not_retired) = _online_total()
     health_check_completed = health_jobs_in_hr().filter(status=TestJob.COMPLETE).count()
@@ -340,15 +310,46 @@ def index(request):
             'num_devices_running': active_devices_count,
             'hc_completed': health_check_completed,
             'hc_total': health_check_total,
-            'device_type_table': dt_overview_table,
-            'worker_table': worker_table,
-            'active_jobs_table': index_table,
+            'device_type_table': ptable,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
             'context_help': BreadCrumbTrail.leading_to(index),
-            "terms_data": terms_data,
-            "search_data": search_data,
-            "discrete_data": discrete_data,
-            "times_data": times_data,
+            "terms_data": ptable.prepare_terms_data(data),
+            "search_data": ptable.prepare_search_data(data),
+            "discrete_data": ptable.prepare_discrete_data(data),
+        })
+
+
+@BreadCrumb("Active jobs", parent=index)
+def active_jobs(request):
+    data = IndexTableView(request, model=TestJob, table_class=IndexJobTable)
+    ptable = IndexJobTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+
+    return render(
+        request,
+        "lava_scheduler_app/active_jobs.html",
+        {
+            'active_jobs_table': ptable,
+            "sort": '-submit_time',
+            "terms_data": ptable.prepare_terms_data(data),
+            "search_data": ptable.prepare_search_data(data),
+            "discrete_data": ptable.prepare_discrete_data(data),
+            "times_data": ptable.prepare_times_data(data),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(active_jobs),
+        })
+
+
+@BreadCrumb("Workers", parent=index)
+def workers(request):
+    data = WorkerView(request, model=None, table_class=WorkerTable)
+    ptable = WorkerTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    return render(
+        request,
+        "lava_scheduler_app/allworkers.html",
+        {
+            'worker_table': ptable,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(workers),
         })
 
 
@@ -632,7 +633,28 @@ def filter_device_types(user):
     return visible
 
 
-class SumIfSQL(models.sql.aggregates.Aggregate):
+# SQL Aggregates can be replaced by either of the following,
+#
+# Conditional Expressions:
+# https://docs.djangoproject.com/en/1.8/ref/models/conditional-expressions/
+#
+# or
+#
+# Query Expressions:
+# https://docs.djangoproject.com/en/1.8/ref/models/expressions/
+#
+# But both the above are available only in django >=1.8, hence there isn't
+# a simple way of replacing SQL Aggregates that will work both in django
+# 1.7 and 1.8, hence this check is available.
+#
+# FIXME: Remove this check when support for django 1.7 ceases.
+if django.VERSION >= (1, 8):
+    aggregate_cls = models.aggregates.Aggregate
+else:
+    aggregate_cls = models.sql.aggregates.Aggregate
+
+
+class SumIfSQL(aggregate_cls):
     is_ordinal = True
     sql_function = 'SUM'
     sql_template = 'SUM((%(condition)s)::int)'
@@ -1278,6 +1300,19 @@ def job_detail(request, pk):
         deploy_list = [item['deploy'] for item in action_list if 'deploy' in item]
         boot_list = [item['boot'] for item in action_list if 'boot' in item]
         test_list = [item['test'] for item in action_list if 'test' in item]
+        sections = []
+        for action in pipeline:
+            if 'section' in action:
+                sections.append({action['section']: action['level']})
+        default_section = 'boot'  # to come from user profile later.
+        if 'section' in request.GET:
+            log_data = utils.folded_logs(job, request.GET['section'], sections, summary=True)
+        else:
+            log_data = utils.folded_logs(job, default_section, sections, summary=True)
+            if not log_data:
+                default_section = 'deploy'
+                log_data = utils.folded_logs(job, default_section, sections, summary=True)
+
         data.update({
             'device_data': description.get('device', {}),
             'job_data': job_data,
@@ -1285,7 +1320,9 @@ def job_detail(request, pk):
             'deploy_list': deploy_list,
             'boot_list': boot_list,
             'test_list': test_list,
-            'description_file': description_filename(job.id)
+            'description_file': description_filename(job.id),
+            'log_data': log_data,
+            'default_section': default_section,
         })
 
     log_file = job.output_file()
@@ -1519,8 +1556,146 @@ def favorite_jobs(request, username=None):
 
 
 @BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
+def job_complete_log(request, pk):
+    job = get_restricted_job(request.user, pk)
+    if not job.is_pipeline:
+        raise Http404
+    description = description_data(job.id)
+    pipeline = description.get('pipeline', {})
+    sections = []
+    for action in pipeline:
+        sections.append({action['section']: action['level']})
+    default_section = 'boot'  # to come from user profile later.
+    if 'section' in request.GET:
+        log_data = utils.folded_logs(job, request.GET['section'], sections, summary=False)
+    else:
+        log_data = utils.folded_logs(job, default_section, sections, summary=False)
+        if not log_data:
+            default_section = 'deploy'
+            log_data = utils.folded_logs(job, default_section, sections, summary=False)
+
+    return render_to_response(
+        "lava_scheduler_app/pipeline_complete.html",
+        {
+            'show_cancel': job.can_cancel(request.user),
+            'show_resubmit': job.can_resubmit(request.user),
+            'show_failure': job.can_annotate(request.user),
+            'job': TestJob.objects.get(pk=pk),
+            'sections': sections,
+            'default_section': default_section,
+            'log_data': log_data,
+            'pipeline_data': pipeline,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_log_file, pk=pk),
+            # 'context_help': BreadCrumbTrail.leading_to(job_detail, pk='detail'),
+        },
+        RequestContext(request))
+
+
+def job_section_log(request, job, log_name):
+    job = get_restricted_job(request.user, job)
+    if not job.is_pipeline:
+        raise Http404
+    path = os.path.join(job.output_dir, 'pipeline', log_name[0], log_name)
+    if not os.path.exists(path):
+        raise Http404
+    with open(path, 'r') as data:
+        log_content = yaml.load(data)
+    log_target = []
+    for logitem in log_content:
+        for key, value in logitem.items():
+            if key == 'target':
+                log_target.append(value)
+    # FIXME: decide if this should be a separate URL
+    if not log_target:
+        for logitem in log_content:
+            for key, value in logitem.items():
+                log_target.append(yaml.dump(value))
+
+    response = HttpResponse('\n'.join(log_target), content_type='text/plain; charset=utf-8')
+    response['Content-Transfer-Encoding'] = 'quoted-printable'
+    response['Content-Disposition'] = "attachment; filename=job-%s_%s" % (job.id, log_name)
+    return response
+
+
+def job_status(request, pk):
+    job = get_restricted_job(request.user, pk)
+    response_dict = {'job_status': job.get_status_display()}
+    if (job.actual_device and job.actual_device.status not in [Device.RESERVED, Device.RUNNING]) or \
+            job.status not in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
+        response_dict['device'] = render_to_string(
+            "lava_scheduler_app/_device_refresh.html", {'job': job}, RequestContext(request))
+    response_dict['timing'] = render_to_string(
+        "lava_scheduler_app/_job_timing.html", {'job': job}, RequestContext(request))
+    if job.status == TestJob.SUBMITTED and not job.actual_device:
+        response_dict['priority'] = job.priority
+    if job.failure_comment:
+        response_dict['failure'] = job.failure_comment
+    if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
+        response_dict['X-JobStatus'] = '1'
+    response = HttpResponse(json.dumps(response_dict), content_type='text/json')
+    return response
+
+
+def job_pipeline_sections(request, pk):
+    job = get_restricted_job(request.user, pk)
+    if not job.is_pipeline:
+        raise Http404
+    description = description_data(job.id)
+    pipeline = description.get('pipeline', {})
+    sections = []
+    for action in pipeline:
+        if 'section' in action:
+            sections.append({action['section']: action['level']})
+    response = render_to_response(
+        "lava_scheduler_app/_section_logging.html", {
+            'job': job,
+            'pipeline_data': pipeline,
+            'sections': sections,
+            'default_section': 'any',
+        }, RequestContext(request))
+    if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
+        response['X-Sections'] = '1'
+    return response
+
+
+def job_pipeline_incremental(request, pk):
+    # FIXME: LAVA-375 - monitor the logfile and possibly the count to send less data per poll.
+    job = get_restricted_job(request.user, pk)
+    summary = int(request.GET.get('summary', 0)) == 1
+    description = description_data(job.id)
+    pipeline = description.get('pipeline', {})
+    sections = []
+    for action in pipeline:
+        if 'section' in action:
+            sections.append({action['section']: action['level']})
+    default_section = str(request.GET.get('section', 'deploy'))
+    if 'section' in request.GET:
+        log_data = utils.folded_logs(job, request.GET['section'], sections, summary=summary)
+    else:
+        log_data = utils.folded_logs(job, default_section, sections, summary=summary, increment=True)
+        if not log_data:
+            default_section = 'deploy'
+            log_data = utils.folded_logs(job, default_section, sections, summary=summary)
+
+    response = render_to_response(
+        "lava_scheduler_app/_structured_logdata.html",
+        {
+            'job': TestJob.objects.get(pk=pk),
+            'sections': sections,
+            'default_section': 'any',
+            'log_data': log_data,
+        },
+        RequestContext(request))
+    if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
+        response['X-Is-Finished'] = '1'
+    return response
+
+
+@BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
 def job_log_file(request, pk):
     job = get_restricted_job(request.user, pk)
+    if job.is_pipeline:
+        return redirect(job_complete_log, pk=pk)
     log_file = job.output_file()
     if not log_file:
         raise Http404
@@ -2260,6 +2435,62 @@ def username_list_json(request):
              "name": user.username,
              "label": user.username})
     return HttpResponse(simplejson.dumps(users), content_type='application/json')
+
+
+class HealthCheckJobsView(JobTableView):
+
+    def get_queryset(self):
+        return all_jobs_with_custom_sort().filter(health_check=True)
+
+
+@BreadCrumb("Healthcheck", parent=index)
+def healthcheck(request):
+    health_check_data = HealthCheckJobsView(request, model=TestJob,
+                                            table_class=JobTable)
+    health_check_ptable = JobTable(health_check_data.get_table_data(),)
+    config = RequestConfig(request,
+                           paginate={"per_page": health_check_ptable.length})
+    config.configure(health_check_ptable)
+
+    return render_to_response(
+        "lava_scheduler_app/health_check_jobs.html",
+        {
+            "times_data": health_check_ptable.prepare_times_data(health_check_data),
+            "terms_data": health_check_ptable.prepare_terms_data(health_check_data),
+            "search_data": health_check_ptable.prepare_search_data(health_check_data),
+            "discrete_data": health_check_ptable.prepare_discrete_data(health_check_data),
+            'health_check_table': health_check_ptable,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(healthcheck),
+        },
+        RequestContext(request))
+
+
+class PipelineJobsView(JobTableView):
+
+    def get_queryset(self):
+        return all_jobs_with_custom_sort().filter(is_pipeline=True)
+
+
+@BreadCrumb("Pipeline", parent=index)
+def pipeline(request):
+    pipeline_data = PipelineJobsView(request, model=TestJob,
+                                     table_class=JobTable)
+    pipeline_ptable = JobTable(pipeline_data.get_table_data(),)
+    config = RequestConfig(request,
+                           paginate={"per_page": pipeline_ptable.length})
+    config.configure(pipeline_ptable)
+
+    return render_to_response(
+        "lava_scheduler_app/pipelinejobs.html",
+        {
+            "times_data": pipeline_ptable.prepare_times_data(pipeline_data),
+            "terms_data": pipeline_ptable.prepare_terms_data(pipeline_data),
+            "search_data": pipeline_ptable.prepare_search_data(pipeline_data),
+            "discrete_data": pipeline_ptable.prepare_discrete_data(pipeline_data),
+            'pipeline_table': pipeline_ptable,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(pipeline),
+        },
+        RequestContext(request))
 
 
 class QueueJobsView(JobTableView):

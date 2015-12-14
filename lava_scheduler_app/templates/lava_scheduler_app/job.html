@@ -1,5 +1,6 @@
 {% extends "layouts/content-bootstrap.html" %}
 {% load utils %}
+{% load django_tables2 %}
 
 {% block styles %}
   <style>
@@ -34,18 +35,18 @@
 {% endblock %}
 
 {% block content %}
-{% if job.status >= job.RUNNING %}
-<a class="btn btn-sm btn-default" id="top" href="#bottom">End of log file <span class="glyphicon glyphicon-fast-forward"></span></a><br/><br/>
+{% if job.status >= job.RUNNING and not job.is_pipeline %}
+<a class="btn btn-sm btn-default" href="#bottom">End of log file <span class="glyphicon glyphicon-fast-forward"></span></a>
 {% endif %}
 
-<div class="row">
+<div class="row" id="top">
   <div class="col-md-4">
     <h4 class="modal-header">Job information</h4>
     <dl class="dl-horizontal">
       <dt>Description</dt>
       <dd>{{job.description|default:"<i>not set</i>" }}</dd>
       <dt>Status<dt>
-      <dd>{{ job.get_status_display }}</dd>
+      <dd id="jobstatusdef">{{ job.get_status_display }}</dd>
       <dt>Priority</dt>
       <dd>{{ job.get_priority_display }}</dd>
       <dt>Submitter</dt>
@@ -64,71 +65,12 @@
   </div>
   <div class="col-md-4">
     <h4 class="modal-header">Device</h4>
-    <dl class="dl-horizontal">
-    {% if job.actual_device %}
-      <dt>Name</dt>
-      <dd><a href="{{ job.actual_device.get_absolute_url }}">{{ job.actual_device.hostname }}</a>{% if not job.is_vmgroup %} <a
-      href="{% url 'lava.scheduler.device_report' job.actual_device.pk %}">(reports)</a>{% endif %}</dd>
-    {% endif %}
-
-    {% if job.requested_device %}
-      <dt>Type</dt>
-      <dd><a href="{{ job.requested_device.device_type.get_absolute_url }}">{{ job.requested_device.device_type }}</a>{% if not job.is_vmgroup %} <a
-      href="{% url 'lava.scheduler.device_type_report' job.requested_device.device_type %}">(reports)</a>{% endif %}</dd>
-    {% elif job.requested_device_type %}
-      <dt>Requested type</dt>
-      <dd><a href="{{ job.requested_device_type.get_absolute_url }}">{{ job.requested_device_type }}</a> <a href="{% url 'lava.scheduler.device_type_report' job.requested_device_type %}">(reports)</a></dd>
-    {% endif %}
-
-    {% for tag in job.tags.all %}
-      {% if forloop.first %}
-      {% if forloop.revcounter > 1 %}
-      <dt>Required Tags</dt>
-      {% else %}
-      <dt>Required Tag</dt>
-      {% endif %}
-      {% endif %}
-      <dd>{{ tag.name }}<abbr title="{{ tag.description }}">(?)</abbr></dd>
-    {% endfor %}
-
-    {% if job.actual_device %}
-      <dt>Owner</dt>
-      <dd>
-      {% if job.actual_device.user %}
-        <a href="mailto:{{ job.actual_device.user.email }}">{{ job.actual_device.user.email }}</a>
-      {% elif job.actual_device.group %}
-        Group <em>{{ job.actual_device.group }}</em>
-      {% else %}
-        <i>Unrestricted</i>
-      {% endif %}
-      </dd>
-      <dt>Physical access</dt>
-      <dd>
-      {% if job.actual_device.physical_owner %}
-        <a href="mailto:{{ job.actual_device.physical_owner.email }}">{{ job.actual_device.physical_owner.email }}</a>
-      {% elif job.actual_device.physical_group %}
-        Group <em>{{ job.actual_device.physical_group }}</em>
-      {% else %}
-        <i>Unknown</i>
-      {% endif %}
-      </dd>
-    {% endif %}
-    </dl>
+    <div id="statusblock">
+{% include 'lava_scheduler_app/_device_refresh.html' %}
+    </div>
   </div>
-  <div class="col-md-4">
-    <h4 class="modal-header">Timing</h4>
-    <dl class="dl-horizontal">
-      <dt>Submitted</dt>
-      <dd title="{{ job.submit_time }}">{{ job.submit_time|timesince }}</dd>
-      <dt>Started</dt>
-      <dd title="{{ job.start_time|default:"not started" }}">{% if job.start_time %}{{ job.start_time|timesince }}{% else %}<i>not started</i>{% endif %}</dd>
-      <dt>Finished</dt>
-      <dd title="{{ job.end_time|default:"not finished" }}">{% if job.end_time %}{{ job.end_time|timesince }}{% else %}<i>not finished</i>{% endif %}</dd>
-      {% if job.start_time and job.end_time %}
-      <dt>Duration</dt>
-      <dd>{{ job.end_time|timeuntil:job.start_time }}</dd>
-      {% endif %}
-    </dl>
+  <div class="col-md-4" id="jobtiming">
+{% include 'lava_scheduler_app/_job_timing.html' %}
   </div>
 </div>
 <div class="row">
@@ -137,6 +79,8 @@
     <div class="row">
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
+        <li><a class="btn btn-sm btn-default" href="#bottom">End of log file <span
+        class="glyphicon glyphicon-fast-forward"></span></a></li>
           <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition</a></li>
         {% if job.is_multinode %}
           <li><a href="{% url 'lava.scheduler.job.multinode_definition' job.pk %}" class="btn btn-info">Multinode Definition</a></li>
@@ -146,10 +90,13 @@
           <li><a href="{% url 'lava.scheduler.job.expanded_definition' job.pk %}" class="btn btn-info">Expanded Definition</a></li>
         {% endif %}
         </ul>
+      <hr/>
       </div>
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
-        {% if job_file_present and not job.archived_job_file %}
+        {% if job.is_pipeline %}
+          <li><a href="{% url 'lava.scheduler.job.complete_log' job.pk %}" class="btn btn-primary">Complete log</a></li>
+        {% elif job_file_present and not job.archived_job_file %}
           <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary"{% if size_warning %} disabled="disabled"{% endif %}>Complete log</a></li>
         {% endif %}
         {% if job.results_link and not job.archived_bundle %}
@@ -169,7 +116,7 @@
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
         {% if show_cancel %}
-          <li><a href="{% url 'lava.scheduler.job.cancel' job.pk %}" class="btn btn-warning">Cancel</a></li>
+          <li id="showcancel"><a href="{% url 'lava.scheduler.job.cancel' job.pk %}" class="btn btn-warning">Cancel</a></li>
         {% endif %}
         {% if show_resubmit and not job.is_multinode %}
           <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
@@ -185,9 +132,6 @@
         {% endif %}
         </ul>
       </div>
-
-
-
       <div class="col-md-6">
         {% if show_failure %}
         <ul class="nav nav-pills nav-stacked">
@@ -199,7 +143,7 @@
         {% endif %}
         </ul>
         {% endif %}
-        {% if change_priority %}
+        {% if change_priority and job.status == job.SUBMITTED %}
         <form method="POST" action="{% url 'lava.scheduler.job.priority' job.pk %}" id="priority-choice">
           {% csrf_token %}
           <button id="priority-button" class="btn btn-default">Set priority</button><br />
@@ -226,10 +170,10 @@
     {% if subjob.actual_device.hostname %}
       on: <a href="{{ subjob.actual_device.get_absolute_url }}">{{ subjob.actual_device.hostname }}</a>
       as: {{ subjob.device_role }}
-      </dd>
     {% else %}
-      No device assigned as {{ subjob.device_role }}.</dd>
+      No device assigned as {{ subjob.device_role }}.
     {% endif %}
+        </dd>
     {% endfor %}
     </dl>
     </div>
@@ -246,7 +190,7 @@
   <div class="tab-pane active" id="Log">
 {% endif %}
 
-{% if job.status < job.RUNNING %}
+{% if job.status < job.RUNNING and not job.is_pipeline %}
 <h4 class="modal-header">Dispatcher Log messages</h4>
 <i>No log file yet.</i>
 {% elif job.archived_job_file %}
@@ -267,8 +211,10 @@
 {% endfor %}
 
 {% if job.failure_comment %}
+<div id="failure_block" style="display: none">
 <h4 class="modal-header">Job failure comment</h4>
-<div class="alert alert-danger">{{ job.failure_comment }}</div>
+<div class="alert alert-danger" id="failure_comment">{{ job.failure_comment }}</div>
+</div>
 {% endif %}
 
 {% if size_warning %}
@@ -277,7 +223,10 @@
     It can only be downloaded.</p>
 </div>
 {% endif %}
-<h4 class="modal-header">Dispatcher Log messages (file size = {{ job_file_size|filesizeformat }}) <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h4>
+{% if not job.is_pipeline %}
+<h4 class="modal-header">Dispatcher Log messages (file size = {{ job_file_size|filesizeformat }}) <a
+        class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}"
+        title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h4>
 <a class="btn btn-sm btn-default" href="#bottom">End of log file <span class="glyphicon glyphicon-fast-forward"></span></a><br/><br/>
 
 <div class="btn-group" data-toggle="buttons" id="logbuttons">
@@ -286,15 +235,17 @@
   <label class="btn btn-primary" id="{{ level.0 }}_label" for="{{ level.0 }}"><input type="checkbox" id="{{ level.0 }}">{{ level.0 }}</label>
 {% else %}
   <label class="btn btn-primary disabled" id="{{ level.0 }}_label" for="{{ level.0 }}"><input type="checkbox" id="{{ level.0 }}">{{ level.0 }}</label>
+
 {% endif %}
 {% endfor %}
 </div>
+{% endif %}
 
 <div id="log-messages">
   {% for log in job_log_messages %}
     <code class="log {{log.0}} {{log.2}}">{{ log.1 }}</code>
   {% endfor %}
-  {% if job.status == job.RUNNING %}
+  {% if job.status == job.RUNNING and not job.is_pipeline %}
   <img src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-progress.gif"/>
   {% endif %}
 </div>
@@ -309,6 +260,93 @@
 {% endif %}
 
 {% if job.is_pipeline %}
+<div class="row" id="sectionlogs">
+{% spaceless %}
+  {% get_pipeline_sections pipeline_data as sections %}
+      <div class="col-md-6">
+      <h4>Sections</h4>
+        <ul class="nav nav-pills">
+  {% for item in sections %}
+      {% if 'section' in request.GET %}
+          {% for section, level in item.items %}
+              {% if section in request.GET.section %}
+          <li><a href="{% querystring "section"=section %}" class="btn btn-primary">{{ section }}</a></li>
+              {% else %}
+          <li><a href="{% querystring "section"=section %}" class="btn btn-info">{{ section }}</a></li>
+              {% endif %}
+          {% endfor %}
+      {% else %}
+          {% for section, level in item.items %}
+              {% if section == default_section %}
+          <li><a href="{% querystring "section"=section %}" class="btn btn-primary">{{ section }}</a></li>
+              {% else %}
+          <li><a href="{% querystring "section"=section %}" class="btn btn-info">{{ section }}</a></li>
+              {% endif %}
+          {% endfor %}
+      {% endif %}
+  {% endfor %}
+        </ul>
+      </div>
+    <div class="col-md-6">
+    <h4>Logging levels</h4>
+      <ul class="nav nav-pills">
+      <li>&nbsp;</li>
+    {% if 'off' in request.GET.warning %}
+      <li><a href="{% querystring "warning"="" %}" class="btn btn-info">Warning</a></li>
+    {% else %}
+      <li><a href="{% querystring "warning"="off" %}" class="btn btn-warning">Warning</a></li>
+    {% endif %}
+    {% if 'off' in request.GET.info %}
+      <li><a href="{% querystring "info"="" %}" class="btn btn-info">Info</a></li>
+    {% else %}
+      <li><a href="{% querystring "info"="off" %}" class="btn btn-primary">Info</a></li>
+    {% endif %}
+    {% if 'on' in request.GET.debug %}
+      <li><a href="{% querystring "debug"="" %}" class="btn btn-primary">Debug</a></li>
+    {% else %}
+      <li><a href="{% querystring "debug"="on" %}" class="btn btn-info">Debug</a></li>
+    {% endif %}
+        </ul>
+    <hr/>
+      </div>
+{% endspaceless %}
+    </div>
+<div id="log-messages">
+<div class="row">
+    <div class="col-md-1">
+        <p class="lead">Line</p>
+    </div>
+    <div class="col-md-2">
+        <p class="lead">Action Timing</p>
+    </div>
+    <div class="col-md-8">
+        <p class="lead">Action Summary</p>
+    </div>
+</div>
+<div id="log_data">
+{% include 'lava_scheduler_app/_structured_logdata.html' %}
+</div>
+  <div class="row" id="log_progress">
+  <div class="col-md-8 col-md-offset-2">
+  {% if job.status != job.COMPLETE and job.status != job.INCOMPLETE and job.status != job.CANCELED %}
+    <img src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-progress.gif"/>
+  {% endif %}
+  </div>
+  </div>
+<hr/>
+<p>Each action is displayed relative to the timeline of the job,
+according to the logging level of the message from that action.
+Dispatcher messages are in <span class="text-primary">blue</span>,
+result messages are in <span class="text-success">green</span>.
+Target messages are indented and shown in <samp>monospace</samp>.
+There is often a lag between the dispatcher message describing
+an operation and the message from the target processing that
+operation.</p>
+</div> {% comment %}log messages{% endcomment %}
+{% endif %}
+
+{% if job.is_pipeline %}
+{% spaceless %}
   </div>
   <div class="tab-pane" id="Description">
       <h2>Job Description <a
@@ -329,7 +367,11 @@
                 Device
               </a></h4>
             </div>
+            {% if 'section' not in request.GET %}
             <div id="device_collapse" class="panel-collapse collapse in">
+            {% else %}
+            <div id="device_collapse" class="panel-collapse collapse">
+            {% endif %}
               <div class="panel-body">
                   <dl class="dl-horizontal">
                       <dt>device type</dt>
@@ -369,7 +411,11 @@
                 Job Actions
               </a></h4>
             </div>
+            {% if 'section' in request.GET %}
+            <div id="job_actions" class="panel-collapse collapse in">
+            {% else %}
             <div id="job_actions" class="panel-collapse collapse">
+            {% endif %}
               <div class="panel-body">
 
                 <!-- Here we insert another nested accordion -->
@@ -394,7 +440,11 @@
                           Deploy
                       </a></h4>
                     </div>
+                  {% if 'section' in request.GET and request.GET.section == 'deploy' %}
                     <div id="collapseInnerOne" class="panel-collapse collapse in">
+                  {% else %}
+                    <div id="collapseInnerOne" class="panel-collapse collapse">
+                  {% endif %}
                       <div class="panel-body">
                           <ol>
                           {% for entry in deploy_list %}
@@ -432,7 +482,11 @@
                         Boot
                       </a></h4>
                     </div>
+                  {% if 'section' in request.GET and request.GET.section == 'boot' %}
+                    <div id="collapseInnerTwo" class="panel-collapse collapse in">
+                  {% else %}
                     <div id="collapseInnerTwo" class="panel-collapse collapse">
+                  {% endif %}
                       <div class="panel-body">
                           <ol>
                           {% for entry in boot_list %}
@@ -470,7 +524,11 @@
                         Test
                       </a></h4>
                     </div>
+                  {% if 'section' in request.GET and request.GET.section == 'test' %}
+                    <div id="collapseInnerThree" class="panel-collapse collapse in">
+                  {% else %}
                     <div id="collapseInnerThree" class="panel-collapse collapse">
+                  {% endif %}
                       <div class="panel-body">
                           <ol>
                           {% for entry in test_list %}
@@ -524,15 +582,27 @@
           </div>
         </div>
   </div>
+    </div>
+{% endspaceless %}
 {% endif %}
 
+
 {% if job.status >= job.RUNNING and job_file_present and job_file_size > 0 and not job.archived_job_file %}
-<a class="btn btn-sm btn-default" id="bottom" href="#top"><span class="glyphicon glyphicon-fast-backward"></span> Start of log file</a>
+{% if not job.is_pipeline %}
+<a class="btn btn-sm btn-default" href="#top"><span class="glyphicon glyphicon-fast-backward"></span> Start of log file</a>
 <br/><br/>
+{% endif %}
+<hr/>
 <div class="row">
   <div class="col-md-6">
     <div class="row">
-      <div class="col-md-6">
+      <div class="col-md-4">
+        <ul class="nav nav-pills nav-stacked">
+        <li><a class="btn btn-sm btn-default" href="#top"><span
+        class="glyphicon glyphicon-fast-backward"></span> Start of log file</a></li>
+        </ul>
+      </div>
+    <div class="col-md-4">
         <ul class="nav nav-pills nav-stacked">
           <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition</a></li>
         {% if job.is_multinode %}
@@ -542,16 +612,18 @@
         {% endif %}
         </ul>
       </div>
-      <div class="col-md-6">
+      <div class="col-md-4">
         <ul class="nav nav-pills nav-stacked">
-        {% if job_file_present %}
+        {% if job.is_pipeline %}
+          <li><a href="{% url 'lava.scheduler.job.complete_log' job.pk %}" class="btn btn-primary">Complete log</a></li>
+        {% elif job_file_present %}
           <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}#bottom" class="btn btn-primary">Complete log</a></li>
         {% endif %}
         </ul>
       </div>
     </div>
   </div>
-  <div class="col-md-6">
+  <div class="col-md-4">
     <div class="row">
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
@@ -564,14 +636,25 @@
         {% endif %}
         </ul>
       </div>
+    <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
+        {% if show_cancel %}
+          <li id="showcancelend"><a href="{% url 'lava.scheduler.job.cancel' job.pk %}" class="btn btn-warning">Cancel</a></li>
+        {% endif %}
+        </ul>
+      </div>
     </div>
   </div>
 </div>
 {% endif %}
+<div  id="bottom"></div>
 {% endblock %}
 
 
 {% block scripts %}
+{% comment %}
+Each JS id relates to a HTML block of polled content.
+{% endcomment %}
 <script type="text/javascript">
   $("#logbuttons label").click(function(e) {
     var label = e.target.htmlFor;
@@ -582,8 +665,21 @@
       $('code.log.' + label).css('display', 'none');
     }
   });
+</script>
+{% if job.is_pipeline %}
+{% if job.status == job.SUBMITTED or job.status == job.RUNNING or job.status == job.CANCELING %}
+<script type="text/javascript">
 
+    var job_status_url = '{% url 'lava.scheduler.job_status' pk=job.pk %}';
+    var logs_url = '{% url 'lava.scheduler.job_pipeline_incremental' pk=job.pk %}{% querystring 'summary'=1 %}';
+    var section_url = '{% url 'lava.scheduler.job_pipeline_sections' pk=job.pk %}';
+
+</script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/lava-job-polling.min.js"></script>
+{% endif %}
+{% else %}
 {% if job.status == job.RUNNING and job_file_present %}
+<script type="text/javascript">
 var pollTimer = null, logLenth = '{{ job_file_size }}';
 
 function poll (start) {
@@ -624,6 +720,7 @@ function () {
 pollTimer = setTimeout(poll, 1000);
 }
 );
-{% endif %}
 </script>
+{% endif %}
+{% endif %}
 {% endblock scripts %}

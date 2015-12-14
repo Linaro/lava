@@ -26,8 +26,7 @@ or jessie. Support for installing LAVA on Ubuntu and other
 Contributions to support other distributions are welcome.
 
 LAVA packages and dependencies of LAVA migrate automatically into the
-current Ubuntu development release. :ref:`trusty_tahr_install` needs
-an extra repository to provide these packages.
+current Ubuntu development release.
 
 .. _Debian: http://www.debian.org/
 
@@ -68,8 +67,8 @@ Device requirements
 
 Devices you wish to deploy in LAVA need to be:
  * Physically connected to the server via usb, usb-serial,
-   or serial [#f1]_ or
- * connected over the network via a serial console server [#f1]_ or
+   or serial or
+ * connected over the network via a serial console server or
  * a fastboot capable device accessible from the server or
  * an emulated virtual machines and/or simulators that allow a
    serial connection
@@ -294,10 +293,12 @@ tested and supported authentication methods for LAVA.
 .. _Django: https://www.djangoproject.com/
 .. _`Django auth subsystems`: https://docs.djangoproject.com/en/dev/topics/auth/
 
-Using OpenID (registration is free) allows for quick start with LAVA
-bring-up and testing.
+.. note:: The previous OpenID support is not compatible with newer versions of django
+   (versions 1.9 or later). OpenID is available in Debian Jessie but not in unstable or
+   Stretch. If the ``python-django-auth-openid`` package is available and installed,
+   OpenID support will be enabled, otherwise it will be omitted, automatically.
 
-Local Django user accounts are also supported. When using local Django
+Local Django user accounts are supported. When using local Django
 user accounts, new user accounts need to be created by Django admin prior
 to use.
 
@@ -310,9 +311,10 @@ Support for `OAuth2`_ is under investigation in LAVA.
 Using Launchpad OpenID
 ----------------------
 
-LAVA server by default is preconfigured to authenticate using
-Launchpad OpenID service. (Launchpad has migrated from the problematic
-CACert.)
+LAVA server, by default, is preconfigured to authenticate using
+Launchpad OpenID service but only **if** ``django-auth-openid`` support
+is available, e.g. Debian Jessie. Newer versions of django cannot work
+with the outdated django_openid_auth support.
 
 Your chosen OpenID server is configured using the ``OPENID_SSO_SERVER_URL``
 in ``/etc/lava-server/settings.conf`` (JSON syntax).
@@ -327,6 +329,9 @@ Restart ``lava-server`` and ``apache2`` services if this is changed.
 
 Using Google+ OpenID
 --------------------
+
+Google+ OpenID also needs the ``python-django-auth-openid`` support
+to be available.
 
 To switch from Launchpad to Google+ OpenID, change the setting for the
 ``OPENID_SSO_SERVER_URL`` in ``/etc/lava-server/settings.conf``
@@ -466,7 +471,7 @@ W.I.P
 This will create a symlink in /dev called rack-usb01 etc. which can then be addressed in the :ref:`ser2net` config file.
 
 Contact and bug reports
-========================
+=======================
 
 Please report bugs using bugzilla:
 https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework

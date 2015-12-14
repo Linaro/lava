@@ -25,7 +25,7 @@
 "          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
           - boot") -%}
 
-{% set base_nfsroot_args = ("nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr") -%}
+{% set base_nfsroot_args = ("nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr") -%}
 
 {# these options are used by both ssh and scp! #}
 {# check the manpages *carefully* & ensure compatibility! #}
@@ -80,6 +80,9 @@ commands:
 {% if hard_reset_command %}
     hard_reset: {{ hard_reset_command }}
 {% endif -%}
+{% if soft_reboot_command %}
+    soft_reboot: {{ soft_reboot_command }}
+{% endif -%}
 {% if power_off_command %}
     power_off: {{ power_off_command }}
 {% endif %}
@@ -91,31 +94,18 @@ commands:
 
 {% block body %}{% endblock -%}
 
-{% block test_image_prompts %}
-test_image_prompts:
-  - '(initramfs)'
-  - 'linaro-test'
-  - '/ #'
-  - 'root@android'
-  - 'root@master'
-  - 'root@debian'
-  - 'root@linaro:~#'
-  - 'root@linaro-nano:~#'
-  - 'root@linaro-developer:~#'
-  - 'root@linaro-server:~#'
-  - 'root@genericarmv7a:~#'
-  - 'root@genericarmv8:~#'
-{% block extend_test_image_prompts %}{% endblock -%}
-{% endblock -%}
-
 {% block timeouts %}
 timeouts:
-  apply-overlay-image:
-    seconds: 120
-  umount-retry:
-    seconds: 45
-  lava-test-shell:
-    seconds: 30
-  power_off:
-    seconds: 5
+  actions:
+    apply-overlay-image:
+      seconds: 120
+    umount-retry:
+      seconds: 45
+    lava-test-shell:
+      seconds: 30
+    power_off:
+      seconds: 5
+  connections:
+    uboot-retry:
+      seconds: 60
 {% endblock -%}

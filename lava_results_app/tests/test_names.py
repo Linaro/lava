@@ -32,16 +32,20 @@ class ModelFactory(object):
     def getUniqueString(self, prefix='generic'):
         return '%s-%d' % (prefix, self.getUniqueInteger())
 
+    def get_unique_user(self, prefix='generic'):
+        return "%s-%d" % (prefix, User.objects.count() + 1)
+
     def cleanup(self):
         DeviceType.objects.all().delete()
         # make sure the DB is in a clean state wrt devices and jobs
         Device.objects.all().delete()
         TestJob.objects.all().delete()
         [item.delete() for item in DeviceDictionary.object_list()]
+        User.objects.all().delete()
 
     def make_user(self):
         return User.objects.create_user(
-            self.getUniqueString(),
+            self.get_unique_user(),
             '%s@mail.invalid' % (self.getUniqueString(),),
             self.getUniqueString())
 
@@ -92,6 +96,7 @@ class TestCaseWithFactory(DjangoTestCase):
         self.factory = ModelFactory()
         self.device_type = self.factory.make_device_type()
         self.factory.make_device(device_type=self.device_type, hostname="fakeqemu1")
+        self.user = self.factory.make_user()
 
 
 class TestTestSuite(TestCaseWithFactory):
@@ -100,9 +105,8 @@ class TestTestSuite(TestCaseWithFactory):
     """
 
     def test_result_store(self):
-        user = self.factory.make_user()
         job = TestJob.from_yaml_and_user(
-            self.factory.make_job_yaml(), user)
+            self.factory.make_job_yaml(), self.user)
         store = JobPipeline.get(job.id)
         self.assertIsNotNone(store)
         self.assertIsInstance(store, JobPipeline)
@@ -110,9 +114,8 @@ class TestTestSuite(TestCaseWithFactory):
         self.factory.cleanup()
 
     def test_name(self):
-        user = self.factory.make_user()
         job = TestJob.from_yaml_and_user(
-            self.factory.make_job_yaml(), user)
+            self.factory.make_job_yaml(), self.user)
         result_sample = """
 - results: !!python/object/apply:collections.OrderedDict
   - - [linux-linaro-ubuntu-pwd, pass]
@@ -154,9 +157,8 @@ class TestTestSuite(TestCaseWithFactory):
         self.factory.cleanup()
 
     def test_pipelinestore(self):
-        user = self.factory.make_user()
         job = TestJob.from_yaml_and_user(
-            self.factory.make_job_yaml(), user)
+            self.factory.make_job_yaml(), self.user)
         result_sample = {
             'results': {
                 'test-runscript-overlay': OrderedDict([
@@ -201,9 +203,8 @@ class TestTestSuite(TestCaseWithFactory):
         self.factory.cleanup()
 
     def test_level_input(self):
-        user = self.factory.make_user()
         job = TestJob.from_yaml_and_user(
-            self.factory.make_job_yaml(), user)
+            self.factory.make_job_yaml(), self.user)
         suite = TestSuite.objects.create(
             job=job,
             name='test-suite'
@@ -231,9 +232,8 @@ results:
         self.factory.cleanup()
 
     def test_bad_input(self):
-        user = self.factory.make_user()
         job = TestJob.from_yaml_and_user(
-            self.factory.make_job_yaml(), user)
+            self.factory.make_job_yaml(), self.user)
         # missing {'results'} key
         result_sample = """
 lava-test-shell: !!python/object/apply:collections.OrderedDict
@@ -279,9 +279,8 @@ results:
         self.factory.cleanup()
 
     def test_set(self):
-        user = self.factory.make_user()
         job = TestJob.from_yaml_and_user(
-            self.factory.make_job_yaml(), user)
+            self.factory.make_job_yaml(), self.user)
         result_sample = """
 results:
     lava-test-shell: !!python/object/apply:collections.OrderedDict

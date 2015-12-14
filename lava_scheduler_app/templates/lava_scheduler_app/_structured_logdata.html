@@ -1,0 +1,106 @@
+{% load utils %}
+{% logging_levels request as log_levels %}
+{% for log, content in log_data.items %}
+{% for entry in content %}
+    {% if 'ts' in entry and 'start' not in entry.debug %}
+      <div class="row">
+        <div class="col-md-1 col-md-offset-1">
+        {% parse_timestamp entry.ts as log_time %}
+        {{ job.start_time|timesince:log_time }}
+        </div>
+        <div class="col-md-8">
+        <p class="text-primary"><span class="sr-only">{{ entry.debug }}</span>
+        <a href="{% url 'lava.scheduler.job.section_log' job.pk '/download/' log %}"
+           class="btn btn-info btn-sm" role="button"><span
+                class="glyphicon glyphicon-download"></span> {{ log }}</a>
+        {{ entry.debug }}
+            </p>
+        </div>
+      </div>
+    {% endif %}
+    <div class="row" id="R{{ forloop.parentloop.counter }}.{{ forloop.counter }}">
+    {% if 'ts' in entry %}
+        {% for level in log_levels %}
+            {% if level in entry and 'start' in entry|get_item:level %}
+            <div class="col-md-1">
+                <a href="#R{{ forloop.parentloop.parentloop.counter }}.{{ forloop.parentloop.counter }}">
+                {{ forloop.parentloop.parentloop.counter }}.{{ forloop.parentloop.counter }}</a>
+            </div>
+                {% parse_timestamp entry.ts as log_time %}
+                {% if level == 'warning' %}
+                    <div class="col-md-1 warning">
+                        {{ job.start_time|timesince:log_time }}
+                    </div>
+                    <div class="col-md-8 warning">
+                        <code>{{ entry|get_item:level }}</code>
+                    </div>
+                {% else %}
+                    <div class="col-md-1">
+                        {{ job.start_time|timesince:log_time }}
+                    </div>
+                    <div class="col-md-8">
+                        <p class="text-primary">{{ entry|get_item:level }}</p>
+                    </div>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    {% elif 'exception' in entry %}
+        <div class="col-md-1"><a
+            href="#R{{ forloop.parentloop.counter }}.{{ forloop.counter }}">
+        {{ forloop.parentloop.counter }}.{{ forloop.counter }}</a></div>
+        <div class="col-md-1 text-danger"><b>Exception</b></div>
+        <div class="col-md-8"><pre class="text-danger">{{ entry|dump_exception }}</pre></div>
+    {% elif 'warning' in entry %}
+        <div class="col-md-1 bg-warning"><a
+            href="#R{{ forloop.parentloop.counter }}.{{ forloop.counter }}">
+        {{ forloop.parentloop.counter }}.{{ forloop.counter }}</a></div>
+        {% for level in log_levels %}
+            {% if level in entry %}
+                {% if level == 'warning' %}
+                <div class="col-md-1 text-warning bg-warning">Warning</div>
+                <div class="col-md-8 bg-warning"><mark>{{ entry|get_item:level }}</mark></div>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    {% elif 'results' in entry %}
+            <div class="col-md-1">
+                <a href="#R{{ forloop.parentloop.counter }}.{{ forloop.counter }}">
+                {{ forloop.parentloop.counter }}.{{ forloop.counter }}</a></div>
+            <div class="col-md-8 col-md-offset-1">
+            {% result_name entry.results as result %}
+            {% if 'pass' in result %}
+            <a href="{{ entry.results|result_url:job.id }}"
+               class="btn btn-success btn-sm" role="button"><span class="glyphicon glyphicon-signal"></span> {{ result }}</a>
+            {% elif 'lava' in result %}
+            <a href="{{ entry.results|result_url:job.id }}"
+               class="btn btn-info btn-sm" role="button"><span class="glyphicon glyphicon-signal"></span> {{ result }}</a>
+            {% else %}
+            <a href="{{ entry.results|result_url:job.id }}"
+               class="btn btn-warning btn-sm" role="button"><span class="glyphicon glyphicon-signal"></span> {{ result }}</a>
+            {% endif %}
+            </div>
+    {% elif 'target' in entry and entry.target %}
+            <div class="col-md-1">
+                <a href="#R{{ forloop.parentloop.counter }}.{{ forloop.counter }}">
+                {{ forloop.parentloop.counter }}.{{ forloop.counter }}</a></div>
+            <div class="col-md-9 col-md-offset-1">
+            <samp>
+                {{ entry.target|truncatechars:150 }}
+            </samp>
+            </div>
+    {% else %}
+        {% for level in log_levels %}
+            {% if level in entry and 'result' not in entry|get_item:level %}
+                <div class="col-md-1">
+                    <a href="#R{{ forloop.parentloop.parentloop.counter }}.{{ forloop.parentloop.counter }}">
+                    {{ forloop.parentloop.parentloop.counter }}.{{ forloop.parentloop.counter }}</a></div>
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="text-primary"><span class="sr-only">{{ log }}</span>
+                    {{ entry|get_item:level }}</p>
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+</div>{% comment %}end row{% endcomment %}
+{% endfor %}
+{% endfor %}

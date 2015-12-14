@@ -31,6 +31,8 @@ class TestRunDetailView(TestCase):
     def setUp(self):
         super(TestRunDetailView, self).setUp()
         self.test_run_url = TestRun.objects.get(pk=1).get_absolute_url()
+        if not hasattr(self, 'client') and hasattr(self, 'client_class'):
+            self.client = self.client_class()
 
     def testrun_valid_page_view(self):
         response = self.client.get(self.test_run_url)

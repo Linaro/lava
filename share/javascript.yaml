@@ -54,3 +54,59 @@ debian:
       jquery-ui-1.10.4.custom.js: jquery-ui.custom.js
       jquery-ui-1.10.4.custom.min.js: jquery-ui.custom.min.js
     version: '1.10.4'
+  - uglify:
+    lava_directory: lava_scheduler_app/static/lava_scheduler_app/js/
+    destination: lava_scheduler_app/static/lava_scheduler_app/js/
+    files:
+      tables.js: tables.min.js
+      jquery-linedtextarea.js: jquery-linedtextarea.min.js
+      job-submit.js: job-submit.min.js
+      lava-job-polling.js: lava-job-polling.min.js
+      shCore.js: shCore.min.js
+      shBrushJScript.js: shBrushJScript.min.js
+      beautify.js: beautify.min.js
+      favorite-jobs.js: favorite-jobs.min.js
+      jquery.details.js: jquery.details.min.js
+      job-wizard.js: job-wizard.min.js
+      jquery.jeditable.js: jquery.jeditable.min.js
+  - uglify:
+    lava_directory: dashboard_app/static/dashboard_app/js/
+    destination: dashboard_app/static/dashboard_app/js/
+    files:
+      bug-links.js: bug-links.min.js
+      image-report-editor.js: image-report-editor.min.js
+      image-chart.js: image-chart.min.js
+      filter-edit.js: filter-edit.min.js
+      filter-detail.js: filter-detail.min.js
+      editable_attributes.js: editable_attributes.min.js
+      jquery.flot.labels.js: jquery.flot.labels.min.js
+      jquery.flot.dashes.js: jquery.flot.dashes.min.js
+      test_result_detail.js: test_result_detail.min.js
+      jquery.formset.js: jquery.formset.min.js
+      jstorage.js: jstorage.min.js
+      bootstrap-editable.js: bootstrap-editable.min.js
+      jquery.flot.axislabels.js: jquery.flot.axislabels.min.js
+      image-report.js: image-report.min.js
+  - uglify:
+    lava_directory: lava_results_app/static/lava_results_app/js/
+    destination: lava_results_app/static/lava_results_app/js/
+    files:
+      query.js: query.min.js
+  - uglify:
+    lava_directory: lava_markitup/static/lava_markitup/
+    destination: lava_markitup/static/lava_markitup/
+    files:
+      jquery.markitup.js: jquery.markitup.min.js
+  - uglify:
+    lava_directory: lava_markitup/static/lava_markitup/sets/markdown/
+    destination: lava_markitup/static/lava_markitup/sets/markdown/
+    files:
+      set.js: set.min.js
+  - uglify:
+    lava_directory: lava_server/lava-server/js/
+    destination: lava_server/lava-server/js/
+    files:
+      bootstrap-3.1.1.js: bootstrap-3.1.1.min.js
+      jquery.validate.js: jquery.validate.min.js
+      jquery.pseudofocus.js: jquery.pseudofocus.min.js
+      jquery.steps.js: jquery.steps.min.js
