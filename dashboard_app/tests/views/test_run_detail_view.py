@@ -23,6 +23,8 @@ from django.contrib.auth.models import (User, Group)
 
 from dashboard_app.tests.utils import TestClient
 
+# pylint: disable=too-many-ancestors,no-member
+
 
 class TestRunDetailView(TestCase):
 
@@ -57,6 +59,7 @@ class TestRunViewAuth(TestCaseWithScenarios):
     _GROUP = "private_group"
     _UNRELATED_USER = "unrelated-user"
     fixtures = ["test_run_detail.json"]
+    accessing_user = None
 
     scenarios = [
         ("anonymous_accessing_private", {

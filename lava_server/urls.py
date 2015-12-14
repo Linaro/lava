@@ -19,13 +19,15 @@
 import imp
 from django.conf import settings
 from django.conf.urls import (
-    handler404, include, patterns, url)
+    handler404, include, url)
 from django.contrib import admin
 from linaro_django_xmlrpc import urls as api_urls
-
+from linaro_django_xmlrpc.views import handler as linaro_django_xmlrpc_views_handler
+from linaro_django_xmlrpc.views import help as linaro_django_xmlrpc_views_help
+from django.views.i18n import javascript_catalog
 from lava_server.extension import loader
 from lava_server.views import index, me, version
-
+from lava_markitup.urls import urlpatterns as lavamarkitup_urlpatterns
 
 handler403 = 'lava_server.views.permission_error'
 handler500 = 'lava_server.views.server_error'
@@ -35,8 +37,7 @@ admin.autodiscover()
 
 
 # Root URL patterns
-urlpatterns = patterns(
-    '',
+urlpatterns = [
     url(r'^{mount_point}$'.format(mount_point=settings.MOUNT_POINT),
         index,
         name='lava.home'),
@@ -47,17 +48,17 @@ urlpatterns = patterns(
     url(r'^{mount_point}accounts/'.format(mount_point=settings.MOUNT_POINT),
         include('django.contrib.auth.urls')),
 
-    url(r'^admin/jsi18n', 'django.views.i18n.javascript_catalog'),
+    url(r'^admin/jsi18n', javascript_catalog),
     url(r'^{mount_point}admin/'.format(mount_point=settings.MOUNT_POINT),
         include(admin.site.urls)),
     url(r'^{mount_point}RPC2/?'.format(mount_point=settings.MOUNT_POINT),
-        'linaro_django_xmlrpc.views.handler',
+        linaro_django_xmlrpc_views_handler,
         name='lava.api_handler',
         kwargs={
             'mapper': loader.xmlrpc_mapper,
             'help_view': 'lava.api_help'}),
     url(r'^{mount_point}api/help/$'.format(mount_point=settings.MOUNT_POINT),
-        'linaro_django_xmlrpc.views.help',
+        linaro_django_xmlrpc_views_help,
         name='lava.api_help',
         kwargs={
             'mapper': loader.xmlrpc_mapper}),
@@ -67,11 +68,13 @@ urlpatterns = patterns(
     url(r'^{mount_point}api/'.format(mount_point=settings.MOUNT_POINT),
         include(api_urls.default_mapper_urlpatterns)),
     url(r'^{mount_point}utils/markitup/'.format(mount_point=settings.MOUNT_POINT),
-        include('lava_markitup.urls')))
+        include(lavamarkitup_urlpatterns))
+]
 
 try:
     import hijack
-    urlpatterns.append(url(r'^hijack/', include('hijack.urls')))
+    from hijack.urls import urlpatterns as hijack_urlpatterns
+    urlpatterns.append(url(r'^hijack/', include(hijack_urlpatterns)))
 except ImportError:
     pass
 

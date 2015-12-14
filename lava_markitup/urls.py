@@ -1,7 +1,7 @@
-from django.conf.urls import *
+from django.conf.urls import url
+from lava_markitup.views import preview_markdown
 
 
-urlpatterns = patterns(
-    'lava_markitup.views',
-    url('^markdown/$', 'preview_markdown', name='lava.markitup.markdown'),
-)
+urlpatterns = [
+    url('^markdown/$', preview_markdown, name='lava.markitup.markdown'),
+]

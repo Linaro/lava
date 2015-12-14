@@ -22,12 +22,15 @@ Unit tests for dashboard_app.views.bundle_stream_list
 
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from dashboard_app.views import bundle_stream_list
 
 from dashboard_app.tests import fixtures
 from dashboard_app.tests.utils import (
     DashboardViewsTestCase,
     TestClient,
 )
+
+# pylint: disable=too-many-ancestors,no-member,invalid-name
 
 
 class BundleStreamListViewAnonymousTest(DashboardViewsTestCase):
@@ -58,7 +61,7 @@ class BundleStreamListViewAnonymousTest(DashboardViewsTestCase):
 
     def setUp(self):
         super(BundleStreamListViewAnonymousTest, self).setUp()
-        self.url = reverse("dashboard_app.views.bundle_stream_list")
+        self.url = reverse(bundle_stream_list)
         self.user = None
 
     def test_status_code(self):
@@ -75,8 +78,8 @@ class BundleStreamListViewAnonymousTest(DashboardViewsTestCase):
             response = self.client.get(self.url)
             expected_bsl = sorted(
                 [bundle_stream.pk for bundle_stream in
-                    bundle_streams if
-                    bundle_stream.is_accessible_by(self.user)])
+                 bundle_streams if
+                 bundle_stream.is_accessible_by(self.user)])
             effective_bsl = sorted(
                 [bundle_stream.pk for bundle_stream in
                  response.context['bundle_stream_table'].data.queryset])

@@ -1515,27 +1515,36 @@ class BugLink(models.Model):
         return unicode(self.bug_link)
 
 
+# would be best moved out of models.py
+# https://docs.djangoproject.com/en/1.9/topics/signals/#connecting-receiver-functions
 @receiver(post_delete)
 def file_cleanup(sender, instance, **kwargs):
     """
-    Signal receiver used for remove FieldFile attachments when removing
+    Signal receiver used for remove FileField attachments when removing
     objects (Bundle and Attachment) from the database.
     """
     if instance is None or sender not in (Bundle, Attachment):
         return
-    meta = sender._meta
 
-    for field_name in meta.get_all_field_names():
+    if django.VERSION < (1, 8):
+        interest = sender._meta.get_all_field_names()
+    else:
+        # we just want the FileField's, not all the fields
+        interest = [field.name for field in sender._meta.get_fields()
+                    if isinstance(field, models.FileField)]
+
+    for field_name in interest:
 
         # object that represents the metadata of the field
         try:
-            field_meta = meta.get_field(field_name)
+            field_meta = sender._meta.get_field(field_name)
         except FieldDoesNotExist:
             continue
 
-        # we just want the FileField's, not all the fields
-        if not isinstance(field_meta, models.FileField):
-            continue
+        if django.VERSION < (1, 8):
+            # we just want the FileField's, not all the fields
+            if not isinstance(field_meta, models.FileField):
+                continue
 
         # the field itself is a FieldFile instance, proxied by FileField
         field = getattr(instance, field_name)

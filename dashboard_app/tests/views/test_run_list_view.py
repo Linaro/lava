@@ -27,6 +27,8 @@ from django_testscenarios.ubertest import TestCaseWithScenarios
 from dashboard_app.tests import fixtures
 from dashboard_app.tests.utils import TestClient
 
+# pylint: disable=too-many-ancestors,no-member
+
 
 class TestRunListViewAnonymousTest(TestCaseWithScenarios):
 

@@ -20,27 +20,28 @@
 from django.conf.urls import patterns, url, handler500, handler404
 
 from linaro_django_xmlrpc.globals import mapper
+from linaro_django_xmlrpc.views import (
+    handler, create_token, delete_token, edit_token, tokens,
+)
 
 
-default_mapper_urlpatterns = patterns(
-    'linaro_django_xmlrpc.views',
-    url(r'^help/$', "help",
+default_mapper_urlpatterns = [
+    url(r'^help/$', help,
         name='linaro_django_xmlrpc.views.default_help',
         kwargs={
             'mapper': mapper,
         }),
-    url(r'^RPC2/$', "handler",
+    url(r'^RPC2/$', handler,
         name='linaro_django_xmlrpc.views.default_handler',
         kwargs={
             'mapper': mapper,
             'help_view': 'linaro_django_xmlrpc.views.default_help'
-        }))
+        })]
 
-token_urlpatterns = patterns(
-    'linaro_django_xmlrpc.views',
-    url(r'^tokens/$', "tokens"),
-    url(r'^tokens/create/$', "create_token"),
-    url(r'^tokens/(?P<object_id>\d+)/delete/$', "delete_token"),
-    url(r'^tokens/(?P<object_id>\d+)/edit/$', "edit_token"))
+token_urlpatterns = [
+    url(r'^tokens/$', tokens),
+    url(r'^tokens/create/$', create_token),
+    url(r'^tokens/(?P<object_id>\d+)/delete/$', delete_token),
+    url(r'^tokens/(?P<object_id>\d+)/edit/$', edit_token)]
 
 urlpatterns = default_mapper_urlpatterns + token_urlpatterns

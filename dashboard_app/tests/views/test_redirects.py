@@ -21,6 +21,8 @@ from django_testscenarios.ubertest import TestCase
 
 from dashboard_app.tests import fixtures
 
+# pylint: disable=too-many-ancestors,invalid-name
+
 
 class RedirectTests(TestCase):
 

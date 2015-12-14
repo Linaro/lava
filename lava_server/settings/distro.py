@@ -50,8 +50,11 @@ STATIC_URL = distro_settings.STATIC_URL
 ADMIN_MEDIA_PREFIX = distro_settings.ADMIN_MEDIA_PREFIX
 
 # List of absolute pathnames used to resolve templates.
-TEMPLATE_DIRS = [os.path.join(os.path.dirname(__file__), '..', 'templates')]
-TEMPLATE_DIRS = distro_settings.TEMPLATE_DIRS + TEMPLATE_DIRS
+if django.VERSION < (1, 8):
+    TEMPLATE_DIRS = [os.path.join(os.path.dirname(__file__), '..', 'templates')]
+    TEMPLATE_DIRS = distro_settings.TEMPLATE_DIRS + TEMPLATE_DIRS
+else:
+    TEMPLATES = distro_settings.TEMPLATES
 
 # Like TEMPLATE_DIRS but for static files
 STATICFILES_DIRS = distro_settings.STATICFILES_DIRS
