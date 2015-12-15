@@ -704,10 +704,11 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(
                 400, "Device '%s' is not a pipeline device" % hostname
             )
-        device_dict = DeviceDictionary.get(hostname).to_dict()
+        device_dict = DeviceDictionary.get(hostname)
         if not device_dict:
             raise xmlrpclib.Fault(
                 404, "Device '%s' does not have a device dictionary" % hostname
             )
+        device_dict = device_dict.to_dict()
         jinja_str = devicedictionary_to_jinja2(device_dict['parameters'], device_dict['parameters']['extends'])
         return xmlrpclib.Binary(jinja_str.encode('UTF-8'))
