@@ -53,12 +53,11 @@ setup(
         "Topic :: Software Development :: Testing",
     ],
     install_requires=[
-        'django >= 1.6.1',
+        'django >= 1.7.1',
         'django-restricted-resource >= 2015.09',
         'django-tables2 >= 0.13.0',
         'docutils >= 0.6',
         'lava-tool >= 0.2',
-        'south >= 1.0',
         'versiontools >= 1.8',
         'markdown >= 2.0.3',
         'psycopg2',

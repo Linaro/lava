@@ -4,7 +4,7 @@ Template data for lava-server
 To make it easier to setup devices automatically, templates
 can be generated from a working instance and then populated
 with data from scripts to create JSON files suitable for use
-with the south loaddata instructions.
+with the django dumpdata instructions.
 
 add_device.py reads the definition of a Device and a DeviceType
 from lava_scheduler_app.models and genericizes the data to reset

@@ -153,11 +153,7 @@ INSTALLED_APPS = [
 if USE_OPENID_AUTH:
     INSTALLED_APPS += ['django_openid_auth']
 
-if django.VERSION < (1, 7):
-    # Django 1.7 has built-in migration suppport
-    INSTALLED_APPS += ['south']
-else:
-    TEST_RUNNER = 'django.test.runner.DiscoverRunner'
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 if devserver_import:
     INSTALLED_APPS += ['devserver']

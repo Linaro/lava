@@ -417,20 +417,7 @@ The migration file will be created in
 is why ``sudo`` is required) and will need to be copied into your git
 working copy and added to the review.
 
-On Ubuntu Trusty only::
-
- $ sudo lava-server manage schemamigration lava_scheduler_app --auto
-
-The migration file will be created in
-``/usr/lib/python2.7/dist-packages/lava_scheduler_app/south_migrations/``
-(which is why ``sudo`` is required) and will need to be copied into your
-git working copy and added to the review.
-
-.. note:: ``python-django-south`` creates migration files which are
-   **not** PEP8 compliant. The file **must** be edited once added to
-   your git working copy.
-
-In both cases, the migration is applied using::
+The migration is applied using::
 
  $ sudo lava-server manage migrate lava_scheduler_app
 

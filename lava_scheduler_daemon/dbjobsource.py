@@ -179,7 +179,7 @@ class DatabaseJobSource(object):
                 # We don't want to leave transactions dangling under any
                 # circumstances so we unconditionally issue a rollback.  This
                 # might be a teensy bit wastful, but it wastes a lot less time
-                # than figuring out why your south migration appears to have
+                # than figuring out why your database migration appears to have
                 # got stuck...
                 transaction.rollback()
                 transaction.set_autocommit(True)
