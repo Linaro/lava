@@ -1059,7 +1059,9 @@ def _check_submit_to_device(device_list, user):
     devices in device_list are available for submission by this user.
     """
     allow = []
-    if type(device_list) != list or len(device_list) == 0:
+    # ensure device_list is or can be converted to a list
+    # DB queries result in a RestrictedResourceQuerySet
+    if not isinstance(list(device_list), list) or len(device_list) == 0:
         # logic error
         return allow
     device_type = None
@@ -1723,7 +1725,7 @@ class TestJob(RestrictedResource):
         job_list = _pipeline_protocols(job_data, user, yaml_data)
         if job_list:
             return job_list
-
+        # singlenode only
         device_type = _get_device_type(user, job_data['device_type'])
         allow = _check_submit_to_device(list(Device.objects.filter(
             device_type=device_type, is_pipeline=True)), user)

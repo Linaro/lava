@@ -20,6 +20,8 @@ from lava_dispatcher.pipeline.device import PipelineDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.actions.boot.qemu import BootQEMU
+from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
+from django_restricted_resource.managers import RestrictedResourceQuerySet
 
 
 # pylint: disable=too-many-ancestors,too-many-public-methods,invalid-name,no-member
@@ -538,10 +540,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                 self.assertEqual(
                     check['protocols']['lava-multinode']['tags'],
                     ['usb-flash', 'usb-eth'])
-                self.assertEqual(
-                    check['protocols']['lava-multinode']['interfaces'],
-                    [{'vlan': 'name_two', 'tags': ['10G']}, {'vlan': 'name_two', 'tags': ['1G']}]
-                )
+                self.assertNotIn('interfaces', check['protocols']['lava-multinode'])
                 self.assertEqual(set(tag_list), set(job.tags.all()))
             if check['protocols']['lava-multinode']['role'] == 'server':
                 self.assertNotIn('tags', check['protocols']['lava-multinode'])
@@ -684,3 +683,34 @@ class TestYamlMultinode(TestCaseWithFactory):
         for job in job_object_list:
             job = TestJob.objects.get(id=job.id)
             self.assertNotEqual(job.sub_id, '')
+
+    def test_mixed_multinode(self):
+        user = self.factory.make_user()
+        device_type = self.factory.make_device_type()
+        self.factory.make_device(device_type, 'fakeqemu1')
+        self.factory.make_device(device_type, 'fakeqemu2')
+        self.factory.make_device(device_type, 'fakeqemu3')
+        self.factory.make_device(device_type, 'fakeqemu4')
+        submission = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'kvm-multinode.yaml'), 'r'))
+        role_list = submission['protocols'][MultinodeProtocol.name]['roles']
+        for role in role_list:
+            if 'tags' in role_list[role]:
+                del role_list[role]['tags']
+        job_list = TestJob.from_yaml_and_user(yaml.dump(submission), user)
+        self.assertEqual(len(job_list), 2)
+        # make the list mixed
+        fakeqemu1 = Device.objects.get(hostname='fakeqemu1')
+        fakeqemu1.is_pipeline = False
+        fakeqemu1.save(update_fields=['is_pipeline'])
+        fakeqemu3 = Device.objects.get(hostname='fakeqemu3')
+        fakeqemu3.is_pipeline = False
+        fakeqemu3.save(update_fields=['is_pipeline'])
+        device_list = Device.objects.filter(device_type=device_type, is_pipeline=True)
+        self.assertEqual(len(device_list), 2)
+        self.assertIsInstance(device_list, RestrictedResourceQuerySet)
+        self.assertIsInstance(list(device_list), list)
+        job_list = TestJob.from_yaml_and_user(yaml.dump(submission), user)
+        self.assertEqual(len(job_list), 2)
+        for job in job_list:
+            self.assertEqual(job.requested_device_type, device_type)
