@@ -41,6 +41,11 @@ if [ -d './dist/' ]; then
 	rm -f ./dist/*
 fi
 python setup.py sdist 2>&1
+if [ ! -e ./dist/${NAME}-${VERSION}.tar.gz ]; then
+	# setuptools/pkg-resources in jessie silently converts + to -
+	# setuptools/pkg-resource in unstable requires + and disallows -
+	VERSION=`echo ${VERSION}| sed -e 's/\([0-9]\)+/\1-/'`
+fi
 DIR=`mktemp -d`
 mkdir ${DIR}/${NAME}-${VERSION}
 mv -v ./dist/${NAME}-${VERSION}.tar.gz ${DIR}/${NAME}_${VERSION}.orig.tar.gz

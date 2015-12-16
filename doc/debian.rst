@@ -1,3 +1,5 @@
+.. index:: developers
+
 .. _lava_on_debian:
 
 Developing LAVA on Debian or Ubuntu
@@ -5,7 +7,7 @@ Developing LAVA on Debian or Ubuntu
 
 Packages for LAVA are available for:
 
-* Debian Jessie (stable)
+* Debian Jessie (stable) - with backports
 * Debian Stretch (testing)
 * Debian Sid (unstable)
 
@@ -26,6 +28,8 @@ the workflow compared to the old lava-deployment-tool buildouts.
    the same changes in a stable environment and re-install. Backports to
    stable in Debian are always built in a stable chroot or VM for this
    reason.
+
+.. index:: developer-builds
 
 .. _dev_builds:
 
@@ -53,6 +57,64 @@ build, ready for use with ``$ sudo dpkg -i``.
           do the packages restart apache, although the ``lava-server``
           service will be restarted each time ``lava-server`` is
           installed or updated.
+
+.. _local_version_strings:
+
+Local version strings
+=====================
+
+The local version is built (using ``./version.py``) from these components:
+
+* package name
+* latest git tag name::
+
+   $ git tag --sort -v:refname|head -n1
+   2015.12
+* incremental revision list count::
+
+   $ git rev-list --count HEAD
+   5451
+* latest git hash::
+
+   $ git rev-parse --short HEAD
+   f9304da
+
+The latest git hash is a reference to the latest commit. If you have
+not committed local changes (e.g. you are on a local branch based on a tag)
+then the short hash can be used to lookup the commit in the master
+branch, e.g.::
+
+  https://git.linaro.org/lava/lava-server.git/f9304da
+
+.. _distribution_differences:
+
+Distribution differences
+========================
+
+LAVA uses a date-based release scheme and PEP440_ imposes constraints
+on how local versions can be named and still work reliably with
+python-setuptools_, yet these constraints differ between jessie and
+unstable::
+
+ jessie:   lava-server-2015.12-5451.f9304da
+ unstable: lava-server-2015.12+5451.f9304da
+
+There are also changes internally in the *egg* information used by
+setuptools when built on jessie and when built on unstable. Binary
+packages built on unstable will fail to install on jessie.
+
+**Always** build packages on the suite you expect to use for
+installation.
+
+Packages available from the :ref:`lava_repositories` are built on
+Jessie (using sbuild) using the
+`lava-buildd scripts <https://git.linaro.org/lava/lava-buildd.git>`_.
+
+.. _pep440: https://www.python.org/dev/peps/pep-0440/
+.. _python-setuptools: http://tracker.debian.org/pkg/python-setuptools
+
+Example
+=======
 
 The helper supports ``lava-server`` and ``lava-dispatcher``::
 

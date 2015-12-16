@@ -36,6 +36,11 @@ python setup.py sdist
 if [ -d .git ]; then
   LOG=`git log -n1 --pretty=format:"Last change %h by %an, %ar. %s%n" --no-merges`
 fi
+if [ ! -e ./dist/${NAME}-${VERSION}.tar.gz ]; then
+	# setuptools/pkg-resources in jessie silently converts + to -
+	# setuptools/pkg-resource in unstable requires + and disallows -
+	VERSION=`echo ${VERSION}| sed -e 's/\([0-9]\)+/\1-/'`
+fi
 DIR=`mktemp -d`
 if [ -f './dist/${NAME}-${VERSION}.tar.gz' ]; then
   mv -v ./dist/${NAME}-${VERSION}.tar.gz ${DIR}/${NAME}_${VERSION}.orig.tar.gz
