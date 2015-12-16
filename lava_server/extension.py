@@ -175,7 +175,7 @@ class HeadlessExtension(ILavaServerExtension):
 class DeprecatedExtension(HeadlessExtension):
     """
     If an extension ever contributed to schema changes in the DB, then we
-    can't just delete it alltogher without causing problems with our
+    can't just delete it altogether without causing problems with our
     django migrations. This is a simple class to keep the extension somewhat
     invisible to the UI, but visible to Django for the DB needs.
     """
