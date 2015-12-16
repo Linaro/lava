@@ -422,8 +422,6 @@ The migration is applied using::
  $ sudo lava-server manage migrate lava_scheduler_app
 
 See `django docs <https://docs.djangoproject.com/en/1.8/topics/migrations/>`_
-and
-`django-south docs <http://south.readthedocs.org/en/latest/tutorial/part1.html>`_
 for more information.
 
 Python 3.x
