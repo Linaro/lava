@@ -1,6 +1,6 @@
-{% extends 'base.yaml' %}
+{% extends 'base.jinja2' %}
 {% block body %}
-device_type: qemu
+device_type: kvm
 
 actions:
   deploy:
@@ -9,9 +9,6 @@ actions:
         parameters:
           root_part: {{ root_part|default(1) }}
   boot:
-    connections:
-      serial:
-      ssh:
     methods:
       qemu:
         parameters:
@@ -36,7 +33,7 @@ actions:
           - -nographic
           - -enable-kvm
           - -cpu host
-          - -net nic,model=virtio,macaddr={{ mac_addr|default('52:54:00:12:34:58') }} -net user
+          - -net nic,model=virtio,macaddr={{ mac_addr|default('52:54:00:12:34:58') }} -net {{ netdevice|default('user') }}
           - -m {{ memory|default(512) }}
 {% endblock %}
 {% endblock %}

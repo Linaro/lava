@@ -323,9 +323,9 @@ Pipeline Device Configuration
 
 Device configuration is a combination of the :term:`device dictionary`
 and the :term:`device type` template. A sample :term:`device
-dictionary` (jinja syntax) for nexus 10 will look like the following::
+dictionary` (jinja2 child template syntax) for nexus 10 will look like the following::
 
- {% extends 'nexus10.yaml' %}
+ {% extends 'nexus10.jinja2' %}
  {% set serial_number = 'R32D300FRYP' %}
  {% set connection_command = 'adb -s R32D300FRYP shell' %}
  {% set soft_reboot_command = 'adb -s R32D300FRYP reboot bootloader' %}
@@ -333,7 +333,7 @@ dictionary` (jinja syntax) for nexus 10 will look like the following::
 The corresponding :term:`device type` template for nexus 10 is as
 follows::
 
- {% extends 'base.yaml' %}
+ {% extends 'base.jinja2' %}
  {% block body %}
  device_type: nexus10
  serial_number: {{ serial_number|default('0000000000') }}
@@ -354,7 +354,7 @@ follows::
 
  {% endblock %}
 
-The :term:`device type` template extends `base.yaml` which is the base
+The :term:`device type` template extends `base.jinja2` which is the base
 template used by all devices and has logic to replace some of the
 values provided in the :term:`device dictionary`. For example, the
 following lines within `base.yaml` will add connection command to the

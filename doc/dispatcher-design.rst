@@ -1733,10 +1733,11 @@ Exporting an existing device dictionary
 ---------------------------------------
 
 If the local instance has a working pipeline device called ``mypanda``,
-the device dictionary can be exported::
+the device dictionary can be exported as a `Jinja2 child template`_
+which *extends* a device type jinja template::
 
  $ sudo lava-server manage device-dictionary --hostname mypanda --export
- {% extends 'panda.yaml' %}
+ {% extends 'panda.jinja2' %}
  {% set power_off_command = '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command off --port 08' %}
  {% set hard_reset_command = '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command reboot --port 08' %}
  {% set connection_command = 'telnet droopy 4001' %}
@@ -1745,6 +1746,8 @@ the device dictionary can be exported::
 This dictionary declares that the device inherits the rest of the device
 configuration from the ``panda`` device type. Settings specific to this
 one device are then specified.
+
+.. _Jinja2 child template: http://jinja.pocoo.org/docs/dev/templates/#child-template
 
 Reviewing an existing device dictionary
 ---------------------------------------

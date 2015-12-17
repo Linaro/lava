@@ -1,0 +1,5 @@
+Placeholder for device type templates
+
+The device-type templates are developed in 
+lava_scheduler_app/tests/device-types
+and installed into etc/ for release.

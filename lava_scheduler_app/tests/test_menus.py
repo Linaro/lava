@@ -14,7 +14,7 @@ class YamlMenuFactory(YamlFactory):
 
     def make_fake_mustang_device(self, hostname='fakemustang1'):  # pylint: disable=no-self-use
         mustang = DeviceDictionary(hostname=hostname)
-        mustang.parameters = {'extends': 'mustang-uefi.yaml'}
+        mustang.parameters = {'extends': 'mustang-uefi.jinja2'}
         mustang.save()
         return hostname
 
@@ -36,7 +36,7 @@ class TestPipelineMenu(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
         self.jinja_path = jinja_template_path(system=False)
         self.device_type = self.factory.make_device_type(name='mustang-uefi')
         self.conf = {
-            'extends': 'mustang-uefi.yaml',
+            'extends': 'mustang-uefi.jinja2',
             'tftp_mac': '52:54:00:12:34:59',
         }
 

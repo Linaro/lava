@@ -18,9 +18,37 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import glob
+import fnmatch
 from setuptools import setup, find_packages
 from version import version_tag
 
+
+# based on https://wiki.python.org/moin/Distutils/Tutorial
+def find_data_files(srcdir, *wildcards):
+    badnames = [".pyc", "~"]
+
+    def walk_helper(arg, dirname, files):
+        names = []
+        lst, wilds = arg
+        for wcard in wilds:
+            wc_name = os.path.normpath(os.path.join(dirname, wcard))
+            for listed in files:
+                filename = os.path.normpath(os.path.join(dirname, listed))
+                if not any(bad in filename for bad in badnames):
+                    if fnmatch.fnmatch(filename, wc_name) and not os.path.isdir(filename):
+                        names.append(filename)
+        if names:
+            lst.append(('/etc/lava-server/dispatcher-config/device-types', names))
+    file_list = []
+    walk_helper(
+        (file_list, wildcards), srcdir,
+        [os.path.basename(f) for f in glob.glob(os.path.normpath(os.path.join(srcdir, '*')))])
+    return file_list
+
+SRCDIR = os.path.join('.', 'lava_scheduler_app', 'tests', 'device-types')
+DEVICE_TYPE_TEMPLATES = find_data_files(SRCDIR, '*.jinja2')
 
 setup(
     name='lava-server',
@@ -98,7 +126,7 @@ setup(
          ['share/add_device.py',
           'etc/lava-master.service',
           'share/render-template.py']),
-    ],
+    ].extend(DEVICE_TYPE_TEMPLATES),
     scripts=[
         'lava_server/lava-daemon',
         'lava_server/lava-master',

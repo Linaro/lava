@@ -11,6 +11,7 @@ from lava_scheduler_app.utils import (
     devicedictionary_to_jinja2,
     jinja2_to_devicedictionary,
     prepare_jinja_template,
+    jinja_template_path,
 )
 from lava_scheduler_app.schema import validate_device
 from django_testscenarios.ubertest import TestCase
@@ -183,8 +184,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         self.assertIsNone(baz)
 
     def test_jinja_string_templates(self):
-        jinja2_path = os.path.realpath(os.path.join(
-            __file__, '..', '..', '..', 'etc', 'dispatcher-config'))
+        jinja2_path = jinja_template_path(system=False)
         self.assertTrue(os.path.exists(jinja2_path))
         device_dictionary = {
             'usb_label': 'SanDisk_Ultra',
@@ -195,7 +195,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
             'console_device': 'ttyfake1',
             'baud_rate': 56
         }
-        data = devicedictionary_to_jinja2(device_dictionary, 'cubietruck.yaml')
+        data = devicedictionary_to_jinja2(device_dictionary, 'cubietruck.jinja2')
         template = prepare_jinja_template('cubie', data, system_path=False, path=jinja2_path)
         device_configuration = template.render()
         yaml_data = yaml.load(device_configuration)
@@ -231,7 +231,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
             }
         )
 
-        data = devicedictionary_to_jinja2(device_dictionary, 'beaglebone-black.yaml')
+        data = devicedictionary_to_jinja2(device_dictionary, 'beaglebone-black.jinja2')
         template = prepare_jinja_template('bbb', data, system_path=False, path=jinja2_path)
         device_configuration = template.render()
         yaml_data = yaml.load(device_configuration)
@@ -246,7 +246,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
 
     def test_jinja_postgres_loader(self):
         # path used for the device_type template
-        jinja2_path = os.path.realpath(os.path.join(__file__, '..', '..', '..', 'etc', 'dispatcher-config'))
+        jinja2_path = jinja_template_path(system=False)
         self.assertTrue(os.path.exists(jinja2_path))
         device_type = 'cubietruck'
         # pretend this was already imported into the database and use for comparison later.
@@ -262,13 +262,13 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         cubie = DeviceDictionary(hostname='cubie')
         cubie.parameters = device_dictionary
         cubie.save()
-        jinja_data = devicedictionary_to_jinja2(cubie.parameters, '%s.yaml' % device_type)
-        dict_loader = jinja2.DictLoader({'cubie.yaml': jinja_data})
+        jinja_data = devicedictionary_to_jinja2(cubie.parameters, '%s.jinja2' % device_type)
+        dict_loader = jinja2.DictLoader({'cubie.jinja2': jinja_data})
         type_loader = jinja2.FileSystemLoader([os.path.join(jinja2_path, 'device-types')])
         env = jinja2.Environment(
             loader=jinja2.ChoiceLoader([dict_loader, type_loader]),
             trim_blocks=True)
-        template = env.get_template("%s.yaml" % 'cubie')
+        template = env.get_template("%s.jinja2" % 'cubie')
         device_configuration = template.render()
 
         chk_template = prepare_jinja_template('cubie', jinja_data, system_path=False, path=jinja2_path)
@@ -308,7 +308,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         The strings read in from config files can have indenting spaces, these
         are removed in the pprint.
         """
-        data = """{% extends 'vland.yaml' %}
+        data = """{% extends 'vland.jinja2' %}
 {% set interfaces = ['eth0', 'eth1'] %}
 {% set sysfs = {'eth0': '/sys/devices/pci0000:00/0000:00:19.0/net/eth0',
 'eth1': '/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1'} %}
@@ -321,7 +321,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
                 'eth1': '/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1',
                 'eth0': '/sys/devices/pci0000:00/0000:00:19.0/net/eth0'
             },
-            'extends': 'vland.yaml',
+            'extends': 'vland.jinja2',
             'mac_addr': {
                 'eth1': '00:24:d7:9b:c0:8c',
                 'eth0': 'f0:de:f1:46:8c:21'
@@ -333,7 +333,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         }
         dictionary = jinja2_to_devicedictionary(data_dict=data)
         self.assertEqual(result, dictionary)
-        jinja2_str = devicedictionary_to_jinja2(data_dict=dictionary, extends='vland.yaml')
+        jinja2_str = devicedictionary_to_jinja2(data_dict=dictionary, extends='vland.jinja2')
         self.assertEqual(str(data), str(jinja2_str))
 
         # create a DeviceDictionary for this test
@@ -344,7 +344,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         vlan = DeviceDictionary.get('vlanned1')
         self.assertEqual(
             str(data),
-            str(devicedictionary_to_jinja2(vlan.parameters, 'vland.yaml'))
+            str(devicedictionary_to_jinja2(vlan.parameters, 'vland.jinja2'))
         )
 
 

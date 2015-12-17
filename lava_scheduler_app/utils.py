@@ -560,21 +560,21 @@ def jinja_template_path(system=True):
     path = '/etc/lava-server/dispatcher-config/'
     if os.path.exists(path) and system:
         return path
-    path = os.path.realpath(os.path.join(os.path.dirname(__file__), '../etc/dispatcher-config/'))
+    path = os.path.realpath(os.path.join(os.path.dirname(__file__), 'tests'))
     if not os.path.exists(path):
         raise RuntimeError("Misconfiguration of jinja templates")
     return path
 
 
 def prepare_jinja_template(hostname, jinja_data, system_path=True, path=None):
-    string_loader = jinja2.DictLoader({'%s.yaml' % hostname: jinja_data})
+    string_loader = jinja2.DictLoader({'%s.jinja2' % hostname: jinja_data})
     if not path:
         path = jinja_template_path(system=system_path)
     type_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
     env = jinja2.Environment(
         loader=jinja2.ChoiceLoader([string_loader, type_loader]),
         trim_blocks=True)
-    return env.get_template("%s.yaml" % hostname)
+    return env.get_template("%s.jinja2" % hostname)
 
 
 def folded_logs(job, section_name, sections, summary=False, increment=False):

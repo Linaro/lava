@@ -36,7 +36,7 @@ class YamlFactory(ModelFactory):
 
     def make_fake_qemu_device(self, hostname='fakeqemu1'):  # pylint: disable=no-self-use
         qemu = DeviceDictionary(hostname=hostname)
-        qemu.parameters = {'extends': 'qemu.yaml', 'arch': 'amd64'}
+        qemu.parameters = {'extends': 'qemu.jinja2', 'arch': 'amd64'}
         qemu.save()
 
     def make_device_type(self, name='qemu', health_check_job=None):
@@ -89,7 +89,7 @@ class PipelineDeviceTags(TestCaseWithFactory):
         self.device_type = self.factory.make_device_type()
         self.conf = {
             'arch': 'amd64',
-            'extends': 'qemu.yaml',
+            'extends': 'qemu.jinja2',
             'mac_addr': '52:54:00:12:34:59',
             'memory': '256',
         }
@@ -222,7 +222,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         job_def = yaml.load(job.definition)
         job_ctx = job_def.get('context', {})
         device = Device.objects.get(hostname='fakeqemu1')
-        device_config = device.load_device_configuration(job_ctx)  # raw dict
+        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
         del device_config['device_type']
         parser = JobParser()
         obj = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
@@ -259,7 +259,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
             self.factory.make_job_json(), user)
         job_def = yaml.load(job.definition)
         job_ctx = job_def.get('context', {})
-        device_config = device.load_device_configuration(job_ctx)  # raw dict
+        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
         self.assertEqual(
             device_config['actions']['boot']['methods']['qemu']['parameters']['command'],
             'qemu-system-x86_64'
@@ -270,7 +270,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.factory.make_device(device_type=mustang_type, hostname=hostname)
         mustang = DeviceDictionary(hostname=hostname)
         mustang.parameters = {
-            'extends': 'mustang-uefi.yaml',
+            'extends': 'mustang-uefi.jinja2',
             'base_nfsroot_args': '10.16.56.2:/home/lava/debian/nfs/,tcp,hard,intr',
             'console_device': 'ttyO0',  # takes precedence over the job context as the same var name is used.
         }
@@ -370,7 +370,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         device = job.actual_device
 
         try:
-            device_config = device.load_device_configuration(job_ctx)  # raw dict
+            device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
         except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
             # FIXME: report the exceptions as useful user messages
             self.fail("[%d] jinja2 error: %s" % (job.id, exc))
@@ -653,7 +653,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                 device = job.actual_device
 
                 try:
-                    device_config = device.load_device_configuration(job_ctx)  # raw dict
+                    device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
                 except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
                     # FIXME: report the exceptions as useful user messages
                     self.fail("[%d] jinja2 error: %s" % (job.id, exc))
