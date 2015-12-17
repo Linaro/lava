@@ -55,7 +55,7 @@ from lava_results_app.views.query.views import (
 )
 
 urlpatterns = [
-    url(r'^$', index, name='lava.results'),
+    url(r'^$', index, name='lava_results'),
     url(r'^query$', query_list, name='lava.results.query_list'),
     url(r'^query/\+add$', query_add, name='lava.results.query_add'),
     url(r'^query/\+custom$', query_custom, name='lava.results.query_custom'),

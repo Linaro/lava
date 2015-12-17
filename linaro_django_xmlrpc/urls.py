@@ -39,7 +39,7 @@ default_mapper_urlpatterns = [
         })]
 
 token_urlpatterns = [
-    url(r'^tokens/$', tokens),
+    url(r'^tokens/$', tokens, name='linaro_django_xmlrpc_tokens'),
     url(r'^tokens/create/$', create_token),
     url(r'^tokens/(?P<object_id>\d+)/delete/$', delete_token),
     url(r'^tokens/(?P<object_id>\d+)/edit/$', edit_token)]

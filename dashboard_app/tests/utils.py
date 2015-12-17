@@ -5,7 +5,6 @@ import xmlrpclib
 
 from django.conf import settings
 from django.contrib.auth import login
-from django.core.urlresolvers import reverse
 from django.http import HttpRequest
 from django.test.client import Client
 from importlib import import_module

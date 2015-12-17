@@ -9,9 +9,9 @@
 
 <div class="modal-header">
   <ul class="nav nav-pills">
-    <li><a href="{% url 'dashboard_app.views.bundle_list' bundle_stream.pathname %}"
+    <li><a href="{% url 'lava_dashboard_bundle_list' bundle_stream.pathname %}"
         class="btn btn-default btn-sm">{% trans "Bundles" %}</a></li>
-    <li><a href="{% url 'dashboard_app.views.test_run_list' bundle_stream.pathname %}"
+    <li><a href="{% url 'lava_dashboard_test_run_list' bundle_stream.pathname %}"
         class="btn btn-primary btn-sm">{% trans "Test Runs" %}</a></li>
   </ul>
 </div>

@@ -49,7 +49,7 @@ class ResultsExtension(LavaServerExtension):
         from django.core.urlresolvers import reverse
         menu = super(ResultsExtension, self).get_menu()
         menu.sub_menu = [
-            Menu("Results", reverse("lava.results")),
+            Menu("Results", reverse("lava_results")),
             Menu("Queries", reverse("lava.results.query_list"))
         ]
         return menu

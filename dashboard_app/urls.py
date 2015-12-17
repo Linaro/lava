@@ -18,6 +18,15 @@
 
 """
 URL mappings for the Dashboard application
+
+https://docs.djangoproject.com/en/1.8/topics/http/urls/#naming-url-patterns
+https://docs.djangoproject.com/en/1.8/releases/1.8/#passing-a-dotted-path-to-reverse-and-url
+
+Avoid letting the name attribute of a url look like a python path - use underscore
+instead of period. The name is just a label, using it as a path is deprecated and
+support will be removed in Django1.10. Equally, always provide a name if the URL
+needs to be reversed elsewhere in the code, e.g. the view. (Best practice is to
+use a name for all new urls, even if not yet used elsewhere.)
 """
 from django.conf.urls import *
 from dashboard_app.views import (
@@ -109,8 +118,8 @@ from dashboard_app.views import (
 
 
 urlpatterns = [
-    url(r'^$', index, name='lava.dashboard'),
-    url(r'^filters/$', filters_list, name='lava.dashboard.filters_list'),
+    url(r'^$', index, name='lava_dashboard'),
+    url(r'^filters/$', filters_list, name='lava_dashboard_filters_list'),
     url(r'^filters/filters_names_json$', filter_name_list_json, name='filter_name_list_json'),
     url(r'^filters/\+add$', filter_add),
     url(r'^filters/\+add-cases-for-test-json$', filter_add_cases_for_test_json),
@@ -125,25 +134,28 @@ urlpatterns = [
     url(r'^filters/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+delete$', filter_delete),
     url(r'^filters/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+compare/(?P<tag1>[a-zA-Z0-9-_: .+]+)/(?P<tag2>[a-zA-Z0-9-_: .+]+)$',
         compare_matches),
-    url(r'^my-subscriptions$', my_subscriptions, name='lava.dashboard.my_subscriptions'),
-    url(r'^streams/$', bundle_stream_list, name="lava.dashboard.bundle.list"),
-    url(r'^streams/mybundlestreams$', mybundlestreams),
+    url(r'^my-subscriptions$', my_subscriptions, name='lava_dashboard_my_subscriptions'),
+    url(r'^streams/$', bundle_stream_list, name="lava_dashboard_bundle_stream_list"),
+    url(r'^streams/mybundlestreams$', mybundlestreams, name='lava_dashboard_mybundlestreams'),
     url(r'^streams/bundlestreams-json$', bundlestreams_json),
-    url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/$', bundle_list),
-    url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/+export$', bundle_list_export),
-    url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/$', bundle_detail),
-    url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/+export$', bundle_export),
+    url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/$', bundle_list, name='lava_dashboard_bundle_list'),
+    url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/+export$', bundle_list_export,
+        name='lava_dashboard_bundle_list_export'),
+    url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/$', bundle_detail,
+        name='lava_dashboard_bundle_detail'),
+    url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/+export$', bundle_export,
+        name='lava_dashboard_bundle_export'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/json$', bundle_json),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/$',
-        test_run_detail),
+        test_run_detail, name='lava_dashboard_test_run_detail'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/+export$',
-        test_run_export),
+        test_run_export, name='lava_dashboard_test_run_export'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/\+update-testrun-attribute$',
         test_run_update_attribute),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/\+remove-testrun-attribute$',
         test_run_remove_attribute),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/result/(?P<relative_index>[0-9]+)/$',
-        test_result_detail),
+        test_result_detail, name='lava_dashboard_test_result_detail'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/result/(?P<relative_index>[0-9]+)/\+update-comments$',
         test_result_update_comments),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/result/(?P<relative_index>[0-9]+)/\+update-units$',
@@ -153,24 +165,28 @@ urlpatterns = [
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/result/(?P<relative_index>[0-9]+)/\+remove-result-attribute$',
         test_result_remove_attribute),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/hardware-context/$',
-        test_run_hardware_context),
+        test_run_hardware_context, name='lava_dashboard_test_run_hardware_context'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/software-context/$',
-        test_run_software_context),
-    url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)test-runs/$', test_run_list),
+        test_run_software_context, name='lava_dashboard_test_run_software_context'),
+    url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)test-runs/$', test_run_list, name='lava_dashboard_test_run_list'),
     url(r'^attachment/(?P<pk>\d+)/download$', attachment_download),
     url(r'^attachment/(?P<pk>\d+)/view$', attachment_view),
-    url(r'^permalink/test-run/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/$', redirect_to_test_run),
-    url(r'^permalink/test-run/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/(?P<trailing>.*)$', redirect_to_test_run),
+    url(r'^permalink/test-run/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/$', redirect_to_test_run,
+        name='lava_dashboard_redirect_to_test_run'),
+    url(r'^permalink/test-run/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/(?P<trailing>.*)$', redirect_to_test_run,
+        name='lava_dashboard_redirect_to_test_run_trailing'),
     url(r'^permalink/test-result/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/(?P<relative_index>\d+)/$',
-        redirect_to_test_result),
+        redirect_to_test_result, name='lava_dashboard_redirect_to_test_result'),
     url(r'^permalink/test-result/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/(?P<relative_index>\d+)/(?P<trailing>.*)$',
-        redirect_to_test_result),
-    url(r'^permalink/bundle/(?P<content_sha1>[0-9a-z]+)/$', redirect_to_bundle),
-    url(r'^permalink/bundle/(?P<content_sha1>[0-9a-z]+)/(?P<trailing>.*)$', redirect_to_bundle),
-    url(r'^image-reports/$', images_report_list, name='lava.dashboard.image.report_list'),
+        redirect_to_test_result, name='lava_dashboard_redirect_to_test_result_trailing'),
+    url(r'^permalink/bundle/(?P<content_sha1>[0-9a-z]+)/$', redirect_to_bundle,
+        name='lava_dashboard_redirect_to_bundle'),
+    url(r'^permalink/bundle/(?P<content_sha1>[0-9a-z]+)/(?P<trailing>.*)$', redirect_to_bundle,
+        name='lava_dashboard_redirect_to_bundle_trailing'),
+    url(r'^image-reports/$', images_report_list, name='lava_dashboard_image_report_list'),
     url(r'^image-reports/(?P<name>[A-Za-z0-9_-]+)$', images_report_detail),
     url(r'^image-charts/$', image_report_list,
-        name='lava.dashboard.image_report.report_list'),
+        name='lava_dashboard_image_report_report_list'),
     url(r'^image-charts/get-report-groups$', image_report_group_list,
         name='image_report_group_list'),
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)$', image_report_display),
@@ -200,8 +216,10 @@ urlpatterns = [
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/(?P<slug>\d+)$', image_chart_filter_detail),
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/(?P<slug>\d+)/\+edit$', image_chart_filter_edit),
     url(r'^image-charts/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/(?P<slug>\d+)/\+delete$', image_chart_filter_delete),
-    url(r'^api/link-bug-to-testrun', link_bug_to_testrun),
-    url(r'^api/unlink-bug-and-testrun', unlink_bug_and_testrun),
-    url(r'^api/link-bug-to-testresult', link_bug_to_testresult),
-    url(r'^api/unlink-bug-and-testresult', unlink_bug_and_testresult),
+    url(r'^api/link-bug-to-testrun', link_bug_to_testrun, name='lava_dashboard_link_bug_to_testrun'),
+    url(r'^api/unlink-bug-and-testrun', unlink_bug_and_testrun, name='lava_dashboard_unlink_bug_and_testrun'),
+    url(r'^api/link-bug-to-testresult', link_bug_to_testresult,
+        name='lava_dashboard_link_bug_to_testresult'),
+    url(r'^api/unlink-bug-and-testresult', unlink_bug_and_testresult,
+        name='lava_dashboard_unlink_bug_and_testresult'),
 ]

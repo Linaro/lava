@@ -238,8 +238,8 @@ RESTRUCTUREDTEXT_FILTER_SETTINGS = {"initial_header_level": 4}
 GOOGLE_ANALYTICS_MODEL = True
 
 ME_PAGE_ACTIONS = [
-    ("django.contrib.auth.views.password_change", "Change your password"),
-    ("django.contrib.auth.views.logout", "Sign out"),
+    ("password_change", "Change your password"),
+    ("logout", "Sign out"),
 ]
 
 ALLOWED_HOSTS = ['*']

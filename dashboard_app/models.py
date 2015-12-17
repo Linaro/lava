@@ -219,7 +219,7 @@ class BundleStream(RestrictedResource):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.views.bundle_list", [self.pathname])
+        return ("lava_dashboard_bundle_list", [self.pathname])
 
     def get_test_run_count(self):
         return TestRun.objects.filter(bundle__bundle_stream=self).count()
@@ -536,10 +536,10 @@ class Bundle(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.views.bundle_detail", [self.bundle_stream.pathname, self.content_sha1])
+        return ("lava_dashboard_bundle_detail", [self.bundle_stream.pathname, self.content_sha1])
 
     def get_permalink(self):
-        return reverse("dashboard_app.views.redirect_to_bundle", args=[self.content_sha1])
+        return reverse("lava_dashboard_redirect_to_bundle", args=[self.content_sha1])
 
     def save(self, *args, **kwargs):
         if not self.is_deserialized:
@@ -1037,13 +1037,13 @@ class TestRun(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.views.test_run_detail",
+        return ("lava_dashboard_test_run_detail",
                 [self.bundle.bundle_stream.pathname,
                  self.bundle.content_sha1,
                  self.analyzer_assigned_uuid])
 
     def get_permalink(self):
-        return reverse("dashboard_app.views.redirect_to_test_run", args=[self.analyzer_assigned_uuid])
+        return reverse("lava_dashboard_redirect_to_test_run", args=[self.analyzer_assigned_uuid])
 
     def get_board(self):
         """
@@ -1377,7 +1377,7 @@ class TestResult(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.views.test_result_detail", [
+        return ("lava_dashboard_test_result_detail", [
             self.test_run.bundle.bundle_stream.pathname,
             self.test_run.bundle.content_sha1,
             self.test_run.analyzer_assigned_uuid,
@@ -1385,7 +1385,7 @@ class TestResult(models.Model):
         ])
 
     def get_permalink(self):
-        return reverse("dashboard_app.views.redirect_to_test_result",
+        return reverse("lava_dashboard_redirect_to_test_result",
                        args=[self.test_run.analyzer_assigned_uuid,
                              self.relative_index])
 

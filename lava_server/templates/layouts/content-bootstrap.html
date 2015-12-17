@@ -33,17 +33,17 @@
           <li class="dropdown">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-dashboard"></span> Dashboard <b class="caret"></b></a>
             <ul class="dropdown-menu">
-              <li><a href="{% url 'lava.dashboard.image.report_list' %}">Image Reports</a></li>
-              <li><a href="{% url 'lava.dashboard.image_report.report_list' %}">Image Reports 2.0</a></li>
-              <li><a href="{% url 'lava.dashboard.filters_list' %}">Filters</a></li>
-              <li><a href="{% url 'lava.dashboard.bundle.list' %}">Bundle Streams</a></li>
+              <li><a href="{% url 'lava_dashboard_image_report_list' %}">Image Reports</a></li>
+              <li><a href="{% url 'lava_dashboard_image_report_report_list' %}">Image Reports 2.0</a></li>
+              <li><a href="{% url 'lava_dashboard_filters_list' %}">Filters</a></li>
+              <li><a href="{% url 'lava_dashboard_bundle_stream_list' %}">Bundle Streams</a></li>
             </ul>
           </li>
 {% if 'PIPELINE'|get_settings %}
           <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-signal"></span> Results <b class="caret"></b></a>
             <ul class="dropdown-menu">
-              <li><a href="{% url 'lava.results' %}">Results</a></li>
+              <li><a href="{% url 'lava_results' %}">Results</a></li>
               <li><a href="{% url 'lava.results.query_list' %}">Queries</a></li>
             </ul>
           </li>
@@ -71,7 +71,7 @@
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-flash"></span> API <b class="caret"></b></a>
             <ul class="dropdown-menu">
               <li><a href="{% url 'lava.api_help' %}">Available Methods</a></li>
-              <li><a href="{% url 'linaro_django_xmlrpc.views.tokens' %}">Authentication Tokens</a></li>
+              <li><a href="{% url 'linaro_django_xmlrpc_tokens' %}">Authentication Tokens</a></li>
             </ul>
           </li>
           <li><a href="{{ STATIC_URL }}docs/"><span class="glyphicon glyphicon-question-sign"></span> Help</a></li>
@@ -87,24 +87,24 @@
               <li><a href="{% url 'lava.me' %}"><span class="glyphicon glyphicon-cog"></span> Profile</a></li>
               <li><a href="{% url 'lava.scheduler.myjobs' %}"><span class="glyphicon glyphicon-tasks"></span> Jobs</a></li>
               <li><a href="{% url 'lava.scheduler.favorite_jobs' %}"><span class="glyphicon glyphicon-tasks"></span> Favorite Jobs</a></li>
-              <li><a href="{% url 'dashboard_app.views.mybundlestreams' %}"><span class="glyphicon glyphicon-folder-open"></span> Bundle streams</a></li>
+              <li><a href="{% url 'lava_dashboard_mybundlestreams' %}"><span class="glyphicon glyphicon-folder-open"></span> Bundle streams</a></li>
               <li><a href="{% url 'lava.scheduler.mydevice_list' %}"><span class="glyphicon glyphicon-phone"></span> Devices</a></li>
               <li><a href="{% url 'lava.scheduler.mydevice_type_health_history_log' %}"><span class="glyphicon glyphicon-time"></span> Devices Health History</a></li>
-              <li><a href="{% url 'dashboard_app.views.my_subscriptions' %}"><span class="glyphicon glyphicon-pencil"></span> Subscriptions</a></li>
+              <li><a href="{% url 'lava_dashboard_my_subscriptions' %}"><span class="glyphicon glyphicon-pencil"></span> Subscriptions</a></li>
               {% if user.is_staff %}
               <li class="divider"></li>
               <li><a href="{% url 'admin:index' %}"><span class="glyphicon glyphicon-fire"></span> Administration</a></li>
               {% endif %}
               <li class="divider"></li>
-              <li><a href="{% url 'django.contrib.auth.views.logout' %}?next={% url 'lava.home' %}"><span class="glyphicon glyphicon-off"></span> Sign out</a></li>
+              <li><a href="{% url 'logout' %}?next={% url 'lava.home' %}"><span class="glyphicon glyphicon-off"></span> Sign out</a></li>
             </ul>
           </li>
           {% else %}
           <li><p class="navbar-text">
           {% if request.get_full_path == "/accounts/logout/" %}
-            <a href="{% url 'django.contrib.auth.views.login' %}">{% trans "Sign In" %}</a>
+            <a href="{% url 'login' %}">{% trans "Sign In" %}</a>
            {% else %}
-            <a href="{% url 'django.contrib.auth.views.login' %}?next={{request.get_full_path}}">{% trans "Sign In" %}</a>
+            <a href="{% url 'login' %}?next={{request.get_full_path}}">{% trans "Sign In" %}</a>
            {% endif %}
           </p></li>
           {% endif %}

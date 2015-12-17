@@ -182,7 +182,7 @@ def create_token(request):
             form.instance.user = request.user
             form.instance.save()
             return HttpResponseRedirect(
-                reverse("linaro_django_xmlrpc.views.tokens"))
+                reverse("linaro_django_xmlrpc_tokens"))
     else:
         form = AuthTokenForm()
     return render_to_response(
@@ -199,7 +199,7 @@ def delete_token(request, object_id):
     if request.method == 'POST':
         token.delete()
         return HttpResponseRedirect(
-            reverse("linaro_django_xmlrpc.views.tokens"))
+            reverse("linaro_django_xmlrpc_tokens"))
     return render_to_response(
         "linaro_django_xmlrpc/authtoken_confirm_delete.html",
         {
@@ -216,7 +216,7 @@ def edit_token(request, object_id):
         if form.is_valid():
             form.save()
             return HttpResponseRedirect(
-                reverse("linaro_django_xmlrpc.views.tokens"))
+                reverse("linaro_django_xmlrpc_tokens"))
     else:
         form = AuthTokenForm(instance=token)
     return render_to_response(
