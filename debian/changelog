@@ -1,3 +1,11 @@
+lava-server (2015.12-3) unstable; urgency=medium
+
+  * Conflict with python-django-auth-openid as 
+    python-django-auth-openid cannot support django1.9 which
+    is now in unstable and testing. (Closes: #808313)
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 18 Dec 2015 20:09:33 +0000
+
 lava-server (2015.12-2) unstable; urgency=medium
 
   * Add extra autopkgtest dependency: python-tz

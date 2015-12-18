@@ -23,7 +23,8 @@ Package: lava-server
 Architecture: all
 Provides: lava-scheduler, lava-dashboard, linaro-django-xmlrpc
 Conflicts: lava-scheduler, lava-dashboard, linaro-django-xmlrpc,
- python-django-hijack (<= 1.0.10-1), python-django (<< 1.7)
+ python-django-hijack (<= 1.0.10-1), python-django (<< 1.7),
+ python-django-auth-openid
 Replaces: lava-scheduler, lava-dashboard, linaro-django-xmlrpc
 Depends: apache2, adduser, diffstat, fuse, iproute2,
  libapache2-mod-uwsgi, libapache2-mod-wsgi, lshw, python-tz,
@@ -34,7 +35,7 @@ Depends: apache2, adduser, diffstat, fuse, iproute2,
  postgresql, postgresql-client, postgresql-common,
  ${python:Depends}, ${misc:Depends}
 Recommends: ntp, lava-coordinator, lava-server-doc
-Suggests: python-django-auth-openid, python-django-hijack
+Suggests: python-django-hijack
 Description: Linaro Automated Validation Architecture server
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
