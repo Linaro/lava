@@ -31,6 +31,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.logical import AdjuvantAction
 from lava_dispatcher.pipeline.utils.constants import SHUTDOWN_MESSAGE
+from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 
 
 class ResetDevice(Action):
@@ -148,6 +149,62 @@ class PowerOn(Action):
             if not self.run_command(command.split(' ')):
                 raise InfrastructureError("%s command failed" % command)
             self.job.device.power_state = 'on'
+        return connection
+
+
+# FIXME: Unused action, but can give fine grained control.
+class LxcStop(Action):
+    """
+    Stops the lxc container at the end of a job
+    """
+    def __init__(self):
+        super(LxcStop, self).__init__()
+        self.name = "lxc_stop"
+        self.summary = "send stop command"
+        self.description = "stop the lxc container"
+
+    def validate(self):
+        super(LxcStop, self).validate()
+        self.errors = infrastructure_error('lxc-stop')
+
+    def run(self, connection, args=None):
+        connection = super(LxcStop, self).run(connection, args)
+        lxc_name = self.get_common_data('lxc', 'name')
+        if not lxc_name:
+            return connection
+        lxc_cmd = ['lxc-stop', '-n', lxc_name, '-k']
+        command_output = self.run_command(lxc_cmd)
+        if command_output and command_output is not '':
+            raise JobError("Unable to stop lxc container: %s" %
+                           command_output)  # FIXME: JobError needs a unit test
+        return connection
+
+
+# FIXME: Unused action, but can give fine grained control.
+class LxcDestroy(Action):
+    """
+    Destroys the lxc container at the end of a job
+    """
+    def __init__(self):
+        super(LxcDestroy, self).__init__()
+        self.name = "lxc_destroy"
+        self.summary = "send destroy command"
+        self.description = "destroy the lxc container"
+
+    def validate(self):
+        super(LxcDestroy, self).validate()
+        self.errors = infrastructure_error('lxc-destroy')
+
+    def run(self, connection, args=None):
+        connection = super(LxcDestroy, self).run(connection, args)
+        lxc_name = self.get_common_data('lxc', 'name')
+        if not lxc_name:
+            return connection
+        lxc_cmd = ['lxc-destroy', '-n', lxc_name]
+        command_output = self.run_command(lxc_cmd)
+        if command_output and command_output is not '':
+            raise JobError("Unable to destroy lxc container: %s" %
+                           command_output)  # FIXME: JobError needs a unit test
         return connection
 
 
