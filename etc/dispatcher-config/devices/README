@@ -1,9 +1,6 @@
 Placeholder for the per-instance device files
 
-This directory can be used for local changes to
-the device dictionary but note that files placed
-here need to be imported into the database using
-lava-server device-dictionary ... or 
-lava-tool device-dictionary ... support to become
-available to test jobs.
-
+This directory can be used for local changes to the device dictionary
+but note that files placed here need to be imported into the database
+using lava-server device-dictionary ... or lava-tool device-dictionary
+... support to become available to test jobs.
