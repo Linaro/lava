@@ -92,6 +92,7 @@ debian:
     destination: lava_results_app/static/lava_results_app/js/
     files:
       query.js: query.min.js
+      chart.js: chart.min.js
   - uglify:
     lava_directory: lava_markitup/static/lava_markitup/
     destination: lava_markitup/static/lava_markitup/

@@ -1,0 +1,49 @@
+{% extends "layouts/content-bootstrap.html" %}
+
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_results_app/css/chart.css"/>
+{% endblock %}
+
+{% block content %}
+{% if form.instance.id %}
+<h1>Edit chart &ldquo;{{ form.instance.name }}&rdquo;…</h1>
+{% else %}
+<h1>Add new chart…</h1>
+{% endif %}
+
+{% block content_form %}
+<form action="" method="post">{% csrf_token %}
+
+  {% if form.errors %}
+  <div class="errors">
+    <div>
+      {{ form.non_field_errors }}
+      <ul>
+	{% for field in form %}
+	{% if field.errors %}
+        <li>{{ field.label }}: {{ field.errors|striptags }}</li>
+        {% endif %}
+	{% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+
+<div class="form-field">
+  {{ form.name.label_tag }}
+  {{ form.name }}
+  {{ form.owner }}
+</div>
+<div class="form-field">
+  {{ form.description.label_tag }}
+  {{ form.description }}
+</div>
+
+<div class="submit-button">
+  <input type="submit" value="Save" />
+</div>
+</form>
+
+{% endblock content_form %}
+
+{% endblock %}

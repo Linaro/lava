@@ -1,0 +1,38 @@
+{% extends "layouts/content-bootstrap.html" %}
+{% load i18n %}
+{% load django_tables2 %}
+
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_results_app/css/chart.css"/>
+{% endblock %}
+
+{% block content %}
+<h1>LAVA Charts</h1>
+
+{% if user_chart_table %}
+
+<h2>Your Charts <small><a href="{% url 'lava_results_app.views.chart.views.chart_add' %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-plus-sign"></span> Create</a></small></h2>
+
+{% render_table user_chart_table %}
+
+{% else %}
+
+<p>Please log in to see and manage your charts.</p>
+
+{% endif %}
+
+{% for name, group_table in group_tables.items %}
+  <h2 id="{{ name }}">{{ name }}</h2>
+  {% render_table group_table %}
+{% endfor %}
+
+
+<h2>Other Charts</h2>
+
+{% render_table other_chart_table %}
+
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.min.js"></script>
+{% endblock %}

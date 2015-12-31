@@ -17,6 +17,7 @@
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
 import csv
+import json
 import os
 import psycopg2
 import shutil
@@ -62,7 +63,9 @@ from lava_results_app.models import (
     QueryMaterializedView,
     QueryUpdatedError,
     TestCase,
-    TestSuite
+    TestSuite,
+    InvalidConditionsError,
+    InvalidContentTypeError
 )
 
 from lava_results_app.views.query.tables import (
@@ -82,18 +85,6 @@ from django_tables2 import (
 )
 
 from lava.utils.lavatable import LavaView
-
-
-CONDITIONS_SEPARATOR = ','
-CONDITION_DIVIDER = '__'
-
-
-class InvalidConditionsError(Exception):
-    """ Raise when querying by URL has incorrect condition arguments. """
-
-
-class InvalidContentTypeError(Exception):
-    """ Raise when querying by URL content type (table name). """
 
 
 class QueryViewDoesNotExistError(Exception):
@@ -154,8 +145,10 @@ class QueryCustomResultView(LavaView):
         super(QueryCustomResultView, self).__init__(request, **kwargs)
 
     def get_queryset(self):
-        return Query.get_queryset(self.content_type,
-                                  self.conditions).visible_by_user(user)
+        return Query.get_queryset(
+            self.content_type,
+            self.conditions).visible_by_user(
+                self.request.user)
 
 
 class QueryResultView(LavaView):
@@ -258,7 +251,7 @@ def query_display(request, username, name):
         'lava_results_app/query_display.html', {
             'query': query,
             'entity': query.content_type.model,
-            'conditions': _serialize_conditions(query),
+            'conditions': query.serialize_conditions(),
             'query_table': table,
             'terms_data': table.prepare_terms_data(view),
             'search_data': table.prepare_search_data(view),
@@ -274,7 +267,7 @@ def query_display(request, username, name):
 @login_required
 def query_custom(request):
 
-    content_type = _get_content_type(request.GET.get("entity"))
+    content_type = Query.get_content_type(request.GET.get("entity"))
 
     if content_type.model_class() not in QueryCondition.RELATION_MAP:
         raise InvalidContentTypeError(
@@ -282,8 +275,8 @@ def query_custom(request):
 
     view = QueryCustomResultView(
         content_type=content_type,
-        conditions=_parse_conditions(content_type,
-                                     request.GET.get("conditions")),
+        conditions=Query.parse_conditions(content_type,
+                                          request.GET.get("conditions")),
         request=request,
         model=content_type.model_class(),
         table_class=QUERY_CONTENT_TYPE_TABLE[content_type.model_class()]
@@ -314,75 +307,6 @@ def query_custom(request):
     )
 
 
-def _parse_conditions(content_type, conditions):
-    # Parse conditions from text representation.
-
-    if not conditions:
-        return []
-
-    conditions_objects = []
-    for condition_str in conditions.split(CONDITIONS_SEPARATOR):
-        condition = QueryCondition()
-        condition_fields = condition_str.split(CONDITION_DIVIDER)
-        if len(condition_fields) == 3:
-            condition.table = content_type
-            condition.field = condition_fields[0]
-            condition.operator = condition_fields[1]
-            condition.value = condition_fields[2]
-        elif len(condition_fields) == 4:
-
-            try:
-                content_type = _get_content_type(condition_fields[0])
-            except ContentType.DoesNotExist:
-                raise InvalidContentTypeError(
-                    "Wrong table name in conditions parameter. " +
-                    "Please refer to query docs.")
-
-            condition.table = content_type
-            condition.field = condition_fields[1]
-            condition.operator = condition_fields[2]
-            condition.value = condition_fields[3]
-
-        else:
-            # TODO: more validation for conditions?.
-            raise InvalidConditionsError("Conditions URL incorrect. Please "
-                                         "refer to query docs.")
-
-        conditions_objects.append(condition)
-
-    return conditions_objects
-
-
-def _serialize_conditions(query):
-    # Serialize conditions into string.
-
-    conditions_list = []
-    for condition in query.querycondition_set.all():
-        conditions_list.append("%s%s%s%s%s%s%s" % (
-            condition.table.model,
-            CONDITION_DIVIDER,
-            condition.field,
-            CONDITION_DIVIDER,
-            condition.operator,
-            CONDITION_DIVIDER,
-            condition.value
-        ))
-
-    return CONDITIONS_SEPARATOR.join(conditions_list)
-
-
-def _get_content_type(model_name):
-    if (model_name == ContentType.objects.get_for_model(TestCase).model):
-        return ContentType.objects.get_for_model(TestCase)
-
-    content_types = ContentType.objects.filter(model=model_name)
-    if (len(content_types) == 0):
-        raise InvalidContentTypeError(
-            "Wrong table name in entity param. Please refer to query docs.")
-    else:
-        return ContentType.objects.filter(model=model_name)[0]
-
-
 @BreadCrumb("Query ~{username}/{name}", parent=query_list,
             needs=['username', 'name'])
 @login_required
@@ -390,7 +314,7 @@ def _get_content_type(model_name):
 def query_detail(request, username, name):
 
     query = get_object_or_404(Query, owner__username=username, name=name)
-    query_conditions = _serialize_conditions(query)
+    query_conditions = query.serialize_conditions()
     view_exists = QueryMaterializedView.view_exists(query.id)
 
     return render_to_response(
@@ -416,7 +340,7 @@ def query_add(request):
     query.owner = request.user
 
     if request.GET.get("entity"):
-        query.content_type = _get_content_type(request.GET.get("entity"))
+        query.content_type = Query.get_content_type(request.GET.get("entity"))
 
     return query_form(
         request,
@@ -468,7 +392,7 @@ def query_export_custom(request):
     """
 
     try:
-        content_type = _get_content_type(request.GET.get("entity"))
+        content_type = Query.get_content_type(request.GET.get("entity"))
     except ContentType.DoesNotExist:
         raise InvalidContentTypeError(
             "Wrong table name in entity param. Please refer to query docs.")
@@ -477,7 +401,8 @@ def query_export_custom(request):
         raise InvalidContentTypeError(
             "Wrong table name in entity param. Please refer to query docs.")
 
-    conditions = _parse_conditions(content_type, request.GET.get("conditions"))
+    conditions = Query.parse_conditions(
+        content_type, request.GET.get("conditions"))
 
     filename = "query_%s_export" % (content_type)
 
@@ -649,6 +574,22 @@ def query_remove_condition(request, username, name, id):
     return HttpResponseRedirect(query.get_absolute_url() + "/+detail")
 
 
+def get_query_names(request):
+
+    term = request.GET['term']
+    result = []
+    query_list = Query.objects.filter(
+        name__startswith=term).distinct().order_by('name')
+    for query in query_list:
+        result.append({"value": query.name,
+                       "label": query.name,
+                       "id": query.id,
+                       "content_type": query.content_type.model_class().__name__})
+    return HttpResponse(
+        json.dumps(list(result)),
+        content_type='application/json')
+
+
 def query_form(request, bread_crumb_trail, instance=None, is_copy=False):
 
     if request.method == 'POST':
@@ -658,8 +599,8 @@ def query_form(request, bread_crumb_trail, instance=None, is_copy=False):
         if form.is_valid():
             query = form.save()
             if request.GET.get("conditions"):
-                conditions = _parse_conditions(query.content_type,
-                                               request.GET.get("conditions"))
+                conditions = Query.parse_conditions(
+                    query.content_type, request.GET.get("conditions"))
                 for condition in conditions:
                     condition.query = query
                     condition.save()

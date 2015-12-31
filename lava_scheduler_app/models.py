@@ -2412,6 +2412,81 @@ class TestJob(RestrictedResource):
         else:
             return ready(self)
 
+    def get_passfail_results(self):
+        # Get pass fail results per lava_results_app.testsuite.
+        results = {}
+        from lava_results_app.models import TestCase
+        for suite in self.testsuite_set.all():
+            results[suite.name] = {
+                'pass': suite.testcase_set.filter(
+                    result=TestCase.RESULT_MAP['pass']).count(),
+                'fail': suite.testcase_set.filter(
+                    result=TestCase.RESULT_MAP['fail']).count(),
+                'skip': suite.testcase_set.filter(
+                    result=TestCase.RESULT_MAP['skip']).count(),
+                'unknown': suite.testcase_set.filter(
+                    result=TestCase.RESULT_MAP['unknown']).count()
+            }
+        return results
+
+    def get_measurement_results(self):
+        # Get measurement values per lava_results_app.testcase.
+        # TODO: add min, max
+        from lava_results_app.models import TestCase
+
+        results = {}
+        for suite in self.testsuite_set.all():
+            sum = 0
+
+            # TODO: this is not available in 1.7 but is much better solution.
+            # results[suite.name]['measurement'] = suite.testcase_set.all().\
+            #     annotate(measurement_float=Func(F('measurement'),
+            #                                     function='CAST',
+            #              template='%(function)s(%(expressions)s as FLOAT)')).\
+            #     aggregate(models.Avg('measurement_float'))
+
+            for testcase in suite.testcase_set.all():
+                if testcase.name not in results:
+                    results[testcase.name] = {}
+                    results[testcase.name]['measurement'] = 0
+                    results[testcase.name]['count'] = 0
+                    results[testcase.name]['fail'] = False
+
+                results[testcase.name]['measurement'] += float(testcase.measurement)
+                results[testcase.name]['count'] += 1
+                results[testcase.name]['fail'] |= testcase.result != TestCase.RESULT_PASS
+
+            for name in results:
+                try:
+                    results[name]['measurement'] = results[name]['measurement'] / results[name]['count']
+                except ZeroDivisionError:
+                    results[name]['measurement'] = 0
+
+        return results
+
+    def get_attribute_results(self, attributes):
+        # Get attribute values per lava_scheduler_app.testjob.
+        results = {}
+        attributes = [x.strip() for x in attributes.split(',')]
+
+        from lava_results_app.models import TestData
+        testdata = TestData.objects.filter(testjob=self).first()
+        if testdata:
+            for attr in testdata.attributes.all():
+                if attr.name in attributes:
+                    results[attr.name] = {}
+                    results[attr.name]['fail'] = self.status != self.COMPLETE
+                    try:
+                        results[attr.name]['value'] = float(attr.value)
+                    except ValueError:
+                        # Ignore non-float metadata.
+                        del results[attr.name]
+
+        return results
+
+    def get_end_datetime(self):
+        return self.end_time
+
 
 class TestJobUser(models.Model):
 

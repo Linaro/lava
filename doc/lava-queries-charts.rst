@@ -1,7 +1,10 @@
 .. _result_queries:
 
-Lava Queries
-############
+LAVA result visualization
+#########################
+
+LAVA Queries
+************
 
 This is documentation for the new queries app, still in **development** stage.
 
@@ -29,7 +32,8 @@ When adding/updating and removing conditions, query is **not** automatically
 updated. This needs to be done either through UI after updating the conditions
 or via XMLRPC.
 
-Authorization and admin:
+Authorization and admin
+=======================
 
 Queries which are not published are visible exclusively to the query owner.
 When query is published, it's results are generally visible to all users,
@@ -45,7 +49,8 @@ Note that this can be done only after the query is published.
 Queries can be organized in 'query groups' which is visible only in the query
 listing page, via 'query group label' option.
 
-Conditions:
+Conditions
+==========
 
 You can add multiple conditions to each query where the query results must
 satisfy **all** conditions in order to be displayed.
@@ -67,7 +72,7 @@ is not yet present in the system.
 .. _query_by_url:
 
 Query by URL
-************
+============
 
 The ability to add conditions through URL is now enabled. User can add as many
 conditions as possible through URL but must also specify the object set which
@@ -85,3 +90,12 @@ The query string format looks like this::
 
 Once the query by URL results are displayed, user can create saved query from
 these conditions, which will be automatically added to the new query.
+
+LAVA Charts
+***********
+
+This is documentation for the new charts app, still in **development** stage.
+
+It is part of the new :ref:`dispatcher_design`.
+
+LAVA charts represent the visual representation for the Queries app.

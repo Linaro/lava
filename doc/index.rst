@@ -124,4 +124,4 @@ Developer guides
    debian.rst
    dispatcher-design.rst
    dispatcher-testing.rst
-   lava-results-queries.rst
+   lava-queries-charts.rst
