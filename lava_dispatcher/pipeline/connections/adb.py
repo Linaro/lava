@@ -39,6 +39,8 @@ class ConnectAdb(Action):
         self.name = "connect-adb"
         self.summary = "run connection command"
         self.description = "use the configured command to connect adb to the device"
+        self.session_class = ShellSession
+        self.shell_class = ShellCommand
 
     def validate(self):
         super(ConnectAdb, self).validate()
@@ -64,11 +66,14 @@ class ConnectAdb(Action):
         self.logger.info("%s Connecting to device using '%s'", self.name, command)
         signal.alarm(0)  # clear the timeouts used without connections.
         # ShellCommand executes the connection command
-        shell = ShellCommand("%s\n" % command, self.timeout, logger=self.logger)
+        shell = self.shell_class("%s\n" % command, self.timeout,
+                                 logger=self.logger)
         if shell.exitstatus:
-            raise JobError("%s command exited %d: %s" % (command, shell.exitstatus, shell.readlines()))
+            raise JobError("%s command exited %d: %s" % (command,
+                                                         shell.exitstatus,
+                                                         shell.readlines()))
         # ShellSession monitors the pexpect
-        connection = ShellSession(self.job, shell)
+        connection = self.session_class(self.job, shell)
         connection.connected = True
         connection = super(ConnectAdb, self).run(connection, args)
         connection.prompt_str = self.parameters['prompts']
