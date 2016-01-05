@@ -87,7 +87,6 @@ from dashboard_app.views.filters.tables import PublicFiltersTable
 from dashboard_app.views.image_reports.tables import UserImageReportTable
 
 from django_tables2 import (
-    Attrs,
     Column,
     RequestConfig,
     SingleTableView,
