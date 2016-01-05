@@ -12,6 +12,7 @@ from lava_scheduler_app.utils import (
     jinja2_to_devicedictionary,
     prepare_jinja_template,
     jinja_template_path,
+    load_devicetype_template,
 )
 from lava_scheduler_app.schema import validate_device
 from django_testscenarios.ubertest import TestCase
@@ -361,3 +362,17 @@ class JobPipelineTest(TestCaseWithFactory):
         self.assertIsInstance(foo, DeviceDictionary)
         foo = DeviceDictionary.get('foo')
         self.assertIsNotNone(foo)
+
+
+class DeviceTypeTest(TestCaseWithFactory):
+    """
+    Test loading of device-type information
+    """
+    def test_device_type_parser(self):
+        jinja2_path = jinja_template_path(system=False)
+        self.assertTrue(os.path.exists(jinja2_path))
+        data = load_devicetype_template('beaglebone-black', system_path=False)
+        self.assertIsNotNone(data)
+        self.assertIn('actions', data)
+        self.assertIn('deploy', data['actions'])
+        self.assertIn('boot', data['actions'])

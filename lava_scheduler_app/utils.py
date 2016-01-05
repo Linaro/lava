@@ -577,6 +577,33 @@ def prepare_jinja_template(hostname, jinja_data, system_path=True, path=None):
     return env.get_template("%s.jinja2" % hostname)
 
 
+def load_devicetype_template(device_type_name, system_path=True, path=None):
+    """
+    Loads the bare device-type template as a python dictionary object for
+    representation within the device_type templates.
+    No device-specific details are parsed - default values only, so some
+    parts of the dictionary may be unexpectedly empty. Not to be used when
+    rendering device configuration for a testjob.
+    :param device_type_name: DeviceType.name (string)
+    :param system_path: use the system path (False for unit tests)
+    :param path: optional alternative path to templates
+    :return: None or a dictionary of the device type template.
+    """
+    if not path:
+        path = jinja_template_path(system=system_path)
+    type_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
+    env = jinja2.Environment(
+        loader=jinja2.ChoiceLoader([type_loader]),
+        trim_blocks=True)
+    try:
+        template = env.get_template("%s.jinja2" % device_type_name)
+    except jinja2.TemplateNotFound:
+        return None
+    if not template:
+        return None
+    return yaml.load(template.render())
+
+
 def folded_logs(job, section_name, sections, summary=False, increment=False):
     log_data = None
     if increment:
