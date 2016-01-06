@@ -24,7 +24,7 @@ actions:
         command:
 {{ schroot }}
         name:
-{{ schroot_name_list|default(['unstable', 'sid']}}
+          {{ schroot_name_list|default(['unstable', 'sid'])}}
 {% endblock schroot %}
       ssh:
 #      vm:

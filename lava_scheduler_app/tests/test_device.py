@@ -376,3 +376,28 @@ class DeviceTypeTest(TestCaseWithFactory):
         self.assertIn('actions', data)
         self.assertIn('deploy', data['actions'])
         self.assertIn('boot', data['actions'])
+
+    def test_device_type_templates(self):
+        """
+        Ensure each template renders valid YAML
+        """
+        jinja2_path = jinja_template_path(system=False)
+        for template_name in os.listdir(os.path.join(jinja2_path, 'device-types')):
+            if not template_name.endswith('jinja2'):
+                continue
+            type_loader = jinja2.FileSystemLoader([os.path.join(jinja2_path, 'device-types')])
+            env = jinja2.Environment(
+                loader=jinja2.ChoiceLoader([type_loader]),
+                trim_blocks=True)
+            try:
+                template = env.get_template(template_name)
+            except jinja2.TemplateNotFound as exc:
+                self.fail('%s: %s' % (template_name, exc))
+            data = None
+            try:
+                data = template.render()
+                yaml_data = yaml.load(data)
+            except yaml.YAMLError as exc:
+                print data  # for easier debugging - use the online yaml parser
+                self.fail("%s: %s" % (template_name, exc))
+            self.assertIsInstance(yaml_data, dict)

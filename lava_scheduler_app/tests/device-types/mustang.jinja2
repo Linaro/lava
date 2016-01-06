@@ -15,9 +15,9 @@ parameters:
     dtb: '{{ bootm_dtb_addr|default('0x4003000000') }}'
 
 actions:
-   deploy:
-     methods:
-     - tftp
+  deploy:
+    methods:
+      tftp:
       ssh:
         options:
 {{ ssh_options }}
@@ -27,11 +27,11 @@ actions:
         user: {{ ssh_user|default(root) }}
         port: {{ ssh_port|default(22) }}
         identity_file: {{ ssh_identity_file }}
-   boot:
+  boot:
     connections:
       serial:
       ssh:
-     methods:
+    methods:
        u-boot:
         parameters:
           bootloader_prompt: {{ bootloader_prompt|default('Mustang') }}
