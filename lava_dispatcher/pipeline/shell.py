@@ -90,6 +90,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
             logfile=ShellLogger(logger),
         )
         self.name = "ShellCommand"
+        self.logger = logger
         # serial can be slow, races do funny things, so allow for a delay
         self.delaybeforesend = SHELL_SEND_DELAY
         self.lava_timeout = lava_timeout
@@ -104,10 +105,12 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         :param delay: delay in milliseconds between sending each character
         :param send_char: send one character or entire string
         """
+        self.logger.debug("sendline(d=%i,c=%s): %s", delay, send_char, s)
         self.send(s, delay, send_char)
         self.send(os.linesep, delay)
 
     def sendcontrol(self, char):
+        self.logger.debug("sendcontrol: %s", char)
         return super(ShellCommand, self).sendcontrol(char)
 
     # FIXME: no sense in sending delay and send_char - if delay is non-zero, send_char needs to be True
@@ -216,13 +219,31 @@ class ShellSession(Connection):
         yield self.__runner__.get_connection()
 
     def wait(self):
-        self.raw_connection.sendline(self.check_char)
         if not self.prompt_str:
             self.prompt_str = self.check_char
         try:
             self.runner.wait_for_prompt(self.timeout.duration, self.check_char)
         except pexpect.TIMEOUT:
             raise JobError("wait for prompt timed out")
+
+
+class SimpleSession(ShellSession):
+
+    def wait(self):
+        """
+        Simple wait without sendling blank lines as that causes the menu
+        to advance without data which can cause blank entries and can cause
+        the menu to exit to an unrecognised prompt.
+        """
+        while True:
+            try:
+                self.raw_connection.expect(self.prompt_str, timeout=self.timeout.duration)
+            except pexpect.TIMEOUT:
+                raise JobError("wait for prompt timed out")
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
+            else:
+                break
 
 
 class ExpectShellSession(Action):

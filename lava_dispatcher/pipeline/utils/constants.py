@@ -99,3 +99,9 @@ LAVA_LXC_TIMEOUT = 30
 # Timeout used by the vland protocol when waiting for vland to
 # respond to the api.create_vlan request, in seconds.
 VLAND_DEPLOY_TIMEOUT = 120
+
+# ipxe boot interrupting
+IPXE_BOOT_PROMPT = "Press Ctrl-B for the iPXE command line"
+
+# bootloader default timeout for commands
+BOOTLOADER_DEFAULT_CMD_TIMEOUT = 90

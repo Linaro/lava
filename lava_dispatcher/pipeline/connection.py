@@ -130,9 +130,15 @@ class Connection(object):
     def corruption_check(self):
         self.sendline(self.check_char)
 
-    def sendline(self, line):
+    def sendline(self, line, delay=0, send_char=True):
         if self.connected:
-            self.raw_connection.sendline(line)
+            self.raw_connection.sendline(line, delay, send_char)
+        else:
+            raise RuntimeError()  # FIXME:
+
+    def sendcontrol(self, char):
+        if self.connected:
+            self.raw_connection.sendcontrol(char)
         else:
             raise RuntimeError()  # FIXME:
 

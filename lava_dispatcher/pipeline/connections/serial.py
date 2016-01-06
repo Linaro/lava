@@ -25,7 +25,7 @@ from lava_dispatcher.pipeline.action import (
     Action,
     JobError,
 )
-from lava_dispatcher.pipeline.shell import ShellCommand, ShellSession
+from lava_dispatcher.pipeline.shell import ShellCommand, SimpleSession
 
 # pylint: disable=too-many-public-methods
 
@@ -42,7 +42,7 @@ class ConnectDevice(Action):
         self.name = "connect-device"
         self.summary = "run connection command"
         self.description = "use the configured command to connect serial to the device"
-        self.session_class = ShellSession  # wraps the pexpect and provides prompt_str access
+        self.session_class = SimpleSession  # wraps the pexpect and provides prompt_str access
         self.shell_class = ShellCommand  # runs the command to initiate the connection
 
     def validate(self):

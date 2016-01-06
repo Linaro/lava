@@ -243,6 +243,7 @@ class ExtractModules(Action):
         self.name = "extract-modules"
         self.summary = "extract kernel modules"
         self.description = "extract supplied kernel modules"
+        self.extra_compression = ["xz"]
 
     def validate(self):
         super(ExtractModules, self).validate()
@@ -264,6 +265,7 @@ class ExtractModules(Action):
 
         modules = self.data['download_action']['modules']['file']
         try:
+            # FIXME: Support XZ tarfiles
             tar = tarfile.open(modules)
             tar.extractall(root)
             tar.close()
@@ -347,11 +349,12 @@ class CompressRamdisk(Action):
         super(CompressRamdisk, self).validate()
         if not self.parameters.get('ramdisk', None):  # idempotency
             return
-        self.errors = infrastructure_error('mkimage')
-        if 'mkimage_arch' not in self.job.device['actions']['boot']['methods']['u-boot']['parameters']:
-            self.errors = "Missing architecture string for uboot mkimage support"
-            return
-        self.mkimage_arch = self.job.device['actions']['boot']['methods']['u-boot']['parameters']['mkimage_arch']
+        if self.parameters.get('ramdisk-type', None) == 'u-boot':
+            self.errors = infrastructure_error('mkimage')
+            if 'mkimage_arch' not in self.job.device['actions']['boot']['methods']['u-boot']['parameters']:
+                self.errors = "Missing architecture string for uboot mkimage support"
+                return
+            self.mkimage_arch = self.job.device['actions']['boot']['methods']['u-boot']['parameters']['mkimage_arch']
 
     def run(self, connection, args=None):
         if not self.parameters.get('ramdisk', None):  # idempotency
