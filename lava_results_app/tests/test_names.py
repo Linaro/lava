@@ -61,7 +61,7 @@ class ModelFactory(object):
 
     def make_fake_qemu_device(self, hostname='fakeqemu1'):  # pylint: disable=no-self-use
         qemu = DeviceDictionary(hostname=hostname)
-        qemu.parameters = {'extends': 'qemu.yaml', 'arch': 'amd64'}
+        qemu.parameters = {'extends': 'qemu.jinja2', 'arch': 'amd64'}
         qemu.save()
 
     def make_device_type(self, name='qemu', health_check_job=None):
