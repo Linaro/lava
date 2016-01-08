@@ -24,6 +24,7 @@ import yaml
 import pprint
 import jinja2
 import socket
+import logging
 import urlparse
 import simplejson
 import models
@@ -604,6 +605,20 @@ def load_devicetype_template(device_type_name, system_path=True, path=None):
     return yaml.load(template.render())
 
 
+def _read_log(log_path):
+    logger = logging.getLogger('lava_scheduler_app')
+    if not os.path.exists(log_path):
+        return {}
+    for logfile in os.listdir(log_path):
+        filepath = os.path.join(log_path, logfile)
+        with open(filepath, 'r') as log_files:
+            try:
+                return {logfile: yaml.load(log_files)}
+            except yaml.YAMLError as exc:
+                logger.warning(exc)
+                return {logfile: [{'warning': "YAML error in %s" % os.path.basename(logfile)}]}
+
+
 def folded_logs(job, section_name, sections, summary=False, increment=False):
     log_data = None
     if increment:
@@ -617,17 +632,14 @@ def folded_logs(job, section_name, sections, summary=False, increment=False):
                 section_name = item.keys()[0] if latest == current else section_name
         if not section_name:
             return log_data
+    logs = {}
+    initialise_log = os.path.join(job.output_dir, 'pipeline', '0')
+    if os.path.exists(initialise_log) and section_name == 'deploy':
+        logs.update(_read_log(initialise_log))
     for item in sections:
         if section_name in item:
             log_path = os.path.join(job.output_dir, 'pipeline', item[section_name])
-            if not os.path.exists(log_path):
-                return None
-            logs = {}
-            for logfile in os.listdir(log_path):
-                filepath = os.path.join(log_path, logfile)
-                logs['filename'] = filepath
-                with open(filepath, 'r') as log_files:
-                    logs[logfile] = yaml.load(log_files)
+            logs.update(_read_log(log_path))
             log_keys = sorted(logs)
             log_data = OrderedDict()
             for key in log_keys:
