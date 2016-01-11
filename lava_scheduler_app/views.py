@@ -1579,7 +1579,7 @@ def job_complete_log(request, pk):
             'show_cancel': job.can_cancel(request.user),
             'show_resubmit': job.can_resubmit(request.user),
             'show_failure': job.can_annotate(request.user),
-            'job': TestJob.objects.get(pk=pk),
+            'job': job,
             'sections': sections,
             'default_section': default_section,
             'log_data': log_data,
@@ -1715,7 +1715,7 @@ def job_log_file(request, pk):
         {
             'show_cancel': job.can_cancel(request.user),
             'show_resubmit': job.can_resubmit(request.user),
-            'job': TestJob.objects.get(pk=pk),
+            'job': job,
             'job_file_present': bool(log_file),
             'sections': content,
             'size_warning': size_warning,
