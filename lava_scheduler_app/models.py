@@ -1574,9 +1574,6 @@ class TestJob(RestrictedResource):
         blank=True
     )
 
-    log_file = models.FileField(
-        upload_to='lava-logs', default=None, null=True, blank=True)
-
     @property
     def size_limit(self):
         return settings.LOG_SIZE_LIMIT * 1024 * 1024
@@ -1589,14 +1586,6 @@ class TestJob(RestrictedResource):
         output_path = os.path.join(self.output_dir, 'output.txt')
         if os.path.exists(output_path):
             return open(output_path, encoding='utf-8', errors='replace')
-        elif self.log_file:
-            log_file = self.log_file
-            if log_file:
-                try:
-                    open(log_file.name)
-                except IOError:
-                    log_file = None
-            return log_file
         else:
             return None
 

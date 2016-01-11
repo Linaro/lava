@@ -541,7 +541,6 @@ class DatabaseJobSource(object):
         job.start_time = timezone.now()
         if job.output_dir:
             shutil.rmtree(job.output_dir, ignore_errors=True)
-        job.log_file.save('job-%s.log' % job.id, ContentFile(''), save=False)
         job.save()
         self._commit_transaction(src='jobStarted_impl')
 
