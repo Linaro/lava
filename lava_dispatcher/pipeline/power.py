@@ -70,13 +70,19 @@ class RebootDevice(Action):
             raise RuntimeError("Called %s without an active Connection" % self.name)
         if self.job.device.power_state is 'off' and self.job.device.power_command is not '':  # power on action used instead
             return connection
-        connection = super(RebootDevice, self).run(connection, args)
-        connection.prompt_str = self.parameters.get('parameters', {}).get('shutdown-message', SHUTDOWN_MESSAGE)
-        connection.timeout = self.connection_timeout
-        connection.sendline("reboot")
-        # FIXME: possibly deployment data, possibly separate actions, possibly adjuvants.
-        connection.sendline("reboot -n")  # initramfs may require -n for *now*
-        connection.sendline("reboot -n -f")  # initrd may require -n for *now* and -f for *force*
+        if self.job.device.power_state is 'on' and self.job.device.soft_reset_command is not '':
+            command = self.job.device['commands']['soft_reset']
+            if not self.run_command(command.split(' ')):
+                raise InfrastructureError("%s command failed" % command)
+            self.results = {'status': "success"}
+        else:
+            connection = super(RebootDevice, self).run(connection, args)
+            connection.prompt_str = self.parameters.get('parameters', {}).get('shutdown-message', SHUTDOWN_MESSAGE)
+            connection.timeout = self.connection_timeout
+            connection.sendline("reboot")
+            # FIXME: possibly deployment data, possibly separate actions, possibly adjuvants.
+            connection.sendline("reboot -n")  # initramfs may require -n for *now*
+            connection.sendline("reboot -n -f")  # initrd may require -n for *now* and -f for *force*
         self.results = {'status': "success"}
         self.data[PDUReboot.key()] = False
         if 'bootloader_prompt' in self.data['common']:

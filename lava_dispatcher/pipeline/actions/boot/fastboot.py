@@ -103,14 +103,14 @@ class FastbootAction(Action):
     def validate(self):
         super(FastbootAction, self).validate()
         self.errors = infrastructure_error('fastboot')
-        if 'serial_number' not in self.job.device:
-            self.errors = "device serial number missing"
-            if self.job.device['serial_number'] == '0000000000':
-                self.errors = "device serial number unset"
+        if 'fastboot_serial_number' not in self.job.device:
+            self.errors = "device fastboot serial number missing"
+            if self.job.device['fastboot_serial_number'] == '0000000000':
+                self.errors = "device fastboot serial number unset"
 
     def run(self, connection, args=None):
         connection = super(FastbootAction, self).run(connection, args)
-        serial_number = self.job.device['serial_number']
+        serial_number = self.job.device['fastboot_serial_number']
         fastboot_cmd = ['fastboot', '-s', serial_number, 'reboot']
         command_output = self.run_command(fastboot_cmd)
         if command_output and 'rebooting' not in command_output:
@@ -129,14 +129,14 @@ class AdbOverlayUnpack(Action):
 
     def validate(self):
         super(AdbOverlayUnpack, self).validate()
-        if 'serial_number' not in self.job.device:
-            self.errors = "device serial number missing"
-            if self.job.device['serial_number'] == '0000000000':
-                self.errors = "device serial number unset"
+        if 'adb_serial_number' not in self.job.device:
+            self.errors = "device adb serial number missing"
+            if self.job.device['adb_serial_number'] == '0000000000':
+                self.errors = "device adb serial number unset"
 
     def run(self, connection, args=None):
         connection = super(AdbOverlayUnpack, self).run(connection, args)
-        serial_number = self.job.device['serial_number']
+        serial_number = self.job.device['adb_serial_number']
         overlay_type = 'adb-overlay'
         overlay_file = self.data['compress-overlay'].get('output')
         host_dir = mkdtemp()

@@ -19,6 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.pipeline.logical import Deployment
+from lava_dispatcher.pipeline.connections.serial import ConnectDevice
+from lava_dispatcher.pipeline.power import ResetDevice
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     JobError,
@@ -52,7 +54,9 @@ def fastboot_accept(device, parameters):
         raise RuntimeError("Invalid device configuration")
     if 'deploy' not in device['actions']:
         return False
-    if 'serial_number' not in device:
+    if 'adb_serial_number' not in device:
+        return False
+    if 'fastboot_serial_number' not in device:
         return False
     if 'methods' not in device['actions']['deploy']:
         raise RuntimeError("Device misconfiguration")
@@ -103,6 +107,10 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(OverlayAction())
+        if hasattr(self.job.device, 'power_state'):
+            if self.job.device.power_state in ['on', 'off']:
+                self.internal_pipeline.add_action(ConnectDevice())
+                self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(EnterFastbootAction())
         for image in parameters['images'].keys():
             if image != 'yaml_line':
@@ -113,6 +121,8 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
                 self.internal_pipeline.add_action(FastbootUpdateAction())
             if image == 'boot':
                 self.internal_pipeline.add_action(ApplyBootAction())
+            if image == 'cache':
+                self.internal_pipeline.add_action(ApplyCacheAction())
             if image == 'userdata':
                 self.internal_pipeline.add_action(ApplyUserdataAction())
             if image == 'system':
@@ -134,28 +144,34 @@ class EnterFastbootAction(DeployAction):
 
     def validate(self):
         super(EnterFastbootAction, self).validate()
-        if 'serial_number' not in self.job.device:
-            self.errors = "device serial number missing"
-            if self.job.device['serial_number'] == '0000000000':
-                self.errors = "device serial number unset"
+        if 'adb_serial_number' not in self.job.device:
+            self.errors = "device adb serial number missing"
+            if self.job.device['adb_serial_number'] == '0000000000':
+                self.errors = "device adb serial number unset"
+        if 'fastboot_serial_number' not in self.job.device:
+            self.errors = "device fastboot serial number missing"
+            if self.job.device['fastboot_serial_number'] == '0000000000':
+                self.errors = "device fastboot serial number unset"
 
     def run(self, connection, args=None):
         connection = super(EnterFastbootAction, self).run(connection, args)
-        serial_number = self.job.device['serial_number']
-        adb_cmd = ['adb', '-s', serial_number, 'get-serialno']
+        adb_serial_number = self.job.device['adb_serial_number']
+        fastboot_serial_number = self.job.device['fastboot_serial_number']
+        adb_cmd = ['adb', '-s', adb_serial_number, 'get-serialno']
         command_output = self.run_command(adb_cmd)
-        if command_output and serial_number in command_output:
-            adb_cmd = ['adb', '-s', serial_number, 'reboot', 'bootloader']
+        if command_output and adb_serial_number in command_output:
+            adb_cmd = ['adb', '-s', adb_serial_number, 'reboot', 'bootloader']
             command_output = self.run_command(adb_cmd)
             if command_output and command_output is not '':
                 raise JobError("Unable to enter fastboot using adb: %s" %
                                command_output)  # FIXME: JobError needs a unit test
         else:
-            fastboot_cmd = ['fastboot', '-s', serial_number, 'devices']
+            fastboot_cmd = ['fastboot', '-s', fastboot_serial_number,
+                            'devices']
             command_output = self.run_command(fastboot_cmd)
-            if command_output and serial_number in command_output:
+            if command_output and fastboot_serial_number in command_output:
                 self.logger.debug("Device is in fastboot: %s" % command_output)
-                fastboot_cmd = ['fastboot', '-s', serial_number,
+                fastboot_cmd = ['fastboot', '-s', fastboot_serial_number,
                                 'reboot-bootloader']
                 command_output = self.run_command(fastboot_cmd)
                 if command_output and 'OKAY' not in command_output:
@@ -183,14 +199,14 @@ class FastbootUpdateAction(DeployAction):
             raise RuntimeError("download-action missing: %s" % self.name)
         if 'file' not in self.data['download_action']['image']:
             self.errors = "no file specified for fastboot"
-        if 'serial_number' not in self.job.device:
-            self.errors = "device serial number missing"
-            if self.job.device['serial_number'] == '0000000000':
-                self.errors = "device serial number unset"
+        if 'fastboot_serial_number' not in self.job.device:
+            self.errors = "device fastboot serial number missing"
+            if self.job.device['fastboot_serial_number'] == '0000000000':
+                self.errors = "device fastboot serial number unset"
 
     def run(self, connection, args=None):
         connection = super(FastbootUpdateAction, self).run(connection, args)
-        serial_number = self.job.device['serial_number']
+        serial_number = self.job.device['fastboot_serial_number']
         fastboot_cmd = ['fastboot', '-s', serial_number, '-w', 'update',
                         self.data['download_action']['image']['file']]
         command_output = self.run_command(fastboot_cmd)
@@ -215,14 +231,14 @@ class FastbootRebootAction(DeployAction):
 
     def validate(self):
         super(FastbootRebootAction, self).validate()
-        if 'serial_number' not in self.job.device:
-            self.errors = "device serial number missing"
-            if self.job.device['serial_number'] == '0000000000':
-                self.errors = "device serial number unset"
+        if 'fastboot_serial_number' not in self.job.device:
+            self.errors = "device fastboot serial number missing"
+            if self.job.device['fastboot_serial_number'] == '0000000000':
+                self.errors = "device fastboot serial number unset"
 
     def run(self, connection, args=None):
         connection = super(FastbootRebootAction, self).run(connection, args)
-        serial_number = self.job.device['serial_number']
+        serial_number = self.job.device['fastboot_serial_number']
         fastboot_cmd = ['fastboot', '-s', serial_number, 'reboot']
         command_output = self.run_command(fastboot_cmd)
         if command_output and 'error' in command_output:
@@ -250,19 +266,55 @@ class ApplyBootAction(DeployAction):
             raise RuntimeError("download-action missing: %s" % self.name)
         if 'file' not in self.data['download_action']['boot']:
             self.errors = "no file specified for fastboot boot image"
-        if 'serial_number' not in self.job.device:
-            self.errors = "device serial number missing"
-            if self.job.device['serial_number'] == '0000000000':
-                self.errors = "device serial number unset"
+        if 'fastboot_serial_number' not in self.job.device:
+            self.errors = "device fastboot serial number missing"
+            if self.job.device['fastboot_serial_number'] == '0000000000':
+                self.errors = "device fastboot serial number unset"
 
     def run(self, connection, args=None):
         connection = super(ApplyBootAction, self).run(connection, args)
-        serial_number = self.job.device['serial_number']
+        serial_number = self.job.device['fastboot_serial_number']
         fastboot_cmd = ['fastboot', '-s', serial_number, 'flash', 'boot',
                         self.data['download_action']['boot']['file']]
         command_output = self.run_command(fastboot_cmd)
         if command_output and 'error' in command_output:
             raise JobError("Unable to apply boot image using fastboot: %s" %
+                           command_output)  # FIXME: JobError needs a unit test
+        return connection
+
+
+class ApplyCacheAction(DeployAction):
+    """
+    Fastboot deploy cache image.
+    """
+
+    def __init__(self):
+        super(ApplyCacheAction, self).__init__()
+        self.name = "fastboot_apply_cache_action"
+        self.description = "fastboot apply cache image"
+        self.summary = "fastboot apply cache"
+        self.retries = 3
+        self.sleep = 10
+
+    def validate(self):
+        super(ApplyCacheAction, self).validate()
+        if 'download_action' not in self.data:
+            raise RuntimeError("download-action missing: %s" % self.name)
+        if 'file' not in self.data['download_action']['cache']:
+            self.errors = "no file specified for fastboot cache image"
+        if 'fastboot_serial_number' not in self.job.device:
+            self.errors = "device fastboot serial number missing"
+            if self.job.device['fastboot_serial_number'] == '0000000000':
+                self.errors = "device fastboot serial number unset"
+
+    def run(self, connection, args=None):
+        connection = super(ApplyCacheAction, self).run(connection, args)
+        serial_number = self.job.device['fastboot_serial_number']
+        fastboot_cmd = ['fastboot', '-s', serial_number, 'flash', 'cache',
+                        self.data['download_action']['cache']['file']]
+        command_output = self.run_command(fastboot_cmd)
+        if command_output and 'error' in command_output:
+            raise JobError("Unable to apply cache image using fastboot: %s" %
                            command_output)  # FIXME: JobError needs a unit test
         return connection
 
@@ -286,14 +338,14 @@ class ApplyUserdataAction(DeployAction):
             raise RuntimeError("download-action missing: %s" % self.name)
         if 'file' not in self.data['download_action']['userdata']:
             self.errors = "no file specified for fastboot userdata image"
-        if 'serial_number' not in self.job.device:
-            self.errors = "device serial number missing"
-            if self.job.device['serial_number'] == '0000000000':
-                self.errors = "device serial number unset"
+        if 'fastboot_serial_number' not in self.job.device:
+            self.errors = "device fastboot serial number missing"
+            if self.job.device['fastboot_serial_number'] == '0000000000':
+                self.errors = "device fastboot serial number unset"
 
     def run(self, connection, args=None):
         connection = super(ApplyUserdataAction, self).run(connection, args)
-        serial_number = self.job.device['serial_number']
+        serial_number = self.job.device['fastboot_serial_number']
         fastboot_cmd = ['fastboot', '-s', serial_number,
                         'flash', 'userdata',
                         self.data['download_action']['userdata']['file']]
@@ -323,14 +375,14 @@ class ApplySystemAction(DeployAction):
             raise RuntimeError("download-action missing: %s" % self.name)
         if 'file' not in self.data['download_action']['system']:
             self.errors = "no file specified for fastboot system image"
-        if 'serial_number' not in self.job.device:
-            self.errors = "device serial number missing"
-            if self.job.device['serial_number'] == '0000000000':
-                self.errors = "device serial number unset"
+        if 'fastboot_serial_number' not in self.job.device:
+            self.errors = "device fastboot serial number missing"
+            if self.job.device['fastboot_serial_number'] == '0000000000':
+                self.errors = "device fastboot serial number unset"
 
     def run(self, connection, args=None):
         connection = super(ApplySystemAction, self).run(connection, args)
-        serial_number = self.job.device['serial_number']
+        serial_number = self.job.device['fastboot_serial_number']
         fastboot_cmd = ['fastboot', '-s', serial_number,
                         'flash', 'system',
                         self.data['download_action']['system']['file']]
