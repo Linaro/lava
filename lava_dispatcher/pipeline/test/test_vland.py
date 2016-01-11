@@ -174,9 +174,6 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
             parser = JobParser()
             job = parser.parse(sample_job_data, self.device, 4212, None, output_dir='/tmp/')
         description_ref = pipeline_reference('bbb-group-vland-alpha.yaml')
-        # import yaml
-        with open('/tmp/test.yaml', 'wb') as describe:
-            yaml.dump(job.pipeline.describe(False), describe)
         self.assertEqual(description_ref, job.pipeline.describe(False))
         job.validate()
         self.assertNotEqual([], [protocol.name for protocol in job.protocols if protocol.name == MultinodeProtocol.name])
