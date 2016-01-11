@@ -37,11 +37,11 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Q
 from django.db.utils import OperationalError, InterfaceError
-from lava_scheduler_app.models import Device, TestJob
+from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.utils import mkdir
 from lava_scheduler_app.dbutils import (
     create_job, start_job,
-    fail_job, cancel_job, end_job,
+    fail_job, cancel_job,
     parse_job_description,
     select_device,
 )
@@ -325,8 +325,7 @@ class Command(BaseCommand):
                     job = TestJob.objects.select_for_update().get(id=job_id)
                     if job.status == TestJob.CANCELING:
                         cancel_job(job)
-                    else:
-                        end_job(job, job_status=status)
+                    fail_job(job, fail_msg=error_msg, job_status=status)
 
                 # Save the description
                 filename = os.path.join(job.output_dir, 'description.yaml')
@@ -407,6 +406,7 @@ class Command(BaseCommand):
                 # to allow for local firewalls etc. So the secondary connection is started on the
                 # remote worker of the "nominated" host.
                 # FIXME:
+                device = None
                 worker_host = job.lookup_worker
                 self.logger.info("[%d] START => %s (connection)", job.id,
                                  worker_host.hostname)
@@ -496,21 +496,7 @@ class Command(BaseCommand):
                     msg = "Infrastructure error: %s" % exc.message
 
                 self.logger.error("[%d] INCOMPLETE job", job.id)
-                job.status = TestJob.INCOMPLETE
-                if job.dynamic_connection:
-                    job.failure_comment = msg
-                    job.save()
-                else:
-                    new_status = Device.IDLE
-                    device.state_transition_to(
-                        new_status,
-                        message=msg,
-                        job=job)
-                    device.status = new_status
-                    device.current_job = None
-                    job.failure_comment = msg
-                    job.save()
-                    device.save()
+                fail_job(job=job, fail_msg=msg, job_status=TestJob.INCOMPLETE)
         return True
 
     def handle_canceling(self):

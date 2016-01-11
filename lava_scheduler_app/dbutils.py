@@ -548,7 +548,7 @@ def assign_jobs():
                     device.current_job = job
                     # implicit device save in state_transition_to()
                     device.state_transition_to(
-                        Device.RESERVED, message="Reserved for job %s" % job.display_id, job=job)
+                        Device.RESERVED, message="Reserved for job %s" % job.display_id, job=job, master=True)
             except IntegrityError:
                 # Retry in the next call to _assign_jobs
                 logger.warning(
@@ -577,7 +577,7 @@ def create_job(job, device):
     device.current_job = job
     new_status = Device.RESERVED
     msg = "Reserved for job %d" % job.id
-    device.state_transition_to(new_status, message=msg, job=job)
+    device.state_transition_to(new_status, message=msg, job=job, master=True)
     device.status = new_status
     # Save the result
     job.save()
@@ -596,7 +596,7 @@ def start_job(job):
     new_status = Device.RUNNING
     job.save()
     if not job.dynamic_connection:
-        device.state_transition_to(new_status, message=msg, job=job)
+        device.state_transition_to(new_status, message=msg, job=job, master=True)
         device.status = new_status
         # Save the result
         device.save()
@@ -608,11 +608,14 @@ def fail_job(job, fail_msg=None, job_status=TestJob.INCOMPLETE):
     in the same multinode group.
     If not multinode, simply wraps end_job.
     """
-    if not job.is_multinode:
+    if not job.is_multinode or not job.essential_role:
         end_job(job, fail_msg=fail_msg, job_status=job_status)
         return
     for failed_job in job.sub_jobs_list:
-        end_job(failed_job, fail_msg=fail_msg, job_status=job_status)
+        if job == failed_job:
+            end_job(failed_job, fail_msg=fail_msg, job_status=job_status)
+        else:
+            end_job(failed_job, fail_msg=fail_msg, job_status=TestJob.CANCELING)
 
 
 def handle_health(job):
@@ -639,7 +642,7 @@ def handle_health(job):
         # would go into running with no current job, so we need OFFLINE
         # so that put_into_online_mode goes to IDLE.
         # FIXME: once V1 code is removed, standardise this state machine.
-        device.state_transition_to(Device.OFFLINE, user=user, message="Health Check Job Failed", job=job)
+        device.state_transition_to(Device.OFFLINE, user=user, message="Health Check Job Failed", job=job, master=True)
     elif job.status == TestJob.COMPLETE:
         device.health_status = Device.HEALTH_PASS
     elif job.status == TestJob.CANCELED:
@@ -671,7 +674,7 @@ def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
     # Transition device only if it's not in OFFLINE/ING mode
     # (by failed health check job which already transitions it)
     if device.status not in [Device.OFFLINE, Device.OFFLINING]:
-        device.state_transition_to(Device.IDLE, message=msg, job=job)
+        device.state_transition_to(Device.IDLE, message=msg, job=job, master=True)
     device.current_job = None
     # Save the result
     job.save()
@@ -686,7 +689,7 @@ def cancel_job(job):
         return
     msg = "Job %d cancelled" % job.id
     device = handle_health(job)
-    device.state_transition_to(Device.IDLE, message=msg, job=job)
+    device.state_transition_to(Device.IDLE, message=msg, job=job, master=True)
     if device.current_job and device.current_job == job:
         device.current_job = None
     # Save the result

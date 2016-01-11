@@ -1141,6 +1141,45 @@ class TestYamlMultinode(TestCaseWithFactory):
             job = TestJob.objects.get(id=job.id)
             self.assertNotEqual(job.sub_id, '')
 
+    def test_multinode_essential(self):
+        user = self.factory.make_user()
+        device_type = self.factory.make_device_type()
+        self.factory.make_device(device_type, 'fakeqemu1')
+        self.factory.make_device(device_type, 'fakeqemu2')
+        bbb_type = self.factory.make_device_type('beaglebone-black')
+        self.factory.make_device(hostname='bbb-01', device_type=bbb_type)
+        self.factory.make_device(hostname='bbb-02', device_type=bbb_type)
+        device_dict = DeviceDictionary(hostname='bbb-01')
+        device_dict.parameters = {
+            'bootloader_prompt': '=>',
+            'connection_command': 'telnet localhost 6004',
+            'extends': 'beaglebone-black.jinja2',
+        }
+        device_dict.save()
+        device_dict = DeviceDictionary(hostname='bbb-02')
+        device_dict.parameters = {
+            'bootloader_prompt': '=>',
+            'connection_command': 'telnet localhost 6005',
+            'extends': 'beaglebone-black.jinja2',
+        }
+        device_dict.save()
+        submission = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'bbb-qemu-multinode.yaml'), 'r'))
+        self.assertIn('protocols', submission)
+        self.assertIn(MultinodeProtocol.name, submission['protocols'])
+        submission['protocols'][MultinodeProtocol.name]['roles']['server']['essential'] = True
+        job_object_list = _pipeline_protocols(submission, user, yaml.dump(submission))
+        for job in job_object_list:
+            definition = yaml.load(job.definition)
+            role = definition['protocols'][MultinodeProtocol.name]['role']
+            self.assertNotEqual(definition['protocols']['lava-multinode']['sub_id'], '')
+            if role == 'client':
+                self.assertFalse(job.essential_role)
+            elif role == 'server':
+                self.assertTrue(job.essential_role)
+            else:
+                self.fail("Unexpected role: %s" % role)
+
 
 class VlanInterfaces(TestCaseWithFactory):
 

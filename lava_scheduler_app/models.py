@@ -805,7 +805,7 @@ class Device(RestrictedResource):
         )
 
     def state_transition_to(self, new_status, user=None, message=None,
-                            job=None):
+                            job=None, master=False):
         logger = logging.getLogger('dispatcher-master')
         try:
             dst_obj = DeviceStateTransition.objects.create(
@@ -818,6 +818,8 @@ class Device(RestrictedResource):
         self.save()
         if user:
             self.log_admin_entry(user, "DeviceStateTransition [%d] %s" % (dst_obj.id, message))
+        elif master:
+            logger.info("Master transitioning with message %s" % message)
         else:
             logger.warning("Empty user passed to state_transition_to() with message %s" % message)
         return True
@@ -1706,6 +1708,23 @@ class TestJob(RestrictedResource):
             return u'/results/%s' % self.id
         else:
             return None
+
+    @property
+    def essential_role(self):  # pylint: disable=too-many-return-statements
+        if not (self.is_multinode or self.is_vmgroup or self.is_pipeline):
+            return False
+        data = yaml.load(self.definition)
+        # would be nice to use reduce here but raising and catching TypeError is slower
+        # than checking 'if .. in ' - most jobs will return False.
+        if 'protocols' not in data:
+            return False
+        if 'lava-multinode' not in data['protocols']:
+            return False
+        if 'role' not in data['protocols']['lava-multinode']:
+            return False
+        if 'essential' not in data['protocols']['lava-multinode']:
+            return False
+        return data['protocols']['lava-multinode']['essential']
 
     @property
     def device_role(self):  # pylint: disable=too-many-return-statements

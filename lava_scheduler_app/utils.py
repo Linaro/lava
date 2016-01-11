@@ -690,6 +690,8 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
             'group_size': group_size,
             'sub_id': subid,
         }
+        if 'essential' in value:
+            params['essential'] = value
         for tag in tags:
             params[tag] = value[tag]
         roles[role].update({'protocols': {'lava-multinode': params}})
