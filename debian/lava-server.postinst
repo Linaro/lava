@@ -188,10 +188,9 @@ install_database()
     # syncdb
     # fake-initial only in django 1.8 but needed for upgrades using 1.9
     if [ `dpkg --compare-versions $(django-admin --version) gt '1.8'` ]; then
-        # dpkg returns zero on success, so non-zero is django < 1.8
-        lava-server manage migrate --noinput
-    else
         lava-server manage migrate --noinput --fake-initial
+    else
+        lava-server manage migrate --noinput
     fi
     # superuser - password must be changed
     if ! su postgres -c "psql \"-c SELECT usename FROM pg_user WHERE usename='$LAVA_SYS_USER'\"" | grep "$LAVA_SYS_USER"; then
