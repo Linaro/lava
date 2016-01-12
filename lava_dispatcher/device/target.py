@@ -908,6 +908,10 @@ class Target(object):
         :return: timeout, extended if deployment_data sets boot_linaro_timeout
         """
         key = 'boot_linaro_timeout'
+        if not self.__deployment_data__:
+            # image in particular does not set deployment_data at this point.
+            value = getattr(self.config, key.lower())
+            return value
         extended = 'extended_boot_timeout'
         value_str = self.deployment_data.get(key)
         if value_str == extended:
