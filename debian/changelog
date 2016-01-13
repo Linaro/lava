@@ -1,3 +1,10 @@
+lava-server (2015.12-4) unstable; urgency=medium
+
+  * Use --fake-initial option on migrations, when django1.8
+    is available but not on Jessie. (Closes: #810355)
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 13 Jan 2016 19:33:16 +0000
+
 lava-server (2015.12-3) unstable; urgency=medium
 
   * Conflict with python-django-auth-openid as 
