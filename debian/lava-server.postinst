@@ -186,8 +186,8 @@ install_database()
         su postgres -c "createdb devel --owner devel"
     fi
     # syncdb
-    # fake-initial only in django 1.8 but needed for upgrades using 1.9
-    if [ `dpkg --compare-versions $(django-admin --version) gt '1.8'` ]; then
+    # fake-initial only in django 1.8 but needed for upgrades from 1.7 using 1.9
+    if [ "`dpkg --compare-versions $(django-admin --version) gt '1.8' && echo $?`" = '0' ]; then
         lava-server manage migrate --noinput --fake-initial
     else
         lava-server manage migrate --noinput
