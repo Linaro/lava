@@ -8,6 +8,10 @@ device_type: panda
 {# allow job context override - use a different variable name, undefined if not in job context #}
 {% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) -%}
 
+{% block vland %}
+{# If super() is to be added, remove the parameters: top level block below #}
+{% endblock %}
+
 parameters:
   bootm:
    kernel: '{{ bootm_kernel_addr|default('0x80200000') }}'
@@ -26,8 +30,10 @@ parameters:
 actions:
   deploy:
     methods:
-      tftp
+      tftp:
   boot:
+    connections:
+      serial:
     methods:
       u-boot:
         parameters:

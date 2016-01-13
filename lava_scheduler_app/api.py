@@ -2,8 +2,8 @@ import xmlrpclib
 import json
 import yaml
 import jinja2
-from django.core.exceptions import PermissionDenied
 from simplejson import JSONDecodeError
+from django.core.exceptions import PermissionDenied
 from django.db.models import Count
 from linaro_django_xmlrpc.models import ExposedAPI
 from lava_scheduler_app.models import (
@@ -712,3 +712,74 @@ class SchedulerAPI(ExposedAPI):
         device_dict = device_dict.to_dict()
         jinja_str = devicedictionary_to_jinja2(device_dict['parameters'], device_dict['parameters']['extends'])
         return xmlrpclib.Binary(jinja_str.encode('UTF-8'))
+
+    def validate_pipeline_devices(self, hostname=None):
+        """
+        Name
+        ----
+        `validate_pipeline_device` [`device_hostname`]
+
+        Description
+        -----------
+        Validate that the device dictionary and device-type template
+        together create a valid YAML file which matches the pipeline
+        device schema.
+
+        See also get_pipeline_device_config
+
+        Arguments
+        ---------
+        `device_hostname`: string
+            Device hostname to validate.
+        If a device hostname is not specified, all pipeline devices
+        are checked.
+
+        Return value
+        ------------
+        This function returns an XML-RPC structure of results with the
+        following fields.
+
+        `device_hostname`: {'Valid': null}
+        or
+        `device_hostname`: {'Invalid': message}
+        `
+
+        """
+        if not hostname:
+            devices = Device.objects.filter(is_pipeline=True)
+        else:
+            devices = Device.objects.filter(is_pipeline=True, hostname=hostname)
+        if not devices and hostname:
+            raise xmlrpclib.Fault(
+                404, "No pipeline device found with hostname %s" % hostname
+            )
+        if not devices and not hostname:
+            raise xmlrpclib.Fault(
+                404, "No pipeline device found on this instance."
+            )
+        results = {}
+        for device in devices:
+            key = str(device.hostname)
+            element = DeviceDictionary.get(device.hostname)
+            if element is None:
+                results[key] = {'Invalid': "Missing device dictionary"}
+                continue
+            data = devicedictionary_to_jinja2(element.parameters,
+                                              element.parameters['extends'])
+            if data is None:
+                results[key] = {'Invalid': 'Unable to convert device dictionary into jinja2'}
+                continue
+            try:
+                template = prepare_jinja_template(device.hostname, data, system_path=True)
+                device_configuration = template.render()
+            except jinja2.TemplateError as exc:
+                results[key] = {'Invalid': exc}
+                continue
+            try:
+                # validate against the device schema
+                validate_device(yaml.load(device_configuration))
+            except SubmissionException as exc:
+                results[key] = {'Invalid': exc}
+                continue
+            results[key] = {'Valid': None}
+        return xmlrpclib.Binary(yaml.dump(results))

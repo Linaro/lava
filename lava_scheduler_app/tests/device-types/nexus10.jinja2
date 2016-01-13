@@ -3,6 +3,9 @@
 device_type: nexus10
 serial_number: {{ serial_number|default('0000000000') }}
 
+{% block vland %}
+{# skip the parameters dict at top level #}
+{% endblock %}
 
 actions:
   deploy:

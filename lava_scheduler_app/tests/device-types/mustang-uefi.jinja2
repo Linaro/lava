@@ -63,6 +63,9 @@ device_type: mustang-uefi
 
 {% set mustang_menu_list = mustang_menu_list | default(menu_action_list) -%}
 
+{% block vland %}
+{# If super() is to be added, remove the parameters: top level block below #}
+{% endblock %}
 parameters:
    bootm:
     kernel: '{{ bootm_kernel_addr|default('0x4002000000') }}'
