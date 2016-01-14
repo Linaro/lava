@@ -176,7 +176,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
     def lookup_deploy(self, params):  # pylint: disable=no-self-use
         actions = iter(params)
         while actions:
-            action = actions.next()
+            action = next(actions)
             if 'deploy' in action:
                 yield action['deploy']
 

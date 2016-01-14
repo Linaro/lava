@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+import sys
 import glob
 import time
 import unittest
@@ -300,7 +301,8 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
         self.assertEqual(pipe['compatibility'], ExpectShellSession.compatibility)
         self.assertEqual(job.compatibility, ExpectShellSession.compatibility)
         kvm_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/kvm.yaml')
-        job_def = yaml.load(open(kvm_yaml, 'r'))
+        with open(kvm_yaml, 'r') as kvm_yaml:
+            job_def = yaml.load(kvm_yaml)
         job_def['compatibility'] = job.compatibility
         parser = JobParser()
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
@@ -396,3 +398,32 @@ class TestFakeActions(unittest.TestCase):  # pylint: disable=too-many-public-met
         pipe.add_action(TestFakeActions.MakeNewConnection())
         conn = object()
         self.assertIsNot(conn, pipe.run_actions(conn))
+
+
+class TestStrategySelector(unittest.TestCase):
+    """
+    Check the lambda operation
+    """
+    class Base(object):
+        priority = 0
+
+    class First(Base):
+        priority = 1
+
+    class Second(Base):
+        priority = 2
+
+    class Third(Base):
+        priority = 3
+
+    @unittest.skipIf(sys.version_info[0] == 3, 'test case only for python2')
+    def test_prioritized(self):
+        willing = [TestStrategySelector.First(), TestStrategySelector.Third(), TestStrategySelector.Second()]
+        prioritized = sorted(willing, lambda x, y: cmp(y.priority, x.priority))
+        self.assertIsInstance(prioritized[0], TestStrategySelector.Third)
+
+    def test_willing(self):
+        willing = [TestStrategySelector.First(), TestStrategySelector.Third(), TestStrategySelector.Second()]
+        willing.sort(key=lambda x: x.priority)
+        willing.reverse()
+        self.assertIsInstance(willing[0], TestStrategySelector.Third)

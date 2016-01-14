@@ -37,6 +37,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
     def setUp(self):
         super(TestVland, self).setUp()
         self.filename = os.path.join(os.path.dirname(__file__), 'sample_jobs/bbb-group-vland-alpha.yaml')
+        self.beta_filename = os.path.join(os.path.dirname(__file__), 'sample_jobs/bbb-group-vland-beta.yaml')
         self.device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
 
     def test_file_structure(self):
@@ -104,17 +105,17 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
                 ]
             )
         self.assertEqual(
-            csv_list,
-            [
+            set(csv_list),
+            {
                 '/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1', '00:24:d7:9b:c0:8c', 'eth1',
                 '/sys/devices/pci0000:00/0000:00:19.0/net/eth0', 'f0:de:f1:46:8c:21', 'eth0'
-            ]
+            }
         )
         tag_list = []
         for interface in self.device['parameters']['interfaces']:
             for tag in self.device['parameters']['interfaces'][interface]['tags']:
                 tag_list.extend([interface, tag])
-        self.assertEqual(tag_list, ['eth1', '1G', 'eth0', '1G'])
+        self.assertEqual(set(tag_list), {'eth1', '100M', 'eth0', '1G'})
 
     def test_configure(self):
         with open(self.filename) as yaml_data:
@@ -153,17 +154,24 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
         bbb2['parameters']['interfaces']['eth1']['switch'] = '192.168.0.2'
         bbb2['parameters']['interfaces']['eth1']['port'] = '4'
         self.assertEqual(
-            vprotocol.params,
-            {'vlan_one': {'switch': '192.168.0.1', 'port': 7, 'tags': ['1G']}, 'vlan_two': {'switch': '192.168.0.1', 'port': 5, 'tags': ['1G']}}
+            vprotocol.params, {
+                'vlan_one': {
+                    'switch': '192.168.0.1', 'port': 5, 'tags': ['1G']
+                },
+                'vlan_two': {
+                    'switch': '192.168.0.1', 'port': 7, 'tags': ['100M']}}
         )
         # already configured the vland protocol in the same job
         self.assertTrue(vprotocol.configure(bbb2, job))
         self.assertEqual(
-            vprotocol.params,
-            {'vlan_one': {'switch': '192.168.0.1', 'port': 7, 'tags': ['1G']}, 'vlan_two': {'switch': '192.168.0.1', 'port': 5, 'tags': ['1G']}}
+            vprotocol.params, {
+                'vlan_one': {
+                    'switch': '192.168.0.1', 'port': 5, 'tags': ['1G']},
+                'vlan_two': {
+                    'switch': '192.168.0.1', 'port': 7, 'tags': ['100M']}}
         )
         self.assertTrue(vprotocol.valid)
-        self.assertEqual(vprotocol.names, {'vlan_one': 'arbitraryg000', 'vlan_two': 'arbitraryg001'})
+        self.assertEqual(vprotocol.names, {'vlan_one': '4212vlanone', 'vlan_two': '4212vlantwo'})
 
     def test_job(self):
         with open(self.filename) as yaml_data:
@@ -184,7 +192,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.assertIn(MultinodeProtocol.name, job.parameters['protocols'])
         vprotocol = [vprotocol for vprotocol in job.protocols if vprotocol.name == VlandProtocol.name][0]
         self.assertTrue(vprotocol.valid)
-        self.assertEqual(vprotocol.names, {'vlan_one': 'arbitraryg000', 'vlan_two': 'arbitraryg001'})
+        self.assertEqual(vprotocol.names, {'vlan_one': '4212vlanone', 'vlan_two': '4212vlantwo'})
         self.assertFalse(vprotocol.check_timeout(120, {'request': 'no call'}))
         self.assertRaises(JobError, vprotocol.check_timeout, 60, 'deploy_vlans')
         self.assertRaises(JobError, vprotocol.check_timeout, 60, {'request': 'deploy_vlans'})

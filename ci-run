@@ -2,6 +2,21 @@
 
 set -e
 
+echo "Checking pep8"
 pep8 --ignore E501 .
 
+echo "Checking python3"
+# sadly 2to3 sends all output to stderr,
+# always exits zero, regardless of results
+# and has no --quiet option. So, just output any diffs
+# and use || true for when grep -v would fail
+# -x imports to ignore ability to retain import urllib with python2.
+2to3 -x imports -v -p lava_dispatcher/pipeline/ 2>&1 | grep -v RefactoringTool|grep -v 'root:' || true
+
+echo "Starting unit tests"
+echo
 TMPDIR=. python setup.py test "$@"
+
+# to run python3 unit tests, you can use
+# python3 -m unittest discover -v lava_dispatcher.pipeline
+# but the python3 dependencies are not automatically installed.

@@ -249,7 +249,7 @@ class VlandProtocol(Protocol):
         }
         ret = self.multinode_protocol(wait_msg)
         if ret:
-            values = ret.values()[0]
+            values = list(ret.values())[0]
             return (values['vlan_name'], values['vlan_tag'],)
         raise JobError("Waiting for vlan creation failed: %s", ret)
 
@@ -358,17 +358,17 @@ class VlandProtocol(Protocol):
         self.multinode_protocol = protocols[0]
         if not self.valid:
             return False
-        interfaces = [interface for interface, _ in device['parameters']['interfaces'].iteritems()]
+        interfaces = [interface for interface, _ in device['parameters']['interfaces'].items()]
         available = []
         for iface in interfaces:
             available.extend(device['parameters']['interfaces'][iface]['tags'])
         requested = []
-        count = 0
         for friendly_name in self.parameters['protocols'][self.name]:
             if friendly_name == 'yaml_line':
                 continue
-            self.names[friendly_name] = "%s%s%02d" % (self.base_group, self.sub_id, count)
-            count += 1
+            base_jobid = "%s" % job.job_id
+            base = "%s%s" % (base_jobid[-8:], friendly_name[:8])
+            self.names[friendly_name] = ''.join(e for e in base if e.isalnum())[:16]
         self.params = copy.deepcopy(self.parameters['protocols'][self.name])
         for vlan_name in self.params:
             if vlan_name == 'yaml_line':

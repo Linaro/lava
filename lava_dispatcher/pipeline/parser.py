@@ -163,7 +163,7 @@ class JobParser(object):
                 elif name == 'repeat':
                     count = action_data[name]['count']  # first list entry must be the count dict
                     repeats = action_data[name]['actions']
-                    for c_iter in xrange(count):
+                    for c_iter in range(count):
                         for repeating in repeats:  # block of YAML to repeat
                             for repeat_action in repeating:  # name of the action for this block
                                 if repeat_action == 'yaml_line':

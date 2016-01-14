@@ -129,9 +129,9 @@ class RepoAction(Action):
                 " '%s'." % repo_type)
 
         # higher priority first
-        prioritized = sorted(willing, lambda x, y: cmp(y.priority, x.priority))
-
-        return prioritized[0]
+        willing.sort(key=lambda x: x.priority)
+        willing.reverse()
+        return willing[0]
 
     def validate(self):
         if 'hostname' not in self.job.device:

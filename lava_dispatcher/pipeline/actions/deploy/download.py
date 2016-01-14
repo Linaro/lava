@@ -24,8 +24,8 @@
 
 import math
 import os
+import sys
 import time
-import urlparse
 import hashlib
 import requests
 import subprocess
@@ -45,6 +45,11 @@ from lava_dispatcher.pipeline.utils.constants import (
     HTTP_DOWNLOAD_TIMEOUT,
     SCP_DOWNLOAD_CHUNK_SIZE,
 )
+
+if sys.version_info[0] == 2:
+    import urlparse as lavaurl
+elif sys.version_info[0] == 3:
+    import urllib.parse as lavaurl
 
 
 # FIXME: separate download actions for decompressed and uncompressed downloads
@@ -69,9 +74,9 @@ class DownloaderAction(RetryAction):
 
         # Find the right action according to the url
         if 'images' in parameters:
-            url = urlparse.urlparse(parameters['images'][self.key]['url'])
+            url = lavaurl.urlparse(parameters['images'][self.key]['url'])
         else:
-            url = urlparse.urlparse(parameters[self.key]['url'])
+            url = lavaurl.urlparse(parameters[self.key]['url'])
         if url.scheme == 'scp':
             action = ScpDownloadAction(self.key, self.path, url)
         elif url.scheme == 'http' or url.scheme == 'https':
@@ -174,7 +179,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         self.data.setdefault('download_action', {self.key: {}})
         if 'images' in self.parameters:
             image = self.parameters['images'][self.key]
-            self.url = urlparse.urlparse(image['url'])
+            self.url = lavaurl.urlparse(image['url'])
             compression = image.get('compression', None)
             image_name, _ = self._url_to_fname_suffix(self.path, compression)
             image_arg = image.get('image_arg', None)
@@ -184,7 +189,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             self.data['download_action'][self.key]['file'] = image_name
             self.data['download_action'][self.key]['image_arg'] = image_arg
         else:
-            self.url = urlparse.urlparse(self.parameters[self.key]['url'])
+            self.url = lavaurl.urlparse(self.parameters[self.key]['url'])
             compression = self.parameters[self.key].get('compression', False)
             overlay = self.parameters.get('overlay', False)
             fname, _ = self._url_to_fname_suffix(self.path, compression)

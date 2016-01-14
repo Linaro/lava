@@ -21,7 +21,9 @@
 
 import os
 import yaml
+import logging
 import unittest
+import subprocess
 from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.device import NewDevice
@@ -64,6 +66,7 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         factory = Factory()
         self.job = factory.create_ssh_job('sample_jobs/ssh-deploy.yaml', mkdtemp())
         self.guest_job = factory.create_bbb_job('sample_jobs/bbb-ssh-guest.yaml', mkdtemp())
+        logging.getLogger('dispatcher').addHandler(logging.NullHandler())
 
     @unittest.skipIf(infrastructure_error('schroot'), "schroot not installed")
     def test_ssh_job(self):
@@ -222,7 +225,7 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertIn(  # ipv4
             login.parameters['parameters']['hostID'],
             prepare.host_keys)
-        prepare.set_common_data(MultinodeProtocol.name, 'ipv4', {'ipaddr': u'172.16.200.165'})
+        prepare.set_common_data(MultinodeProtocol.name, 'ipv4', {'ipaddr': '172.16.200.165'})
         self.assertEqual(prepare.get_common_data(prepare.name, 'overlay'), prepare.host_keys)
         self.assertIn(
             login.parameters['parameters']['host_key'],
@@ -230,13 +233,14 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         host_data = prepare.get_common_data(MultinodeProtocol.name, login.parameters['parameters']['hostID'])
         self.assertEqual(
             host_data[login.parameters['parameters']['host_key']],
-            u'172.16.200.165'
+            '172.16.200.165'
         )
         data = scp_overlay.get_common_data(MultinodeProtocol.name, 'ipv4')
         if 'protocols' in scp_overlay.parameters:
             for params in scp_overlay.parameters['protocols'][MultinodeProtocol.name]:
-                (replacement_key, placeholder) = [(key, value) for key, value in params['message'].items() if key != 'yaml_line'][0]
-                self.assertEqual(data[replacement_key], u'172.16.200.165')
+                (replacement_key, placeholder) = [
+                    (key, value)for key, value in params['message'].items() if key != 'yaml_line'][0]
+                self.assertEqual(data[replacement_key], '172.16.200.165')
                 self.assertEqual(placeholder, '$ipaddr')
         environment = scp_overlay.get_common_data('environment', 'env_dict')
         self.assertIsNotNone(environment)
@@ -285,9 +289,9 @@ class TestTimeouts(unittest.TestCase):
         """
         Test connection timeout specified in the submission YAML
         """
-        data = yaml.load(
-            open(os.path.join(
-                os.path.dirname(__file__), './sample_jobs/uboot-ramdisk.yaml'), 'r'))
+        with open(os.path.join(
+                os.path.dirname(__file__), './sample_jobs/uboot-ramdisk.yaml'), 'r') as uboot_ramdisk:
+            data = yaml.load(uboot_ramdisk)
         data['timeouts']['connection'] = {'seconds': 20}
         job = self.create_custom_job(yaml.dump(data))
         for action in job.pipeline.actions:
@@ -301,9 +305,9 @@ class TestTimeouts(unittest.TestCase):
         """
         Test connection timeout specified for a particular action
         """
-        data = yaml.load(
-            open(os.path.join(
-                os.path.dirname(__file__), './sample_jobs/uboot-ramdisk.yaml'), 'r'))
+        with open(os.path.join(
+                os.path.dirname(__file__), './sample_jobs/uboot-ramdisk.yaml'), 'r') as uboot_ramdisk:
+            data = yaml.load(uboot_ramdisk)
         data['timeouts']['connections'] = {'uboot-retry': {}}
         data['timeouts']['connections']['uboot-retry'] = {'seconds': 20}
         job = self.create_custom_job(yaml.dump(data))

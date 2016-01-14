@@ -24,6 +24,7 @@ import glob
 import yaml
 import uuid
 import json
+import logging
 import unittest
 from lava_dispatcher.pipeline.test.fake_coordinator import TestCoordinator
 from lava_dispatcher.pipeline.test.test_basic import Factory
@@ -144,8 +145,14 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
 
         client_protocol = [protocol for protocol in self.client_job.protocols][0]
         server_protocol = [protocol for protocol in self.server_job.protocols][0]
-        self.assertEqual([client_name for client_name in client_protocol.parameters['protocols'][client_protocol.name]['roles']], ['kvm02', 'kvm01', 'yaml_line'])
-        self.assertEqual([client_name for client_name in server_protocol.parameters['protocols'][server_protocol.name]['roles']], ['kvm02', 'kvm01', 'yaml_line'])
+        self.assertEqual(
+            set([client_name for client_name in
+                 client_protocol.parameters['protocols'][client_protocol.name]['roles']]),
+            {'kvm02', 'kvm01', 'yaml_line'})
+        self.assertEqual(
+            set([client_name for client_name in
+                 server_protocol.parameters['protocols'][server_protocol.name]['roles']]),
+            {'kvm02', 'kvm01', 'yaml_line'})
         self.assertEqual(client_protocol.parameters['protocols'][client_protocol.name]['roles']['kvm01'], 'client')
         self.assertEqual(client_protocol.parameters['protocols'][client_protocol.name]['roles']['kvm02'], 'server')
         self.assertEqual(server_protocol.parameters['protocols'][client_protocol.name]['roles']['kvm01'], 'client')
@@ -490,9 +497,11 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
             mn_protocol.collate(reply, params)
         )
 
-        replaceables = [key for key, value in params['message'].items() if key != 'yaml_line' and value.startswith('$')]
+        replaceables = [key for key, value in params['message'].items()
+                        if key != 'yaml_line' and value.startswith('$')]
         for item in replaceables:
-            data = [val for val in reply['message'].items()][0][1]
+            target_list = [val for val in reply['message'].items()]
+            data = target_list[0][1]
             params['message'][item] = data[item]
 
         self.assertEqual(
@@ -535,6 +544,7 @@ class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-method
         }
         self.coord = TestCoordinator()
         self.protocol = TestProtocol.FakeProtocol(self.coord, parameters)
+        logging.getLogger('dispatcher').addHandler(logging.NullHandler())
 
     def _wrap_message(self, message, role):
         base_msg = {
@@ -672,32 +682,6 @@ class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-method
         self.coord.expectResponse("ack")
         with self.assertRaises(JobError):
             self.protocol(msg)
-
-    def test_lava_send(self):
-        msg = {
-            'request': 'lava_send',
-            'port': 3,
-            'blocksize': 8,
-            'messageID': 'test-id'
-        }
-        msg.update(self.protocol.base_message)
-        self.coord.expectResponse("ack")
-        self.protocol(msg)
-
-    def test_lava_send_message(self):
-        msg = {
-            'request': 'lava_send',
-            'port': 3,
-            'blocksize': 8,
-            'messageID': 'test-id',
-            'message': {
-                'one': 1,
-                'two': 2
-            }
-        }
-        msg.update(self.protocol.base_message)
-        self.coord.expectResponse("ack")
-        self.protocol(msg)
 
 
 class TestDelayedStart(unittest.TestCase):  # pylint: disable=too-many-public-methods

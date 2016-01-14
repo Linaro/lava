@@ -204,10 +204,9 @@ class Deployment(object):  # pylint: disable=abstract-class-not-used
                 "No deployment strategy available for the given "
                 "device '%s'. %s" % (device['hostname'], cls))
 
-        # higher priority first
-        prioritized = sorted(willing, lambda x, y: cmp(y.priority, x.priority))
-
-        return prioritized[0]
+        willing.sort(key=lambda x: x.priority)
+        willing.reverse()
+        return willing[0]
 
 
 class Boot(object):
@@ -247,9 +246,9 @@ class Boot(object):
             )
 
         # higher priority first
-        prioritized = sorted(willing, lambda x, y: cmp(y.priority, x.priority))
-
-        return prioritized[0]
+        willing.sort(key=lambda x: x.priority)
+        willing.reverse()
+        return willing[0]
 
 
 class LavaTest(object):  # pylint: disable=abstract-class-not-used
@@ -291,9 +290,9 @@ class LavaTest(object):  # pylint: disable=abstract-class-not-used
             raise NotImplementedError(msg)
 
         # higher priority first
-        prioritized = sorted(willing, lambda x, y: cmp(y.priority, x.priority))
-
-        return prioritized[0]
+        willing.sort(key=lambda x: x.priority)
+        willing.reverse()
+        return willing[0]
 
 
 class PipelineContext(object):  # pylint: disable=too-few-public-methods

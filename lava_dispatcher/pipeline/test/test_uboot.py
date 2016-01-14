@@ -293,6 +293,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         sample_job_data = open(sample_job_file)
         job = job_parser.parse(sample_job_data, cubie, 4212, None, output_dir='/tmp/')
         job.validate()
+        sample_job_data.close()
         u_boot_media = job.pipeline.actions[1].internal_pipeline.actions[0]
         self.assertIsInstance(u_boot_media, UBootSecondaryMedia)
         self.assertEqual([], u_boot_media.errors)

@@ -108,6 +108,6 @@ class DeployImages(Deployment):
         if 'images' not in parameters:
             # python3 compatible
             # FIXME: too broad
-            print("Parameters %s have not been implemented yet." % parameters.keys())  # pylint: disable=superfluous-parens
+            print("Parameters %s have not been implemented yet." % list(parameters.keys()))  # pylint: disable=superfluous-parens
             return False
         return True

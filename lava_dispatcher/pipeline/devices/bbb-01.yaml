@@ -26,7 +26,7 @@ parameters:
       sysfs: "/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1"
       mac: "00:24:d7:9b:c0:8c"
       tags:
-      - 1G
+      - 100M
       switch: 192.168.0.1
       port: 7
 commands:

@@ -177,8 +177,8 @@ class SelectorMenuAction(Action):
         for item in self.items:
             if 'select' in item:
                 for _ in item['select']:
-                    item_keys[item['select'].keys()[0]] = None
-        disallowed = set(item_keys) - {'items', 'prompt', 'enter', 'escape'}
+                    item_keys[list(item['select'].keys())[0]] = None
+        disallowed = set(item_keys) - {'items', 'prompt', 'enter', 'escape', 'wait', 'fallback'}
         if disallowed:
             self.errors = "Unable to recognise item %s" % disallowed
 

@@ -56,6 +56,14 @@ class deployment_data_dict(object):  # pylint: disable=invalid-name, too-few-pub
         return self.__data__.get(key)
 
     def keys(self):
+        """
+        Exists principally so that the return looks like a list
+        of keys of a normal dict object. The most common thing
+        to do with the return value of dict.keys() is to iterate
+        or just with if _ in dict.keys():, so take the line of
+        least surprise, despite what 2to3 thinks.
+        https://docs.python.org/3/library/stdtypes.html#dict-views
+        """
         return self.__data__.keys()
 
 # FIXME: harmonise the prompt management to avoid duplication with device configuration

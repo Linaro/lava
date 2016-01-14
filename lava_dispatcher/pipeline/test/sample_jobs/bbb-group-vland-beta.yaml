@@ -17,23 +17,30 @@ protocols:
     sub_id: 1
     timeout:
       minutes: 10
+  # interface, switch and port come from device config
   lava-vland:
     vlan_one:
       tags:
       - 1G
     vlan_two:
       tags:
-      - 1G
+      - 100M
 
 priority: medium
 visibility: public
 
 actions:
   - deploy:
-      protocols:
-        lava-vland:
-        - action: prepare-vland
-          request: deploy_vlans
+     to: tftp
+     kernel: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+     nfsrootfs: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
+     rootfs_compression: gz
+     os: debian
+     dtb: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+     protocols:
+       lava-vland:
+       - action: prepare-vland
+         request: deploy_vlans
   - test:
      failure_retry: 3
      name: kvm-basic-singlenode

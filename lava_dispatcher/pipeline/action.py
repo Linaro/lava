@@ -372,14 +372,18 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 self.cleanup_actions(connection, "Cancelled")
                 sys.exit(1)
             except (JobError, InfrastructureError) as exc:
-                action.errors = exc.message
+                if sys.version > '3':
+                    exc_message = str(exc)
+                else:
+                    exc_message = exc.message
+                action.errors = exc_message
                 # set results including retries
                 if "boot-result" not in action.data:
                     action.data['boot-result'] = 'failed'
                 action.results = {"fail": exc}
                 self._diagnose(connection)
                 action.cleanup()
-                self.cleanup_actions(connection, exc.message)
+                self.cleanup_actions(connection, exc_message)
                 raise exc
         return connection
 
@@ -633,17 +637,28 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         command_list.insert(0, 'nice')
         try:
             log = subprocess.check_output(command_list, stderr=subprocess.STDOUT)
+            log = log.decode('utf-8')
         except subprocess.CalledProcessError as exc:
-            if exc.output:
-                self.errors = exc.output.strip()
-            elif exc.message:
-                self.errors = exc.message
+            if sys.version > '3':
+                if exc.output:
+                    self.errors = exc.output.strip().decode('utf-8')
+                else:
+                    self.errors = str(exc)
+                self.logger.exception({
+                    'command': [i.strip() for i in exc.cmd],
+                    'message': str(exc),
+                    'output': str(exc).split('\n')})
             else:
-                self.errors = str(exc)
-            self.logger.exception({
-                'command': [i.strip() for i in exc.cmd],
-                'message': [i.strip() for i in exc.message],
-                'output': exc.output.split('\n')})
+                if exc.output:
+                    self.errors = exc.output.strip()
+                elif exc.message:
+                    self.errors = exc.message
+                else:
+                    self.errors = str(exc)
+                self.logger.exception({
+                    'command': [i.strip() for i in exc.cmd],
+                    'message': [i.strip() for i in exc.message],
+                    'output': exc.output.split('\n')})
 
         # allow for commands which return no output
         if not log and allow_silent:

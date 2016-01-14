@@ -254,7 +254,7 @@ class MultinodeProtocol(Protocol):
         self.settings = {
             'blocksize': 4096,
             'port': 3179,  # debug port
-            'coordinator_hostname': u'localhost',
+            'coordinator_hostname': 'localhost',
             'poll_delay': 3
         }
 
@@ -407,9 +407,11 @@ class MultinodeProtocol(Protocol):
                             if key != 'yaml_line' and value.startswith('$')]
             for item in replaceables:
                 if 'message' in reply:
-                    data = [val for val in reply['message'].items() if self.parameters['target'] in val][0][1]
+                    target_list = [val for val in reply['message'].items()
+                                   if self.parameters['target'] in val]
                 else:
-                    data = [val for val in reply.items()][0][1]
+                    target_list = [val for val in list(reply.items())]
+                data = target_list[0][1]
                 if item not in data:
                     self.logger.warning("Skipping %s - not found in %s", item, data)
                     continue

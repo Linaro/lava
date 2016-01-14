@@ -19,6 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+
+import sys
 import glob
 import stat
 import unittest
@@ -126,7 +128,10 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
             scripts_to_copy.append(script)
         check_list = [os.path.basename(scr) for scr in scripts_to_copy]
 
-        self.assertItemsEqual(check_list, script_list)
+        if sys.version_info[0] == 2:
+            self.assertItemsEqual(check_list, script_list)
+        elif sys.version_info[0] == 3:
+            self.assertCountEqual(check_list, script_list)
         self.assertEqual(overlay.xmod, stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH)
 
 
@@ -189,12 +194,12 @@ class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-publi
         testdef = {'params': {'VARIABLE_NAME_1': 'value_1', 'VARIABLE_NAME_2': 'value_2'}}
         content = test.handle_parameters(testdef)
         self.assertEqual(
-            content,
-            [
+            set(content),
+            {
                 '###default parameters from yaml###\n', "VARIABLE_NAME_1='value_1'\n", "VARIABLE_NAME_2='value_2'\n",
                 '######\n', '###test parameters from json###\n', "VARIABLE_NAME_1='eth2'\n",
                 "VARIABLE_NAME_2='wlan0'\n", '######\n'
-            ]
+            }
         )
 
 

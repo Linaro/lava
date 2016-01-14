@@ -24,7 +24,7 @@ protocols:
       - 1G
     vlan_two:
       tags:
-      - 1G
+      - 100M
 
 priority: medium
 visibility: public

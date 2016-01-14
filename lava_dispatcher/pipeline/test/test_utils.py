@@ -20,6 +20,7 @@
 
 import os
 import shutil
+import logging
 import subprocess
 import tempfile
 import unittest
@@ -37,6 +38,8 @@ from lava_dispatcher.pipeline.utils import vcs
 class TestGit(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
+        logging.getLogger('dispatcher').addHandler(logging.NullHandler())
+        logging.disable(logging.CRITICAL)
         self.cwd = os.getcwd()
 
         # Go into a temp dirctory
@@ -109,6 +112,8 @@ class TestGit(unittest.TestCase):  # pylint: disable=too-many-public-methods
 class TestBzr(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
+        logging.getLogger('dispatcher').addHandler(logging.NullHandler())
+        logging.disable(logging.CRITICAL)
         self.cwd = os.getcwd()
 
         # Go into a temp dirctory
