@@ -50,7 +50,6 @@ def parse_template(device_file):
 class Command(BaseCommand):
 
     logger = None
-    # noinspection PyShadowingBuiltins
     help = "LAVA Device Dictionary I/O tool"
 
     def add_arguments(self, parser):

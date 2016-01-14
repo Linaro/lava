@@ -3,12 +3,14 @@ Database utility functions which use but are not actually models themselves
 Used to allow models.py to be shortened and easier to follow.
 """
 
-import json
+# pylint: disable=wrong-import-order
+
+import os
 import yaml
+import jinja2
 import datetime
 import logging
 import simplejson
-from simplejson import JSONDecodeError
 import django
 from django.db.models import Q
 from django.db import IntegrityError, transaction
@@ -25,7 +27,12 @@ from lava_scheduler_app.models import (
     validate_job,
     is_deprecated_json,
 )
-from lava_scheduler_app.schema import validate_submission, SubmissionException
+from lava_results_app.dbutils import map_metadata
+from lava_dispatcher.pipeline.device import PipelineDevice
+from lava_dispatcher.pipeline.parser import JobParser
+from lava_dispatcher.pipeline.action import JobError
+
+# pylint: disable=too-many-branches,too-many-statements,too-many-locals
 
 
 def match_vlan_interface(device, job_def):
@@ -94,11 +101,21 @@ def submit_health_check_jobs():
             if time_denominator:
                 run_health_check = device.last_health_report_job.end_time < \
                     timezone.now() - datetime.timedelta(hours=device.device_type.health_frequency)
+                if run_health_check:
+                    logger.debug("%s needs to run_health_check", device)
+                    logger.debug("health_check_end=%s", device.last_health_report_job.end_time)
+                    logger.debug("health_frequency is every %s hours", device.device_type.health_frequency)
+                    logger.debug("time_diff=%s"), (
+                        timezone.now() - datetime.timedelta(hours=device.device_type.health_frequency))
             else:
                 unchecked_job_count = TestJob.objects.filter(
                     actual_device=device, health_check=False,
                     id__gte=device.last_health_report_job.id).count()
                 run_health_check = unchecked_job_count > device.device_type.health_frequency
+                if run_health_check:
+                    logger.debug("%s needs to run_health_check", device)
+                    logger.debug("unchecked_job_count=%s", unchecked_job_count)
+                    logger.debug("health_frequency is every %s jobs", device.device_type.health_frequency)
 
         if run_health_check:
             logger.debug('submit health check for %s', device.hostname)
@@ -187,7 +204,7 @@ def find_device_for_job(job, device_list):  # pylint: disable=too-many-branches
         return None
     # forced health check support
     if job.health_check is True:
-        if job.requested_device.status == Device.OFFLINE:
+        if job.requested_device and job.requested_device.status == Device.OFFLINE:
             logger.debug("[%s] - assigning %s for forced health check.", job.id, job.requested_device)
             return job.requested_device
     logger.debug("[%s] Finding a device from a list of %s", job.id, len(device_list))
@@ -433,3 +450,242 @@ def assign_jobs():
 
     # worker heartbeat must not occur within this loop
     logger.info("Assigned %d jobs on %s devices", len(assigned_jobs), len(reserved_devices))
+
+
+def create_job(job, device):
+    """
+    Only for use with the dispatcher-master
+    """
+    # FIXME check the incoming device status
+    job.actual_device = device
+    device.current_job = job
+    new_status = Device.RESERVED
+    msg = "Reserved for job %d" % job.id
+    device.state_transition_to(new_status, message=msg, job=job)
+    device.status = new_status
+    # Save the result
+    job.save()
+    device.save()
+
+
+def start_job(job):
+    """
+    Only for use with the dispatcher-master
+    """
+    job.status = TestJob.RUNNING
+    # TODO: Only if that was not already the case !
+    job.start_time = timezone.now()
+    device = job.actual_device
+    msg = "Job %d running" % job.id
+    new_status = Device.RUNNING
+    job.save()
+    if not job.dynamic_connection:
+        device.state_transition_to(new_status, message=msg, job=job)
+        device.status = new_status
+        # Save the result
+        device.save()
+
+
+def fail_job(job, fail_msg=None, job_status=TestJob.INCOMPLETE):
+    """
+    Fail the job due to issues which would compromise any other jobs
+    in the same multinode group.
+    If not multinode, simply wraps end_job.
+    """
+    if not job.is_multinode:
+        end_job(job, fail_msg=fail_msg, job_status=job_status)
+        return
+    for failed_job in job.sub_jobs_list:
+        end_job(failed_job, fail_msg=fail_msg, job_status=job_status)
+
+
+def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
+    """
+    Controls the end of a single job..
+    If the job failed rather than simply ended with an exit code, use fail_job.
+    """
+    if job.status in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
+        # testjob has already ended and been marked as such
+        return
+    job.status = job_status
+    if job.status == TestJob.CANCELING:
+        job.status = TestJob.CANCELED
+    if job.start_time and not job.end_time:
+        job.end_time = timezone.now()
+    device = job.actual_device
+    if fail_msg:
+        job.failure_comment = "%s %s" % (job.failure_comment, fail_msg) if job.failure_comment else fail_msg
+    if not device:
+        job.save()
+        return
+    msg = "Job %d has ended. Setting job status %s" % (job.id, TestJob.STATUS_CHOICES[job.status][1])
+    new_status = Device.IDLE
+    device.state_transition_to(new_status, message=msg, job=job)
+    device.status = new_status
+    device.current_job = None
+    # Save the result
+    job.save()
+    device.save()
+
+
+def cancel_job(job):
+    job.status = TestJob.CANCELED
+    job.end_time = timezone.now()
+    if job.dynamic_connection:
+        job.save()
+        return
+    device = job.actual_device
+    msg = "Job %s cancelled" % job.id
+    # TODO: what should be the new device status? health check should set
+    # health unknown
+    new_status = Device.IDLE
+    device.state_transition_to(new_status, message=msg, job=job)
+    device.status = new_status
+    if device.current_job and device.current_job == job:
+        device.current_job = None
+    # Save the result
+    job.save()
+    device.save()
+
+
+def select_device(job, dispatchers):  # pylint: disable=too-many-return-statements
+    """
+    Transitioning a device from Idle to Reserved is the responsibility of the scheduler_daemon (currently).
+    This function just checks that the reserved device is valid for this job.
+    Jobs will only enter this function if a device is already reserved for that job.
+    Stores the pipeline description
+
+    To prevent cycling between lava_scheduler_daemon:assign_jobs and here, if a job
+    fails validation, the job is incomplete. Issues with this need to be fixed using
+    device tags.
+    """
+    # FIXME: split out dynamic_connection, multinode and validation
+    logger = logging.getLogger('dispatcher-master')
+    if not job.dynamic_connection:
+        if not job.actual_device:
+            return None
+        if job.actual_device.status is not Device.RESERVED:
+            # should not happen
+            logger.error("[%d] device [%s] not in reserved state", job.id, job.actual_device)
+            return None
+
+        if job.actual_device.worker_host is None:
+            fail_msg = "Misconfigured device configuration for %s - missing worker_host" % job.actual_device
+            fail_job(job, fail_msg=fail_msg)
+            logger.error(fail_msg)
+            return None
+
+    if job.is_multinode:
+        # inject the actual group hostnames into the roles for the dispatcher to populate in the overlay.
+        devices = {}
+        for multinode_job in job.sub_jobs_list:
+            # build a list of all devices in this group
+            definition = yaml.load(multinode_job.definition)
+            # devices are not necessarily assigned to all jobs in a group at the same time
+            # check all jobs in this multinode group before allowing any to start.
+            if multinode_job.dynamic_connection:
+                logger.debug("[%s] dynamic connection job", multinode_job.sub_id)
+                continue
+            if not multinode_job.actual_device:
+                logger.debug("[%s] job has no device yet", multinode_job.sub_id)
+                return None
+            devices[str(multinode_job.actual_device.hostname)] = definition['protocols']['lava-multinode']['role']
+        for multinode_job in job.sub_jobs_list:
+            # apply the complete list to all jobs in this group
+            definition = yaml.load(multinode_job.definition)
+            definition['protocols']['lava-multinode']['roles'] = devices
+            multinode_job.definition = yaml.dump(definition)
+            multinode_job.save()
+
+    # Load job definition to get the variables for template rendering
+    job_def = yaml.load(job.definition)
+    job_ctx = job_def.get('context', {})
+    parser = JobParser()
+    device = None
+    device_object = None
+    if not job.dynamic_connection:
+        device = job.actual_device
+
+        try:
+            device_config = device.load_device_configuration(job_ctx)  # raw dict
+        except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
+            logger.error("[%d] jinja2 error: %s", job.id, exc)
+            msg = "Administrative error. Unable to parse device configuration: '%s'" % exc
+            fail_job(job, fail_msg=msg)
+            return None
+        if not device_config or not isinstance(device_config, dict):
+            # it is an error to have a pipeline device without a device dictionary as it will never get any jobs.
+            msg = "Administrative error. Device '%s' has no device dictionary." % device.hostname
+            logger.error('[%d] device-dictionary error: %s', job.id, msg)
+            # as we don't control the scheduler, yet, this has to be an error and an incomplete job.
+            # the scheduler_daemon sorts by a fixed order, so this would otherwise just keep on repeating.
+            fail_job(job, fail_msg=msg)
+            return None
+        if not device.worker_host or not device.worker_host.hostname:
+            msg = "Administrative error. Device '%s' has no worker host." % device.hostname
+            logger.error('[%d] worker host error: %s', job.id, msg)
+            fail_job(job, fail_msg=msg)
+            return None
+        if device.worker_host.hostname not in dispatchers:
+            # a configured worker has not called in to this master
+            # likely that the worker is misconfigured - polling the wrong master
+            # or simply not running at all.
+            msg = """Administrative error. Device '{0}' has a worker_host setting of
+ '{1}' but no slave has registered with this master
+ using that FQDN.""".format(device.hostname, device.worker_host.hostname)
+            logger.error('[%d] worker-hostname error: %s', job.id, msg)
+            fail_job(job, fail_msg=msg)
+            return None
+
+        device_object = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
+        # FIXME: drop this nasty hack once 'target' is dropped as a parameter
+        if 'target' not in device_object:
+            device_object.target = device.hostname
+        device_object['hostname'] = device.hostname
+
+    validate_list = job.sub_jobs_list if job.is_multinode else [job]
+    for check_job in validate_list:
+        parser_device = None if job.dynamic_connection else device_object
+        try:
+            logger.info("[%d] Parsing definition", check_job.id)
+            # pass (unused) output_dir just for validation as there is no zmq socket either.
+            pipeline_job = parser.parse(
+                check_job.definition, parser_device,
+                check_job.id, None, output_dir=check_job.output_dir)
+        except (
+                AttributeError, JobError, NotImplementedError,
+                KeyError, TypeError, RuntimeError) as exc:
+            logger.error('[%d] parser error: %s', check_job.id, exc)
+            fail_job(check_job, fail_msg=exc)
+            return None
+        try:
+            logger.info("[%d] Validating actions", check_job.id)
+            pipeline_job.pipeline.validate_actions()
+        except (AttributeError, JobError, KeyError, TypeError, RuntimeError) as exc:
+            logger.error({device: exc})
+            fail_job(check_job, fail_msg=exc)
+            return None
+        if pipeline_job:
+            pipeline = pipeline_job.describe()
+            # write the pipeline description to the job output directory.
+            if not os.path.exists(check_job.output_dir):
+                os.makedirs(check_job.output_dir)
+            with open(os.path.join(check_job.output_dir, 'description.yaml'), 'w') as describe_yaml:
+                describe_yaml.write(yaml.dump(pipeline))
+            map_metadata(yaml.dump(pipeline), job)
+            # add the compatibility result from the master to the definition for comparison on the slave.
+            if 'compatibility' in pipeline:
+                try:
+                    compat = int(pipeline['compatibility'])
+                except ValueError:
+                    logger.error("[%d] Unable to parse job compatibility: %s",
+                                 check_job.id, pipeline['compatibility'])
+                    compat = 0
+                check_job.pipeline_compatibility = compat
+                check_job.save(update_fields=['pipeline_compatibility'])
+            else:
+                logger.error("[%d] Unable to identify job compatibility.", check_job.id)
+                fail_job(check_job, fail_msg='Unknown compatibility')
+                return None
+
+    return device
