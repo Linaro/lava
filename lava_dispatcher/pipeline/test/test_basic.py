@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+import glob
 import time
 import unittest
 import simplejson
@@ -321,6 +322,7 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
             pass
         self.assertIsNotNone(job)
 
+    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_common_data(self):
         factory = Factory()
         job = factory.create_kvm_job('sample_jobs/kvm.yaml', mkdtemp())

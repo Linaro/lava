@@ -506,7 +506,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         httpdownloadaction.validate()
         self.assertRaises(JobError, httpdownloadaction.run, None)
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
+    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_no_test_action_validate(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
