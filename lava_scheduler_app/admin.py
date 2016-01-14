@@ -234,7 +234,7 @@ class TestJobAdmin(admin.ModelAdmin):
         ('Advanced properties', {
             'fields': ('description', 'tags', 'sub_id', 'target_group', 'vm_group')}),
         ('Current status', {
-            'fields': ('actual_device', 'status', 'log_file')}),
+            'fields': ('actual_device', 'status')}),
         ('Results & Failures', {
             'fields': ('failure_tags', 'failure_comment', '_results_link', '_results_bundle')}),
     )
