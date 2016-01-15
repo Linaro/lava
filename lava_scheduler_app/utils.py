@@ -609,14 +609,16 @@ def _read_log(log_path):
     logger = logging.getLogger('lava_scheduler_app')
     if not os.path.exists(log_path):
         return {}
+    logs = {}
     for logfile in os.listdir(log_path):
         filepath = os.path.join(log_path, logfile)
         with open(filepath, 'r') as log_files:
             try:
-                return {logfile: yaml.load(log_files)}
+                logs.update({logfile: yaml.load(log_files)})
             except yaml.YAMLError as exc:
                 logger.warning(exc)
-                return {logfile: [{'warning': "YAML error in %s" % os.path.basename(logfile)}]}
+                logs.update({logfile: [{'warning': "YAML error in %s" % os.path.basename(logfile)}]})
+    return logs
 
 
 def folded_logs(job, section_name, sections, summary=False, increment=False):
