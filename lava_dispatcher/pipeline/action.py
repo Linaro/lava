@@ -374,6 +374,8 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             except (JobError, InfrastructureError) as exc:
                 action.errors = exc.message
                 # set results including retries
+                if "boot-result" not in action.data:
+                    action.data['boot-result'] = 'failed'
                 action.results = {"fail": exc}
                 self._diagnose(connection)
                 action.cleanup()
@@ -769,7 +771,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         if not connection.connected:
             self.logger.debug("Already disconnected")
             return
-        self.logger.debug("%s: Wait for prompt. %s seconds" % (self.name, int(self.timeout.duration)))
+        self.logger.debug("%s: Wait for prompt. %s seconds" % (self.name, int(self.connection_timeout.duration)))
         connection.wait()
 
 
