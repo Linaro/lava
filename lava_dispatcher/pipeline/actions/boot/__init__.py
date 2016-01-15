@@ -25,6 +25,7 @@ from lava_dispatcher.pipeline.utils.constants import (
     DEFAULT_SHELL_PROMPT,
     DISTINCTIVE_PROMPT_CHARACTERS,
 )
+from lava_dispatcher.pipeline.utils.shell import wait_for_prompt
 
 
 class BootAction(RetryAction):
@@ -135,9 +136,9 @@ class AutoLoginAction(Action):
             check_prompt_characters(prompts)
 
         self.logger.debug("Setting shell prompt")
-        # FIXME: by fact we need to wait here not a prompt but *something*
-        #        which looks like a successful login
-        self.wait(connection)
+        # may need to force a prompt here.
+        wait_for_prompt(connection.raw_connection, connection.prompt_str, connection.timeout.duration, '#')
+        # self.wait(connection)
         connection.sendline('export PS1="%s"' % DEFAULT_SHELL_PROMPT)
 
         return connection
