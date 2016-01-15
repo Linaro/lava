@@ -28,6 +28,7 @@ recursive-include doc/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg
 include entry_points.ini
 include instance.template
 include doc/*
+include doc/deprecated/*
 recursive-include doc/examples *.json * *.py
 include doc/_static/*
 include doc/linaro_dashboard_bundle/*
