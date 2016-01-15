@@ -165,6 +165,22 @@ die() {
 
 install_database()
 {
+    # check postgres is not just installed but actually ready.
+    pg=1
+    limit=3
+    while [ $pg -le $limit ]; do
+        if ! pg_isready -d '$LAVA_DB_NAME' -p $LAVA_DB_PORT -q; then
+            echo "[$pg] Postgres not ready for connection to $LAVA_DB_NAME on port $LAVA_DB_PORT."
+            sleep 1
+        else
+            break
+        fi
+        pg=$(( $pg + 1 ))
+    done
+    if [ $pg -ge $limit ]; then
+        echo "Failed to connect to postgres."
+        exit $pg
+    fi
     # Create database user, if it doesn't exist
     if ! su postgres -c "psql \"-c SELECT usename FROM pg_user WHERE usename='$LAVA_DB_USER'\"" | grep "$LAVA_DB_USER"; then
         su postgres -c "createuser --no-createdb --encrypted --login --no-superuser --no-createrole --no-password --port $LAVA_DB_PORT $LAVA_DB_USER"|| "Failed to create database user"
