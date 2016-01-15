@@ -76,7 +76,7 @@ DEFAULT_SHELL_PROMPT = 'lava-test: # '
 
 # Distinctive prompt characters which can
 # help distinguish status messages from shell prompts.
-DISTINCTIVE_PROMPT_CHARACTERS = ":"
+DISTINCTIVE_PROMPT_CHARACTERS = "\\:"
 
 # LAVA Coordinator setup and finalize timeout
 LAVA_MULTINODE_SYSTEM_TIMEOUT = 90
