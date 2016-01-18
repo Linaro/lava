@@ -399,7 +399,9 @@ class MultinodeProtocol(Protocol):
             msg = "Unable to identify replaceable values in the parameters: %s" % params
             self.logger.error(msg)
             raise JobError(msg)
-        self.logger.debug("Retrieving replaceable values from %s %s", json.dumps(reply), params)
+        self.logger.debug({
+            "Retrieving replaceable values from": "%s" % json.dumps(reply),
+            "params": "%s" % json.dumps(params)})
         if 'message' in params and reply:
             replaceables = [key for key, value in params['message'].items()
                             if key != 'yaml_line' and value.startswith('$')]

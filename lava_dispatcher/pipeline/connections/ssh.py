@@ -137,17 +137,21 @@ class ConnectSsh(Action):
         command = self.command[:]  # local copy for idempotency
         command.extend(['-i', self.identity_file])
 
-        host_address = self.get_common_data('ssh-connection', 'host_address')
+        overrides = self.get_common_data("prepare-scp-overlay", self.key)
+        host_address = str(self.get_common_data("prepare-scp-overlay", overrides[0]))
         if host_address:
             self.logger.info("Using common data to retrieve host_address for secondary connection.")
-            self.host = host_address
+            command_str = " ".join(str(item) for item in command)
+            self.logger.info("%s Connecting to device %s using '%s'", self.name, host_address, command_str)
+            command.append("%s@%s" % (self.ssh_user, host_address))
         elif self.host and not self.primary:
             self.logger.info("Using device data host_address for primary connection.")
+            command_str = " ".join(str(item) for item in command)
+            self.logger.info("%s Connecting to device %s using '%s'", self.name, self.host, command_str)
             command.append("%s@%s" % (self.ssh_user, self.host))
         else:
             raise JobError("Unable to identify host address. Primary? %s", self.primary)
         command_str = " ".join(str(item) for item in command)
-        self.logger.info("%s Connecting to device %s using '%s'", self.name, self.host, command_str)
         shell = ShellCommand("%s\n" % command_str, self.timeout, logger=self.logger)
         if shell.exitstatus:
             raise JobError("%s command exited %d: %s" % (
@@ -159,5 +163,5 @@ class ConnectSsh(Action):
         connection.prompt_str = [DEFAULT_SHELL_PROMPT]
         connection.connected = True
         self.wait(connection)
-        self.data["boot-result"] = 'success'
+        self.data["boot-result"] = 'failed' if self.errors else 'success'
         return connection
