@@ -107,7 +107,7 @@ class BootloaderRetry(BootAction):
 
     def __init__(self):
         super(BootloaderRetry, self).__init__()
-        self.name = "uboot-retry"
+        self.name = "bootloader-retry"
         self.description = "interactive uboot retry action"
         self.summary = "uboot commands with retry"
         self.type = "ipxe"

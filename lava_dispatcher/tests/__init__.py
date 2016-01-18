@@ -24,6 +24,7 @@ def test_suite():
         'lava_dispatcher.pipeline.test.test_menus',
         'lava_dispatcher.pipeline.test.test_fastboot',
         'lava_dispatcher.pipeline.test.test_vland',
+        'lava_dispatcher.pipeline.test.test_ipxe'
     ]
     loader = unittest.TestLoader()
     return loader.loadTestsFromNames(module_names)
