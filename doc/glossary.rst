@@ -50,6 +50,7 @@ migration to the new :ref:`dispatcher_design`.
 [ :term:`hwpack` ]
 [ :term:`logging level` ]
 [ :term:`stream` ]
+[ :term:`vmgroups` ]
 
 .. glossary::
 
@@ -402,6 +403,14 @@ migration to the new :ref:`dispatcher_design`.
     entire LAVA instance, including the physical layout of the switches
     and the devices of that instance. See :ref:`vland_in_lava` or
     :ref:`admin_vland_lava`.
+
+  vmgroups
+     :ref:`vm_groups` is the deprecated and limited way of supporting running
+     multiple test jobs on a single host device. This support has been replaced
+     by the use of a :ref:`secondary_connection`. [#deprecated]_
+
+     .. seealso:: :ref:`writing_secondary_connection_jobs` and
+        :ref:`replacing _vmgroups`
 
   ZMQ
     Zero MQ (or `0MQ <http://en.wikipedia.org/wiki/%C3%98MQ>`_) is

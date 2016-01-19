@@ -13,6 +13,8 @@ Even if the test definitions will eventually reside in external
 repositories, it is helpful to do the planning stage using inline
 definitions. See :ref:`inline_test_definition_example`.
 
+.. _secure_secondary_shells:
+
 Secure Shell connections (ssh)
 ******************************
 

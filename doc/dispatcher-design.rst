@@ -719,6 +719,20 @@ The same requirement exists for documenting how to build, modify and
 update all components of the "image" and the set of components need to
 be tested as a whole to represent a test using the standard.
 
+In addition, information about the prompts within the image needs to be
+exposed. LAVA no longer has a list of potential prompts and each job must
+specify a list of prompts to use for the job.
+
+Other information should also be provided, for example, memory requirements or
+CPU core requirements for images to be used with QEMU or dependencies on other
+components (like firmware or kernel support).
+
+Test writers need to have enough information to submit a job without
+needing to resubmit after identifying and providing missing data.
+
+One or more sample test jobs is one way of providing this information but
+it is still recommended to provide the prompts and other information explicitly.
+
 .. _secondary_media:
 
 Secondary media
