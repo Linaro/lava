@@ -80,6 +80,9 @@ commands:
 {% if hard_reset_command %}
     hard_reset: {{ hard_reset_command }}
 {% endif -%}
+{% if soft_reset_command %}
+    soft_reset: {{ soft_reset_command }}
+{% endif -%}
 {% if soft_reboot_command %}
     soft_reboot: {{ soft_reboot_command }}
 {% endif -%}
@@ -88,6 +91,12 @@ commands:
 {% endif %}
 {% if power_on_command %}
     power_on: {{ power_on_command }}
+{% endif %}
+{% if adb_command %}
+    adb_command: {{ adb_command | default('adb -s {{ adb_serial_number }}') }}
+{% endif %}
+{% if fastboot_command %}
+    fastboot_command: {{ fastboot_command | default('fastboot -s {{ fastboot_serial_number }}') }}
 {% endif %}
 {% endif %}
 {% endblock -%}

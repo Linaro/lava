@@ -1,0 +1,7 @@
+{% extends 'nexus10.jinja2' %}
+{% set adb_serial_number = 'R32D300FRYP' %}
+{% set fastboot_serial_number = 'R32D300FRYP' %}
+{% set adb_command = 'adb -s R32D300FRYP' %}
+{% set fastboot_command = 'fastboot -s R32D300FRYP' %}
+{% set connection_command = 'adb -s R32D300FRYP shell' %}
+{% set soft_reboot_command = 'adb -s R32D300FRYP reboot bootloader' %}

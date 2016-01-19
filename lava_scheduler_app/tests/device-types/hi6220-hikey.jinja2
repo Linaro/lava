@@ -1,6 +1,6 @@
 {% extends 'base.jinja2' %}
 {% block body %}
-device_type: nexus10
+device_type: hi6220-hikey
 adb_serial_number: {{ adb_serial_number|default('0000000000') }}
 fastboot_serial_number: {{ fastboot_serial_number|default('0000000000') }}
 
@@ -14,11 +14,21 @@ actions:
       fastboot:
     connections:
       serial:
-      adb:
   boot:
     connections:
       adb:
+      serial:
     methods:
-      fastboot:
+      uefi-menu:
 
+timeouts:
+  actions:
+    apply-overlay-image:
+      seconds: 120
+    umount-retry:
+      seconds: 45
+    lava-test-shell:
+      seconds: 600
+    power_off:
+      seconds: 10
 {% endblock %}

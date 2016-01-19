@@ -1,7 +1,8 @@
 {% extends 'base.jinja2' %}
 {% block body %}
 device_type: nexus9
-serial_number: {{ serial_number|default('0000000000') }}
+adb_serial_number: {{ adb_serial_number|default('0000000000') }}
+fastboot_serial_number: {{ fastboot_serial_number|default('0000000000') }}
 
 {% block vland %}
 {# skip the parameters dict at top level #}

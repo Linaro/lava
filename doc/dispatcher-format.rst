@@ -325,7 +325,10 @@ and the :term:`device type` template. A sample :term:`device
 dictionary` (jinja2 child template syntax) for nexus 10 will look like the following::
 
  {% extends 'nexus10.jinja2' %}
- {% set serial_number = 'R32D300FRYP' %}
+ {% set adb_serial_number = 'R32D300FRYP' %}
+ {% set fastboot_serial_number = 'R32D300FRYP' %}
+ {% set adb_command = 'adb -s R32D300FRYP' %}
+ {% set fastboot_command = 'fastboot -s R32D300FRYP' %}
  {% set connection_command = 'adb -s R32D300FRYP shell' %}
  {% set soft_reboot_command = 'adb -s R32D300FRYP reboot bootloader' %}
 
@@ -335,8 +338,12 @@ follows::
  {% extends 'base.jinja2' %}
  {% block body %}
  device_type: nexus10
- serial_number: {{ serial_number|default('0000000000') }}
+ adb_serial_number: {{ adb_serial_number|default('0000000000') }}
+ fastboot_serial_number: {{ fastboot_serial_number|default('0000000000') }}
 
+ {% block vland %}
+ {# skip the parameters dict at top level #}
+ {% endblock %}
 
  actions:
    deploy:
@@ -372,35 +379,42 @@ template are combined together in order to form the device
 configuration which will look like the following for a nexus 10
 device::
 
-    commands:
-        connect: adb -s R32D300FRYP shell
-        soft_reboot: adb -s R32D300FRYP reboot bootloader
-    device_type: nexus10
-    serial_number: R32D300FRYP
+ commands:
+     connect: adb -s R32D300FRYP shell
+     soft_reboot: adb -s R32D300FRYP reboot bootloader
+     adb_command: adb -s R32D300FRYP
+     fastboot_command: fastboot -s R32D300FRYP
+ device_type: nexus10
+ adb_serial_number: R32D300FRYP
+ fastboot_serial_number: R32D300FRYP
 
 
-    actions:
-      deploy:
-        methods:
-          fastboot:
-        connections:
-          serial:
-          adb:
-      boot:
-        connections:
-          adb:
-        methods:
-          fastboot:
+ actions:
+   deploy:
+     methods:
+       fastboot:
+     connections:
+       serial:
+       adb:
+   boot:
+     connections:
+       adb:
+     methods:
+       fastboot:
 
-    timeouts:
-      apply-overlay-image:
-        seconds: 120
-      umount-retry:
-        seconds: 45
-      lava-test-shell:
-        seconds: 30
-      power_off:
-        seconds: 5
+ timeouts:
+   actions:
+     apply-overlay-image:
+       seconds: 120
+     umount-retry:
+       seconds: 45
+     lava-test-shell:
+       seconds: 30
+     power_off:
+       seconds: 5
+   connections:
+     uboot-retry:
+       seconds: 60
 
 Use the following :ref:`lava_tool <lava_tool>` command to get the
 device configuration in the command line::
