@@ -31,10 +31,20 @@ actions:
   deploy:
     methods:
       tftp:
+      ssh:
+        options:
+{{ ssh_options }}
+{% if ssh_host %}
+        host: {{ ssh_host }}
+{% endif %}
+        user: {{ ssh_user|default(root) }}
+        port: {{ ssh_port|default(22) }}
+        identity_file: {{ ssh_identity_file }}
   boot:
     connections:
       serial:
     methods:
+      ssh:
       u-boot:
         parameters:
           bootloader_prompt: {{ bootloader_prompt|default('U-Boot') }}

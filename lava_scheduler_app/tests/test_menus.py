@@ -66,7 +66,7 @@ class TestPipelineMenu(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
         config = yaml.load(config_str)
         self.assertIsNotNone(config)
         self.assertEqual(config['device_type'], self.device_type.name)
-        self.assertIsNotNone(config['parameters'])
+        self.assertNotIn('parameters', config)
         self.assertIsNotNone(config['actions']['boot']['methods']['uefi-menu']['nfs'])
         menu_data = config['actions']['boot']['methods']['uefi-menu']['nfs']
         tftp_menu = [item for item in menu_data if 'items' in item['select'] and 'TFTP' in item['select']['items'][0]][0]

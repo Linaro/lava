@@ -64,22 +64,26 @@ device_type: mustang-uefi
 {% set mustang_menu_list = mustang_menu_list | default(menu_action_list) -%}
 
 {% block vland %}
-{# If super() is to be added, remove the parameters: top level block below #}
 {% endblock %}
-parameters:
-   bootm:
-    kernel: '{{ bootm_kernel_addr|default('0x4002000000') }}'
-    ramdisk: '{{ bootm_ramdisk_addr|default('0x4004000000') }}'
-    dtb: '{{ bootm_dtb_addr|default('0x4003000000') }}'
 
 actions:
   deploy:
     methods:
       tftp:
+      ssh:
+        options:
+{{ ssh_options }}
+{% if ssh_host %}
+        host: {{ ssh_host }}
+{% endif %}
+        user: {{ ssh_user|default(root) }}
+        port: {{ ssh_port|default(22) }}
+        identity_file: {{ ssh_identity_file }}
   boot:
      connections:
        serial:
      methods:
+      ssh:
       uefi-menu:
         parameters:
           interrupt_prompt: {{ base_menu_interrupt_prompt }}
