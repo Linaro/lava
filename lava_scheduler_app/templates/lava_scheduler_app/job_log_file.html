@@ -162,7 +162,7 @@
           <li><a href="{% url 'lava.scheduler.job.annotate_failure' job.pk %}" class="btn btn-default">Comment</a></li>
         </ul>
         {% endif %}
-        {% if change_priority %}
+        {% if change_priority and not job.is_multinode %}
         <form method="POST" action="{% url 'lava.scheduler.job.priority' job.pk %}" id="priority-choice">
           {% csrf_token %}
           <button id="priority-button" class="btn btn-default">Set priority</button><br />
