@@ -99,6 +99,9 @@ class VexpressTarget(BootloaderTarget):
                     "vexpress_uefi_path, vexpress_uefi_backup_path and "
                     "vexpress_usb_mass_storage_device")
 
+        if self.config.vexpress_sky2_mac:
+            self._boot_tags['{SKY2_MAC}'] = self.config.vexpress_sky2_mac
+
     ##################################################################
     # methods inherited from BootloaderTarget and overriden here
     ##################################################################
