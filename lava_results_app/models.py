@@ -34,6 +34,7 @@ import urllib
 import yaml
 
 from datetime import datetime, timedelta
+from dateutil import parser
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
@@ -94,6 +95,9 @@ class Queryable(object):
         raise NotImplementedError("Should have implemented this")
 
     def get_end_datetime(self):
+        raise NotImplementedError("Should have implemented this")
+
+    def get_xaxis_attribute(self):
         raise NotImplementedError("Should have implemented this")
 
 
@@ -216,6 +220,18 @@ class TestSuite(models.Model, Queryable):
 
     def get_end_datetime(self):
         return self.job.end_time
+
+    def get_xaxis_attribute(self, xaxis_attribute=None):
+
+        attribute = None
+        if xaxis_attribute:
+            try:
+                attribute = self.testcase_set.first().action_metadata[
+                    xaxis_attribute]
+            except:  # There's no attribute, use date.
+                pass
+
+        return attribute
 
     def get_absolute_url(self):
         """
@@ -368,8 +384,8 @@ class TestCase(models.Model, Queryable):
         return action_data[0]
 
     def get_passfail_results(self):
-        # Get pass fail results per lava_results_app.testcase.
-        return self.result == self.RESULT_PASS
+        # Pass/fail charts for testcases do not make sense.
+        pass
 
     def get_measurement_results(self):
         # Get measurement values per lava_results_app.testcase.
@@ -399,6 +415,17 @@ class TestCase(models.Model, Queryable):
 
     def get_end_datetime(self):
         return self.logged
+
+    def get_xaxis_attribute(self, xaxis_attribute=None):
+
+        attribute = None
+        if xaxis_attribute:
+            try:
+                attribute = self.action_metadata[xaxis_attribute]
+            except:  # There's no attribute, use date.
+                pass
+
+        return attribute
 
     def get_absolute_url(self):
         if self.test_set:
@@ -1208,6 +1235,8 @@ class ChartQuery(models.Model):
         TestSuite: 'job__end_time',
     }
 
+    DATE_FORMAT = "%d/%m/%Y %H:%M"
+
     def get_data(self, user, content_type=None, conditions=None):
         """
         Pack data from filter to json format based on Chart options.
@@ -1285,17 +1314,14 @@ class ChartQuery(models.Model):
         for item in query_results:
 
             # Set attribute based on xaxis_attribute.
-            attribute = None
-            if self.xaxis_attribute:
-                try:
-                    attribute = result.attributes.get(
-                        name=self.xaxis_attribute).value
-                except:
-                    # FIXME: logged for cases.
-                    attribute = str(item.get_end_datetime())
-            else:
-                # FIXME: logged for cases.
-                attribute = str(item.get_end_datetime())
+            attribute = item.get_xaxis_attribute(self.xaxis_attribute)
+            # If xaxis attribute is set and this query item does not have
+            # this specific attribute, ignore it.
+            if self.xaxis_attribute and not attribute:
+                continue
+
+            date = str(item.get_end_datetime())
+            attribute = attribute if attribute is not None else date
 
             passfail_results = item.get_passfail_results()
             for result in passfail_results:
@@ -1304,7 +1330,7 @@ class ChartQuery(models.Model):
                     chart_item = {
                         "id": result,
                         "link": item.get_absolute_url(),
-                        "date": str(item.get_end_datetime()),
+                        "date": date,
                         "attribute": attribute,
                         "pass": passfail_results[result]['fail'] == 0,
                         "passes": passfail_results[result]['pass'],
@@ -1326,17 +1352,14 @@ class ChartQuery(models.Model):
         for item in query_results:
 
             # Set attribute based on xaxis_attribute.
-            attribute = None
-            if self.xaxis_attribute:
-                try:
-                    attribute = result.attributes.get(
-                        name=self.xaxis_attribute).value
-                except:
-                    # FIXME: logged for cases.
-                    attribute = str(item.get_end_datetime())
-            else:
-                # FIXME: logged for cases.
-                attribute = str(item.get_end_datetime())
+            attribute = item.get_xaxis_attribute(self.xaxis_attribute)
+            # If xaxis attribute is set and this query item does not have
+            # this specific attribute, ignore it.
+            if self.xaxis_attribute and not attribute:
+                continue
+
+            date = str(item.get_end_datetime())
+            attribute = attribute if attribute is not None else date
 
             measurement_results = item.get_measurement_results()
             for result in measurement_results:
@@ -1345,7 +1368,7 @@ class ChartQuery(models.Model):
                     chart_item = {
                         "id": result,
                         "link": item.get_absolute_url(),
-                        "date": str(item.get_end_datetime()),
+                        "date": date,
                         "attribute": attribute,
                         "pass": measurement_results[result]['fail'] == 0,
                         "measurement": measurement_results[result]['measurement']
@@ -1359,14 +1382,12 @@ class ChartQuery(models.Model):
         data = []
         for item in query_results:
 
-            attribute = str(item.get_end_datetime())
-
             attribute_results = item.get_attribute_results(self.attributes)
             for result in attribute_results:
                 if result:
                     chart_item = {
                         "id": result,
-                        "attribute": attribute,
+                        "attribute": str(item.get_end_datetime()),
                         "link": item.get_absolute_url(),
                         "date": str(item.get_end_datetime()),
                         "pass": attribute_results[result]['fail'] == 0,

@@ -260,7 +260,7 @@
       {% endif %}
       field.select();
       field.autocomplete({
-        source: '{% url 'lava_results_app.views.query.views.get_group_names' %}',
+        source: '{% url 'lava_results_app.views.query.views.get_query_group_names' %}',
         minLength: 1,
       });
   });

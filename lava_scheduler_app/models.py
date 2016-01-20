@@ -10,9 +10,11 @@ import smtplib
 import socket
 import sys
 import yaml
+from dateutil import parser
 from django.db.models import Q
 from django.conf import settings
 from django.contrib.auth.models import User, Group
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.utils.safestring import mark_safe
 from django.core.exceptions import (
@@ -38,7 +40,7 @@ from django_restricted_resource.models import (
 from lava_scheduler_app.managers import RestrictedTestJobQuerySet
 
 
-from dashboard_app.models import Bundle, BundleStream
+from dashboard_app.models import Bundle, BundleStream, NamedAttribute
 
 from lava_dispatcher.job import validate_job_data
 from lava_scheduler_app import utils
@@ -2486,6 +2488,24 @@ class TestJob(RestrictedResource):
 
     def get_end_datetime(self):
         return self.end_time
+
+    def get_xaxis_attribute(self, xaxis_attribute=None):
+
+        attribute = None
+        if xaxis_attribute:
+            try:
+                from lava_results_app.models import TestData
+                content_type_id = ContentType.objects.get_for_model(
+                    TestData).id
+                attribute = NamedAttribute.objects.filter(
+                    content_type_id=content_type_id,
+                    object_id__in=self.testdata_set.all().values_list(
+                        'id', flat=True),
+                    name=xaxis_attribute).values_list('value', flat=True)[0]
+            except:  # There's no attribute, use date.
+                pass
+
+        return attribute
 
 
 class TestJobUser(models.Model):

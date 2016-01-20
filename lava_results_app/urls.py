@@ -33,7 +33,7 @@ from lava_results_app.views import (
     testset,
 )
 from lava_results_app.views.query.views import (
-    get_group_names,
+    get_query_group_names,
     get_query_names,
     query_list,
     query_add,
@@ -55,7 +55,7 @@ from lava_results_app.views.query.views import (
     query_toggle_published,
 )
 from lava_results_app.views.chart.views import (
-    get_group_names,
+    get_chart_group_names,
     chart_list,
     chart_add,
     chart_add_group,
@@ -103,7 +103,7 @@ urlpatterns = [
     url(r'^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+add-group$', query_add_group, name='query_add_group'),
     url(r'^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+select-group$', query_select_group, name='query_select_group'),
     url(r'^query/get-query-groups$', query_group_list, name='query_group_list'),
-    url(r'^query/\+get-group-names$', get_group_names),
+    url(r'^query/\+get-group-names$', get_query_group_names),
     url(r'^query/\+get-query-names$', get_query_names),
     url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)$', testjob, name='lava.results.testjob'),
     url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/csv$', testjob_csv, name='lava.results.testjob_csv'),
@@ -134,10 +134,10 @@ urlpatterns = [
         name='chart_select_group'),
     url(r'^chart/get-chart-groups$', chart_group_list,
         name='chart_group_list'),
-    url(r'^chart/\+get-group-names$', get_group_names),
+    url(r'^chart/\+get-group-names$', get_chart_group_names),
     url(r'^chart/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/\+settings-update$', settings_update, name='chart_settings_update'),
-    url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/(?P<ts>[-_a-zA-Z0-9.]+)/(?P<case>[-_a-zA-Z0-9.]+)$',
-        testset, name='lava.results.testset'),
+    url(r'^chart/(?P<name>[a-zA-Z0-9-_]+)/\+chart-query-order-update$', chart_query_order_update, name='chart_query_order_update'),
+    url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/(?P<ts>[-_a-zA-Z0-9.]+)/(?P<case>[-_a-zA-Z0-9.]+)$', testset, name='lava.results.testset'),
     url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/csv$',
         suite_csv, name='lava.results.suite_csv'),
     url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/stream/csv$',
