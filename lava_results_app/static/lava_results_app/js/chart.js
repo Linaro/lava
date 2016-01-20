@@ -90,7 +90,7 @@ $(document).ready(function () {
             this.update_data_tables();
             // Generate chart.
             this.update_plot();
-            // Add source for saving charts as images and csv export.
+            // Add source for saving charts as images and custom charts.
             this.update_urls();
             // Update events.
             this.update_events();
@@ -206,9 +206,6 @@ $(document).ready(function () {
                 '<img src="' + image_url + 'icon-print.png"></a>' +
                 '</span>');
 
-        csv_html = '<li class="print-menu-item"><a href="#" id="chart_csv_' +
-            this.chart_id + '">Download as CSV</a></li>';
-
         image_html = '<li class="print-menu-item"><a target="_blank" href="#"' +
             ' id="chart_img_' + this.chart_id + '">View as image</a></li>';
 
@@ -223,7 +220,7 @@ $(document).ready(function () {
             // We use 0 for chart_id for custom charts.
             print_menu_html = image_html;
         } else {
-            print_menu_html = csv_html + image_html + url_html;
+            print_menu_html = image_html + url_html;
         }
 
         $("#toggle_options_container_" + this.chart_id).append(
@@ -669,9 +666,6 @@ $(document).ready(function () {
         canvas = $("#inner_container_" + this.chart_id + " > .flot-base").get(0);
         var dataURL = canvas.toDataURL();
         document.getElementById("chart_img_" + this.chart_id).href = dataURL;
-        export_url = "/dashboard/image-charts/" +
-            this.chart_data["report_name"] + "/" + this.chart_id + "/+export";
-        document.getElementById("chart_csv_" + this.chart_id).href = export_url;
     }
 
     ChartQuery.prototype.test_show_tick = function(tick) {
@@ -714,7 +708,6 @@ $(document).ready(function () {
 
         // Dates on the x-axis.
         dates = [];
-
 
         // Get all build numbers to be used as tick labels.
         ticks = [];
@@ -834,15 +827,15 @@ $(document).ready(function () {
 
                 // Add the data.
                 if (this.chart_data.basic.is_keys_numeric) {
-                    insert_data_item(build_number, [build_number, value],
+                    insert_data_item(tick, [tick, value],
                                      plot_data[id]["data"]);
-                    insert_data_item(build_number, label,
+                    insert_data_item(tick, label,
                                      plot_data[id]["labels"]);
-                    meta_key = build_number + "_" +  value;
+                    meta_key = tick + "_" +  value;
                     plot_data[id]["meta"][meta_key] = meta_item;
 
                 } else if (this.chart_data.basic.xaxis_attribute) {
-                    key = build_numbers.indexOf(row["attribute"]);
+                    key = ticks.indexOf(row["attribute"]);
                     data_item = [key, value];
                     insert_data_item(key, [key, value],
                                      plot_data[id]["data"]);
@@ -992,8 +985,8 @@ $(document).ready(function () {
 	    goal_data = [];
 
             if (this.chart_data.basic.is_keys_numeric || this.chart_data.basic.xaxis_attribute) {
-	        for (var i in build_numbers) {
-	            goal_data.push([build_numbers[i], target_goal]);
+	        for (var i in ticks) {
+	            goal_data.push([ticks[i], target_goal]);
 	        }
             } else {
 	        for (key in dates) {
@@ -1042,7 +1035,7 @@ $(document).ready(function () {
                     if (chart_data.basic.is_keys_numeric) {
                         return val;
                     } else {
-                        return build_numbers[val];
+                        return ticks[val].replace(" ", "<br/>");
                     }
             }
 

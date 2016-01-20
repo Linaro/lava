@@ -269,6 +269,20 @@ The advantage to this is that the indices in the chart can overlap so in order
 to use the interactivity you might need to change the order of the legend
 items.
 
+Chart using metadata
+^^^^^^^^^^^^^^^^^^^^
+
+By default, charts will use date and time to diplay results.
+User can change this behavior and use a custom attribute (i.e. build number)
+to plot the result data. This setting can be changed in the chart settings -
+'xaxis attribute' field.
+
+If the field is empty, the date/time will be used to plot the data. Users
+should keep in mind that this setting is a free text field so if the custom
+attribute set is not found in the system, no results will be shown.
+Similarly, if particular test result does not contain the custom attribute that
+is set, that result will be omitted from chart.
+
 
 Chart by URL
 ============

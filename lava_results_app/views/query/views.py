@@ -408,7 +408,7 @@ def query_export_custom(request):
 
     try:
         results = Query.get_queryset(content_type, conditions).visible_by_user(
-            user)
+            request.user)
     except FieldError:
         raise InvalidConditionsError("Conditions URL incorrect: Field does "
                                      "not exist. Please refer to query docs.")
@@ -525,7 +525,7 @@ def query_select_group(request, username, name):
 
 
 @login_required
-def get_group_names(request):
+def get_query_group_names(request):
 
     term = request.GET['term']
     groups = []

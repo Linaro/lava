@@ -103,7 +103,7 @@
   </a>
 </div>
 
-<div class="list-container" id="charts">
+<div class="list-container" id="queries">
   {% for chart_query in chart.chartquery_set.all %}
   <div id="{{ chart_query.id }}" class="sortable-placeholder">
     <div class="chart-title">
@@ -140,6 +140,26 @@
 
 {% block scripts %}
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.min.js"></script>
+<script>
+  $("#queries").sortable({
+    cursor: "move",
+    placeholder: "sortable-placeholder",
+    forcePlaceholderSize: true
+  });
+  $("#queries").disableSelection();
+
+  $("#queries").on("sortstop", function(event, ui) {
+    var chart_query_order = $("#queries").sortable("toArray").join();
+    $.ajax({
+      url: "{% url 'lava_results_app.views.chart.views.chart_query_order_update' name=chart.name %}",
+      type: "POST",
+      data: {
+        csrfmiddlewaretoken: '{{csrf_token}}',
+        chart_query_order: chart_query_order,
+      },
+    });
+  });
+</script>
 {% if chart.is_published %}
 <script>
   $("#chart_group").editable(
@@ -187,7 +207,7 @@
       {% endif %}
       field.select();
       field.autocomplete({
-        source: '{% url 'lava_results_app.views.chart.views.get_group_names' %}',
+        source: '{% url 'lava_results_app.views.chart.views.get_chart_group_names' %}',
         minLength: 1,
       });
   });

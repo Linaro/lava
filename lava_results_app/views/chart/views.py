@@ -91,6 +91,10 @@ class InvalidChartTypeError(Exception):
     """ Raise when charting by URL has incorrect type argument. """
 
 
+class TestCasePassFailChartError(Exception):
+    """ Raise when test case charts are of pass/fail type. """
+
+
 class UserChartView(LavaView):
 
     def get_chartset(self):
@@ -234,6 +238,10 @@ def chart_custom(request):
     if content_type.model_class() not in QueryCondition.RELATION_MAP:
         raise InvalidContentTypeError(
             "Wrong table name in entity param. Please refer to chart docs.")
+
+    if content_type.model_class() == TestCase and chart_type == "pass/fail":
+        raise TestCasePassFailChartError(
+            "Chart of TestCase entity cannot be of pass/fail chart type.")
 
     conditions = Query.parse_conditions(
         content_type, request.GET.get("conditions"))
@@ -384,7 +392,7 @@ def chart_select_group(request, name):
 
 
 @login_required
-def get_group_names(request):
+def get_chart_group_names(request):
 
     term = request.GET['term']
     groups = []
@@ -443,7 +451,7 @@ def chart_query_order_update(request, name):
     if request.method != 'POST':
         raise PermissionDenied
 
-    chart_query_id_order = request.POST.get("chart_query_id_order").split(",")
+    chart_query_order = request.POST.get("chart_query_order").split(",")
     chart = get_object_or_404(Chart, name=name)
 
     try:
