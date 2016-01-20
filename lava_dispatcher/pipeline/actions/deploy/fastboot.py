@@ -119,6 +119,8 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
                 self.internal_pipeline.add_action(download)
             if image == 'image':
                 self.internal_pipeline.add_action(FastbootUpdateAction())
+            if image == 'ptable':
+                self.internal_pipeline.add_action(ApplyPtableAction())
             if image == 'boot':
                 self.internal_pipeline.add_action(ApplyBootAction())
             if image == 'cache':
@@ -243,6 +245,42 @@ class FastbootRebootAction(DeployAction):
         command_output = self.run_command(fastboot_cmd)
         if command_output and 'error' in command_output:
             raise JobError("Unable to reboot using fastboot: %s" %
+                           command_output)  # FIXME: JobError needs a unit test
+        return connection
+
+
+class ApplyPtableAction(DeployAction):
+    """
+    Fastboot deploy ptable image.
+    """
+
+    def __init__(self):
+        super(ApplyPtableAction, self).__init__()
+        self.name = "fastboot_apply_ptable_action"
+        self.description = "fastboot apply ptable image"
+        self.summary = "fastboot apply ptable"
+        self.retries = 3
+        self.sleep = 10
+
+    def validate(self):
+        super(ApplyPtableAction, self).validate()
+        if 'download_action' not in self.data:
+            raise RuntimeError("download-action missing: %s" % self.name)
+        if 'file' not in self.data['download_action']['ptable']:
+            self.errors = "no file specified for fastboot ptable image"
+        if 'fastboot_serial_number' not in self.job.device:
+            self.errors = "device fastboot serial number missing"
+            if self.job.device['fastboot_serial_number'] == '0000000000':
+                self.errors = "device fastboot serial number unset"
+
+    def run(self, connection, args=None):
+        connection = super(ApplyPtableAction, self).run(connection, args)
+        serial_number = self.job.device['fastboot_serial_number']
+        fastboot_cmd = ['fastboot', '-s', serial_number, 'flash', 'ptable',
+                        self.data['download_action']['ptable']['file']]
+        command_output = self.run_command(fastboot_cmd)
+        if command_output and 'error' in command_output:
+            raise JobError("Unable to apply ptable image using fastboot: %s" %
                            command_output)  # FIXME: JobError needs a unit test
         return connection
 
