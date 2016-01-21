@@ -134,6 +134,7 @@ def _job_schema():
 
 def _device_deploy_schema():
     return Schema({
+        'connections': dict,
         Required('methods'): dict,
     })
 
@@ -169,6 +170,8 @@ def _device_schema():
     """
     return Schema({
         'commands': dict,
+        'adb_serial_number': str,
+        'fastboot_serial_number': str,
         'device_type': All(str, Length(min=1)),
         'parameters': dict,
         'actions': _device_actions_schema(),

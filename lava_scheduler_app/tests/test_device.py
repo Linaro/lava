@@ -1,6 +1,7 @@
 import os
 import yaml
 import jinja2
+import unittest
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -472,3 +473,20 @@ class DeviceTypeTest(TestCaseWithFactory):
                 print data  # for easier debugging - use the online yaml parser
                 self.fail("%s: %s" % (template_name, exc))
             self.assertIsInstance(yaml_data, dict)
+
+    @unittest.skip('local developer test')
+    def test_individual_template(self):
+        """
+        Adjust for temporary, local, checks when adapting the schema.
+        Comment out the decorator and adjust the device_dict_str to run.
+        """
+        device_dict_str = """{% extends 'nexus10.jinja2' %}
+{% set adb_serial_number = 'R32D300FRYP' %}
+{% set soft_reboot_command = 'adb -s R32D300FRYP reboot bootloader' %}
+{% set connection_command = 'adb -s R32D300FRYP shell' %}"""
+        test_template = prepare_jinja_template('staging-nexus10-01', device_dict_str, system_path=False)
+        data = test_template.render()
+        print('#######')
+        print(data)
+        print('#######')
+        validate_device(yaml.load(data))
