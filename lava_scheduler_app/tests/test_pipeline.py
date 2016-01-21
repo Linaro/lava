@@ -11,9 +11,11 @@ from lava_scheduler_app.models import (
     Tag,
     DevicesUnavailableException,
     _pipeline_protocols,
+    _check_submit_to_device,
 )
 from lava_scheduler_app.dbutils import match_vlan_interface
 from django.db import models
+from django.db.models import Q
 from django.core.exceptions import ValidationError
 from django_testscenarios.ubertest import TestCase
 from django.contrib.auth.models import Group, Permission, User
@@ -767,6 +769,83 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.assertEqual(len(job_list), 2)
         for job in job_list:
             self.assertEqual(job.requested_device_type, device_type)
+
+    def test_multinode_with_retired(self):
+        """
+        check handling with retired devices in device_list
+        """
+        user = self.factory.make_user()
+        device_type = self.factory.make_device_type()
+        self.factory.make_device(device_type, 'fakeqemu1')
+        self.factory.make_device(device_type, 'fakeqemu2')
+        self.factory.make_device(device_type, 'fakeqemu3')
+        self.factory.make_device(device_type, 'fakeqemu4')
+        submission = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'kvm-multinode.yaml'), 'r'))
+        role_list = submission['protocols'][MultinodeProtocol.name]['roles']
+        for role in role_list:
+            if 'tags' in role_list[role]:
+                del role_list[role]['tags']
+        job_list = TestJob.from_yaml_and_user(yaml.dump(submission), user)
+        self.assertEqual(len(job_list), 2)
+        # make the list mixed
+        fakeqemu1 = Device.objects.get(hostname='fakeqemu1')
+        fakeqemu1.is_pipeline = False
+        fakeqemu1.save(update_fields=['is_pipeline'])
+        fakeqemu2 = Device.objects.get(hostname='fakeqemu2')
+        fakeqemu3 = Device.objects.get(hostname='fakeqemu3')
+        fakeqemu4 = Device.objects.get(hostname='fakeqemu4')
+        device_list = Device.objects.filter(device_type=device_type, is_pipeline=True)
+        self.assertEqual(len(device_list), 3)
+        self.assertIsInstance(device_list, RestrictedResourceQuerySet)
+        self.assertIsInstance(list(device_list), list)
+        allowed_devices = []
+        for device in list(device_list):
+            if _check_submit_to_device([device], user):
+                allowed_devices.append(device)
+        self.assertEqual(len(allowed_devices), 3)
+        self.assertIn(fakeqemu3, allowed_devices)
+        self.assertIn(fakeqemu4, allowed_devices)
+        self.assertIn(fakeqemu2, allowed_devices)
+        self.assertNotIn(fakeqemu1, allowed_devices)
+
+        # set one candidate device to RETIRED to force the bug
+        fakeqemu2.status = Device.RETIRED
+        fakeqemu2.save(update_fields=['status'])
+        # refresh the device_list
+        device_list = Device.objects.filter(device_type=device_type, is_pipeline=True)
+        allowed_devices = []
+        # test the old code to force the exception
+        try:
+            # by looping through in the test *and* in _check_submit_to_device
+            # the retired device in device_list triggers the exception.
+            for device in list(device_list):
+                if _check_submit_to_device([device], user):
+                    allowed_devices.append(device)
+        except DevicesUnavailableException:
+            self.assertEqual(len(allowed_devices), 2)
+            self.assertIn(fakeqemu2, device_list)
+            self.assertIn(fakeqemu2.status, [Device.RETIRED])
+        else:
+            self.fail("Missed DevicesUnavailableException")
+        allowed_devices = []
+        allowed_devices.extend(_check_submit_to_device(list(device_list), user))
+        self.assertEqual(len(allowed_devices), 2)
+        self.assertIn(fakeqemu3, allowed_devices)
+        self.assertIn(fakeqemu4, allowed_devices)
+        self.assertNotIn(fakeqemu2, allowed_devices)
+        self.assertNotIn(fakeqemu1, allowed_devices)
+        allowed_devices = []
+
+        # test improvement as there is no point wasting memory with a Query containing Retired.
+        device_list = Device.objects.filter(
+            Q(device_type=device_type), Q(is_pipeline=True), ~Q(status=Device.RETIRED))
+        allowed_devices.extend(_check_submit_to_device(list(device_list), user))
+        self.assertEqual(len(allowed_devices), 2)
+        self.assertIn(fakeqemu3, allowed_devices)
+        self.assertIn(fakeqemu4, allowed_devices)
+        self.assertNotIn(fakeqemu2, allowed_devices)
+        self.assertNotIn(fakeqemu1, allowed_devices)
 
 
 class VlanInterfaces(TestCaseWithFactory):

@@ -10,6 +10,7 @@ import smtplib
 import socket
 import sys
 import yaml
+from django.db.models import Q
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.sites.models import Site
@@ -1277,10 +1278,9 @@ def _pipeline_protocols(job_data, user, yaml_data=None):
                 role_dictionary[role]['device_type'] = device_type
 
                 allowed_devices = []
-                device_list = Device.objects.filter(device_type=device_type, is_pipeline=True)
-                for device in device_list:
-                    if _check_submit_to_device([device], user):
-                        allowed_devices.append(device)
+                device_list = Device.objects.filter(
+                    Q(device_type=device_type), Q(is_pipeline=True), ~Q(status=Device.RETIRED))
+                allowed_devices.extend(_check_submit_to_device(list(device_list), user))
 
                 if len(allowed_devices) < params['count']:
                     raise DevicesUnavailableException("Not enough devices of type %s are currently "
