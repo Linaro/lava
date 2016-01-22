@@ -50,6 +50,8 @@ class BootFastboot(Boot):
     """
     Expects fastboot bootloader, and boots.
     """
+    compatibility = 1
+
     def __init__(self, parent, parameters):
         super(BootFastboot, self).__init__(parent)
         self.action = BootFastbootAction()

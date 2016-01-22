@@ -46,6 +46,8 @@ class BootLxc(Boot):
     """
     Attaches to the lxc container.
     """
+    compatibility = 1
+
     def __init__(self, parent, parameters):
         super(BootLxc, self).__init__(parent)
         self.action = BootLxcAction()

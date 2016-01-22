@@ -68,6 +68,8 @@ class Fastboot(Deployment):
     Strategy class for a fastboot deployment.
     Downloads the relevant parts, copies to the locations using fastboot.
     """
+    compatibility = 1
+
     def __init__(self, parent, parameters):
         super(Fastboot, self).__init__(parent)
         self.action = FastbootAction()

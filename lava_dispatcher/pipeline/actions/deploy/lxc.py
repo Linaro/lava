@@ -56,6 +56,8 @@ class Lxc(Deployment):
     Strategy class for a lxc deployment.
     Downloads the relevant parts, copies to the locations using lxc.
     """
+    compatibility = 1
+
     def __init__(self, parent, parameters):
         super(Lxc, self).__init__(parent)
         self.action = LxcAction()
