@@ -1,12 +1,12 @@
 import os
 import yaml
 import jinja2
-import unittest
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
     DeviceDictionary,
     JobPipeline,
+    SubmissionException,
 )
 from lava_scheduler_app.utils import (
     devicedictionary_to_jinja2,
@@ -474,19 +474,71 @@ class DeviceTypeTest(TestCaseWithFactory):
                 self.fail("%s: %s" % (template_name, exc))
             self.assertIsInstance(yaml_data, dict)
 
-    @unittest.skip('local developer test')
-    def test_individual_template(self):
-        """
-        Adjust for temporary, local, checks when adapting the schema.
-        Comment out the decorator and adjust the device_dict_str to run.
-        """
-        device_dict_str = """{% extends 'nexus10.jinja2' %}
+
+class TestTemplates(TestCaseWithFactory):
+
+    # When adding or modifying a jinja2 template, add or update the test here.
+    # Use realistic data.
+
+    debug = False  # set to True to see the YAML device config output
+
+    def validate_data(self, hostname, data):
+        test_template = prepare_jinja_template(hostname, data, system_path=False)
+        rendered = test_template.render()
+        if self.debug:
+            print('#######')
+            print(rendered)
+            print('#######')
+        try:
+            ret = validate_device(yaml.load(rendered))
+        except SubmissionException as exc:
+            print('#######')
+            print(rendered)
+            print('#######')
+            self.fail(exc)
+        return ret
+
+    def test_nexus10_template(self):
+        self.assertTrue(self.validate_data('staging-nexus10-01', """{% extends 'nexus10.jinja2' %}
 {% set adb_serial_number = 'R32D300FRYP' %}
 {% set soft_reboot_command = 'adb -s R32D300FRYP reboot bootloader' %}
-{% set connection_command = 'adb -s R32D300FRYP shell' %}"""
-        test_template = prepare_jinja_template('staging-nexus10-01', device_dict_str, system_path=False)
-        data = test_template.render()
-        print('#######')
-        print(data)
-        print('#######')
-        validate_device(yaml.load(data))
+{% set connection_command = 'adb -s R32D300FRYP shell' %}"""))
+
+    def test_x86_template(self):
+        self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'x86.jinja2' %}
+{% set power_off_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command off' %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command reboot' %}
+{% set power_on_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command on' %}
+{% set connection_command = 'telnet localhost 7302' %}"""))
+
+    def test_beaglebone_black_template(self):
+        self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'beaglebone-black.jinja2' %}
+{% set map = {'eth0': {'lngswitch03': 19}, 'eth1': {'lngswitch03': 8}} %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --hostname lngpdu01 --command reboot --port 19' %}
+{% set tags = {'eth0': ['1G', '100M'], 'eth1': ['100M']} %}
+{% set interfaces = ['eth0', 'eth1'] %}
+{% set sysfs = {'eth0': '/sys/devices/platform/ocp/4a100000.ethernet/net/eth0',
+'eth1': '/sys/devices/platform/ocp/47400000.usb/47401c00.usb/musb-hdrc.1.auto/usb1/1-1/1-1:1.0/net/eth1'} %}
+{% set power_off_command = '/usr/bin/pduclient --daemon localhost --hostname lngpdu01 --command off --port 19' %}
+{% set mac_addr = {'eth0': '90:59:af:5e:69:fd', 'eth1': '00:e0:4c:53:44:58'} %}
+{% set power_on_command = '/usr/bin/pduclient --daemon localhost --hostname lngpdu01 --command on --port 19' %}
+{% set connection_command = 'telnet localhost 7333' %}
+{% set exclusive = 'True' %}"""))
+
+    def test_qemu_template(self):
+        self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'qemu.jinja2' %}
+{% set exclusive = 'True' %}
+{% set mac_addr = 'DE:AD:BE:EF:28:01' %}
+{% set memory = 512 %}"""))
+
+    def test_mustang_template(self):
+        self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'mustang.jinja2' %}
+{% set connection_command = 'telnet serial4 7012' %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command reboot --port 05' %}
+{% set power_off_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command off --port 05' %}
+{% set power_on_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command on --port 05' %}"""))
+
+    def test_hikey_template(self):
+        with open(os.path.join(os.path.dirname(__file__), 'devices', 'hi6220-hikey-01.jinja2')) as hikey:
+            data = hikey.read()
+        self.assertTrue(self.validate_data('hi6220-hikey-01', data))

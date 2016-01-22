@@ -53,20 +53,22 @@ actions:
           - kernel tftp://{SERVER_IP}/{KERNEL} ${extraargs} ${console}
           - initrd tftp://{SERVER_IP}/{RAMDISK}
           - boot
+{% endblock %}
 
+{% block timeouts %}
 timeouts:
-actions:
-  bootloader-retry:
-    seconds: 120
-  bootloader-interrupt:
-    seconds: 300
-  bootloader-commands:
-    seconds: 120
-connections:
-  bootloader-retry:
-    seconds: 120
-  bootloader-interrupt:
-    seconds: 300
-  bootloader-commands:
-    seconds: 120
+  actions:
+    bootloader-retry:
+      seconds: 120
+    bootloader-interrupt:
+      seconds: 300
+    bootloader-commands:
+      seconds: 120
+  connections:
+    bootloader-retry:
+      seconds: 120
+    bootloader-interrupt:
+      seconds: 300
+    bootloader-commands:
+      seconds: 120
 {% endblock %}

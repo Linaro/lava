@@ -47,9 +47,15 @@ def main():
         default=None,
         type=str,
         help='Device to check (all pipeline devices if not used)')
+    parser.add_argument(
+        '--https',
+        action='store_true',
+        help='Use https instead of http')
     args = parser.parse_args()
 
-    connection = xmlrpclib.ServerProxy("http://%s//RPC2" % args.instance)
+    protocol = 'https' if args.https else 'http'
+
+    connection = xmlrpclib.ServerProxy("%s://%s//RPC2" % (protocol, args.instance))
     if args.hostname:
         print connection.scheduler.validate_pipeline_devices(args.hostname)
     else:
