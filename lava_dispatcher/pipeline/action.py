@@ -651,6 +651,9 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         if 'protocols' not in self.parameters:
             return
         for protocol in self.job.protocols:
+            if protocol.name not in self.parameters['protocols']:
+                # nothing to do for this action with this protocol
+                continue
             params = self.parameters['protocols'][protocol.name]
             for call_dict in [call for call in params if 'action' in call and call['action'] == self.name]:
                 del call_dict['yaml_line']
@@ -662,8 +665,9 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
                 self.logger.info("Making protocol call for %s using %s", self.name, protocol.name)
                 reply = protocol(call_dict)
                 message = protocol.collate(reply, call_dict)
-                self.logger.info("Setting common data key %s to %s", message[0], message[1])
-                self.set_common_data(protocol.name, message[0], message[1])
+                if message:
+                    self.logger.info("Setting common data key %s to %s", message[0], message[1])
+                    self.set_common_data(protocol.name, message[0], message[1])
 
     def run(self, connection, args=None):
         """
