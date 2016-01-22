@@ -23,13 +23,14 @@ actions:
           boot_message: Linux version
           send_char: True
           use_bootscript: True
+          lava_mac: 00:90:05:af:00:7d
         nfs:
           bootscript_commands:
           - dhcp net0
           - chain {BOOTSCRIPT}
           commands:
           - dhcp net0,
-          - set console console=ttyS0,115200n8 %(lava_network_info)s
+          - set console console=ttyS0,115200n8 lava_mac={LAVA_MAC}
           - "set extraargs root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=eth0:dhcp"
           - kernel tftp://{SERVER_IP}/{KERNEL} ${extraargs} ${console}
           - initrd tftp://{SERVER_IP}/{RAMDISK}
@@ -40,7 +41,7 @@ actions:
           - chain {BOOTSCRIPT}
           commands:
           - dhcp net0
-          - set console console=ttyS0,115200n8 %(lava_network_info)s
+          - set console console=ttyS0,115200n8 lava_mac={LAVA_MAC}
           - set extraargs init=/sbin/init ip=dhcp
           - kernel tftp://{SERVER_IP}/{KERNEL} ${extraargs} ${console}
           - initrd tftp://{SERVER_IP}/{RAMDISK}
