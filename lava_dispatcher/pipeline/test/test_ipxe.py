@@ -171,6 +171,7 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
             '{SERVER_IP}': ip_addr,
             '{RAMDISK}': ramdisk,
             '{KERNEL}': kernel,
+            '{LAVA_MAC}': "00:00:00:00:00:00"
         }
         params = device['actions']['boot']['methods']
         params['ipxe']['ramdisk']['commands'] = substitute(params['ipxe']['ramdisk']['commands'], substitution_dictionary)
@@ -178,7 +179,7 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
         commands = params['ipxe']['ramdisk']['commands']
         self.assertIs(type(commands), list)
         self.assertIn("dhcp net0", commands)
-        self.assertIn("set console console=ttyS0,115200n8 %(lava_network_info)s", commands)
+        self.assertIn("set console console=ttyS0,115200n8 lava_mac=00:00:00:00:00:00", commands)
         self.assertIn("set extraargs init=/sbin/init ip=dhcp", commands)
         self.assertNotIn("kernel tftp://{SERVER_IP}/{KERNEL} ${extraargs} ${console}", commands)
         self.assertNotIn("initrd tftp://{SERVER_IP}/{RAMDISK}", commands)

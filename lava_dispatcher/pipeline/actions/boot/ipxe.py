@@ -22,6 +22,7 @@
 # imported by the parser to populate the list of subclasses.
 
 import os
+import re
 from lava_dispatcher.pipeline.action import (
     Action,
     Pipeline,
@@ -204,6 +205,7 @@ class BootloaderCommandOverlay(Action):
         self.commands = None
         self.type = "ipxe"
         self.use_bootscript = False
+        self.lava_mac = ""
 
     def validate(self):
         super(BootloaderCommandOverlay, self).validate()
@@ -221,6 +223,11 @@ class BootloaderCommandOverlay(Action):
         # download_action will set ['dtb'] as tftp_path, tmpdir & filename later, in the run step.
         if 'use_bootscript' in params:
             self.use_bootscript = params['use_bootscript']
+        if 'lava_mac' in params:
+            if re.match("([0-9A-F]{2}[:-]){5}([0-9A-F]{2})", params['lava_mac'], re.IGNORECASE):
+                self.lava_mac = params['lava_mac']
+            else:
+                self.errors = "lava_mac is not a valid mac address"
         self.data.setdefault(self.type, {})
         self.data[self.type].setdefault('commands', [])
         self.commands = device_methods[self.parameters['method']][self.parameters['commands']]['commands']
@@ -243,7 +250,7 @@ class BootloaderCommandOverlay(Action):
         }
         substitutions['{RAMDISK}'] = self.get_common_data('file', 'ramdisk')
         substitutions['{KERNEL}'] = self.get_common_data('file', 'kernel')
-
+        substitutions['{LAVA_MAC}'] = self.lava_mac
         nfs_url = self.get_common_data('nfs_url', 'nfsroot')
         if 'download_action' in self.data and 'nfsrootfs' in self.data['download_action']:
             substitutions['{NFSROOTFS}'] = self.get_common_data('file', 'nfsroot')
