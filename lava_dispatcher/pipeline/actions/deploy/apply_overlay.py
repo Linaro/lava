@@ -315,7 +315,7 @@ class ExtractRamdisk(Action):
                 raise RuntimeError('Unable to remove uboot header: %s' % ramdisk)
         else:
             # give the file a predictable name
-            os.rename(ramdisk, ramdisk_compressed_data)
+            shutil.move(ramdisk, ramdisk_compressed_data)
         self.logger.debug(os.system("file %s" % ramdisk_compressed_data))
         cmd = ('gzip -d -f %s' % ramdisk_compressed_data).split(' ')
         if self.run_command(cmd) is not '':
