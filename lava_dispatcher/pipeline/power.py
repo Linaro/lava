@@ -31,6 +31,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.logical import AdjuvantAction
 from lava_dispatcher.pipeline.utils.constants import SHUTDOWN_MESSAGE
+from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 
 
 class ResetDevice(Action):
@@ -69,13 +70,19 @@ class RebootDevice(Action):
             raise RuntimeError("Called %s without an active Connection" % self.name)
         if self.job.device.power_state is 'off' and self.job.device.power_command is not '':  # power on action used instead
             return connection
-        connection = super(RebootDevice, self).run(connection, args)
-        connection.prompt_str = self.parameters.get('parameters', {}).get('shutdown-message', SHUTDOWN_MESSAGE)
-        connection.timeout = self.connection_timeout
-        connection.sendline("reboot")
-        # FIXME: possibly deployment data, possibly separate actions, possibly adjuvants.
-        connection.sendline("reboot -n")  # initramfs may require -n for *now*
-        connection.sendline("reboot -n -f")  # initrd may require -n for *now* and -f for *force*
+        if self.job.device.power_state is 'on' and self.job.device.soft_reset_command is not '':
+            command = self.job.device['commands']['soft_reset']
+            if not self.run_command(command.split(' ')):
+                raise InfrastructureError("%s command failed" % command)
+            self.results = {'status': "success"}
+        else:
+            connection = super(RebootDevice, self).run(connection, args)
+            connection.prompt_str = self.parameters.get('parameters', {}).get('shutdown-message', SHUTDOWN_MESSAGE)
+            connection.timeout = self.connection_timeout
+            connection.sendline("reboot")
+            # FIXME: possibly deployment data, possibly separate actions, possibly adjuvants.
+            connection.sendline("reboot -n")  # initramfs may require -n for *now*
+            connection.sendline("reboot -n -f")  # initrd may require -n for *now* and -f for *force*
         self.results = {'status': "success"}
         self.data[PDUReboot.key()] = False
         if 'bootloader_prompt' in self.data['common']:
@@ -148,6 +155,62 @@ class PowerOn(Action):
             if not self.run_command(command.split(' ')):
                 raise InfrastructureError("%s command failed" % command)
             self.job.device.power_state = 'on'
+        return connection
+
+
+# FIXME: Unused action, but can give fine grained control.
+class LxcStop(Action):
+    """
+    Stops the lxc container at the end of a job
+    """
+    def __init__(self):
+        super(LxcStop, self).__init__()
+        self.name = "lxc_stop"
+        self.summary = "send stop command"
+        self.description = "stop the lxc container"
+
+    def validate(self):
+        super(LxcStop, self).validate()
+        self.errors = infrastructure_error('lxc-stop')
+
+    def run(self, connection, args=None):
+        connection = super(LxcStop, self).run(connection, args)
+        lxc_name = self.get_common_data('lxc', 'name')
+        if not lxc_name:
+            return connection
+        lxc_cmd = ['lxc-stop', '-n', lxc_name, '-k']
+        command_output = self.run_command(lxc_cmd)
+        if command_output and command_output is not '':
+            raise JobError("Unable to stop lxc container: %s" %
+                           command_output)  # FIXME: JobError needs a unit test
+        return connection
+
+
+# FIXME: Unused action, but can give fine grained control.
+class LxcDestroy(Action):
+    """
+    Destroys the lxc container at the end of a job
+    """
+    def __init__(self):
+        super(LxcDestroy, self).__init__()
+        self.name = "lxc_destroy"
+        self.summary = "send destroy command"
+        self.description = "destroy the lxc container"
+
+    def validate(self):
+        super(LxcDestroy, self).validate()
+        self.errors = infrastructure_error('lxc-destroy')
+
+    def run(self, connection, args=None):
+        connection = super(LxcDestroy, self).run(connection, args)
+        lxc_name = self.get_common_data('lxc', 'name')
+        if not lxc_name:
+            return connection
+        lxc_cmd = ['lxc-destroy', '-n', lxc_name]
+        command_output = self.run_command(lxc_cmd)
+        if command_output and command_output is not '':
+            raise JobError("Unable to destroy lxc container: %s" %
+                           command_output)  # FIXME: JobError needs a unit test
         return connection
 
 

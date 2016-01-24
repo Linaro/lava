@@ -76,7 +76,7 @@ DEFAULT_SHELL_PROMPT = 'lava-test: # '
 
 # Distinctive prompt characters which can
 # help distinguish status messages from shell prompts.
-DISTINCTIVE_PROMPT_CHARACTERS = ":"
+DISTINCTIVE_PROMPT_CHARACTERS = "\\:"
 
 # LAVA Coordinator setup and finalize timeout
 LAVA_MULTINODE_SYSTEM_TIMEOUT = 90
@@ -89,3 +89,19 @@ ANDROID_TMP_DIR = '/data/local/tmp'
 
 # Default timeout for fastboot reboot
 FASTBOOT_REBOOT_TIMEOUT = 10
+
+# LXC container path
+LXC_PATH = "/var/lib/lxc"
+
+# LXC finalize timeout
+LAVA_LXC_TIMEOUT = 30
+
+# Timeout used by the vland protocol when waiting for vland to
+# respond to the api.create_vlan request, in seconds.
+VLAND_DEPLOY_TIMEOUT = 120
+
+# ipxe boot interrupting
+IPXE_BOOT_PROMPT = "Press Ctrl-B for the iPXE command line"
+
+# bootloader default timeout for commands
+BOOTLOADER_DEFAULT_CMD_TIMEOUT = 90

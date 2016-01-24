@@ -117,6 +117,7 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.set_common_data('tftp', 'tftp_dir', self.tftp_dir)
         if 'ramdisk' in parameters:
             download = DownloaderAction('ramdisk', path=self.tftp_dir)
             download.max_retries = 3  # overridden by failure_retry in the parameters, if set.

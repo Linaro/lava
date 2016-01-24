@@ -21,6 +21,7 @@
 
 import os
 import re
+import logging
 import unittest
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.device import NewDevice
@@ -96,7 +97,7 @@ class TestUefi(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.job = factory.create_uefi_job('sample_jobs/mustang-menu-ramdisk.yaml', mkdtemp())
 
     def test_check_char(self):
-        shell = ShellCommand("%s\n" % 'ls', Timeout('fake', 30))
+        shell = ShellCommand("%s\n" % 'ls', Timeout('fake', 30), logger=logging.getLogger())
         if shell.exitstatus:
             raise JobError("%s command exited %d: %s" % ('ls', shell.exitstatus, shell.readlines()))
         connection = ShellSession(self.job, shell)

@@ -1,0 +1,63 @@
+device_type: x86
+parameters:
+  stuff:
+    - junk
+commands:
+  connect: telnet bumblebee 8003
+  hard_reset: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 08 --command reboot --delay 5
+  power_off: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 08 --command off
+  power_on: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 08 --command on
+
+
+actions:
+  deploy:
+    methods:
+      tftp:
+  boot:
+    connections:
+      serial:
+    methods:
+      ipxe:
+        parameters:
+          bootloader_prompt: iPXE>
+          boot_message: Linux version
+          send_char: True
+          use_bootscript: True
+        nfs:
+          bootscript_commands:
+          - dhcp net0
+          - chain {BOOTSCRIPT}
+          commands:
+          - dhcp net0,
+          - set console console=ttyS0,115200n8 %(lava_network_info)s
+          - "set extraargs root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=eth0:dhcp"
+          - kernel tftp://{SERVER_IP}/{KERNEL} ${extraargs} ${console}
+          - initrd tftp://{SERVER_IP}/{RAMDISK}
+          - boot
+        ramdisk:
+          bootscript_commands:
+          - dhcp net0
+          - chain {BOOTSCRIPT}
+          commands:
+          - dhcp net0
+          - set console console=ttyS0,115200n8 %(lava_network_info)s
+          - set extraargs init=/sbin/init ip=dhcp
+          - kernel tftp://{SERVER_IP}/{KERNEL} ${extraargs} ${console}
+          - initrd tftp://{SERVER_IP}/{RAMDISK}
+          - boot
+
+timeouts:
+  actions:
+    bootloader-retry:
+      seconds: 120
+    bootloader-interrupt:
+      seconds: 300
+    bootloader-commands:
+      seconds: 120
+  connections:
+    bootloader-retry:
+      seconds: 120
+    bootloader-interrupt:
+      seconds: 300
+    bootloader-commands:
+      seconds: 120

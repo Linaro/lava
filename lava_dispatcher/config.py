@@ -57,6 +57,7 @@ class DeviceSchema(schema.Schema):
     boot_cmd_timeout = schema.IntOption(default=10)
     boot_options = schema.ListOption()
     boot_linaro_timeout = schema.IntOption(default=300)
+    extended_boot_timeout = schema.IntOption(default=3600)
     boot_part = schema.IntOption(fatal=True)
     boot_part_android_org = schema.IntOption()
     boot_retries = schema.IntOption(default=3)

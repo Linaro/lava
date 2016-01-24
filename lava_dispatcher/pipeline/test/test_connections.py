@@ -31,6 +31,7 @@ from lava_dispatcher.pipeline.actions.boot.ssh import SchrootAction
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.utils.filesystem import check_ssh_identity_file
+from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 
 
 class Factory(object):  # pylint: disable=too-few-public-methods
@@ -114,8 +115,10 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
             '-p', '8022']
         self.job.validate()
         login = [action for action in self.job.pipeline.actions if action.name == 'login-ssh'][0]
-        self.assertIn('primary-ssh', [action.name for action in login.internal_pipeline.actions])
-        primary = [action for action in login.internal_pipeline.actions if action.name == 'primary-ssh'][0]
+        self.assertIn('ssh-connection', [action.name for action in login.internal_pipeline.actions])
+        primary = [action for action in login.internal_pipeline.actions if action.name == 'ssh-connection'][0]
+        prepare = [action for action in login.internal_pipeline.actions if action.name == 'prepare-ssh'][0]
+        self.assertTrue(prepare.primary)
         self.assertEqual(identity, primary.identity_file)
         self.assertEqual(primary.host, params['ssh']['host'])
         self.assertEqual(test_command, primary.command)
@@ -138,16 +141,12 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
     @unittest.skipIf(infrastructure_error('schroot'), "schroot not installed")
     def test_scp_command(self):
         self.job.validate()
-        overlay = [action for action in self.job.pipeline.actions if action.name == 'scp-overlay'][0]
-        deploy = [action for action in overlay.internal_pipeline.actions if action.name == 'scp-deploy'][0]
-        scp = [action for action in overlay.internal_pipeline.actions if action.name == 'prepare-scp-overlay'][0]
+        login = [action for action in self.guest_job.pipeline.actions if action.name == 'login-ssh'][0]
+        scp = [action for action in login.internal_pipeline.actions if action.name == 'scp-deploy'][0]
         self.assertIsNotNone(scp)
-        self.assertIn('scp', deploy.scp)
-        self.assertNotIn('ssh', deploy.scp)
-        self.assertIn('ssh', deploy.command)
-        self.assertNotIn('scp', deploy.command)
-        self.assertIn('lava_test_results_dir', deploy.data)
-        self.assertIn('/lava-', deploy.data['lava_test_results_dir'])
+        # FIXME: schroot needs to make use of scp
+        self.assertNotIn('ssh', scp.scp)
+        self.assertFalse(scp.primary)
 
     @unittest.skipIf(infrastructure_error('schroot'), "schroot not installed")
     def test_schroot_params(self):
@@ -171,15 +170,75 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
 
     def test_guest_ssh(self):
         self.assertIsNotNone(self.guest_job)
+        description_ref = pipeline_reference('bbb-ssh-guest.yaml')
+        self.assertEqual(description_ref, self.guest_job.pipeline.describe(False))
         self.guest_job.validate()
+        multinode = [protocol for protocol in self.guest_job.protocols if protocol.name == MultinodeProtocol.name][0]
+        self.assertEqual(int(multinode.system_timeout.duration), 900)
         self.assertEqual([], self.guest_job.pipeline.errors)
-        scp_overlay = [item for item in self.guest_job.pipeline.actions if item.name == 'scp-overlay']
-        environment = scp_overlay[0].get_common_data('environment', 'env_dict')
+        self.assertEqual(len([item for item in self.guest_job.pipeline.actions if item.name == 'scp-overlay']), 1)
+        scp_overlay = [item for item in self.guest_job.pipeline.actions if item.name == 'scp-overlay'][0]
+        prepare = [item for item in scp_overlay.internal_pipeline.actions if item.name == 'prepare-scp-overlay'][0]
+        self.assertEqual(prepare.host_keys, ['ipv4'])
+        self.assertEqual(prepare.get_common_data(prepare.name, 'overlay'), prepare.host_keys)
+        params = prepare.parameters['protocols'][MultinodeProtocol.name]
+        for call_dict in [call for call in params if 'action' in call and call['action'] == prepare.name]:
+            del call_dict['yaml_line']
+            if 'message' in call_dict:
+                del call_dict['message']['yaml_line']
+            if 'timeout' in call_dict:
+                del call_dict['timeout']['yaml_line']
+            self.assertEqual(
+                call_dict, {
+                    'action': 'prepare-scp-overlay',
+                    'message': {'ipaddr': '$ipaddr'},
+                    'messageID': 'ipv4', 'request': 'lava-wait',
+                    'timeout': {'minutes': 5}
+                },
+            )
+        login = [action for action in self.guest_job.pipeline.actions if action.name == 'login-ssh'][0]
+        scp = [action for action in login.internal_pipeline.actions if action.name == 'scp-deploy'][0]
+        self.assertFalse(scp.primary)
+        ssh = [action for action in login.internal_pipeline.actions if action.name == 'prepare-ssh'][0]
+        self.assertFalse(ssh.primary)
+        self.assertIsNotNone(scp.scp)
+        self.assertFalse(scp.primary)
+        self.assertIn('host_key', login.parameters['parameters'])
+        self.assertIn('hostID', login.parameters['parameters'])
+        self.assertIn(  # ipv4
+            login.parameters['parameters']['hostID'],
+            prepare.host_keys)
+        prepare.set_common_data(MultinodeProtocol.name, 'ipv4', {'ipaddr': u'172.16.200.165'})
+        self.assertEqual(prepare.get_common_data(prepare.name, 'overlay'), prepare.host_keys)
+        self.assertIn(
+            login.parameters['parameters']['host_key'],
+            prepare.get_common_data(MultinodeProtocol.name, login.parameters['parameters']['hostID']))
+        host_data = prepare.get_common_data(MultinodeProtocol.name, login.parameters['parameters']['hostID'])
+        self.assertEqual(
+            host_data[login.parameters['parameters']['host_key']],
+            u'172.16.200.165'
+        )
+        data = scp_overlay.get_common_data(MultinodeProtocol.name, 'ipv4')
+        if 'protocols' in scp_overlay.parameters:
+            for params in scp_overlay.parameters['protocols'][MultinodeProtocol.name]:
+                (replacement_key, placeholder) = [(key, value) for key, value in params['message'].items() if key != 'yaml_line'][0]
+                self.assertEqual(data[replacement_key], u'172.16.200.165')
+                self.assertEqual(placeholder, '$ipaddr')
+        environment = scp_overlay.get_common_data('environment', 'env_dict')
         self.assertIsNotNone(environment)
         self.assertIn('LANG', environment.keys())
         self.assertIn('C', environment.values())
-        self.assertEqual(len(scp_overlay), 1)
-        overlay = [item for item in scp_overlay[0].internal_pipeline.actions if item.name == 'lava-overlay']
+        overlay = [item for item in scp_overlay.internal_pipeline.actions if item.name == 'lava-overlay']
+        self.assertIn('action', overlay[0].parameters['protocols'][MultinodeProtocol.name][0])
+        self.assertIn('message', overlay[0].parameters['protocols'][MultinodeProtocol.name][0])
+        self.assertIn('timeout', overlay[0].parameters['protocols'][MultinodeProtocol.name][0])
+        msg_dict = overlay[0].parameters['protocols'][MultinodeProtocol.name][0]['message']
+        for key, value in msg_dict.items():
+            if 'yaml_line' == key:
+                continue
+            self.assertTrue(value.startswith('$'))
+            self.assertFalse(key.startswith('$'))
+        self.assertIn('request', overlay[0].parameters['protocols'][MultinodeProtocol.name][0])
         multinode = [item for item in overlay[0].internal_pipeline.actions if item.name == 'lava-multinode-overlay']
         self.assertEqual(len(multinode), 1)
         # Check Pipeline

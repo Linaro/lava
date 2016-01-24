@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+import glob
 import time
 import unittest
 import simplejson
@@ -320,6 +321,23 @@ class TestPipeline(unittest.TestCase):  # pylint: disable=too-many-public-method
             # some deployments listed in basics.yaml are not implemented yet
             pass
         self.assertIsNotNone(job)
+
+    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
+    def test_common_data(self):
+        factory = Factory()
+        job = factory.create_kvm_job('sample_jobs/kvm.yaml', mkdtemp())
+        self.assertIsNotNone(job)
+        test_action = job.pipeline.actions[0]
+        test_action.validate()
+        test_action.set_common_data('ns', 'simple', 1)
+        self.assertEqual(test_action.get_common_data('ns', 'simple'), 1)
+        test_action.set_common_data('ns', 'dict', {'key': False})
+        self.assertEqual(test_action.get_common_data('ns', 'dict'), {'key': False})
+        test_action.set_common_data('ns', 'list', [1, 2, 3, '4'])
+        self.assertEqual(test_action.get_common_data('ns', 'list'), [1, 2, 3, '4'])
+        test_action.set_common_data('ns', 'dict2', {'key': {'nest': True}})
+        self.assertEqual(test_action.get_common_data('ns', 'dict2'), {'key': {'nest': True}})
+        self.assertNotEqual(test_action.get_common_data('unknown', 'simple'), 1)
 
 
 class TestFakeActions(unittest.TestCase):  # pylint: disable=too-many-public-methods

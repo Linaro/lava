@@ -19,9 +19,11 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
+import re
 import copy
 import json
 import logging
+import traceback
 import os
 import socket
 import time
@@ -84,6 +86,7 @@ class MultinodeProtocol(Protocol):
             "poll_delay": 1,
             "coordinator_hostname": "localhost"
         }
+        self.logger = logging.getLogger('dispatcher')
         json_default = {}
         with open(filename) as stream:
             jobdata = stream.read()
@@ -132,7 +135,7 @@ class MultinodeProtocol(Protocol):
                 self.logger.debug("zero bytes sent for message - connection closed?")
                 return False
         except socket.error as exc:
-            self.logger.exception("socket error '%d' on send" % exc.message)
+            self.logger.exception("socket error '%s' on send" % exc.message)
             self.sock.close()
             return False
         return True
@@ -164,6 +167,10 @@ class MultinodeProtocol(Protocol):
         """
         if not timeout:
             timeout = self.poll_timeout.duration
+        if isinstance(timeout, float):
+            timeout = int(timeout)
+        elif not isinstance(timeout, int):
+            raise RuntimeError("Invalid timeout duration type: %s %s" % (type(timeout), timeout))
         msg_len = len(message)
         if msg_len > 0xFFFE:
             raise JobError("Message was too long to send!")
@@ -239,7 +246,7 @@ class MultinodeProtocol(Protocol):
                 "waitrole": expect_role,
                 "messageID": 'lava_start'}
             self._send(sync_msg, True)
-            self.logger.debug("sent %s" % sync_msg)
+            self.logger.debug("sent %s" % json.dumps(sync_msg))
         else:
             self.logger.debug("%s protocol initialised" % self.name)
 
@@ -303,7 +310,14 @@ class MultinodeProtocol(Protocol):
         if "poll_delay" in json_data:
             self.settings['poll_delay'] = int(json_data["poll_delay"])
         if 'timeout' in json_data:
-            self.poll_timeout = Timeout(self.name, json_data['timeout'])
+            if isinstance(json_data['timeout'], dict):
+                self.poll_timeout.duration = Timeout.parse(json_data['timeout'])
+            elif isinstance(json_data['timeout'], int) or isinstance(json_data['timeout'], float):
+                self.poll_timeout.duration = json_data['timeout']
+            else:
+                self.logger.debug(json_data['timeout'])
+                raise JobError("Invalid timeout request")
+            self.logger.debug("Setting poll timeout of %s seconds", int(self.poll_timeout.duration))
         if 'messageID' not in json_data:
             raise JobError("Missing messageID")
         # handle conversion of api calls to internal functions
@@ -344,10 +358,10 @@ class MultinodeProtocol(Protocol):
                 send_msg = json_data['message']
                 if type(send_msg) is not dict:
                     send_msg = {json_data['message']: None}
-                self.logger.debug("message: %s", send_msg)
+                self.logger.debug("message: %s", json.dumps(send_msg))
                 if 'yaml_line' in send_msg:
                     del send_msg['yaml_line']
-                self.logger.debug("requesting lava_send %s with args %s" % (message_id, send_msg))
+                self.logger.debug("requesting lava_send %s with args %s" % (message_id, json.dumps(send_msg)))
                 reply_str = self.request_send(message_id, send_msg)
             else:
                 self.logger.debug("requesting lava_send %s without args" % message_id)
@@ -365,6 +379,9 @@ class MultinodeProtocol(Protocol):
         try:
             return self._api_select(json.dumps(args))
         except (ValueError, TypeError) as exc:
+            msg = re.sub('\s+', ' ', ''.join(traceback.format_exc().split('\n')))
+            logger = logging.getLogger("dispatcher")
+            logger.exception(msg)
             raise JobError("Invalid call to %s %s" % (self.name, exc))
 
     def collate(self, reply, params):
@@ -378,15 +395,33 @@ class MultinodeProtocol(Protocol):
         and the second value is the collated data from the call to the protocol.
         """
         retval = {}
-        if 'message' in params and 'message' in reply:
+        if reply == {} or not isinstance(reply, dict):
+            msg = "Unable to identify replaceable values in the parameters: %s" % params
+            self.logger.error(msg)
+            raise JobError(msg)
+        self.logger.debug({
+            "Retrieving replaceable values from": "%s" % json.dumps(reply),
+            "params": "%s" % json.dumps(params)})
+        if 'message' in params and reply:
             replaceables = [key for key, value in params['message'].items()
                             if key != 'yaml_line' and value.startswith('$')]
             for item in replaceables:
-                data = [val for val in reply['message'].items() if self.parameters['target'] in val][0][1]
+                if 'message' in reply:
+                    data = [val for val in reply['message'].items() if self.parameters['target'] in val][0][1]
+                else:
+                    data = [val for val in reply.items()][0][1]
+                if item not in data:
+                    self.logger.warning("Skipping %s - not found in %s", item, data)
+                    continue
                 retval.setdefault(params['messageID'], {item: data[item]})
-        ret_key = params['messageID']
-        ret_value = retval[ret_key]
-        return ret_key, ret_value
+        if 'messageID' in params:
+            ret_key = params['messageID']
+            if ret_key in retval:
+                ret_value = retval[ret_key]
+                return ret_key, ret_value
+        msg = "Unable to identify replaceable values in the parameters: %s" % params
+        self.logger.error(msg)
+        raise JobError(msg)
 
     def _send(self, msg, system=False):
         """ Internal call to perform the API call via the Poller.

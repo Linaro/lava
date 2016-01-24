@@ -21,3 +21,5 @@
 # pylint: disable=unused-import
 
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
+from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
+from lava_dispatcher.pipeline.protocols.vland import VlandProtocol

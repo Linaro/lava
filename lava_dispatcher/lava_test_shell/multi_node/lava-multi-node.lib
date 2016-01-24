@@ -184,7 +184,7 @@ if [ -n "$1" ] ; then
 fi
 
 if [ ! -f $LAVA_MULTI_NODE_CACHE ] ; then
-	_lava_multi_node_debug "$FUNCNAME not cache file $LAVA_MULTI_NODE_CACHE !"
+	_lava_multi_node_debug "$FUNCNAME no cache file exists $LAVA_MULTI_NODE_CACHE !"
 	exit $LAVA_MULTI_NODE_EXIT_ERROR
 fi
 

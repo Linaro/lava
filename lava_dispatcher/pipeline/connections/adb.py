@@ -39,6 +39,8 @@ class ConnectAdb(Action):
         self.name = "connect-adb"
         self.summary = "run connection command"
         self.description = "use the configured command to connect adb to the device"
+        self.session_class = ShellSession
+        self.shell_class = ShellCommand
 
     def validate(self):
         super(ConnectAdb, self).validate()
@@ -64,11 +66,14 @@ class ConnectAdb(Action):
         self.logger.info("%s Connecting to device using '%s'", self.name, command)
         signal.alarm(0)  # clear the timeouts used without connections.
         # ShellCommand executes the connection command
-        shell = ShellCommand("%s\n" % command, self.timeout, logger=self.logger)
+        shell = self.shell_class("%s\n" % command, self.timeout,
+                                 logger=self.logger)
         if shell.exitstatus:
-            raise JobError("%s command exited %d: %s" % (command, shell.exitstatus, shell.readlines()))
+            raise JobError("%s command exited %d: %s" % (command,
+                                                         shell.exitstatus,
+                                                         shell.readlines()))
         # ShellSession monitors the pexpect
-        connection = ShellSession(self.job, shell)
+        connection = self.session_class(self.job, shell)
         connection.connected = True
         connection = super(ConnectAdb, self).run(connection, args)
         connection.prompt_str = self.parameters['prompts']
@@ -90,14 +95,14 @@ class WaitForAdbDevice(Action):
 
     def validate(self):
         super(WaitForAdbDevice, self).validate()
-        if 'serial_number' not in self.job.device:
-            self.errors = "device serial number missing"
-            if self.job.device['serial_number'] == '0000000000':
-                self.errors = "device serial number unset"
+        if 'adb_serial_number' not in self.job.device:
+            self.errors = "device adb serial number missing"
+            if self.job.device['adb_serial_number'] == '0000000000':
+                self.errors = "device adb serial number unset"
 
     def run(self, connection, args=None):
         connection = super(WaitForAdbDevice, self).run(connection, args)
-        serial_number = self.job.device['serial_number']
+        serial_number = self.job.device['adb_serial_number']
         adb_cmd = ['adb', '-s', serial_number, 'wait-for-device']
         self.run_command(adb_cmd)
         self.logger.debug("%s: Waiting for device", serial_number)
@@ -117,15 +122,15 @@ class WaitForFastbootDevice(Action):
         self.prompts = []
 
     def validate(self):
-        super(WaitForAdbDevice, self).validate()
-        if 'serial_number' not in self.job.device:
-            self.errors = "device serial number missing"
-            if self.job.device['serial_number'] == '0000000000':
-                self.errors = "device serial number unset"
+        super(WaitForFastbootDevice, self).validate()
+        if 'fastboot_serial_number' not in self.job.device:
+            self.errors = "device fastboot serial number missing"
+            if self.job.device['fastboot_serial_number'] == '0000000000':
+                self.errors = "device fastboot serial number unset"
 
     def run(self, connection, args=None):
         connection = super(WaitForFastbootDevice, self).run(connection, args)
-        serial_number = self.job.device['serial_number']
+        serial_number = self.job.device['fastboot_serial_number']
         fastboot_cmd = ['fastboot', '-s', serial_number, 'wait-for-device']
         self.run_command(fastboot_cmd)
         self.logger.debug("%s: Waiting for device", serial_number)

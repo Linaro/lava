@@ -4,16 +4,21 @@ actions:
     os: debian
     protocols:
       lava-multinode:
-        api: lava-wait
-        id: ipv4
-        key: ipaddr
-        timeout: {minutes: 5}
+        - action: prepare-scp-overlay
+          request: lava-wait
+          messageID: ipv4
+          message:
+              ipaddr: $ipaddr
+          timeout: {minutes: 5}
     role: guest
     timeout: {seconds: 30}
     to: ssh
 - boot:
     method: ssh
     role: guest
+    parameters:
+      hostID: ipv4
+      host_key: ipaddr
     timeout: {minutes: 3}
     prompts:
       - 'linaro-test'

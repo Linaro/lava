@@ -80,7 +80,9 @@ def wait_for_prompt(connection, prompt_pattern, timeout, check_char):
         except TestError as exc:
             if prompt_wait_count < 6:
                 logger = logging.getLogger('dispatcher')
-                logger.warning('%s: Sending %s in case of corruption.', exc, check_char)
+                logger.warning('%s: Sending %s in case of corruption. connection timeout %s, retry in %s',
+                               exc, check_char, timeout, partial_timeout)
+                logger.debug("pattern: %s" % prompt_pattern)
                 prompt_wait_count += 1
                 partial_timeout = timeout / 10
                 connection.sendline(check_char)

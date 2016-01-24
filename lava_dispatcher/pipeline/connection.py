@@ -130,9 +130,15 @@ class Connection(object):
     def corruption_check(self):
         self.sendline(self.check_char)
 
-    def sendline(self, line):
+    def sendline(self, line, delay=0, send_char=True):
         if self.connected:
-            self.raw_connection.sendline(line)
+            self.raw_connection.sendline(line, delay, send_char)
+        else:
+            raise RuntimeError()  # FIXME:
+
+    def sendcontrol(self, char):
+        if self.connected:
+            self.raw_connection.sendcontrol(char)
         else:
             raise RuntimeError()  # FIXME:
 
@@ -248,12 +254,12 @@ class Protocol(object):  # pylint: disable=abstract-class-not-used
     level = 0
 
     def __init__(self, parameters):
-        # FIXME: allow the bare logger to use the zmq socket
-        self.logger = logging.getLogger("root")
+        self.logger = logging.getLogger("dispatcher")
         self.poll_timeout = Timeout(self.name)
         self.parameters = None
         self.__errors__ = []
         self.parameters = parameters
+        self.configured = False
 
     @classmethod
     def select_all(cls, parameters):
@@ -279,8 +285,22 @@ class Protocol(object):  # pylint: disable=abstract-class-not-used
     def set_up(self):
         raise NotImplementedError()
 
+    def configure(self, device, job):
+        self.configured = True
+
     def finalise_protocol(self):
         raise NotImplementedError()
+
+    def check_timeout(self, duration, data):
+        """
+        Use if particular protocol calls can require a connection timeout
+        larger than the default_connection_duration.
+        :param duration: A minimum number of seconds
+        :param data: the API call
+        :return: True if checked, False if no limit is specified by the protocol.
+        raises JobError if the API call is invalid.
+        """
+        return False
 
     def _api_select(self, data):
         if not data:

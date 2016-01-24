@@ -236,7 +236,7 @@ class cmd_deploy_linaro_kernel(BaseAction):
             'rootfstype': {'type': 'string', 'optional': True},
             'bootloadertype': {'type': 'string', 'optional': True,
                                'default': 'u_boot'},
-            'target_type': {'type': 'string', 'enum': ['ubuntu', 'oe', 'android', 'fedora'],
+            'target_type': {'type': 'string', 'enum': ['ubuntu', 'oe', 'android', 'fedora', 'debian_installer'],
                             'optional': True, 'default': 'oe'},
             'login_prompt': {'type': 'string', 'optional': True},
             'password_prompt': {'type': 'string', 'optional': True},

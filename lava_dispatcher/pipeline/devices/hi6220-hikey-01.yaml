@@ -1,0 +1,53 @@
+commands:
+    connect: telnet 192.168.1.200 8001
+    hard_reset: /home/stylesen/work/pdu/pdu-control-reset.sh 0 5 1 5
+    soft_reset: fastboot -s usb:2-1.2 reboot
+    power_off: /home/stylesen/work/pdu/pdu-control-off.sh 5
+    power_on: /home/stylesen/work/pdu/pdu-control-on.sh 5
+    adb_command: adb -s 0123456789
+    fastboot_command: fastboot -s usb:2-1.2
+device_type: hi6220-hikey
+adb_serial_number: 0123456789
+fastboot_serial_number: usb:2-1.2
+
+
+actions:
+  deploy:
+    methods:
+      fastboot:
+    connections:
+      serial:
+  boot:
+    connections:
+      adb:
+      serial:
+    methods:
+      uefi-menu:
+        parameters:
+          interrupt_prompt: "Android Fastboot mode"
+          interrupt_string: ' '
+          item_markup:
+            - "["
+            - "]"
+          item_class: '0-9'
+          separator: ' '
+          label_class: 'a-zA-Z0-9\s\:'
+          bootloader_prompt: 'Start:'
+          boot_message: "Booting Linux Kernel..."
+          send_char: True
+          character_delay: 10
+        fastboot:
+        - select:
+            items:
+             - 'boot from eMMC'
+
+timeouts:
+  actions:
+    apply-overlay-image:
+      seconds: 120
+    umount-retry:
+      seconds: 45
+    lava-test-shell:
+      seconds: 600
+    power_off:
+      seconds: 10

@@ -158,8 +158,10 @@ class UBootRetry(BootAction):
         self.logger.debug("Setting default test shell prompt")
         if not connection.prompt_str:
             connection.prompt_str = self.parameters['prompts']
+        self.logger.debug(connection.prompt_str)
         connection.timeout = self.connection_timeout
         self.wait(connection)
+        self.logger.error(self.errors)
         self.data['boot-result'] = 'failed' if self.errors else 'success'
         return connection
 
@@ -373,7 +375,6 @@ class UBootCommandsAction(Action):
         for line in self.data['u-boot']['commands']:
             self.wait(connection)
             connection.sendline(line)
-            self.wait(connection)
         # allow for auto_login
         params = self.job.device['actions']['boot']['methods']['u-boot']['parameters']
         connection.prompt_str = params.get('boot_message', BOOT_MESSAGE)

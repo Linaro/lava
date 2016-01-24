@@ -1,0 +1,23 @@
+device_type: lxc
+
+actions:
+  deploy:
+    methods:
+      lxc:
+    connections:
+      lxc:
+  boot:
+    connections:
+      lxc:
+    methods:
+      lxc:
+
+timeouts:
+  apply-overlay-image:
+    seconds: 120
+  umount-retry:
+    seconds: 45
+  lava-test-shell:
+    seconds: 30
+  power_off:
+    seconds: 5
