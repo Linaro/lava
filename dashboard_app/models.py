@@ -219,7 +219,7 @@ class BundleStream(RestrictedResource):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.views.bundle_list", [self.pathname])
+        return ("lava_dashboard_bundle_list", [self.pathname])
 
     def get_test_run_count(self):
         return TestRun.objects.filter(bundle__bundle_stream=self).count()
@@ -536,10 +536,10 @@ class Bundle(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.views.bundle_detail", [self.bundle_stream.pathname, self.content_sha1])
+        return ("lava_dashboard_bundle_detail", [self.bundle_stream.pathname, self.content_sha1])
 
     def get_permalink(self):
-        return reverse("dashboard_app.views.redirect_to_bundle", args=[self.content_sha1])
+        return reverse("lava_dashboard_redirect_to_bundle", args=[self.content_sha1])
 
     def save(self, *args, **kwargs):
         if not self.is_deserialized:
@@ -1037,13 +1037,13 @@ class TestRun(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.views.test_run_detail",
+        return ("lava_dashboard_test_run_detail",
                 [self.bundle.bundle_stream.pathname,
                  self.bundle.content_sha1,
                  self.analyzer_assigned_uuid])
 
     def get_permalink(self):
-        return reverse("dashboard_app.views.redirect_to_test_run", args=[self.analyzer_assigned_uuid])
+        return reverse("lava_dashboard_redirect_to_test_run", args=[self.analyzer_assigned_uuid])
 
     def get_board(self):
         """
@@ -1377,7 +1377,7 @@ class TestResult(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.views.test_result_detail", [
+        return ("lava_dashboard_test_result_detail", [
             self.test_run.bundle.bundle_stream.pathname,
             self.test_run.bundle.content_sha1,
             self.test_run.analyzer_assigned_uuid,
@@ -1385,7 +1385,7 @@ class TestResult(models.Model):
         ])
 
     def get_permalink(self):
-        return reverse("dashboard_app.views.redirect_to_test_result",
+        return reverse("lava_dashboard_redirect_to_test_result",
                        args=[self.test_run.analyzer_assigned_uuid,
                              self.relative_index])
 
@@ -1515,27 +1515,36 @@ class BugLink(models.Model):
         return unicode(self.bug_link)
 
 
+# would be best moved out of models.py
+# https://docs.djangoproject.com/en/1.9/topics/signals/#connecting-receiver-functions
 @receiver(post_delete)
 def file_cleanup(sender, instance, **kwargs):
     """
-    Signal receiver used for remove FieldFile attachments when removing
+    Signal receiver used for remove FileField attachments when removing
     objects (Bundle and Attachment) from the database.
     """
     if instance is None or sender not in (Bundle, Attachment):
         return
-    meta = sender._meta
 
-    for field_name in meta.get_all_field_names():
+    if django.VERSION < (1, 8):
+        interest = sender._meta.get_all_field_names()
+    else:
+        # we just want the FileField's, not all the fields
+        interest = [field.name for field in sender._meta.get_fields()
+                    if isinstance(field, models.FileField)]
+
+    for field_name in interest:
 
         # object that represents the metadata of the field
         try:
-            field_meta = meta.get_field(field_name)
+            field_meta = sender._meta.get_field(field_name)
         except FieldDoesNotExist:
             continue
 
-        # we just want the FileField's, not all the fields
-        if not isinstance(field_meta, models.FileField):
-            continue
+        if django.VERSION < (1, 8):
+            # we just want the FileField's, not all the fields
+            if not isinstance(field_meta, models.FileField):
+                continue
 
         # the field itself is a FieldFile instance, proxied by FileField
         field = getattr(instance, field_name)

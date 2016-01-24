@@ -51,7 +51,11 @@
           <li><a href="{% url 'lava.scheduler.job.log_file' job.pk %}" class="btn btn-primary">Complete log</a></li>
         {% endif %}
         {% if job.results_link %}
+            {% if job.is_pipeline %}
+          <li><a href="{{ job.results_link }}" class="btn btn-success">Results</a></li>
+            {% else %}
           <li><a href="{{ job.results_link }}" class="btn btn-success">Results Bundle</a></li>
+            {% endif %}
         {% endif %}
         </ul>
       </div>
@@ -96,7 +100,7 @@
     {% for subjob in job.sub_jobs_list %}
       <dt><a href="{% url 'lava.scheduler.job.detail' subjob.sub_id %}">{{ subjob.sub_id }}</a>
         {% if '0' in subjob.sub_id and '0' not in job.sub_id %}
-            <abbr title="view job {{ subjob.sub_id }} to see the result bundle, if any.">(?)</abbr>
+            <abbr title="view job {{ subjob.sub_id }} to see the results, if any.">(?)</abbr>
         {% endif %}
       </dt>
       <dd>

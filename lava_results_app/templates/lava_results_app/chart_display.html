@@ -1,0 +1,52 @@
+{% extends "layouts/content-bootstrap.html" %}
+
+{% load i18n %}
+{% load keep_spacing %}
+{% load make_safe %}
+
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_results_app/css/chart.css"/>
+{% endblock %}
+
+{% block content %}
+
+<h1>Chart {{ chart.name }} {% if can_admin %}<small><a href="{% url 'lava_results_app.views.chart.views.chart_detail' chart.name %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-th-list"></span> Settings</a></small>{% endif %}</h1>
+
+{% if chart.chart_group %}
+Chart Group:&nbsp;&nbsp;<a href="{% url 'lava_results_app.views.chart.views.chart_list' %}#{{ chart.chart_group|iriencode }}">{{ chart.chart_group }}</a>
+{% endif %}
+{{ chart.description|default_if_none:""|keep_spacing|linebreaks }}
+
+<div id="main_container">
+</div>
+
+<div id="add-bug-dialog" style="display: none">
+  <input type="hidden" name="uuid"/>
+  <input type="hidden" name="relative_index"/>
+  <div class="linked" style="display:none"></div>
+  <div class="prev" style="display:none">
+    XXX
+  </div>
+  <input name="bug_link" style="width: 100%"/>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ STATIC_URL }}lava_results_app/js/chart.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.canvas.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.dashes.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.axislabels.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.navigate.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.time.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.labels.min.js"></script>
+
+<script>
+  chart_data = $.parseJSON($('<div/>').html('{{chart_data|make_jquery_safe|escapejs}}').text());
+  csrf_token = '{{csrf_token}}';
+  image_url = '{{ STATIC_URL }}dashboard_app/images/';
+  custom_chart_url = '{% url 'lava_results_app.views.chart.views.chart_custom' %}';
+</script>
+
+{% endblock %}

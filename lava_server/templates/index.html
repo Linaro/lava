@@ -19,7 +19,7 @@ of each type are available for tests and currently running jobs.</p>
 <ul>
     <li>
         <span class="glyphicon glyphicon-dashboard"></span>
-        <b><a href="{% url 'lava.dashboard' %}">Dashboard</a></b> - viewing
+        <b><a href="{% url 'lava_dashboard' %}">Dashboard</a></b> - viewing
         results of tests run by you or others, depending on your group
         membership.
 {% if 'PIPELINE'|get_settings %}
@@ -29,7 +29,7 @@ of each type are available for tests and currently running jobs.</p>
 {% if 'PIPELINE'|get_settings %}
     <li>
         <span class="glyphicon glyphicon-signal"></span>
-        <b><a href="{% url 'lava.results' %}">Results</a></b> - viewing
+        <b><a href="{% url 'lava_results' %}">Results</a></b> - viewing
         results of pipeline tests run by you or others. (YAML pipeline
     submissions only.)
     </li>
@@ -150,17 +150,17 @@ of each type are available for tests and currently running jobs.</p>
    <h4 class="modal-header">Your results</h4>
     <ul class="nav nav-pills nav-stacked">
       <li>
-        <a href="{% url 'dashboard_app.views.mybundlestreams' %}"><span
+        <a href="{% url 'lava_dashboard_mybundlestreams' %}"><span
             class="glyphicon glyphicon-folder-open pull-right"></span> Your bundle streams</a>
       </li>
 {% if 'PIPELINE'|get_settings %}
       <li>
-        <a href="{% url 'lava.results' %}"><span
+        <a href="{% url 'lava_results' %}"><span
             class="glyphicon glyphicon-signal pull-right"></span> Your pipeline results</a>
       </li>
 {% endif %}
       <li>
-        <a href="{% url 'dashboard_app.views.my_subscriptions' %}"><span
+        <a href="{% url 'lava_dashboard_my_subscriptions' %}"><span
             class="glyphicon glyphicon-pencil pull-right"></span> Your subscriptions</a>
       </li>
      </ul>

@@ -42,6 +42,7 @@ Simple integration for Django settings.py
  exists at /etc/lava-server/settings.conf
 """
 
+import django
 from lava_server.settings.secret_key import get_secret_key
 from lava_server.settings.config_file import ConfigFile
 import json
@@ -281,26 +282,33 @@ class Settings(object):
         default = self.STATIC_URL + "admin/"
         return self._settings.get("ADMIN_MEDIA_PREFIX", default)
 
-    @property
-    def TEMPLATE_DIRS(self):
-        """
-        See: http://docs.djangoproject.com/en/1.2/ref/settings/#template-dirs
+    if django.VERSION > (1, 8):
+        @property
+        def TEMPLATES(self):
+            from django.conf import settings
+            default = settings.TEMPLATES
+            return self._settings.get('TEMPLATES', default)
+    else:
+        @property
+        def TEMPLATE_DIRS(self):
+            """
+            See: http://docs.djangoproject.com/en/1.2/ref/settings/#template-dirs
 
-        Bridge for the settings file TEMPLATE_DIRS property.
+            Bridge for the settings file TEMPLATE_DIRS property.
 
-        By default it produces two directories:
+            By default it produces two directories:
 
-            * ``"/etc/{appname}/templates"``
-            * ``"/usr/share/{appname}/templates"``
+                * ``"/etc/{appname}/templates"``
+                * ``"/usr/lib/python2.7/dist-packages/{appname}/templates"``
 
-        The first one is provided for administrators that may wish to override
-        one or more templates in a local installation for any purpose. The
-        second one is to gain access to standard package templates.
-        """
-        default = (
-            "/etc/{appname}/templates/".format(appname=self._appname),
-            "/usr/share/{appname}/templates/".format(appname=self._appname))
-        return self._settings.get("TEMPLATE_DIRS", default)
+            The first one is provided for administrators that may wish to override
+            one or more templates in a local installation for any purpose. The
+            second one is to gain access to standard package templates.
+            """
+            default = (
+                "/etc/{appname}/templates/".format(appname=self._appname),
+                "/usr/lib/python2.7/dist-packages/{appname}/templates/".format(appname=self._appname))
+            return self._settings.get("TEMPLATE_DIRS", default)
 
     @property
     def STATICFILES_DIRS(self):

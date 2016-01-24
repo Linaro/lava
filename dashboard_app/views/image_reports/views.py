@@ -266,7 +266,7 @@ def image_report_delete(request, name):
     image_report.is_archived = True
     image_report.save()
     return HttpResponseRedirect(reverse(
-        'lava.dashboard.image_report.report_list'))
+        'lava_dashboard_image_report_report_list'))
 
 
 @login_required

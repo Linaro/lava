@@ -143,7 +143,7 @@
         {% endif %}
         </ul>
         {% endif %}
-        {% if change_priority and job.status == job.SUBMITTED %}
+        {% if change_priority and job.status == job.SUBMITTED and not job.is_multinode %}
         <form method="POST" action="{% url 'lava.scheduler.job.priority' job.pk %}" id="priority-choice">
           {% csrf_token %}
           <button id="priority-button" class="btn btn-default">Set priority</button><br />

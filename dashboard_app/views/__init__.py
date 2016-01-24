@@ -24,6 +24,7 @@ import csv
 import json
 import os
 import re
+import django
 import shutil
 import tempfile
 
@@ -35,6 +36,7 @@ from django.core import serializers
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.views.decorators.http import require_POST
+from django.template.loader import get_template
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
 from django.db.models import Count, Q
@@ -85,7 +87,6 @@ from dashboard_app.views.filters.tables import PublicFiltersTable
 from dashboard_app.views.image_reports.tables import UserImageReportTable
 
 from django_tables2 import (
-    Attrs,
     Column,
     RequestConfig,
     SingleTableView,
@@ -219,24 +220,28 @@ def bundle_stream_list(request):
     """
     data = BundleStreamView(request, model=BundleStream, table_class=BundleStreamTable)
     table = BundleStreamTable(data.get_table_data())
+    context_dict = {
+        'bread_crumb_trail': BreadCrumbTrail.leading_to(bundle_stream_list),
+        "bundle_stream_table": table,
+        "terms_data": table.prepare_terms_data(data),
+        "search_data": table.prepare_search_data(data),
+        "discrete_data": table.prepare_discrete_data(data),
+        'has_personal_streams': (
+            request.user.is_authenticated() and
+            BundleStream.objects.filter(user=request.user).count() > 0),
+        'has_team_streams': (
+            request.user.is_authenticated() and
+            BundleStream.objects.filter(
+                group__in=request.user.groups.all()).count() > 0),
+    }
     RequestConfig(request, paginate={"per_page": table.length}).configure(table)
-    return render_to_response(
-        'dashboard_app/bundle_stream_list.html', {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                bundle_stream_list),
-            "bundle_stream_table": table,
-            "terms_data": table.prepare_terms_data(data),
-            "search_data": table.prepare_search_data(data),
-            "discrete_data": table.prepare_discrete_data(data),
-            'has_personal_streams': (
-                request.user.is_authenticated() and
-                BundleStream.objects.filter(user=request.user).count() > 0),
-            'has_team_streams': (
-                request.user.is_authenticated() and
-                BundleStream.objects.filter(
-                    group__in=request.user.groups.all()).count() > 0),
-        }, RequestContext(request)
-    )
+    if django.VERSION > (1, 8):
+        template = get_template('dashboard_app/bundle_stream_list.html')
+        return HttpResponse(template.render(context_dict, request))
+    else:
+        return render_to_response(
+            'dashboard_app/bundle_stream_list.html', context_dict, RequestContext(request)
+        )
 
 
 def bundlestreams_json(request):

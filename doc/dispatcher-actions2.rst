@@ -350,6 +350,8 @@ Lava-Test-Shell Test Definitions although the submission format has changed:
      failure_retry: 3
      name: kvm-basic-singlenode
 
+.. _test_action_definitions:
+
 Definitions
 ===========
 
@@ -371,6 +373,21 @@ Definitions
 * **name** (optional) if not present, use the name from the YAML. The
   name can also be overriden from the actual commands being run by
   calling the lava-test-suite-name API call (e.g. `lava-test-suite-name FOO`).
+* **parameters** (optional): Pass parameters to the Lava Test Shell
+  Definition. The format is a YAML dictionary - the key is the name of
+  the variable to be made available to the test shell, the value is the
+  value of that variable.
+
+  .. code-block:: yaml
+
+     definitions:
+         - repository: http://git.linaro.org/lava-team/hacking-session.git
+           from: git
+           path: hacking-session-debian.yaml
+           name: hacking
+           parameters:
+            IRC_USER: ""
+            PUB_KEY: ""
 
 .. code-block:: yaml
 
@@ -464,14 +481,6 @@ Repeat
 ******
 
 See :ref:`repeats`.
-
-.. _submit_action:
-
-Submit
-******
-
-.. warning:: As yet, pipeline data cannot be submitted - any details here are
-             ignored.
 
 .. _repeats:
 
@@ -1079,34 +1088,43 @@ is responsible for making the ``lava-start`` call.
    steps:
      - lava-send lava_start
 
+.. _passing_data_at_startup:
+
 Passing data at startup
------------------------
+=======================
+
+The pipeline exposes the names of all actions and these names are
+used for a variety of functions, from timeouts to protocol usage.
+
+To see the actions within a specific pipeline job, see the job
+definition (not the multinode definition) where you will find a Pipeline
+Description.
 
 Various delayed start jobs will need dynamic data from the "server" job
 in order to be able to start, like an IP address. This is achieved by
-adding the ``lava-start`` call to the ``test`` action of the server
-where the test definition initiates a :ref:`lava_send` message. When this
-``test`` action completes, the protocol will send the ``lava-start``.
+adding the ``lava-start`` call to a specified ``test`` action of the server
+role where the test definition initiates a :ref:`lava_send` message. When this
+specific ``test`` action completes, the protocol will send the ``lava-start``.
 The first thing the delayed start job does is a ``lava-wait`` which would
 be added to the ``deploy`` action of that job.
 
-+-------------------------------+-------------------------+
-| ``Server`` role               | Delayed ``client`` role |
-+===============================+=========================+
-| ``deploy``                    |                         |
-+-------------------------------+-------------------------+
-| ``boot``                      |                         |
-+-------------------------------+-------------------------+
-| ``test``                      |                         |
-+-------------------------------+-------------------------+
-| - lava-send ipv4 ipaddr=$(IP) |                         |
-+-------------------------------+-------------------------+
-| - lava-start                  |  ``deploy``             |
-+-------------------------------+-------------------------+
-|                               |  - lava-wait ipv4       |
-+-------------------------------+-------------------------+
-| - lava-test-case              |  ``boot``               |
-+-------------------------------+-------------------------+
++-----------------------------------+-------------------------+
+| ``Server`` role                   | Delayed ``client`` role |
++===================================+=========================+
+| ``deploy``                        |                         |
++-----------------------------------+-------------------------+
+| ``boot``                          |                         |
++-----------------------------------+-------------------------+
+| ``test``                          |                         |
++-----------------------------------+-------------------------+
+| ``- lava-send ipv4 ipaddr=$(IP)`` |                         |
++-----------------------------------+-------------------------+
+| ``- lava-start``                  |  ``deploy``             |
++-----------------------------------+-------------------------+
+|                                   |  ``- lava-wait ipv4``   |
++-----------------------------------+-------------------------+
+| ``- lava-test-case``              |  ``boot``               |
++-----------------------------------+-------------------------+
 
 .. code-block:: yaml
 
@@ -1114,9 +1132,22 @@ be added to the ``deploy`` action of that job.
         role: client
         protocols:
           lava-multinode:
-            api: lava-wait
-            id: ipv4
-            key: ipaddr
+          - action: prepare-scp-overlay
+            request: lava-wait
+            message:
+                ipaddr: $ipaddr
+            messageID: ipv4
+            timeout:
+              minutes: 5
+
+.. note:: Some calls can only be made against specific actions.
+   Specifically, the ``prepare-scp-overlay`` action needs the IP
+   address of the host device to be able to copy the LAVA overlay
+   (containing the test definitions) onto the device before connecting
+   using ``ssh`` to start the test. This is a **complex** configuration
+   to write.
+
+.. seealso:: :ref:`writing_secondary_connection_jobs`
 
 Depending on the implementation of the ``deploy`` action, determined by
 the Strategy class, the ``lava-wait`` call will be made at a suitable
@@ -1125,10 +1156,18 @@ call is made before ``lava-start`` - this allows the data to be stored
 in the lava coordinator and the ``lava-wait`` will receive the data
 immediately.
 
-The specified ``id`` and ``key`` **must** exactly match the message ID
+The specified ``messageID`` **must** exactly match the message ID
 used for the :ref:`lava_send` call in the test definition. (So an **inline**
 test definition could be useful for the test action of the job definition
 for the ``server`` role. See :ref:`inline_test_definition_example`)
+
+.. code-block:: yaml
+
+ - lava-send ipv4 ipaddr=$(lava-echo-ipv4 eth0)
+
+``lava-send`` takes a messageID as the first argument.
+
+
 
 .. code-block:: yaml
 
@@ -1136,7 +1175,77 @@ for the ``server`` role. See :ref:`inline_test_definition_example`)
         role: server
         protocols:
           lava-multinode:
-            api: lava-start
+          - action: multinode-test
+            request: lava-start
             roles:
               - client
 
+See also :ref:`writing_secondary_connection_jobs`.
+
+.. _managing_flow_using_inline:
+
+Managing flow using inline definitions
+======================================
+
+The pipeline exposes the names of all actions and these names are
+used for a variety of functions, from timeouts to protocol usage.
+
+To see the actions within a specific pipeline job, see the job
+definition (not the multinode definition) where you will find a Pipeline
+Description.
+
+Creating multinode jobs has always been complex. The consistent use of
+inline definitions can significantly improve the experience and once
+the support is complete, it may be used to invalidate submissions which
+fail to match the synchronisation primitives.
+
+The principle is to separate the synchronisation from the test operation.
+By only using synchronisation primitives inside an inline definition,
+the flow of the complete multinode group can be displayed. This becomes
+impractical as soon as the requirement involves downloading a test
+definition repository and possibly fishing inside custom scripts for the
+synchronisation primitives.
+
+Inline blocks using synchronisation calls can still do other checks and
+tasks as well but keeping the synchronisation at the level of the
+submitted YAML allows much easier checking of the job before the job
+starts to run.
+
+.. code-block:: yaml
+
+         - repository:
+                metadata:
+                    format: Lava-Test Test Definition 1.0
+                    name: install-ssh
+                    description: "install step"
+                install:
+                    deps:
+                        - openssh-server
+                        - ntpdate
+                run:
+                    steps:
+                        - ntpdate-debian
+                        - lava-echo-ipv4 eth0
+                        - lava-send ipv4 ipaddr=$(lava-echo-ipv4 eth0)
+                        - lava-send lava_start
+                        - lava-sync clients
+           from: inline
+           name: ssh-inline
+           path: inline/ssh-install.yaml
+
+.. code-block:: yaml
+
+         - repository: git://git.linaro.org/qa/test-definitions.git
+           from: git
+           path: ubuntu/smoke-tests-basic.yaml
+           name: smoke-tests
+
+This is a small deviation from how existing Multinode jobs may be defined
+but the potential benefits are substantial when combined with the other
+elements of the Multinode Protocol.
+
+VLANd protocol
+**************
+
+See :ref:`VLANd protocol <vland_in_lava>` - which uses the multinode protocol
+to interface with :term:`VLANd` to support virtual local area networks in LAVA.

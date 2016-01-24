@@ -18,9 +18,37 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import glob
+import fnmatch
 from setuptools import setup, find_packages
 from version import version_tag
 
+
+# based on https://wiki.python.org/moin/Distutils/Tutorial
+def find_data_files(srcdir, *wildcards):
+    badnames = [".pyc", "~"]
+
+    def walk_helper(arg, dirname, files):
+        names = []
+        lst, wilds = arg
+        for wcard in wilds:
+            wc_name = os.path.normpath(os.path.join(dirname, wcard))
+            for listed in files:
+                filename = os.path.normpath(os.path.join(dirname, listed))
+                if not any(bad in filename for bad in badnames):
+                    if fnmatch.fnmatch(filename, wc_name) and not os.path.isdir(filename):
+                        names.append(filename)
+        if names:
+            lst.append(('/etc/lava-server/dispatcher-config/device-types', names))
+    file_list = []
+    walk_helper(
+        (file_list, wildcards), srcdir,
+        [os.path.basename(f) for f in glob.glob(os.path.normpath(os.path.join(srcdir, '*')))])
+    return file_list
+
+SRCDIR = os.path.join('.', 'lava_scheduler_app', 'tests', 'device-types')
+DEVICE_TYPE_TEMPLATES = find_data_files(SRCDIR, '*.jinja2')
 
 setup(
     name='lava-server',
@@ -53,12 +81,11 @@ setup(
         "Topic :: Software Development :: Testing",
     ],
     install_requires=[
-        'django >= 1.6.1',
+        'django >= 1.7.1',
         'django-restricted-resource >= 2015.09',
         'django-tables2 >= 0.13.0',
         'docutils >= 0.6',
         'lava-tool >= 0.2',
-        'south >= 1.0',
         'versiontools >= 1.8',
         'markdown >= 2.0.3',
         'psycopg2',
@@ -99,7 +126,7 @@ setup(
          ['share/add_device.py',
           'etc/lava-master.service',
           'share/render-template.py']),
-    ],
+    ].extend(DEVICE_TYPE_TEMPLATES),
     scripts=[
         'lava_server/lava-daemon',
         'lava_server/lava-master',

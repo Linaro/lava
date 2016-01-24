@@ -39,7 +39,7 @@ class SecondaryConnections(TestCaseWithFactory):
         self.device_type = self.factory.make_device_type()
         self.conf = {
             'arch': 'amd64',
-            'extends': 'qemu.yaml',
+            'extends': 'qemu.jinja2',
             'mac_addr': '52:54:00:12:34:59',
             'memory': '256',
         }

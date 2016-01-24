@@ -1,0 +1,89 @@
+# unit test support comment
+job_name: bbb-cubie-vland
+visibility: public
+timeouts:
+  job:
+    minutes: 5
+  action:
+    minutes: 1
+  test:
+    minutes: 3
+
+protocols:
+  lava-multinode:
+    roles:
+      client:
+        device_type: bbb
+        count: 1
+        tags:
+        - usb-eth
+      server:
+        device_type: cubietruck
+        count: 1
+        tags:
+        - sata
+    timeout:
+      seconds: 60
+  lava-vland:
+    # not a very useful vlan pair, just for the unittests
+    client:
+      vlan_one:
+        tags:
+        - 10G
+    server:
+      vlan_two:
+        tags:
+        - 1G
+
+priority: medium
+
+actions:
+    - deploy:
+        timeout:
+          minutes: 4
+        to: tftp
+        kernel: http://people.linaro.org/~neil.williams/opentac/zImage
+        ramdisk: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
+        ramdisk-type: u-boot
+        os: oe
+        dtb: http://people.linaro.org/~neil.williams/opentac/am335x-boneblack.dtb
+        role:
+        - server
+
+    - deploy:
+        timeout:
+          minutes: 2
+        to: tftp
+        kernel: http://people.linaro.org/~neil.williams/opentac/zImage
+        ramdisk: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
+        ramdisk-type: u-boot
+        os: oe
+        dtb: http://people.linaro.org/~neil.williams/opentac/am335x-boneblack.dtb
+        role:
+        - client
+
+    - boot:
+        method: u-boot
+        commands: ramdisk
+        type: bootz
+        prompts: ['linaro-test']
+        parameters:
+          shutdown-message: "reboot: Restarting system"
+        timeout:
+          minutes: 2
+        role:
+        - server
+        - client
+
+    - test:
+        failure_retry: 3
+        role: server
+        name: kvm-basic-multinode
+        definitions:
+            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+              from: git
+              path: lava-test-shell/multi-node/multinode01.yaml
+              name: multinode-basic
+        role:
+        - server
+        - client

@@ -36,7 +36,6 @@ from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.db import models
 from django.db.models import Q
-from django_kvstore import models as kvmodels
 from django.utils import timezone
 
 from django_tables2 import (
@@ -1580,7 +1579,7 @@ def job_complete_log(request, pk):
             'show_cancel': job.can_cancel(request.user),
             'show_resubmit': job.can_resubmit(request.user),
             'show_failure': job.can_annotate(request.user),
-            'job': TestJob.objects.get(pk=pk),
+            'job': job,
             'sections': sections,
             'default_section': default_section,
             'log_data': log_data,
@@ -1716,7 +1715,7 @@ def job_log_file(request, pk):
         {
             'show_cancel': job.can_cancel(request.user),
             'show_resubmit': job.can_resubmit(request.user),
-            'job': TestJob.objects.get(pk=pk),
+            'job': job,
             'job_file_present': bool(log_file),
             'sections': content,
             'size_warning': size_warning,
@@ -2205,6 +2204,10 @@ def device_detail(request, pk):
 
     visible = filter_device_types(request.user)
 
+    overrides = None
+    if device.is_pipeline:
+        overrides = []
+
     return render_to_response(
         "lava_scheduler_app/device.html",
         {
@@ -2236,6 +2239,7 @@ def device_detail(request, pk):
             'context_help': BreadCrumbTrail.show_help(device_detail, pk="help"),
             'next_device': next_device,
             'previous_device': previous_device,
+            'overrides': overrides,
         },
         RequestContext(request))
 
@@ -2542,5 +2546,15 @@ def running(request):
         RequestContext(request))
 
 
-def device_dictionary(request, pk):
-    return "test function"
+def download_device_type_template(request, pk):
+    device_type = DeviceType.objects.filter(name=pk)
+    if not device_type:
+        raise Http404
+    device_type = device_type[0]
+    data = utils.load_devicetype_template(device_type.name)
+    if not data:
+        raise Http404
+    response = HttpResponse(yaml.dump(data), content_type='text/plain; charset=utf-8')
+    response['Content-Transfer-Encoding'] = 'quoted-printable'
+    response['Content-Disposition'] = "attachment; filename=%s_template.yaml" % device_type.name
+    return response

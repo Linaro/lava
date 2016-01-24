@@ -3,6 +3,10 @@
 Packaging lava-server for distributions
 ***************************************
 
+.. warning:: This chapter discusses a model of deployment
+   which is being superceded by the :term:`pipeline` model.
+   See :ref:`setting_up_pipeline_instance`.
+
 Apache distribution support
 ###########################
 

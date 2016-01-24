@@ -1,0 +1,137 @@
+{% extends 'base.jinja2' %}
+{% block body %}
+
+device_type: mustang-uefi
+{% set console_device = console_device | default('ttyS0') -%}
+{% set baud_rate = baud_rate | default(115200) -%}
+{% set tftp_mac = tftp_mac | default('00:01:73:69:5A:EF') -%}
+
+{# declare placeholders for use in the UI #}
+{% set placeholders = [ 'tftp_mac', 'console_device', 'baud_rate'] -%}
+
+{# allow job context override - use a different variable name, undefined if not in job context #}
+{% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) -%}
+{% set base_menu_interrupt_prompt = menu_interrupt_prompt | default(base_menu_interrupt_prompt) -%}
+{% set base_menu_interrupt_string = menu_interrupt_string | default(base_menu_interrupt_string) -%}
+{% set base_item_markup_list = item_markup | default(base_item_markup_list) -%}
+{% set base_item_class = item_class | default(base_item_class) -%}
+{% set base_item_separator = item_separator | default(base_item_separator) -%}
+{% set base_label_class = label_class | default(base_label_class) -%}
+{% set base_menu_bootloader_prompt = bootloader_prompt | default(base_menu_bootloader_prompt) -%}
+{% set base_menu_boot_message = boot_message | default(base_menu_boot_message) -%}
+{% set base_menu_dictionary =  menu_dictionary | default(base_menu_dictionary) -%}
+{% set base_early_printk = menu_early_printk | default('earlyprintk=uart8250-32bit,0x1c020000') -%}
+
+{# Consists of a list of dictionaries to enforce the order #}
+{% set menu_action_list = [
+{'item': 'Boot Manager'},
+{'wait': 'Choice:'},
+{'item': 'Remove Boot Device Entry', 'fallback': 'Return to Main Menu',},
+{'wait': 'Delete entry'},
+{'item': '{TEST_MENU_NAME}'},
+{'wait': 'Choice:'},
+{'item': 'Add Boot Device Entry'},
+{'wait': "Select the Boot Device:"},
+{'item': 'TFTP on MAC Address: ' ~ tftp_mac},
+{'wait': "Get the IP address from DHCP:"},
+{'enter': 'y'},
+{'wait': "Get the TFTP server IP address:"},
+{'enter': '{SERVER_IP}'},
+{'wait': "File path of the EFI Application or the kernel :"},
+{'enter': '{KERNEL}'},
+{'wait': 'Is an EFI Application?'},
+{'enter': 'n'},
+{'wait': "Boot Type:"},
+{'enter': 'f'},
+{'wait': "Add an initrd:"},
+{'enter': n},
+{'wait': "Get the IP address from DHCP:"},
+{'enter': y},
+{'wait': "Get the TFTP server IP address:"},
+{'enter': '{SERVER_IP}'},
+{'wait': "File path of the FDT :"},
+{'enter': '{DTB}'},
+{'wait': 'Arguments to pass to the binary:'},
+{'enter': "console=" ~ console_device ~ "," ~ baud_rate ~ " " ~ base_early_printk ~ " debug root=/dev/nfs rw " ~ base_nfsroot_args ~ " ip=dhcp"},
+{'wait': 'Description for this new Entry:'},
+{'enter': '{TEST_MENU_NAME}'},
+{'wait': "Choice:"},
+{'item': 'Return to main menu'},
+{'wait': "Start:"},
+{'item': 'LAVA NFS Test Image'},
+] -%}
+
+{% set mustang_menu_list = mustang_menu_list | default(menu_action_list) -%}
+
+{% block vland %}
+{% endblock %}
+
+actions:
+  deploy:
+    methods:
+      tftp:
+      ssh:
+        options:
+{{ ssh_options }}
+{% if ssh_host %}
+        host: {{ ssh_host }}
+{% endif %}
+        user: {{ ssh_user|default(root) }}
+        port: {{ ssh_port|default(22) }}
+        identity_file: {{ ssh_identity_file }}
+  boot:
+     connections:
+       serial:
+     methods:
+      ssh:
+      uefi-menu:
+        parameters:
+          interrupt_prompt: {{ base_menu_interrupt_prompt }}
+          interrupt_string: '{{ base_menu_interrupt_string }}'
+          item_markup:
+{{ base_item_markup_list }}
+          item_class: '{{ base_item_class }}'
+          separator: '{{ base_item_separator }}'
+          label_class: '{{ base_label_class }}'
+          bootloader_prompt: '{{ base_menu_bootloader_prompt }}'
+          boot_message: '{{ base_menu_boot_message }}'
+          send_char: True  # redefine to take an integer? or drop and set True if the delay is defined?
+          character_delay: 10
+        nfs:
+{% for test_dict in mustang_menu_list %}
+{% for select, action in test_dict.iteritems() %}
+{% if select == 'item' %}
+        - select:
+            items:
+{# This is ugly but the limitations of the template #}
+{# prevent checking for a single match in a list against another list #}
+{# FIXME: may need a jinja2 extension to make this support generic #}
+{# http://jinja.pocoo.org/docs/dev/extensions/ #}
+{% if 'tftp_mac' in action %}
+             -  '{{ action|replace('tftp_mac', tftp_mac) }}'
+{% elif 'console_device' in action %}
+             -  '{{ action|replace('console_device', console_device) }}'
+{% elif 'baud_rate' in action %}
+             -  '{{ action|replace('baud_rate', baud_rate) }}'
+{% else %}
+             -  '{{ action }}'
+{% endif %}
+{% elif select == 'enter' %}
+        - select:
+{% if 'tftp_mac' in action %}
+            enter: {{ action|replace('tftp_mac', tftp_mac) }}
+{% elif 'console_device' in action %}
+            enter: {{ action|replace('console_device', console_device) }}
+{% elif 'baud_rate' in action %}
+            enter: {{ action|replace('baud_rate', baud_rate) }}
+{% else %}
+            enter: {{ action }}
+{% endif %}
+{% elif select == 'fallback' %}
+            fallback: '{{ action }}'
+{% elif select == 'wait' %}
+            wait: '{{ action }}'
+{% endif %}
+{% endfor %}
+{% endfor %}
+{% endblock %}

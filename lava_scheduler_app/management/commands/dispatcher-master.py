@@ -250,7 +250,7 @@ def select_device(job, dispatchers):
             device_config = device.load_device_configuration(job_ctx)  # raw dict
         except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
             logger.error("[%d] jinja2 error: %s" % (job.id, exc))
-            msg = "Administrative error. Unable to parse '%s'" % exc
+            msg = "Administrative error. Unable to parse device configuration: '%s'" % exc
             fail_job(job, fail_msg=msg)
             return None
         if not device_config or type(device_config) is not dict:

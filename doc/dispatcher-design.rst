@@ -96,8 +96,8 @@ conform to the :ref:`pipeline_schema`.
 Design
 ******
 
-Start with a Job which is broken up into a Deployment, a Boot, a Test
-and a Submit class:
+Start with a Job which is broken up into a Deployment, a Boot and a
+Test class. Results are transmitted live during any part of the job.
 
 +-------------+--------------------+------------------+-------------------+
 |     Job     |                    |                  |                   |
@@ -121,8 +121,6 @@ and a Submit class:
 |             |                    |   BootAction     |                   |
 +-------------+--------------------+------------------+-------------------+
 |             |                    |   TestAction     |                   |
-+-------------+--------------------+------------------+-------------------+
-|             |                    |   SubmitAction   |                   |
 +-------------+--------------------+------------------+-------------------+
 
 The Job manages the Actions using a Pipeline structure. Actions
@@ -721,6 +719,20 @@ The same requirement exists for documenting how to build, modify and
 update all components of the "image" and the set of components need to
 be tested as a whole to represent a test using the standard.
 
+In addition, information about the prompts within the image needs to be
+exposed. LAVA no longer has a list of potential prompts and each job must
+specify a list of prompts to use for the job.
+
+Other information should also be provided, for example, memory requirements or
+CPU core requirements for images to be used with QEMU or dependencies on other
+components (like firmware or kernel support).
+
+Test writers need to have enough information to submit a job without
+needing to resubmit after identifying and providing missing data.
+
+One or more sample test jobs is one way of providing this information but
+it is still recommended to provide the prompts and other information explicitly.
+
 .. _secondary_media:
 
 Secondary media
@@ -1153,6 +1165,20 @@ different user, if the test requires this.
    already. This is a security precaution (so that test images
    can be shared easily without allowing unexpected access). Hacking
    sessions append to this file after the overlay has been unpacked.
+
+Deployment can also include delivering the LAVA overlay files, including
+the LAVA test shell support scripts and the test definitions specified
+by the submitter, to the **host** device to be executed over the
+secondary connection. So for SSH, the secondary connection typically
+has a test action defined and uses :file:`scp` to put the overlay into
+place before connecting using :file:`ssh` and executing the tests. The
+creation of the overlay is part of the deployment, the delivery of the
+overlay is part of the boot process of the secondary connection, i.e.
+deploy is passive, boot is active. To support this, use the Multinode
+protocol on the host to declare the IP address of the host and communicate
+that to the guest as part of the guest deployment. Then the guest
+uses the data to copy the files and make the connection as part of the
+boot action. See :ref:`writing_secondary_connection_jobs`.
 
 .. _host_role:
 
@@ -1733,10 +1759,11 @@ Exporting an existing device dictionary
 ---------------------------------------
 
 If the local instance has a working pipeline device called ``mypanda``,
-the device dictionary can be exported::
+the device dictionary can be exported as a `Jinja2 child template`_
+which *extends* a device type jinja template::
 
  $ sudo lava-server manage device-dictionary --hostname mypanda --export
- {% extends 'panda.yaml' %}
+ {% extends 'panda.jinja2' %}
  {% set power_off_command = '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command off --port 08' %}
  {% set hard_reset_command = '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command reboot --port 08' %}
  {% set connection_command = 'telnet droopy 4001' %}
@@ -1745,6 +1772,8 @@ the device dictionary can be exported::
 This dictionary declares that the device inherits the rest of the device
 configuration from the ``panda`` device type. Settings specific to this
 one device are then specified.
+
+.. _Jinja2 child template: http://jinja.pocoo.org/docs/dev/templates/#child-template
 
 Reviewing an existing device dictionary
 ---------------------------------------

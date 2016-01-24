@@ -21,12 +21,14 @@ recursive-include dashboard_app/static *.png *.js *.css *.gif
 recursive-include dashboard_app/templates *.html
 recursive-include examples *.xml *.json *html *.conf
 recursive-include lava_scheduler_app/templates *.html *.txt
-include lava_scheduler_app/tests/*.yaml
+recursive-include lava_scheduler_app/tests *.yaml
+recursive-include lava_scheduler_app/tests/device-types *.jinja2
 recursive-include lava_scheduler_app/static *.js *.css *.gif *.png
 recursive-include doc/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg
 include entry_points.ini
 include instance.template
 include doc/*
+include doc/deprecated/*
 recursive-include doc/examples *.json * *.py
 include doc/_static/*
 include doc/linaro_dashboard_bundle/*
@@ -43,12 +45,8 @@ include etc/lava-server.wsgi
 include etc/settings.conf
 include etc/uwsgi.ini
 include etc/uwsgi.reload
-include test.sh
-include contrib/install.sh
-include contrib/virtualenv-install.sh
-include assets.src/icons.xcf
 include fake-dispatcher
 include version.py
-recursive-include etc/dispatcher-config README *.sh *.py *.yaml
+recursive-include etc/dispatcher-config README
 include share/*
 include share/zmq/*

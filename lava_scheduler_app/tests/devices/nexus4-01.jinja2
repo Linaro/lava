@@ -1,0 +1,7 @@
+{% extends 'nexus4.jinja2' %}
+{% set adb_serial_number = '04f228d1d9c76f39' %}
+{% set fastboot_serial_number = '04f228d1d9c76f39' %}
+{% set adb_command = 'adb -s 04f228d1d9c76f39' %}
+{% set fastboot_command = 'fastboot -s 04f228d1d9c76f39' %}
+{% set connection_command = 'adb -s 04f228d1d9c76f39 shell' %}
+{% set soft_reboot_command = 'adb -s 04f228d1d9c76f39 reboot bootloader' %}

@@ -23,8 +23,8 @@ General principles
 API
 ---
 
-#. The API here is still in development and subject to change without
-   warning. `Sample jobs are available <https://git.linaro.org/lava-team/refactoring.git>`_
+#. The API here is still in development and changes may still be
+   required. `Sample jobs are available <https://git.linaro.org/lava-team/refactoring.git>`_
    from the LAVA team and are updated regularly.
 #. Only certain deployment types, boot types and device types are currently
    supportable. These guidelines will be enlarged as support grows.

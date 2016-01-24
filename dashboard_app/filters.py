@@ -75,13 +75,13 @@
 #       'fail_count': int,
 # }
 
+import django
 import datetime
 
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
-from django.db.models.sql.aggregates import Aggregate as SQLAggregate
 from django.utils import timezone
 
 from dashboard_app.models import (
@@ -90,6 +90,26 @@ from dashboard_app.models import (
     TestResult,
     TestRun,
 )
+
+# SQL Aggregates can be replaced by either of the following,
+#
+# Conditional Expressions:
+# https://docs.djangoproject.com/en/1.8/ref/models/conditional-expressions/
+#
+# or
+#
+# Query Expressions:
+# https://docs.djangoproject.com/en/1.8/ref/models/expressions/
+#
+# But both the above are available only in django >=1.8, hence there isn't
+# a simple way of replacing SQL Aggregates that will work both in django
+# 1.7 and 1.8, hence this check is available.
+#
+# FIXME: Remove this check when support for django 1.7 ceases.
+if django.VERSION >= (1, 8):
+    from django.db.models.aggregates import Aggregate as SQLAggregate
+else:
+    from django.db.models.sql.aggregates import Aggregate as SQLAggregate
 
 
 class FilterMatch(object):

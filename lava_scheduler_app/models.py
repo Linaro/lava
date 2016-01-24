@@ -10,6 +10,7 @@ import smtplib
 import socket
 import sys
 import yaml
+from django.db.models import Q
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.sites.models import Site
@@ -1059,7 +1060,9 @@ def _check_submit_to_device(device_list, user):
     devices in device_list are available for submission by this user.
     """
     allow = []
-    if type(device_list) != list or len(device_list) == 0:
+    # ensure device_list is or can be converted to a list
+    # DB queries result in a RestrictedResourceQuerySet
+    if not isinstance(list(device_list), list) or len(device_list) == 0:
         # logic error
         return allow
     device_type = None
@@ -1275,10 +1278,9 @@ def _pipeline_protocols(job_data, user, yaml_data=None):
                 role_dictionary[role]['device_type'] = device_type
 
                 allowed_devices = []
-                device_list = Device.objects.filter(device_type=device_type, is_pipeline=True)
-                for device in device_list:
-                    if _check_submit_to_device([device], user):
-                        allowed_devices.append(device)
+                device_list = Device.objects.filter(
+                    Q(device_type=device_type), Q(is_pipeline=True), ~Q(status=Device.RETIRED))
+                allowed_devices.extend(_check_submit_to_device(list(device_list), user))
 
                 if len(allowed_devices) < params['count']:
                     raise DevicesUnavailableException("Not enough devices of type %s are currently "
@@ -1572,9 +1574,6 @@ class TestJob(RestrictedResource):
         blank=True
     )
 
-    log_file = models.FileField(
-        upload_to='lava-logs', default=None, null=True, blank=True)
-
     @property
     def size_limit(self):
         return settings.LOG_SIZE_LIMIT * 1024 * 1024
@@ -1587,14 +1586,6 @@ class TestJob(RestrictedResource):
         output_path = os.path.join(self.output_dir, 'output.txt')
         if os.path.exists(output_path):
             return open(output_path, encoding='utf-8', errors='replace')
-        elif self.log_file:
-            log_file = self.log_file
-            if log_file:
-                try:
-                    open(log_file.name)
-                except IOError:
-                    log_file = None
-            return log_file
         else:
             return None
 
@@ -1723,7 +1714,7 @@ class TestJob(RestrictedResource):
         job_list = _pipeline_protocols(job_data, user, yaml_data)
         if job_list:
             return job_list
-
+        # singlenode only
         device_type = _get_device_type(user, job_data['device_type'])
         allow = _check_submit_to_device(list(Device.objects.filter(
             device_type=device_type, is_pipeline=True)), user)
@@ -2420,6 +2411,81 @@ class TestJob(RestrictedResource):
             return ready_or_running(self) and all(map(ready_or_running, self.sub_jobs_list))
         else:
             return ready(self)
+
+    def get_passfail_results(self):
+        # Get pass fail results per lava_results_app.testsuite.
+        results = {}
+        from lava_results_app.models import TestCase
+        for suite in self.testsuite_set.all():
+            results[suite.name] = {
+                'pass': suite.testcase_set.filter(
+                    result=TestCase.RESULT_MAP['pass']).count(),
+                'fail': suite.testcase_set.filter(
+                    result=TestCase.RESULT_MAP['fail']).count(),
+                'skip': suite.testcase_set.filter(
+                    result=TestCase.RESULT_MAP['skip']).count(),
+                'unknown': suite.testcase_set.filter(
+                    result=TestCase.RESULT_MAP['unknown']).count()
+            }
+        return results
+
+    def get_measurement_results(self):
+        # Get measurement values per lava_results_app.testcase.
+        # TODO: add min, max
+        from lava_results_app.models import TestCase
+
+        results = {}
+        for suite in self.testsuite_set.all():
+            sum = 0
+
+            # TODO: this is not available in 1.7 but is much better solution.
+            # results[suite.name]['measurement'] = suite.testcase_set.all().\
+            #     annotate(measurement_float=Func(F('measurement'),
+            #                                     function='CAST',
+            #              template='%(function)s(%(expressions)s as FLOAT)')).\
+            #     aggregate(models.Avg('measurement_float'))
+
+            for testcase in suite.testcase_set.all():
+                if testcase.name not in results:
+                    results[testcase.name] = {}
+                    results[testcase.name]['measurement'] = 0
+                    results[testcase.name]['count'] = 0
+                    results[testcase.name]['fail'] = False
+
+                results[testcase.name]['measurement'] += float(testcase.measurement)
+                results[testcase.name]['count'] += 1
+                results[testcase.name]['fail'] |= testcase.result != TestCase.RESULT_PASS
+
+            for name in results:
+                try:
+                    results[name]['measurement'] = results[name]['measurement'] / results[name]['count']
+                except ZeroDivisionError:
+                    results[name]['measurement'] = 0
+
+        return results
+
+    def get_attribute_results(self, attributes):
+        # Get attribute values per lava_scheduler_app.testjob.
+        results = {}
+        attributes = [x.strip() for x in attributes.split(',')]
+
+        from lava_results_app.models import TestData
+        testdata = TestData.objects.filter(testjob=self).first()
+        if testdata:
+            for attr in testdata.attributes.all():
+                if attr.name in attributes:
+                    results[attr.name] = {}
+                    results[attr.name]['fail'] = self.status != self.COMPLETE
+                    try:
+                        results[attr.name]['value'] = float(attr.value)
+                    except ValueError:
+                        # Ignore non-float metadata.
+                        del results[attr.name]
+
+        return results
+
+    def get_end_datetime(self):
+        return self.end_time
 
 
 class TestJobUser(models.Model):

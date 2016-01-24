@@ -560,7 +560,7 @@ Starting a new device type template
 
 For example, a new mustang template starts as::
 
- {% extends 'base.yaml' %}
+ {% extends 'base.jinja2' %}
  {% block body %}
 
  device_type: mustang
@@ -626,7 +626,7 @@ Completed mustang template
 
 .. code-block:: yaml
 
- {% extends 'base.yaml' %}
+ {% extends 'base.jinja2' %}
  {% block body %}
 
  device_type: mustang
@@ -675,7 +675,7 @@ provides the device-specific values.
 
 .. code-block:: yaml
 
- {% extends 'mustang.yaml' %}
+ {% extends 'mustang.jinja2' %}
  {% set connection_command = "telnet serial4 7012" %}
  {% set hard_reset_command = "/usr/bin/pduclient --daemon services --hostname pdu15 --command reboot --port 05" %}
  {% set power_off_command = "/usr/bin/pduclient --daemon services --hostname pdu15 --command off --port 05" %}

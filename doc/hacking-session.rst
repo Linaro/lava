@@ -1,11 +1,20 @@
+.. index: hacking session
+
+.. _hacking_session:
+
 LAVA Hacking Sessions
 *********************
-A LAVA hacking session is a lava-test-shell test that provides remote
-ssh access to a LAVA device.
+
+A LAVA hacking session is a lava-test-shell test that provides interactive
+ssh access to a LAVA device inside a defined test environment. This support
+differs from the SSH protocol support in that the job waits for a real
+user to login instead of expecting a dynamic connection to run a test shell.
 
 Assumptions
 ===========
- * The user has TCP/IP access to the device
+
+ * The user has TCP/IP access to the device (this may require a VPN or
+   other access if firewalls exist between the user and the device).
  * The test job deployment raises a usable networking interface.
 
 Parameters
@@ -41,7 +50,7 @@ Options
 
 .. _hacking-session-oe.yaml: https://git.linaro.org/lava-team/hacking-session.git/blob_plain/HEAD:/hacking-session-oe.yaml
 
-.. _example: https://staging.validation.linaro.org/scheduler/job/125107/definition
+.. _example: https://staging.validation.linaro.org/scheduler/job/138105/definition
 
 Starting a Hacking Session
 ==========================
@@ -49,24 +58,21 @@ Starting a Hacking Session
 * Create a LAVA job file with your desired target and image
 * Add a lava-test-shell action to your LAVA json job file where you want hacking access
 
-::
+.. code-block:: yaml
 
-    {
-        "command": "lava_test_shell",
-        "parameters": {
-            "testdef_repos": [
-                {
-                    "git-repo": "http://git.linaro.org/lava-team/hacking-session.git",
-                    "testdef": "hacking-session-debian.yaml",
-                    "parameters": {
-                        "IRC_USER": "TYPE YOUR IRC NICK HERE",
-                        "PUB_KEY": "PASTE_PUBKEY(S) HERE"
-                    }
-                }
-            ],
-            "timeout": 3600
-        }
-    }
+  - test:
+        failure_retry: 3
+        name: kvm-basic-hacking-session
+        timeout:
+          minutes: 5
+        definitions:
+         - repository: http://git.linaro.org/lava-team/hacking-session.git
+           from: git
+           path: hacking-session-debian.yaml
+           name: hacking
+           parameters:
+              "IRC_USER": "TYPE YOUR IRC NICK HERE",
+              "PUB_KEY": "PASTE_PUBKEY(S) HERE"
 
 See :ref:`inactivity_termination` for clarification of the timeout
 support.

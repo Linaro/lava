@@ -20,13 +20,6 @@ protocols:
         tags:
         - usb-flash
         - usb-eth
-        interfaces:
-        - vlan: name_two
-          tags:
-          - 10G
-        - vlan: name_two
-          tags:
-          - 1G
       server:
         device_type: qemu
         count: 1

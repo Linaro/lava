@@ -27,6 +27,8 @@ from django_testscenarios.ubertest import TestCaseWithScenarios
 from dashboard_app.tests import fixtures
 from dashboard_app.tests.utils import TestClient
 
+# pylint: disable=too-many-ancestors,no-member
+
 
 class TestRunListViewAnonymousTest(TestCaseWithScenarios):
 
@@ -67,7 +69,7 @@ class TestRunListViewAnonymousTest(TestCaseWithScenarios):
         super(TestRunListViewAnonymousTest, self).setUp()
         self.bundle_stream = fixtures.create_bundle_stream(self.pathname)
         self.user = None
-        self.url = reverse("dashboard_app.views.test_run_list", args=[self.bundle_stream.pathname])
+        self.url = reverse("lava_dashboard_test_run_list", args=[self.bundle_stream.pathname])
 
     def test_status_code(self):
         response = self.client.get(self.url)

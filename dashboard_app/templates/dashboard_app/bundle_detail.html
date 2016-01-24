@@ -67,7 +67,7 @@
   <div class="col-md-6">
     <h4 class="modal-header">Bundle information</h4>
     <p>You can navigate to this bundle, regardless of the bundle stream it is located in, by using this <a href="{{bundle.get_permalink}}">permalink</a></p>
-    <p><b>Export test run data</b> <a href="{% url 'dashboard_app.views.bundle_export' bundle_stream.pathname bundle.content_sha1 %}">as CSV</a></p>
+    <p><b>Export test run data</b> <a href="{% url 'lava_dashboard_bundle_export' bundle_stream.pathname bundle.content_sha1 %}">as CSV</a></p>
   {% if bundle.uploaded_by %}
     <p>This bundle was uploaded by <strong>{{bundle.uploaded_by}}</strong> on {{bundle.uploaded_on}} ({{bundle.uploaded_on|timesince}} ago)</p>
   {% else %}
@@ -140,7 +140,7 @@
 </div>
 
 <form method="POST"
-      action="{% url 'dashboard_app.views.link_bug_to_testrun' %}"
+      action="{% url 'lava_dashboard_link_bug_to_testrun' %}"
       id="add-bug-dialog" style="display: none">
   {% csrf_token %}
   <input type="hidden" name="back" value="{{ request.path }}"/>
@@ -156,8 +156,8 @@
 <script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/bug-links.min.js"></script>
 <script>
   image_url = '{{ STATIC_URL }}dashboard_app/images/';
-  unlink_bug_url = '{% url 'dashboard_app.views.unlink_bug_and_testrun' %}';
-  link_bug_url = '{% url 'dashboard_app.views.link_bug_to_testrun' %}';
+  unlink_bug_url = '{% url 'lava_dashboard_unlink_bug_and_testrun' %}';
+  link_bug_url = '{% url 'lava_dashboard_link_bug_to_testrun' %}';
   csrf_token = '{{csrf_token}}';
 
 $(document).ready(function() {

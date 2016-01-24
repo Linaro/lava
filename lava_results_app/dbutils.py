@@ -140,6 +140,9 @@ def map_scanned_results(scanned_dict, job):
         logger.debug("missing results in %s", scanned_dict.keys())
         return False
     results = scanned_dict['results']
+    if isinstance(results, str):
+        logger.warning("Invalid results string: %s", results)
+        return False
     if 'test_definition' in results and 'test_set' in results:
         suite, created = TestSuite.objects.get_or_create(name=results['test_definition'], job=job)
         if created:

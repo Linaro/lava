@@ -1,3 +1,4 @@
+import django
 from django import template
 from django.db.models import fields
 from django.utils.html import escape
@@ -63,3 +64,10 @@ def get_length_select(table, string):
     for option in val:
         select += "<option selected>%d</option>" % option if option == num else "<option>%d</option>" % option
     return mark_safe(select)
+
+
+@register.assignment_tag()
+def django_version_1_7():
+    if django.VERSION > (1, 7):
+        return False
+    return True

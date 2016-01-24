@@ -3,177 +3,27 @@
 Writing a LAVA test definition
 ##############################
 
-A LAVA Test Definition comprises of two parts:
+A LAVA Test Job comprises of
 
-#. the data to setup the test, expressed as a JSON file.
-#. the instructions to run inside the test, expressed as a YAML file.
+#. the actions and parameters to setup the test(s)
+#. the instructions to run as part of the test(s)
 
-This allows the same tests to be easily migrated to a range of different
-devices, environments and purposes by using the same YAML files in
-multiple JSON files. It also allows tests to be built from a range of
-components by aggregating YAML files inside a single JSON file.
+For certain tests, the instructions can be included inline with the
+actions. For more complex tests or to share test definitions across
+multiple devices, environments and purposes, the test can use a
+repository of YAML files.
 
-.. _json_contents:
+.. _test_definition_yaml:
 
-Contents of the JSON file
-*************************
+Writing a test definition YAML file
+***********************************
 
-The JSON file is submitted to the LAVA server and contains:
-
-#. Demarcation as a :term:`health check` or a user test.
-#. The default timeout of each action within the test.
-#. The :term:`logging level` for the test, DEBUG or INFO.
-#. The name of the test, shown in the list of jobs.
-#. The location of all support files.
-#. All parameters necessary to use the support files.
-#. The declaration of which device(s) to use for the test.
-#. The location to which the results should be uploaded.
-
-The JSON determines how the test is deployed onto the device and
-where to find the tests to be run.
-
-All user tests should use::
-
-    "health_check": false,
-
-See :ref:`health_checks`.
-
-Multiple tests can be defined in a single JSON file by listing multiple
-locations of YAML files. Each set of instructions in the YAML files can
-be run with or without a reboot between each set.
-
-If a test needs to use more than one device, it is the JSON file which
-determines which other devices are available within the test and how
-the test(s) are deployed to the devices in the group.
-
-Support files
-=============
-
-These include:
-
-#. Files to boot the device: Root filesystem images, kernel images,
-   device tree blobs, bootloader parameters
-#. Files containing the tests: The YAML files, either alone or as part
-   of a repository, are added to the test by LAVA.
-
-.. expand this section to go through each way of specifying support
-   files by summaries with links to full sections.
-
-Using local files
-------------------
-
-Support files do not need to be at remote locations, all files specified
-in the JSON can be local to the :term:`dispatcher` executing the test. This
-is useful for local tests on your own LAVA instance, simply ensure that
-you use the ``file://`` protocol for support files. Note that a local
-YAML file will still need to download any custom scripts and required
-packages from a remote location.
-
-.. _initial_json_actions:
-
-Initial actions in the JSON
-===========================
-
-The simplest tests involve using a pre-built image, a test definition
-and submission of the results to the server.
-
-Actions defined in the JSON will be executed in the order specified
-in the JSON file, so a deployment is typically followed by a
-test shell and then submission of results.
-
-#. **deploy_linaro_image** : Download a complete image (usually but not
-   necessarily compressed) containing the kernel, kernel modules and
-   root filesystem. The LAVA overlay will be applied on top before the
-   image boots, to provide access to the LAVA test tools and the test
-   definitions defined in the subsequent ``actions``.
-#. **lava_test_shell** : Boots the deployed image and starts the
-   ``lava_test_runner`` which starts the execution of the commands
-   defined in the YAML.
-#. **submit_results_on_host** : (Equivalent to **submit_results**)
-   Collects the result data from the image after the completion of
-   all the commands in the YAML and submits a bundle containing the
-   results and metadata about the job to the server, to be added to
-   the :term:`bundle stream` listed in the submission. These result bundles can then
-   be viewed, downloaded and used in filters and reports.
-
-See :ref:`available_actions`
-
-.. _basic_json:
-
-Basic JSON file
-===============
-
-Your first LAVA test should use DEBUG logging so that it is easier
-to see what is happening.
-
-See :ref:`timeouts` for detailed information on how LAVA handles the
-timeouts. A suitable example for your first tests is 900 seconds.
-
-Make the ``job_name`` descriptive and explanatory, you will want to be
-able to tell which job is which when reviewing the results.
-
-Make sure the :term:`device type` matches exactly with one of the suitable
-device types listed on the server to which you want to submit this job.
-
-Change the :term:`stream` to one to which you are allowed to upload results,
-on your chosen server. If you use ``localhost``, note that this will
-be replaced by the fully qualified domain name of the server to which
-the job is submitted.
-
-::
-
- {
-    "health_check": false,
-    "logging_level": "DEBUG",
-    "timeout": 900,
-    "job_name": "kvm-basic-test",
-    "device_type": "kvm",
-    "actions": [
-        {
-            "command": "deploy_linaro_image",
-            "parameters": {
-                "image": "http://images.validation.linaro.org/kvm-debian-wheezy.img.gz"
-            }
-        },
-        {
-            "command": "lava_test_shell",
-            "parameters": {
-                "testdef_repos": [
-                    {
-                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
-                        "testdef": "ubuntu/smoke-tests-basic.yaml"
-                    }
-                ],
-                "timeout": 900
-            }
-        },
-        {
-            "command": "submit_results_on_host",
-            "parameters": {
-                "stream": "/anonymous/example/",
-                "server": "http://localhost/RPC2/"
-            }
-        }
-    ]
- }
-
-.. note:: Always check your JSON syntax. A useful site for this is
-          http://jsonlint.com.
-
-For more on the contents of the JSON file and how to construct JSON
-for devices known to LAVA or devices new to LAVA, see the
-:ref:`test_developer`.
-
-.. _yaml_contents:
-
-Contents of the YAML file
-*************************
-
-The YAML is downloaded from the location specified in the JSON and
+The YAML is downloaded from the repository (or handled as an inline) and
 installed into the test image, either as a single file or as part of
 a git or bzr repository. (See :ref:`test_repos`)
 
-Each YAML file contains metadata and instructions. Metadata includes:
+Each test definition YAML file contains metadata and instructions.
+Metadata includes:
 
 #. A format string recognised by LAVA
 #. A short name of the purpose of the file
@@ -525,7 +375,6 @@ you can set the units manually on the test result details page. Setting this
 unit manually will raise a warning, since this affects all the other test
 results in the system.
 
-
 .. _best_practices:
 
 Best practices for writing a LAVA job
@@ -558,71 +407,8 @@ one test will fail in a way that prevents the results from all tests
 being collected.
 
 Overly long sets of test definitions also increase the complexity of
-the log files and the result bundles, making it hard to identify why
-a particular job failed.
-
-LAVA supports filters and image reports to combine result bundles into
-a single analysis.
-
-LAVA also support retrieving individual result bundles using ``lava-tool``
-so that the bundles can be aggregated outside LAVA for whatever tests
-and export the script writer chooses to use.
+the log files which can make it hard to identify why a particular job
+failed.
 
 Splitting a large job into smaller chunks also means that the device can
 run other jobs for other users in between the smaller jobs.
-
-.. _tests_and_reboots:
-
-Minimise the number of reboots within a single test
-***************************************************
-
-In many cases, if a test definition needs to be isolated from another
-test case by a reboot (to prevent data pollution etc.) it is likely that
-the tests can be split into different LAVA jobs.
-
-To run two test definitions without a reboot, simply combine the JSON
-to not use two ``lava_test_shell`` commands::
-
-        {
-            "command": "lava_test_shell",
-            "parameters": {
-                "testdef_repos": [
-                    {
-                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
-                        "testdef": "ubuntu/smoke-tests-basic.yaml"
-                    }
-                ],
-                "timeout": 900
-            }
-        },
-        {
-            "command": "lava_test_shell",
-            "parameters": {
-                "testdef_repos": [
-                    {
-                        "git-repo": "https://git.linaro.org/people/neil.williams/temp-functional-tests.git",
-                        "testdef": "singlenode/singlenode01.yaml"
-                    }
-                ],
-                "timeout": 900
-            }
-        }
-
-Becomes::
-
-        {
-            "command": "lava_test_shell",
-            "parameters": {
-                "testdef_repos": [
-                    {
-                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
-                        "testdef": "ubuntu/smoke-tests-basic.yaml"
-                    },
-                    {
-                        "git-repo": "https://git.linaro.org/people/neil.williams/temp-functional-tests.git",
-                        "testdef": "singlenode/singlenode01.yaml"
-                    }
-                ],
-                "timeout": 900
-            }
-        },

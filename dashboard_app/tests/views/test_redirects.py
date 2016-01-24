@@ -21,6 +21,8 @@ from django_testscenarios.ubertest import TestCase
 
 from dashboard_app.tests import fixtures
 
+# pylint: disable=too-many-ancestors,invalid-name
+
 
 class RedirectTests(TestCase):
 
@@ -56,14 +58,14 @@ class RedirectTests(TestCase):
 
     def test_bundle_permalink(self):
         response = self.client.get(
-            reverse("dashboard_app.views.redirect_to_bundle",
+            reverse("lava_dashboard_redirect_to_bundle",
                     args=(self.bundle.content_sha1, )))
         self.assertRedirects(response, self.bundle.get_absolute_url())
         self.bundle.delete()
 
     def test_bundle_permalink_trailing(self):
         response = self.client.get(
-            reverse("dashboard_app.views.redirect_to_bundle",
+            reverse("lava_dashboard_redirect_to_bundle_trailing",
                     args=(self.bundle.content_sha1, 'trailing/')))
         self.assertRedirects(
             response, self.bundle.get_absolute_url() + 'trailing/',
@@ -72,7 +74,7 @@ class RedirectTests(TestCase):
 
     def test_bundle_permalink_query_string(self):
         response = self.client.get(
-            reverse("dashboard_app.views.redirect_to_bundle",
+            reverse("lava_dashboard_redirect_to_bundle",
                     args=(self.bundle.content_sha1, )), data={'foo': 'bar'})
         self.assertRedirects(
             response, self.bundle.get_absolute_url() + '?foo=bar')
@@ -81,7 +83,7 @@ class RedirectTests(TestCase):
     def test_test_run_permalink(self):
         test_run = self.bundle.test_runs.all()[0]
         response = self.client.get(
-            reverse("dashboard_app.views.redirect_to_test_run",
+            reverse("lava_dashboard_redirect_to_test_run",
                     args=(test_run.analyzer_assigned_uuid, )))
         self.assertRedirects(response, test_run.get_absolute_url())
         self.bundle.delete()
@@ -89,7 +91,7 @@ class RedirectTests(TestCase):
     def test_test_run_permalink_trailing(self):
         test_run = self.bundle.test_runs.all()[0]
         response = self.client.get(
-            reverse("dashboard_app.views.redirect_to_test_run",
+            reverse("lava_dashboard_redirect_to_test_run_trailing",
                     args=(test_run.analyzer_assigned_uuid, 'trailing/')))
         self.assertRedirects(
             response, test_run.get_absolute_url() + 'trailing/',
@@ -99,7 +101,7 @@ class RedirectTests(TestCase):
     def test_test_run_permalink_query_string(self):
         test_run = self.bundle.test_runs.all()[0]
         response = self.client.get(
-            reverse("dashboard_app.views.redirect_to_test_run",
+            reverse("lava_dashboard_redirect_to_test_run",
                     args=(test_run.analyzer_assigned_uuid, )),
             data={'foo': 'bar'})
         self.assertRedirects(
@@ -110,7 +112,7 @@ class RedirectTests(TestCase):
         test_run = self.bundle.test_runs.all()[0]
         test_result = test_run.test_results.all()[0]
         response = self.client.get(
-            reverse("dashboard_app.views.redirect_to_test_result",
+            reverse("lava_dashboard_redirect_to_test_result",
                     args=(test_run.analyzer_assigned_uuid,
                           test_result.relative_index)))
         self.assertRedirects(response, test_result.get_absolute_url())
@@ -120,7 +122,7 @@ class RedirectTests(TestCase):
         test_run = self.bundle.test_runs.all()[0]
         test_result = test_run.test_results.all()[0]
         response = self.client.get(
-            reverse("dashboard_app.views.redirect_to_test_result",
+            reverse("lava_dashboard_redirect_to_test_result_trailing",
                     args=(test_run.analyzer_assigned_uuid,
                           test_result.relative_index, 'trailing/')))
         self.assertRedirects(
@@ -132,7 +134,7 @@ class RedirectTests(TestCase):
         test_run = self.bundle.test_runs.all()[0]
         test_result = test_run.test_results.all()[0]
         response = self.client.get(
-            reverse("dashboard_app.views.redirect_to_test_result",
+            reverse("lava_dashboard_redirect_to_test_result",
                     args=(test_run.analyzer_assigned_uuid,
                           test_result.relative_index)),
             data={'foo': 'bar'})

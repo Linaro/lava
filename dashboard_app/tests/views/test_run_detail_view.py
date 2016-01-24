@@ -23,6 +23,8 @@ from django.contrib.auth.models import (User, Group)
 
 from dashboard_app.tests.utils import TestClient
 
+# pylint: disable=too-many-ancestors,no-member
+
 
 class TestRunDetailView(TestCase):
 
@@ -45,7 +47,7 @@ class TestRunDetailView(TestCase):
 
     # def testrun_invalid_page_view(self):
     #    invalid_uuid = "0000000-0000-0000-0000-000000000000"
-    #    invalid_test_run_url = reverse("dashboard_app.views.test_run_detail",
+    #    invalid_test_run_url = reverse("lava_dashboard_test_run_detail",
     #                                   args=[invalid_uuid])
     #    response = self.client.get(invalid_test_run_url)
     #    self.assertEqual(response.status_code, 404)
@@ -57,6 +59,7 @@ class TestRunViewAuth(TestCaseWithScenarios):
     _GROUP = "private_group"
     _UNRELATED_USER = "unrelated-user"
     fixtures = ["test_run_detail.json"]
+    accessing_user = None
 
     scenarios = [
         ("anonymous_accessing_private", {

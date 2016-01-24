@@ -15,3 +15,5 @@ evolve and feed into this section over time.
    pipeline-admin-example.rst
    pipeline-server.rst
    pipeline-writer.rst
+   pipeline-writer-secondary.rst
+   pipeline-writer-vmgroups.rst

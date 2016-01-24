@@ -1,0 +1,97 @@
+{% extends "layouts/content-bootstrap.html" %}
+
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_results_app/css/chart.css"/>
+{% endblock %}
+
+{% block content %}
+<h1>Add new query to chart {{form.chart.name}}…</h1>
+
+{% block content_form %}
+<form action="" method="post">{% csrf_token %}
+
+  {% if form.errors %}
+  <div class="errors">
+    <div>
+      {{ form.non_field_errors }}
+      <ul>
+	{% for field in form %}
+	{% if field.errors %}
+        <li>{{ field.label }}: {{ field.errors|striptags }}</li>
+        {% endif %}
+	{% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+
+<div id="add_filter_link" class="form-field">
+
+  {{ form.query.label_tag }}
+  <input id="query" value="{{ instance.query.owner_name }}" />
+  {{ form.query }}
+  {{ form.chart }}
+  {{ form.relative_index }}
+</div>
+
+<div class="form-field">
+  {{ form.chart_type.label_tag }}
+  {{ form.chart_type }}
+</div>
+<div class="form-field" id="attributes_container">
+  {{ form.attributes.label_tag }}
+  {{ form.attributes }}
+  &nbsp;&nbsp;
+  <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="Add list of custom attributes separated by comma(','). Attributes used will be from the related query content type objects.">?</button>
+
+</div>
+<div class="form-field">
+  {{ form.chart_height.label_tag }}
+  {{ form.chart_height }}
+</div>
+<div class="form-field">
+  {{ form.chart_visibility.label_tag }}
+  {{ form.chart_visibility }}
+</div>
+<div class="form-field">
+  {{ form.representation.label_tag }}
+  {{ form.representation }}
+</div>
+
+
+<div class="submit-button">
+  <input type="submit" value="Save" />
+</div>
+</form>
+
+{% endblock content_form %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+
+$(document).ready(function () {
+
+  $("#query").autocomplete({
+    source: '{% url 'lava_results_app.views.query.views.get_query_names' %}',
+    minLength: 1,
+    select: function(event, ui) {
+      $("#id_query").val(ui.item.id);
+    }
+  });
+
+  $("#id_chart_type").change(function() {
+    if ($(this).val() == "attributes") {
+      $("#attributes_container").show();
+    } else {
+      $("#attributes_container").hide();
+    }
+  });
+
+  $("#id_chart_type").change();
+});
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,198 @@
+{% extends "layouts/content-bootstrap.html" %}
+{% load i18n %}
+{% load keep_spacing %}
+{% load django_tables2 %}
+
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_results_app/css/chart.css"/>
+{% endblock %}
+
+{% block content %}
+
+<h1>Chart {{ chart.name }} <small><a href="{% url 'lava_results_app.views.chart.views.chart_display' chart.name %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-th-list"></span> Display</a></small></h1>
+
+<div class="row">
+  <div class="col-md-6">
+    <h4 class="modal-header">Summary</h4>
+
+    <dl class="dl-horizontal">
+
+    <dt>Status</dt>
+    <dd>
+      {% if chart.is_published %}
+      Published
+      {% else %}
+      Unpublished
+      {% endif %}
+    </dd>
+
+    {% if chart.is_published %}
+    <dt>Chart Group label</dt>
+    <dd>
+      <a href="#">
+	<div id="chart_group" style="float: left;">{{ chart.chart_group|default:"Click here to select"}}</div>
+      </a>
+
+      {% if chart.chart_group %}
+      <div id="group_link" class="group-link">
+	<a href="{% url 'lava_results_app.views.chart.views.chart_list' %}#{{ chart.chart_group|iriencode }}">Group link</a>
+      </div>
+      {% else %}
+      <div id="group_link" class="group-link" style="display: none;">
+	<a href="{% url 'lava_results_app.views.chart.views.chart_list' %}#">Group link</a>
+      </div>
+      {% endif %}
+      &nbsp;&nbsp;
+      <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="Collect similar reports into a single table on the image reports list.">?</button>
+
+    </dd>
+    <dt>Maintainer</dt>
+    <dd>
+      {{ chart.owner }}&nbsp;&nbsp;
+      <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="User who created the chart.">?</button>
+    </dd>
+
+    <dt>Group edit permission</dt>
+    <dd>
+      <a href="#">
+	<div id="group" style="float: left;">{{ chart.group|default:"Click here to select"}}</div>
+      </a>
+      &nbsp;&nbsp;
+      <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="A group of users already listed on the Profile page.">?</button>
+      <div style="clear: both;"></div>
+    </dd>
+    {% endif %}
+    <dt>Description</dt>
+    <dd>
+    {{ chart.description|keep_spacing|linebreaks }}
+    </dd>
+    </dl>
+  </div>
+
+  <div class="col-md-6">
+    <h4 class="modal-header">Actions</h4>
+    <div class="btn-group btn-group-justified">
+      {% if chart.owner == request.user or request.user.is_superuser or chart.group in request.user.groups.all %}
+      <div class="btn-group">
+        <a href="{{ chart.get_absolute_url }}/+edit" class="btn btn-info"><span class="glyphicon glyphicon-pencil"></span> Edit</a>
+      </div>
+      <div class="btn-group">
+        <a href="{{ chart.get_absolute_url }}/+delete" class="btn btn-danger"><span class="glyphicon glyphicon-trash"></span> Delete</a>
+      </div>
+      {% endif %}
+      {% if chart.owner == request.user or request.user.is_superuser or chart.group in request.user.groups.all %}
+      <div class="btn-group">
+        <a href="{{ chart.get_absolute_url }}/+toggle-published" class="btn btn-default"><span class="glyphicon glyphicon-share"></span>
+	  {% if chart.is_published %}
+	  Unpublish
+	  {% else %}
+	  Publish
+	  {% endif %}
+	</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<h3>Queries</h3>
+
+<div class="fields-container">
+  <a href="{% url 'lava_results_app.views.chart.views.chart_query_add' chart.name %}">
+    Add query
+  </a>
+</div>
+
+<div class="list-container" id="charts">
+  {% for chart_query in chart.chartquery_set.all %}
+  <div id="{{ chart_query.id }}" class="sortable-placeholder">
+    <div class="chart-title">
+      {{ chart_query.query.name }}
+      <a style="font-size: 13px;" href="{% url 'lava_results_app.views.chart.views.chart_query_remove' chart.name chart_query.id %}" onclick="return confirm('Are you sure you want to remove query from this chart?');">
+        remove
+      </a>
+      <a style="font-size: 13px;" href="{{ chart_query.get_absolute_url }}">
+        edit
+      </a>
+    </div>
+    <div>
+      Type: {{ chart_query.chart_type }}
+    </div>
+    <div>
+      Height: {{ chart_query.chart_height }}
+    </div>
+    <div>
+      Visibility: {{ chart_query.chart_visibility }}
+    </div>
+    <div>
+      Representation: {{ chart_query.representation }}
+    </div>
+  </div>
+
+  {% empty %}
+  <div>
+    <li>No queries added yet.</li>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.min.js"></script>
+{% if chart.is_published %}
+<script>
+  $("#chart_group").editable(
+  "{% url 'lava_results_app.views.chart.views.chart_add_group' name=chart.name %}",
+  {
+    onblur: "submit",
+    width: 200,
+    submitdata : {"csrfmiddlewaretoken": '{{csrf_token}}'},
+    callback: function(data) {
+      if(data != "") {
+        $("#group_link").show();
+        href = $("#group_link a:first-child").attr("href").split("#")[0] + "#";
+        $("#group_link a:first-child").attr("href", href + data);
+      } else {
+        $("#group_link").hide();
+      }
+    }
+  });
+
+  $("#chart_group").on("click", function(event) {
+      var field = $(this).find("input");
+      {% if chart.chart_group == None %}
+        field.val("");
+      {% endif %}
+      field.select();
+      field.autocomplete({
+        source: '{% url 'lava_results_app.views.chart.views.chart_group_list' %}',
+        minLength: 2,
+      });
+  });
+
+
+  $("#group").editable(
+  "{% url 'lava_results_app.views.chart.views.chart_select_group' name=chart.name %}",
+  {
+    onblur: "submit",
+    width: 200,
+    submitdata : {"csrfmiddlewaretoken": '{{csrf_token}}'},
+  });
+
+  $("#group").on("click", function(event) {
+      var field = $(this).find("input");
+      {% if chart.group == None %}
+        field.val("");
+      {% endif %}
+      field.select();
+      field.autocomplete({
+        source: '{% url 'lava_results_app.views.chart.views.get_group_names' %}',
+        minLength: 1,
+      });
+  });
+
+</script>
+{% endif %}
+
+{% endblock %}

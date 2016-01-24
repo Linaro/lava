@@ -15,8 +15,8 @@ lava-server manage subcommand [options] [args]
 Common Options
 ##############
 
-Most of these options are imported from ``django`` or ``south`` and more
-information can be found in the documentation of those projects.
+Most of these options are imported from ``django`` and more
+information can be found in the django documentation.
 
 These options are supported for all subcommands.
 
@@ -389,21 +389,6 @@ lava_scheduler_app
 
       Usage:
         lava-server manage testjobmigrate [options]
-
-south
-    convert_to_south
-      Quickly converts the named application to use South if it is currently using syncdb.
-
-      Usage:
-        lava-server manage convert_to_south [options]
-      Options:
-        --delete-ghost-migrations
-                        Tells South to delete any 'ghost' migrations (ones in
-                        the database but not on disk).
-        --ignore-ghost-migrations
-                        Tells South to ignore any 'ghost' migrations (ones in
-                        the database but not on disk) and continue to apply
-                        new migrations.
 
     datamigration
       Creates a new template data migration for the given app
