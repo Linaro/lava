@@ -125,7 +125,7 @@ If you are considering large changes, it is best to register and also
 to subscribe to the :ref:`lava_devel` mailing list and talk
 to us on IRC::
 
- irc.oftc.net
+ irc.freenode.net
  #linaro-lava
 
 Contributing via GitHub
