@@ -53,8 +53,9 @@ actions:
 {{ base_uboot_addr_commands }}
 {{ base_tftp_commands }}
           # Always quote the entire string if the command includes a colon to support correct YAML.
-          - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw {{ base_nfsroot_args }} earlyprintk ip=dhcp'"
-{{ base_nfs_uboot_bootcmd }}
+          - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 drm_kms_helper.edid_firmware=edid-1920x1080.fw root=/dev/nfs rw {{ base_nfsroot_args }} earlyprintk ip=:::::eth0:dhcp'"
+          - setenv bootcmd 'usb start; dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
+          - boot
         ramdisk:
           commands:
 {{ base_uboot_commands }}
