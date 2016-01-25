@@ -104,6 +104,14 @@ The :file:`services-trace.txt` file in the repository shows the latest
 update timestamp and is accompanied by a GnuPG signature of the trace
 file, signed using the :ref:`lava_archive_signing_key`.
 
+Interim builds (including release candidates) are available in the
+staging repository::
+
+ deb http:://images.validation.linaro.org/staging-repo sid main
+
+This repository uses the same key as the production repository and
+uses ``sid`` in the same way.
+
 .. _production_releases:
 
 Production releases

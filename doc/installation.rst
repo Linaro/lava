@@ -118,8 +118,8 @@ Ubuntu Utopic Unicorn, scheduled for release as 14.10. ``production``
 releases are tracked in the ``release`` branch of the upstream git
 repositories.
 
-Interim releases remain available from ``people.linaro.org`` which also
-includes builds for Ubuntu Trusty Tahr 14.04LTS.
+Interim releases are made available from the the
+:ref:`staging-repo <lava_repositories>`.
 
 During periods when the internal transitions within Debian require that
 ``lava-server`` is unable to migrate into the testing suite, users
