@@ -37,10 +37,11 @@ actions:
           boot_message: {{ boot_message|default('Linux version') }}
           send_char: True
           use_bootscript: {{ use_bootscript|default(False)}}
+          lava_mac: {{ lava_mac_address|default('00:90:05:af:00:7d') }}
         nfs:
           commands:
           - dhcp net0,
-          - set console console={{ console_device }},{{ baud_rate }}n8
+          - set console console={{ console_device }},{{ baud_rate }}n8 lava_mac={LAVA_MAC}
           - "set extraargs root=/dev/nfs rw {{ base_nfsroot_args }} ip=eth0:dhcp"
           - kernel tftp://{SERVER_IP}/{KERNEL} ${extraargs} ${console}
           - initrd tftp://{SERVER_IP}/{RAMDISK}
@@ -48,7 +49,7 @@ actions:
         ramdisk:
           commands:
           - dhcp net0
-          - set console console={{ console_device }},{{ baud_rate }}n8
+          - set console console={{ console_device }},{{ baud_rate }}n8 lava_mac={LAVA_MAC}
           - set extraargs init=/sbin/init ip=dhcp
           - kernel tftp://{SERVER_IP}/{KERNEL} ${extraargs} ${console}
           - initrd tftp://{SERVER_IP}/{RAMDISK}
