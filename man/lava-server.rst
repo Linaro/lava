@@ -593,5 +593,5 @@ http://lists.linaro.org/mailman/listinfo/linaro-validation
 
 Also talk to us on IRC::
 
- irc.oftc.net
+ irc.freenode.net
  #linaro-lava
