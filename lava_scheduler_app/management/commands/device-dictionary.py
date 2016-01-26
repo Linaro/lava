@@ -53,22 +53,22 @@ class Command(BaseCommand):
     # FIXME: migrate BaseCommand to argparse as optparse is deprecated
     # noinspection PyShadowingBuiltins
     help = "LAVA Device Dictionary I/O tool"
-    option_list = BaseCommand.option_list + (
-        make_option('--hostname', help="Hostname of the device to use"),
-        make_option('--import', help="create new or update existing entry"),
-        make_option(
+
+    def add_arguments(self, parser):
+        parser.add_argument('--hostname', help="Hostname of the device to use")
+        parser.add_argument('--import', help="create new or update existing entry")
+        parser.add_argument(
             '--path',
             default='/etc/lava-server/dispatcher-config/',
             help='path to the lava-server jinja2 device type templates'),
-        make_option(
+        parser.add_argument(
             '--export',
             action="store_true",
             help="export existing entry"),
-        make_option(
+        parser.add_argument(
             '--review',
             action="store_true",
             help="review the generated device configuration")
-    )
 
     def handle(self, *args, **options):
         """
@@ -79,7 +79,7 @@ class Command(BaseCommand):
         if hostname is None:
             self.stderr.write("Please specify a hostname")
             sys.exit(2)
-        if options['import'] is not None:
+        if options['import']:
             data = parse_template(options['import'])
             element = DeviceDictionary.get(hostname)
             if element is None:
@@ -90,9 +90,8 @@ class Command(BaseCommand):
             element.parameters = data
             element.save()
             self.stdout.write("Device dictionary updated for %s" % hostname)
-        elif options['export'] is not None or options['review'] is not None:
+        elif options['export'] or options['review']:
             element = DeviceDictionary.get(hostname)
-            data = None
             if element is None:
                 self.stderr.write("Unable to export - no dictionary found for '%s'" %
                                   hostname)
@@ -102,7 +101,7 @@ class Command(BaseCommand):
                     element.parameters,
                     element.parameters['extends']
                 )
-            if options['review'] is None:
+            if not options['review']:
                 self.stdout.write(data)
             else:
                 template = prepare_jinja_template(hostname, data, system_path=False, path=options['path'])
