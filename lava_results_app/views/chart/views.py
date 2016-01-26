@@ -97,13 +97,13 @@ class TestCasePassFailChartError(Exception):
 
 class UserChartView(LavaView):
 
-    def get_chartset(self):
+    def get_queryset(self):
         return Chart.objects.filter(owner=self.request.user).order_by('name')
 
 
 class OtherChartView(LavaView):
 
-    def get_chartset(self):
+    def get_queryset(self):
         # All published charts which are not part
         # of any group.
         other_charts = Chart.objects.filter(is_published=True,
@@ -118,7 +118,7 @@ class GroupChartView(LavaView):
         super(GroupChartView, self).__init__(request, **kwargs)
         self.chart_group = group
 
-    def get_chartset(self):
+    def get_queryset(self):
         # Specific group charts.
         group_charts = Chart.objects.filter(
             is_published=True,
