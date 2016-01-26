@@ -197,6 +197,8 @@ validates as JSON before restarting apache::
 
 If the value is not set or set to ``true``, the Results app will be displayed.
 
+.. seealso:: :ref:`setting_up_pipeline_instance`
+
 A note on wsgi buffers
 ======================
 
