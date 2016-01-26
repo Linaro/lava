@@ -915,7 +915,9 @@ class Device(RestrictedResource):
         device_dict = DeviceDictionary.get(self.hostname)
         if device_dict:
             device_dict = device_dict.to_dict()
-        return yaml.dump(device_dict['parameters'], default_flow_style=False)
+            if 'parameters' in device_dict:
+                return yaml.dump(device_dict['parameters'], default_flow_style=False)
+        return ''
 
     @property
     def device_dictionary_jinja(self):
