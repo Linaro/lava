@@ -84,6 +84,9 @@ LAVA Administrator Guide
 .. toctree::
    :maxdepth: 2
 
+   pipeline-server.rst
+   pipeline-admin.rst
+   pipeline-admin-example.rst
    devicetypes.rst
    hiddentypes.rst
    proxy.rst

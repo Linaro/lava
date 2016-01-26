@@ -266,6 +266,12 @@ def select_device(job, dispatchers):
             logger.error('[%d] worker host error: %s', job.id, msg)
             fail_job(job, fail_msg=msg)
             return None
+        if not device.worker_host.display:
+            # a configured worker has been disabled by the master admin
+            msg = """Administrative error. Device '{0}' has a worker_host which has been disabled.""".format(device.hostname)
+            logger.error('[%d] worker-hostname error: %s', job.id, msg)
+            fail_job(job, fail_msg=msg)
+            return None
         if device.worker_host.hostname not in dispatchers:
             # a configured worker has not called in to this master
             # likely that the worker is misconfigured - polling the wrong master
