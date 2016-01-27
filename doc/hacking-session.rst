@@ -17,6 +17,18 @@ Assumptions
    other access if firewalls exist between the user and the device).
  * The test job deployment raises a usable networking interface.
 
+Device requirements
+===================
+
+Some devices may need parameters to configure the network correctly to allow the
+user to login to the hacking session. e.g. QEMU jobs need to setup a ``tap`` device:
+
+.. code-block:: yaml
+
+ context:
+   arch: amd64
+   netdevice: tap
+
 Parameters
 ==========
  * ``PUB_KEY`` - A plain-text string containing the ssh public key(s) you
