@@ -275,6 +275,14 @@ class TestPipelineSubmit(TestCaseWithFactory):
             device_config['actions']['boot']['methods']['qemu']['parameters']['command'],
             'qemu-system-x86_64'
         )
+
+        job_data = yaml.load(self.factory.make_job_yaml())
+        job_data['context'].update({'netdevice': 'tap'})
+        job_ctx = job_data.get('context', {})
+        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+        opts = ' '.join(device_config['actions']['boot']['methods']['qemu']['parameters']['options'])
+        self.assertIn('-net tap', opts)
+
         hostname = "fakemustang"
         mustang_type = self.factory.make_device_type('mustang-uefi')
         # this sets a qemu device dictionary, so replace it
