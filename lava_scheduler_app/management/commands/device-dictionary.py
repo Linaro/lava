@@ -19,14 +19,14 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 # pylint gets confused: commands have no shebang, but the file is not a module.
-# pylint: disable=invalid-name
+# import order is a new pylint tag for putting system imports before package
+# imports but there is no functional benefit.
+# pylint: disable=invalid-name,wrong-import-order
 
 
 import os
 import sys
 import yaml
-import jinja2
-from optparse import make_option
 from django.core.management.base import BaseCommand
 from lava_scheduler_app.models import DeviceDictionary, SubmissionException
 from lava_scheduler_app.utils import (
@@ -50,7 +50,6 @@ def parse_template(device_file):
 class Command(BaseCommand):
 
     logger = None
-    # FIXME: migrate BaseCommand to argparse as optparse is deprecated
     # noinspection PyShadowingBuiltins
     help = "LAVA Device Dictionary I/O tool"
 
@@ -60,11 +59,11 @@ class Command(BaseCommand):
         parser.add_argument(
             '--path',
             default='/etc/lava-server/dispatcher-config/',
-            help='path to the lava-server jinja2 device type templates'),
+            help='path to the lava-server jinja2 device type templates')
         parser.add_argument(
             '--export',
             action="store_true",
-            help="export existing entry"),
+            help="export existing entry")
         parser.add_argument(
             '--review',
             action="store_true",
