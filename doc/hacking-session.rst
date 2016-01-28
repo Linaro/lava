@@ -83,7 +83,7 @@ Starting a Hacking Session
            path: hacking-session-debian.yaml
            name: hacking
            parameters:
-              "IRC_USER": "TYPE YOUR IRC NICK HERE",
+              "IRC_USER": "TYPE YOUR IRC NICK HERE"
               "PUB_KEY": "PASTE_PUBKEY(S) HERE"
 
 See :ref:`inactivity_termination` for clarification of the timeout
