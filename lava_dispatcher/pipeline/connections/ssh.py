@@ -138,7 +138,9 @@ class ConnectSsh(Action):
         command.extend(['-i', self.identity_file])
 
         overrides = self.get_common_data("prepare-scp-overlay", self.key)
-        host_address = str(self.get_common_data("prepare-scp-overlay", overrides[0]))
+        host_address = None
+        if overrides:
+            host_address = str(self.get_common_data("prepare-scp-overlay", overrides[0]))
         if host_address:
             self.logger.info("Using common data to retrieve host_address for secondary connection.")
             command_str = " ".join(str(item) for item in command)
