@@ -67,6 +67,8 @@ class RetryAction(Action):
                 time.sleep(self.sleep)
         if not self.valid:
             self.errors = "%s retries failed for %s" % (self.retries, self.name)
+            if "boot-result" not in self.data:
+                self.data['boot-result'] = 'failed'
         return connection
 
     # FIXME: needed?

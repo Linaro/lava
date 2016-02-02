@@ -14,6 +14,21 @@ parameters:
       SanDisk_Ultra:
         uuid: usb-SanDisk_Ultra_20060775320F43006019-0:0
         boot_part: 0:1
+  interfaces:
+    eth0: # fake values just for the vland unit test
+      sysfs: "/sys/devices/pci0000:00/0000:00:19.0/net/eth0"
+      mac: "f0:de:f1:46:8c:21"
+      switch: 192.168.0.1
+      port: 5
+      tags:
+      - 1G
+    eth1:
+      sysfs: "/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1"
+      mac: "00:24:d7:9b:c0:8c"
+      tags:
+      - 1G
+      switch: 192.168.0.1
+      port: 7
 commands:
   connect: telnet localhost 6000
   hard_reset: /usr/bin/pduclient --daemon localhost --hostname pdu --command reboot --port 08

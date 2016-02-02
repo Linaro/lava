@@ -20,9 +20,11 @@
 
 import contextlib
 import os
+import yaml
 import pexpect
 import sys
 import time
+import logging
 from lava_dispatcher.pipeline.action import (
     Action,
     JobError,
@@ -80,6 +82,8 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
     def __init__(self, command, lava_timeout, logger=None, cwd=None):
         if not lava_timeout or not isinstance(lava_timeout, Timeout):
             raise RuntimeError("ShellCommand needs a timeout set by the calling Action")
+        if not logger:
+            raise RuntimeError("ShellCommand needs a logger")
         pexpect.spawn.__init__(
             self, command,
             timeout=lava_timeout.duration,
@@ -87,6 +91,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
             logfile=ShellLogger(logger),
         )
         self.name = "ShellCommand"
+        self.logger = logger
         # serial can be slow, races do funny things, so allow for a delay
         self.delaybeforesend = SHELL_SEND_DELAY
         self.lava_timeout = lava_timeout
@@ -101,10 +106,18 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         :param delay: delay in milliseconds between sending each character
         :param send_char: send one character or entire string
         """
+        if delay:
+            self.logger.debug({
+                "sending with %s millisecond delay" % delay: yaml.dump(
+                    s, default_style='"', width=1000)})
+        else:
+            self.logger.debug({
+                "sending": "%s" % yaml.dump(s, default_style='"', width=1000)})
         self.send(s, delay, send_char)
         self.send(os.linesep, delay)
 
     def sendcontrol(self, char):
+        self.logger.debug("sendcontrol: %s", char)
         return super(ShellCommand, self).sendcontrol(char)
 
     # FIXME: no sense in sending delay and send_char - if delay is non-zero, send_char needs to be True
@@ -213,13 +226,31 @@ class ShellSession(Connection):
         yield self.__runner__.get_connection()
 
     def wait(self):
-        self.raw_connection.sendline(self.check_char)
         if not self.prompt_str:
             self.prompt_str = self.check_char
         try:
             self.runner.wait_for_prompt(self.timeout.duration, self.check_char)
         except pexpect.TIMEOUT:
             raise JobError("wait for prompt timed out")
+
+
+class SimpleSession(ShellSession):
+
+    def wait(self):
+        """
+        Simple wait without sendling blank lines as that causes the menu
+        to advance without data which can cause blank entries and can cause
+        the menu to exit to an unrecognised prompt.
+        """
+        while True:
+            try:
+                self.raw_connection.expect(self.prompt_str, timeout=self.timeout.duration)
+            except pexpect.TIMEOUT:
+                raise JobError("wait for prompt timed out")
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
+            else:
+                break
 
 
 class ExpectShellSession(Action):

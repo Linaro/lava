@@ -56,8 +56,8 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
             self.assertIsNotNone(action.name)
             if isinstance(action, DeployAction):
                 overlay = action.pipeline.children[action.pipeline][3]
-                testdef = overlay.internal_pipeline.actions[1]
-        self.assertEqual(len(overlay.internal_pipeline.actions), 4)
+                testdef = overlay.internal_pipeline.actions[2]
+        self.assertEqual(len(overlay.internal_pipeline.actions), 5)
         self.assertIsInstance(testdef, TestDefinitionAction)
         testdef.validate()
         if not testdef.valid:
@@ -90,6 +90,7 @@ class TestDefinitionHandlers(unittest.TestCase):  # pylint: disable=too-many-pub
         script_list = [
             'lava-test-case',
             'lava-add-keys',
+            'lava-echo-ipv4',
             'lava-install-packages',
             'lava-test-case-attach',
             'lava-os-build',
@@ -136,7 +137,7 @@ class TestDefinitionSimple(unittest.TestCase):  # pylint: disable=too-many-publi
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-notest.yaml')
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
+    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_job_without_tests(self):
         deploy = boot = finalize = None
         self.job.pipeline.validate_actions()
@@ -160,7 +161,7 @@ class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-publi
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-params.yaml')
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
+    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_job_without_tests(self):
         deploy = boot = finalize = overlay = test = None
         self.job.pipeline.validate_actions()
@@ -172,7 +173,7 @@ class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-publi
             finalize = self.job.pipeline.actions[3]
             overlay = deploy.internal_pipeline.actions[3]
         self.assertIsInstance(overlay, OverlayAction)
-        testdef = overlay.internal_pipeline.actions[1]
+        testdef = overlay.internal_pipeline.actions[2]
         self.assertIsInstance(testdef, TestDefinitionAction)
         test = testdef.internal_pipeline.actions[1]
         install = testdef.internal_pipeline.actions[2]

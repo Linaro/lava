@@ -158,7 +158,7 @@ class TestKVMBasicDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
         self.assertIn('persistent-nfs-overlay', [action.name for action in overlay.internal_pipeline.actions])
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
+    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_validate(self):
         try:
             self.job.pipeline.validate_actions()
@@ -224,7 +224,7 @@ class TestKVMQcow2Deploy(unittest.TestCase):  # pylint: disable=too-many-public-
         description_ref = pipeline_reference('kvm-qcow2.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
+    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_validate(self):
         try:
             self.job.pipeline.validate_actions()
@@ -265,7 +265,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
             if isinstance(action, DeployAction):
                 self.assertEqual(action.job, self.job)
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
+    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_validate(self):
         try:
             self.job.pipeline.validate_actions()
@@ -282,7 +282,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
                 overlay = action.pipeline.children[action.pipeline][3]
-                testdef = overlay.internal_pipeline.actions[1]
+                testdef = overlay.internal_pipeline.actions[2]
                 inline_repo = testdef.internal_pipeline.actions[0]
                 break
 
@@ -334,6 +334,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
 
         self.assertEqual(conn.prompt_str, ['lava-test: # ', 'root@debian:~#'])
 
+    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_autologin_void_login_prompt(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
@@ -346,6 +347,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
 
         self.assertRaises(JobError, self.job.validate)
 
+    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_missing_autologin_void_prompts_list(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
@@ -356,6 +358,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
 
         self.assertRaises(JobError, self.job.validate)
 
+    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_missing_autologin_void_prompts_list_item(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
@@ -366,6 +369,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
 
         self.assertRaises(JobError, self.job.validate)
 
+    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_missing_autologin_void_prompts_list_item2(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
@@ -393,6 +397,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
 
         self.assertEqual(conn.prompt_str, ['lava-test: # ', 'root@debian:~#'])
 
+    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_missing_autologin_void_prompts_str(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
@@ -501,7 +506,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         httpdownloadaction.validate()
         self.assertRaises(JobError, httpdownloadaction.run, None)
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
+    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_no_test_action_validate(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 

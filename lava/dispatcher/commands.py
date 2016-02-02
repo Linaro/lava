@@ -87,7 +87,9 @@ def get_pipeline_runner(job):
             job.validate(simulate=validate_only)
             if not validate_only:
                 exitcode = job.run()
-        except (JobError, RuntimeError):
+        except (JobError, RuntimeError, TypeError, ValueError) as exc:
+            import traceback
+            traceback.print_exc()
             sys.exit(2)
         if exitcode:
             sys.exit(exitcode)

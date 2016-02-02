@@ -30,6 +30,7 @@ from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, check_ssh_identit
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.network import rpcinfo_nfs
 from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
+from lava_dispatcher.pipeline.protocols.vland import VlandProtocol
 
 
 class CustomisationAction(DeployAction):
@@ -98,6 +99,7 @@ class OverlayAction(DeployAction):
         if any('ssh' in data for data in self.job.device['actions']['deploy']['methods']):
             # only devices supporting ssh deployments add this action.
             self.internal_pipeline.add_action(SshAuthorize())
+        self.internal_pipeline.add_action(VlandOverlayAction())
         self.internal_pipeline.add_action(MultinodeOverlayAction())
         self.internal_pipeline.add_action(TestDefinitionAction())
         self.internal_pipeline.add_action(CompressOverlay())
@@ -110,7 +112,7 @@ class OverlayAction(DeployAction):
         * copy runners into test runner directories
         """
         self.data[self.name].setdefault('location', mkdtemp())
-        self.logger.debug("Preparing overlay tarball in %s" % self.data[self.name]['location'])
+        self.logger.debug("Preparing overlay tarball in %s", self.data[self.name]['location'])
         if 'lava_test_results_dir' not in self.data:
             self.logger.error("Unable to identify lava test results directory - missing OS type?")
             return connection
@@ -120,11 +122,11 @@ class OverlayAction(DeployAction):
             path = os.path.abspath("%s/%s" % (lava_path, runner_dir))
             if not os.path.exists(path):
                 os.makedirs(path, 0755)
-                self.logger.debug("makedir: %s" % path)
+                self.logger.debug("makedir: %s", path)
         for fname in self.scripts_to_copy:
             with open(fname, 'r') as fin:
                 output_file = '%s/bin/%s' % (lava_path, os.path.basename(fname))
-                self.logger.debug("Creating %s" % output_file)
+                self.logger.debug("Creating %s", output_file)
                 with open(output_file, 'w') as fout:
                     fout.write("#!%s\n\n" % self.parameters['deployment_data']['lava_test_sh_cmd'])
                     fout.write(fin.read())
@@ -169,7 +171,7 @@ class MultinodeOverlayAction(OverlayAction):
 
     def run(self, connection, args=None):
         if self.role is None:
-            self.logger.debug("skipped %s" % self.name)
+            self.logger.debug("skipped %s", self.name)
             return connection
         if 'location' not in self.data['lava-overlay']:
             raise RuntimeError("Missing lava overlay location")
@@ -187,13 +189,13 @@ class MultinodeOverlayAction(OverlayAction):
         lava_path = os.path.abspath("%s/%s" % (location, self.data['lava_test_results_dir']))
         scripts_to_copy = glob.glob(os.path.join(self.lava_multi_node_test_dir, 'lava-*'))
         self.logger.debug(self.lava_multi_node_test_dir)
-        self.logger.debug("lava_path:%s scripts:%s" % (lava_path, scripts_to_copy))
+        self.logger.debug({"lava_path": lava_path, "scripts": scripts_to_copy})
 
         for fname in scripts_to_copy:
             with open(fname, 'r') as fin:
                 foutname = os.path.basename(fname)
                 output_file = '%s/bin/%s' % (lava_path, foutname)
-                self.logger.debug("Creating %s" % output_file)
+                self.logger.debug("Creating %s", output_file)
                 with open(output_file, 'w') as fout:
                     fout.write("#!%s\n\n" % shell)
                     # Target-specific scripts (add ENV to the generic ones)
@@ -203,7 +205,7 @@ class MultinodeOverlayAction(OverlayAction):
                             if client_name == 'yaml_line':
                                 continue
                             role_line = self.job.parameters['protocols'][self.protocol]['roles'][client_name]
-                            self.logger.debug("group roles:\t%s\t%s" % (client_name, role_line))
+                            self.logger.debug("group roles:\t%s\t%s", client_name, role_line)
                             fout.write(r"\t%s\t%s\n" % (client_name, role_line))
                         fout.write('"\n')
                     elif foutname == 'lava-role':
@@ -217,6 +219,111 @@ class MultinodeOverlayAction(OverlayAction):
                         fout.write("LAVA_MULTI_NODE_DEBUG='yes'\n")
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), self.xmod)
+        self.call_protocols()
+        return connection
+
+
+class VlandOverlayAction(OverlayAction):
+    """
+    Adds data for vland interface locations, MAC addresses and vlan names
+    """
+    def __init__(self):
+        super(VlandOverlayAction, self).__init__()
+        self.name = "lava-vland-overlay"
+        self.summary = "Add files detailing vlan configuration."
+        self.description = "Populate specific vland scripts for tests to lookup vlan data."
+
+        # vland-only
+        self.lava_vland_test_dir = os.path.realpath(
+            '%s/../../../lava_test_shell/vland' % os.path.dirname(__file__))
+        self.lava_vland_cache_file = '/tmp/lava_vland_cache.txt'
+        self.params = {}
+        self.sysfs = []
+        self.tags = []
+        self.protocol = VlandProtocol.name
+
+    def populate(self, parameters):
+        # override the populate function of overlay action which provides the
+        # lava test directory settings etc.
+        pass
+
+    def validate(self):
+        super(VlandOverlayAction, self).validate()
+        # idempotency
+        if 'actions' not in self.job.parameters:
+            return
+        if 'protocols' not in self.job.parameters:
+            return
+        if self.protocol not in [protocol.name for protocol in self.job.protocols]:
+            return
+        if 'parameters' not in self.job.device:
+            self.errors = "Device lacks parameters"
+        elif 'interfaces' not in self.job.device['parameters']:
+            self.errors = "Device lacks vland interfaces data."
+        if not self.valid:
+            return
+        # same as the parameters of the protocol itself.
+        self.params = self.job.parameters['protocols'][self.protocol]
+        device_params = self.job.device['parameters']['interfaces']
+        for interface in device_params:
+            self.sysfs.extend(
+                [
+                    device_params[interface]['sysfs'],
+                    device_params[interface]['mac'],
+                    interface
+                ]
+            )
+        for interface in device_params:
+            for tag in device_params[interface]['tags']:
+                self.tags.extend([interface, tag])
+
+    # pylint: disable=anomalous-backslash-in-string
+    def run(self, connection, args=None):
+        """
+        Writes out file contents from lists, across multiple lines
+        VAR="VAL1\n\
+        VAL2\n\
+        "
+        The \n and \ are used to avoid unwanted whitespace, so are escaped.
+        \n becomes \\n, \ becomes \\, which itself then needs \n to output:
+        VAL1
+        VAL2
+        """
+        if not self.params:
+            self.logger.debug("skipped %s", self.name)
+            return connection
+        if 'location' not in self.data['lava-overlay']:
+            raise RuntimeError("Missing lava overlay location")
+        if not os.path.exists(self.data['lava-overlay']['location']):
+            raise RuntimeError("Unable to find overlay location")
+        location = self.data['lava-overlay']['location']
+        shell = self.parameters['deployment_data']['lava_test_sh_cmd']
+
+        lava_path = os.path.abspath("%s/%s" % (location, self.data['lava_test_results_dir']))
+        scripts_to_copy = glob.glob(os.path.join(self.lava_vland_test_dir, 'lava-*'))
+        self.logger.debug(self.lava_vland_test_dir)
+        self.logger.debug({"lava_path": lava_path, "scripts": scripts_to_copy})
+
+        for fname in scripts_to_copy:
+            with open(fname, 'r') as fin:
+                foutname = os.path.basename(fname)
+                output_file = '%s/bin/%s' % (lava_path, foutname)
+                self.logger.debug("Creating %s", output_file)
+                with open(output_file, 'w') as fout:
+                    fout.write("#!%s\n\n" % shell)
+                    # Target-specific scripts (add ENV to the generic ones)
+                    if foutname == 'lava-vland-self':
+                        fout.write(r'LAVA_VLAND_SELF="')
+                        for line in self.sysfs:
+                            fout.write(r"%s\n" % line)
+                    elif foutname == 'lava-vland-tags':
+                        fout.write(r'LAVA_VLAND_TAGS="')
+                        for line in self.tags:
+                            fout.write(r"%s\n" % line)
+                    fout.write('"\n\n')
+                    fout.write(fin.read())
+                    os.fchmod(fout.fileno(), self.xmod)
+        self.call_protocols()
         return connection
 
 
@@ -327,7 +434,7 @@ class SshAuthorize(Action):
         # the key exists in the lava_test_results_dir to allow test writers to work around this
         # after logging in via the identity_file set here
         authorize = os.path.join(user_sshdir, 'authorized_keys')
-        self.logger.debug("Copying %s to %s" % ("%s.pub" % self.identity_file, authorize))
+        self.logger.debug("Copying %s to %s", "%s.pub" % self.identity_file, authorize)
         shutil.copyfile("%s.pub" % self.identity_file, authorize)
         os.chmod(authorize, 0600)
         return connection

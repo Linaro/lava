@@ -190,3 +190,20 @@ plamo = deployment_data_dict({
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/lava-%s',
 })
+
+debian_installer = deployment_data_dict({  # pylint: disable=invalid-name
+    'TESTER_PS1': r"Enter",
+    'TESTER_PS1_PATTERN': r"Enter",
+    'TESTER_PS1_INCLUDES_RC': False,
+    'boot_cmds': 'boot_cmds',
+    'boot_linaro_timeout': 'extended_boot_timeout',  # run the installer
+    'skip_newlines': True,
+
+    # for lava-test-shell
+    'distro': 'debian',
+    'lava_test_sh_cmd': '/bin/bash',
+    'lava_test_dir': '/lava-%s',
+    'lava_test_results_part_attr': 'root_part',
+    'lava_test_results_dir': '/lava-%s',
+    'lava_test_shell_file': '~/.bashrc',
+})

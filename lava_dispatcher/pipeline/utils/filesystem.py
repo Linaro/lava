@@ -94,3 +94,11 @@ def tftpd_dir():
             if 'TFTP_DIRECTORY' in line:
                 return os.path.realpath(line[15:].replace('"', ''))  # remove quote markers
     raise RuntimeError("Unable to identify tftpd directory")
+
+
+def write_bootscript(commands, filename):
+    with open(filename, 'w') as bootscript:
+        bootscript.write("#!ipxe\n\n")
+        for line in commands:
+            bootscript.write(line + "\n")
+        bootscript.close()

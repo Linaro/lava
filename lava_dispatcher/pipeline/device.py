@@ -53,6 +53,12 @@ class PipelineDevice(dict):
         return ''
 
     @property
+    def soft_reset_command(self):
+        if 'commands' in self and 'soft_reset' in self['commands']:
+            return self['commands']['soft_reset']
+        return ''
+
+    @property
     def power_command(self):
         if 'commands' in self and 'power_on' in self['commands']:
             return self['commands']['power_on']

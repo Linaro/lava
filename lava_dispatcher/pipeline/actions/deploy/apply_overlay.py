@@ -243,6 +243,7 @@ class ExtractModules(Action):
         self.name = "extract-modules"
         self.summary = "extract kernel modules"
         self.description = "extract supplied kernel modules"
+        self.extra_compression = ["xz"]
 
     def validate(self):
         super(ExtractModules, self).validate()
@@ -264,6 +265,7 @@ class ExtractModules(Action):
 
         modules = self.data['download_action']['modules']['file']
         try:
+            # FIXME: Support XZ tarfiles
             tar = tarfile.open(modules)
             tar.extractall(root)
             tar.close()
@@ -304,7 +306,7 @@ class ExtractRamdisk(Action):
         extracted_ramdisk = os.path.join(ramdisk_dir, 'ramdisk')
         os.mkdir(extracted_ramdisk)
         ramdisk_compressed_data = os.path.join(ramdisk_dir, RAMDISK_COMPRESSED_FNAME)
-        if self.parameters.get('ramdisk-type', None) == 'u-boot':
+        if self.parameters.get('ramdisk-header', None) == 'u-boot':
             # TODO: 64 bytes is empirical - may need to be configurable in the future
             cmd = ('dd if=%s of=%s ibs=64 skip=1' % (ramdisk, ramdisk_compressed_data)).split(' ')
             try:
@@ -313,7 +315,7 @@ class ExtractRamdisk(Action):
                 raise RuntimeError('Unable to remove uboot header: %s' % ramdisk)
         else:
             # give the file a predictable name
-            os.rename(ramdisk, ramdisk_compressed_data)
+            shutil.move(ramdisk, ramdisk_compressed_data)
         self.logger.debug(os.system("file %s" % ramdisk_compressed_data))
         cmd = ('gzip -d -f %s' % ramdisk_compressed_data).split(' ')
         if self.run_command(cmd) is not '':
@@ -347,11 +349,12 @@ class CompressRamdisk(Action):
         super(CompressRamdisk, self).validate()
         if not self.parameters.get('ramdisk', None):  # idempotency
             return
-        self.errors = infrastructure_error('mkimage')
-        if 'mkimage_arch' not in self.job.device['actions']['boot']['methods']['u-boot']['parameters']:
-            self.errors = "Missing architecture string for uboot mkimage support"
-            return
-        self.mkimage_arch = self.job.device['actions']['boot']['methods']['u-boot']['parameters']['mkimage_arch']
+        if self.parameters.get('ramdisk-add-header', None) == 'u-boot':
+            self.errors = infrastructure_error('mkimage')
+            if 'mkimage_arch' not in self.job.device['actions']['boot']['methods']['u-boot']['parameters']:
+                self.errors = "Missing architecture string for uboot mkimage support"
+                return
+            self.mkimage_arch = self.job.device['actions']['boot']['methods']['u-boot']['parameters']['mkimage_arch']
 
     def run(self, connection, args=None):
         if not self.parameters.get('ramdisk', None):  # idempotency
@@ -382,7 +385,7 @@ class CompressRamdisk(Action):
         final_file = os.path.join(os.path.dirname(ramdisk_data), 'ramdisk.cpio.gz')
         tftp_dir = os.path.dirname(self.data['download_action']['ramdisk']['file'])
 
-        if self.parameters.get('ramdisk-type', None) == 'u-boot':
+        if self.parameters.get('ramdisk-add-header', None) == 'u-boot':
             ramdisk_uboot = final_file + ".uboot"
             self.logger.debug("Adding RAMdisk u-boot header.")
             cmd = ("mkimage -A %s -T ramdisk -C none -d %s %s" % (self.mkimage_arch, final_file, ramdisk_uboot)).split(' ')

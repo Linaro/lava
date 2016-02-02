@@ -21,7 +21,6 @@
 
 import os
 from lava_dispatcher.pipeline.logical import Deployment
-from lava_dispatcher.pipeline.connections.ssh import Scp
 from lava_dispatcher.pipeline.action import Pipeline, Action
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
@@ -30,6 +29,7 @@ from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvi
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.pipeline.actions.deploy.download import DownloaderAction
 from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
+from lava_dispatcher.pipeline.protocols.multinode import MultinodeProtocol
 
 # Deploy SSH can mean a few options:
 # for a primary connection, the device might need to be powered_on
@@ -91,7 +91,6 @@ class ScpOverlay(DeployAction):
             'firmware', 'kernel', 'dtb', 'rootfs', 'modules'
         ]
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        # FIXME: apply job_id to other overlay classes when settings lava_test_results_dir
         self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
 
     def populate(self, parameters):
@@ -107,8 +106,6 @@ class ScpOverlay(DeployAction):
         self.internal_pipeline.add_action(PrepareOverlayScp())
         # prepare the device environment settings in common data for enabling in the boot step
         self.internal_pipeline.add_action(DeployDeviceEnvironment())
-        scp = Scp('overlay')
-        self.internal_pipeline.add_action(scp)
 
 
 class PrepareOverlayScp(Action):
@@ -122,6 +119,7 @@ class PrepareOverlayScp(Action):
         self.name = "prepare-scp-overlay"
         self.summary = "scp the overlay to the remote device"
         self.description = "copy the overlay over an existing ssh connection"
+        self.host_keys = []
 
     def validate(self):
         super(PrepareOverlayScp, self).validate()
@@ -132,6 +130,22 @@ class PrepareOverlayScp(Action):
             environment = {}
         environment.update({"LC_ALL": "C.UTF-8", "LANG": "C"})
         self.set_common_data('environment', 'env_dict', environment)
+        if 'protocols' in self.parameters:
+            # set run to call the protocol, retrieve the data and store.
+            for params in self.parameters['protocols'][MultinodeProtocol.name]:
+                if isinstance(params, str):
+                    self.errors = "Invalid protocol action setting - needs to be a list."
+                    continue
+                if 'action' not in params or params['action'] != self.name:
+                    continue
+                if 'messageID' not in params:
+                    self.errors = "Invalid protocol block: %s" % params
+                    return
+                if 'message' not in params or not isinstance(params['message'], dict):
+                    self.errors = "Missing message block for scp deployment"
+                    return
+                self.host_keys.append(params['messageID'])
+        self.set_common_data(self.name, 'overlay', self.host_keys)
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -140,6 +154,18 @@ class PrepareOverlayScp(Action):
 
     def run(self, connection, args=None):
         connection = super(PrepareOverlayScp, self).run(connection, args)
-        self.logger.info("Preparing to copy: %s" % os.path.basename(self.data['compress-overlay'].get('output')))
+        self.logger.info("Preparing to copy: %s", os.path.basename(self.data['compress-overlay'].get('output')))
         self.set_common_data('scp-deploy', 'overlay', self.data['compress-overlay'].get('output'))
+        for host_key in self.host_keys:
+            data = self.get_common_data(MultinodeProtocol.name, host_key)
+            if not data:
+                self.logger.warning("Missing data for host_key %s", host_key)
+                continue
+            for params in self.parameters['protocols'][MultinodeProtocol.name]:
+                replacement_key = [key for key, _ in params['message'].items() if key != 'yaml_line'][0]
+                if replacement_key not in data:
+                    self.logger.error("Mismatched replacement key %s and received data %s", replacement_key, data.keys())
+                    continue
+                self.set_common_data(self.name, host_key, str(data[replacement_key]))
+                self.logger.info("data %s replacement key is %s", host_key, self.get_common_data(self.name, host_key))
         return connection

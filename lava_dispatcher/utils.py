@@ -570,7 +570,7 @@ def connect_to_serial(context):
     raise CriticalError('could not execute connection_command successfully')
 
 
-def wait_for_prompt(connection, prompt_pattern, timeout):
+def wait_for_prompt(connection, prompt_pattern, timeout, skip_newlines=False):
     # One of the challenges we face is that kernel log messages can appear
     # half way through a shell prompt.  So, if things are taking a while,
     # we send a newline along to maybe provoke a new prompt.  We wait for
@@ -585,10 +585,11 @@ def wait_for_prompt(connection, prompt_pattern, timeout):
             connection.expect(prompt_pattern, timeout=partial_timeout)
         except pexpect.TIMEOUT:
             if prompt_wait_count < 6:
-                logging.warning('Sending newline in case of corruption.')
                 prompt_wait_count += 1
                 partial_timeout = timeout / 10
-                connection.sendline('')
+                if not skip_newlines:
+                    logging.warning('Sending newline in case of corruption.')
+                    connection.sendline('')
                 continue
             else:
                 raise

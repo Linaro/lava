@@ -1,8 +1,11 @@
 commands:
     connect: adb -s 04f228d1d9c76f39 shell
     soft_reboot: adb -s 04f228d1d9c76f39 reboot bootloader
+    adb_command: adb -s 04f228d1d9c76f39
+    fastboot_command: fastboot -s 04f228d1d9c76f39
 device_type: nexus4
-serial_number: 04f228d1d9c76f39
+adb_serial_number: 04f228d1d9c76f39
+fastboot_serial_number: 04f228d1d9c76f39
 
 
 actions:
@@ -19,11 +22,15 @@ actions:
       fastboot:
 
 timeouts:
-  apply-overlay-image:
-    seconds: 120
-  umount-retry:
-    seconds: 45
-  lava-test-shell:
-    seconds: 30
-  power_off:
-    seconds: 5
+  actions:
+    apply-overlay-image:
+      seconds: 120
+    umount-retry:
+      seconds: 45
+    lava-test-shell:
+      seconds: 30
+    power_off:
+      seconds: 5
+  connections:
+    uboot-retry:
+      seconds: 60

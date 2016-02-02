@@ -1,8 +1,11 @@
 commands:
     connect: adb -s R32D300FRYP shell
     soft_reboot: adb -s R32D300FRYP reboot bootloader
+    adb_command: adb -s R32D300FRYP
+    fastboot_command: fastboot -s R32D300FRYP
 device_type: nexus10
-serial_number: R32D300FRYP
+adb_serial_number: R32D300FRYP
+fastboot_serial_number: R32D300FRYP
 
 
 actions:
@@ -19,11 +22,15 @@ actions:
       fastboot:
 
 timeouts:
-  apply-overlay-image:
-    seconds: 120
-  umount-retry:
-    seconds: 45
-  lava-test-shell:
-    seconds: 30
-  power_off:
-    seconds: 5
+  actions:
+    apply-overlay-image:
+      seconds: 120
+    umount-retry:
+      seconds: 45
+    lava-test-shell:
+      seconds: 30
+    power_off:
+      seconds: 5
+  connections:
+    uboot-retry:
+      seconds: 60
