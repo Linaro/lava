@@ -25,16 +25,18 @@ from dashboard_app.helpers import get_ldap_user_properties
 
 
 class Command(BaseCommand):
-    args = '<lava_user> <ldap_user>'
-    help = 'Merge given ldap_user with lava_user'
+    help = 'Merge given LDAP_USER with LAVA_USER'
+
+    def add_arguments(self, parser):
+        parser.add_argument('--lava-user', required=True,
+                            help="LAVA username.")
+        parser.add_argument('--ldap-user', required=True,
+                            help="LDAP username.")
 
     def handle(self, *args, **options):
-        if len(args) > 1:
-            lava_user = old_lava_user = args[0]
-            ldap_user = args[1]
-        else:
-            self.stderr.write("<lava_user> <ldap_user> are required")
-            return
+        lava_user = old_lava_user = options['lava_user']
+        ldap_user = options['ldap_user']
+
         try:
             ldap_user = User.objects.get(username=ldap_user)
             if ldap_user:

@@ -53,16 +53,17 @@ def _get_script_path():
 
 
 class Command(BaseCommand):
-    args = '<filename>'
     help = 'Write complete ldap user list from ' + LDAP_SERVER_HOST + \
-           ' as CSV to the given filename'
+           ' as CSV to the given filename.'
+
+    def add_arguments(self, parser):
+        parser.add_argument('filename', metavar='FILENAME', type=str,
+                            nargs='?', help='Filename to write user list.')
 
     def handle(self, *args, **options):
-        filename = None
-        if len(args) > 0:
-            filename = args[0]
-        else:
-            self.stderr.write("filename not specified, writing to stdout")
+        filename = options['filename']
+        if filename is None:
+            self.stderr.write("filename not specified, writing to stdout.")
 
         settings = Settings("lava-server")
         server_uri = settings.get_setting("AUTH_LDAP_SERVER_URI", None)

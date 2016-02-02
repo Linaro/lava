@@ -24,14 +24,16 @@ from django.core.management.base import BaseCommand, CommandError
 
 
 class Command(BaseCommand):
-    args = '<username>'
-    help = 'Authorize superuser'
+    help = 'Authorize superuser.'
+
+    def add_arguments(self, parser):
+        parser.add_argument('username', metavar='USERNAME', type=str,
+                            nargs='?', help='Username to authorize.')
 
     def handle(self, *args, **options):
-        if len(args) > 0:
-            username = args[0]
-        else:
-            self.stderr.write("Username not specified")
+        username = options['username']
+        if username is None:
+            self.stderr.write("Username not specified.")
             sys.exit(2)
 
         try:

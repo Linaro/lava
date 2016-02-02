@@ -20,28 +20,25 @@
 import sys
 import ldap
 
-from optparse import make_option
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
 from dashboard_app.helpers import get_ldap_user_properties
 
 
 class Command(BaseCommand):
-    args = '<username>'
-    help = 'Add given username from the configured LDAP server'
-    option_list = BaseCommand.option_list + (
-        make_option('--superuser',
-                    action='store_true',
-                    dest='superuser',
-                    default=False,
-                    help='User added will be made as superuser'),
-    )
+    help = 'Add given username from the configured LDAP server.'
+
+    def add_arguments(self, parser):
+        parser.add_argument('username', metavar='USERNAME', type=str,
+                            nargs='?', help='Username to be added.')
+        parser.add_argument('--superuser', action='store_true',
+                            dest='superuser', default=False,
+                            help='User added will be made as superuser.')
 
     def handle(self, *args, **options):
-        if len(args) > 0:
-            username = args[0]
-        else:
-            self.stderr.write("Username not specified")
+        username = options['username']
+        if username is None:
+            self.stderr.write("Username not specified.")
             sys.exit(2)
 
         try:
