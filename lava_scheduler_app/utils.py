@@ -24,6 +24,7 @@ import yaml
 import pprint
 import jinja2
 import socket
+import logging
 import urlparse
 import simplejson
 import models
@@ -560,21 +561,64 @@ def jinja_template_path(system=True):
     path = '/etc/lava-server/dispatcher-config/'
     if os.path.exists(path) and system:
         return path
-    path = os.path.realpath(os.path.join(os.path.dirname(__file__), '../etc/dispatcher-config/'))
+    path = os.path.realpath(os.path.join(os.path.dirname(__file__), 'tests'))
     if not os.path.exists(path):
         raise RuntimeError("Misconfiguration of jinja templates")
     return path
 
 
 def prepare_jinja_template(hostname, jinja_data, system_path=True, path=None):
-    string_loader = jinja2.DictLoader({'%s.yaml' % hostname: jinja_data})
+    string_loader = jinja2.DictLoader({'%s.jinja2' % hostname: jinja_data})
     if not path:
         path = jinja_template_path(system=system_path)
     type_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
     env = jinja2.Environment(
         loader=jinja2.ChoiceLoader([string_loader, type_loader]),
         trim_blocks=True)
-    return env.get_template("%s.yaml" % hostname)
+    return env.get_template("%s.jinja2" % hostname)
+
+
+def load_devicetype_template(device_type_name, system_path=True, path=None):
+    """
+    Loads the bare device-type template as a python dictionary object for
+    representation within the device_type templates.
+    No device-specific details are parsed - default values only, so some
+    parts of the dictionary may be unexpectedly empty. Not to be used when
+    rendering device configuration for a testjob.
+    :param device_type_name: DeviceType.name (string)
+    :param system_path: use the system path (False for unit tests)
+    :param path: optional alternative path to templates
+    :return: None or a dictionary of the device type template.
+    """
+    if not path:
+        path = jinja_template_path(system=system_path)
+    type_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
+    env = jinja2.Environment(
+        loader=jinja2.ChoiceLoader([type_loader]),
+        trim_blocks=True)
+    try:
+        template = env.get_template("%s.jinja2" % device_type_name)
+    except jinja2.TemplateNotFound:
+        return None
+    if not template:
+        return None
+    return yaml.load(template.render())
+
+
+def _read_log(log_path):
+    logger = logging.getLogger('lava_scheduler_app')
+    if not os.path.exists(log_path):
+        return {}
+    logs = {}
+    for logfile in os.listdir(log_path):
+        filepath = os.path.join(log_path, logfile)
+        with open(filepath, 'r') as log_files:
+            try:
+                logs.update({logfile: yaml.load(log_files)})
+            except yaml.YAMLError as exc:
+                logger.warning(exc)
+                logs.update({logfile: [{'warning': "YAML error in %s" % os.path.basename(logfile)}]})
+    return logs
 
 
 def folded_logs(job, section_name, sections, summary=False, increment=False):
@@ -590,17 +634,14 @@ def folded_logs(job, section_name, sections, summary=False, increment=False):
                 section_name = item.keys()[0] if latest == current else section_name
         if not section_name:
             return log_data
+    logs = {}
+    initialise_log = os.path.join(job.output_dir, 'pipeline', '0')
+    if os.path.exists(initialise_log) and section_name == 'deploy':
+        logs.update(_read_log(initialise_log))
     for item in sections:
         if section_name in item:
             log_path = os.path.join(job.output_dir, 'pipeline', item[section_name])
-            if not os.path.exists(log_path):
-                return None
-            logs = {}
-            for logfile in os.listdir(log_path):
-                filepath = os.path.join(log_path, logfile)
-                logs['filename'] = filepath
-                with open(filepath, 'r') as log_files:
-                    logs[logfile] = yaml.load(log_files)
+            logs.update(_read_log(log_path))
             log_keys = sorted(logs)
             log_data = OrderedDict()
             for key in log_keys:
@@ -610,6 +651,90 @@ def folded_logs(job, section_name, sections, summary=False, increment=False):
                 else:
                     log_data[key] = logs[key]
     return log_data
+
+
+def map_context_overrides(base_template, devicetype_template, system=True):  # pylint: disable=too-many-locals
+    """
+    The problem here is that this function needs to reproduce how
+    jinja2 handles templates and overrides.
+
+    :param base_template: filename of the base template
+    :param devicetype_template: filename of the device type template which
+           extends the base_template (and only the base_template)
+    :param system: Whether to use system paths
+    :return: sorted list of keys which can be overridden by the
+            device dictionary or, if not specified in the device dictionary,
+            by the job context.
+    """
+    path = jinja_template_path(system)
+    base_file = os.path.join(path, 'device-types', base_template)
+    if not os.path.exists(base_file):
+        return None
+    devicetype_file = os.path.join(path, 'device-types', devicetype_template)
+    if not os.path.exists(devicetype_file):
+        return None
+    with open(base_file, 'r') as content:
+        base_data = content.read()
+    with open(devicetype_file, 'r') as content:
+        devicetype_data = content.read()
+    base_keys = []
+    devicetype_keys = []
+    base_pattern = '{%\s+set\s+(?P<key>\w+)'
+    devicetype_pattern = '{{\s+(?P<key>\w+)'
+    for line in base_data.split('\n'):
+        match = re.match(base_pattern, line)
+        if match:
+            base_keys.append(match.group('key'))
+    for line in devicetype_data.split('\n'):
+        match = re.search(devicetype_pattern, line)
+        if match:
+            key = match.group('key')
+            if key not in base_keys and key not in devicetype_keys:
+                devicetype_keys.append(match.group('key'))
+    for line in devicetype_data.split('\n'):
+        match = re.match(base_pattern, line)
+        if match:
+            key = match.group('key')
+            if key not in devicetype_keys:
+                devicetype_keys.append(match.group('key'))
+    return sorted(devicetype_keys)
+
+
+def allowed_overrides(device_dict, system=True):
+    """
+    Returns the list of keys which can be overridden in a job context
+    :param device_dict: dict created using DeviceDictionary.to_dict()
+    :return: a sorted list of keys which can be overridden in the job context
+    """
+    path = jinja_template_path(system)
+    devicedict_template = device_dict['parameters']['extends']
+    devicetype_file = os.path.join(path, 'device-types', devicedict_template)
+    if not os.path.exists(devicetype_file):
+        return None
+    with open(devicetype_file, 'r') as content:
+        devicetype_data = content.read()
+    extends_pattern = "{%\s+extends\s+'(?P<key>\S+)'"
+    base_template = None
+    for line in devicetype_data.split('\n'):
+        match = re.search(extends_pattern, line)
+        if match:
+            base_template = match.group('key')
+    override_map = map_context_overrides(base_template, devicedict_template, system)
+    allowed = []
+    for key in override_map:
+        if key is not 'extends' and key not in device_dict['parameters'].keys():
+            allowed.append(key)
+    return sorted(allowed)
+
+
+def _split_multinode_vland(submission, jobs):
+
+    for role, _ in jobs.iteritems():
+        # populate the lava-vland protocol metadata
+        if len(jobs[role]) != 1:
+            raise models.SubmissionException("vland protocol only supports one device per role.")
+        jobs[role][0]['protocols'].update({'lava-vland': submission['protocols']['lava-vland'][role]})
+    return jobs
 
 
 def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-branches,too-many-locals
@@ -628,6 +753,8 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
       value: list of jobs to be created for that role.
      """
     # the list of devices cannot be definite here, only after devices have been reserved
+
+    # FIXME: needs a Protocol base class in the server and protocol-specific split handlers
 
     copies = [
         'context',
@@ -728,4 +855,8 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
                     del job[item]
             jobs[role].append(copy.deepcopy(job))
         count += 1
+
+    # populate the lava-vland protocol metadata
+    if 'lava-vland' in submission['protocols']:
+        _split_multinode_vland(submission, jobs)
     return jobs

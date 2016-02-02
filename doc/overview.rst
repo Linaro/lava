@@ -215,52 +215,6 @@ the token. e.g. if your token was created on validation.linaro.org::
           created newly, set a password for the same, else enter the
           password for the keyring already created.
 
-.. index:: bundle-stream
-
-.. _bundle_stream:
-
-Bundle Stream Overview
-======================
-
-What is a Bundle Stream?
-------------------------
-
-LAVA runs tests which produce results with multiple tests being run for
-each submitted job. The collection of results from any one submitted
-job is termed a Result Bundle. Each bundle can contain multiple sets
-of test results, as well as other information about the system where the
-testing was performed.
-
-Within a single result bundle are the results of each test definition
-execution, termed a Test Run. Each Test Run is typically a single YAML
-file and is listed in the bundle via the description of the test
-definition. The individual id and result of a single test within a test
-run is called the Test Case, typically a single line in the YAML file.
-If the job ran across multiple devices, the bundle can include test
-runs from each device from that job.
-
-Result Bundles are uploaded to the server at the end of the test run
-into a Bundle Stream which is a way of organising related results
-bundles. A bundle stream could be imagined as a folder within which all
-related result bundle will be stored. A bundle stream could be private
-or anonymous. The name of the stream is specified in the job definition to
-determine where the result bundle from the job should be submitted.
-
-How to setup a Bundle Stream?
------------------------------
-
-A public/anonymous bundle stream could be setup with the help of
-lava-tool as follows,
-
-::
-
-  $ lava-tool make-stream --dashboard-url
-  http://<username>@validation.linaro.org/RPC2/ /anonymous/USERNAME/
-
-.. note:: Replace *username* and *USERNAME* with your
-          username. Alternatively an existing stream like
-          anonymous/test could be used for initial testing purposes.
-
 .. index:: submit
 
 .. _submit_first_job:
@@ -269,59 +223,83 @@ Submitting your first job
 =========================
 
 A job defines what image to deploy on the DUT and further actions that
-should be performed on the DUT. Jobs are defined in *JSON* files.
+should be performed on the DUT. Jobs are defined in *YAML* files.
+See also :ref:`submitting using the deprecated *JSON* files <submit_json_job>`.
 
 Job Definition
 --------------
 
-Here's a minimal job that could be executed ::
+Here's a minimal job that could be executed.
 
-    {
-      "job_name": "kvm-test",
-      "device_type": "kvm",
-      "timeout": 1800,
-      "actions": [
-        {
-          "command": "deploy_linaro_image",
-          "parameters":
-            {
-              "image": "http://images.validation.linaro.org/kvm-debian-wheezy.img.gz"
-            }
-        },
-        {
-          "command": "boot_linaro_image"
-        },
-        {
-          "command": "submit_results",
-          "parameters":
-            {
-              "server": "http://<username>@validation.linaro.org/RPC2/",
-              "stream": "/anonymous/test/"
-            }
-        }
-      ]
-    }
+.. code-block:: yaml
 
-.. note:: Replace *username* with your username.
+ # Sample JOB definition for an x86_64 QEMU
+ device_type: qemu
+ job_name: kvm-pipeline
+
+ timeouts:
+   job:
+     minutes: 15
+   action:
+     minutes: 5
+ priority: medium
+ visibility: public
+ context:
+   arch: amd64
+
+ actions:
+
+    - deploy:
+        timeout:
+          minutes: 5
+        to: tmpfs
+        images:
+            rootfs:
+              image_arg: -drive format=raw,file={rootfs}
+              url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+              compression: gz
+        os: debian
+        root_partition: 1
+
+    - boot:
+        method: qemu
+        media: tmpfs
+        prompts: ["root@debian:"]
+        failure_retry: 2
+
+    - test:
+        failure_retry: 3
+        name: kvm-basic-singlenode
+        timeout:
+          minutes: 5 # uses install:deps, so takes a few minutes
+        definitions:
+            - repository: git://git.linaro.org/qa/test-definitions.git
+              from: git
+              path: ubuntu/smoke-tests-basic.yaml
+              name: smoke-tests
+            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+              from: git
+              path: lava-test-shell/single-node/singlenode03.yaml
+              name: singlenode-advanced
 
 .. _job_submission:
 
 Job Submission
 --------------
 
-A job could be submitted either from the command line (using
-lava-tool) or via the web UI.
+A job is submitted from the command line (using lava-tool or XMLRPC).
+The web UI form is being migrated to pipeline jobs.
 
 Command Line Job Submission
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Once you have copied the above job definition to a file, for example
-*/tmp/job.json* Use the lava-tool as shown below,
+*/tmp/job.yaml* Use the lava-tool as shown below,
 
 ::
 
   $ lava-tool submit-job https://<username>@validation.linaro.org/RPC2/
-  /tmp/job.json
+  /tmp/job.yaml
   Please enter password for encrypted keyring:
   submitted as job id: 82287
 
@@ -335,95 +313,37 @@ UI. In the above submission job-id returned is 82287. Visit
 ``http://validation.linaro.org/scheduler/job/<job-id>`` in order to see
 the details of the job run.
 
+.. commented out until the web ui support is available.
 
-Job Definition
---------------
+   Web Based Job Submission
+   ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Here's a minimal job that could be executed ::
+   Visit http://validation.linaro.org/scheduler/jobsubmit and paste your
+   json file into the window and click "Submit" button. The job
+   submission screen is shown below,
 
-    {
-      "job_name": "kvm-test",
-      "device_type": "kvm",
-      "timeout": 1800,
-      "actions": [
-        {
-          "command": "deploy_linaro_image",
-          "parameters":
-            {
-              "image": "http://images.validation.linaro.org/kvm-debian-wheezy.img.gz"
-            }
-        },
-        {
-          "command": "boot_linaro_image"
-        },
-        {
-          "command": "submit_results",
-          "parameters":
-            {
-              "server": "http://<username>@validation.linaro.org/RPC2/",
-              "stream": "/anonymous/test/"
-            }
-        }
-      ]
-    }
+   .. image:: ./images/job-submission-screen.png
 
-.. note:: Replace *username* with your username.
-
-Job Submission
---------------
-
-A job could be submitted either from the command line (using
-lava-tool) or via the web UI.
-
-Command Line Job Submission
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Once you have copied the above job definition to a file, for example
-*/tmp/job.json* Use the lava-tool as shown below,
-
-::
-
-  $ lava-tool submit-job https://<username>@validation.linaro.org/RPC2/
-  /tmp/job.json
-  Please enter password for encrypted keyring:
-  submitted as job id: 82287
-
-.. note:: Replace *username* with your username. Enter the password
-          for the encrypted keyring which is the same that was used
-          when adding authentication token.
-
-Once the job is submitted successfully, the job-id is returned back,
-which could be used in order to check the status of the job on the
-UI. In the above submission job-id returned is 82287. Visit
-``http://validation.linaro.org/scheduler/job/<job-id>`` in order to see
-the details of the job run.
-
-Web Based Job Submission
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-Visit http://validation.linaro.org/scheduler/jobsubmit and paste your
-json file into the window and click "Submit" button. The job
-submission screen is shown below,
-
-.. image:: ./images/job-submission-screen.png
-
-.. note:: If a link to job json file is pasted on the above screen,
+   .. note:: If a link to job json file is pasted on the above screen,
           the JSON file will be fetched and displayed in the text box
           for submission.
 
-Once the job is successfully submitted, the following screen appears,
-from which the user can navigate to the job details or the list of
-jobs page.
+   Once the job is successfully submitted, the following screen appears,
+   from which the user can navigate to the job details or the list of
+   jobs page.
 
-.. image:: ./images/web-ui-job-submission-success.png
+   .. image:: ./images/web-ui-job-submission-success.png
 
-Viewing the submitted job will show something like this.
+   Viewing the submitted job will show something like this.
 
-.. image:: ./images/job-details.png
+   .. image:: ./images/job-details.png
 
+.. index: test definitions
 
-Test Jobs
----------
+.. _test_definitions:
+
+Test Definitions
+----------------
 
 In order to run a test, a test definition is required. A test
 definition is expressed in YAML format. A minimal test definition
@@ -448,51 +368,5 @@ explained above ::
       steps:
           - "lava-test-case passtest --result pass"
           - "lava-test-case failtest --result pass"
-
-In order to run the above test definition with a minimal job file, the
-following job json could be used and submitted in the same way as
-explained above ::
-
-  {
-      "job_name": "kvm-test",
-      "device_type": "kvm",
-      "timeout": 1800,
-      "actions": [
-          {
-              "command": "deploy_linaro_image",
-              "parameters": {
-                  "image":
-                  "http://images.validation.linaro.org/kvm-debian-wheezy.img.gz"
-              }
-          },
-          {
-              "command": "lava_test_shell",
-              "parameters": {
-                  "testdef_urls": [
-                      "http://people.linaro.org/~senthil.kumaran/test.yaml"
-                  ]
-              }
-          },
-          {
-              "command": "boot_linaro_image"
-          },
-          {
-              "command": "submit_results",
-              "parameters": {
-                  "server":
-                  "http://stylesen@validation.linaro.org/RPC2/",
-                  "stream": "/anonymous/test/"
-              }
-          }
-      ]
-  }
-
-.. note:: The test definition is uploaded to an URL that will be
-          accessible over http which is referred in the job json.
-
-.. note:: Test definitions could be referred from git
-          repositories. The official upstream Linaro git repository
-          for test definitions is
-          https://git.linaro.org/gitweb?p=qa/test-definitions.git
 
 .. include:: tables.rst

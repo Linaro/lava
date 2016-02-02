@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
+import yaml
 import xmlrpclib
 from django.http import Http404
 from dashboard_app.models import Bundle
@@ -25,7 +26,6 @@ from django.core.exceptions import PermissionDenied
 from lava_scheduler_app.views import get_restricted_job
 from lava_scheduler_app.models import Device, DeviceType, DeviceDictionary
 from linaro_django_xmlrpc.models import Mapper, SystemAPI
-from django.contrib.auth.models import Group, Permission, User
 
 
 class LavaSystemAPI(SystemAPI):
@@ -375,6 +375,73 @@ class LavaSystemAPI(SystemAPI):
                 access.append(device.can_submit(username))
             retval[device_type.name] = any(access)
         return retval
+
+    def pipeline_network_map(self, switch=None):
+        """
+        Name
+        ----
+        pipeline_network_map(switch=None):
+
+        Description
+        -----------
+
+        Collate all the vland information from pipeline devices to create a complete map,
+        then return YAML data for all switches or a specified switch.
+
+        This function requires authentication with a username and token.
+
+        Arguments
+        ---------
+        switch: string
+            hostname or IP of the switch to map. If None, data is returned for all switches.
+
+        Return value
+        ------------
+        Returns a YAML file of the form:
+
+        switches:
+          '192.168.0.2':
+          - port: 5
+            device:
+              interface: eth0
+              sysfs: "/sys/devices/pci0000:00/0000:00:19.0/net/eth0"
+              mac: "f0:de:f1:46:8c:21"
+              hostname: bbb1
+
+        """
+        self._authenticate()
+        # get all device dictionaries, build the entire map.
+        dictionaries = [
+            DeviceDictionary.get(device.hostname).to_dict() for device in Device.objects.filter(is_pipeline=True)
+        ]
+        network_map = {'switches': {}}
+        for device_dict in dictionaries:
+            params = device_dict['parameters']
+            hostname = device_dict['hostname']
+            if 'interfaces' not in params:
+                continue
+            for interface in params['interfaces']:
+                for map_switch, port in params['map'][interface].iteritems():
+                    port_list = []
+                    device = {
+                        'interface': interface,
+                        'mac': params['mac_addr'][interface],
+                        'sysfs': params['sysfs'][interface],
+                        'hostname': hostname
+                    }
+                    port_list.append({'port': port, 'device': device})
+                    switch_port = network_map['switches'].setdefault(map_switch, [])
+                    # Any switch can only have one entry for one port
+                    if port not in switch_port:
+                        switch_port.extend(port_list)
+
+        if switch:
+            if switch in network_map['switches']:
+                return yaml.dump(network_map['switches'][switch])
+            else:
+                return xmlrpclib.Fault(
+                    404, "No switch '%s' was found in the network map of supported devices." % switch)
+        return yaml.dump(network_map)
 
 
 class LavaMapper(Mapper):

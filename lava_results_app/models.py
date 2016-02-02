@@ -28,14 +28,20 @@ TestSet can be enabled within a test definition run step
 TestCase is a single lava-test-case record or Action result.
 """
 
-import yaml
-import urllib
 import logging
+import simplejson
+import urllib
+import yaml
 
 from datetime import datetime, timedelta
+from dateutil import parser
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
+from django.core.validators import (
+    MaxValueValidator,
+    MinValueValidator
+)
 from django.db import models, connection, IntegrityError
 from django.db.models import Q
 from django.db.models.fields import FieldDoesNotExist
@@ -61,12 +67,38 @@ from lava_results_app.utils import help_max_length
 from dashboard_app.models import NamedAttribute
 
 
+class InvalidConditionsError(Exception):
+    """ Raise when querying by URL has incorrect condition arguments. """
+
+
+class InvalidContentTypeError(Exception):
+    """ Raise when querying by URL content type (table name). """
+
+
 class QueryUpdatedError(Exception):
     """ Error raised if query is updating or recently updated. """
 
 
 class RefreshLiveQueryError(Exception):
     """ Error raised if refreshing the live query is attempted. """
+
+
+class Queryable(object):
+    """All Queryable objects should inherit this."""
+    def get_passfail_results(self):
+        raise NotImplementedError("Should have implemented this")
+
+    def get_measurement_results(self):
+        raise NotImplementedError("Should have implemented this")
+
+    def get_attribute_results(self, attributes):
+        raise NotImplementedError("Should have implemented this")
+
+    def get_end_datetime(self):
+        raise NotImplementedError("Should have implemented this")
+
+    def get_xaxis_attribute(self):
+        raise NotImplementedError("Should have implemented this")
 
 
 class QueryMaterializedView(MaterializedView):
@@ -120,7 +152,7 @@ class QueryMaterializedView(MaterializedView):
         return QueryMaterializedView.objects.all()
 
 
-class TestSuite(models.Model):
+class TestSuite(models.Model, Queryable):
     """
     Result suite of a pipeline job.
     Top level grouping of results from a job.
@@ -139,6 +171,67 @@ class TestSuite(models.Model):
         default=None,
         max_length=200
     )
+
+    def get_passfail_results(self):
+        # Get pass fail results per lava_results_app.testsuite.
+        results = {}
+        results[self.name] = {
+            'pass': self.testcase_set.filter(
+                result=TestCase.RESULT_MAP['pass']).count(),
+            'fail': self.testcase_set.filter(
+                result=TestCase.RESULT_MAP['fail']).count(),
+            'skip': self.testcase_set.filter(
+                result=TestCase.RESULT_MAP['skip']).count(),
+            'unknown': self.testcase_set.filter(
+                result=TestCase.RESULT_MAP['unknown']).count()
+        }
+        return results
+
+    def get_measurement_results(self):
+        # Get measurement values per lava_results_app.testcase.
+        results = {}
+
+        for testcase in self.testcase_set.all():
+            results[testcase.name] = {}
+            results[testcase.name]['measurement'] = testcase.measurement
+            results[testcase.name]['fail'] = testcase.result != TestCase.RESULT_PASS
+
+        return results
+
+    def get_attribute_results(self, attributes):
+        # Get attribute values per lava_results_app.testsuite.
+        results = {}
+        attributes = [x.strip() for x in attributes.split(',')]
+        for testcase in self.testcase_set.all():
+            if testcase.action_metadata:
+                for key in testcase.action_metadata:
+                    if key in attributes and key not in results:
+                        # Use only the metadata from the first testcase atm.
+                        results[key] = {}
+                        results[key]['fail'] = testcase.result != TestCase.RESULT_PASS
+                        try:
+                            results[key]['value'] = float(
+                                testcase.action_metadata[key])
+                        except ValueError:
+                            # Ignore non-float metadata.
+                            del results[key]
+
+        return results
+
+    def get_end_datetime(self):
+        return self.job.end_time
+
+    def get_xaxis_attribute(self, xaxis_attribute=None):
+
+        attribute = None
+        if xaxis_attribute:
+            try:
+                attribute = self.testcase_set.first().action_metadata[
+                    xaxis_attribute]
+            except:  # There's no attribute, use date.
+                pass
+
+        return attribute
 
     def get_absolute_url(self):
         """
@@ -187,7 +280,7 @@ class TestSet(models.Model):
             self.name)
 
 
-class TestCase(models.Model):
+class TestCase(models.Model, Queryable):
     """
     Result of an individual test case.
     lava-test-case or action result
@@ -289,6 +382,50 @@ class TestCase(models.Model):
         if not action_data:
             return None
         return action_data[0]
+
+    def get_passfail_results(self):
+        # Pass/fail charts for testcases do not make sense.
+        pass
+
+    def get_measurement_results(self):
+        # Get measurement values per lava_results_app.testcase.
+        results = {}
+        results[self.name] = {}
+        results[self.name]['measurement'] = self.measurement
+        results[self.name]['fail'] = self.result != self.RESULT_PASS
+        return results
+
+    def get_attribute_results(self, attributes):
+        # Get attribute values per lava_results_app.testcase.
+        results = {}
+        attributes = [x.strip() for x in attributes.split(',')]
+        if self.action_metadata:
+            for key in self.action_metadata:
+                if key in attributes:
+                    results[key] = {}
+                    results[key]['fail'] = self.result != self.RESULT_PASS
+                    try:
+                        results[key]['value'] = float(
+                            self.action_metadata[key])
+                    except ValueError:
+                        # Ignore non-float metadata.
+                        del results[key]
+
+        return results
+
+    def get_end_datetime(self):
+        return self.logged
+
+    def get_xaxis_attribute(self, xaxis_attribute=None):
+
+        attribute = None
+        if xaxis_attribute:
+            try:
+                attribute = self.action_metadata[xaxis_attribute]
+            except:  # There's no attribute, use date.
+                pass
+
+        return attribute
 
     def get_absolute_url(self):
         if self.test_set:
@@ -571,6 +708,9 @@ class Query(models.Model):
         verbose_name='Query object set'
     )
 
+    CONDITIONS_SEPARATOR = ','
+    CONDITION_DIVIDER = '__'
+
     @property
     def owner_name(self):
         return '~%s/%s' % (self.owner.username, self.name)
@@ -717,9 +857,9 @@ class Query(models.Model):
                 filters[filter_key] = condition.value
 
         query_results = content_type.model_class().objects.filter(
-            **filters).distinct().extra(
-                select={'%s_ptr_id' % content_type.model:
-                        '%s.id' % content_type.model_class()._meta.db_table})
+            **filters).distinct().extra(select={
+                '%s_ptr_id' % content_type.model:
+                '%s.id' % content_type.model_class()._meta.db_table})
 
         return query_results
 
@@ -753,6 +893,75 @@ class Query(models.Model):
                 self.save()
         else:
             raise RefreshLiveQueryError("Refreshing live query not permitted.")
+
+    @classmethod
+    def parse_conditions(cls, content_type, conditions):
+        # Parse conditions from text representation.
+        if not conditions:
+            return []
+
+        conditions_objects = []
+        for condition_str in conditions.split(cls.CONDITIONS_SEPARATOR):
+            condition = QueryCondition()
+            condition_fields = condition_str.split(cls.CONDITION_DIVIDER)
+            if len(condition_fields) == 3:
+                condition.table = content_type
+                condition.field = condition_fields[0]
+                condition.operator = condition_fields[1]
+                condition.value = condition_fields[2]
+            elif len(condition_fields) == 4:
+
+                try:
+                    content_type = Query.get_content_type(condition_fields[0])
+                except ContentType.DoesNotExist:
+                    raise InvalidContentTypeError(
+                        "Wrong table name in conditions parameter. " +
+                        "Please refer to query docs.")
+
+                condition.table = content_type
+                condition.field = condition_fields[1]
+                condition.operator = condition_fields[2]
+                condition.value = condition_fields[3]
+
+            else:
+                # TODO: more validation for conditions?.
+                raise InvalidConditionsError("Conditions URL incorrect. Please "
+                                             "refer to query docs.")
+
+            conditions_objects.append(condition)
+
+        return conditions_objects
+
+    def serialize_conditions(self):
+        # Serialize conditions into string.
+
+        conditions_list = []
+        for condition in self.querycondition_set.all():
+            conditions_list.append("%s%s%s%s%s%s%s" % (
+                condition.table.model,
+                self.CONDITION_DIVIDER,
+                condition.field,
+                self.CONDITION_DIVIDER,
+                condition.operator,
+                self.CONDITION_DIVIDER,
+                condition.value
+            ))
+
+        return self.CONDITIONS_SEPARATOR.join(conditions_list)
+
+    @classmethod
+    def get_content_type(cls, model_name):
+        # Need this check because there are multiple models named 'TestCase'
+        # in different apps now.
+        if (model_name == ContentType.objects.get_for_model(TestCase).model):
+            return ContentType.objects.get_for_model(TestCase)
+
+        content_types = ContentType.objects.filter(model=model_name)
+        if (len(content_types) == 0):
+            raise InvalidContentTypeError(
+                "Wrong table name in entity param. Please refer to query docs.")
+        else:
+            return ContentType.objects.filter(model=model_name)[0]
 
     def save(self, *args, **kwargs):
         super(Query, self).save(*args, **kwargs)
@@ -868,3 +1077,360 @@ def _get_foreign_key_model(model, fieldname):
     if not m2m and direct and isinstance(field_object, models.ForeignKey):
         return field_object.rel.to
     return None
+
+
+class ChartGroup(models.Model):
+
+    name = models.SlugField(max_length=1024, unique=True)
+
+    def __unicode__(self):
+        return self.name
+
+
+# Chart types
+CHART_TYPES = ((r'pass/fail', 'Pass/Fail'),
+               (r'measurement', 'Measurement'),
+               (r'attributes', 'Attributes'))
+# Chart representation
+REPRESENTATION_TYPES = ((r'lines', 'Lines'),
+                        (r'bars', 'Bars'))
+# Chart visibility
+CHART_VISIBILITY = ((r'chart', 'Chart only'),
+                    (r'table', 'Result table only'),
+                    (r'both', 'Both'))
+
+
+class Chart(models.Model):
+
+    name = models.SlugField(max_length=1024, unique=True)
+
+    chart_group = models.ForeignKey(
+        ChartGroup,
+        default=None,
+        null=True,
+        on_delete=models.CASCADE)
+
+    owner = models.ForeignKey(
+        User,
+        default=None,
+        on_delete=models.CASCADE)
+
+    group = models.ForeignKey(
+        Group,
+        default=None,
+        null=True,
+        on_delete=models.SET_NULL)
+
+    description = models.TextField(blank=True, null=True)
+
+    is_published = models.BooleanField(
+        default=False,
+        verbose_name='Published')
+
+    queries = models.ManyToManyField(Query, through='ChartQuery', blank=True)
+
+    def __unicode__(self):
+        return self.name
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("lava_results_app.views.chart.views.chart_display",
+                (), dict(name=self.name))
+
+    def can_admin(self, user):
+        if self.owner == user or \
+           (self.group and user in self.group.user_set.all()):
+            return True
+        else:
+            return False
+
+
+# Chart types
+CHART_TYPES = ((r'pass/fail', 'Pass/Fail'),
+               (r'measurement', 'Measurement'),
+               (r'attributes', 'Attributes'))
+# Chart representation
+REPRESENTATION_TYPES = ((r'lines', 'Lines'),
+                        (r'bars', 'Bars'))
+# Chart visibility
+CHART_VISIBILITY = ((r'chart', 'Chart only'),
+                    (r'table', 'Result table only'),
+                    (r'both', 'Both'))
+
+
+class ChartQuery(models.Model):
+
+    class Meta:
+        ordering = ['relative_index']
+
+    chart = models.ForeignKey(
+        Chart,
+        on_delete=models.CASCADE)
+
+    query = models.ForeignKey(
+        Query,
+        on_delete=models.CASCADE)
+
+    chart_type = models.CharField(
+        max_length=20,
+        choices=CHART_TYPES,
+        verbose_name='Chart type',
+        blank=False,
+        default="pass/fail",
+    )
+
+    target_goal = models.DecimalField(
+        blank=True,
+        decimal_places=5,
+        max_digits=10,
+        null=True,
+        verbose_name='Target goal')
+
+    chart_height = models.PositiveIntegerField(
+        default=300,
+        validators=[
+            MinValueValidator(200),
+            MaxValueValidator(400)
+        ],
+        verbose_name='Chart height')
+
+    is_percentage = models.BooleanField(
+        default=False,
+        verbose_name='Percentage')
+
+    chart_visibility = models.CharField(
+        max_length=20,
+        choices=CHART_VISIBILITY,
+        verbose_name='Chart visibility',
+        blank=False,
+        default="chart",
+    )
+
+    xaxis_attribute = models.CharField(
+        blank=True,
+        null=True,
+        max_length=20,
+        verbose_name='X-axis attribute')
+
+    representation = models.CharField(
+        max_length=20,
+        choices=REPRESENTATION_TYPES,
+        verbose_name='Representation',
+        blank=False,
+        default="lines",
+    )
+
+    relative_index = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Order in the chart')
+
+    attributes = models.CharField(
+        blank=True,
+        null=True,
+        max_length=200,
+        verbose_name='Chart attributes')
+
+    ORDER_BY_MAP = {
+        TestJob: 'end_time',
+        TestCase: 'logged',
+        TestSuite: 'job__end_time',
+    }
+
+    DATE_FORMAT = "%d/%m/%Y %H:%M"
+
+    def get_data(self, user, content_type=None, conditions=None):
+        """
+        Pack data from filter to json format based on Chart options.
+
+        content_type and conditions are only mandatory if this is a custom
+        Chart.
+        """
+
+        chart_data = {}
+        chart_data["basic"] = self.get_basic_chart_data()
+        chart_data["user"] = self.get_user_chart_data(user)
+
+        # TODO: order by attribute if attribute is used for x-axis.
+        if hasattr(self, "query"):
+            results = self.query.get_results(user).order_by(
+                self.ORDER_BY_MAP[self.query.content_type.model_class()])
+        # TODO: order by attribute if attribute is used for x-axis.
+        else:
+            results = Query.get_queryset(
+                content_type,
+                conditions).visible_by_user(user).order_by(
+                    self.ORDER_BY_MAP[content_type.model_class()])
+
+        if self.chart_type == "pass/fail":
+            chart_data["data"] = self.get_chart_passfail_data(user, results)
+
+        elif self.chart_type == "measurement":
+            # TODO: In case of job or suite, do avg measurement, and later add
+            # option to do min/max/other.
+            chart_data["data"] = self.get_chart_measurement_data(user, results)
+
+        elif self.chart_type == "attributes":
+            chart_data["data"] = self.get_chart_attributes_data(user, results)
+
+        return chart_data
+
+    def get_basic_chart_data(self):
+        data = {}
+        fields = ["id", "chart_type", "target_goal", "chart_height",
+                  "is_percentage", "chart_visibility", "xaxis_attribute",
+                  "representation"]
+
+        for field in fields:
+            data[field] = getattr(self, field)
+
+        data["chart_name"] = self.chart.name
+        if hasattr(self, "query"):
+            data["query_name"] = self.query.name
+            data["query_description"] = self.query.description
+            data["entity"] = self.query.content_type.model
+            data["conditions"] = self.query.serialize_conditions()
+
+        return data
+
+    def get_user_chart_data(self, user):
+
+        data = {}
+        try:
+            chart_user = ChartQueryUser.objects.get(
+                chart_query=self,
+                user=user)
+            data["start_date"] = chart_user.start_date
+            data["is_legend_visible"] = chart_user.is_legend_visible
+            data["is_delta"] = chart_user.is_delta
+
+        except ChartQueryUser.DoesNotExist:
+            # Leave an empty dict.
+            pass
+
+        return data
+
+    def get_chart_passfail_data(self, user, query_results):
+
+        data = []
+        for item in query_results:
+
+            # Set attribute based on xaxis_attribute.
+            attribute = item.get_xaxis_attribute(self.xaxis_attribute)
+            # If xaxis attribute is set and this query item does not have
+            # this specific attribute, ignore it.
+            if self.xaxis_attribute and not attribute:
+                continue
+
+            date = str(item.get_end_datetime())
+            attribute = attribute if attribute is not None else date
+
+            passfail_results = item.get_passfail_results()
+            for result in passfail_results:
+
+                if result:
+                    chart_item = {
+                        "id": result,
+                        "link": item.get_absolute_url(),
+                        "date": date,
+                        "attribute": attribute,
+                        "pass": passfail_results[result]['fail'] == 0,
+                        "passes": passfail_results[result]['pass'],
+                        "failures": passfail_results[result]['fail'],
+                        "skip": passfail_results[result]['skip'],
+                        "skip": passfail_results[result]['unknown'],
+                        "total": passfail_results[result]['pass'] +
+                        passfail_results[result]['fail'] +
+                        passfail_results[result]['unknown'] +
+                        passfail_results[result]['skip'],
+                    }
+                data.append(chart_item)
+
+        return data
+
+    def get_chart_measurement_data(self, user, query_results):
+
+        data = []
+        for item in query_results:
+
+            # Set attribute based on xaxis_attribute.
+            attribute = item.get_xaxis_attribute(self.xaxis_attribute)
+            # If xaxis attribute is set and this query item does not have
+            # this specific attribute, ignore it.
+            if self.xaxis_attribute and not attribute:
+                continue
+
+            date = str(item.get_end_datetime())
+            attribute = attribute if attribute is not None else date
+
+            measurement_results = item.get_measurement_results()
+            for result in measurement_results:
+
+                if result:
+                    chart_item = {
+                        "id": result,
+                        "link": item.get_absolute_url(),
+                        "date": date,
+                        "attribute": attribute,
+                        "pass": measurement_results[result]['fail'] == 0,
+                        "measurement": measurement_results[result]['measurement']
+                    }
+                data.append(chart_item)
+
+        return data
+
+    def get_chart_attributes_data(self, user, query_results):
+
+        data = []
+        for item in query_results:
+
+            attribute_results = item.get_attribute_results(self.attributes)
+            for result in attribute_results:
+                if result:
+                    chart_item = {
+                        "id": result,
+                        "attribute": str(item.get_end_datetime()),
+                        "link": item.get_absolute_url(),
+                        "date": str(item.get_end_datetime()),
+                        "pass": attribute_results[result]['fail'] == 0,
+                        "attr_value": attribute_results[result]['value'],
+                    }
+                data.append(chart_item)
+
+        return data
+
+    def __unicode__(self):
+        return self.name
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("lava_results_app.views.chart.views.chart_query_edit",
+                (), dict(name=self.chart.name, id=self.id))
+
+
+class ChartQueryUser(models.Model):
+
+    class Meta:
+        unique_together = ("chart_query", "user")
+
+    chart_query = models.ForeignKey(
+        ChartQuery,
+        null=False,
+        on_delete=models.CASCADE)
+
+    user = models.ForeignKey(
+        User,
+        null=False,
+        on_delete=models.CASCADE)
+
+    # Start date can actually also be start build number, ergo char, not date.
+    # Also, we do not store end date(build number) since user's only want
+    # to see the latest data.
+    start_date = models.CharField(max_length=20)
+
+    is_legend_visible = models.BooleanField(
+        default=True,
+        verbose_name='Toggle legend')
+
+    is_delta = models.BooleanField(
+        default=False,
+        verbose_name='Delta reporting')

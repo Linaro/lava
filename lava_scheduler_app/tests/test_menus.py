@@ -14,7 +14,7 @@ class YamlMenuFactory(YamlFactory):
 
     def make_fake_mustang_device(self, hostname='fakemustang1'):  # pylint: disable=no-self-use
         mustang = DeviceDictionary(hostname=hostname)
-        mustang.parameters = {'extends': 'mustang-uefi.yaml'}
+        mustang.parameters = {'extends': 'mustang-uefi.jinja2'}
         mustang.save()
         return hostname
 
@@ -36,7 +36,7 @@ class TestPipelineMenu(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
         self.jinja_path = jinja_template_path(system=False)
         self.device_type = self.factory.make_device_type(name='mustang-uefi')
         self.conf = {
-            'extends': 'mustang-uefi.yaml',
+            'extends': 'mustang-uefi.jinja2',
             'tftp_mac': '52:54:00:12:34:59',
         }
 
@@ -66,7 +66,7 @@ class TestPipelineMenu(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
         config = yaml.load(config_str)
         self.assertIsNotNone(config)
         self.assertEqual(config['device_type'], self.device_type.name)
-        self.assertIsNotNone(config['parameters'])
+        self.assertNotIn('parameters', config)
         self.assertIsNotNone(config['actions']['boot']['methods']['uefi-menu']['nfs'])
         menu_data = config['actions']['boot']['methods']['uefi-menu']['nfs']
         tftp_menu = [item for item in menu_data if 'items' in item['select'] and 'TFTP' in item['select']['items'][0]][0]

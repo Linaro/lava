@@ -74,7 +74,7 @@ def version_tag():
         dev_count = subprocess.check_output(dev_stamp).strip()
         dev_short = ['git', 'rev-parse', '--short', 'HEAD']
         dev_hash = subprocess.check_output(dev_short).strip()
-        return "%s.%s.%s" % (tag_name, dev_count, dev_hash)
+        return "%s+%s.%s" % (tag_name, dev_count, dev_hash)
 
 
 def main():

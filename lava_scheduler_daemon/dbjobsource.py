@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import yaml
 import shutil
 import urlparse
 import signal
@@ -31,6 +32,7 @@ from lava_scheduler_app.models import (
     JSONDataError,
 )
 from lava_scheduler_app import utils
+from lava_scheduler_app.dbutils import match_vlan_interface
 from lava_scheduler_daemon.worker import WorkerData
 from lava_scheduler_daemon.jobsource import IJobSource
 
@@ -178,8 +180,8 @@ class DatabaseJobSource(object):
             finally:
                 # We don't want to leave transactions dangling under any
                 # circumstances so we unconditionally issue a rollback.  This
-                # might be a teensy bit wastful, but it wastes a lot less time
-                # than figuring out why your south migration appears to have
+                # might be a teensy bit wasteful, but it wastes a lot less time
+                # than figuring out why your database migration appears to have
                 # got stuck...
                 transaction.rollback()
                 transaction.set_autocommit(True)
@@ -399,6 +401,13 @@ class DatabaseJobSource(object):
         for job in jobs:
             device = find_device_for_job(job, devices)
             if device:
+                if job.is_pipeline:
+                    job_dict = yaml.load(job.definition)
+                    if 'protocols' in job_dict and 'lava-vland' in job_dict['protocols']:
+                        if not match_vlan_interface(device, job_dict):
+                            self.logger.debug("%s does not match vland tags", str(device.hostname))
+                            devices.remove(device)
+                            continue
                 if not self._validate_idle_device(job, device):
                     self.logger.debug("Removing %s from the list of available devices",
                                       str(device.hostname))
@@ -541,7 +550,6 @@ class DatabaseJobSource(object):
         job.start_time = timezone.now()
         if job.output_dir:
             shutil.rmtree(job.output_dir, ignore_errors=True)
-        job.log_file.save('job-%s.log' % job.id, ContentFile(''), save=False)
         job.save()
         self._commit_transaction(src='jobStarted_impl')
 

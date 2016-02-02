@@ -6,11 +6,14 @@ from lava_scheduler_app.models import (
     DeviceType,
     DeviceDictionary,
     JobPipeline,
+    SubmissionException,
 )
 from lava_scheduler_app.utils import (
     devicedictionary_to_jinja2,
     jinja2_to_devicedictionary,
     prepare_jinja_template,
+    jinja_template_path,
+    load_devicetype_template,
 )
 from lava_scheduler_app.schema import validate_device
 from django_testscenarios.ubertest import TestCase
@@ -183,8 +186,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         self.assertIsNone(baz)
 
     def test_jinja_string_templates(self):
-        jinja2_path = os.path.realpath(os.path.join(
-            __file__, '..', '..', '..', 'etc', 'dispatcher-config'))
+        jinja2_path = jinja_template_path(system=False)
         self.assertTrue(os.path.exists(jinja2_path))
         device_dictionary = {
             'usb_label': 'SanDisk_Ultra',
@@ -195,7 +197,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
             'console_device': 'ttyfake1',
             'baud_rate': 56
         }
-        data = devicedictionary_to_jinja2(device_dictionary, 'cubietruck.yaml')
+        data = devicedictionary_to_jinja2(device_dictionary, 'cubietruck.jinja2')
         template = prepare_jinja_template('cubie', data, system_path=False, path=jinja2_path)
         device_configuration = template.render()
         yaml_data = yaml.load(device_configuration)
@@ -231,7 +233,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
             }
         )
 
-        data = devicedictionary_to_jinja2(device_dictionary, 'beaglebone-black.yaml')
+        data = devicedictionary_to_jinja2(device_dictionary, 'beaglebone-black.jinja2')
         template = prepare_jinja_template('bbb', data, system_path=False, path=jinja2_path)
         device_configuration = template.render()
         yaml_data = yaml.load(device_configuration)
@@ -246,7 +248,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
 
     def test_jinja_postgres_loader(self):
         # path used for the device_type template
-        jinja2_path = os.path.realpath(os.path.join(__file__, '..', '..', '..', 'etc', 'dispatcher-config'))
+        jinja2_path = jinja_template_path(system=False)
         self.assertTrue(os.path.exists(jinja2_path))
         device_type = 'cubietruck'
         # pretend this was already imported into the database and use for comparison later.
@@ -262,13 +264,13 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         cubie = DeviceDictionary(hostname='cubie')
         cubie.parameters = device_dictionary
         cubie.save()
-        jinja_data = devicedictionary_to_jinja2(cubie.parameters, '%s.yaml' % device_type)
-        dict_loader = jinja2.DictLoader({'cubie.yaml': jinja_data})
+        jinja_data = devicedictionary_to_jinja2(cubie.parameters, '%s.jinja2' % device_type)
+        dict_loader = jinja2.DictLoader({'cubie.jinja2': jinja_data})
         type_loader = jinja2.FileSystemLoader([os.path.join(jinja2_path, 'device-types')])
         env = jinja2.Environment(
             loader=jinja2.ChoiceLoader([dict_loader, type_loader]),
             trim_blocks=True)
-        template = env.get_template("%s.yaml" % 'cubie')
+        template = env.get_template("%s.jinja2" % 'cubie')
         device_configuration = template.render()
 
         chk_template = prepare_jinja_template('cubie', jinja_data, system_path=False, path=jinja2_path)
@@ -308,12 +310,13 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         The strings read in from config files can have indenting spaces, these
         are removed in the pprint.
         """
-        data = """{% extends 'vland.yaml' %}
+        data = """{% extends 'vland.jinja2' %}
 {% set interfaces = ['eth0', 'eth1'] %}
 {% set sysfs = {'eth0': '/sys/devices/pci0000:00/0000:00:19.0/net/eth0',
 'eth1': '/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1'} %}
 {% set mac_addr = {'eth0': 'f0:de:f1:46:8c:21', 'eth1': '00:24:d7:9b:c0:8c'} %}
 {% set tags = {'eth0': ['1G', '10G'], 'eth1': ['1G']} %}
+{% set map = {'eth0': {'192.168.0.2': 5}, 'eth1': {'192.168.0.2': 7}} %}
 """
         result = {
             'interfaces': ['eth0', 'eth1'],
@@ -321,7 +324,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
                 'eth1': '/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1',
                 'eth0': '/sys/devices/pci0000:00/0000:00:19.0/net/eth0'
             },
-            'extends': 'vland.yaml',
+            'extends': 'vland.jinja2',
             'mac_addr': {
                 'eth1': '00:24:d7:9b:c0:8c',
                 'eth0': 'f0:de:f1:46:8c:21'
@@ -329,12 +332,22 @@ class DeviceDictionaryTest(TestCaseWithFactory):
             'tags': {
                 'eth1': ['1G'],
                 'eth0': ['1G', '10G']
+            },
+            'map': {
+                'eth0': {
+                    '192.168.0.2': 5
+                },
+                'eth1': {
+                    '192.168.0.2': 7
+                }
             }
         }
         dictionary = jinja2_to_devicedictionary(data_dict=data)
         self.assertEqual(result, dictionary)
-        jinja2_str = devicedictionary_to_jinja2(data_dict=dictionary, extends='vland.yaml')
-        self.assertEqual(str(data), str(jinja2_str))
+        jinja2_str = devicedictionary_to_jinja2(data_dict=dictionary, extends='vland.jinja2')
+        # ordering within the dict can change but each line needs to still appear
+        for line in str(data).split('\n'):
+            self.assertIn(line, str(jinja2_str))
 
         # create a DeviceDictionary for this test
         vlan = DeviceDictionary(hostname='vlanned1')
@@ -342,10 +355,70 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         vlan.save()
         del vlan
         vlan = DeviceDictionary.get('vlanned1')
-        self.assertEqual(
-            str(data),
-            str(devicedictionary_to_jinja2(vlan.parameters, 'vland.yaml'))
-        )
+        cmp = str(devicedictionary_to_jinja2(vlan.parameters, 'vland.jinja2'))
+        for line in str(data).split('\n'):
+            self.assertIn(line, cmp)
+
+    def test_network_map(self):
+        """
+        Convert a device dictionary into the output suitable for XMLRPC
+        """
+        map_yaml = """
+switches:
+  '192.168.0.2':
+  - port: 5
+    device:
+      interface: eth0
+      sysfs: "/sys/devices/pci0000:00/0000:00:19.0/net/eth0"
+      mac: "f0:de:f1:46:8c:21"
+      hostname: bbb1
+  - port: 7
+    device:
+      interface: eth1
+      sysfs: "/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1"
+      mac: "00:24:d7:9b:c0:8c"
+      hostname: bbb1
+        """
+        device_dict = {
+            'interfaces': ['eth0', 'eth1'],
+            'sysfs': {
+                'eth1': '/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1',
+                'eth0': '/sys/devices/pci0000:00/0000:00:19.0/net/eth0'
+            },
+            'extends': 'vland.jinja2',
+            'mac_addr': {
+                'eth1': '00:24:d7:9b:c0:8c',
+                'eth0': 'f0:de:f1:46:8c:21'
+            },
+            'tags': {
+                'eth1': ['1G'],
+                'eth0': ['1G', '10G']
+            },
+            'map': {
+                'eth0': {
+                    '192.168.0.2': 5
+                },
+                'eth1': {
+                    '192.168.0.2': 7
+                }
+            }
+        }
+        chk_map = yaml.load(map_yaml)
+        if 'interfaces' not in device_dict:
+            self.fail("Not a vland device dictionary")
+        network_map = {}
+        port_list = []
+        for interface in device_dict['interfaces']:
+            for switch, port in device_dict['map'][interface].iteritems():
+                device = {
+                    'interface': interface,
+                    'mac': device_dict['mac_addr'][interface],
+                    'sysfs': device_dict['sysfs'][interface],
+                    'hostname': 'bbb1'
+                }
+                port_list.append({'port': port, 'device': device})
+                network_map['switches'] = {switch: port_list}
+        self.assertEqual(chk_map, network_map)
 
 
 class JobPipelineTest(TestCaseWithFactory):
@@ -361,3 +434,111 @@ class JobPipelineTest(TestCaseWithFactory):
         self.assertIsInstance(foo, DeviceDictionary)
         foo = DeviceDictionary.get('foo')
         self.assertIsNotNone(foo)
+
+
+class DeviceTypeTest(TestCaseWithFactory):
+    """
+    Test loading of device-type information
+    """
+    def test_device_type_parser(self):
+        jinja2_path = jinja_template_path(system=False)
+        self.assertTrue(os.path.exists(jinja2_path))
+        data = load_devicetype_template('beaglebone-black', system_path=False)
+        self.assertIsNotNone(data)
+        self.assertIn('actions', data)
+        self.assertIn('deploy', data['actions'])
+        self.assertIn('boot', data['actions'])
+
+    def test_device_type_templates(self):
+        """
+        Ensure each template renders valid YAML
+        """
+        jinja2_path = jinja_template_path(system=False)
+        for template_name in os.listdir(os.path.join(jinja2_path, 'device-types')):
+            if not template_name.endswith('jinja2'):
+                continue
+            type_loader = jinja2.FileSystemLoader([os.path.join(jinja2_path, 'device-types')])
+            env = jinja2.Environment(
+                loader=jinja2.ChoiceLoader([type_loader]),
+                trim_blocks=True)
+            try:
+                template = env.get_template(template_name)
+            except jinja2.TemplateNotFound as exc:
+                self.fail('%s: %s' % (template_name, exc))
+            data = None
+            try:
+                data = template.render()
+                yaml_data = yaml.load(data)
+            except yaml.YAMLError as exc:
+                print data  # for easier debugging - use the online yaml parser
+                self.fail("%s: %s" % (template_name, exc))
+            self.assertIsInstance(yaml_data, dict)
+
+
+class TestTemplates(TestCaseWithFactory):
+
+    # When adding or modifying a jinja2 template, add or update the test here.
+    # Use realistic data.
+
+    debug = False  # set to True to see the YAML device config output
+
+    def validate_data(self, hostname, data):
+        test_template = prepare_jinja_template(hostname, data, system_path=False)
+        rendered = test_template.render()
+        if self.debug:
+            print('#######')
+            print(rendered)
+            print('#######')
+        try:
+            ret = validate_device(yaml.load(rendered))
+        except SubmissionException as exc:
+            print('#######')
+            print(rendered)
+            print('#######')
+            self.fail(exc)
+        return ret
+
+    def test_nexus10_template(self):
+        self.assertTrue(self.validate_data('staging-nexus10-01', """{% extends 'nexus10.jinja2' %}
+{% set adb_serial_number = 'R32D300FRYP' %}
+{% set soft_reboot_command = 'adb -s R32D300FRYP reboot bootloader' %}
+{% set connection_command = 'adb -s R32D300FRYP shell' %}"""))
+
+    def test_x86_template(self):
+        self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'x86.jinja2' %}
+{% set power_off_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command off' %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command reboot' %}
+{% set power_on_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command on' %}
+{% set connection_command = 'telnet localhost 7302' %}"""))
+
+    def test_beaglebone_black_template(self):
+        self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'beaglebone-black.jinja2' %}
+{% set map = {'eth0': {'lngswitch03': 19}, 'eth1': {'lngswitch03': 8}} %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --hostname lngpdu01 --command reboot --port 19' %}
+{% set tags = {'eth0': ['1G', '100M'], 'eth1': ['100M']} %}
+{% set interfaces = ['eth0', 'eth1'] %}
+{% set sysfs = {'eth0': '/sys/devices/platform/ocp/4a100000.ethernet/net/eth0',
+'eth1': '/sys/devices/platform/ocp/47400000.usb/47401c00.usb/musb-hdrc.1.auto/usb1/1-1/1-1:1.0/net/eth1'} %}
+{% set power_off_command = '/usr/bin/pduclient --daemon localhost --hostname lngpdu01 --command off --port 19' %}
+{% set mac_addr = {'eth0': '90:59:af:5e:69:fd', 'eth1': '00:e0:4c:53:44:58'} %}
+{% set power_on_command = '/usr/bin/pduclient --daemon localhost --hostname lngpdu01 --command on --port 19' %}
+{% set connection_command = 'telnet localhost 7333' %}
+{% set exclusive = 'True' %}"""))
+
+    def test_qemu_template(self):
+        self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'qemu.jinja2' %}
+{% set exclusive = 'True' %}
+{% set mac_addr = 'DE:AD:BE:EF:28:01' %}
+{% set memory = 512 %}"""))
+
+    def test_mustang_template(self):
+        self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'mustang.jinja2' %}
+{% set connection_command = 'telnet serial4 7012' %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command reboot --port 05' %}
+{% set power_off_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command off --port 05' %}
+{% set power_on_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command on --port 05' %}"""))
+
+    def test_hikey_template(self):
+        with open(os.path.join(os.path.dirname(__file__), 'devices', 'hi6220-hikey-01.jinja2')) as hikey:
+            data = hikey.read()
+        self.assertTrue(self.validate_data('hi6220-hikey-01', data))

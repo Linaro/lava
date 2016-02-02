@@ -1,0 +1,143 @@
+device_type: beaglebone-black
+
+parameters:
+  bootm:
+   kernel: '0x80200000'
+   ramdisk: '0x81600000'
+   dtb: '0x815f0000'
+  bootz:
+   kernel: '0x81000000'
+   ramdisk: '0x82000000'
+   dtb: '0x81f00000'
+  media:
+    usb:
+      SanDisk_Ultra:
+        uuid: usb-SanDisk_Ultra_20060775320F43006019-0:0
+        boot_part: 0:1
+  interfaces:
+    eth0: # fake values just for the vland unit test
+      sysfs: "/sys/devices/pci0000:00/0000:00:19.0/net/eth0"
+      mac: "f0:de:f1:46:8c:21"
+      switch: 192.168.0.1
+      port: 5
+      tags:
+      - 1G
+    eth1:
+      sysfs: "/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1"
+      mac: "00:24:d7:9b:c0:8c"
+      tags:
+      - 1G
+      switch: 192.168.0.1
+      port: 7
+commands:
+  connect: telnet localhost 6000
+  hard_reset: /usr/bin/pduclient --daemon localhost --hostname pdu --command reboot --port 08
+  power_off: /usr/bin/pduclient --daemon localhost --hostname pdu --command off --port 08
+  power_on: /usr/bin/pduclient --daemon localhost --hostname pdu --command on --port 08
+
+
+actions:
+  deploy:
+    methods:
+      tftp:
+      usb:
+      ssh:
+        options:
+          - '-o'
+          - 'Compression=yes'
+          - '-o'
+          - 'UserKnownHostsFile=/dev/null'
+          - '-o'
+          - 'PasswordAuthentication=no'
+          - '-o'
+          - 'StrictHostKeyChecking=no'
+          - '-o'
+          - 'LogLevel=FATAL'
+          - '-l'
+          - 'root '
+          - '-p'
+          - '22'
+        host: 172.16.200.165
+        identity_file: device/dynamic_vm_keys/lava
+  boot:
+    connections:
+      serial:
+      ssh:
+    methods:
+      kexec:
+      ssh:
+      u-boot:
+        parameters:
+          bootloader_prompt: U-Boot
+          boot_message: Booting Linux
+          send_char: False
+          mkimage_arch: arm # string to pass to mkimage -A when adding UBoot headers
+          # interrupt: # character needed to interrupt u-boot, single whitespace by default
+          # method specific stanza
+        oe:
+          commands:
+          - setenv autoload no
+          - setenv initrd_high '0xffffffff'
+          - setenv fdt_high '0xffffffff'
+          - setenv bootcmd 'fatload mmc 0:3 0x80200000 uImage; fatload mmc 0:3 0x815f0000 board.dtb;
+            bootm 0x80200000 - 0x815f0000'
+          - setenv bootargs 'console=ttyO0,115200n8 root=/dev/mmcblk0p5 rootwait ro'
+          - boot
+        master:
+          commands:
+          - setenv autoload no
+          - setenv initrd_high '0xffffffff'
+          - setenv fdt_high '0xffffffff'
+          - setenv bootcmd 'fatload mmc 0:3 0x80200000 uImage; fatload mmc 0:3 0x81600000 uInitrd;
+             fatload mmc 0:3 0x815f0000 board.dtb; bootm 0x80200000 0x81600000 0x815f0000'
+          - setenv bootargs 'console=ttyO0,115200n8 root=LABEL=testrootfs rootwait ro'
+          - boot
+        nfs:
+          commands:
+          - setenv autoload no
+          - setenv initrd_high '0xffffffff'
+          - setenv fdt_high '0xffffffff'
+          - setenv kernel_addr_r '{KERNEL_ADDR}'
+          - setenv initrd_addr_r '{RAMDISK_ADDR}'
+          - setenv fdt_addr_r '{DTB_ADDR}'
+          - setenv loadkernel 'tftp ${kernel_addr_r} {KERNEL}'
+          - setenv loadinitrd 'tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'
+          # Always quote the entire string if the command includes a colon to support correct YAML.
+          - "setenv nfsargs 'setenv bootargs console=ttyO0,115200n8 root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp'"
+          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
+          - boot
+        ramdisk:
+          commands:
+          - setenv autoload no
+          - setenv initrd_high '0xffffffff'
+          - setenv fdt_high '0xffffffff'
+          - setenv kernel_addr_r '{KERNEL_ADDR}'
+          - setenv initrd_addr_r '{RAMDISK_ADDR}'
+          - setenv fdt_addr_r '{DTB_ADDR}'
+          - setenv loadkernel 'tftp ${kernel_addr_r} {KERNEL}'
+          - setenv loadinitrd 'tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'
+          - setenv bootargs 'console=ttyO0,115200n8 root=/dev/ram0 ip=dhcp'
+          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+          - boot
+        usb:
+          commands:
+          - usb start
+          - usb info
+          - setenv autoload no
+          - setenv initrd_high '0xffffffff'
+          - setenv fdt_high '0xffffffff'
+          - setenv kernel_addr_r '{KERNEL_ADDR}'
+          - setenv initrd_addr_r '{RAMDISK_ADDR}'
+          - setenv fdt_addr_r '{DTB_ADDR}'
+          - setenv loadkernel 'load usb 0:{ROOT_PART} ${kernel_addr_r} {KERNEL}'
+          - setenv loadinitrd 'load usb 0:{ROOT_PART} ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'load usb 0:{ROOT_PART} ${fdt_addr_r} {DTB}'
+          - setenv bootargs 'console=ttyO0,115200n8 root={ROOT} ip=dhcp'
+          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+          - boot
+
+timeouts:
+  call-kexec:
+    seconds: 45

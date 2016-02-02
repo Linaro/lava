@@ -250,7 +250,7 @@ def select_device(job, dispatchers):
             device_config = device.load_device_configuration(job_ctx)  # raw dict
         except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
             logger.error("[%d] jinja2 error: %s" % (job.id, exc))
-            msg = "Administrative error. Unable to parse '%s'" % exc
+            msg = "Administrative error. Unable to parse device configuration: '%s'" % exc
             fail_job(job, fail_msg=msg)
             return None
         if not device_config or type(device_config) is not dict:
@@ -264,6 +264,12 @@ def select_device(job, dispatchers):
         if not device.worker_host or not device.worker_host.hostname:
             msg = "Administrative error. Device '%s' has no worker host." % device.hostname
             logger.error('[%d] worker host error: %s', job.id, msg)
+            fail_job(job, fail_msg=msg)
+            return None
+        if not device.worker_host.display:
+            # a configured worker has been disabled by the master admin
+            msg = """Administrative error. Device '{0}' has a worker_host which has been disabled.""".format(device.hostname)
+            logger.error('[%d] worker-hostname error: %s', job.id, msg)
             fail_job(job, fail_msg=msg)
             return None
         if device.worker_host.hostname not in dispatchers:

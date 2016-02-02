@@ -21,7 +21,7 @@ from lava_server.extension import DeprecatedExtension
 
 class ProjectExtension(DeprecatedExtension):
     """
-    This has been deprecated but is just in place for south database migrations
+    This has been deprecated but is just in place for django database migrations
     """
 
     @property

@@ -250,7 +250,7 @@ class DashboardAPI(ExposedAPI):
         bundle = self._put(content, content_filename, pathname)
         self.logger.debug("Returning permalink to bundle")
         return self._context.request.build_absolute_uri(
-            reverse('dashboard_app.views.redirect_to_bundle',
+            reverse('lava_dashboard_redirect_to_bundle',
                     kwargs={'content_sha1': bundle.content_sha1}))
 
     def put_pending(self, content, pathname, group_name):
@@ -429,7 +429,7 @@ class DashboardAPI(ExposedAPI):
         bundle = self._put(group_content, content_filename, pathname)
         self.logger.debug("Returning permalink to aggregated bundle for %s", group_name)
         permalink = self._context.request.build_absolute_uri(
-            reverse('dashboard_app.views.redirect_to_bundle',
+            reverse('lava_dashboard_redirect_to_bundle',
                     kwargs={'content_sha1': bundle.content_sha1}))
         # only delete the group file when things go well.
         if os.path.isfile(grp_file):

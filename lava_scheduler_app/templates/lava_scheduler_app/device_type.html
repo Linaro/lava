@@ -1,6 +1,6 @@
 {% extends "layouts/content-bootstrap.html" %}
 {% load django_tables2 %}
-
+{% load utils %}
 {% block content %}
 
 {% if device_type.owners_only %}
@@ -20,13 +20,23 @@
     Consider adding a <a href="{{ STATIC_URL }}docs/healthchecks.html#health-checks">health check definition</a>.
   </div>
 {% endif %}
-
-  <h2><i>{{ device_type }}</i> information
+<div>
   {% if user.is_authenticated and user.is_superuser %}
     <a href="{% url 'admin:lava_scheduler_app_devicetype_change' device_type %}" class="btn btn-xs btn-danger" title="Admin this device type - {{ device_type.name }}">
       <span class="glyphicon glyphicon-wrench"></span> Admin this type
     </a>
   {% endif %}
+</div>
+<ul class="nav nav-tabs">
+  <li><a href="#information" data-toggle="tab">Information</a></li>
+  <li><a href="#status" data-toggle="tab">Status</a></li>
+{% if device_type|deploy_methods:'deploy' %}
+  <li><a href="#support" data-toggle="tab">Support</a></li>
+{% endif %}
+</ul>
+<div class="tab-content">
+  <div class="tab-pane" id="information">
+      <h2><i>{{ device_type }}</i> information
   </h2>
     <div class="row">
     <h4 class="modal-header">Metadata</h4>
@@ -51,6 +61,8 @@
         </dl>
     </div>
     </div>
+    </div>
+  <div class="tab-pane active" id="status">
 <h2><i>{{device_type}}</i> status</h2>
 
 <div class="row">
@@ -81,6 +93,48 @@
 {% endif %}
   </dl>
   </div>
+</div>
+</div>
+
+{% if device_type|deploy_methods:'deploy' %}
+<div class="tab-pane" id="support">
+<h2><i>{{ device_type }}</i> pipeline template
+    <a
+        class="btn btn-xs btn-info" href="{% url 'lava_scheduler_download_device_type_yaml' device_type %}"
+        title="Download template as YAML file"><span class="glyphicon glyphicon-download"></span> download</a>
+</h2>
+<p>The device-type template needs to be overridden by the device dictionary of each device of this type
+    and is <b>not</b> a valid template for an individual device of this type.</p>
+<div class="row">
+    <div class="col-md-6">
+    <h4 class="modal-header"><i>{{ device_type }}</i> methods</h4>
+        <p>Not all methods may be available on all devices.</p>
+        <dl class="dl-horizontal">
+            <dt>Deployment</dt>
+            <dd>{{ device_type|deploy_methods:'deploy'|join:", " }}</dd>
+            <dt>Boot</dt>
+            <dd>{{ device_type|deploy_methods:'boot'|join:", " }}</dd>
+        </dl>
+    </div>
+    <div class="col-md-6">
+    <h4 class="modal-header">Default <i>{{ device_type }}</i> timeouts</h4>
+    <p>Classes named in the default timeouts can be part of the pipeline
+        description which is available from a test job definition, depending
+        on the deployment or boot methods used by that job. </p>
+        {% device_type_timeouts device_type as timeout_data %}
+          <ul>
+              {% for timeout_type, action_data in timeout_data.items %}
+              <li><b>{{ timeout_type }}</b>
+              {% for key, value in action_data.items %}
+                  <ul><li>{{ key }}: {{ value.seconds }} seconds</li></ul>
+              {% endfor %}
+              </li>
+              {% endfor %}
+          </ul>
+    </div>
+</div>
+</div>
+{% endif %}
 </div>
 
 <h4 class="modal-header">Devices list</h4>

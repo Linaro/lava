@@ -1,0 +1,10 @@
+{% extends 'hi6220-hikey.jinja2' %}
+{% set adb_serial_number = '0123456789' %}
+{% set fastboot_serial_number = 'usb:2-1.2' %}
+{% set connection_command = 'telnet 192.168.1.200 8001' %}
+{% set hard_reset_command = '/home/stylesen/work/pdu/pdu-control-reset.sh 0 5 1 5' %}
+{% set soft_reset_command = 'fastboot -s usb:2-1.2 reboot' %}
+{% set power_on_command = '/home/stylesen/work/pdu/pdu-control-on.sh 5' %}
+{% set power_off_command = '/home/stylesen/work/pdu/pdu-control-off.sh 5' %}
+{% set adb_command = 'adb -s 0123456789' %}
+{% set fastboot_command = 'fastboot -s usb:2-1.2' %}

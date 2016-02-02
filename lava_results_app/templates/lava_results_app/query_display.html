@@ -15,6 +15,8 @@
   {% endif %}
   <small><a href="{% url 'lava_results_app.views.query.views.query_custom' %}?entity={{ entity }}&conditions={{ conditions }}" class="btn btn-xs btn-success"><span class="glyphicon glyphicon-link"></span> This query by URL</a></small>
   <small><a href="{% url 'lava_results_app.views.query.views.query_export'  query.owner.username query.name %}" class="btn btn-xs btn-primary"><span class="glyphicon glyphicon-export"></span> Export as CSV</a></small>
+  <small><a href="{% url 'lava_results_app.views.chart.views.chart_custom' %}?entity={{ entity }}&conditions={{ conditions }}&type=pass/fail" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-align-left"></span> View Chart</a></small>
+  <small><a href="{% url 'lava_results_app.views.chart.views.chart_add' %}?query_id={{ query.id }}" class="btn btn-xs btn-primary"><span class="glyphicon glyphicon-plus"></span> Create New Chart</a></small>
 </h2>
 <h4>Last updated: {% if query.is_live %} Live query{% else %}{{ query.last_updated | default:"Never" }}{% endif %}</h4>
 

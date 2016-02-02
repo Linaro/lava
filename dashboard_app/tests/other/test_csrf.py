@@ -23,7 +23,7 @@ import xmlrpclib
 
 import django
 from django import forms
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.template import Template, RequestContext
@@ -37,7 +37,7 @@ class CSRFConfigurationTestCase(CSRFTestCase):
     @property
     def urls(self):
         urlpatterns = urls.urlpatterns
-        urlpatterns += patterns('', url(r'^test-form/', test_form))
+        urlpatterns.append(url(r'^test-form/', test_form))
         return type('urls', (), dict(urlpatterns=urlpatterns))
 
     def setUp(self):

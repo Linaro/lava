@@ -6,23 +6,23 @@ Debian-based distributions
 These instructions cover Debian and all distributions based upon Debian,
 including Ubuntu. The supported versions of Debian and Ubuntu are:
 
-+---------------+------------------------+--------+---------------+
-| Distribution  | Codename               | Number | Support       |
-+===============+========================+========+===============+
-| Debian        | experimental           | n/a    | Yes [#f1]_    |
-+---------------+------------------------+--------+---------------+
-| Debian        | sid                    | n/a    | Yes           |
-+---------------+------------------------+--------+---------------+
-| Debian        | stretch                | n/a    | [#f2]_        |
-+---------------+------------------------+--------+---------------+
-| Debian        | jessie                 | 8.0    | Yes [#f3]_    |
-+---------------+------------------------+--------+---------------+
-| Ubuntu        | vivid vervet (& later) | 15.04  | Yes [#f4]_    |
-+---------------+------------------------+--------+---------------+
-| Ubuntu        | utopic unicorn         | 14.10  | Yes [#f5]_    |
-+---------------+------------------------+--------+---------------+
-| Ubuntu        | trusty tahr LTS        | 14.04  | **No** [#f6]_ |
-+---------------+------------------------+--------+---------------+
++---------------+------------------------+--------+----------------------+
+| Distribution  | Codename               | Number | Support              |
++===============+========================+========+======================+
+| Debian        | experimental           | n/a    | Yes [#f1]_           |
++---------------+------------------------+--------+----------------------+
+| Debian        | sid                    | n/a    | Yes                  |
++---------------+------------------------+--------+----------------------+
+| Debian        | stretch                | n/a    | [#f2]_               |
++---------------+------------------------+--------+----------------------+
+| Debian        | jessie                 | 8.0    | Yes [#f3]_           |
++---------------+------------------------+--------+----------------------+
+| Ubuntu        | vivid vervet (& later) | 15.04  | Yes [#f4]_           |
++---------------+------------------------+--------+----------------------+
+| Ubuntu        | utopic unicorn         | 14.10  | **No** [#f5]_ [#f6]_ |
++---------------+------------------------+--------+----------------------+
+| Ubuntu        | trusty tahr LTS        | 14.04  | **No** [#f5]_ [#f6]_ |
++---------------+------------------------+--------+----------------------+
 
 Debian uses names for `suites`_ (unstable, testing, stable & oldstable)
 but the content of all suites except unstable will change codename once
@@ -54,10 +54,11 @@ See :ref:`ubuntu_install`
          makes a release, the LAVA packages in that release do not
          receive updates.
 .. [#f5] To install on Ubuntu, ensure the universe_ repository is enabled.
-
-.. [#f6] Support for ``lava-server`` on Ubuntu Trusty 14.04LTS stopped at
-         2015.9.post1. See :ref:`trusty_tahr_install`. Support for
-         ``lava-dispatcher`` on Ubuntu Trusty 14.04LTS stopped at 2015.9.
+.. [#f6] Support for ``lava-server`` on Ubuntu Trusty 14.04LTS and
+         Ubuntu Utopic 14.10 stopped at 2015.9.post1. Support for
+         ``lava-dispatcher`` on Ubuntu Trusty 14.04LTS and Ubuntu
+         Utopic 14.10 stopped at 2015.9. See
+         :ref:`trusty_tahr_install` or :ref:`utopic_unicorn_install`.
 
 .. _experimental: https://wiki.debian.org/DebianExperimental
 
@@ -102,6 +103,14 @@ Jessie, Stretch or Sid.
 The :file:`services-trace.txt` file in the repository shows the latest
 update timestamp and is accompanied by a GnuPG signature of the trace
 file, signed using the :ref:`lava_archive_signing_key`.
+
+Interim builds (including release candidates) are available in the
+staging repository::
+
+ deb http:://images.validation.linaro.org/staging-repo sid main
+
+This repository uses the same key as the production repository and
+uses ``sid`` in the same way.
 
 .. _production_releases:
 
@@ -347,6 +356,17 @@ Ubuntu Trusty Tahr 14.04 LTS
    2015.9.post1 for ``lava-server`` and 2015.9 for ``lava-dispatcher``.
    **No** further updates will be made for Trusty and no new installs
    (master or remote worker) should be made on Trusty.
+
+.. _utopic_unicorn_install:
+
+Ubuntu Utopic Unicorn 14.10
+---------------------------
+
+.. warning:: Support for Ubuntu Utopic 14.10 was **frozen** at
+             2015.9.post1 for ``lava-server`` and 2015.9 for
+             ``lava-dispatcher``. **No** further updates will be made
+             for Utopic and no new installs (master or remote worker)
+             should be made on Utopic.
 
 Setting up a reverse proxy
 ==========================

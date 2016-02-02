@@ -56,15 +56,23 @@ class RestrictedIDLinkColumn(IDLinkColumn):
 
 def pklink(record):
     job_id = record.pk
-    try:
-        if record.sub_id:
+    complete = ''
+    button = ''
+    suffix = ''
+    if isinstance(record, TestJob):
+        if record.is_pipeline:
+            suffix = 'complete_log?debug=on#bottom'
+        elif record.sub_jobs_list:
             job_id = record.sub_id
-    except:
-        pass
+            suffix = 'log_file#bottom'
+        else:
+            suffix = 'log_file#bottom'
+        complete = '<a class="btn btn-xs btn-primary pull-right" title="end of complete log" href="%s/%s">' % (record.get_absolute_url(), suffix)
+        button = '<span class="glyphicon glyphicon-fast-forward"></span></a>'
     return mark_safe(
-        '<a href="%s">%s</a>' % (
+        '<a href="%s" title="job summary">%s</a>&nbsp;%s%s' % (
             record.get_absolute_url(),
-            escape(job_id)))
+            escape(job_id), complete, button))
 
 
 class ExpandedStatusColumn(tables.Column):

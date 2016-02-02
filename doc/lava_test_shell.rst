@@ -117,12 +117,6 @@ utilities are available:
  * ``lava-background-process-start``
  * ``lava-background-process-stop``
 
-You need to use ``lava-test-case`` (specifically, ``lava-test-case
---shell``) when you are working with `hooks, signals and external
-measurement`_.
-
-.. _`hooks, signals and external measurement`: external_measurement.html
-
 lava-test-case
 --------------
 
@@ -222,12 +216,12 @@ execution was a fail::
 #. **echo2** - pass
 #. **test2b** - fail
 
-The --shell form also sends the start test case and end test case
-signals that are described in `hooks, signals and external
-measurement`_.
-
 lava-test-case-attach
 ---------------------
+
+.. caution:: ``lava-test-case-attach`` is retained with the
+   dispatcher refactoring but the effect of the script needs
+   consideration by the test writer. See :ref:`test_attach`.
 
 This attaches a file to a test result with a particular ID, for example::
 
@@ -245,6 +239,10 @@ The arguments are:
 
 lava-test-run-attach
 --------------------
+
+.. caution:: ``lava-test-run-attach`` is retained with the
+   dispatcher refactoring but the effect of the script needs
+   consideration by the test writer. See :ref:`test_attach`.
 
 This attaches a file to the overall test run that lava-test-shell is
 currently executing, for example::
@@ -278,6 +276,8 @@ The arguments are:
     lava-background-process-stop
  2. The process to be run in the background
 
+See :ref:`test_attach`.
+
 lava-background-process-stop
 -----------------------------
 
@@ -295,11 +295,34 @@ For example::
 The arguments are:
 
  1. Name that was specified in lava-background-process-start
- 2. (optional) Indicate if you want to attach file(s) the test run with specified mime type
+ 2. (optional) Indicate if you want to attach file(s) the test run
+    with specified mime type. See :ref:`test_attach`.
+
+.. _test_attach:
+
+Handling test attachments
+=========================
+
+The deprecated dispatcher support for test attachments depends on the
+deprecated bundle and :term:`bundle stream` support - the scripts
+available in lava-test shell do not actually attach the requested files,
+just copy the files to a hard-coded directory where the bundle
+processing code expects to find data to put into the bundle. This
+relies on the device being booted into an environment with a working
+network connection - what was called the master image.
+
+In the pipeline support, master images and bundles have been removed. This
+puts the handling of attachments into the control of the test writer. An
+equivalent method would be to simply add another deploy and boot action
+to get into an environment where the network connection is known to work,
+however the eventual location of the file needs to be managed by the
+test writer. An alternative method for text based data is simply to
+output the contents into the log file. (Individual parts of the log
+file can be downloaded separately.)
 
 .. _handling_dependencies:
 
-Handling Dependencies (Ubuntu)
+Handling Dependencies (Debian)
 ==============================
 
 If your test requires some packages to be installed before its run it can
@@ -367,91 +390,11 @@ All the above parameters within the `git-repos` section could be
 controlled from the JSON job file. See the following JSON job
 definition and YAML test definition to get an understanding of how it works.
 
-* JSON job definition - https://git.linaro.org/people/senthil.kumaran/job-definitions.git/blob/HEAD:/kvm-git-params-custom.json
+.. * JSON job definition - https://git.linaro.org/people/senthil.kumaran/job-definitions.git/blob/HEAD:/kvm-git-params-custom.json
+
 * YAML test definition - https://git.linaro.org/people/senthil.kumaran/test-definitions.git/blob/HEAD:/debian/git-params-controlled.yaml
 
-default parameters
-==================
-
-The "params" section is optional. If your test definition file includes
-shell variables in "install" and "run" sections, you can use a ``params``
-section to set the default parameters for those variables.
-
-The format should be like this::
-
-    params:
-      VARIABLE_NAME_1: value_1
-      VARIABLE_NAME_2: value_2
-
-    run:
-        steps:
-        - echo $VARIABLE_NAME_1
-
-
-The JSON would override these defaults using the syntax::
-
-        {
-            "command": "lava_test_shell",
-            "parameters": {
-                "testdef_repos": [
-                    {
-                        "git-repo": "https://git.linaro.org/people/neil.williams/temp-functional-tests.git",
-                        "testdef": "params.yaml",
-                        "parameters": {"VARIABLE_NAME_1": "eth2"}
-                    }
-                ],
-                "timeout": 900
-            }
-        }
-
-Always set default values for all variables in the test definition file to
-allow for missing values in the JSON file. In the example above, ``$VARIABLE_NAME_2``
-is not defined in the JSON snippet, so the default would be used.
-
-.. note:: The format of default parameters in yaml file is below, please note that
-          there is **not** a hyphen at the start of the line and **not** quotes
-          around either the variable name or the variable value::
-
-            VARIABLE_NAME_1: value_1
-
-.. note:: The code which implements this parameter function will put variable
-          name and value at the head of test shell script like below::
-
-            VARIABLE_NAME_1='value_1'
-
-.. note:: Be mindful when using booleans as parameters. PyYAML converts such parameters
-          into 'True' or 'False' regardless of the original case::
-
-            VARIABLE_NAME_1: true
-            $VARIABLE_NAME_1 == True
-
-So please make sure you didn't put any special character(like single quote) into value or
-variable name. But Spaces and double quotes can be included in value.
-Because we use two single quote marks around value strings, if you put any variable into
-value strings, that will **not** be expanded.
-
-
-Examples:
-
-http://git.linaro.org/people/neil.williams/temp-functional-tests.git/blob/HEAD:/kvm-parameters.json
-
-http://git.linaro.org/people/neil.williams/temp-functional-tests.git/blob/HEAD:/params.yaml
-
-.. _install_steps:
-
-other parameters
-================
-
-LAVA adds other parameters which could be accessed within the
-lava-test-shell test definition. Currently the following params are
-available automatically::
-
-* LAVA_SERVER_IP
-* TARGET_TYPE
-
-Example:
-
-https://git.linaro.org/people/senthil.kumaran/test-definitions.git/blob/HEAD:/debian/other-params.yaml
+.. TODO: parameter support.
 
 Install Steps
 =============

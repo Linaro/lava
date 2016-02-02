@@ -22,7 +22,7 @@ Unit tests of the TestClient support class
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.test import TestCase
-
+from django.test.utils import override_settings
 from dashboard_app.tests.utils import TestClient
 
 
@@ -35,15 +35,14 @@ def auth_test(request):
 
 
 class local_urls:
-    from django.conf.urls import patterns, url
-    urlpatterns = patterns('', url(r'^auth-test/$', auth_test))
+    from django.conf.urls import url
+    urlpatterns = [url(r'^auth-test/$', auth_test)]
 
 
+@override_settings(ROOT_URLCONF=local_urls)
 class TestClientTest(TestCase):
 
     _USER = "user"
-
-    urls = local_urls
 
     def setUp(self):
         super(TestClientTest, self).setUp()

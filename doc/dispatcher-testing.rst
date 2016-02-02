@@ -296,17 +296,7 @@ Sample pipeline description output
   - - '4'
     - content:
         level: '4'
-        name: submit_results
-        parameters:
-          parameters: {stream: /anonymous/codehelp/, yaml_line: 44}
-        summary: submit_results
-        valid: true
-      description: null
-      summary: submit_results
-  - - '5'
-    - content:
         description: finish the process and cleanup
-        level: '5'
         name: finalize
         parameters:
           parameters: {}
@@ -678,8 +668,8 @@ device** as the selection function is a ``classmethod``.
 
 A test Job will consist of multiple strategies, one for each of the
 listed *actions* in the YAML file. Typically, this may include a
-Deployment strategy, a Boot strategy, a Test strategy and a Submit
-strategy. Jobs can have multiple deployment, boot, or test actions.
+Deployment strategy, a Boot strategy and a Test strategy.
+Jobs can have multiple deployment, boot, or test actions.
 Strategies add top level Actions to the main pipeline in the order
 specified by the parser. For the parser to select the new strategy,
 the ``strategies.py`` module for the relevant type of action

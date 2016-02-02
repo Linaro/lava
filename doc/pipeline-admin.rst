@@ -207,7 +207,7 @@ not have access, ask the admins for an export of the dictionary - a helper
 for this step will be available in time.)::
 
  $ lava-server manage device-dictionary --hostname black01 --export
- {% extends 'beaglebone-black.yaml' %}
+ {% extends 'beaglebone-black.jinja2' %}
  {% set ssh_host = '172.16.200.165' %}
  {% set connection_command = 'telnet localhost 6000' %}
 
@@ -216,9 +216,9 @@ for this step will be available in time.)::
    setting. There is no mention of the hostname within the exported
    dictionary.
 
-Now modify the dictionary (jinja2 format) to set the values required::
+Now modify the dictionary (`Jinja2 child template`_ format) to set the values required::
 
- {% extends 'beaglebone-black.yaml' %}
+ {% extends 'beaglebone-black.jinja2' %}
  {% set power_off_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 04' %}
  {% set hard_reset_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 04' %}
  {% set connection_command = 'telnet playgroundmaster 7018' %}
@@ -230,6 +230,8 @@ Now modify the dictionary (jinja2 format) to set the values required::
    change or the existing settings will be lost. LAVA does not preserve history
    of a device dictionary, it is recommended that the files used to create the
    dictionaries are kept under version control.
+
+.. _Jinja2 child template: http://jinja.pocoo.org/docs/dev/templates/#child-template
 
 .. _viewing_device_dictionary_content:
 

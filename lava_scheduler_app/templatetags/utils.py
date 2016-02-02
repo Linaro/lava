@@ -13,6 +13,7 @@ from lava_scheduler_app.models import (
     JobPipeline,
     PipelineStore,
 )
+from lava_scheduler_app.utils import load_devicetype_template
 
 
 register = template.Library()
@@ -174,6 +175,25 @@ def dump_exception(entry):
     if 'debug' in entry:
         data.append(entry['debug'])
     return yaml.dump(data)
+
+
+@register.filter()
+def deploy_methods(device_type, methods):
+    data = load_devicetype_template(device_type)
+    if not data or 'actions' not in data or methods not in data['actions']:
+        return None
+    methods = data['actions'][methods]['methods']
+    if isinstance(methods, dict):
+        return methods.keys()
+    return [methods]
+
+
+@register.assignment_tag()
+def device_type_timeouts(device_type):
+    data = load_devicetype_template(device_type)
+    if not data or 'timeouts' not in data:
+        return None
+    return data['timeouts']
 
 
 @register.filter()

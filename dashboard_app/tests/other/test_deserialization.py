@@ -19,6 +19,7 @@
 """
 Unit tests of the Dashboard application
 """
+import django
 import datetime
 import decimal
 
@@ -76,7 +77,12 @@ class TestHelper(object):
         return value
 
     def getUniqueStringForField(self, model, field_name):
-        return self.getUniqueString(max_length=model._meta.get_field_by_name(field_name)[0].max_length)
+        if django.VERSION > (1, 8):
+            field = [field for field in model._meta.get_fields()
+                     if field.name == field_name][0]
+            return self.getUniqueString(max_length=field.max_length)
+        else:
+            return self.getUniqueString(max_length=model._meta.get_field_by_name(field_name)[0].max_length)
 
 
 class BundleFormatImporter_1_1Tests(TestHelper, TestCaseWithScenarios):

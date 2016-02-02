@@ -1,3 +1,5 @@
+.. _setting_up_pipeline_instance:
+
 Setting up a LAVA pipeline instance
 ###################################
 
@@ -5,7 +7,7 @@ Initial considerations
 ======================
 
 #. The default setup of the LAVA packages and codebase is for the current
-   dispatcher and :ref:`distributed_deployment`.
+   dispatcher and :ref:`distributed_deployment` but this will change in 2016.
 #. A LAVA pipeline instance can have existing remote worker support
    alongside but uses a completely different mechanism to identify
    remote workers and run jobs on pipeline devices.
@@ -19,9 +21,10 @@ Initial considerations
    to allow pipeline submissions to devices connected to ``http://localhost``
    is to have pipeline devices available.
 #. Distributed deployments need changes on each worker, see
-   :ref:`changing_existing_workers`.
-#. Helpers will be developed in due course but currently, pipeline
-   setup is principally a manual task for admins.
+   :ref:`changing_existing_workers` but this can be avoided if all
+   devices on the instance are suitable for the pipeline.
+#. Guides will be addedin due course but pipeline setup is a much simplified
+   manual task for admins.
 #. If only pipeline devices are to be supported, the dispatchers
    running ``lava-slave`` do **not** need to have the ``lava-server``
    package installed. Each dispatcher does need to be able to connect
@@ -39,6 +42,8 @@ Initial considerations
    the relevant ports are open for outgoing traffic. i.e. the slave pulls
    from the master, the master cannot push to the slave.
 
+.. _installing_pipeline_worker:
+
 Detailed changes
 ================
 
@@ -48,7 +53,8 @@ which will actually be running the jobs are termed ``lava-slave``
 machines.
 
 If this slave has no devices which will be used by the current
-dispatcher, only by the pipeline, just install ``lava-dispatcher``::
+dispatcher, only by the pipeline, i.e. :term:`exclusive` devices,
+only ``lava-dispatcher`` needs to be installed, not ``lava-server``::
 
  $ sudo apt install lava-dispatcher
 
@@ -88,6 +94,46 @@ device. The slave is responsible for ensuring that these ports are only
 visible to that slave. There is no need for any connections to be visible
 to the master.
 
+.. _adding_pipeline_workers:
+
+Adding pipeline workers to the master
+=====================================
+
+A worker which only has :term:`exclusive` pipeline devices attached can be installed as a
+:ref:`pipeline worker <installing_pipeline_worker>`. These workers need to be manually
+added to the master so that the admins of the master have the ability to assign devices
+in the database and enable or disable the worker.
+
+To add a new pipeline worker::
+
+ $ sudo lava-server manage pipeline-worker --hostname <HOSTNAME>
+
+To add a pipeline worker with a description::
+
+ $ sudo lava-server manage pipeline-worker --hostname <HOSTNAME> --description <DESC>
+
+To add a pipeline worker in a disabled state::
+
+ $ sudo lava-server manage pipeline-worker --hostname <HOSTNAME> --disable
+
+Pipeline workers are enabled or disabled in the Django admin interface by changing the
+``display`` field of the worker. Jobs submitted to devices on that worker will fail, so
+it is also recommended that the devices would be made offline at the same time. (The django
+admin interface has support for selecting devices by worker and taking all selected devices
+offline in a single action.)
+
+Adding pipeline devices to a worker
+===================================
+
+Admins use the Django admin interface to add devices to workers using the worker drop-down in the
+device detail page.
+
+It is up to the admin to ensure that pipeline devices are assigned to pipeline workers and
+devices which can run JSON jobs are assigned only to distributed deployment workers.
+
+.. note:: A pipeline worker may have a description but does not have a record of the IP
+   address, uptime or architecture in the Worker object.
+
 .. _changing_existing_workers:
 
 Changes for existing remote workers
@@ -102,6 +148,9 @@ localhost once the slave has been directed at the real master as above.
 
 Disabling lava-master on workers
 --------------------------------
+
+.. note:: A pipeline worker will only have ``lava-dispatcher`` installed, so there will be
+   no ``lava-master`` daemon which is installed by ``lava-server``.
 
 .. warning:: Only do this on the remote worker but make sure it is done
    on **all** remote workers before submitting pipeline jobs which would

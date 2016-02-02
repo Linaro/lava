@@ -17,10 +17,9 @@ so take care when preparing new files.
 
 .. warning:: This code is in ongoing development and the formats may
              change without notice. Only a very restricted set of
-             actions and device types are supported. The refactored
-             code can only be used from the command line and requires
-             ``sudo`` access on the dispatcher. No-one except LAVA
-             developers should be expecting to use any of these files.
+             actions and device types are supported. Jobs using the
+             refactored code can only be submitted from the command
+             line (using XMLRPC or :ref:`lava_tool`).
 
 .. _yaml_job:
 
@@ -323,21 +322,28 @@ Pipeline Device Configuration
 
 Device configuration is a combination of the :term:`device dictionary`
 and the :term:`device type` template. A sample :term:`device
-dictionary` (jinja syntax) for nexus 10 will look like the following::
+dictionary` (jinja2 child template syntax) for nexus 10 will look like the following::
 
- {% extends 'nexus10.yaml' %}
- {% set serial_number = 'R32D300FRYP' %}
+ {% extends 'nexus10.jinja2' %}
+ {% set adb_serial_number = 'R32D300FRYP' %}
+ {% set fastboot_serial_number = 'R32D300FRYP' %}
+ {% set adb_command = 'adb -s R32D300FRYP' %}
+ {% set fastboot_command = 'fastboot -s R32D300FRYP' %}
  {% set connection_command = 'adb -s R32D300FRYP shell' %}
  {% set soft_reboot_command = 'adb -s R32D300FRYP reboot bootloader' %}
 
 The corresponding :term:`device type` template for nexus 10 is as
 follows::
 
- {% extends 'base.yaml' %}
+ {% extends 'base.jinja2' %}
  {% block body %}
  device_type: nexus10
- serial_number: {{ serial_number|default('0000000000') }}
+ adb_serial_number: {{ adb_serial_number|default('0000000000') }}
+ fastboot_serial_number: {{ fastboot_serial_number|default('0000000000') }}
 
+ {% block vland %}
+ {# skip the parameters dict at top level #}
+ {% endblock %}
 
  actions:
    deploy:
@@ -354,7 +360,7 @@ follows::
 
  {% endblock %}
 
-The :term:`device type` template extends `base.yaml` which is the base
+The :term:`device type` template extends `base.jinja2` which is the base
 template used by all devices and has logic to replace some of the
 values provided in the :term:`device dictionary`. For example, the
 following lines within `base.yaml` will add connection command to the
@@ -373,35 +379,42 @@ template are combined together in order to form the device
 configuration which will look like the following for a nexus 10
 device::
 
-    commands:
-        connect: adb -s R32D300FRYP shell
-        soft_reboot: adb -s R32D300FRYP reboot bootloader
-    device_type: nexus10
-    serial_number: R32D300FRYP
+ commands:
+     connect: adb -s R32D300FRYP shell
+     soft_reboot: adb -s R32D300FRYP reboot bootloader
+     adb_command: adb -s R32D300FRYP
+     fastboot_command: fastboot -s R32D300FRYP
+ device_type: nexus10
+ adb_serial_number: R32D300FRYP
+ fastboot_serial_number: R32D300FRYP
 
 
-    actions:
-      deploy:
-        methods:
-          fastboot:
-        connections:
-          serial:
-          adb:
-      boot:
-        connections:
-          adb:
-        methods:
-          fastboot:
+ actions:
+   deploy:
+     methods:
+       fastboot:
+     connections:
+       serial:
+       adb:
+   boot:
+     connections:
+       adb:
+     methods:
+       fastboot:
 
-    timeouts:
-      apply-overlay-image:
-        seconds: 120
-      umount-retry:
-        seconds: 45
-      lava-test-shell:
-        seconds: 30
-      power_off:
-        seconds: 5
+ timeouts:
+   actions:
+     apply-overlay-image:
+       seconds: 120
+     umount-retry:
+       seconds: 45
+     lava-test-shell:
+       seconds: 30
+     power_off:
+       seconds: 5
+   connections:
+     uboot-retry:
+       seconds: 60
 
 Use the following :ref:`lava_tool <lava_tool>` command to get the
 device configuration in the command line::
@@ -582,5 +595,8 @@ Example:
 Submit actions
 ==============
 
-The submission back to the server web frontend will include the entire
-pipeline but the methods for doing this have not yet been written.
+There is no submit action in the pipeline. Results are transmitted live
+from any class in the pipeline with support for declaring a result.
+
+There is no meta-format for the results, results are based on the test
+job and do not exist without reference to the test job.

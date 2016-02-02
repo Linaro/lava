@@ -175,15 +175,15 @@ class HeadlessExtension(ILavaServerExtension):
 class DeprecatedExtension(HeadlessExtension):
     """
     If an extension ever contributed to schema changes in the DB, then we
-    can't just delete it alltogher without causing problems with our
-    south migrations. This is a simple class to keep the extension somewhat
+    can't just delete it altogether without causing problems with our
+    django migrations. This is a simple class to keep the extension somewhat
     invisible to the UI, but visible to Django for the DB needs.
     """
     @abstractproperty
     def app_name(self):
         """
         Name of this extension's primary django application.
-        (needed for south migrations)
+        (needed for django migrations)
         """
 
     def contribute_to_settings(self, settings_module):

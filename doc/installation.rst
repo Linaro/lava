@@ -118,8 +118,8 @@ Ubuntu Utopic Unicorn, scheduled for release as 14.10. ``production``
 releases are tracked in the ``release`` branch of the upstream git
 repositories.
 
-Interim releases remain available from ``people.linaro.org`` which also
-includes builds for Ubuntu Trusty Tahr 14.04LTS.
+Interim releases are made available from the the
+:ref:`staging-repo <lava_repositories>`.
 
 During periods when the internal transitions within Debian require that
 ``lava-server`` is unable to migrate into the testing suite, users
@@ -153,58 +153,24 @@ USB or using serial cables.
 To install a single master instance and create a superuser, refer to
 :ref:`debian_installation` installation.
 
-.. _distributed_instance:
-
-Distributed Instance installation
-=================================
-
-A single master instance,  can also work with one :term:`Remote Worker` or more,
-acting as the web frontend and database server for the remote
-worker(s). Depending on load, the master can also have devices attached.
-
-This installation type involves the use of two or more machines
-
-* The master instance is installed and configured on one machine. Refer to
-  :ref:`debian_installation` installation.
-* On the other machine(s), the :term:`Remote Worker` is installed and configured.
-  Refer to :ref:`distributed_deployment`
-
-Remote workers are especially useful when the master instance is on a public server
-or external virtual host, and the remote workers and the devices are
-hosted in a separate location.
-
-A note on Heartbeat
-===================
-The heartbeat data of the dispatcher node is sent to the database via
-xmlrpc. For this feature to work correctly the ``rpc2_url`` parameter
-should be set properly. Login as an admin user and go to
-``http://localhost/admin/lava_scheduler_app/worker/``. Click on the
-machine which is your master (in case of distributed deployment), or
-the machine that is listed in the page (in case of single LAVA instance).
-In the page that opens, set the "Master RPC2 URL:" with the correct
-value, if it is not set properly, already. Do not touch any other
-values in this page except the description, since all the other fields
-except description is populated automatically. The following figure
-illustrates this:
-
-.. image:: ./images/lava-worker-rpc2-url.png
+The old :ref:`distributed_instance` installation method has been deprecated
+as the :term:`refactoring` introduces a much improved architecture for
+remote workers using :term:`ZMQ`.
 
 .. _pipeline_install:
 
 What is the Pipeline?
 =====================
 
-.. warning:: Developers only
+.. note:: Production systems will begin to migrate to the pipeline
+   during 2016.
 
-There are various developments happening in parallel with the
-:ref:`single_instance` and :ref:`distributed_instance` models as
-part of the :ref:`dispatcher refactoring <dispatcher_design>`. These
-changes are currently for developers only but introduce new dependencies
-and new elements which should not be confused with the current
-production models. It is possible to install LAVA using the new design
-but a lot of helpers and wrappers are needed and the code is still
-evolving, so submission requirements and result handling are likely to
-change before a migration to the new design can be planned in detail.
+In parallel with the :ref:`single_instance` and :ref:`distributed_instance`
+models, the :term:`dispatcher refactoring <refactoring>` introduces changes and new
+elements which should not be confused with the previous production models.
+It is possible to install LAVA using the new design but the documentation
+is pending. Submission requirements and device support can change before and
+during a migration to the new design.
 
 This documentation includes notes on the new design, so to make things
 clearer, the following terms refer exclusively to the new design and
@@ -230,6 +196,8 @@ validates as JSON before restarting apache::
  "PIPELINE": false
 
 If the value is not set or set to ``true``, the Results app will be displayed.
+
+.. seealso:: :ref:`setting_up_pipeline_instance`
 
 A note on wsgi buffers
 ======================
@@ -481,19 +449,3 @@ Debian Bug Tracking System: https://bugs.debian.org/cgi-bin/pkgreport.cgi?pkg=la
 
 Feel free to contact us at validation (at) linaro (dot) org and on
 the ``#linaro-lava`` channel on OFTC.
-
-Distributed deployment
-######################
-
-.. toctree::
-   :maxdepth: 2
-
-   distributed-deployment.rst
-
-Migrating existing LAVA instances
-#################################
-
-.. toctree::
-   :maxdepth: 2
-
-   migration.rst

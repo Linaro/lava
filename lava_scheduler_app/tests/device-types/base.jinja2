@@ -1,0 +1,144 @@
+{% set base_uboot_commands = (
+"          - setenv autoload no
+          - setenv initrd_high '0xffffffff'
+          - setenv fdt_high '0xffffffff'") -%}
+
+{% set base_uboot_addr_commands = (
+"          - setenv kernel_addr_r '{KERNEL_ADDR}'
+          - setenv initrd_addr_r '{RAMDISK_ADDR}'
+          - setenv fdt_addr_r '{DTB_ADDR}'") -%}
+
+{% set base_tftp_commands = (
+"          - setenv loadkernel 'tftp ${kernel_addr_r} {KERNEL}'
+          - setenv loadinitrd 'tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'") -%}
+
+{% set base_uboot_bootcmd = (
+"          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+          - boot") -%}
+
+{% set base_tftp_uboot_bootcmd = (
+"          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+          - boot") -%}
+
+{% set base_nfs_uboot_bootcmd = (
+"          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; {BOOTX}'
+          - boot") -%}
+
+{% set base_nfsroot_args = ("nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr") -%}
+
+{# these options are used by both ssh and scp! #}
+{# check the manpages *carefully* & ensure compatibility! #}
+{# in particular, -p vs -P for port, -l is ok for ssh, not scp. #}
+{% set ssh_options = (
+"          - '-o'
+          - 'Compression=yes'
+          - '-o'
+          - 'UserKnownHostsFile=/dev/null'
+          - '-o'
+          - 'PasswordAuthentication=no'
+          - '-o'
+          - 'StrictHostKeyChecking=no'
+          - '-o'
+          - 'LogLevel=FATAL'
+"
+) -%}
+
+{% set ssh_user = 'root' -%}
+
+{% set ssh_port = '22' -%}
+
+{% set ssh_identity_file = 'device/dynamic_vm_keys/lava' -%}
+
+{% set schroot_options = (
+"          - 'schroot'
+          - '-d'
+          - '/'
+          - '-u'
+          - 'root'"
+) -%}
+
+{# UEFI menu support #}
+{% set base_menu_interrupt_prompt = 'The default boot selection will start in' -%}
+{% set base_menu_interrupt_string = ' ' -%}
+{% set base_item_markup_list = (
+'            - "["
+            - "]"'
+) -%}
+{% set base_item_class = '0-9' -%}
+{% set base_item_separator = ' ' -%}
+{% set base_label_class = 'a-zA-Z0-9\s\:' -%}
+{% set base_menu_bootloader_prompt = 'Start:' -%}
+{% set base_menu_boot_message = "Loaded: LinuxImage" -%}
+{% set base_menu_dictionary = {} -%}
+
+
+{% block commands %}
+{% if connection_command %}
+commands:
+    connect: {{ connection_command }}
+{% if hard_reset_command %}
+    hard_reset: {{ hard_reset_command }}
+{% endif -%}
+{% if soft_reset_command %}
+    soft_reset: {{ soft_reset_command }}
+{% endif -%}
+{% if soft_reboot_command %}
+    soft_reboot: {{ soft_reboot_command }}
+{% endif -%}
+{% if power_off_command %}
+    power_off: {{ power_off_command }}
+{% endif %}
+{% if power_on_command %}
+    power_on: {{ power_on_command }}
+{% endif %}
+{% if adb_command %}
+    adb_command: {{ adb_command | default('adb -s {{ adb_serial_number }}') }}
+{% endif %}
+{% if fastboot_command %}
+    fastboot_command: {{ fastboot_command | default('fastboot -s {{ fastboot_serial_number }}') }}
+{% endif %}
+{% endif %}
+{% endblock -%}
+
+{% block vland %}
+parameters:
+{% if interfaces %}
+  interfaces:
+{% for interface in interfaces %}
+   {{ interface }}:
+     sysfs: "{{ sysfs.get(interface) }}"
+     mac: "{{ mac_addr.get(interface) }}"
+{% for switch, port in map.get(interface).iteritems() %}
+     switch: "{{ switch }}"
+     port: {{ port }}
+{% endfor %}
+     tags:
+{% if tags.get(interface) %}
+{% for tag in tags.get(interface) %}
+     - {{ tag }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% else %}
+  pass:
+{% endif %}
+{% endblock -%}
+
+{% block body %}{% endblock -%}
+
+{% block timeouts %}
+timeouts:
+  actions:
+    apply-overlay-image:
+      seconds: 120
+    umount-retry:
+      seconds: 45
+    lava-test-shell:
+      seconds: 30
+    power_off:
+      seconds: 5
+  connections:
+    uboot-retry:
+      seconds: 60
+{% endblock -%}

@@ -28,7 +28,7 @@
   {% if ldap_available %}
   <div class="col-md-6">
     <h4 class="modal-header">LDAP Login</h4>
-    <form class="form-horizontal" method="post" action="{% url 'django.contrib.auth.views.login' %}">
+    <form class="form-horizontal" method="post" action="{% url 'login' %}">
       {% csrf_token %}
       <input type="hidden" name="next" value="{{ request.GET.next }}" />
       <div class="form-group{% if form.errors %} has-error{% endif %}">

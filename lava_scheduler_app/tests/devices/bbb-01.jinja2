@@ -1,0 +1,15 @@
+{% extends 'beaglebone-black.jinja2' %}
+{% set usb_uuid = 'usb-SanDisk_Ultra_20060775320F43006019-0:0' %}
+{% set connection_command = "telnet localhost 6000" %}
+{% set hard_reset_command = (
+"/usr/bin/pduclient --daemon localhost --hostname pdu --command reboot --port 08") %}
+{% set power_off_command = (
+"/usr/bin/pduclient --daemon localhost --hostname pdu --command off --port 08") %}
+{% set power_on_command = (
+"/usr/bin/pduclient --daemon localhost --hostname pdu --command on --port 08") %}
+{% set interfaces = ['eth0', 'eth1'] %}
+{% set sysfs = {'eth0': "/sys/devices/pci0000:00/0000:00:19.0/net/eth0",
+   'eth1': "/sys/devices/pci0000:00/0000:00:1c.1/0000:03:00.0/net/eth1"} %}
+{% set mac_addr = {'eth0': "f0:de:f1:46:8c:21",'eth1': "00:24:d7:9b:c0:8c"} %}
+{% set tags = {'eth0': ['1G', '10G'], 'eth1': ['1G']} %}
+{% set map = {'eth0': {'192.168.0.2': 5}, 'eth1': {'192.168.0.2': 7}} %}

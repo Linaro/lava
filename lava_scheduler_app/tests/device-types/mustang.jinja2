@@ -1,0 +1,53 @@
+{% extends 'base.jinja2' %}
+{% block body %}
+
+device_type: mustang
+{% set console_device = console_device | default('ttyS0') %}
+{% set baud_rate = baud_rate | default(115200) %}
+
+# allow job context override - use a different variable name, undefined if not in job context
+{% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) %}
+
+{% block vland %}
+{# If super() is to be added, remove the parameters: top level block below #}
+{% endblock %}
+
+parameters:
+   bootm:
+    kernel: '{{ bootm_kernel_addr|default('0x4002000000') }}'
+    ramdisk: '{{ bootm_ramdisk_addr|default('0x4004000000') }}'
+    dtb: '{{ bootm_dtb_addr|default('0x4003000000') }}'
+
+actions:
+  deploy:
+    methods:
+      tftp:
+      ssh:
+        options:
+{{ ssh_options }}
+{% if ssh_host %}
+        host: {{ ssh_host }}
+{% endif %}
+        user: {{ ssh_user|default(root) }}
+        port: {{ ssh_port|default(22) }}
+        identity_file: {{ ssh_identity_file }}
+  boot:
+    connections:
+      serial:
+      ssh:
+    methods:
+       ssh:
+       u-boot:
+        parameters:
+          bootloader_prompt: {{ bootloader_prompt|default('Mustang') }}
+          boot_message: {{ boot_message|default('Starting kernel') }}
+          mkimage_arch: {{ uboot_mkimage_arch|default('arm64') }} # string to pass to mkimage -A when adding UBoot headers
+        nfs:
+          commands:
+          - setenv autoload no
+{{ base_uboot_addr_commands }}
+{{ base_tftp_commands }}
+          - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw {{ base_nfsroot_args }} panic=1 earlyprintk=uart8250-32bit,0x1c020000 debug ip=dhcp'"
+{{ base_nfs_uboot_bootcmd }}
+
+{% endblock %}
