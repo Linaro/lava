@@ -1,3 +1,9 @@
+lava-dispatcher (2016.2-1) unstable; urgency=medium
+
+  * New production release 
+
+ -- Neil Williams <codehelp@debian.org>  Tue, 02 Feb 2016 08:34:13 +0000
+
 lava-dispatcher (2015.12-1) unstable; urgency=medium
 
   * New production release
