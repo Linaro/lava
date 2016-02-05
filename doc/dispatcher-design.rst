@@ -640,7 +640,9 @@ to the test writer. ``self.run_command()`` is a dispatcher call and
 needs to be protected. ``connection.sendline()`` is a deployment
 call and does not need to be protected.
 
-.. _gold_standard_images:
+.. index:: gold standard
+
+.. _providing_gold_standard_files:
 
 Providing gold standard images
 ==============================
@@ -681,6 +683,8 @@ The reason to give developers enough rope is precisely so that kernel
 developers are able to fix issues in the test images before problems
 show up in the gold standard images. Test writers need to work with the
 QA team, using the gold standard images.
+
+.. _creating_gold_standard_files:
 
 Creating a gold standard image
 ------------------------------

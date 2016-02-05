@@ -23,16 +23,16 @@ import errno
 import fcntl
 import jinja2
 import logging
-from optparse import make_option
 import os
 import signal
 import time
 import yaml
 import zmq
 
-from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
+from django.contrib.auth.models import User
+from lava_server.utils import OptArgBaseCommand as BaseCommand
 from lava_scheduler_app.models import Device, TestJob
 from lava_results_app.dbutils import map_scanned_results, map_metadata
 from lava_dispatcher.pipeline.device import PipelineDevice
@@ -146,13 +146,38 @@ def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
         job.save()
         return
     msg = "Job %s has ended. Setting %s" % (job.id, TestJob.STATUS_CHOICES[job.status])
-    new_status = Device.IDLE
-    device.state_transition_to(new_status, message=msg, job=job)
-    device.status = new_status
+    device = handle_health(job, Device.IDLE)
+    device.state_transition_to(device.status, message=msg, job=job)
     device.current_job = None
     # Save the result
     job.save()
     device.save()
+
+
+def handle_health(job, new_device_status):
+    """
+    LOOPING = no change
+    job is not health check = no change
+    last_health_report_job is set
+    INCOMPLETE = HEALTH_FAIL, maintenance_mode
+    COMPLETE = HEALTH_PASS, device IDLE
+    Only change the device here, job is not returned and
+    should not be saved.
+    """
+    device = job.actual_device
+    device.status = new_device_status
+    if not job.health_check or device.health_status == Device.HEALTH_LOOPING:
+        return device
+    device.last_health_report_job = job
+    if job.status == TestJob.INCOMPLETE:
+        device.health_status = Device.HEALTH_FAIL
+        user = User.objects.get(username='lava-health')
+        device.put_into_maintenance_mode(user, "Health Check Job Failed")
+    elif job.status == TestJob.COMPLETE:
+        device.health_status = Device.HEALTH_PASS
+    elif job.status == TestJob.CANCELED:
+        device.health_status = Device.HEALTH_UNKNOWN
+    return device
 
 
 def cancel_job(job):
@@ -161,13 +186,9 @@ def cancel_job(job):
     if job.dynamic_connection:
         job.save()
         return
-    device = job.actual_device
     msg = "Job %s cancelled" % job.id
-    # TODO: what should be the new device status? health check should set
-    # health unknown
-    new_status = Device.IDLE
-    device.state_transition_to(new_status, message=msg, job=job)
-    device.status = new_status
+    device = handle_health(job, Device.IDLE)
+    device.state_transition_to(device.status, message=msg, job=job)
     if device.current_job and device.current_job == job:
         device.current_job = None
     # Save the result
@@ -359,30 +380,34 @@ class Command(BaseCommand):
     """
     logger = None
     help = "LAVA dispatcher master"
-    option_list = BaseCommand.option_list + (
-        make_option('--master-socket',
-                    default='tcp://*:5556',
-                    help="Socket for master-slave communication"),
-        make_option('--log-socket',
-                    default='tcp://*:5555',
-                    help="Socket waiting for logs"),
-        make_option('-l', '--level',
-                    default='DEBUG',
-                    help="Logging level (ERROR, WARN, INFO, DEBUG)"),
-        make_option('--templates',
-                    default="/etc/lava-server/dispatcher-config/",
-                    help="Base directory for device configuration templates"),
-        # FIXME: ensure share/env.yaml is put into /etc/ by setup.py when merging.
-        make_option('--env',
-                    default="/etc/lava-server/env.yaml",
-                    help="Environment variables for the dispatcher processes"),
-        make_option('--env-dut',
-                    default="/etc/lava-server/env.dut.yaml",
-                    help="Environment variables for device under test"),
-        make_option('--output-dir',
-                    default='/var/lib/lava-server/default/media/job-output',
-                    help="Directory where to store job outputs"),
-    )
+
+    def add_arguments(self, parser):
+        parser.add_argument('--master-socket',
+                            default='tcp://*:5556',
+                            help="Socket for master-slave communication. Default: tcp://*:5556")
+        parser.add_argument('--log-socket',
+                            default='tcp://*:5555',
+                            help="Socket waiting for logs. Default: tcp://*:5555")
+        parser.add_argument('-l', '--level',
+                            default='DEBUG',
+                            help="Logging level (ERROR, WARN, INFO, DEBUG) Default: DEBUG")
+        parser.add_argument('--templates',
+                            default="/etc/lava-server/dispatcher-config/",
+                            help="Base directory for device configuration templates. "
+                                 "Default: /etc/lava-server/dispatcher-config/")
+        # Important: ensure share/env.yaml is put into /etc/ by setup.py in packaging.
+        parser.add_argument('--env',
+                            default="/etc/lava-server/env.yaml",
+                            help="Environment variables for the dispatcher processes. "
+                                 "Default: /etc/lava-server/env.yaml")
+        parser.add_argument('--env-dut',
+                            default="/etc/lava-server/env.dut.yaml",
+                            help="Environment variables for device under test. "
+                                 "Default: /etc/lava-server/env.dut.yaml")
+        parser.add_argument('--output-dir',
+                            default='/var/lib/lava-server/default/media/job-output',
+                            help="Directory where to store job outputs. "
+                                 "Default: /var/lib/lava-server/default/media/job-output")
 
     def _cancel_slave_dispatcher_jobs(self, hostname):
         """Get dispatcher jobs and cancel them.

@@ -11,7 +11,8 @@ from lava_scheduler_app.models import (
     DevicesUnavailableException,
 )
 from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
-from lava_scheduler_daemon.dbjobsource import DatabaseJobSource, find_device_for_job
+from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
+from lava_scheduler_app.dbutils import find_device_for_job
 from lava_scheduler_daemon.tests.base import DatabaseJobSourceTestEngine
 
 

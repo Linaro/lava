@@ -164,6 +164,10 @@ migration to the new :ref:`dispatcher_design`.
     migration to the pipeline and prevent users mistakenly submitting
     old jobs.
 
+    It is recommended to have pipeline support for all devices of the
+    relevant device type before enabling exclusive pipeline support,
+    especially if the device type has a :ref:`yaml_health_checks`
+
   filter
     Within the Dashboard, a filter identifies particular results from
     a :term:`stream` or streams. Filters in LAVA can be used to combine

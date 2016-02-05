@@ -26,11 +26,10 @@ from lava_scheduler_app.models import (
     TestJob,
     DevicesUnavailableException,
     DeviceDictionary,
-    SubmissionException,
     _check_exclusivity,
 )
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
-from lava_scheduler_app.schema import validate_submission, validate_device
+from lava_scheduler_app.schema import validate_submission, validate_device, SubmissionException
 import simplejson
 
 logger = logging.getLogger()

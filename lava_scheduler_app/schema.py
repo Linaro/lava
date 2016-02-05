@@ -3,7 +3,10 @@ from voluptuous import (
     Schema, Required, All, Length,
     Any, Invalid, Optional, MultipleInvalid
 )
-from lava_scheduler_app.models import SubmissionException
+
+
+class SubmissionException(UserWarning):
+    """ Error raised if the submission is itself invalid. """
 
 
 def _timeout_schema():

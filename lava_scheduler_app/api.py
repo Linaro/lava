@@ -1,5 +1,4 @@
 import xmlrpclib
-import json
 import yaml
 import jinja2
 from simplejson import JSONDecodeError
@@ -14,7 +13,6 @@ from lava_scheduler_app.models import (
     TestJob,
     Worker,
     DeviceDictionary,
-    SubmissionException,
 )
 from lava_scheduler_app.views import (
     SumIf,
@@ -25,7 +23,15 @@ from lava_scheduler_app.utils import (
     jinja2_to_devicedictionary,
     prepare_jinja_template,
 )
-from lava_scheduler_app.schema import validate_submission, validate_device
+from lava_scheduler_app.schema import (
+    validate_submission,
+    validate_device,
+    SubmissionException,
+)
+from lava_scheduler_app.dbutils import testjob_submission
+
+# functions need to be members to be exposed in the API
+# pylint: disable=no-self-use
 
 
 class SchedulerAPI(ExposedAPI):
@@ -44,7 +50,7 @@ class SchedulerAPI(ExposedAPI):
         Arguments
         ---------
         `job_data`: string
-            Job JSON string.
+            Job JSON or YAML string.
 
         Return value
         ------------
@@ -58,36 +64,14 @@ class SchedulerAPI(ExposedAPI):
                 403, "Permission denied.  User %r does not have the "
                 "'lava_scheduler_app.add_testjob' permission.  Contact "
                 "the administrators." % self.user.username)
-        is_json = True
-        is_yaml = False
         try:
-            json.loads(job_data)
-        except (AttributeError, JSONDecodeError, ValueError) as exc:
-            is_json = False
-            try:
-                # only try YAML if this is not JSON
-                # YAML can parse JSON as YAML, JSON cannot parse YAML at all
-                yaml_data = yaml.load(job_data)
-            except yaml.YAMLError as exc:
-                # neither yaml nor json loaders were able to process the submission.
-                raise xmlrpclib.Fault(400, "Loading job submission failed: %s." % exc)
-
-            # validate against the submission schema.
-            is_yaml = validate_submission(yaml_data)  # raises SubmissionException if invalid.
-
-        try:
-            if is_json:
-                job = TestJob.from_json_and_user(job_data, self.user)
-            elif is_yaml:
-                job = TestJob.from_yaml_and_user(job_data, self.user)
-            else:
-                raise xmlrpclib.Fault(400, "Unable to determine whether job is JSON or YAML.")
+            job = testjob_submission(job_data, self.user)
+        except SubmissionException as exc:
+            raise xmlrpclib.Fault(400, exc)
         except (JSONDataError, JSONDecodeError, ValueError) as exc:
             raise xmlrpclib.Fault(400, "Decoding job submission failed: %s." % exc)
-        except Device.DoesNotExist:
-            raise xmlrpclib.Fault(404, "Specified device not found.")
-        except DeviceType.DoesNotExist:
-            raise xmlrpclib.Fault(404, "Specified device type not found.")
+        except (Device.DoesNotExist, DeviceType.DoesNotExist):
+            raise xmlrpclib.Fault(404, "Specified device or device type not found.")
         except DevicesUnavailableException as exc:
             raise xmlrpclib.Fault(400, str(exc))
         if isinstance(job, type(list())):

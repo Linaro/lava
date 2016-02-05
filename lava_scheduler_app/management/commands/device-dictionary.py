@@ -28,13 +28,13 @@ import os
 import sys
 import yaml
 from lava_server.utils import OptArgBaseCommand as BaseCommand
-from lava_scheduler_app.models import DeviceDictionary, SubmissionException
+from lava_scheduler_app.models import DeviceDictionary
 from lava_scheduler_app.utils import (
     devicedictionary_to_jinja2,
     jinja2_to_devicedictionary,
     prepare_jinja_template,
 )
-from lava_scheduler_app.schema import validate_device
+from lava_scheduler_app.schema import validate_device, SubmissionException
 
 
 def parse_template(device_file):

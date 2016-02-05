@@ -18,7 +18,7 @@ from lava_scheduler_app.utils import (
 )
 from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
 from lava_scheduler_app.tests.test_pipeline import YamlFactory
-from lava_scheduler_daemon.dbjobsource import find_device_for_job
+from lava_scheduler_app.dbutils import find_device_for_job
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.connection import Protocol

@@ -1,3 +1,5 @@
+.. index:: health check
+
 .. _health_checks:
 
 Writing Health Checks for device types
@@ -20,7 +22,37 @@ http://validation.linaro.org/scheduler/reports/failures?start=-1&end=0&health_ch
 Health checks are defined in the admin interface for each device type
 and run as the lava-health user.
 
-The required entry is a JSON test file with the following change:
+.. _yaml_health_checks:
+
+Pipeline YAML health checks
+===========================
+
+.. note:: Before enabling a pipeline health check, ensure that all devices of the
+  specified type have been enabled as pipeline devices or the health check will
+  force any remaining devices **offline**.
+
+It is recommended that the YAML health check follows these guidelines:
+
+* A job name describing the test as a health check
+* A minimal set of test definitions
+* Use :ref:`gold standard files <providing_gold_standard_files>`
+
+The rest of the job needs no changes.
+
+.. _json_health_checks:
+
+Deprecated JSON health checks
+=============================
+
+.. note:: A health check using the deprecated JSON dispatcher is **not** suitable if
+  **any** of the devices of this type are :term:`exclusive` to the pipeline
+  dispatcher. A :ref:`pipeline health check <yaml_health_checks>` should be used. Avoid
+  having exclusive devices unless all devices of that type have pipeline support -
+  if this is unavoidable, the health check may need to be omitted or some devices split
+  into a temporary device type.
+
+The required entry for a health check using the deprecated dispatcher
+is a JSON test file with the following change:
 
 * The health_check boolean set to ```true```
 
@@ -97,7 +129,20 @@ this applies to a job failure, not a fail result from a single
 lava-test-case.
 
 It is advisable to use a minimal set of sanity check test cases in all
-health checks, without making the health check unnecessarily long::
+health checks, without making the health check unnecessarily long:
+
+.. code-block:: yaml
+
+    - test:
+       timeout:
+         minutes: 5
+       definitions:
+         - repository: git://git.linaro.org/qa/test-definitions.git
+           from: git
+           path: ubuntu/smoke-tests-basic.yaml
+           name: smoke-tests
+
+Or for :ref:`json_health_checks` ::
 
     {
         "command": "lava_test_shell",

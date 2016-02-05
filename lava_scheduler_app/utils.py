@@ -40,6 +40,7 @@ from django.utils import timezone
 
 from lava_server.settings.getsettings import Settings
 from lava_server.settings.config_file import ConfigFile
+from lava_scheduler_app.schema import SubmissionException
 
 
 def get_fqdn():
@@ -735,7 +736,7 @@ def _split_multinode_vland(submission, jobs):
     for role, _ in jobs.iteritems():
         # populate the lava-vland protocol metadata
         if len(jobs[role]) != 1:
-            raise models.SubmissionException("vland protocol only supports one device per role.")
+            raise SubmissionException("vland protocol only supports one device per role.")
         jobs[role][0]['protocols'].update({'lava-vland': submission['protocols']['lava-vland'][role]})
     return jobs
 
@@ -812,7 +813,7 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
                 try:
                     value['role']
                 except (KeyError, TypeError):
-                    raise models.SubmissionException("Invalid YAML - check for consistent use of whitespace indents.")
+                    raise SubmissionException("Invalid YAML - check for consistent use of whitespace indents.")
                 if role in value['role']:
                     actions.setdefault(role, {'actions': []})
                     actions[role]['actions'].append({copy.deepcopy(key): copy.deepcopy(value)})
@@ -841,7 +842,7 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
     for role in roles:
         if role == check_count:
             if roles[role]['count'] != 1:
-                raise models.SubmissionException('The count for a role designated as a host_role must be 1.')
+                raise SubmissionException('The count for a role designated as a host_role must be 1.')
     for role in roles:
         jobs[role] = []
         for sub in range(0, roles[role]['count']):

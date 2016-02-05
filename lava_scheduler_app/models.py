@@ -3,14 +3,13 @@
 import logging
 import os
 import uuid
-import jinja2
+import json
 import simplejson
 import urlparse
 import smtplib
 import socket
 import sys
 import yaml
-from dateutil import parser
 from django.db.models import Q
 from django.conf import settings
 from django.contrib.auth.models import User, Group
@@ -38,8 +37,7 @@ from django_restricted_resource.models import (
     RestrictedResourceManager
 )
 from lava_scheduler_app.managers import RestrictedTestJobQuerySet
-
-
+from lava_scheduler_app.schema import validate_submission, SubmissionException
 from dashboard_app.models import Bundle, BundleStream, NamedAttribute
 
 from lava_dispatcher.job import validate_job_data
@@ -63,10 +61,6 @@ class DevicesUnavailableException(UserWarning):
     """Error raised when required number of devices are unavailable."""
 
 
-class SubmissionException(UserWarning):
-    """ Error raised if the submission is itself invalid. """
-
-
 class Tag(models.Model):
 
     name = models.SlugField(unique=True)
@@ -77,7 +71,36 @@ class Tag(models.Model):
         return self.name
 
 
+def is_deprecated_json(data):
+    """ Deprecated """
+    deprecated_json = True
+    try:
+        ob = simplejson.loads(data)
+        # calls deprecated lava_dispatcher code
+        validate_job_data(ob)
+    except (AttributeError, simplejson.JSONDecodeError, ValueError):
+        deprecated_json = False
+    except (JSONDataError, JSONDecodeError, ValueError) as exc:
+        raise SubmissionException("Decoding job submission failed: %s." % exc)
+    return deprecated_json
+
+
+def validate_job(data):
+    if not is_deprecated_json(data):
+        try:
+            # only try YAML if this is not JSON
+            # YAML can parse JSON as YAML, JSON cannot parse YAML at all
+            yaml_data = yaml.load(data)
+        except yaml.YAMLError as exc:
+            # neither yaml nor json loaders were able to process the submission.
+            raise SubmissionException("Loading job submission failed: %s." % exc)
+
+        # validate against the submission schema.
+        validate_submission(yaml_data)  # raises SubmissionException if invalid.
+
+
 def validate_job_json(data):
+    """ Deprecated """
     try:
         ob = simplejson.loads(data)
         validate_job_data(ob)
@@ -198,7 +221,27 @@ class DeviceType(models.Model):
     )
 
     health_check_job = models.TextField(
-        null=True, blank=True, default=None, validators=[validate_job_json])
+        null=True, blank=True, default=None, validators=[validate_job])
+
+    health_frequency = models.IntegerField(
+        verbose_name="How often to run health checks",
+        default=24
+    )
+
+    HEALTH_PER_HOUR = 0
+    HEALTH_PER_JOB = 1
+    HEALTH_DENOMINATOR = (
+        (HEALTH_PER_HOUR, 'hours'),
+        (HEALTH_PER_JOB, 'jobs'),
+    )
+
+    health_denominator = models.IntegerField(
+        choices=HEALTH_DENOMINATOR,
+        default=HEALTH_PER_HOUR,
+        verbose_name="Initiate health checks by hours or by jobs.",
+        help_text=("Choose to submit a health check every N hours "
+                   "or every N jobs. Balance against the duration of "
+                   "a health check job and the average job duration."))
 
     display = models.BooleanField(default=True,
                                   help_text=("Should this be displayed in the GUI or not. This can be "
@@ -841,33 +884,6 @@ class Device(RestrictedResource):
                                           health_check=True)[0]
         except IndexError:
             return None
-
-    def initiate_health_check_job(self):
-        if self.status in [self.RETIRED]:
-            return None
-
-        existing_health_check_job = self.get_existing_health_check_job()
-        if existing_health_check_job:
-            return existing_health_check_job
-
-        job_json = self.device_type.health_check_job
-        if not job_json:
-            # This should never happen, it's a logic error.
-            self.put_into_maintenance_mode(
-                None, "no job_json in initiate_health_check_job")
-            raise JSONDataError("no job_json found for %r", self.hostname)
-        else:
-            user = User.objects.get(username='lava-health')
-            job_data = simplejson.loads(job_json)
-            job_data['target'] = self.hostname
-            job_data['health-check'] = True
-            job_json = simplejson.dumps(job_data)
-            try:
-                return TestJob.from_json_and_user(job_json, user, True)
-            except (JSONDataError, ValueError) as e:
-                self.put_into_maintenance_mode(
-                    None, "Job submission failed for health job for %s: %s" % (self, e))
-                raise JSONDataError("Health check job submission failed for %s: %s" % (self, e))
 
     def load_device_configuration(self, job_ctx=None, system=True):
         """
@@ -1734,6 +1750,8 @@ class TestJob(RestrictedResource):
     @classmethod
     def from_json_and_user(cls, json_data, user, health_check=False):
         """
+        Deprecated
+
         Constructs one or more TestJob objects from a JSON data and a submitting
         user. Handles multinode jobs and creates one job for each target
         device.
