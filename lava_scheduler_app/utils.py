@@ -88,6 +88,7 @@ def split_multi_job(json_jobdata, target_group):
     all_nodes = {}
     node_actions = {}
     node_lmp = {}
+    shared_config = get_shared_device_config("/etc/lava-server/shared-device-config.yaml")
 
     # Check if we are operating on multinode job data. Else return the job
     # data as it is.
@@ -161,6 +162,8 @@ def split_multi_job(json_jobdata, target_group):
             if json_jobdata.get("priority", False):
                 node_json[role][c]["priority"] = json_jobdata["priority"]
             node_json[role][c]["device_type"] = clients["device_type"]
+            if shared_config:
+                node_json[role][c]["shared_config"] = shared_config
 
     return node_json
 
@@ -860,3 +863,16 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
     if 'lava-vland' in submission['protocols']:
         _split_multinode_vland(submission, jobs)
     return jobs
+
+
+def get_shared_device_config(filename):
+    config_dict = {}
+    if os.path.isfile(filename):
+        try:
+            with open(filename, 'r') as f:
+                config_dict = yaml.load(f.read())
+        except (yaml.YAMLError, IOError):
+            return None
+    else:
+        return None
+    return config_dict
