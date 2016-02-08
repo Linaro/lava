@@ -167,7 +167,7 @@ class RequestedDeviceTypeFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value():
-            return queryset.filter(device_type__name=self.value())
+            return queryset.filter(requested_device_type__name=self.value())
         return queryset.order_by('requested_device_type__name')
 
 
