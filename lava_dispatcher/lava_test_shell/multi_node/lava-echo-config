@@ -8,16 +8,23 @@
 #Usage: ``lava-echo-config``
 #
 
+if [ -z "${LAVA_SHARED_CONFIG}" ]
+then
+    printf "no shared config\n"
+    exit 1
+fi
+
 FILTER=$1
 if [ -z "$FILTER" ]; then
-  printf ${LAVA_SHARED_CONFIG}
-  exit 0
+    printf "${LAVA_SHARED_CONFIG}\n"
+    exit 0
 fi
-MATCH=$(printf ${LAVA_SHARED_CONFIG} | sed "/^\t${FILTER}\t/!D" | sed "s/^\t${FILTER}\t//")
+
+MATCH=$(printf "${LAVA_SHARED_CONFIG}" | sed "/^${FILTER} /!D" | sed "s/^${FILTER} //")
 if [ "$MATCH" = "" ] || [ -z "$MATCH" ]; then
   # failed to find the filter in the group
-  echo $MATCH not found
-  exit 0
+  printf "no matching devices\n"
+  exit 1
 fi
-printf "${MATCH}\n"
+printf "${MATCH}"
 exit 0

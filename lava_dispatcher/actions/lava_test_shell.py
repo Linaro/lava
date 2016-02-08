@@ -1003,12 +1003,12 @@ class cmd_lava_test_shell(BaseAction):
                     elif foutname == LAVA_SELF_FILE:
                         fout.write("LAVA_HOSTNAME='%s'\n" % self.context.test_data.metadata['target.hostname'])
                     elif foutname == LAVA_ECHO_CONFIG_FILE:
-                        fout.write('LAVA_SHARED_CONFIG="\n')
+                        fout.write('LAVA_SHARED_CONFIG="')
                         if 'shared_config' in self.context.test_data.metadata:
                             for device, data in self.context.test_data.metadata['shared_config'].iteritems():
                                 if device in self.context.group_data['roles']:
                                     for key, value in data.iteritems():
-                                        fout.write(r"\t%s\t%s\t%s\n" % (device, key, value))
+                                        fout.write(r"%s %s %s\n" % (device, key, value))
                         fout.write('"\n')
                     else:
                         fout.write("LAVA_TEST_BIN='%s/bin'\n" %
