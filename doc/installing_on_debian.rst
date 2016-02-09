@@ -46,8 +46,12 @@ See :ref:`ubuntu_install`
          release freeze.
 .. [#f2] `stretch` is the name of the next Debian release after Jessie,
          which is supported automatically via uploads to sid (unstable).
-.. [#f3] Jessie was released on April 25th, 2015. Uupdates to LAVA packages
-         for jessie will be made using `jessie-backports`_.
+.. [#f3] Jessie was released on April 25th, 2015. All updates to LAVA packages
+         for jessie will be made using `jessie-backports`_. Systems using
+         Debian Jessie are recommended to enable jessie-backports. LAVA packages
+         and dependencies which are installed using jessie-backports are
+         **fully supported** by upstream and are the same codebase as the
+         relevant production release available from the :ref:`lava_repositories`.
 .. [#f4] Ubuntu vivid vervet 15.04 was released on April
          23rd, 2015. LAVA packages automatically migrate from Debian
          into the current development release of Ubuntu. Once Ubuntu

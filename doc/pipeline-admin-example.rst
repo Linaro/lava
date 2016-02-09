@@ -579,12 +579,10 @@ the majority of the commands are already available in ``base.yaml``.
 These commands use ``{{ console_device }}`` and ``{{ baud_rate }}``,
 which need to be defined with defaults:
 
-.. code-block:: yaml
+.. code-block:: jinja
 
  {% set console_device = console_device | default('ttyS0') %}
  {% set baud_rate = baud_rate | default(115200) %}
-
-.. code-block:: yaml
 
   parameters:
     bootm:
@@ -596,7 +594,7 @@ The actions are determined by the available support for this device,
 initially, templates can simply support the initial working configuration,
 more support can be added later.
 
-.. code-block:: yaml
+.. code-block:: jinja
 
   actions:
     deploy:
@@ -624,7 +622,7 @@ more support can be added later.
 Completed mustang template
 --------------------------
 
-.. code-block:: yaml
+.. code-block:: jinja
 
  {% extends 'base.jinja2' %}
  {% block body %}
@@ -673,7 +671,7 @@ Examples of exported device dictionaries exist in the ``lava-server``
 for unit test support. The dictionary extends the new template and
 provides the device-specific values.
 
-.. code-block:: yaml
+.. code-block:: jinja
 
  {% extends 'mustang.jinja2' %}
  {% set connection_command = "telnet serial4 7012" %}
