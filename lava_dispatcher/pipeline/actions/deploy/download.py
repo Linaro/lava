@@ -334,7 +334,12 @@ class HttpDownloadAction(DownloadHandler):
         try:
             res = requests.head(self.url.geturl(), allow_redirects=True, timeout=HTTP_DOWNLOAD_TIMEOUT)
             if res.status_code != requests.codes.OK:  # pylint: disable=no-member
-                self.errors = "Resources not available at '%s'" % (self.url.geturl())
+                # try using (the slower) get for services with broken redirect support
+                res = requests.get(
+                    self.url.geturl(), allow_redirects=True, stream=True,
+                    timeout=HTTP_DOWNLOAD_TIMEOUT)
+                if res.status_code != requests.codes.OK:  # pylint: disable=no-member
+                    self.errors = "Resources not available at '%s'" % (self.url.geturl())
             else:
                 self.size = int(res.headers.get('content-length', -1))
         except requests.Timeout:
