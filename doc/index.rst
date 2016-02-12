@@ -1,17 +1,18 @@
 LAVA Manual
 ###########
 
-[ `Home <../../>`_ ] [ `Dashboard <../../dashboard/>`_ ] [ `Scheduler <../../scheduler/>`_ ] [ `API <../../api/help/>`_ ]
+[ `Home <../../>`_ ] [ `Dashboard <../../dashboard/>`_ ]
+[ `Results <../../results/>`_ ] [ `Scheduler <../../scheduler/>`_ ] [ `API <../../api/help/>`_ ]
 
-.. note:: Migrations from the current dispatcher to the :term:`pipeline`
-   are beginning and will continue as more devices and new deployment
+.. note:: Migrations from the deprecated dispatcher to the :term:`pipeline`
+   began with the 2016.2 release and will continue as more devices and new deployment
    methods gain support in the :term:`refactoring`. Please subscribe
    to the :ref:`mailing_lists` for information and support. Migrations
    are expected to take most of 2016 to complete. Support for the
    current dispatcher will be **removed** at a point after the
-   completion of the migrations.
-   See the :ref:`guide to migrating to the pipeline <migrating_to_pipeline>`.
-   See also docs for the :ref:`deprecated JSON features <deprecated_features>`.
+   completion of the migrations. See :ref:`guide to migrating to the pipeline <migrating_to_pipeline>`.
+   :ref:`setting_up_pipeline_instance` and
+   :ref:`deprecated JSON features <deprecated_features>`.
 
 .. toctree::
    :maxdepth: 2

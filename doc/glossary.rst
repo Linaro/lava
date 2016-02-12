@@ -172,6 +172,13 @@ migration to the new :ref:`dispatcher_design`.
     exclude particular tests or test cases.
     [#deprecated]_
 
+  hacking session
+    A test job which uses a particular type of test definition to allow users to
+    connect to a test device and interact with the test environment directly.
+    Normally implemented by installing and enabling an SSH daemon inside the
+    test image. Not all devices can support hacking sessions.
+    See :ref:`hacking_session`.
+
   health check
     A test job for one specific :term:`device type` which is automatically
     run at regular intervals to ensure that the physical device is capable

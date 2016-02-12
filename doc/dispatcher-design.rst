@@ -640,6 +640,8 @@ to the test writer. ``self.run_command()`` is a dispatcher call and
 needs to be protected. ``connection.sendline()`` is a deployment
 call and does not need to be protected.
 
+.. _gold_standard_images:
+
 Providing gold standard images
 ==============================
 

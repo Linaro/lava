@@ -3,11 +3,15 @@
 Setting up a LAVA pipeline instance
 ###################################
 
+.. _pipeline_install_considerations:
+
 Initial considerations
 ======================
 
 #. The default setup of the LAVA packages and codebase is for the current
-   dispatcher and :ref:`distributed_deployment` but this will change in 2016.
+   dispatcher and :ref:`distributed_deployment` but this will change towards
+   the end of 2016 before the old code is removed. Until then, installations
+   will continue to provide both models.
 #. A LAVA pipeline instance can have existing remote worker support
    alongside but uses a completely different mechanism to identify
    remote workers and run jobs on pipeline devices.
@@ -23,8 +27,8 @@ Initial considerations
 #. Distributed deployments need changes on each worker, see
    :ref:`changing_existing_workers` but this can be avoided if all
    devices on the instance are suitable for the pipeline.
-#. Guides will be addedin due course but pipeline setup is a much simplified
-   manual task for admins.
+#. Pipeline setup is a much simplified task for admins but still contains
+   some manual steps. See :ref:`installing_pipeline_worker`.
 #. If only pipeline devices are to be supported, the dispatchers
    running ``lava-slave`` do **not** need to have the ``lava-server``
    package installed. Each dispatcher does need to be able to connect
@@ -37,10 +41,12 @@ Initial considerations
    at any time without affecting currently running jobs or requiring any
    changes or restarts at the other end of the connection. There are no
    other connections required between the slave and the master and the
-   outgoing request from the slave is initiated by the slave, so it should
-   be possible for the slave to be behind a local firewall, as long as
+   outgoing request from the slave is initiated by the slave, so it is
+   possible for the slave to be behind a local firewall, as long as
    the relevant ports are open for outgoing traffic. i.e. the slave pulls
-   from the master, the master cannot push to the slave.
+   from the master, the master cannot push to the slave. (This does then mean
+   that a :term:`hacking session` would be restricted to those with access
+   through such a firewall.)
 
 .. _installing_pipeline_worker:
 
@@ -59,7 +65,11 @@ only ``lava-dispatcher`` needs to be installed, not ``lava-server``::
  $ sudo apt install lava-dispatcher
 
 #. Change the init script for ``lava-slave`` (``/etc/init.d/lava-slave``)
-   to point at the relevant ``lava-master``.
+   to point at the relevant ``lava-master`` instead of ``localhost``::
+
+     MASTER="--master tcp://localhost:5556"
+     LOG_SOCKET="--socket-addr tcp://localhost:5555"
+
 #. Change the port numbers, if required, to match those in use on the
    ``lava-master``.
 #. Restart ``lava-slave`` once the changes are complete::
@@ -70,12 +80,14 @@ only ``lava-dispatcher`` needs to be installed, not ``lava-server``::
    pipeline devices to this slave.
 
 .. note:: For security reasons, the slave does not declare the devices
-   connected to it to the master. The slave actually needs no knowledge
-   of what is connected or where. All this information is stored solely
-   in the database of the master. Once this data is entered by the admin
-   of the master, the slave then needs to connect and the admin can then
-   select that slave for the relevant devices. Once selected, the slave
-   can immediately start running pipeline jobs on those devices.
+   connected to it to the master. The LAVA configuration on the slave
+   actually needs no knowledge of what is connected or where as long as
+   services like ``ser2net`` are configured. All the LAVA configuration
+   data is stored solely in the database of the master. Once this data
+   is entered by the admin of the master, the slave then needs to connect
+   and the admin can then select that slave for the relevant devices. Once
+   selected, the slave can immediately start running pipeline jobs on those
+   devices.
 
 The administrator of the master will require the following information
 about the devices attached to each slave:

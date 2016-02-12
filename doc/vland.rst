@@ -152,7 +152,7 @@ Details of which interface of which board is on which port of which switch is co
 :ref:`network map <vland_network_map>` which is maintained by the lab admins. See :ref:`admin_vland_lava`.
 
 Test writers get to see which :term:`types of device <device type>` support which interfaces and which
-:term:`vland_device_tags`, together with :term:`device tags <device tag>`. This allows test writers to
+:term:`interface tag`, together with :term:`device tags <device tag>`. This allows test writers to
 specify which devices are used for a particular test, without being tied to a set of device hostnames
 that may change from time to time. LAVA then maps the test writer request to a specific device,
 interface and switch/port combination and constructs the commands to pass to :term:`VLANd`.

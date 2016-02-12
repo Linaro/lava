@@ -20,13 +20,10 @@ Software Requirements
 See :ref:`debian_installation` for instructions.
 
 We currently recommend installing LAVA on `Debian`_ unstable, stretch
-or jessie. Support for installing LAVA on Ubuntu and other
-:ref:`debian_installation` is provided via uploads to Debian.
+or jessie. Installations using jessie (the current Debian stable release)
+should use updates available in ``jessie-backports``.
 
 Contributions to support other distributions are welcome.
-
-LAVA packages and dependencies of LAVA migrate automatically into the
-current Ubuntu development release.
 
 .. _Debian: http://www.debian.org/
 
@@ -111,7 +108,7 @@ Which release to install
 
 LAVA makes regular monthly releases called ``production releases`` which
 match the packages installed onto http://validation.linaro.org/. These
-releases are also uploaded to Debian (see :ref:`debian_installation`).
+releases are also uploaded to Debian unstable and backports (see :ref:`debian_installation`).
 Packages uploaded to Debian typically migrate automatically into the
 current Ubuntu development release - at time of writing that is
 Ubuntu Utopic Unicorn, scheduled for release as 14.10. ``production``
@@ -132,7 +129,8 @@ builds directly from local git working copies which allows for builds
 using unreleased code, development code and patches under review.
 
 If in doubt, install the ``production`` release of ``lava-server``
-from official distribution mirrors.
+from official distribution mirrors. (Backports are included on Debian
+mirrors.)
 
 .. _install_types:
 
@@ -153,7 +151,7 @@ USB or using serial cables.
 To install a single master instance and create a superuser, refer to
 :ref:`debian_installation` installation.
 
-The old :ref:`distributed_instance` installation method has been deprecated
+The old :ref:`distributed_instance` installation method has been **deprecated**
 as the :term:`refactoring` introduces a much improved architecture for
 remote workers using :term:`ZMQ`.
 
@@ -162,21 +160,24 @@ remote workers using :term:`ZMQ`.
 What is the Pipeline?
 =====================
 
-.. note:: Production systems will begin to migrate to the pipeline
-   during 2016.
+.. note:: Linaro production systems in the Cambridge lab began to migrate to
+   the pipeline with the 2016.2 production release whilst retaining support
+   for the deprecated model until the migration is complete.
+   Deprecated support is due to be removed in 2017.
 
-In parallel with the :ref:`single_instance` and :ref:`distributed_instance`
+In parallel with the **deprecated** :ref:`single_instance` and :ref:`distributed_instance`
 models, the :term:`dispatcher refactoring <refactoring>` introduces changes and new
 elements which should not be confused with the previous production models.
-It is possible to install LAVA using the new design but the documentation
-is pending. Submission requirements and device support can change before and
-during a migration to the new design.
+It is supported to install LAVA using solely the new design but there are some
+:ref:`pipeline_install_considerations` regarding your current device usage.
+Submission requirements and device support can change before and during a
+migration to the new design.
 
 This documentation includes notes on the new design, so to make things
 clearer, the following terms refer exclusively to the new design and
 have no bearing on :ref:`single_instance` or :ref:`distributed_instance`
-installation methods which should still be used for all production
-instances.
+installation methods which are being used for current production instances
+in the Cambridge lab.
 
 #. :term:`pipeline`
 #. :term:`refactoring`

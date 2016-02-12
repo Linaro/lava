@@ -255,7 +255,7 @@ There are three options in the print menu:
  * View as image - displays only chart as an image in a new tab
  * This chart by URL - opens a new tab with manually set conditions and object set
 
-.. _legend:
+.. _charts_legend:
 
 Legend
 ^^^^^^

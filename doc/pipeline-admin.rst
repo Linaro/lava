@@ -1,6 +1,152 @@
 Administrator use cases
 #######################
 
+.. _admin_introduction:
+
+Introduction
+************
+
+Administrators who are familiar with the terminology of the pipeline and templates can skip
+this section. If so, move on to :ref:`pipeline_device_requirements`.
+
+Information sources
+===================
+
+The pipeline tests repository
+-----------------------------
+
+This git repository holds working examples of a range of different jobs for a range
+of different devices. These jobs are routinely submitted as functional tests of
+upcoming releases of the LAVA software.
+
+https://git.linaro.org/lava-team/refactoring.git
+
+Not every combination of deployment method or boot method can be expressed for all
+supported devices but we aim to have at least one example of each deployment method
+and each boot method on at least one supported device.
+
+Check the ``standard`` directory for tests which use
+:ref:`gold standard images <gold_standard_images>`.
+
+The lava-dispatcher pipeline source code
+----------------------------------------
+
+As well as the source code, the ``devices`` and ``device_types`` directories in this
+git repository contain YAML examples of device and device type configuration. These are
+the raw forms which are used on the ``lava-dispatch`` command line and are useful for
+debugging and starting to create support for your own devices.
+
+https://git.linaro.org/lava/lava-dispatcher.git/tree/HEAD:/lava_dispatcher/pipeline
+
+The lava-server unit test support
+---------------------------------
+
+The `Jinja2`_ device-type templates here are used for the unit tests and
+also become the default :term:`device type` templates when the packages are built.
+The ``devices`` directory contains working device dictionary examples for these device
+types.
+
+https://git.linaro.org/lava/lava-server.git/tree/HEAD:/lava_scheduler_app/tests
+
+.. index:: templates
+
+.. _device_type_templates:
+
+About device type templates
+===========================
+
+Although the example templates include jinja markup, the template itself is YAML. The
+files use the ``.jinja2`` filename extension to make it easier for editors to pick up the
+correct syntax highlighting, but whatever jinja does not recognise is passed through unchanged.
+The output of rendering the template **must always** be valid YAML.
+
+If you are starting with just a single device of the relevant device type on a particular
+instance, you don't need to include jinja markup in the device type template - it
+can stay as YAML. Once you have more than one device or you are considering contributing
+the template upstream, then you will need to support the jinja markup. Jinja is used to:
+
+* **avoid code duplication** - e.g. if a U-Boot command stanza is common to a number of device
+  types (it does not have to be all devices capable of supporting U-Boot), then the common code
+  needs to move into the base template and be inserted using jinja.
+* **support multiple devices** - e.g. if the configuration needs serial numbers (for adb) or
+  references to unique IDs (like UUID of storage devices) or IP addresses (for primary ssh
+  connections) then these can be set as defaults in the template but need a variable name which
+  is then overridden by the device dictionary.
+* **support job-level overrides** - if a variable exists in the device type template and that
+  variable is not set in the device dictionary, it becomes available for the job submission
+  to set that variable.
+
+About the device dictionary
+===========================
+
+In the early stages, the device dictionary can be very simple:
+
+.. code-block:: jinja
+
+ {% extends 'mytemplate.jinja2' %}
+
+Comments may be used in device dictionary files but will not be stored in the form of the dictionary
+created in the database. To use comments, use the jinja syntax:
+
+.. code-block:: jinja
+
+ {# comment goes here #}
+
+To remove a variable from a device dictionary, simply remove or comment out the variable in the file.
+When the file is uploaded, the complete device dictionary for that device is replaced with the content
+of the file.
+
+.. seealso:: :ref:`updating_device_dictionary_using_xmlrpc` and
+   :ref:`updating_device_dictionary_on_command_line`
+
+The `Jinja template documentation <http://jinja.pocoo.org/docs/dev/templates/>`_ gives more
+information on jinja syntax, although the examples are for HTML. Not all features of the
+jinja template API can be supported in a device dictionary or device type template. All of
+the logic within the template support, such as conditionals and the use of blocks, is
+**only** to be done in the device type template.
+
+Checking your templates
+-----------------------
+
+Whenever you modify a device type template, take care to respect the indentation
+within the file. You can (temporarily) copy your template into
+``lava_scheduler_app/tests/device-types`` and run the unit tests to verify that the
+template can be parsed and rendered as valid YAML::
+
+ $ ./lava_server/manage.py test lava_scheduler_app.tests.test_device.DeviceTypeTest
+
+(As with all unit tests in ``lava-server``, this requires that ``lava-server`` is installed
+and configured on the machine running the test **and** that the version of ``lava-server`` is
+recent enough such that its database schema is compatible with the source code in the git
+checkout you are using. It does not need to be `latest`, as long as it is `consistent`
+with the version installed. If you are using production releases or jessie-backports, this
+is likely to mean using ``git pull; git checkout release``.)
+
+All contributions are **required** to pass this test (amongst others) and you will not
+be able to successfully run jobs through your instance if it fails.
+
+Finally, although the final configuration sent to the dispatcher will be stripped of comments,
+it is **strongly recommended** to use **comments** liberally in all your YAML files, including
+device type templates.
+
+Finding your way around the files
+=================================
+
+* Start with a device-type YAML file from the dispatcher which is similar to the one you
+  want to support. Modify the YAML using the
+  `Online YAML parser <http://yaml-online-parser.appspot.com/?yaml=&type=json>`_
+  to make sure you **always** have valid YAML. This is the basis of your device type
+  template. Use **comments** liberally, this is YAML remember.
+* Compare that with the device-specific YAML which is what the dispatcher will actually
+  see. Again, modify the YAML using the
+  `Online YAML parser <http://yaml-online-parser.appspot.com/?yaml=&type=json>`_
+  and make sure you **always** have valid YAML. This is what your device type
+  template will need to produce.
+* Identify variables which are device-specific and add **comments** about what will
+  need to be handled when the device type template is used.
+* Create a minimal device dictionary file which simply extends your initial device
+  type template.
+
 .. index:: pipeline device requirements
 
 .. _pipeline_device_requirements:
@@ -374,3 +520,6 @@ If the dictionary does exist and the file is valid, you should see output::
    :file:`.txt`, :file:`.jinja2`, :file:`.conf` and :file:`.yaml` are
    common, depending on your preferred editor / syntax / highlighting
    configuration.
+
+Updating the device dictionary replaces any previous device dictionary
+for the specified device.

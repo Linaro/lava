@@ -121,9 +121,11 @@ uses ``sid`` in the same way.
 Production releases
 ===================
 
+.. seealso:: :ref:`setting_up_pipeline_instance`.
+
 LAVA is currently packaged for Debian unstable using Django1.7 and
 Postgresql. LAVA packages are now available from official Debian
-mirrors for Debian unstable::
+mirrors for Debian unstable. e.g. to install the master, use::
 
  $ sudo apt install postgresql
  $ sudo apt install lava-server
@@ -245,6 +247,8 @@ Installing just lava-server
 
 The ``lava-server`` package is the main LAVA scheduler and frontend.
 
+.. seealso:: :ref:`setting_up_pipeline_instance`.
+
 To install just the lava-server from the current packages, use::
 
  $ sudo apt-get install lava-server
@@ -298,7 +302,7 @@ one set.
  $ sudo service apache2 restart
 
 Upgrading LAVA packages on Jessie
----------------------------------
+=================================
 
 Updates are uploaded to `jessie-backports <http://backports.debian.org/>`_
 
