@@ -1,8 +1,9 @@
-lava-server (2016.2-2) UNRELEASED; urgency=medium
+lava-server (2016.2-2) unstable; urgency=medium
 
   * Fix testsuite parameters for autopkgtest
+  * Fix missing apache2 config in sites-available
 
- -- Neil Williams <codehelp@debian.org>  Tue, 02 Feb 2016 21:42:25 +0000
+ -- Neil Williams <codehelp@debian.org>  Sat, 13 Feb 2016 12:35:41 +0000
 
 lava-server (2016.2-1) unstable; urgency=medium
 

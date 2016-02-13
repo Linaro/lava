@@ -1,3 +1,4 @@
 examples/ ./usr/share/doc/lava-server/
 instance.template ./usr/share/lava-server/
 lava_scheduler_app/tests/device-types/ ./etc/lava-server/dispatcher-config/
+etc/lava-server.conf ./etc/apache2/sites-available/
