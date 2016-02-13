@@ -1,3 +1,9 @@
+lava-server (2016.2-3) UNRELEASED; urgency=medium
+
+  * Add back uwsgi conffiles
+
+ -- Neil Williams <codehelp@debian.org>  Sat, 13 Feb 2016 13:25:29 +0000
+
 lava-server (2016.2-2) unstable; urgency=medium
 
   * Fix testsuite parameters for autopkgtest
