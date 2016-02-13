@@ -1,8 +1,8 @@
-lava-server (2016.2-3) UNRELEASED; urgency=medium
+lava-server (2016.2-3) unstable; urgency=medium
 
-  * Add back uwsgi conffiles
+  * Add back uwsgi conffiles and setting.conf.
 
- -- Neil Williams <codehelp@debian.org>  Sat, 13 Feb 2016 13:25:29 +0000
+ -- Neil Williams <codehelp@debian.org>  Sat, 13 Feb 2016 13:42:12 +0000
 
 lava-server (2016.2-2) unstable; urgency=medium
 
