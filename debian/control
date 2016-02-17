@@ -11,7 +11,7 @@ Build-Depends: debhelper (>= 8.0.0), dh-python,
  python-sphinx (>= 1.0.7+dfsg) | python3-sphinx,
  python-setuptools (>= 3)
 X-Python-Version: 2.7
-XS-Testsuite: autopkgtest
+Testsuite: autopkgtest
 Standards-Version: 3.9.7
 Homepage: http://www.linaro.org/projects/test-validation/
 Vcs-Git: https://github.com/Linaro/pkg-lava-dispatcher.git

@@ -3,7 +3,7 @@ Upstream-Name: lava-dispatcher
 Source: https://git.linaro.org/lava/lava-dispatcher.git
 
 Files: *
-Copyright: 2010-2013, Linaro Limited
+Copyright: 2010-2016, Linaro Limited
 License: GPL-2.0+
 
 Files: linaro_dashboard_bundle/evolution.py
