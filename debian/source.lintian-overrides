@@ -1,1 +1,12 @@
-lava-server source: unused-file-paragraph-in-dep5-copyright paragraph at line 47
+# problems with dual-licensing 'or' clauses.
+lava-server source: dep5-copyright-license-name-not-unique (paragraph at line 102)
+lava-server source: dep5-copyright-license-name-not-unique (paragraph at line 119)
+lava-server source: dep5-copyright-license-name-not-unique (paragraph at line 119)
+lava-server source: dep5-copyright-license-name-not-unique (paragraph at line 178)
+lava-server source: dep5-copyright-license-name-not-unique (paragraph at line 203)
+# javascript detection mistakes
+lava-server source: source-is-missing lava_server/lava-server/js/jquery.validate.js line length is 1084 characters (>512)
+lava-server source: source-is-missing dashboard_app/static/dashboard_app/js/jquery.flot.navigate.js line length is 1893 characters (>512)
+lava-server source: source-is-missing lava_scheduler_app/static/lava_scheduler_app/js/beautify.js line length is 4240 characters (>512)
+lava-server source: source-is-missing lava_scheduler_app/static/lava_scheduler_app/js/shCore.js line length is 1086 characters (>512)
+

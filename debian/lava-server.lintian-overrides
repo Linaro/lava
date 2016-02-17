@@ -2,3 +2,6 @@ lava-server: script-not-executable etc/lava-server/debug.wsgi
 lava-server: script-not-executable etc/lava-server/lava-server.wsgi
 # these are symlinks created by dh_python.
 lava-server: image-file-in-usr-lib *
+# deprecated support never to be documented
+lava-server: binary-without-manpage usr/sbin/lava-mount-masterfs
+
