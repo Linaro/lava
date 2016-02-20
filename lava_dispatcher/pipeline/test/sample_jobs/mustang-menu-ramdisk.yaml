@@ -17,11 +17,13 @@ actions:
      timeout:
        minutes: 2
      to: tftp
-     dtb: http://images.validation.linaro.org/mustang/mustang.dtb_1.11
-     kernel: http://images.validation.linaro.org/mustang/uImage_1.11
-     nfsrootfs: http://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
-     # nfsrootfs: file:///tmp/debian-jessie-arm64-rootfs.tar.gz
-     rootfs_compression: gz
+     dtb:
+         url: http://images.validation.linaro.org/mustang/mustang.dtb_1.11
+     kernel:
+         url: http://images.validation.linaro.org/mustang/uImage_1.11
+     nfsrootfs:
+         url: http://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
+         compression: gz
      os: debian
      timeout: {minutes: 5}
      to: tftp

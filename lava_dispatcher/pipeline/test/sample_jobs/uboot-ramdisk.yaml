@@ -19,12 +19,16 @@ actions:
      timeout:
        minutes: 2
      to: tftp
-     kernel: http://images.validation.linaro.org/functional-test-images/bbb/zImage
-     ramdisk: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
-     ramdisk-header: u-boot
-     ramdisk-add-header: u-boot
+     kernel:
+         url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+     ramdisk:
+         url: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
+         header: u-boot
+         add-header: u-boot
+         compression: gz
      os: oe
-     dtb: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+     dtb:
+         url: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 
   - boot:
      method: u-boot

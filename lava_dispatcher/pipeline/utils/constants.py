@@ -41,7 +41,6 @@ UBOOT_AUTOBOOT_PROMPT = "Hit any key to stop autoboot"
 UBOOT_DEFAULT_CMD_TIMEOUT = 90
 
 # Ramdisk default filenames
-RAMDISK_COMPRESSED_FNAME = 'ramdisk.cpio.gz'
 RAMDISK_FNAME = 'ramdisk.cpio'
 
 # Size of the chunks when copying file

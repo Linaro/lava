@@ -72,7 +72,7 @@ class DownloaderAction(RetryAction):
         if 'images' in parameters:
             url = urlparse.urlparse(parameters['images'][self.key]['url'])
         else:
-            url = urlparse.urlparse(parameters[self.key])
+            url = urlparse.urlparse(parameters[self.key]['url'])
         if url.scheme == 'scp':
             action = ScpDownloadAction(self.key, self.path, url)
         elif url.scheme == 'http' or url.scheme == 'https':
@@ -129,6 +129,12 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         compression = False
         if 'images' in self.parameters:
             compression = self.parameters['images'][self.key].get('compression', False)
+        else:
+            if self.key == 'ramdisk':
+                self.logger.debug("Not decompressing ramdisk as can be used compressed.")
+            else:
+                compression = self.parameters[self.key].get('compression', False)
+
         fname, _ = self._url_to_fname_suffix(self.path, compression)
 
         if os.path.exists(fname):
@@ -179,8 +185,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             self.data['download_action'][self.key]['file'] = image_name
             self.data['download_action'][self.key]['image_arg'] = image_arg
         else:
-            self.url = urlparse.urlparse(self.parameters[self.key])
-            compression = self.parameters.get('compression', False)
+            self.url = urlparse.urlparse(self.parameters[self.key]['url'])
+            compression = self.parameters[self.key].get('compression', False)
             overlay = self.parameters.get('overlay', False)
             fname, _ = self._url_to_fname_suffix(self.path, compression)
             self.data['download_action'][self.key] = {'file': fname}

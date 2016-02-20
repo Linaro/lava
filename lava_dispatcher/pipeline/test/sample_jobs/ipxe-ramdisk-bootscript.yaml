@@ -18,13 +18,17 @@ actions:
   - deploy:
      timeout:
        minutes: 2
-     modules_compression: xz
      parameters:
        use_bootscript: True
      to: tftp
-     kernel: http://ironhide.bounceme.net/x86-32/bzImage
-     ramdisk: http://ironhide.bounceme.net/x86-32/rootfs.cpio.gz
-     modules: http://ironhide.bounceme.net/x86-32/modules.tar
+     kernel:
+         url: http://ironhide.bounceme.net/x86-32/bzImage
+     ramdisk:
+         url: http://ironhide.bounceme.net/x86-32/rootfs.cpio.gz
+         compression: gz
+     modules:
+         url: http://ironhide.bounceme.net/x86-32/modules.tar.xz
+         compression: xz
      os: oe
 
   - boot:

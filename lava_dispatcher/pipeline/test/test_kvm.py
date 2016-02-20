@@ -468,7 +468,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         # Just a small image
         httpdownloadaction.url = 'http://images.validation.linaro.org/unit-tests/rootfs.gz'
         del httpdownloadaction.parameters['images']
-        httpdownloadaction.parameters.update({'rootfs': httpdownloadaction.url})
+        httpdownloadaction.parameters.update({'rootfs': {'url': httpdownloadaction.url}})
         httpdownloadaction.validate()
         httpdownloadaction.run(None)
 
@@ -483,7 +483,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         httpdownloadaction.url = 'http://images.validation.linaro.org/unit-tests/rootfs.gz'
         del httpdownloadaction.parameters['images']
         httpdownloadaction.parameters.update({
-            'rootfs': httpdownloadaction.url,
+            'rootfs': {'url': httpdownloadaction.url},
             'md5sum': {'rootfs': '6ea432ac3c23210c816551782346ed1c'},
             'sha256sum': {'rootfs': '1a76b17701b9fdf6346b88eb49b0143a9c6912701b742a6e5826d6856edccd21'}})
         httpdownloadaction.validate()
@@ -500,7 +500,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         httpdownloadaction.url = 'http://images.validation.linaro.org/unit-tests/rootfs.gz'
         del httpdownloadaction.parameters['images']
         httpdownloadaction.parameters.update({
-            'rootfs': httpdownloadaction.url,
+            'rootfs': {'url': httpdownloadaction.url},
             'md5sum': {'rootfs': '6ea432ac3c232122222221782346ed1c'},
             'sha256sum': {'rootfs': '1a76b17701b9fdf63444444444444444446912701b742a6e5826d6856edccd21'}})
         httpdownloadaction.validate()
