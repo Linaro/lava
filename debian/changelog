@@ -1,6 +1,7 @@
 lava-dispatcher (2016.2-2) UNRELEASED; urgency=medium
 
   * Update standards version.
+  * Update copyright file with changes from debmake
 
  -- Neil Williams <codehelp@debian.org>  Wed, 17 Feb 2016 09:46:06 +0000
 
