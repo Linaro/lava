@@ -121,30 +121,41 @@ deploy to the requested location.
 
     * **kernel** - in an appropriate format to what the commands require::
 
-       kernel: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+       kernel:
+         url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
 
     * **dtb** - in an appropriate format to what the commands require::
 
-       dtb: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+       dtb:
+         url: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 
     * **ramdisk** - in an appropriate format to what the commands require.
-      If a UBoot header is required, it **must** have already been added
-      prior to download and the ``ramdisk-type: u-boot`` option added.
-      The original header is removed before unpacking so that the LAVA
-      scripts can be overlaid and the header replaced::
+      If a header is already applied, the ``header`` value **must**
+      specify the type of header, e.g. ``u-boot``. This header will
+      be removed before unpacking, ready for the LAVA overlay files.
+      If a header needs to be applied after any LAVA overlay files are
+      added to the ramdisk, the ``add-header`` value must specify the type
+      of header to add, e.g. ``u-boot``.
+      The compression algorithm to be used to unpack the ramdisk **must**
+      be specified explicitly.
+      ::
 
-       ramdisk: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
-       ramdisk-type: u-boot
+       ramdisk:
+         url: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
+         compression: gz
+         header: u-boot
+         add-header: u-boot
 
     * **nfsrootfs** - **must** be a tarball and supports one of ``gz``, ``xz`` or
       ``bz2`` compression. The NFS is unpacked into a temporary directory onto the
-      dispatcher in a location supported by NFS exports::
+      dispatcher in a location supported by NFS exports.
+      The compression algorithm to be used to unpack the nfsrootfs **must**
+      be specified explicitly.
+      ::
 
-       nfsrootfs: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
-
-    * **rootfs_compression** - **must** be specified if ``nfsrootfs`` also specified.
-      Denotes the compression algorithm used by the ``nfsrootfs`` instead of assuming that
-      the file extension is somehow reliable.
+       nfsrootfs:
+         url: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
+         compression: gz
 
     * **nfs_url** - use a persistent NFS URL instead of a compressed tarball. See
       :ref:`persistence` for the limitations of persistent storage. The creation and
