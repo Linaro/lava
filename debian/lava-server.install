@@ -7,3 +7,5 @@ etc/lava-server.wsgi ./etc/lava-server/
 etc/settings.conf ./etc/lava-server/
 etc/uwsgi.ini ./etc/lava-server/
 etc/uwsgi.reload ./etc/lava-server/
+etc/logrotate.d/* ./etc/logrotate.d/
+etc/env.yaml ./etc/lava-server/
