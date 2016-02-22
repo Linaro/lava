@@ -124,6 +124,7 @@ Developer guides
 .. toctree::
    :maxdepth: 2
 
+   development.rst
    debian.rst
    dispatcher-design.rst
    dispatcher-testing.rst

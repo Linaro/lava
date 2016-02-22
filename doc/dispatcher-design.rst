@@ -1864,7 +1864,7 @@ Example device configuration review
             - boot
 
 Importing configuration using a known template
------------------------------------------------
+----------------------------------------------
 
 To add or update the device dictionary, a file using the same syntax as
 the ``export`` content can be imported into the database::
@@ -1896,3 +1896,4 @@ specified to the ``--target`` option. ``--output-dir`` must also be
 specified::
 
  sudo lava-dispatch --target devices/fred.conf panda-ramdisk.yaml --output-dir=/tmp/test
+
