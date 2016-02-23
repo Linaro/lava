@@ -195,6 +195,10 @@ an account.::
   $ sudo apt-get update
   $ sudo apt-get install lava-tool
 
+(If you are installing on Debian Jessie, you may want to first enable
+``jessie-backports`` to install an updated ``lava-tool`` to use
+some superuser operations or for other updates.)
+
 .. _using_lava_tool:
 
 Using lava-tool

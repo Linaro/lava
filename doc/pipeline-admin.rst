@@ -233,10 +233,12 @@ Now modify the dictionary (`Jinja2 child template`_ format) to set the values re
 
 .. _Jinja2 child template: http://jinja.pocoo.org/docs/dev/templates/#child-template
 
+.. seealso:: :ref:`updating_device_dictionary`
+
 .. _viewing_device_dictionary_content:
 
 Viewing current device dictionary content
------------------------------------------
+=========================================
 
 The admin interface displays the current device dictionary contents
 in the Advanced Properties drop-down section of the Device detail view.
@@ -257,30 +259,92 @@ dictionary.
    to have version control over the device configuration with a simple
    mechanism to update the database and verify the database content.
 
-.. _updating_device_dictionary_using_xmlrpc:
+.. index:: device dictionary update
 
-Updating a device dictionary using XMLRPC
------------------------------------------
+.. _updating_device_dictionary:
+
+Updating a device dictionary
+============================
 
 The populated dictionary now needs to be updated in the database
-of the instance. Superusers can update the device dictionary over
-XMLPRC or developers can use :ref:`developer_access_to_django_shell`
+of the instance.
+
+All operations to update a device dictionary need to be done by a
+superuser. The specified device must already exist in the
+database **and** be marked as a pipeline device -
+
+.. seealso:: :ref:`create_entry_known_type`
+
+* :ref:`updating_device_dictionary_with_lava_tool`
+* :ref:`updating_device_dictionary_using_xmlrpc`
+* :ref:`updating_device_dictionary_on_command_line`
+
+Developers can use :ref:`developer_access_to_django_shell`
 to update the dictionary on the command line.
 
-.. note:: Newer version of :ref:`lava_tool <lava_tool>` (>= 0.14) support
-   the ``import-device-dictionary`` and ``export-device-dictionary``
-   functions.
+.. _updating_device_dictionary_with_lava_tool:
+
+Using lava-tool
+^^^^^^^^^^^^^^^
+
+.. note:: Ensure you update to the latest version of
+   :ref:`lava_tool <lava_tool>` (>= 0.14) support to use
+   the ``device-dictionary`` ``--import`` and ``--export``
+   functions as superuser.
+
+::
+
+ $ lava-tool device-dictionary SERVER HOSTNAME --export > file.jinja2
+ Please enter password for encrypted keyring:
+
+The filename and extension are completely arbitrary but you may find
+that your preferred editor has highlighting support for jinja2. The
+contents of the file can be something like:
+
+.. code-block:: jinja
+
+ {% extends 'beaglebone-black.jinja2' %}
+ {% set power_off_command = '/usr/bin/pduclient --daemon localhost --hostname pdu01 --command off --port 12' %}
+ {% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --hostname pdu01 --command reboot --port 12' %}
+ {% set connection_command = 'telnet dispatcher01 7001' %}
+ {% set power_on_command = '/usr/bin/pduclient --daemon localhost --hostname pdu01 --command on --port 12' %}
+
+Make changes within the `Jinja2 child template`_ syntax and then
+``lava-tool`` can be used to import a new device dictionary (replacing
+the previous device dictionary)::
+
+ $ lava-tool device-dictionary SERVER HOSTNAME --import file.jinja2
+ Please enter password for encrypted keyring:
+ Device dictionary updated for black01
+
+Any line not included in the imported device dictionary will be removed
+from the database for that device.
+
+.. _updating_device_dictionary_using_xmlrpc:
+
+Using XMLRPC
+^^^^^^^^^^^^
 
 Superusers can use ``import_device_dictionary`` to update a Jinja2 string
-for a specified Device hostname (the Device must already exist in the
-database - see :ref:`adding_known_devices`).
+for a specified Device hostname:
+
+.. code-block:: python
+
+  import xmlrpclib
+  username = "USERNAME"
+  token = "TOKEN_STRING"
+  hostname = "HOSTNAME"
+  protocol = "PROTOCOL"  # http or preferably https
+  server = xmlrpclib.ServerProxy("%s://%s:%s@%s/RPC2" % (protocol, username, token, hostname))
+  server.scheduler.import_device_dictionary(device_hostname, jinja_string)
 
 If the dictionary did not exist for this hostname, it will be created.
-You should see output::
+The XMLRPC call will return::
 
  Adding new device dictionary for black01
 
-The dictionary is then updated. If the file is valid, you should see output::
+The dictionary is then updated. If the file is valid, the XMLRPC call will
+return::
 
  Device dictionary updated for black01
 
@@ -289,8 +353,10 @@ Superusers can also export the existing jinja2 device information using
 can then be edited and imported to update the device dictionary
 information.
 
-Updating a device dictionary on the command line
--------------------------------------------------
+.. _updating_device_dictionary_on_command_line:
+
+Using the command line
+^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
