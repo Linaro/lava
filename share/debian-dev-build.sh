@@ -1,29 +1,53 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 
-if [ -z "$1" ]; then
-    echo "Usage: <package> [<architecture>]"
-    echo "If architecture is a known Debian architecture, build"
-    echo "a binary-only package for this architecture."
-    echo "e.g. armhf or arm64"
-    exit 1
-fi
+BRANCH=master
+arch=''
 
-if [ -n "$2" ]; then
-    set +e
-    chk=`dpkg-architecture -a$2 > /dev/null 2>&1 ; echo $?`
-    set -e
-    if [ $chk = 0 ]; then
-        echo "Building for architecture $2"
-        arch="-a$2 -b"
-    else
-        echo "Did not recognise $2 as a Debian architecture name. Exit."
+while getopts ":p:a:b:" opt; do
+  case $opt in
+    p)
+      NAME=$OPTARG
+      ;;
+    a)
+      arch=$OPTARG
+      ;;
+    b)
+      BRANCH=$OPTARG
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      ;;
+  esac
+done
+
+if [ -z "$NAME" ]; then
+
+    if [ -z "$1" ]; then
+        echo "Usage: <package> [<architecture>]"
+        echo "If architecture is a known Debian architecture, build"
+        echo "a binary-only package for this architecture."
+        echo "e.g. armhf or arm64"
         exit 1
     fi
+
+    if [ -n "$2" ]; then
+        set +e
+        chk=`dpkg-architecture -a$2 > /dev/null 2>&1 ; echo $?`
+        set -e
+        if [ $chk = 0 ]; then
+            echo "Building for architecture $2"
+            arch="-a$2 -b"
+        else
+            echo "Did not recognise $2 as a Debian architecture name. Exit."
+            exit 1
+        fi
+    fi
+    PWD=`pwd`
+    NAME=${1}
+    BRANCH=master
 fi
-PWD=`pwd`
-NAME=${1}
 if [ -x ./version.py ]; then
   VERSION=`python ./version.py`
 else
@@ -55,8 +79,9 @@ if [ ! -d ${DIR}/${NAME}-${VERSION} ]; then
   mv -v ${DIR}/${NAME}-* ${DIR}/${NAME}-${VERSION}
 fi
 cd ${DIR}/pkg-${NAME}/
+git checkout ${BRANCH}
 dpkg-checkbuilddeps
-git archive master debian | tar -x -C ../${NAME}-${VERSION}
+git archive ${BRANCH} debian | tar -x -C ../${NAME}-${VERSION}
 cd ${DIR}/${NAME}-${VERSION}
 dch -v ${VERSION}-1 -D unstable "Local developer build"
 if [ -n "${LOG}" ]; then

@@ -143,7 +143,12 @@
   {% block breadcrumb_container %}
     {% if context_help %}
        <span style="float: right; padding-right: 1em; padding-top: 0.5em"><a
-           href="/static/docs/{{ context_help|join:'-'|slugify }}.html"><b>Help</b></a></span>
+          {% if not 'HIDE_V2_DOCS'|get_settings %}
+           href="/static/docs/v2/{{ context_help|join:'-'|slugify }}.html"
+           {% else %}
+           href="/static/docs/v1/{{ context_help|join:'-'|slugify }}.html"
+           {% endif %}
+           ><b>Help</b></a></span>
     {% endif %}
   <ul class="breadcrumb">
     {% block breadcrumbs %}
@@ -162,7 +167,7 @@
 
 <div id="footer">
   <div class="container">
-    <p class="text-center"><a href="https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework">Report a bug</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="{{ STATIC_URL }}docs/support.html">Support</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="https://git.linaro.org/gitweb?s=lava%2F">Source code</a></p>
+    <p class="text-center"><a href="https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework">Report a bug</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="{{ STATIC_URL }}docs/index.html#getting-support">Support</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="https://git.linaro.org/gitweb?s=lava%2F">Source code</a></p>
     <p class="text-muted text-center">LAVA Server is free software developed by <a href="http://linaro.org">Linaro</a>. It is distributed under the terms of the <a href="http://www.gnu.org/licenses/agpl-3.0.html" >GNU Affero General Public License version 3</a>.<br /><strong>You have the right to obtain source code of any server side installations of this software that you interact with.</strong></p>
   </div>
 </div>
