@@ -185,6 +185,10 @@ BRANDING_URL = distro_settings.get_setting("BRANDING_URL", 'http://www.linaro.or
 BRANDING_HEIGHT = distro_settings.get_setting("BRANDING_HEIGHT", 22)
 BRANDING_WIDTH = distro_settings.get_setting("BRANDING_WIDTH", 22)
 
+HIDE_V1_DOCS = distro_settings.get_setting("HIDE_V1_DOCS", False)
+HIDE_V2_DOCS = distro_settings.get_setting("HIDE_V2_DOCS", False)
+CUSTOM_DOCS = distro_settings.get_setting("CUSTOM_DOCS", {})
+
 # Logging
 
 LOGGING = {

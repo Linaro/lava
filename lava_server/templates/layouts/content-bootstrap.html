@@ -75,7 +75,28 @@
               <li><a href="{% url 'linaro_django_xmlrpc_tokens' %}">Authentication Tokens</a></li>
             </ul>
           </li>
-          <li><a href="{{ STATIC_URL }}docs/"><span class="glyphicon glyphicon-question-sign"></span> Help</a></li>
+          <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span
+                      class="glyphicon glyphicon-question-sign"></span> Help <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                  <li><a href="{{ STATIC_URL }}docs/">LAVA Overview</a></li>
+              {% if not 'HIDE_V2_DOCS'|get_settings %}
+                  <li><a href="{{ STATIC_URL }}docs/v2">Help (Pipeline V2)</a></li>
+              {% endif %}
+              {% if not 'HIDE_V1_DOCS'|get_settings %}
+                  <li><a href="{{ STATIC_URL }}docs/v1">Help (Deprecated V1)</a></li>
+              {% endif %}
+              {% assign_setting 'CUSTOM_DOCS' as userdocs %}
+                  {% if userdocs %}
+                      {% for label, url in userdocs.items %}
+                          {% if label and url %}
+                            <li role="separator" class="divider"></li>
+                            <li><a href="{{ url }}">{{ label }}</a></li>
+                          {% endif %}
+                      {% endfor %}
+                  {% endif %}
+              </ul>
+          </li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
           {% if lava.instance_name %}
