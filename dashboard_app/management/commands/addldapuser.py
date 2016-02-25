@@ -21,7 +21,7 @@ import sys
 import ldap
 
 from django.contrib.auth.models import User
-from django.core.management.base import BaseCommand, CommandError
+from lava_server.utils import OptArgBaseCommand as BaseCommand
 from dashboard_app.helpers import get_ldap_user_properties
 
 
@@ -29,8 +29,8 @@ class Command(BaseCommand):
     help = 'Add given username from the configured LDAP server.'
 
     def add_arguments(self, parser):
-        parser.add_argument('username', metavar='USERNAME', type=str,
-                            nargs='?', help='Username to be added.')
+        parser.add_argument('--username', type=str,
+                            help='Username to be added.')
         parser.add_argument('--superuser', action='store_true',
                             dest='superuser', default=False,
                             help='User added will be made as superuser.')

@@ -21,7 +21,7 @@ import os
 import csv
 import ldap
 
-from django.core.management.base import BaseCommand, CommandError
+from lava_server.utils import OptArgBaseCommand as BaseCommand
 from lava_server.settings.getsettings import Settings
 
 
@@ -57,8 +57,8 @@ class Command(BaseCommand):
            ' as CSV to the given filename.'
 
     def add_arguments(self, parser):
-        parser.add_argument('filename', metavar='FILENAME', type=str,
-                            nargs='?', help='Filename to write user list.')
+        parser.add_argument('--filename', type=str,
+                            help='Filename to write user list.')
 
     def handle(self, *args, **options):
         filename = options['filename']

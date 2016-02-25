@@ -17,25 +17,31 @@
 # along with Lava Dashboard. If not, see <http://www.gnu.org/licenses/>.
 
 
+import sys
 import ldap
 
 from django.contrib.auth.models import User
-from django.core.management.base import BaseCommand, CommandError
 from dashboard_app.helpers import get_ldap_user_properties
+from lava_server.utils import OptArgBaseCommand as BaseCommand
 
 
 class Command(BaseCommand):
     help = 'Merge given LDAP_USER with LAVA_USER'
 
     def add_arguments(self, parser):
-        parser.add_argument('--lava-user', required=True,
-                            help="LAVA username.")
-        parser.add_argument('--ldap-user', required=True,
-                            help="LDAP username.")
+        parser.add_argument('--lava-user', help="LAVA username.")
+        parser.add_argument('--ldap-user', help="LDAP username.")
 
     def handle(self, *args, **options):
         lava_user = old_lava_user = options['lava_user']
+        if lava_user is None:
+            self.stderr.write("LAVA username not specified.")
+            sys.exit(2)
+
         ldap_user = options['ldap_user']
+        if ldap_user is None:
+            self.stderr.write("LDAP username not specified.")
+            sys.exit(2)
 
         try:
             ldap_user = User.objects.get(username=ldap_user)
