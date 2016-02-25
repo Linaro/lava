@@ -27,7 +27,7 @@
 import os
 import sys
 import yaml
-from django.core.management.base import BaseCommand
+from lava_server.utils import OptArgBaseCommand as BaseCommand
 from lava_scheduler_app.models import DeviceDictionary, SubmissionException
 from lava_scheduler_app.utils import (
     devicedictionary_to_jinja2,
