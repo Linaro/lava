@@ -1072,3 +1072,64 @@ job_name: qemu-pipeline
             self.assertIn('required key not provided', str(exc))
             self.assertIn('job', str(exc))
             self.assertIn('timeouts', str(exc))
+
+    def test_compression_change(self):
+
+        bad_submission = """
+job_name: bbb-ramdisk
+visibility: public
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+actions:
+    - deploy:
+        to: tftp
+        kernel:
+          url: http://test.com/foo
+        ramdisk:
+          url: http://test.com/bar
+          header: u-boot
+          add-header: u-boot
+          compression: gz
+        os: oe
+        # breakage at the dtb block of a tftp deploy
+        dtb:
+          location: http://test.com/baz
+                """
+        try:
+            validate_submission(yaml.load(bad_submission))
+        except SubmissionException as exc:
+            self.assertIn('required key not provided', str(exc))
+            self.assertIn('dtb', str(exc))
+            self.assertIn('url', str(exc))
+
+        bad_submission = """
+job_name: bbb-ramdisk
+visibility: public
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+actions:
+    - deploy:
+        to: tftp
+        kernel:
+          url: http://test.com/foo
+        ramdisk:
+          url: http://test.com/bar
+          header: u-boot
+          add-header: u-boot
+          compression: gz
+        os: oe
+        # breakage using the original syntax
+        dtb: http://test.com/baz
+                """
+        try:
+            validate_submission(yaml.load(bad_submission))
+        except SubmissionException as exc:
+            self.assertIn('expected a dictionary for dictionary value', str(exc))
+            self.assertIn('dtb', str(exc))
+            self.assertNotIn('url', str(exc))

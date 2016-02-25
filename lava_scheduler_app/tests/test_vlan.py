@@ -243,7 +243,6 @@ class TestVlandProtocolSplit(TestCaseWithFactory):
         yaml.dump(client_job, open(client_file_name, 'w'))
         # YAML device file, as required by lava-dispatch --target
         device_yaml_file = os.path.realpath(os.path.join(os.path.dirname(__file__), 'bbb-01.yaml'))
-        print device_yaml_file
         self.assertTrue(os.path.exists(device_yaml_file))
         parser = JobParser()
         bbb_device = NewDevice(device_yaml_file)

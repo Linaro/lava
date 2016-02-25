@@ -42,11 +42,16 @@ actions:
         timeout:
           minutes: 4
         to: tftp
-        kernel: http://people.linaro.org/~neil.williams/opentac/zImage
-        ramdisk: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
-        ramdisk-type: u-boot
+        kernel:
+          url: http://people.linaro.org/~neil.williams/opentac/zImage
+        ramdisk:
+          url: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
+          header: u-boot
+          add-header: u-boot
+          compression: gz
         os: oe
-        dtb: http://people.linaro.org/~neil.williams/opentac/am335x-boneblack.dtb
+        dtb:
+          url: http://people.linaro.org/~neil.williams/opentac/am335x-boneblack.dtb
         role:
         - server
 
@@ -54,11 +59,16 @@ actions:
         timeout:
           minutes: 2
         to: tftp
-        kernel: http://people.linaro.org/~neil.williams/opentac/zImage
-        ramdisk: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
-        ramdisk-type: u-boot
+        kernel:
+          url: http://people.linaro.org/~neil.williams/opentac/zImage
+        ramdisk:
+          url: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
+          header: u-boot
+          add-header: u-boot
+          compression: gz
         os: oe
-        dtb: http://people.linaro.org/~neil.williams/opentac/am335x-boneblack.dtb
+        dtb:
+          url: http://people.linaro.org/~neil.williams/opentac/am335x-boneblack.dtb
         role:
         - client
 
