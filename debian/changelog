@@ -1,3 +1,9 @@
+lava-server (2016.2-4) unstable; urgency=medium
+
+  * Building lava-tool depends on python-mock
+
+ -- Senthil Kumaran S (stylesen) <stylesen@gmail.com>  Thu, 25 Feb 2016 12:42:21 +0530
+
 lava-server (2016.2-3) unstable; urgency=medium
 
   * Add back uwsgi conffiles and setting.conf.
