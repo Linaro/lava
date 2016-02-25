@@ -5,7 +5,7 @@ max_retry=4
 
 while [ 1 ]
 do
-  DEBIAN_FRONTEND=noninteractive apt-get update
+  DEBIAN_FRONTEND=noninteractive apt-get update -q
   DEBIAN_FRONTEND=noninteractive apt-get install -y -q "$@"
   return_value=$?
   [ "$return_value" = 0 ] && break
