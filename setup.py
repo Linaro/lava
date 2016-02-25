@@ -77,7 +77,8 @@ setup(
         'requests',
         'netifaces >= 0.10.0',
         'nose',
-        'pyzmq'
+        'pyzmq',
+        'configobj'
     ],
     tests_require=[
         'pep8 >= 1.4.6',
