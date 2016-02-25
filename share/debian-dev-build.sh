@@ -60,7 +60,7 @@ git archive master debian | tar -x -C ../${NAME}-${VERSION}
 cd ${DIR}/${NAME}-${VERSION}
 dch -v ${VERSION}-1 -D unstable "Local developer build"
 if [ -n "${LOG}" ]; then
-  dch -a ${LOG}
+  dch -a "${LOG}"
 fi
 debuild -sa -uc -us $arch
 cd ${DIR}
