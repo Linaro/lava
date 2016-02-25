@@ -43,8 +43,8 @@ from django.core.validators import (
     MinValueValidator
 )
 from django.db import models, connection, IntegrityError
-from django.db.models import Q
-from django.db.models.fields import FieldDoesNotExist
+from django.db.models import Q, Lookup
+from django.db.models.fields import Field, FieldDoesNotExist
 from django_restricted_resource.models import RestrictedResource
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
@@ -99,6 +99,18 @@ class Queryable(object):
 
     def get_xaxis_attribute(self):
         raise NotImplementedError("Should have implemented this")
+
+
+@Field.register_lookup
+class NotEqual(Lookup):
+    # Class for __ne field lookup.
+    lookup_name = 'ne'
+
+    def as_sql(self, compiler, connection):
+        lhs, lhs_params = self.process_lhs(compiler, connection)
+        rhs, rhs_params = self.process_rhs(compiler, connection)
+        params = lhs_params + rhs_params
+        return '%s <> %s' % (lhs, rhs), params
 
 
 class QueryMaterializedView(MaterializedView):
@@ -762,9 +774,15 @@ class Query(models.Model):
         return "<Query ~%s/%s>" % (self.owner.username, self.name)
 
     def get_results(self, user):
+
+        omitted_list = QueryOmitResult.objects.filter(
+            query=self).values_list('object_id', flat=True)
+
         if self.is_live:
             return Query.get_queryset(self.content_type,
-                                      self.querycondition_set.all()).visible_by_user(user)
+                                      self.querycondition_set.all()).exclude(
+                                          id__in=omitted_list).visible_by_user(
+                                              user)
         else:
             if self.content_type.model_class() == TestJob:
                 view = TestJobViewFactory(self)
@@ -773,7 +791,8 @@ class Query(models.Model):
             elif self.content_type.model_class() == TestSuite:
                 view = TestSuiteViewFactory(self)
 
-            return view.__class__.objects.all().visible_by_user(user)
+            return view.__class__.objects.all().exclude(
+                id__in=omitted_list).visible_by_user(user)
 
     @classmethod
     def get_queryset(cls, content_type, conditions):
@@ -800,12 +819,11 @@ class Query(models.Model):
             if condition.table.model_class() == NamedAttribute:
                 # For custom attributes, need two filters since
                 # we're comparing the key(name) and the value.
-                filter_key_name = '{0}__name'.format(relation_string,
-                                                     condition.field)
-                filter_key_value = '{0}__value'.format(relation_string,
-                                                       condition.field)
+                filter_key_name = '{0}__name'.format(relation_string)
+                filter_key_value = '{0}__value'.format(relation_string)
+                filter_key_value = '{0}__{1}'.format(filter_key_value,
+                                                     condition.operator)
 
-                filter_key = '{0}__{1}'.format(filter_key, condition.operator)
                 filters[filter_key_name] = condition.field
                 filters[filter_key_value] = condition.value
 
@@ -1032,6 +1050,7 @@ class QueryCondition(models.Model):
     )
 
     EXACT = 'exact'
+    NOTEQUAL = 'ne'
     IEXACT = 'iexact'
     ICONTAINS = 'icontains'
     GT = 'gt'
@@ -1040,6 +1059,7 @@ class QueryCondition(models.Model):
     OPERATOR_CHOICES = (
         (EXACT, u"Exact match"),
         (IEXACT, u"Case-insensitive match"),
+        (NOTEQUAL, u"Not equal to"),
         (ICONTAINS, u"Contains"),
         (GT, u"Greater than"),
         (LT, u"Less than"),
@@ -1077,6 +1097,21 @@ def _get_foreign_key_model(model, fieldname):
     if not m2m and direct and isinstance(field_object, models.ForeignKey):
         return field_object.rel.to
     return None
+
+
+class QueryOmitResult(models.Model):
+
+    query = models.ForeignKey(
+        Query,
+        on_delete=models.CASCADE
+    )
+
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = fields.GenericForeignKey('content_type', 'object_id')
+
+    class Meta:
+        unique_together = (('object_id', 'query', 'content_type'))
 
 
 class ChartGroup(models.Model):

@@ -51,6 +51,7 @@ from lava_results_app.views.query.views import (
     query_group_list,
     query_refresh,
     query_remove_condition,
+    query_omit_result,
     query_select_group,
     query_toggle_published,
 )
@@ -102,6 +103,7 @@ urlpatterns = [
         name='lava.results.query_edit_condition'),
     url(r'^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+add-group$', query_add_group, name='query_add_group'),
     url(r'^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+select-group$', query_select_group, name='query_select_group'),
+    url(r'^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/\+omit-result$', query_omit_result, name='lava.results.query_omit_result'),
     url(r'^query/get-query-groups$', query_group_list, name='query_group_list'),
     url(r'^query/\+get-group-names$', get_query_group_names),
     url(r'^query/\+get-query-names$', get_query_names),

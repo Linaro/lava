@@ -24,6 +24,7 @@ import shutil
 import simplejson
 import tempfile
 
+from django.db import IntegrityError
 from django.db.utils import ProgrammingError
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, User
@@ -60,6 +61,7 @@ from lava_results_app.models import (
     Query,
     QueryGroup,
     QueryCondition,
+    QueryOmitResult,
     QueryMaterializedView,
     QueryUpdatedError,
     TestCase,
@@ -236,6 +238,8 @@ def query_display(request, username, name):
     )
 
     table = QUERY_CONTENT_TYPE_TABLE[query.content_type.model_class()](
+        query,
+        request.user,
         view.get_table_data()
     )
 
@@ -284,6 +288,8 @@ def query_custom(request):
 
     try:
         table = QUERY_CONTENT_TYPE_TABLE[content_type.model_class()](
+            None,
+            request.user,
             view.get_table_data()
         )
     except FieldError:
@@ -572,6 +578,23 @@ def query_remove_condition(request, username, name, id):
     query_condition.delete()
 
     return HttpResponseRedirect(query.get_absolute_url() + "/+detail")
+
+
+@login_required
+@ownership_required
+def query_omit_result(request, username, name, id):
+
+    query = get_object_or_404(Query, owner__username=username, name=name)
+    result_object = get_object_or_404(query.content_type.model_class(), id=id)
+
+    try:
+        QueryOmitResult.objects.create(query=query,
+                                       content_object=result_object)
+    except IntegrityError:
+        # Ignore unique constraint violation.
+        pass
+
+    return HttpResponseRedirect(query.get_absolute_url())
 
 
 def get_query_names(request):

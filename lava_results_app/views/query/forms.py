@@ -174,6 +174,7 @@ def _get_operators_for_field_type(field_object):
     if field_object.choices:
         operator_keys = [
             QueryCondition.EXACT,
+            QueryCondition.NOTEQUAL,
             QueryCondition.ICONTAINS
         ]
     elif isinstance(field_object, models.DateTimeField):
@@ -182,13 +183,18 @@ def _get_operators_for_field_type(field_object):
         operator_keys = [
             QueryCondition.EXACT,
             QueryCondition.IEXACT,
+            QueryCondition.NOTEQUAL,
             QueryCondition.ICONTAINS
         ]
     elif isinstance(field_object, models.BooleanField):
-        operator_keys = [QueryCondition.EXACT]
+        operator_keys = [
+            QueryCondition.EXACT,
+            QueryCondition.NOTEQUAL
+        ]
     elif isinstance(field_object, models.IntegerField):
         operator_keys = [
             QueryCondition.EXACT,
+            QueryCondition.NOTEQUAL,
             QueryCondition.ICONTAINS,
             QueryCondition.GT,
             QueryCondition.LT
@@ -197,18 +203,21 @@ def _get_operators_for_field_type(field_object):
         operator_keys = [
             QueryCondition.EXACT,
             QueryCondition.IEXACT,
+            QueryCondition.NOTEQUAL,
             QueryCondition.ICONTAINS
         ]
     elif isinstance(field_object, models.TextField):
         operator_keys = [
             QueryCondition.EXACT,
             QueryCondition.IEXACT,
+            QueryCondition.NOTEQUAL,
             QueryCondition.ICONTAINS
         ]
     else:  # Show all.
         operator_keys = [
             QueryCondition.EXACT,
             QueryCondition.IEXACT,
+            QueryCondition.NOTEQUAL,
             QueryCondition.ICONTAINS,
             QueryCondition.GT,
             QueryCondition.LT

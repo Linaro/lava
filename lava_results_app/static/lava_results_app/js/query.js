@@ -104,7 +104,7 @@ $(document).ready(function () {
                     condition = data[0].fields;
 
                     condition_row_html =
-                        '<td>' + data[1].fields.name + '</td>' +
+                        '<td>' + data[1].fields.model + '</td>' +
                         '<td>' + condition.field + '</td>' +
                         '<td>' + condition.operator + '</td>' +
                         '<td>' + condition.value + '</td>' +

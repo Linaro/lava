@@ -105,6 +105,18 @@ Currently, the only supported format for exporting is CSV.
 
 User can download the query CSV export file from the query display page.
 
+
+Omitting Query Results
+======================
+
+Ability to omit specific results from queries is available.
+
+Users which have owner rights over specific query have the option to omit
+particular results in the query results display page. Keep in mind that this
+action will effect all the charts using this query as well, since charts pull
+the results from queries.
+
+
 .. _lava_charts:
 
 LAVA Charts

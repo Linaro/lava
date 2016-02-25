@@ -145,7 +145,7 @@
     {% for condition in query.querycondition_set.all %}
     <tr id="condition_row_{{ condition.id }}">
       <td>
-	{{ condition.table }}
+	{{ condition.table.model }}
       </td>
       <td>
 	{{ condition.field }}
@@ -172,7 +172,7 @@
     Add new condition
   </a>
 </div>
-    
+
 <!-- Modal HTML -->
 <div id="condition_modal" class="modal fade">
   <div class="modal-dialog">

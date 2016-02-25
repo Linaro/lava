@@ -152,9 +152,18 @@ class QueryTestJobTable(JobTable):
     submit_time = DateColumn()
     end_time = DateColumn()
 
-    def __init__(self, *args, **kwargs):
+    omit = tables.TemplateColumn('''
+    <a href="{{ query.get_absolute_url }}/{{ record.id }}/+omit-result" onclick="return confirm('Omitting results affects all image charts which use this query. Are you sure you want to omit this job from query?');"><span class="glyphicon glyphicon-remove"></span></a>
+    ''')
+    omit.orderable = False
+
+    def __init__(self, query, user, *args, **kwargs):
         super(QueryTestJobTable, self).__init__(*args, **kwargs)
         self.length = 25
+        if query and query.is_accessible_by(user):
+            self.base_columns['omit'].visible = True
+        else:
+            self.base_columns['omit'].visible = False
 
     class Meta(JobTable.Meta):
         model = TestJob
@@ -169,9 +178,18 @@ class QueryTestCaseTable(SuiteTable):
     <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
     ''')
 
-    def __init__(self, data, *args, **kwargs):
-        super(QueryTestCaseTable, self).__init__(data, *args, **kwargs)
+    omit = tables.TemplateColumn('''
+    <a href="{{ query.get_absolute_url }}/{{ record.id }}/+omit-result" onclick="return confirm('Omitting results affects all image charts which use this query. Are you sure you want to omit this job from query?');"><span class="glyphicon glyphicon-remove"></span></a>
+    ''')
+    omit.orderable = False
+
+    def __init__(self, query, user, *args, **kwargs):
+        super(QueryTestCaseTable, self).__init__(*args, **kwargs)
         self.length = 25
+        if query and query.is_accessible_by(user):
+            self.base_columns['omit'].visible = True
+        else:
+            self.base_columns['omit'].visible = False
 
     class Meta(SuiteTable.Meta):
         model = TestCase
@@ -188,9 +206,18 @@ class QueryTestSuiteTable(ResultsTable):
     <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
     ''')
 
-    def __init__(self, data, *args, **kwargs):
-        super(QueryTestSuiteTable, self).__init__(data, *args, **kwargs)
+    omit = tables.TemplateColumn('''
+    <a href="{{ query.get_absolute_url }}/{{ record.id }}/+omit-result" onclick="return confirm('Omitting results affects all image charts which use this query. Are you sure you want to omit this job from query?');"><span class="glyphicon glyphicon-remove"></span></a>
+    ''')
+    omit.orderable = False
+
+    def __init__(self, query, user, *args, **kwargs):
+        super(QueryTestSuiteTable, self).__init__(*args, **kwargs)
         self.length = 25
+        if query and query.is_accessible_by(user):
+            self.base_columns['omit'].visible = True
+        else:
+            self.base_columns['omit'].visible = False
 
     class Meta(ResultsTable.Meta):
         model = TestSuite
