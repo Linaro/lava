@@ -19,10 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import lzma
 import shutil
-import tarfile
-import contextlib
 import subprocess
 from lava_dispatcher.pipeline.action import (
     Action,
@@ -94,9 +91,13 @@ class PrepareOverlayTftp(Action):
         return connection
 
 
-class ApplyOverlayTftp(Action):  # FIXME: generic to more than just tftp
+class ApplyOverlayTftp(Action):
     """
     Unpacks the overlay on top of the ramdisk or nfsrootfs
+    Implicit default order: overlay goes into the NFS by preference
+    only into the ramdisk if NFS not specified
+    Other actions applying overlays for other deployments need their
+    own logic.
     """
     def __init__(self):
         super(ApplyOverlayTftp, self).__init__()
@@ -106,31 +107,30 @@ class ApplyOverlayTftp(Action):  # FIXME: generic to more than just tftp
 
     def run(self, connection, args=None):
         connection = super(ApplyOverlayTftp, self).run(connection, args)
-        overlay_type = ''
         overlay_file = None
         directory = None
         nfs_url = None
-        if self.parameters.get('ramdisk', None) is not None:
-            overlay_type = 'ramdisk'
-            overlay_file = self.data['compress-overlay'].get('output')
-            directory = self.data['extract-overlay-ramdisk']['extracted_ramdisk']
-        elif self.parameters.get('nfsrootfs', None) is not None:
-            overlay_type = 'nfsrootfs'
+        if self.parameters.get('nfsrootfs', None) is not None:
             overlay_file = self.data['compress-overlay'].get('output')
             directory = self.get_common_data('file', 'nfsroot')
-        elif self.parameters.get('rootfs', None) is not None:
-            overlay_type = 'rootfs'
-            overlay_file = self.data['compress-overlay'].get('output')
-            directory = self.get_common_data('file', 'root')
+            self.logger.info("Applying overlay to NFS")
         elif self.parameters.get('nfs_url', None) is not None:
             nfs_url = self.parameters.get('nfs_url')
             overlay_file = self.data['compress-overlay'].get('output')
+            self.logger.info("Applying overlay to persistent NFS")
             # need to mount the persistent NFS here.
             directory = mkdtemp(autoremove=False)
             try:
                 subprocess.check_output(['mount', '-t', 'nfs', nfs_url, directory])
             except subprocess.CalledProcessError as exc:
                 raise JobError(exc)
+        elif self.parameters.get('ramdisk', None) is not None:
+            overlay_file = self.data['compress-overlay'].get('output')
+            directory = self.data['extract-overlay-ramdisk']['extracted_ramdisk']
+            self.logger.info("Applying overlay to ramdisk")
+        elif self.parameters.get('rootfs', None) is not None:
+            overlay_file = self.data['compress-overlay'].get('output')
+            directory = self.get_common_data('file', 'root')
         else:
             self.logger.debug("No overlay directory")
             self.logger.debug(self.parameters)
@@ -160,7 +160,6 @@ class ExtractRootfs(Action):  # pylint: disable=too-many-instance-attributes
         super(ExtractRootfs, self).validate()
         if not self.parameters.get(self.param_key, None):  # idempotency
             return
-        compression = self.parameters[self.param_key].get('compression', None)
 
     def run(self, connection, args=None):
         if not self.parameters.get(self.param_key, None):  # idempotency
@@ -170,7 +169,7 @@ class ExtractRootfs(Action):  # pylint: disable=too-many-instance-attributes
         root_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
         untar_file(root, root_dir)
         self.set_common_data('file', self.file_key, root_dir)
-        self.logger.debug("Extracted %s to %s" % (self.file_key, root_dir))
+        self.logger.debug("Extracted %s to %s", self.file_key, root_dir)
         return connection
 
 
@@ -218,16 +217,21 @@ class ExtractModules(Action):
         if not self.parameters.get('modules', None):  # idempotency
             return connection
         connection = super(ExtractModules, self).run(connection, args)
+        modules = self.data['download_action']['modules']['file']
         if not self.parameters.get('ramdisk', None):
             if not self.parameters.get('nfsrootfs', None):
                 raise JobError("Unable to identify a location for the unpacked modules")
-            else:
-                root = self.get_common_data('file', 'nfsroot')
-        else:
+        # if both NFS and ramdisk are specified, apply modules to both
+        # as the kernel may need some modules to raise the network and
+        # will need other modules to support operations within the NFS
+        if self.parameters.get('nfsrootfs', None):
+            root = self.get_common_data('file', 'nfsroot')
+            self.logger.info("extracting modules file %s to %s", modules, root)
+            untar_file(modules, root)
+        if self.parameters.get('ramdisk', None):
             root = self.data['extract-overlay-ramdisk']['extracted_ramdisk']
-        modules = self.data['download_action']['modules']['file']
-        self.logger.info("extracting modules file %s to %s", modules, root)
-        untar_file(modules, root)
+            self.logger.info("extracting modules file %s to %s", modules, root)
+            untar_file(modules, root)
         try:
             os.unlink(modules)
         except OSError as exc:
@@ -327,16 +331,15 @@ class CompressRamdisk(Action):
         ramdisk_data = self.data['extract-overlay-ramdisk']['ramdisk_file']
         pwd = os.getcwd()
         os.chdir(ramdisk_dir)
-        self.logger.debug("Building ramdisk %s containing %s" % (
-            ramdisk_data, ramdisk_dir
-        ))
+        self.logger.debug("Building ramdisk %s containing %s",
+                          ramdisk_data, ramdisk_dir)
         cmd = "find . | cpio --create --format='newc' > %s" % ramdisk_data
         try:
             # safe to use shell=True here, no external arguments
             log = subprocess.check_output(cmd, shell=True)
         except OSError as exc:
             raise RuntimeError('Unable to create cpio filesystem: %s' % exc)
-        self.logger.debug("%s\n%s" % (cmd, log))
+        self.logger.debug("%s\n%s", cmd, log)
 
         # we need to compress the ramdisk with the same method is was submitted with
         compression = self.parameters['ramdisk'].get('compression', None)
@@ -353,9 +356,8 @@ class CompressRamdisk(Action):
             final_file = ramdisk_uboot
 
         shutil.move(final_file, os.path.join(tftp_dir, os.path.basename(final_file)))
-        self.logger.debug("rename %s to %s" % (
-            final_file, os.path.join(tftp_dir, os.path.basename(final_file))
-        ))
+        self.logger.debug("rename %s to %s",
+                          final_file, os.path.join(tftp_dir, os.path.basename(final_file)))
         if self.parameters['to'] == 'tftp':
             suffix = self.data['tftp-deploy'].get('suffix', '')
             self.set_common_data('file', 'ramdisk', os.path.join(suffix, os.path.basename(final_file)))

@@ -1,0 +1,48 @@
+device_type: beaglebone-black
+
+job_name: bbb-armmp-standard-nfs
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+actions:
+- deploy:
+    timeout:
+      minutes: 4
+    to: tftp
+    kernel:
+      url: file:///tmp/armhf/vmlinuz
+    ramdisk: 
+      url: file:///tmp/armhf/initramfs.cpio.gz
+      compression: gz
+      # the bootloader needs a u-boot header on the modified ramdisk
+      add-header: u-boot
+    modules:
+      url: file:///tmp/armhf/modules.tar.gz
+      compression: gz
+    nfsrootfs:
+      url: file:///tmp/armhf/jessie-armhf-nfs.tar.gz
+      compression: gz
+    os: oe
+    dtb:
+      url: file:///tmp/armhf/dtbs/am335x-boneblack.dtb
+
+- boot:
+    method: u-boot
+    commands: nfs
+    type: bootz
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    parameters:
+      shutdown-message: "reboot: Restarting system"
+    prompts:
+    - 'root@jessie:'
+    timeout:
+      minutes: 2
