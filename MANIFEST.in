@@ -15,6 +15,7 @@ include lava_dispatcher/tests/test-config/bin/*
 include requirements.txt
 include man/*
 include etc/*
+include etc/logrotate.d/*
 include version.py
 include linaro_dashboard_bundle/schemas/*.json
 include linaro_dashboard_bundle/test_documents/*.json

@@ -93,6 +93,8 @@ setup(
             ['etc/lava-options.conf']),
         ('/etc/modules-load.d/',
             ['etc/lava-modules.conf']),
+        ('/etc/logrotate.d/',
+            ['etc/logrotate.d/lava-slave-log']),
         ('/etc/init.d/',
             ['etc/lava-slave.init']),
         ('/usr/share/lava-dispatcher/',
