@@ -79,32 +79,6 @@ class FileHandler(object):  # pylint: disable=too-few-public-methods
         self.fd.close()
 
 
-def handle_health(job, new_device_status):
-    """
-    LOOPING = no change
-    job is not health check = no change
-    last_health_report_job is set
-    INCOMPLETE = HEALTH_FAIL, maintenance_mode
-    COMPLETE = HEALTH_PASS, device IDLE
-    Only change the device here, job is not returned and
-    should not be saved.
-    """
-    device = job.actual_device
-    device.status = new_device_status
-    if not job.health_check or device.health_status == Device.HEALTH_LOOPING:
-        return device
-    device.last_health_report_job = job
-    if job.status == TestJob.INCOMPLETE:
-        device.health_status = Device.HEALTH_FAIL
-        user = User.objects.get(username='lava-health')
-        device.put_into_maintenance_mode(user, "Health Check Job Failed")
-    elif job.status == TestJob.COMPLETE:
-        device.health_status = Device.HEALTH_PASS
-    elif job.status == TestJob.CANCELED:
-        device.health_status = Device.HEALTH_UNKNOWN
-    return device
-
-
 def send_status(hostname, socket, logger):
     """
     The master crashed, send a STATUS message to get the current state of jobs

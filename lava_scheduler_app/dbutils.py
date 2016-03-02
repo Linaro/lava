@@ -105,8 +105,8 @@ def submit_health_check_jobs():
                     logger.debug("%s needs to run_health_check", device)
                     logger.debug("health_check_end=%s", device.last_health_report_job.end_time)
                     logger.debug("health_frequency is every %s hours", device.device_type.health_frequency)
-                    logger.debug("time_diff=%s"), (
-                        timezone.now() - datetime.timedelta(hours=device.device_type.health_frequency))
+                    logger.debug("time_diff=%s", (
+                        timezone.now() - datetime.timedelta(hours=device.device_type.health_frequency)))
             else:
                 unchecked_job_count = TestJob.objects.filter(
                     actual_device=device, health_check=False,
@@ -499,6 +499,32 @@ def fail_job(job, fail_msg=None, job_status=TestJob.INCOMPLETE):
         end_job(failed_job, fail_msg=fail_msg, job_status=job_status)
 
 
+def handle_health(job, new_device_status):
+    """
+    LOOPING = no change
+    job is not health check = no change
+    last_health_report_job is set
+    INCOMPLETE = HEALTH_FAIL, maintenance_mode
+    COMPLETE = HEALTH_PASS, device IDLE
+    Only change the device here, job is not returned and
+    should not be saved.
+    """
+    device = job.actual_device
+    device.status = new_device_status
+    if not job.health_check or device.health_status == Device.HEALTH_LOOPING:
+        return device
+    device.last_health_report_job = job
+    if job.status == TestJob.INCOMPLETE:
+        device.health_status = Device.HEALTH_FAIL
+        user = User.objects.get(username='lava-health')
+        device.put_into_maintenance_mode(user, "Health Check Job Failed")
+    elif job.status == TestJob.COMPLETE:
+        device.health_status = Device.HEALTH_PASS
+    elif job.status == TestJob.CANCELED:
+        device.health_status = Device.HEALTH_UNKNOWN
+    return device
+
+
 def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
     """
     Controls the end of a single job..
@@ -519,9 +545,8 @@ def end_job(job, fail_msg=None, job_status=TestJob.COMPLETE):
         job.save()
         return
     msg = "Job %d has ended. Setting job status %s" % (job.id, TestJob.STATUS_CHOICES[job.status][1])
-    new_status = Device.IDLE
-    device.state_transition_to(new_status, message=msg, job=job)
-    device.status = new_status
+    device = handle_health(job, Device.IDLE)
+    device.state_transition_to(device.status, message=msg, job=job)
     device.current_job = None
     # Save the result
     job.save()
@@ -534,13 +559,9 @@ def cancel_job(job):
     if job.dynamic_connection:
         job.save()
         return
-    device = job.actual_device
-    msg = "Job %s cancelled" % job.id
-    # TODO: what should be the new device status? health check should set
-    # health unknown
-    new_status = Device.IDLE
-    device.state_transition_to(new_status, message=msg, job=job)
-    device.status = new_status
+    msg = "Job %d cancelled" % job.id
+    device = handle_health(job, Device.IDLE)
+    device.state_transition_to(device.status, message=msg, job=job)
     if device.current_job and device.current_job == job:
         device.current_job = None
     # Save the result
