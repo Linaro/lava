@@ -34,6 +34,8 @@ override_dh_auto_build:
 	[ ! -f etc/lava-master.init ] || cp etc/lava-master.init debian/
 	python setup.py build
 	make -C doc/ html SPHINXOPTS="-D today=\"$(BUILD_DATE)\""
+	make -C doc/v1/ html SPHINXOPTS="-D today=\"$(BUILD_DATE)\""
+	make -C doc/v2/ html SPHINXOPTS="-D today=\"$(BUILD_DATE)\""
 	make -C man/ man SPHINXOPTS="-D today=\"$(BUILD_DATE)\""
 
 override_dh_auto_install:
@@ -57,6 +59,8 @@ override_dh_auto_clean:
 	$(RM) -r lava_server.egg-info doc/_build dist/ .idea/ jquery.cookie.js
 	$(RM) -r versiontools-*.egg/
 	[ ! -f doc/Makefile ] || make -C doc/ clean
+	[ ! -f doc/v1/Makefile ] || make -C doc/v1/ clean
+	[ ! -f doc/v2/Makefile ] || make -C doc/v2/ clean
 	[ ! -f man/Makefile ] || make -C man/ clean
 	debconf-updatepo
 
