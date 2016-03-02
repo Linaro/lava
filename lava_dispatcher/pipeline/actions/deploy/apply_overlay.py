@@ -339,7 +339,8 @@ class CompressRamdisk(Action):
             log = subprocess.check_output(cmd, shell=True)
         except OSError as exc:
             raise RuntimeError('Unable to create cpio filesystem: %s' % exc)
-        self.logger.debug("%s\n%s", cmd, log)
+        # lazy-logging would mean that the quoting of cmd causes invalid YAML
+        self.logger.debug("%s\n%s" % (cmd, log))  # pylint: disable=logging-not-lazy
 
         # we need to compress the ramdisk with the same method is was submitted with
         compression = self.parameters['ramdisk'].get('compression', None)
