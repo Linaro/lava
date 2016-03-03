@@ -132,7 +132,7 @@ def testjob_submission(job_definition, user, check_device=None):
     :param job_definition: string of the job submission
     :param user: user attempting the submission
     :param: check_device: set specified device as the target
-    and set job as a health check job. (JSON only)
+    **and** thereby set job as a health check job. (JSON only)
     :return: a job or a list of jobs
     :raises: SubmissionException, Device.DoesNotExist,
         DeviceType.DoesNotExist, DevicesUnavailableException,
@@ -141,21 +141,31 @@ def testjob_submission(job_definition, user, check_device=None):
 
     if is_deprecated_json(job_definition):
         allow_health = False
+        job_json = simplejson.loads(job_definition)
+        target_device = None
+        if 'target' in job_json:
+            target_device = Device.objects.get(hostname=job_json['target'])
         if check_device:
-            job_json = simplejson.loads(job_definition)
             job_json['target'] = check_device.hostname
             job_json['health-check'] = True
             job_definition = simplejson.dumps(job_json)
             allow_health = True
         try:
             job = TestJob.from_json_and_user(job_definition, user, health_check=allow_health)
-            job.health_check = True
-            job.requested_device = check_device
+            job.health_check = allow_health
+            if check_device:
+                job.requested_device = check_device
+            elif target_device:
+                job.requested_device = target_device
             job.save(update_fields=['health_check', 'requested_device'])
         except (JSONDataError, ValueError) as exc:
-            check_device.put_into_maintenance_mode(
-                user, "Job submission failed for health job for %s: %s" % (check_device, exc))
-            raise JSONDataError("Health check job submission failed for %s: %s" % (check_device, exc))
+            if check_device:
+                check_device.put_into_maintenance_mode(
+                    user, "Job submission failed for health job for %s: %s" % (check_device, exc))
+                raise JSONDataError("Health check job submission failed for %s: %s" % (check_device, exc))
+            else:
+                raise JSONDataError("Job submission failed: %s" % exc)
+
     else:
         validate_job(job_definition)
         job = TestJob.from_yaml_and_user(job_definition, user)
