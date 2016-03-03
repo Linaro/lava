@@ -1,0 +1,52 @@
+{
+    "actions": [
+        {
+            "command": "deploy_linaro_kernel",
+            "parameters": {
+                "dtb": "http://images.validation.linaro.org/functional-test-images/bbb/am335x-boneblack.dtb",
+                "kernel": "http://images.validation.linaro.org/functional-test-images/bbb/zImage",
+                "login_prompt": "login:",
+                "password": "temppwd",
+                "password_prompt": "Password:",
+                "ramdisk": "http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot",
+                "username": "debian"
+            }
+        },
+        {
+            "command": "boot_linaro_image",
+            "parameters": {
+                "boot_cmds": [
+                    "setenv autoload no",
+                    "setenv pxefile_addr_r '0x50000000'",
+                    "setenv kernel_addr_r '0x81000000'",
+                    "setenv initrd_addr_r '0x8200000'",
+                    "setenv fdt_addr_r '0x81f00000'",
+                    "setenv initrd_high '0xffffffff'",
+                    "setenv fdt_high '0xffffffff'",
+                    "setenv loadkernel 'tftp ${kernel_addr_r} {KERNEL}'",
+                    "setenv loadinitrd 'tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'",
+                    "setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'",
+                    "setenv bootargs 'console=ttyO0,115200n8 root=/dev/ram0 ip=:::::eth0:dhcp'",
+                    "setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; bootz ${kernel_addr_r} ${initrd_addr_r} ${fdt_addr_r}'",
+                    "boot"
+                ]
+            }
+        },
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
+                        "testdef": "openembedded/kernel-version.yaml"
+                    }
+                ],
+                "timeout": 9600
+            }
+        }
+    ],
+    "device_type": "beaglebone-black",
+    "job_name": "bootloader-job-defined-boot-cmds-lava-test-shell",
+    "logging_level": "DEBUG",
+    "timeout": 18000
+}

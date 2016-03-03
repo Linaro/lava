@@ -30,6 +30,7 @@ from lava_scheduler_app.models import (
 )
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 from lava_scheduler_app.schema import validate_submission, validate_device, SubmissionException
+from lava_scheduler_app.dbutils import testjob_submission
 import simplejson
 
 logger = logging.getLogger()
@@ -926,6 +927,62 @@ actions:
         job_id = server.scheduler.submit_job(yaml_def)
         job = TestJob.objects.get(id=job_id)
         self.assertTrue(job.is_pipeline)
+
+    def test_health_determination(self):
+        user = self.factory.ensure_user('test', 'e@mail.invalid', 'test')
+        user.user_permissions.add(
+            Permission.objects.get(codename='add_testjob'))
+        user.save()
+        device_type = self.factory.make_device_type('beaglebone-black')
+        device = self.factory.make_device(device_type=device_type, hostname="black01")
+        device.save()
+        filename = os.path.join(os.path.dirname(__file__), 'master-check.json')
+        self.assertTrue(os.path.exists(filename))
+        with open(filename, 'r') as json_file:
+            definition = json_file.read()
+        # simulate UI submission
+        job = self.factory.make_testjob(definition=definition, submitter=user)
+        self.assertFalse(job.health_check)
+        job.save(update_fields=['health_check', 'requested_device'])
+        self.assertFalse(job.health_check)
+        job.delete()
+        # simulate API submission
+        job = testjob_submission(definition, user)
+        self.assertFalse(job.health_check)
+        self.assertIsNone(job.requested_device)
+        job.delete()
+        job = testjob_submission(definition, user, check_device=None)
+        self.assertFalse(job.health_check)
+        self.assertIsNone(job.requested_device)
+        job.delete()
+        # simulate initiating a health check
+        job = testjob_submission(definition, user, check_device=device)
+        self.assertTrue(job.health_check)
+        self.assertEqual(job.requested_device.hostname, device.hostname)
+        job.delete()
+        # modify definition to use the deprecated target support
+        device2 = self.factory.make_device(device_type=device_type, hostname="black02")
+        device2.save()
+        def_dict = json.loads(definition)
+        self.assertNotIn('target', def_dict)
+        def_dict['target'] = device2.hostname
+        definition = json.dumps(def_dict)
+        # simulate API submission with target set
+        job = testjob_submission(definition, user, check_device=None)
+        self.assertFalse(job.health_check)
+        self.assertEqual(job.requested_device.hostname, device2.hostname)
+        job.delete()
+        # healthcheck designation overrides target (although this is itself an admin error)
+        job = testjob_submission(definition, user, check_device=device)
+        self.assertTrue(job.health_check)
+        self.assertEqual(job.requested_device.hostname, device.hostname)
+        job.delete()
+        # check malformed JSON
+        self.assertRaises(SubmissionException, testjob_submission, definition[:100], user)
+        # check non-existent targets
+        def_dict['target'] = 'nosuchdevice'
+        definition = json.dumps(def_dict)
+        self.assertRaises(Device.DoesNotExist, testjob_submission, definition, user)
 
 
 class TransactionTestCaseWithFactory(TransactionTestCase):
