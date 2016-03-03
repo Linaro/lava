@@ -159,7 +159,7 @@ def suite_csv(request, job, pk):
         extrasaction='ignore',
         fieldnames=testcase_export_fields())
     writer.writeheader()
-    for row in test_suite.test_cases.all():
+    for row in test_suite.testcase_set.all():
         writer.writerow(export_testcase(row))
     return response
 
@@ -194,7 +194,7 @@ def suite_yaml(request, job, pk):
     filename = "lava_%s.yaml" % test_suite.name
     response['Content-Disposition'] = 'attachment; filename="%s"' % filename
     yaml_list = []
-    for test_case in test_suite.test_cases.all():
+    for test_case in test_suite.testcase_set.all():
         yaml_list.append(export_testcase(test_case))
     yaml.dump(yaml_list, response)
     return response
