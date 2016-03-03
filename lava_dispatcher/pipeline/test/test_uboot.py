@@ -21,7 +21,6 @@
 
 import os
 import yaml
-import tarfile
 import unittest
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
@@ -94,6 +93,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertIn('dtb', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
         # allow root to compare the path (with the mkdtemp added)
         paths = {action.path for action in tftp.internal_pipeline.actions if hasattr(action, 'path')}
+        self.assertNotIn('=', tftpd_dir())
         self.assertIn(
             tftpd_dir(),
             [item for item in paths][0]
@@ -309,7 +309,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertEqual(part_reference, "0:1")
 
     @unittest.skipIf(infrastructure_error('telnet'), "telnet not installed")
-    def test_prompt_from_job(self):
+    def test_prompt_from_job(self):  # pylint: disable=too-many-locals
         """
         Support setting the prompt after login via the job
 
@@ -332,6 +332,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         parser = JobParser()
         sample_job_data = yaml.load(sample_job_string)
         boot = [item['boot'] for item in sample_job_data['actions'] if 'boot' in item][0]
+        self.assertIsNotNone(boot)
         sample_job_string = yaml.dump(sample_job_data)
         job = parser.parse(sample_job_string, device, 4212, None, output_dir='/tmp')
         job.validate()
@@ -350,13 +351,22 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         tftp_deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
         nfs = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-nfsrootfs'][0]
-        self.assertIn('rootfs_compression', nfs.parameters)
-        self.assertEqual(nfs.parameters['rootfs_compression'], 'xz')
-        valid = tarfile.TarFile
-        if 'xz' not in valid.__dict__['OPEN_METH'].keys():
-            self.assertTrue(nfs.use_lzma)
-            self.assertFalse(nfs.use_tarfile)
-        else:
-            # python3 has xz support in tarfile.
-            self.assertFalse(nfs.use_lzma)
-            self.assertTrue(nfs.use_tarfile)
+        self.assertIn('compression', nfs.parameters['nfsrootfs'])
+        self.assertEqual(nfs.parameters['nfsrootfs']['compression'], 'xz')
+
+
+class TestOverlayCommands(unittest.TestCase):  # pylint: disable=too-many-public-methods
+
+    def test_combined_ramdisk_nfs(self):
+        factory = Factory()
+        job = factory.create_bbb_job('sample_jobs/bbb-ramdisk-nfs.yaml')
+        tftp_deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
+        nfs = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-nfsrootfs'][0]
+        modules = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-modules'][0]
+        overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'apply-overlay-tftp'][0]
+        self.assertIsNotNone(modules.parameters.get('ramdisk', None))
+        self.assertIsNotNone(modules.parameters.get('nfsrootfs', None))
+        self.assertIsNotNone(nfs.parameters.get('nfsrootfs', None))
+        self.assertIsNotNone(overlay.parameters.get('nfsrootfs', None))
+        self.assertIsNotNone(overlay.parameters.get('ramdisk', None))

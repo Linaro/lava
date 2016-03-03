@@ -15,10 +15,12 @@ actions:
      timeout:
        minutes: 2
      to: tftp
-     kernel: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+     kernel:
+         url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
      nfs_url: "127.0.0.1:/nfs/debian-jessie.armhf"
      os: debian
-     dtb: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+     dtb:
+         url: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 
   - boot:
      method: u-boot

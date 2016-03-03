@@ -338,6 +338,10 @@ class LavaTestJob(object):
                 metadata['group_size'] = self.job_data['group_size']
                 self.context.test_data.add_metadata(metadata)
 
+            if 'shared_config' in self.job_data:
+                metadata['shared_config'] = self.job_data['shared_config']
+                self.context.test_data.add_metadata(metadata)
+
             logging.debug("[ACTION-B] Multi Node test!")
             logging.debug("[ACTION-B] target_group is (%s)." % self.context.test_data.metadata['target_group'])
         else:

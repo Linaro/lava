@@ -157,6 +157,7 @@ LAVA_SEND_FILE = 'lava-send'
 LAVA_SYNC_FILE = 'lava-sync'
 LAVA_WAIT_FILE = 'lava-wait'
 LAVA_WAIT_ALL_FILE = 'lava-wait-all'
+LAVA_ECHO_CONFIG_FILE = 'lava-echo-config'
 LAVA_MULTI_NODE_CACHE_FILE = '/tmp/lava_multi_node_cache.txt'
 LAVA_LMP_CACHE_FILE = '/tmp/lava_lmp_cache.txt'
 
@@ -1001,6 +1002,14 @@ class cmd_lava_test_shell(BaseAction):
                         fout.write("TARGET_ROLE='%s'\n" % self.context.test_data.metadata['role'])
                     elif foutname == LAVA_SELF_FILE:
                         fout.write("LAVA_HOSTNAME='%s'\n" % self.context.test_data.metadata['target.hostname'])
+                    elif foutname == LAVA_ECHO_CONFIG_FILE:
+                        fout.write('LAVA_SHARED_CONFIG="')
+                        if 'shared_config' in self.context.test_data.metadata:
+                            for device, data in self.context.test_data.metadata['shared_config'].iteritems():
+                                if device in self.context.group_data['roles']:
+                                    for key, value in data.iteritems():
+                                        fout.write(r"%s %s %s\n" % (device, key, value))
+                        fout.write('"\n')
                     else:
                         fout.write("LAVA_TEST_BIN='%s/bin'\n" %
                                    target.lava_test_dir)

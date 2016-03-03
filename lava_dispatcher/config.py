@@ -337,6 +337,7 @@ class DeviceSchema(schema.Schema):
     vexpress_firmware_default = schema.StringOption(default=None)
     vexpress_flash_range_low = schema.StringOption(default=None)
     vexpress_flash_range_high = schema.StringOption(default=None)
+    vexpress_sky2_mac = schema.StringOption(default=None)
 
     # for lxc devices
     lxc_driver = schema.StringOption(default=None)

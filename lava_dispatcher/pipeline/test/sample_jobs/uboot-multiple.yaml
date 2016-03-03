@@ -21,11 +21,14 @@ actions:
      timeout:
        minutes: 2
      to: tftp
-     kernel: http://images.validation.linaro.org/functional-test-images/bbb/zImage
-     nfsrootfs: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
-     rootfs_compression: gz
+     kernel:
+         url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+     nfsrootfs:
+         url: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
+         compression: gz
      os: debian
-     dtb: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+     dtb:
+         url: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 
   - boot:
      method: u-boot
@@ -40,11 +43,14 @@ actions:
      timeout:
        minutes: 4
      to: tftp
-     kernel: http://images.validation.linaro.org/functional-test-images/bbb/zImage
-     nfsrootfs: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
-     rootfs_compression: gz
+     kernel:
+         url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+     nfsrootfs:
+         url: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
+         compression: gz
      os: oe
-     dtb: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+     dtb:
+         url: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 
   - boot:
      method: u-boot

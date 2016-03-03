@@ -286,13 +286,5 @@ class TestBootloaderAction(unittest.TestCase):  # pylint: disable=too-many-publi
         tftp_deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
         nfs = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-nfsrootfs'][0]
-        self.assertIn('rootfs_compression', nfs.parameters)
-        self.assertEqual(nfs.parameters['rootfs_compression'], 'xz')
-        valid = tarfile.TarFile
-        if 'xz' not in valid.__dict__['OPEN_METH'].keys():
-            self.assertTrue(nfs.use_lzma)
-            self.assertFalse(nfs.use_tarfile)
-        else:
-            # python3 has xz support in tarfile.
-            self.assertFalse(nfs.use_lzma)
-            self.assertTrue(nfs.use_tarfile)
+        self.assertIn('compression', nfs.parameters['nfsrootfs'])
+        self.assertEqual(nfs.parameters['nfsrootfs']['compression'], 'xz')

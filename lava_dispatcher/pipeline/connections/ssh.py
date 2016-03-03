@@ -138,13 +138,15 @@ class ConnectSsh(Action):
         command.extend(['-i', self.identity_file])
 
         overrides = self.get_common_data("prepare-scp-overlay", self.key)
-        host_address = str(self.get_common_data("prepare-scp-overlay", overrides[0]))
+        host_address = None
+        if overrides:
+            host_address = str(self.get_common_data("prepare-scp-overlay", overrides[0]))
         if host_address:
             self.logger.info("Using common data to retrieve host_address for secondary connection.")
             command_str = " ".join(str(item) for item in command)
             self.logger.info("%s Connecting to device %s using '%s'", self.name, host_address, command_str)
             command.append("%s@%s" % (self.ssh_user, host_address))
-        elif self.host and not self.primary:
+        elif self.host and self.primary:
             self.logger.info("Using device data host_address for primary connection.")
             command_str = " ".join(str(item) for item in command)
             self.logger.info("%s Connecting to device %s using '%s'", self.name, self.host, command_str)

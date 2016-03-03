@@ -1,11 +1,11 @@
-# Sample JOB definition for an ipxe job
+# Sample JOB definition for a u-boot job
 
-device_type: x86
+device_type: tk1
 
-job_name: x86-pipeline
+job_name: tk1-beserk
 timeouts:
   job:
-    minutes: 15            # timeout for the whole job (default: ??h)
+    minutes: 10            # timeout for the whole job (default: ??h)
   action:
    minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
 priority: medium
@@ -20,20 +20,22 @@ actions:
        minutes: 2
      to: tftp
      kernel:
-         url: http://ironhide.bounceme.net/x86-32/bzImage
-     ramdisk:
-         url: http://ironhide.bounceme.net/x86-32/rootfs.cpio.gz
+         url: http://storage.kernelci.org/next/next-20160120/arm-multi_v7_defconfig+CONFIG_LKDTM=y/zImage
+     nfsrootfs:
+         url: http://ironhide.bounceme.net/debian-jessie-arm64-rootfs.tar.gz
          compression: gz
      modules:
-         url: http://ironhide.bounceme.net/x86-32/modules.tar.xz
+         url: http://ironhide.bounceme.net/tk1/modules.tar.xz
          compression: xz
+
      os: oe
+     dtb:
+         url: http://storage.kernelci.org/next/next-20160120/arm-multi_v7_defconfig+CONFIG_LKDTM=y/dtbs/tegra124-jetson-tk1.dtb
 
   - boot:
-     method: ipxe
-     commands: ramdisk
-     parameters:
-       shutdown-message: "reboot: Restarting system"
+     method: u-boot
+     commands: nfs
+     type: bootz
      prompts:
        - 'linaro-test'
        - 'root@debian:~#'
@@ -41,7 +43,7 @@ actions:
 
   - test:
      failure_retry: 3
-     name: kvm-basic-singlenode  # is not present, use "test $N"
+     name: smoke-tests  # is not present, use "test $N"
      # only s, m & h are supported.
      timeout:
        minutes: 5 # uses install:deps, so takes longer than singlenode01
