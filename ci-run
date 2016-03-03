@@ -5,10 +5,17 @@ set -e
 
 pep8 --ignore E501 .
 
+if [ -z "$1" ] || [ "$1" == "--noinput" ]; then
+  echo "If it exists, a broken test database will be deleted without prompting."
+  NOINPUT='--noinput -v1'
+fi
+
 if [[ (-z "$1") || (("$1" == -v*) && ($# -eq 1)) ]]; then
   VERBOSE=$1
+fi
 
-  ./lava_server/manage.py test $VERBOSE \
+if [ -n "$NOINPUT" ] || [ -n "$VERBOSE" ]; then
+  ./lava_server/manage.py test $NOINPUT $VERBOSE \
 	dashboard_app \
 	lava_scheduler_app \
 	lava_scheduler_daemon \

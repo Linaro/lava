@@ -9,6 +9,7 @@ device configuration is valid for each pipeline device on a specified instance.
 
 """
 
+# Copyright 2016 Linaro Limited
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # This file is part of LAVA Dispatcher.

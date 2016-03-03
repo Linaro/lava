@@ -23,7 +23,7 @@ import urlparse
 import xmlrpclib
 import simplejson
 import lava_dispatcher.config as dispatcher_config
-
+from xml.parsers.expat import ExpatError
 from urllib2 import URLError
 
 from linaro_django_xmlrpc.models import AuthToken
@@ -127,7 +127,7 @@ class WorkerData:
                 server.worker_heartbeat(data)
                 self.logger.debug("Heartbeat updated")
                 return
-            except (CommandError, URLError, IOError) as err:
+            except (CommandError, URLError, IOError, ExpatError) as err:
                 self.logger.debug("Error message: %s", str(err))
             except xmlrpclib.Fault as err:
                 time.sleep(1)

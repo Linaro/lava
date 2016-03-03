@@ -11,7 +11,12 @@
 
 <p>LAVA is an automated validation architecture primarily aimed at testing deployments of systems based around the
 Linux kernel on ARM devices, specifically ARMv7 and later. The current range of boards (<a
-href="{{ STATIC_URL }}docs/glossary.html#term-device-type">device types</a>) supported by this LAVA instance can be seen
+{% if not 'HIDE_V2_DOCS'|get_settings %}
+href="{{ STATIC_URL }}docs/v2/glossary.html#term-device-type"
+{% else %}
+href="{{ STATIC_URL }}docs/v1/glossary.html#term-device-type"
+{% endif %}
+>device types</a>) supported by this LAVA instance can be seen
 on the <a href="{% url 'lava.scheduler' %}">scheduler status</a> page which includes details of how many boards
 of each type are available for tests and currently running jobs.</p>
 
@@ -75,11 +80,16 @@ of each type are available for tests and currently running jobs.</p>
     <div class="row">
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
-          <li><a href="{{ STATIC_URL }}docs/overview.html"
+          <li><a href="{{ STATIC_URL }}docs/index.html"
               class="btn btn-primary">
               <span class="glyphicon glyphicon-question-sign"></span>
               Introduction to LAVA</a></li>
-          <li><a href="{{ STATIC_URL }}docs/#lava-administrator-guide"
+          <li><a
+          {% if not 'HIDE_V2_DOCS'|get_settings %}
+          href="{{ STATIC_URL }}docs/v2/index.html#lava-administrator-guide"
+          {% else %}
+          href="{{ STATIC_URL }}docs/v1/index.html#lava-administrator-guide"
+          {% endif %}
               class="btn btn-default">
               <span class="glyphicon glyphicon-question-sign"></span>
               Administering a LAVA instance</a></li>
@@ -90,7 +100,12 @@ of each type are available for tests and currently running jobs.</p>
           <li><a href="http://www.linaro.org/projects/test-validation/"
               class="btn btn-default">
               More about LAVA &amp; Linaro</a></li>
-          <li><a href="{{ STATIC_URL }}docs/#developer-guides"
+          <li><a
+          {% if not 'HIDE_V2_DOCS'|get_settings %}
+          href="{{ STATIC_URL }}docs/v2/index.html#developer-guides"
+          {% else %}
+          href="{{ STATIC_URL }}docs/v1/index.html#developer-guides"
+          {% endif %}
               class="btn btn-default">
               <span class="glyphicon glyphicon-question-sign"></span>
               Developing LAVA</a></li>
@@ -103,11 +118,21 @@ of each type are available for tests and currently running jobs.</p>
     <div class="row">
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
-          <li><a href="{{ STATIC_URL }}docs/multinode-usecases.html"
+          <li><a
+          {% if not 'HIDE_V2_DOCS'|get_settings %}
+          href="{{ STATIC_URL }}docs/v2/multinode-usecases.html"
+          {% else %}
+          href="{{ STATIC_URL }}docs/v1/multinode-usecases.html"
+          {% endif %}
               class="btn btn-info">
               <span class="glyphicon glyphicon-question-sign"></span>
               Use cases and worked examples.</a></li>
-          <li><a href="{{ STATIC_URL}}docs/hacking-session.html"
+          <li><a
+          {% if not 'HIDE_V2_DOCS'|get_settings %}
+          href="{{ STATIC_URL}}docs/v2/hacking-session.html"
+          {% else %}
+          href="{{ STATIC_URL}}docs/v1/hacking-session.html"
+          {% endif %}
               class="btn btn-info">
               <span class="glyphicon glyphicon-question-sign"></span>
               Logging into a LAVA device.</a></li>
@@ -115,7 +140,12 @@ of each type are available for tests and currently running jobs.</p>
       </div>
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
-          <li><a href="{{ STATIC_URL }}docs/writing-tests.html"
+          <li><a
+          {% if not 'HIDE_V2_DOCS'|get_settings %}
+          href="{{ STATIC_URL }}docs/v2/writing-tests.html"
+          {% else %}
+          href="{{ STATIC_URL }}docs/v1/writing-tests.html"
+          {% endif %}
               class="btn btn-success">
               <span class="glyphicon glyphicon-question-sign"></span>
               Writing a LAVA test definition.</a></li>

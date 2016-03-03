@@ -3,13 +3,26 @@ from voluptuous import (
     Schema, Required, All, Length,
     Any, Invalid, Optional, MultipleInvalid
 )
-from lava_scheduler_app.models import SubmissionException
+
+
+class SubmissionException(UserWarning):
+    """ Error raised if the submission is itself invalid. """
 
 
 def _timeout_schema():
     return Schema({
         'days': int, 'hours': int, 'minutes': int, 'seconds': int
     })
+
+
+def _deploy_tftp_schema():
+    return Schema({
+        Required('to'): 'tftp',
+        Optional('kernel'): {Required('url'): str},
+        Optional('ramdisk'): {Required('url'): str},
+        Optional('nfsrootfs'): {Required('url'): str},
+        Optional('dtb'): {Required('url'): str},
+    }, extra=True)
 
 
 def _job_deploy_schema():
@@ -72,7 +85,9 @@ def _job_test_schema():
 def _job_actions_schema():
     return Schema([
         {
-            'deploy': _job_deploy_schema(),
+            'deploy': Any(
+                _deploy_tftp_schema(),
+                _job_deploy_schema()),
             'boot': _job_boot_schema(),
             'test': _job_test_schema(),
         }

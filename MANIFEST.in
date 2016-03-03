@@ -6,6 +6,7 @@ include README
 recursive-include lava_server *.gif *.png *.js *.css *.svg *.ico *.woff
 recursive-include lava_server/templates *.html
 recursive-include lava_results_app/templates *.html
+recursive-include lava_results_app/tests *.yaml
 recursive-include lava_results_app/static *.png *.js *.css *.gif
 recursive-include lava_projects/templates *.html
 recursive-include lava_markitup/templates *.html
@@ -23,15 +24,21 @@ recursive-include examples *.xml *.json *html *.conf
 recursive-include lava_scheduler_app/templates *.html *.txt
 recursive-include lava_scheduler_app/tests *.yaml
 recursive-include lava_scheduler_app/tests/device-types *.jinja2
+recursive-include lava_scheduler_app/tests/devices *.jinja2
 recursive-include lava_scheduler_app/static *.js *.css *.gif *.png
 recursive-include doc/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg
+recursive-include doc/v1/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg
+recursive-include doc/v2/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg
 include entry_points.ini
 include instance.template
 include doc/*
 include doc/deprecated/*
-recursive-include doc/examples *.json * *.py
+include doc/v1/*
+include doc/v2/*
 include doc/_static/*
-include doc/linaro_dashboard_bundle/*
+include doc/v1/_static/*
+include doc/v2/_static/*
+include doc/v1/linaro_dashboard_bundle/*
 include man/*
 include etc/debug.wsgi
 include etc/lava-default.conf

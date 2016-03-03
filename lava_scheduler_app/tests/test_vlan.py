@@ -18,7 +18,7 @@ from lava_scheduler_app.utils import (
 )
 from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
 from lava_scheduler_app.tests.test_pipeline import YamlFactory
-from lava_scheduler_daemon.dbjobsource import find_device_for_job
+from lava_scheduler_app.dbutils import find_device_for_job
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.connection import Protocol
@@ -243,7 +243,6 @@ class TestVlandProtocolSplit(TestCaseWithFactory):
         yaml.dump(client_job, open(client_file_name, 'w'))
         # YAML device file, as required by lava-dispatch --target
         device_yaml_file = os.path.realpath(os.path.join(os.path.dirname(__file__), 'bbb-01.yaml'))
-        print device_yaml_file
         self.assertTrue(os.path.exists(device_yaml_file))
         parser = JobParser()
         bbb_device = NewDevice(device_yaml_file)

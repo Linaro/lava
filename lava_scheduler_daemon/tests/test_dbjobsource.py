@@ -9,8 +9,9 @@ from lava_scheduler_app.models import (
     DeviceDictionary,
     DevicesUnavailableException,
 )
-
-from lava_scheduler_daemon.dbjobsource import DatabaseJobSource, find_device_for_job
+from lava_scheduler_app.dbutils import initiate_health_check_job
+from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
+from lava_scheduler_app.dbutils import find_device_for_job
 from lava_scheduler_daemon.tests.base import DatabaseJobSourceTestEngine
 from lava_scheduler_app.views import job_cancel
 
@@ -331,8 +332,8 @@ class DatabaseJobSourceTest(DatabaseJobSourceTestEngine):
         self.panda01.state_transition_to(Device.OFFLINE)
         self.panda02.state_transition_to(Device.OFFLINE)
 
-        Device.initiate_health_check_job(self.panda01)
-        Device.initiate_health_check_job(self.panda02)
+        initiate_health_check_job(self.panda01)
+        initiate_health_check_job(self.panda02)
 
         jobs = self.scheduler_tick()
 

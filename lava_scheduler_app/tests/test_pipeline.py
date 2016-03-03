@@ -27,6 +27,7 @@ from lava_scheduler_app.utils import (
     split_multinode_yaml,
 )
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
+from lava_scheduler_app.dbutils import testjob_submission
 from lava_dispatcher.pipeline.device import PipelineDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.action import JobError
@@ -225,6 +226,20 @@ class TestPipelineSubmit(TestCaseWithFactory):
         job = TestJob.from_yaml_and_user(
             self.factory.make_job_json(), user)
         self.assertEqual(user, job.submitter)
+        self.assertFalse(job.health_check)
+
+    def test_pipeline_health_check(self):
+        user = self.factory.make_user()
+        device = Device.objects.get(hostname='fakeqemu1')
+        job = testjob_submission(self.factory.make_job_yaml(), user, check_device=None)
+        self.assertEqual(user, job.submitter)
+        self.assertFalse(job.health_check)
+        self.assertIsNone(job.requested_device)
+        job = testjob_submission(self.factory.make_job_yaml(), user, check_device=device)
+        self.assertEqual(user, job.submitter)
+        self.assertTrue(job.health_check)
+        self.assertEqual(job.requested_device, device)
+        self.assertIsNone(job.actual_device)
 
     def test_invalid_device(self):
         user = self.factory.make_user()

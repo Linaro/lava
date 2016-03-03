@@ -21,7 +21,7 @@
 # pylint: disable=invalid-name,no-member
 
 import sys
-from django.core.management.base import BaseCommand
+from lava_server.utils import OptArgBaseCommand as BaseCommand
 from lava_scheduler_app.models import Worker
 
 
@@ -37,7 +37,7 @@ class Command(BaseCommand):
     help = "LAVA Pipeline worker helper"
 
     def add_arguments(self, parser):
-        parser.add_argument('--hostname', help="Hostname of the new worker", required=True)
+        parser.add_argument('--hostname', help="Hostname of the new worker")
         parser.add_argument('--description', help='optional description of the new worker')
         # equivalent to turning off the display flag in the admin interface
         parser.add_argument(
@@ -45,7 +45,12 @@ class Command(BaseCommand):
             help='prevent pipeline jobs running on this worker.')
 
     def handle(self, *args, **options):
-        new_worker, created = Worker.objects.get_or_create(hostname=options['hostname'])
+        hostname = options['hostname']
+        if hostname is None:
+            self.stderr.write("Please specify a hostname")
+            sys.exit(2)
+
+        new_worker, created = Worker.objects.get_or_create(hostname=hostname)
         if not created:
             if new_worker.is_master:
                 self.stderr.write("Error: %s is the master worker." % options['hostname'])

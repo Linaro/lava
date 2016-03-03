@@ -1,10 +1,9 @@
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 import copy
 import yaml
 import json
 import logging
 import os
-from argcomplete import debug
 import simplejson
 import StringIO
 import datetime
@@ -31,16 +30,11 @@ from django.shortcuts import (
     render,
 )
 from django.template import RequestContext
-from django.template import defaultfilters as filters
-from django.utils.html import escape
-from django.utils.safestring import mark_safe
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
 from django_tables2 import (
-    Column,
-    TemplateColumn,
     RequestConfig,
 )
 
@@ -67,9 +61,10 @@ from lava_scheduler_app.models import (
     Worker,
 )
 from lava_scheduler_app import utils
+from lava_scheduler_app.dbutils import initiate_health_check_job
 from dashboard_app.models import BundleStream
 
-from lava.utils.lavatable import LavaTable, LavaView
+from lava.utils.lavatable import LavaView
 from lava_results_app.utils import description_data, description_filename
 
 from lava_scheduler_app.template_helper import expand_template
@@ -92,10 +87,6 @@ from lava_scheduler_app.job_templates import (
 from django.contrib.auth.models import User, Group
 from lava_scheduler_app.tables import (
     JobTable,
-    DateColumn,
-    IDLinkColumn,
-    RestrictedIDLinkColumn,
-    pklink,
     all_jobs_with_custom_sort,
     IndexJobTable,
     FailedJobTable,
@@ -251,11 +242,12 @@ class WorkerView(JobTableView):
         return Worker.objects.filter(display=True).order_by('hostname')
 
 
-def health_jobs_in_hr(hr=-24):
+def health_jobs_in_hr():
     return TestJob.objects.values('actual_device').filter(
-        health_check=True, start_time__gte=(timezone.now() +
-                                            relativedelta(hours=hr))).\
-        exclude(status__in=[TestJob.SUBMITTED, TestJob.RUNNING]).distinct()
+        health_check=True,
+        actual_device__isnull=False).exclude(
+        actual_device__status__in=[Device.RETIRED]).exclude(
+        status__in=[TestJob.SUBMITTED, TestJob.RUNNING]).distinct()
 
 
 def _online_total():
@@ -810,6 +802,15 @@ def device_type_detail(request, pk):
     cpu_name = dt.cpu_model if dt.cpu_model else ''
     desc = dt.description if dt.description else ''
 
+    if dt.health_check_job == "":
+        health_freq_str = ""
+    elif not list(Device.objects.filter(Q(device_type=dt), ~Q(status=Device.RETIRED))):
+        health_freq_str = ""
+    elif dt.health_denominator == DeviceType.HEALTH_PER_JOB:
+        health_freq_str = "one every %d jobs" % dt.health_frequency
+    else:
+        health_freq_str = "one every %d hours" % dt.health_frequency
+
     return render_to_response(
         "lava_scheduler_app/device_type.html",
         {
@@ -844,6 +845,7 @@ def device_type_detail(request, pk):
             'devices_table_no_dt': no_dt_ptable,  # NoDTDeviceTable('devices' kwargs=dict(pk=pk)), params=(dt,)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_detail, pk=pk),
             'context_help': BreadCrumbTrail.leading_to(device_type_detail, pk='help'),
+            'health_freq': health_freq_str,
         },
         RequestContext(request))
 
@@ -2316,7 +2318,7 @@ def device_looping_mode(request, pk):
 def device_force_health_check(request, pk):
     device = Device.objects.get(pk=pk)
     if device.can_admin(request.user):
-        job = device.initiate_health_check_job()
+        job = initiate_health_check_job(device)
         return redirect(job)
     else:
         return HttpResponseForbidden(

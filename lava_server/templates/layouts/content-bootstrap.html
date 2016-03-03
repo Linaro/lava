@@ -75,7 +75,28 @@
               <li><a href="{% url 'linaro_django_xmlrpc_tokens' %}">Authentication Tokens</a></li>
             </ul>
           </li>
-          <li><a href="{{ STATIC_URL }}docs/"><span class="glyphicon glyphicon-question-sign"></span> Help</a></li>
+          <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span
+                      class="glyphicon glyphicon-question-sign"></span> Help <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                  <li><a href="{{ STATIC_URL }}docs/">LAVA Overview</a></li>
+              {% if not 'HIDE_V2_DOCS'|get_settings %}
+                  <li><a href="{{ STATIC_URL }}docs/v2">Help (Pipeline V2)</a></li>
+              {% endif %}
+              {% if not 'HIDE_V1_DOCS'|get_settings %}
+                  <li><a href="{{ STATIC_URL }}docs/v1">Help (Deprecated V1)</a></li>
+              {% endif %}
+              {% assign_setting 'CUSTOM_DOCS' as userdocs %}
+                  {% if userdocs %}
+                      {% for label, url in userdocs.items %}
+                          {% if label and url %}
+                            <li role="separator" class="divider"></li>
+                            <li><a href="{{ url }}">{{ label }}</a></li>
+                          {% endif %}
+                      {% endfor %}
+                  {% endif %}
+              </ul>
+          </li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
           {% if lava.instance_name %}
@@ -122,7 +143,12 @@
   {% block breadcrumb_container %}
     {% if context_help %}
        <span style="float: right; padding-right: 1em; padding-top: 0.5em"><a
-           href="/static/docs/{{ context_help|join:'-'|slugify }}.html"><b>Help</b></a></span>
+          {% if not 'HIDE_V2_DOCS'|get_settings %}
+           href="/static/docs/v2/{{ context_help|join:'-'|slugify }}.html"
+           {% else %}
+           href="/static/docs/v1/{{ context_help|join:'-'|slugify }}.html"
+           {% endif %}
+           ><b>Help</b></a></span>
     {% endif %}
   <ul class="breadcrumb">
     {% block breadcrumbs %}
@@ -141,7 +167,7 @@
 
 <div id="footer">
   <div class="container">
-    <p class="text-center"><a href="https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework">Report a bug</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="{{ STATIC_URL }}docs/support.html">Support</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="https://git.linaro.org/gitweb?s=lava%2F">Source code</a></p>
+    <p class="text-center"><a href="https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework">Report a bug</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="{{ STATIC_URL }}docs/index.html#getting-support">Support</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="https://git.linaro.org/gitweb?s=lava%2F">Source code</a></p>
     <p class="text-muted text-center">LAVA Server is free software developed by <a href="http://linaro.org">Linaro</a>. It is distributed under the terms of the <a href="http://www.gnu.org/licenses/agpl-3.0.html" >GNU Affero General Public License version 3</a>.<br /><strong>You have the right to obtain source code of any server side installations of this software that you interact with.</strong></p>
   </div>
 </div>

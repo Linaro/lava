@@ -35,7 +35,8 @@ from importlib import import_module
 
 from django.apps import apps
 from django.core.management import call_command
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import CommandError
+from lava_server.utils import OptArgBaseCommand as BaseCommand
 from django.core.management.color import no_style
 from django.core.management.sql import (
     custom_sql_for_model, emit_post_migrate_signal, emit_pre_migrate_signal,
@@ -45,7 +46,6 @@ from django.db.migrations.autodetector import MigrationAutodetector
 from django.db.migrations.executor import MigrationExecutor
 from django.db.migrations.loader import AmbiguityError
 from django.db.migrations.state import ProjectState
-from django.utils.deprecation import RemovedInDjango110Warning
 from django.utils.module_loading import module_has_submodule
 
 
@@ -53,9 +53,9 @@ class Command(BaseCommand):
     help = "Updates database schema. Manages both apps with migrations and those without."
 
     def add_arguments(self, parser):
-        parser.add_argument('app_label', nargs='?',
+        parser.add_argument('--app_label',
                             help='App label of an application to synchronize the state.')
-        parser.add_argument('migration_name', nargs='?',
+        parser.add_argument('--migration_name',
                             help=(
                                 'Database state will be brought to the state after that '
                                 'migration. Use the name "zero" to unapply all migrations.'
@@ -93,9 +93,8 @@ class Command(BaseCommand):
 
         # If they asked for a migration listing, quit main execution flow and show it
         if options.get("list", False):
-            warnings.warn(
-                "The 'migrate --list' command is deprecated. Use 'showmigrations' instead.",
-                RemovedInDjango110Warning, stacklevel=2)
+            self.stderr.write(
+                "The 'migrate --list' command is deprecated. Use 'showmigrations' instead.")
             self.stdout.ending = None  # Remove when #21429 is fixed
             return call_command(
                 'showmigrations',

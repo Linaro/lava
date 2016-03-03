@@ -10,7 +10,6 @@ from lava_scheduler_app.models import (
     TestJob,
     Tag,
     DevicesUnavailableException,
-    SubmissionException,
     _pipeline_protocols,
 )
 from django.db import models
@@ -18,6 +17,7 @@ from django_testscenarios.ubertest import TestCase
 from lava_scheduler_app.tests.test_pipeline import YamlFactory
 from lava_scheduler_app.utils import jinja_template_path, split_multinode_yaml
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
+from lava_scheduler_app.schema import SubmissionException
 
 
 class YamlSshFactory(YamlFactory):

@@ -83,7 +83,9 @@ class DashboardAPIStreamsTests(DashboardXMLRPCViewsTestCase):
         """
         with fixtures.created_bundle_streams(self.pathnames):
             response = self.xml_rpc_call('streams')
-            self.assertEqual(response, self.expected_response)
+            for item in response:
+                self.assertIn(item, self.expected_response)
+            self.assertEqual(len(response), len(self.expected_response))
 
 
 class DashboardAPIBundlesTests(DashboardXMLRPCViewsTestCase):

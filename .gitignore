@@ -8,6 +8,8 @@ build
 versiontools-*egg
 *.pyc
 doc/_build
+doc/v1/_build
+doc/v2/_build
 man/_build
 lava_server/precious
 django.log
