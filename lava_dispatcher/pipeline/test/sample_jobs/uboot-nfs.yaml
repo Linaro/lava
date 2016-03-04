@@ -21,11 +21,14 @@ actions:
      timeout:
        minutes: 2
      to: tftp
-     kernel: http://images.validation.linaro.org/functional-test-images/bbb/zImage
-     nfsrootfs: http://images.validation.linaro.org/no-such-file-rootfs.tar.xz
-     rootfs_compression: xz
+     kernel:
+         url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+     nfsrootfs:
+         url: http://images.validation.linaro.org/no-such-file-rootfs.tar.xz
+         compression: xz
      os: debian
-     dtb: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+     dtb:
+         url: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 
   - boot:
      method: u-boot

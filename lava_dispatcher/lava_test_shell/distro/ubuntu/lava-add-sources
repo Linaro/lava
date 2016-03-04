@@ -3,7 +3,7 @@
 which add-apt-repository >/dev/null
 ret=$?
 if [ $ret -ne 0 ]; then
-    DEBIAN_FRONTEND=noninteractive apt-get update
+    DEBIAN_FRONTEND=noninteractive apt-get update -q
     DEBIAN_FRONTEND=noninteractive apt-get install -y -q "software-properties-common"
 fi
 

@@ -18,7 +18,9 @@ actions:
           minutes: 10
         to: usb
         os: debian
-        image: http://images.validation.linaro.org/functional-test-images/panda/panda-raring_developer_20130723-408.img.gz
+        image:
+            url: http://images.validation.linaro.org/functional-test-images/panda/panda-raring_developer_20130723-408.img.gz
+            compression: gz
         device: SanDisk_Ultra # needs to be exposed in the device-specific UI
         download: /usr/bin/wget
 

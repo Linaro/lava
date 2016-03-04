@@ -19,9 +19,13 @@ actions:
      timeout:
        minutes: 2
      to: tftp
-     kernel: http://images.validation.linaro.org/functional-test-images/panda/uImage
-     nfsrootfs: file:///home/linaro/chroots/jessie.tar.gz
-     dtb: http://images.validation.linaro.org/functional-test-images/panda/omap4-panda-es.dtb
+     kernel:
+         url: http://images.validation.linaro.org/functional-test-images/panda/uImage
+     nfsrootfs:
+         url: file:///home/linaro/chroots/jessie.tar.gz
+         compression: gz
+     dtb:
+         url: http://images.validation.linaro.org/functional-test-images/panda/omap4-panda-es.dtb
 
   - boot:
      method: u-boot

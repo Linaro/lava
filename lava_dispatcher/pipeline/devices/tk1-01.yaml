@@ -1,0 +1,69 @@
+device_type: tk1
+
+parameters:
+  bootm:
+   kernel: '0x81000000'
+   ramdisk: '0x83000000'
+   dtb: '0x82000000'
+  bootz:
+   kernel: '0x81000000'
+   ramdisk: '0x83000000'
+   dtb: '0x82000000'
+
+commands:
+  connect: telnet bumblebee 8000
+  hard_reset: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 03 --command reboot --delay 5
+  power_off: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 03 --command off
+  power_on: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 03 --command on
+
+timeouts:
+  actions:
+    call-kexec:
+      seconds: 45
+    uboot-retry:
+      seconds: 90
+  connections:
+    uboot-retry:
+      seconds: 45
+
+actions:
+  deploy:
+    methods:
+      tftp:
+  boot:
+    connections:
+      serial:
+      ssh:
+    methods:
+      u-boot:
+        ramdisk:
+            commands:
+            - setenv autoload no
+            - setenv initrd_high '0xffffffff'
+            - setenv fdt_high '0xffffffff'
+            - setenv kernel_addr_r '{KERNEL_ADDR}'
+            - setenv initrd_addr_r '{RAMDISK_ADDR}'
+            - setenv fdt_addr_r '{DTB_ADDR}'
+            - setenv loadkernel 'tftp ${kernel_addr_r} {KERNEL}'
+            - setenv loadinitrd 'tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}'
+            - setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'
+            - setenv bootargs 'console=ttyS0,115200n8 earlyprintk root=/dev/ram0 ip=dhcp'
+            - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+            - boot
+        nfs:
+            commands:
+            - setenv autoload no
+            - setenv initrd_high '0xffffffff'
+            - setenv fdt_high '0xffffffff'
+            - setenv kernel_addr_r '{KERNEL_ADDR}'
+            - setenv fdt_addr_r '{DTB_ADDR}'
+            - setenv loadkernel 'tftp ${kernel_addr_r} {KERNEL}'
+            - setenv loadfdt 'tftp ${fdt_addr_r} {DTB}'
+            - "setenv bootargs 'console=ttyS0,115200n8 earlyprintk root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp'"
+            - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+            - boot
+        parameters:
+          bootloader_prompt: Jetson TK1
+          boot_message: Booting Linux
+          send_char: False
+          mkimage_arch: arm

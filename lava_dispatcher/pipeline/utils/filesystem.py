@@ -22,6 +22,7 @@ import atexit
 import os
 import shutil
 import tempfile
+from configobj import ConfigObj
 
 
 def rmtree(directory):
@@ -87,12 +88,11 @@ def tftpd_dir():
     subdirectory of it. Default installation value: /srv/tftp/
     :return: real path to the TFTP directory or raises RuntimeError
     """
+    var_name = 'TFTP_DIRECTORY'
     if os.path.exists('/etc/default/tftpd-hpa'):
-        with open('/etc/default/tftpd-hpa', 'r') as tftpd:
-            lines = tftpd.read()
-        for line in lines.split('\n'):
-            if 'TFTP_DIRECTORY' in line:
-                return os.path.realpath(line[15:].replace('"', ''))  # remove quote markers
+        config = ConfigObj('/etc/default/tftpd-hpa')
+        value = config.get(var_name)
+        return os.path.realpath(value)
     raise RuntimeError("Unable to identify tftpd directory")
 
 
