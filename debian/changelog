@@ -1,8 +1,16 @@
-lava-server (2016.2-4) unstable; urgency=medium
+lava-server (2016.3-1) unstable; urgency=medium
 
-  * Building lava-tool depends on python-mock
+  [ Senthil Kumaran S (stylesen) ]
+  * Building lava-tool depends on python-mock (lava-dev)
 
- -- Senthil Kumaran S (stylesen) <stylesen@gmail.com>  Thu, 25 Feb 2016 12:42:21 +0530
+  [ Neil Williams ]
+  * New production release.
+  * Add support for pipeline healthchecks.
+  * Fix management commands to work with django >= 1.7.x
+  * Add support for Debian SSO client certs.
+  * Split documentation for LAVA V1 and LAVA pipeline V2
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 04 Mar 2016 15:01:28 +0000
 
 lava-server (2016.2-3) unstable; urgency=medium
 
