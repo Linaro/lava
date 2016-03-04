@@ -2,6 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.db.models import Q
 from lava_scheduler_app.models import (
     Device, DeviceStateTransition, DeviceType, TestJob, Tag, JobFailureTag,
     User, Worker, DefaultDeviceOwner, DeviceDictionaryTable,
@@ -167,7 +168,7 @@ class RequestedDeviceTypeFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value():
-            return queryset.filter(device_type__name=self.value())
+            return queryset.filter(requested_device_type__name=self.value())
         return queryset.order_by('requested_device_type__name')
 
 
@@ -290,9 +291,19 @@ class DeviceTypeAdmin(admin.ModelAdmin):
                 ','.join([core.name for core in obj.cores.all().order_by('name')]))
         return ''
 
+    def health_check_frequency(self, device_type):
+        if device_type.health_check_job == "":
+            return ""
+        if not list(Device.objects.filter(Q(device_type=device_type), ~Q(status=Device.RETIRED))):
+            return ""
+        if device_type.health_denominator == DeviceType.HEALTH_PER_JOB:
+            return "every %d jobs" % device_type.health_frequency
+        return "every %d hours" % device_type.health_frequency
+
     list_filter = ('name', 'display', 'cores',
                    'architecture', 'processor')
     list_display = ('name', 'has_health_check', 'display', 'owners_only',
+                    'health_check_frequency',
                     'architecture_name', 'processor_name', 'cpu_model_name',
                     'list_of_cores', 'bit_count')
     ordering = ['name']

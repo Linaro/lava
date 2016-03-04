@@ -81,7 +81,7 @@ def get_device_parameters(data, key):
         return data
     if type(data) == dict:
         if type(key) == str and key in data:
-                return data.get(key)
+            return data.get(key)
         return key.keys()
     return (type(data), type(key), data)
 
@@ -98,6 +98,14 @@ def get_yaml_parameters(parameters):
 
 @register.filter
 def get_settings(value):
+    """This is only a filter, so use for boolean checks """
+    if hasattr(settings, value):
+        return getattr(settings, value)
+
+
+@register.assignment_tag()
+def assign_setting(value):
+    """Returns the value of the setting"""
     if hasattr(settings, value):
         return getattr(settings, value)
 
@@ -213,13 +221,13 @@ def result_url(result_dict, job_id):
             job_id, testdef, testcase
         ))
     elif len(result_dict.keys()) == 1:
-            # action based result
-            testdef = 'lava'
-            if isinstance(result_dict.values()[0], OrderedDict):
-                testcase = result_dict.keys()[0]
-                return mark_safe('/results/%s/%s/%s' % (
-                    job_id, testdef, testcase
-                ))
+        # action based result
+        testdef = 'lava'
+        if isinstance(result_dict.values()[0], OrderedDict):
+            testcase = result_dict.keys()[0]
+            return mark_safe('/results/%s/%s/%s' % (
+                job_id, testdef, testcase
+            ))
     else:
         return None
 

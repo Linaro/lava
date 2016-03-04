@@ -71,13 +71,18 @@ release = version
 # today_fmt = '%B %d, %Y'
 
 # List of documents that shouldn't be included in the build.
-# unused_docs = []
+unused_docs = []
 
 # List of directories, relative to source directory, that shouldn't be searched
 # for source files.
 exclude_trees = []
 
-exclude_patterns = ['pages/reference-architecture', 'tables.rst']
+exclude_patterns = [
+    'pages/reference-architecture',
+    'tables.rst', 'support.rst',
+    'v2/*',
+    'v1/*',
+]
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 # default_role = None

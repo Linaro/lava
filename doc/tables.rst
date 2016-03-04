@@ -18,8 +18,8 @@ Table search support
 
 .. note:: Tables are only the base representation of the data available
    in LAVA and whenever the table search support seems incomplete, the
-   solution is to create a :ref:`Query <result_queries>` which can also
-   be :ref:`represented as a simple URL <query_by_url>`.
+   solution is to create a Query which can also be represented as a simple
+   URL.
 
 Unless specified explicitly, all table searches are case-sensitive.
 
@@ -99,7 +99,7 @@ clear the querystring in the browser address bar manually.
 Unavailable entries
 -------------------
 
-Certain tables may contain data relating to a :term:`hidden device type`
+Certain tables may contain data relating to a hidden device type
 which would show as ``Unavailable`` if the user viewing the table does
 not own a device of this type. It is not possible to search these tables
 for details of the hidden type and the ``Unavailable`` label itself does

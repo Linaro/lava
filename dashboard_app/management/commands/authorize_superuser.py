@@ -20,18 +20,20 @@
 import sys
 
 from django.contrib.auth.models import User
-from django.core.management.base import BaseCommand, CommandError
+from lava_server.utils import OptArgBaseCommand as BaseCommand
 
 
 class Command(BaseCommand):
-    args = '<username>'
-    help = 'Authorize superuser'
+    help = 'Authorize superuser.'
+
+    def add_arguments(self, parser):
+        parser.add_argument('--username', type=str,
+                            help='Username to authorize.')
 
     def handle(self, *args, **options):
-        if len(args) > 0:
-            username = args[0]
-        else:
-            self.stderr.write("Username not specified")
+        username = options['username']
+        if username is None:
+            self.stderr.write("Username not specified.")
             sys.exit(2)
 
         try:

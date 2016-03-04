@@ -24,6 +24,7 @@ this script can be used to match the template output with existing templates.
 
 """
 
+#  Copyright 2014 Linaro Limited
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # This file is part of LAVA Dispatcher.

@@ -6,7 +6,6 @@ from lava_scheduler_app.models import (
     DeviceType,
     DeviceDictionary,
     JobPipeline,
-    SubmissionException,
 )
 from lava_scheduler_app.utils import (
     devicedictionary_to_jinja2,
@@ -15,7 +14,7 @@ from lava_scheduler_app.utils import (
     jinja_template_path,
     load_devicetype_template,
 )
-from lava_scheduler_app.schema import validate_device
+from lava_scheduler_app.schema import validate_device, SubmissionException
 from django_testscenarios.ubertest import TestCase
 from django.contrib.auth.models import User
 from lava_dispatcher.pipeline.device import PipelineDevice

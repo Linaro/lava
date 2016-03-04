@@ -7,6 +7,7 @@ from lava_scheduler_app.models import (
     TestJob,
     Tag,
 )
+from lava_scheduler_app.dbutils import get_job_queue, get_available_devices
 
 # pylint: disable=attribute-defined-outside-init,superfluous-parens,too-many-ancestors,no-self-use,no-member
 # pylint: disable=invalid-name,too-few-public-methods,too-many-statements,unbalanced-tuple-unpacking
@@ -70,13 +71,13 @@ class DatabaseJobSourceTestEngine(TestCaseWithFactory):
         if 'DEBUG' in os.environ:
             print("##############################################")
             print('# Before %s' % event)
-            print('        Job queue: %r' % self.master._get_job_queue())
-            print('Available devices: %r' % self.master._get_available_devices())
+            print('        Job queue: %r', get_job_queue())
+            print('Available devices: %r', get_available_devices())
         yield
         if 'DEBUG' in os.environ:
             print('# After %s' % event)
-            print('        Job queue: %r' % self.master._get_job_queue())
-            print('Available devices: %r' % self.master._get_available_devices())
+            print('        Job queue: %r', get_job_queue())
+            print('Available devices: %r', get_available_devices())
 
     def scheduler_tick(self, worker=None):
         if worker is None:

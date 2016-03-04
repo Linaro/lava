@@ -839,6 +839,8 @@ class BundleFormatImporter_1_7_1(BundleFormatImporter_1_7):
         from dashboard_app.models import SoftwareSource
 
         for c_source in self._get_sw_context(c_test_run).get("sources", []):
+            def_params = str(c_source.get("default_params", []))
+            test_params = str(c_source.get("test_params", []))
             s_source, source_created = SoftwareSource.objects.get_or_create(
                 project_name=c_source["project_name"],  # required by schema
                 branch_url=c_source["branch_url"],  # required by schema
@@ -851,8 +853,8 @@ class BundleFormatImporter_1_7_1(BundleFormatImporter_1_7):
                         c_source["commit_timestamp"])
                     if "commit_timestamp" in c_source
                     else None),
-                default_params=c_source.get("default_params", []),
-                test_params=c_source.get("test_params", [])
+                default_params=def_params[:1020],
+                test_params=test_params[:1020]
             )
             if source_created:
                 s_source.save()
