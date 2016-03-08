@@ -1,3 +1,9 @@
+lava-server (2016.3-2) unstable; urgency=medium
+
+  * Add missing support file for autopkgtest
+
+ -- Neil Williams <codehelp@debian.org>  Tue, 08 Mar 2016 08:54:17 +0700
+
 lava-server (2016.3-1) unstable; urgency=medium
 
   [ Senthil Kumaran S (stylesen) ]
