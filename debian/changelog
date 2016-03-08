@@ -1,6 +1,6 @@
 lava-server (2016.3-3) unstable; urgency=medium
 
-  * Remove python-pep8 dependency for lava-dev
+  * Add pep8 | python-pep8 dependency for lava-dev
 
  -- Senthil Kumaran S (stylesen) <stylesen@gmail.com>  Tue, 08 Mar 2016 16:16:47 +0530
 
