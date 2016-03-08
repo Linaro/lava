@@ -15,10 +15,7 @@ actions:
           - 'StrictHostKeyChecking=no'
           - '-o'
           - 'LogLevel=FATAL'
-          - '-l'
-          - 'root '
-          - '-p'
-          - '8022'
+        port: 8022
         host: localhost
         identity_file: 'device/dynamic_vm_keys/lava'  # unit test support
 

@@ -119,6 +119,10 @@ class Scp(ConnectSsh):
         if not self.primary and len(
                 self.get_common_data("prepare-scp-overlay", self.key)) != 1:
             self.errors = "Invalid number of host_keys"
+        if 'port' in self.job.device['actions']['deploy']['methods']['ssh']:
+            port = str(self.job.device['actions']['deploy']['methods']['ssh']['port'])
+            if not port.isdigit():
+                self.errors = "Port was set but was not a digit"
         if self.valid:
             self.scp.append('scp')
             self.scp.extend(params['options'])
@@ -141,7 +145,10 @@ class Scp(ConnectSsh):
         destination = "%s-%s" % (self.job.job_id, os.path.basename(path))
         command = self.scp[:]  # local copy
         command.extend(['-i', self.identity_file])
-        command.extend(['-v'])
+        # add arguments to ignore host key checking of the host device
+        command.extend(['-o', 'UserKnownHostsFile=/dev/null', '-o', 'StrictHostKeyChecking=no'])
+        # add the argument for setting the port (-P port)
+        command.extend(self.scp_port)
         # add the local file as source
         command.append(path)
         command_str = " ".join(str(item) for item in command)

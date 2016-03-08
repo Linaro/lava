@@ -111,8 +111,8 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         test_command = [
             'ssh', '-o', 'Compression=yes', '-o', 'UserKnownHostsFile=/dev/null',
             '-o', 'PasswordAuthentication=no', '-o', 'StrictHostKeyChecking=no',
-            '-o', 'LogLevel=FATAL', '-l', 'root ',
-            '-p', '8022']
+            '-o', 'LogLevel=FATAL'
+        ]
         self.job.validate()
         login = [action for action in self.job.pipeline.actions if action.name == 'login-ssh'][0]
         self.assertIn('ssh-connection', [action.name for action in login.internal_pipeline.actions])
@@ -121,6 +121,7 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertTrue(prepare.primary)
         self.assertEqual(identity, primary.identity_file)
         self.assertEqual(primary.host, params['ssh']['host'])
+        self.assertEqual(int(primary.ssh_port[1]), params['ssh']['port'])
         self.assertEqual(test_command, primary.command)
         # idempotency check
         self.job.validate()
@@ -128,10 +129,11 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertEqual(test_command, primary.command)
         bad_port = {
             'host': 'localhost',
+            'port': 'bob',
             'options': [
                 '-o', 'Compression=yes', '-o', 'UserKnownHostsFile=/dev/null',
                 '-o', 'PasswordAuthentication=no', '-o', 'StrictHostKeyChecking=no',
-                '-o', 'LogLevel=FATAL', '-l', 'root ', '-p', 8022
+                '-o', 'LogLevel=FATAL'
             ],
             'identity_file': 'device/dynamic_vm_keys/lava'}
         self.job.device['actions']['deploy']['methods']['ssh'] = bad_port
