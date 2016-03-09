@@ -109,9 +109,13 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         identity = os.path.realpath(os.path.join(__file__, '../../../', params['ssh']['identity_file']))
         self.assertTrue(os.path.exists(identity))
         test_command = [
-            'ssh', '-o', 'Compression=yes', '-o', 'UserKnownHostsFile=/dev/null',
-            '-o', 'PasswordAuthentication=no', '-o', 'StrictHostKeyChecking=no',
-            '-o', 'LogLevel=FATAL'
+            'ssh', '-o', 'Compression=yes',
+            '-o', 'PasswordAuthentication=no',
+            '-o', 'LogLevel=FATAL',
+            '-o', 'UserKnownHostsFile=/dev/null',
+            '-o', 'StrictHostKeyChecking=no',
+            '-i', identity,
+            '-p', '8022'
         ]
         self.job.validate()
         login = [action for action in self.job.pipeline.actions if action.name == 'login-ssh'][0]

@@ -88,23 +88,23 @@ class ConnectSsh(Action):
             self.errors = "Invalid device configuration - no suitable deploy method for ssh"
             return
         params = self.job.device['actions']['deploy']['methods']
-        check = check_ssh_identity_file(params)
-        if check[0]:
-            self.errors = check[0]
-        elif check[1]:
-            self.identity_file = check[1]
+        if 'identity_file' in self.job.device['actions']['deploy']['methods']['ssh']:
+            check = check_ssh_identity_file(params)
+            if check[0]:
+                self.errors = check[0]
+            elif check[1]:
+                self.identity_file = check[1]
         if 'ssh' not in params:
             self.errors = "Empty ssh parameter list in device configuration %s" % params
             return
-        if any([option for option in params['ssh']['options'] if not isinstance(option, str)]):
-            msg = [(option, type(option)) for option in params['ssh']['options'] if not isinstance(option, str)]
-            self.errors = "[%s] Invalid device configuration: all options must be only strings: %s" % (self.name, msg)
-            return
+        if 'options' in params['ssh']:
+            if any([option for option in params['ssh']['options'] if not isinstance(option, str)]):
+                msg = [(option, type(option)) for option in params['ssh']['options'] if not isinstance(option, str)]
+                self.errors = "[%s] Invalid device configuration: all options must be only strings: %s" % (self.name, msg)
+                return
         if 'port' in params['ssh']:
             self.ssh_port = ["-p", "%s" % str(params['ssh']['port'])]
             self.scp_port = ["-P", "%s" % str(params['ssh']['port'])]
-        if 'options' not in params['ssh']:
-            self.errors = "Missing ssh options in device configuration"
         if 'host' in params['ssh'] and params['ssh']['host']:
             # get the value from the protocol later.
             self.host = params['ssh']['host']
@@ -121,7 +121,14 @@ class ConnectSsh(Action):
             self.host = self.job.device['actions']['deploy']['methods']['ssh']['host']
         if self.valid:
             self.command = ['ssh']
-            self.command.extend(params['options'])
+            if 'options' in params:
+                self.command.extend(params['options'])
+            # add arguments to ignore host key checking of the host device
+            self.command.extend(['-o', 'UserKnownHostsFile=/dev/null', '-o', 'StrictHostKeyChecking=no'])
+            if self.identity_file:
+                # add optional identity file
+                self.command.extend(['-i', self.identity_file])
+            self.command.extend(self.ssh_port)
 
     def run(self, connection, args=None):
         if connection:
@@ -131,12 +138,7 @@ class ConnectSsh(Action):
         # ShellCommand executes the connection command
 
         params = self._check_params()
-        if self.valid:
-            self.command = ['ssh']
-            self.command.extend(params['options'])
         command = self.command[:]  # local copy for idempotency
-        command.extend(['-i', self.identity_file])
-
         overrides = self.get_common_data("prepare-scp-overlay", self.key)
         host_address = None
         if overrides:

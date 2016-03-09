@@ -125,7 +125,8 @@ class Scp(ConnectSsh):
                 self.errors = "Port was set but was not a digit"
         if self.valid:
             self.scp.append('scp')
-            self.scp.extend(params['options'])
+            if 'options' in params:
+                self.scp.extend(params['options'])
 
     def run(self, connection, args=None):
         path = self.get_common_data(self.name, self.key)
@@ -144,11 +145,13 @@ class Scp(ConnectSsh):
             return connection
         destination = "%s-%s" % (self.job.job_id, os.path.basename(path))
         command = self.scp[:]  # local copy
-        command.extend(['-i', self.identity_file])
-        # add arguments to ignore host key checking of the host device
-        command.extend(['-o', 'UserKnownHostsFile=/dev/null', '-o', 'StrictHostKeyChecking=no'])
         # add the argument for setting the port (-P port)
         command.extend(self.scp_port)
+
+        if self.identity_file:
+            command.extend(['-i', self.identity_file])
+        # add arguments to ignore host key checking of the host device
+        command.extend(['-o', 'UserKnownHostsFile=/dev/null', '-o', 'StrictHostKeyChecking=no'])
         # add the local file as source
         command.append(path)
         command_str = " ".join(str(item) for item in command)
