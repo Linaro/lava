@@ -42,7 +42,7 @@ from django.core.validators import (
     MaxValueValidator,
     MinValueValidator
 )
-from django.db import models, connection, IntegrityError
+from django.db import models, connection, IntegrityError, transaction
 from django.db.models import Q, Lookup
 from django.db.models.fields import Field, FieldDoesNotExist
 from django_restricted_resource.models import RestrictedResource
@@ -885,14 +885,18 @@ class Query(models.Model):
 
         if not self.is_live:
             hour_ago = timezone.now() - timedelta(hours=1)
-            if self.is_updating:
-                raise QueryUpdatedError("query is currently updating")
-            # TODO: commented out because of testing purposes.
-            # elif self.last_updated and self.last_updated > hour_ago:
-            #    raise QueryUpdatedError("query was recently updated (less then hour ago)")
-            else:
-                self.is_updating = True
-                self.save()
+
+            with transaction.atomic():
+                # Lock the selected row until the end of transaction.
+                query = Query.objects.select_for_update().get(pk=self.id)
+                if query.is_updating:
+                    raise QueryUpdatedError("query is currently updating")
+                # TODO: commented out because of testing purposes.
+                # elif query.last_updated and query.last_updated > hour_ago:
+                #    raise QueryUpdatedError("query was recently updated (less then hour ago)")
+                else:
+                    query.is_updating = True
+                    query.save()
 
             try:
                 if not QueryMaterializedView.view_exists(self.id):
