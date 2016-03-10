@@ -1,3 +1,9 @@
+lava-server (2016.3-4) unstable; urgency=medium
+
+  * Remove debian patches which is not required anymore.
+
+ -- Senthil Kumaran S (stylesen) <stylesen@gmail.com>  Thu, 10 Mar 2016 13:36:45 +0530
+
 lava-server (2016.3-3) unstable; urgency=medium
 
   * Add pep8 | python-pep8 dependency for lava-dev
