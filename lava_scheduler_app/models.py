@@ -1261,7 +1261,8 @@ def _pipeline_protocols(job_data, user, yaml_data=None):
       user: the user submitting the job
     returns:
       list of all jobs created using the specified type(s) which meet the protocol criteria,
-      specified device tags and which the user is able to submit.
+      specified device tags and which the user is able to submit. (This is not a QuerySet,
+      it is explicitly a list object.)
     exceptions:
         DevicesUnavailableException if all criteria cannot be met.
     """
@@ -1722,6 +1723,9 @@ class TestJob(RestrictedResource):
         This function must *never* be involved in setting the state of this job or the state of any associated device.
         'target' is not supported, so requested_device is always None at submission time.
         Retains yaml_data as the original definition to retain comments.
+
+        :return: a single TestJob object or a list
+        (explicitly, a list, not a QuerySet) of evaluated TestJob objects
         """
         job_data = yaml.load(yaml_data)
 
@@ -1733,6 +1737,7 @@ class TestJob(RestrictedResource):
         # pipeline protocol handling, e.g. lava-multinode
         job_list = _pipeline_protocols(job_data, user, yaml_data)
         if job_list:
+            # explicitly a list, not a QuerySet.
             return job_list
         # singlenode only
         device_type = _get_device_type(user, job_data['device_type'])
@@ -1758,6 +1763,9 @@ class TestJob(RestrictedResource):
 
         For single node jobs, returns the job object created. For multinode
         jobs, returns an array of test objects.
+
+        :return: a single TestJob object or a list
+        (explicitly, a list, not a QuerySet) of evaluated TestJob objects
         """
         job_data = simplejson.loads(json_data)
         validate_job_data(job_data)

@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines,invalid-name,logging-not-lazy
 import os
 import yaml
 import cStringIO
@@ -16,8 +17,6 @@ from django.core.exceptions import ValidationError
 from django_testscenarios.ubertest import TestCase
 from django.utils import timezone
 
-from linaro_django_xmlrpc.models import AuthToken
-
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -31,7 +30,12 @@ from lava_scheduler_app.models import (
 )
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 from lava_scheduler_app.schema import validate_submission, validate_device, SubmissionException
-from lava_scheduler_app.dbutils import testjob_submission
+from lava_scheduler_app.dbutils import(
+    testjob_submission, get_job_queue,
+    find_device_for_job,
+    get_available_devices,
+    check_device_and_job,
+)
 import simplejson
 
 logger = logging.getLogger()
@@ -55,6 +59,7 @@ class TestTransport(xmlrpclib.Transport, object):
             if not success:
                 raise AssertionError("Login attempt failed!")
         self._use_datetime = True
+        self.verbose = 0
 
     def request(self, host, handler, request_body, verbose=0):
         self.verbose = verbose
@@ -77,19 +82,19 @@ class ModelFactory(object):
     def getUniqueString(self, prefix='generic'):
         return '%s-%d' % (prefix, self.getUniqueInteger())
 
-    def get_unique_user(self, prefix='generic'):
+    def get_unique_user(self, prefix='generic'):  # pylint: disable=no-self-use
         return "%s-%d" % (prefix, User.objects.count() + 1)
 
-    def cleanup(self):
+    def cleanup(self):  # pylint: disable=no-self-use
         DeviceType.objects.all().delete()
         # make sure the DB is in a clean state wrt devices and jobs
         Device.objects.all().delete()
         TestJob.objects.all().delete()
-        [item.delete() for item in DeviceDictionary.object_list()]
+        [item.delete() for item in DeviceDictionary.object_list()]  # pylint: disable=expression-not-assigned
         User.objects.all().delete()
         Group.objects.all().delete()
 
-    def ensure_user(self, username, email, password):
+    def ensure_user(self, username, email, password):  # pylint: disable=no-self-use
         if User.objects.filter(username=username):
             user = User.objects.get(username=username)
         else:
@@ -137,7 +142,7 @@ class ModelFactory(object):
         logging.debug("asking for a device of type %s" % device_type.name)
         return device_type
 
-    def ensure_tag(self, name):
+    def ensure_tag(self, name):  # pylint: disable=no-self-use
         return Tag.objects.get_or_create(name=name)[0]
 
     def make_device(self, device_type=None, hostname=None, tags=None, is_public=True, **kw):
@@ -145,7 +150,7 @@ class ModelFactory(object):
             device_type = self.ensure_device_type()
         if hostname is None:
             hostname = self.getUniqueString()
-        if type(tags) != list:
+        if not isinstance(tags, list):
             tags = []
         # a hidden device type will override is_public
         device = Device(device_type=device_type, is_public=is_public, hostname=hostname, **kw)
@@ -155,7 +160,9 @@ class ModelFactory(object):
         device.save()
         return device
 
-    def make_job_data(self, actions=[], **kw):
+    def make_job_data(self, actions=None, **kw):
+        if not actions:
+            actions = []
         data = {'actions': actions, 'timeout': 1, 'health_check': False}
         data.update(kw)
         if 'target' not in data and 'device_type' not in data:
@@ -182,14 +189,14 @@ class ModelFactory(object):
         return testjob
 
 
-class TestCaseWithFactory(TestCase):
+class TestCaseWithFactory(TestCase):  # pylint: disable=too-many-ancestors
 
     def setUp(self):
         TestCase.setUp(self)
         self.factory = ModelFactory()
 
 
-class TestTestJob(TestCaseWithFactory):
+class TestTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors,too-many-public-methods
 
     def test_from_json_and_user_sets_definition(self):
         definition = self.factory.make_job_json()
@@ -697,7 +704,7 @@ class TestTestJob(TestCaseWithFactory):
         self.factory.cleanup()
 
 
-class TestHiddenTestJob(TestCaseWithFactory):
+class TestHiddenTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
 
     def test_hidden_device_type_sets_restricted_device(self):
         device_type = self.factory.make_hidden_device_type('hidden')
@@ -759,9 +766,9 @@ class TestHiddenTestJob(TestCaseWithFactory):
         self.assertRaises(DevicesUnavailableException, TestJob.from_json_and_user, j, anon_user)
 
 
-class TestSchedulerAPI(TestCaseWithFactory):
+class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
 
-    def server_proxy(self, user=None, password=None):
+    def server_proxy(self, user=None, password=None):  # pylint: disable=no-self-use
         return xmlrpclib.ServerProxy(
             'http://localhost/RPC2/',
             transport=TestTransport(user=user, password=password))
@@ -929,7 +936,7 @@ actions:
         job = TestJob.objects.get(id=job_id)
         self.assertTrue(job.is_pipeline)
 
-    def test_health_determination(self):
+    def test_health_determination(self):  # pylint: disable=too-many-statements
         user = self.factory.ensure_user('test', 'e@mail.invalid', 'test')
         user.user_permissions.add(
             Permission.objects.get(codename='add_testjob'))
@@ -1001,6 +1008,58 @@ actions:
                 self.assertIsInstance(job.requested_device, TemporaryDevice)
                 job.requested_device.delete()
             job.delete()
+
+    # comment out the decorator to run this queue timing test
+    @unittest.skip('Developer only - timing test')
+    def test_queueing(self):
+        """
+        uses stderr to avoid buffered prints
+        Expect the test itself to take <30s and
+        the gap between jobs submitted and end being ~500ms
+        Most of the time is spent setting up the database
+        and submitting all the test jobs.
+        """
+        import sys
+        print >> sys.stderr, timezone.now(), "start"
+        user = self.factory.ensure_user('test', 'e@mail.invalid', 'test')
+        user.user_permissions.add(
+            Permission.objects.get(codename='add_testjob'))
+        user.save()
+        device_type = self.factory.make_device_type('beaglebone-black')
+        device = self.factory.make_device(device_type=device_type, hostname="black01")
+        device.save()
+        device_type = self.factory.make_device_type('wandboard')
+        count = 1
+        while count < 100:
+            suffix = "{:02d}".format(count)
+            device = self.factory.make_device(device_type=device_type, hostname="imx6q-%s" % suffix)
+            device.save()
+            count += 1
+        print >> sys.stderr, timezone.now(), "%d dummy devices created" % count
+        device_list = list(get_available_devices())
+        print >> sys.stderr, timezone.now(), "%d available devices" % len(device_list)
+        filename = os.path.join(os.path.dirname(__file__), 'master-check.json')
+        self.assertTrue(os.path.exists(filename))
+        with open(filename, 'r') as json_file:
+            definition = json_file.read()
+        count = 0
+        # each 1000 more can take ~15s in the test.
+        while count < 1000:
+            # simulate API submission
+            job = testjob_submission(definition, user)
+            self.assertFalse(job.health_check)
+            count += 1
+        print >> sys.stderr, timezone.now(), "%d jobs submitted" % count
+        jobs = list(get_job_queue())
+        self.assertIsNotNone(jobs)
+        print >> sys.stderr, timezone.now(), "Finding devices for jobs."
+        for job in jobs:
+            # this needs to stay as a tight loop to cope with load
+            device = find_device_for_job(job, device_list)
+            if device:
+                print >> sys.stderr, timezone.now(), "[%d] allocated %s" % (job.id, device)
+                device_list.remove(device)
+        print >> sys.stderr, timezone.now(), "end"
 
 
 class TransactionTestCaseWithFactory(TransactionTestCase):
