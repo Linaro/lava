@@ -1,0 +1,63 @@
+{
+	"timeout": 900,
+	"job_name": "test multinode submission",
+	"logging_level": "INFO",
+	"vm_group": {
+		"host": {
+			"device_type": "beaglebone-black",
+			"role": "host"
+		},
+		"auto_start_vms": false,
+		"vms": [{
+			"device_type": "kvm-aarch64",
+			"role": "guest-nonsecure"
+		}, {
+			"device_type": "kvm-aarch64",
+			"role": "guest-secure"
+		}, {
+			"device_type": "kvm-aarch64",
+			"role": "guest-grub-secure"
+		}]
+	},
+	"actions": [{
+		"command": "deploy_linaro_kernel",
+		"parameters": {
+			"dtb": "",
+			"kernel": "",
+			"nfsrootfs": "",
+			"target_type": "ubuntu",
+			"role": "host"
+		}
+	}, {
+		"command": "deploy_linaro_kernel",
+		"parameters": {
+			"kernel": "",
+			"ramdisk": "",
+			"firmware": "",
+			"role": "guest-nonsecure"
+		}
+	}, {
+		"command": "deploy_linaro_kernel",
+		"parameters": {
+			"kernel": "",
+			"ramdisk": "",
+			"role": "guest-secure"
+		}
+	}, {
+		"command": "deploy_linaro_kernel",
+		"parameters": {
+			"kernel": "",
+			"rootfs": "",
+			"role": "guest-grub-secure"
+		}
+	}, {
+		"command": "lava_test_shell",
+		"parameters": {
+			"testdef_repos": [{
+				"url": "https://git.linaro.org/ci/uefi.git/blob_plain/HEAD:/lava/kvm-install-qemu-host.yaml"
+			}],
+			"timeout": 1800,
+			"role": "host"
+		}
+	}]
+}
