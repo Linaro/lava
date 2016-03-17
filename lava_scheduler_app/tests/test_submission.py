@@ -24,6 +24,7 @@ from lava_scheduler_app.models import (
     JSONDataError,
     Tag,
     TestJob,
+    TemporaryDevice,
     DevicesUnavailableException,
     DeviceDictionary,
     _check_exclusivity,
@@ -983,6 +984,23 @@ actions:
         def_dict['target'] = 'nosuchdevice'
         definition = json.dumps(def_dict)
         self.assertRaises(Device.DoesNotExist, testjob_submission, definition, user)
+        # check multinode API submission. bug #2130
+        filename = os.path.join(os.path.dirname(__file__), 'master-multinode.json')
+        self.assertTrue(os.path.exists(filename))
+        with open(filename, 'r') as json_file:
+            definition = json_file.read()
+        job_list = testjob_submission(definition, user)
+        self.assertIsInstance(job_list, list)
+        for job in job_list:
+            self.assertIsNotNone(job.vm_group)
+            self.assertFalse(job.health_check)
+            if job.requested_device_type == device_type:
+                self.assertIsNone(job.requested_device)
+            else:
+                self.assertIsNotNone(job.requested_device)
+                self.assertIsInstance(job.requested_device, TemporaryDevice)
+                job.requested_device.delete()
+            job.delete()
 
 
 class TransactionTestCaseWithFactory(TransactionTestCase):
