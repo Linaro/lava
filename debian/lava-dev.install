@@ -1,2 +1,4 @@
-share/debian-dev-build.sh /usr/share/lava-server/
-share/schroot-dev-build.sh /usr/share/lava-server/
+share/debian-dev-build.sh ./usr/share/lava-server/
+share/schroot-dev-build.sh ./usr/share/lava-server/
+share/validate_devices.py ./usr/share/lava-server/
+share/render-template.py ./usr/share/lava-server/
