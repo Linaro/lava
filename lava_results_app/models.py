@@ -29,12 +29,10 @@ TestCase is a single lava-test-case record or Action result.
 """
 
 import logging
-import simplejson
 import urllib
 import yaml
 
 from datetime import datetime, timedelta
-from dateutil import parser
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
@@ -42,18 +40,16 @@ from django.core.validators import (
     MaxValueValidator,
     MinValueValidator
 )
-from django.db import models, connection, IntegrityError, transaction
+from django.db import models, connection, transaction
 from django.db.models import Q, Lookup
-from django.db.models.fields import Field, FieldDoesNotExist
-from django_restricted_resource.models import RestrictedResource
+from django.db.models.fields import Field
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 
 from lava.utils.managers import MaterializedView
 from lava_scheduler_app.models import (
     TestJob,
-    Device,
-    DeviceType
+    Device
 )
 from lava_scheduler_app.managers import (
     RestrictedTestJobQuerySet,
@@ -1376,13 +1372,13 @@ class ChartQuery(models.Model):
                         "passes": passfail_results[result]['pass'],
                         "failures": passfail_results[result]['fail'],
                         "skip": passfail_results[result]['skip'],
-                        "skip": passfail_results[result]['unknown'],
-                        "total": passfail_results[result]['pass'] +
-                        passfail_results[result]['fail'] +
-                        passfail_results[result]['unknown'] +
-                        passfail_results[result]['skip'],
+                        "unknown": passfail_results[result]['unknown'],
+                        "total": (passfail_results[result]['pass'] +
+                                  passfail_results[result]['fail'] +
+                                  passfail_results[result]['unknown'] +
+                                  passfail_results[result]['skip']),
                     }
-                data.append(chart_item)
+                    data.append(chart_item)
 
         return data
 
