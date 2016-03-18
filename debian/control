@@ -86,7 +86,7 @@ Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
  python-sphinx (>= 1.0.7+dfsg) | python3-sphinx, po-debconf,
  python-mocker, python-setuptools, python-versiontools, python-yaml,
  docbook-xsl, xsltproc, python-mock,
- ${misc:Depends}
+ ${python:Depends}, ${misc:Depends}
 Recommends: sbuild, python-django-extensions, python-pydot
 Description: Linaro Automated Validation Architecture developer support
  LAVA is a continuous integration system for deploying operating
