@@ -111,7 +111,7 @@ file, signed using the :ref:`lava_archive_signing_key`.
 Interim builds (including release candidates) are available in the
 staging repository::
 
- deb http:://images.validation.linaro.org/staging-repo sid main
+ deb http://images.validation.linaro.org/staging-repo sid main
 
 This repository uses the same key as the production repository and
 uses ``sid`` in the same way.
