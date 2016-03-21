@@ -20,6 +20,16 @@ devices being managed in the database. When developers are working on new suppor
 directly from the command line lava-dispatch or developing new templates,
 this script can be used to match the template output with existing templates.
 
+The path used needs to contain both the jinja2 device-type template in a
+device-types/ directory *and* the jinja2 device dictionary file for the device
+to review in a devices/ directory.
+
+If you use the system path of /etc/lava-server/dispatcher-config/, you'll
+temporarily need to create / symlink your device dictionary file into the
+devices/ directory at that location. This script only looks for device
+configuration files called <HOSTNAME>.jinja2 in the devices/ directory
+specified by the --path option or system path default.
+
 (This script will go into the lava-dev binary package.)
 
 """
@@ -75,10 +85,10 @@ def main():
             [os.path.join(args.path, 'devices'),
              os.path.join(args.path, 'device-types')]),
         trim_blocks=True)
-    if not os.path.exists(os.path.join(args.path, 'devices', "%s.yaml" % args.device)):
+    if not os.path.exists(os.path.join(args.path, 'devices', "%s.jinja2" % args.device)):
         print "Cannot find %s device configuration file" % args.device
         return
-    template = env.get_template("%s.yaml" % args.device)
+    template = env.get_template("%s.jinja2" % args.device)
     ctx = {}
     config = template.render(**ctx)
 

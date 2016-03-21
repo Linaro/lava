@@ -22,7 +22,7 @@ recursive-include dashboard_app/static *.png *.js *.css *.gif
 recursive-include dashboard_app/templates *.html
 recursive-include examples *.xml *.json *html *.conf
 recursive-include lava_scheduler_app/templates *.html *.txt
-recursive-include lava_scheduler_app/tests *.yaml
+recursive-include lava_scheduler_app/tests *.yaml *.json
 recursive-include lava_scheduler_app/tests/device-types *.jinja2
 recursive-include lava_scheduler_app/tests/devices *.jinja2
 recursive-include lava_scheduler_app/static *.js *.css *.gif *.png

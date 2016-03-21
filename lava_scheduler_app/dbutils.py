@@ -152,6 +152,9 @@ def testjob_submission(job_definition, user, check_device=None):
             allow_health = True
         try:
             job = TestJob.from_json_and_user(job_definition, user, health_check=allow_health)
+            if isinstance(job, list):
+                # multinode health checks not supported
+                return job
             job.health_check = allow_health
             if check_device:
                 job.requested_device = check_device
@@ -217,7 +220,6 @@ def find_device_for_job(job, device_list):  # pylint: disable=too-many-branches
         if job.requested_device and job.requested_device.status == Device.OFFLINE:
             logger.debug("[%s] - assigning %s for forced health check.", job.id, job.requested_device)
             return job.requested_device
-    logger.debug("[%s] Finding a device from a list of %s", job.id, len(device_list))
     for device in device_list:
         if job.is_vmgroup:
             # special handling, tied directly to the TestJob within the vmgroup
@@ -410,6 +412,8 @@ def assign_jobs():
     reserved_devices = []
     # this takes a significant amount of time when under load, only do it once per tick
     devices = list(get_available_devices())
+    logger.debug("[%d] devices available", len(devices))
+    logger.debug("[%d] jobs in the queue", len(jobs))
     # a forced health check can be assigned even if the device is not in the list of idle devices.
     for job in jobs:
         device = find_device_for_job(job, devices)

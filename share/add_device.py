@@ -149,14 +149,14 @@ def main(dt, name, options):
             "default-config/lava-dispatcher/device-types/",
             "%s%s" % (dt, ".conf"))
         if not os.path.exists(default_type):
-            print ("'%s' is not an existing device-type for this instance." % dt)
-            print ("A default device_type configuration needs to be written as %s" % default_type)
+            print("'%s' is not an existing device-type for this instance." % dt)
+            print("A default device_type configuration needs to be written as %s" % default_type)
             exit(1)
     config['device_type'] = dt
     deviceconf = os.path.join("/etc/lava-dispatcher/devices", "%s%s" % (name, ".conf"))
     if os.path.exists(deviceconf):
-        print ("'%s' is an existing device on this instance." % name)
-        print ("If you want to add another device of type %s, use a different hostname." % default_type)
+        print("'%s' is an existing device on this instance." % name)
+        print("If you want to add another device of type %s, use a different hostname." % default_type)
         exit(1)
     config['hostname'] = name
     # FIXME: need a config file for daemon, pdu hostname and telnet ser2net host
@@ -164,7 +164,7 @@ def main(dt, name, options):
         try:
             options.pduport = int(options.pduport)
         except ValueError:
-            print ("Unable to parse %s as a port number" % options.pduport)
+            print("Unable to parse %s as a port number" % options.pduport)
             exit(1)
         config['hard_reset_command'] = "/usr/bin/pduclient " \
                                        "--daemon localhost " \
@@ -180,7 +180,7 @@ def main(dt, name, options):
         try:
             options.telnetport = int(options.telnetport)
         except ValueError:
-            print ("Unable to parse %s as a port number" % options.telnetport)
+            print("Unable to parse %s as a port number" % options.telnetport)
             exit(1)
         config['connection_command'] = "telnet localhost %d" % options.telnetport
     else:
