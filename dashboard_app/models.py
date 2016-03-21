@@ -1136,7 +1136,10 @@ class TestRun(models.Model):
         """
         for src in self.sources.all():
             if src.test_params:
-                test_struct = ast.literal_eval(src.test_params)
+                try:
+                    test_struct = ast.literal_eval(src.test_params)
+                except SyntaxError:
+                    return None
                 if type(test_struct) == dict:
                     test_params = {}
                     for k, v in test_struct.items():
