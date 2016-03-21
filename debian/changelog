@@ -1,3 +1,11 @@
+lava-server (2016.3.post1-1) unstable; urgency=medium
+
+  * Hot fix release
+  * Fix bug in JSON multinode submissions over XMLRPC.
+  * Fix missing test support file
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 21 Mar 2016 08:56:44 +0000
+
 lava-server (2016.3-4) unstable; urgency=medium
 
   * Remove debian patches which is not required anymore.
