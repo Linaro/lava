@@ -138,19 +138,46 @@ $(document).ready(function () {
         });
     }
 
+    ChartQuery.prototype.setup_item_menu = function() {
+        chart_id = this.chart_id;
+        $("#item_menu_" + chart_id).menu();
+        $("#item_menu_" + chart_id).hide();
+        $("#item_menu_" + chart_id).mouseleave(function() {
+            $("#item_menu_" + chart_id).hide();
+        });
+    }
+
     ChartQuery.prototype.update_events = function() {
 
+	// Add item menu.
+	$("#chart_container_" + this.chart_id).append(
+            '<ul class="print-menu" id="item_menu_' + this.chart_id + '">' +
+		'<li class="print-menu-item"><a target="_blank" href="#"' +
+		' id="view_item_' + this.chart_id + '">View result</a></li>' +
+		'<li class="print-menu-item"><a href="#"' + ' id="omit_item_' +
+		this.chart_id + '">Omit result</a></li>' +
+	    '</ul>');
+        this.setup_item_menu();
+
         // Bind plotclick event.
+	chart_id = this.chart_id;
+	chart_name = this.chart_data.basic.chart_name;
         $("#inner_container_" + this.chart_id).bind(
             "plotclick",
             function (event, pos, item) {
                 if (item) {
                     // Make datapoint unique value
                     datapoint = item.datapoint.join("_");
-                    url = window.location.protocol + "//" +
-                        window.location.host +
-                        item.series.meta[datapoint]["link"];
-                    window.open(url, "_blank");
+		    toggle_item_menu(chart_id, pos.pageX, pos.pageY);
+		    $("#view_item_" + chart_id).attr("href", window.location.protocol + "//" + window.location.host + item.series.meta[datapoint]["link"]);
+		    $("#omit_item_" + chart_id).attr(
+			"href",
+			window.location.protocol + "//" +
+			    window.location.host + "/results/chart/" +
+			    chart_name + "/" +
+			    chart_id + "/" +
+			    item.series.meta[datapoint]["pk"] +
+			    "/+omit-result");
                 }
             });
 
@@ -820,6 +847,7 @@ $(document).ready(function () {
                 }
 
                 meta_item = {
+		    "pk": row["pk"],
                     "link": row["link"],
                     "pass": row["pass"],
                     "tooltip": tooltip,
@@ -1265,6 +1293,11 @@ $(document).ready(function () {
     toggle_print_menu = function(e, chart_id) {
         $("#print_menu_" + chart_id).show();
         $("#print_menu_" + chart_id).offset({left: e.pageX-15, top: e.pageY-5});
+    }
+
+    toggle_item_menu = function(chart_id, pageX, pageY) {
+        $("#item_menu_" + chart_id).show();
+        $("#item_menu_" + chart_id).offset({left: pageX-15, top: pageY-5});
     }
 
     init_loading_dialog = function() {

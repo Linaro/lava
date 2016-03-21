@@ -1365,6 +1365,7 @@ class ChartQuery(models.Model):
                 if result:
                     chart_item = {
                         "id": result,
+                        "pk": item.id,
                         "link": item.get_absolute_url(),
                         "date": date,
                         "attribute": attribute,
@@ -1403,6 +1404,7 @@ class ChartQuery(models.Model):
                 if result:
                     chart_item = {
                         "id": result,
+                        "pk": item.id,
                         "link": item.get_absolute_url(),
                         "date": date,
                         "attribute": attribute,
@@ -1423,6 +1425,7 @@ class ChartQuery(models.Model):
                 if result:
                     chart_item = {
                         "id": result,
+                        "pk": item.id,
                         "attribute": str(item.get_end_datetime()),
                         "link": item.get_absolute_url(),
                         "date": str(item.get_end_datetime()),

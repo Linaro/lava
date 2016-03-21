@@ -72,6 +72,7 @@ from lava_results_app.views.chart.views import (
     chart_query_edit,
     chart_query_remove,
     chart_query_order_update,
+    chart_omit_result,
     settings_update
 )
 
@@ -139,6 +140,7 @@ urlpatterns = [
     url(r'^chart/\+get-group-names$', get_chart_group_names),
     url(r'^chart/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/\+settings-update$', settings_update, name='chart_settings_update'),
     url(r'^chart/(?P<name>[a-zA-Z0-9-_]+)/\+chart-query-order-update$', chart_query_order_update, name='chart_query_order_update'),
+    url(r'^chart/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/(?P<result_id>\d+)/\+omit-result$', chart_omit_result, name='lava.results.chart_omit_result'),
     url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/(?P<ts>[-_a-zA-Z0-9.]+)/(?P<case>[-_a-zA-Z0-9.]+)$', testset, name='lava.results.testset'),
     url(r'^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/csv$',
         suite_csv, name='lava.results.suite_csv'),
