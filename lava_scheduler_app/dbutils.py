@@ -57,20 +57,34 @@ def match_vlan_interface(device, job_def):
 
 
 def initiate_health_check_job(device):
+    if not device:
+        # logic error
+        return None
     if device.status in [Device.RETIRED]:
+        # logic error
         return None
 
     existing_health_check_job = device.get_existing_health_check_job()
     if existing_health_check_job:
         return existing_health_check_job
 
+    logger = logging.getLogger('dispatcher-master')
     job_data = device.device_type.health_check_job
     user = User.objects.get(username='lava-health')
     if not job_data:
         # This should never happen, it's a logic error.
+        logger.error("No health check definition found for %s", device)
         device.put_into_maintenance_mode(
             user, "health check job not found in initiate_health_check_job")
         raise JSONDataError("no health check job found for %r", device.hostname)
+    if is_deprecated_json(job_data):
+        # only JSON supports 'target' and that needs to be set by the health-check not the admin.
+        job_json = simplejson.loads(job_data)
+        if 'target' in job_json:
+            logger.error("[%s] JSON Health check definition must not specify a 'target'.", device.device_type.name)
+            device.put_into_maintenance_mode(
+                user, "target must not be defined in health check definitions.")
+            return None
     return testjob_submission(job_data, user, check_device=device)
 
 
