@@ -57,7 +57,7 @@ class FastBoot(object):
         self.device = device
         self.context = device.context
 
-    def __call__(self, args, ignore_failure=False, timeout=600):
+    def __call__(self, args, ignore_failure=False, timeout=300):
         command = self.device.config.fastboot_command + ' ' + args
         command = "flock -o /var/lock/lava-fastboot.lck " + command
         _call(self.context, command, ignore_failure, timeout)
@@ -290,7 +290,7 @@ class BaseDriver(object):
 
         self.__boot_image__ = boot
 
-    def adb(self, args, ignore_failure=False, spawn=False, timeout=600):
+    def adb(self, args, ignore_failure=False, spawn=False, timeout=120):
         cmd = self.config.adb_command + ' ' + args
         if spawn:
             return self.context.spawn(cmd, timeout=60)
