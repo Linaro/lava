@@ -57,7 +57,7 @@ class FastBoot(object):
         self.device = device
         self.context = device.context
 
-    def __call__(self, args, ignore_failure=False, timeout=300):
+    def __call__(self, args, ignore_failure=False, timeout=600):
         command = self.device.config.fastboot_command + ' ' + args
         command = "flock -o /var/lock/lava-fastboot.lck " + command
         _call(self.context, command, ignore_failure, timeout)
