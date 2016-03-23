@@ -99,20 +99,27 @@ def submit_health_check_jobs():
     for device in Device.objects.filter(
             Q(status=Device.IDLE) | Q(status=Device.OFFLINE, health_status=Device.HEALTH_LOOPING)):
         time_denominator = True
+        run_health_check = False
         if device.device_type.health_denominator == DeviceType.HEALTH_PER_JOB:
             time_denominator = False
         if not device.device_type.health_check_job:
             run_health_check = False
         elif device.health_status == Device.HEALTH_UNKNOWN:
             run_health_check = True
+            logger.debug("health status: %s", Device.HEALTH_CHOICES[device.health_status][1])
         elif device.health_status == Device.HEALTH_LOOPING:
             run_health_check = True
+            logger.debug("health status: %s", Device.HEALTH_CHOICES[device.health_status][1])
         elif not device.last_health_report_job:
             run_health_check = True
+            logger.debug("Empty last health report job")
         elif not device.last_health_report_job.end_time:
             run_health_check = True
+            logger.debug("Last health report job [%d] has no end_time", device.last_health_report_job.id)
         else:
             if time_denominator:
+                if not run_health_check:
+                    logger.debug("checking time since last health check")
                 run_health_check = device.last_health_report_job.end_time < \
                     timezone.now() - datetime.timedelta(hours=device.device_type.health_frequency)
                 if run_health_check:
