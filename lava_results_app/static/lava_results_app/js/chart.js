@@ -196,13 +196,28 @@ $(document).ready(function () {
     }
 
     ChartQuery.prototype.update_headline = function() {
+        query_link = this.chart_data.basic.query_link.replace(/\\/g, "");
 	if (this.chart_data.basic.query_name) {
             $("#headline_container_" + this.chart_id).append(
 		'<span class="chart-headline">' +
+                    '<a href="' + query_link + '" target="_blank">' +
 		    this.chart_data.basic.query_name +
-                    '</span>');
+                    '</a></span>');
             $("#headline_container_" + this.chart_id).append(
 		'<span>' + this.chart_data.basic.query_description + '</span>');
+	}
+
+	if (this.chart_data.basic.has_omitted) {
+            $("#headline_container_" + this.chart_id).append(
+                '<div class="alert alert-info">' +
+                    '<button type="button" class="close" ' +
+                    'data-dismiss="alert">&times;</button>' +
+                    '<strong>This chart has some of the results omitted.' +
+                    '</strong> ' +
+                    'Check the underlying <strong><a href="' + query_link +
+                    '" target="_blank">' + 'query</a></strong> ' +
+                    'for the list of omitted results.' +
+                    '</div>');
 	}
     }
 

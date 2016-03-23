@@ -179,7 +179,7 @@ class QueryTestCaseTable(SuiteTable):
     ''')
 
     omit = tables.TemplateColumn('''
-    <a href="{{ query.get_absolute_url }}/{{ record.id }}/+omit-result" onclick="return confirm('Omitting results affects all image charts which use this query. Are you sure you want to omit this job from query?');"><span class="glyphicon glyphicon-remove"></span></a>
+    <a href="{{ query.get_absolute_url }}/{{ record.id }}/+omit-result" onclick="return confirm('Omitting results affects all image charts which use this query. Are you sure you want to omit this test case from query?');"><span class="glyphicon glyphicon-remove"></span></a>
     ''')
     omit.orderable = False
 
@@ -207,7 +207,7 @@ class QueryTestSuiteTable(ResultsTable):
     ''')
 
     omit = tables.TemplateColumn('''
-    <a href="{{ query.get_absolute_url }}/{{ record.id }}/+omit-result" onclick="return confirm('Omitting results affects all image charts which use this query. Are you sure you want to omit this job from query?');"><span class="glyphicon glyphicon-remove"></span></a>
+    <a href="{{ query.get_absolute_url }}/{{ record.id }}/+omit-result" onclick="return confirm('Omitting results affects all image charts which use this query. Are you sure you want to omit this test suite from query?');"><span class="glyphicon glyphicon-remove"></span></a>
     ''')
     omit.orderable = False
 

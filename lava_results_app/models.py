@@ -1321,9 +1321,12 @@ class ChartQuery(models.Model):
         data["chart_name"] = self.chart.name
         if hasattr(self, "query"):
             data["query_name"] = self.query.name
+            data["query_link"] = self.query.get_absolute_url()
             data["query_description"] = self.query.description
             data["entity"] = self.query.content_type.model
             data["conditions"] = self.query.serialize_conditions()
+            data["has_omitted"] = QueryOmitResult.objects.filter(
+                query=self.query).exists()
 
         return data
 

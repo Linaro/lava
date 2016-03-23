@@ -19,7 +19,6 @@
 import csv
 import json
 import os
-import psycopg2
 import shutil
 import simplejson
 import tempfile
@@ -27,24 +26,20 @@ import tempfile
 from django.db import IntegrityError
 from django.db.utils import ProgrammingError
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import Group, User
+from django.contrib.auth.models import Group
 from django.core import serializers
 from django.core.exceptions import (
     PermissionDenied,
-    ValidationError,
     FieldError
 )
 from django.core.urlresolvers import reverse
 from django.http import (
     HttpResponse,
-    HttpResponseBadRequest,
     HttpResponseRedirect
 )
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext, defaultfilters
-from django.utils.safestring import mark_safe
 
-from dashboard_app.models import NamedAttribute
 from lava_server.bread_crumbs import (
     BreadCrumb,
     BreadCrumbTrail,
@@ -251,11 +246,14 @@ def query_display(request, username, name):
             "Query view does not exist. Please contact query owner or system "
             "administrator.")
 
+    omitted = [result.content_object for result in QueryOmitResult.objects.filter(query=query)]
+
     return render_to_response(
         'lava_results_app/query_display.html', {
             'query': query,
             'entity': query.content_type.model,
             'conditions': query.serialize_conditions(),
+            'omitted': omitted,
             'query_table': table,
             'terms_data': table.prepare_terms_data(view),
             'search_data': table.prepare_search_data(view),
@@ -597,6 +595,25 @@ def query_omit_result(request, username, name, id):
     return HttpResponseRedirect(query.get_absolute_url())
 
 
+@login_required
+@ownership_required
+def query_include_result(request, username, name, id):
+
+    query = get_object_or_404(Query, owner__username=username, name=name)
+    result_object = get_object_or_404(query.content_type.model_class(), id=id)
+
+    try:
+        QueryOmitResult.objects.get(
+            query=query,
+            object_id=result_object.id,
+            content_type=query.content_type).delete()
+    except QueryOmitResult.DoesNotExist:
+        # Ignore does not exist violation.
+        raise
+
+    return HttpResponseRedirect(query.get_absolute_url())
+
+
 def get_query_names(request):
 
     term = request.GET['term']
@@ -670,7 +687,7 @@ def _remove_dir(path):
     try:
         # Delete directory.
         shutil.rmtree(path)
-    except OSError as exception:
+    except OSError:
         # Silent exception whatever happens. If it's unexisting dir, we don't
         # care.
         pass
