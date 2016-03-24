@@ -430,7 +430,7 @@ class InlineRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
             os.makedirs(os.path.join(runner_path, yaml_dirname))
         with open(yaml_file, 'w') as test_file:
             data = yaml.safe_dump(testdef)
-            sha1.update(data)
+            sha1.update(data.encode('utf-8'))
             test_file.write(data)
 
         # set testdef metadata in base class

@@ -1,0 +1,903 @@
+[    0.000000] Linux version 3.1.1-19-linaro-lt-omap (buildd@diphda) (gcc version 4.6.1 (Ubuntu/Linaro 4.6.1-9ubuntu3) ) #19~lt~ci~20120216183525+1329716076~4f41e9c2-Ubuntu SMP PREEMPT  (Ubuntu 3.1.1-19.19~lt~ci~20120216183525+1329716076~4f41e9c2-linaro-lt-omap 3.1.1)
+[    0.000000] CPU: ARMv7 Processor [411fc092] revision 2 (ARMv7), cr=10c5387d
+[    0.000000] CPU: VIPT nonaliasing data cache, VIPT aliasing instruction cache
+[    0.000000] Machine: OMAP4 Panda board, model: TI OMAP4 PandaBoard
+[    0.000000] Reserving 50331648 bytes SDRAM for VRAM
+[    0.000000] CMA: reserved 32 MiB at 9a000000
+[    0.000000] Memory policy: ECC disabled, Data cache writealloc
+[    0.000000] OMAP4430 ES2.1
+[    0.000000] SRAM: Mapped pa 0x40300000 to va 0xfe400000 size: 0xd000
+[    0.000000] PERCPU: Embedded 9 pages/cpu @e0003000 s13440 r8192 d15232 u36864
+[    0.000000] Built 1 zonelists in Zone order, mobility grouping on.  Total pages: 233216
+[    0.000000] Kernel command line: console=tty0 console=ttyO2,115200n8  root=LABEL=testrootfs rootwait ro earlyprintk fixrtc nocompcache vram=48M omapfb.vram=0:24M mem=456M@0x80000000 mem=512M@0xA0000000
+[    0.000000] PID hash table entries: 4096 (order: 2, 16384 bytes)
+[    0.000000] Dentry cache hash table entries: 131072 (order: 7, 524288 bytes)
+[    0.000000] Inode-cache hash table entries: 65536 (order: 6, 262144 bytes)
+[    0.000000] Memory: 456MB 463MB = 919MB total
+[    0.000000] Memory: 880324k/880324k available, 110908k reserved, 211968K highmem
+[    0.000000] Virtual kernel memory layout:
+[    0.000000]     vector  : 0xffff0000 - 0xffff1000   (   4 kB)
+[    0.000000]     fixmap  : 0xfff00000 - 0xfffe0000   ( 896 kB)
+[    0.000000]     vmalloc : 0xf0800000 - 0xf8000000   ( 120 MB)
+[    0.000000]     lowmem  : 0xc0000000 - 0xf0000000   ( 768 MB)
+[    0.000000]     pkmap   : 0xbfe00000 - 0xc0000000   (   2 MB)
+[    0.000000]     modules : 0xbf000000 - 0xbfe00000   (  14 MB)
+[    0.000000]       .text : 0xc0008000 - 0xc0a6bfcc   (10640 kB)
+[    0.000000]       .init : 0xc0a6c000 - 0xc0adf480   ( 462 kB)
+[    0.000000]       .data : 0xc0ae0000 - 0xc0b79a00   ( 615 kB)
+[    0.000000]        .bss : 0xc0b79a24 - 0xc10e619c   (5554 kB)
+[    0.000000] Preemptible hierarchical RCU implementation.
+[    0.000000] NR_IRQS:410
+[    0.000000] OMAP clockevent source: GPTIMER1 at 32768 Hz
+[    0.000000] sched_clock: 32 bits at 32kHz, resolution 30517ns, wraps every 131071999ms
+[    0.000000] Console: colour dummy device 80x30
+[    0.000000] console [tty0] enabled
+[    0.000000] Lock dependency validator: Copyright (c) 2006 Red Hat, Inc., Ingo Molnar
+[    0.000000] ... MAX_LOCKDEP_SUBCLASSES:  8
+[    0.000000] ... MAX_LOCK_DEPTH:          48
+[    0.000000] ... MAX_LOCKDEP_KEYS:        8191
+[    0.000000] ... CLASSHASH_SIZE:          4096
+[    0.000000] ... MAX_LOCKDEP_ENTRIES:     16384
+[    0.000000] ... MAX_LOCKDEP_CHAINS:      32768
+[    0.000000] ... CHAINHASH_SIZE:          16384
+[    0.000000]  memory used by lock dependency info: 3695 kB
+[    0.000000]  per task-struct memory footprint: 1152 bytes
+[    0.005889] Calibrating delay loop... 1194.24 BogoMIPS (lpj=4665344)
+[    0.062469] pid_max: default: 32768 minimum: 301
+[    0.063598] Security Framework initialized
+[    0.063873] AppArmor: AppArmor initialized
+[    0.063964] Yama: becoming mindful.
+[    0.064514] Mount-cache hash table entries: 512
+[    0.073516] CPU: Testing write buffer coherency: ok
+[    0.074096] ftrace: allocating 30682 entries in 91 pages
+[    0.116607] CPU0: thread -1, cpu 0, socket 0, mpidr 80000000
+[    0.116699] Calibrating local timer... 292.50MHz.
+[    0.156433] hw perfevents: enabled with ARMv7 Cortex-A9 PMU driver, 7 counters available
+[    0.156677] L310 cache controller enabled
+[    0.156738] l2x0: 16 ways, CACHE_ID 0x410000c4, AUX_CTRL 0x5e470000, Cache size: 1048576 B
+[    0.233581] CPU1: Booted secondary processor
+[    0.233612] CPU1: Unknown IPI message 0x1
+[    0.301147] CPU1: thread -1, cpu 1, socket 0, mpidr 80000001
+[    0.301483] Brought up 2 CPUs
+[    0.301605] SMP: Total of 2 processors activated (2359.07 BogoMIPS).
+[    0.305908] devtmpfs: initialized
+[    0.320159] omap_hwmod: l4_div_ck: missing clockdomain for l4_div_ck.
+[    0.366912] omap_hwmod: dss_dispc: softreset failed (waited 10000 usec)
+[    0.391113] omap_hwmod: dss_rfbi: softreset failed (waited 10000 usec)
+[    0.416137] omap_hwmod: ipu: failed to hardreset
+[    0.421844] omap_hwmod: mcpdm: _wait_target_ready: -16
+[    0.421874] ------------[ cut here ]------------
+[    0.421936] WARNING: at /build/buildd/linux-linaro-lt-omap-3.1-3.1.1/arch/arm/mach-omap2/omap_hwmod.c:1509 _enable+0x1fc/0x230()
+[    0.422027] Modules linked in:
+[    0.422119] [<c001b5f0>] (unwind_backtrace+0x0/0xec) from [<c0720fc8>] (dump_stack+0x20/0x24)
+[    0.422180] [<c0720fc8>] (dump_stack+0x20/0x24) from [<c005e224>] (warn_slowpath_common+0x5c/0x74)
+[    0.422241] [<c005e224>] (warn_slowpath_common+0x5c/0x74) from [<c005e268>] (warn_slowpath_null+0x2c/0x34)
+[    0.422332] [<c005e268>] (warn_slowpath_null+0x2c/0x34) from [<c0029bd8>] (_enable+0x1fc/0x230)
+[    0.422393] [<c0029bd8>] (_enable+0x1fc/0x230) from [<c0029fd8>] (_setup.part.13+0x20/0xf0)
+[    0.422485] [<c0029fd8>] (_setup.part.13+0x20/0xf0) from [<c002a13c>] (_setup+0x94/0x9c)
+[    0.422546] [<c002a13c>] (_setup+0x94/0x9c) from [<c002a2e8>] (omap_hwmod_for_each+0x38/0x68)
+[    0.422607] [<c002a2e8>] (omap_hwmod_for_each+0x38/0x68) from [<c0a77118>] (omap_hwmod_setup_all+0x74/0xa0)
+[    0.422698] [<c0a77118>] (omap_hwmod_setup_all+0x74/0xa0) from [<c00088dc>] (do_one_initcall+0xa0/0x174)
+[    0.422790] [<c00088dc>] (do_one_initcall+0xa0/0x174) from [<c0a6c9a4>] (kernel_init+0x94/0x138)
+[    0.422882] [<c0a6c9a4>] (kernel_init+0x94/0x138) from [<c0014318>] (kernel_thread_exit+0x0/0x8)
+[    0.422973] ---[ end trace da227214a82491b7 ]---
+[    0.423034] omap_hwmod: mcpdm: cannot be enabled (3)
+[    0.430297] Enabling ERRATA 751472
+[    0.430328] OMAP4: Map 0xafe00000 to 0xfe600000 for dram barrier
+[    0.437438] print_constraints: dummy: 
+[    0.442230] NET: Registered protocol family 16
+[    0.444091] Trying to unpack rootfs image as initramfs...
+[    0.470703] DMA: preallocated 256 KiB pool for atomic coherent allocations
+[    0.634002] Freeing initrd memory: 1840K
+[    0.634857] GPMC revision 6.0
+[    0.646270] omap_device: omap_gpio.0: new worst case activate latency 0: 91552
+[    0.648803] OMAP GPIO hardware version 0.1
+[    0.661590] omap_mux_init: Add partition: #1: core, flags: 2
+[    0.664154] omap_mux_init: Add partition: #2: wkup, flags: 2
+[    0.667510] Calling omap_enable_smartreflex_on_init from board file
+[    0.670898] omap_device: omap_uart.0: new worst case activate latency 0: 30517
+[    0.672332] omap_device: omap_uart.1: new worst case deactivate latency 0: 30517
+[    0.685852] No ATAGs?
+[    0.685913] hw-breakpoint: found 5 (+1 reserved) breakpoint and 1 watchpoint registers.
+[    0.685974] hw-breakpoint: maximum watchpoint size is 4 bytes.
+[    0.705780] omap_ipussdev_init: could not look up fdif
+[    0.709655] OMAP DMA hardware revision 0.0
+[    0.797943] bio: create slab <bio-0> at 0
+[    0.801330] print_constraints: vwl1271: 1800 mV 
+[    0.804931] i2c-core: driver [twl] using legacy suspend method
+[    0.804962] i2c-core: driver [twl] using legacy resume method
+[    0.806945] SCSI subsystem initialized
+[    0.807556] omap_device: omap2_mcspi.1: new worst case activate latency 0: 30517
+[    0.811431] omap_device: omap2_mcspi.4: new worst case deactivate latency 0: 30517
+[    0.814300] usbcore: registered new interface driver usbfs
+[    0.815155] usbcore: registered new interface driver hub
+[    0.815795] usbcore: registered new device driver usb
+[    0.820617] omap_device: omap_i2c.1: new worst case activate latency 0: 30517
+[    0.834869] omap_i2c omap_i2c.1: bus 1 rev4.0 at 400 kHz
+[    0.840148] Skipping twl internal clock init and using bootloader value (unknown osc rate)
+[    0.841918] twl6030: PIH (irq 39) chaining IRQs 368..387
+[    0.845031] print_constraints: VUSB: 3300 mV normal standby
+[    1.046142] twl6030_usb twl6030_usb: Initialized TWL6030 USB module
+[    1.048767] print_constraints: VMMC: 1200 <--> 3000 mV at 3000 mV normal standby
+[    1.050659] print_constraints: VPP: 1800 <--> 2500 mV at 1900 mV normal standby
+[    1.052612] print_constraints: VUSIM: 1200 <--> 2900 mV at 1800 mV normal standby
+[    1.054412] print_constraints: VCXIO: 1800 mV normal standby
+[    1.056182] print_constraints: VDAC: 1800 mV normal standby
+[    1.058044] print_constraints: VAUX1_6030: 1000 <--> 3000 mV at 1800 mV normal standby
+[    1.058166] twl_reg twl_reg.37: Failed to set supply vmmc
+[    1.064758] twl_reg twl_reg.37: can't register VAUX1_6030, -16
+[    1.064910] twl_reg: probe of twl_reg.37 failed with error -16
+[    1.066619] print_constraints: VAUX2_6030: 1200 <--> 2800 mV at 1800 mV normal standby
+[    1.068542] print_constraints: VAUX3_6030: 1000 <--> 3000 mV at 1200 mV normal standby
+[    1.070343] print_constraints: CLK32KG: 
+[    1.071990] print_constraints: VANA: 2100 mV normal standby
+[    1.072479] omap_device: omap_i2c.1: new worst case deactivate latency 0: 30517
+[    1.085998] omap_i2c omap_i2c.2: bus 2 rev4.0 at 400 kHz
+[    1.101196] omap_i2c omap_i2c.3: bus 3 rev4.0 at 100 kHz
+[    1.116302] omap_i2c omap_i2c.4: bus 4 rev4.0 at 400 kHz
+[    1.120697] Advanced Linux Sound Architecture Driver Version 1.0.24.
+[    1.124938] Bluetooth: Core ver 2.16
+[    1.125427] NET: Registered protocol family 31
+[    1.125457] Bluetooth: HCI device and connection manager initialized
+[    1.125671] Bluetooth: HCI socket layer initialized
+[    1.125732] Bluetooth: L2CAP socket layer initialized
+[    1.125915] Bluetooth: SCO socket layer initialized
+[    1.127868] cfg80211: Calling CRDA to update world regulatory domain
+[    1.130187] NetLabel: Initializing
+[    1.130249] NetLabel:  domain hash size = 128
+[    1.130279] NetLabel:  protocols = UNLABELED CIPSOv4
+[    1.130645] NetLabel:  unlabeled traffic allowed by default
+[    1.133209] Switching to clocksource 32k_counter
+[    1.139190] Switched to NOHz mode on CPU #0
+[    1.140167] Switched to NOHz mode on CPU #1
+[    1.208526] AppArmor: AppArmor Filesystem Enabled
+[    1.270996] musb-hdrc: version 6.0, ?dma?, otg (peripheral+host)
+[    1.271362] omap_device: musb-omap2430.-1: new worst case activate latency 0: 30517
+[    1.275695] musb-hdrc musb-hdrc: USB OTG mode controller at fc0ab000 using DMA, IRQ 124
+[    1.276306] omap_device: musb-omap2430.-1: new worst case deactivate latency 0: 61035
+[    1.277893] NET: Registered protocol family 2
+[    1.278625] IP route cache hash table entries: 32768 (order: 5, 131072 bytes)
+[    1.281036] TCP established hash table entries: 131072 (order: 8, 1048576 bytes)
+[    1.285064] TCP bind hash table entries: 65536 (order: 9, 2621440 bytes)
+[    1.322479] TCP: Hash tables configured (established 131072 bind 65536)
+[    1.322784] TCP reno registered
+[    1.322845] UDP hash table entries: 512 (order: 3, 49152 bytes)
+[    1.323486] UDP-Lite hash table entries: 512 (order: 3, 49152 bytes)
+[    1.325103] NET: Registered protocol family 1
+[    1.326934] RPC: Registered named UNIX socket transport module.
+[    1.326995] RPC: Registered udp transport module.
+[    1.327026] RPC: Registered tcp transport module.
+[    1.327087] RPC: Registered tcp NFSv4.1 backchannel transport module.
+[    1.327117] NetWinder Floating Point Emulator V0.97 (double precision)
+[    1.359344] ipu-power ipu0: Test of writing to the device message log,done from ipu_pm_init
+[    1.359436] ipu-power initialized ipu, major: 253, minor: 0
+[    1.361053] omap-iommu omap-iommu.0: ducati registered
+[    1.361267] omap-iommu omap-iommu.1: tesla registered
+[    1.363647] iovmm-omap initialized ducati, major: 252, base-minor: 0
+[    1.364471] iovmm-omap initialized tesla, major: 252, base-minor: 1
+[    1.365722] omap-remoteproc omap-remoteproc.0: omap_rproc_probe: adding rproc tesla
+[    1.366882] omap-remoteproc omap-remoteproc.0: omap-rproc initialized tesla, major: 251, base-minor: 0
+[    1.367004] omap-remoteproc omap-remoteproc.1: omap_rproc_probe: adding rproc ducati-proc0
+[    1.367858] omap-remoteproc omap-remoteproc.1: omap-rproc initialized ducati-proc0, major: 251, base-minor: 1
+[    1.367980] omap-remoteproc omap-remoteproc.2: omap_rproc_probe: adding rproc ducati-proc1
+[    1.368835] omap-remoteproc omap-remoteproc.2: omap-rproc initialized ducati-proc1, major: 251, base-minor: 2
+[    1.372222] audit: initializing netlink socket (disabled)
+[    1.372558] type=2000 audit(1.359:1): initialized
+[    1.520996] Kprobe smoke test started
+[    2.219848] Kprobe smoke test passed successfully
+[    2.273956] highmem bounce pool size: 64 pages
+[    2.275054] VFS: Disk quotas dquot_6.5.2
+[    2.275390] Dquot-cache hash table entries: 1024 (order 0, 4096 bytes)
+[    2.281219] Installing knfsd (copyright (C) 1996 okir@monad.swb.de).
+[    2.282562] JFFS2 version 2.2. (NAND) (SUMMARY)  © 2001-2006 Red Hat, Inc.
+[    2.283630] ROMFS MTD (C) 2007 Red Hat, Inc.
+[    2.285064] Btrfs loaded
+[    2.285156] msgmni has been set to 1372
+[    2.290313] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 250)
+[    2.290527] io scheduler noop registered
+[    2.290557] io scheduler deadline registered
+[    2.290740] io scheduler cfq registered (default)
+[    2.294647] omap_device: omapdss_dss.-1: new worst case activate latency 0: 61035
+[    2.294738] OMAP DSS rev 4.0
+[    2.297454] omap_device: omapdss_dss.-1: new worst case deactivate latency 0: 2655029
+[    2.304595] omap_device: omapdss_dss.-1: new worst case deactivate latency 0: 2685546
+[    2.307952] omap_device: omapdss_dsi.0: new worst case deactivate latency 0: 2807617
+[    2.314117] omap_device: omapdss_dispc.-1: new worst case deactivate latency 0: 2838134
+[    2.323211] omap_device: omapdss_dispc.-1: new worst case deactivate latency 0: 3021240
+[    2.326324] omapdss CORE error: driver probe failed: -22
+[    2.327789] generic_dpi_panel: probe of display1 failed with error -22
+[    2.332427] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[    2.689483] omap_uart.0: ttyO0 at MMIO 0x4806a000 (irq = 104) is a OMAP UART0
+[    2.813568] omap_uart.1: ttyO1 at MMIO 0x4806c000 (irq = 105) is a OMAP UART1
+[    2.938507] omap_uart.2: ttyO2 at MMIO 0x48020000 (irq = 106) is a OMAP UART2
+[    4.300964] console [ttyO2] enabled
+[    4.391662] omap_uart.3: ttyO3 at MMIO 0x4806e000 (irq = 102) is a OMAP UART3
+[    4.517883] [drm] Initialized drm 1.1.0 20060810
+[    4.553863] brd: module loaded
+[    4.575836] loop: module loaded
+[    4.579559] (stk) :sysfs entries created
+[    4.583862] (stk) : debugfs entries created 
+[    4.591186] omap_device: omap_i2c.1: new worst case activate latency 0: 122070
+[    4.609497] mtdoops: mtd device (mtddev=name/number) must be supplied
+[    4.616943] omap2-nand driver initializing
+[    4.622314] OneNAND driver initializing
+[    4.633148] usbcore: registered new interface driver asix
+[    4.639434] usbcore: registered new interface driver cdc_ether
+[    4.646301] usbcore: registered new interface driver smsc95xx
+[    4.653320] usbcore: registered new interface driver net1080
+[    4.659881] usbcore: registered new interface driver cdc_subset
+[    4.666320] cdc_ncm: 04-Aug-2011
+[    4.670288] usbcore: registered new interface driver cdc_ncm
+[    4.678253] ehci_hcd: USB 2.0 'Enhanced' Host Controller (EHCI) Driver
+[    4.685607] _regulator_get: ehci-omap.0 supply hsusb0 not found, using dummy regulator
+[    4.694824] ehci-omap ehci-omap.0: OMAP-EHCI Host Controller
+[    4.704376] ehci-omap ehci-omap.0: new USB bus registered, assigned bus number 1
+[    4.713897] ehci-omap ehci-omap.0: irq 109, io mem 0x4a064c00
+[    4.735351] ehci-omap ehci-omap.0: USB 2.0 started, EHCI 1.00
+[    4.742523] usb usb1: New USB device found, idVendor=1d6b, idProduct=0002
+[    4.749816] usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[    4.757598] usb usb1: Product: OMAP-EHCI Host Controller
+[    4.763305] usb usb1: Manufacturer: Linux 3.1.1-19-linaro-lt-omap ehci_hcd
+[    4.770660] usb usb1: SerialNumber: ehci-omap.0
+[    4.780975] hub 1-0:1.0: USB hub found
+[    4.785278] hub 1-0:1.0: 3 ports detected
+[    4.821624] ohci_hcd: USB 1.1 'Open' Host Controller (OHCI) Driver
+[    4.828582] ohci-omap3 ohci-omap3.0: OMAP3 OHCI Host Controller
+[    4.836120] ohci-omap3 ohci-omap3.0: new USB bus registered, assigned bus number 2
+[    4.844757] ohci-omap3 ohci-omap3.0: irq 108, io mem 0x4a064800
+[    4.927215] usb usb2: New USB device found, idVendor=1d6b, idProduct=0001
+[    4.934509] usb usb2: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[    4.942260] usb usb2: Product: OMAP3 OHCI Host Controller
+[    4.948089] usb usb2: Manufacturer: Linux 3.1.1-19-linaro-lt-omap ohci_hcd
+[    4.955444] usb usb2: SerialNumber: ohci-omap3.0
+[    4.962646] hub 2-0:1.0: USB hub found
+[    4.966705] hub 2-0:1.0: 3 ports detected
+[    4.973632] usbcore: registered new interface driver cdc_wdm
+[    4.979766] Initializing USB Mass Storage driver...
+[    4.985626] usbcore: registered new interface driver usb-storage
+[    4.992065] USB Mass Storage support registered.
+[    4.998718] usbcore: registered new interface driver libusual
+[    5.006256] usbcore: registered new interface driver usbserial
+[    5.013732] USB Serial support registered for generic
+[    5.118194] usb 1-1: new high speed USB device number 2 using ehci-omap
+[    5.282836] usb 1-1: New USB device found, idVendor=0424, idProduct=9514
+[    5.290039] usb 1-1: New USB device strings: Mfr=0, Product=0, SerialNumber=0
+[    5.300598] hub 1-1:1.0: USB hub found
+[    5.304809] hub 1-1:1.0: 5 ports detected
+[    5.313140] usbcore: registered new interface driver usbserial_generic
+[    5.320251] usbserial: USB Serial Driver core
+[    5.325439] usbcore: registered new interface driver usbtest
+[    5.333496] mousedev: PS/2 mouse device common for all mice
+[    5.343292] i2c-core: driver [tm12xx_ts] using legacy suspend method
+[    5.350158] i2c-core: driver [tm12xx_ts] using legacy resume method
+[    5.359222] input: twl6040:vibrator as /devices/platform/omap/omap_i2c.1/i2c-1/1-004b/twl6040/input/input0
+[    5.372131] _regulator_get: twl6040-vibra supply vddvibl not found, using dummy regulator
+[    5.381225] _regulator_get: twl6040-vibra supply vddvibr not found, using dummy regulator
+[    5.392364] twl_rtc twl_rtc: Power up reset detected.
+[    5.399108] twl_rtc twl_rtc: Enabling TWL-RTC.
+[    5.408477] twl_rtc twl_rtc: rtc core: registered twl_rtc as rtc0
+[    5.416381] i2c /dev entries driver
+[    5.424987] Linux media interface: v0.10
+[    5.429626] Linux video capture interface: v2.00
+[    5.441253] Driver for 1-wire Dallas network protocol.
+[    5.449218] omap_device: omap_wdt.-1: new worst case activate latency 0: 30517
+[    5.458709] OMAP Watchdog Timer Rev 0x00: initial timeout 60 sec
+[    5.468109] device-mapper: ioctl: 4.21.0-ioctl (2011-07-06) initialised: dm-devel@redhat.com
+[    5.477386] Bluetooth: HCI UART driver ver 2.2
+[    5.482177] Bluetooth: HCI H4 protocol initialized
+[    5.487457] Bluetooth: HCI BCSP protocol initialized
+[    5.492767] Bluetooth: HCILL protocol initialized
+[    5.497833] Bluetooth: Bluetooth Driver for TI WiLink - Version 1.0
+[    5.535614] (stc): st_register(4) 
+[    5.539184] (stc):  chnl_id list empty :4 
+[    5.541107] cpuidle: using governor ladder
+[    5.541137] cpuidle: using governor menu
+[    5.544586] omap_device: omap_hsmmc.0: new worst case activate latency 0: 61035
+[    5.546844] _regulator_get: omap_hsmmc.0 supply vmmc_aux not found, using dummy regulator
+[    5.559631] _regulator_get: omap_hsmmc.4 supply vmmc_aux not found, using dummy regulator
+[    5.561614] omap_device: omap_hsmmc.4: new worst case deactivate latency 0: 30517
+[    5.569122] usbcore: registered new interface driver usbhid
+[    5.569152] usbhid: USB HID core driver
+[    5.569152] thermal_governor_dev_register:Adding omap_ondie_governor governor
+[    5.569335] thermal_init_thermal_state:Not all components registered for cpu domain sensor   (null), gov=ee3dcc60, cooling=  (null)
+[    5.603424] usb 1-1.1: new high speed USB device number 3 using ehci-omap
+[    5.623291] (stk) : st_kim_start
+[    5.628173] proc4430_drv_initializeModule
+[    5.637084] omap-devicehandler omap-devicehandler.0: omap_devh_probe: adding devh Tesla
+[    5.647369] omap-devh initialized Tesla, major: 241, base-minor: 0
+[    5.654968] omap-devicehandler omap-devicehandler.1: omap_devh_probe: adding devh SysM3
+[    5.665252] omap-devh initialized SysM3, major: 241, base-minor: 1
+[    5.672607] omap-devicehandler omap-devicehandler.2: omap_devh_probe: adding devh AppM3
+[    5.682281] omap-devh initialized AppM3, major: 241, base-minor: 2
+[    5.710388] SDP4430 SoC init
+[    5.721008] usb 1-1.1: New USB device found, idVendor=0424, idProduct=ec00
+[    5.729492] omap_device: aess.-1: new worst case activate latency 0: 183105
+[    5.730407] (stk) :ldisc_install = 1
+[    5.730987] usb 1-1.1: New USB device strings: Mfr=0, Product=0, SerialNumber=0
+[    5.750305] smsc95xx v1.0.4
+[    5.758850] omap_device: aess.-1: new worst case deactivate latency 0: 2685546
+[    5.825347] mmc0: host does not support reading read-only switch. assuming write-enable.
+[    5.834289] mmc0: new SDHC card at address aaaa
+[    5.843353] mmcblk0: mmc0:aaaa SU16G 14.8 GiB 
+[    5.858062] smsc95xx 1-1.1:1.0: eth0: register 'smsc95xx' at usb-ehci-omap.0-1.1, smsc95xx USB 2.0 Ethernet, 2e:40:b8:8b:6c:0a
+[    5.872039]  mmcblk0: p1 p2 p3 p4 < p5 p6 p7 >
+[    5.886016] omap_device: omap_hsmmc.4: new worst case activate latency 0: 183105
+[    5.923370] twl6040 twl6040: timeout waiting for READYINT
+[    5.929138] twl6040 twl6040: automatic power-down failed
+[    5.935791] twl6040-codec twl6040-codec: asoc: failed to probe CODEC twl6040-codec: -110
+[    5.944854] asoc: failed to instantiate card sdp4430-defname: -110
+[    5.954315] usb 1-1.2: new high speed USB device number 4 using ehci-omap
+[    5.963958] OMAP4 HDMI audio SoC init
+[    5.972045] asoc: omap4-hdmi-audio-codec <-> hdmi-audio-dai mapping ok
+[    5.984527] ALSA device list:
+[    5.988128]   #0: TI OMAP4 HDMI Board
+[    5.993835] oprofile: using arm/armv7-ca9
+[    5.999114] TCP cubic registered
+[    6.003631] NET: Registered protocol family 10
+[    6.012512] NET: Registered protocol family 17
+[    6.017547] NET: Registered protocol family 15
+[    6.023071] Bridge firewalling registered
+[    6.027923] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[    6.033721] Bluetooth: BNEP filters: protocol multicast
+[    6.039367] mmc1: card claims to support voltages below the defined range. These will be ignored.
+[    6.039703] 8021q: 802.1Q VLAN Support v1.8
+[    6.039978] lib80211: common routines for IEEE802.11 drivers
+[    6.040100] Registering the dns_resolver key type
+[    6.040985] VFP support v0.3: implementor 41 architecture 3 part 30 variant 9 rev 1
+[    6.072631] ThumbEE CPU extension supported.
+[    6.077301] Registering SWP/SWPB emulation handler
+[    6.092681] omap2_set_init_voltage: unable to find boot up OPP for vdd_iva
+[    6.100097] omap2_set_init_voltage: Unable to put vdd_iva to its init voltage
+[    6.100128] 
+[    6.111633] usb 1-1.2: New USB device found, idVendor=0781, idProduct=5567
+[    6.119079] usb 1-1.2: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[    6.127136] usb 1-1.2: Product: Cruzer Blade
+[    6.131774] usb 1-1.2: Manufacturer: SanDisk
+[    6.132598] thermal_cooling_dev_register:Found cpu cpu
+[    6.132629] thermal_init_thermal_state:Not all components registered for cpu domain sensor   (null), gov=ee3dcc60, cooling=c0aff2c4
+[    6.134918] omap_sr_disable: omap_sr struct for sr_mpu not found
+[    6.134979] omap_sr_disable: omap_sr struct for sr_mpu not found
+[    6.167419] usb 1-1.2: SerialNumber: 2006026651028482F256
+[    6.173431] Power Management for TI OMAP4.
+[    6.180999] scsi0 : usb-storage 1-1.2:1.0
+[    6.181945] sr_init: No PMIC hook to init smartreflex
+[    6.181945] smartreflex smartreflex.0: omap_sr_probe: SmartReflex driver initialized
+[    6.182861] smartreflex smartreflex.1: omap_sr_probe: SmartReflex driver initialized
+[    6.183258] smartreflex smartreflex.2: omap_sr_probe: SmartReflex driver initialized
+[    6.184112] SmartReflex Class3 initialized
+[    6.184295] sr_class3_enable: Curr voltage unknown. Cannot enable sr_iva
+[    6.184356] omap_device: smartreflex.0: new worst case activate latency 0: 30517
+[    6.237457] CMA: reserved 32 MiB at ac000000
+[    6.238739] mmc1: queuing unknown CIS tuple 0x91 (3 bytes)
+[    6.241302] mmc1: new SDIO card at address 0001
+[    6.291595] omap_device: omap_i2c.1: new worst case activate latency 0: 152587
+[    6.300445] regulator_init_complete: VANA: incomplete constraints, leaving on
+[    6.309173] regulator_init_complete: CLK32KG: incomplete constraints, leaving on
+[    6.320312] regulator_init_complete: VDAC: incomplete constraints, leaving on
+[    6.329040] regulator_init_complete: VCXIO: incomplete constraints, leaving on
+[    6.340026] regulator_init_complete: VUSB: incomplete constraints, leaving on
+[    6.350158] twl_rtc twl_rtc: setting system clock to 2000-01-01 00:00:00 UTC (946684800)
+[    6.360015] omap4iss omap4iss: Revision 40000101 found
+[    6.382476] ov5650 3-0036: Failed reading register 0x302a!
+[    6.388397] ov5650 3-0036: Failure to detect OV5650 chip
+[    6.396545] iss_register_subdev_group: Unable to register subdev ov5650
+[    6.406127] omap_device: omapdss_hdmi.-1: new worst case activate latency 0: 122070
+[    6.428710] Failed to set PHY power mode to 1
+[    6.433502] ------------[ cut here ]------------
+[    6.438507] WARNING: at /build/buildd/linux-linaro-lt-omap-3.1-3.1.1/drivers/video/omap2/dss/ti_hdmi_4xxx_ip.c:163 hdmi_set_phy_pwr+0x90/0xac()
+[    6.452301] Modules linked in:
+[    6.455688] [<c001b5f0>] (unwind_backtrace+0x0/0xec) from [<c0720fc8>] (dump_stack+0x20/0x24)
+[    6.464874] [<c0720fc8>] (dump_stack+0x20/0x24) from [<c005e224>] (warn_slowpath_common+0x5c/0x74)
+[    6.474517] [<c005e224>] (warn_slowpath_common+0x5c/0x74) from [<c005e268>] (warn_slowpath_null+0x2c/0x34)
+[    6.484893] [<c005e268>] (warn_slowpath_null+0x2c/0x34) from [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac)
+[    6.494873] [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac) from [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c)
+[    6.505371] [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c) from [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c)
+[    6.516387] [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c) from [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128)
+[    6.528045] [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128) from [<c03b3bb4>] (hdmi_panel_enable+0x58/0x98)
+[    6.539093] [<c03b3bb4>] (hdmi_panel_enable+0x58/0x98) from [<c0a9baa0>] (omap_vout_probe+0x158/0x2a4)
+[    6.549133] [<c0a9baa0>] (omap_vout_probe+0x158/0x2a4) from [<c0405dc4>] (platform_drv_probe+0x24/0x28)
+[    6.559204] [<c0405dc4>] (platform_drv_probe+0x24/0x28) from [<c04047fc>] (really_probe+0xa8/0x158)
+[    6.568939] [<c04047fc>] (really_probe+0xa8/0x158) from [<c0404a1c>] (driver_probe_device+0x58/0x70)
+[    6.578735] [<c0404a1c>] (driver_probe_device+0x58/0x70) from [<c0404aac>] (__driver_attach+0x78/0x9c)
+[    6.588745] [<c0404aac>] (__driver_attach+0x78/0x9c) from [<c0403a48>] (bus_for_each_dev+0x60/0x9c)
+[    6.598449] [<c0403a48>] (bus_for_each_dev+0x60/0x9c) from [<c0404588>] (driver_attach+0x28/0x30)
+[    6.607971] [<c0404588>] (driver_attach+0x28/0x30) from [<c0404158>] (bus_add_driver+0xb0/0x238)
+[    6.617401] [<c0404158>] (bus_add_driver+0xb0/0x238) from [<c0405050>] (driver_register+0xb0/0x13c)
+[    6.627319] [<c0405050>] (driver_register+0xb0/0x13c) from [<c0406210>] (platform_driver_register+0x54/0x68)
+[    6.637878] [<c0406210>] (platform_driver_register+0x54/0x68) from [<c0a9b760>] (omap_vout_init+0x14/0x34)
+[    6.648254] [<c0a9b760>] (omap_vout_init+0x14/0x34) from [<c00088dc>] (do_one_initcall+0xa0/0x174)
+[    6.657897] [<c00088dc>] (do_one_initcall+0xa0/0x174) from [<c0a6c9a4>] (kernel_init+0x94/0x138)
+[    6.667358] [<c0a6c9a4>] (kernel_init+0x94/0x138) from [<c0014318>] (kernel_thread_exit+0x0/0x8)
+[    6.676788] ---[ end trace da227214a82491b9 ]---
+[    6.681762] Failed to start PHY
+[    6.685119] omapdss HDMI error: failed to power on device
+[    6.696960] omapdss error: failed to power on
+[    6.717926] Failed to set PHY power mode to 1
+[    6.722808] ------------[ cut here ]------------
+[    6.727813] WARNING: at /build/buildd/linux-linaro-lt-omap-3.1-3.1.1/drivers/video/omap2/dss/ti_hdmi_4xxx_ip.c:163 hdmi_set_phy_pwr+0x90/0xac()
+[    6.727935] (stk) :line disc installation timed out
+[    6.727966] (stk) :ldisc_install = 0
+[    6.750518] Modules linked in:
+[    6.754058] [<c001b5f0>] (unwind_backtrace+0x0/0xec) from [<c0720fc8>] (dump_stack+0x20/0x24)
+[    6.763214] [<c0720fc8>] (dump_stack+0x20/0x24) from [<c005e224>] (warn_slowpath_common+0x5c/0x74)
+[    6.772827] [<c005e224>] (warn_slowpath_common+0x5c/0x74) from [<c005e268>] (warn_slowpath_null+0x2c/0x34)
+[    6.783203] [<c005e268>] (warn_slowpath_null+0x2c/0x34) from [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac)
+[    6.793212] [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac) from [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c)
+[    6.803680] [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c) from [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c)
+[    6.814880] [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c) from [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128)
+[    6.826385] [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128) from [<c03b3bb4>] (hdmi_panel_enable+0x58/0x98)
+[    6.837402] [<c03b3bb4>] (hdmi_panel_enable+0x58/0x98) from [<c0a9baa0>] (omap_vout_probe+0x158/0x2a4)
+[    6.847412] [<c0a9baa0>] (omap_vout_probe+0x158/0x2a4) from [<c0405dc4>] (platform_drv_probe+0x24/0x28)
+[    6.857482] [<c0405dc4>] (platform_drv_probe+0x24/0x28) from [<c04047fc>] (really_probe+0xa8/0x158)
+[    6.867218] [<c04047fc>] (really_probe+0xa8/0x158) from [<c0404a1c>] (driver_probe_device+0x58/0x70)
+[    6.877014] [<c0404a1c>] (driver_probe_device+0x58/0x70) from [<c0404aac>] (__driver_attach+0x78/0x9c)
+[    6.887023] [<c0404aac>] (__driver_attach+0x78/0x9c) from [<c0403a48>] (bus_for_each_dev+0x60/0x9c)
+[    6.896728] [<c0403a48>] (bus_for_each_dev+0x60/0x9c) from [<c0404588>] (driver_attach+0x28/0x30)
+[    6.906249] [<c0404588>] (driver_attach+0x28/0x30) from [<c0404158>] (bus_add_driver+0xb0/0x238)
+[    6.915893] [<c0404158>] (bus_add_driver+0xb0/0x238) from [<c0405050>] (driver_register+0xb0/0x13c)
+[    6.925598] [<c0405050>] (driver_register+0xb0/0x13c) from [<c0406210>] (platform_driver_register+0x54/0x68)
+[    6.936157] [<c0406210>] (platform_driver_register+0x54/0x68) from [<c0a9b760>] (omap_vout_init+0x14/0x34)
+[    6.946533] [<c0a9b760>] (omap_vout_init+0x14/0x34) from [<c00088dc>] (do_one_initcall+0xa0/0x174)
+[    6.956146] [<c00088dc>] (do_one_initcall+0xa0/0x174) from [<c0a6c9a4>] (kernel_init+0x94/0x138)
+[    6.965606] [<c0a6c9a4>] (kernel_init+0x94/0x138) from [<c0014318>] (kernel_thread_exit+0x0/0x8)
+[    6.975036] ---[ end trace da227214a82491ba ]---
+[    6.980010] Failed to start PHY
+[    6.983367] omapdss HDMI error: failed to power on device
+[    6.995117] omapdss error: failed to power on
+[    7.016265] Failed to set PHY power mode to 1
+[    7.020965] ------------[ cut here ]------------
+[    7.025970] WARNING: at /build/buildd/linux-linaro-lt-omap-3.1-3.1.1/drivers/video/omap2/dss/ti_hdmi_4xxx_ip.c:163 hdmi_set_phy_pwr+0x90/0xac()
+[    7.039733] Modules linked in:
+[    7.043090] [<c001b5f0>] (unwind_backtrace+0x0/0xec) from [<c0720fc8>] (dump_stack+0x20/0x24)
+[    7.052246] [<c0720fc8>] (dump_stack+0x20/0x24) from [<c005e224>] (warn_slowpath_common+0x5c/0x74)
+[    7.061859] [<c005e224>] (warn_slowpath_common+0x5c/0x74) from [<c005e268>] (warn_slowpath_null+0x2c/0x34)
+[    7.072235] [<c005e268>] (warn_slowpath_null+0x2c/0x34) from [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac)
+[    7.082244] [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac) from [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c)
+[    7.092681] [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c) from [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c)
+[    7.103912] [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c) from [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128)
+[    7.115386] [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128) from [<c03b3bb4>] (hdmi_panel_enable+0x58/0x98)
+[    7.126403] [<c03b3bb4>] (hdmi_panel_enable+0x58/0x98) from [<c0a9baa0>] (omap_vout_probe+0x158/0x2a4)
+[    7.136413] [<c0a9baa0>] (omap_vout_probe+0x158/0x2a4) from [<c0405dc4>] (platform_drv_probe+0x24/0x28)
+[    7.146484] [<c0405dc4>] (platform_drv_probe+0x24/0x28) from [<c04047fc>] (really_probe+0xa8/0x158)
+[    7.156219] [<c04047fc>] (really_probe+0xa8/0x158) from [<c0404a1c>] (driver_probe_device+0x58/0x70)
+[    7.166015] [<c0404a1c>] (driver_probe_device+0x58/0x70) from [<c0404aac>] (__driver_attach+0x78/0x9c)
+[    7.176025] [<c0404aac>] (__driver_attach+0x78/0x9c) from [<c0403a48>] (bus_for_each_dev+0x60/0x9c)
+[    7.185729] [<c0403a48>] (bus_for_each_dev+0x60/0x9c) from [<c0404588>] (driver_attach+0x28/0x30)
+[    7.195251] [<c0404588>] (driver_attach+0x28/0x30) from [<c0404158>] (bus_add_driver+0xb0/0x238)
+[    7.204895] [<c0404158>] (bus_add_driver+0xb0/0x238) from [<c0405050>] (driver_register+0xb0/0x13c)
+[    7.214599] [<c0405050>] (driver_register+0xb0/0x13c) from [<c0406210>] (platform_driver_register+0x54/0x68)
+[    7.225158] [<c0406210>] (platform_driver_register+0x54/0x68) from [<c0a9b760>] (omap_vout_init+0x14/0x34)
+[    7.235534] [<c0a9b760>] (omap_vout_init+0x14/0x34) from [<c00088dc>] (do_one_initcall+0xa0/0x174)
+[    7.245147] [<c00088dc>] (do_one_initcall+0xa0/0x174) from [<c0a6c9a4>] (kernel_init+0x94/0x138)
+[    7.254791] [<c0a6c9a4>] (kernel_init+0x94/0x138) from [<c0014318>] (kernel_thread_exit+0x0/0x8)
+[    7.257354] scsi 0:0:0:0: Direct-Access     SanDisk  Cruzer Blade     1.20 PQ: 0 ANSI: 5
+[    7.272888] ---[ end trace da227214a82491bb ]---
+[    7.274475] sd 0:0:0:0: [sda] 31266816 512-byte logical blocks: (16.0 GB/14.9 GiB)
+[    7.276184] sd 0:0:0:0: [sda] Write Protect is off
+[    7.277587] sd 0:0:0:0: [sda] Write cache: disabled, read cache: enabled, doesn't support DPO or FUA
+[    7.293548]  sda: sda1 sda2
+[    7.303924] Failed to start PHY
+[    7.307342] omapdss HDMI error: failed to power on device
+[    7.312347] sd 0:0:0:0: [sda] Attached SCSI removable disk
+[    7.324615] omapdss error: failed to power on
+[    7.332092] omap_vout omap_vout: Buffer Size = 3686400
+[    7.339782] omap_vout omap_vout: : registered and initialized video device 2
+[    7.347381] omap_vout omap_vout: Buffer Size = 3686400
+[    7.354919] omap_vout omap_vout: : registered and initialized video device 3
+[    7.370605] omap_device: omapdss_dispc.-1: new worst case activate latency 0: 183105
+[    7.405792] Failed to set PHY power mode to 1
+[    7.410644] ------------[ cut here ]------------
+[    7.415679] WARNING: at /build/buildd/linux-linaro-lt-omap-3.1-3.1.1/drivers/video/omap2/dss/ti_hdmi_4xxx_ip.c:163 hdmi_set_phy_pwr+0x90/0xac()
+[    7.429473] Modules linked in:
+[    7.432891] [<c001b5f0>] (unwind_backtrace+0x0/0xec) from [<c0720fc8>] (dump_stack+0x20/0x24)
+[    7.442077] [<c0720fc8>] (dump_stack+0x20/0x24) from [<c005e224>] (warn_slowpath_common+0x5c/0x74)
+[    7.451690] [<c005e224>] (warn_slowpath_common+0x5c/0x74) from [<c005e268>] (warn_slowpath_null+0x2c/0x34)
+[    7.462066] [<c005e268>] (warn_slowpath_null+0x2c/0x34) from [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac)
+[    7.472076] [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac) from [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c)
+[    7.482543] [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c) from [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c)
+[    7.493560] [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c) from [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128)
+[    7.505249] [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128) from [<c03b3bb4>] (hdmi_panel_enable+0x58/0x98)
+[    7.516296] [<c03b3bb4>] (hdmi_panel_enable+0x58/0x98) from [<c052d908>] (omap_connector_init+0xec/0x1b8)
+[    7.526580] [<c052d908>] (omap_connector_init+0xec/0x1b8) from [<c052b5cc>] (create_connector.29157+0xb0/0x190)
+[    7.537414] [<c052b5cc>] (create_connector.29157+0xb0/0x190) from [<c052bad0>] (omap_modeset_init+0x134/0x258)
+[    7.548156] [<c052bad0>] (omap_modeset_init+0x134/0x258) from [<c052bc70>] (dev_load+0x7c/0x148)
+[    7.557586] [<c052bc70>] (dev_load+0x7c/0x148) from [<c03f4668>] (drm_get_platform_dev+0xfc/0x20c)
+[    7.567230] [<c03f4668>] (drm_get_platform_dev+0xfc/0x20c) from [<c03f47cc>] (drm_platform_init+0x54/0x68)
+[    7.577606] [<c03f47cc>] (drm_platform_init+0x54/0x68) from [<c052bd80>] (pdev_probe+0x44/0x5c)
+[    7.586975] [<c052bd80>] (pdev_probe+0x44/0x5c) from [<c0405dc4>] (platform_drv_probe+0x24/0x28)
+[    7.596588] [<c0405dc4>] (platform_drv_probe+0x24/0x28) from [<c04047fc>] (really_probe+0xa8/0x158)
+[    7.606323] [<c04047fc>] (really_probe+0xa8/0x158) from [<c0404a1c>] (driver_probe_device+0x58/0x70)
+[    7.616119] [<c0404a1c>] (driver_probe_device+0x58/0x70) from [<c0404aac>] (__driver_attach+0x78/0x9c)
+[    7.626129] [<c0404aac>] (__driver_attach+0x78/0x9c) from [<c0403a48>] (bus_for_each_dev+0x60/0x9c)
+[    7.635833] [<c0403a48>] (bus_for_each_dev+0x60/0x9c) from [<c0404588>] (driver_attach+0x28/0x30)
+[    7.645355] [<c0404588>] (driver_attach+0x28/0x30) from [<c0404158>] (bus_add_driver+0xb0/0x238)
+[    7.654815] [<c0404158>] (bus_add_driver+0xb0/0x238) from [<c0405050>] (driver_register+0xb0/0x13c)
+[    7.664520] [<c0405050>] (driver_register+0xb0/0x13c) from [<c0406210>] (platform_driver_register+0x54/0x68)
+[    7.675109] [<c0406210>] (platform_driver_register+0x54/0x68) from [<c0a9e0a4>] (omap_drm_init+0x28/0x3c)
+[    7.685363] [<c0a9e0a4>] (omap_drm_init+0x28/0x3c) from [<c00088dc>] (do_one_initcall+0xa0/0x174)
+[    7.695098] [<c00088dc>] (do_one_initcall+0xa0/0x174) from [<c0a6c9a4>] (kernel_init+0x94/0x138)
+[    7.704559] [<c0a6c9a4>] (kernel_init+0x94/0x138) from [<c0014318>] (kernel_thread_exit+0x0/0x8)
+[    7.713989] ---[ end trace da227214a82491bc ]---
+[    7.718933] Failed to start PHY
+[    7.722320] omapdss HDMI error: failed to power on device
+[    7.733978] omapdss error: failed to power on
+[    7.755065] Failed to set PHY power mode to 1
+[    7.759765] ------------[ cut here ]------------
+[    7.764709] WARNING: at /build/buildd/linux-linaro-lt-omap-3.1-3.1.1/drivers/video/omap2/dss/ti_hdmi_4xxx_ip.c:163 hdmi_set_phy_pwr+0x90/0xac()
+[    7.778503] Modules linked in:
+[    7.781799] [<c001b5f0>] (unwind_backtrace+0x0/0xec) from [<c0720fc8>] (dump_stack+0x20/0x24)
+[    7.791137] [<c0720fc8>] (dump_stack+0x20/0x24) from [<c005e224>] (warn_slowpath_common+0x5c/0x74)
+[    7.800781] [<c005e224>] (warn_slowpath_common+0x5c/0x74) from [<c005e268>] (warn_slowpath_null+0x2c/0x34)
+[    7.811157] [<c005e268>] (warn_slowpath_null+0x2c/0x34) from [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac)
+[    7.821166] [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac) from [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c)
+[    7.830017] (stk) :ldisc_install = 1[<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c) from [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c)
+[    7.844879] [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c) from [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128)
+[    7.856353] [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128) from [<c03b3840>] (hdmi_detect+0x38/0x7c)
+[    7.866821] [<c03b3840>] (hdmi_detect+0x38/0x7c) from [<c052d3a8>] (omap_connector_detect+0x44/0x58)
+[    7.876617] [<c052d3a8>] (omap_connector_detect+0x44/0x58) from [<c052b5f8>] (create_connector.29157+0xdc/0x190)
+[    7.887725] [<c052b5f8>] (create_connector.29157+0xdc/0x190) from [<c052bad0>] (omap_modeset_init+0x134/0x258)
+[    7.898468] [<c052bad0>] (omap_modeset_init+0x134/0x258) from [<c052bc70>] (dev_load+0x7c/0x148)
+[    7.907928] [<c052bc70>] (dev_load+0x7c/0x148) from [<c03f4668>] (drm_get_platform_dev+0xfc/0x20c)
+[    7.917541] [<c03f4668>] (drm_get_platform_dev+0xfc/0x20c) from [<c03f47cc>] (drm_platform_init+0x54/0x68)
+[    7.927917] [<c03f47cc>] (drm_platform_init+0x54/0x68) from [<c052bd80>] (pdev_probe+0x44/0x5c)
+[    7.937255] [<c052bd80>] (pdev_probe+0x44/0x5c) from [<c0405dc4>] (platform_drv_probe+0x24/0x28)
+[    7.946685] [<c0405dc4>] (platform_drv_probe+0x24/0x28) from [<c04047fc>] (really_probe+0xa8/0x158)
+[    7.956420] [<c04047fc>] (really_probe+0xa8/0x158) from [<c0404a1c>] (driver_probe_device+0x58/0x70)
+[    7.966217] [<c0404a1c>] (driver_probe_device+0x58/0x70) from [<c0404aac>] (__driver_attach+0x78/0x9c)
+[    7.976226] [<c0404aac>] (__driver_attach+0x78/0x9c) from [<c0403a48>] (bus_for_each_dev+0x60/0x9c)
+[    7.986206] [<c0403a48>] (bus_for_each_dev+0x60/0x9c) from [<c0404588>] (driver_attach+0x28/0x30)
+[    7.995758] [<c0404588>] (driver_attach+0x28/0x30) from [<c0404158>] (bus_add_driver+0xb0/0x238)
+[    8.005218] [<c0404158>] (bus_add_driver+0xb0/0x238) from [<c0405050>] (driver_register+0xb0/0x13c)
+[    8.014923] [<c0405050>] (driver_register+0xb0/0x13c) from [<c0406210>] (platform_driver_register+0x54/0x68)
+[    8.025512] [<c0406210>] (platform_driver_register+0x54/0x68) from [<c0a9e0a4>] (omap_drm_init+0x28/0x3c)
+[    8.035766] [<c0a9e0a4>] (omap_drm_init+0x28/0x3c) from [<c00088dc>] (do_one_initcall+0xa0/0x174)
+[    8.045318] [<c00088dc>] (do_one_initcall+0xa0/0x174) from [<c0a6c9a4>] (kernel_init+0x94/0x138)
+[    8.054779] [<c0a6c9a4>] (kernel_init+0x94/0x138) from [<c0014318>] (kernel_thread_exit+0x0/0x8)
+[    8.064208] ---[ end trace da227214a82491bd ]---
+[    8.069122] Failed to start PHY
+[    8.072509] omapdss HDMI error: failed to power on device
+[    8.086730] omapdrm omapdrm.0: dvi has no driver.. skipping it
+[    8.112335] Failed to set PHY power mode to 1
+[    8.117004] ------------[ cut here ]------------
+[    8.121978] WARNING: at /build/buildd/linux-linaro-lt-omap-3.1-3.1.1/drivers/video/omap2/dss/ti_hdmi_4xxx_ip.c:163 hdmi_set_phy_pwr+0x90/0xac()
+[    8.135772] Modules linked in:
+[    8.139099] [<c001b5f0>] (unwind_backtrace+0x0/0xec) from [<c0720fc8>] (dump_stack+0x20/0x24)
+[    8.148254] [<c0720fc8>] (dump_stack+0x20/0x24) from [<c005e224>] (wa
+[    8.157867] [<c005e224>] (warn_slowpath_common+0x5c/0x74) from [<c005e268>] (warn_slowpath_null+0x2c/0x34)
+[    8.168243] [<c005e268>] (warn_slowpath_null+0x2c/0x34) from [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac)
+[    8.178436] [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac) from [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c)
+[    8.188903] [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c) from [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c)
+[    8.199951] [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c) from [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128)
+[    8.211425] [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128) from [<c03b3840>] (hdmi_detect+0x38/0x7c)
+[    8.221893] [<c03b3840>] (hdmi_detect+0x38/0x7c) from [<c052d3a8>] (omap_connector_detect+0x44/0x58)
+[    8.231689] [<c052d3a8>] (omap_connector_detect+0x44/0x58) from [<c03e9a98>] (drm_helper_probe_single_connector_modes+0xc4/0x2e0)
+[    8.244201] [<c03e9a98>] (drm_helper_probe_single_connector_modes+0xc4/0x2e0) from [<c03e6a70>] (drm_fb_helper_probe_connector_modes+0x50/0x68)
+[    8.258026] [<c03e6a70>] (drm_fb_helper_probe_connector_modes+0x50/0x68) from [<c03e84cc>] (drm_fb_helper_initial_config+0x40/0x74)
+[    8.270874] [<c03e84cc>] (drm_fb_helper_initial_config+0x40/0x74) from [<c052e378>] (omap_fbdev_init+0x9c/0xb8)
+[    8.281707] [<c052e378>] (omap_fbdev_init+0x9c/0xb8) from [<c052bc8c>] (dev_load+0x98/0x148)
+[    8.290771] [<c052bc8c>] (dev_load+0x98/0x148) from [<c03f4668>] (drm_get_platform_dev+0xfc/0x20c)
+[    8.300415] [<c03f4668>] (drm_get_platform_dev+0xfc/0x20c) from [<c03f47cc>] (drm_platform_init+0x54/0x68)
+[    8.310760] [<c03f47cc>] (drm_platform_init+0x54/0x68) from [<c052bd80>] (pdev_probe+0x44/0x5c)
+[    8.320129] [<c052bd80>] (pdev_probe+0x44/0x5c) from [<c0405dc4>] (platform_drv_probe+0x24/0x28)
+[    8.329559] [<c0405dc4>] (platform_drv_probe+0x24/0x28) from [<c04047fc>] (really_probe+0xa8/0x158)
+[    8.339263] [<c04047fc>] (really_probe+0xa8/0x158) from [<c0404a1c>] (driver_probe_device+0x58/0x70)
+[    8.349090] [<c0404a1c>] (driver_probe_device+0x58/0x70) from [<c0404aac>] (__driver_attach+0x78/0x9c)
+[    8.359069] [<c0404aac>] (__driver_attach+0x78/0x9c) from [<c0403a48>] (bus_for_each_dev+0x60/0x9c)
+[    8.368988] [<c0403a48>] (bus_for_each_dev+0x60/0x9c) from [<c0404588>] (driver_attach+0x28/0x30)
+[    8.378509] [<c0404588>] (driver_attach+0x28/0x30) from [<c0404158>] (bus_add_driver+0xb0/0x238)
+[    8.387969] [<c0404158>] (bus_add_driver+0xb0/0x238) from [<c0405050>] (driver_register+0xb0/0x13c)
+[    8.397674] [<c0405050>] (driver_register+0xb0/0x13c) from [<c0406210>] (platform_driver_register+0x54/0x68)
+[    8.408233] [<c0406210>] (platform_driver_register+0x54/0x68) from [<c0a9e0a4>] (omap_drm_init+0x28/0x3c)
+[    8.418518] [<c0a9e0a4>] (omap_drm_init+0x28/0x3c) from [<c00088dc>] (do_one_initcall+0xa0/0x174)
+[    8.428039] [<c00088dc>] (do_one_initcall+0xa0/0x174) from [<c0a6c9a4>] (kernel_init+0x94/0x138)
+[    8.437499] [<c0a6c9a4>] (kernel_init+0x94/0x138) from [<c0014318>] (kernel_thread_exit+0x0/0x8)
+[    8.446929] ---[ end trace da227214a82491be ]---
+[    8.451873] Failed to start PHY
+[    8.455261] omapdss HDMI error: failed to power on device
+[    8.483001] Failed to set PHY power mode to 1
+[    8.487701] ------------[ cut here ]------------
+[    8.492645] WARNING: at /build/buildd/linux-linaro-lt-omap-3.1-3.1.1/drivers/video/omap2/dss/ti_hdmi_4xxx_ip.c:163 hdmi_set_phy_pwr+0x90/0xac()
+[    8.506439] Modules linked in:
+[    8.509765] [<c001b5f0>] (unwind_backtrace+0x0/0xec) from [<c0720fc8>] (dump_stack+0x20/0x24)
+[    8.518951] [<c0720fc8>] (dump_stack+0x20/0x24) from [<c005e224>] (warn_slowpath_common+0x5c/0x74)
+[    8.528564] [<c005e224>] (warn_slowpath_common+0x5c/0x74) from [<c005e268>] (warn_slowpath_null+0x2c/0x34)
+[    8.538940] [<c005e268>] (warn_slowpath_null+0x2c/0x34) from [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac)
+[    8.548919] [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac) from [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c)
+[    8.559570] [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c) from [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c)
+[    8.570587] [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c) from [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128)
+[    8.582092] [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128) from [<c03b39c4>] (hdmi_read_edid+0x40/0x88)
+[    8.592834] [<c03b39c4>] (hdmi_read_edid+0x40/0x88) from [<c052cfdc>] (omap_connector_get_modes+0x98/0x1cc)
+[    8.603302] [<c052cfdc>] (omap_connector_get_modes+0x98/0x1cc) from [<c03e9af8>] (drm_helper_probe_single_connector_modes+0x124/0x2e0)
+[    8.616271] [<c03e9af8>] (drm_helper_probe_single_connector_modes+0x124/0x2e0) from [<c03e6a70>] (drm_fb_helper_probe_connector_modes+0x50/0x68)
+[    8.630157] [<c03e6a70>] (drm_fb_helper_probe_connector_modes+0x50/0x68) from [<c03e84cc>] (drm_fb_helper_initial_config+0x40/0x74)
+[    8.642852] [<c03e84cc>] (drm_fb_helper_initial_config+0x40/0x74) from [<c052e378>] (omap_fbdev_init+0x9c/0xb8)
+[    8.653869] [<c052e378>] (omap_fbdev_init+0x9c/0xb8) from [<c052bc8c>] (dev_load+0x98/0x148)
+[    8.662933] [<c052bc8c>] (dev_load+0x98/0x148) from [<c03f4668>] (drm_get_platform_dev+0xfc/0x20c)
+[    8.672576] [<c03f4668>] (drm_get_platform_dev+0xfc/0x20c) from [<c03f47cc>] (drm_platform_init+0x54/0x68)
+[    8.682952] [<c03f47cc>] (drm_platform_init+0x54/0x68) from [<c052bd80>] (pdev_probe+0x44/0x5c)
+[    8.692291] [<c052bd80>] (pdev_probe+0x44/0x5c) from [<c0405dc4>] (platform_drv_probe+0x24/0x28)
+[    8.701721] [<c0405dc4>] (platform_drv_probe+0x24/0x28) from [<c04047fc>] (really_probe+0xa8/0x158)
+[    8.711456] [<c04047fc>] (really_probe+0xa8/0x158) from [<c0404a1c>] (driver_probe_device+0x58/0x70)
+[    8.721252] [<c0404a1c>] (driver_probe_device+0x58/0x70) from [<c0404aac>] (__driver_attach+0x78/0x9c)
+[    8.731262] [<c0404aac>] (__driver_attach+0x78/0x9c) from [<c0403a48>] (bus_for_each_dev+0x60/0x9c)
+[    8.740966] [<c0403a48>] (bus_for_each_dev+0x60/0x9c) from [<c0404588>] (driver_attach+0x28/0x30)
+[    8.750671] [<c0404588>] (driver_attach+0x28/0x30) from [<c0404158>] (bus_add_driver+0xb0/0x238)
+[    8.760131] [<c0404158>] (bus_add_driver+0xb0/0x238) from [<c0405050>] (driver_register+0xb0/0x13c)
+[    8.769836] [<c0405050>] (driver_register+0xb0/0x13c) from [<c0406210>] (platform_driver_register+0x54/0x68)
+[    8.780395] [<c0406210>] (platform_driver_register+0x54/0x68) from [<c0a9e0a4>] (omap_drm_init+0x28/0x3c)
+[    8.790679] [<c0a9e0a4>] (omap_drm_init+0x28/0x3c) from [<c00088dc>] (do_one_initcall+0xa0/0x174)
+[    8.800231] [<c00088dc>] (do_one_initcall+0xa0/0x174) from [<c0a6c9a4>] (kernel_init+0x94/0x138)
+[    8.809661] [<c0a6c9a4>] (kernel_init+0x94/0x138) from [<c0014318>] (kernel_thread_exit+0x0/0x8)
+[    8.813598] (stk) :line disc installation timed out 
+[    8.813629] (stk) :ldisc_install = 0
+[    8.828002] ---[ end trace da227214a82491bf ]---
+[    8.833190] Failed to start PHY
+[    8.836547] omapdss HDMI error: failed to power on device
+[    8.890441] omap_device: omapdss_dispc.-1: new worst case activate latency 0: 213623
+[    8.920257] Console: switching to colour frame buffer device 128x48
+[    8.952575] fb0: omapdrm frame buffer device
+[    8.957336] drm: registered panic notifier
+[    8.962066] [drm] Supports vblank timestamp caching Rev 1 (10.10.2010).
+[    8.969360] [drm] No driver support for vblank timestamp query.
+[    8.975952] [drm] Initialized omapdrm 1.0.0 20110403 on minor 0
+[    8.987426] Freeing init memory: 460K
+Loading, please wait...
+[    9.194427] udevd[887]: starting version 173
+Begin: Loading essential drivers ... done.
+Begin: Running /scripts/init-premount ... done.
+Begin: Mounting root file system ... Begin: Running /scripts/local-top ... done.
+[   10.104553] (stk) :ldisc_install = 1Begin: Running /scripts/local-premount ... done.
+
+[   10.445526] EXT4-fs (mmcblk0p5): mounted filesystem with ordered data mode. Opts: (null)
+Begin: Running /scripts/local-bottom ... done.
+done.
+Begin: Running /scripts/init-bottom ... done.
+[   11.102539] (stk) :line disc installation timed out 
+[   11.107849] (stk) :ldisc_install = 0[   13.191741] platform_mem_setup : status [0x0]
+[   13.196990] platform_setup : status [0x0]
+[   13.222503] proc_mgr_setup : status [0x0]
+[   13.242248] (stk) :line disc installation timed out 
+[   13.256103] sharedregion_setup : status [0x0]
+[   13.272857] notify_ducatidrv_setup : status [0x0]
+[   13.289978] notify_setup : status [0x0]
+[   13.316680] ipu_pm_setup : status [0x0]
+[   13.331359] nameserver_setup : status [0x0]
+[   13.351226] nameserver_get_handle failed! status = 0xfffffffe
+[   13.360107] gatemp_setup : status [0x0]
+[   13.383728] gatepeterson_setup : status [0x0]
+[   13.396881] nameserver_get_handle failed! status = 0xfffffffe
+[   13.407226] messageq_setup : status [0x0]
+[   13.428314] nameserver_get_handle failed! status = 0xfffffffe
+[   13.428344] heapbufmp_setup : status [0x0]
+[   13.428375] nameserver_get_handle failed! status = 0xfffffffe
+[   13.428405] heapmemmp_setup : status [0x0]
+[   13.428436] nameserver_get_handle failed! status = 0xfffffffe
+[   13.428558] listmp_setup : status [0x0]
+[   13.428558] transportshm_setup : status [0xa7a000]
+[   13.428588] nameserver_remotenotify_setup : status [0x0]
+[   13.429779] _platform_setup : status [0x0]
+[   13.933380] proc4430_attach num_mem_entries = 6
+[   13.946441] proc4430_attach num_mem_entries = 6
+[   15.279327] _platform_read_slave_memory successful! status = 0x0, proc_id = 2, addr = 0x12e00, m_addr = 0xf0a12e00, size = 0x20
+[   15.329284] _platform_read_slave_memory successful! status = 0x0, proc_id = 2, addr = 0x12e20, m_addr = 0xf0a12e20, size = 0x30
+[   15.368011] _platform_write_slave_memory successful! status = 0x0, proc_id = 2, addr = 0x12e00, m_addr = 0xf0a12e00, size = 0x20
+[   15.369018] (stk) :line disc installation timed out 
+[   15.539367] Timer failed to reset
+[   15.753173] ipc_proc_sync_start failed: status [0xffffffff]
+[   15.894683] ipc_attach : ipc_proc_sync_start failed [0xffffffff]
+[   16.139739] ipc_attach failed! status = 0xffffffff
+[   16.313812] ipc_proc_sync_start done
+[   16.429443] ipc_proc_sync_start : status [0x0]
+[   16.529663] gatemp_attach : status [0x0]
+[   16.647277] sharedregion_attach : status [0x0]
+[   16.783233] sharedregion_get_ptr : status [0x0]
+[   16.788421] notify_attach : status [0x0]
+[   16.788787] ipu_pm_attach : status [0x0]
+[   16.788818] sharedregion_get_ptr : status [0x0]
+[   16.788848] nameserver_remotenotify_attach : status [0x0]
+[   16.788879] sharedregion_get_ptr : status [0x0]
+[   16.800018] messageq_attach : status [0x0]
+[   16.800048] ipc_proc_sync_finish : status [0x0]
+[   17.920288] _platform_read_slave_memory successful! status = 0x0, proc_id = 1, addr = 0x147180, m_addr = 0xf1047180, size = 0x20
+[   17.955871] _platform_read_slave_memory successful! status = 0x0, proc_id = 1, addr = 0x1471a0, m_addr = 0xf10471a0, size = 0x30
+[   17.984283] _platform_write_slave_memory successful! status = 0x0, proc_id = 1, addr = 0x147180, m_addr = 0xf1047180, size = 0x20
+[   18.040496] Timer failed to reset
+[   18.053955] ipc_proc_sync_start failed: status [0xffffffff]
+[   18.074951] ipc_attach : ipc_proc_sync_start failed [0xffffffff]
+[   18.090240] ipc_attach failed! status = 0xffffffff
+[   18.118164] ipc_proc_sync_start failed: status [0xffffffff]
+[   18.134399] ipc_attach : ipc_proc_sync_start failed [0xffffffff]
+[   18.150390] ipc_attach failed! status = 0xffffffff
+[   18.180664] ipc_proc_sync_start done
+[   18.195098] ipc_proc_sync_start : status [0x0]
+[   18.211364] gatemp_attach : status [0x1]
+[   18.227020] sharedregion_attach : status [0x0]
+[   18.242218] sharedregion_get_ptr : status [0x0]
+[   18.257751] notify_attach : status [0x0]
+[   18.271148] ipu_pm_attach : status [0x0]
+[   18.290527] sharedregion_get_ptr : status [0x0]
+[   18.309692] nameserver_remotenotify_attach : status [0x0]
+[   18.336578] sharedregion_get_ptr : status [0x0]
+[   18.359741] messageq_attach : status [0x0]
+[   18.374816] ipc_proc_sync_finish : status [0x0]
+[   18.416137] gatehwspinlock_enter failed! status = 0xffffffed
+[   18.426483] =====================================
+[   18.430664] (stk) :line disc installation timed out 
+[   18.430694] (stk) :ldisc_install = 0[ BUG: bad unlock balance detected! ]
+[   18.476165] -------------------------------------
+[   18.489105] syslink_daemon/1094 is trying to release lock (gatemp_module->gate_mutex) at:
+[   18.505401] [<c0743b40>] mutex_unlock+0x18/0x1c
+[   18.517730] but there are no more locks to release!
+[   18.530395] 
+[   18.530426] other info that might help us debug this:
+[   18.552093] no locks held by syslink_daemon/1094.
+[   18.564575] 
+[   18.564575] stack backtrace:
+[   18.584167] [<c001b5f0>] (unwind_backtrace+0x0/0xec) from [<c0720fc8>] (dump_stack+0x20/0x24)
+[   18.600952] [<c0720fc8>] (dump_stack+0x20/0x24) from [<c072452c>] (print_unlock_inbalance_bug.part.19+0x84/0xac)
+[   18.619750] [<c072452c>] (print_unlock_inbalance_bug.part.19+0x84/0xac) from [<c0094840>] (print_unlock_inbalance_bug+0x44/0x50)
+[   18.648437] [<c0094840>] (print_unlock_inbalance_bug+0x44/0x50) from [<c0097388>] (__lock_release+0x9c/0xd8)
+[   18.667572] [<c0097388>] (__lock_release+0x9c/0xd8) from [<c00974a0>] (lock_release+0xdc/0x100)
+[   18.685577] [<c00974a0>] (lock_release+0xdc/0x100) from [<c0743a94>] (__mutex_unlock_slowpath+0xf8/0x18c)
+[   18.704681] [<c0743a94>] (__mutex_unlock_slowpath+0xf8/0x18c) from [<c0743b40>] (mutex_unlock+0x18/0x1c)
+[   18.723815] [<c0743b40>] (mutex_unlock+0x18/0x1c) from [<c0537f0c>] (gatehwspinlock_leave+0xc0/0xe0)
+[   18.742706] [<c0537f0c>] (gatehwspinlock_leave+0xc0/0xe0) from [<c0538ea8>] (gatemp_leave+0x28/0x2c)
+[   18.761474] [<c0538ea8>] (gatemp_leave+0x28/0x2c) from [<c053b21c>] (heapmemmp_alloc+0x1b8/0x200)
+[   18.779846] [<c053b21c>] (heapmemmp_alloc+0x1b8/0x200) from [<c053c6e4>] (heapmemmp_ioctl+0x13c/0x4f0)
+[   18.798583] [<c053c6e4>] (heapmemmp_ioctl+0x13c/0x4f0) from [<c0544dcc>] (ipc_ioc_router+0x164/0x194)
+[   18.817077] [<c0544dcc>] (ipc_ioc_router+0x164/0x194) from [<c0544e64>] (ipc_ioctl+0x68/0x74)
+[   18.834716] [<c0544e64>] (ipc_ioctl+0x68/0x74) from [<c0127af4>] (do_vfs_ioctl+0x2a8/0x2e4)
+[   18.852020] [<c0127af4>] (do_vfs_ioctl+0x2a8/0x2e4) from [<c0127b90>] (sys_ioctl+0x60/0x84)
+[   18.869415] [<c0127b90>] (sys_ioctl+0x60/0x84) from [<c00130e0>] (ret_fast_syscall+0x0/0x3c)
+[   18.896636] gatehwspinlock_enter failed! status = 0xffffffed
+[   18.905853] Registered user-space process for DEV_SYS_ERROR event in AppM3
+[   18.917205] Registered user-space process for DEV_SYS_ERROR event in SysM3
+[   18.917266] Registered user-space process for DEV_WATCHDOG_ERROR event in SysM3
+[   18.963348] Registered user-space process for DEV_WATCHDOG_ERROR event in AppM3
+[   18.998535] Failed to set PHY power mode to 1
+[   19.014434] ------------[ cut here ]------------
+[   19.028594] WARNING: at /build/buildd/linux-linaro-lt-omap-3.1-3.1.1/drivers/video/omap2/dss/ti_hdmi_4xxx_ip.c:163 hdmi_set_phy_pwr+0x90/0xac()
+[   19.071990] Modules linked in: wl12xx_sdio wl12xx
+[   19.092926] [<c001b5f0>] (unwind_backtrace+0x0/0xec) from [<c0720fc8>] (dump_stack+0x20/0x24)
+[   19.113098] [<c0720fc8>] (dump_stack+0x20/0x24) from [<c005e224>] (warn_slowpath_common+0x5c/0x74)
+[   19.133636] [<c005e224>] (warn_slowpath_common+0x5c/0x74) from [<c005e268>] (warn_slowpath_null+0x2c/0x34)
+[   19.156433] [<c005e268>] (warn_slowpath_null+0x2c/0x34) from [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac)
+[   19.179107] [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac) from [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c)
+[   19.199829] [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c) from [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c)
+[   19.221130] [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c) from [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128)
+[   19.249206] [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128) from [<c03b3840>] (hdmi_detect+0x38/0x7c)
+[   19.270812] [<c03b3840>] (hdmi_detect+0x38/0x7c) from [<c052d3a8>] (omap_connector_detect+0x44/0x58)
+[   19.291290] [<c052d3a8>] (omap_connector_detect+0x44/0x58) from [<c03e8a9c>] (output_poll_execute+0x9c/0x164)
+[   19.314056] [<c03e8a9c>] (output_poll_execute+0x9c/0x164) from [<c007a230>] (process_one_work+0x2e8/0x534)
+[   19.341247] [<c007a230>] (process_one_work+0x2e8/0x534) from [<c007a784>] (worker_thread+0x144/0x244)
+[   19.363403] [<c007a784>] (worker_thread+0x144/0x244) from [<c007f558>] (kthread+0xa4/0xb0)
+[   19.387329] [<c007f558>] (kthread+0xa4/0xb0) from [<c0014318>] (kernel_thread_exit+0x0/0x8)
+[   19.409820] ---[ end trace da227214a82491c0 ]---
+[   19.430633] Bluetooth: st_register failed -22
+[   19.450836] Failed to start PHY
+[   19.467956] omapdss HDMI error: failed to power on device
+[   29.522277] Failed to set PHY power mode to 1
+[   29.537628] ------------[ cut here ]------------
+[   29.553314] WARNING: at /build/buildd/linux-linaro-lt-omap-3.1-3.1.1/drivers/video/omap2/dss/ti_hdmi_4xxx_ip.c:163 hdmi_set_phy_pwr+0x90/0xac()
+[   29.588806] Modules linked in: wl12xx_sdio wl12xx
+[   29.604705] [<c001b5f0>] (unwind_backtrace+0x0/0xec) from [<c0720fc8>] (dump_stack+0x20/0x24)
+[   29.624603] [<c0720fc8>] (dump_stack+0x20/0x24) from [<c005e224>] (warn_slowpath_common+0x5c/0x74)
+[   29.644897] [<c005e224>] (warn_slowpath_common+0x5c/0x74) from [<c005e268>] (warn_slowpath_null+0x2c/0x34)
+[   29.644927] [<c005e268>] (warn_slowpath_null+0x2c/0x34) from [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac)
+[   29.644958] [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac) from [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c)
+[   29.644989] [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c) from [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c)
+[   29.645050] [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c) from [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128)
+[   29.645080] [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128) from [<c03b3840>] (hdmi_detect+0x38/0x7c)
+[   29.645111] [<c03b3840>] (hdmi_detect+0x38/0x7c) from [<c052d3a8>] (omap_connector_detect+0x44/0x58)
+[   29.645172] [<c052d3a8>] (omap_connector_detect+0x44/0x58) from [<c03e8a9c>] (output_poll_execute+0x9c/0x164)
+[   29.645202] [<c03e8a9c>] (output_poll_execute+0x9c/0x164) from [<c007a230>] (process_one_work+0x2e8/0x534)
+[   29.645233] [<c007a230>] (process_one_work+0x2e8/0x534) from [<c007a784>] (worker_thread+0x144/0x244)
+[   29.645263] [<c007a784>] (worker_thread+0x144/0x244) from [<c007f558>] (kthread+0xa4/0xb0)
+[   29.645324] [<c007f558>] (kthread+0xa4/0xb0) from [<c0014318>] (kernel_thread_exit+0x0/0x8)
+[   29.645355] ---[ end trace da227214a82491c1 ]---
+[   29.645355] Failed to start PHY
+[   29.645385] omapdss HDMI error: failed to power on device
+[   39.678741] Failed to set PHY power mode to 1
+[   39.694305] ------------[ cut here ]------------
+[   39.710235] WARNING: at /build/buildd/linux-linaro-lt-omap-3.1-3.1.1/drivers/video/omap2/dss/ti_hdmi_4xxx_ip.c:163 hdmi_set_phy_pwr+0x90/0xac()
+[   39.710235] Modules linked in: wl12xx_sdio wl12xx
+[   39.710296] [<c001b5f0>] (unwind_backtrace+0x0/0xec) from [<c0720fc8>] (dump_stack+0x20/0x24)
+[   39.710327] [<c0720fc8>] (dump_stack+0x20/0x24) from [<c005e224>] (warn_slowpath_common+0x5c/0x74)
+[   39.710357] [<c005e224>] (warn_slowpath_common+0x5c/0x74) from [<c005e268>] (warn_slowpath_null+0x2c/0x34)
+[   39.710388] [<c005e268>] (warn_slowpath_null+0x2c/0x34) from [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac)
+[   39.710418] [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac) from [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c)
+[   39.710449] [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c) from [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c)
+[   39.710510] [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c) from [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128)
+[   39.710540] [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128) from [<c03b3840>] (hdmi_detect+0x38/0x7c)
+[   39.710571] [<c03b3840>] (hdmi_detect+0x38/0x7c) from [<c052d3a8>] (omap_connector_detect+0x44/0x58)
+[   39.710601] [<c052d3a8>] (omap_connector_detect+0x44/0x58) from [<c03e8a9c>] (output_poll_execute+0x9c/0x164)
+[   39.710632] [<c03e8a9c>] (output_poll_execute+0x9c/0x164) from [<c007a230>] (process_one_work+0x2e8/0x534)
+[   39.710662] [<c007a230>] (process_one_work+0x2e8/0x534) from [<c007a784>] (worker_thread+0x144/0x244)
+[   39.710723] [<c007a784>] (worker_thread+0x144/0x244) from [<c007f558>] (kthread+0xa4/0xb0)
+[   39.710754] [<c007f558>] (kthread+0xa4/0xb0) from [<c0014318>] (kernel_thread_exit+0x0/0x8)
+[   39.710784] ---[ end trace da227214a82491c2 ]---
+[   39.710784] Failed to start PHY
+[   39.710784] omapdss HDMI error: failed to power on device
+fsck from util-linux 2.19.1
+
+testrootfs: clean, 138344/262144 files, 500457/1048576 blocks
+
+[   47.773803] init: failsafe main process (1376) killed by TERM signal
+
+speech-dispatcher disabled; edit /etc/default/speech-dispatcher
+
+[   48.759948] init: apport pre-start process (1510) terminated with status 1
+[   48.789489] init: alsa-restore main process (1516) terminated with status 99
+Checking for running unattended-upgrades: 
+
+[   48.959899] init: apport post-stop process (1545) terminated with status 1
+ * Starting mDNS/DNS-SD daemon[74G[ OK ]
+
+ * Starting System V runlevel compatibility[74G[ OK ]
+
+[   49.746948] Failed to set PHY power mode to 1
+[   49.764282] ------------[ cut here ]------------
+[   49.781463] WARNING: at /build/buildd/linux-linaro-lt-omap-3.1-3.1.1/drivers/video/omap2/dss/ti_hdmi_4xxx_ip.c:163 hdmi_set_phy_pwr+0x90/0xac()
+[   49.819000] Modules linked in: wl12xx_sdio wl12xx
+[   49.841156] [<c001b5f0>] (unwind_backtrace+0x0/0xec) from [<c0720fc8>] (dump_stack+0x20/0x24)
+[   49.865478] [<c0720fc8>] (dump_stack+0x20/0x24) from [<c005e224>] (warn_slowpath_common+0x5c/0x74)
+[   49.893249] [<c005e224>] (warn_slowpath_common+0x5c/0x74) from [<c005e268>] (warn_slowpath_null+0x2c/0x34)
+[   49.922851] [<c005e268>] (warn_slowpath_null+0x2c/0x34) from [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac)
+[   49.946502] [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac) from [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c)
+[   49.973571] [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c) from [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c)
+[   50.009490] [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c) from [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128)
+[   50.032928] [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128) from [<c03b3840>] (hdmi_detect+0x38/0x7c)
+[   50.068267] [<c03b3840>] (hdmi_detect+0x38/0x7c) from [<c052d3a8>] (omap_connector_detect+0x44/0x58)
+[   50.068328] [<c052d3a8>] (omap_connector_detect+0x44/0x58) from [<c03e8a9c>] (output_poll_execute+0x9c/0x164)
+[   50.068389] [<c03e8a9c>] (output_poll_execute+0x9c/0x164) from [<c007a230>] (process_one_work+0x2e8/0x534)
+[   50.068420] [<c007a230>] (process_one_work+0x2e8/0x534) from [<c007a784>] (worker_thread+0x144/0x244)
+[   50.068481] [<c007a784>] (worker_thread+0x144/0x244) from [<c007f558>] (kthread+0xa4/0xb0)
+[   50.068542] [<c007f558>] (kthread+0xa4/0xb0) from [<c0014318>] (kernel_thread_exit+0x0/0x8)
+[   50.068572] ---[ end trace da227214a82491c3 ]---
+[   50.068572] Failed to start PHY
+[   50.068572] omapdss HDMI error: failed to power on device
+ * Starting bluetooth       [80G [   50.320526] omap_device: omapdrm_pvr.0: new worst case activate latency 0: 30517
+[   50.339752] omaplfb: Device 31: Framebuffer physical address: 0xbd000000
+[   50.347839] omaplfb: Device 31: Framebuffer virtual address: 0xf0c00000
+[   50.355651] omaplfb: Device 31: Framebuffer size: 3145728
+[   50.361877] omaplfb: Device 31: Framebuffer width: 1024
+[   50.375366] omaplfb: Device 31: Framebuffer height: 768
+[   50.382904] omaplfb: Device 31: Framebuffer stride: 4096
+[   50.389221] omaplfb: Device 31: LCM of stride and page size: 4096
+[   50.397674] omaplfb: Device 31: Maximum number of swap chain buffers: 3
+[   50.406494] omaplfb: Device 31: PVR Device ID: 1
+[   50.556518] hci0 ee3e4000
+[   50.559356] (stc): st_register(4) 
+[   50.562866] (stc):  chnl_id list empty :4 
+[   50.583068] Bluetooth: RFCOMM TTY layer initialized
+[   50.586059] (stk) : st_kim_start
+[   50.599029] Bluetooth: RFCOMM socket layer initialized
+[   50.614715] Bluetooth: RFCOMM ver 1.11
+
+[   50.645782] Failed to set PHY power mode to 1
+[   50.656036] ------------[ cut here ]------------
+[74G[   50.662658] WARNING: at /build/buildd/linux-linaro-lt-omap-3.1-3.1.1/drivers/video/omap2/dss/ti_hdmi_4xxx_ip.c:163 hdmi_set_phy_pwr+0x90/0xac()
+[ OK ]
+[   50.677124] Modules linked in: rfcomm omapdrm_pvr wl12xx_sdio wl12xx
+[   50.685760] [<c001b5f0>] (unwind_backtrace+0x0/0xec) from [<c0720fc8>] (dump_stack+0x20/0x24)
+[   50.704345] [<c0720fc8>] (dump_stack+0x20/0x24) from [<c005e224>] (warn_slowpath_common+0x5c/0x74)
+[   50.721923] [<c005e224>] (warn_slowpath_common+0x5c/0x74) from [<c005e268>] (warn_slowpath_null+0x2c/0x34)
+[   50.739532] [<c005e268>] (warn_slowpath_null+0x2c/0x34) from [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac)
+[   50.755554] [<c03b44a0>] (hdmi_set_phy_pwr+0x90/0xac) from [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c)
+[   50.766906] [<c03b45c4>] (ti_hdmi_4xxx_phy_enable+0x28/0x8c) from [<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c)
+[   50.776397] (stk) :ldisc_install = 1[<c03b32d0>] (hdmi_power_on.part.3+0x168/0x20c) from [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128)
+ [33m*[39;49m [   50.793609] [<c03b36c8>] (omapdss_hdmi_display_enable+0xbc/0x128) from [<c03b3840>] (hdmi_detect+0x38/0x7c)
+PulseAudio confi[   50.805572] [<c03b3840>] (hdmi_detect+0x38/0x7c) from [<c052d3a8>] (omap_connector_detect+0x44/0x58)
+gured for per-user sessions
+[   50.821533] [<c052d3a8>] (omap_connector_detect+0x44/0x58) from [<c03e9a98>] (drm_helper_probe_single_connector_modes+0xc4/0x2e0)
+[   50.834716] [<c03e9a98>] (drm_helper_probe_single_connector_modes+0xc4/0x2e0) from [<c03f9048>] (drm_mode_getconnector+0x100/0x354)
+saned disabled; [   50.848114] [<c03f9048>] (drm_mode_getconnector+0x100/0x354) from [<c03ed344>] (drm_ioctl+0x290/0x3c0)
+edit /etc/defaul[   50.859924] [<c03ed344>] (drm_ioctl+0x290/0x3c0) from [<c0127af4>] (do_vfs_ioctl+0x2a8/0x2e4)
+t/saned
+Welcome[   50.869567] [<c0127af4>] (do_vfs_ioctl+0x2a8/0x2e4) from [<c0127b90>] (sys_ioctl+0x60/0x84)
+ to Linaro 12.02[   50.879791] [<c0127b90>] (sys_ioctl+0x60/0x84) from [<c00130e0>] (ret_fast_syscall+0x0/0x3c)
+ (GNU/Linux 3.1.[   50.890319] ---[ end trace da227214a82491c4 ]---
+1-19-linaro-lt-o[   50.896514] Failed to start PHY
+map armv7l)
+
+ [   50.901458] omapdss HDMI error: failed to power on device

@@ -35,6 +35,7 @@ from lava_dispatcher.pipeline.shell import (
 )
 from lava_dispatcher.pipeline.utils.shell import which
 from lava_dispatcher.pipeline.utils.strings import substitute
+from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 
 
@@ -80,6 +81,7 @@ class BootQEMUImageAction(BootAction):
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(BootQemuRetry())
+        self.internal_pipeline.add_action(LinuxKernelMessages())
         # Add AutoLoginAction unconditionally as this action does nothing if
         # the configuration does not contain 'auto_login'
         self.internal_pipeline.add_action(AutoLoginAction())

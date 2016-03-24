@@ -34,6 +34,7 @@
     name: boot_qemu_image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
+  - {class: utils.messages.LinuxKernelMessages, name: kernel-messages}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}

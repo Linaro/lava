@@ -23,16 +23,20 @@ import os
 import glob
 import unittest
 import yaml
+import pexpect
 
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.action import Pipeline, Action, JobError, Timeout
+from lava_dispatcher.pipeline.action import Pipeline, Action, JobError
 from lava_dispatcher.pipeline.test.test_basic import Factory, pipeline_reference
-from lava_dispatcher.pipeline.shell import ShellSession
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.boot.qemu import BootAction
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
+from lava_dispatcher.pipeline.test.test_messages import FakeConnection
+from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
+
+# pylint: disable=invalid-name
 
 
 class TestBasicJob(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -252,6 +256,15 @@ class TestKVMDownloadLocalDeploy(unittest.TestCase):  # pylint: disable=too-many
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
 
+def prepare_test_connection():
+    logfile = os.path.join(os.path.dirname(__file__), 'kernel.txt')
+    if not os.path.exists(logfile):
+        raise OSError("Missing test support file.")
+    child = pexpect.spawn('cat', [logfile])
+    message_list = LinuxKernelMessages.get_kernel_prompts()
+    return FakeConnection(child, message_list)
+
+
 class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
@@ -278,6 +291,7 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
         self.assertEqual(len(self.job.pipeline.describe()), 4)
+        inline_repo = None
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
                 self.assertIsNotNone(action.internal_pipeline.actions[2])
@@ -285,36 +299,39 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
                 self.assertIsNotNone(overlay.internal_pipeline.actions[2])
                 testdef = overlay.internal_pipeline.actions[2]
                 self.assertIsNotNone(testdef.internal_pipeline.actions[0])
+                inline_repo = testdef.internal_pipeline.actions[0]
                 break
+        # Test the InlineRepoAction directly
+        self.assertIsNotNone(inline_repo)
+        location = mkdtemp()
+        # other actions have not been run, so fake up
+        inline_repo.data['lava_test_results_dir'] = location
+        inline_repo.data['lava-overlay'] = {'location': location}
+        inline_repo.data['test-definition'] = {'overlay_dir': location}
 
-            # Test the InlineRepoAction directly
-            location = mkdtemp()
-            inline_repo.data['lava-overlay'] = {'location': location}
-            inline_repo.data['test-definition'] = {'overlay_dir': location}
-
-            inline_repo.run(None)
-            yaml_file = os.path.join(location, 'tests/0_smoke-tests-inline/inline/smoke-tests-basic.yaml')
-            self.assertTrue(os.path.exists(yaml_file))
-            with open(yaml_file, 'r') as f_in:
-                testdef = yaml.load(f_in)
-            expected_testdef = {'metadata':
-                                {'description': 'Basic system test command for Linaro Ubuntu images',
-                                 'devices': ['panda', 'panda-es', 'arndale', 'vexpress-a9', 'vexpress-tc2'],
-                                 'format': 'Lava-Test Test Definition 1.0',
-                                 'name': 'smoke-tests-basic',
-                                 'os': ['ubuntu'],
-                                 'scope': ['functional'],
-                                 'yaml_line': 39},
-                                'run': {'steps': ['lava-test-case linux-INLINE-pwd --shell pwd',
-                                                  'lava-test-case linux-INLINE-uname --shell uname -a',
-                                                  'lava-test-case linux-INLINE-vmstat --shell vmstat',
-                                                  'lava-test-case linux-INLINE-ifconfig --shell ifconfig -a',
-                                                  'lava-test-case linux-INLINE-lscpu --shell lscpu',
-                                                  'lava-test-case linux-INLINE-lsusb --shell lsusb',
-                                                  'lava-test-case linux-INLINE-lsb_release --shell lsb_release -a'],
-                                        'yaml_line': 53},
-                                'yaml_line': 38}
-            self.assertEqual(testdef, expected_testdef)
+        inline_repo.run(None)
+        yaml_file = os.path.join(location, 'tests/0_smoke-tests-inline/inline/smoke-tests-basic.yaml')
+        self.assertTrue(os.path.exists(yaml_file))
+        with open(yaml_file, 'r') as f_in:
+            testdef = yaml.load(f_in)
+        expected_testdef = {'metadata':
+                            {'description': 'Basic system test command for Linaro Ubuntu images',
+                             'devices': ['panda', 'panda-es', 'arndale', 'vexpress-a9', 'vexpress-tc2'],
+                             'format': 'Lava-Test Test Definition 1.0',
+                             'name': 'smoke-tests-basic',
+                             'os': ['ubuntu'],
+                             'scope': ['functional'],
+                             'yaml_line': 39},
+                            'run': {'steps': ['lava-test-case linux-INLINE-pwd --shell pwd',
+                                              'lava-test-case linux-INLINE-uname --shell uname -a',
+                                              'lava-test-case linux-INLINE-vmstat --shell vmstat',
+                                              'lava-test-case linux-INLINE-ifconfig --shell ifconfig -a',
+                                              'lava-test-case linux-INLINE-lscpu --shell lscpu',
+                                              'lava-test-case linux-INLINE-lsusb --shell lsusb',
+                                              'lava-test-case linux-INLINE-lsb_release --shell lsb_release -a'],
+                                    'yaml_line': 53},
+                            'yaml_line': 38}
+        self.assertEqual(set(testdef), set(expected_testdef))
 
 
 class TestAutoLogin(unittest.TestCase):
@@ -335,13 +352,13 @@ class TestAutoLogin(unittest.TestCase):
                                            'prompts': ['root@debian:~#']})
 
         # initialise the first Connection object, a command line shell
-        shell_command = FakeCommand(autologinaction.timeout)
-        shell_connection = ShellSession(self.job, shell_command)
+        shell_connection = prepare_test_connection()
 
         # Test the AutoLoginAction directly
         conn = autologinaction.run(shell_connection)
 
-        self.assertEqual(conn.prompt_str, ['lava-test: # ', 'root@debian:~#'])
+        self.assertIn('lava-test: # ', conn.prompt_str)
+        self.assertIn('root@debian:~#', conn.prompt_str)
 
     def test_autologin_void_login_prompt(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -394,13 +411,13 @@ class TestAutoLogin(unittest.TestCase):
         autologinaction.parameters.update({'prompts': ['root@debian:~#']})
 
         # initialise the first Connection object, a command line shell
-        shell_command = FakeCommand(autologinaction.timeout)
-        shell_connection = ShellSession(self.job, shell_command)
+        shell_connection = prepare_test_connection()
 
         # Test the AutoLoginAction directly
         conn = autologinaction.run(shell_connection)
 
-        self.assertEqual(conn.prompt_str, ['lava-test: # ', 'root@debian:~#'])
+        self.assertIn('lava-test: # ', conn.prompt_str)
+        self.assertIn('root@debian:~#', conn.prompt_str)
 
     def test_missing_autologin_void_prompts_str(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -421,13 +438,13 @@ class TestAutoLogin(unittest.TestCase):
         autologinaction.parameters.update({'prompts': 'root@debian:~#'})
 
         # initialise the first Connection object, a command line shell
-        shell_command = FakeCommand(autologinaction.timeout)
-        shell_connection = ShellSession(self.job, shell_command)
+        shell_connection = prepare_test_connection()
 
         # Test the AutoLoginAction directly
         conn = autologinaction.run(shell_connection)
 
-        self.assertEqual(conn.prompt_str, ['lava-test: # ', 'root@debian:~#'])
+        self.assertIn('lava-test: # ', conn.prompt_str)
+        self.assertIn('root@debian:~#', conn.prompt_str)
 
 
 class TestChecksum(unittest.TestCase):
@@ -544,21 +561,6 @@ class TestChecksum(unittest.TestCase):
         self.assertIsNone(md5sum)
         sha256sum = remote.get('sha256sum', None)
         self.assertIsNotNone(sha256sum)
-
-
-class FakeCommand(object):
-
-    def __init__(self, lava_timeout):
-        if not lava_timeout or not isinstance(lava_timeout, Timeout):
-            raise RuntimeError("FakeCommand needs a timeout set by the calling Action")
-        self.name = "FakeCommand"
-        self.lava_timeout = lava_timeout
-
-    def sendline(self, s='', delay=0, send_char=True):  # pylint: disable=invalid-name
-        pass
-
-    def expect(self, *args, **kw):
-        pass
 
 
 class TestKvmGuest(unittest.TestCase):  # pylint: disable=too-many-public-methods

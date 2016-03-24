@@ -183,7 +183,7 @@ class CommandRunner(object):
         self._prompt_str = string
 
     def wait_for_prompt(self, timeout=-1, check_char='#'):
-        wait_for_prompt(self._connection, self._prompt_str, timeout, check_char)
+        return wait_for_prompt(self._connection, self._prompt_str, timeout, check_char)
 
     def get_connection(self):
         return self._connection

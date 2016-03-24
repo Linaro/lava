@@ -112,3 +112,15 @@ GRUB_BOOT_PROMPT = "Press enter to boot the selected OS"
 
 # Timeout for USB devices to settle and show up
 USB_SHOW_UP_TIMEOUT = 10
+
+# kernel boot monitoring
+# Some successful kernel builds end the boot with this string
+KERNEL_FREE_UNUSED_MSG = 'Freeing unused kernel memory'
+# Some successful kernel builds end the boot with this string
+KERNEL_FREE_INIT_MSG = 'Freeing init memory'
+# exception
+KERNEL_EXCEPTION_MSG = '-+\[ cut here \]-+\s+(.*\s+-+\[ end trace (\w*) \]-+)'
+# unhandled fault
+KERNEL_FAULT_MSG = '(Unhandled fault.*)\r\n'
+# panic
+KERNEL_PANIC_MSG = "Kernel panic - (.*) end Kernel panic"

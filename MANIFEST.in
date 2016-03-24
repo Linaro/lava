@@ -8,7 +8,7 @@ include lava/dispatcher/lava-dispatcher-slave
 include lava/dispatcher/lava-slave
 include lava_dispatcher/default-config/lava-dispatcher/README
 recursive-include lava_dispatcher/pipeline/devices *.conf *.yaml
-recursive-include lava_dispatcher/pipeline/test/pipeline_refs *.yaml
+recursive-include lava_dispatcher/pipeline/test *.yaml *.txt
 recursive-include lava_dispatcher/pipeline/device_types *.conf
 include lava_dispatcher/pipeline/test/sample_jobs/*
 include lava_dispatcher/tests/test-config/bin/*

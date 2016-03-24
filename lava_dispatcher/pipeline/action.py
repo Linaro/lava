@@ -291,6 +291,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     'level': action.level,
                     'duration': action.elapsed_time,
                     'timeout': action.timeout.duration,
+                    'connection-timeout': action.connection_timeout.duration
                 }
             )
             action.logger.results({action.name: action.results})
@@ -822,7 +823,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
             self.logger.debug("Already disconnected")
             return
         self.logger.debug("%s: Wait for prompt. %s seconds" % (self.name, int(self.connection_timeout.duration)))
-        connection.wait()
+        return connection.wait()
 
 
 class Timeout(object):

@@ -65,6 +65,13 @@ def infrastructure_error(path):
 
 
 def wait_for_prompt(connection, prompt_pattern, timeout, check_char):
+    """
+    :param connection: the Connection object passed to the Action.
+    :param prompt_pattern: connection.prompt_str list
+    :param timeout: connection.timeout.duration (seconds)
+    :param check_char: char to send to encourage a prompt to be displayed
+    :return: the index into the connection.prompt_str list
+    """
     # One of the challenges we face is that kernel log messages can appear
     # half way through a shell prompt.  So, if things are taking a while,
     # we send a newline along to maybe provoke a new prompt.  We wait for
@@ -76,7 +83,7 @@ def wait_for_prompt(connection, prompt_pattern, timeout, check_char):
     partial_timeout = timeout / 2.0
     while True:
         try:
-            connection.expect(prompt_pattern, timeout=partial_timeout)
+            return connection.expect(prompt_pattern, timeout=partial_timeout)
         except TestError as exc:
             if prompt_wait_count < 6:
                 logger = logging.getLogger('dispatcher')
@@ -91,5 +98,3 @@ def wait_for_prompt(connection, prompt_pattern, timeout, check_char):
                 raise
         except KeyboardInterrupt:
             raise KeyboardInterrupt
-        else:
-            break
