@@ -225,6 +225,10 @@ def query_display(request, username, name):
 
     query = get_object_or_404(Query, owner__username=username, name=name)
 
+    if not request.user.is_superuser:
+        if not query.is_published and query.owner != request.user:
+            raise PermissionDenied
+
     view = QueryResultView(
         query=query,
         request=request,
@@ -452,6 +456,7 @@ def query_copy(request, username, name):
 
 
 @login_required
+@ownership_required
 def query_refresh(request, name, username):
 
     query = get_object_or_404(Query, owner__username=username, name=name)

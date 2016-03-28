@@ -1173,7 +1173,7 @@ class Chart(models.Model):
                 (), dict(name=self.name))
 
     def can_admin(self, user):
-        if self.owner == user or \
+        if user.is_superuser or self.owner == user or \
            (self.group and user in self.group.user_set.all()):
             return True
         else:
