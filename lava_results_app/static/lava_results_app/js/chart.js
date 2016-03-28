@@ -155,8 +155,11 @@ $(document).ready(function () {
 		'<li class="print-menu-item"><a target="_blank" href="#"' +
 		' id="view_item_' + this.chart_id + '">View result</a></li>' +
 		'<li class="print-menu-item"><a href="#"' + ' id="omit_item_' +
-		this.chart_id + '">Omit result</a></li>' +
-	    '</ul>');
+		this.chart_id + '" data-toggle="confirm" data-title="This ' +
+                'will affect underlying query. Are you sure you want to omit' +
+                ' this result?">' +
+                'Omit result</a></li>' +
+                '</ul>');
         this.setup_item_menu();
 
         // Bind plotclick event.
@@ -180,6 +183,9 @@ $(document).ready(function () {
 			    "/+omit-result");
                 }
             });
+
+        // Now setup the click event for omit link (needed for bootbox dialog).
+        add_bootbox_data_toggle();
 
         $("#inner_container_" + this.chart_id).bind(
             "plothover",
@@ -1293,7 +1299,7 @@ $(document).ready(function () {
     };
 
     validation_alert = function(message) {
-        alert(message);
+        bootbox.alert(message);
     }
 
     showTooltip = function(x, y, contents, pass) {

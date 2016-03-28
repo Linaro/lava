@@ -91,7 +91,7 @@
         <a href="{{ query.get_absolute_url }}/+edit" class="btn btn-info"><span class="glyphicon glyphicon-pencil"></span> Edit</a>
       </div>
       <div class="btn-group">
-        <a href="{{ query.get_absolute_url }}/+delete" class="btn btn-danger"><span class="glyphicon glyphicon-trash"></span> Delete</a>
+        <a href="{{ query.get_absolute_url }}/+delete" class="btn btn-danger" data-toggle="confirm" data-title="Are you sure you want to delete this Query?"><span class="glyphicon glyphicon-trash"></span> Delete</a>
       </div>
       {% endif %}
       {% if request.user.is_authenticated %}
@@ -201,6 +201,8 @@
 {% block scripts %}
 <script type="text/javascript" src="{{ STATIC_URL }}lava_results_app/js/query.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/bootbox.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_results_app/js/bootbox.data.toggle.min.js"></script>
 <script type="text/javascript">
   csrf_token = '{{csrf_token}}';
   query_name = '{{ query.name }}';
@@ -210,6 +212,10 @@
   initial_operators = Object();
   $("#id_operator option").each(function() {
     initial_operators[$(this).val()] = $(this).html();
+  });
+
+  $(document).ready(function () {
+    add_bootbox_data_toggle();
   });
 </script>
 
@@ -264,8 +270,6 @@
         minLength: 1,
       });
   });
-
-
 </script>
 {% endif %}
 

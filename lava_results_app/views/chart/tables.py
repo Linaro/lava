@@ -52,7 +52,7 @@ class UserChartTable(LavaTable):
     view.orderable = False
 
     remove = tables.TemplateColumn('''
-    <a href="{{ record.get_absolute_url }}/+delete" onclick="return confirm('Are you sure you want to delete this Chart?');">remove</a>
+    <a href="{{ record.get_absolute_url }}/+delete" data-toggle="confirm" data-title="Are you sure you want to delete this Chart?">remove</a>
     ''')
     remove.orderable = False
 

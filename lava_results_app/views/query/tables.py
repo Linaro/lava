@@ -69,7 +69,7 @@ class UserQueryTable(LavaTable):
     view.orderable = False
 
     remove = tables.TemplateColumn('''
-    <a href="{{ record.get_absolute_url }}/+delete" onclick="return confirm('Are you sure you want to delete this Query?');">remove</a>
+    <a href="{{ record.get_absolute_url }}/+delete" data-toggle="confirm" data-title="Are you sure you want to delete this Query?">remove</a>
     ''')
     remove.orderable = False
 
@@ -153,7 +153,7 @@ class QueryTestJobTable(JobTable):
     end_time = DateColumn()
 
     omit = tables.TemplateColumn('''
-    <a href="{{ query.get_absolute_url }}/{{ record.id }}/+omit-result" onclick="return confirm('Omitting results affects all image charts which use this query. Are you sure you want to omit this job from query?');"><span class="glyphicon glyphicon-remove"></span></a>
+    <a href="{{ query.get_absolute_url }}/{{ record.id }}/+omit-result" data-toggle="confirm" data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this job from query?"><span class="glyphicon glyphicon-remove"></span></a>
     ''')
     omit.orderable = False
 
@@ -179,7 +179,7 @@ class QueryTestCaseTable(SuiteTable):
     ''')
 
     omit = tables.TemplateColumn('''
-    <a href="{{ query.get_absolute_url }}/{{ record.id }}/+omit-result" onclick="return confirm('Omitting results affects all image charts which use this query. Are you sure you want to omit this test case from query?');"><span class="glyphicon glyphicon-remove"></span></a>
+    <a href="{{ query.get_absolute_url }}/{{ record.id }}/+omit-result" data-toggle="confirm" data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this test case from query?"><span class="glyphicon glyphicon-remove"></span></a>
     ''')
     omit.orderable = False
 
@@ -207,7 +207,7 @@ class QueryTestSuiteTable(ResultsTable):
     ''')
 
     omit = tables.TemplateColumn('''
-    <a href="{{ query.get_absolute_url }}/{{ record.id }}/+omit-result" onclick="return confirm('Omitting results affects all image charts which use this query. Are you sure you want to omit this test suite from query?');"><span class="glyphicon glyphicon-remove"></span></a>
+    <a href="{{ query.get_absolute_url }}/{{ record.id }}/+omit-result" data-toggle="confirm" data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this test suite from query?"><span class="glyphicon glyphicon-remove"></span></a>
     ''')
     omit.orderable = False
 

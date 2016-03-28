@@ -9,7 +9,12 @@
 
 {% block content %}
 
-<h2 class="modal-header">Query {{ query.name }} matches ({{ query.content_type.name }})</h2>
+<h2 class="modal-header">Query {{ query.name }} matches ({{ query.content_type.name }})
+  {% if query.owner == request.user or request.user.is_superuser or query.group in request.user.groups.all %}
+  <small><a href="{% url 'lava_results_app.views.query.views.query_detail' query.owner.username query.name %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-edit"></span> Query details</a></small>
+  {% endif %}
+</h2>
+
   {% if omitted %}
   <div class="alert alert-info">
     <button type="button" class="close" data-dismiss="alert">&times;</button>
@@ -38,7 +43,7 @@
                   <a href="{{ result.get_absolute_url }}" target="_blank">{{ result }}</a>
                 </td>
                 <td>{{ result.get_end_datetime }}</td>
-                <td><a href="{{ query.get_absolute_url }}/{{ result.id }}/+include-result" onclick="return confirm('Including results affects all image charts which use this query. Are you sure you want to include this result back to the query?');"><span class="glyphicon glyphicon-plus"></span></a></td>
+                <td><a href="{{ query.get_absolute_url }}/{{ result.id }}/+include-result"><span class="glyphicon glyphicon-plus"></span></a></td>
               </tr>
               {% endfor %}
             </tbody>
@@ -52,9 +57,6 @@
   </div>
   {% endif %}
 
-  {% if query.owner == request.user or request.user.is_superuser or query.group in request.user.groups.all %}
-  <small><a href="{% url 'lava_results_app.views.query.views.query_detail' query.owner.username query.name %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-edit"></span> Query details</a></small>
-  {% endif %}
   <small><a href="{% url 'lava_results_app.views.query.views.query_custom' %}?entity={{ entity }}&conditions={{ conditions }}" class="btn btn-xs btn-success"><span class="glyphicon glyphicon-link"></span> This query by URL</a></small>
   <small><a href="{% url 'lava_results_app.views.query.views.query_export'  query.owner.username query.name %}" class="btn btn-xs btn-primary"><span class="glyphicon glyphicon-export"></span> Export as CSV</a></small>
   <small><a href="{% url 'lava_results_app.views.chart.views.chart_custom' %}?entity={{ entity }}&conditions={{ conditions }}&type=pass/fail" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-align-left"></span> View Chart</a></small>
@@ -67,4 +69,11 @@
 
 {% block scripts %}
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/bootbox.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_results_app/js/bootbox.data.toggle.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function () {
+  add_bootbox_data_toggle();
+});
+</script>
 {% endblock %}
