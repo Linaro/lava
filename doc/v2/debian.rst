@@ -45,9 +45,11 @@ started from the directory containing the code for that package::
 
  $ /usr/share/lava-server/debian-dev-build.sh -p lava-server
 
-or the older syntax::
+If you are building a package to be installed on Jessie, ensure that the
+``backports`` packaging branch is used so that the packaging scripts
+can allow for differences between unstable and jessie::
 
- $ /usr/share/lava-server/debian-dev-build.sh lava-server
+ $ /usr/share/lava-server/debian-dev-build.sh -p lava-server -b backports
 
 The packages will be built in a temporary directory using a version string
 based on the current git tag and the time of the build. The helper
@@ -122,18 +124,18 @@ The helper supports ``lava-server`` and ``lava-dispatcher``::
  $ sudo apt-get install lava-dev
  $ git clone http://git.linaro.org/git/lava/lava-server.git
  $ cd lava-server
- $ /usr/share/lava-server/debian-dev-build.sh lava-server
+ $ /usr/share/lava-server/debian-dev-build.sh -p lava-server
 
  $ git clone http://git.linaro.org/git/lava/lava-dispatcher.git
  $ cd lava-dispatcher
- $ /usr/share/lava-server/debian-dev-build.sh lava-dispatcher
+ $ /usr/share/lava-server/debian-dev-build.sh -p lava-dispatcher
 
 ``lava-dispatcher`` has architecture-dependent dependencies. By
 default, the package is built for the native architecture and can
 only be installed on that architecture. To build for a different
 architecture, e.g. armhf, use::
 
- $ /usr/share/lava-server/debian-dev-build.sh lava-dispatcher armhf
+ $ /usr/share/lava-server/debian-dev-build.sh -p lava-dispatcher -a armhf
 
 This does a *binary build*, so the source is not included, which allows
 these builds to be included in a local repository, e.g. using ``reprepro``.
@@ -385,6 +387,10 @@ pushing to a public branch and passing the ``-b`` option to
 :file:`debian-dev-build-sh`::
 
  $ /usr/share/lava-server/debian-dev-build.sh -p lava-server -b docs
+
+or for installation on jessie::
+
+ $ /usr/share/lava-server/debian-dev-build.sh -p lava-server -b backports
 
 .. _architecture_builds:
 
