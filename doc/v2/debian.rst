@@ -2,20 +2,17 @@
 
 .. _lava_on_debian:
 
-Developing LAVA on Debian or Ubuntu
-###################################
+Developing LAVA on Debian
+#########################
+
+LAVA no longer supports development on Ubuntu.
+See :ref:`ubuntu_install`.
 
 Packages for LAVA are available for:
 
 * Debian Jessie (stable) - with backports
 * Debian Stretch (testing)
 * Debian Sid (unstable)
-
-Packages migrate into the current Ubuntu development release from Debian.
-See `Ubuntu package status <https://launchpad.net/ubuntu/+source/lava-server>`_.
-To install on Ubuntu, ensure the universe_ repository is enabled.
-
-.. _universe: https://help.ubuntu.com/community/Repositories/CommandLine#Adding_the_Universe_and_Multiverse_Repositories
 
 When using the packages to develop LAVA, there is a change to
 the workflow compared to the old lava-deployment-tool buildouts.

@@ -17,22 +17,28 @@ including Ubuntu. The supported versions of Debian and Ubuntu are:
 +---------------+------------------------+--------+----------------------+
 | Debian        | jessie                 | 8.0    | Yes [#f3]_           |
 +---------------+------------------------+--------+----------------------+
-| Ubuntu        | vivid vervet (& later) | 15.04  | Yes [#f4]_           |
+| Ubuntu        | wily werewolf          | 15.10  | **No** [#f4]_ [#f5]_ |
 +---------------+------------------------+--------+----------------------+
-| Ubuntu        | utopic unicorn         | 14.10  | **No** [#f5]_ [#f6]_ |
+| Ubuntu        | vivid vervet           | 15.04  | **No** [#f4]_ [#f5]_ |
 +---------------+------------------------+--------+----------------------+
-| Ubuntu        | trusty tahr LTS        | 14.04  | **No** [#f5]_ [#f6]_ |
+| Ubuntu        | utopic unicorn         | 14.10  | **No** [#f4]_ [#f5]_ |
++---------------+------------------------+--------+----------------------+
+| Ubuntu        | trusty tahr LTS        | 14.04  | **No** [#f4]_ [#f5]_ |
 +---------------+------------------------+--------+----------------------+
 
-Debian uses names for `suites`_ (unstable, testing, stable & oldstable)
-but the content of all suites except unstable will change codename once
-a release of Debian stable is made. Once Jessie is released, the Debian
-testing suite will gain the codename ``stretch`` and the oldstable suite
-will have the codename ``wheezy`` (the name of the current stable suite),
-so to prevent this table having to be updated every time there is a
-Debian release, codenames are used.
+Debian uses codenames for releases (jessie, wheezy, squeeze) and names
+for `suites`_ (unstable, testing, stable & oldstable). The packages in
+all suites except unstable will change codename once a release of Debian
+stable is made. The testing suite then gains a new codename and the
+oldstable suite will gain the codename of the former stable suite.
 
-`Ubuntu codenames`_ change with each 6 monthly release.
+To allow the table to refer to the same package versions consistently
+over time, codenames are used. When a Debian release is made, a new
+codename is applied to the testing suite and LAVA releases after that
+point will include that codename in the table.
+
+`Ubuntu codenames`_ change with each 6 monthly release and there will
+be no further updates of LAVA in Ubuntu after 2016.9.post1.
 See :ref:`ubuntu_install`
 
 .. _suites: http://en.wikipedia.org/wiki/Debian#Branches
@@ -52,17 +58,17 @@ See :ref:`ubuntu_install`
          and dependencies which are installed using jessie-backports are
          **fully supported** by upstream and are the same codebase as the
          relevant production release available from the :ref:`lava_repositories`.
-.. [#f4] Ubuntu vivid vervet 15.04 was released on April
-         23rd, 2015. LAVA packages automatically migrate from Debian
-         into the current development release of Ubuntu. Once Ubuntu
-         makes a release, the LAVA packages in that release do not
-         receive updates.
+.. [#f4] Ubuntu vivid vervet 15.04 was released on April 23rd, 2015 and
+         wily werewolf on October 22nd 2015. LAVA packages no longer
+         migrate from Debian into the current development release of Ubuntu,
+         so wily werewolf has the last lava-server update, 2015.8.1-1.
+         Once Ubuntu makes a release, the LAVA packages in that release
+         do not receive updates. Support for ``lava-server`` on Ubuntu
+         Trusty 14.04LTS, Ubuntu Vivid 15.04 and Ubuntu Wily 15.10 stopped
+         at 2015.9.post1. Support for lava-dispatcher`` on Ubuntu Trusty
+         14.04LTS, Ubuntu Vivid 15.04 and Ubuntu Wily 15.10 stopped at
+         2015.9. See :ref:`trusty_tahr_install` or :ref:`utopic_unicorn_install`.
 .. [#f5] To install on Ubuntu, ensure the universe_ repository is enabled.
-.. [#f6] Support for ``lava-server`` on Ubuntu Trusty 14.04LTS and
-         Ubuntu Utopic 14.10 stopped at 2015.9.post1. Support for
-         ``lava-dispatcher`` on Ubuntu Trusty 14.04LTS and Ubuntu
-         Utopic 14.10 stopped at 2015.9. See
-         :ref:`trusty_tahr_install` or :ref:`utopic_unicorn_install`.
 
 .. _experimental: https://wiki.debian.org/DebianExperimental
 
@@ -70,8 +76,8 @@ See :ref:`ubuntu_install`
 
 .. _jessie-backports: http://backports.debian.org/
 
-You can track the versions of LAVA packages in the various Debian and
-Ubuntu suites by following links from the Debian package trackers for
+You can track the versions of LAVA packages in the various Debian
+by following links from the Debian package trackers for
 `lava-dispatcher <https://tracker.debian.org/pkg/lava-dispatcher>`_ and
 `lava-server <https://tracker.debian.org/pkg/lava-server>`_.
 
@@ -329,28 +335,29 @@ The PPA uses this signing key::
 Installing on Ubuntu
 ====================
 
-LAVA recommends the use of Debian - Ubuntu installs are possible but
-may not receive updates of the LAVA packages. See :ref:`lava_on_debian`
-for information on building LAVA packages of your own.
+LAVA recommends the use of Debian - Ubuntu installs are **no longer
+supportable** and **2015.9.post1** marks the last available version.
 
 Always ensure that the Ubuntu universe_ repository is enabled on all
 Ubuntu instances before installing LAVA.
 
 .. _ubuntu_unicorn:
 
-Installing on Ubuntu Utopic Unicorn and later
----------------------------------------------
+Installing on Ubuntu Utopic, Vivid and Wily
+-------------------------------------------
+
+.. warning:: Support for Ubuntu Xenial 16.04LTS was **removed**
+   as unsupportable, leaving the last Ubuntu version of LAVA at
+   2015.9.post1. **No** further updates will be made for Ubuntu
+   and no new installs (master or remote worker) should be made on
+   Ubuntu.
 
 Ubuntu Unicorn 14.10 includes all packages needed by LAVA
-up to the 2014.07 release. Subsequent releases of Ubuntu will contain
-newer versions of LAVA and LAVA dependencies.
+up to the 2014.07 release. Subsequent releases of Ubuntu contain
+newer versions of LAVA and LAVA dependencies up to 2016.9.post1.
 
-Installing on Unicorn and Ubuntu releases newer than Unicorn 14.10
-is the same as :ref:`install_debian_jessie`.
-
-Future production releases of LAVA will be uploaded to Debian and then
-migrate into the current Ubuntu development release. The full set of
-architectures are supported, just as with Debian Jessie.
+Installing on Unicorn, Vivid and Wily is the same as
+:ref:`install_debian_jessie`.
 
 See also :ref:`lava_on_debian` for information on building updated LAVA
 packages on your own, LAVA will not be making backports to Ubuntu.
