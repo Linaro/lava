@@ -64,13 +64,17 @@ def get_deployment_testdefs(parameters=None):
     deploy_list = []
     for action in parameters['actions']:
         yaml_line = None
+        namespace = None
         if 'deploy' in action:
             yaml_line = action['deploy']['yaml_line']
+            namespace = action['deploy'].get('namespace', None)
             test_dict[yaml_line] = []
             deploy_list = get_deployment_tests(parameters, yaml_line)
         for action in deploy_list:
             if 'test' in action:
-                test_dict[yaml_line].append(action['test']['definitions'])
+                if namespace and namespace == action['test'].get(
+                        'namespace', None):
+                    test_dict[yaml_line].append(action['test']['definitions'])
         deploy_list = []
     return test_dict
 
@@ -95,6 +99,25 @@ def get_deployment_tests(parameters, yaml_line):
         if 'test' in action and seen:
             deploy.append(action)
     return deploy
+
+
+def get_test_action_namespaces(parameters=None):
+    """Iterates through the job parameters to identify all the test action
+    namespaces."""
+    test_namespaces = []
+    for action in parameters['actions']:
+        if 'test' in action:
+            if action['test'].get('namespace', None):
+                test_namespaces.append(action['test']['namespace'])
+    repeat_list = [action['repeat']
+                   for action in parameters['actions']
+                   if 'repeat' in action]
+    if repeat_list:
+        test_namespaces.extend(
+            [action['test']['namespace']
+             for action in repeat_list[0]['actions']
+             if 'test' in action and action['test'].get('namespace', None)])
+    return test_namespaces
 
 
 # pylint:disable=too-many-public-methods,too-many-instance-attributes,too-many-locals,too-many-branches
@@ -161,9 +184,17 @@ class RepoAction(Action):
 
         if args is None or 'test_name' not in args:
             raise RuntimeError("RepoAction run called via super without parameters as arguments")
-        if 'location' not in self.data['lava-overlay']:
+        if 'namespace' in self.parameters:
+            namespace = self.parameters['namespace']
+            location = self.get_common_data(namespace, 'location')
+            lava_test_results_dir = self.get_common_data(namespace,
+                                                         'lava_test_results_dir')
+        elif 'location' not in self.data['lava-overlay']:
             raise RuntimeError("Missing lava overlay location")
-        if not os.path.exists(self.data['lava-overlay']['location']):
+        else:
+            location = self.data['lava-overlay']['location']
+            lava_test_results_dir = self.data['lava_test_results_dir']
+        if not os.path.exists(location):
             raise RuntimeError("Overlay location does not exist")
 
         # runner_path is the path to read and execute from to run the tests after boot
@@ -604,13 +635,23 @@ class TestDefinitionAction(TestAction):
         :param args: Not used.
         :return: the received Connection.
         """
-        if 'location' not in self.data['lava-overlay']:
+        if 'namespace' in self.parameters:
+            namespace = self.parameters['namespace']
+            location = self.get_common_data(namespace, 'location')
+            lava_test_results_dir = self.get_common_data(namespace,
+                                                         'lava_test_results_dir')
+        elif 'location' not in self.data['lava-overlay']:
             raise RuntimeError("Missing lava overlay location")
+        else:
+            location = self.data['lava-overlay']['location']
+            lava_test_results_dir = self.data['lava_test_results_dir']
+        if not os.path.exists(location):
+            raise RuntimeError("Unable to find overlay location")
         self.logger.info("Loading test definitions")
 
         # overlay_path is the location of the files before boot
         self.data[self.name]['overlay_dir'] = os.path.abspath(
-            "%s/%s" % (self.data['lava-overlay']['location'], self.data['lava_test_results_dir']))
+            "%s/%s" % (location, lava_test_results_dir))
 
         connection = super(TestDefinitionAction, self).run(connection, args)
 

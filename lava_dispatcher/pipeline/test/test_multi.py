@@ -22,7 +22,7 @@
 import os
 import unittest
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
-from lava_dispatcher.pipeline.job import Job, ResetContext
+from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.action import Pipeline
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.boot import BootAction
@@ -119,10 +119,6 @@ class TestMultiDeploy(unittest.TestCase):
         for action_data in self.parsed_data['actions']:
             for name in action_data:
                 counts.setdefault(name, 1)
-                if counts[name] >= 2:
-                    reset_context = ResetContext()
-                    reset_context.section = 'deploy'
-                    pipeline.add_action(reset_context)
                 parameters = action_data[name]
                 test_deploy = TestMultiDeploy.TestDeploy(pipeline, parameters, job)
                 self.assertEqual(
@@ -140,18 +136,15 @@ class TestMultiDeploy(unittest.TestCase):
             [detail['deploy']['parameters'] for detail in self.parsed_data['actions'] if 'parameters' in detail['deploy']]
         )
         self.assertIsInstance(pipeline.actions[0], TestMultiDeploy.TestDeployAction)
-        self.assertIsInstance(pipeline.actions[1], ResetContext)
+        self.assertIsInstance(pipeline.actions[1], TestMultiDeploy.TestDeployAction)
         self.assertIsInstance(pipeline.actions[2], TestMultiDeploy.TestDeployAction)
-        self.assertIsInstance(pipeline.actions[3], ResetContext)
-        self.assertIsInstance(pipeline.actions[4], TestMultiDeploy.TestDeployAction)
         job.validate()
         self.assertEqual([], job.pipeline.errors)
         job.run()
         self.assertNotEqual(pipeline.actions[0].data, {'common': {}, 'fake_deploy': pipeline.actions[0].parameters})
-        self.assertNotEqual(pipeline.actions[1].data, {'common': {}, 'fake_deploy': pipeline.actions[1].parameters})
-        self.assertEqual(pipeline.actions[2].data, {'common': {}, 'fake_deploy': pipeline.actions[4].parameters})
+        self.assertEqual(pipeline.actions[1].data, {'common': {}, 'fake_deploy': pipeline.actions[2].parameters})
         # check that values from previous DeployAction run actions have been cleared
-        self.assertEqual(pipeline.actions[4].data, {'common': {}, 'fake_deploy': pipeline.actions[4].parameters})
+        self.assertEqual(pipeline.actions[2].data, {'common': {}, 'fake_deploy': pipeline.actions[2].parameters})
 
 
 class TestMultiUBoot(unittest.TestCase):  # pylint: disable=too-many-public-methods

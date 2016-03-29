@@ -106,3 +106,6 @@ IPXE_BOOT_PROMPT = "Press Ctrl-B for the iPXE command line"
 BOOTLOADER_DEFAULT_CMD_TIMEOUT = 90
 
 GRUB_BOOT_PROMPT = "Press enter to boot the selected OS"
+
+# Timeout for USB devices to settle and show up
+USB_SHOW_UP_TIMEOUT = 10

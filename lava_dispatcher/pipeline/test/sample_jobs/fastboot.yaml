@@ -16,7 +16,6 @@ actions:
       images:
         boot:
           url: http://images.validation.linaro.org/functional-test-images/nexus4/boot.img
-
         userdata:
           url: http://images.validation.linaro.org/functional-test-images/nexus4/userdata.img
         system:

@@ -68,6 +68,24 @@ class LxcProtocol(Protocol):
         pass
 
     def finalise_protocol(self):
+        # FIXME: There should be a better way of doing this ie., identifying
+        #        whether this device needs 'adb reboot bootloader' by looking
+        #        at the device configuration.
+        # Reboot lxc-droid device types to bootloader using adb
+        if self.parameters['device_type'] == 'lxc-droid':
+            reboot_cmd = "lxc-attach -n {0} -- adb reboot bootloader".format(
+                self.lxc_name)
+            self.logger.debug("%s protocol: executing '%s'", self.name,
+                              reboot_cmd)
+            shell = ShellCommand("%s\n" % reboot_cmd, self.system_timeout,
+                                 logger=self.logger)
+            # execute the command.
+            shell.expect(pexpect.EOF)
+            if shell.exitstatus:
+                raise JobError("%s command exited %d: %s" %
+                               (reboot_cmd, shell.exitstatus,
+                                shell.readlines()))
+
         # ShellCommand executes the destroy command
         cmd = "lxc-destroy -n {0} -f".format(self.lxc_name)
         self.logger.debug("%s protocol: executing '%s'", self.name, cmd)

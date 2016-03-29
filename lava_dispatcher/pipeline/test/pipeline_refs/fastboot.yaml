@@ -35,11 +35,6 @@
   name: fastboot_boot
   pipeline:
   - {class: actions.boot.fastboot.FastbootAction, name: boot-fastboot}
-  - {class: connections.adb.WaitForAdbDevice, name: wait-for-adb-device}
-  - {class: connections.adb.ConnectAdb, name: connect-adb}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
-  - {class: shell.ExpectShellSession, name: expect-shell-connection}
-  - {class: actions.boot.fastboot.AdbOverlayUnpack, name: adb-overlay-unpack}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:

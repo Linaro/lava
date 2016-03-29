@@ -425,6 +425,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         self.protocols = []  # list of protocol objects supported by this action, full list in job.protocols
         self.section = None
         self.connection_timeout = Timeout(self.name)
+        self.action_namespaces = []
 
     # public actions (i.e. those who can be referenced from a job file) must
     # declare a 'class-type' name so they can be looked up.

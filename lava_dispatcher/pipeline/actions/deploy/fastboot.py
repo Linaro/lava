@@ -101,14 +101,20 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
 
     def validate(self):
         super(FastbootAction, self).validate()
-        self.errors = infrastructure_error('adb')
-        if infrastructure_error('adb'):
-            self.errors = "Unable to find 'adb' command"
         self.errors = infrastructure_error('fastboot')
         if infrastructure_error('fastboot'):
             self.errors = "Unable to find 'fastboot' command"
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
+        lava_test_results_dir = lava_test_results_dir % self.job.job_id
+        self.data['lava_test_results_dir'] = lava_test_results_dir
+        namespace = self.parameters.get('namespace', None)
+        if namespace:
+            self.action_namespaces.append(namespace)
+            self.set_common_data(namespace, 'lava_test_results_dir',
+                                 lava_test_results_dir)
+            lava_test_sh_cmd = self.parameters['deployment_data']['lava_test_sh_cmd']
+            self.set_common_data(namespace, 'lava_test_sh_cmd',
+                                 lava_test_sh_cmd)
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -118,7 +124,7 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
                 self.internal_pipeline.add_action(ConnectDevice())
                 self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(EnterFastbootAction())
-        image_keys = parameters['images'].keys()
+        image_keys = list(parameters['images'].keys())
         if 'image' in image_keys:
             download = DownloaderAction('image', self.fastboot_dir)
             download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
@@ -166,10 +172,6 @@ class EnterFastbootAction(DeployAction):
 
     def validate(self):
         super(EnterFastbootAction, self).validate()
-        if 'adb_serial_number' not in self.job.device:
-            self.errors = "device adb serial number missing"
-            if self.job.device['adb_serial_number'] == '0000000000':
-                self.errors = "device adb serial number unset"
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
             if self.job.device['fastboot_serial_number'] == '0000000000':
@@ -177,28 +179,21 @@ class EnterFastbootAction(DeployAction):
 
     def run(self, connection, args=None):
         connection = super(EnterFastbootAction, self).run(connection, args)
-        adb_serial_number = self.job.device['adb_serial_number']
         fastboot_serial_number = self.job.device['fastboot_serial_number']
-        adb_cmd = ['adb', '-s', adb_serial_number, 'get-serialno']
-        command_output = self.run_command(adb_cmd)
-        if command_output and adb_serial_number in command_output:
-            adb_cmd = ['adb', '-s', adb_serial_number, 'reboot', 'bootloader']
-            command_output = self.run_command(adb_cmd)
-            if command_output and command_output is not '':
-                raise JobError("Unable to enter fastboot using adb: %s" %
-                               command_output)  # FIXME: JobError needs a unit test
-        else:
+        fastboot_cmd = ['fastboot', '-s', fastboot_serial_number, 'devices']
+        command_output = self.run_command(fastboot_cmd)
+        if command_output and fastboot_serial_number in command_output:
+            self.logger.debug("Device is in fastboot: %s" % command_output)
             fastboot_cmd = ['fastboot', '-s', fastboot_serial_number,
-                            'devices']
+                            'reboot-bootloader']
             command_output = self.run_command(fastboot_cmd)
-            if command_output and fastboot_serial_number in command_output:
-                self.logger.debug("Device is in fastboot: %s" % command_output)
-                fastboot_cmd = ['fastboot', '-s', fastboot_serial_number,
-                                'reboot-bootloader']
-                command_output = self.run_command(fastboot_cmd)
-                if command_output and 'OKAY' not in command_output:
-                    raise JobError("Unable to enter fastboot: %s" %
-                                   command_output)  # FIXME: JobError needs a unit test
+            if command_output and 'OKAY' not in command_output:
+                raise JobError("Unable to enter fastboot: %s" %
+                               command_output)  # FIXME: JobError needs a unit test
+            else:
+                status = [status.strip() for status in command_output.split(
+                    '\n') if 'finished' in status][0]
+                self.results = {'status': status}
         return connection
 
 

@@ -60,10 +60,6 @@ class ConnectAdb(Action):
             self.errors = "Unable to find '%s' command" % exe
 
     def run(self, connection, args=None):
-        if connection:
-            self.logger.debug("Already connected")
-            connection.prompt_str = self.parameters['prompts']
-            return connection
         command = self.job.device['commands']['connect'][:]  # local copy to retain idempotency.
         self.logger.info("%s Connecting to device using '%s'", self.name, command)
         signal.alarm(0)  # clear the timeouts used without connections.

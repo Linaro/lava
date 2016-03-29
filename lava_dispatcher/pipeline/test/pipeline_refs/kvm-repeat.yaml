@@ -230,7 +230,6 @@
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
-- {class: job.ResetContext, name: reset-context}
 - class: actions.deploy.image.DeployImagesAction
   name: deployimages
   pipeline:

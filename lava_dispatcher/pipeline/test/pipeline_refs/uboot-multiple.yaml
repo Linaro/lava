@@ -20,7 +20,7 @@
     - class: actions.deploy.overlay.OverlayAction
       name: lava-overlay
       pipeline:
-      - {'class': actions.deploy.overlay.SshAuthorize, 'name': ssh-authorize}
+      - {class: actions.deploy.overlay.SshAuthorize, name: ssh-authorize}
       - {class: actions.deploy.overlay.VlandOverlayAction, name: lava-vland-overlay}
       - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
       - {class: actions.deploy.testdef.TestDefinitionAction, name: test-definition}
@@ -53,7 +53,6 @@
     - {class: actions.boot.AutoLoginAction, name: auto-login-action}
     - {class: shell.ExpectShellSession, name: expect-shell-connection}
     - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
-- {class: job.ResetContext, name: reset-context}
 - class: actions.deploy.tftp.TftpAction
   name: tftp-deploy
   pipeline:
@@ -76,7 +75,7 @@
     - class: actions.deploy.overlay.OverlayAction
       name: lava-overlay
       pipeline:
-      - {'class': actions.deploy.overlay.SshAuthorize, 'name': ssh-authorize}
+      - {class: actions.deploy.overlay.SshAuthorize, name: ssh-authorize}
       - {class: actions.deploy.overlay.VlandOverlayAction, name: lava-vland-overlay}
       - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
       - {class: actions.deploy.testdef.TestDefinitionAction, name: test-definition}

@@ -74,13 +74,6 @@ class BootFastbootAction(BootAction):
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(FastbootAction())
-        self.internal_pipeline.add_action(WaitForAdbDevice())
-        self.internal_pipeline.add_action(ConnectAdb())
-        # Add AutoLoginAction unconditionally as this action does nothing if
-        # the configuration does not contain 'auto_login'
-        self.internal_pipeline.add_action(AutoLoginAction())
-        self.internal_pipeline.add_action(ExpectShellSession())
-        self.internal_pipeline.add_action(AdbOverlayUnpack())
 
 
 class FastbootAction(Action):
@@ -113,6 +106,11 @@ class FastbootAction(Action):
         if command_output and 'rebooting' not in command_output:
             raise JobError("Unable to boot with fastboot: %s" %
                            command_output)
+        else:
+            status = [status.strip() for status in command_output.split(
+                '\n') if 'finished' in status][0]
+            self.results = {'status': status}
+        self.data['boot-result'] = 'failed' if self.errors else 'success'
         return connection
 
 
@@ -137,7 +135,11 @@ class AdbOverlayUnpack(Action):
         connection = super(AdbOverlayUnpack, self).run(connection, args)
         serial_number = self.job.device['adb_serial_number']
         overlay_type = 'adb-overlay'
-        overlay_file = self.data['compress-overlay'].get('output')
+        if 'namespace' in self.parameters:
+            overlay_file = self.get_common_data(self.parameters['namespace'],
+                                                'output')
+        else:
+            overlay_file = self.data['compress-overlay'].get('output')
         host_dir = mkdtemp()
         target_dir = ANDROID_TMP_DIR
         try:
@@ -155,7 +157,7 @@ class AdbOverlayUnpack(Action):
             raise JobError("Unable to push overlay files with adb: %s" %
                            command_output)
         adb_cmd = ['adb', '-s', serial_number, 'shell', '/system/bin/chmod',
-                   '0777', target_dir]
+                   '-R', '0777', target_dir]
         command_output = self.run_command(adb_cmd)
         if command_output and 'pushed' not in command_output:
             raise JobError("Unable to chmod overlay files with adb: %s" %

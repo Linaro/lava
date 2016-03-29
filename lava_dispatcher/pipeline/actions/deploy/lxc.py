@@ -89,7 +89,16 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
             self.errors = "Invalid job - missing protocol"
         self.errors = infrastructure_error('lxc-create')
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
+        lava_test_results_dir = lava_test_results_dir % self.job.job_id
+        self.data['lava_test_results_dir'] = lava_test_results_dir
+        namespace = self.parameters.get('namespace', None)
+        if namespace:
+            self.action_namespaces.append(namespace)
+            self.set_common_data(namespace, 'lava_test_results_dir',
+                                 lava_test_results_dir)
+            lava_test_sh_cmd = self.parameters['deployment_data']['lava_test_sh_cmd']
+            self.set_common_data(namespace, 'lava_test_sh_cmd',
+                                 lava_test_sh_cmd)
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -121,8 +130,8 @@ class LxcCreateAction(DeployAction):
 
     def run(self, connection, args=None):
         connection = super(LxcCreateAction, self).run(connection, args)
-        lxc_cmd = ['lxc-create', '-t', 'download',
-                   '-n', self.get_common_data('lxc', 'name'), '--',
+        lxc_name = self.get_common_data('lxc', 'name')
+        lxc_cmd = ['lxc-create', '-t', 'download', '-n', lxc_name, '--',
                    '--dist', self.get_common_data('lxc', 'distribution'),
                    '--release', self.get_common_data('lxc', 'release'),
                    '--arch', self.get_common_data('lxc', 'arch')]
@@ -130,4 +139,6 @@ class LxcCreateAction(DeployAction):
         if command_output and 'Unpacking the rootfs' not in command_output:
             raise JobError("Unable to create lxc container: %s" %
                            command_output)  # FIXME: JobError needs a unit test
+        else:
+            self.results = {'status': lxc_name}
         return connection
