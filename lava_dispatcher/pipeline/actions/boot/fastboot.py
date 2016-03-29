@@ -83,7 +83,7 @@ class BootFastbootAction(BootAction):
         self.internal_pipeline.add_action(FastbootAction())
         self.internal_pipeline.add_action(WaitForAdbDevice())
         self.internal_pipeline.add_action(ConnectAdb())
-        # Add AutoLoginAction unconditionnally as this action does nothing if
+        # Add AutoLoginAction unconditionally as this action does nothing if
         # the configuration does not contain 'auto_login'
         self.internal_pipeline.add_action(AutoLoginAction())
         self.internal_pipeline.add_action(ExpectShellSession())

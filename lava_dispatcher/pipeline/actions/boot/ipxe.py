@@ -120,7 +120,7 @@ class BootloaderRetry(BootAction):
         self.internal_pipeline.add_action(BootloaderInterrupt())
         # need to look for Hit any key to stop autoboot
         self.internal_pipeline.add_action(BootloaderCommandsAction())
-        # Add AutoLoginAction unconditionnally as this action does nothing if
+        # Add AutoLoginAction unconditionally as this action does nothing if
         # the configuration does not contain 'auto_login'
         self.internal_pipeline.add_action(AutoLoginAction())
         self.internal_pipeline.add_action(ExpectShellSession())  # wait
