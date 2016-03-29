@@ -125,9 +125,10 @@ class TestShellAction(TestAction):
         self.signal_director.connection = connection
 
         self.logger.info("Executing test definitions using %s" % connection.name)
-        self.logger.debug("Setting default test shell prompt")
         if not connection.prompt_str:
             connection.prompt_str = [DEFAULT_SHELL_PROMPT]
+            # FIXME: This should be logged whenever prompt_str is changed, by the connection object.
+            self.logger.debug("Setting default test shell prompt %s", connection.prompt_str)
         self.logger.debug("Setting default timeout: %s" % self.timeout.duration)
         connection.timeout = self.connection_timeout
         self.wait(connection)

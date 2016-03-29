@@ -139,6 +139,10 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
             download = DownloaderAction('modules', path=self.tftp_dir)
             download.max_retries = 3
             self.internal_pipeline.add_action(download)
+        if 'preseed' in parameters:
+            download = DownloaderAction('preseed', path=self.tftp_dir)
+            download.max_retries = 3
+            self.internal_pipeline.add_action(download)
         # TftpAction is a deployment, so once the files are in place, just do the overlay
         self.internal_pipeline.add_action(PrepareOverlayTftp())
         self.internal_pipeline.add_action(DeployDeviceEnvironment())

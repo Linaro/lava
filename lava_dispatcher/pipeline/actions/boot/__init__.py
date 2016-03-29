@@ -135,7 +135,7 @@ class AutoLoginAction(Action):
             connection.prompt_str.extend([prompts])
             check_prompt_characters(prompts)
 
-        self.logger.debug("Setting shell prompt")
+        self.logger.debug("Setting shell prompt(s) to %s", connection.prompt_str)
         # may need to force a prompt here.
         wait_for_prompt(connection.raw_connection, connection.prompt_str, connection.timeout.duration, '#')
         # self.wait(connection)

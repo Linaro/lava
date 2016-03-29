@@ -122,7 +122,6 @@ oe = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_shell_file': None,
 })
 
-
 fedora = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
@@ -132,6 +131,22 @@ fedora = deployment_data_dict({  # pylint: disable=invalid-name
     # for lava-test-shell
     'distro': 'fedora',
     'tar_flags': '--warning no-timestamp',
+    'lava_test_sh_cmd': '/bin/bash',
+    'lava_test_dir': '/lava-%s',
+    'lava_test_results_part_attr': 'root_part',
+    'lava_test_results_dir': '/lava-%s',
+    'lava_test_shell_file': None,
+})
+
+debian_installer = deployment_data_dict({  # pylint: disable=invalid-name
+    'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
+    'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
+    'TESTER_PS1_INCLUDES_RC': True,
+    'boot_cmds': 'boot_cmds',
+
+    # for lava-test-shell
+    'distro': 'debian',
+    'boot_finished': 'reboot: Restarting system',
     'lava_test_sh_cmd': '/bin/bash',
     'lava_test_dir': '/lava-%s',
     'lava_test_results_part_attr': 'root_part',
