@@ -130,12 +130,13 @@ def submit_health_check_jobs():
         else:
             if time_denominator:
                 if not run_health_check:
-                    logger.debug("checking time since last health check")
+                    logger.debug("[%s] checking time since last health check", device)
                 run_health_check = device.last_health_report_job.end_time < \
                     timezone.now() - datetime.timedelta(hours=device.device_type.health_frequency)
                 if run_health_check:
                     logger.debug("%s needs to run_health_check", device)
-                    logger.debug("health_check_end=%s", device.last_health_report_job.end_time)
+                    logger.debug("[%d] health_check_end=%s",
+                                 device.last_health_report_job.id, device.last_health_report_job.end_time)
                     logger.debug("health_frequency is every %s hours", device.device_type.health_frequency)
                     logger.debug("time_diff=%s", (
                         timezone.now() - datetime.timedelta(hours=device.device_type.health_frequency)))
