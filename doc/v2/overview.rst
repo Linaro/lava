@@ -298,6 +298,33 @@ the details of the job run.
 
    .. image:: ./images/job-details.png
 
+.. index: results
+
+.. downloading_results:
+
+Downloading test results
+------------------------
+
+LAVA V2 makes the test results available directly from the instance,
+without needing to go through ``lava-tool``. Currently, the results
+for any test job can be downloaded as :abbr:`CSV (comma-separated value)`
+and YAML format.
+
+For example, the results for test job number 123 are available as
+CSV using::
+
+ http://localhost/results/123/csv
+
+The same results are job number 123 are available as YAML using::
+
+ http://localhost/results/123/yaml
+
+If you know the test definition name, you can download just the
+results for that test definition in the same way::
+
+ http://localhost/results/123/singlenode-advanced/csv
+ http://localhost/results/123/singlenode-advanced/yaml
+
 .. index: test definitions
 
 .. _test_definitions:

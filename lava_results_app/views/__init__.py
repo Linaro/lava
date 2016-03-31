@@ -110,7 +110,7 @@ def testjob_csv(request, job):
         fieldnames=testcase_export_fields())
     writer.writeheader()
     for test_suite in job.testsuite_set.all():
-        for row in test_suite.test_cases.all():
+        for row in test_suite.testcase_set.all():
             writer.writerow(export_testcase(row))
     return response
 
@@ -122,7 +122,7 @@ def testjob_yaml(request, job):
     response['Content-Disposition'] = 'attachment; filename="%s"' % filename
     yaml_list = []
     for test_suite in job.testsuite_set.all():
-        for test_case in test_suite.test_cases.all():
+        for test_case in test_suite.testcase_set.all():
             yaml_list.append(export_testcase(test_case))
     yaml.dump(yaml_list, response)
     return response
