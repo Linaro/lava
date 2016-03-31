@@ -748,14 +748,15 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             fail_job(job, fail_msg=msg)
             return None
         if device.worker_host.hostname not in dispatchers:
-            # a configured worker has not called in to this master
-            # likely that the worker is misconfigured - polling the wrong master
-            # or simply not running at all.
-            msg = """Administrative error. Device '{0}' has a worker_host setting of
- '{1}' but no slave has registered with this master
- using that FQDN.""".format(device.hostname, device.worker_host.hostname)
-            logger.error('[%d] worker-hostname error: %s', job.id, msg)
-            fail_job(job, fail_msg=msg)
+            # A configured worker has not (yet) called in to this master.
+            # It is likely that the worker is misconfigured - polling the wrong master
+            # or simply not running at all. There is also a possible race condition
+            # here when the master gets restarted with a queue of jobs and has not yet
+            # received polls from all slaves, so do not fail the job.
+            msg = "Device '{0}' has a worker_host setting of " \
+                  "'{1}' but no slave has yet registered with this master " \
+                  "using that FQDN.".format(device.hostname, device.worker_host.hostname)
+            logger.info('[%d] worker-hostname not seen: %s', job.id, msg)
             return None
 
         device_object = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.

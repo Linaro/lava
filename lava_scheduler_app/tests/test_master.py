@@ -31,6 +31,8 @@ class MasterTest(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
             'memory': '256',
         }
         self.worker, _ = Worker.objects.get_or_create(hostname='localhost')
+        self.remote, _ = Worker.objects.get_or_create(hostname='remote')
+        # exclude remote from the list
         self.dispatchers = [self.worker.hostname]
 
     def restart(self):  # pylint: disable=no-self-use
@@ -67,7 +69,7 @@ class MasterTest(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
         device.save()
         selected = select_device(job, self.dispatchers)
         self.assertEqual(selected, device)
-        print(selected)  # pylint: disable=superfluous-parens
+        # print(selected)  # pylint: disable=superfluous-parens
 
     @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_job_handlers(self):
@@ -91,3 +93,27 @@ class MasterTest(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
         create_job(job, device)
         self.assertEqual(job.actual_device, device)
         self.assertEqual(device.status, Device.RESERVED)
+
+    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
+    def test_dispatcher_restart(self):
+        self.restart()
+        hostname = 'fakeqemu4'
+        device_dict = DeviceDictionary(hostname=hostname)
+        device_dict.parameters = self.conf
+        device_dict.save()
+        device = self.factory.make_device(self.device_type, hostname)
+        job = TestJob.from_yaml_and_user(
+            self.factory.make_job_yaml(),
+            self.factory.make_user())
+        job.actual_device = device
+        self.assertEqual(job.status, TestJob.SUBMITTED)
+        device.worker_host = self.remote
+        selected = select_device(job, self.dispatchers)
+        self.assertIsNone(selected)
+        self.assertEqual(job.status, TestJob.SUBMITTED)
+        create_job(job, device)
+        self.assertEqual(job.actual_device, device)
+        self.assertEqual(device.status, Device.RESERVED)
+        selected = select_device(job, self.dispatchers)
+        self.assertIsNone(selected)
+        self.assertEqual(job.status, TestJob.SUBMITTED)
