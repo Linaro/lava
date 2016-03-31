@@ -296,11 +296,11 @@ class MonitorJob(object):
         childFDs = {0: 'w', 1: 'r', 2: 'r'}
         args = [
             'setsid', 'lava-server', 'manage', 'schedulermonitor',
-            str(self.job.id), self.dispatcher, str(self.board_name),
-            self._json_file, '-l', self.daemon_options['LOG_LEVEL']]
+            '-l', self.daemon_options['LOG_LEVEL']]
         if self.daemon_options['LOG_FILE_PATH']:
             args.extend(['-f', self.daemon_options['LOG_FILE_PATH']])
             childFDs = None
+        args.extend([str(self.job.id), self.dispatcher, str(self.board_name), self._json_file])
         self.logger.info('monitoring "%s"', ' '.join(args))
         self.reactor.spawnProcess(
             SchedulerMonitorPP(d, self.board_name), 'setsid',
