@@ -72,6 +72,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
         def __init__(self, parent=None, job=None):
             super(TestAction.FakePipeline, self).__init__(parent, job)
+            job.pipeline = self
 
     class FakeAction(Action):
         """
@@ -203,7 +204,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(deploy.action.max_retries, 3)
         fakepipeline.add_action(deploy.action)
         self.assertIsNone(fakepipeline.validate_actions())
-        fakepipeline.run_actions(None, None)
+        self.assertRaises(JobError, fakepipeline.run_actions, None, None)
         self.assertIsNotNone(fakepipeline.errors)
         self.assertIsNotNone(deploy.action.job)
 
@@ -216,7 +217,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
         fakepipeline.add_action(deploy.action)
         self.assertIsNotNone(deploy.action.job)
         self.assertIsNone(fakepipeline.validate_actions())
-        fakepipeline.run_actions(None, None)
+        self.assertRaises(JobError, fakepipeline.run_actions, None, None)
         with self.assertRaises(JobError):
             self.assertIsNotNone(fakepipeline.validate_actions())
         self.assertIsNotNone(fakepipeline.errors)

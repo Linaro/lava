@@ -173,7 +173,7 @@ overrides:
             job.parameters['env_dut'],
             data
         )
-        with self.assertRaises(TypeError):
+        with self.assertRaises(JobError):
             job.validate()
 
     @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")

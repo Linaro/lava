@@ -31,6 +31,8 @@ from lava_dispatcher.pipeline.shell import ShellSession
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.boot.qemu import BootAction
+from lava_dispatcher.pipeline.device import NewDevice
+from lava_dispatcher.pipeline.parser import JobParser
 
 
 class TestBasicJob(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -278,9 +280,11 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         self.assertEqual(len(self.job.pipeline.describe()), 4)
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
-                overlay = action.pipeline.children[action.pipeline][3]
-                # testdef = overlay.internal_pipeline.actions[2]
-                # inline_repo = testdef.internal_pipeline.actions[0]
+                self.assertIsNotNone(action.internal_pipeline.actions[2])
+                overlay = action.pipeline.children[action.pipeline][2]
+                self.assertIsNotNone(overlay.internal_pipeline.actions[2])
+                testdef = overlay.internal_pipeline.actions[2]
+                self.assertIsNotNone(testdef.internal_pipeline.actions[0])
                 break
 
             # Test the InlineRepoAction directly
@@ -311,6 +315,14 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
                                         'yaml_line': 53},
                                 'yaml_line': 38}
             self.assertEqual(testdef, expected_testdef)
+
+
+class TestAutoLogin(unittest.TestCase):
+
+    def setUp(self):
+        super(TestAutoLogin, self).setUp()
+        factory = Factory()
+        self.job = factory.create_kvm_job('sample_jobs/kvm-inline.yaml', mkdtemp())
 
     def test_autologin_prompt_patterns(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -417,6 +429,14 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
 
         self.assertEqual(conn.prompt_str, ['lava-test: # ', 'root@debian:~#'])
 
+
+class TestChecksum(unittest.TestCase):
+
+    def setUp(self):
+        super(TestChecksum, self).setUp()
+        factory = Factory()
+        self.job = factory.create_kvm_job('sample_jobs/kvm-inline.yaml', mkdtemp())
+
     def test_download_checksum_match_success(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
@@ -475,9 +495,9 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         httpdownloadaction.url = 'http://images.validation.linaro.org/unit-tests/rootfs.gz'
         del httpdownloadaction.parameters['images']
         httpdownloadaction.parameters.update({
-            'rootfs': {'url': httpdownloadaction.url},
-            'md5sum': {'rootfs': '6ea432ac3c23210c816551782346ed1c'},
-            'sha256sum': {'rootfs': '1a76b17701b9fdf6346b88eb49b0143a9c6912701b742a6e5826d6856edccd21'}})
+            'rootfs': {'url': httpdownloadaction.url,
+                       'md5sum': '6ea432ac3c23210c816551782346ed1c',
+                       'sha256sum': '1a76b17701b9fdf6346b88eb49b0143a9c6912701b742a6e5826d6856edccd21'}})
         httpdownloadaction.validate()
         httpdownloadaction.run(None)
 
@@ -492,9 +512,9 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         httpdownloadaction.url = 'http://images.validation.linaro.org/unit-tests/rootfs.gz'
         del httpdownloadaction.parameters['images']
         httpdownloadaction.parameters.update({
-            'rootfs': {'url': httpdownloadaction.url},
-            'md5sum': {'rootfs': '6ea432ac3c232122222221782346ed1c'},
-            'sha256sum': {'rootfs': '1a76b17701b9fdf63444444444444444446912701b742a6e5826d6856edccd21'}})
+            'rootfs': {'url': httpdownloadaction.url,
+                       'md5sum': '6ea432ac3c232122222221782346ed1c',
+                       'sha256sum': '1a76b17701b9fdf63444444444444444446912701b742a6e5826d6856edccd21'}})
         httpdownloadaction.validate()
         self.assertRaises(JobError, httpdownloadaction.run, None)
 
@@ -509,6 +529,21 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
             self.fail(exc)
         for action in self.job.pipeline.actions:
             self.assertEqual([], action.errors)
+
+    def test_uboot_checksum(self):
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        bbb_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/bbb-ramdisk-nfs.yaml')
+        with open(bbb_yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, None, None, output_dir='/tmp/')
+        deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        download = [action for action in deploy.internal_pipeline.actions if action.name == 'download_retry'][0]
+        helper = [action for action in download.internal_pipeline.actions if action.name == 'file_download'][0]
+        remote = helper.parameters[helper.key]
+        md5sum = remote.get('md5sum', None)
+        self.assertIsNone(md5sum)
+        sha256sum = remote.get('sha256sum', None)
+        self.assertIsNotNone(sha256sum)
 
 
 class FakeCommand(object):

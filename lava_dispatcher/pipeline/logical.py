@@ -61,13 +61,14 @@ class RetryAction(Action):
             except (JobError, InfrastructureError, TestError) as exc:
                 self.retries += 1
                 self.errors = "%s failed: %d of %d attempts. '%s'" % (self.name, self.retries, self.max_retries, exc)
-                if self.timeout:
-                    self.logger.warning("%s: timeout reached. %s seconds" % (self.timeout.name, int(self.timeout.duration)))
                 time.sleep(self.sleep)
         if not self.valid:
             self.errors = "%s retries failed for %s" % (self.retries, self.name)
             if "boot-result" not in self.data:
                 self.data['boot-result'] = 'failed'
+            # tried and failed
+            self.job.pipeline.cleanup_actions(connection, self.errors)
+            raise JobError(self.errors)
         return connection
 
     # FIXME: needed?

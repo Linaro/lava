@@ -25,6 +25,7 @@
 import math
 import os
 import sys
+import shutil
 import time
 import hashlib
 import requests
@@ -115,6 +116,14 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
     def reader(self):
         raise NotImplementedError
 
+    def cleanup(self):
+        nested_tmp_dir = os.path.join(self.path, self.key)
+        self.logger.debug("%s cleanup", self.name)
+        if os.path.exists(nested_tmp_dir):
+            self.logger.debug("Cleaning up temporary tree.")
+            shutil.rmtree(nested_tmp_dir)
+        self.data['download_action'][self.key]['file'] = ''
+
     def _url_to_fname_suffix(self, path, modify):
         filename = os.path.basename(self.url.path)
         parts = filename.split('.')
@@ -130,7 +139,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         return filename, suffix
 
     @contextlib.contextmanager
-    def _decompressor_stream(self):
+    def _decompressor_stream(self):  # pylint: disable=too-many-branches
         dwnld_file = None
         compression = False
         if 'images' in self.parameters and self.key in self.parameters['images']:
@@ -145,6 +154,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
 
         if os.path.exists(fname):
             nested_tmp_dir = os.path.join(self.path, self.key)
+            if os.path.exists(nested_tmp_dir):
+                shutil.rmtree(nested_tmp_dir)
             os.makedirs(nested_tmp_dir)
             fname = os.path.join(nested_tmp_dir, os.path.basename(fname))
 
@@ -203,7 +214,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             if compression not in ['gz', 'bz2', 'xz']:
                 self.errors = "Unknown 'compression' format '%s'" % compression
 
-    def run(self, connection, args=None):  # pylint: disable=too-many-locals,too-many-statements
+    def run(self, connection, args=None):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         def progress_unknown_total(downloaded_size, last_value):
             """ Compute progress when the size is unknown """
             condition = downloaded_size >= last_value + 25 * 1024 * 1024
@@ -222,22 +233,13 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         md5 = hashlib.md5()
         sha256 = hashlib.sha256()
         with self._decompressor_stream() as (writer, fname):
-            md5sum = None
-            sha256sum = None
 
             if 'images' in self.parameters and self.key in self.parameters['images']:
                 remote = self.parameters['images'][self.key]
-
-                md5sum = remote.get('md5sum', None)
-                sha256sum = remote.get('sha256sum', None)
             else:
                 remote = self.parameters[self.key]
-
-                if 'md5sum' in self.parameters:
-                    md5sum = self.parameters['md5sum'].get(self.key, None)
-
-                if 'sha256sum' in self.parameters:
-                    sha256sum = self.parameters['sha256sum'].get(self.key, None)
+            md5sum = remote.get('md5sum', None)
+            sha256sum = remote.get('sha256sum', None)
 
             self.logger.info("downloading %s as %s" % (remote, fname))
 
@@ -275,15 +277,27 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         self.data['download_action'][self.key]['md5'] = md5.hexdigest()
         self.data['download_action'][self.key]['sha256'] = sha256.hexdigest()
 
-        if md5sum and md5sum != self.data['download_action'][self.key]['md5']:
-            self.logger.error("md5sum of downloaded content: %s" % (self.data['download_action'][self.key]['md5']))
-            self.logger.error("sha256sum of downloaded content: %s" % (self.data['download_action'][self.key]['sha256']))
-            raise JobError("MD5 checksum for '%s' does not match." % fname)
+        if md5sum is not None:
+            if md5sum != self.data['download_action'][self.key]['md5']:
+                self.logger.error("md5sum of downloaded content: %s" % (
+                    self.data['download_action'][self.key]['md5']))
+                self.logger.info("sha256sum of downloaded content: %s" % (
+                    self.data['download_action'][self.key]['sha256']))
+                self.results = {'fail': {
+                    'md5': md5sum, 'download': self.data['download_action'][self.key]['md5']}}
+                raise JobError("MD5 checksum for '%s' does not match." % fname)
+            self.results = {'success': {'md5': md5sum}}
 
-        if sha256sum and sha256sum != self.data['download_action'][self.key]['sha256']:
-            self.logger.error("md5sum of downloaded content: %s" % (self.data['download_action'][self.key]['md5']))
-            self.logger.error("sha256sum of downloaded content: %s" % (self.data['download_action'][self.key]['sha256']))
-            raise JobError("SHA256 checksum for '%s' does not match." % fname)
+        if sha256sum is not None:
+            if sha256sum != self.data['download_action'][self.key]['sha256']:
+                self.logger.info("md5sum of downloaded content: %s" % (
+                    self.data['download_action'][self.key]['md5']))
+                self.logger.error("sha256sum of downloaded content: %s" % (
+                    self.data['download_action'][self.key]['sha256']))
+                self.results = {'fail': {
+                    'sha256': sha256sum, 'download': self.data['download_action'][self.key]['sha256']}}
+                raise JobError("SHA256 checksum for '%s' does not match." % fname)
+            self.results = {'success': {'sha256': sha256sum}}
 
         # certain deployments need prefixes set
         if self.parameters['to'] == 'tftp':
