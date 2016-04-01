@@ -29,6 +29,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.pipeline.utils.constants import (
+    LXC_PATH,
     RAMDISK_FNAME,
     DISPATCHER_DOWNLOAD_DIR,
 )
@@ -364,4 +365,32 @@ class CompressRamdisk(Action):
             self.set_common_data('file', 'ramdisk', os.path.join(suffix, os.path.basename(final_file)))
         else:
             self.set_common_data('file', 'ramdisk', final_file)
+        return connection
+
+
+class ApplyLxcOverlay(Action):
+
+    def __init__(self):
+        super(ApplyLxcOverlay, self).__init__()
+        self.name = "apply-lxc-overlay"
+        self.summary = "apply overlay on the container"
+        self.description = "apply the overlay to the container by copying"
+
+    def validate(self):
+        super(ApplyLxcOverlay, self).validate()
+        self.errors = infrastructure_error('tar')
+
+    def run(self, connection, args=None):
+        connection = super(ApplyLxcOverlay, self).run(connection, args)
+        overlay_file = self.data['compress-overlay'].get('output')
+        lxc_path = os.path.join(LXC_PATH, self.get_common_data('lxc', 'name'),
+                                "rootfs")
+        if not os.path.exists(lxc_path):
+            raise JobError("Lxc container rootfs not found")
+        tar_cmd = ['tar', '--warning', 'no-timestamp', '-C', lxc_path, '-xaf',
+                   overlay_file]
+        command_output = self.run_command(tar_cmd)
+        if command_output and command_output is not '':
+            raise JobError("Unable to untar overlay: %s" %
+                           command_output)  # FIXME: JobError needs a unit test
         return connection
