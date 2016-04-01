@@ -31,16 +31,17 @@ from lava_server.bread_crumbs import (
     BreadCrumbTrail,
 )
 from django.shortcuts import get_object_or_404
-from lava_results_app.models import TestSuite, TestCase
 from lava_results_app.tables import ResultsTable, SuiteTable
 from lava_results_app.utils import StreamEcho
 from lava_results_app.dbutils import export_testcase, testcase_export_fields
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.tables import pklink
 from django_tables2 import RequestConfig
-
+from lava_results_app.utils import check_request_auth
 from lava_results_app.models import TestSuite, TestCase, TestSet
 from lava.utils.lavatable import LavaView
+
+# pylint: disable=too-many-ancestors,invalid-name
 
 
 class ResultsView(LavaView):
@@ -100,6 +101,7 @@ def testjob(request, job):
 
 def testjob_csv(request, job):
     job = get_object_or_404(TestJob, pk=job)
+    check_request_auth(request, job)
     response = HttpResponse(content_type='text/csv')
     filename = "lava_%s.csv" % job.id
     response['Content-Disposition'] = 'attachment; filename="%s"' % filename
@@ -117,6 +119,7 @@ def testjob_csv(request, job):
 
 def testjob_yaml(request, job):
     job = get_object_or_404(TestJob, pk=job)
+    check_request_auth(request, job)
     response = HttpResponse(content_type='text/yaml')
     filename = "lava_%s.yaml" % job.id
     response['Content-Disposition'] = 'attachment; filename="%s"' % filename
@@ -149,6 +152,7 @@ def suite(request, job, pk):
 
 def suite_csv(request, job, pk):
     job = get_object_or_404(TestJob, pk=job)
+    check_request_auth(request, job)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     response = HttpResponse(content_type='text/csv')
     filename = "lava_%s.csv" % test_suite.name
@@ -176,6 +180,7 @@ def suite_csv_stream(request, job, pk):
     """
     job = get_object_or_404(TestJob, pk=job)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
+    check_request_auth(request, job)
 
     pseudo_buffer = StreamEcho()
     writer = csv.writer(pseudo_buffer)
@@ -189,6 +194,7 @@ def suite_csv_stream(request, job, pk):
 
 def suite_yaml(request, job, pk):
     job = get_object_or_404(TestJob, pk=job)
+    check_request_auth(request, job)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     response = HttpResponse(content_type='text/yaml')
     filename = "lava_%s.yaml" % test_suite.name
