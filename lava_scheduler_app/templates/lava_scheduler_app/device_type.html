@@ -15,9 +15,17 @@
   <div class="alert alert-info">
     <button type="button" class="close" data-dismiss="alert">&times;</button>
     <strong>The '{{ device_type }}' device type has no
-      <a href="{{ STATIC_URL }}docs/glossary.html#term-health-check">health check job</a> in the
+    {% if not 'HIDE_V2_DOCS'|get_settings %}
+      <a href="{{ STATIC_URL }}docs/v2/glossary.html#term-health-check">health check job</a> in the
+    {% else %}
+      <a href="{{ STATIC_URL }}docs/v1/glossary.html#term-health-check">health check job</a> in the
+    {% endif %}
       <a href="{{ STATIC_URL }}../admin/lava_scheduler_app/devicetype/{{ device_type.hostname }}">admin interface</a>.</strong>
-    Consider adding a <a href="{{ STATIC_URL }}docs/healthchecks.html#health-checks">health check definition</a>.
+    {% if not 'HIDE_V2_DOCS'|get_settings %}
+    Consider adding a <a href="{{ STATIC_URL }}docs/v2/healthchecks.html#health-checks">health check definition</a>.
+    {% else %}
+    Consider adding a <a href="{{ STATIC_URL }}docs/v1/healthchecks.html#health-checks">health check definition</a>.
+    {% endif %}
   </div>
 {% endif %}
 <div>
