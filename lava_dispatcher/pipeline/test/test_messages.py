@@ -68,6 +68,7 @@ class FakeConnection(object):  # pylint: disable=too-few-public-methods
         self.prompt_str = prompt_str
         self.check_char = '#'
         self.timeout = 30
+        self.connected = True
 
     def sendline(self, s='', delay=0, send_char=True):  # pylint: disable=invalid-name
         pass

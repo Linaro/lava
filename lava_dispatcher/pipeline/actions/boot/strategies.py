@@ -32,3 +32,4 @@ from lava_dispatcher.pipeline.actions.boot.uefi_menu import UefiMenu
 from lava_dispatcher.pipeline.actions.boot.lxc import BootLxc
 from lava_dispatcher.pipeline.actions.boot.ipxe import IPXE
 from lava_dispatcher.pipeline.actions.boot.grub import Grub
+from lava_dispatcher.pipeline.actions.boot.iso import BootIsoInstaller

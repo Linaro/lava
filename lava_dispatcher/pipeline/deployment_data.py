@@ -72,7 +72,6 @@ class deployment_data_dict(object):  # pylint: disable=invalid-name, too-few-pub
         """
         return self.__data__.keys()
 
-# FIXME: harmonise the prompt management to avoid duplication with device configuration
 android = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1': "root@linaro# ",
     'TESTER_PS1_PATTERN': "root@linaro# ",
@@ -158,6 +157,18 @@ debian_installer = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1_INCLUDES_RC': True,
     'boot_cmds': 'boot_cmds',
     'installer_extra_cmd': 'cp -r /lava-* /target/ || true ;',
+
+    # DEBIAN_INSTALLER preseeeding
+    'locale': 'debian-installer/locale=en_US',
+    'keymaps': 'console-keymaps-at/keymap=us keyboard-configuration/xkb-keymap=us',
+    'netcfg': 'netcfg/choose_interface=auto netcfg/get_hostname=debian netcfg/get_domain=',
+    'base': 'auto=true install noshell debug verbose BOOT_DEBUG=1 DEBIAN_FRONTEND=text ',
+    'prompts': [
+        'ERROR: Installation step failed',
+        'Press enter to continue',
+        'reboot: Power down',
+        'Requesting system poweroff'
+    ],
 
     # for lava-test-shell
     'distro': 'debian',

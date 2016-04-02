@@ -138,6 +138,13 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             filename = os.path.join(path, '.'.join(parts[:-1]))
         return filename, suffix
 
+    def cleanup(self):
+        nested_tmp_dir = os.path.join(self.path, self.key)
+        if os.path.exists(nested_tmp_dir):
+            self.logger.info("%s %s cleanup", self.name, nested_tmp_dir)
+            shutil.rmtree(nested_tmp_dir)
+        super(DownloadHandler, self).cleanup()
+
     @contextlib.contextmanager
     def _decompressor_stream(self):  # pylint: disable=too-many-branches
         dwnld_file = None
@@ -155,6 +162,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         if os.path.exists(fname):
             nested_tmp_dir = os.path.join(self.path, self.key)
             if os.path.exists(nested_tmp_dir):
+                self.logger.warning("Cleaning up existing directory: %s", nested_tmp_dir)
                 shutil.rmtree(nested_tmp_dir)
             os.makedirs(nested_tmp_dir)
             fname = os.path.join(nested_tmp_dir, os.path.basename(fname))
@@ -302,6 +310,9 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         # certain deployments need prefixes set
         if self.parameters['to'] == 'tftp':
             suffix = self.data['tftp-deploy'].get('suffix', '')
+            self.set_common_data('file', self.key, os.path.join(suffix, os.path.basename(fname)))
+        elif self.parameters['to'] == 'iso-installer':
+            suffix = self.data['deploy-iso-installer'].get('suffix', '')
             self.set_common_data('file', self.key, os.path.join(suffix, os.path.basename(fname)))
         else:
             self.set_common_data('file', self.key, fname)

@@ -123,7 +123,7 @@ class CallQemuAction(Action):
         except AttributeError as exc:
             raise InfrastructureError(exc)
         except (KeyError, TypeError):
-            self.errors = "Invalid parameters"
+            self.errors = "Invalid parameters for %s" % self.name
         substitutions = {}
         commands = []
         for action in self.data['download_action'].keys():

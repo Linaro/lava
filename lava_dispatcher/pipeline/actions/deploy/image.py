@@ -100,6 +100,8 @@ class DeployImages(Deployment):
         """
         if device['device_type'] != 'qemu':
             return False
+        if parameters['to'] != 'tmpfs':
+            return False
         # lookup if the job parameters match the available device methods
         if 'images' not in parameters:
             # python3 compatible

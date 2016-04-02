@@ -140,3 +140,41 @@ def prepare_guestfs(output, overlay, size):
     os.unlink(guest_tar)
     guest.umount(guest_device)
     return guest.blkid(guest_device)['UUID']
+
+
+def prepare_install_base(output, size):
+    """
+    Create an empty image of the specified size (in bytes),
+    ready for an installer to partition, create filesystem(s)
+    and install files.
+    """
+    guest = guestfs.GuestFS(python_return_dict=True)
+    guest.disk_create(output, "raw", size)
+    guest.add_drive_opts(output, format="raw", readonly=False)
+    guest.launch()
+    devices = guest.list_devices()
+    if len(devices) != 1:
+        raise RuntimeError("Unable to prepare guestfs")
+    guest.shutdown()
+
+
+def copy_out_files(image, filenames, destination):
+    """
+    Copies a list of files out of the image to the specified
+    destination which must exist. Launching the guestfs is
+    expensive, so copy out all files in one operation. The
+    filenames list must contain unique filenames even if the
+    source files exist in separate directories.
+    """
+    if not isinstance(filenames, list):
+        raise RuntimeError('filenames must be a list')
+    guest = guestfs.GuestFS(python_return_dict=True)
+    guest.add_drive_ro(image)
+    guest.launch()
+    devices = guest.list_devices()
+    if len(devices) != 1:
+        raise RuntimeError("Unable to prepare guestfs")
+    guest.mount_ro(devices[0], '/')
+    for filename in filenames:
+        guest.copy_out(filename, destination)
+    guest.shutdown()

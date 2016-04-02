@@ -124,3 +124,8 @@ KERNEL_EXCEPTION_MSG = '-+\[ cut here \]-+\s+(.*\s+-+\[ end trace (\w*) \]-+)'
 KERNEL_FAULT_MSG = '(Unhandled fault.*)\r\n'
 # panic
 KERNEL_PANIC_MSG = "Kernel panic - (.*) end Kernel panic"
+
+# qemu installer size limit in Mb
+# (i.e. size * 1024 * 1024)
+INSTALLER_IMAGE_MAX_SIZE = 8 * 1024  # 8Gb
+INSTALLER_QUIET_MSG = 'Loading initial ramdisk'
