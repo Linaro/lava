@@ -61,7 +61,7 @@ Depends: lava-server, lava-server-doc, lava-dispatcher, lava-coordinator,
  lava-dev, lava-tool, lavapdu-client, linaro-image-tools, ntp | ntpdate,
  tftpd-hpa, openssh-client, schroot, lxc, bridge-utils, ${misc:Depends}
 Recommends: lavapdu-daemon
-Suggests: vmdebootstrap, android-tools-adb, android-tools-fastboot
+Suggests: vmdebootstrap, adb | android-tools-adb, fastboot | android-tools-fastboot
 Description: Linaro Automated Validation Architecture metapackage
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
@@ -81,13 +81,13 @@ Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
  debhelper (>= 8.0.0), fakeroot, git, libdistro-info-perl,
  node-uglify, libjs-excanvas, libjs-jquery-cookie, libjs-jquery,
  libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), libjs-jquery-ui,
- django-testscenarios, android-tools-adb, android-tools-fastboot,
  python | python-all | python-dev | python-all-dev, pep8 | python-pep8,
  python-sphinx (>= 1.0.7+dfsg) | python3-sphinx, po-debconf,
  python-mocker, python-setuptools, python-versiontools, python-yaml,
- docbook-xsl, xsltproc, python-mock,
+ docbook-xsl, xsltproc, python-mock,  django-testscenarios,
  ${python:Depends}, ${misc:Depends}
-Recommends: sbuild, python-django-extensions, python-pydot
+Recommends: sbuild, python-django-extensions, python-pydot,
+ adb | android-tools-adb, fastboot | android-tools-fastboot,
 Description: Linaro Automated Validation Architecture developer support
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
