@@ -105,6 +105,8 @@ class FastbootAction(Action):
     def validate(self):
         super(FastbootAction, self).validate()
         self.errors = infrastructure_error('fastboot')
+        if infrastructure_error('fastboot'):
+            self.errors = "Unable to find 'fastboot' command"
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
             if self.job.device['fastboot_serial_number'] == '0000000000':
@@ -135,6 +137,8 @@ class AdbOverlayUnpack(Action):
             self.errors = "device adb serial number missing"
             if self.job.device['adb_serial_number'] == '0000000000':
                 self.errors = "device adb serial number unset"
+        if infrastructure_error('adb'):
+            self.errors = "Unable to find 'adb' command"
 
     def run(self, connection, args=None):
         connection = super(AdbOverlayUnpack, self).run(connection, args)

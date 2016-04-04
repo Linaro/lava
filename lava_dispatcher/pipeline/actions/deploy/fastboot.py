@@ -102,7 +102,11 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
     def validate(self):
         super(FastbootAction, self).validate()
         self.errors = infrastructure_error('adb')
+        if infrastructure_error('adb'):
+            self.errors = "Unable to find 'adb' command"
         self.errors = infrastructure_error('fastboot')
+        if infrastructure_error('fastboot'):
+            self.errors = "Unable to find 'fastboot' command"
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
         self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
 
