@@ -12,6 +12,7 @@ import datetime
 import logging
 import simplejson
 import django
+from traceback import format_exc
 from django.db.models import Q
 from django.db import IntegrityError, transaction
 from django.contrib.auth.models import User
@@ -775,6 +776,7 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
         except (
                 AttributeError, JobError, NotImplementedError,
                 KeyError, TypeError, RuntimeError) as exc:
+            exc = format_exc(exc)
             logger.error('[%d] parser error: %s', check_job.id, exc)
             fail_job(check_job, fail_msg=exc)
             return None
@@ -782,6 +784,7 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             logger.info("[%d] Validating actions", check_job.id)
             pipeline_job.pipeline.validate_actions()
         except (AttributeError, JobError, KeyError, TypeError, RuntimeError) as exc:
+            exc = format_exc(exc)
             logger.error({device: exc})
             fail_job(check_job, fail_msg=exc)
             return None
