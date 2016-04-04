@@ -335,6 +335,9 @@ the command line or the & will likely be interpreted by your shell::
 
  $ curl 'http://localhost/results/123/singlenode-advanced/yaml?user=user.name&token=yourtokentextgoeshereononeverylongline'
 
+Use the **Username** as specified in `your Profile </me>`_ - this may differ to the
+username you use when logging in with LDAP.
+
 .. caution:: Take care of your tokens - avoid using personal tokens in scripts
    and test definitions or other files that end up in public git repositories.
    Wherever supported, use ``https://`` when using a token.
