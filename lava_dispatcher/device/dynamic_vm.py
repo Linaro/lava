@@ -43,6 +43,7 @@ class DynamicVmTarget(Target):
         'kvm': lambda: kvm_adapter,
         'kvm-arm': lambda: kvm_adapter,
         'kvm-aarch64': lambda: kvm_adapter,
+        'kvm-aarch32': lambda: kvm_adapter,
     }
 
     def __init__(self, context, config):
