@@ -153,7 +153,7 @@ def testjob_submission(job_definition, user, check_device=None):
     Single submission frontend for JSON or YAML
     :param job_definition: string of the job submission
     :param user: user attempting the submission
-    :param: check_device: set specified device as the target
+    :param check_device: set specified device as the target
     **and** thereby set job as a health check job. (JSON only)
     :return: a job or a list of jobs
     :raises: SubmissionException, Device.DoesNotExist,
@@ -216,6 +216,7 @@ def check_device_and_job(job, device):
     the database when jobs terminate. Monitor and remove once
     V1 scheduling has ceased.
 
+    :param job: The job being processed.
     :param device: the device about the be assigned to the job.
     :return: the device if OK or None on error.
     """
@@ -256,10 +257,13 @@ def find_device_for_job(job, device_list):  # pylint: disable=too-many-branches
         return None
 
     logger = logging.getLogger('dispatcher-master')
-    # forced health check support
+    # health check support
     if job.health_check is True:
-        if job.requested_device and job.requested_device.status == Device.OFFLINE:
-            logger.debug("[%s] - assigning %s for forced health check.", job.id, job.requested_device)
+        if job.requested_device:
+            if job.requested_device.status == Device.OFFLINE:
+                logger.debug("[%s] - assigning %s for forced health check.", job.id, job.requested_device)
+            else:
+                logger.debug("[%s] - assigning %s for health check.", job.id, job.requested_device)
             return job.requested_device
     for device in device_list:
         if device != job.requested_device and device.device_type != job.requested_device_type:
@@ -274,7 +278,7 @@ def find_device_for_job(job, device_list):  # pylint: disable=too-many-branches
             if tmp_dev and job.vm_group != tmp_dev[0].vm_group:
                 continue
         # these are the principal requirements and checks.
-        # for pipeline, requested_device is only used for automated health checks
+        # for pipeline, requested_device is only used for automated health checks, handled above.
         # device_type, requested_device and requested_device_type have been retrieved with select_related
         # tags.all() has been retrieved using prefetch_related
         if device == job.requested_device or device.device_type == job.requested_device_type:
