@@ -21,7 +21,7 @@ class ArmProbe(SignalHandler):
         else:
             self.post_process_script = download_image(
                 post_process_script, testdef_obj.context, self.scratch_dir)
-        os.chmod(self.post_process_script, 755)  # make sure we can execute it
+        os.chmod(self.post_process_script, 0o755)  # make sure we can execute it
 
         # build up the command we'll use for running the probe
         config = testdef_obj.context.client.config
