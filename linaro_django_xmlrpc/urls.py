@@ -21,7 +21,8 @@ from django.conf.urls import patterns, url, handler500, handler404
 
 from linaro_django_xmlrpc.globals import mapper
 from linaro_django_xmlrpc.views import (
-    handler, create_token, delete_token, edit_token, tokens,
+    handler, create_token, delete_token,
+    delete_unused_tokens, edit_token, tokens,
 )
 
 
@@ -42,6 +43,7 @@ token_urlpatterns = [
     url(r'^tokens/$', tokens, name='linaro_django_xmlrpc_tokens'),
     url(r'^tokens/create/$', create_token),
     url(r'^tokens/(?P<object_id>\d+)/delete/$', delete_token),
+    url(r'^tokens/delete_unused/$', delete_unused_tokens),
     url(r'^tokens/(?P<object_id>\d+)/edit/$', edit_token)]
 
 urlpatterns = default_mapper_urlpatterns + token_urlpatterns
