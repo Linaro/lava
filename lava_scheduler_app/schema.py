@@ -115,6 +115,12 @@ def _job_protocols_schema():
                     ],
                 }
             }
+        },
+        'lava-lxc': {
+            'name': str,
+            'distribution': str,
+            'release': str,
+            'arch': str
         }
     })
 

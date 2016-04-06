@@ -80,7 +80,7 @@ def is_deprecated_json(data):
         validate_job_data(ob)
     except (AttributeError, simplejson.JSONDecodeError, ValueError):
         deprecated_json = False
-    except (JSONDataError, JSONDecodeError, ValueError) as exc:
+    except (JSONDataError, simplejson.JSONDecodeError, ValueError) as exc:
         raise SubmissionException("Decoding job submission failed: %s." % exc)
     return deprecated_json
 
