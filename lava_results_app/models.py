@@ -342,9 +342,10 @@ class TestCase(models.Model, Queryable):
         choices=RESULT_CHOICES
     )
 
-    measurement = models.CharField(
+    measurement = models.DecimalField(
+        decimal_places=10,
+        max_digits=30,
         blank=True,
-        max_length=512,
         help_text=_(u"Arbitrary value that was measured as a part of this test."),
         null=True,
         verbose_name=_(u"Measurement"),
