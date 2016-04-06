@@ -440,7 +440,7 @@ class GzipFileSystemStorage(FileSystemStorage):
                 finally:
                     locks.unlock(fd)
                     gz_file.close()
-            except OSError, e:
+            except OSError as e:
                 if e.errno == errno.EEXIST:
                     # Ooops, the file exists. We need a new file name.
                     name = self.get_available_name(name)

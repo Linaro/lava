@@ -104,7 +104,7 @@ def validate_job_json(data):
     try:
         ob = simplejson.loads(data)
         validate_job_data(ob)
-    except ValueError, e:
+    except ValueError as e:
         raise ValidationError(e)
 
 

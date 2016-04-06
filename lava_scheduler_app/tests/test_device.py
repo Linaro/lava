@@ -469,7 +469,7 @@ class DeviceTypeTest(TestCaseWithFactory):
                 data = template.render()
                 yaml_data = yaml.load(data)
             except yaml.YAMLError as exc:
-                print data  # for easier debugging - use the online yaml parser
+                print(data)  # for easier debugging - use the online yaml parser
                 self.fail("%s: %s" % (template_name, exc))
             self.assertIsInstance(yaml_data, dict)
 
