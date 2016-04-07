@@ -128,7 +128,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
             job = parser.parse(sample_job_data, self.device, 4212, None, output_dir='/tmp/')
         ret = vprotocol.configure(self.device, job)
         if not ret:
-            print vprotocol.errors
+            print(vprotocol.errors)
         self.assertTrue(ret)
         nodes = {}
         for name in vprotocol.names:
@@ -212,27 +212,27 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
             "client_name": socket.gethostname(),
         }
         count = 0
-        print "\nTesting vland live using connections."
+        print("\nTesting vland live using connections.")
         for friendly_name in vprotocol.parameters['protocols'][vprotocol.name]:
-            print "Processing VLAN: %s" % friendly_name
+            print("Processing VLAN: %s" % friendly_name)
             vprotocol.names[friendly_name] = vprotocol.base_group + '%02d' % count
             count += 1
             vprotocol.vlans[friendly_name], tag = vprotocol._create_vlan(friendly_name)
-            print "[%s] Created vlan with id %s" % (friendly_name, vprotocol.vlans[friendly_name])
-            print "[%s] tag: %s" % (friendly_name, tag)
+            print("[%s] Created vlan with id %s" % (friendly_name, vprotocol.vlans[friendly_name]))
+            print("[%s] tag: %s" % (friendly_name, tag))
             for hostname in vprotocol.parameters['protocols'][vprotocol.name][friendly_name]:
                 params = vprotocol.parameters['protocols'][vprotocol.name][friendly_name][hostname]
-                print "[%s] to use switch %s and port %s" % (friendly_name, params['switch'], params['port'])
+                print("[%s] to use switch %s and port %s" % (friendly_name, params['switch'], params['port']))
                 self.assertIn('switch', params)
                 self.assertIn('port', params)
                 self.assertIsNotNone(params['switch'])
                 self.assertIsNotNone(params['port'])
                 switch_id = vprotocol._lookup_switch_id(params['switch'])
                 self.assertIsNotNone(switch_id)
-                print "[%s] Using switch ID %s" % (friendly_name, switch_id)
+                print("[%s] Using switch ID %s" % (friendly_name, switch_id))
                 port_id = vprotocol._lookup_port_id(switch_id, params['port'])
-                print "%s Looked up port ID %s for %s" % (friendly_name, port_id, params['port'])
+                print("%s Looked up port ID %s for %s" % (friendly_name, port_id, params['port']))
                 vprotocol._set_port_onto_vlan(vprotocol.vlans[friendly_name], port_id)
                 vprotocol.ports.append(port_id)
-        print "Finalising - tearing down vlans"
+        print("Finalising - tearing down vlans")
         vprotocol.finalise_protocol()
