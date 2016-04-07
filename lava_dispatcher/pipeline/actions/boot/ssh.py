@@ -209,7 +209,8 @@ class ScpOverlayUnpack(Action):
         if not connection:
             raise RuntimeError("Cannot unpack, no connection available.")
         filename = self.get_common_data(self.name, 'overlay')
-        cmd = "tar --warning no-timestamp -C / -xaf /%s" % filename
+        tar_flags = self.get_common_data('scp-overlay', 'tar_flags')
+        cmd = "tar %s -C / -xzf /%s" % (tar_flags, filename)
         connection.sendline(cmd)
         self.wait(connection)
         self.data['boot-result'] = 'failed' if self.errors else 'success'

@@ -154,6 +154,13 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertNotIn('ssh', scp.scp)
         self.assertFalse(scp.primary)
 
+    def test_tar_command(self):
+        self.job.validate()
+        login = [item for item in self.job.pipeline.actions if item.name == 'login-ssh'][0]
+        tar_flags = login.get_common_data('scp-overlay', 'tar_flags')
+        self.assertIsNotNone(tar_flags)
+        self.assertEqual('--warning no-timestamp', tar_flags)
+
     @unittest.skipIf(infrastructure_error('schroot'), "schroot not installed")
     def test_schroot_params(self):
         self.assertIn('schroot-login', [action.name for action in self.job.pipeline.actions])

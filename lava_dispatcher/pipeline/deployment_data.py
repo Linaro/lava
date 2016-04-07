@@ -83,6 +83,7 @@ ubuntu = deployment_data_dict({  # pylint: disable=invalid-name
 
     # for lava-test-shell
     'distro': 'ubuntu',
+    'tar_flags': '--warning no-timestamp',
     'lava_test_sh_cmd': '/bin/bash',
     'lava_test_dir': '/lava-%s',
     'lava_test_results_part_attr': 'root_part',
@@ -98,6 +99,7 @@ debian = deployment_data_dict({  # pylint: disable=invalid-name
 
     # for lava-test-shell
     'distro': 'debian',
+    'tar_flags': '--warning no-timestamp',
     'lava_test_sh_cmd': '/bin/bash',
     'lava_test_dir': '/lava-%s',
     'lava_test_results_part_attr': 'root_part',
@@ -129,6 +131,7 @@ fedora = deployment_data_dict({  # pylint: disable=invalid-name
 
     # for lava-test-shell
     'distro': 'fedora',
+    'tar_flags': '--warning no-timestamp',
     'lava_test_sh_cmd': '/bin/bash',
     'lava_test_dir': '/lava-%s',
     'lava_test_results_part_attr': 'root_part',
