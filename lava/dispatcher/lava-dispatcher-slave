@@ -65,9 +65,8 @@ SEND_QUEUE = 10
 # (at least until the slave is rebooted).
 TMP_DIR = os.path.join(tempfile.gettempdir(), "lava-dispatcher/slave/")
 
-# Setup the log.
+# Create the logger that will be configured after arguments parsing
 FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
-logging.basicConfig(format=FORMAT, filename='/var/log/lava-dispatcher/lava-slave.log')
 LOG = logging.getLogger("dispatcher-slave")
 
 
@@ -279,6 +278,9 @@ def main():
     parser.add_argument(
         "--socket-addr", type=str, help="Log socket", required=True)
     parser.add_argument(
+        "--log-file", type=str, help="Log file for the slave logs",
+        default="/var/log/lava-dispatcher/lava-slave.log")
+    parser.add_argument(
         "--level", "-l",
         type=str,
         default="INFO",
@@ -293,10 +295,19 @@ def main():
     )
     args = parser.parse_args()
 
+    log_file = args.log_file
     log_level = args.level
     timeout = args.timeout
     host_name = args.hostname
     master_uri = args.master
+
+    # Configure the log handler
+    if log_file == "-":
+        handler = logging.StreamHandler(sys.stdout)
+    else:
+        handler = logging.FileHandler(log_file, "a")
+    handler.setFormatter(logging.Formatter(FORMAT))
+    LOG.addHandler(handler)
 
     # Set-up the LOG level
     if log_level == "ERROR":
