@@ -140,7 +140,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Handle embedded javascript')
     parser.add_argument(
-        '-f', '--filename',
+        '-f', '--filename', required=True,
         help='YAML file describing embedded javascript')
     parser.add_argument(
         '-r', '--remove',
@@ -150,9 +150,6 @@ def main():
         action='store_true', help='Only echo the commands')
 
     args = parser.parse_args()
-    if not args.filename and args.simulate:
-        print "Please provide a suitable YAML file"
-        sys.exit(1)
     data = yaml.load(open(args.filename, 'r'))
     # only have data for debian-based packages so far.
     dependencies = handle_embedded('debian', data, os.getcwd(), args.simulate)
