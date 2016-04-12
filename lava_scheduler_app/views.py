@@ -698,41 +698,46 @@ def device_type_detail(request, pk):
         visible = filter_device_types(request.user)
         if dt.name not in visible:
             raise Http404('No device type matches the given query.')
+
+    # Get some test job statistics
+    now = timezone.now().date()
+    devices = list(Device.objects.filter(device_type=dt) \
+                    .values_list('pk', flat=True))
     daily_complete = TestJob.objects.filter(
-        actual_device__in=Device.objects.filter(device_type=dt),
+        actual_device__in=devices,
         health_check=True,
-        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=1)),
-        submit_time__lt=timezone.now().date(),
+        submit_time__gte=(now - datetime.timedelta(days=1)),
+        submit_time__lt=now,
         status=TestJob.COMPLETE).count()
     daily_failed = TestJob.objects.filter(
-        actual_device__in=Device.objects.filter(device_type=dt),
+        actual_device__in=devices,
         health_check=True,
-        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=1)),
-        submit_time__lt=timezone.now().date(),
+        submit_time__gte=(now - datetime.timedelta(days=1)),
+        submit_time__lt=now,
         status=TestJob.INCOMPLETE).count()
     weekly_complete = TestJob.objects.filter(
-        actual_device__in=Device.objects.filter(device_type=dt),
+        actual_device__in=devices,
         health_check=True,
-        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=7)),
-        submit_time__lt=timezone.now().date(),
+        submit_time__gte=(now - datetime.timedelta(days=7)),
+        submit_time__lt=now,
         status=TestJob.COMPLETE).count()
     weekly_failed = TestJob.objects.filter(
-        actual_device__in=Device.objects.filter(device_type=dt),
+        actual_device__in=devices,
         health_check=True,
-        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=7)),
-        submit_time__lt=timezone.now().date(),
+        submit_time__gte=(now - datetime.timedelta(days=7)),
+        submit_time__lt=now,
         status=TestJob.INCOMPLETE).count()
     monthly_complete = TestJob.objects.filter(
-        actual_device__in=Device.objects.filter(device_type=dt),
+        actual_device__in=devices,
         health_check=True,
-        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=30)),
-        submit_time__lt=timezone.now().date(),
+        submit_time__gte=(now - datetime.timedelta(days=30)),
+        submit_time__lt=now,
         status=TestJob.COMPLETE).count()
     monthly_failed = TestJob.objects.filter(
-        actual_device__in=Device.objects.filter(device_type=dt),
+        actual_device__in=devices,
         health_check=True,
-        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=30)),
-        submit_time__lt=timezone.now().date(),
+        submit_time__gte=(now - datetime.timedelta(days=30)),
+        submit_time__lt=now,
         status=TestJob.INCOMPLETE).count()
     health_summary_data = [{
         "Duration": "24hours",
@@ -763,7 +768,7 @@ def device_type_detail(request, pk):
     dt = get_object_or_404(DeviceType, pk=dt)
     dt_jobs_ptable = OverviewJobsTable(
         dt_jobs_data.get_table_data(prefix)
-        .filter(actual_device__in=Device.objects.filter(device_type=dt)),
+        .filter(actual_device__in=devices),
         prefix=prefix,
     )
     config = RequestConfig(request, paginate={"per_page": dt_jobs_ptable.length})
