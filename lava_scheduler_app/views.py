@@ -693,16 +693,21 @@ class NoDTDeviceView(DeviceTableView):
 
 @BreadCrumb("Device Type {pk}", parent=index, needs=['pk'])
 def device_type_detail(request, pk):
-    dt = get_object_or_404(DeviceType, pk=pk)
+    try:
+        dt = DeviceType.objects \
+            .select_related('architecture', 'bits', 'processor') \
+            .get(pk=pk)
+    except DeviceType.DoesNotExist:
+        raise Http404()
+    # Check that at least one device is visible to the current user
     if dt.owners_only:
-        visible = filter_device_types(request.user)
-        if dt.name not in visible:
+        if dt.num_devices_visible_to(request.user) == 0:
             raise Http404('No device type matches the given query.')
 
     # Get some test job statistics
     now = timezone.now().date()
-    devices = list(Device.objects.filter(device_type=dt) \
-                    .values_list('pk', flat=True))
+    devices = list(Device.objects.filter(device_type=dt)
+                   .values_list('pk', flat=True))
     daily_complete = TestJob.objects.filter(
         actual_device__in=devices,
         health_check=True,
@@ -809,7 +814,7 @@ def device_type_detail(request, pk):
 
     if dt.health_check_job == "":
         health_freq_str = ""
-    elif not list(Device.objects.filter(Q(device_type=dt), ~Q(status=Device.RETIRED))):
+    elif not Device.objects.filter(Q(device_type=dt), ~Q(status=Device.RETIRED)).count():
         health_freq_str = ""
     elif dt.health_denominator == DeviceType.HEALTH_PER_JOB:
         health_freq_str = "one every %d jobs" % dt.health_frequency
