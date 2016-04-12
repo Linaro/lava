@@ -403,3 +403,68 @@ To build an ``armhf`` package of lava-dispatcher using the developer
 scripts, use::
 
  $ /usr/share/lava-server/debian-dev-build.sh -p lava-dispatcher -a armhf
+
+Debugging Django issues
+***********************
+
+When trying to investigate LAVA web pages generation we advise you to use
+`django-debug-toolbar <https://django-debug-toolbar.readthedocs.org>`_. This is
+a Django application that provide more information on how the page was
+rendered, including:
+
+* SQL queries
+* templates involved
+* HTTP headers
+
+For instance, the toolbar is a really helpful resource to debug the Django
+:abbr:`ORM (Object Relational Model)`.
+
+Installing
+==========
+
+On a Debian system, just run::
+
+  $ apt-get install python-django-debug-toolbar
+
+Configuration
+=============
+
+You should add ``debug_toolbar`` to ``INSTALLED_APPS`` in
+``lava_server/settings/common.py``. This should become::
+
+  INSTALLED_APPS = [
+      'django.contrib.auth',
+      'django.contrib.contenttypes',
+      [...]
+      'debug_toolbar',
+  ]
+
+In order to see the toolbar, you should also set `INTERNAL_IPS
+<https://docs.djangoproject.com/en/1.9/ref/settings/#internal-ips>`_
+to you client IPs. For instance::
+
+  INTERNAL_IPS = ['127.0.0.1', '::1']
+
+These value depends on your setup. But if you don't see the toolbar
+that's the first think to look at.
+
+Apache then needs access to django-debug-toolbar CSS and JS files::
+
+  cd /usr/share/lava-server/static/
+  ln -s /usr/lib/python2.7/dist-packages/debug_toolbar/static/debug_toolbar .
+
+In ``/etc/lava-server/settings.conf`` remove the reference to htdocs
+in ``STATICFILES_DIRS``. Django-debug-toolbar does check that all
+directories listed in ``STATICFILES_DIRS`` exists. While this is only
+a leftover from previous versions of LAVA installer that is not
+needed anymore.
+
+Performance overhead
+====================
+
+Keep in mind that django-debug-toolbar has some overhead on the webpage
+generation and should only be used while debugging.
+
+Django-debug-toolbar can be disabled, while not debugging, by commenting out
+'debug_toolbar' from ``INSTALLED_APPS`` or by changing the ``̀DEBUG`` level in
+``/etc/lava-server/settings.conf`` to ``DEBUG: false``.
