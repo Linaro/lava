@@ -770,7 +770,6 @@ def device_type_detail(request, pk):
 
     prefix = "dt_"
     dt_jobs_data = AllJobsView(request, model=TestJob, table_class=OverviewJobsTable)
-    dt = get_object_or_404(DeviceType, pk=dt)
     dt_jobs_ptable = OverviewJobsTable(
         dt_jobs_data.get_table_data(prefix)
         .filter(actual_device__in=devices),
@@ -847,7 +846,7 @@ def device_type_detail(request, pk):
                 Q(requested_device_type=dt) |
                 Q(requested_device__in=Device.objects.filter(device_type=dt))).count(),
             'idle_num': Device.objects.filter(device_type=dt, status=Device.IDLE).count(),
-            'offline_num': Device.objects.filter(device_type=dt, status__in=[Device.OFFLINE]).count(),
+            'offline_num': Device.objects.filter(device_type=dt, status=Device.OFFLINE).count(),
             'retired_num': Device.objects.filter(device_type=dt, status=Device.RETIRED).count(),
             'is_admin': request.user.has_perm('lava_scheduler_app.change_devicetype'),
             'health_job_summary_table': health_table,
@@ -2213,8 +2212,6 @@ def device_detail(request, pk):
 
     times_data = recent_ptable.prepare_times_data(recent_data)
     times_data.update(trans_table.prepare_times_data(trans_data))
-
-    visible = filter_device_types(request.user)
 
     overrides = None
     if device.is_pipeline:
