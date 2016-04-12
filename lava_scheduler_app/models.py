@@ -266,7 +266,9 @@ class DeviceType(models.Model):
         user can see. This may be 0 if the type is hidden
         and the user owns none of the devices of this type.
         """
-        devices = Device.objects.filter(device_type=self)
+        devices = Device.objects.filter(device_type=self) \
+                                .only('user', 'group') \
+                                .select_related('user', 'group')
         if self.owners_only:
             return len([d for d in devices if d.is_owned_by(user)])
         else:
