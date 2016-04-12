@@ -618,7 +618,7 @@ def filter_device_types(user):
     at least one device this user can see.
     """
     visible = []
-    for device_type in DeviceType.objects.filter(display=True):
+    for device_type in DeviceType.objects.filter(display=True).only('name', 'owners_only'):
         if device_type.num_devices_visible_to(user) > 0:
             visible.append(device_type.name)
     return visible
