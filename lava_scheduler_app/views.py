@@ -599,7 +599,7 @@ def get_restricted_job(user, pk):
     if not device_type:
         # dynamic connection - might need to still be restricted?
         return job
-    if len(device_type.devices_visible_to(user)) == 0:
+    if device_type.num_devices_visible_to(user) == 0:
         raise Http404()
     if job.can_view(user):
         return job
@@ -619,7 +619,7 @@ def filter_device_types(user):
     """
     visible = []
     for device_type in DeviceType.objects.filter(display=True):
-        if len(device_type.devices_visible_to(user)) > 0:
+        if device_type.num_devices_visible_to(user) > 0:
             visible.append(device_type.name)
     return visible
 
@@ -2025,7 +2025,7 @@ def edit_transition(request):
 def transition_detail(request, pk):
     transition = get_object_or_404(DeviceStateTransition, id=pk)
     device_type = transition.device.device_type
-    if len(device_type.devices_visible_to(request.user)) == 0:
+    if device_type.num_devices_visible_to(request.user) == 0:
         raise Http404()
     trans_data = TransitionView(request, transition.device, model=DeviceStateTransition, table_class=DeviceTransitionTable)
     trans_table = DeviceTransitionTable(trans_data.get_table_data())

@@ -301,7 +301,7 @@ class SchedulerAPI(ExposedAPI):
         keys = ['busy', 'name', 'idle', 'offline']
 
         for dev_type in DeviceType.objects.all():
-            if len(dev_type.devices_visible_to(self.user)) == 0:
+            if dev_type.num_devices_visible_to(self.user) == 0:
                 continue
             device_type_names.append(dev_type.name)
 

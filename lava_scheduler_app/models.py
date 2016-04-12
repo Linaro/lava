@@ -256,21 +256,21 @@ class DeviceType(models.Model):
     def get_absolute_url(self):
         return ("lava.scheduler.device_type.detail", [self.pk])
 
-    def devices_visible_to(self, user):
+    def num_devices_visible_to(self, user):
         """
         Prepare a list of devices of this DeviceType which
         this user can see. If the DeviceType is not hidden,
         returns all devices of this type.
         :param user: User to check
-        :return: a list of devices of this DeviceType which the
-        user can see. The list may be empty if the type is hidden
+        :return: the number of devices of this DeviceType which the
+        user can see. This may be 0 if the type is hidden
         and the user owns none of the devices of this type.
         """
-        q = list(Device.objects.filter(device_type=self))
+        devices = Device.objects.filter(device_type=self)
         if self.owners_only:
-            return [o for o in q if o.is_owned_by(user)]
+            return len([d for d in devices if d.is_owned_by(user)])
         else:
-            return q
+            return devices.count()
 
 
 class DefaultDeviceOwner(models.Model):
@@ -794,7 +794,7 @@ class Device(RestrictedResource):
         if self.device_type.owners_only:
             if not user:
                 return False
-            if len(self.device_type.devices_visible_to(user)) == 0:
+            if self.device_type.num_devices_visible_to(user) == 0:
                 return False
         if not self.is_public:
             if not user:
@@ -1131,7 +1131,7 @@ def _get_device_type(user, name):
         msg = "Device type '%s' is unavailable. %s" % (name, e)
         logger.error(msg)
         raise DevicesUnavailableException(msg)
-    if len(device_type.devices_visible_to(user)) == 0:
+    if device_type.num_devices_visible_to(user) == 0:
         msg = "Device type '%s' is unavailable to user '%s'" % (name, user.username)
         logger.error(msg)
         raise DevicesUnavailableException(msg)
@@ -1163,7 +1163,7 @@ def _check_device_types(user):
         # dt[1] -> device type count
         device_type = DeviceType.objects.get(name=dt[0])
         if device_type.owners_only:
-            count = len(device_type.devices_visible_to(user))
+            count = device_type.num_devices_visible_to(user)
             if count > 0:
                 all_devices[dt[0]] = count
         if dt[1] > 0:

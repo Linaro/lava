@@ -47,7 +47,7 @@ class RestrictedIDLinkColumn(IDLinkColumn):
         device_type = record.job_device_type()
         if not device_type:
             return pklink(record)
-        if len(device_type.devices_visible_to(user)) == 0:
+        if device_type.num_devices_visible_to(user) == 0:
             return "Unavailable"
         elif record.is_accessible_by(user):
             return pklink(record)
@@ -195,7 +195,7 @@ class JobTable(LavaTable):
             return 'connection'
         else:
             return '-'
-        if len(device_type.devices_visible_to(self.context.get('request').user)) == 0:
+        if device_type.num_devices_visible_to(self.context.get('request').user) == 0:
             return "Unavailable"
         return retval
 
