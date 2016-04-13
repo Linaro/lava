@@ -317,8 +317,6 @@ class CompressRamdisk(Action):
                 self.errors = "Missing architecture string for uboot mkimage support"
                 return
             self.mkimage_arch = self.job.device['actions']['boot']['methods']['u-boot']['parameters']['mkimage_arch']
-        if not self.parameters['ramdisk'].get('compression', None):
-            self.errors = "No ramdisk compression method specified."
 
     def run(self, connection, args=None):
         if not self.parameters.get('ramdisk', None):  # idempotency
