@@ -923,7 +923,7 @@ class Query(models.Model):
                 else:
                     QueryMaterializedView.refresh(self.id)
 
-                self.last_updated = datetime.utcnow()
+                self.last_updated = timezone.now()
                 self.is_changed = False
 
             finally:
