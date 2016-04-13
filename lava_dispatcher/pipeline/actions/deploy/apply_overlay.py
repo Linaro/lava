@@ -306,17 +306,23 @@ class CompressRamdisk(Action):
         self.summary = "compress ramdisk with overlay"
         self.description = "recreate a ramdisk with the overlay applied."
         self.mkimage_arch = None
+        self.add_header = None
 
     def validate(self):
         super(CompressRamdisk, self).validate()
         if not self.parameters.get('ramdisk', None):  # idempotency
             return
-        if self.parameters['ramdisk'].get('add-header', None) == 'u-boot':
-            self.errors = infrastructure_error('mkimage')
-            if 'mkimage_arch' not in self.job.device['actions']['boot']['methods']['u-boot']['parameters']:
-                self.errors = "Missing architecture string for uboot mkimage support"
-                return
-            self.mkimage_arch = self.job.device['actions']['boot']['methods']['u-boot']['parameters']['mkimage_arch']
+        if 'parameters' in self.job.device['actions']['deploy']:
+            self.add_header = self.job.device['actions']['deploy']['parameters'].get('add_header', None)
+            if self.add_header is not None:
+                if self.add_header == 'u-boot':
+                    self.errors = infrastructure_error('mkimage')
+                    if 'mkimage_arch' not in self.job.device['actions']['deploy']['parameters']:
+                        self.errors = "Missing architecture for uboot mkimage support (mkimage_arch in deploy parameters)"
+                        return
+                    self.mkimage_arch = self.job.device['actions']['deploy']['parameters']['mkimage_arch']
+                else:
+                    self.errors = "ramdisk: add_header: unknown header type"
 
     def run(self, connection, args=None):
         if not self.parameters.get('ramdisk', None):  # idempotency
@@ -347,7 +353,7 @@ class CompressRamdisk(Action):
         os.chdir(pwd)
         tftp_dir = os.path.dirname(self.data['download_action']['ramdisk']['file'])
 
-        if self.parameters['ramdisk'].get('add-header', None) == 'u-boot':
+        if self.add_header == 'u-boot':
             ramdisk_uboot = final_file + ".uboot"
             self.logger.debug("Adding RAMdisk u-boot header.")
             cmd = ("mkimage -A %s -T ramdisk -C none -d %s %s" % (self.mkimage_arch, final_file, ramdisk_uboot)).split(' ')
