@@ -294,7 +294,7 @@ def index(request):
         request,
         "lava_scheduler_app/index.html",
         {
-            'device_status': "%d/%d" % _online_total(),
+            'device_status': "%d/%d" % (num_online, num_not_retired),
             'num_online': num_online,
             'num_not_retired': num_not_retired,
             'num_jobs_running': running_jobs_count,
