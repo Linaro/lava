@@ -2158,22 +2158,32 @@ class MyDTHealthHistoryView(JobTableView):
 
 @BreadCrumb("Device {pk}", parent=index, needs=['pk'])
 def device_detail(request, pk):
-    device = get_object_or_404(Device, pk=pk)
+    # Find the device and raise 404 if we are not allowed to see it
+    try:
+        device = Device.objects.select_related('device_type', 'user').get(pk=pk)
+    except Device.DoesNotExist:
+        raise Http404()
+
+    # Any user that can access to a device_type can
+    # see all the devices even if they are for owners_only
     if device.device_type.owners_only:
-        visible = filter_device_types(request.user)
-        if device.device_type.name not in visible:
+        if device.device_type.num_devices_visible_to(request.user) == 0:
             raise Http404('No device matches the given query.')
 
-    devices = Device.objects.filter(device_type_id=device.device_type_id).order_by('hostname')
-    devices_list = [dev[0] for dev in devices.values_list('hostname')]
-    try:
-        next_device = devices_list[devices_list.index(device.hostname) + 1]
-    except IndexError:
-        next_device = None
-    try:
-        previous_device = devices_list[:devices_list.index(device.hostname)].pop()
-    except IndexError:
-        previous_device = None
+    # Find previous and next device
+    devices = Device.objects \
+        .filter(device_type_id=device.device_type_id) \
+        .only('hostname').order_by('hostname')
+    previous_device = None
+    devices_iter = iter(devices)
+    for d in devices_iter:
+        if d.hostname == device.hostname:
+            try:
+                next_device = next(devices_iter).hostname
+            except StopIteration:
+                next_device = None
+            break
+        previous_device = d.hostname
 
     if device.status in [Device.OFFLINE, Device.OFFLINING]:
         try:
