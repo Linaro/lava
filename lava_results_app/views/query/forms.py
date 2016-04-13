@@ -42,7 +42,7 @@ class QueryForm(forms.ModelForm):
     class Meta:
         model = Query
         exclude = ('is_published', 'query_group', 'group', 'is_changed',
-                   'is_updating')
+                   'last_updated', 'is_updating')
         widgets = {'owner': forms.HiddenInput}
 
     def __init__(self, owner, *args, **kwargs):

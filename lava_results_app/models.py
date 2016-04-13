@@ -127,7 +127,8 @@ class QueryMaterializedView(MaterializedView):
         if not cls.view_exists(query.id):  # create view
             sql, params = Query.get_queryset(
                 query.content_type,
-                query.querycondition_set.all()).query.sql_with_params()
+                query.querycondition_set.all(),
+                query.limit).query.sql_with_params()
 
             sql = sql.replace("%s", "'%s'")
             query_str = sql % params
@@ -711,6 +712,13 @@ class Query(models.Model):
         blank=True,
         on_delete=models.CASCADE)
 
+    limit = models.PositiveIntegerField(
+        default=200,
+        validators=[
+            MinValueValidator(20),
+        ],
+        verbose_name='Results limit')
+
     content_type = models.ForeignKey(
         ContentType,
         limit_choices_to=Q(model__in=['testsuite', 'testjob']) | (Q(app_label='lava_results_app') & Q(model='testcase')),
@@ -770,16 +778,21 @@ class Query(models.Model):
     def __unicode__(self):
         return "<Query ~%s/%s>" % (self.owner.username, self.name)
 
-    def get_results(self, user):
+    def get_results(self, user, limit=None):
+        """ Used to get query results for persistant queries.
+
+        Limit parameter should not be used in views where django tables are
+        used.
+        """
 
         omitted_list = QueryOmitResult.objects.filter(
             query=self).values_list('object_id', flat=True)
 
         if self.is_live:
-            return Query.get_queryset(self.content_type,
-                                      self.querycondition_set.all()).exclude(
-                                          id__in=omitted_list).visible_by_user(
-                                              user)
+            return Query.get_queryset(
+                self.content_type,
+                self.querycondition_set.all(),
+                limit).exclude(id__in=omitted_list).visible_by_user(user)
         else:
             if self.content_type.model_class() == TestJob:
                 view = TestJobViewFactory(self)
@@ -789,14 +802,20 @@ class Query(models.Model):
                 view = TestSuiteViewFactory(self)
 
             return view.__class__.objects.all().exclude(
-                id__in=omitted_list).visible_by_user(user)
+                id__in=omitted_list).visible_by_user(user)[:limit]
 
     @classmethod
-    def get_queryset(cls, content_type, conditions):
+    def get_queryset(cls, content_type, conditions, limit=None):
         """ Return list of QuerySet objects for class 'content_type'.
 
         Be mindful when using this method directly as it does not apply the
         visibility rules.
+
+        This method is used for custom and live queries since they are do not
+        have corresponding materialized views.
+
+        Limit parameter should not be used in views where django tables are
+        used.
         """
 
         logger = logging.getLogger('lava_results_app')
@@ -874,7 +893,7 @@ class Query(models.Model):
         query_results = content_type.model_class().objects.filter(
             **filters).distinct().extra(select={
                 '%s_ptr_id' % content_type.model:
-                '%s.id' % content_type.model_class()._meta.db_table})
+                '%s.id' % content_type.model_class()._meta.db_table})[:limit]
 
         return query_results
 

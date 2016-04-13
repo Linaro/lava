@@ -39,6 +39,10 @@
       {{ query.last_updated | default:"Never" }}
       {% endif %}
     </dd>
+    <dt>Results limit</dt>
+    <dd>
+      {{ query.limit }}
+    </dd>
 
     {% if query.is_published %}
     <dt>Query Group label</dt>
