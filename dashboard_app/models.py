@@ -2549,7 +2549,7 @@ class ImageChartFilter(models.Model):
     filter = models.ForeignKey(
         TestRunFilter,
         null=True,
-        on_delete=models.SET_NULL)
+        on_delete=models.CASCADE)
 
     representation = models.CharField(
         max_length=20,
