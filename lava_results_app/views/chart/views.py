@@ -184,7 +184,7 @@ def chart_list(request):
             'terms_data': terms_data,
             'group_tables': group_tables,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(chart_list),
-            'context_help': BreadCrumbTrail.leading_to(chart_list),
+            'context_help': ['lava-queries-charts'],
         }, RequestContext(request)
     )
 
@@ -281,7 +281,7 @@ def chart_detail(request, name):
             'chart_queries': chart.queries.all(),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 chart_detail, name=name),
-            'context_help': BreadCrumbTrail.leading_to(chart_list),
+            'context_help': ['lava-queries-charts'],
         }, RequestContext(request)
     )
 

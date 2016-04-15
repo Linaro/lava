@@ -214,7 +214,7 @@ def query_list(request):
             'terms_data': terms_data,
             'group_tables': group_tables,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(query_list),
-            'context_help': BreadCrumbTrail.leading_to(query_list),
+            'context_help': ['lava-queries-charts'],
         }, RequestContext(request)
     )
 
@@ -264,7 +264,7 @@ def query_display(request, username, name):
             'discrete_data': table.prepare_discrete_data(view),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 query_display, username=username, name=name),
-            'context_help': BreadCrumbTrail.leading_to(query_list),
+            'context_help': ['lava-queries-charts'],
         }, RequestContext(request)
     )
 
@@ -310,7 +310,7 @@ def query_custom(request):
             'discrete_data': table.prepare_discrete_data(view),
 
             'bread_crumb_trail': BreadCrumbTrail.leading_to(query_custom),
-            'context_help': BreadCrumbTrail.leading_to(query_list),
+            'context_help': ['lava-queries-charts'],
         }, RequestContext(request)
     )
 
@@ -332,7 +332,7 @@ def query_detail(request, username, name):
             'view_exists': view_exists,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 query_detail, username=username, name=name),
-            'context_help': BreadCrumbTrail.leading_to(query_list),
+            'context_help': ['lava-queries-charts'],
             'condition_form': QueryConditionForm(
                 instance=None,
                 initial={'query': query, 'table': query.content_type}),
