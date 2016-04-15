@@ -157,6 +157,7 @@ def _device_deploy_schema():
     return Schema({
         'connections': dict,
         Required('methods'): dict,
+        Optional('parameters'): _simple_params(),
     })
 
 

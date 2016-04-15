@@ -23,6 +23,9 @@ device_type: arndale
 
 actions:
   deploy:
+    parameters:
+      add_header: u-boot
+      mkimage_arch: {{ uboot_mkimage_arch|default('arm') }} # string to pass to mkimage -A when adding UBoot headers
     methods:
       tftp:
       ssh:
@@ -43,7 +46,6 @@ actions:
         parameters:
           bootloader_prompt: {{ bootloader_prompt|default('ARNDALE5250') }}
           boot_message: {{ boot_message|default('Booting Linux') }}
-          mkimage_arch: {{ uboot_mkimage_arch|default('arm') }} # string to pass to mkimage -A when adding UBoot headers
           send_char: False
           # interrupt: # character needed to interrupt u-boot, single whitespace by default
           # method specific stanza
