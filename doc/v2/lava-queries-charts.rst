@@ -117,6 +117,18 @@ action will effect all the charts using this query as well, since charts pull
 the results from queries.
 
 
+Deleting a Query
+================
+
+In LAVA, deleting a query does not really delete it, but rather 'archives' it
+so that if user created rather complex query, that query can be restored at a
+later point in time. Archived queries are only visible to superusers in the
+admin section of LAVA. If user tries to create a query with the same name and
+owner (himself) which was already archived, system will inform the user that
+it's already in the system.
+
+
+
 .. _lava_charts:
 
 LAVA Charts

@@ -58,6 +58,31 @@ class QueryForm(forms.ModelForm):
         instance = super(QueryForm, self).save(commit=commit, **kwargs)
         return instance
 
+    def clean(self):
+        form_data = self.cleaned_data
+
+        try:
+            # Existing (or archived) Query validataion.
+            existing_query = Query.objects.get(name=form_data["name"],
+                                               owner=form_data["owner"])
+            if existing_query:
+                if existing_query.is_archived:
+                    self.add_error(
+                        "name",
+                        """ Query already exists but is archived. Please
+                        contact system adminstrator or consult LAVA doc. """)
+                else:
+                    self.add_error(
+                        "name",
+                        "Query with this owner and name already exists.")
+        except KeyError:
+            # form_data will pick up the rest of validation errors.
+            pass
+        except Query.DoesNotExist:
+            pass
+
+        return form_data
+
 
 class QueryConditionForm(forms.ModelForm):
 

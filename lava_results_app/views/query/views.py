@@ -667,6 +667,7 @@ def query_form(request, bread_crumb_trail, instance=None, is_copy=False):
             'is_copy': is_copy,
             'query_name': query_name,
             'form': form,
+            'context_help': ['lava-queries-charts'],
         }, RequestContext(request))
 
 
