@@ -73,10 +73,12 @@ The local version is built (using ``./version.py``) from these components:
 
    $ git tag --sort -v:refname|head -n1
    2015.12
+
 * incremental revision list count::
 
    $ git rev-list --count HEAD
    5451
+
 * latest git hash::
 
    $ git rev-parse --short HEAD
@@ -429,27 +431,48 @@ On a Debian system, just run::
 Configuration
 =============
 
-You should add ``debug_toolbar`` to ``INSTALLED_APPS`` in
-``lava_server/settings/common.py``. This should become::
+Once the ``python-django-debug-toolbar`` package is installed, the toolbar
+needs to be enabled in the instance. Two settings are required in
+``/etc/lava-server/settings.conf``
 
-  INSTALLED_APPS = [
-      'django.contrib.auth',
-      'django.contrib.contenttypes',
-      [...]
-      'debug_toolbar',
-  ]
+* ``"DEBUG": true,``
+* ``"USE_DEBUG_TOOLBAR": true,``
 
-In order to see the toolbar, you should also set `INTERNAL_IPS
-<https://docs.djangoproject.com/en/1.9/ref/settings/#internal-ips>`_
-to you client IPs. For instance::
+.. note:: ``settings.conf`` is JSON syntax, so ensure that the previous
+   line ends with a comma and that the resulting file validates as JSON.
+   Use `JSONLINT <http://www.jsonlint.com>`_
 
-  INTERNAL_IPS = ['127.0.0.1', '::1']
+The toolbar can be disabled without disabling django debug but
+django must be in debug mode for the toolbar to be loaded at all.
+
+Restart the ``django`` related services to complete the installation of the toolbar::
+
+ sudo service lava-server restart
+ sudo apache2ctl restart
+
+Installation can be checked using ``lava-server manage shell``::
+
+ >>> from django.conf import settings
+ >>> 'debug_toolbar' in settings.INSTALLED_APPS
+ True
+
+.. seealso:: :ref:`developer_access_to_django_shell`
+
+In order to see the toolbar, you should also check the value of `INTERNAL_IPS
+<https://docs.djangoproject.com/en/1.9/ref/settings/#internal-ips>`_.
+Local addresses ``127.0.0.1`` and ``::1`` are enabled by default.
+
+To add more addresses, set ``INTERNAL_IPS`` to a list of addresses in
+``/etc/lava-server/settings.conf``, (JSON syntax) for example::
+
+  "INTERNAL_IPS": ["192.168.0.5", "10.0.0.6"],
 
 These value depends on your setup. But if you don't see the toolbar
 that's the first think to look at.
 
 Apache then needs access to django-debug-toolbar CSS and JS files::
 
+  sudo su -
   cd /usr/share/lava-server/static/
   ln -s /usr/lib/python2.7/dist-packages/debug_toolbar/static/debug_toolbar .
 
@@ -459,12 +482,23 @@ directories listed in ``STATICFILES_DIRS`` exists. While this is only
 a leftover from previous versions of LAVA installer that is not
 needed anymore.
 
+Once the changes are complete, ensure the settings are loaded by restarting
+both apache2 and django::
+
+ sudo service lava-server restart
+ sudo apache2ctl restart
+
 Performance overhead
 ====================
 
 Keep in mind that django-debug-toolbar has some overhead on the webpage
 generation and should only be used while debugging.
 
-Django-debug-toolbar can be disabled, while not debugging, by commenting out
-'debug_toolbar' from ``INSTALLED_APPS`` or by changing the ``̀DEBUG`` level in
-``/etc/lava-server/settings.conf`` to ``DEBUG: false``.
+Django-debug-toolbar can be disabled, while not debugging, by changing the value
+of ``USE_DEBUG_TOOLBAR`` in ``/etc/lava-server/settings.conf`` to ``false``
+or by changing the ``̀DEBUG`` level in ``/etc/lava-server/settings.conf`` to ``DEBUG: false``.
+
+Ensure the settings are reloaded by restarting both apache2 and django::
+
+ sudo service lava-server restart
+ sudo apache2ctl restart

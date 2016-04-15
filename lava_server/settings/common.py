@@ -54,6 +54,13 @@ except ImportError:
 if USE_OPENID_AUTH:
     from openid import oidutil
 
+try:
+    imp.find_module('debug_toolbar')
+    USE_DEBUG_TOOLBAR = True
+    INTERNAL_IPS = []
+except ImportError:
+    USE_DEBUG_TOOLBAR = False
+
 # Administrator contact, used for sending
 # emergency email when something breaks
 ADMINS = (
