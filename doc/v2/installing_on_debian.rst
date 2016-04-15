@@ -424,7 +424,7 @@ granted superuser privileges on LAVA web UI. After logging in with
 OpenID or LDAP successfully, make use of the following command to make
 this user a superuser::
 
-  $ sudo lava-server manage authorize_superuser {username}
+  $ sudo lava-server manage authorize_superuser --username {username}
 
 .. note:: `{username}` is the username of OpenID or LDAP user.
 
@@ -434,7 +434,7 @@ In LAVA instances that use LDAP as authentication mechanism, the
 `addldapuser` command can be used to populate a user from LDAP and
 also grant superuser privilege as follows::
 
-  $ sudo lava-server manage addldapuser {username} --superuser
+  $ sudo lava-server manage addldapuser --username {username} --superuser
 
 .. note:: `{username}` is the username of LDAP user.
 
@@ -472,5 +472,5 @@ user account without losing data, using the `mergeldapuser` command,
 provided the LDAP username does not already exist in the LAVA
 instance::
 
-  $ sudo lava-server manage mergeldapuser <lava_user> <ldap_user>
+  $ sudo lava-server manage mergeldapuser --lava-user <lava_user> --ldap-user <ldap_user>
 
