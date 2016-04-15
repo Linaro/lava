@@ -28,6 +28,7 @@ from lava_dispatcher.pipeline.action import (
     Pipeline,
     InfrastructureError,
     TestError,
+    JobError,
 )
 from lava_dispatcher.pipeline.logical import AdjuvantAction
 from lava_dispatcher.pipeline.utils.constants import SHUTDOWN_MESSAGE
@@ -72,7 +73,7 @@ class RebootDevice(Action):
             return connection
         if self.job.device.power_state is 'on' and self.job.device.soft_reset_command is not '':
             command = self.job.device['commands']['soft_reset']
-            if not self.run_command(command.split(' ')):
+            if not self.run_command(command.split(' '), allow_silent=True):
                 raise InfrastructureError("%s command failed" % command)
             self.results = {'status': "success"}
         else:
@@ -124,7 +125,7 @@ class PDUReboot(AdjuvantAction):
         if not self.job.device.hard_reset_command:
             raise InfrastructureError("Hard reset required but not defined for %s." % self.job.device['hostname'])
         command = self.job.device.hard_reset_command
-        if not self.run_command(command.split(' ')):
+        if not self.run_command(command.split(' '), allow_silent=True):
             raise InfrastructureError("%s failed" % command)
         try:
             self.wait(connection)
@@ -152,8 +153,9 @@ class PowerOn(Action):
             command = self.job.device.power_command
             if not command:
                 return connection
-            if not self.run_command(command.split(' ')):
+            if not self.run_command(command.split(' '), allow_silent=True):
                 raise InfrastructureError("%s command failed" % command)
+            self.results = {'status': 'success'}
             self.job.device.power_state = 'on'
         return connection
 
@@ -230,8 +232,9 @@ class PowerOff(Action):
             return connection
         if self.job.device.power_state is 'on':  # allow for '' and skip
             command = self.job.device['commands']['power_off']
-            if not self.run_command(command.split(' ')):
+            if not self.run_command(command.split(' '), allow_silent=True):
                 raise InfrastructureError("%s command failed" % command)
+            self.results = {'status': 'success'}
             self.job.device.power_state = 'off'
         return connection
 
