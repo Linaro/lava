@@ -6,7 +6,7 @@
 
 <form action="" method="POST">
   {% csrf_token %}
-  Do you really want to delete the filter {{ filter.name }}?
+  Do you really want to delete the filter {{ filter.name }} (please bear in mind that this action will also remove all the existing image chart filters that use this filter)?
   <input type="submit" name="yes" value="Yes">
   <input type="submit" name="no" value="No">
 </form>

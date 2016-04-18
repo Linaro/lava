@@ -33,7 +33,11 @@ device configuration is valid for each pipeline device on a specified instance.
 
 
 import argparse
-import xmlrpclib
+import sys
+if sys.version > '3':
+    import xmlrpc.client as xmlrpclib
+else:
+    import xmlrpclib
 
 
 def main():
@@ -58,9 +62,9 @@ def main():
 
     connection = xmlrpclib.ServerProxy("%s://%s//RPC2" % (protocol, args.instance))
     if args.hostname:
-        print connection.scheduler.validate_pipeline_devices(args.hostname)
+        print(connection.scheduler.validate_pipeline_devices(args.hostname))
     else:
-        print connection.scheduler.validate_pipeline_devices()
+        print(connection.scheduler.validate_pipeline_devices())
 
 if __name__ == '__main__':
     main()

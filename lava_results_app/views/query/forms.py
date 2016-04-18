@@ -42,7 +42,7 @@ class QueryForm(forms.ModelForm):
     class Meta:
         model = Query
         exclude = ('is_published', 'query_group', 'group', 'is_changed',
-                   'is_updating')
+                   'last_updated', 'is_updating')
         widgets = {'owner': forms.HiddenInput}
 
     def __init__(self, owner, *args, **kwargs):
@@ -57,6 +57,31 @@ class QueryForm(forms.ModelForm):
     def save(self, commit=True, **kwargs):
         instance = super(QueryForm, self).save(commit=commit, **kwargs)
         return instance
+
+    def clean(self):
+        form_data = self.cleaned_data
+
+        try:
+            # Existing (or archived) Query validataion.
+            existing_query = Query.objects.get(name=form_data["name"],
+                                               owner=form_data["owner"])
+            if existing_query:
+                if existing_query.is_archived:
+                    self.add_error(
+                        "name",
+                        """ Query already exists but is archived. Please
+                        contact system adminstrator or consult LAVA doc. """)
+                else:
+                    self.add_error(
+                        "name",
+                        "Query with this owner and name already exists.")
+        except KeyError:
+            # form_data will pick up the rest of validation errors.
+            pass
+        except Query.DoesNotExist:
+            pass
+
+        return form_data
 
 
 class QueryConditionForm(forms.ModelForm):
@@ -174,6 +199,7 @@ def _get_operators_for_field_type(field_object):
     if field_object.choices:
         operator_keys = [
             QueryCondition.EXACT,
+            QueryCondition.NOTEQUAL,
             QueryCondition.ICONTAINS
         ]
     elif isinstance(field_object, models.DateTimeField):
@@ -182,13 +208,18 @@ def _get_operators_for_field_type(field_object):
         operator_keys = [
             QueryCondition.EXACT,
             QueryCondition.IEXACT,
+            QueryCondition.NOTEQUAL,
             QueryCondition.ICONTAINS
         ]
     elif isinstance(field_object, models.BooleanField):
-        operator_keys = [QueryCondition.EXACT]
+        operator_keys = [
+            QueryCondition.EXACT,
+            QueryCondition.NOTEQUAL
+        ]
     elif isinstance(field_object, models.IntegerField):
         operator_keys = [
             QueryCondition.EXACT,
+            QueryCondition.NOTEQUAL,
             QueryCondition.ICONTAINS,
             QueryCondition.GT,
             QueryCondition.LT
@@ -197,18 +228,21 @@ def _get_operators_for_field_type(field_object):
         operator_keys = [
             QueryCondition.EXACT,
             QueryCondition.IEXACT,
+            QueryCondition.NOTEQUAL,
             QueryCondition.ICONTAINS
         ]
     elif isinstance(field_object, models.TextField):
         operator_keys = [
             QueryCondition.EXACT,
             QueryCondition.IEXACT,
+            QueryCondition.NOTEQUAL,
             QueryCondition.ICONTAINS
         ]
     else:  # Show all.
         operator_keys = [
             QueryCondition.EXACT,
             QueryCondition.IEXACT,
+            QueryCondition.NOTEQUAL,
             QueryCondition.ICONTAINS,
             QueryCondition.GT,
             QueryCondition.LT

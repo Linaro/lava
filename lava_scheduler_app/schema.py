@@ -115,6 +115,12 @@ def _job_protocols_schema():
                     ],
                 }
             }
+        },
+        'lava-lxc': {
+            'name': str,
+            'distribution': str,
+            'release': str,
+            'arch': str
         }
     })
 
@@ -151,6 +157,7 @@ def _device_deploy_schema():
     return Schema({
         'connections': dict,
         Required('methods'): dict,
+        Optional('parameters'): _simple_params(),
     })
 
 

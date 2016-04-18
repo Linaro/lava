@@ -31,7 +31,7 @@ import yaml
 import zmq
 
 from django.db import transaction
-from django.db.utils import OperationalError
+from django.db.utils import OperationalError, InterfaceError
 from django.contrib.auth.models import User
 from lava_server.utils import OptArgBaseCommand as BaseCommand
 from lava_scheduler_app.models import Device, TestJob
@@ -631,7 +631,7 @@ class Command(BaseCommand):
 
                     # Handle canceling jobs
                     self.handle_canceling()
-            except OperationalError:
+            except (OperationalError, InterfaceError):
                 self.logger.info("[RESET] database connection reset.")
                 continue
 

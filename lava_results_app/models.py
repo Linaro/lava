@@ -29,12 +29,10 @@ TestCase is a single lava-test-case record or Action result.
 """
 
 import logging
-import simplejson
 import urllib
 import yaml
 
 from datetime import datetime, timedelta
-from dateutil import parser
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
@@ -42,18 +40,16 @@ from django.core.validators import (
     MaxValueValidator,
     MinValueValidator
 )
-from django.db import models, connection, IntegrityError
-from django.db.models import Q
-from django.db.models.fields import FieldDoesNotExist
-from django_restricted_resource.models import RestrictedResource
+from django.db import models, connection, transaction
+from django.db.models import Q, Lookup
+from django.db.models.fields import Field
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 
 from lava.utils.managers import MaterializedView
 from lava_scheduler_app.models import (
     TestJob,
-    Device,
-    DeviceType
+    Device
 )
 from lava_scheduler_app.managers import (
     RestrictedTestJobQuerySet,
@@ -101,6 +97,18 @@ class Queryable(object):
         raise NotImplementedError("Should have implemented this")
 
 
+@Field.register_lookup
+class NotEqual(Lookup):
+    # Class for __ne field lookup.
+    lookup_name = 'ne'
+
+    def as_sql(self, compiler, connection):
+        lhs, lhs_params = self.process_lhs(compiler, connection)
+        rhs, rhs_params = self.process_rhs(compiler, connection)
+        params = lhs_params + rhs_params
+        return '%s <> %s' % (lhs, rhs), params
+
+
 class QueryMaterializedView(MaterializedView):
 
     class Meta:
@@ -119,7 +127,8 @@ class QueryMaterializedView(MaterializedView):
         if not cls.view_exists(query.id):  # create view
             sql, params = Query.get_queryset(
                 query.content_type,
-                query.querycondition_set.all()).query.sql_with_params()
+                query.querycondition_set.all(),
+                query.limit).query.sql_with_params()
 
             sql = sql.replace("%s", "'%s'")
             query_str = sql % params
@@ -334,9 +343,10 @@ class TestCase(models.Model, Queryable):
         choices=RESULT_CHOICES
     )
 
-    measurement = models.CharField(
+    measurement = models.DecimalField(
+        decimal_places=10,
+        max_digits=30,
         blank=True,
-        max_length=512,
         help_text=_(u"Arbitrary value that was measured as a part of this test."),
         null=True,
         verbose_name=_(u"Measurement"),
@@ -702,6 +712,13 @@ class Query(models.Model):
         blank=True,
         on_delete=models.CASCADE)
 
+    limit = models.PositiveIntegerField(
+        default=200,
+        validators=[
+            MinValueValidator(20),
+        ],
+        verbose_name='Results limit')
+
     content_type = models.ForeignKey(
         ContentType,
         limit_choices_to=Q(model__in=['testsuite', 'testjob']) | (Q(app_label='lava_results_app') & Q(model='testcase')),
@@ -761,10 +778,21 @@ class Query(models.Model):
     def __unicode__(self):
         return "<Query ~%s/%s>" % (self.owner.username, self.name)
 
-    def get_results(self, user):
+    def get_results(self, user, limit=None):
+        """ Used to get query results for persistant queries.
+
+        Limit parameter should not be used in views where django tables are
+        used.
+        """
+
+        omitted_list = QueryOmitResult.objects.filter(
+            query=self).values_list('object_id', flat=True)
+
         if self.is_live:
-            return Query.get_queryset(self.content_type,
-                                      self.querycondition_set.all()).visible_by_user(user)
+            return Query.get_queryset(
+                self.content_type,
+                self.querycondition_set.all(),
+                limit).exclude(id__in=omitted_list).visible_by_user(user)
         else:
             if self.content_type.model_class() == TestJob:
                 view = TestJobViewFactory(self)
@@ -773,14 +801,21 @@ class Query(models.Model):
             elif self.content_type.model_class() == TestSuite:
                 view = TestSuiteViewFactory(self)
 
-            return view.__class__.objects.all().visible_by_user(user)
+            return view.__class__.objects.all().exclude(
+                id__in=omitted_list).visible_by_user(user)[:limit]
 
     @classmethod
-    def get_queryset(cls, content_type, conditions):
+    def get_queryset(cls, content_type, conditions, limit=None):
         """ Return list of QuerySet objects for class 'content_type'.
 
         Be mindful when using this method directly as it does not apply the
         visibility rules.
+
+        This method is used for custom and live queries since they are do not
+        have corresponding materialized views.
+
+        Limit parameter should not be used in views where django tables are
+        used.
         """
 
         logger = logging.getLogger('lava_results_app')
@@ -800,12 +835,11 @@ class Query(models.Model):
             if condition.table.model_class() == NamedAttribute:
                 # For custom attributes, need two filters since
                 # we're comparing the key(name) and the value.
-                filter_key_name = '{0}__name'.format(relation_string,
-                                                     condition.field)
-                filter_key_value = '{0}__value'.format(relation_string,
-                                                       condition.field)
+                filter_key_name = '{0}__name'.format(relation_string)
+                filter_key_value = '{0}__value'.format(relation_string)
+                filter_key_value = '{0}__{1}'.format(filter_key_value,
+                                                     condition.operator)
 
-                filter_key = '{0}__{1}'.format(filter_key, condition.operator)
                 filters[filter_key_name] = condition.field
                 filters[filter_key_value] = condition.value
 
@@ -859,7 +893,7 @@ class Query(models.Model):
         query_results = content_type.model_class().objects.filter(
             **filters).distinct().extra(select={
                 '%s_ptr_id' % content_type.model:
-                '%s.id' % content_type.model_class()._meta.db_table})
+                '%s.id' % content_type.model_class()._meta.db_table})[:limit]
 
         return query_results
 
@@ -867,14 +901,18 @@ class Query(models.Model):
 
         if not self.is_live:
             hour_ago = timezone.now() - timedelta(hours=1)
-            if self.is_updating:
-                raise QueryUpdatedError("query is currently updating")
-            # TODO: commented out because of testing purposes.
-            # elif self.last_updated and self.last_updated > hour_ago:
-            #    raise QueryUpdatedError("query was recently updated (less then hour ago)")
-            else:
-                self.is_updating = True
-                self.save()
+
+            with transaction.atomic():
+                # Lock the selected row until the end of transaction.
+                query = Query.objects.select_for_update().get(pk=self.id)
+                if query.is_updating:
+                    raise QueryUpdatedError("query is currently updating")
+                # TODO: commented out because of testing purposes.
+                # elif query.last_updated and query.last_updated > hour_ago:
+                #    raise QueryUpdatedError("query was recently updated (less then hour ago)")
+                else:
+                    query.is_updating = True
+                    query.save()
 
             try:
                 if not QueryMaterializedView.view_exists(self.id):
@@ -885,7 +923,7 @@ class Query(models.Model):
                 else:
                     QueryMaterializedView.refresh(self.id)
 
-                self.last_updated = datetime.utcnow()
+                self.last_updated = timezone.now()
                 self.is_changed = False
 
             finally:
@@ -1032,6 +1070,7 @@ class QueryCondition(models.Model):
     )
 
     EXACT = 'exact'
+    NOTEQUAL = 'ne'
     IEXACT = 'iexact'
     ICONTAINS = 'icontains'
     GT = 'gt'
@@ -1040,6 +1079,7 @@ class QueryCondition(models.Model):
     OPERATOR_CHOICES = (
         (EXACT, u"Exact match"),
         (IEXACT, u"Case-insensitive match"),
+        (NOTEQUAL, u"Not equal to"),
         (ICONTAINS, u"Contains"),
         (GT, u"Greater than"),
         (LT, u"Less than"),
@@ -1077,6 +1117,21 @@ def _get_foreign_key_model(model, fieldname):
     if not m2m and direct and isinstance(field_object, models.ForeignKey):
         return field_object.rel.to
     return None
+
+
+class QueryOmitResult(models.Model):
+
+    query = models.ForeignKey(
+        Query,
+        on_delete=models.CASCADE
+    )
+
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = fields.GenericForeignKey('content_type', 'object_id')
+
+    class Meta:
+        unique_together = (('object_id', 'query', 'content_type'))
 
 
 class ChartGroup(models.Model):
@@ -1138,7 +1193,7 @@ class Chart(models.Model):
                 (), dict(name=self.name))
 
     def can_admin(self, user):
-        if self.owner == user or \
+        if user.is_superuser or self.owner == user or \
            (self.group and user in self.group.user_set.all()):
             return True
         else:
@@ -1286,9 +1341,12 @@ class ChartQuery(models.Model):
         data["chart_name"] = self.chart.name
         if hasattr(self, "query"):
             data["query_name"] = self.query.name
+            data["query_link"] = self.query.get_absolute_url()
             data["query_description"] = self.query.description
             data["entity"] = self.query.content_type.model
             data["conditions"] = self.query.serialize_conditions()
+            data["has_omitted"] = QueryOmitResult.objects.filter(
+                query=self.query).exists()
 
         return data
 
@@ -1330,6 +1388,7 @@ class ChartQuery(models.Model):
                 if result:
                     chart_item = {
                         "id": result,
+                        "pk": item.id,
                         "link": item.get_absolute_url(),
                         "date": date,
                         "attribute": attribute,
@@ -1337,13 +1396,13 @@ class ChartQuery(models.Model):
                         "passes": passfail_results[result]['pass'],
                         "failures": passfail_results[result]['fail'],
                         "skip": passfail_results[result]['skip'],
-                        "skip": passfail_results[result]['unknown'],
-                        "total": passfail_results[result]['pass'] +
-                        passfail_results[result]['fail'] +
-                        passfail_results[result]['unknown'] +
-                        passfail_results[result]['skip'],
+                        "unknown": passfail_results[result]['unknown'],
+                        "total": (passfail_results[result]['pass'] +
+                                  passfail_results[result]['fail'] +
+                                  passfail_results[result]['unknown'] +
+                                  passfail_results[result]['skip']),
                     }
-                data.append(chart_item)
+                    data.append(chart_item)
 
         return data
 
@@ -1368,6 +1427,7 @@ class ChartQuery(models.Model):
                 if result:
                     chart_item = {
                         "id": result,
+                        "pk": item.id,
                         "link": item.get_absolute_url(),
                         "date": date,
                         "attribute": attribute,
@@ -1388,6 +1448,7 @@ class ChartQuery(models.Model):
                 if result:
                     chart_item = {
                         "id": result,
+                        "pk": item.id,
                         "attribute": str(item.get_end_datetime()),
                         "link": item.get_absolute_url(),
                         "date": str(item.get_end_datetime()),

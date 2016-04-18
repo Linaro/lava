@@ -29,16 +29,12 @@
 
 {# these options are used by both ssh and scp! #}
 {# check the manpages *carefully* & ensure compatibility! #}
-{# in particular, -p vs -P for port, -l is ok for ssh, not scp. #}
+{# Do not specify port or login (-p/-P or -l) here as this is now handled in the codebase. #}
 {% set ssh_options = (
 "          - '-o'
           - 'Compression=yes'
           - '-o'
-          - 'UserKnownHostsFile=/dev/null'
-          - '-o'
           - 'PasswordAuthentication=no'
-          - '-o'
-          - 'StrictHostKeyChecking=no'
           - '-o'
           - 'LogLevel=FATAL'
 "
@@ -46,8 +42,10 @@
 
 {% set ssh_user = 'root' -%}
 
+{# The code will create the correct port arguments for SCP and SSH, as they are different #}
 {% set ssh_port = '22' -%}
 
+{# This is no longer a requirement, to support devices that allow login without authentication #}
 {% set ssh_identity_file = 'device/dynamic_vm_keys/lava' -%}
 
 {% set schroot_options = (

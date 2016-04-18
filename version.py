@@ -40,7 +40,7 @@ def version_tag():
     if not os.path.exists("./.git/"):
         base = os.path.basename(os.getcwd())
         name_list = ['grep', 'name=', 'setup.py']
-        name_data = subprocess.check_output(name_list).strip()
+        name_data = subprocess.check_output(name_list).strip().decode('utf-8')
         name_data = name_data.replace("name=\'", '')
         name_data = name_data.replace("\',", '')
         return base.replace("%s-" % name_data, '')
@@ -71,9 +71,9 @@ def version_tag():
         # a newer version to cope with date changes at month end.
         # use short git hash for reference.
         dev_stamp = ['git', 'rev-list', '--count', 'HEAD']
-        dev_count = subprocess.check_output(dev_stamp).strip()
+        dev_count = subprocess.check_output(dev_stamp).strip().decode('utf-8')
         dev_short = ['git', 'rev-parse', '--short', 'HEAD']
-        dev_hash = subprocess.check_output(dev_short).strip()
+        dev_hash = subprocess.check_output(dev_short).strip().decode('utf-8')
         return "%s+%s.%s" % (tag_name, dev_count, dev_hash)
 
 

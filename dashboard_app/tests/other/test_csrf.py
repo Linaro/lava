@@ -45,16 +45,10 @@ class CSRFConfigurationTestCase(CSRFTestCase):
         self.form_path = reverse(test_form, urlconf=self.urls)
 
     def test_csrf_token_present_in_form(self):
-        if django.VERSION[:2] == (1, 1):
-            # This feature is not supported on django 1.1
-            return
         response = self.client.get(self.form_path)
         self.assertContains(response, "csrfmiddlewaretoken")
 
     def test_cross_site_form_submission_fails(self):
-        if django.VERSION[:2] == (1, 1):
-            # This feature is not supported on django 1.1
-            return
         response = self.client.post(self.form_path, {'text': 'text'})
         self.assertEquals(response.status_code, 403)
 

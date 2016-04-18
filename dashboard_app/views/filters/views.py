@@ -378,7 +378,7 @@ def get_tests_json(request):
         raise Http404
 
     tests = Test.objects.filter(
-        test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id']).distinct('test_id').order_by('test_id').prefetch_related('test_cases')
+        test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id']).distinct('test_id').order_by('test_id')
 
     data = serializers.serialize('json', tests)
     return HttpResponse(data, content_type='application/json')

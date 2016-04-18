@@ -38,6 +38,19 @@ After setting up everything you will see a preview page where you can check
 if the data your new filter correlates to your need, and you can continue
 editing or save the filter.
 
+
+Deleting a Filter
+-----------------
+
+Filters are a crucial part of Image Reports (including 2.0).
+
+Keep in mind that deleting a filter will also remove all of the images used in
+:ref:`image_reports`.
+
+Regarding :ref:`image_reports2.0` it will remove all
+image chart filters (:ref:`adding-filter`) that use this filter.
+
+
 Subscriptions
 -------------
 

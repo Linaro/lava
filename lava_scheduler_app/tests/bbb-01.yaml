@@ -46,17 +46,11 @@ actions:
           - '-o'
           - 'Compression=yes'
           - '-o'
-          - 'UserKnownHostsFile=/dev/null'
-          - '-o'
           - 'PasswordAuthentication=no'
           - '-o'
-          - 'StrictHostKeyChecking=no'
-          - '-o'
           - 'LogLevel=FATAL'
-          - '-l'
-          - 'root '
-          - '-p'
-          - '22'
+        user: root
+        port: 22
         host: 172.16.200.165
         identity_file: device/dynamic_vm_keys/lava
   boot:

@@ -294,7 +294,7 @@ def index(request):
         request,
         "lava_scheduler_app/index.html",
         {
-            'device_status': "%d/%d" % _online_total(),
+            'device_status': "%d/%d" % (num_online, num_not_retired),
             'num_online': num_online,
             'num_not_retired': num_not_retired,
             'num_jobs_running': running_jobs_count,
@@ -599,7 +599,7 @@ def get_restricted_job(user, pk):
     if not device_type:
         # dynamic connection - might need to still be restricted?
         return job
-    if len(device_type.devices_visible_to(user)) == 0:
+    if device_type.num_devices_visible_to(user) == 0:
         raise Http404()
     if job.can_view(user):
         return job
@@ -618,8 +618,8 @@ def filter_device_types(user):
     at least one device this user can see.
     """
     visible = []
-    for device_type in DeviceType.objects.filter(display=True):
-        if len(device_type.devices_visible_to(user)) > 0:
+    for device_type in DeviceType.objects.filter(display=True).only('name', 'owners_only'):
+        if device_type.num_devices_visible_to(user) > 0:
             visible.append(device_type.name)
     return visible
 
@@ -693,46 +693,56 @@ class NoDTDeviceView(DeviceTableView):
 
 @BreadCrumb("Device Type {pk}", parent=index, needs=['pk'])
 def device_type_detail(request, pk):
-    dt = get_object_or_404(DeviceType, pk=pk)
+    try:
+        dt = DeviceType.objects \
+            .select_related('architecture', 'bits', 'processor') \
+            .get(pk=pk)
+    except DeviceType.DoesNotExist:
+        raise Http404()
+    # Check that at least one device is visible to the current user
     if dt.owners_only:
-        visible = filter_device_types(request.user)
-        if dt.name not in visible:
+        if dt.num_devices_visible_to(request.user) == 0:
             raise Http404('No device type matches the given query.')
+
+    # Get some test job statistics
+    now = timezone.now().date()
+    devices = list(Device.objects.filter(device_type=dt)
+                   .values_list('pk', flat=True))
     daily_complete = TestJob.objects.filter(
-        actual_device__in=Device.objects.filter(device_type=dt),
+        actual_device__in=devices,
         health_check=True,
-        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=1)),
-        submit_time__lt=timezone.now().date(),
+        submit_time__gte=(now - datetime.timedelta(days=1)),
+        submit_time__lt=now,
         status=TestJob.COMPLETE).count()
     daily_failed = TestJob.objects.filter(
-        actual_device__in=Device.objects.filter(device_type=dt),
+        actual_device__in=devices,
         health_check=True,
-        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=1)),
-        submit_time__lt=timezone.now().date(),
+        submit_time__gte=(now - datetime.timedelta(days=1)),
+        submit_time__lt=now,
         status=TestJob.INCOMPLETE).count()
     weekly_complete = TestJob.objects.filter(
-        actual_device__in=Device.objects.filter(device_type=dt),
+        actual_device__in=devices,
         health_check=True,
-        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=7)),
-        submit_time__lt=timezone.now().date(),
+        submit_time__gte=(now - datetime.timedelta(days=7)),
+        submit_time__lt=now,
         status=TestJob.COMPLETE).count()
     weekly_failed = TestJob.objects.filter(
-        actual_device__in=Device.objects.filter(device_type=dt),
+        actual_device__in=devices,
         health_check=True,
-        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=7)),
-        submit_time__lt=timezone.now().date(),
+        submit_time__gte=(now - datetime.timedelta(days=7)),
+        submit_time__lt=now,
         status=TestJob.INCOMPLETE).count()
     monthly_complete = TestJob.objects.filter(
-        actual_device__in=Device.objects.filter(device_type=dt),
+        actual_device__in=devices,
         health_check=True,
-        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=30)),
-        submit_time__lt=timezone.now().date(),
+        submit_time__gte=(now - datetime.timedelta(days=30)),
+        submit_time__lt=now,
         status=TestJob.COMPLETE).count()
     monthly_failed = TestJob.objects.filter(
-        actual_device__in=Device.objects.filter(device_type=dt),
+        actual_device__in=devices,
         health_check=True,
-        submit_time__gte=(timezone.now().date() - datetime.timedelta(days=30)),
-        submit_time__lt=timezone.now().date(),
+        submit_time__gte=(now - datetime.timedelta(days=30)),
+        submit_time__lt=now,
         status=TestJob.INCOMPLETE).count()
     health_summary_data = [{
         "Duration": "24hours",
@@ -760,10 +770,9 @@ def device_type_detail(request, pk):
 
     prefix = "dt_"
     dt_jobs_data = AllJobsView(request, model=TestJob, table_class=OverviewJobsTable)
-    dt = get_object_or_404(DeviceType, pk=dt)
     dt_jobs_ptable = OverviewJobsTable(
         dt_jobs_data.get_table_data(prefix)
-        .filter(actual_device__in=Device.objects.filter(device_type=dt)),
+        .filter(actual_device__in=devices),
         prefix=prefix,
     )
     config = RequestConfig(request, paginate={"per_page": dt_jobs_ptable.length})
@@ -804,7 +813,7 @@ def device_type_detail(request, pk):
 
     if dt.health_check_job == "":
         health_freq_str = ""
-    elif not list(Device.objects.filter(Q(device_type=dt), ~Q(status=Device.RETIRED))):
+    elif not Device.objects.filter(Q(device_type=dt), ~Q(status=Device.RETIRED)).count():
         health_freq_str = ""
     elif dt.health_denominator == DeviceType.HEALTH_PER_JOB:
         health_freq_str = "one every %d jobs" % dt.health_frequency
@@ -837,7 +846,7 @@ def device_type_detail(request, pk):
                 Q(requested_device_type=dt) |
                 Q(requested_device__in=Device.objects.filter(device_type=dt))).count(),
             'idle_num': Device.objects.filter(device_type=dt, status=Device.IDLE).count(),
-            'offline_num': Device.objects.filter(device_type=dt, status__in=[Device.OFFLINE]).count(),
+            'offline_num': Device.objects.filter(device_type=dt, status=Device.OFFLINE).count(),
             'retired_num': Device.objects.filter(device_type=dt, status=Device.RETIRED).count(),
             'is_admin': request.user.has_perm('lava_scheduler_app.change_devicetype'),
             'health_job_summary_table': health_table,
@@ -2025,7 +2034,7 @@ def edit_transition(request):
 def transition_detail(request, pk):
     transition = get_object_or_404(DeviceStateTransition, id=pk)
     device_type = transition.device.device_type
-    if len(device_type.devices_visible_to(request.user)) == 0:
+    if device_type.num_devices_visible_to(request.user) == 0:
         raise Http404()
     trans_data = TransitionView(request, transition.device, model=DeviceStateTransition, table_class=DeviceTransitionTable)
     trans_table = DeviceTransitionTable(trans_data.get_table_data())
@@ -2149,22 +2158,32 @@ class MyDTHealthHistoryView(JobTableView):
 
 @BreadCrumb("Device {pk}", parent=index, needs=['pk'])
 def device_detail(request, pk):
-    device = get_object_or_404(Device, pk=pk)
+    # Find the device and raise 404 if we are not allowed to see it
+    try:
+        device = Device.objects.select_related('device_type', 'user').get(pk=pk)
+    except Device.DoesNotExist:
+        raise Http404()
+
+    # Any user that can access to a device_type can
+    # see all the devices even if they are for owners_only
     if device.device_type.owners_only:
-        visible = filter_device_types(request.user)
-        if device.device_type.name not in visible:
+        if device.device_type.num_devices_visible_to(request.user) == 0:
             raise Http404('No device matches the given query.')
 
-    devices = Device.objects.filter(device_type_id=device.device_type_id).order_by('hostname')
-    devices_list = [dev[0] for dev in devices.values_list('hostname')]
-    try:
-        next_device = devices_list[devices_list.index(device.hostname) + 1]
-    except IndexError:
-        next_device = None
-    try:
-        previous_device = devices_list[:devices_list.index(device.hostname)].pop()
-    except IndexError:
-        previous_device = None
+    # Find previous and next device
+    devices = Device.objects \
+        .filter(device_type_id=device.device_type_id) \
+        .only('hostname').order_by('hostname')
+    previous_device = None
+    devices_iter = iter(devices)
+    for d in devices_iter:
+        if d.hostname == device.hostname:
+            try:
+                next_device = next(devices_iter).hostname
+            except StopIteration:
+                next_device = None
+            break
+        previous_device = d.hostname
 
     if device.status in [Device.OFFLINE, Device.OFFLINING]:
         try:
@@ -2203,8 +2222,6 @@ def device_detail(request, pk):
 
     times_data = recent_ptable.prepare_times_data(recent_data)
     times_data.update(trans_table.prepare_times_data(trans_data))
-
-    visible = filter_device_types(request.user)
 
     overrides = None
     if device.is_pipeline:

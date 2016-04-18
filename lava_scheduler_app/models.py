@@ -80,7 +80,7 @@ def is_deprecated_json(data):
         validate_job_data(ob)
     except (AttributeError, simplejson.JSONDecodeError, ValueError):
         deprecated_json = False
-    except (JSONDataError, JSONDecodeError, ValueError) as exc:
+    except (JSONDataError, simplejson.JSONDecodeError, ValueError) as exc:
         raise SubmissionException("Decoding job submission failed: %s." % exc)
     return deprecated_json
 
@@ -104,7 +104,7 @@ def validate_job_json(data):
     try:
         ob = simplejson.loads(data)
         validate_job_data(ob)
-    except ValueError, e:
+    except ValueError as e:
         raise ValidationError(e)
 
 
@@ -256,21 +256,23 @@ class DeviceType(models.Model):
     def get_absolute_url(self):
         return ("lava.scheduler.device_type.detail", [self.pk])
 
-    def devices_visible_to(self, user):
+    def num_devices_visible_to(self, user):
         """
         Prepare a list of devices of this DeviceType which
         this user can see. If the DeviceType is not hidden,
         returns all devices of this type.
         :param user: User to check
-        :return: a list of devices of this DeviceType which the
-        user can see. The list may be empty if the type is hidden
+        :return: the number of devices of this DeviceType which the
+        user can see. This may be 0 if the type is hidden
         and the user owns none of the devices of this type.
         """
-        q = list(Device.objects.filter(device_type=self))
+        devices = Device.objects.filter(device_type=self) \
+                                .only('user', 'group') \
+                                .select_related('user', 'group')
         if self.owners_only:
-            return [o for o in q if o.is_owned_by(user)]
+            return len([d for d in devices if d.is_owned_by(user)])
         else:
-            return q
+            return devices.count()
 
 
 class DefaultDeviceOwner(models.Model):
@@ -794,7 +796,7 @@ class Device(RestrictedResource):
         if self.device_type.owners_only:
             if not user:
                 return False
-            if len(self.device_type.devices_visible_to(user)) == 0:
+            if self.device_type.num_devices_visible_to(user) == 0:
                 return False
         if not self.is_public:
             if not user:
@@ -1131,7 +1133,7 @@ def _get_device_type(user, name):
         msg = "Device type '%s' is unavailable. %s" % (name, e)
         logger.error(msg)
         raise DevicesUnavailableException(msg)
-    if len(device_type.devices_visible_to(user)) == 0:
+    if device_type.num_devices_visible_to(user) == 0:
         msg = "Device type '%s' is unavailable to user '%s'" % (name, user.username)
         logger.error(msg)
         raise DevicesUnavailableException(msg)
@@ -1163,7 +1165,7 @@ def _check_device_types(user):
         # dt[1] -> device type count
         device_type = DeviceType.objects.get(name=dt[0])
         if device_type.owners_only:
-            count = len(device_type.devices_visible_to(user))
+            count = device_type.num_devices_visible_to(user)
             if count > 0:
                 all_devices[dt[0]] = count
         if dt[1] > 0:
@@ -1261,7 +1263,8 @@ def _pipeline_protocols(job_data, user, yaml_data=None):
       user: the user submitting the job
     returns:
       list of all jobs created using the specified type(s) which meet the protocol criteria,
-      specified device tags and which the user is able to submit.
+      specified device tags and which the user is able to submit. (This is not a QuerySet,
+      it is explicitly a list object.)
     exceptions:
         DevicesUnavailableException if all criteria cannot be met.
     """
@@ -1722,6 +1725,9 @@ class TestJob(RestrictedResource):
         This function must *never* be involved in setting the state of this job or the state of any associated device.
         'target' is not supported, so requested_device is always None at submission time.
         Retains yaml_data as the original definition to retain comments.
+
+        :return: a single TestJob object or a list
+        (explicitly, a list, not a QuerySet) of evaluated TestJob objects
         """
         job_data = yaml.load(yaml_data)
 
@@ -1733,6 +1739,7 @@ class TestJob(RestrictedResource):
         # pipeline protocol handling, e.g. lava-multinode
         job_list = _pipeline_protocols(job_data, user, yaml_data)
         if job_list:
+            # explicitly a list, not a QuerySet.
             return job_list
         # singlenode only
         device_type = _get_device_type(user, job_data['device_type'])
@@ -1758,6 +1765,9 @@ class TestJob(RestrictedResource):
 
         For single node jobs, returns the job object created. For multinode
         jobs, returns an array of test objects.
+
+        :return: a single TestJob object or a list
+        (explicitly, a list, not a QuerySet) of evaluated TestJob objects
         """
         job_data = simplejson.loads(json_data)
         validate_job_data(job_data)
@@ -2454,35 +2464,17 @@ class TestJob(RestrictedResource):
     def get_measurement_results(self):
         # Get measurement values per lava_results_app.testcase.
         # TODO: add min, max
-        from lava_results_app.models import TestCase
+        from lava_results_app.models import TestSuite, TestCase
 
         results = {}
-        for suite in self.testsuite_set.all():
-            sum = 0
-
-            # TODO: this is not available in 1.7 but is much better solution.
-            # results[suite.name]['measurement'] = suite.testcase_set.all().\
-            #     annotate(measurement_float=Func(F('measurement'),
-            #                                     function='CAST',
-            #              template='%(function)s(%(expressions)s as FLOAT)')).\
-            #     aggregate(models.Avg('measurement_float'))
-
-            for testcase in suite.testcase_set.all():
-                if testcase.name not in results:
-                    results[testcase.name] = {}
-                    results[testcase.name]['measurement'] = 0
-                    results[testcase.name]['count'] = 0
-                    results[testcase.name]['fail'] = False
-
-                results[testcase.name]['measurement'] += float(testcase.measurement)
-                results[testcase.name]['count'] += 1
-                results[testcase.name]['fail'] |= testcase.result != TestCase.RESULT_PASS
-
-            for name in results:
-                try:
-                    results[name]['measurement'] = results[name]['measurement'] / results[name]['count']
-                except ZeroDivisionError:
-                    results[name]['measurement'] = 0
+        for suite in TestSuite.objects.filter(job=self).prefetch_related(
+                'testcase_set').annotate(
+                    test_case_avg=models.Avg('testcase__measurement')):
+            if suite.name not in results:
+                results[suite.name] = {}
+            results[suite.name]['measurement'] = suite.test_case_avg
+            results[suite.name]['fail'] = suite.testcase_set.filter(
+                result=TestCase.RESULT_MAP['fail']).count()
 
         return results
 
