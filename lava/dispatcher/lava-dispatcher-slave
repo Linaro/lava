@@ -45,6 +45,7 @@ import time
 import traceback
 import yaml
 import zmq
+import zmq.auth
 
 # pylint: disable=no-member
 # pylint: disable=too-few-public-methods
@@ -210,7 +211,8 @@ def get_fqdn():
         raise exc
 
 
-def create_zmq_context(master_uri, hostname, send_queue=10):
+def create_zmq_context(master_uri, hostname, send_queue, encrypt,
+                       master_cert, slave_cert):
     """Create the ZMQ context and necessary accessories.
 
     :param master_uri: The URI where the sokect should be connected.
@@ -219,6 +221,9 @@ def create_zmq_context(master_uri, hostname, send_queue=10):
     :type hostname: string
     :param send_queue: How many object should be in the send queue.
     :type send_queue: int
+    :param encrypt: encrypt (or not) the zmq messages
+    :param master_cert: the master certificate file
+    :param slave_cert: the slave certificate file
     :return A tuple with: the zmq context, the zmq socket, the zmq poller, a
     read pipe and a write pipe.
     """
@@ -228,6 +233,24 @@ def create_zmq_context(master_uri, hostname, send_queue=10):
     sock = context.socket(zmq.DEALER)
     sock.setsockopt(zmq.IDENTITY, hostname)
     sock.setsockopt(zmq.SNDHWM, send_queue)
+
+    # If needed, load certificates
+    if encrypt:
+        LOG.info("Starting encryption")
+        try:
+            LOG.debug("Opening slave certificate: %s", slave_cert)
+            (client_public, client_private) = zmq.auth.load_certificate(slave_cert)
+            sock.curve_publickey = client_public
+            sock.curve_secretkey = client_private
+            LOG.debug("Opening master certificate: %s", master_cert)
+            (server_public, _) = zmq.auth.load_certificate(master_cert)
+            sock.curve_serverkey = server_public
+        except IOError as err:
+            LOG.error(err)
+            sock.close()
+            context.term()
+            sys.exit(1)
+
     sock.connect(master_uri)
 
     # Poll on the socket and the pipe (signal).
@@ -563,6 +586,21 @@ def main():
         default=TIMEOUT,
         help="Socket connection timeout in seconds; default to %d" % TIMEOUT,
     )
+
+    parser.add_argument(
+        "--encrypt", default=False, action="store_true",
+        help="Encrypt messages"
+    )
+    parser.add_argument(
+        "--master-cert", type=str,
+        default="/etc/lava-dispatcher/certificates.d/master.key",
+        help="Master certificate file",
+    )
+    parser.add_argument(
+        "--slave-cert", type=str,
+        default="/etc/lava-dispatcher/certificates.d/slave.key_secret",
+        help="Slave certificate file",
+    )
     args = parser.parse_args()
 
     # Parse the command line
@@ -575,7 +613,8 @@ def main():
 
     # Create the zmq context
     context, sock, poller, pipe_r, pipe_w = create_zmq_context(
-        master_uri, host_name, send_queue=SEND_QUEUE)
+        master_uri, host_name, SEND_QUEUE, args.encrypt,
+        args.master_cert, args.slave_cert)
 
     # Register cleanup function to be run at exit.
     atexit.register(destroy_zmq_context, context, sock, pipe_r, pipe_w)
@@ -586,6 +625,11 @@ def main():
 
     # Connect to the master and wait for the reply
     LOG.info("Connecting to master as <%s>", host_name)
+    if args.encrypt:
+        LOG.info("Connection is encrypted using %s", args.slave_cert)
+    else:
+        LOG.info("Connection is not encrypted")
+
     hello_msg = "HELLO"
     LOG.debug("Greeting the master => '%s'", hello_msg)
     sock.send_multipart([hello_msg])
