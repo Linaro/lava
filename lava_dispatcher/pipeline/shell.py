@@ -277,6 +277,6 @@ class ExpectShellSession(Action):
         connection = super(ExpectShellSession, self).run(connection, args)
         if not connection.prompt_str:
             connection.prompt_str = self.parameters['prompts']
-        self.logger.debug("%s: Waiting for prompt %s", self.name, self.parameters['prompts'])
+        self.logger.debug("%s: Waiting for prompt %s", self.name, ', '.join(self.parameters['prompts']))
         self.wait(connection)  # FIXME: should this be a regular RetryAction operation?
         return connection
