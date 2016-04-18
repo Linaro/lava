@@ -67,7 +67,7 @@ class TestGit(unittest.TestCase):  # pylint: disable=too-many-public-methods
                                      'GIT_COMMITTER_EMAIL': 'foo@example.com'})
 
         # Go into the tempdir
-        os.chdir(self.tmpdir)
+        os.chdir('..')
 
     def tearDown(self):
         os.chdir(self.cwd)
@@ -112,7 +112,7 @@ class TestBzr(unittest.TestCase):  # pylint: disable=too-many-public-methods
         # Go into a temp dirctory
         self.tmpdir = tempfile.mkdtemp()
         os.chdir(self.tmpdir)
-        self.env = {'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'}
+        self.env = {'BZR_HOME': self.tmpdir, 'BZR_LOG': self.tmpdir}
 
         # Create a Git repository with two commits
         subprocess.check_output(['bzr', 'init', 'repo'], env=self.env, stderr=subprocess.STDOUT)
@@ -128,8 +128,8 @@ class TestBzr(unittest.TestCase):  # pylint: disable=too-many-public-methods
         subprocess.check_output(['bzr', 'commit', 'second.txt', '-m', 'Second commit'],
                                 env=self.env, stderr=subprocess.STDOUT)
 
-        # Go into the tempdir
-        os.chdir(self.tmpdir)
+        # Go back into the tempdir
+        os.chdir('..')
 
     def tearDown(self):
         os.chdir(self.cwd)

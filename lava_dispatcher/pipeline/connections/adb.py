@@ -56,6 +56,8 @@ class ConnectAdb(Action):
         except AttributeError:
             self.errors = "Unable to parse the connection command %s" % command
         self.errors = infrastructure_error(exe)
+        if infrastructure_error(exe):
+            self.errors = "Unable to find '%s' command" % exe
 
     def run(self, connection, args=None):
         if connection:

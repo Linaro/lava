@@ -1,0 +1,42 @@
+# This is not a usable job, it combines several jobs into one to support unit tests
+# a set of workable files will use the multinode protocol and also deploy the VM files
+# the tmpfs early so that the job can fail early if there is a 404.
+# See https://git.linaro.org/lava-team/refactoring.git
+
+
+job_name: ssh-boot
+timeouts:
+  job:
+    minutes: 5
+  action:
+    minutes: 1
+  test:
+    minutes: 3
+
+actions:
+    - deploy:
+        timeout:
+          minutes: 2
+        to: ssh
+        os: debian
+
+    - boot:
+        method: ssh
+        connection: ssh
+        failure_retry: 2
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
+
+    - test:
+        failure_retry: 3
+        name: kvm-basic-singlenode
+        definitions:
+            - repository: git://git.linaro.org/qa/test-definitions.git
+              from: git
+              path: ubuntu/smoke-tests-basic.yaml
+              name: smoke-tests
+            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+              from: git
+              path: lava-test-shell/single-node/singlenode03.yaml
+              name: singlenode-advanced

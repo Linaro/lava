@@ -1,0 +1,29 @@
+Apache config only for pipeline workers
+=======================================
+
+LAVA V1 workers have a lava-server configuration
+to provide the apache configuration. LAVA V2 workers
+just have lava-dispatcher installed, so unless a
+usable localhost website is available, retrieving
+files within the dispatcher can fail.
+
+This is a section of the lava-server apache config,
+adapted just for lava-dispatcher installations.
+
+sudo cp share/apache2/lava-dispatcher.conf /etc/apache2/sites-available/
+sudo a2ensite lava-dispatcher
+sudo a2dissite 000-default
+
+Note: not all V2 workers need a localhost server
+as long as TFTP is working but it can be useful
+for persistent NFS.
+
+If the DocumentRoot and Alias need to be changed
+in the localhost configuration, the value in
+DISPATCHER_DOWNLOAD_DIR
+also needs to be changed in
+/usr/lib/python2.7/dist-packages/lava_dispatcher/pipeline/utils/constants.py
+
+(Support for reading constants independently of the
+packaged code is pending.)
+

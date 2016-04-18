@@ -19,12 +19,13 @@ def test_suite():
         'lava_dispatcher.pipeline.test.test_kvm',
         'lava_dispatcher.pipeline.test.test_multinode',
         'lava_dispatcher.pipeline.test.test_connections',
-        #  'lava_dispatcher.pipeline.test.test_utils',
+        'lava_dispatcher.pipeline.test.test_utils',
         'lava_dispatcher.pipeline.test.test_repeat',
         'lava_dispatcher.pipeline.test.test_menus',
         'lava_dispatcher.pipeline.test.test_fastboot',
         'lava_dispatcher.pipeline.test.test_vland',
-        'lava_dispatcher.pipeline.test.test_ipxe'
+        'lava_dispatcher.pipeline.test.test_ipxe',
+        'lava_dispatcher.pipeline.test.test_grub'
     ]
     loader = unittest.TestLoader()
     return loader.loadTestsFromNames(module_names)

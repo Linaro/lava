@@ -22,7 +22,7 @@
 """
 Start the lava dispatcher and the zmq messager.
 
-Slaves are allowed to connect over ZMQ but devices can only
+Slaves are allowed to connect over ZMQ, but devices can only
 be assigned to known slaves by the admin of the instance
 (by selecting the worker_host for each pipeline device.
 Initially, the details of the workers will be configured
@@ -65,9 +65,8 @@ SEND_QUEUE = 10
 # (at least until the slave is rebooted).
 TMP_DIR = os.path.join(tempfile.gettempdir(), "lava-dispatcher/slave/")
 
-# Setup the log.
+# Create the logger that will be configured after arguments parsing
 FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
-logging.basicConfig(format=FORMAT, filename='/var/log/lava-dispatcher/lava-slave.log')
 LOG = logging.getLogger("dispatcher-slave")
 
 
@@ -106,7 +105,7 @@ class Job(object):
         self.env = env
         self.env_dut = env_dut
         self.proc = None
-        self.running = False
+        self.is_running = False
         self.base_dir = os.path.join(TMP_DIR, "%s/" % self.job_id)
         mkdir(self.base_dir)
 
@@ -177,8 +176,8 @@ class Job(object):
                 args,
                 stdout=open(out_file, "w"),
                 stderr=open(err_file, "w"), env=env)
-            self.running = True
-        except Exception as exc:
+            self.is_running = True
+        except Exception as exc:  # pylint: disable=broad-except
             # daemon must always continue running even if the job crashes
             if hasattr(exc, "child_traceback"):
                 LOG.exception(
@@ -196,7 +195,7 @@ class Job(object):
             # TODO: be sure not to block here
             self.proc.wait()
             self.proc = None
-        self.running = False
+        self.is_running = False
 
 
 def get_fqdn():
@@ -269,6 +268,276 @@ def destroy_zmq_context(context, sock, read_pipe, write_pipe):
     context.term()
 
 
+def configure_logger(log_file, level):
+    """Configure the logger
+
+    :param log_file: the log_file or "-" for sys.stdout
+    :param level: the log level
+    """
+    # Configure the log handler
+    if log_file == "-":
+        handler = logging.StreamHandler(sys.stdout)
+    else:
+        handler = logging.FileHandler(log_file, "a")
+    handler.setFormatter(logging.Formatter(FORMAT))
+    LOG.addHandler(handler)
+
+    # Set-up the LOG level
+    if level == "ERROR":
+        LOG.setLevel(logging.ERROR)
+    elif level == "WARN":
+        LOG.setLevel(logging.WARN)
+    elif level == "INFO":
+        LOG.setLevel(logging.INFO)
+    else:
+        LOG.setLevel(logging.DEBUG)
+
+
+def connect_to_master(master, poller, pipe_r, sock, timeout):
+    """ Connect to master and wait for the answer
+
+    :param master: the master structure to fill when done
+    :param  poller: the structure to poll for messages
+    :param pipe_r: the read pipe for signals
+    :param sock: the zmq socket
+    :param timeout: the poll timeout
+    :return: True if the master had answered
+    """
+    retry_msg = "HELLO_RETRY"
+    try:
+        LOG.info("Waiting for the master to reply")
+        sockets = dict(poller.poll(timeout * 1000))
+    except zmq.error.ZMQError:
+        # TODO: tests needed to understand cases where ZMQError is raised.
+        LOG.error("Received an error, interrupted")
+        sys.exit(1)
+
+    if sockets.get(pipe_r) == zmq.POLLIN:
+        LOG.info("Received a signal, leaving")
+        sys.exit(0)
+    elif sockets.get(sock) == zmq.POLLIN:
+        msg = sock.recv_multipart()
+
+        try:
+            message = msg[0]
+            LOG.debug("The master replied: %s", msg)
+        except (IndexError, TypeError):
+            LOG.error("Invalid message from the master: %s", msg)
+        else:
+            if message == "HELLO_OK":
+                LOG.info("Connection with the master established")
+                # Mark the master as alive.
+                master.received_msg()
+                return True
+            else:
+                LOG.info("Unexpected message from the master: %s", message)
+
+    LOG.debug("Sending new %s message to the master", retry_msg)
+    sock.send_multipart([retry_msg])
+    return False
+
+
+def listen_to_master(master, jobs, poller, pipe_r, socket_addr, sock, timeout):
+    """Listen for master orders
+
+    :param master: the master structure
+    :param jobs: the list of jobs
+    :param pipe_r: the read pipe for signals
+    :param socket_addr: address of the logging socket
+    :param sock: the zmq socket
+    :param timeout: the poll timeout
+    """
+    try:
+        sockets = dict(poller.poll(timeout * 1000))
+    except zmq.error.ZMQError:
+        # TODO: tests needed to understand cases where ZMQError is raised.
+        return
+
+    if sockets.get(pipe_r) == zmq.POLLIN:
+        LOG.info("Received a signal, leaving")
+        sys.exit(0)
+
+    if sockets.get(sock) == zmq.POLLIN:
+        msg = sock.recv_multipart()
+
+        # 1: the action
+        try:
+            action = msg[0]
+        except (IndexError, TypeError):
+            LOG.error("Invalid message from the master: %s", msg)
+            return
+        LOG.debug("Received action=%s", action)
+
+        # Parse the action
+        if action == "HELLO_OK":
+            LOG.debug(
+                "Received HELLO_OK from the master - nothing do to")
+
+        elif action == "PONG":
+            LOG.debug("Connection to master OK")
+
+            # Mark the master as alive
+            master.received_msg()
+
+        elif action == "START":
+            try:
+                job_id = int(msg[1])
+                job_definition = msg[2]
+                device_definition = msg[3]
+                env = msg[4]
+                env_dut = msg[5] if len(msg) == 6 else None
+            except (IndexError, ValueError) as exc:
+                LOG.error("Invalid message '%s'. length=%d. %s", msg, len(msg), exc)
+                return
+
+            LOG.info("[%d] Starting job", job_id)
+            LOG.debug("[%d]        : %s", job_id, job_definition)
+            LOG.debug("[%d] device : %s", job_id, device_definition)
+            LOG.debug("[%d] env    : %s", job_id, env)
+            LOG.debug("[%d] env-dut: %s", job_id, env_dut)
+
+            # Check if the job is known and started. In this case, send
+            # back the right signal (ignoring the duplication or signaling
+            # the end of the job).
+            if job_id in jobs:
+                if jobs[job_id].is_running:
+                    LOG.info(
+                        "[%d] Job has already been started", job_id)
+                    sock.send_multipart(["START_OK", str(job_id)])
+                else:
+                    LOG.warning("[%d] Job has already ended", job_id)
+                    sock.send_multipart(["END", str(job_id), "0"])
+            else:
+                jobs[job_id] = Job(job_id, job_definition,
+                                   device_definition, env,
+                                   socket_addr, env_dut=env_dut)
+                jobs[job_id].start()
+                sock.send_multipart(["START_OK", str(job_id)])
+
+            # Mark the master as alive
+            master.received_msg()
+
+        elif action == "CANCEL":
+            try:
+                job_id = int(msg[1])
+            except (IndexError, ValueError):
+                LOG.error("Invalid message '%s'", msg)
+                return
+            LOG.info("[%d] Canceling", job_id)
+
+            # Check if the job is known and started. In this case, send
+            # back the right signal (ignoring the duplication or signaling
+            # the end of the job).
+            if job_id in jobs:
+                if jobs[job_id].is_running:
+                    jobs[job_id].cancel()
+                else:
+                    LOG.info(
+                        "[%d] Job has already been canceled", job_id)
+            else:
+                LOG.debug("[%d] Unknown job, sending END", job_id)
+                jobs[job_id] = Job(job_id, "", "", None, None)
+                jobs[job_id].is_running = False
+            # Send the END message anyway
+            sock.send_multipart(["END", str(job_id), "0"])
+
+            # Mark the master as alive
+            master.received_msg()
+
+        elif action == "END_OK":
+            try:
+                job_id = int(msg[1])
+            except (IndexError, ValueError):
+                LOG.error("Invalid message '%s'", msg)
+                return
+            if job_id in jobs:
+                LOG.debug("[%d] Job END acked", job_id)
+                del jobs[job_id]
+            else:
+                LOG.debug("[%d] Unknown job END acked", job_id)
+
+            # Do not mark the master as alive. In fact we are not sending
+            # back any data so the master will not be able to mark the
+            # slave as alive.
+
+        elif action == "STATUS":
+            try:
+                job_id = int(msg[1])
+            except (IndexError, ValueError):
+                LOG.error("Invalid message '%s'", msg)
+                return
+            if job_id in jobs:
+                if jobs[job_id].is_running:
+                    # The job is still running
+                    sock.send_multipart(["START_OK", str(job_id)])
+                else:
+                    # The job has already ended
+                    sock.send_multipart(["END", str(job_id), "0"])
+            else:
+                # Unknown job: return END anyway
+                LOG.debug(
+                    "[%d] Unknown job, sending END after STATUS", job_id)
+                jobs[job_id] = Job(job_id, "", "", None, None)
+                jobs[job_id].is_running = False
+                sock.send_multipart(["END", str(job_id), "0"])
+
+            # Mark the master as alive
+            master.received_msg()
+
+        else:
+            LOG.error(
+                "Unknown action: '%s', args=(%s)", action, msg[1:])
+            # Do not tag the master as alive as the message does not mean
+            # anything.
+
+
+def check_job_status(jobs, sock):
+    """Look for finished jobs
+
+    :param jobs: the list of jobs
+    :param sock: the zmq socket
+    """
+    # Loop on all running jobs
+    for job_id in [i for i in jobs.keys() if jobs[i].is_running]:
+        ret = jobs[job_id].proc.poll()
+        # Job has finished
+        if ret is not None:
+            LOG.info("[%d] Job END", job_id)
+            job_status = jobs[job_id].proc.returncode
+            if job_status:
+                LOG.info("[%d] Job returned non-zero", job_id)
+                errs = jobs[job_id].log_errors()
+                if errs:
+                    sock.send_multipart(["ERROR", str(job_id), str(errs)])
+
+            jobs[job_id].is_running = False
+            sock.send_multipart(["END", str(job_id), str(job_status)])
+
+
+def ping_master(master, sock, timeout):
+    """PING the master whnever needed
+    Send a PING only if we haven't received a message from the master nor sent
+    a PING for a long time.
+
+    :param master: the master structure
+    :param sock: the zmq socket
+    :param timeout: the time to wait to flag the master as offline
+    """
+    now = time.time()
+    if now - max(master.last_msg, master.last_ping) > timeout:
+        # Is the master offline ?
+        if master.online and now - master.last_msg > 4 * timeout:
+            LOG.warning("Master goes OFFLINE")
+            master.online = False
+
+        LOG.debug(
+            "Sending PING to the master (last message %ss ago)",
+            int(now - master.last_msg))
+
+        sock.send_multipart(["PING"])
+        master.last_ping = now
+
+
 def main():
     """Set up and start the dispatcher slave."""
     parser = argparse.ArgumentParser(description="LAVA Dispatcher Slave")
@@ -278,6 +547,9 @@ def main():
         "--master", type=str, help="Main master socket", required=True)
     parser.add_argument(
         "--socket-addr", type=str, help="Log socket", required=True)
+    parser.add_argument(
+        "--log-file", type=str, help="Log file for the slave logs",
+        default="/var/log/lava-dispatcher/lava-slave.log")
     parser.add_argument(
         "--level", "-l",
         type=str,
@@ -293,21 +565,15 @@ def main():
     )
     args = parser.parse_args()
 
-    log_level = args.level
+    # Parse the command line
     timeout = args.timeout
     host_name = args.hostname
     master_uri = args.master
 
-    # Set-up the LOG level
-    if log_level == "ERROR":
-        LOG.setLevel(logging.ERROR)
-    elif log_level == "WARN":
-        LOG.setLevel(logging.WARN)
-    elif log_level == "INFO":
-        LOG.setLevel(logging.INFO)
-    else:
-        LOG.setLevel(logging.DEBUG)
+    # configure logger
+    configure_logger(args.log_file, args.level)
 
+    # Create the zmq context
     context, sock, poller, pipe_r, pipe_w = create_zmq_context(
         master_uri, host_name, send_queue=SEND_QUEUE)
 
@@ -318,222 +584,22 @@ def main():
     master = Master()
     jobs = {}
 
+    # Connect to the master and wait for the reply
     LOG.info("Connecting to master as <%s>", host_name)
     hello_msg = "HELLO"
-    retry_msg = "HELLO_RETRY"
     LOG.debug("Greeting the master => '%s'", hello_msg)
     sock.send_multipart([hello_msg])
 
-    while True:
-        try:
-            LOG.info("Waiting for the master to reply")
-            sockets = dict(poller.poll(timeout * 1000))
-        except zmq.error.ZMQError:
-            # TODO: tests needed to understand cases where ZMQError is raised.
-            LOG.error("Received an error, interrupted")
-            sys.exit(1)
-
-        if sockets.get(pipe_r) == zmq.POLLIN:
-            LOG.info("Received a signal, leaving")
-            sys.exit(0)
-        elif sockets.get(sock) == zmq.POLLIN:
-            msg = sock.recv_multipart()
-
-            try:
-                message = msg[0]
-                LOG.debug("The master replied: %s", msg)
-            except (IndexError, TypeError):
-                LOG.error("Invalid message from the master: %s", msg)
-            else:
-                if message == "HELLO_OK":
-                    LOG.info("Connection with the master established")
-                    # Mark the master as alive.
-                    master.received_msg()
-                    break
-                else:
-                    LOG.info("Unexpected message from the master: %s", message)
-
-        LOG.debug("Sending new %s message to the master", retry_msg)
-        sock.send_multipart([retry_msg])
+    while not connect_to_master(master, poller, pipe_r, sock, timeout):
+        pass
 
     # Loop for server instructions
     LOG.info("Waiting for master instructions")
     while True:
-        try:
-            sockets = dict(poller.poll(timeout * 1000))
-        except zmq.error.ZMQError:
-            # TODO: tests needed to understand cases where ZMQError is raised.
-            continue
-
-        if sockets.get(pipe_r) == zmq.POLLIN:
-            LOG.info("Received a signal, leaving")
-            break
-
-        if sockets.get(sock) == zmq.POLLIN:
-            msg = sock.recv_multipart()
-
-            # 1: the action
-            try:
-                action = msg[0]
-            except (IndexError, TypeError):
-                LOG.error("Invalid message from the master: %s", msg)
-                continue
-            LOG.debug("Received action=%s", action)
-
-            # Parse the action
-            if action == "HELLO_OK":
-                LOG.debug(
-                    "Received HELLO_OK from the master - nothing do to")
-
-            elif action == "PONG":
-                LOG.debug("Connection to master OK")
-
-                # Mark the master as alive
-                master.received_msg()
-
-            elif action == "START":
-                try:
-                    job_id = int(msg[1])
-                    job_definition = msg[2]
-                    device_definition = msg[3]
-                    env = msg[4]
-                    env_dut = msg[5] if len(msg) == 6 else None
-                except (IndexError, ValueError) as exc:
-                    LOG.error("Invalid message '%s'. length=%d. %s", (msg, len(msg), exc))
-                    continue
-
-                LOG.info("[%d] Starting job", job_id)
-                LOG.debug("[%d]        : %s", job_id, job_definition)
-                LOG.debug("[%d] device : %s", job_id, device_definition)
-                LOG.debug("[%d] env    : %s", job_id, env)
-                LOG.debug("[%d] env-dut: %s", job_id, env_dut)
-
-                # Check if the job is known and started. In this case, send
-                # back the right signal (ignoring the duplication or signaling
-                # the end of the job).
-                if job_id in jobs:
-                    if jobs[job_id].running:
-                        LOG.info(
-                            "[%d] Job has already been started", job_id)
-                        sock.send_multipart(["START_OK", str(job_id)])
-                    else:
-                        LOG.warning("[%d] Job has already ended", job_id)
-                        sock.send_multipart(["END", str(job_id), "0"])
-                else:
-                    jobs[job_id] = Job(job_id, job_definition,
-                                       device_definition, env,
-                                       args.socket_addr, env_dut=env_dut)
-                    jobs[job_id].start()
-                    sock.send_multipart(["START_OK", str(job_id)])
-
-                # Mark the master as alive
-                master.received_msg()
-
-            elif action == "CANCEL":
-                try:
-                    job_id = int(msg[1])
-                except (IndexError, ValueError):
-                    LOG.error("Invalid message '%s'", msg)
-                    continue
-                LOG.info("[%d] Canceling", job_id)
-
-                # Check if the job is known and started. In this case, send
-                # back the right signal (ignoring the duplication or signaling
-                # the end of the job).
-                if job_id in jobs:
-                    if jobs[job_id].running:
-                        jobs[job_id].cancel()
-                    else:
-                        LOG.info(
-                            "[%d] Job has already been canceled", job_id)
-                else:
-                    LOG.debug("[%d] Unknown job, sending END", job_id)
-                    jobs[job_id] = Job(job_id, "", "", None, None)
-                    jobs[job_id].running = False
-                # Send the END message anyway
-                sock.send_multipart(["END", str(job_id), "0"])
-
-                # Mark the master as alive
-                master.received_msg()
-
-            elif action == "END_OK":
-                try:
-                    job_id = int(msg[1])
-                except (IndexError, ValueError):
-                    LOG.error("Invalid message '%s'", msg)
-                    continue
-                if job_id in jobs:
-                    LOG.debug("[%d] Job END acked", job_id)
-                    del jobs[job_id]
-                else:
-                    LOG.debug("[%d] Unknown job END acked", job_id)
-
-                # Do not mark the master as alive. In fact we are not sending
-                # back any data so the master will not be able to mark the
-                # slave as alive.
-
-            elif action == "STATUS":
-                try:
-                    job_id = int(msg[1])
-                except (IndexError, ValueError):
-                    LOG.error("Invalid message '%s'", msg)
-                    continue
-                if job_id in jobs:
-                    if jobs[job_id].running:
-                        # The job is still running
-                        sock.send_multipart(["START_OK", str(job_id)])
-                    else:
-                        # The job has already ended
-                        sock.send_multipart(["END", str(job_id), "0"])
-                else:
-                    # Unknown job: return END anyway
-                    LOG.debug(
-                        "[%d] Unknown job, sending END after STATUS", job_id)
-                    jobs[job_id] = Job(job_id, "", "", None, None)
-                    jobs[job_id].running = False
-                    sock.send_multipart(["END", str(job_id), "0"])
-
-                # Mark the master as alive
-                master.received_msg()
-
-            else:
-                LOG.error(
-                    "Unknown action: '%s', args=(%s)", action, msg[1:])
-                # Do not write the master as alive as the message does not mean
-                # anything.
-
-        # Check job status
-        for job_id in jobs.keys():
-            if jobs[job_id].running:
-                ret = jobs[job_id].proc.poll()
-                # Job has finished
-                if ret is not None:
-                    LOG.info("[%d] Job END", job_id)
-                    job_status = jobs[job_id].proc.returncode
-                    if job_status:
-                        LOG.info("[%d] Job returned non-zero", job_id)
-                        errs = jobs[job_id].log_errors()
-                        if errs:
-                            sock.send_multipart(["ERROR", str(job_id), str(errs)])
-
-                    jobs[job_id].running = False
-                    sock.send_multipart(["END", str(job_id), str(job_status)])
-
-        # Send a PING only if we haven't received a message from the master nor
-        # sent a PING for a long time.
-        now = time.time()
-        if now - max(master.last_msg, master.last_ping) > timeout:
-            # Is the master offline ?
-            if master.online and now - master.last_msg > 4 * timeout:
-                LOG.warning("Master goes OFFLINE")
-                master.online = False
-
-            LOG.debug(
-                "Sending PING to the master (last message %ss ago)",
-                int(now - master.last_msg))
-
-            sock.send_multipart(["PING"])
-            master.last_ping = now
+        listen_to_master(master, jobs, poller, pipe_r, args.socket_addr,
+                         sock, timeout)
+        check_job_status(jobs, sock)
+        ping_master(master, sock, timeout)
 
 
 if __name__ == "__main__":

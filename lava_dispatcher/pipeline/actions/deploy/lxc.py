@@ -25,6 +25,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
+from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ApplyLxcOverlay
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 
@@ -97,8 +98,9 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         self.set_common_data('lxc', 'distribution', self.protocols[0].lxc_dist)
         self.set_common_data('lxc', 'release', self.protocols[0].lxc_release)
         self.set_common_data('lxc', 'arch', self.protocols[0].lxc_arch)
-        self.internal_pipeline.add_action(OverlayAction())
         self.internal_pipeline.add_action(LxcCreateAction())
+        self.internal_pipeline.add_action(OverlayAction())
+        self.internal_pipeline.add_action(ApplyLxcOverlay())
 
 
 class LxcCreateAction(DeployAction):

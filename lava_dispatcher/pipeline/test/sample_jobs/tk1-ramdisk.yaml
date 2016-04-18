@@ -10,8 +10,6 @@ timeouts:
    minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
 priority: medium
 
-# example old-style job: https://staging.validation.linaro.org/scheduler/job/113682/definition
-
 actions:
 
   # needs to be a list of hashes to retain the order
@@ -20,20 +18,13 @@ actions:
        minutes: 2
      to: tftp
      kernel:
-         url: http://storage.kernelci.org/mainline/v4.4-8855-ga200dcb34693/arm-multi_v7_defconfig/zImage
+         url: https://googledrive.com/host/0B9DbsE2BbZ7ufjdLMVVONThlbE1mR3N4TjdFTVJod2c4TXpRUDZjMmF0Ylp4Ukk5VG14Ync/jetson-tk1/zImage
      ramdisk:
-         url: http://ironhide.bounceme.net/common/kernelcirootfs.cpio.bz2
-         #url: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
-         compression: bz2
-         #header: u-boot
-         add-header: u-boot
-     modules:
-         url: http://storage.kernelci.org/mainline/v4.4-8855-ga200dcb34693/arm-multi_v7_defconfig/modules.tar.xz
-         compression: xz
-
-     os: oe
+         url: https://googledrive.com/host/0B9DbsE2BbZ7ufjdLMVVONThlbE1mR3N4TjdFTVJod2c4TXpRUDZjMmF0Ylp4Ukk5VG14Ync/images/rootfs/armel/rootfs.cpio.gz
+         compression: gz
      dtb:
-         url: http://storage.kernelci.org/mainline/v4.4-8855-ga200dcb34693/arm-multi_v7_defconfig/dtbs/tegra124-jetson-tk1.dtb
+         url: https://googledrive.com/host/0B9DbsE2BbZ7ufjdLMVVONThlbE1mR3N4TjdFTVJod2c4TXpRUDZjMmF0Ylp4Ukk5VG14Ync/jetson-tk1/tegra124-jetson-tk1.dtb
+     os: oe
 
   - boot:
      method: u-boot

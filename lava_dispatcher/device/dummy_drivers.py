@@ -154,7 +154,7 @@ class ssh(BaseDriver):
             # one pointed by the actual configuration to be OK
             identity_file = os.path.join(base, self.__host__ + '_key')
             shutil.copyfile(self.__identity_file__, identity_file)
-            os.chmod(identity_file, 0600)
+            os.chmod(identity_file, 0o600)
 
             with open(filename, 'w') as f:
                 f.write("User %s\n" % self.__username__)

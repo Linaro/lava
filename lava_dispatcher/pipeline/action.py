@@ -604,7 +604,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         """
         pass
 
-    def run_command(self, command_list):
+    def run_command(self, command_list, allow_silent=False):
         """
         Single location for all external command operations on the
         dispatcher, without using a shell and with full structured logging.
@@ -613,27 +613,42 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         Returns the output of the command (after logging the output)
         Includes default support for proxy settings in the environment.
         Blocks until the command returns then processes & logs the output.
+
+        Caution: take care with the return value as this is highly dependent
+        on the command_list and the expected results.
+
+        :param: command_list - the command to run, with arguments
+        :param: allow_silent - if True, the command may exit zero with no output
+        without being considered to have failed.
+        :return: On success (command exited zero), returns the command output.
+        If allow_silent is True and the command produced no output, returns True.
+        On failure (command exited non-zero), sets self.errors.
+        If allow_silent is True, returns False, else returns the command output.
         """
         # FIXME: add option to only check stdout or stderr for failure output
         if type(command_list) != list:
             raise RuntimeError("commands to run_command need to be a list")
         log = None
+        # nice is assumed to always exist (coreutils)
         command_list.insert(0, 'nice')
         try:
             log = subprocess.check_output(command_list, stderr=subprocess.STDOUT)
-        except OSError as exc:
-            self.logger.exception({exc.strerror: exc.child_traceback.split('\n')})
         except subprocess.CalledProcessError as exc:
-            self.errors = exc.output.strip() if not exc.message else exc.message
+            if exc.output:
+                self.errors = exc.output.strip()
+            elif exc.message:
+                self.errors = exc.message
+            else:
+                self.errors = str(exc)
             self.logger.exception({
                 'command': [i.strip() for i in exc.cmd],
                 'message': [i.strip() for i in exc.message],
                 'output': exc.output.split('\n')})
 
         # allow for commands which return no output
-        if not log:
+        if not log and allow_silent:
             self.logger.debug({'command': command_list})
-            return ''
+            return self.errors == []
         else:
             self.logger.debug({'command': command_list,
                                'output': log})

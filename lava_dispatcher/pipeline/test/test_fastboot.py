@@ -25,6 +25,7 @@ import unittest
 from lava_dispatcher.pipeline.device import NewDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.action import JobError
 from lava_dispatcher.pipeline.test.test_basic import pipeline_reference
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
@@ -64,6 +65,8 @@ class TestFastbootDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
         description_ref = pipeline_reference('fastboot.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
+    @unittest.skipIf(infrastructure_error('adb'), 'adb not installed')
+    @unittest.skipIf(infrastructure_error('fastboot'), 'fastboot not installed')
     def test_validate(self):
         try:
             self.job.pipeline.validate_actions()

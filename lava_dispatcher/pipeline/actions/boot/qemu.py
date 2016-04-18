@@ -80,7 +80,7 @@ class BootQEMUImageAction(BootAction):
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(BootQemuRetry())
-        # Add AutoLoginAction unconditionnally as this action does nothing if
+        # Add AutoLoginAction unconditionally as this action does nothing if
         # the configuration does not contain 'auto_login'
         self.internal_pipeline.add_action(AutoLoginAction())
         self.internal_pipeline.add_action(ExpectShellSession())

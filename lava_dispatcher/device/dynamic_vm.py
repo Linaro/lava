@@ -43,6 +43,7 @@ class DynamicVmTarget(Target):
         'kvm': lambda: kvm_adapter,
         'kvm-arm': lambda: kvm_adapter,
         'kvm-aarch64': lambda: kvm_adapter,
+        'kvm-aarch32': lambda: kvm_adapter,
     }
 
     def __init__(self, context, config):
@@ -105,7 +106,7 @@ class kvm_adapter(object):
         identity_file = '%s/dynamic_vm_keys/lava' % os.path.dirname(__file__)
         self.identity_file = os.path.join(device.scratch_dir, 'lava')
         shutil.copyfile(identity_file, self.identity_file)
-        os.chmod(self.identity_file, 0600)
+        os.chmod(self.identity_file, 0o600)
         self.local_sd_image = None
         self.__host__ = None
         self.vm_images_dir = '/lava-vm-images/%s' % device.config.hostname

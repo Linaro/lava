@@ -24,7 +24,6 @@ actions:
      ramdisk:
          url: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
          header: u-boot
-         add-header: u-boot
          compression: gz
      os: oe
      dtb:

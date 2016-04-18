@@ -109,10 +109,14 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         identity = os.path.realpath(os.path.join(__file__, '../../../', params['ssh']['identity_file']))
         self.assertTrue(os.path.exists(identity))
         test_command = [
-            'ssh', '-o', 'Compression=yes', '-o', 'UserKnownHostsFile=/dev/null',
-            '-o', 'PasswordAuthentication=no', '-o', 'StrictHostKeyChecking=no',
-            '-o', 'LogLevel=FATAL', '-l', 'root ',
-            '-p', '8022']
+            'ssh', '-o', 'Compression=yes',
+            '-o', 'PasswordAuthentication=no',
+            '-o', 'LogLevel=FATAL',
+            '-o', 'UserKnownHostsFile=/dev/null',
+            '-o', 'StrictHostKeyChecking=no',
+            '-i', identity,
+            '-p', '8022'
+        ]
         self.job.validate()
         login = [action for action in self.job.pipeline.actions if action.name == 'login-ssh'][0]
         self.assertIn('ssh-connection', [action.name for action in login.internal_pipeline.actions])
@@ -121,6 +125,7 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertTrue(prepare.primary)
         self.assertEqual(identity, primary.identity_file)
         self.assertEqual(primary.host, params['ssh']['host'])
+        self.assertEqual(int(primary.ssh_port[1]), params['ssh']['port'])
         self.assertEqual(test_command, primary.command)
         # idempotency check
         self.job.validate()
@@ -128,10 +133,11 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertEqual(test_command, primary.command)
         bad_port = {
             'host': 'localhost',
+            'port': 'bob',
             'options': [
                 '-o', 'Compression=yes', '-o', 'UserKnownHostsFile=/dev/null',
                 '-o', 'PasswordAuthentication=no', '-o', 'StrictHostKeyChecking=no',
-                '-o', 'LogLevel=FATAL', '-l', 'root ', '-p', 8022
+                '-o', 'LogLevel=FATAL'
             ],
             'identity_file': 'device/dynamic_vm_keys/lava'}
         self.job.device['actions']['deploy']['methods']['ssh'] = bad_port
@@ -147,6 +153,13 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         # FIXME: schroot needs to make use of scp
         self.assertNotIn('ssh', scp.scp)
         self.assertFalse(scp.primary)
+
+    def test_tar_command(self):
+        self.job.validate()
+        login = [item for item in self.job.pipeline.actions if item.name == 'login-ssh'][0]
+        tar_flags = login.get_common_data('scp-overlay', 'tar_flags')
+        self.assertIsNotNone(tar_flags)
+        self.assertEqual('--warning no-timestamp', tar_flags)
 
     @unittest.skipIf(infrastructure_error('schroot'), "schroot not installed")
     def test_schroot_params(self):

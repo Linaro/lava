@@ -205,3 +205,50 @@ overrides:
                 # assert that the string containing a space still contains that space and is quoted
                 self.assertIn('\\\'Neil Williams\\\'', line)
         self.assertTrue(found)
+
+
+class TestCommand(unittest.TestCase):
+
+    def test_silent(self):
+        fake = FakeAction()
+        command = 'true'
+        log = fake.run_command(command.split(' '))
+        self.assertEqual(log, '')
+        self.assertEqual([], fake.errors)
+
+    def test_allow_silent(self):
+        fake = FakeAction()
+        command = 'true'
+        log = fake.run_command(command.split(' '), allow_silent=True)
+        if not log:
+            self.fail(log)
+        self.assertEqual([], fake.errors)
+
+    def test_error(self):
+        fake = FakeAction()
+        command = 'false'
+        # sets return code non-zero with no output
+        log = fake.run_command(command.split(' '))
+        self.assertIsNone(log)
+        self.assertNotEqual([], fake.errors)
+
+    def test_allow_silent_error(self):
+        fake = FakeAction()
+        command = 'false'
+        log = fake.run_command(command.split(' '), allow_silent=True)
+        self.assertFalse(log)
+        self.assertNotEqual([], fake.errors)
+
+    def test_invalid(self):
+        fake = FakeAction()
+        command = './no-script'
+        log = fake.run_command(command.split(' '))
+        self.assertIsNone(log)
+        self.assertNotEqual([], fake.errors)
+
+    def test_allow_silent_invalid(self):
+        fake = FakeAction()
+        command = './no-script'
+        log = fake.run_command(command.split(' '), allow_silent=True)
+        self.assertFalse(log)
+        self.assertNotEqual([], fake.errors)

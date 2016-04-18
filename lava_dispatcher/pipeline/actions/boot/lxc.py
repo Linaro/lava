@@ -37,9 +37,6 @@ from lava_dispatcher.pipeline.connections.lxc import (
 )
 from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
-from lava_dispatcher.pipeline.utils.constants import (
-    LXC_PATH,
-)
 
 
 class BootLxc(Boot):
@@ -78,12 +75,11 @@ class BootLxcAction(BootAction):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(LxcStartAction())
         self.internal_pipeline.add_action(ConnectLxc())
-        # Add AutoLoginAction unconditionnally as this action does nothing if
+        # Add AutoLoginAction unconditionally as this action does nothing if
         # the configuration does not contain 'auto_login'
         self.internal_pipeline.add_action(AutoLoginAction())
         self.internal_pipeline.add_action(ExpectShellSession())
         self.internal_pipeline.add_action(ExportDeviceEnvironment())
-        self.internal_pipeline.add_action(LxcOverlayUnpack())
 
 
 class LxcStartAction(Action):
@@ -110,33 +106,4 @@ class LxcStartAction(Action):
         if command_output and command_output is not '':
             raise JobError("Unable to start lxc container: %s" %
                            command_output)  # FIXME: JobError needs a unit test
-        return connection
-
-
-class LxcOverlayUnpack(Action):
-
-    def __init__(self):
-        super(LxcOverlayUnpack, self).__init__()
-        self.name = "lxc-overlay-unpack"
-        self.summary = "unpack the overlay on the container"
-        self.description = "unpack the overlay to the container by copying"
-
-    def validate(self):
-        super(LxcOverlayUnpack, self).validate()
-        self.errors = infrastructure_error('tar')
-
-    def run(self, connection, args=None):
-        connection = super(LxcOverlayUnpack, self).run(connection, args)
-        overlay_file = self.data['compress-overlay'].get('output')
-        lxc_path = os.path.join(LXC_PATH, self.get_common_data('lxc', 'name'),
-                                "rootfs")
-        if not os.path.exists(lxc_path):
-            raise JobError("Lxc container rootfs not found")
-        tar_cmd = ['tar', '--warning', 'no-timestamp', '-C', lxc_path, '-xaf',
-                   overlay_file]
-        command_output = self.run_command(tar_cmd)
-        if command_output and command_output is not '':
-            raise JobError("Unable to untar overlay: %s" %
-                           command_output)  # FIXME: JobError needs a unit test
-        self.data['boot-result'] = 'failed' if self.errors else 'success'
         return connection

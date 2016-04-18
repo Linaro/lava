@@ -36,7 +36,7 @@ if __name__ == '__main__':
     parser = optparse.OptionParser(usage=usage, description=description)
     (options, args) = parser.parse_args()
     if len(args) != 2:
-        print "Missing job option, try -h for help"
+        print("Missing job option, try -h for help")
         exit(1)
 
     # Create the device
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     try:
         device = NewDevice(args[0])
     except RuntimeError:
-        print "No device configuration found for %s" % args[0]
+        print("No device configuration found for %s" % args[0])
         exit(1)
 
     # Load the job definition
@@ -52,4 +52,4 @@ if __name__ == '__main__':
         parser = JobParser()
         job = parser.parse(job_data, device, 0, None)
 
-    print yaml.dump(job.pipeline.describe(False))
+    print(yaml.dump(job.pipeline.describe(False)))

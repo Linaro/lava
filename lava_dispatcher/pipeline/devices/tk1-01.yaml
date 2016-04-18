@@ -30,6 +30,9 @@ actions:
   deploy:
     methods:
       tftp:
+    parameters:
+      add_header: u-boot
+      mkimage_arch: arm
   boot:
     connections:
       serial:
