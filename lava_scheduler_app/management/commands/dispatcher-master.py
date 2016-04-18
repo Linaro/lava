@@ -32,7 +32,6 @@ import zmq
 
 from django.db import transaction
 from django.db.utils import OperationalError, InterfaceError
-from django.contrib.auth.models import User
 from lava_server.utils import OptArgBaseCommand as BaseCommand
 from lava_scheduler_app.models import Device, TestJob
 from lava_scheduler_app.utils import mkdir
@@ -168,16 +167,20 @@ class Command(BaseCommand):
         try:
             scanned = yaml.load(message)
         except yaml.YAMLError:
-            # failure to scan is not an error here, it just means the message is not a result
+            # failure to scan is not an error here, it just means the message
+            # is not a result
             scanned = None
-        # the results logger wraps the OrderedDict in a dict called results, for identification,
-        # YAML then puts that into a list of one item for each call to log.results.
+        # the results logger wraps the OrderedDict in a dict called results,
+        # for identification, YAML then puts that into a list of one item for
+        # each call to log.results.
         if isinstance(scanned, list) and len(scanned) == 1:
             if isinstance(scanned[0], dict) and 'results' in scanned[0]:
                 job = TestJob.objects.get(id=job_id)
                 ret = map_scanned_results(scanned_dict=scanned[0], job=job)
                 if not ret:
-                    self.logger.warning("[%s] Unable to map scanned results: %s", job_id, yaml.dump(scanned[0]))
+                    self.logger.warning(
+                        "[%s] Unable to map scanned results: %s",
+                        job_id, yaml.dump(scanned[0]))
 
         # Clear filename
         if '/' in level or '/' in name:
