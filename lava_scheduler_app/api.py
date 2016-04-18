@@ -320,6 +320,55 @@ class SchedulerAPI(ExposedAPI):
 
         return all_device_types
 
+    def put_into_maintenance_mode(self, hostname, reason, notify=None):
+        """
+        Name
+        ----
+        `put_into_maintenance_mode` (`hostname`, `reason`, `notify`)
+
+        Description
+        -----------
+        Put the given device in maintenance mode with the given reason and optionally
+        notify the given mail address when the job has finished.
+
+        Arguments
+        ---------
+        `hostname`: string
+            Name of the device to put into maintenance mode.
+        `reason`: string
+            The reason given to justify putting the device into maintenance mode.
+        `notify`: string
+            Email address of the user to notify when the job has finished. Can be
+            omitted.
+
+        Return value
+        ------------
+        None. The user should be authenticated with a username and token and has
+        sufficient permission.
+        """
+
+        self._authenticate()
+        if not hostname:
+            raise xmlrpclib.Fault(
+                400, "Bad request: Hostname was not specified."
+            )
+        if not reason:
+            raise xmlrpclib.Fault(
+                400, "Bad request: Reason was not specified."
+            )
+        try:
+            device = Device.objects.get(hostname=hostname)
+        except Device.DoesNotExist:
+            raise xmlrpclib.Fault(
+                404, "Device '%s' was not found." % hostname
+            )
+        if device.can_admin(self.user):
+            device.put_into_maintenance_mode(self.user, reason, notify)
+        else:
+            raise xmlrpclib.Fault(
+                403, "Permission denied for user to put %s into maintenance mode." % hostname
+            )
+
     def put_into_online_mode(self, hostname, reason, skip_health_check=False):
         """
         Name
