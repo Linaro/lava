@@ -36,7 +36,7 @@ class Commit(object):
         self.commit_id = commit_id
         self.change_id = change_id
 
-        self.obj = subprocess.check_output(['git', 'cat-file', '-p', self.commit_id])
+        self.obj = subprocess.check_output(['git', 'cat-file', '-p', self.commit_id]).decode('utf-8')
         break_next_time = False
 
         for line in self.obj.split('\n'):
@@ -64,7 +64,7 @@ def get_change_ids(branch):
     results = []
 
     subprocess.check_output(["git", "checkout", branch], stderr=subprocess.STDOUT)
-    lines = subprocess.check_output(["git", "log"])
+    lines = subprocess.check_output(["git", "log"]).decode('utf-8')
     for line in lines.split('\n'):
         if "Change-Id" in line:
             m = change_id_pattern.match(line)
@@ -87,7 +87,7 @@ def main():
     try:
         subprocess.check_call(["git", "rev-parse"])
     except subprocess.CalledProcessError:
-        print "Ensure this script is run from the git working copy."
+        print("Ensure this script is run from the git working copy.")
         return 1
 
     master_branch = 'staging' if args.staging else 'master'
@@ -96,10 +96,11 @@ def main():
     release = get_change_ids(args.branch)
 
     diff = list(set(master) - set(release))
+    diff.sort()
 
     # Go back to master
     subprocess.check_output(["git", "checkout", master_branch], stderr=subprocess.STDOUT)
-    lines = subprocess.check_output(["git", "log"])
+    lines = subprocess.check_output(["git", "log"]).decode('utf-8')
 
     # List the missing commits
     current_hash = ''
@@ -121,10 +122,10 @@ def main():
     commits.sort(key=lambda x: x.time, reverse=True)
     if args.changelog:
         for c in commits:
-            print c.message
+            print(c.message)
     else:
         for c in commits:
-            print c.render()
+            print(c.render())
 
     return 0
 
