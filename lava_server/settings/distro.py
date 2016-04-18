@@ -130,8 +130,18 @@ if AUTH_LDAP_SERVER_URI:
     INSTALLED_APPS.append('ldap')
     INSTALLED_APPS.append('django_auth_ldap')
     import ldap
-    from django_auth_ldap.config import (
-        LDAPSearch, LDAPSearchUnion, GroupOfNamesType)
+    from django_auth_ldap.config import (LDAPSearch, LDAPSearchUnion)
+
+    def get_ldap_group_types():
+        """Return a list of all LDAP group types supported by django_auth_ldap module"""
+        import django_auth_ldap.config
+        import inspect
+        types = []
+        for name, obj in inspect.getmembers(django_auth_ldap.config):
+            if inspect.isclass(obj) and name.endswith('Type'):
+                types.append(name)
+
+        return types
 
     AUTHENTICATION_BACKENDS = ['django_auth_ldap.backend.LDAPBackend',
                                'django.contrib.auth.backends.ModelBackend'] + \
@@ -165,8 +175,13 @@ if AUTH_LDAP_SERVER_URI:
             "AUTH_LDAP_GROUP_SEARCH"))
 
     if distro_settings.get_setting("AUTH_LDAP_GROUP_TYPE"):
-        AUTH_LDAP_GROUP_TYPE = eval(distro_settings.get_setting(
-            "AUTH_LDAP_GROUP_TYPE"))
+        group_type = distro_settings.get_setting("AUTH_LDAP_GROUP_TYPE")
+        # strip params from group type to get the class name
+        group_class = group_type.split('(', 1)[0]
+        group_types = get_ldap_group_types()
+        if group_class in group_types:
+            exec('from django_auth_ldap.config import ' + group_class)
+            AUTH_LDAP_GROUP_TYPE = eval(group_type)
 
     if distro_settings.get_setting("AUTH_LDAP_USER_FLAGS_BY_GROUP"):
         AUTH_LDAP_USER_FLAGS_BY_GROUP = distro_settings.get_setting(
