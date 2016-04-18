@@ -320,6 +320,74 @@ class SchedulerAPI(ExposedAPI):
 
         return all_device_types
 
+    def get_device_status(self, hostname):
+        """
+        Name
+        ----
+        `get_device_status` (`hostname`)
+
+        Description
+        -----------
+        Get status, running job, date from which it is offline of the given
+        device and the user who put it offline.
+
+        Arguments
+        ---------
+        `hostname`: string
+            Name of the device for which the status is asked.
+
+        Return value
+        ------------
+        This function returns an XML-RPC dictionary which contains hostname,
+        status, date from which the device is offline if the device is offline,
+        the user who put the device offline if the device is offline and the
+        job id of the running job.
+        The device has to be visible to the user who requested device's status.
+
+        Note that offline_since and offline_by can be empty strings if the device
+        status is manually changed by an administrator in the database or from
+        the admin site of LAVA even if device's status is offline.
+        """
+
+        if not hostname:
+            raise xmlrpclib.Fault(
+                400, "Bad request: Hostname was not specified."
+            )
+        try:
+            device = Device.objects.get(hostname=hostname)
+        except Device.DoesNotExist:
+            raise xmlrpclib.Fault(
+                404, "Device '%s' was not found." % hostname
+            )
+
+        device_dict = {}
+        if device.is_visible_to(self.user):
+            device_dict["hostname"] = device.hostname
+            device_dict["status"] = Device.STATUS_CHOICES[device.status][1].lower()
+            device_dict["job"] = None
+            device_dict["offline_since"] = None
+            device_dict["offline_by"] = None
+
+            if device.current_job:
+                device_dict["job"] = device.current_job.pk
+
+            if device.status == Device.OFFLINE:
+                device_dict["offline_since"] = ""
+                device_dict["offline_by"] = ""
+                try:
+                    last_transition = device.transitions.latest('created_on')
+                    if last_transition.new_state == Device.OFFLINE:
+                        device_dict["offline_since"] = str(last_transition.created_on)
+                        if last_transition.created_by:
+                            device_dict["offline_by"] = last_transition.created_by.username
+                except Device.DoesNotExist:
+                    pass
+        else:
+            raise xmlrpclib.Fault(
+                403, "Permission denied for user to access %s information." % hostname
+            )
+        return device_dict
+
     def put_into_maintenance_mode(self, hostname, reason, notify=None):
         """
         Name
