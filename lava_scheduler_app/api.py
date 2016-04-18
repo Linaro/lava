@@ -320,6 +320,55 @@ class SchedulerAPI(ExposedAPI):
 
         return all_device_types
 
+    def put_into_online_mode(self, hostname, reason, skip_health_check=False):
+        """
+        Name
+        ----
+        `put_into_online_mode` (`hostname`, `reason`, `skip_health_check`)
+
+        Description
+        -----------
+        Put the given device into online mode with the given reason ans skip health
+        check if asked.
+
+        Arguments
+        ---------
+        `hostname`: string
+            Name of the device to put into online mode.
+        `reason`: string
+            The reason given to justify putting the device into online mode.
+        `skip_health_check`: boolean
+            Skip health check when putting the board into online mode. If
+            omitted, health check is not skipped by default.
+
+        Return value
+        ------------
+        None. The user should be authenticated with a username and token and has
+        sufficient permission.
+        """
+
+        self._authenticate()
+        if not hostname:
+            raise xmlrpclib.Fault(
+                400, "Bad request: Hostname was not specified."
+            )
+        if not reason:
+            raise xmlrpclib.Fault(
+                400, "Bad request: Reason was not specified."
+            )
+        try:
+            device = Device.objects.get(hostname=hostname)
+        except Device.DoesNotExist:
+            raise xmlrpclib.Fault(
+                404, "Device '%s' was not found." % hostname
+            )
+        if device.can_admin(self.user):
+            device.put_into_online_mode(self.user, reason, skip_health_check)
+        else:
+            raise xmlrpclib.Fault(
+                403, "Permission denied for user to put %s into online mode." % hostname
+            )
+
     def pending_jobs_by_device_type(self):
         """
         Name
