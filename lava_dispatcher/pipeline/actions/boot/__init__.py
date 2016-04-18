@@ -68,7 +68,7 @@ class AutoLoginAction(Action):
         )
         # FIXME: self.timeout.duration = AUTOLOGIN_DEFAULT_TIMEOUT
 
-    def validate(self):
+    def validate(self):  # pylint: disable=too-many-branches
         super(AutoLoginAction, self).validate()
         # Skip auto login if the configuration is not found
         params = self.parameters.get('auto_login', None)
@@ -104,9 +104,11 @@ class AutoLoginAction(Action):
                     self.errors = "Items of 'prompts' can't be empty"
 
     def run(self, connection, args=None):
+        # Prompts commonly include # - when logging such strings,
+        # use lazy logging or the string will not be quoted correctly.
         def check_prompt_characters(prompt):
             if not any([True for c in DISTINCTIVE_PROMPT_CHARACTERS if c in prompt]):
-                self.logger.warning(self.check_prompt_characters_warning % prompt)
+                self.logger.warning(self.check_prompt_characters_warning % prompt)  # pylint: disable=logging-not-lazy
 
         # Skip auto login if the configuration is not found
         params = self.parameters.get('auto_login', None)
@@ -131,14 +133,12 @@ class AutoLoginAction(Action):
             connection.prompt_str.extend(prompts)
             for prompt in prompts:
                 check_prompt_characters(prompt)
+            self.logger.debug("Setting shell prompt(s) to %s" % ', '.join(connection.prompt_str))  # pylint: disable=logging-not-lazy
         else:
             connection.prompt_str.extend([prompts])
             check_prompt_characters(prompts)
+            self.logger.debug("Setting shell prompt(s) to %s" % connection.prompt_str)  # pylint: disable=logging-not-lazy
 
-        if isinstance(connection.prompt_str, list):
-            self.logger.debug("Setting shell prompt(s) to %s", ', '.join(connection.prompt_str))
-        else:
-            self.logger.debug("Setting shell prompt(s) to %s", connection.prompt_str)
         # may need to force a prompt here.
         wait_for_prompt(connection.raw_connection, connection.prompt_str, connection.timeout.duration, '#')
         # self.wait(connection)
