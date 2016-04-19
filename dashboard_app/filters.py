@@ -376,7 +376,10 @@ class ArrayAgg(models.Aggregate):
         # For way more detail than you want about what this next line is for,
         # see
         # http://voices.canonical.com/michael.hudson/2012/09/02/using-postgres-array_agg-from-django/
-        aggregate.field = models.DecimalField()  # vomit
+        try:
+            aggregate.field = models.DecimalField()  # vomit
+        except AttributeError:
+            pass
         query.aggregates[alias] = aggregate
 
 
