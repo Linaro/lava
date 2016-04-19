@@ -899,38 +899,38 @@ class Query(models.Model):
 
     def refresh_view(self):
 
-        if not self.is_live:
-            hour_ago = timezone.now() - timedelta(hours=1)
-
-            with transaction.atomic():
-                # Lock the selected row until the end of transaction.
-                query = Query.objects.select_for_update().get(pk=self.id)
-                if query.is_updating:
-                    raise QueryUpdatedError("query is currently updating")
-                # TODO: commented out because of testing purposes.
-                # elif query.last_updated and query.last_updated > hour_ago:
-                #    raise QueryUpdatedError("query was recently updated (less then hour ago)")
-                else:
-                    query.is_updating = True
-                    query.save()
-
-            try:
-                if not QueryMaterializedView.view_exists(self.id):
-                    QueryMaterializedView.create(self)
-                elif self.is_changed:
-                    QueryMaterializedView.drop(self.id)
-                    QueryMaterializedView.create(self)
-                else:
-                    QueryMaterializedView.refresh(self.id)
-
-                self.last_updated = timezone.now()
-                self.is_changed = False
-
-            finally:
-                self.is_updating = False
-                self.save()
-        else:
+        if self.is_live:
             raise RefreshLiveQueryError("Refreshing live query not permitted.")
+
+        hour_ago = timezone.now() - timedelta(hours=1)
+
+        with transaction.atomic():
+            # Lock the selected row until the end of transaction.
+            query = Query.objects.select_for_update().get(pk=self.id)
+            if query.is_updating:
+                raise QueryUpdatedError("query is currently updating")
+            # TODO: commented out because of testing purposes.
+            # elif query.last_updated and query.last_updated > hour_ago:
+            #    raise QueryUpdatedError("query was recently updated (less then hour ago)")
+            else:
+                query.is_updating = True
+                query.save()
+
+        try:
+            if not QueryMaterializedView.view_exists(self.id):
+                QueryMaterializedView.create(self)
+            elif self.is_changed:
+                QueryMaterializedView.drop(self.id)
+                QueryMaterializedView.create(self)
+            else:
+                QueryMaterializedView.refresh(self.id)
+
+            self.last_updated = timezone.now()
+            self.is_changed = False
+
+        finally:
+            self.is_updating = False
+            self.save()
 
     @classmethod
     def parse_conditions(cls, content_type, conditions):
