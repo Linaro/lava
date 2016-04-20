@@ -14,7 +14,7 @@ lava-dispatcher (2016.4-1) unstable; urgency=medium
     Initial support for device using GRUB bootloader in V2
     Add in the ability to halt the V1 master image before powering off
     No longer require ssh options or identity_file
-    Dont use -p port in SCP options
+    Don't use -p port in SCP options
 
  -- Neil Williams <codehelp@debian.org>  Mon, 18 Apr 2016 15:04:32 +0100
 
