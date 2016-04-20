@@ -406,10 +406,7 @@ class Worker(models.Model):
         return self.hostname
 
     def can_admin(self, user):
-        if user.has_perm('lava_scheduler_app.change_worker'):
-            return True
-        else:
-            return False
+        return user.has_perm('lava_scheduler_app.change_worker')
 
     def can_update(self, user):
         if user.has_perm('lava_scheduler_app.change_worker'):
@@ -454,10 +451,7 @@ class Worker(models.Model):
         # Added since we observe offline worker in the UI which uses the same
         # API to display offline workers.
         heartbeat_timeout = utils.get_heartbeat_timeout() + scheduler_tick
-        if difference.total_seconds() > heartbeat_timeout:
-            return True
-        else:
-            return False
+        return difference.total_seconds() > heartbeat_timeout
 
     def attached_devices(self):
         return Device.objects.filter(worker_host=self)
@@ -1618,34 +1612,28 @@ class TestJob(RestrictedResource):
         last_info = os.path.join(settings.ARCHIVE_ROOT, 'job-output',
                                  'last.info')
 
-        if os.path.exists(last_info):
-            with open(last_info, 'r') as last:
-                last_archived_job = int(last.read())
-                last.close()
+        if not os.path.exists(last_info):
+            return False
 
-            if self.id <= last_archived_job:
-                return True
-            else:
-                return False
+        with open(last_info, 'r') as last:
+            last_archived_job = int(last.read())
+            last.close()
 
-        return False
+        return self.id <= last_archived_job
 
     def archived_bundle(self):
         """Checks if the current bundle file was archived.
         """
         last_info = os.path.join(settings.ARCHIVE_ROOT, 'bundles', 'last.info')
 
-        if os.path.exists(last_info):
-            with open(last_info, 'r') as last:
-                last_archived_bundle = int(last.read())
-                last.close()
+        if not os.path.exists(last_info):
+            return False
 
-            if self.id <= last_archived_bundle:
-                return True
-            else:
-                return False
+        with open(last_info, 'r') as last:
+            last_archived_bundle = int(last.read())
+            last.close()
 
-        return False
+        return self.id <= last_archived_bundle
 
     failure_tags = models.ManyToManyField(
         JobFailureTag, blank=True, related_name='failure_tags')
@@ -2338,10 +2326,7 @@ class TestJob(RestrictedResource):
 
     @property
     def is_multinode(self):
-        if self.target_group:
-            return True
-        else:
-            return False
+        return bool(self.target_group)
 
     @property
     def lookup_worker(self):
@@ -2367,10 +2352,8 @@ class TestJob(RestrictedResource):
     def is_vmgroup(self):
         if self.is_pipeline:
             return False
-        if self.vm_group:
-            return True
         else:
-            return False
+            return bool(self.vm_group)
 
     @property
     def display_id(self):
