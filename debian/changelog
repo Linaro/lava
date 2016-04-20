@@ -1,3 +1,23 @@
+lava-dispatcher (2016.4-1) unstable; urgency=medium
+
+  * New production release
+    Allow for adb not being available on some arches
+    Support ramdisks that are not compressed
+    Move the ramdisk header requirements into the device template
+    Fix calling the Bzr unit tests
+    Use tar flags from deployment data when unpacking overlay
+    kvm-aarch32: introduce device type for 32-bit guest on 64-bit KVM
+    host
+    kvm-aarch64: expose a virtual random number generator (RNG) to the
+    guest
+    Provide an apache2 config for V2 workers
+    Initial support for device using GRUB bootloader in V2
+    Add in the ability to halt the V1 master image before powering off
+    No longer require ssh options or identity_file
+    Dont use -p port in SCP options
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 18 Apr 2016 15:04:32 +0100
+
 lava-dispatcher (2016.3-1) unstable; urgency=medium
 
   * New production release.
