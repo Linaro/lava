@@ -299,7 +299,7 @@ class MultinodeProtocol(Protocol):
             json_data = json.loads(data)
         except (ValueError, TypeError) as exc:
             raise JobError("Invalid data for %s protocol: %s %s" % (self.name, data, exc))
-        if type(json_data) != dict:
+        if not isinstance(json_data, dict):
             raise JobError("Invalid data type %s for protocol %s" % (data, self.name))
         if not json_data:
             raise JobError("No data to be sent over protocol %s" % self.name)
@@ -356,7 +356,7 @@ class MultinodeProtocol(Protocol):
             self.logger.debug("requesting lava_send %s" % message_id)
             if 'message' in json_data and json_data['message'] is not None:
                 send_msg = json_data['message']
-                if type(send_msg) is not dict:
+                if not isinstance(send_msg, dict):
                     send_msg = {json_data['message']: None}
                 self.logger.debug("message: %s", json.dumps(send_msg))
                 if 'yaml_line' in send_msg:

@@ -150,7 +150,7 @@ class JobParser(object):
         for action_data in data['actions']:
             action_data.pop('yaml_line', None)
             for name in action_data:
-                if type(action_data[name]) is dict:  # FIXME: commands are not fully implemented & may produce a list
+                if isinstance(action_data[name], dict):  # FIXME: commands are not fully implemented & may produce a list
                     action_data[name].update(self._map_context_defaults())
                 counts.setdefault(name, 1)
                 if name == 'deploy' or name == 'boot' or name == 'test':
@@ -177,12 +177,12 @@ class JobParser(object):
                     action = Action.select(name)()
                     action.job = job
                     # put parameters (like rootfs_type, results_dir) into the actions.
-                    if type(action_data[name]) == dict:
+                    if isinstance(action_data[name], dict):
                         action.parameters = action_data[name]
                     elif name == "commands":
                         # FIXME
                         pass
-                    elif type(action_data[name]) == list:
+                    elif isinstance(action_data[name], list):
                         for param in action_data[name]:
                             action.parameters = param
                     action.summary = name

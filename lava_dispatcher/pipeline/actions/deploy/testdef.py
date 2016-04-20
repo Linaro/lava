@@ -648,7 +648,7 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
         test_list = identify_test_definitions(self.job.parameters)
         for testdef in test_list[0]:
             if 'parameters' in testdef:  # optional
-                if type(testdef['parameters']) is not dict:
+                if not isinstance(testdef['parameters'], dict):
                     self.errors = "Invalid test definition parameters"
 
     def handle_parameters(self, testdef):

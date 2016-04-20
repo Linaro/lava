@@ -626,7 +626,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         If allow_silent is True, returns False, else returns the command output.
         """
         # FIXME: add option to only check stdout or stderr for failure output
-        if type(command_list) != list:
+        if not isinstance(command_list, list):
             raise RuntimeError("commands to run_command need to be a list")
         log = None
         # nice is assumed to always exist (coreutils)
@@ -821,7 +821,7 @@ class Timeout(object):
         Parsed timeouts can be set in device configuration or device_type configuration
         and can therefore exceed the clamp.
         """
-        if type(data) is not dict:
+        if not isinstance(data, dict):
             raise RuntimeError("Invalid timeout data")
         days = 0
         hours = 0

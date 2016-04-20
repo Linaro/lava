@@ -58,7 +58,7 @@ def check_ssh_identity_file(params):  # pylint: disable=too-many-return-statemen
     If the first value returned is not None, an error occurred.
     If the first value is None, the second value contains the path to the identity_file
     """
-    if not params or type(params) is not dict:
+    if not params or not isinstance(params, dict):
         return "Invalid parameters", None
     if 'ssh' not in params:
         return "Empty ssh parameter list in device configuration %s" % params, None
