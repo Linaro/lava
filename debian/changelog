@@ -1,3 +1,27 @@
+lava-server (2016.4-1) unstable; urgency=medium
+
+  * New production release
+    Add support for python-django-debug-toolbar
+    Deleting V1 filters now cascade delete image chart filters.
+    Reduce the number of SQL queries used on common pages.
+    Improve scheduler iterative performance.
+    Add support for deleting unused tokens
+    Stop runaway healthchecks in V2.
+    Migrate option_list to argparse for django 1.8 and later.
+    Allow authentication with result export in V2
+    Drop references to Ubuntu beyond 2016.9.post1
+    Implement omitting individual results from queries in V2
+    Indicate omitted results and allow including them back in.
+    Add a management command for refreshing queries
+    Change V1 measurement field to be float only.
+    Clean up top-level documentation
+    Introduce limit to queries in V2.
+  * Suggest python-django-debug-tooolbar
+  * Refresh all V2 queries during package postinst to ensure
+    materialized views are available.
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 18 Apr 2016 14:56:47 +0100
+
 lava-server (2016.3.post1-1) unstable; urgency=medium
 
   * Hot fix release
