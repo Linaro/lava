@@ -293,7 +293,7 @@ class UBootCommandOverlay(Action):
             self.errors = "No boot type specified in device parameters."
         else:
             if self.parameters['type'] not in self.job.device['parameters']:
-                self.errors = "Unable to match specified boot type '%s' with device parameters" % self['type']
+                self.errors = "Unable to match specified boot type '%s' with device parameters" % self.parameters['type']
         self.commands = device_methods[self.parameters['method']][self.parameters['commands']]['commands']
 
     def run(self, connection, args=None):
