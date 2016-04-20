@@ -154,6 +154,7 @@ class TestConnection(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertNotIn('ssh', scp.scp)
         self.assertFalse(scp.primary)
 
+    @unittest.skipIf(infrastructure_error('schroot'), "schroot not installed")
     def test_tar_command(self):
         self.job.validate()
         login = [item for item in self.job.pipeline.actions if item.name == 'login-ssh'][0]
