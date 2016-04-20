@@ -30,6 +30,7 @@
     - {class: actions.deploy.apply_overlay.ExtractModules, name: extract-modules}
     - {class: actions.deploy.apply_overlay.ApplyOverlayTftp, name: apply-overlay-tftp}
     - {class: actions.deploy.apply_overlay.CompressRamdisk, name: compress-ramdisk}
+    - {class: actions.deploy.apply_overlay.ConfigurePreseedFile, name: configure-preseed-file}
   - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
 - class: actions.boot.u_boot.UBootAction
   name: uboot-action
@@ -85,6 +86,7 @@
     - {class: actions.deploy.apply_overlay.ExtractModules, name: extract-modules}
     - {class: actions.deploy.apply_overlay.ApplyOverlayTftp, name: apply-overlay-tftp}
     - {class: actions.deploy.apply_overlay.CompressRamdisk, name: compress-ramdisk}
+    - {class: actions.deploy.apply_overlay.ConfigurePreseedFile, name: configure-preseed-file}
   - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
 - class: actions.boot.u_boot.UBootAction
   name: uboot-action
@@ -111,4 +113,3 @@
   name: finalize
   pipeline:
   - {class: power.PowerOff, name: power_off}
-

@@ -33,6 +33,7 @@ from lava_dispatcher.pipeline.utils.constants import (
     RAMDISK_FNAME,
     DISPATCHER_DOWNLOAD_DIR,
 )
+from lava_dispatcher.pipeline.utils.installers import add_late_command
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.compression import (
@@ -83,6 +84,7 @@ class PrepareOverlayTftp(Action):
         self.internal_pipeline.add_action(ExtractModules())  # idempotent, checks for a modules parameter
         self.internal_pipeline.add_action(ApplyOverlayTftp())
         self.internal_pipeline.add_action(CompressRamdisk())  # idempotent, checks for a ramdisk parameter
+        self.internal_pipeline.add_action(ConfigurePreseedFile())  # idempotent, checks for a preseed parameter
 
     def run(self, connection, args=None):
         connection = super(PrepareOverlayTftp, self).run(connection, args)
@@ -398,3 +400,21 @@ class ApplyLxcOverlay(Action):
             raise JobError("Unable to untar overlay: %s" %
                            command_output)  # FIXME: JobError needs a unit test
         return connection
+
+
+class ConfigurePreseedFile(Action):
+    def __init__(self):
+        super(ConfigurePreseedFile, self).__init__()
+        self.name = "configure-preseed-file"
+        self.summary = "add commands to installer config"
+        self.description = "add commands to automated installers, to copy the lava test overlay to the installed system"
+
+    def validate(self):
+        super(ConfigurePreseedFile, self).validate()
+        if not self.parameters.get('preseed', None):
+            return
+
+    def run(self, connection, args=None):
+        if self.parameters["deployment_data"].get('installer_extra_cmd', None):
+            if self.parameters.get('os', None) == "debian_installer":
+                add_late_command(self.data['download_action']['preseed']['file'], self.parameters["deployment_data"]["installer_extra_cmd"])

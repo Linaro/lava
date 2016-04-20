@@ -1,0 +1,25 @@
+device_type: grub-x86
+
+job_name: grub-x86-debian-preseed
+timeouts:
+  job:
+    minutes: 300
+  action:
+    minutes: 300
+priority: medium
+
+actions:
+  - boot:
+      method: grub
+      os: debian
+      commands: debian-installed
+      auto_login:
+        login_prompt: 'login:'
+        username: root
+        password_prompt: 'Password:'
+        password: linaro123
+      timeout:
+          minutes: 5
+      prompts:
+       - 'root@debian:~#'
+       - 'root@dellpc:~#'

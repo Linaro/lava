@@ -1,0 +1,46 @@
+device_type: d02
+
+job_name: d02-grub-boot
+timeouts:
+  job:
+    minutes: 300
+  action:
+    minutes: 300
+priority: medium
+
+actions:
+  - deploy:
+     timeout:
+       minutes: 10
+     to: tftp
+     ramdisk:
+         url: http://http.us.debian.org/debian/dists/jessie/main/installer-i386/current/images/netboot/debian-installer/i386/initrd.gz
+         compression: gz
+     kernel:
+         url: http://http.us.debian.org/debian/dists/jessie/main/installer-i386/current/images/netboot/debian-installer/i386/linux
+     os: oe
+
+  - boot:
+      method: grub
+      commands: ramdisk
+      timeout:
+          minutes: 50
+      prompts:
+       - 'linaro-test'
+       - 'root@debian:~#'
+       - '/ #'
+
+  - test:
+     failure_retry: 3
+     name: kvm-basic-singlenode
+     timeout:
+       minutes: 5
+     definitions:
+         - repository: git://git.linaro.org/qa/test-definitions.git
+           from: git
+           path: ubuntu/smoke-tests-basic.yaml
+           name: smoke-tests
+         - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+           from: git
+           path: lava-test-shell/single-node/singlenode03.yaml
+           name: singlenode-advanced

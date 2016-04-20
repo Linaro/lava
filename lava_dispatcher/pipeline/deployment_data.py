@@ -52,8 +52,14 @@ class deployment_data_dict(object):  # pylint: disable=invalid-name, too-few-pub
     def __repr__(self):
         return repr(self.__data__)
 
-    def get(self, key):
-        return self.__data__.get(key)
+    def get(self, *args):
+        if len(args) == 1:
+            return self.__data__.get(args[0])
+        else:
+            if args[0] in self.__data__.keys():
+                return self.__data__.get(args[0])
+            else:
+                return args[1]
 
     def keys(self):
         """
@@ -151,10 +157,10 @@ debian_installer = deployment_data_dict({  # pylint: disable=invalid-name
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
     'boot_cmds': 'boot_cmds',
+    'installer_extra_cmd': 'cp -r /lava-* /target/ || true ;',
 
     # for lava-test-shell
     'distro': 'debian',
-    'boot_finished': 'reboot: Restarting system',
     'lava_test_sh_cmd': '/bin/bash',
     'lava_test_dir': '/lava-%s',
     'lava_test_results_part_attr': 'root_part',
