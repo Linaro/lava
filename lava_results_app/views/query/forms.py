@@ -71,7 +71,7 @@ class QueryForm(forms.ModelForm):
                         "name",
                         """ Query already exists but is archived. Please
                         contact system adminstrator or consult LAVA doc. """)
-                else:
+                elif not self.instance.id:
                     self.add_error(
                         "name",
                         "Query with this owner and name already exists.")
