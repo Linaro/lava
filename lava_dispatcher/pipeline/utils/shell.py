@@ -59,7 +59,7 @@ def infrastructure_error(path):
     if not exefile:
         return "Cannot find command '%s' in $PATH" % path
     # is the infrastructure call safe to make?
-    if exefile and not os.stat(exefile).st_mode & S_IXUSR == S_IXUSR:
+    if exefile and os.stat(exefile).st_mode & S_IXUSR != S_IXUSR:
         return "%s is not executable" % exefile
     return None
 

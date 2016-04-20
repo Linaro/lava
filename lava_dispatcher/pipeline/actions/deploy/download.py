@@ -33,7 +33,6 @@ import bz2
 import contextlib
 import lzma
 import zlib
-import shutil
 from lava_dispatcher.pipeline.action import (
     Action,
     JobError,

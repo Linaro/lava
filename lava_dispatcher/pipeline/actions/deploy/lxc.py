@@ -118,7 +118,6 @@ class LxcCreateAction(DeployAction):
 
     def validate(self):
         super(LxcCreateAction, self).validate()
-        pass
 
     def run(self, connection, args=None):
         connection = super(LxcCreateAction, self).run(connection, args)
