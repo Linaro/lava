@@ -143,7 +143,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         try:
             proc = super(ShellCommand, self).expect(*args, **kw)
         except pexpect.TIMEOUT:
-            raise TestError("command timed out.")
+            raise TestError("ShellCommand command timed out.")
         except pexpect.EOF:
             # FIXME: deliberately closing the connection (and starting a new one) needs to be supported.
             raise InfrastructureError("Connection closed")
@@ -190,6 +190,7 @@ class ShellSession(Connection):
 
     @prompt_str.setter
     def prompt_str(self, string):
+        # FIXME: Debug logging should show whenever this property is changed
         self.__prompt_str__ = string
         if self.__runner__:
             self.__runner__.change_prompt(self.__prompt_str__)
@@ -276,6 +277,6 @@ class ExpectShellSession(Action):
         connection = super(ExpectShellSession, self).run(connection, args)
         if not connection.prompt_str:
             connection.prompt_str = self.parameters['prompts']
-        self.logger.debug("%s: Waiting for prompt", self.name)
+        self.logger.debug("%s: Waiting for prompt %s", self.name, ', '.join(self.parameters['prompts']))
         self.wait(connection)  # FIXME: should this be a regular RetryAction operation?
         return connection

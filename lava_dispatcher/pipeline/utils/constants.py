@@ -104,3 +104,5 @@ IPXE_BOOT_PROMPT = "Press Ctrl-B for the iPXE command line"
 
 # bootloader default timeout for commands
 BOOTLOADER_DEFAULT_CMD_TIMEOUT = 90
+
+GRUB_BOOT_PROMPT = "Press enter to boot the selected OS"

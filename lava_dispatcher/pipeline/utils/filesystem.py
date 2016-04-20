@@ -62,10 +62,6 @@ def check_ssh_identity_file(params):  # pylint: disable=too-many-return-statemen
         return "Invalid parameters", None
     if 'ssh' not in params:
         return "Empty ssh parameter list in device configuration %s" % params, None
-    if 'options' not in params['ssh']:
-        return "Missing ssh options in device configuration", None
-    if 'identity_file' not in params['ssh']:
-        return "Missing entry for SSH private key", None
     if os.path.isabs(params['ssh']['identity_file']):
         identity_file = params['ssh']['identity_file']
     else:

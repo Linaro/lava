@@ -130,6 +130,11 @@ class MasterImageTarget(Target):
         return self.proc
 
     def power_off(self, proc):
+        if self.config.master_image_halt_command:
+            self.proc.sendline(self.config.master_image_halt_command)
+            self.proc.expect([self.config.master_image_halt_complete_message, pexpect.TIMEOUT],
+                             timeout=self.config.master_image_halt_time)
+
         if self.config.power_off_cmd != "":
             self.context.run_command(self.config.power_off_cmd)
         else:

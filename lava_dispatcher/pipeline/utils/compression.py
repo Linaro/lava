@@ -37,6 +37,8 @@ decompress_command_map = {'xz': 'unxz', 'gz': 'gunzip', 'bz2': 'bunzip2'}
 
 
 def compress_file(infile, compression):
+    if not compression:
+        return infile
     if compression not in compress_command_map.keys():
         raise JobError("Cannot find shell command to compress: %s" % compression)
     pwd = os.getcwd()
@@ -52,6 +54,8 @@ def compress_file(infile, compression):
 
 
 def decompress_file(infile, compression):
+    if not compression:
+        return infile
     if compression not in decompress_command_map.keys():
         raise JobError("Cannot find shell command to decompress: %s" % compression)
     os.chdir(os.path.dirname(infile))

@@ -8,18 +8,12 @@ actions:
           - '-o'
           - 'Compression=yes'
           - '-o'
-          - 'UserKnownHostsFile=/dev/null'
-          - '-o'
           - 'PasswordAuthentication=no'
           - '-o'
-          - 'StrictHostKeyChecking=no'
-          - '-o'
           - 'LogLevel=FATAL'
-          - '-l'
-          - 'root '
-          - '-p'
-          - '8022'
+        port: 8022
         host: localhost
+        user: root
         identity_file: 'device/dynamic_vm_keys/lava'  # unit test support
 
   boot:

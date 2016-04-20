@@ -102,7 +102,11 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
     def validate(self):
         super(FastbootAction, self).validate()
         self.errors = infrastructure_error('adb')
+        if infrastructure_error('adb'):
+            self.errors = "Unable to find 'adb' command"
         self.errors = infrastructure_error('fastboot')
+        if infrastructure_error('fastboot'):
+            self.errors = "Unable to find 'fastboot' command"
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
         self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
 
@@ -114,23 +118,37 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
                 self.internal_pipeline.add_action(ConnectDevice())
                 self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(EnterFastbootAction())
-        for image in parameters['images'].keys():
-            if image != 'yaml_line':
-                download = DownloaderAction(image, self.fastboot_dir)
-                download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
-                self.internal_pipeline.add_action(download)
-            if image == 'image':
-                self.internal_pipeline.add_action(FastbootUpdateAction())
-            if image == 'ptable':
-                self.internal_pipeline.add_action(ApplyPtableAction())
-            if image == 'boot':
-                self.internal_pipeline.add_action(ApplyBootAction())
-            if image == 'cache':
-                self.internal_pipeline.add_action(ApplyCacheAction())
-            if image == 'userdata':
-                self.internal_pipeline.add_action(ApplyUserdataAction())
-            if image == 'system':
-                self.internal_pipeline.add_action(ApplySystemAction())
+        image_keys = parameters['images'].keys()
+        if 'image' in image_keys:
+            download = DownloaderAction('image', self.fastboot_dir)
+            download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
+            self.internal_pipeline.add_action(download)
+            self.internal_pipeline.add_action(FastbootUpdateAction())
+        if 'ptable' in image_keys:
+            download = DownloaderAction('ptable', self.fastboot_dir)
+            download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
+            self.internal_pipeline.add_action(download)
+            self.internal_pipeline.add_action(ApplyPtableAction())
+        if 'boot' in image_keys:
+            download = DownloaderAction('boot', self.fastboot_dir)
+            download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
+            self.internal_pipeline.add_action(download)
+            self.internal_pipeline.add_action(ApplyBootAction())
+        if 'cache' in image_keys:
+            download = DownloaderAction('cache', self.fastboot_dir)
+            download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
+            self.internal_pipeline.add_action(download)
+            self.internal_pipeline.add_action(ApplyCacheAction())
+        if 'userdata' in image_keys:
+            download = DownloaderAction('userdata', self.fastboot_dir)
+            download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
+            self.internal_pipeline.add_action(download)
+            self.internal_pipeline.add_action(ApplyUserdataAction())
+        if 'system' in image_keys:
+            download = DownloaderAction('system', self.fastboot_dir)
+            download.max_retries = 3  # overridden by failure_retry in the parameters, if set.
+            self.internal_pipeline.add_action(download)
+            self.internal_pipeline.add_action(ApplySystemAction())
 
 
 class EnterFastbootAction(DeployAction):

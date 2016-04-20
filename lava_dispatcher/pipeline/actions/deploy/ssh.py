@@ -95,6 +95,8 @@ class ScpOverlay(DeployAction):
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        tar_flags = parameters['deployment_data']['tar_flags'] if 'tar_flags' in parameters['deployment_data'].keys() else ''
+        self.set_common_data(self.name, 'tar_flags', tar_flags)
         self.internal_pipeline.add_action(OverlayAction())
         for item in self.items:
             if item in parameters:

@@ -121,7 +121,7 @@ class OverlayAction(DeployAction):
             # avoid os.path.join as lava_test_results_dir startswith / so location is *dropped* by join.
             path = os.path.abspath("%s/%s" % (lava_path, runner_dir))
             if not os.path.exists(path):
-                os.makedirs(path, 0755)
+                os.makedirs(path, 0o755)
                 self.logger.debug("makedir: %s", path)
         for fname in self.scripts_to_copy:
             with open(fname, 'r') as fin:
@@ -429,14 +429,14 @@ class SshAuthorize(Action):
         self.logger.info("Adding SSH authorisation for %s.pub", os.path.basename(output_file))
         user_sshdir = os.path.join(location, 'root', '.ssh')
         if not os.path.exists(user_sshdir):
-            os.makedirs(user_sshdir, 0755)
+            os.makedirs(user_sshdir, 0o755)
         # if /root/.ssh/authorized_keys exists in the test image it will be overwritten
         # the key exists in the lava_test_results_dir to allow test writers to work around this
         # after logging in via the identity_file set here
         authorize = os.path.join(user_sshdir, 'authorized_keys')
         self.logger.debug("Copying %s to %s", "%s.pub" % self.identity_file, authorize)
         shutil.copyfile("%s.pub" % self.identity_file, authorize)
-        os.chmod(authorize, 0600)
+        os.chmod(authorize, 0o600)
         return connection
 
 

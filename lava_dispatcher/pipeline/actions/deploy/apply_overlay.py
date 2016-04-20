@@ -29,6 +29,7 @@ from lava_dispatcher.pipeline.action import (
 )
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.pipeline.utils.constants import (
+    LXC_PATH,
     RAMDISK_FNAME,
     DISPATCHER_DOWNLOAD_DIR,
 )
@@ -305,19 +306,23 @@ class CompressRamdisk(Action):
         self.summary = "compress ramdisk with overlay"
         self.description = "recreate a ramdisk with the overlay applied."
         self.mkimage_arch = None
+        self.add_header = None
 
     def validate(self):
         super(CompressRamdisk, self).validate()
         if not self.parameters.get('ramdisk', None):  # idempotency
             return
-        if self.parameters['ramdisk'].get('add-header', None) == 'u-boot':
-            self.errors = infrastructure_error('mkimage')
-            if 'mkimage_arch' not in self.job.device['actions']['boot']['methods']['u-boot']['parameters']:
-                self.errors = "Missing architecture string for uboot mkimage support"
-                return
-            self.mkimage_arch = self.job.device['actions']['boot']['methods']['u-boot']['parameters']['mkimage_arch']
-        if not self.parameters['ramdisk'].get('compression', None):
-            self.errors = "No ramdisk compression method specified."
+        if 'parameters' in self.job.device['actions']['deploy']:
+            self.add_header = self.job.device['actions']['deploy']['parameters'].get('add_header', None)
+            if self.add_header is not None:
+                if self.add_header == 'u-boot':
+                    self.errors = infrastructure_error('mkimage')
+                    if 'mkimage_arch' not in self.job.device['actions']['deploy']['parameters']:
+                        self.errors = "Missing architecture for uboot mkimage support (mkimage_arch in deploy parameters)"
+                        return
+                    self.mkimage_arch = self.job.device['actions']['deploy']['parameters']['mkimage_arch']
+                else:
+                    self.errors = "ramdisk: add_header: unknown header type"
 
     def run(self, connection, args=None):
         if not self.parameters.get('ramdisk', None):  # idempotency
@@ -348,7 +353,7 @@ class CompressRamdisk(Action):
         os.chdir(pwd)
         tftp_dir = os.path.dirname(self.data['download_action']['ramdisk']['file'])
 
-        if self.parameters['ramdisk'].get('add-header', None) == 'u-boot':
+        if self.add_header == 'u-boot':
             ramdisk_uboot = final_file + ".uboot"
             self.logger.debug("Adding RAMdisk u-boot header.")
             cmd = ("mkimage -A %s -T ramdisk -C none -d %s %s" % (self.mkimage_arch, final_file, ramdisk_uboot)).split(' ')
@@ -364,4 +369,32 @@ class CompressRamdisk(Action):
             self.set_common_data('file', 'ramdisk', os.path.join(suffix, os.path.basename(final_file)))
         else:
             self.set_common_data('file', 'ramdisk', final_file)
+        return connection
+
+
+class ApplyLxcOverlay(Action):
+
+    def __init__(self):
+        super(ApplyLxcOverlay, self).__init__()
+        self.name = "apply-lxc-overlay"
+        self.summary = "apply overlay on the container"
+        self.description = "apply the overlay to the container by copying"
+
+    def validate(self):
+        super(ApplyLxcOverlay, self).validate()
+        self.errors = infrastructure_error('tar')
+
+    def run(self, connection, args=None):
+        connection = super(ApplyLxcOverlay, self).run(connection, args)
+        overlay_file = self.data['compress-overlay'].get('output')
+        lxc_path = os.path.join(LXC_PATH, self.get_common_data('lxc', 'name'),
+                                "rootfs")
+        if not os.path.exists(lxc_path):
+            raise JobError("Lxc container rootfs not found")
+        tar_cmd = ['tar', '--warning', 'no-timestamp', '-C', lxc_path, '-xaf',
+                   overlay_file]
+        command_output = self.run_command(tar_cmd)
+        if command_output and command_output is not '':
+            raise JobError("Unable to untar overlay: %s" %
+                           command_output)  # FIXME: JobError needs a unit test
         return connection

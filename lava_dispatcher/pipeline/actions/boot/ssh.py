@@ -119,9 +119,14 @@ class Scp(ConnectSsh):
         if not self.primary and len(
                 self.get_common_data("prepare-scp-overlay", self.key)) != 1:
             self.errors = "Invalid number of host_keys"
+        if 'port' in self.job.device['actions']['deploy']['methods']['ssh']:
+            port = str(self.job.device['actions']['deploy']['methods']['ssh']['port'])
+            if not port.isdigit():
+                self.errors = "Port was set but was not a digit"
         if self.valid:
             self.scp.append('scp')
-            self.scp.extend(params['options'])
+            if 'options' in params:
+                self.scp.extend(params['options'])
 
     def run(self, connection, args=None):
         path = self.get_common_data(self.name, self.key)
@@ -140,8 +145,13 @@ class Scp(ConnectSsh):
             return connection
         destination = "%s-%s" % (self.job.job_id, os.path.basename(path))
         command = self.scp[:]  # local copy
-        command.extend(['-i', self.identity_file])
-        command.extend(['-v'])
+        # add the argument for setting the port (-P port)
+        command.extend(self.scp_port)
+
+        if self.identity_file:
+            command.extend(['-i', self.identity_file])
+        # add arguments to ignore host key checking of the host device
+        command.extend(['-o', 'UserKnownHostsFile=/dev/null', '-o', 'StrictHostKeyChecking=no'])
         # add the local file as source
         command.append(path)
         command_str = " ".join(str(item) for item in command)
@@ -199,7 +209,8 @@ class ScpOverlayUnpack(Action):
         if not connection:
             raise RuntimeError("Cannot unpack, no connection available.")
         filename = self.get_common_data(self.name, 'overlay')
-        cmd = "tar --warning no-timestamp -C / -xaf /%s" % filename
+        tar_flags = self.get_common_data('scp-overlay', 'tar_flags')
+        cmd = "tar %s -C / -xzf /%s" % (tar_flags, filename)
         connection.sendline(cmd)
         self.wait(connection)
         self.data['boot-result'] = 'failed' if self.errors else 'success'

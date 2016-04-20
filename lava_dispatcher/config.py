@@ -107,6 +107,9 @@ class DeviceSchema(schema.Schema):
     pre_connect_command = schema.StringOption()
     power_on_cmd = schema.StringOption()  # for sdmux
     power_off_cmd = schema.StringOption()  # for sdmux
+    master_image_halt_command = schema.StringOption()
+    master_image_halt_complete_message = schema.StringOption(default="System halted")
+    master_image_halt_time = schema.IntOption(default=10)
     pre_os_cmd = schema.StringOption(default=None)
     pre_power_cmd = schema.StringOption(default=None)
     reset_port_command = schema.StringOption()
