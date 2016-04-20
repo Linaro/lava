@@ -1,8 +1,8 @@
-lava-dispatcher (2016.4-2) UNRELEASED; urgency=medium
+lava-dispatcher (2016.4-2) unstable; urgency=medium
 
-  * Add extra packages for autopkgtest.
+  * Add extra packages, schroot & bzr, for autopkgtest.
 
- -- Neil Williams <codehelp@debian.org>  Wed, 20 Apr 2016 15:13:41 +0100
+ -- Neil Williams <codehelp@debian.org>  Wed, 20 Apr 2016 15:27:35 +0100
 
 lava-dispatcher (2016.4-1) unstable; urgency=medium
 
