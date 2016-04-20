@@ -1,0 +1,3 @@
+lava-dev: python-script-but-no-python-dep usr/share/lava-server/render-template.py
+lava-dev: python-script-but-no-python-dep usr/share/lava-server/validate_devices.py
+

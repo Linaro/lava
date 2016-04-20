@@ -33,10 +33,10 @@ Depends: apache2, adduser, diffstat, fuse, iproute2,
  libjs-jquery, libjs-jquery-ui, python-django (>= 1.7),
  libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), openssh-client,
  postgresql, postgresql-client, postgresql-common,
- lava-dispatcher (>= 2016.2),
+ lava-dispatcher (>= 2016.4),
  ${python:Depends}, ${misc:Depends}
 Recommends: ntp, lava-coordinator, lava-server-doc
-Suggests: python-django-hijack
+Suggests: python-django-hijack, python-django-debug-toolbar
 Description: Linaro Automated Validation Architecture server
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
