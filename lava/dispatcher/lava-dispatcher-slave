@@ -100,9 +100,11 @@ class Master(object):
 class Job(object):
     """Wrapper around a job process."""
     def __init__(self, job_id, definition, device_definition, env,
-                 log_socket, env_dut=None):
+                 log_socket, master_cert, slave_cert, env_dut=None):
         self.job_id = job_id
         self.log_socket = log_socket
+        self.master_cert = master_cert
+        self.slave_cert = slave_cert
         self.env = env
         self.env_dut = env_dut
         self.proc = None
@@ -169,6 +171,10 @@ class Job(object):
                 "--job-id=%s" % self.job_id,
                 "--socket-addr=%s" % self.log_socket
             ]
+            # Use certificates if defined
+            if self.master_cert is not None and self.slave_cert is not None:
+                args.extend(["--master-cert", self.master_cert,
+                             "--slave-cert", self.slave_cert])
 
             if self.env_dut and env_dut_tmp_path:
                 args.append("--env-dut-path=%s" % env_dut_tmp_path)
@@ -360,13 +366,16 @@ def connect_to_master(master, poller, pipe_r, sock, timeout):
     return False
 
 
-def listen_to_master(master, jobs, poller, pipe_r, socket_addr, sock, timeout):
+def listen_to_master(master, jobs, poller, pipe_r, socket_addr, master_cert,
+                     slave_cert, sock, timeout):
     """Listen for master orders
 
     :param master: the master structure
     :param jobs: the list of jobs
     :param pipe_r: the read pipe for signals
     :param socket_addr: address of the logging socket
+    :param master_cert: the master certificate
+    :param slave_cert: the slave certificate
     :param sock: the zmq socket
     :param timeout: the poll timeout
     """
@@ -431,9 +440,9 @@ def listen_to_master(master, jobs, poller, pipe_r, socket_addr, sock, timeout):
                     LOG.warning("[%d] Job has already ended", job_id)
                     sock.send_multipart(["END", str(job_id), "0"])
             else:
-                jobs[job_id] = Job(job_id, job_definition,
-                                   device_definition, env,
-                                   socket_addr, env_dut=env_dut)
+                jobs[job_id] = Job(job_id, job_definition, device_definition,
+                                   env, socket_addr, master_cert, slave_cert,
+                                   env_dut=env_dut)
                 jobs[job_id].start()
                 sock.send_multipart(["START_OK", str(job_id)])
 
@@ -459,7 +468,7 @@ def listen_to_master(master, jobs, poller, pipe_r, socket_addr, sock, timeout):
                         "[%d] Job has already been canceled", job_id)
             else:
                 LOG.debug("[%d] Unknown job, sending END", job_id)
-                jobs[job_id] = Job(job_id, "", "", None, None)
+                jobs[job_id] = Job(job_id, "", "", None, None, None, None)
                 jobs[job_id].is_running = False
             # Send the END message anyway
             sock.send_multipart(["END", str(job_id), "0"])
@@ -500,7 +509,7 @@ def listen_to_master(master, jobs, poller, pipe_r, socket_addr, sock, timeout):
                 # Unknown job: return END anyway
                 LOG.debug(
                     "[%d] Unknown job, sending END after STATUS", job_id)
-                jobs[job_id] = Job(job_id, "", "", None, None)
+                jobs[job_id] = Job(job_id, "", "", None, None, None, None)
                 jobs[job_id].is_running = False
                 sock.send_multipart(["END", str(job_id), "0"])
 
@@ -628,6 +637,9 @@ def main():
     if args.encrypt:
         LOG.info("Connection is encrypted using %s", args.slave_cert)
     else:
+        # Set to None to disable encryption in the logger
+        args.slave_cert = None
+        args.master_cert = None
         LOG.info("Connection is not encrypted")
 
     hello_msg = "HELLO"
@@ -641,7 +653,7 @@ def main():
     LOG.info("Waiting for master instructions")
     while True:
         listen_to_master(master, jobs, poller, pipe_r, args.socket_addr,
-                         sock, timeout)
+                         args.master_cert, args.slave_cert, sock, timeout)
         check_job_status(jobs, sock)
         ping_master(master, sock, timeout)
 

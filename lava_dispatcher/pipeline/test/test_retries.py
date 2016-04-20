@@ -45,7 +45,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
     class FakeJob(Job):
 
         def __init__(self, parameters):
-            super(TestAction.FakeJob, self).__init__(4212, None, parameters)
+            super(TestAction.FakeJob, self).__init__(4212, None, None, None, parameters)
 
     class FakeDeploy(object):
         """
@@ -245,7 +245,7 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
     class FakeJob(Job):
 
         def __init__(self, parameters):
-            super(TestAdjuvant.FakeJob, self).__init__(4212, None, parameters)
+            super(TestAdjuvant.FakeJob, self).__init__(4212, None, None, None, parameters)
 
         def validate(self, simulate=False):
             self.pipeline.validate_actions()
@@ -462,7 +462,7 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
     class FakeJob(Job):
 
         def __init__(self, parameters):
-            super(TestTimeout.FakeJob, self).__init__(4212, None, parameters)
+            super(TestTimeout.FakeJob, self).__init__(4212, None, None, None, parameters)
 
         def validate(self, simulate=False):
             self.pipeline.validate_actions()

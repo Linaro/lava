@@ -85,7 +85,8 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         mustang_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(mustang_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 0, socket_addr=None, output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 0, socket_addr=None,
+                               master_cert=None, slave_cert=None, output_dir=output_dir)
         return job
 
 

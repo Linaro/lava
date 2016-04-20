@@ -132,6 +132,13 @@ class dispatch(DispatcherCommand):
         parser.add_argument(
             "--socket-addr", default=None,
             help="Address of the ZMQ socket used to send the logs to the master")
+        # Don't put any default value as it has to be defined by the calling process
+        parser.add_argument(
+            "--master-cert", default=None,
+            help="Master certificate file")
+        parser.add_argument(
+            "--slave-cert", default=None,
+            help="Slave certificate file")
         parser.add_argument(
             "job_file",
             metavar="JOB",
@@ -250,6 +257,8 @@ class dispatch(DispatcherCommand):
                 with open(filename) as f_in:
                     job = parser.parse(f_in, device, self.args.job_id,
                                        socket_addr=self.args.socket_addr,
+                                       master_cert=self.args.master_cert,
+                                       slave_cert=self.args.slave_cert,
                                        output_dir=self.args.output_dir,
                                        env_dut=env_dut)
 

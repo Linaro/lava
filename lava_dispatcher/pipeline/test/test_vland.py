@@ -126,7 +126,8 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
         vprotocol.set_up()
         with open(self.filename) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, self.device, 4212, None, output_dir='/tmp/')
+            job = parser.parse(sample_job_data, self.device, 4212, None, None, None,
+                               output_dir='/tmp/')
         ret = vprotocol.configure(self.device, job)
         if not ret:
             print(vprotocol.errors)
@@ -180,7 +181,8 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.assertIn(VlandProtocol.name, alpha_data['protocols'])
         with open(self.filename) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, self.device, 4212, None, output_dir='/tmp/')
+            job = parser.parse(sample_job_data, self.device, 4212, None, None, None,
+                               output_dir='/tmp/')
         description_ref = pipeline_reference('bbb-group-vland-alpha.yaml')
         self.assertEqual(description_ref, job.pipeline.describe(False))
         job.validate()

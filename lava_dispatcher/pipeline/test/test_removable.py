@@ -62,7 +62,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         sample_job_data = open(sample_job_file)
-        job = job_parser.parse(sample_job_data, cubie, 4212, None, output_dir='/tmp/')
+        job = job_parser.parse(sample_job_data, cubie, 4212, None, None, None, output_dir='/tmp/')
         try:
             job.validate()
         except JobError:
@@ -92,7 +92,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         sample_job_data = open(sample_job_file)
-        job = job_parser.parse(sample_job_data, cubie, 4212, None, output_dir='/tmp/')
+        job = job_parser.parse(sample_job_data, cubie, 4212, None, None, None, output_dir='/tmp/')
         sample_job_data.close()
         job.validate()
         self.assertIn('usb', cubie['parameters']['media'].keys())
@@ -124,7 +124,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         bbb = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
         sample_job_data = open(sample_job_file)
-        job = job_parser.parse(sample_job_data, bbb, 4212, None, output_dir='/tmp/')
+        job = job_parser.parse(sample_job_data, bbb, 4212, None, None, None, output_dir='/tmp/')
         sample_job_data.close()
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
@@ -142,7 +142,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         sample_job_data = open(sample_job_file)
-        job = job_parser.parse(sample_job_data, cubie, 4212, None, output_dir='/tmp/')
+        job = job_parser.parse(sample_job_data, cubie, 4212, None, None, None, output_dir='/tmp/')
         sample_job_data.close()
         job.validate()
         boot_params = [

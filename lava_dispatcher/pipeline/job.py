@@ -45,9 +45,11 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
     device for this job - one job, one device.
     """
 
-    def __init__(self, job_id, socket_addr, parameters):
+    def __init__(self, job_id, socket_addr, master_cert, slave_cert, parameters):
         self.job_id = job_id
         self.socket_addr = socket_addr
+        self.master_cert = master_cert
+        self.slave_cert = slave_cert
         self.device = None
         self.parameters = parameters
         self.__context__ = PipelineContext()
@@ -140,7 +142,8 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         """
         # Add the ZMQ handler now
         if self.socket_addr is not None:
-            self.logger.addZMQHandler(self.socket_addr, self.job_id)  # pylint: disable=maybe-no-member
+            self.logger.addZMQHandler(self.socket_addr, self.master_cert,
+                                      self.slave_cert, self.job_id)  # pylint: disable=maybe-no-member
         else:
             self.logger.addHandler(logging.StreamHandler())
 
