@@ -35,4 +35,11 @@
 
 {% block scripts %}
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/bootbox.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_results_app/js/bootbox.data.toggle.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function () {
+  add_bootbox_data_toggle();
+});
+</script>
 {% endblock %}

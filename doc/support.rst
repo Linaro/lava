@@ -21,22 +21,28 @@ to follow:
 Guidelines
 **********
 
+* If you are having problems, it may be helpful to check the mailing
+  list archives **first** - somebody else may have already seen and solved
+  a similar problem.
 * Avoid putting LAVA job output directly into your email to a list or
   IRC channel. Mailing list posts can include a few lines but not IRC.
-* If you are using the LAVA V1, rather than LAVA V2, you need to
+* If you are using LAVA V1, rather than LAVA V2, you need to
   **always** re-run your test with ``logging_level: DEBUG`` if
   you have not done so already.
-* Always use a `pastebin`_ for log output and include a link
-  to the paste in your post. Pastebins can be provided by your
-  distribution or other sources - the internal Linaro pastebin requires
-  the user to `register`_. Example pastebins which are open to
-  anyone include `pastebin.com <http://pastebin.com/>`_ and
-  `paste.debian.net <https://paste.debian.net/>`_. Pastes will typically
-  expire automatically, depending on the option selected by the user
-  making the paste.
-* Paste from the complete log, not the summary, so that you get the
-  complete lines.
-* Include in this paste or another paste, the job definition you used.
+* Always use a `pastebin`_ for log output, and include a link to the
+  paste in your post. Pastebin services are provided online by
+  multiple people. Some are open to anyone, such as `pastebin.com
+  <http://pastebin.com/>`_ and `paste.debian.net
+  <https://paste.debian.net/>`_. Others (like the internal Linaro
+  pastebin) are restricted and will require users to
+  `register`_. Pastes will typically expire automatically, depending
+  on the options selected by the user creating the paste.
+* Paste content from the complete log, not the summary, so that you
+  get the complete lines.
+* Include the job definition you used, either in this paste or another
+  paste.
+* If you are administering your own instance, also include the device
+  type template and an export of the device dictionary.
 * Provide details of which server you are using (with a URL
   if it is publicly visible or a version string from the documentation
   pages if not) and details of the actual device(s) in use.
@@ -52,7 +58,7 @@ Guidelines
 Mailing lists
 *************
 
-The primary method for support for LAVA is based on mailing lists.
+The primary method for support for LAVA is our mailing lists.
 
 A few guidelines apply to all such lists:
 
@@ -96,15 +102,15 @@ lava-announce
 =============
 
 Subscribing to the `lava-announce <https://lists.linaro.org/mailman/listinfo/lava-announce>`_
-list is recommended for **everyone** using LAVA, whether a test writer or
-viewing reports or administering a LAVA instance.
+list is recommended for **everyone** using LAVA, whether writing tests
+or viewing reports or administering a LAVA instance.
 
 As the work on LAVA V2 continues, it will become increasingly important
 that **all** users of LAVA are aware of the upcoming changes, new methods
 available in the refactoring and the removal of old methods.
 
 Replies to this list are sent to the :ref:`lava_devel` list - if you are
-not subscribed to ``lava-devel``, please ask other uses to CC you on
+not subscribed to ``lava-devel``, please ask other users to CC you on
 replies.
 
 .. index:: irc
@@ -113,8 +119,8 @@ IRC
 ***
 
 `IRC <https://en.wikipedia.org/wiki/Internet_Relay_Chat>`_ is a common
-support method for developers. Our team is spread geographically around
-the world, with some members in Europe, America, Asia. We
+support method for developers. Our team is spread geographically
+around the world, with some members in Europe, America and Asia. We
 are usually talking on our IRC channel ``#linaro-lava`` on
 ``irc.freenode.net``.
 
@@ -126,7 +132,8 @@ are usually talking on our IRC channel ``#linaro-lava`` on
   person or people are awake. Check back for replies on the channel
   intermittently. If you disconnect, you will **not** see any replies
   sent whilst you were disconnected from the channel.
-* Ask your question, do not wait to see people joining or talking.
+* Ask your question, do not wait to see people joining or
+  talking. Don't ask if you may ask a question!
 * As with mailing lists, it is even more important with IRC that you
   **always** use a pastebin. See :ref:`guidelines`.
 * Do not assume that the person someone else spoke to last is also able

@@ -66,6 +66,45 @@ in the system.</p>
   {% endif %}
 
   <h3>Most recently created tokens shown first</h3>
+    {% if unused %}
+    <button class="btn btn-sm btn-danger" data-toggle="modal"
+            data-target="#deleteUnusedTokensModal"
+            {% if unused == 1 %}
+            title="Delete the unused token">Delete the {{ unused }} unused token
+            {% else %}
+            title="Delete all unused tokens">Delete all {{ unused }} unused tokens
+            {% endif %}
+        <span class="glyphicon glyphicon-trash"></span></button>
+    <div class="modal fade" id="deleteUnusedTokensModal" tabindex="-1" role="dialog"
+         aria-labelledby="deleteUnusedTokensModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+    <div class="modal-content">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        {% if unused == 1 %}
+      <h3 class="modal-title" id="deleteUnusedTokensModalLabel">Delete the {{ unused }} unused token</h3>
+        {% else %}
+      <h3 class="modal-title" id="deleteUnusedTokensModalLabel">Delete <b>ALL</b> {{ unused }} unused tokens</h3>
+        {% endif %}
+    </div>
+    <div class="modal-body">
+    {% if unused == 1 %}
+      <p>Are you sure that you want to delete <b>the {{ unused }} unused token</b>?</p>
+    {% else %}
+      <p>Are you sure that you want to delete <b>all {{ unused }} unused tokens</b>?</p>
+    {% endif %}
+    </div>
+    <div class="modal-footer">
+        <form method="post" action="{% url 'linaro_django_xmlrpc.views.delete_unused_tokens' %}">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <input class="btn btn-danger" type="submit" value="Delete"/>
+            {% csrf_token %}
+         </form>
+    </div>
+    </div>
+    </div>
+    </div>
+    {% endif %}
 
 <div class="row">
   <div class="col-md-12">

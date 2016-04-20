@@ -31,6 +31,7 @@ from django.core.exceptions import (
     FieldError
 )
 from django.core.urlresolvers import reverse
+from django.db import IntegrityError
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
@@ -57,6 +58,7 @@ from lava_results_app.views.chart.forms import (
 from lava_results_app.models import (
     Query,
     QueryCondition,
+    QueryOmitResult,
     Chart,
     ChartGroup,
     ChartQuery,
@@ -182,7 +184,7 @@ def chart_list(request):
             'terms_data': terms_data,
             'group_tables': group_tables,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(chart_list),
-            'context_help': BreadCrumbTrail.leading_to(chart_list),
+            'context_help': ['lava-queries-charts'],
         }, RequestContext(request)
     )
 
@@ -279,7 +281,7 @@ def chart_detail(request, name):
             'chart_queries': chart.queries.all(),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 chart_detail, name=name),
-            'context_help': BreadCrumbTrail.leading_to(chart_list),
+            'context_help': ['lava-queries-charts'],
         }, RequestContext(request)
     )
 
@@ -443,6 +445,26 @@ def chart_query_remove(request, name, id):
     chart_query.delete()
 
     return HttpResponseRedirect(chart.get_absolute_url() + "/+detail")
+
+
+@login_required
+@ownership_required
+def chart_omit_result(request, name, id, result_id):
+
+    chart_query = get_object_or_404(ChartQuery, id=id)
+    result_object = get_object_or_404(
+        chart_query.query.content_type.model_class(),
+        id=result_id
+    )
+
+    try:
+        QueryOmitResult.objects.create(query=chart_query.query,
+                                       content_object=result_object)
+    except IntegrityError:
+        # Ignore unique constraint violation.
+        pass
+
+    return HttpResponseRedirect(chart_query.chart.get_absolute_url())
 
 
 @login_required

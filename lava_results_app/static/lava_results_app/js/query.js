@@ -104,7 +104,7 @@ $(document).ready(function () {
                     condition = data[0].fields;
 
                     condition_row_html =
-                        '<td>' + data[1].fields.name + '</td>' +
+                        '<td>' + data[1].fields.model + '</td>' +
                         '<td>' + condition.field + '</td>' +
                         '<td>' + condition.operator + '</td>' +
                         '<td>' + condition.value + '</td>' +
@@ -164,12 +164,12 @@ $(document).ready(function () {
 		if (data[0] == true) {
 		    $('#last_updated').html(data[1]);
 		} else {
-		    alert("Update failed: " + data[2]);
+		    bootbox.alert("Update failed: " + data[2]);
 		}
             },
 	    error: function(data, status, error) {
                 $('#refresh_loading_dialog').hide();
-                alert('Operation failed, please try again or contact system administrator.');
+                bootbox.alert('Operation failed, please try again or contact system administrator.');
             }
         });
     });

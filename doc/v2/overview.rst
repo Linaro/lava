@@ -298,6 +298,50 @@ the details of the job run.
 
    .. image:: ./images/job-details.png
 
+.. index: results
+
+.. downloading_results:
+
+Downloading test results
+------------------------
+
+LAVA V2 makes the test results available directly from the instance,
+without needing to go through ``lava-tool``. Currently, the results
+for any test job can be downloaded as :abbr:`CSV (comma-separated value)`
+and YAML format.
+
+For example, the results for test job number 123 are available as
+CSV using::
+
+ http://localhost/results/123/csv
+
+The same results are job number 123 are available as YAML using::
+
+ http://localhost/results/123/yaml
+
+If you know the test definition name, you can download just the
+results for that test definition in the same way::
+
+ http://localhost/results/123/singlenode-advanced/csv
+ http://localhost/results/123/singlenode-advanced/yaml
+
+Some test jobs can be restricted to particular users or groups of users. The
+results of these test jobs are restricted in the same way. To download these
+results, you will need to specify your username and one of your
+:ref:`authentication_tokens` - remember to quote the URL if using it on
+the command line or the & will likely be interpreted by your shell::
+
+ 'http://localhost/results/123/csv?user=user.name&token=yourtokentextgoeshereononeverylongline'
+
+ $ curl 'http://localhost/results/123/singlenode-advanced/yaml?user=user.name&token=yourtokentextgoeshereononeverylongline'
+
+Use the **Username** as specified in `your Profile </me>`_ - this may differ to the
+username you use when logging in with LDAP.
+
+.. caution:: Take care of your tokens - avoid using personal tokens in scripts
+   and test definitions or other files that end up in public git repositories.
+   Wherever supported, use ``https://`` when using a token.
+
 .. index: test definitions
 
 .. _test_definitions:

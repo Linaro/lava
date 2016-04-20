@@ -96,6 +96,25 @@ as a device type, some factors include:
 
 See also :ref:`device_type_metadata`.
 
+Choosing a name for a device type
+=================================
+
+There are some considerations for the names of a device-type in LAVA.
+
+#. The name of the device type in the database will be used as part of
+   the URL of the page covering details of that device type, so the name
+   **must not** include characters that would be encoded in a URL. This
+   includes whitespace, UTF-8 characters, brackets and other common
+   punctuation characters.
+#. Hyphens and underscores are supported.
+#. In general, the name should represent the hardware in a way that uniquely
+   separates that type from similar hardware, e.g. panda and panda-es or
+   imx6q-wandboard instead of just 'wandboard'.
+#. Each type has a description which can be used to provide lab-specific
+   information, so the name does not have to include all details.
+#. Check other LAVA instances, especially if your instance is likely to
+   need to work with other instances with a single frontend (like kernelci.org)
+
 Examples
 ========
 

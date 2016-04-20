@@ -180,9 +180,8 @@ to manage the JSON jobs). On such workers, ``lava-master`` should be
 
  $ sudo invoke-rc.d lava-master stop
  $ sudo update-rc.d lava-master remove
- $ sudo chmod a -x /etc/init.d/lava-master
+ $ sudo chmod a-x /etc/init.d/lava-master
  $ sudo service lava-master status
- lava-master: unrecognized service
 
 Removing the executable bits stops the lava-master being re-enabled when
 the packages are updated.

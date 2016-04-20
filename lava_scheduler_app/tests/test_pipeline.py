@@ -27,7 +27,7 @@ from lava_scheduler_app.utils import (
     split_multinode_yaml,
 )
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
-from lava_scheduler_app.dbutils import testjob_submission
+from lava_scheduler_app.dbutils import testjob_submission, find_device_for_job
 from lava_dispatcher.pipeline.device import PipelineDevice
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.action import JobError
@@ -240,6 +240,37 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.assertTrue(job.health_check)
         self.assertEqual(job.requested_device, device)
         self.assertIsNone(job.actual_device)
+
+    def test_pipeline_health_assignment(self):
+        user = self.factory.make_user()
+        device1 = Device.objects.get(hostname='fakeqemu1')
+        self.factory.make_fake_qemu_device(hostname="fakeqemu1")
+        self.assertTrue(device1.is_pipeline)
+        device2 = self.factory.make_device(device_type=device1.device_type, hostname='fakeqemu2')
+        self.factory.make_fake_qemu_device(hostname="fakeqemu2")
+        self.assertTrue(device2.is_pipeline)
+        device3 = self.factory.make_device(device_type=device1.device_type, hostname='fakeqemu3')
+        self.factory.make_fake_qemu_device(hostname="fakeqemu3")
+        self.assertTrue(device3.is_pipeline)
+        job1 = testjob_submission(self.factory.make_job_yaml(), user, check_device=device1)
+        job2 = testjob_submission(self.factory.make_job_yaml(), user, check_device=device2)
+        self.assertEqual(user, job1.submitter)
+        self.assertTrue(job1.health_check)
+        self.assertEqual(job1.requested_device, device1)
+        self.assertEqual(job2.requested_device, device2)
+        self.assertIsNone(job1.actual_device)
+        self.assertIsNone(job2.actual_device)
+        device_list = Device.objects.filter(device_type=device1.device_type)
+        count = 0
+        while True:
+            device_list.reverse()
+            assigned = find_device_for_job(job2, device_list)
+            if assigned != device2:
+                self.fail("[%d] invalid device assigment in health check." % count)
+            count += 1
+            if count > 100:
+                break
+        self.assertGreater(count, 100)
 
     def test_invalid_device(self):
         user = self.factory.make_user()

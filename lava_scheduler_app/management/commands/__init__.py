@@ -1,21 +1,10 @@
 import logging.config
-from optparse import make_option
-
+import argparse
+import django
 from lava_server.utils import OptArgBaseCommand as BaseCommand
 
 
 class SchedulerCommand(BaseCommand):
-
-    option_list = BaseCommand.option_list + (
-        make_option('-l', '--loglevel',
-                    action='store',
-                    default=None,
-                    help="Log level, default is taken from settings."),
-        make_option('-f', '--logfile',
-                    action='store',
-                    default=None,
-                    help="Path to log file, default is taken from settings."),
-    )
 
     log_prefix = ''
 
@@ -39,6 +28,16 @@ class SchedulerCommand(BaseCommand):
             }
         },
     }
+
+    def add_arguments(self, parser):
+        parser.add_argument('-l', '--loglevel', action='store', default=None, type=str,
+                            help="Log level, default is taken from settings.")
+        parser.add_argument('-f', '--logfile', action='store', default=None, type=str,
+                            help="Path to log file, default is taken from settings.")
+        if django.VERSION >= (1, 8):
+            parser.add_argument('args', nargs=argparse.REMAINDER)
+        else:
+            parser.add_argument('--args', nargs=argparse.REMAINDER)
 
     def _configure(self, options):
         from django.conf import settings

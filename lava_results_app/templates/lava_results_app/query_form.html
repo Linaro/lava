@@ -52,6 +52,10 @@
   <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="Query will display latest results always. Keep in mind that live queries take a lot more time to load and can also affect the system performance as each time someone go to query result page the results are updated.">?</button>
 </div>
 <div class="form-field">
+  {{ form.limit.label_tag }}
+  {{ form.limit }}
+</div>
+<div class="form-field">
   {{ form.description.label_tag }}
   {{ form.description }}
 </div>

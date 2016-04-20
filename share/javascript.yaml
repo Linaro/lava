@@ -93,6 +93,7 @@ debian:
     files:
       query.js: query.min.js
       chart.js: chart.min.js
+      bootbox.data.toggle.js: bootbox.data.toggle.min.js
   - uglify:
     lava_directory: lava_markitup/static/lava_markitup/
     destination: lava_markitup/static/lava_markitup/
@@ -107,6 +108,7 @@ debian:
     lava_directory: lava_server/lava-server/js/
     destination: lava_server/lava-server/js/
     files:
+      bootbox.js: bootbox.min.js
       bootstrap-3.1.1.js: bootstrap-3.1.1.min.js
       jquery.validate.js: jquery.validate.min.js
       jquery.pseudofocus.js: jquery.pseudofocus.min.js

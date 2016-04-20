@@ -14,11 +14,11 @@ Multinode jobs are more likely to trigger this issue as they cause many jobs
 to be started at the same time.
 
 To solve this problem we use a project called 
-`lavapdu <https://git.linaro.org/lava/lavapdu.git>`_.
+`pdudaemon <https://github.com/Linaro/pdudaemon>`_.
 Instead of each dispatcher accessing the PDUs directly, dispatchers make
 requests to a queueing daemon which executes them sequentially.
 
-The project source is available here: https://git.linaro.org/lava/lavapdu.git
+The project source is available here: https://github.com/Linaro/pdudaemon
 Packages for Debian and Ubuntu will be available shortly.
 
 A Postgres server is required with a database created, and postgres

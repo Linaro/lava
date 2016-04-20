@@ -520,7 +520,7 @@ class SystemAPITest(TestCase):
         [result] = self.system_api.multicall(
             [{"methodName": "system.listMethods", "params": [], "other": 1}])
         self.assertIsInstance(result, xmlrpclib.Fault)
-        print result.faultString
+        print(result.faultString)
         self.assertEqual(
             result.faultCode,
             FaultCodes.ServerError.INVALID_METHOD_PARAMETERS)

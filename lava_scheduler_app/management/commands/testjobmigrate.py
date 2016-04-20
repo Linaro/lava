@@ -18,7 +18,7 @@ class Command(BaseCommand):
         query = TestJob.objects.filter(
             ~Q(_results_link=u''), _results_link__isnull=False,
             _results_bundle__isnull=True)
-        print query.count()
+        print(query.count())
         for job in query.all():
             count += 1
             if count % 100 == 0:
@@ -31,4 +31,4 @@ class Command(BaseCommand):
                 continue
             job._results_bundle = bundle
             job.save()
-        print
+        print("")

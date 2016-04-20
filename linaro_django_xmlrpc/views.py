@@ -21,7 +21,6 @@ XML-RPC views
 """
 
 import base64
-import logging
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
@@ -41,7 +40,7 @@ from linaro_django_xmlrpc.forms import AuthTokenForm
 
 
 @csrf_exempt
-def handler(request, mapper, help_view):
+def handler(request, mapper, help_view):  # pylint: disable=too-many-return-statements
     """
     XML-RPC handler.
 
@@ -74,11 +73,7 @@ def handler(request, mapper, help_view):
                 username, secret = decoded_value.split(":", 1)
             except ValueError:
                 return HttpResponse("Corrupted HTTP_AUTHORIZATION header, no user:pass", status=400)
-            user = None
-            try:
-                user = AuthToken.get_user_for_secret(username, secret)
-            except Exception:
-                logging.exception("bug")
+            user = AuthToken.get_user_for_secret(username, secret)
             if user is None:
                 response = HttpResponse("Invalid token", status=401)
                 response['WWW-Authenticate'] = 'Basic realm="XML-RPC Authentication token"'
@@ -94,7 +89,7 @@ def handler(request, mapper, help_view):
         return redirect(help_view)
 
 
-def help(request, mapper, template_name="linaro_django_xmlrpc/api.html"):
+def help(request, mapper, template_name="linaro_django_xmlrpc/api.html"):  # pylint: disable=redefined-builtin
     context = CallContext(
         user=None, mapper=mapper, dispatcher=None, request=request)
     system = SystemAPI(context)
@@ -150,8 +145,8 @@ def help(request, mapper, template_name="linaro_django_xmlrpc/api.html"):
         'context_help': ['data-export'],
         'site_url': "{scheme}://{domain}".format(
             scheme=scheme,
-            domain=Site.objects.get_current().domain)},
-        RequestContext(request))
+            domain=Site.objects.get_current().domain)
+    }, RequestContext(request))
 
 
 @login_required
@@ -159,12 +154,15 @@ def tokens(request):
     """
     List of tokens for an authenticated user
     """
-    tokens = AuthToken.objects.filter(user=request.user).order_by(
+    token_list = AuthToken.objects.filter(user=request.user).order_by(
         "last_used_on")
+    unused = AuthToken.objects.filter(user=request.user, last_used_on__isnull=True).count()
+
     return render_to_response(
         "linaro_django_xmlrpc/tokens.html",
         {
-            "token_list": tokens,
+            "token_list": token_list,
+            "unused": unused,
             "context_help": ["lava-tool"],
         },
         RequestContext(request))
@@ -224,5 +222,23 @@ def edit_token(request, object_id):
         {
             "token": token,
             "form": form,
+        },
+        RequestContext(request))
+
+
+@login_required
+def delete_unused_tokens(request):
+    token_list = AuthToken.objects.filter(user=request.user, last_used_on__isnull=True)
+    if request.method == "POST":
+        for token in token_list:
+            token.delete()
+        return HttpResponseRedirect(
+            reverse("linaro_django_xmlrpc_tokens")
+        )
+    return render_to_response(
+        "linaro_django_xmlrpc/tokens.html",
+        {
+            "token_list": token_list,
+            "context_help": ["lava-tool"],
         },
         RequestContext(request))

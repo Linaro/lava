@@ -26,7 +26,7 @@ from linaro_django_xmlrpc.views import handler as linaro_django_xmlrpc_views_han
 from linaro_django_xmlrpc.views import help as linaro_django_xmlrpc_views_help
 from django.views.i18n import javascript_catalog
 from lava_server.extension import loader
-from lava_server.views import index, me, version
+from lava_server.views import index, me
 from lava_markitup.urls import urlpatterns as lavamarkitup_urlpatterns
 
 handler403 = 'lava_server.views.permission_error'

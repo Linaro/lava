@@ -193,8 +193,8 @@ def main(dt, name, options):
     if options.simulate:
         for key in sequence:
             if key in config:
-                print "%s = %s" % (key, config[key])
-        print simplejson.dumps(template, indent=4)
+                print("%s = %s" % (key, config[key]))
+        print(simplejson.dumps(template, indent=4))
         return 0
     with open(deviceconf, 'w') as f:
         for key in sequence:
@@ -215,7 +215,7 @@ def main(dt, name, options):
         "%s" % json
     ])
     if loaded:
-        print "lava-server manage loaddata failed for %s" % json
+        print("lava-server manage loaddata failed for %s" % json)
         exit(1)
     else:
         os.close(fd)

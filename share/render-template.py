@@ -86,18 +86,18 @@ def main():
              os.path.join(args.path, 'device-types')]),
         trim_blocks=True)
     if not os.path.exists(os.path.join(args.path, 'devices', "%s.jinja2" % args.device)):
-        print "Cannot find %s device configuration file" % args.device
+        print("Cannot find %s device configuration file" % args.device)
         return
     template = env.get_template("%s.jinja2" % args.device)
     ctx = {}
     config = template.render(**ctx)
 
-    print "YAML config"
-    print "==========="
-    print config
-    print "Parsed config"
-    print "============="
-    print yaml.load(config)
+    print("YAML config")
+    print("===========")
+    print(config)
+    print("Parsed config")
+    print("=============")
+    print(yaml.load(config))
 
 
 if __name__ == '__main__':

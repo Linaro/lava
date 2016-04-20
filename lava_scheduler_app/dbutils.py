@@ -12,6 +12,7 @@ import datetime
 import logging
 import simplejson
 import django
+from traceback import format_exc
 from django.db.models import Q
 from django.db import IntegrityError, transaction
 from django.contrib.auth.models import User
@@ -57,20 +58,34 @@ def match_vlan_interface(device, job_def):
 
 
 def initiate_health_check_job(device):
+    if not device:
+        # logic error
+        return None
     if device.status in [Device.RETIRED]:
+        # logic error
         return None
 
     existing_health_check_job = device.get_existing_health_check_job()
     if existing_health_check_job:
         return existing_health_check_job
 
+    logger = logging.getLogger('dispatcher-master')
     job_data = device.device_type.health_check_job
     user = User.objects.get(username='lava-health')
     if not job_data:
         # This should never happen, it's a logic error.
+        logger.error("No health check definition found for %s", device)
         device.put_into_maintenance_mode(
             user, "health check job not found in initiate_health_check_job")
         raise JSONDataError("no health check job found for %r", device.hostname)
+    if is_deprecated_json(job_data):
+        # only JSON supports 'target' and that needs to be set by the health-check not the admin.
+        job_json = simplejson.loads(job_data)
+        if 'target' in job_json:
+            logger.error("[%s] JSON Health check definition must not specify a 'target'.", device.device_type.name)
+            device.put_into_maintenance_mode(
+                user, "target must not be defined in health check definitions.")
+            return None
     return testjob_submission(job_data, user, check_device=device)
 
 
@@ -85,20 +100,27 @@ def submit_health_check_jobs():
     for device in Device.objects.filter(
             Q(status=Device.IDLE) | Q(status=Device.OFFLINE, health_status=Device.HEALTH_LOOPING)):
         time_denominator = True
+        run_health_check = False
         if device.device_type.health_denominator == DeviceType.HEALTH_PER_JOB:
             time_denominator = False
         if not device.device_type.health_check_job:
             run_health_check = False
         elif device.health_status == Device.HEALTH_UNKNOWN:
             run_health_check = True
+            logger.debug("health status: %s", Device.HEALTH_CHOICES[device.health_status][1])
         elif device.health_status == Device.HEALTH_LOOPING:
             run_health_check = True
+            logger.debug("health status: %s", Device.HEALTH_CHOICES[device.health_status][1])
         elif not device.last_health_report_job:
             run_health_check = True
+            logger.debug("Empty last health report job")
         elif not device.last_health_report_job.end_time:
             run_health_check = True
+            logger.debug("Last health report job [%d] has no end_time", device.last_health_report_job.id)
         else:
             if time_denominator:
+                if not run_health_check:
+                    logger.debug("checking time since last health check")
                 run_health_check = device.last_health_report_job.end_time < \
                     timezone.now() - datetime.timedelta(hours=device.device_type.health_frequency)
                 if run_health_check:
@@ -131,7 +153,7 @@ def testjob_submission(job_definition, user, check_device=None):
     Single submission frontend for JSON or YAML
     :param job_definition: string of the job submission
     :param user: user attempting the submission
-    :param: check_device: set specified device as the target
+    :param check_device: set specified device as the target
     **and** thereby set job as a health check job. (JSON only)
     :return: a job or a list of jobs
     :raises: SubmissionException, Device.DoesNotExist,
@@ -151,6 +173,7 @@ def testjob_submission(job_definition, user, check_device=None):
             job_definition = simplejson.dumps(job_json)
             allow_health = True
         try:
+            # returns a single job or a list (not a QuerySet) of job objects.
             job = TestJob.from_json_and_user(job_definition, user, health_check=allow_health)
             if isinstance(job, list):
                 # multinode health checks not supported
@@ -171,6 +194,7 @@ def testjob_submission(job_definition, user, check_device=None):
 
     else:
         validate_job(job_definition)
+        # returns a single job or a list (not a QuerySet) of job objects.
         job = TestJob.from_yaml_and_user(job_definition, user)
         if check_device and isinstance(check_device, Device) and not isinstance(job, list):
             # the slave must neither know nor care if this is a health check,
@@ -179,6 +203,39 @@ def testjob_submission(job_definition, user, check_device=None):
             job.requested_device = check_device
             job.save(update_fields=['health_check', 'requested_device'])
     return job
+
+
+def check_device_and_job(job, device):
+    """
+    Once a device shows as a candidate for assignment,
+    check for bad current_job/reserved states.
+
+    LAVA V1 can lead to problems where a device can be Idle
+    with a current job still listed due to the asynchronous
+    scheduler daemons on the workers being able to write to
+    the database when jobs terminate. Monitor and remove once
+    V1 scheduling has ceased.
+
+    :param job: The job being processed.
+    :param device: the device about the be assigned to the job.
+    :return: the device if OK or None on error.
+    """
+    logger = logging.getLogger('dispatcher-master')
+    if not job.is_pipeline and device.is_exclusive:
+        return None
+    if device.current_job:
+        if device.device_type != job.requested_device_type:
+            return None
+        if job.requested_device and device == job.requested_device:
+            # forced health checks complicate this condition as it would otherwise
+            # be an error to find the device here when it should not be IDLE.
+            return None
+        # warn the admin that this needs human intervention
+        bad_job = TestJob.objects.get(id=device.current_job.id)
+        logger.warning("Refusing to reserve %s for %s - current job is %s",
+                       device, job, bad_job)
+        return None
+    return device
 
 
 def find_device_for_job(job, device_list):  # pylint: disable=too-many-branches
@@ -191,51 +248,43 @@ def find_device_for_job(job, device_list):  # pylint: disable=too-many-branches
     allowed to run non-pipeline jobs.
 
     Note: with a large queue and a lot of devices, this function can be a
-    significant delay.
+    source of significant delays. Uncomment the unittest.skip and run the
+    lava_scheduler_app.tests.test_submission.TestSchedulerAPI.test_queueing
+    test before and after making changes here.
     """
     if job.dynamic_connection:
         # secondary connection, the "host" has a real device
         return None
 
     logger = logging.getLogger('dispatcher-master')
-    for device in device_list:
-        if device.current_job:
-            if device.device_type != job.requested_device_type:
-                continue
-            if job.requested_device and device == job.requested_device:
-                # forced health checks complicate this condition as it would otherwise
-                # be an error to find the device here when it should not be IDLE.
-                continue
-            # warn the admin that this needs human intervention
-            bad_job = TestJob.objects.get(id=device.current_job.id)
-            logger.warning("Refusing to reserve %s for %s - current job is %s",
-                           device, job, bad_job)
-            device_list.remove(device)
-        if device.is_exclusive and not job.is_pipeline:
-            continue
-    if not device_list:
-        return None
-    # forced health check support
+    # health check support
     if job.health_check is True:
-        if job.requested_device and job.requested_device.status == Device.OFFLINE:
-            logger.debug("[%s] - assigning %s for forced health check.", job.id, job.requested_device)
+        if job.requested_device:
+            if job.requested_device.status == Device.OFFLINE:
+                logger.debug("[%s] - assigning %s for forced health check.", job.id, job.requested_device)
+            else:
+                logger.debug("[%s] - assigning %s for health check.", job.id, job.requested_device)
             return job.requested_device
     for device in device_list:
+        if device != job.requested_device and device.device_type != job.requested_device_type:
+            continue
+        if job.is_pipeline and not device.is_pipeline:
+            continue
         if job.is_vmgroup:
+            # deprecated and slow!
             # special handling, tied directly to the TestJob within the vmgroup
             # mask to a Temporary Device to be able to see vm_group of the device
             tmp_dev = TemporaryDevice.objects.filter(hostname=device.hostname)
             if tmp_dev and job.vm_group != tmp_dev[0].vm_group:
                 continue
-        if job.is_pipeline and not device.is_pipeline:
-            continue
-        if device == job.requested_device:  # for pipeline, this is only used for automated health checks
+        # these are the principal requirements and checks.
+        # for pipeline, requested_device is only used for automated health checks, handled above.
+        # device_type, requested_device and requested_device_type have been retrieved with select_related
+        # tags.all() has been retrieved using prefetch_related
+        if device == job.requested_device or device.device_type == job.requested_device_type:
             if device.can_submit(job.submitter) and\
                     set(job.tags.all()) & set(device.tags.all()) == set(job.tags.all()):
-                return device
-        if device.device_type == job.requested_device_type:
-            if device.can_submit(job.submitter) and\
-                    set(job.tags.all()) & set(device.tags.all()) == set(job.tags.all()):
+                device = check_device_and_job(job, device)
                 return device
     return None
 
@@ -249,8 +298,24 @@ def get_available_devices():
     be available for other users who don't have their own.
 
     Forced health checks ignore this constraint.
+
+    Operations on the returned QuerySet will need to lookup the related
+    objects from these foreign keys in the Device object:
+        device_type - unchanging DeviceType object.
+        current_job - an existing job unrelated to this query which
+                      must NOT be modified by loops based on this list.
+    select_related is used to get the related objects in the same query
+    for performance benefits - same cannot be done for tags which are
+    Many-to-Many lookups, use prefetch_related for those, e.g. Tag
+    as long as those are used with all() and not a filter().
+
+    :return: QuerySet of IDLE Devices with device_type, current _job
+    and tags retrieved.
     """
-    devices = Device.objects.filter(status=Device.IDLE).order_by('is_public')
+    devices = Device.objects.filter(
+        status=Device.IDLE).select_related(
+            'device_type', 'current_job').order_by('is_public')
+    devices = devices.prefetch_related('tags')
     return devices
 
 
@@ -270,14 +335,37 @@ def get_job_queue():
 
     Pipeline jobs are allowed to be assigned but the actual running of
     a job on a reserved pipeline device is down to the dispatcher-master.
+
+    Operations on the returned QuerySet will need to lookup the related
+    objects from these foreign keys in the TestJob object:
+        requested_device - Device object (status and current_job to be modified here)
+        actual_device - Device object (status and current_job to be modified here)
+        requested_device_type - unchanging DeviceType object.
+
+    select_related is used to get the related objects in the same query
+    for performance benefits - the same cannot be done for tags which are
+    Many-to-Many lookups, use prefetch_related for those (e.g. Tag)
+    as long as those are used with all() and not a filter().
+
+    This has the effect that requested_device and actual_device are handled
+    by the find_device_for_job loops as the Device object was when this
+    QuerySet is evaluated as a list (at len(jobs)).
+    https://docs.djangoproject.com/en/1.9/ref/models/querysets/#when-querysets-are-evaluated
+
+    :return: Evaluated QuerySet of submitted TestJob objects with
+    requested_device, requested_device_type, actual_device and tags
+    retrieved and with set ordering.
     """
 
     logger = logging.getLogger('dispatcher-master')
     jobs = TestJob.objects.filter(status=TestJob.SUBMITTED)
     jobs = jobs.filter(actual_device=None)
+    jobs = jobs.select_related(
+        'requested_device', 'requested_device_type', 'actual_device')
+    jobs = jobs.prefetch_related('tags')
     jobs = jobs.order_by('-health_check', '-priority', 'submit_time',
                          'vm_group', 'target_group', 'id')
-
+    # evaluate in database
     if len(jobs):
         logger.info("Job queue length: %d", len(jobs))
     return jobs
@@ -416,7 +504,9 @@ def assign_jobs():
     logger.debug("[%d] jobs in the queue", len(jobs))
     # a forced health check can be assigned even if the device is not in the list of idle devices.
     for job in jobs:
+        # this needs to stay as a tight loop to cope with load
         device = find_device_for_job(job, devices)
+        # slower steps as assignment happens less often than the checks
         if device:
             if job.is_pipeline:
                 job_dict = yaml.load(job.definition)
@@ -662,14 +752,15 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             fail_job(job, fail_msg=msg)
             return None
         if device.worker_host.hostname not in dispatchers:
-            # a configured worker has not called in to this master
-            # likely that the worker is misconfigured - polling the wrong master
-            # or simply not running at all.
-            msg = """Administrative error. Device '{0}' has a worker_host setting of
- '{1}' but no slave has registered with this master
- using that FQDN.""".format(device.hostname, device.worker_host.hostname)
-            logger.error('[%d] worker-hostname error: %s', job.id, msg)
-            fail_job(job, fail_msg=msg)
+            # A configured worker has not (yet) called in to this master.
+            # It is likely that the worker is misconfigured - polling the wrong master
+            # or simply not running at all. There is also a possible race condition
+            # here when the master gets restarted with a queue of jobs and has not yet
+            # received polls from all slaves, so do not fail the job.
+            msg = "Device '{0}' has a worker_host setting of " \
+                  "'{1}' but no slave has yet registered with this master " \
+                  "using that FQDN.".format(device.hostname, device.worker_host.hostname)
+            logger.info('[%d] worker-hostname not seen: %s', job.id, msg)
             return None
 
         device_object = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
@@ -690,6 +781,7 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
         except (
                 AttributeError, JobError, NotImplementedError,
                 KeyError, TypeError, RuntimeError) as exc:
+            exc = format_exc(exc)
             logger.error('[%d] parser error: %s', check_job.id, exc)
             fail_job(check_job, fail_msg=exc)
             return None
@@ -697,6 +789,7 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             logger.info("[%d] Validating actions", check_job.id)
             pipeline_job.pipeline.validate_actions()
         except (AttributeError, JobError, KeyError, TypeError, RuntimeError) as exc:
+            exc = format_exc(exc)
             logger.error({device: exc})
             fail_job(check_job, fail_msg=exc)
             return None

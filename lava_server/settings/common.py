@@ -54,6 +54,13 @@ except ImportError:
 if USE_OPENID_AUTH:
     from openid import oidutil
 
+try:
+    imp.find_module('debug_toolbar')
+    USE_DEBUG_TOOLBAR = True
+    INTERNAL_IPS = []
+except ImportError:
+    USE_DEBUG_TOOLBAR = False
+
 # Administrator contact, used for sending
 # emergency email when something breaks
 ADMINS = (
@@ -140,9 +147,6 @@ STATICFILES_MEDIA_DIRNAMES = (
 
 STATICFILES_PREPEND_LABEL_APPS = [
 ]
-
-if django.VERSION < (1, 4):
-    STATICFILES_PREPEND_LABEL_APPS.append("django.contrib.admin")
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).

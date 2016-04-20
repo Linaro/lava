@@ -138,21 +138,54 @@ $(document).ready(function () {
         });
     }
 
+    ChartQuery.prototype.setup_item_menu = function() {
+        chart_id = this.chart_id;
+        $("#item_menu_" + chart_id).menu();
+        $("#item_menu_" + chart_id).hide();
+        $("#item_menu_" + chart_id).mouseleave(function() {
+            $("#item_menu_" + chart_id).hide();
+        });
+    }
+
     ChartQuery.prototype.update_events = function() {
 
+	// Add item menu.
+	$("#chart_container_" + this.chart_id).append(
+            '<ul class="print-menu" id="item_menu_' + this.chart_id + '">' +
+		'<li class="print-menu-item"><a target="_blank" href="#"' +
+		' id="view_item_' + this.chart_id + '">View result</a></li>' +
+		'<li class="print-menu-item"><a href="#"' + ' id="omit_item_' +
+		this.chart_id + '" data-toggle="confirm" data-title="This ' +
+                'will affect underlying query. Are you sure you want to omit' +
+                ' this result?">' +
+                'Omit result</a></li>' +
+                '</ul>');
+        this.setup_item_menu();
+
         // Bind plotclick event.
+	chart_id = this.chart_id;
+	chart_name = this.chart_data.basic.chart_name;
         $("#inner_container_" + this.chart_id).bind(
             "plotclick",
             function (event, pos, item) {
                 if (item) {
                     // Make datapoint unique value
                     datapoint = item.datapoint.join("_");
-                    url = window.location.protocol + "//" +
-                        window.location.host +
-                        item.series.meta[datapoint]["link"];
-                    window.open(url, "_blank");
+		    toggle_item_menu(chart_id, pos.pageX, pos.pageY);
+		    $("#view_item_" + chart_id).attr("href", window.location.protocol + "//" + window.location.host + item.series.meta[datapoint]["link"]);
+		    $("#omit_item_" + chart_id).attr(
+			"href",
+			window.location.protocol + "//" +
+			    window.location.host + "/results/chart/" +
+			    chart_name + "/" +
+			    chart_id + "/" +
+			    item.series.meta[datapoint]["pk"] +
+			    "/+omit-result");
                 }
             });
+
+        // Now setup the click event for omit link (needed for bootbox dialog).
+        add_bootbox_data_toggle();
 
         $("#inner_container_" + this.chart_id).bind(
             "plothover",
@@ -170,12 +203,27 @@ $(document).ready(function () {
 
     ChartQuery.prototype.update_headline = function() {
 	if (this.chart_data.basic.query_name) {
+            query_link = this.chart_data.basic.query_link.replace(/\\/g, "");
             $("#headline_container_" + this.chart_id).append(
 		'<span class="chart-headline">' +
+                    '<a href="' + query_link + '" target="_blank">' +
 		    this.chart_data.basic.query_name +
-                    '</span>');
+                    '</a></span>');
             $("#headline_container_" + this.chart_id).append(
 		'<span>' + this.chart_data.basic.query_description + '</span>');
+
+	    if (this.chart_data.basic.has_omitted) {
+                $("#headline_container_" + this.chart_id).append(
+                    '<div class="alert alert-info">' +
+                        '<button type="button" class="close" ' +
+                        'data-dismiss="alert">&times;</button>' +
+                        '<strong>This chart has some of the results omitted.' +
+                        '</strong> ' +
+                        'Check the underlying <strong><a href="' + query_link +
+                        '" target="_blank">' + 'query</a></strong> ' +
+                        'for the list of omitted results.' +
+                        '</div>');
+	    }
 	}
     }
 
@@ -820,6 +868,7 @@ $(document).ready(function () {
                 }
 
                 meta_item = {
+		    "pk": row["pk"],
                     "link": row["link"],
                     "pass": row["pass"],
                     "tooltip": tooltip,
@@ -1250,7 +1299,7 @@ $(document).ready(function () {
     };
 
     validation_alert = function(message) {
-        alert(message);
+        bootbox.alert(message);
     }
 
     showTooltip = function(x, y, contents, pass) {
@@ -1265,6 +1314,11 @@ $(document).ready(function () {
     toggle_print_menu = function(e, chart_id) {
         $("#print_menu_" + chart_id).show();
         $("#print_menu_" + chart_id).offset({left: e.pageX-15, top: e.pageY-5});
+    }
+
+    toggle_item_menu = function(chart_id, pageX, pageY) {
+        $("#item_menu_" + chart_id).show();
+        $("#item_menu_" + chart_id).offset({left: pageX-15, top: pageY-5});
     }
 
     init_loading_dialog = function() {

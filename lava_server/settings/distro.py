@@ -178,6 +178,14 @@ elif AUTH_DEBIAN_SSO:
     MIDDLEWARE_CLASSES.append('lava_server.debian_sso.DebianSsoUserMiddleware')
     AUTHENTICATION_BACKENDS += ('lava_server.debian_sso.DebianSsoUserBackend',)
 
+USE_DEBUG_TOOLBAR = distro_settings.get_setting('USE_DEBUG_TOOLBAR', False)
+
+if USE_DEBUG_TOOLBAR:
+    INSTALLED_APPS.append('debug_toolbar')
+    default_ips = ['127.0.0.1', '::1']
+    default_ips.extend(distro_settings.get_setting('INTERNAL_IPS', []))
+    INTERNAL_IPS.extend(default_ips)
+
 # read branding details
 BRANDING_ALT = distro_settings.get_setting("BRANDING_ALT", "Linaro logo")
 BRANDING_ICON = distro_settings.get_setting("BRANDING_ICON", 'lava-server/images/linaro-sprinkles.png')

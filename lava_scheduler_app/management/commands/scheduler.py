@@ -17,28 +17,27 @@
 # along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from optparse import make_option
-
 from lava_scheduler_app.management.commands import SchedulerCommand
 
 
 class Command(SchedulerCommand):
 
     help = "Run the LAVA test job scheduler"
-    option_list = SchedulerCommand.option_list + (
-        make_option('--use-fake',
-                    action='store_true',
-                    dest='use_fake',
-                    default=False,
-                    help="Use fake dispatcher (for testing)"),
-        make_option('--dispatcher',
-                    action="store",
-                    dest="dispatcher",
-                    default="lava-dispatch",
-                    help="Dispatcher command to invoke"),
-    )
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        super(Command, self).add_arguments(parser)
+        parser.add_argument('--use-fake',
+                            action='store_true',
+                            dest='use_fake',
+                            default=False,
+                            help="Use fake dispatcher (for testing)")
+        parser.add_argument('--dispatcher',
+                            action="store",
+                            dest="dispatcher",
+                            default="lava-dispatch",
+                            help="Dispatcher command to invoke")
+
+    def handle(self, *args, **options):  # pylint: disable=too-many-locals
         import os
 
         from twisted.internet import reactor
@@ -66,11 +65,11 @@ class Command(SchedulerCommand):
         worker = WorkerData()
         try:
             worker.put_heartbeat_data(restart=True)
-        except (xmlrpclib.Fault, xmlrpclib.ProtocolError) as err:
+        except (xmlrpclib.Fault, xmlrpclib.ProtocolError):
             worker.logger.error("Complete heartbeat update failed!")
 
         # Start scheduler service.
         service = JobQueue(
             source, dispatcher, reactor, daemon_options=daemon_options)
-        reactor.callWhenRunning(service.startService)
-        reactor.run()
+        reactor.callWhenRunning(service.startService)  # pylint: disable=no-member
+        reactor.run()  # pylint: disable=no-member

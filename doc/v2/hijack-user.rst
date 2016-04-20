@@ -21,22 +21,10 @@ in Debian testing release as of now.
 Install `python-django-compat` and `python-django-hijack` packages
 directly using apt if either of production-repo or staging-repo are
 configured already using `images.validation.linaro.org`
-See :ref:`lava_archive_signing_key`
+See :ref:`lava_repositories` and :ref:`lava_archive_signing_key`.
 
-In order to install manually, the `LAVA team` provides these Debian
-packages, which could be downloaded from the following URLs:
-
- * python-django-compat_1.0.6-2_all.deb_
-
- * python-django-hijack_1.0.8-2_all.deb_
-
-To enable hijack download the two packages and use the following
-commands to install them::
-
-  $ sudo dpkg -i python-django-compat_1.0.6-2_all.deb
-  $ sudo dpkg -i python-django-hijack_1.0.8-2_all.deb
-
-Restart apache webserver for the changes to take effect::
+Once the above packages are installed, restart apache webserver for
+the changes to take effect::
 
   $ sudo service apache2 restart
 
@@ -45,14 +33,11 @@ Hijack by calling URLs in the browser's address bar
 
 Users can be hijacked directly from the address bar by typing:
 
- * http://example.com/hijack/email/email-address
- * http://example.com/hijack/user-id
+ * http://example.com/hijack/email/{email-address}
+ * http://example.com/hijack/username/{username}
+ * http://example.com/hijack/{user-id}
 
 .. note:: Replace `example.com` with your LAVA instance's hostname.
 
 Read more about django-hijack in
 https://github.com/arteria/django-hijack#django-hijack
-
-.. _python-django-compat_1.0.6-2_all.deb: http://images.validation.linaro.org/staging-repo/pool/main/d/django-compat/python-django-compat_1.0.6-2_all.deb
-
-.. _python-django-hijack_1.0.8-2_all.deb: http://images.validation.linaro.org/staging-repo/pool/main/d/django-hijack/python-django-hijack_1.0.8-2_all.deb

@@ -105,6 +105,30 @@ Currently, the only supported format for exporting is CSV.
 
 User can download the query CSV export file from the query display page.
 
+
+Omitting Query Results
+======================
+
+Ability to omit specific results from queries is available.
+
+Users which have owner rights over specific query have the option to omit
+particular results in the query results display page. Keep in mind that this
+action will effect all the charts using this query as well, since charts pull
+the results from queries.
+
+
+Deleting a Query
+================
+
+In LAVA, deleting a query does not really delete it, but rather 'archives' it
+so that if user created rather complex query, that query can be restored at a
+later point in time. Archived queries are only visible to superusers in the
+admin section of LAVA. If user tries to create a query with the same name and
+owner (himself) which was already archived, system will inform the user that
+it's already in the system.
+
+
+
 .. _lava_charts:
 
 LAVA Charts

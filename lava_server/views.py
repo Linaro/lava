@@ -61,17 +61,6 @@ def me(request):
     return HttpResponse(template.render(context))
 
 
-@BreadCrumb(_("Version details"),
-            parent=index)
-def version(request):
-    data = {
-        'bread_crumb_trail': BreadCrumbTrail.leading_to(version)
-    }
-    context = RequestContext(request, data)
-    template = loader.get_template('version_details.html')
-    return HttpResponse(template.render(context))
-
-
 @requires_csrf_token
 def server_error(request, template_name='500.html'):
     t = loader.get_template(template_name)

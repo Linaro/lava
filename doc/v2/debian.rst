@@ -2,20 +2,17 @@
 
 .. _lava_on_debian:
 
-Developing LAVA on Debian or Ubuntu
-###################################
+Developing LAVA on Debian
+#########################
+
+LAVA no longer supports development on Ubuntu.
+See :ref:`ubuntu_install`.
 
 Packages for LAVA are available for:
 
 * Debian Jessie (stable) - with backports
 * Debian Stretch (testing)
 * Debian Sid (unstable)
-
-Packages migrate into the current Ubuntu development release from Debian.
-See `Ubuntu package status <https://launchpad.net/ubuntu/+source/lava-server>`_.
-To install on Ubuntu, ensure the universe_ repository is enabled.
-
-.. _universe: https://help.ubuntu.com/community/Repositories/CommandLine#Adding_the_Universe_and_Multiverse_Repositories
 
 When using the packages to develop LAVA, there is a change to
 the workflow compared to the old lava-deployment-tool buildouts.
@@ -48,9 +45,11 @@ started from the directory containing the code for that package::
 
  $ /usr/share/lava-server/debian-dev-build.sh -p lava-server
 
-or the older syntax::
+If you are building a package to be installed on Jessie, ensure that the
+``backports`` packaging branch is used so that the packaging scripts
+can allow for differences between unstable and jessie::
 
- $ /usr/share/lava-server/debian-dev-build.sh lava-server
+ $ /usr/share/lava-server/debian-dev-build.sh -p lava-server -b backports
 
 The packages will be built in a temporary directory using a version string
 based on the current git tag and the time of the build. The helper
@@ -74,10 +73,12 @@ The local version is built (using ``./version.py``) from these components:
 
    $ git tag --sort -v:refname|head -n1
    2015.12
+
 * incremental revision list count::
 
    $ git rev-list --count HEAD
    5451
+
 * latest git hash::
 
    $ git rev-parse --short HEAD
@@ -125,18 +126,18 @@ The helper supports ``lava-server`` and ``lava-dispatcher``::
  $ sudo apt-get install lava-dev
  $ git clone http://git.linaro.org/git/lava/lava-server.git
  $ cd lava-server
- $ /usr/share/lava-server/debian-dev-build.sh lava-server
+ $ /usr/share/lava-server/debian-dev-build.sh -p lava-server
 
  $ git clone http://git.linaro.org/git/lava/lava-dispatcher.git
  $ cd lava-dispatcher
- $ /usr/share/lava-server/debian-dev-build.sh lava-dispatcher
+ $ /usr/share/lava-server/debian-dev-build.sh -p lava-dispatcher
 
 ``lava-dispatcher`` has architecture-dependent dependencies. By
 default, the package is built for the native architecture and can
 only be installed on that architecture. To build for a different
 architecture, e.g. armhf, use::
 
- $ /usr/share/lava-server/debian-dev-build.sh lava-dispatcher armhf
+ $ /usr/share/lava-server/debian-dev-build.sh -p lava-dispatcher -a armhf
 
 This does a *binary build*, so the source is not included, which allows
 these builds to be included in a local repository, e.g. using ``reprepro``.
@@ -389,6 +390,10 @@ pushing to a public branch and passing the ``-b`` option to
 
  $ /usr/share/lava-server/debian-dev-build.sh -p lava-server -b docs
 
+or for installation on jessie::
+
+ $ /usr/share/lava-server/debian-dev-build.sh -p lava-server -b backports
+
 .. _architecture_builds:
 
 Building for other architectures
@@ -400,3 +405,100 @@ To build an ``armhf`` package of lava-dispatcher using the developer
 scripts, use::
 
  $ /usr/share/lava-server/debian-dev-build.sh -p lava-dispatcher -a armhf
+
+Debugging Django issues
+***********************
+
+When trying to investigate LAVA web pages generation we advise you to use
+`django-debug-toolbar <https://django-debug-toolbar.readthedocs.org>`_. This is
+a Django application that provide more information on how the page was
+rendered, including:
+
+* SQL queries
+* templates involved
+* HTTP headers
+
+For instance, the toolbar is a really helpful resource to debug the Django
+:abbr:`ORM (Object Relational Model)`.
+
+Installing
+==========
+
+On a Debian system, just run::
+
+  $ apt-get install python-django-debug-toolbar
+
+Configuration
+=============
+
+Once the ``python-django-debug-toolbar`` package is installed, the toolbar
+needs to be enabled in the instance. Two settings are required in
+``/etc/lava-server/settings.conf``
+
+* ``"DEBUG": true,``
+* ``"USE_DEBUG_TOOLBAR": true,``
+
+.. note:: ``settings.conf`` is JSON syntax, so ensure that the previous
+   line ends with a comma and that the resulting file validates as JSON.
+   Use `JSONLINT <http://www.jsonlint.com>`_
+
+The toolbar can be disabled without disabling django debug but
+django must be in debug mode for the toolbar to be loaded at all.
+
+Restart the ``django`` related services to complete the installation of the toolbar::
+
+ sudo service lava-server restart
+ sudo apache2ctl restart
+
+Installation can be checked using ``lava-server manage shell``::
+
+ >>> from django.conf import settings
+ >>> 'debug_toolbar' in settings.INSTALLED_APPS
+ True
+
+.. seealso:: :ref:`developer_access_to_django_shell`
+
+In order to see the toolbar, you should also check the value of `INTERNAL_IPS
+<https://docs.djangoproject.com/en/1.9/ref/settings/#internal-ips>`_.
+Local addresses ``127.0.0.1`` and ``::1`` are enabled by default.
+
+To add more addresses, set ``INTERNAL_IPS`` to a list of addresses in
+``/etc/lava-server/settings.conf``, (JSON syntax) for example::
+
+  "INTERNAL_IPS": ["192.168.0.5", "10.0.0.6"],
+
+These value depends on your setup. But if you don't see the toolbar
+that's the first think to look at.
+
+Apache then needs access to django-debug-toolbar CSS and JS files::
+
+  sudo su -
+  cd /usr/share/lava-server/static/
+  ln -s /usr/lib/python2.7/dist-packages/debug_toolbar/static/debug_toolbar .
+
+In ``/etc/lava-server/settings.conf`` remove the reference to htdocs
+in ``STATICFILES_DIRS``. Django-debug-toolbar does check that all
+directories listed in ``STATICFILES_DIRS`` exists. While this is only
+a leftover from previous versions of LAVA installer that is not
+needed anymore.
+
+Once the changes are complete, ensure the settings are loaded by restarting
+both apache2 and django::
+
+ sudo service lava-server restart
+ sudo apache2ctl restart
+
+Performance overhead
+====================
+
+Keep in mind that django-debug-toolbar has some overhead on the webpage
+generation and should only be used while debugging.
+
+Django-debug-toolbar can be disabled, while not debugging, by changing the value
+of ``USE_DEBUG_TOOLBAR`` in ``/etc/lava-server/settings.conf`` to ``false``
+or by changing the ``̀DEBUG`` level in ``/etc/lava-server/settings.conf`` to ``DEBUG: false``.
+
+Ensure the settings are reloaded by restarting both apache2 and django::
+
+ sudo service lava-server restart
+ sudo apache2ctl restart

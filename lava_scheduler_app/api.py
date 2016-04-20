@@ -44,8 +44,8 @@ class SchedulerAPI(ExposedAPI):
 
         Description
         -----------
-        Submit the given job data which is in LAVA job JSON format as a new
-        job to LAVA scheduler.
+        Submit the given job data which is in LAVA job JSON or YAML format as a
+        new job to LAVA scheduler.
 
         Arguments
         ---------
@@ -55,8 +55,7 @@ class SchedulerAPI(ExposedAPI):
         Return value
         ------------
         This function returns an XML-RPC integer which is the newly created
-        job's id,  provided the user is authenticated with an username and
-        token.
+        job's id, provided the user is authenticated with an username and token.
         """
         self._authenticate()
         if not self.user.has_perm('lava_scheduler_app.add_testjob'):
@@ -67,13 +66,13 @@ class SchedulerAPI(ExposedAPI):
         try:
             job = testjob_submission(job_data, self.user)
         except SubmissionException as exc:
-            raise xmlrpclib.Fault(400, exc)
+            raise xmlrpclib.Fault(400, "Problem with submitted job data: %s" % exc)
         except (JSONDataError, JSONDecodeError, ValueError) as exc:
             raise xmlrpclib.Fault(400, "Decoding job submission failed: %s." % exc)
         except (Device.DoesNotExist, DeviceType.DoesNotExist):
             raise xmlrpclib.Fault(404, "Specified device or device type not found.")
         except DevicesUnavailableException as exc:
-            raise xmlrpclib.Fault(400, str(exc))
+            raise xmlrpclib.Fault(400, "Device unavailable:" % str(exc))
         if isinstance(job, type(list())):
             return [j.sub_id for j in job]
         else:
@@ -302,7 +301,7 @@ class SchedulerAPI(ExposedAPI):
         keys = ['busy', 'name', 'idle', 'offline']
 
         for dev_type in DeviceType.objects.all():
-            if len(dev_type.devices_visible_to(self.user)) == 0:
+            if dev_type.num_devices_visible_to(self.user) == 0:
                 continue
             device_type_names.append(dev_type.name)
 

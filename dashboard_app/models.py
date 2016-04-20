@@ -440,7 +440,7 @@ class GzipFileSystemStorage(FileSystemStorage):
                 finally:
                     locks.unlock(fd)
                     gz_file.close()
-            except OSError, e:
+            except OSError as e:
                 if e.errno == errno.EEXIST:
                     # Ooops, the file exists. We need a new file name.
                     name = self.get_available_name(name)
@@ -1136,7 +1136,10 @@ class TestRun(models.Model):
         """
         for src in self.sources.all():
             if src.test_params:
-                test_struct = ast.literal_eval(src.test_params)
+                try:
+                    test_struct = ast.literal_eval(src.test_params)
+                except SyntaxError:
+                    return None
                 if type(test_struct) == dict:
                     test_params = {}
                     for k, v in test_struct.items():
@@ -2546,7 +2549,7 @@ class ImageChartFilter(models.Model):
     filter = models.ForeignKey(
         TestRunFilter,
         null=True,
-        on_delete=models.SET_NULL)
+        on_delete=models.CASCADE)
 
     representation = models.CharField(
         max_length=20,
