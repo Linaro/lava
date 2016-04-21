@@ -38,7 +38,6 @@ class TestRepeatBootTest(unittest.TestCase):  # pylint: disable=too-many-public-
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-repeat.yaml', mkdtemp())
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_basic_structure(self):
         self.assertIsNotNone(self.job)
         self.job.validate()

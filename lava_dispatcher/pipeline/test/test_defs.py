@@ -28,6 +28,7 @@ from lava_dispatcher.pipeline.power import FinalizeAction
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry
 from lava_dispatcher.pipeline.test.test_basic import Factory
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
+from lava_dispatcher.pipeline.actions.deploy.image import DeployImagesAction
 from lava_dispatcher.pipeline.actions.deploy.testdef import (
     TestDefinitionAction,
     GitRepoAction,
@@ -142,7 +143,6 @@ class TestDefinitionSimple(unittest.TestCase):  # pylint: disable=too-many-publi
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-notest.yaml')
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_job_without_tests(self):
         deploy = boot = finalize = None
         self.job.pipeline.validate_actions()
@@ -166,24 +166,23 @@ class TestDefinitionParams(unittest.TestCase):  # pylint: disable=too-many-publi
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-params.yaml')
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_job_without_tests(self):
-        deploy = boot = finalize = overlay = test = None
+        boot = finalize = None
         self.job.pipeline.validate_actions()
+        deploy = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
+        overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        testdef = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
         for action in self.job.pipeline.actions:
             self.assertNotIsInstance(action, TestDefinitionAction)
             self.assertNotIsInstance(action, OverlayAction)
-            deploy = self.job.pipeline.actions[0]
             boot = self.job.pipeline.actions[1]
             finalize = self.job.pipeline.actions[3]
-            overlay = deploy.internal_pipeline.actions[3]
         self.assertIsInstance(overlay, OverlayAction)
-        testdef = overlay.internal_pipeline.actions[2]
         self.assertIsInstance(testdef, TestDefinitionAction)
         test = testdef.internal_pipeline.actions[1]
         install = testdef.internal_pipeline.actions[2]
         runsh = testdef.internal_pipeline.actions[3]
-        self.assertIsInstance(deploy, DeployAction)
+        self.assertIsInstance(deploy, DeployImagesAction)
         self.assertIsInstance(boot, BootAction)
         self.assertIsInstance(finalize, FinalizeAction)
         self.assertEqual(len(self.job.pipeline.actions), 4)  # deploy, boot, test, finalize

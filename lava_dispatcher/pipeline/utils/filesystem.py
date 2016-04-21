@@ -21,7 +21,9 @@
 import atexit
 import os
 import shutil
+import tarfile
 import tempfile
+import guestfs
 from configobj import ConfigObj
 
 
@@ -98,3 +100,37 @@ def write_bootscript(commands, filename):
         for line in commands:
             bootscript.write(line + "\n")
         bootscript.close()
+
+
+def prepare_guestfs(output, overlay, size):
+    """
+    Applies the overlay, offset by one directory.
+    This allows the booted device to mount at the
+    original lava directory and retain the same path
+    as if the overlay was unpacked directly into the
+    image.
+    :param output: filename of the temporary device
+    :param overlay: tarball of the lava test shell overlay.
+    :param size: size of the filesystem in Mb
+    :return blkid of the guest device
+    """
+    guest = guestfs.GuestFS(python_return_dict=True)
+    guest.disk_create(output, "qcow2", size * 1024 * 1024)
+    guest.add_drive_opts(output, format="qcow2", readonly=False)
+    guest.launch()
+    devices = guest.list_devices()
+    if len(devices) != 1:
+        raise RuntimeError("Unable to prepare guestfs")
+    guest_device = devices[0]
+    guest.mkfs("ext2", guest_device, label='LAVA')
+    # extract to a temp location
+    tar_output = mkdtemp()
+    # Now mount the filesystem so that we can add files.
+    guest.mount(guest_device, "/")
+    tarball = tarfile.open(overlay)
+    tarball.extractall(tar_output)
+    for dirname in os.listdir(tar_output):
+        for lavadir in os.listdir(os.path.join(tar_output, dirname)):
+            guest.copy_in(os.path.join(tar_output, dirname, lavadir), '/')
+    guest.umount(guest_device)
+    return guest.blkid(guest_device)['UUID']

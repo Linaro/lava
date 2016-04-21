@@ -18,9 +18,11 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import os
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,
+    InfrastructureError,
     JobError,
 )
 from lava_dispatcher.pipeline.logical import Boot, RetryAction
@@ -36,8 +38,6 @@ from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 
 
-# FIXME: decide if root_partition is needed, supported or can be removed from YAML.
-# document it if it is retained/useful.
 # FIXME: decide if 'media: tmpfs' is necessary or remove from YAML. Only removable needs 'media'
 class BootQEMU(Boot):
     """
@@ -49,7 +49,7 @@ class BootQEMU(Boot):
     hand this pexpect wrapper to subsequent actions as a shell connection.
     """
 
-    compatibility = 1
+    compatibility = 4
 
     def __init__(self, parent, parameters):
         super(BootQEMU, self).__init__(parent)
@@ -113,31 +113,33 @@ class CallQemuAction(Action):
         super(CallQemuAction, self).validate()
         if 'prompts' not in self.parameters:
             self.errors = "Unable to identify boot prompts from job definition."
-        if 'download_action' not in self.data:
-            self.errors = "No download_action data"
         try:
-            # FIXME: need a schema and do this inside the NewDevice with a QemuDevice class? (just for parsing)
             boot = self.job.device['actions']['boot']['methods']['qemu']
             qemu_binary = which(boot['parameters']['command'])
             self.sub_command = [qemu_binary]
             self.sub_command.extend(boot['parameters'].get('options', []))
-        # FIXME: AttributeError is an InfrastructureError in fact
-        except (KeyError, TypeError, AttributeError):
+        except AttributeError as exc:
+            raise InfrastructureError(exc)
+        except (KeyError, TypeError):
             self.errors = "Invalid parameters"
         substitutions = {}
         commands = []
         for action in self.data['download_action'].keys():
-            if action != 'offset' or action != 'available_loops':
-                image_arg = self.data['download_action'][action]['image_arg']
-                action_arg = self.data['download_action'][action]['file']
-                if not image_arg or not action_arg:
-                    self.errors = "Missing image_arg for %s. " % action
-                    continue
-                substitutions["{%s}" % action] = action_arg
-                commands.append(image_arg)
+            if action == 'offset' or action == 'available_loops' or action == 'uefi':
+                continue
+            image_arg = self.data['download_action'][action].get('image_arg', None)
+            action_arg = self.data['download_action'][action].get('file', None)
+            if not image_arg or not action_arg:
+                self.errors = "Missing image_arg for %s. " % action
+                continue
+            substitutions["{%s}" % action] = action_arg
+            commands.append(image_arg)
         self.sub_command.extend(substitute(commands, substitutions))
         if not self.sub_command:
             self.errors = "No QEMU command to execute"
+        uefi_dir = self.get_common_data('image', 'uefi_dir')
+        if uefi_dir:
+            self.sub_command.extend(['-L', uefi_dir, '-monitor', 'none'])
 
     def run(self, connection, args=None):
         """
@@ -151,6 +153,18 @@ class CallQemuAction(Action):
         pexpect.spawn is one of the raw_connection objects for a Connection class.
         """
         # initialise the first Connection object, a command line shell into the running QEMU.
+        guest = self.get_common_data('guest', 'filename')
+        if guest:
+            self.logger.info("Extending command line for qcow2 test overlay")
+            self.sub_command.append('-drive format=qcow2,file=%s,media=disk' % (os.path.realpath(guest)))
+            # push the mount operation to the test shell pre-command to be run
+            # before the test shell tries to execute.
+            shell_precommand_list = []
+            mountpoint = self.data['lava_test_results_dir']
+            shell_precommand_list.append('mkdir %s' % mountpoint)
+            shell_precommand_list.append('mount -L LAVA %s' % mountpoint)
+            self.set_common_data('lava-test-shell', 'pre-command-list', shell_precommand_list)
+
         self.logger.info("Boot command: %s", ' '.join(self.sub_command))
         shell = ShellCommand(' '.join(self.sub_command), self.timeout, logger=self.logger)
         if shell.exitstatus:

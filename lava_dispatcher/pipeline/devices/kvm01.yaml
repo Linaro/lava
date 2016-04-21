@@ -5,7 +5,8 @@ actions:
     methods:
       image:
         parameters:
-          root_part: 1
+          guest:
+            size: 512  # in Mb
   boot:
     connections:
       serial:

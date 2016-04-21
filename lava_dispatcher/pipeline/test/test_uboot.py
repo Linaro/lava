@@ -225,7 +225,6 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertNotIn("setenv initrd_addr_r '{RAMDISK_ADDR}'", parsed)
         self.assertNotIn("setenv fdt_addr_r '{DTB_ADDR}'", parsed)
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_download_action(self):
         factory = Factory()
         job = factory.create_bbb_job('sample_jobs/uboot.yaml')
@@ -253,7 +252,6 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertIsNotNone(extract)
         self.assertEqual(extract.timeout.duration, job.parameters['timeouts'][extract.name]['seconds'])
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_reset_actions(self):
         factory = Factory()
         job = factory.create_bbb_job('sample_jobs/uboot.yaml')

@@ -14,7 +14,6 @@ actions:
             image_arg: -hda {rootfs}
             compression: gz
         os: debian
-        root_partition: 1
 
     - repeat:
         count: 6
@@ -83,13 +82,12 @@ actions:
         timeout:
           minutes: 20
         to: tmpfs
-        images: 
+        images:
           rootfs:
             url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
             image_arg: -hda {rootfs}
             compression: gz
         os: debian
-        root_partition: 1
 
     - boot:
         namespace: test-normal

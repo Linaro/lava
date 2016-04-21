@@ -191,7 +191,6 @@ class TestGrubAction(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertNotIn('initrd (tftp,{SERVER_IP})/{RAMDISK}', parsed)
         self.assertNotIn('devicetree (tftp,{SERVER_IP})/{DTB}', parsed)
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_download_action(self):
         factory = Factory()
         job = factory.create_job('sample_jobs/grub-nfs.yaml')
@@ -219,7 +218,6 @@ class TestGrubAction(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertIsNotNone(extract)
         self.assertEqual(extract.timeout.duration, job.parameters['timeouts'][extract.name]['seconds'])
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_reset_actions(self):
         factory = Factory()
         job = factory.create_job('sample_jobs/grub-ramdisk.yaml')

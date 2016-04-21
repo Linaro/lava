@@ -1,27 +1,22 @@
-# Sample JOB definition for a KVM
+# Sample JOB definition for a KVM-android
 
 device_type: qemu
 
 job_name: qemu-arm-android-pipeline
 timeouts:
   job:
-    minutes: 10            # timeout for the whole job (default: ??h)
+    minutes: 10
   action:
-    minutes: 2         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+    minutes: 2
 
 priority: medium
 
 actions:
-
     - deploy:
         timeout:
           minutes: 2
         to: tmpfs
         os: android
-        # if root_partition partition is not present:
-        # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
-        # - look into device configuration
-        root_partition: 1
         images:
           kernel:
             url: http://images.validation.linaro.org/pipeline/vexpress/zImage
@@ -50,9 +45,6 @@ actions:
         prompts:
           - 'linaro-test'
           - 'root@debian:~#'
-
-    - submit_results:
-        stream: /anonymous/codehelp/
 
 context:
   arch: arm

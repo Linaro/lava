@@ -34,7 +34,7 @@ from lava_dispatcher.pipeline.utils.constants import (
     DISPATCHER_DOWNLOAD_DIR,
 )
 from lava_dispatcher.pipeline.utils.installers import add_late_command
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, prepare_guestfs
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.compression import (
     compress_file,
@@ -63,6 +63,36 @@ class ApplyOverlayImage(Action):
         connection = super(ApplyOverlayImage, self).run(connection, args)
         # use tarfile module - no SELinux support here yet
         untar_file(self.data['compress-overlay'].get('output'), self.data['loop_mount']['mntdir'])
+        return connection
+
+
+class ApplyOverlayGuest(Action):
+
+    def __init__(self):
+        super(ApplyOverlayGuest, self).__init__()
+        self.name = "apply-overlay-guest"
+        self.summary = "build a guest filesystem with the overlay"
+        self.description = "prepare a qcow2 drive containing the overlay"
+        self.guest_filename = 'lava-guest.qcow2'
+
+    def validate(self):
+        super(ApplyOverlayGuest, self).validate()
+        self.set_common_data('guest', 'name', self.guest_filename)
+        lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
+        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
+        if 'guest' not in self.job.device['actions']['deploy']['methods']['image']['parameters']:
+            self.errors = "Device configuration does not specify size of guest filesystem."
+
+    def run(self, connection, args=None):
+        if not self.data['compress-overlay'].get('output'):
+            raise RuntimeError("Unable to find the overlay")
+        guest_dir = mkdtemp()
+        guest_file = os.path.join(guest_dir, self.guest_filename)
+        self.set_common_data('guest', 'filename', guest_file)
+        blkid = prepare_guestfs(
+            guest_file, self.data['compress-overlay'].get('output'),
+            self.job.device['actions']['deploy']['methods']['image']['parameters']['guest']['size'])
+        self.results = {'success': blkid}
         return connection
 
 

@@ -23,10 +23,6 @@ actions:
             format: qcow2
             compression: xz
         os: debian
-        # if root_partition partition is not present:
-        # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
-        # - look into device configuration
-        root_partition: 1
 
     - boot:
         method: qemu

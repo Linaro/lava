@@ -83,7 +83,6 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
             msg.update(self.base_message)
             return json.dumps(self.coord.dataReceived(msg))
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_multinode_jobs(self):
         self.assertIsNotNone(self.client_job)
         self.assertIsNotNone(self.server_job)
@@ -92,7 +91,6 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.server_job.validate()
         self.assertEqual(self.server_job.pipeline.errors, [])
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_protocol(self):
         self.assertEqual(
             ['lava-multinode'],
@@ -185,7 +183,6 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
             self.assertIs(True, protocol.valid)
         self.assertIsNone(self.coord.dataReceived({}))
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_multinode_description(self):
         self.assertIsNotNone(self.client_job)
         self.client_job.validate()
@@ -431,10 +428,10 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
                 'action': customise.name,
                 'request': 'lava-send',
                 'messageID': 'test',
-                'yaml_line': 48,
+                'yaml_line': 47,
                 'message': {
                     'key': 'value',
-                    'yaml_line': 50
+                    'yaml_line': 49
                 },
             }
         )
@@ -452,11 +449,11 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
                 'action': 'customise',
                 'message': {
                     'key': 'value',
-                    'yaml_line': 50
+                    'yaml_line': 49
                 },
                 'messageID': 'test',
                 'request': 'lava-send',
-                'yaml_line': 48
+                'yaml_line': 47
             }
         )
 
@@ -478,11 +475,11 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
                 'action': 'execute-qemu',
                 'message': {
                     'ipv4': '$IPV4',
-                    'yaml_line': 67
+                    'yaml_line': 66
                 },
                 'messageID': 'test',
                 'request': 'lava-wait',
-                'yaml_line': 64
+                'yaml_line': 63
             }])
         client_calls = {}
         for action in retry.internal_pipeline.actions:
@@ -528,9 +525,9 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
                 'action': 'execute-qemu',
                 'message': {
                     'ipv4': reply['message'][self.client_job.device.target]['ipv4'],
-                    'yaml_line': 67
+                    'yaml_line': 66
                 },
-                'yaml_line': 64,
+                'yaml_line': 63,
                 'request': 'lava-wait',
                 'messageID': 'test'
             }

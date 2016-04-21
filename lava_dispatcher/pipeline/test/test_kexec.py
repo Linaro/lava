@@ -32,7 +32,6 @@ from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry
 
 class TestKExec(unittest.TestCase):
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_deploy_parameters(self):
         factory = Factory()
         job = factory.create_bbb_job('sample_jobs/kexec.yaml')

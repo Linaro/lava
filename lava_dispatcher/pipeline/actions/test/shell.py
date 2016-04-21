@@ -18,7 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import copy
 import logging
 import pexpect
 from collections import OrderedDict
@@ -75,6 +74,11 @@ class TestShellRetry(RetryAction):
 
 
 class TestShellAction(TestAction):
+    """
+    Sets up and runs the LAVA Test Shell Definition scripts.
+    Supports a pre-command-list of operations necessary on the
+    booted image before the test shell can be started.
+    """
 
     def __init__(self):
         super(TestShellAction, self).__init__()
@@ -132,6 +136,10 @@ class TestShellAction(TestAction):
         self.logger.debug("Setting default timeout: %s" % self.timeout.duration)
         connection.timeout = self.connection_timeout
         self.wait(connection)
+
+        pre_command_list = self.get_common_data(self.name, 'pre-command-list')
+        for command in pre_command_list:
+            connection.sendline(command)
 
         # FIXME: a predictable UID could be calculated from existing data here.
         # instead, uuid is read from the params to set _current_handler

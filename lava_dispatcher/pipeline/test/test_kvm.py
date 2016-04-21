@@ -158,7 +158,6 @@ class TestKVMBasicDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
         self.assertIn('persistent-nfs-overlay', [action.name for action in overlay.internal_pipeline.actions])
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_validate(self):
         try:
             self.job.pipeline.validate_actions()
@@ -224,7 +223,6 @@ class TestKVMQcow2Deploy(unittest.TestCase):  # pylint: disable=too-many-public-
         description_ref = pipeline_reference('kvm-qcow2.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_validate(self):
         try:
             self.job.pipeline.validate_actions()
@@ -265,7 +263,6 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
             if isinstance(action, DeployAction):
                 self.assertEqual(action.job, self.job)
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_validate(self):
         try:
             self.job.pipeline.validate_actions()
@@ -282,8 +279,8 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
                 overlay = action.pipeline.children[action.pipeline][3]
-                testdef = overlay.internal_pipeline.actions[2]
-                inline_repo = testdef.internal_pipeline.actions[0]
+                # testdef = overlay.internal_pipeline.actions[2]
+                # inline_repo = testdef.internal_pipeline.actions[0]
                 break
 
             # Test the InlineRepoAction directly
@@ -334,7 +331,6 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
 
         self.assertEqual(conn.prompt_str, ['lava-test: # ', 'root@debian:~#'])
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_autologin_void_login_prompt(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
@@ -347,7 +343,6 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
 
         self.assertRaises(JobError, self.job.validate)
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_missing_autologin_void_prompts_list(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
@@ -358,7 +353,6 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
 
         self.assertRaises(JobError, self.job.validate)
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_missing_autologin_void_prompts_list_item(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
@@ -369,7 +363,6 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
 
         self.assertRaises(JobError, self.job.validate)
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_missing_autologin_void_prompts_list_item2(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
@@ -397,7 +390,6 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
 
         self.assertEqual(conn.prompt_str, ['lava-test: # ', 'root@debian:~#'])
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_missing_autologin_void_prompts_str(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
@@ -506,7 +498,6 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         httpdownloadaction.validate()
         self.assertRaises(JobError, httpdownloadaction.run, None)
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_no_test_action_validate(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
@@ -533,3 +524,40 @@ class FakeCommand(object):
 
     def expect(self, *args, **kw):
         pass
+
+
+class TestKvmGuest(unittest.TestCase):  # pylint: disable=too-many-public-methods
+
+    def setUp(self):
+        super(TestKvmGuest, self).setUp()
+        factory = Factory()
+        self.job = factory.create_kvm_job('sample_jobs/kvm-local.yaml', mkdtemp())
+
+    def test_guest_size(self):
+        self.assertIn('guest', self.job.device['actions']['deploy']['methods']['image']['parameters'])
+        self.assertEqual(512, self.job.device['actions']['deploy']['methods']['image']['parameters']['guest']['size'])
+
+
+class TestKvmUefi(unittest.TestCase):  # pylint: disable=too-many-public-methods
+
+    def setUp(self):
+        super(TestKvmUefi, self).setUp()
+        factory = Factory()
+        self.job = factory.create_kvm_job('sample_jobs/kvm-uefi.yaml', mkdtemp())
+
+    def test_uefi_path(self):
+        deploy = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
+        downloaders = [action for action in deploy.internal_pipeline.actions if action.name == 'download_retry']
+        self.assertEqual(len(downloaders), 2)
+        uefi_download = downloaders[0]
+        image_download = downloaders[1]
+        self.assertEqual(image_download.key, 'disk1')
+        uefi_dir = uefi_download.get_common_data('image', 'uefi_dir')
+        self.assertTrue(os.path.exists(uefi_dir))  # no download has taken place, but the directory needs to exist
+        self.assertFalse(uefi_dir.endswith('bios-256k.bin'))
+        boot = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        qemu = [action for action in boot.internal_pipeline.actions if action.name == 'boot_qemu_image'][0]
+        execute = [action for action in qemu.internal_pipeline.actions if action.name == 'execute-qemu'][0]
+        self.job.validate()
+        self.assertIn('-L', execute.sub_command)
+        self.assertIn(uefi_dir, execute.sub_command)

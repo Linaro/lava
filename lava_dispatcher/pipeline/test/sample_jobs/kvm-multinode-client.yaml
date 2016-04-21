@@ -41,7 +41,6 @@ actions:
             image_arg: -hda {rootfs}
             compression: gz
         os: debian
-        root_partition: 1
         role: client
         protocols:
           lava-multinode:

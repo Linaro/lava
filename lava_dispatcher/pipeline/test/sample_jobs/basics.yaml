@@ -33,10 +33,6 @@ actions:
             url: http://myimage.com/target.img.gz
             compression: gz
         os: debian
-        # if root_partition partition is not present:
-        # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
-        # - look into device configuration
-        root_partition: 1
 
     - deploy:
         # formats the device, creates a single partition there and explodes the
