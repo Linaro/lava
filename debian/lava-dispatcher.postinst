@@ -32,7 +32,7 @@ case "$1" in
             perl -pi -e "s/#LAVASERVERIP#/${LAVA_SERVER_IP}/g" /etc/lava-dispatcher/lava-dispatcher.conf
         fi
         # generate slave key for ZMQ authentication and encryption.
-        if [ -x /usr/share/lava-dispatcher/create_certificate.py && ! -f /etc/lava-dispatcher/certificates.d/slave.key_secret ]; then
+        if [ -x /usr/share/lava-dispatcher/create_certificate.py ] && [ ! -f /etc/lava-dispatcher/certificates.d/slave.key_secret ]; then
             /usr/share/lava-dispatcher/create_certificate.py --directory /etc/lava-dispatcher/certificates.d --name slave
         fi
     ;;

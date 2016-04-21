@@ -1,2 +1,2 @@
 debian/lava-dispatcher.conf ./usr/share/lava-dispatcher/
-share/create_certificate.py ./usr/sbin/
+share/create_certificate.py ./usr/share/lava-dispatcher/
