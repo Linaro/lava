@@ -26,9 +26,14 @@ LAVA_SERVER_IP=`ip addr | awk '{ if ($1 == "inet" && $4 != "host") { gsub("/.*",
 
 case "$1" in
     configure)
+        # only used by V1 and can be overriden using LAVA_NETWORK_INTERFACE
         if [ ! -f /etc/lava-dispatcher/lava-dispatcher.conf ]; then
             sed -e "s/#LAVANETWORKIFACE#//" /usr/share/lava-dispatcher/lava-dispatcher.conf > /etc/lava-dispatcher/lava-dispatcher.conf
             perl -pi -e "s/#LAVASERVERIP#/${LAVA_SERVER_IP}/g" /etc/lava-dispatcher/lava-dispatcher.conf
+        fi
+        # generate slave key for ZMQ authentication and encryption.
+        if [ -x /usr/share/lava-dispatcher/create_certificate.py && ! -f /etc/lava-dispatcher/certificates.d/slave.key_secret ]; then
+            /usr/share/lava-dispatcher/create_certificate.py --directory /etc/lava-dispatcher/certificates.d --name slave
         fi
     ;;
 
