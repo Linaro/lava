@@ -1617,7 +1617,6 @@ class TestJob(RestrictedResource):
 
         with open(last_info, 'r') as last:
             last_archived_job = int(last.read())
-            last.close()
 
         return self.id <= last_archived_job
 
@@ -1631,7 +1630,6 @@ class TestJob(RestrictedResource):
 
         with open(last_info, 'r') as last:
             last_archived_bundle = int(last.read())
-            last.close()
 
         return self.id <= last_archived_bundle
 
