@@ -5,7 +5,7 @@ from lava_scheduler_app.views import (
     device_list, device_looping_mode, device_maintenance_mode, device_online,
     device_reports, device_restrict_device, device_type_detail,
     device_type_health_history_log, device_type_reports, edit_transition, edit_worker_desc,
-    expanded_job_definition, failure_report, favorite_jobs, favorite_jobs, get_remote_json,
+    expanded_job_definition, failure_report, favorite_jobs, get_remote_json,
     health_job_list, healthcheck, index, job_annotate_failure, job_cancel, job_change_priority,
     job_complete_log, job_definition, job_definition_plain, job_description_yaml,
     job_detail, job_full_log_incremental, job_json, job_list, job_log_file, job_log_file_plain,
@@ -15,7 +15,7 @@ from lava_scheduler_app.views import (
     multinode_job_definition_plain, mydevice_list, mydevice_type_health_history_log,
     myjobs, online_device_list, passing_health_checks, pipeline, queue, reports, running,
     transition_detail, username_list_json, vmgroup_job_definition,
-    vmgroup_job_definition_plain, vmgroup_job_definition_plain, worker_detail, workers,
+    vmgroup_job_definition_plain, worker_detail, workers,
     download_device_type_template,
 )
 
