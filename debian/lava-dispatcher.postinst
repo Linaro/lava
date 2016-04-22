@@ -31,10 +31,6 @@ case "$1" in
             sed -e "s/#LAVANETWORKIFACE#//" /usr/share/lava-dispatcher/lava-dispatcher.conf > /etc/lava-dispatcher/lava-dispatcher.conf
             perl -pi -e "s/#LAVASERVERIP#/${LAVA_SERVER_IP}/g" /etc/lava-dispatcher/lava-dispatcher.conf
         fi
-        # generate slave key for ZMQ authentication and encryption.
-        if [ -x /usr/share/lava-dispatcher/create_certificate.py ] && [ ! -f /etc/lava-dispatcher/certificates.d/slave.key_secret ]; then
-            /usr/share/lava-dispatcher/create_certificate.py --directory /etc/lava-dispatcher/certificates.d --name slave
-        fi
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
