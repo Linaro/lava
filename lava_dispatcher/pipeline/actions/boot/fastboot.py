@@ -24,14 +24,10 @@ import tarfile
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,
-    Timeout,
     JobError,
 )
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import BootAction
-from lava_dispatcher.pipeline.actions.boot.environment import (
-    ExportDeviceEnvironment,
-)
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 from lava_dispatcher.pipeline.connections.adb import (
     ConnectAdb,
@@ -40,10 +36,7 @@ from lava_dispatcher.pipeline.connections.adb import (
 from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.utils.constants import (
-    DISPATCHER_DOWNLOAD_DIR,
-    ANDROID_TMP_DIR,
-)
+from lava_dispatcher.pipeline.utils.constants import ANDROID_TMP_DIR
 
 
 class BootFastboot(Boot):

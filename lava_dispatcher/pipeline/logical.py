@@ -20,7 +20,6 @@
 
 
 import time
-from contextlib import contextmanager
 from lava_dispatcher.pipeline.action import (
     Action,
     JobError,
