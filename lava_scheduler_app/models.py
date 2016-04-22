@@ -987,7 +987,7 @@ def _get_tag_list(tags, pipeline=False):
     :raise: JSONDataError if a tag cannot be found in the database.
     """
     taglist = []
-    if type(tags) != list:
+    if not isinstance(tags, list):
         msg = "'device_tags' needs to be a list - received %s" % type(tags)
         raise yaml.YAMLError(msg) if pipeline else JSONDataError(msg)
     for tag_name in tags:
@@ -1170,7 +1170,7 @@ def _check_device_types(user):
 def _create_pipeline_job(job_data, user, taglist, device=None,
                          device_type=None, target_group=None, orig=None):
 
-    if type(job_data) is not dict:
+    if not isinstance(job_data, dict):
         # programming error
         raise RuntimeError("Invalid job data %s" % job_data)
 
@@ -1263,7 +1263,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):
         DevicesUnavailableException if all criteria cannot be met.
     """
     device_list = []
-    if type(job_data) is dict and 'protocols' not in job_data:
+    if isinstance(job_data, dict) and 'protocols' not in job_data:
         return device_list
 
     if not yaml_data:
@@ -1360,7 +1360,7 @@ class PipelineStore(models.Model):
         val = self.kee
         msg = val.replace('__KV_STORE_::lava_scheduler_app.models.JobPipeline:', '')
         data = JobPipeline.get(msg)
-        if type(data.pipeline) == str:
+        if isinstance(data.pipeline, str):
             # if this fails, fix lava_dispatcher.pipeline.actions.explode()
             data.pipeline = yaml.load(data.pipeline)
         return data

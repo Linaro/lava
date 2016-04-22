@@ -521,7 +521,7 @@ def devicedictionary_to_jinja2(data_dict, extends):
         (including file name extension / suffix) which jinja2 will later
         assume to be in the jinja2 device_types folder
     """
-    if type(data_dict) is not dict:
+    if not isinstance(data_dict, dict):
         return None
     pp = pprint.PrettyPrinter(indent=0, width=80)  # simulate human readable input
     data = u'{%% extends \'%s\' %%}\n' % extends
@@ -537,7 +537,7 @@ def jinja2_to_devicedictionary(data_dict):
     Do some string mangling to convert the template to a key value store
     The reverse of lava_scheduler_app.utils.devicedictionary_to_jinja2
     """
-    if type(data_dict) is not str:
+    if not isinstance(data_dict, str):
         return None
     data = {}
     data_dict = data_dict.replace('\n', '')

@@ -120,7 +120,7 @@ class SuiteTable(LavaTable):
     def render_result(self, record):
         if record.metadata:
             # FIXME: much more can be done here.
-            if type(record.action_metadata) == str:
+            if isinstance(record.action_metadata, str):
                 return record.action_metadata
             return " ".join([key for key, _ in record.action_metadata.items() if key != 'level'])
         else:
