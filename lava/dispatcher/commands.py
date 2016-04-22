@@ -49,7 +49,7 @@ class devices(DispatcherCommand):
     """
     def invoke(self):
         for d in list_devices():
-            print d
+            print(d)
 
 
 def run_legacy_job(job_data, oob_file, config, output_dir, validate):
@@ -66,7 +66,7 @@ def run_legacy_job(job_data, oob_file, config, output_dir, validate):
         try:
             validate_job_data(job.job_data)
         except ValidationError as e:
-            print e
+            print(e)
     else:
         job.run()
 
@@ -188,7 +188,7 @@ class dispatch(DispatcherCommand):
                     with open(reporter, 'a') as f:
                         f.write("Configuration error: %s\n" % e)
                 else:
-                    print e
+                    print(e)
                 exit(1)
             # Set the logging level
             logging.root.setLevel(self.config.logging_level)
