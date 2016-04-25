@@ -72,7 +72,7 @@ class SchedulerAPI(ExposedAPI):
         except (Device.DoesNotExist, DeviceType.DoesNotExist):
             raise xmlrpclib.Fault(404, "Specified device or device type not found.")
         except DevicesUnavailableException as exc:
-            raise xmlrpclib.Fault(400, "Device unavailable:" % str(exc))
+            raise xmlrpclib.Fault(400, "Device unavailable: %s" % str(exc))
         if isinstance(job, type(list())):
             return [j.sub_id for j in job]
         else:
