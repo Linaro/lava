@@ -350,8 +350,8 @@ class HttpDownloadAction(DownloadHandler):
                     timeout=HTTP_DOWNLOAD_TIMEOUT)
                 if res.status_code != requests.codes.OK:  # pylint: disable=no-member
                     self.errors = "Resources not available at '%s'" % (self.url.geturl())
-            else:
-                self.size = int(res.headers.get('content-length', -1))
+
+            self.size = int(res.headers.get('content-length', -1))
         except requests.Timeout:
             self.errors = "'%s' timed out" % (self.url.geturl())
         except requests.RequestException as exc:
