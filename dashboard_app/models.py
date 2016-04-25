@@ -2424,7 +2424,7 @@ class ImageReportChart(models.Model):
             # Set attribute based on xaxis_attribute.
             attribute = None
             if self.xaxis_attribute:
-                attribute = test_run.attributes.get(
+                attribute = test_result.test_run.attributes.get(
                     name=self.xaxis_attribute).value
 
             chart_item = {
