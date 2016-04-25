@@ -777,7 +777,7 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             # pass (unused) output_dir just for validation as there is no zmq socket either.
             pipeline_job = parser.parse(
                 check_job.definition, parser_device,
-                check_job.id, None, output_dir=check_job.output_dir)
+                check_job.id, None, None, None, output_dir=check_job.output_dir)
         except (
                 AttributeError, JobError, NotImplementedError,
                 KeyError, TypeError, RuntimeError) as exc:

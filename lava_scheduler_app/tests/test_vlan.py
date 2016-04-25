@@ -247,7 +247,7 @@ class TestVlandProtocolSplit(TestCaseWithFactory):
         parser = JobParser()
         bbb_device = NewDevice(device_yaml_file)
         with open(client_file_name) as sample_job_data:
-            bbb_job = parser.parse(sample_job_data, bbb_device, 4212, None, output_dir='/tmp/')
+            bbb_job = parser.parse(sample_job_data, bbb_device, 4212, None, None, None, output_dir='/tmp/')
         os.close(client_handle)
         os.unlink(client_file_name)
         self.assertIn('protocols', bbb_job.parameters)

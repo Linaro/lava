@@ -283,7 +283,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         del device_config['device_type']
         parser = JobParser()
         obj = PipelineDevice(device_config, device.hostname)  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
-        self.assertRaises(KeyError, parser.parse, job.definition, obj, job.id, None, output_dir='/tmp')
+        self.assertRaises(KeyError, parser.parse, job.definition, obj, job.id, None, None, None, output_dir='/tmp')
 
     def test_exclusivity(self):
         device = Device.objects.get(hostname="fakeqemu1")
@@ -455,7 +455,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
             # pass (unused) output_dir just for validation as there is no zmq socket either.
             pipeline_job = parser.parse(
                 job.definition, parser_device,
-                job.id, None, output_dir=job.output_dir)
+                job.id, None, None, None, output_dir=job.output_dir)
         except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
             self.fail('[%s] parser error: %s' % (job.sub_id, exc))
         description = pipeline_job.describe()
@@ -784,7 +784,8 @@ class TestYamlMultinode(TestCaseWithFactory):
                     # pass (unused) output_dir just for validation as there is no zmq socket either.
                     pipeline_job = parser.parse(
                         check_job.definition, parser_device,
-                        check_job.id, None, output_dir=check_job.output_dir)
+                        check_job.id, None, None, None,
+                        output_dir=check_job.output_dir)
                 except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
                     self.fail('[%s] parser error: %s' % (check_job.sub_id, exc))
                 if os.path.exists('/dev/loop0'):  # rather than skipping the entire test, just the validation.

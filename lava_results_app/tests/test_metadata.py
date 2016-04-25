@@ -32,7 +32,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device_config = device.load_device_configuration(job_ctx)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config, device.hostname)
-        pipeline_job = parser.parse(job.definition, obj, job.id, None, output_dir='/tmp')
+        pipeline_job = parser.parse(job.definition, obj, job.id, None, None, None, output_dir='/tmp')
         pipeline_job.pipeline.validate_actions()
         pipeline = pipeline_job.describe()
         map_metadata(yaml.dump(pipeline), job)
