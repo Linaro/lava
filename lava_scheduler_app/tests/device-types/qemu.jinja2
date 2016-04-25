@@ -5,12 +5,16 @@ device_type: qemu
 {% block vland %}
 {% endblock %}
 
+# allow job context override - use a different variable name, undefined if not in job context
+{% set base_guest_fs_size = guestfs_size | default(512) %}
+
 actions:
   deploy:
     methods:
       image:
         parameters:
-          root_part: {{ root_part|default(1) }}
+          guest:
+            size: {{ base_guest_fs_size }}  # in Mb
   boot:
     connections:
       serial:

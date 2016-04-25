@@ -1,7 +1,5 @@
-import os
 import yaml
 import decimal
-import unittest
 from lava_results_app.tests.test_names import TestCaseWithFactory
 from lava_scheduler_app.models import (
     TestJob,
@@ -19,9 +17,7 @@ from lava_dispatcher.pipeline.device import PipelineDevice
 class TestMetaTypes(TestCaseWithFactory):
     """
     MetaType and ActionData generation
-    Needs to skip if no /dev/loop0 as it tests job validation
     """
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_job(self):
         MetaType.objects.all().delete()
         job = TestJob.from_yaml_and_user(
@@ -29,7 +25,7 @@ class TestMetaTypes(TestCaseWithFactory):
         job_def = yaml.load(job.definition)
         job_ctx = job_def.get('context', {})
         device = Device.objects.get(hostname='fakeqemu1')
-        device_config = device.load_device_configuration(job_ctx)  # raw dict
+        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config, device.hostname)
         pipeline_job = parser.parse(job.definition, obj, job.id, None, None, None, output_dir='/tmp')
@@ -74,7 +70,7 @@ class TestMetaTypes(TestCaseWithFactory):
         )
 
     def test_duration(self):
-        job = TestJob.from_yaml_and_user(
+        TestJob.from_yaml_and_user(
             self.factory.make_job_yaml(), self.user)
         metatype = MetaType(name='fake', metatype=MetaType.DEPLOY_TYPE)
         metatype.save()
