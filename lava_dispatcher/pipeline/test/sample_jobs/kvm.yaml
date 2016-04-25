@@ -23,11 +23,11 @@ actions:
           disk1:
             url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
             compression: gz
-            image_arg: -hda {disk1}
+            image_arg: -drive format=raw,file={disk1}
           disk2:
             url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
             compression: gz
-            image_arg: -hdb {disk2}
+            image_arg: -drive format=raw,file={disk2}
 
     - boot:
         method: qemu

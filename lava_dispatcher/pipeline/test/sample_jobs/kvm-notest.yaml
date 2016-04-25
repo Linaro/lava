@@ -14,10 +14,10 @@ actions:
 
     - deploy:
         to: tmpfs
-        images: 
+        images:
           rootfs:
             url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
-            image_arg: -hda {rootfs}
+            image_arg: -drive format=raw,file={rootfs}
             compression: gz
         os: debian
 

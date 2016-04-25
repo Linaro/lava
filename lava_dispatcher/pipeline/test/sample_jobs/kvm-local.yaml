@@ -19,7 +19,7 @@ actions:
         images:
           rootfs:
             url: file:///home/lava/kvm-debian-wheezy.img.bz2
-            image_arg: -hda {rootfs}
+            image_arg: -drive format=raw,file={rootfs}
             compression: bz2
         os: debian
 

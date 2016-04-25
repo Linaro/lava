@@ -19,7 +19,7 @@ actions:
         images:
           rootfs:
             url: http://images.validation.linaro.org/kvm/debian-sid-2014_08_21-amd64.qcow2.xz
-            image_arg: -hda {rootfs}
+            image_arg: -drive format=raw,file={rootfs}
             format: qcow2
             compression: xz
         os: debian
