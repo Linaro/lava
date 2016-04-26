@@ -134,6 +134,183 @@ it is also recommended that the devices would be made offline at the same time. 
 admin interface has support for selecting devices by worker and taking all selected devices
 offline in a single action.)
 
+.. index::
+   single: encrypt; ZMQ authentication; master slave configuration
+
+.. _zmq_curve:
+
+Using ZMQ authentication and encryption
+=======================================
+
+``lava-master`` and ``lava-slave`` use ZMQ to pass control messages and
+log messages. When using a slave on the same machine as the master, this
+traffic does not need to be authenticated or encrypted. When the slave
+is remote to the master, it is **strongly** recommended that the slave
+authenticates with the master using ZMQ curve so that all traffic can
+then be encrypted and the master can refuse connections which cannot be
+authenticated against the credentials configured by the admin.
+
+To enable authentication and encryption, you will need to restart the
+master and each of the slaves. Once the master is reconfigured, it will
+not be possible for the slaves to communicate with the master until each
+is configured correctly. It is recommended that this is done when there
+are no test jobs running on any of the slaves, so a maintenance window
+may be needed before the work can start. ZMQ is able to cope with short
+interruptions to the connection between master and slave, so depending
+on the particular layout of your instance, the changes can be made on
+each machine before the master is restarted, then the slaves can be
+restarted. Make sure you test this process on a temporary or testing
+instance if you are planning on doing this for a live instance without
+using a maintenance window.
+
+Encryption is particularly important when using remote slaves as the
+control socket (which manages starting and ending testjobs) needs to
+be protected when it is visible across open networks. Authentication
+ensures that only known slaves are able to connect to the master.
+Once authenticated, all communication will be encrypted using the
+certificates.
+
+Protection of the secret keys for the master and each of the slaves is
+the responsibility of the admin. If a slave is compromised, the admin
+can delete the certificate from ``/etc/lava-dispatcher/certificates.d/``
+and restart the master daemon to immediately block that slave.
+
+Create certificates
+-------------------
+
+Encryption is supported by default in ``lava-master`` and ``lava-slave``
+but needs to be enabled in the init scripts for each daemon. Start by
+generating a master certificate on the master::
+
+ $ sudo /usr/share/lava-dispatcher/create_certificate.py master
+
+Now generate a unique slave certificate on each slave. The default name
+for any slave certificate is just ``slave`` but this is only relevant
+for testing. Use a name which relates to the hostname or location or
+other unique aspect of each slave. The admin will need to be able to
+relate each certificate to a specific slave machine::
+
+ $ sudo /usr/share/lava-dispatcher/create_certificate.py foo_slave_1
+
+Distribute public certificates
+------------------------------
+
+Copy the public component of the master certificate to each slave. By
+default, the master public key will be
+``/etc/lava-dispatcher/certificates.d/master.key`` and needs to be
+copied to the same directory on each slave.
+
+Copy the public component of each slave certificate to the master. By
+default, the slave public key will be
+``/etc/lava-dispatcher/certificates.d/slave.key``.
+
+Admins need to maintain the set of slave certificates in
+``/etc/lava-dispatcher/certificates.d`` - only certificates declared by
+active slaves will be used but having obsolete or possibly compromised
+certificates available to the master is a security risk.
+
+.. _preparing_for_zmq_auth:
+
+Preparation
+-----------
+
+Once enabled, the master will refuse connections from any slave which are
+either not encrypted or lack a certificate in ``/etc/lava-dispatcher/certificates.d/``.
+So before restarting the master, stop each of the slaves::
+
+ $ sudo service lava-slave stop
+
+Enable master encryption
+------------------------
+
+The master will only authenticate the slave certificates if the master
+is configured with the ``--encrypt`` option in ``/etc/init.d/lava-master``.
+
+Edit ``/etc/init.d/lava-master`` to enable encryption by adding the
+``--encrypt`` argument. e.g.::
+
+ CERTS="--encrypt"
+
+::
+
+ DAEMON_ARGS="manage ${INST_TMPL} $INSTANCE dispatcher-master ${CERTS}"  # Arguments to run the daemon with
+
+If you have changed the name or location of the master certificate or
+the location of the slave certificates, specify those locations and
+names explicitly::
+
+ CERTS="--encrypt --master-cert /etc/lava-dispatcher/certificates.d/master.key_secret --slaves-certs /etc/lava-dispatcher/certificates.d"
+
+.. note:: Each master needs to find the **secret** key for that master and
+   the **directory** containing all of the  **public** slave keys copied
+   onto that master by the admin.
+
+.. seealso:: :ref:`preparing_for_zmq_auth`
+
+Enable slave encryption
+-----------------------
+
+.. seealso:: :ref:`preparing_for_zmq_auth`
+
+Edit ``/etc/init.d/lava-slave`` to enable encryption by adding the
+``--encrypt`` argument::
+
+ CERTS="--encrypt"
+
+::
+
+ DAEMON_ARGS="manage ${INST_TMPL} $INSTANCE dispatcher-master ${CERTS}"  # Arguments to run the daemon with
+
+If you have changed the name or location of the master certificate or
+the location of the slave certificates, specify those locations and
+names explicitly::
+
+ CERTS="--encrypt --master-cert /etc/lava-dispatcher/certificates.d/master.key --slave-cert /etc/lava-dispatcher/certificates.d/slave.key_secret"
+
+.. note:: Each slave refers to the **secret** key for that slave and
+   the **public** master key copied onto that slave by the admin.
+
+Restarting master and slaves
+----------------------------
+
+For minimal disruption, the master and each slave can be prepared for
+encryption and authentication without restarting any of the daemons. Only
+upon restarting the master will the slaves need to authenticate.
+
+Once all the slaves are configured restart the master and check the logs
+for a message showing that encryption has been enabled on the
+master. e.g.::
+
+ 2016-04-26 10:08:56,303 LAVA Daemon: lava-server manage --instance-template=/etc/lava-server/{{filename}}.conf
+  --instance=playground dispatcher-master --encrypt --master-cert /etc/lava-dispatcher/certificates.d/master.key_secret
+  --slaves-certs /etc/lava-dispatcher/certificates.d pid: 17387
+ 2016-04-26 09:08:58,410 INFO Starting encryption
+ 2016-04-26 09:08:58,411 DEBUG Opening master certificate: /etc/lava-dispatcher/certificates.d/master.key_secret
+ 2016-04-26 09:08:58,411 DEBUG Using slaves certificates from: /etc/lava-dispatcher/certificates.d
+ 2016-04-26 09:08:58,411 INFO [INIT] LAVA dispatcher-master has started.
+
+Now restart each slave in turn and watch for equivalent messages in the
+logs::
+
+ 2016-04-26 10:11:03,128 LAVA Daemon: lava-dispatcher-slave
+  --master tcp://localhost:5556 --hostname playgroundmaster.lavalab
+  --socket-addr tcp://localhost:5555 --level=DEBUG
+  --encrypt --master-cert /etc/lava-dispatcher/certificates.d/master.key
+  --slave-cert /etc/lava-dispatcher/certificates.d/slave.key_secret pid: 17464
+ 2016-04-26 10:11:03,239 INFO Creating ZMQ context and socket connections
+ 2016-04-26 10:11:03,239 INFO Starting encryption
+ 2016-04-26 10:11:03,240 DEBUG Opening slave certificate: /etc/lava-dispatcher/certificates.d/slave.key_secret
+ 2016-04-26 10:11:03,240 DEBUG Opening master certificate: /etc/lava-dispatcher/certificates.d/master.key
+ 2016-04-26 10:11:03,241 INFO Connecting to master as <playgroundmaster.lavalab>
+ 2016-04-26 10:11:03,241 INFO Connection is encrypted using /etc/lava-dispatcher/certificates.d/slave.key_secret
+ 2016-04-26 10:11:03,241 DEBUG Greeting the master => 'HELLO'
+ 2016-04-26 10:11:03,241 INFO Waiting for the master to reply
+ 2016-04-26 10:11:03,244 DEBUG The master replied: ['HELLO_OK']
+ 2016-04-26 10:11:03,244 INFO Connection with the master established
+
+(This example does use authentication and encryption over localhost, but
+that is why the machine is called *playground*.)
+
 Adding pipeline devices to a worker
 ===================================
 
