@@ -294,7 +294,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
                                output_dir='/tmp/')
         job.validate()
         sample_job_data.close()
-        u_boot_media = job.pipeline.actions[1].internal_pipeline.actions[0]
+        u_boot_media = [action for action in job.pipeline.actions if action.name == 'uboot-action'][1].internal_pipeline.actions[0]
         self.assertIsInstance(u_boot_media, UBootSecondaryMedia)
         self.assertEqual([], u_boot_media.errors)
         self.assertEqual(u_boot_media.parameters['kernel'], '/boot/vmlinuz-3.16.0-4-armmp-lpae')

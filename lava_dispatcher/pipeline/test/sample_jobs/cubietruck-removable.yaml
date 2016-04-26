@@ -11,9 +11,49 @@ timeouts:
 priority: medium
 
 actions:
+  - deploy:
+      timeout:
+        minutes: 4
+      to: tftp
+      kernel:
+        url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/vmlinuz
+      ramdisk:
+        url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/initramfs.cpio.gz
+        compression: gz
+        # the bootloader needs a u-boot header on the modified ramdisk
+        add-header: u-boot
+      modules:
+        url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/modules.tar.gz
+        compression: gz
+      nfsrootfs:
+        url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/jessie-armhf-nfs.tar.gz
+        compression: gz
+      os: debian
+      dtb:
+        url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/dtbs/sun7i-a20-cubietruck.dtb
+
+  - boot:
+      method: u-boot
+      commands: nfs
+      type: bootz
+      auto_login:
+        login_prompt: 'login:'
+        username: root
+      prompts:
+      - 'root@jessie:'
+      timeout:
+        minutes: 2
+  - test:
+      timeout:
+        minutes: 5
+      definitions:
+      - repository: git://git.linaro.org/qa/test-definitions.git
+        from: git
+        path: ubuntu/smoke-tests-basic.yaml
+        name: smoke-tests
     # secondary media - use the first deploy to get to a system which can deploy the next
     # in testing, assumed to already be deployed
-    - deploy:
+  - deploy:
         timeout:
           minutes: 10
         to: usb
@@ -24,7 +64,7 @@ actions:
         device: SanDisk_Ultra # needs to be exposed in the device-specific UI
         download: /usr/bin/wget
 
-    - boot:
+  - boot:
         method: u-boot
         commands: usb
         parameters:

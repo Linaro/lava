@@ -96,13 +96,13 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         sample_job_data.close()
         job.validate()
         self.assertIn('usb', cubie['parameters']['media'].keys())
-        deploy_params = [methods for methods in job.parameters['actions'] if 'deploy' in methods.keys()][0]['deploy']
+        deploy_params = [methods for methods in job.parameters['actions'] if 'deploy' in methods.keys()][1]['deploy']
         self.assertIn('device', deploy_params)
         self.assertIn(deploy_params['device'], cubie['parameters']['media']['usb'])
         self.assertIn('uuid', cubie['parameters']['media']['usb'][deploy_params['device']])
         self.assertIn('device_id', cubie['parameters']['media']['usb'][deploy_params['device']])
         self.assertNotIn('boot_part', cubie['parameters']['media']['usb'][deploy_params['device']])
-        deploy_action = job.pipeline.actions[0]
+        deploy_action = [action for action in job.pipeline.actions if action.name == 'storage-deploy'][0]
         self.assertIn('lava_test_results_dir', deploy_action.data)
         self.assertIn('/lava-', deploy_action.data['lava_test_results_dir'])
         self.assertIsInstance(deploy_action, MassStorage)
@@ -146,7 +146,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         sample_job_data.close()
         job.validate()
         boot_params = [
-            methods for methods in job.parameters['actions'] if 'boot' in methods.keys()][0]['boot']
+            methods for methods in job.parameters['actions'] if 'boot' in methods.keys()][1]['boot']
         self.assertIn('ramdisk', boot_params)
         self.assertIn('kernel', boot_params)
         self.assertIn('dtb', boot_params)
@@ -155,7 +155,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertIn('type', boot_params)
         self.assertGreater(len(job.pipeline.actions), 1)
         self.assertIsNotNone(job.pipeline.actions[1].internal_pipeline)
-        u_boot_action = job.pipeline.actions[1].internal_pipeline.actions[1]
+        u_boot_action = [action for action in job.pipeline.actions if action.name == 'uboot-action'][1].internal_pipeline.actions[1]
         self.assertIsNotNone(u_boot_action.get_common_data('u-boot', 'device'))
         self.assertEqual(u_boot_action.name, "uboot-overlay")
 
