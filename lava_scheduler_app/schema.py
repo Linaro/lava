@@ -146,6 +146,7 @@ def _job_schema():
             'priority': Any('high', 'medium', 'low'),
             'protocols': _job_protocols_schema(),
             'context': _simple_params(),
+            'metadata': dict,
             Required('visibility'): visibility_schema(),
             Required('timeouts'): _job_timeout_schema(),
             Required('actions'): _job_actions_schema()
