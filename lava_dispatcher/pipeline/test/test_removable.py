@@ -30,6 +30,22 @@ from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 
 
+class Factory(object):  # pylint: disable=too-few-public-methods
+    """
+    Not Model based, this is not a Django factory.
+    Factory objects are dispatcher based classes, independent
+    of any database objects.
+    """
+    def create_job(self, sample_job, device_file, output_dir='/tmp/'):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__), device_file))
+        yaml = os.path.join(os.path.dirname(__file__), sample_job)
+        with open(yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, None, None,
+                               output_dir=output_dir)
+        return job
+
+
 class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def test_device_parameters(self):
@@ -76,7 +92,7 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
             if isinstance(action, DeployAction):
                 if isinstance(action, MassStorage):
                     self.assertTrue(action.valid)
-                    agent = action.parameters['download']
+                    agent = action.parameters['download']['tool']
                     self.assertTrue(agent.startswith('/'))  # needs to be a full path but on the device, so avoid os.path
                     self.assertIn(action.parameters['device'], job.device['parameters']['media']['usb'])
                     mass_storage = action
@@ -114,6 +130,27 @@ class TestRemovable(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertEqual('0', '%s' % dd_action.get_common_data('u-boot', 'boot_part'))
         self.assertTrue(type(dd_action.get_common_data('uuid', 'boot_part')) is str)
         self.assertEqual('0:1', dd_action.get_common_data('uuid', 'boot_part'))
+
+    def test_juno_deployment(self):
+        factory = Factory()
+        job = factory.create_job('sample_jobs/juno-uboot-oe-usb.yaml', '../devices/juno-uboot.yaml')
+        job.validate()
+        self.assertEqual(job.pipeline.errors, [])
+        self.assertIn('usb', job.device['parameters']['media'].keys())
+        deploy_params = [methods for methods in job.parameters['actions'] if 'deploy' in methods.keys()][1]['deploy']
+        self.assertIn('device', deploy_params)
+        self.assertIn(deploy_params['device'], job.device['parameters']['media']['usb'])
+        self.assertIn('uuid', job.device['parameters']['media']['usb'][deploy_params['device']])
+        self.assertIn('device_id', job.device['parameters']['media']['usb'][deploy_params['device']])
+        self.assertNotIn('boot_part', job.device['parameters']['media']['usb'][deploy_params['device']])
+        deploy_action = [action for action in job.pipeline.actions if action.name == 'storage-deploy'][0]
+        download_action = [action for action in deploy_action.internal_pipeline.actions if action.name == 'download_retry'][0]
+        overlay_action = [action for action in deploy_action.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        self.assertEqual(['test-image'], overlay_action.action_namespaces)
+        self.assertIn('lava_test_results_dir', deploy_action.data)
+        self.assertIn('/lava-', deploy_action.data['lava_test_results_dir'])
+        self.assertIsInstance(deploy_action, MassStorage)
+        self.assertIn('image', deploy_action.parameters.keys())
 
     @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
     def test_primary_media(self):

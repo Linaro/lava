@@ -1,0 +1,100 @@
+device_type: juno
+
+parameters:
+  bootz:
+    kernel: '0x80080000'
+    ramdisk: '0x84000000'
+    dtb: '0x83000000'
+  media:  # four USB slots.
+    usb:
+      UUID-required: True
+      Kingston_DataTraveler:
+        uuid: "usb-Kingston_DataTraveler_2.0_60A44C4254D6F9707B561FA3-0:0"  # /dev/disk/by-id/
+        device_id: 0  # the bootloader device id for this media on the 'usb' interface
+
+commands:
+  connect: telnet localhost 6000
+  hard_reset: /usr/bin/pduclient --daemon localhost --hostname pdu --command reboot --port 08
+  power_off: /usr/bin/pduclient --daemon localhost --hostname pdu --command off --port 08
+  power_on: /usr/bin/pduclient --daemon localhost --hostname pdu --command on --port 08
+
+actions:
+  deploy:
+    # list of deployment methods which this device supports
+    methods:
+      tftp:
+      lxc:
+    connections:
+      lxc:
+      serial:
+      adb:
+  boot:
+    # list of connection methods which this device supports
+    connections:
+      serial:
+      lxc:
+      adb:
+    # list of boot methods which this device supports.
+    methods:
+      lxc:
+      bootloader-defaults:
+        parameters:
+          bootloader_prompt:
+          boot_message: Booting Linux
+      u-boot:
+        parameters:
+          bootloader_prompt: VExpress64
+          boot_message: Booting Linux
+          send_char: False
+        ramdisk:
+          commands:
+          - setenv autoload no
+          - setenv bootdelay 1
+          - setenv ethact smc911x-0
+          - setenv fdt_addr 0x83000000
+          - setenv fdt_high 0xffffffffffffffff
+          - setenv fdtfile board.dtb
+          - setenv initrd_addr 0x84000000
+          - setenv initrd_high 0xffffffffffffffff
+          - setenv initrd_name ramdisk.img
+          - setenv kernel_addr 0x80080000
+          - setenv kernel_name norkern
+          - setenv bootargs 'console=ttyAMA0,115200n8 root=/dev/sda2 rw rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9'
+          - setenv bootcmd 'afs load ${kernel_name} ${kernel_addr} ; afs load ${fdtfile} ${fdt_addr} ; fdt addr ${fdt_addr}; fdt resize; if afs load ${initrd_name} ${initrd_addr} ; then setenv initrd_param ${initrd_addr}; else setenv initrd_param -; fi ; setenv bootargs ${bootargs} ${bootargs_sky2}; booti ${kernel_addr} ${initrd_param} ${fdt_addr}'
+          - boot
+        ramdisk-tftp:
+          commands:
+          - setenv autoload no
+          - setenv bootdelay 1
+          - setenv ethact smc911x-0
+          - setenv fdt_addr 0x83000000
+          - setenv fdt_high 0xffffffffffffffff
+          - setenv initrd_addr 0x84000000
+          - setenv initrd_high 0xffffffffffffffff
+          - setenv kernel_addr 0x80080000
+          - setenv initrd_name ramdisk.cpio
+          - setenv loadfdt 'tftp ${fdt_addr} {DTB}'
+          - setenv loadkernel 'tftp ${kernel_addr} {KERNEL}'
+          - setenv loadinitrd 'tftp ${initrd_addr} {RAMDISK}'
+          - setenv bootargs 'console=ttyAMA0,115200n8 root=/dev/sda2 rw rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9'
+          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadfdt; fdt addr ${fdt_addr}; fdt resize; if run loadinitrd; then setenv initrd_param ${initrd_addr}; else setenv initrd_param -; fi ; setenv bootargs ${bootargs} ${bootargs_sky2}; booti ${kernel_addr} ${initrd_param} ${fdt_addr}'
+          - boot
+        tftp:
+          commands:
+          - setenv autoload no
+          - setenv bootdelay 1
+          - setenv ethact smc911x-0
+          - setenv fdt_addr 0x83000000
+          - setenv fdt_high 0xffffffffffffffff
+          - setenv initrd_addr 0x84000000
+          - setenv initrd_high 0xffffffffffffffff
+          - setenv kernel_addr 0x80080000
+          - setenv initrd_name ramdisk.img
+          - setenv loadfdt 'tftp ${fdt_addr} {DTB}'
+          - setenv loadkernel 'tftp ${kernel_addr} {KERNEL}'
+          - setenv bootargs 'console=ttyAMA0,115200n8 root=/dev/nfs nfsroot={SERVER_IP}:{NFSROOTFS} ip=dhcp rw rootwait earlycon=pl011,0x7ff80000 debug systemd.log_target=null user_debug=31 androidboot.hardware=juno loglevel=9'
+          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadfdt; fdt addr ${fdt_addr}; fdt resize; if afs load  ${initrd_name} ${initrd_addr} ; then   setenv initrd_param ${initrd_addr};   else setenv initrd_param -; fi ; setenv bootargs ${bootargs} ${bootargs_sky2}; booti ${kernel_addr} ${initrd_param} ${fdt_addr}'
+          - boot
+        use-defaults:
+          commands:
+          - boot

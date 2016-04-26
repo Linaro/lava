@@ -21,6 +21,8 @@
 # Overrides are only supported when and as declared in the comments for
 # each constant.
 
+# pylint: disable=anomalous-backslash-in-string
+
 # Delay between each character sent to the shell. This is required for some
 # slow serial consoles.
 SHELL_SEND_DELAY = 0.05
@@ -135,3 +137,6 @@ INSTALLER_QUIET_MSG = 'Loading initial ramdisk'
 # V1 compatibility
 DEFAULT_V1_PATTERN = "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))"
 DEFAULT_V1_FIXUP = {'PASS': 'pass', 'FAIL': 'fail', 'SKIP': 'skip', 'UNKNOWN': 'unknown'}
+
+# Message for notifying completion of secondary deployment
+SECONDARY_DEPLOYMENT_MSG = "Secondary media deployment complete"

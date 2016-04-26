@@ -34,11 +34,20 @@ from lava_dispatcher.pipeline.actions.deploy.overlay import (
     CustomisationAction,
     OverlayAction,
 )
+from lava_dispatcher.pipeline.actions.deploy.apply_overlay import (
+    ApplyOverlayImage,
+)
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
-from lava_dispatcher.pipeline.utils.constants import DISPATCHER_DOWNLOAD_DIR
-
+from lava_dispatcher.pipeline.utils.filesystem import (
+    mkdtemp,
+    tftpd_dir,
+)
+from lava_dispatcher.pipeline.utils.strings import substitute
+from lava_dispatcher.pipeline.utils.constants import (
+    SECONDARY_DEPLOYMENT_MSG,
+)
 
 class Removable(Deployment):
     """
@@ -69,11 +78,11 @@ class Removable(Deployment):
         if 'to' in parameters:
             # connection support
             # Which deployment method to use?
-            if 'usb' == parameters['to']:
+            if parameters['to'] == 'usb':
                 if 'device' in parameters:
                     job_device = parameters['device']
                     media = 'usb'
-            if 'sata' == parameters['to']:
+            if parameters['to'] == 'sata':
                 if 'device' in parameters:
                     job_device = parameters['device']
                     media = 'sata'
@@ -107,10 +116,12 @@ class DDAction(Action):
         super(DDAction, self).validate()
         if 'device' not in self.parameters:
             self.errors = "missing device for deployment"
-        if 'download' not in self.parameters:
+        if 'tool' not in self.parameters['download']:
             self.errors = "missing download tool for deployment"
-        if not os.path.isabs(self.parameters['download']):
-            self.errors = "download parameter needs to be an absolute path"
+        if 'options' not in self.parameters['download']:
+            self.errors = "missing options for download tool"
+        if not os.path.isabs(self.parameters['download']['tool']):
+            self.errors = "download tool parameter needs to be an absolute path"
         uuid_required = False
         self.boot_params = self.job.device['parameters']['media'][self.parameters['to']]
         if 'media' in self.job.device:
@@ -151,30 +162,55 @@ class DDAction(Action):
             raise JobError("Unable to find disk by id %s" %
                            self.boot_params[self.parameters['device']]['uuid'])
 
-        suffix = "tmp"
-        wget_options = ''
-        if self.parameters.get('download', '/usr/bin/wget') == '/usr/bin/wget':
-            wget_options = "--no-check-certificate --no-proxy --connect-timeout=30 -S --progress=dot:giga -O -"
-        wget_cmd = "%s %s http://%s/%s/%s" % (
-            self.parameters['download'], wget_options, dispatcher_ip(), suffix, decompressed_image
+        suffix = "%s/%s" % ("tmp", self.data['storage-deploy'].get('suffix', ''))
+
+        # As the test writer can use any tool we cannot predict where the
+        # download URL will be positioned in the download command.
+        # Providing the download URL as a substitution option gets round this
+        download_url = "http://%s/%s/%s" % (
+            dispatcher_ip(), suffix, decompressed_image
         )
+        substitutions = {
+            '{DOWNLOAD_URL}': download_url
+        }
+        download_options = substitute([self.parameters['download']['options']], substitutions)[0]
+        download_cmd = "%s %s" % (
+            self.parameters['download']['tool'], download_options
+        )
+
         dd_cmd = "dd of='%s' bs=4M" % device_path  # busybox dd does not support other flags
-        connection.sendline("%s | %s" % (wget_cmd, dd_cmd))
-        # connection.wait()  # long command lines can echo back
-        # connection.wait()
+
+        # We must ensure that the secondary media deployment has completed before handing over
+        # the connection.  Echoing the SECONDARY_DEPLOYMENT_MSG after the deployment means we
+        # always have a constant string to match against
+        prompt_string = connection.prompt_str
+        connection.prompt_str = SECONDARY_DEPLOYMENT_MSG
+        self.logger.debug("Changing prompt to %s" % connection.prompt_str)
+        connection.sendline("%s | %s ; echo %s" % (download_cmd, dd_cmd, SECONDARY_DEPLOYMENT_MSG))
+        self.wait(connection)
         if not self.valid:
             self.logger.error(self.errors)
 
+        # set prompt back
+        connection.prompt_str = prompt_string
+        self.logger.debug("Changing prompt to %s" % connection.prompt_str)
         return connection
 
 
-class MassStorage(DeployAction):
+class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
 
     def __init__(self):
         super(MassStorage, self).__init__()
         self.name = "storage-deploy"
         self.description = "Deploy image to mass storage"
         self.summary = "write image to storage"
+        self.suffix = None
+        try:
+            self.image_path = mkdtemp(basedir=tftpd_dir())
+        except OSError:
+            self.suffix = '/'
+            self.image_path = mkdtemp()  # unit test support
+        self.suffix = os.path.basename(self.image_path)
 
     def validate(self):
         super(MassStorage, self).validate()
@@ -188,6 +224,9 @@ class MassStorage(DeployAction):
         self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
         if 'device' in self.parameters:
             self.set_common_data('u-boot', 'device', self.parameters['device'])
+        if self.suffix:
+            self.data[self.name].setdefault('suffix', self.suffix)
+        self.data[self.name].setdefault('suffix', os.path.basename(self.image_path))
 
     def populate(self, parameters):
         """
@@ -199,12 +238,13 @@ class MassStorage(DeployAction):
         but not the device.
         """
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        if 'image' in parameters:
-            download = DownloaderAction('image', path=DISPATCHER_DOWNLOAD_DIR)
-            download.max_retries = 3
-            self.internal_pipeline.add_action(download)
-            self.internal_pipeline.add_action(DDAction())
-        # FIXME: could support tarballs too
         self.internal_pipeline.add_action(CustomisationAction())
         self.internal_pipeline.add_action(OverlayAction())  # idempotent, includes testdef
+        if 'image' in parameters:
+            download = DownloaderAction('image', path=self.image_path)
+            download.max_retries = 3
+            self.internal_pipeline.add_action(download)
+            self.internal_pipeline.add_action(ApplyOverlayImage())
+            self.internal_pipeline.add_action(DDAction())
+        # FIXME: could support tarballs too
         self.internal_pipeline.add_action(DeployDeviceEnvironment())

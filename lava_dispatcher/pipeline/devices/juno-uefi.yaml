@@ -1,0 +1,149 @@
+device_type: juno
+
+parameters:
+  media:  # four USB slots.
+    usb:
+      UUID-required: True
+      Kingston_DataTraveler:
+        uuid: "usb-Kingston_DataTraveler_2.0_60A44C4254D6F9707B561FA3-0:0"  # /dev/disk/by-id/
+        device_id: 0  # the bootloader device id for this media on the 'usb' interface
+
+character-delays:
+  boot: 50
+
+actions:
+  deploy:
+    # list of deployment methods which this device supports
+    methods:
+      tftp:
+  boot:
+    # list of connection methods which this device supports
+    connections:
+      serial:
+    # list of boot methods which this device supports.
+    methods:
+      uefi-menu:
+        parameters:
+          character_delay: 300 
+          interrupt_prompt: The default boot selection will start in
+          interrupt_string: ' '
+          item_markup:
+            - "["
+            - "]"
+          item_class: '0-9'
+          separator: ' '
+          label_class: 'a-zA-Z0-9\s\:'
+          bootloader_prompt: 'Start:'
+          boot_message: "Loaded: LinuxImage"
+          # interrupt: # character needed to interrupt u-boot, single whitespace by default
+          # method specific stanza
+        nor_flash:
+        -  select:
+            items:
+             - 'Boot Manager'
+            wait: "Choice:"
+        - select:
+            items:
+               - 'Add Boot Device Entry'
+            wait: "Select the Boot Device:"
+        - select:
+            items:
+               - 'NOR Flash'
+            wait: "File path of the EFI Application or the kernel:"
+        - select:
+            enter: norkern
+            wait: "Is an EFI Application?"
+        - select:
+            enter: n
+            wait: "Has FDT support?"
+        - select:
+            enter: y
+            wait: "Add an initrd:"
+        - select:
+            enter: n
+            wait: 'Arguments to pass to the binary:'
+        - select: 
+            enter: "dtb=board.dtb initrd=ramdisk.img console=ttyAMA0,115200 androidboot.hardware=juno systemd.log_target=null rootwait root=/dev/sda1"
+            wait: 'Description for this new Entry:'
+        - select:
+            enter: 'LAVA Master Image'
+            wait: "Choice:"
+        - select:
+            items:
+              - 'Update FDT path'
+            wait: "Select the Boot Device:"
+        - select:
+            items:
+               - 'TFTP on MAC Address: 00:02:F7:00:58:EB'  # substitute the MAC in the template
+            wait: "File path of the FDT blob:"
+        - select:
+            enter: 'board.dtb'
+            wait: "Choice:"
+        - select:
+            items:
+               - 'Return to main menu'
+            wait: "Start:"
+        - select:
+            items:
+              - LAVA Master Image
+        nfs:
+        - select:
+            items:
+             - 'Boot Manager'
+            wait: "Choice:"
+        - select:
+            items:
+               - 'Add Boot Device Entry'
+            wait: "Select the Boot Device:"
+        - select:
+            items:
+               - 'TFTP on MAC Address: 00:02:F7:00:58:EB'  # substitute the MAC in the template
+            wait: "Get the IP address from DHCP:"
+        - select:
+            enter: y
+            wait: "Get the TFTP server IP address:"
+        - select:
+            enter: '{SERVER_IP}'
+            wait: "File path of the EFI Application or the kernel :"
+        - select:
+            enter: '{KERNEL}'
+            wait: "Is an EFI Application?"
+        - select:
+            enter: n
+            wait: "Has FDT support?"
+        - select:
+            enter: y
+            wait: "Add an initrd:"
+        - select:
+            enter: n
+            wait: 'Arguments to pass to the binary:'
+        - select:
+            enter: "console=ttyS0,115200 earlyprintk=uart8250-32bit,0x1c020000 debug root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp"
+            wait: 'Description for this new Entry:'
+        - select:
+            enter: 'Test Image'
+            wait: "Choice:"
+        - select:
+            items:
+              - 'Update FDT path'
+            wait: "Select the Boot Device:"
+        - select:
+            items:
+               - 'TFTP on MAC Address: 00:02:F7:00:58:EB'  # substitute the MAC in the template
+            wait: "Get the IP address from DHCP:"
+        - select:
+            enter: y
+            wait: "Get the TFTP server IP address:"
+        - select:
+            enter: '{SERVER_IP}'
+            wait: "File path of the FDT blob :"
+        - select:
+            enter: '{DTB}'
+            wait: "Choice:"
+        - select:
+            items:
+               - 'Return to main menu'
+            wait: "Start:"
+        - select:
+            items:
+              - Test Image

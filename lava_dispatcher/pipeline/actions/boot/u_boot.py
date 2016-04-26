@@ -342,6 +342,7 @@ class UBootCommandOverlay(Action):
         substitutions['{ROOT}'] = self.get_common_data('uuid', 'root')  # UUID label, not a file
         substitutions['{ROOT_PART}'] = self.get_common_data('uuid', 'boot_part')
 
+        self.data.setdefault('u-boot', {})
         self.data['u-boot']['commands'] = substitute(self.commands, substitutions)
         self.logger.debug("Parsed boot commands: %s" % '; '.join(self.data['u-boot']['commands']))
         return connection

@@ -37,7 +37,11 @@ from lava_dispatcher.pipeline.utils.installers import (
     add_late_command,
     add_to_kickstart
 )
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, prepare_guestfs
+from lava_dispatcher.pipeline.utils.filesystem import (
+    mkdtemp,
+    prepare_guestfs,
+    copy_in_overlay
+)
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.compression import (
     compress_file,
@@ -46,29 +50,6 @@ from lava_dispatcher.pipeline.utils.compression import (
 )
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
-
-
-class ApplyOverlayImage(Action):
-    """
-    Applies the overlay to an image using mntdir
-    * checks that the filesystem we need is actually mounted.
-    """
-    def __init__(self):
-        super(ApplyOverlayImage, self).__init__()
-        self.name = "apply-overlay-image"
-        self.summary = "unpack overlay onto image"
-        self.description = "unpack overlay onto image mountpoint"
-
-    def run(self, connection, args=None):
-        if not self.data['compress-overlay'].get('output'):
-            raise RuntimeError("Unable to find the overlay")
-        if not os.path.ismount(self.data['loop_mount']['mntdir']):
-            raise RuntimeError("Image overlay requested to be applied but %s is not a mountpoint" %
-                               self.data['loop_mount']['mntdir'])
-        connection = super(ApplyOverlayImage, self).run(connection, args)
-        # use tarfile module - no SELinux support here yet
-        untar_file(self.data['compress-overlay'].get('output'), self.data['loop_mount']['mntdir'])
-        return connection
 
 
 class ApplyOverlayGuest(Action):
@@ -98,6 +79,29 @@ class ApplyOverlayGuest(Action):
             guest_file, self.data['compress-overlay'].get('output'),
             self.job.device['actions']['deploy']['methods']['image']['parameters']['guest']['size'])
         self.results = {'success': blkid}
+        return connection
+
+
+class ApplyOverlayImage(Action):
+
+    def __init__(self):
+        super(ApplyOverlayImage, self).__init__()
+        self.name = "apply-overlay-image"
+        self.summary = "apply overlay via guestfs to test image"
+
+    def validate(self):
+        super(ApplyOverlayImage, self).validate()
+
+    def run(self, connection, args=None):
+        if not self.data['compress-overlay'].get('output'):
+            raise RuntimeError("Unable to find the overlay")
+        overlay = self.data['compress-overlay'].get('output')
+        self.logger.debug("Overlay: %s", overlay)
+        decompressed_image = self.data['download_action']['image']['file']
+        self.logger.debug("Image: %s", decompressed_image)
+        root_partition = self.parameters['image']['root_partition']
+        self.logger.debug("root_partition: %s", root_partition)
+        copy_in_overlay(decompressed_image, root_partition, overlay)
         return connection
 
 
@@ -184,6 +188,11 @@ class ApplyOverlayTftp(Action):
         if nfs_url:
             subprocess.check_output(['umount', directory])
             os.rmdir(directory)  # fails if the umount fails
+        if overlay_file:
+            untar_file(overlay_file, directory)
+            if nfs_url:
+                subprocess.check_output(['umount', directory])
+                os.rmdir(directory)  # fails if the umount fails
         return connection
 
 
@@ -252,7 +261,7 @@ class ExtractNfsRootfs(ExtractRootfs):
     def run(self, connection, args=None):
         if not self.parameters.get(self.param_key, None):  # idempotency
             return connection
-        connection = super(ExtractRootfs, self).run(connection, args)
+        connection = super(ExtractNfsRootfs, self).run(connection, args)
         root = self.data['download_action'][self.param_key]['file']
         root_dir = mkdtemp(basedir=DISPATCHER_DOWNLOAD_DIR)
         untar_file(root, root_dir)
