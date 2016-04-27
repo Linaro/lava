@@ -329,8 +329,7 @@ show_worker_action.short_description = "Show selected worker(s)"
 
 class WorkerAdmin(admin.ModelAdmin):
     actions = [hide_worker_action, show_worker_action]
-    list_display = ('hostname', 'display', 'ip_address', 'is_master',
-                    'uptime', 'arch')
+    list_display = ('hostname', 'display', 'is_master')
     ordering = ['hostname']
 
 

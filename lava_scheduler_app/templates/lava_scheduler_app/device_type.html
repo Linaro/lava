@@ -150,6 +150,11 @@
 <h4 class="modal-header">Devices list</h4>
 {% render_table devices_table_no_dt %}
 
+<p><span class="glyphicon glyphicon-thumbs-up text-success"></span>
+indicates the device is <b>online</b>, but
+<span class="glyphicon glyphicon-thumbs-down text-danger"></span>
+indicates the device is <b>offline or retired</b>.</p>
+
 {% if device_type.name != 'dynamic-vm' and device_type.health_check_job != '' %}
 <h4 class="modal-header">Health Job Summary</h4>
 {% render_table health_job_summary_table %}

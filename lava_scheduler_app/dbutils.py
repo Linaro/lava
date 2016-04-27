@@ -58,18 +58,21 @@ def match_vlan_interface(device, job_def):
 
 
 def initiate_health_check_job(device):
+    logger = logging.getLogger('dispatcher-master')
+    logger.info("Initiating health check")
     if not device:
         # logic error
+        logger.error("No device")
         return None
     if device.status in [Device.RETIRED]:
         # logic error
+        logger.error("[%s] has been retired", device)
         return None
 
     existing_health_check_job = device.get_existing_health_check_job()
     if existing_health_check_job:
         return existing_health_check_job
 
-    logger = logging.getLogger('dispatcher-master')
     job_data = device.device_type.health_check_job
     user = User.objects.get(username='lava-health')
     if not job_data:
@@ -553,7 +556,6 @@ def assign_jobs():
     if postprocess and reserved_devices:
         logger.debug("All queued jobs checked, %d devices reserved and validated", len(reserved_devices))
 
-    # worker heartbeat must not occur within this loop
     logger.info("Assigned %d jobs on %s devices", len(assigned_jobs), len(reserved_devices))
 
 

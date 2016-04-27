@@ -424,16 +424,7 @@ def get_heartbeat_timeout():
 
     If there is no value found, we return a default timeout value 300.
     """
-    settings = Settings("lava-server")
-    worker_config_path = settings._get_pathname("worker")  # pylint: disable=protected-access
-    try:
-        worker_config = ConfigFile.load(worker_config_path)
-        if worker_config and worker_config.HEARTBEAT_TIMEOUT != '':
-            return int(worker_config.HEARTBEAT_TIMEOUT)
-        else:
-            return 300
-    except (IOError, AttributeError):
-        return 300
+    return 300
 
 
 # Private variable to record scheduler tick, which shouldn't be accessed from

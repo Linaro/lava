@@ -43,7 +43,6 @@ class Command(SchedulerCommand):
         from twisted.internet import reactor
 
         from lava_scheduler_daemon.service import JobQueue
-        from lava_scheduler_daemon.worker import WorkerData
         from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
         import xmlrpclib
 
@@ -59,14 +58,6 @@ class Command(SchedulerCommand):
                 'fake-dispatcher')
         else:
             dispatcher = options['dispatcher']
-
-        # Update complete worker heartbeat data. This will be run once,
-        # on every start/restart of the scheduler daemon.
-        worker = WorkerData()
-        try:
-            worker.put_heartbeat_data(restart=True)
-        except (xmlrpclib.Fault, xmlrpclib.ProtocolError):
-            worker.logger.error("Complete heartbeat update failed!")
 
         # Start scheduler service.
         service = JobQueue(

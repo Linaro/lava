@@ -446,11 +446,6 @@ class DeviceHealthTable(LavaTable):
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
     ''')
     worker_host = tables.TemplateColumn('''
-    {% if record.too_long_since_last_heartbeat %}
-    <span class="glyphicon glyphicon-thumbs-down text-danger"></span>
-    {% else %}
-    <span class="glyphicon glyphicon-thumbs-up text-success"></span>
-    {% endif %}
     {% if record.is_master %}
     <b><a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a></b>
     {% else %}
@@ -539,11 +534,6 @@ class DeviceTable(LavaTable):
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
     ''')
     worker_host = tables.TemplateColumn('''
-    {% if record.too_long_since_last_heartbeat %}
-    <span class="glyphicon glyphicon-thumbs-down text-danger"></span>
-    {% else %}
-    <span class="glyphicon glyphicon-thumbs-up text-success"></span>
-    {% endif %}
     {% if record.is_master %}
     <b><a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a></b>
     {% else %}
@@ -618,48 +608,23 @@ class WorkerTable(tables.Table):  # pylint: disable=too-few-public-methods,no-in
         self.length = 10
         self.show_help = True
 
-    last_master_scheduler_tick = DateColumn()
-
     hostname = tables.TemplateColumn('''
-    {% if record.too_long_since_last_heartbeat %}
-    <span class="glyphicon glyphicon-thumbs-down text-danger"></span>
-    {% else %}
-    <span class="glyphicon glyphicon-thumbs-up text-success"></span>
-    {% endif %}
     {% if record.is_master %}
     <b><a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a></b>
     {% else %}
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
     {% endif %}
     ''')
-    status = tables.TemplateColumn('''
-    {% if record.too_long_since_last_heartbeat %}
-    down
-    {% else %}
-    up
-    {% endif %}
-        ''')
-    status.orderable = False
 
     is_master = tables.Column()
-    uptime = tables.TemplateColumn('''
-    {% if record.too_long_since_last_heartbeat %}
-    ---
-    {% else %}
-    {{ record.uptime }}
-    {% endif %}
-        ''')
-    arch = tables.Column()
 
     class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         model = Worker
         exclude = [
-            'rpc2_url', 'description', 'hardware_info', 'software_info',
-            'platform', 'last_heartbeat', 'last_complete_info_update',
-            'display'
+            'rpc2_url', 'display'
         ]
         sequence = [
-            'hostname', 'ip_address', 'status', 'is_master', 'uptime', 'arch'
+            'hostname', 'description', 'is_master'
         ]
 
 

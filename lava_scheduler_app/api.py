@@ -628,7 +628,7 @@ class SchedulerAPI(ExposedAPI):
 
         Description
         -----------
-        Pushes the heartbeat of dispatcher worker node.
+        Dropped - arguments are ignored.
 
         Arguments
         ---------
@@ -640,15 +640,10 @@ class SchedulerAPI(ExposedAPI):
         This function returns an XML-RPC boolean output, provided the user is
         authenticated with an username and token.
         """
-        worker = Worker()
         if not self.user:
             raise xmlrpclib.Fault(
                 401, "Authentication with user and token required for this "
                 "API.")
-        if not worker.can_update(self.user):
-            raise xmlrpclib.Fault(403, "Permission denied.")
-
-        worker.update_heartbeat(heartbeat_data)
         return True
 
     def notify_incomplete_job(self, job_id):

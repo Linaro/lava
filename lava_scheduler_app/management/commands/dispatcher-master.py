@@ -111,8 +111,7 @@ def get_env_string(filename):
 
 class Command(BaseCommand):
     """
-    worker_host is the hostname of the worker - under the old dispatcher, this was declared by
-    that worker using the heartbeat. In the new dispatcher, this field is set by the admin
+    worker_host is the hostname of the worker this field is set by the admin
     and could therefore be empty in a misconfigured instance.
     """
     logger = None

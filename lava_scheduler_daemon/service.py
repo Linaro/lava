@@ -40,20 +40,6 @@ class JobQueue(Service):
         self._check_job_call.clock = reactor
 
     def _checkJobs(self):
-        # Update Worker Heartbeat
-        #
-        # NOTE: This will recide here till we finalize scheduler refactoring
-        #       and a separte module for worker specific daemon gets created.
-        self.logger.debug("Worker heartbeat")
-        worker = WorkerData()
-
-        # Record the scheduler tick (timestamp).
-        worker.record_master_scheduler_tick()
-
-        try:
-            worker.put_heartbeat_data()
-        except (xmlrpclib.Fault, xmlrpclib.ProtocolError) as err:
-            worker.logger.error("Heartbeat update failed!")
 
         self.logger.debug("Refreshing jobs")
         return self.source.getJobList().addCallback(
