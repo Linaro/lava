@@ -286,9 +286,10 @@ class TagsColumn(tables.Column):
     def render(self, value):
         tag_id = 'tag-%s' % os.urandom(4).encode('hex')
         tags = ''
-        if len(value.all()) > 0:
+        values = list(value.all())
+        if len(values) > 0:
             tags = '<p class="collapse" id="%s">' % tag_id
-            tags += ',<br>'.join('<abbr data-toggle="tooltip" title="%s">%s</abbr>' % (tag.description, tag.name) for tag in value.all())
+            tags += ',<br>'.join('<abbr data-toggle="tooltip" title="%s">%s</abbr>' % (tag.description, tag.name) for tag in values)
             tags += '</p><p><a class="btn btn-xs btn-success" data-toggle="collapse" data-target="#%s"><span class="glyphicon glyphicon-eye-open"></span></p></a></p>' % tag_id
         return mark_safe(tags)
 
