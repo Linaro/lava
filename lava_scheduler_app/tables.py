@@ -777,12 +777,13 @@ class OnlineDeviceTable(DeviceTable):
         self.length = 25
 
     def render_status(self, record):  # pylint: disable=no-self-use
-        t = DeviceStateTransition.objects.filter(device=record).order_by('-id')
         status = Device.STATUS_CHOICES[record.status][1]
-        if t:
-            return "%s (reason: %s)" % (status, t[0].message)
-        else:
+        try:
+            t = DeviceStateTransition.objects.filter(device=record).order_by('-id')[0]
+        except IndexError:
             return status
+        else:
+            return "%s (reason: %s)" % (status, t.message)
 
     class Meta(LavaTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         exclude = [
