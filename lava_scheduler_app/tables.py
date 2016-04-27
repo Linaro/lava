@@ -174,7 +174,7 @@ class JobTable(LavaTable):
         super(JobTable, self).__init__(*args, **kwargs)
         self.length = 25
 
-    id = RestrictedIDLinkColumn(verbose_name="ID", accessor="id")
+    id = RestrictedIDLinkColumn(verbose_name="ID", accessor="id")  # pylint: disable=invalid-name
     device = tables.Column(accessor='device_sort')
     duration = tables.Column(accessor='duration_sort')
     duration.orderable = False

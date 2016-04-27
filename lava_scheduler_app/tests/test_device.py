@@ -20,6 +20,8 @@ from django.contrib.auth.models import User
 from lava_dispatcher.pipeline.device import PipelineDevice
 
 # pylint: disable=blacklisted-name,too-many-ancestors,invalid-name
+# python3 needs print to be a function, so disable pylint
+# pylint: disable=superfluous-parens
 
 
 class ModelFactory(object):
@@ -34,7 +36,7 @@ class ModelFactory(object):
     def getUniqueString(self, prefix='generic'):
         return '%s-%d' % (prefix, self.getUniqueInteger())
 
-    def get_unique_user(self, prefix='generic'):
+    def get_unique_user(self, prefix='generic'):  # pylint: disable=no-self-use
         return "%s-%d" % (prefix, User.objects.count() + 1)
 
     def make_user(self):
@@ -270,10 +272,11 @@ class DeviceDictionaryTest(TestCaseWithFactory):
             loader=jinja2.ChoiceLoader([dict_loader, type_loader]),
             trim_blocks=True)
         template = env.get_template("%s.jinja2" % 'cubie')
-        device_configuration = template.render()
+        # pylint gets this wrong from jinja
+        device_configuration = template.render()  # pylint: disable=no-member
 
         chk_template = prepare_jinja_template('cubie', jinja_data, system_path=False, path=jinja2_path)
-        self.assertEqual(template.render(), chk_template.render())
+        self.assertEqual(template.render(), chk_template.render())  # pylint: disable=no-member
         yaml_data = yaml.load(device_configuration)
         self.assertTrue(validate_device(yaml_data))
         self.assertIn('timeouts', yaml_data)
@@ -354,9 +357,9 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         vlan.save()
         del vlan
         vlan = DeviceDictionary.get('vlanned1')
-        cmp = str(devicedictionary_to_jinja2(vlan.parameters, 'vland.jinja2'))
+        cmp_str = str(devicedictionary_to_jinja2(vlan.parameters, 'vland.jinja2'))
         for line in str(data).split('\n'):
-            self.assertIn(line, cmp)
+            self.assertIn(line, cmp_str)
 
     def test_network_map(self):
         """

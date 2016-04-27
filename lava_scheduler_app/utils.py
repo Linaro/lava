@@ -28,7 +28,6 @@ import socket
 import logging
 import urlparse
 import simplejson
-import models
 import subprocess
 import datetime
 import netifaces
@@ -85,9 +84,8 @@ def rewrite_hostname(result_url):
     return result_url
 
 
-def split_multi_job(json_jobdata, target_group):
+def split_multi_job(json_jobdata, target_group):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
     node_json = {}
-    all_nodes = {}
     node_actions = {}
     node_lmp = {}
     shared_config = get_shared_device_config("/etc/lava-server/shared-device-config.yaml")
@@ -170,9 +168,8 @@ def split_multi_job(json_jobdata, target_group):
     return node_json
 
 
-def split_vm_job(json_jobdata, vm_group):
+def split_vm_job(json_jobdata, vm_group):  # pylint: disable=too-many-locals,too-many-statements,too-many-branches
     node_json = {}
-    all_nodes = {}
     node_actions = {}
     vms_list = []
 
@@ -292,7 +289,8 @@ def get_lshw_out():
     return simplejson.dumps(lshw_out)
 
 
-def get_ip_address():
+# pylint gets confused with netifaces
+def get_ip_address():  # pylint: disable=no-member
     """Returns the IP address of the default interface, if found.
     """
     ip = '0.0.0.0'
@@ -322,7 +320,7 @@ def format_sw_info_to_html(data_dict):
     return html_content
 
 
-def installed_packages(prefix=None, package_name=None):
+def installed_packages(prefix=None, package_name=None):  # pylint: disable=too-many-locals
     """Queries dpkg and filters packages that are related to PACKAGE_NAME.
 
     PREFIX is the installation prefix for the given instance ie.,
@@ -338,7 +336,7 @@ def installed_packages(prefix=None, package_name=None):
         proc = subprocess.Popen(package_cmd, shell=True,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
-        package_out, package_err = proc.communicate()
+        package_out, _ = proc.communicate()
         pack_re = re.compile(r"ii\s+(?P<package>\S+)\s+(?P<version>\S+)\s+.*",
                              re.MULTILINE)
         for package in pack_re.findall(package_out):
@@ -350,7 +348,7 @@ def installed_packages(prefix=None, package_name=None):
         cmd = "grep exports %s" % python_path
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
-        out, err = proc.communicate()
+        out, _ = proc.communicate()
 
         # The output of the command looks like the following, which is a
         # string, we process this string to populate the package dictionary.
@@ -404,7 +402,7 @@ def get_software_info():
 
     # Populate the git status of server code from exports directory.
     settings = Settings("lava-server")
-    instance_config_path = settings._get_pathname("instance")
+    instance_config_path = settings._get_pathname("instance")  # pylint: disable=protected-access
     instance_config = ConfigFile.load(instance_config_path)
     prefix = os.path.join(instance_config.LAVA_PREFIX,
                           instance_config.LAVA_INSTANCE)
@@ -427,7 +425,7 @@ def get_heartbeat_timeout():
     If there is no value found, we return a default timeout value 300.
     """
     settings = Settings("lava-server")
-    worker_config_path = settings._get_pathname("worker")
+    worker_config_path = settings._get_pathname("worker")  # pylint: disable=protected-access
     try:
         worker_config = ConfigFile.load(worker_config_path)
         if worker_config and worker_config.HEARTBEAT_TIMEOUT != '':
@@ -457,7 +455,7 @@ def last_scheduler_tick():
     return __last_scheduler_tick
 
 
-def process_repeat_parameter(json_jobdata):
+def process_repeat_parameter(json_jobdata):  # pylint: disable=too-many-branches
     new_json = {}
     new_actions = []
     allowed_actions = ["delpoy_linaro_image", "deploy_image",
@@ -684,8 +682,8 @@ def map_context_overrides(base_template, devicetype_template, system=True):  # p
         devicetype_data = content.read()
     base_keys = []
     devicetype_keys = []
-    base_pattern = '{%\s+set\s+(?P<key>\w+)'
-    devicetype_pattern = '{{\s+(?P<key>\w+)'
+    base_pattern = r'{%\s+set\s+(?P<key>\w+)'
+    devicetype_pattern = r'{{\s+(?P<key>\w+)'
     for line in base_data.split('\n'):
         match = re.match(base_pattern, line)
         if match:
@@ -718,7 +716,7 @@ def allowed_overrides(device_dict, system=True):
         return None
     with open(devicetype_file, 'r') as content:
         devicetype_data = content.read()
-    extends_pattern = "{%\s+extends\s+'(?P<key>\S+)'"
+    extends_pattern = r"{%\s+extends\s+'(?P<key>\S+)'"
     base_template = None
     for line in devicetype_data.split('\n'):
         match = re.search(extends_pattern, line)
@@ -742,7 +740,7 @@ def _split_multinode_vland(submission, jobs):
     return jobs
 
 
-def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-branches,too-many-locals
+def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
     """
     Handles the lava-multinode protocol requirements.
     Uses the multinode protocol requirements to generate as many YAML

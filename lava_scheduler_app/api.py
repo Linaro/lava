@@ -33,6 +33,9 @@ from lava_scheduler_app.dbutils import testjob_submission
 # functions need to be members to be exposed in the API
 # pylint: disable=no-self-use
 
+# to make a function visible in the API, it must be a member of SchedulerAPI
+# pylint: disable=no-self-use
+
 
 class SchedulerAPI(ExposedAPI):
 
@@ -607,7 +610,7 @@ class SchedulerAPI(ExposedAPI):
         bundle_sha1 = ""
         try:
             bundle_sha1 = job.results_link.split('/')[-2]
-        except:
+        except IndexError:
             pass
 
         job_status = {

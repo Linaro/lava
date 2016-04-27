@@ -14,10 +14,7 @@ from lava_scheduler_app.models import (
     _check_submit_to_device,
 )
 from lava_scheduler_app.dbutils import match_vlan_interface
-from django.db import models
 from django.db.models import Q
-from django.core.exceptions import ValidationError
-from django_testscenarios.ubertest import TestCase
 from django.contrib.auth.models import Group, Permission, User
 from collections import OrderedDict
 from lava_scheduler_app.utils import (
@@ -355,11 +352,13 @@ class TestPipelineSubmit(TestCaseWithFactory):
         menu_data = device_config['actions']['boot']['methods']['uefi-menu']['nfs']
         self.assertIn(
             job_ctx['nfsroot_args'],
-            [item['select']['enter'] for item in menu_data if 'enter' in item['select'] and
+            [
+                item['select']['enter'] for item in menu_data if 'enter' in item['select'] and
                 'new Entry' in item['select']['wait']][0]
         )
         self.assertEqual(
-            [item['select']['items'][0] for item in menu_data if 'select' in item and
+            [
+                item['select']['items'][0] for item in menu_data if 'select' in item and
                 'items' in item['select'] and 'TFTP' in item['select']['items'][0]][0],
             'TFTP on MAC Address: FF:01:00:69:AA:CC'  # matches the job_ctx
         )
@@ -369,7 +368,8 @@ class TestPipelineSubmit(TestCaseWithFactory):
         # the variable, the job could set it to override the device type template default, as shown by the
         # override of the base_nfsroot_args by allowing nfsroot_args in the device type template..
         self.assertEqual(
-            [item['select']['enter'] for item in menu_data if 'select' in item and
+            [
+                item['select']['enter'] for item in menu_data if 'select' in item and
                 'wait' in item['select'] and 'Description' in item['select']['wait']][0],
             'console=ttyO0,115200 earlyprintk=uart8250-32bit,0x1c020000 debug '
             'root=/dev/nfs rw 172.164.56.2:/home/user/nfs/,tcp,hard,intr ip=dhcp'
@@ -825,7 +825,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         for job in job_list:
             self.assertEqual(job.requested_device_type, device_type)
 
-    def test_multinode_with_retired(self):
+    def test_multinode_with_retired(self):  # pylint: disable=too-many-statements
         """
         check handling with retired devices in device_list
         """
@@ -944,7 +944,7 @@ class VlanInterfaces(TestCaseWithFactory):
         device_dict.save()
         self.filename = os.path.join(os.path.dirname(__file__), 'bbb-cubie-vlan-group.yaml')
 
-    def test_vlan_interface(self):
+    def test_vlan_interface(self):  # pylint: disable=too-many-locals
         device_dict = DeviceDictionary.get('bbb-01')
         chk = {
             'hostname': 'bbb-01',

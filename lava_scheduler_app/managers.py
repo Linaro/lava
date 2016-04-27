@@ -21,8 +21,6 @@ from django.db.models import Q
 
 from django_restricted_resource.managers import RestrictedResourceQuerySet
 
-from lava_scheduler_app import utils
-
 
 class RestrictedTestJobQuerySet(RestrictedResourceQuerySet):
 
