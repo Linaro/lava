@@ -1382,6 +1382,9 @@ class TestJob(RestrictedResource):
     """
     A test job is a test process that will be run on a Device.
     """
+    class Meta:
+        index_together = ["status", "requested_device_type", "requested_device"]
+
     objects = RestrictedResourceManager.from_queryset(
         RestrictedTestJobQuerySet)()
 
