@@ -389,14 +389,13 @@ def job_report(start_day, end_day, health_check):
     end_date = now + datetime.timedelta(end_day)
 
     res = TestJob.objects.filter(health_check=health_check,
-                                 start_time__range=(start_date, end_date),
-                                 status__in=(TestJob.COMPLETE, TestJob.INCOMPLETE,
-                                             TestJob.CANCELED, TestJob.CANCELING),).values('status')
+                                 start_time__range=(start_date, end_date)).values('status')
     url = reverse('lava.scheduler.failure_report')
     params = 'start=%s&end=%s&health_check=%d' % (start_day, end_day, health_check)
     return {
         'pass': res.filter(status=TestJob.COMPLETE).count(),
-        'fail': res.exclude(status=TestJob.COMPLETE).count(),
+        'fail': res.filter(status__in=(TestJob.INCOMPLETE, TestJob.CANCELED,
+                                       TestJob.CANCELING)).count(),
         'date': start_date.strftime('%m-%d'),
         'failure_url': '%s?%s' % (url, params),
     }
