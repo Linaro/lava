@@ -437,7 +437,7 @@ class DeviceHealthTable(LavaTable):
             return pklink(report)
 
     hostname = tables.TemplateColumn('''
-    {% if record.too_long_since_last_heartbeat or record.status == record.RETIRED or record.status == record.OFFLINE %}
+    {% if record.status == record.RETIRED or record.status == record.OFFLINE %}
     <span class="glyphicon glyphicon-thumbs-down text-danger"></span>
     {% else %}
     <span class="glyphicon glyphicon-thumbs-up text-success"></span>
@@ -530,7 +530,7 @@ class DeviceTable(LavaTable):
         return pklink(record.device_type)
 
     hostname = tables.TemplateColumn('''
-    {% if record.too_long_since_last_heartbeat or record.status == record.RETIRED or record.status == record.OFFLINE %}
+    {% if record.status == record.RETIRED or record.status == record.OFFLINE %}
     <span class="glyphicon glyphicon-thumbs-down text-danger"></span>
     {% else %}
     <span class="glyphicon glyphicon-thumbs-up text-success"></span>
