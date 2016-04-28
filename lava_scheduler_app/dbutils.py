@@ -379,7 +379,8 @@ def _validate_queue():
     """
     logger = logging.getLogger('dispatcher-master')
     jobs = TestJob.objects.filter(status=TestJob.SUBMITTED)
-    jobs = jobs.filter(actual_device__isnull=False)
+    jobs = jobs.filter(actual_device__isnull=False) \
+               .select_related('actual_device', 'actual_device__current_job')
     for job in jobs:
         if not job.actual_device.current_job:
             device = Device.objects.get(hostname=job.actual_device.hostname)
