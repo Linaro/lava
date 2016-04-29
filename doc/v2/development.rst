@@ -1,93 +1,4 @@
-LAVA development
-################
-
-Pre-requisites to start with development
-****************************************
-
-LAVA is written in Python_, so you will need to know (or be willing to
-learn) Python_. Likewise, the web interface is a Django_ application so
-you will need to Django if you need to modify the web interface. The
-pipeline model uses YAML_ (so you'll need the
-`YAML Parser <http://yaml-online-parser.appspot.com/?yaml=&type=json>`_) and Jinja2_.
-
-.. _Python: http://www.python.org/
-.. _Django: https://www.djangoproject.com/
-.. _YAML: http://yaml.org/
-.. _Jinja2: http://jinja.pocoo.org/docs/dev/
-
-Also, you will need git_.
-
-.. _git: http://www.git-scm.org/
-
-Updating online documentation
-*****************************
-
-LAVA online documentation is written with RST_ format. You can use the command
-below to generate html format files.::
-
- $ cd lava-server/
- $ make -C doc html
- $ iceweasel doc/_build/html/index.html
- (or whatever browser you prefer)
-
-We welcome contributions to improve the documentation. If you are considering
-adding new features to LAVA or changing current behaviour, ensure that the
-changes include updates for the documentation.
-
-.. _RST: http://sphinx-doc.org/rest.html
-
-.. _contribute_upstream:
-
-Contributing Upstream
-*********************
-
-The best way to protect your investment on LAVA is to contribute your
-changes back. This way you don't have to maintain the changes you need
-by yourself, and you don't run the risk of LAVA changed in a way that is
-incompatible with your changes.
-
-Upstream uses Debian_, see :ref:`lava_on_debian` for more information.
-
-.. _Debian: http://www.debian.org/
-
-Community contributions
-=======================
-
-Contributing via your distribution
-----------------------------------
-
-You are welcome to use the bug tracker of your chosen distribution.
-The maintainer for the packages in that distribution should :ref:`register`
-with Linaro (or already be part of Linaro) to be able to
-forward bug reports and patches into the upstream LAVA systems.
-
-.. _register:
-
-Register with Linaro as a Community contributor
------------------------------------------------
-
-If you, or anyone on your team, would like to register with Linaro directly,
-this will allow you to file an upstream bug, submit code for review by
-the LAVA team, etc. Register at the following url:
-
-https://register.linaro.org/
-
-If you are considering large changes, it is best to register and also
-to subscribe to the `lava_devel` mailing list and talk
-to us on IRC::
-
- irc.freenode.net
- #linaro-lava
-
-Contributing via GitHub
------------------------
-
-You can use GitHub to fork the LAVA packages and make pull requests.
-
-https://github.com/Linaro
-
-It is worth sending an email to the `lava_devel` mailing list, so
-that someone can migrate the pull request to a review.
+.. _development_workflow:
 
 Patch Submissions and workflow
 ==============================
@@ -150,8 +61,7 @@ Run the unit tests
 ------------------
 
 Extra dependencies are required to run the tests. On Debian based distributions,
-you can install ``lava-dev``. (If you only need to run the ``lava-dispatcher``
-unit tests, you can just install ``pep8`` and ``python-testscenarios``.)
+you can install ``lava-dev``.
 
 To run the tests, use the ``ci-run`` script::
 
@@ -344,8 +254,8 @@ development.
 Database migrations
 -------------------
 
-LAVA recommends Debian Jessie but also supports Ubuntu Trusty which has
-an older version of `python-django <https://tracker.debian.org/pkg/python-django>`_.
+LAVA recommends Debian Jessie but also supports testing and unstable which
+have a newer version of `python-django <https://tracker.debian.org/pkg/python-django>`_.
 
 Database migrations on Debian Jessie and later are managed within
 django. Support for
@@ -378,16 +288,39 @@ for more information.
 Python 3.x
 ----------
 
-There is no pressure or expectation on delivering python 3.x code.
-LAVA is a long way from being able to use python 3.x support,
+LAVA dispatcher now supports python3 testing but **only** for the
+pipeline unit tests. Code changes to the V2 dispatcher code (i.e. in
+the ``lava_dispatcher/pipeline`` tree) **must** be sufficiently aware
+of Python3 to not break the unit tests when run using python3.
+
+LAVA is not yet ready to use python 3.x support at runtime,
 particularly in lava-server, due to the lack of python 3.x migrations
 in dependencies. However it is good to take python 3.x support into
-account, when writing new code, so that it makes it easy during
-the move anytime in the future.
+account in ``lava-server``, when writing new code for LAVA v2, so that
+it makes it easy during the move anytime in the future.
 
-Developers can run unit tests against python 3.x for all LAVA
-components from time to time and keep a check on how we can support
-python 3.x without breaking compatibility with python 2.x
+All reviews run the ``lava-dispatcher.pipelnie`` V2 unit tests against
+python 3.x and changes must pass without breaking compatibility with
+python 2.x
+
+The ``./ci-run`` script for ``lava-dispatcher`` shows how to run the
+python3 unit tests::
+
+ # to run python3 unit tests, you can use
+ # python3 -m unittest discover -v lava_dispatcher.pipeline
+ # but the python3 dependencies are not automatically installed.
+
+The list of python3 dependencies needed for the pipeline unit tests is
+maintained as part of the functional tests:
+
+https://git.linaro.org/lava-team/refactoring.git/blob/HEAD:/functional/dispatcher-pipeline-python3.yaml
+
+From time to time, reviews may add more python dependencies - check on
+the :ref:`mailing_lists` if your tests start to fail after rebasing on
+current master or if you want to help with more python3 support in LAVA V2.
+
+Avoid making changes to LAVA V1 code for python3 - only LAVA V2 is
+going to support python3.
 
 Pylint
 ------
@@ -400,13 +333,35 @@ code smells, refer to Martin Fowler's `refactoring book`_. LAVA
 developers stick on to `PEP 008`_ (aka `Guido's style guide`_) across
 all the LAVA component code.
 
+``pylint`` does need to be used with some caution, the messages produced
+should not be followed blindly. It can be very useful for spotting unused
+imports, unused variables and other issues. One notable problem is with
+``logging-not-lazy`` as there can be times when lazy logging can result
+in out of date or invalid information being logged. This is a particular
+problem when passing variables like dictionaries and lists to the logger
+in the dispatcher as these later need to be turned into YAML.
+
 To simplify the pylint output, some warnings are recommended to be
 disabled::
 
  $ pylint -d line-too-long -d missing-docstring
 
-**NOTE**: Docstrings should still be added wherever a docstring would
-be useful.
+.. note:: Docstrings should still be added wherever a docstring would
+   be useful.
+
+``pylint`` also supports local disabling of warnings and there are many
+examples of:
+
+.. code-block:: python
+
+ variable = func_call()  # pylint: disable=
+
+There is a ``pylint-django`` plugin available in unstable and testing
+and whilst it improves the pylint output for the ``lava-server`` codebase,
+it still has a high level of false indications.
+
+pep8
+----
 
 In order to check for `PEP 008`_ compliance the following command is
 recommended::
@@ -425,9 +380,7 @@ any. Most of the LAVA components such as ``lava-server``,
 ``lava-dispatcher``, :ref:`lava-tool <lava_tool>` have unit tests.
 
 Extra dependencies are required to run the tests. On Debian based
-distributions, you can install lava-dev. (If you only need to run the
-``lava-dispatcher`` unit tests, you can just install `pep8` and
-`python-testscenarios`.)
+distributions, you can install lava-dev.
 
 To run the tests, use the ci-run / ci-build scripts::
 

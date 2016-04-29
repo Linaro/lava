@@ -97,6 +97,7 @@ Developer guides
 .. toctree::
    :maxdepth: 2
 
+   development-intro.rst
    development.rst
    debugging.rst
    debian.rst
