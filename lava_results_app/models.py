@@ -747,11 +747,12 @@ class Query(models.Model):
 
     is_changed = models.BooleanField(
         default=False,
-        verbose_name='Live query')
+        verbose_name='Conditions have changed')
 
     is_updating = models.BooleanField(
         default=False,
-        verbose_name='Live query')
+        editable=False,
+        verbose_name='Query is currently updating')
 
     last_updated = models.DateTimeField(
         blank=True,
