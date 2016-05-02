@@ -330,7 +330,7 @@ class Settings(object):
     @property
     def ADMINS(self):
         """
-        See: http://docs.djangoproject.com/en/1.2/ref/settings/#admins
+        See: https://docs.djangoproject.com/en/1.8/ref/settings/#admins
 
         Bridge for the settings file ADMIN property.
 
@@ -338,10 +338,19 @@ class Settings(object):
 
             ``("{appname} Administrator", "root@localhost')``
         """
-        default = (
-            ('{appname} Administrator'.format(appname=self._appname), 'root@localhost'),
-        )
-        return self._settings.get("ADMINS", default)
+        default = [
+            ['{appname} Administrator'.format(appname=self._appname), 'root@localhost'],
+        ]
+
+        value = self._settings.get("ADMINS", default)
+        # In Django < 1.9, this a tuple of tuples
+        # In Django >= 1.9 this is a list of tuples
+        # See https://docs.djangoproject.com/en/1.8/ref/settings/#admins
+        # and https://docs.djangoproject.com/en/1.9/ref/settings/#admins
+        if django.VERSION < (1, 9):
+            return tuple(tuple(v) for v in value)
+        else:
+            return [tuple(v) for v in value]
 
     @property
     def MANAGERS(self):
