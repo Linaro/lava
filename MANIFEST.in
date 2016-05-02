@@ -18,6 +18,7 @@ include etc/*
 include etc/logrotate.d/*
 include version.py
 include share/*
+include share/apache2/*
 include linaro_dashboard_bundle/schemas/*.json
 include linaro_dashboard_bundle/test_documents/*.json
 
