@@ -355,25 +355,21 @@ class Settings(object):
     @property
     def MANAGERS(self):
         """
-        See: http://docs.djangoproject.com/en/1.2/ref/settings/#managers
+        See: http://docs.djangoproject.com/en/1.8/ref/settings/#managers
 
         Bridge for the settings file MANAGERS property.
 
         By default it returns whatever ADMINS returns.
         """
-        return self._settings.get("MANAGERS", self.ADMINS)
+        value = self._settings.get("MANAGERS", None)
+        if not value:
+            return self.ADMINS
 
-    @property
-    def SEND_BROKEN_LINK_EMAILS(self):
-        """
-        See: http://docs.djangoproject.com/en/1.2/ref/settings/#send-broken-link-emails
-
-        Bridge for the settings file SEND_BROKEN_LINK_EMAILS property.
-
-        By default it returns False
-        """
-        default = False
-        return self._settings.get("SEND_BROKEN_LINK_EMAILS", default)
+        # Same format as ADMINS
+        if django.VERSION < (1, 9):
+            return tuple(tuple(v) for v in value)
+        else:
+            return [tuple(v) for v in value]
 
     @property
     def LOGIN_URL(self):

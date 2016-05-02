@@ -69,15 +69,8 @@ STATICFILES_DIRS = distro_settings.STATICFILES_DIRS
 ADMINS = distro_settings.ADMINS
 
 # A tuple in the same format as ADMINS that specifies who should get
-# broken-link notifications when SEND_BROKEN_LINK_EMAILS=True.
+# broken-link notifications when BrokenLinkEmailsMiddleware is enabled
 MANAGERS = distro_settings.MANAGERS
-
-# Whether to send an e-mail to the MANAGERS each time somebody visits a
-# Django-powered page that is 404ed with a non-empty referer (i.e., a broken
-# link). This is only used if CommonMiddleware is installed (see Middleware.
-# See also IGNORABLE_404_STARTS, IGNORABLE_404_ENDS and Error reporting via
-# e-mail.
-SEND_BROKEN_LINK_EMAILS = distro_settings.SEND_BROKEN_LINK_EMAILS
 
 # LOG_SIZE_LIMIT in megabytes
 LOG_SIZE_LIMIT = distro_settings.LOG_SIZE_LIMIT
