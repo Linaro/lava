@@ -79,6 +79,11 @@ When using existing git tags or the release branch, create a new local
 branch and commit your changes to ensure that a
 :ref:`local version string <local_version_strings>` is used.
 
+There can also be new dependencies added by changes in master and
+staging before those changes are merged into release or uploaded as
+a production release. When these changes are merged into master, the
+packaging will also be updated.
+
 .. _local_version_strings:
 
 Local version strings

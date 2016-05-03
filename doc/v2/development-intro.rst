@@ -26,7 +26,7 @@ is used. The LAVA UI has some use of Javascript_ and CSS_. LAVA also
 uses ZMQ_ and XML-RPC_ and the LAVA documentation is written with RST_.
 
 In addition, test jobs and device support can involve use of U-Boot_,
-ADB_, QEMU_, Grub_, SSH_ and a variety of other systems and tools to
+GuestFS_, ADB_, QEMU_, Grub_, SSH_ and a variety of other systems and tools to
 access devices and debug test jobs.
 
 .. _Python: http://www.python.org/
@@ -38,6 +38,7 @@ access devices and debug test jobs.
 .. _Debian: https://www.debian.org/
 .. _Javascript: https://www.javascript.com/
 .. _CSS: https://www.w3.org/Style/CSS/Overview.en.html
+.. _GuestFS: http://libguestfs.org/
 .. _ZMQ: http://zeromq.org/
 .. _XML-RPC: http://xmlrpc.scripting.com/
 .. _ADB: http://developer.android.com/tools/help/adb.html
@@ -58,7 +59,8 @@ Developer workflows
    python virtual environments or installing directly from a git
    directory**. ``python-setuptools`` is used but only  with ``sdist``
    to create the tarballs to be used for the Debian packaging, not
-   for ``install``.
+   for ``install``. Some dependencies of LAVA are not available with
+   pypi, for example ``python-guestfs``.
 
 .. seealso:: :ref:`lava_on_debian` and a summary of the
   `Debian LAVA team activity <https://qa.debian.org/developer.php?email=pkg-linaro-lava-devel%40lists.alioth.debian.org>`_
