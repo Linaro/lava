@@ -1801,12 +1801,12 @@ def send_image_report_notifications(sender, bundle):
                 for chart_filter in chart.imagechartfilter_set.all():
                     chart_tests += chart_filter.chart_tests
 
-                chart_tests = [chart_test.test for chart_test in chart_tests]
-
                 for filter_match in filter_matches:
 
                     if filter_match.filter in chart_filters:
                         if chart.chart_type == "pass/fail":
+                            chart_tests = [chart_test.test for chart_test in
+                                           chart_tests]
                             for test_run in filter_match.test_runs:
                                 if test_run.test in chart_tests:
 
@@ -1815,6 +1815,8 @@ def send_image_report_notifications(sender, bundle):
                                         matches.append(test_run)
 
                         elif chart.chart_type == "measurement":
+                            chart_tests = [chart_test.test_case for chart_test
+                                           in chart_tests]
                             for test_result in filter_match.specific_results:
                                 if test_result.test_case in chart_tests:
                                     if test_result.measurement <\
@@ -1822,6 +1824,8 @@ def send_image_report_notifications(sender, bundle):
                                         matches.append(test_result)
 
                         elif chart.chart_type == "attributes":
+                            chart_tests = [chart_test.test for chart_test in
+                                           chart_tests]
                             for test_run in filter_match.test_runs:
                                 if test_run.test in chart_tests:
                                     for attr in chart_test.attributes:
