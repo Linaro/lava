@@ -39,6 +39,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.filename = os.path.join(os.path.dirname(__file__), 'sample_jobs/bbb-group-vland-alpha.yaml')
         self.beta_filename = os.path.join(os.path.dirname(__file__), 'sample_jobs/bbb-group-vland-beta.yaml')
         self.device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        self.job_id = "100"
 
     def test_file_structure(self):
         with open(self.filename) as yaml_data:
@@ -53,7 +54,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
                 item[0] for item in sorted(level_tuple, key=lambda data: data[1])
             ][1]
         )
-        vprotocol = VlandProtocol(alpha_data)
+        vprotocol = VlandProtocol(alpha_data, self.job_id)
         self.assertIn(
             'arbit',
             vprotocol.base_group,
@@ -122,7 +123,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
             alpha_data = yaml.load(yaml_data)
         self.assertIn('protocols', alpha_data)
         self.assertTrue(VlandProtocol.accepts(alpha_data))
-        vprotocol = VlandProtocol(alpha_data)
+        vprotocol = VlandProtocol(alpha_data, self.job_id)
         vprotocol.set_up()
         with open(self.filename) as sample_job_data:
             parser = JobParser()

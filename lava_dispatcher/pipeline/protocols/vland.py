@@ -47,8 +47,8 @@ class VlandProtocol(Protocol):
     name = "lava-vland"
     level = 5
 
-    def __init__(self, parameters):
-        super(VlandProtocol, self).__init__(parameters=parameters)
+    def __init__(self, parameters, job_id):
+        super(VlandProtocol, self).__init__(parameters, job_id)
         self.logger = logging.getLogger('dispatcher')
         self.vlans = {}
         self.ports = []

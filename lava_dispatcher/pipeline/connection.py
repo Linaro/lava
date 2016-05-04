@@ -253,13 +253,14 @@ class Protocol(object):  # pylint: disable=abstract-class-not-used
     name = 'protocol'
     level = 0
 
-    def __init__(self, parameters):
+    def __init__(self, parameters, job_id):
         self.logger = logging.getLogger("dispatcher")
         self.poll_timeout = Timeout(self.name)
         self.parameters = None
         self.__errors__ = []
         self.parameters = parameters
         self.configured = False
+        self.job_id = job_id
 
     @classmethod
     def select_all(cls, parameters):

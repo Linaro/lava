@@ -45,8 +45,8 @@ class MultinodeProtocol(Protocol):
 
     # FIXME: use errors and valid where old code just logged complaints
 
-    def __init__(self, parameters):
-        super(MultinodeProtocol, self).__init__(parameters)
+    def __init__(self, parameters, job_id):
+        super(MultinodeProtocol, self).__init__(parameters, job_id)
         self.blocks = 4 * 1024
         # how long between polls (in seconds)
         self.system_timeout = Timeout('system', LAVA_MULTINODE_SYSTEM_TIMEOUT)

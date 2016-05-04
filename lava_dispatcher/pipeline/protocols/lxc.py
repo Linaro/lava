@@ -36,10 +36,11 @@ class LxcProtocol(Protocol):
     """
     name = "lava-lxc"
 
-    def __init__(self, parameters):
-        super(LxcProtocol, self).__init__(parameters)
+    def __init__(self, parameters, job_id):
+        super(LxcProtocol, self).__init__(parameters, job_id)
         self.system_timeout = Timeout('system', LAVA_LXC_TIMEOUT)
-        self.lxc_name = parameters['protocols'][self.name]['name']
+        self.lxc_name = '-'.join([parameters['protocols'][self.name]['name'],
+                                  str(job_id)])
         self.lxc_dist = parameters['protocols'][self.name]['distribution']
         self.lxc_release = parameters['protocols'][self.name]['release']
         self.lxc_arch = parameters['protocols'][self.name]['arch']

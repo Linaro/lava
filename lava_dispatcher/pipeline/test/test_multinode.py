@@ -50,6 +50,7 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
         factory = Factory()
         self.client_job = factory.create_kvm_job('sample_jobs/kvm-multinode-client.yaml')
         self.server_job = factory.create_kvm_job('sample_jobs/kvm-multinode-server.yaml')
+        self.job_id = "100"
         self.coord = TestCoordinator()
 
     def _cleanup(self):
@@ -65,8 +66,8 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
         """
         Override the socket calls to simply pass messages directly to the TestCoordinator
         """
-        def __init__(self, coord, parameters):
-            super(TestMultinode.TestClient, self).__init__(parameters)
+        def __init__(self, coord, parameters, job_id):
+            super(TestMultinode.TestClient, self).__init__(parameters, job_id)
             self.coord = coord
             self.debug_setup()
             self.client_name = "fake"
@@ -261,7 +262,9 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.assertTrue(ret == "completed")
 
     def test_client(self):
-        client = TestMultinode.TestClient(self.coord, self.client_job.parameters)
+        client = TestMultinode.TestClient(self.coord,
+                                          self.client_job.parameters,
+                                          self.job_id)
         client.settings['target'] = 'completed'
         self.coord.expectResponse('wait')
         client.initialise_group()
@@ -282,8 +285,11 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
         self.coord.newGroup(2)
         self.coord.addClient("completing")
         self.coord.addClient("completed")
-        client = TestMultinode.TestClient(self.coord, self.client_job.parameters)
-        TestMultinode.TestClient(self.coord, self.server_job.parameters)
+        client = TestMultinode.TestClient(self.coord,
+                                          self.client_job.parameters,
+                                          self.job_id)
+        TestMultinode.TestClient(self.coord, self.server_job.parameters,
+                                 self.job_id)
         self.coord.expectResponse('wait')
         client.initialise_group()
         client.settings['target'] = 'completed'
@@ -306,8 +312,12 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
         )
 
     def test_wait(self):
-        client = TestMultinode.TestClient(self.coord, self.client_job.parameters)
-        server = TestMultinode.TestClient(self.coord, self.server_job.parameters)
+        client = TestMultinode.TestClient(self.coord,
+                                          self.client_job.parameters,
+                                          self.job_id)
+        server = TestMultinode.TestClient(self.coord,
+                                          self.server_job.parameters,
+                                          self.job_id)
         client.settings['target'] = 'completed'
         self.coord.expectResponse('wait')
         client.initialise_group()
@@ -338,8 +348,12 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
         }))
 
     def test_wait_all(self):
-        client = TestMultinode.TestClient(self.coord, self.client_job.parameters)
-        server = TestMultinode.TestClient(self.coord, self.server_job.parameters)
+        client = TestMultinode.TestClient(self.coord,
+                                          self.client_job.parameters,
+                                          self.job_id)
+        server = TestMultinode.TestClient(self.coord,
+                                          self.server_job.parameters,
+                                          self.job_id)
         client.settings['target'] = 'completed'
         self.coord.expectResponse('wait')
         client.initialise_group()
@@ -364,8 +378,12 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
         }))
 
     def test_wait_all_role(self):
-        client = TestMultinode.TestClient(self.coord, self.client_job.parameters)
-        server = TestMultinode.TestClient(self.coord, self.server_job.parameters)
+        client = TestMultinode.TestClient(self.coord,
+                                          self.client_job.parameters,
+                                          self.job_id)
+        server = TestMultinode.TestClient(self.coord,
+                                          self.server_job.parameters,
+                                          self.job_id)
         client.settings['target'] = 'completed'
         self.coord.expectResponse('wait')
         client.initialise_group()
@@ -527,6 +545,7 @@ class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-method
         """
         Unable to test actually sending messages - need a genuine group with clients and roles
         """
+        self.job_id = "100"
         parameters = {
             'target': 'kvm01',
             'protocols': {
@@ -543,7 +562,8 @@ class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-method
             }
         }
         self.coord = TestCoordinator()
-        self.protocol = TestProtocol.FakeProtocol(self.coord, parameters)
+        self.protocol = TestProtocol.FakeProtocol(self.coord, parameters,
+                                                  self.job_id)
         logging.getLogger('dispatcher').addHandler(logging.NullHandler())
 
     def _wrap_message(self, message, role):
@@ -608,10 +628,10 @@ class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-method
 
     class FakeProtocol(MultinodeProtocol):
 
-        def __init__(self, fake_coordinator, parameters):
+        def __init__(self, fake_coordinator, parameters, job_id):
             # set the name before passing in the parameters based on that name
             self.name = "fake-multinode"
-            super(TestProtocol.FakeProtocol, self).__init__(parameters)
+            super(TestProtocol.FakeProtocol, self).__init__(parameters, job_id)
             self.sock = TestProtocol.FakeClient(fake_coordinator)
             self.debug_setup()
 
@@ -692,6 +712,7 @@ class TestDelayedStart(unittest.TestCase):  # pylint: disable=too-many-public-me
         """
         Unable to test actually sending messages - need a genuine group with clients and roles
         """
+        job_id = "100"
         client_parameters = {
             'target': 'kvm01',
             'protocols': {
@@ -748,9 +769,15 @@ class TestDelayedStart(unittest.TestCase):  # pylint: disable=too-many-public-me
             }
         }
         self.coord = TestCoordinator()
-        self.client_protocol = TestProtocol.FakeProtocol(self.coord, client_parameters)
-        self.server_protocol = TestProtocol.FakeProtocol(self.coord, server_parameters)
-        self.bad_protocol = TestProtocol.FakeProtocol(self.coord, bad_parameters)
+        self.client_protocol = TestProtocol.FakeProtocol(self.coord,
+                                                         client_parameters,
+                                                         job_id)
+        self.server_protocol = TestProtocol.FakeProtocol(self.coord,
+                                                         server_parameters,
+                                                         job_id)
+        self.bad_protocol = TestProtocol.FakeProtocol(self.coord,
+                                                      bad_parameters,
+                                                      job_id)
 
     def test_lava_start(self):
         self.assertTrue(self.client_protocol.delayed_start)
