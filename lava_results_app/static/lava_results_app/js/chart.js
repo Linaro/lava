@@ -547,13 +547,6 @@ $(document).ready(function () {
         table_body += '</tr></tbody>';
         $("#results-table_" + this.chart_id + " tbody").html(table_head +
                                                        table_body);
-
-        this.update_tooltips();
-    }
-
-    ChartQuery.prototype.update_tooltips = function() {
-        // Update tooltips on the remaining td's for the test names.
-        $(document).tooltip({items: "td"});
     }
 
     ChartQuery.prototype.set_dates = function() {
