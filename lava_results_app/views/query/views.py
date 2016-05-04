@@ -24,6 +24,7 @@ import simplejson
 import tempfile
 
 from django.db import IntegrityError
+from django.db.models import Q
 from django.db.utils import ProgrammingError
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
@@ -623,11 +624,14 @@ def get_query_names(request):
 
     term = request.GET['term']
     result = []
+
     query_list = Query.objects.filter(
-        name__startswith=term).distinct().order_by('name')
+        Q(is_archived=False),
+        Q(name__istartswith=term) |
+        Q(owner__username__istartswith=term)).distinct().order_by('name')
     for query in query_list:
-        result.append({"value": query.name,
-                       "label": query.name,
+        result.append({"value": query.owner_name,
+                       "label": query.owner_name,
                        "id": query.id,
                        "content_type": query.content_type.model_class().__name__})
     return HttpResponse(

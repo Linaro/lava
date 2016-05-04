@@ -58,9 +58,10 @@ div.selector .selector-chosen select {
     margin-bottom: 10px;
 }
 
-.chart-title a {
+.chart-title-link {
     float: right;
     margin-left: 20px;
+    font-size: 13px;
 }
 
 .errors {
