@@ -285,7 +285,9 @@ class DeviceSchema(schema.Schema):
     # for fastboot devices
     fastboot_driver = schema.StringOption(default=None)
     adb_command = schema.StringOption()
+    adb_command_timeout = schema.IntOption(default=120)
     fastboot_command = schema.StringOption()
+    fastboot_command_timeout = schema.IntOption(default=600)
     fastboot_kernel_load_addr = schema.StringOption()
     fastboot_efi_image = schema.StringOption(default=None)
     run_boot_cmds = schema.BoolOption(default=False)
