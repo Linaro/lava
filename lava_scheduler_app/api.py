@@ -3,7 +3,7 @@ import yaml
 import jinja2
 from simplejson import JSONDecodeError
 from django.core.exceptions import PermissionDenied
-from django.db.models import Count
+from django.db.models import Count, Q
 from linaro_django_xmlrpc.models import ExposedAPI
 from lava_scheduler_app.models import (
     Device,
@@ -593,7 +593,7 @@ class SchedulerAPI(ExposedAPI):
 
         `bundle_sha1`: string
         The sha1 hash code of the bundle, if it existed. Otherwise it will be
-        an empty string.
+        an empty string. (LAVA V1 only)
         """
         self._authenticate()
         if not job_id:
@@ -607,6 +607,10 @@ class SchedulerAPI(ExposedAPI):
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
+        if job.is_pipeline:
+            return job.get_status_display()
+
+        # DEPRECATED
         bundle_sha1 = ""
         try:
             bundle_sha1 = job.results_link.split('/')[-2]
@@ -618,6 +622,60 @@ class SchedulerAPI(ExposedAPI):
             'bundle_sha1': bundle_sha1
         }
 
+        return job_status
+
+    def job_list_status(self, job_id_list):
+        """
+        Name
+        ----
+        job_list_status ([job_id, job_id, job_id])
+
+        Description
+        -----------
+        Get the status of a list of job ids.
+
+        Arguments
+        ---------
+        `job_id_list`: list
+            List of job ids for which the output is required.
+            For multinode jobs specify the job sub_id as a float
+            in the XML-RPC call:
+            job_list_status([1, 2, 3,1, 5])
+
+        Return value
+        ------------
+        The user needs to be authenticated with an username and token.
+
+        This function returns an XML-RPC structure of job status with the
+        following content.
+
+        `job_status`: string
+        {ID: ['Submitted'|'Running'|'Complete'|'Incomplete'|'Canceled'|'Canceling']}
+
+        If the user is not able to view one of the specified jobs, that entry
+        will be omitted.
+
+        """
+        self._authenticate()
+        job_status = {}
+        # optimise the query for a long list instead of using the
+        # convenience handlers
+        if not isinstance(job_id_list, list):
+            raise xmlrpclib.Fault(400, "Bad request: needs to be a list")
+        if not all(isinstance(chk, (float, int)) for chk in job_id_list):
+            raise xmlrpclib.Fault(400, "Bad request: needs to be a list of integers or floats")
+        jobs = TestJob.objects.filter(
+            Q(id__in=job_id_list) | Q(sub_id__in=job_id_list)).select_related(
+                'actual_device', 'requested_device', 'requested_device_type')
+        for job in jobs:
+            device_type = job.job_device_type()
+            if not job.can_view(self.user) or not job.is_accessible_by(self.user) and not self.user.is_superuser:
+                continue
+            if device_type.owners_only:
+                # do the more expensive check second and only for a hidden device type
+                if device_type.num_devices_visible_to(self.user) == 0:
+                    continue
+            job_status[str(job.display_id)] = job.get_status_display()
         return job_status
 
     def worker_heartbeat(self, heartbeat_data):
