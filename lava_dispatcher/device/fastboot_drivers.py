@@ -86,7 +86,10 @@ class FastBoot(object):
         try:
             logging.info("Waiting for 10 seconds for connection to settle")
             sleep(10)
-            self('getvar all', timeout=2)
+            command = self.device.config.fastboot_command + ' ' + 'getvar all'
+            command = "flock -o /var/lock/lava-fastboot.lck " + command
+            # deliberately shortened from device config
+            _call(self.context, command, False, 2)
             return True
         except subprocess.CalledProcessError:
             return False
