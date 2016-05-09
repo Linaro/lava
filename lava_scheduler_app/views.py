@@ -2332,7 +2332,7 @@ def device_looping_mode(request, pk):
 
 @post_only
 def device_force_health_check(request, pk):
-    device = Device.objects.get_object_or_404(pk=pk)
+    device = get_object_or_404(Device, pk=pk)
     if device.can_admin(request.user):
         job = initiate_health_check_job(device)
         if not job:
