@@ -138,8 +138,9 @@ class TestShellAction(TestAction):
         self.wait(connection)
 
         pre_command_list = self.get_common_data(self.name, 'pre-command-list')
-        for command in pre_command_list:
-            connection.sendline(command)
+        if pre_command_list:
+            for command in pre_command_list:
+                connection.sendline(command)
 
         # FIXME: a predictable UID could be calculated from existing data here.
         # instead, uuid is read from the params to set _current_handler
