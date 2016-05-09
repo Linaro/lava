@@ -2005,7 +2005,9 @@ class ImageReport(models.Model):
         # If any of bundle streams is not accessible by this user, restrict
         # access to this image report as well.
         for chart in self.imagereportchart_set.all():
-            for chart_filter in chart.imagechartfilter_set.all():
+            chart_filters = chart.imagechartfilter_set.all().select_related("filter")\
+                                 .prefetch_related("filter__bundle_streams")
+            for chart_filter in chart_filters:
                 if not chart_filter.filter:
                     continue
                 for bundle_stream in chart_filter.filter.bundle_streams.all():
