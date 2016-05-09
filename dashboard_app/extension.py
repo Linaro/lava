@@ -73,9 +73,6 @@ class DashboardExtension(LavaServerExtension):
         settings_module['DATAREPORT_DIRS'] = [
             os.path.join(root_dir, 'examples', 'reports'),
             os.path.join(root_dir, 'production', 'reports')]
-        prepend_label_apps = settings_module.get('STATICFILES_PREPEND_LABEL_APPS', [])
-        if self.app_name in prepend_label_apps:
-            prepend_label_apps.remove(self.app_name)
 
     def contribute_to_settings_ex(self, settings_module, settings_object):
         settings_module['DATAVIEW_DIRS'] = settings_object._settings.get(

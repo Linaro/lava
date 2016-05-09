@@ -81,9 +81,6 @@ class SchedulerExtension(LavaServerExtension):
             'MIN_JOB_TIMEOUT': 24 * 60 * 60,
         }
         settings_module['SCHEDULER_DAEMON_OPTIONS'].update(from_module)
-        prepend_label_apps = settings_module.get('STATICFILES_PREPEND_LABEL_APPS', [])
-        if self.app_name in prepend_label_apps:
-            prepend_label_apps.remove(self.app_name)
 
     def contribute_to_settings_ex(self, settings_module, settings_object):
         super(SchedulerExtension, self).contribute_to_settings_ex(
