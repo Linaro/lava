@@ -27,7 +27,6 @@ from linaro_django_xmlrpc.views import help as linaro_django_xmlrpc_views_help
 from django.views.i18n import javascript_catalog
 from lava_server.extension import loader
 from lava_server.views import index, me
-from lava_markitup.urls import urlpatterns as lavamarkitup_urlpatterns
 
 handler403 = 'lava_server.views.permission_error'
 handler500 = 'lava_server.views.server_error'
@@ -66,9 +65,7 @@ urlpatterns = [
         include(api_urls.token_urlpatterns)),
     # XXX: This is not needed but without it linaro-django-xmlrpc tests fail
     url(r'^{mount_point}api/'.format(mount_point=settings.MOUNT_POINT),
-        include(api_urls.default_mapper_urlpatterns)),
-    url(r'^{mount_point}utils/markitup/'.format(mount_point=settings.MOUNT_POINT),
-        include(lavamarkitup_urlpatterns))
+        include(api_urls.default_mapper_urlpatterns))
 ]
 
 try:

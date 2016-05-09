@@ -95,7 +95,6 @@ if django.VERSION < (1, 8):
         os.path.join(PROJECT_SRC_DIR, 'dashboard_app', 'templates', 'dashboard_app'),
         os.path.join(PROJECT_SRC_DIR, 'lava_results_app', 'templates', 'lava_results_app'),
         os.path.join(PROJECT_SRC_DIR, 'google_analytics', 'templates', 'google_analytics'),
-        os.path.join(PROJECT_SRC_DIR, 'lava_markitup', 'templates', 'lava_markitup'),
         os.path.join(PROJECT_SRC_DIR, "templates"),
     )
 else:
@@ -108,7 +107,6 @@ else:
                 os.path.join(PROJECT_SRC_DIR, '..', 'dashboard_app', 'templates', 'dashboard_app'),
                 os.path.join(PROJECT_SRC_DIR, '..', 'lava_results_app', 'templates', 'lava_results_app'),
                 os.path.join(PROJECT_SRC_DIR, '..', 'google_analytics', 'templates', 'google_analytics'),
-                os.path.join(PROJECT_SRC_DIR, '..', 'lava_markitup', 'templates', 'lava_markitup'),
             ],
             'OPTIONS': {
                 'context_processors': [

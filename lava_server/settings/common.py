@@ -108,7 +108,6 @@ else:
                 os.path.join(PROJECT_DIR, '..', '..', 'dashboard_app', 'templates', 'dashboard_app'),
                 os.path.join(PROJECT_DIR, '..', '..', 'lava_results_app', 'templates', 'lava_results_app'),
                 os.path.join(PROJECT_DIR, '..', '..', 'google_analytics', 'templates', 'google_analytics'),
-                os.path.join(PROJECT_DIR, '..', '..', 'lava_markitup', 'templates', 'lava_markitup'),
             ],
             'OPTIONS': {
                 'context_processors': [
@@ -185,7 +184,6 @@ INSTALLED_APPS = [
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     'linaro_django_xmlrpc',
-    'lava_markitup',  # Support app for MarkItUp in LAVA
     'google_analytics',
 ]
 

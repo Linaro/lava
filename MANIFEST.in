@@ -8,11 +8,9 @@ recursive-include lava_server/templates *.html
 recursive-include lava_results_app/templates *.html
 recursive-include lava_results_app/tests *.yaml
 recursive-include lava_results_app/static *.png *.js *.css *.gif
-recursive-include lava_markitup/templates *.html
 recursive-include google_analytics/templates *.html
 include google_analytics/LICENSE
 include google_analytics/USAGE
-recursive-include lava_markitup/static *.gif *.png *.js *.css *.html
 include setup-dev-env.sh
 recursive-include dashboard_app/fixtures *.json
 recursive-include dashboard_app/templates *.html *.txt
