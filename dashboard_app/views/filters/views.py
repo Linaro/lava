@@ -87,7 +87,10 @@ class UserFiltersView(FilterView):
 class PublicFiltersView(FilterView):
 
     def get_queryset(self):
-        filters = TestRunFilter.objects.filter(public=True)
+        filters = TestRunFilter.objects.filter(public=True)\
+                               .prefetch_related("bundle_streams", "bundle_streams__user", "bundle_streams__group")\
+                               .prefetch_related("tests__cases", "tests__cases__test_case", "attributes")\
+                               .select_related("owner")
         non_accessible_filters = []
         for filter in filters:
             if not filter.is_accessible_by(self.request.user):
