@@ -436,6 +436,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         self.section = None
         self.connection_timeout = Timeout(self.name)
         self.action_namespaces = []
+        self.character_delay = 0
 
     # public actions (i.e. those who can be referenced from a job file) must
     # declare a 'class-type' name so they can be looked up.
@@ -567,6 +568,10 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
             self.max_retries = self.parameters['failure_retry']
         if 'repeat' in self.parameters:
             self.max_retries = self.parameters['repeat']
+        if self.job:
+            if self.job.device:
+                if 'character-delays' in self.job.device:
+                    self.character_delay = self.job.device['character-delays'].get(self.section, 0)
 
     @parameters.setter
     def parameters(self, data):

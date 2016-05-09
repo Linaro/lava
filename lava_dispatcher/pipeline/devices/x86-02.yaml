@@ -1,13 +1,14 @@
 device_type: x86
-parameters:
-  stuff:
-    - junk
+
 commands:
   connect: telnet bumblebee 8003
   hard_reset: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 01 --command reboot --delay 5
   power_off: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 01 --command off
   power_on: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 01 --command on
 
+character-delays:
+      boot: 100
+      test: 100
 
 actions:
   deploy:

@@ -159,7 +159,7 @@ class TestShellAction(TestAction):
                 "%s/bin/lava-test-runner %s" % (
                     self.data["lava_test_results_dir"],
                     self.data["lava_test_results_dir"]),
-            )
+                delay=self.character_delay)
 
             if self.timeout:
                 test_connection.timeout = self.timeout.duration

@@ -6,6 +6,8 @@ commands:
   #power_off: /usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 05
   #power_on: /usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 05
 
+character-delays:
+      boot: 10
 
 actions:
   deploy:
@@ -54,8 +56,6 @@ actions:
           label_class: 'a-zA-Z0-9\s\:'
           bootloader_prompt: 'Start:'
           boot_message: "Loaded: LinuxImage"
-          send_char: True  # redefine to take an integer? or drop and set True if the delay is defined?
-          character_delay: 10
           # interrupt: # character needed to interrupt u-boot, single whitespace by default
           # method specific stanza
         nfs:

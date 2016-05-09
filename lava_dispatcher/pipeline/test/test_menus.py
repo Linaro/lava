@@ -119,8 +119,8 @@ class TestUefi(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(selector.selector.prompt, params['bootloader_prompt'])  # initial prompt
         self.assertEqual(selector.boot_message, params['boot_message'])  # final prompt
         self.assertEqual(
-            selector.send_char_delay,
-            self.job.device['actions']['boot']['methods']['uefi-menu']['parameters']['character_delay'])
+            selector.character_delay,
+            self.job.device['character-delays']['boot'])
 
     def test_uefi_job(self):
         self.assertIsNotNone(self.job)

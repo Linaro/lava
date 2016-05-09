@@ -285,7 +285,7 @@ class BootloaderCommandsAction(Action):
         self.wait(connection)
         i = 1
         for line in self.data[self.type]['commands']:
-            connection.sendline(line, delay=300, send_char=True)
+            connection.sendline(line, delay=self.character_delay, send_char=True)
             if i != (len(self.data[self.type]['commands'])):
                 self.wait(connection)
                 i += 1

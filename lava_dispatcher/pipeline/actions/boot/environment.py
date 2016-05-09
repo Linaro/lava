@@ -54,7 +54,7 @@ class ExportDeviceEnvironment(Action):
         shell_file = self.get_common_data('environment', 'shell_file')
 
         for line in self.env:
-            connection.sendline(line)
-        connection.sendline('. %s' % shell_file)
+            connection.sendline(line, delay=self.character_delay)
+        connection.sendline('. %s' % shell_file, delay=self.character_delay)
 
         return connection

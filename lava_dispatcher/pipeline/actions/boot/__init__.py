@@ -118,13 +118,13 @@ class AutoLoginAction(Action):
             self.logger.debug("Waiting for the login prompt")
             connection.prompt_str = params['login_prompt']
             self.wait(connection)
-            connection.sendline(params['username'])
+            connection.sendline(params['username'], delay=self.character_delay)
 
             if 'password_prompt' in params:
                 self.logger.debug("Waiting for password prompt")
                 connection.prompt_str = params['password_prompt']
                 self.wait(connection)
-                connection.sendline(params['password'])
+                connection.sendline(params['password'], delay=self.character_delay)
         # prompt_str can be a list or str
         connection.prompt_str = [DEFAULT_SHELL_PROMPT]
 
@@ -142,6 +142,6 @@ class AutoLoginAction(Action):
         # may need to force a prompt here.
         wait_for_prompt(connection.raw_connection, connection.prompt_str, connection.timeout.duration, '#')
         # self.wait(connection)
-        connection.sendline('export PS1="%s"' % DEFAULT_SHELL_PROMPT)
+        connection.sendline('export PS1="%s"' % DEFAULT_SHELL_PROMPT, delay=self.character_delay)
 
         return connection

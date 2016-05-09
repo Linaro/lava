@@ -8,6 +8,9 @@ commands:
   power_off: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 08 --command off
   power_on: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 08 --command on
 
+character-delays:
+      boot: 250
+      test: 100
 
 actions:
   deploy:
