@@ -122,7 +122,7 @@ def prepare_guestfs(output, overlay, size):
     if len(devices) != 1:
         raise RuntimeError("Unable to prepare guestfs")
     guest_device = devices[0]
-    guest.mkfs("ext2", guest_device, label='LAVA')
+    guest.mke2fs(guest_device, label='LAVA')
     # extract to a temp location
     tar_output = mkdtemp()
     # Now mount the filesystem so that we can add files.
