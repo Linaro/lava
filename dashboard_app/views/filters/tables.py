@@ -192,7 +192,8 @@ class BundleTestColumn(tables.Column):
     def render(self, record):
         r = []
         if 'id__arrayagg' in record:
-            runs = TestRun.objects.filter(id__in=record['id__arrayagg'])
+            runs = TestRun.objects.filter(id__in=record['id__arrayagg'])\
+                                  .select_related("bundle", "bundle__bundle_stream")
             for run in runs:
                 r.append('<a href="' +
                          run.bundle.get_absolute_url() + '">' +
