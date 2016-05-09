@@ -129,8 +129,14 @@ def prepare_guestfs(output, overlay, size):
     guest.mount(guest_device, "/")
     tarball = tarfile.open(overlay)
     tarball.extractall(tar_output)
-    for dirname in os.listdir(tar_output):
-        for lavadir in os.listdir(os.path.join(tar_output, dirname)):
-            guest.copy_in(os.path.join(tar_output, dirname, lavadir), '/')
+    guest_dir = mkdtemp()
+    guest_tar = os.path.join(guest_dir, 'guest.tar')
+    root_tar = tarfile.open(guest_tar, 'w')
+    for topdir in os.listdir(tar_output):
+        for dirname in os.listdir(os.path.join(tar_output, topdir)):
+            root_tar.add(os.path.join(tar_output, topdir, dirname), arcname=dirname)
+    root_tar.close()
+    guest.tar_in(guest_tar, '/')
+    os.unlink(guest_tar)
     guest.umount(guest_device)
     return guest.blkid(guest_device)['UUID']
