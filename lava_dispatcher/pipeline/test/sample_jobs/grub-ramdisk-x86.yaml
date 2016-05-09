@@ -1,6 +1,6 @@
-device_type: d02
+device_type: x86
 
-job_name: d02-grub-boot
+job_name: x86-grub-boot
 timeouts:
   job:
     minutes: 300
@@ -14,7 +14,7 @@ actions:
        minutes: 10
      to: tftp
      ramdisk:
-         url: http://http.us.debian.org/debian/dists/jessie/main/installer-i386/current/images/netboot/debian-installer/i386/initrd.gz
+         url: http://ironhide.bounceme.net/x86-32/rootfs.cpio.gz
          compression: gz
      kernel:
          url: http://http.us.debian.org/debian/dists/jessie/main/installer-i386/current/images/netboot/debian-installer/i386/linux
@@ -26,8 +26,6 @@ actions:
       timeout:
           minutes: 50
       prompts:
-       - 'linaro-test'
-       - 'root@debian:~#'
        - '/ #'
 
   - test:
