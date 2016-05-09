@@ -519,7 +519,8 @@ def get_filter_testruns(user, filter, limit=100, descending=True,
         'denormalization',
         'bundle',
         'bundle__bundle_stream',
-        'test'
+        'test',
+        'bug_links'
     )[:limit]
 
     return reversed(testruns)
@@ -572,7 +573,9 @@ def get_filter_testresults(user, filter, limit=50, descending=True,
         'test_run__denormalization',
         'test_run__bundle',
         'test_run__bundle__bundle_stream',
-        'test_run__test'
+        'test_run__test',
+        'bug_links',
+        'test_case'
     )[:limit]
 
     return reversed(testresults)
