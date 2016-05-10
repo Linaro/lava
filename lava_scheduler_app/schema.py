@@ -94,6 +94,44 @@ def _job_actions_schema():
     ])
 
 
+def _job_notify_schema():
+    return Schema({
+        Required('method'): Any('email', 'irc'),
+        Required('criteria'): _notify_criteria_schema(),
+        'recipients': [str],
+        'verbosity': Any('verbose', 'quiet', 'status-only'),
+        'compare': _notify_compare_schema()
+    }, extra=True)
+
+
+def _notify_criteria_schema():
+    return Schema({
+        Required('status'): Any('complete', 'incomplete'),
+        'type': Any('progression', 'regression')
+    }, extra=True)
+
+
+def _notify_compare_schema():
+    return Schema({
+        'query': Any(_query_name_schema(), _query_conditions_schema()),
+        'blacklist': [str]
+    }, extra=True)
+
+
+def _query_name_schema():
+    return Schema({
+        Required('username'): str,
+        Required('name'): str
+    })
+
+
+def _query_conditions_schema():
+    return Schema({
+        Required('entity'): str,
+        'conditions': dict
+    })
+
+
 def vlan_name(value):
     if re.match("^[_a-zA-Z0-9]+$", str(value)):
         return str(value)
@@ -149,7 +187,8 @@ def _job_schema():
             'metadata': dict,
             Required('visibility'): visibility_schema(),
             Required('timeouts'): _job_timeout_schema(),
-            Required('actions'): _job_actions_schema()
+            Required('actions'): _job_actions_schema(),
+            'notify': _job_notify_schema()
         }
     )
 
