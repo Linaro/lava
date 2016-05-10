@@ -95,6 +95,10 @@ class OtherImageReportView(LavaView):
             is_archived=False,
             is_published=True,
             image_report_group=None).order_by('name')
+        other_reports = other_reports.prefetch_related("imagereportchart_set",
+                                                       "imagereportchart_set__imagechartfilter_set",
+                                                       "imagereportchart_set__imagechartfilter_set__filter",
+                                                       "imagereportchart_set__imagechartfilter_set__filter__bundle_streams")
 
         non_accessible_reports = []
         for report in other_reports:
@@ -122,6 +126,10 @@ class GroupImageReportView(LavaView):
             is_archived=False,
             is_published=True,
             image_report_group=self.image_report_group).order_by('name')
+        group_reports = group_reports.prefetch_related("imagereportchart_set",
+                                                       "imagereportchart_set__imagechartfilter_set",
+                                                       "imagereportchart_set__imagechartfilter_set__filter",
+                                                       "imagereportchart_set__imagechartfilter_set__filter__bundle_streams")
 
         non_accessible_reports = []
         for report in group_reports:
