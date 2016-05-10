@@ -4,14 +4,40 @@
 
 {% block content %}
     <h2>LAVA Results for {{ job_link }}</h2>
+<div class="row">
+  <div class="col-md-4">
+    <h4 class="modal-header">Exports
+      <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right"
+              title="Download links can be used with tokens:
+  ?name=user.name&amp;token=tokenstring">?</button>
+        </h4>
     <dl class="dl-horizontal">
-    <dt>Test results export :</dt>
+    <dt>Test results :</dt>
     <dd><a class="btn btn-xs btn-info" href="{% url 'lava.results.testjob_csv' job.id %}"
-       title="Download as CSV"><span class="glyphicon glyphicon-download"></span> CSV</a> or <a
+       title="Download results as CSV"><span class="glyphicon glyphicon-download"></span> CSV</a> or <a
             class="btn btn-xs btn-info" href="{% url 'lava.results.testjob_yaml' job.id %}"
-       title="Download as CSV"><span class="glyphicon glyphicon-download"></span> YAML</a></dd>
+       title="Download results as YAML"><span class="glyphicon glyphicon-download"></span> YAML</a></dd>
+    <dt>Job metadata :</dt>
+    <dd><a class="btn btn-xs btn-info" href="{% url 'lava.results.job.metadata' job.id %}"
+       title="Download metadata as YAML"><span class="glyphicon glyphicon-download"></span> YAML</a></dd>
     </dl>
+  </div>
+</div>
     {% render_table suite_table %}
+ <div class="panel-group" id="results_accordion">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4 class="panel-title"><a data-toggle="collapse" data-parent="#results_accordion" href="#metadata_collapse">
+        Metadata
+      </a></h4>
+    </div>
+    <div id="metadata_collapse" class="panel-collapse collapse">
+      <div class="panel-body">
+          <pre>{{ metadata }}</pre>
+      </div>
+    </div>
+  </div>
+ </div>
 
 {% endblock %}
 {% block scripts %}

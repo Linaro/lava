@@ -38,7 +38,7 @@ from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.tables import pklink
 from django_tables2 import RequestConfig
 from lava_results_app.utils import check_request_auth
-from lava_results_app.models import TestSuite, TestCase, TestSet
+from lava_results_app.models import TestSuite, TestCase, TestSet, TestData
 from lava.utils.lavatable import LavaView
 
 # pylint: disable=too-many-ancestors,invalid-name
@@ -49,7 +49,9 @@ class ResultsView(LavaView):
     Base results view
     """
     def get_queryset(self):
-        return TestSuite.objects.all().order_by('-job__id')
+        return TestSuite.objects.all().select_related('job').prefetch_related(
+            'job__actual_device', 'job__actual_device__device_type'
+        ).order_by('-job__id')
 
 
 class SuiteView(LavaView):
@@ -89,6 +91,11 @@ def testjob(request, job):
     suite_table = ResultsTable(
         data.get_table_data().filter(job=job)
     )
+    testdata = TestData.objects.get(testjob=job)
+    yaml_dict = {}
+    # hide internal python objects
+    for data in testdata.attributes.all():
+        yaml_dict[str(data.name)] = str(data.value)
     RequestConfig(request, paginate={"per_page": suite_table.length}).configure(suite_table)
     return render_to_response(
         "lava_results_app/job.html", {
@@ -96,6 +103,7 @@ def testjob(request, job):
             'job': job,
             'job_link': pklink(job),
             'suite_table': suite_table,
+            'metadata': yaml.dump(yaml_dict, default_flow_style=False)
         }, RequestContext(request))
 
 
@@ -134,6 +142,7 @@ def testjob_yaml(request, job):
 @BreadCrumb("Suite {pk}", parent=testjob, needs=['job', 'pk'])
 def suite(request, job, pk):
     job = get_object_or_404(TestJob, pk=job)
+    check_request_auth(request, job)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     data = SuiteView(request, model=TestCase, table_class=SuiteTable)
     suite_table = SuiteTable(
@@ -203,6 +212,28 @@ def suite_yaml(request, job, pk):
     for test_case in test_suite.testcase_set.all():
         yaml_list.append(export_testcase(test_case))
     yaml.dump(yaml_list, response)
+    return response
+
+
+def metadata_export(request, job):
+    """
+    Dispatcher adds some metadata,
+    Job submitter can add more.
+    CSV is not supported as the user-supplied metadata can
+    include nested dicts or lists.
+    """
+    job = get_object_or_404(TestJob, pk=job)
+    check_request_auth(request, job)
+    # testdata from job & export
+    testdata = get_object_or_404(TestData, testjob=job)
+    response = HttpResponse(content_type='text/yaml')
+    filename = "lava_metadata_%s.yaml" % job.id
+    response['Content-Disposition'] = 'attachment; filename="%s"' % filename
+    yaml_dict = {}
+    # hide internal python objects
+    for data in testdata.attributes.all():
+        yaml_dict[str(data.name)] = str(data.value)
+    yaml.dump(yaml_dict, response)
     return response
 
 

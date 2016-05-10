@@ -55,7 +55,7 @@ def anonymous_token(request, job):
 
 
 def check_request_auth(request, job):
-    if not request.user and job.is_public:
+    if job.is_public:
         return
     if not request.user.is_authenticated():
         # handle anonymous access
