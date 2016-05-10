@@ -589,7 +589,7 @@ def mydevice_type_health_history_log(request):
         RequestContext(request))
 
 
-def get_restricted_job(user, pk):
+def get_restricted_job(user, pk, request=None):
     """Returns JOB which is a TestJob object after checking for USER
     accessibility to the object.
     """
@@ -600,7 +600,7 @@ def get_restricted_job(user, pk):
         return job
     if device_type.num_devices_visible_to(user) == 0:
         raise Http404()
-    if job.can_view(user):
+    if utils.check_user_auth(user, job, request=request):
         return job
     if not job.is_accessible_by(user) and not user.is_superuser:
         raise PermissionDenied()
@@ -1404,7 +1404,7 @@ def job_definition(request, pk):
 
 
 def job_description_yaml(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     if not job.is_pipeline:
         raise Http404()
     filename = description_filename(job.id)
@@ -1419,7 +1419,7 @@ def job_description_yaml(request, pk):
 
 
 def job_definition_plain(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     response = HttpResponse(job.display_definition, content_type='text/plain')
     filename = "job_%d.yaml" % job.id if job.is_pipeline else "job_%d.json" % job.id
     response['Content-Disposition'] = "attachment; filename=%s" % filename

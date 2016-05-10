@@ -302,13 +302,17 @@ the details of the job run.
 
 .. downloading_results:
 
-Downloading test results
-------------------------
+Downloading test results and job data
+-------------------------------------
 
-LAVA V2 makes the test results available directly from the instance,
-without needing to go through ``lava-tool``. Currently, the results
-for any test job can be downloaded as :abbr:`CSV (comma-separated value)`
-and YAML format.
+LAVA V2 makes the test results and elements of the test job available directly
+from the instance, without needing to go through ``lava-tool``.
+
+* The results for any test job can be downloaded as :abbr:`CSV (comma-separated value)`
+  and YAML format.
+* The job definition and job description (V2 jobs only) can be downloaded.
+  For V1, the job definition will be in JSON. For V2, the definition and
+  the description will be in YAML.
 
 For example, the results for test job number 123 are available as
 CSV using::
@@ -332,6 +336,10 @@ results, you will need to specify your username and one of your
 the command line or the & will likely be interpreted by your shell::
 
  'http://localhost/results/123/csv?user=user.name&token=yourtokentextgoeshereononeverylongline'
+
+ 'http://localhost/scheduler/123/definition/plain?user=user.name&token=yourtokentextgoeshereononeverylongline'
+
+ 'http://localhost/scheduler/123/description?user=user.name&token=yourtokentextgoeshereononeverylongline'
 
  $ curl 'http://localhost/results/123/singlenode-advanced/yaml?user=user.name&token=yourtokentextgoeshereononeverylongline'
 

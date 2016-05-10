@@ -37,7 +37,7 @@ from collections import OrderedDict
 from django.contrib.sites.models import Site
 from django.core.exceptions import ImproperlyConfigured
 from django.utils import timezone
-
+from lava_results_app.utils import check_request_auth
 from lava_server.settings.getsettings import Settings
 from lava_server.settings.config_file import ConfigFile
 from lava_scheduler_app.schema import SubmissionException
@@ -877,3 +877,10 @@ def mkdir(path):
             pass
         else:
             raise
+
+
+def check_user_auth(user, job, request=None):
+    if request:
+        check_request_auth(request, job)
+        return True
+    return job.can_view(user)
