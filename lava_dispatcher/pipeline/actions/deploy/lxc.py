@@ -28,6 +28,9 @@ from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.pipeline.actions.deploy.apply_overlay import ApplyLxcOverlay
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
+from lava_dispatcher.pipeline.utils.constants import (
+    LXC_TEMPLATE_WITH_MIRROR,
+)
 
 
 def lxc_accept(device, parameters):
@@ -82,6 +85,7 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         self.name = "lxc-deploy"
         self.description = "download files and deploy using lxc"
         self.summary = "lxc deployment"
+        self.lxc_data = {}
 
     def validate(self):
         super(LxcAction, self).validate()
@@ -101,12 +105,8 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
                                  lava_test_sh_cmd)
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.protocols = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name]
-        self.set_common_data('lxc', 'name', self.protocols[0].lxc_name)
-        self.set_common_data('lxc', 'distribution', self.protocols[0].lxc_dist)
-        self.set_common_data('lxc', 'release', self.protocols[0].lxc_release)
-        self.set_common_data('lxc', 'arch', self.protocols[0].lxc_arch)
+        self.internal_pipeline = Pipeline(parent=self, job=self.job,
+                                          parameters=parameters)
         self.internal_pipeline.add_action(LxcCreateAction())
         self.internal_pipeline.add_action(OverlayAction())
         self.internal_pipeline.add_action(ApplyLxcOverlay())
@@ -124,21 +124,51 @@ class LxcCreateAction(DeployAction):
         self.summary = "create lxc"
         self.retries = 10
         self.sleep = 10
+        self.lxc_data = {}
+
+    def _set_lxc_data(self):
+        protocols = [protocol for protocol in self.job.protocols
+                     if protocol.name == LxcProtocol.name]
+        if protocols:
+            protocol = protocols[0]
+            self.set_common_data('lxc', 'name', protocol.lxc_name)
+            self.lxc_data['lxc_name'] = protocol.lxc_name
+            self.lxc_data['lxc_distribution'] = protocol.lxc_dist
+            self.lxc_data['lxc_release'] = protocol.lxc_release
+            self.lxc_data['lxc_arch'] = protocol.lxc_arch
+            self.lxc_data['lxc_template'] = protocol.lxc_template
+            self.lxc_data['lxc_mirror'] = protocol.lxc_mirror
+            self.lxc_data['lxc_security_mirror'] = protocol.lxc_security_mirror
 
     def validate(self):
         super(LxcCreateAction, self).validate()
+        # set lxc_data
+        self._set_lxc_data()
 
     def run(self, connection, args=None):
         connection = super(LxcCreateAction, self).run(connection, args)
-        lxc_name = self.get_common_data('lxc', 'name')
-        lxc_cmd = ['lxc-create', '-t', 'download', '-n', lxc_name, '--',
-                   '--dist', self.get_common_data('lxc', 'distribution'),
-                   '--release', self.get_common_data('lxc', 'release'),
-                   '--arch', self.get_common_data('lxc', 'arch')]
+        if self.lxc_data['lxc_template'] in LXC_TEMPLATE_WITH_MIRROR:
+            lxc_cmd = ['lxc-create', '-t', self.lxc_data['lxc_template'],
+                       '-n', self.lxc_data['lxc_name'], '--', '--release',
+                       self.lxc_data['lxc_release'], '--arch',
+                       self.lxc_data['lxc_arch']]
+            if self.lxc_data['lxc_mirror']:
+                lxc_cmd += ['--mirror', self.lxc_data['lxc_mirror']]
+            if self.lxc_data['lxc_security_mirror']:
+                lxc_cmd += ['--security-mirror',
+                            self.lxc_data['lxc_security_mirror']]
+            cmd_out_str = 'Generation complete.'
+        else:
+            lxc_cmd = ['lxc-create', '-t', self.lxc_data['lxc_template'],
+                       '-n', self.lxc_data['lxc_name'], '--', '--dist',
+                       self.lxc_data['lxc_distribution'], '--release',
+                       self.lxc_data['lxc_release'], '--arch',
+                       self.lxc_data['lxc_arch']]
+            cmd_out_str = 'Unpacking the rootfs'
         command_output = self.run_command(lxc_cmd)
-        if command_output and 'Unpacking the rootfs' not in command_output:
+        if command_output and cmd_out_str not in command_output:
             raise JobError("Unable to create lxc container: %s" %
                            command_output)  # FIXME: JobError needs a unit test
         else:
-            self.results = {'status': lxc_name}
+            self.results = {'status': self.lxc_data['lxc_name']}
         return connection

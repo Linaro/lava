@@ -1,0 +1,42 @@
+device_type: lxc
+job_name: lxc-pipeline
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+priority: medium
+visibility: public
+
+protocols:
+  lava-lxc:
+    name: pipeline-lxc-test
+    template: debian
+    distribution: debian
+    release: sid
+    arch: amd64
+    mirror: http://ftp.us.debian.org/debian/
+    security_mirror: http://mirror.csclub.uwaterloo.ca/debian-security/
+
+actions:
+- deploy:
+    timeout:
+      minutes: 5
+    to: lxc
+    os: debian
+
+- boot:
+    prompts:
+    - 'root@(.*):/#'
+    timeout:
+      minutes: 5
+    method: lxc
+
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: git://git.linaro.org/qa/test-definitions.git
+      from: git
+      path: common/dmidecode.yaml
+      name: dmidecode

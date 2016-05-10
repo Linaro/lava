@@ -44,6 +44,12 @@ class LxcProtocol(Protocol):
         self.lxc_dist = parameters['protocols'][self.name]['distribution']
         self.lxc_release = parameters['protocols'][self.name]['release']
         self.lxc_arch = parameters['protocols'][self.name]['arch']
+        self.lxc_template = parameters['protocols'][self.name].get(
+            'template', 'download')
+        self.lxc_mirror = parameters['protocols'][self.name].get('mirror',
+                                                                 None)
+        self.lxc_security_mirror = parameters['protocols'][self.name].get(
+            'security_mirror', None)
         self.logger = logging.getLogger('dispatcher')
 
     @classmethod
