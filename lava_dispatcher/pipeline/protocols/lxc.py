@@ -68,12 +68,12 @@ class LxcProtocol(Protocol):
         """
         pass
 
-    def finalise_protocol(self):
-        # FIXME: There should be a better way of doing this ie., identifying
-        #        whether this device needs 'adb reboot bootloader' by looking
-        #        at the device configuration.
-        # Reboot lxc-droid device types to bootloader using adb
-        if self.parameters['device_type'] == 'lxc-droid':
+    def finalise_protocol(self, device=None):
+        """Called by Finalize action to power down and clean up the assigned
+        device.
+        """
+        # Reboot devices that have adb serial number.
+        if 'adb_serial_number' in device:
             reboot_cmd = "lxc-attach -n {0} -- adb reboot bootloader".format(
                 self.lxc_name)
             self.logger.debug("%s protocol: executing '%s'", self.name,

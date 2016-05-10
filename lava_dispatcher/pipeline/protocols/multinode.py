@@ -286,7 +286,7 @@ class MultinodeProtocol(Protocol):
         self.logger.debug("Initialising group %s" % self.parameters['protocols'][self.name]['target_group'])
         self._send(init_msg, True)
 
-    def finalise_protocol(self):
+    def finalise_protocol(self, device=None):
         fin_msg = {
             "request": "clear_group",
             "group_size": self.parameters['protocols'][self.name]['group_size']

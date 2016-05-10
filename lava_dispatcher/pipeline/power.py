@@ -267,7 +267,7 @@ class FinalizeAction(Action):
         if connection:
             connection.finalise()
         for protocol in self.job.protocols:
-            protocol.finalise_protocol()
+            protocol.finalise_protocol(self.job.device)
         if self.errors:
             self.results = {'status': self.errors}
             self.logger.debug('status: %s' % self.errors)

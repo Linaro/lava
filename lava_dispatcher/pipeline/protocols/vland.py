@@ -472,7 +472,7 @@ class VlandProtocol(Protocol):
             return True
         return False
 
-    def finalise_protocol(self):
+    def finalise_protocol(self, device=None):
         # restore any ports to base_vlan
         for port_id in self.ports:
             self.logger.info("Finalizing port %s", port_id)
