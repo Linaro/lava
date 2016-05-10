@@ -300,7 +300,9 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         commit_id = self.vcs.clone(runner_path, self.parameters.get('revision', None))
         if commit_id is None:
             raise RuntimeError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
-        self.results = {'success': commit_id}
+        self.results = {
+            'success': commit_id,
+            'repository': self.parameters['repository'], 'path': self.parameters['path']}
 
         # now read the YAML to create a testdef dict to retrieve metadata
         self.logger.debug(os.path.join(runner_path, self.parameters['path']))
@@ -361,7 +363,11 @@ class BzrRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         commit_id = self.vcs.clone(runner_path, self.parameters.get('revision', None))
         if commit_id is None:
             raise RuntimeError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
-        self.results = {'success': commit_id}
+        self.results = {
+            'success': commit_id,
+            'repository': self.parameters['repository'],
+            'path': self.parameters['path']
+        }
 
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters['path'])
