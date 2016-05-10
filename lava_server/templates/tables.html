@@ -13,7 +13,7 @@ https://git.linaro.org/lava/lava-server.git/b727660635e57d5ccdb08272f0a379207a33
 {% block table %}
 <div class="row">
   <div class="col-md-6">
-  <form class="form-inline" id="{{ table.prefix }}search_form" action="{% querystring %}#{{ table.prefix|default:"table" }}" method="GET" role="form">
+  <form class="form-inline" id="{{ table.prefix }}search_form" action="{% querystring %}#{{ table.prefix|default:"table" }}" method="GET">
     {% for key,value in request.GET.iteritems %}
     <input type="hidden" name="{{ table.prefix }}{{ key }}" value="{{ value }}">
     {% endfor %}
@@ -30,7 +30,7 @@ https://git.linaro.org/lava/lava-server.git/b727660635e57d5ccdb08272f0a379207a33
   </div>
 {%  if search_data|get_search_data:table.prefix %}
   <div class="col-md-5">
-    <form class="form-inline pull-right" action="{% querystring "search"="" %}#{{ table.prefix|default:"table" }}" method="GET" role="form">
+    <form class="form-inline pull-right" action="{% querystring "search"="" %}#{{ table.prefix|default:"table" }}" method="GET">
       {% for key,value in request.GET.iteritems %}
       <input type="hidden" name="{{ table.prefix }}{{ key }}" value="{{ value }}">
       {% endfor %}

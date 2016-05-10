@@ -163,7 +163,7 @@
                     <h4 class="modal-title" id="maintenanceDialoglabel">Reason for offlining</h4>
                   </div>
                   <div class="modal-body">
-                    <form role="form" method="post" action="{% url 'lava.scheduler.device.maintenance' device.pk %}">
+                    <form method="post" action="{% url 'lava.scheduler.device.maintenance' device.pk %}">
                       <div id="maintenance-container" class="form-group has-error has-feedback">
                         <p>a reason must be specified:</p>
                         <input id="maintenance-reason" name="reason"/>
@@ -202,7 +202,7 @@
                     <h4 class="modal-title" id="stoploopingDialoglabel">Reason for stopping looping mode</h4>
                   </div>
                   <div class="modal-body">
-                    <form role="form" method="post" action="{% url 'lava.scheduler.device.maintenance' device.pk %}">
+                    <form method="post" action="{% url 'lava.scheduler.device.maintenance' device.pk %}">
                       <div id="stoplooping-container" class="form-group has-error has-feedback">
                         <p>A reason must be specified:</p>
                         <input id="stoplooping-reason" name="reason"/>
@@ -236,7 +236,7 @@
                     <h4 class="modal-title" id="onlineDialoglabel">Reason for onlining</h4>
                   </div>
                   <div class="modal-body">
-                    <form role="form" method="post" action="{% url 'lava.scheduler.device.online' device.pk %}">
+                    <form method="post" action="{% url 'lava.scheduler.device.online' device.pk %}">
                       <div id="online-container" class="form-group has-error has-feedback">
                         <p>A reason must be specified:</p>
                         <input id="online-reason" name="reason"/>
@@ -270,7 +270,7 @@
                     <h4 class="modal-title" id="loopingDialoglabel">Reason for looping health checks</h4>
                   </div>
                   <div class="modal-body">
-                    <form role="form" method="post" action="{% url 'lava.scheduler.device.looping' device.pk %}">
+                    <form method="post" action="{% url 'lava.scheduler.device.looping' device.pk %}">
                       <div id="looping-container" class="form-group has-error has-feedback">
                         <p>A reason must be specified:</p>
                         <input id="looping-reason" name="reason"/>
@@ -295,7 +295,7 @@
 {% if show_forcehealthcheck %}
         <div class="btn-group btn-group-justified">
           <div class="btn-group">
-            <form role="form" method="POST" action="{% url 'lava.scheduler.device.forcehealthcheck' device.pk %}">
+            <form method="POST" action="{% url 'lava.scheduler.device.forcehealthcheck' device.pk %}">
               {% csrf_token %}
               <button class="btn btn-info" id="forcehealthcheck-button">Force Health Check</button>
             </form>
@@ -326,7 +326,7 @@
                     <h4 class="modal-title" id="descriptionDialoglabel">Edit device description</h4>
                   </div>
                   <div class="modal-body">
-                    <form role="form" method="post" action="{% url 'lava.scheduler.device.edit_description' device.pk %}">
+                    <form method="post" action="{% url 'lava.scheduler.device.edit_description' device.pk %}">
                       <div id="description-container" class="form-group">
                         <p>An empty description will clear the existing content</p>
                         <input id="device-description" name="desc" value="{{ device.get_description }}"/>
@@ -358,7 +358,7 @@
                     <h4 class="modal-title" id="restrictDialoglabel">Reasons for restricting {{ device.hostname }}</h4>
                   </div>
                   <div class="modal-body">
-                    <form role="form" method="post" action="{% url 'lava.scheduler.device.restrict_device' device.pk %}">
+                    <form method="post" action="{% url 'lava.scheduler.device.restrict_device' device.pk %}">
                       <div id="restrict-container" class="form-group has-error has-feedback">
                         <p>A reason must be specified:</p>
                         <input id="restrict-reason" name="reason"/>
@@ -392,7 +392,7 @@
                     <h4 class="modal-title" id="poolDialoglabel">Reasons for returning {{ device.hostname }} to the pool</h4>
                   </div>
                   <div class="modal-body">
-                    <form role="form" method="post" action="{% url 'lava.scheduler.device.derestrict_device' device.pk %}">
+                    <form method="post" action="{% url 'lava.scheduler.device.derestrict_device' device.pk %}">
                       <div id="derestrict-container" class="form-group has-error has-feedback">
                         <p>A reason must be specified:</p>
                         <input id="derestrict-reason" name="reason"/>

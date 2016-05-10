@@ -38,7 +38,7 @@ in the system.</p>
                   <h4 class="modal-title" id="newTokenModalLabel">Description of new token</h4>
                 </div>
                   <div class="modal-body">
-                    <form role="form" method="post" action="{% url 'linaro_django_xmlrpc.views.create_token' %}">
+                    <form method="post" action="{% url 'linaro_django_xmlrpc.views.create_token' %}">
                       <div id="description-container" class="form-group">
                       <p>The token description is arbitrary text
                       which can help you to associate tokens with an intended purpose.
@@ -153,7 +153,7 @@ in the system.</p>
                     <h4 class="modal-title" id="editTokenModal{{ token.id }}">Edit description of {{ token }}</h4>
                   </div>
                   <div class="modal-body">
-                    <form role="form" method="post" action="{% url 'linaro_django_xmlrpc.views.edit_token' token.pk %}">
+                    <form method="post" action="{% url 'linaro_django_xmlrpc.views.edit_token' token.pk %}">
                       <div id="description-container" class="form-group">
                         <p>An empty description will clear the existing content.</p>
                         <input id="description" name="description" value="{{ token.description }}"/>
