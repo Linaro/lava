@@ -2282,7 +2282,7 @@ class ImageReportChart(models.Model):
             # Add comments flag to indicate whether comments do exist in
             # any of the test result in this test run.
             has_comments = test_run.test_results.exclude(
-                comments__isnull=True).count() != 0
+                comments__isnull=True).exists()
 
             test_filter_id = "%s-%s" % (test_id, image_chart_filter.id)
 

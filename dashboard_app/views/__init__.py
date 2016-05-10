@@ -228,11 +228,11 @@ def bundle_stream_list(request):
         "discrete_data": table.prepare_discrete_data(data),
         'has_personal_streams': (
             request.user.is_authenticated() and
-            BundleStream.objects.filter(user=request.user).count() > 0),
+            BundleStream.objects.filter(user=request.user).exists()),
         'has_team_streams': (
             request.user.is_authenticated() and
             BundleStream.objects.filter(
-                group__in=request.user.groups.all()).count() > 0),
+                group__in=request.user.groups.all()).exists()),
     }
     RequestConfig(request, paginate={"per_page": table.length}).configure(table)
     if django.VERSION > (1, 8):

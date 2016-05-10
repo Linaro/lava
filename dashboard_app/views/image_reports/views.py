@@ -423,7 +423,7 @@ def image_report_add_group(request, name):
     image_report.save()
 
     if old_group:
-        if not old_group.imagereport_set.count():
+        if not old_group.imagereport_set.exists():
             old_group.delete()
 
     return HttpResponse(group_name, content_type='application/json')
