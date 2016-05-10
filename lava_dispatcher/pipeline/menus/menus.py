@@ -166,7 +166,6 @@ class SelectorMenuAction(Action):
         self.description = 'select specified menu items'
         self.selector = SelectorMenu()
         self.items = []
-        self.send_char_delay = 0
 
     def validate(self):
         super(SelectorMenuAction, self).validate()
@@ -226,7 +225,7 @@ class SelectorMenuAction(Action):
                     self._change_prompt(connection, change_prompt)
                 if 'enter' in block['select']:
                     self.logger.debug("Sending %s Ctrl-M", block['select']['enter'])
-                    connection.raw_connection.send(block['select']['enter'], delay=self.send_char_delay)
+                    connection.raw_connection.send(block['select']['enter'], delay=self.character_delay)
                     connection.raw_connection.sendcontrol('M')
                     self._change_prompt(connection, change_prompt)
             else:

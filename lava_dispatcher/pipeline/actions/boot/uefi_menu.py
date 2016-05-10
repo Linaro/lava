@@ -131,8 +131,6 @@ class UefiMenuSelector(SelectorMenuAction):
         self.selector.prompt = params['bootloader_prompt']  # initial prompt
         self.boot_message = params['boot_message']  # final prompt
         self.items = self.job.device['actions']['boot']['methods']['uefi-menu'][self.parameters['commands']]
-        if 'character_delay' in self.job.device['actions']['boot']['methods']['uefi-menu']['parameters']:
-            self.send_char_delay = self.job.device['actions']['boot']['methods']['uefi-menu']['parameters']['character_delay']
         super(UefiMenuSelector, self).validate()
 
     def run(self, connection, args=None):
