@@ -18,7 +18,6 @@
 
 import os
 
-from lava_server.extension import loader
 from lava_server.settings.common import *
 
 # Top-level directory of the project.
@@ -149,9 +148,6 @@ except ImportError:
 # Any emails that would normally be sent are redirected to stdout.
 # This setting is only used for django 1.2 and newer.
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-# Load extensions
-loader.contribute_to_settings(locals())
 
 # default branding details
 BRANDING_ALT = "Linaro logo"

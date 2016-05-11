@@ -25,14 +25,26 @@ from linaro_django_xmlrpc import urls as api_urls
 from linaro_django_xmlrpc.views import handler as linaro_django_xmlrpc_views_handler
 from linaro_django_xmlrpc.views import help as linaro_django_xmlrpc_views_help
 from django.views.i18n import javascript_catalog
-from lava_server.extension import loader
+
+from dashboard_app.xmlrpc import DashboardAPI
+from lava_results_app.xmlrpc import ResultsAPI
+from lava_scheduler_app.api import SchedulerAPI
+
 from lava_server.views import index, me
+from lava_server.xmlrpc import LavaMapper
 
 handler403 = 'lava_server.views.permission_error'
 handler500 = 'lava_server.views.server_error'
 
 # Enable admin stuff
 admin.autodiscover()
+
+# Create the XMLRPC mapper
+mapper = LavaMapper()
+mapper.register_introspection_methods()
+mapper.register(DashboardAPI, 'dashboard')
+mapper.register(ResultsAPI, 'results')
+mapper.register(SchedulerAPI, 'scheduler')
 
 
 # Root URL patterns
@@ -54,18 +66,25 @@ urlpatterns = [
         linaro_django_xmlrpc_views_handler,
         name='lava.api_handler',
         kwargs={
-            'mapper': loader.xmlrpc_mapper,
+            'mapper': mapper,
             'help_view': 'lava.api_help'}),
     url(r'^{mount_point}api/help/$'.format(mount_point=settings.MOUNT_POINT),
         linaro_django_xmlrpc_views_help,
         name='lava.api_help',
         kwargs={
-            'mapper': loader.xmlrpc_mapper}),
+            'mapper': mapper}),
     url(r'^{mount_point}api/'.format(mount_point=settings.MOUNT_POINT),
         include(api_urls.token_urlpatterns)),
     # XXX: This is not needed but without it linaro-django-xmlrpc tests fail
     url(r'^{mount_point}api/'.format(mount_point=settings.MOUNT_POINT),
-        include(api_urls.default_mapper_urlpatterns))
+        include(api_urls.default_mapper_urlpatterns)),
+
+    url(r'^{mount_point}dashboard/'.format(mount_point=settings.MOUNT_POINT),
+        include('dashboard_app.urls')),
+    url(r'^{mount_point}results/'.format(mount_point=settings.MOUNT_POINT),
+        include('lava_results_app.urls')),
+    url(r'^{mount_point}scheduler/'.format(mount_point=settings.MOUNT_POINT),
+        include('lava_scheduler_app.urls')),
 ]
 
 try:
@@ -83,7 +102,3 @@ try:
     )
 except ImportError:
     pass
-
-
-# Load URLs for extensions
-loader.contribute_to_urlpatterns(urlpatterns, settings.MOUNT_POINT)

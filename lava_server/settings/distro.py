@@ -2,7 +2,6 @@
 
 import os
 from lava_server.settings.getsettings import Settings
-from lava_server.extension import loader
 from lava_server.settings.production import *
 from django.db.backends.signals import connection_created
 
@@ -261,8 +260,8 @@ LOGGING = {
 # set to false in /etc/lava-server/settings.conf to hide the Results menu
 PIPELINE = distro_settings.get_setting("PIPELINE", True)
 
-# Load extensions
-loader.contribute_to_settings(locals(), distro_settings)
+# Scheduler options
+SCHEDULER_DAEMON_OPTIONS.update(distro_settings.get_setting('SCHEDULER_DAEMON_OPTIONS', {}))
 
 
 def set_timeout(connection, **kw):

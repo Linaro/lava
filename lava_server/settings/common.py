@@ -25,6 +25,9 @@
 # All comments below are strictly for development usage and
 # reference.
 
+# Import application settings
+from lava_scheduler_app.settings import *
+
 import os
 import imp
 import django
@@ -175,11 +178,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.humanize',
-    'django_tables2',
     'django.contrib.staticfiles',
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
+    # Add LAVA applications
+    'dashboard_app',
+    'lava_results_app',
+    'lava_scheduler_daemon',
+    'lava_scheduler_app',
+    # Needed applications
+    'django_tables2',
     'linaro_django_xmlrpc',
     'google_analytics',
 ]
@@ -235,11 +244,6 @@ RESTRUCTUREDTEXT_FILTER_SETTINGS = {"initial_header_level": 4}
 
 # Add google analytics model.
 GOOGLE_ANALYTICS_MODEL = True
-
-ME_PAGE_ACTIONS = [
-    ("password_change", "Change your password"),
-    ("logout", "Sign out"),
-]
 
 ALLOWED_HOSTS = ['*']
 
