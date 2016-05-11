@@ -332,7 +332,7 @@ def bundle_list_export(request, pathname):
         pathname=pathname
     )
 
-    file_name = bundle_stream.slug
+    file_name = bundle_stream.slug.replace('/', '_')
     tmp_dir = tempfile.mkdtemp()
     file_path = os.path.join(tmp_dir, "%s.csv" % file_name)
 
