@@ -182,7 +182,7 @@ class UefiSubstituteCommands(Action):
             substitution_dictionary['{NFSROOTFS}'] = self.get_common_data('file', 'nfsroot')
         for item in self.items:
             if 'enter' in item['select']:
-                item['select']['enter'] = substitute([item['select']['enter']], substitution_dictionary)
+                item['select']['enter'] = substitute([item['select']['enter']], substitution_dictionary)[0]
             if 'items' in item['select']:
                 # items is already a list, so pass without wrapping in []
                 item['select']['items'] = substitute(item['select']['items'], substitution_dictionary)

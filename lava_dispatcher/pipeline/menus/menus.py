@@ -217,7 +217,7 @@ class SelectorMenuAction(Action):
                             self.logger.debug("Selecting option %s", action)
                         elif 'fallback' in block['select']:
                             action = self.selector.select(menu_text, block['select']['fallback'])
-                        connection.sendline(action)
+                        connection.sendline(action, delay=self.character_delay)
                         self._change_prompt(connection, change_prompt)
                 if 'escape' in block['select']:
                     self.logger.debug("Sending escape")
