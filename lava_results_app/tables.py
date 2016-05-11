@@ -26,12 +26,39 @@ from lava.utils.lavatable import LavaTable
 from lava_scheduler_app.tables import DateColumn, RestrictedIDLinkColumn
 from lava_results_app.models import TestCase
 from django.templatetags.static import static
+from markupsafe import escape
+
+
+def results_pklink(record):
+    job_id = record.pk
+    complete = '<a class="btn btn-xs btn-success pull-right" title="test job results" href="%s">' % record.results_link
+    button = '<span class="glyphicon glyphicon-signal"></span></a>'
+    return mark_safe(
+        '<a href="%s" title="test job summary">%s</a>&nbsp;%s%s' % (
+            record.get_absolute_url(),
+            escape(job_id), complete, button))
 
 
 class JobRestrictionColumn(RestrictedIDLinkColumn):
 
     def render(self, record, table=None):
         return super(JobRestrictionColumn, self).render(record.job, table)
+
+
+class IndexResultsColumn(RestrictedIDLinkColumn):
+
+    def render(self, record, table=None):
+        user = table.context.get('request').user
+        device_type = record.job.job_device_type()
+        if not device_type:
+            return results_pklink(record.job)
+        elif device_type.owners_only:
+            if device_type.num_devices_visible_to(user) == 0:
+                return "Unavailable"
+        elif record.job.is_accessible_by(user):
+            return results_pklink(record.job)
+        else:
+            return record.job.pk
 
 
 class ResultsTable(LavaTable):
@@ -109,7 +136,23 @@ class ResultsTable(LavaTable):
             suite=record,
         )[0].logged
 
-    job_id = JobRestrictionColumn(verbose_name='Job')
+    job_id = JobRestrictionColumn(verbose_name='Test Job')
+    submitter = tables.Column(accessor='job.submitter')
+    name = tables.Column(verbose_name='Test Suite')
+    passes = tables.Column(accessor='job', verbose_name='Passes')
+    fails = tables.Column(accessor='job', verbose_name='Fails')
+    total = tables.Column(accessor='job', verbose_name='Totals')
+    logged = tables.Column(accessor='job', verbose_name='Logged')
+
+    class Meta(LavaTable.Meta):  # pylint: disable=no-init,too-few-public-methods
+        searches = {
+            'name': 'contains'
+        }
+
+
+class ResultsIndexTable(ResultsTable):
+
+    job_id = IndexResultsColumn(verbose_name='Job Results')
     submitter = tables.Column(accessor='job.submitter')
     name = tables.Column(verbose_name='Test Suite')
     passes = tables.Column(accessor='job', verbose_name='Passes')

@@ -31,7 +31,7 @@ from lava_server.bread_crumbs import (
     BreadCrumbTrail,
 )
 from django.shortcuts import get_object_or_404
-from lava_results_app.tables import ResultsTable, SuiteTable
+from lava_results_app.tables import ResultsTable, SuiteTable, ResultsIndexTable
 from lava_results_app.utils import StreamEcho
 from lava_results_app.dbutils import export_testcase, testcase_export_fields
 from lava_scheduler_app.models import TestJob
@@ -65,7 +65,7 @@ class SuiteView(LavaView):
 @BreadCrumb("Results", parent=lava_index)
 def index(request):
     data = ResultsView(request, model=TestSuite, table_class=ResultsTable)
-    result_table = ResultsTable(
+    result_table = ResultsIndexTable(
         data.get_table_data(),
     )
     RequestConfig(request, paginate={"per_page": result_table.length}).configure(result_table)
