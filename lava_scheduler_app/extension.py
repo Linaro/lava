@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
-from lava_server.extension import LavaServerExtension, Menu
+from lava_server.extension import LavaServerExtension
 
 
 class SchedulerExtension(LavaServerExtension):
@@ -41,30 +41,6 @@ class SchedulerExtension(LavaServerExtension):
     @property
     def main_view_name(self):
         return "lava_scheduler_app.views.index"
-
-    def get_menu(self):
-        from django.core.urlresolvers import reverse
-        menu = super(SchedulerExtension, self).get_menu()
-        menu.sub_menu = [
-            Menu("Status", reverse("lava.scheduler")),
-            Menu("Jobs", reverse("lava.scheduler.job.list")),
-            Menu("Devices", reverse("lava.scheduler.active_devices")),
-            Menu("Queue", reverse("lava.scheduler.queue")),
-            Menu("Reports", reverse("lava.scheduler.reports")),
-            Menu("Submit Job", reverse("lava.scheduler.job.submit")),
-        ]
-        return menu
-
-    @property
-    def description(self):
-        return "Scheduler application for LAVA server"
-
-    @property
-    def version(self):
-        import versiontools
-        import lava_scheduler_app
-        return versiontools.format_version(
-            lava_scheduler_app.__version__, lava_scheduler_app)
 
     def contribute_to_settings(self, settings_module):
         super(SchedulerExtension, self).contribute_to_settings(settings_module)

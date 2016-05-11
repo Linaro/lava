@@ -20,7 +20,6 @@ import os
 import versiontools
 
 import lava_server
-from lava_server.extension import Menu, loader
 from django.core.urlresolvers import reverse
 from django.conf import settings
 
@@ -41,7 +40,6 @@ def lava(request):
 
     return {
         'lava': {
-            'extension_list': loader.extensions,
             'instance_name': instance_name,
             'branding_url': settings.BRANDING_URL,
             'branding_icon': settings.BRANDING_ICON,

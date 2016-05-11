@@ -25,12 +25,5 @@ class SchedulerDaemonExtension(HeadlessExtension):
     def name(self):
         return "LAVA Scheduler Daemon"
 
-    @property
-    def version(self):
-        import versiontools
-        import lava_scheduler_app
-        return versiontools.format_version(
-            lava_scheduler_app.__version__, lava_scheduler_app)
-
     def contribute_to_settings_ex(self, settings_module, settings_object):
         settings_module['INSTALLED_APPS'].append("lava_scheduler_daemon")

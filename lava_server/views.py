@@ -29,19 +29,14 @@ from lava_server.bread_crumbs import (
     BreadCrumb,
     BreadCrumbTrail,
 )
-from lava_server.extension import loader as extension_loader
 
 
 @BreadCrumb(_("LAVA"))
 def index(request):
-    # Start with a list of extensions
     data = {
-        'extension_list': extension_loader.extensions,
         'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
     }
-    # Append each extension context data
-    for extension in extension_loader.extensions:
-        data.update(extension.get_front_page_context())
+
     # Load and render the template
     context = RequestContext(request, data)
     template = loader.get_template('index.html')

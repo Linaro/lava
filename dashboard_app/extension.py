@@ -18,7 +18,7 @@
 
 import os
 
-from lava_server.extension import LavaServerExtension, Menu
+from lava_server.extension import LavaServerExtension
 
 
 class DashboardExtension(LavaServerExtension):
@@ -28,36 +28,8 @@ class DashboardExtension(LavaServerExtension):
         return "dashboard_app"
 
     @property
-    def name(self):
-        return "Dashboard"
-
-    @property
     def main_view_name(self):
         return "dashboard_app.views.index"
-
-    def get_menu(self):
-        from django.conf import settings
-        from django.core.urlresolvers import reverse
-
-        menu = super(DashboardExtension, self).get_menu()
-        subm = []
-        menu.sub_menu = subm
-        subm.append(Menu("Image Reports", reverse("lava_dashboard_image_report_list")))
-        subm.append(Menu("Image Reports 2.0", reverse("lava_dashboard_image_report_report_list")))
-        subm.append(Menu("Filters", reverse("lava_dashboard_filters_list")))
-        subm.append(Menu("Bundle Streams", reverse("lava_dashboard_bundle_stream_list")))
-
-        return menu
-
-    @property
-    def description(self):
-        return "Validation Dashboard"
-
-    @property
-    def version(self):
-        import dashboard_app
-        import versiontools
-        return versiontools.format_version(dashboard_app.__version__, hint=dashboard_app)
 
     @property
     def api_class(self):

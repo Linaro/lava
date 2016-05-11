@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
-from lava_server.extension import LavaServerExtension, Menu
+from lava_server.extension import LavaServerExtension
 
 
 class ResultsExtension(LavaServerExtension):
@@ -33,10 +33,6 @@ class ResultsExtension(LavaServerExtension):
         return "Results"
 
     @property
-    def version(self):
-        return ""
-
-    @property
     def api_class(self):
         from lava_results_app.xmlrpc import ResultsAPI
         return ResultsAPI
@@ -44,20 +40,6 @@ class ResultsExtension(LavaServerExtension):
     @property
     def main_view_name(self):
         return "lava_results_app.views.index"
-
-    def get_menu(self):
-        from django.core.urlresolvers import reverse
-        menu = super(ResultsExtension, self).get_menu()
-        menu.sub_menu = [
-            Menu("Results", reverse("lava_results")),
-            Menu("Queries", reverse("lava.results.query_list")),
-            Menu("Charts", reverse("lava.results.chart_list"))
-        ]
-        return menu
-
-    @property
-    def description(self):
-        return "Results application for LAVA server"
 
     def contribute_to_settings(self, settings_module):
         super(ResultsExtension, self).contribute_to_settings(settings_module)

@@ -77,56 +77,9 @@ class IExtension(object):
         methods should be added.
         """
 
-    @abstractproperty
-    def name(self):
-        """
-        Name of this extension.
-        """
-
-    @abstractproperty
-    def version(self):
-        """
-        Version of this extension.
-        """
-
-    @abstractproperty
-    def front_page_template(self):
-        """
-        Name of the front page template to {% include %}, may be None
-        """
-
-    @abstractmethod
-    def get_front_page_context(self):
-        """
-        Context available to the front page template
-        """
-
-    @abstractmethod
-    def get_main_url(self):
-        """
-        Absolute URL of the main view
-        """
-
-    @abstractmethod
-    def get_menu(self):
-        """
-        Return a Menu object
-        """
-
 
 # Old longish name, we know it's LAVA already
 ILavaServerExtension = IExtension
-
-
-class Menu(object):
-    """
-    Menu (for navigation)
-    """
-
-    def __init__(self, label, url, sub_menu=None):
-        self.label = label
-        self.url = url
-        self.sub_menu = sub_menu or []
 
 
 class HeadlessExtension(ILavaServerExtension):
@@ -134,8 +87,7 @@ class HeadlessExtension(ILavaServerExtension):
     Base class for building headless extensions.
 
     The only required things to implement are two ``@property`` functions. You
-    will need to implement :attr:`~ILavaServerExtension.name` and
-    :attr:`~ILavaServerExtension.version`.
+    will need to implement :attr:`~ILavaServerExtension.name`
 
     Meaningful extensions will want to implement
     :meth:`~ILavaServerExtension.contribute_to_settings_ex` and add additional
@@ -157,41 +109,6 @@ class HeadlessExtension(ILavaServerExtension):
     @property
     def api_class(self):
         return None
-
-    @property
-    def front_page_template(self):
-        return None
-
-    def get_front_page_context(self):
-        return {}
-
-    def get_main_url(self):
-        pass
-
-    def get_menu(self):
-        pass
-
-
-class DeprecatedExtension(HeadlessExtension):
-    """
-    If an extension ever contributed to schema changes in the DB, then we
-    can't just delete it altogether without causing problems with our
-    django migrations. This is a simple class to keep the extension somewhat
-    invisible to the UI, but visible to Django for the DB needs.
-    """
-    @abstractproperty
-    def app_name(self):
-        """
-        Name of this extension's primary django application.
-        (needed for django migrations)
-        """
-
-    def contribute_to_settings(self, settings_module):
-        settings_module['INSTALLED_APPS'].append(self.app_name)
-
-    @property
-    def version(self):
-        return "deprecated"
 
 
 class Extension(ILavaServerExtension):
@@ -217,17 +134,6 @@ class Extension(ILavaServerExtension):
         Name of the main view
         """
 
-    def get_menu(self):
-        from django.core.urlresolvers import reverse
-        return Menu(self.name, reverse(self.main_view_name))
-
-    @property
-    def front_page_template(self):
-        return None
-
-    def get_front_page_context(self):
-        return {}
-
     @property
     def api_class(self):
         """
@@ -248,10 +154,6 @@ class Extension(ILavaServerExtension):
         urlpatterns += [
             url(r'^{mount_point}{slug}/'.format(mount_point=mount_point, slug=self.slug),
                 include('{app_name}.urls'.format(app_name=self.app_name)))]
-
-    def get_main_url(self):
-        from django.core.urlresolvers import reverse
-        return reverse(self.main_view_name)
 
 
 LavaServerExtension = Extension
