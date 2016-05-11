@@ -116,6 +116,9 @@
       </a>
     </div>
     <div>
+      Last updated: {% if chart_query.query.is_live %} Live query{% else %}{{ chart_query.query.last_updated | default:"Never" }}{% endif %}
+    </div>
+    <div>
       Type: {{ chart_query.chart_type }}
     </div>
     <div>

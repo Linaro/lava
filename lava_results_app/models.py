@@ -33,6 +33,7 @@ import urllib
 import yaml
 
 from datetime import datetime, timedelta
+from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
@@ -1341,6 +1342,9 @@ class ChartQuery(models.Model):
             data["query_name"] = self.query.name
             data["query_link"] = self.query.get_absolute_url()
             data["query_description"] = self.query.description
+            data["query_live"] = self.query.is_live
+            data["query_updated"] = self.query.last_updated.strftime(
+                settings.DATETIME_INPUT_FORMATS[0])
             data["entity"] = self.query.content_type.model
             data["conditions"] = self.query.serialize_conditions()
             data["has_omitted"] = QueryOmitResult.objects.filter(

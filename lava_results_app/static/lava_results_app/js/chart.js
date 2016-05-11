@@ -204,13 +204,20 @@ $(document).ready(function () {
     ChartQuery.prototype.update_headline = function() {
 	if (this.chart_data.basic.query_name) {
             query_link = this.chart_data.basic.query_link.replace(/\\/g, "");
+            if (this.chart_data.basic.query_live) {
+                last_updated = "Live query";
+            } else {
+                last_updated = "Last updated: " +
+                    this.chart_data.basic.query_updated;
+            }
             $("#headline_container_" + this.chart_id).append(
 		'<span class="chart-headline">' +
                     '<a href="' + query_link + '" target="_blank">' +
 		    this.chart_data.basic.query_name +
-                    '</a></span>');
+                    '</a></span> <span>' + last_updated +
+                    '</span>');
             $("#headline_container_" + this.chart_id).append(
-		'<span>' + this.chart_data.basic.query_description + '</span>');
+		'<div>' + this.chart_data.basic.query_description + '</div>');
 
 	    if (this.chart_data.basic.has_omitted) {
                 $("#headline_container_" + this.chart_id).append(
