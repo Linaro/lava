@@ -191,7 +191,7 @@ if USE_DEBUG_TOOLBAR:
     INSTALLED_APPS.append('debug_toolbar')
     default_ips = ['127.0.0.1', '::1']
     default_ips.extend(distro_settings.get_setting('INTERNAL_IPS', []))
-    INTERNAL_IPS.extend(default_ips)
+    INTERNAL_IPS = default_ips
 
 # read branding details
 BRANDING_ALT = distro_settings.get_setting("BRANDING_ALT", "Linaro logo")

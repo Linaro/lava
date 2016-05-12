@@ -31,38 +31,15 @@ from lava_scheduler_app.settings import *
 import os
 import imp
 import django
-try:
-    import devserver
-    devserver_import = True
-except ImportError:
-    devserver_import = False
-try:
-    import django_extensions
-    django_extensions_import = True
-except ImportError:
-    django_extensions_import = False
-try:
-    import hijack
-    hijack_import = True
-except ImportError:
-    hijack_import = False
-try:
-    # test the import without actually importing
-    # as the rest of the settings are not ready yet.
-    imp.find_module('django_openid_auth')
-    USE_OPENID_AUTH = True
-except ImportError:
-    USE_OPENID_AUTH = False
 
-if USE_OPENID_AUTH:
-    from openid import oidutil
-
-try:
-    imp.find_module('debug_toolbar')
-    USE_DEBUG_TOOLBAR = True
-    INTERNAL_IPS = []
-except ImportError:
-    USE_DEBUG_TOOLBAR = False
+# Check for available modules
+available_modules = list()
+for module_name in ["devserver", "django_extensions", "django_openid_auth", "hijack"]:
+    try:
+        imp.find_module(module_name)
+        available_modules.append(module_name)
+    except ImportError:
+        pass
 
 # Administrator contact, used for sending
 # emergency email when something breaks
@@ -193,19 +170,10 @@ INSTALLED_APPS = [
     'google_analytics',
 ]
 
-if USE_OPENID_AUTH:
-    INSTALLED_APPS += ['django_openid_auth']
+for module_name in available_modules:
+    INSTALLED_APPS.append(module_name)
 
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
-
-if devserver_import:
-    INSTALLED_APPS += ['devserver']
-
-if django_extensions_import:
-    INSTALLED_APPS += ['django_extensions']
-
-if hijack_import:
-    INSTALLED_APPS += ['hijack']
 
 if django.VERSION < (1, 8):
     TEMPLATE_CONTEXT_PROCESSORS = [
@@ -219,14 +187,14 @@ if django.VERSION < (1, 8):
         "lava_server.context_processors.ldap_available",
     ]
 
-    if USE_OPENID_AUTH:
+    if "django_openid_auth" in available_modules:
         TEMPLATE_CONTEXT_PROCESSORS += ['lava_server.context_processors.openid_available']
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 
-if USE_OPENID_AUTH:
+if "django_openid_auth" in available_modules:
     AUTHENTICATION_BACKENDS += ('django_openid_auth.auth.OpenIDBackend',)
     MIGRATION_MODULES = {
         'django_openid_auth': 'django_openid_auth.migrations'
@@ -238,6 +206,7 @@ if USE_OPENID_AUTH:
     OPENID_SSO_SERVER_URL = 'https://login.ubuntu.com/'
 
     # python-openid is too noisy, so we silence it.
+    from openid import oidutil
     oidutil.log = lambda msg, level=0: None
 
 RESTRUCTUREDTEXT_FILTER_SETTINGS = {"initial_header_level": 4}
