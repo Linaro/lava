@@ -200,3 +200,26 @@ def result_name(result_dict):
             ))
     else:
         return None
+
+
+@register.filter()
+def metadata_key(key, index=0):
+    return '.'.join(key.split('.')[index:]).replace('definition.', '')
+
+
+@register.filter()
+def markup_metadata(key, value):
+    if 'target.device_type' in key:
+        return mark_safe("<a href='/scheduler/device_type/%s'>%s</a>" % (value, value))
+    elif 'target.hostname' in key:
+        return mark_safe("<a href='/scheduler/device/%s'>%s</a>" % (value, value))
+    elif 'definition.repository' in key:
+        repo = value.replace('git:', 'http:')
+        return mark_safe("<a href='%s'>%s</a>" % (repo, value))
+    else:
+        return value
+
+
+@register.filter()
+def markup_completion(data):
+    return [key for key, _ in data.items() if 'test' in key]

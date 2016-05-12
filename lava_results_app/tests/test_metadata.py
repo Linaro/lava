@@ -5,7 +5,12 @@ from lava_scheduler_app.models import (
     TestJob,
     Device,
 )
-from lava_results_app.dbutils import map_metadata, testcase_export_fields, export_testcase
+from lava_results_app.dbutils import (
+    map_metadata,
+    _get_job_metadata, _get_device_metadata,  # pylint: disable=protected-access
+    testcase_export_fields,
+    export_testcase,
+)
 from lava_results_app.models import ActionData, MetaType, TestData, TestCase, TestSuite
 from lava_dispatcher.pipeline.parser import JobParser
 from lava_dispatcher.pipeline.device import PipelineDevice
@@ -85,3 +90,35 @@ class TestMetaTypes(TestCaseWithFactory):
         action_data.timeout = 300
         action_data.save(update_fields=['timeout'])
         self.assertEqual(action_data.timeout, 300)
+
+    def test_repositories(self):
+        job = TestJob.from_yaml_and_user(
+            self.factory.make_job_yaml(), self.user)
+        job_def = yaml.load(job.definition)
+        job_ctx = job_def.get('context', {})
+        device = Device.objects.get(hostname='fakeqemu1')
+        device_config = device.load_device_configuration(job_ctx, system=False)  # raw dict
+        parser = JobParser()
+        obj = PipelineDevice(device_config, device.hostname)
+        pipeline_job = parser.parse(job.definition, obj, job.id, None, None, None, output_dir='/tmp')
+        pipeline_job.pipeline.validate_actions()
+        pipeline = pipeline_job.describe()
+        retval = _get_device_metadata(pipeline['device'])
+        self.assertEqual(
+            retval,
+            {'target.hostname': 'fakeqemu1', 'target.device_type': 'qemu'}
+        )
+        retval = _get_job_metadata(pipeline['job']['actions'])
+        self.assertEqual(
+            retval,
+            {
+                'test.1.definition.from': 'git',
+                'test.0.definition.repository': 'git://git.linaro.org/qa/test-definitions.git',
+                'test.0.definition.name': 'smoke-tests',
+                'test.1.definition.repository': 'http://git.linaro.org/lava-team/lava-functional-tests.git',
+                'boot.0.method': 'qemu',
+                'test.1.definition.name': 'singlenode-advanced',
+                'test.0.definition.from': 'git',
+                'test.0.definition.path': 'ubuntu/smoke-tests-basic.yaml',
+                'test.1.definition.path': 'lava-test-shell/single-node/singlenode03.yaml'}
+        )

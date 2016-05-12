@@ -1,5 +1,6 @@
 {% extends "layouts/content-bootstrap.html" %}
 {% load i18n %}
+{% load utils %}
 {% load django_tables2 %}
 
 {% block content %}
@@ -27,15 +28,50 @@
  <div class="panel-group" id="results_accordion">
   <div class="panel panel-default">
     <div class="panel-heading">
-      <h4 class="panel-title"><a data-toggle="collapse" data-parent="#results_accordion" href="#metadata_collapse">
+      <h4><a data-toggle="collapse" data-parent="#results_accordion" href="#metadata_collapse">
         Metadata
-      </a></h4>
+      </a>
+      </h4>
     </div>
+  {% spaceless %}
     <div id="metadata_collapse" class="panel-collapse collapse">
       <div class="panel-body">
-          <pre>{{ metadata }}</pre>
+      <p>The <b>key</b> is the name of the metadata named attribute which can be used in query conditions.
+          Values relating to devices, device-types and URLs are formatted as links. Due to
+          the variation between different git server interfaces, it is not possible to construct
+          a full URL to the test definition file. The commit id of the test definition is part of
+          the <i>lava</i> results for the job.
+      </p>
+      <p>Attributes relating to items which can repeat within a single job include a number representing
+          the sequence of that item within the job. For example, <i>boot.0.method</i> is the name of an
+          attribute containing information on the first boot method used in the job. <i>boot.0.commands</i>
+          would be an attribute containing information on the commands used by the first boot method in
+          the job.
+      </p>
+      <p>Metadata submitted as part of the job submission is also included, if present.</p>
+        <dl class="dl-horizontal">
+          {% for key, value in metadata.items %}
+              {% if 'target' in key %}
+                  <dt>{{ key|metadata_key}}</dt>
+                  <dd>{{ key|markup_metadata:value }}</dd>
+              {% elif 'deploy' in key %}
+                  <dt>{{ key|metadata_key}}</dt>
+                  <dd>{{ value }}</dd>
+              {% elif 'boot' in key %}
+                  <dt>{{ key|metadata_key}}</dt>
+                  <dd>{{ value }}</dd>
+              {% elif 'test' in key %}
+                  <dt>{{ key|metadata_key}}</dt>
+                  <dd>{{ key|markup_metadata:value }}</dd>
+              {% else %}
+                  <dt>{{ key }}</dt>
+                  <dd>{{ value }}</dd>
+              {% endif %}
+          {% endfor %}
+        </dl>
       </div>
     </div>
+  {% endspaceless %}
   </div>
  </div>
 

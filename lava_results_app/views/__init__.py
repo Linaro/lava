@@ -22,6 +22,7 @@ Keep to just the response rendering functions
 """
 import csv
 import yaml
+from collections import OrderedDict
 from django.template import RequestContext
 from django.http.response import HttpResponse, StreamingHttpResponse
 from django.shortcuts import render_to_response
@@ -92,10 +93,12 @@ def testjob(request, job):
     suite_table = ResultsTable(
         data.get_table_data().filter(job=job)
     )
-    testdata = TestData.objects.get(testjob=job)
-    yaml_dict = {}
+    # some duplicates can exist, so get would fail here and [0] is quicker than try except.
+    testdata = TestData.objects.filter(testjob=job)[0]
+    # FIXME get the actiondata as well, use that to map the testdata test defs to what actually got run.
+    yaml_dict = OrderedDict()
     # hide internal python objects
-    for data in testdata.attributes.all():
+    for data in testdata.attributes.all().order_by('name'):
         yaml_dict[str(data.name)] = str(data.value)
     RequestConfig(request, paginate={"per_page": suite_table.length}).configure(suite_table)
     return render_to_response(
@@ -104,7 +107,7 @@ def testjob(request, job):
             'job': job,
             'job_link': pklink(job),
             'suite_table': suite_table,
-            'metadata': yaml.dump(yaml_dict, default_flow_style=False)
+            'metadata': yaml_dict
         }, RequestContext(request))
 
 
