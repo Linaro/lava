@@ -1749,7 +1749,7 @@ class TestJob(RestrictedResource):
                 # Right now we support only 'kvm' type vms.
                 #
                 # FIXME: Once we have support for 'xen' augment this list
-                if dtype in ['kvm', 'kvm-arm', 'kvm-aarch64']:
+                if dtype in ['kvm', 'kvm-arm', 'kvm-aarch32', 'kvm-aarch64']:
                     if dtype in requested_devices:
                         count = count + requested_devices[dtype][0]
                         requested_devices[dtype] = (count, role)

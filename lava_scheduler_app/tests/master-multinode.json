@@ -9,7 +9,7 @@
 		},
 		"auto_start_vms": false,
 		"vms": [{
-			"device_type": "kvm-aarch64",
+			"device_type": "kvm-aarch32",
 			"role": "guest-nonsecure"
 		}, {
 			"device_type": "kvm-aarch64",
