@@ -31,9 +31,6 @@ Simple integration for Django settings.py
  handling is done by distribution-specific packaging scripts which generate the
  /etc/lava-server/instance.conf and this embeds the database access
  methods into that file. default_database.conf is not needed.
- Under lava-deployment-tool, these settings were duplicated in
- /srv/lava/instances/<INSTANCE>/instance.conf and
- /srv/lava/instances/<INSTANCE>/etc/lava-server/default-database.conf
  When packaged, all settings are in /etc/lava-server/instance.conf
 
  Only the secret key is separate.
