@@ -32,9 +32,9 @@ import zmq
 import zmq.auth
 from zmq.auth.thread import ThreadAuthenticator
 
+from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.utils import OperationalError, InterfaceError
-from lava_server.utils import OptArgBaseCommand as BaseCommand
 from lava_scheduler_app.models import Device, TestJob
 from lava_scheduler_app.utils import mkdir
 from lava_scheduler_app.dbutils import (

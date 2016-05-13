@@ -653,16 +653,7 @@ def filter_device_types(user):
 #
 # Query Expressions:
 # https://docs.djangoproject.com/en/1.8/ref/models/expressions/
-#
-# But both the above are available only in django >=1.8, hence there isn't
-# a simple way of replacing SQL Aggregates that will work both in django
-# 1.7 and 1.8, hence this check is available.
-#
-# FIXME: Remove this check when support for django 1.7 ceases.
-if django.VERSION >= (1, 8):
-    aggregate_cls = models.aggregates.Aggregate
-else:
-    aggregate_cls = models.sql.aggregates.Aggregate
+aggregate_cls = models.aggregates.Aggregate
 
 
 class SumIfSQL(aggregate_cls):

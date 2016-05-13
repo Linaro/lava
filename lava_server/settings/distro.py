@@ -39,14 +39,7 @@ STATIC_ROOT = distro_settings.STATIC_ROOT
 STATIC_URL = distro_settings.STATIC_URL
 
 # List of absolute pathnames used to resolve templates.
-if django.VERSION < (1, 8):
-    if isinstance(distro_settings.TEMPLATE_DIRS, tuple):
-        TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), '..', 'templates'),)
-    else:
-        TEMPLATE_DIRS = [os.path.join(os.path.dirname(__file__), '..', 'templates')]
-    TEMPLATE_DIRS = distro_settings.TEMPLATE_DIRS + TEMPLATE_DIRS
-else:
-    TEMPLATES = distro_settings.TEMPLATES
+TEMPLATES = distro_settings.TEMPLATES
 
 # Like TEMPLATE_DIRS but for static files
 STATICFILES_DIRS = distro_settings.STATICFILES_DIRS

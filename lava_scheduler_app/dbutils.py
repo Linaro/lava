@@ -416,11 +416,8 @@ def _validate_idle_device(job, device):
     """
     # FIXME: do this properly in the dispatcher master.
     # FIXME: isolate forced health check requirements
-    if django.VERSION >= (1, 8):
-        # https://docs.djangoproject.com/en/dev/ref/models/instances/#refreshing-objects-from-database
-        device.refresh_from_db()
-    else:
-        device = Device.objects.get(hostname=device.hostname)
+    # https://docs.djangoproject.com/en/dev/ref/models/instances/#refreshing-objects-from-database
+    device.refresh_from_db()
 
     logger = logging.getLogger('dispatcher-master')
     # to be valid for reservation, no queued TestJob can reference this device

@@ -1,7 +1,7 @@
 import logging.config
 import argparse
 import django
-from lava_server.utils import OptArgBaseCommand as BaseCommand
+from django.core.management.base import BaseCommand
 
 
 class SchedulerCommand(BaseCommand):

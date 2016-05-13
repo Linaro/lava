@@ -55,38 +55,31 @@ SITE_ID = 1
 
 DISALLOWED_USER_AGENTS = []
 
-if django.VERSION < (1, 8):
-    # List of callables that know how to import templates from various sources.
-    TEMPLATE_LOADERS = (
-        'django.template.loaders.filesystem.Loader',
-        'django.template.loaders.app_directories.Loader',
-    )
-else:
-    PROJECT_DIR = os.path.dirname(os.path.join(os.path.dirname(__file__), '..', '..'))
-    TEMPLATES = [
-        {
-            'BACKEND': 'django.template.backends.django.DjangoTemplates',
-            'DIRS': [
-                os.path.join(PROJECT_DIR, 'templates'),
+PROJECT_DIR = os.path.dirname(os.path.join(os.path.dirname(__file__), '..', '..'))
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            os.path.join(PROJECT_DIR, 'templates'),
+        ],
+        'OPTIONS': {
+            'context_processors': [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.template.context_processors.i18n",
+                "django.template.context_processors.static",
+                # LAVA context processors
+                "lava_server.context_processors.lava",
+                "lava_server.context_processors.ldap_available",
             ],
-            'OPTIONS': {
-                'context_processors': [
-                    "django.template.context_processors.debug",
-                    "django.template.context_processors.request",
-                    "django.contrib.auth.context_processors.auth",
-                    "django.template.context_processors.i18n",
-                    "django.template.context_processors.static",
-                    # LAVA context processors
-                    "lava_server.context_processors.lava",
-                    "lava_server.context_processors.ldap_available",
-                ],
-                'loaders': [
-                    'django.template.loaders.filesystem.Loader',
-                    'django.template.loaders.app_directories.Loader',
-                ]
-            },
+            'loaders': [
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+            ]
         },
-    ]
+    },
+]
 
 MIDDLEWARE_CLASSES = [
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -138,20 +131,6 @@ for module_name in available_modules:
     INSTALLED_APPS.append(module_name)
 
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
-
-if django.VERSION < (1, 8):
-    TEMPLATE_CONTEXT_PROCESSORS = [
-        "django.contrib.auth.context_processors.auth",
-        "django.core.context_processors.debug",
-        "django.core.context_processors.i18n",
-        "django.core.context_processors.request",
-        "django.core.context_processors.static",
-        "lava_server.context_processors.lava",
-        "lava_server.context_processors.ldap_available",
-    ]
-
-    if "django_openid_auth" in available_modules:
-        TEMPLATE_CONTEXT_PROCESSORS += ['lava_server.context_processors.openid_available']
 
 AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend']
 

@@ -23,8 +23,7 @@ import threading
 import zmq
 
 from django.conf import settings
-
-from lava_server.utils import OptArgBaseCommand as BaseCommand
+from django.core.management.base import BaseCommand
 
 
 class Monitor(threading.Thread):

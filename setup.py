@@ -81,9 +81,9 @@ setup(
         "Topic :: Software Development :: Testing",
     ],
     install_requires=[
-        'django >= 1.7.1',
+        'django >= 1.8',
         'django-restricted-resource >= 2015.09',
-        'django-tables2 >= 0.13.0',
+        'django-tables2 >= 1.2',
         'docutils >= 0.6',
         'lava-tool >= 0.2',
         'versiontools >= 1.8',

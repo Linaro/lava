@@ -220,13 +220,8 @@ def bundle_stream_list(request):
                 group__in=request.user.groups.all()).exists()),
     }
     RequestConfig(request, paginate={"per_page": table.length}).configure(table)
-    if django.VERSION > (1, 8):
-        template = get_template('dashboard_app/bundle_stream_list.html')
-        return HttpResponse(template.render(context_dict, request))
-    else:
-        return render_to_response(
-            'dashboard_app/bundle_stream_list.html', context_dict, RequestContext(request)
-        )
+    template = get_template('dashboard_app/bundle_stream_list.html')
+    return HttpResponse(template.render(context_dict, request))
 
 
 def bundlestreams_json(request):

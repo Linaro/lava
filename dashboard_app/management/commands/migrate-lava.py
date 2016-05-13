@@ -35,8 +35,7 @@ from importlib import import_module
 
 from django.apps import apps
 from django.core.management import call_command
-from django.core.management.base import CommandError
-from lava_server.utils import OptArgBaseCommand as BaseCommand
+from django.core.management.base import CommandError, BaseCommand
 from django.core.management.color import no_style
 from django.core.management.sql import (
     custom_sql_for_model, emit_post_migrate_signal, emit_pre_migrate_signal,
