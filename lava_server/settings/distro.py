@@ -26,11 +26,6 @@ SECRET_KEY = distro_settings.SECRET_KEY
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 MEDIA_ROOT = distro_settings.MEDIA_ROOT
 
-# URL that handles the media served from MEDIA_ROOT. Make sure to use a
-# trailing slash if there is a path component (optional in other cases).
-# Examples: "http://media.lawrence.com", "http://example.com/media/"
-MEDIA_URL = distro_settings.MEDIA_URL
-
 # Absolute filesystem path to the directory that will hold archived files.
 ARCHIVE_ROOT = distro_settings.ARCHIVE_ROOT
 
@@ -42,11 +37,6 @@ STATIC_ROOT = distro_settings.STATIC_ROOT
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://static.lawrence.com", "http://example.com/static/"
 STATIC_URL = distro_settings.STATIC_URL
-
-# URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
-# trailing slash.
-# Examples: "http://foo.com/media/", "/media/".
-ADMIN_MEDIA_PREFIX = distro_settings.ADMIN_MEDIA_PREFIX
 
 # List of absolute pathnames used to resolve templates.
 if django.VERSION < (1, 8):
@@ -137,7 +127,7 @@ if AUTH_LDAP_SERVER_URI:
 
     AUTHENTICATION_BACKENDS = ['django_auth_ldap.backend.LDAPBackend',
                                'django.contrib.auth.backends.ModelBackend'] + \
-        [x for x in AUTHENTICATION_BACKENDS]
+        AUTHENTICATION_BACKENDS
 
     DISABLE_OPENID_AUTH = distro_settings.get_setting("DISABLE_OPENID_AUTH")
     if DISABLE_OPENID_AUTH:
@@ -183,7 +173,7 @@ if AUTH_LDAP_SERVER_URI:
     LOGIN_MESSAGE_LDAP = distro_settings.get_setting("LOGIN_MESSAGE_LDAP", "")
 elif AUTH_DEBIAN_SSO:
     MIDDLEWARE_CLASSES.append('lava_server.debian_sso.DebianSsoUserMiddleware')
-    AUTHENTICATION_BACKENDS += ('lava_server.debian_sso.DebianSsoUserBackend',)
+    AUTHENTICATION_BACKENDS.append('lava_server.debian_sso.DebianSsoUserBackend')
 
 USE_DEBUG_TOOLBAR = distro_settings.get_setting('USE_DEBUG_TOOLBAR', False)
 

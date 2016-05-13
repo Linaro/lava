@@ -223,21 +223,6 @@ class Settings(object):
         return self._settings.get("LOG_SIZE_LIMIT", default)
 
     @property
-    def MEDIA_URL(self):
-        """
-        See: http://docs.djangoproject.com/en/1.2/ref/settings/#media-url
-
-        Bridge for the settings file MEDIA_URL property.
-
-        By default it produces the string:
-
-            ``"/{mount_point}media/"``
-
-        """
-        default = "/{mount_point}media/".format(mount_point=self.mount_point)
-        return self._settings.get("MEDIA_URL", default)
-
-    @property
     def STATIC_ROOT(self):
         """
         Similar to MEDIA_ROOT but only for static files shipped with each application.
@@ -265,19 +250,6 @@ class Settings(object):
         """
         default = "/{mount_point}static/".format(mount_point=self.mount_point)
         return self._settings.get("STATIC_URL", default)
-
-    @property
-    def ADMIN_MEDIA_PREFIX(self):
-        """
-        See: http://docs.djangoproject.com/en/1.2/ref/settings/#admin-media-prefix
-
-        Bridge for the settings file ADMIN_MEDIA_DIRS property.
-
-        By default it produces the string:
-            ``"{STATIC_URL}admin/"``
-        """
-        default = self.STATIC_URL + "admin/"
-        return self._settings.get("ADMIN_MEDIA_PREFIX", default)
 
     if django.VERSION > (1, 8):
         @property
