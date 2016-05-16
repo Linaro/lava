@@ -7,3 +7,9 @@ SCHEDULER_DAEMON_OPTIONS = {
     # So we don't let it go below this value, which defaults to a day.
     'MIN_JOB_TIMEOUT': 24 * 60 * 60,
 }
+
+# ZMQ events
+EVENT_NOTIFICATION = False
+INTERNAL_EVENT_SOCKET = "ipc:///tmp/lava.events"
+EVENT_SOCKET = "tcp://*:5500"
+EVENT_TOPIC = "org.linaro.validation"
