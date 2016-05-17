@@ -29,10 +29,6 @@ from lava_dispatcher.pipeline.action import (
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
-from lava_dispatcher.pipeline.connections.adb import (
-    ConnectAdb,
-    WaitForAdbDevice,
-)
 from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
@@ -110,57 +106,5 @@ class FastbootAction(Action):
             status = [status.strip() for status in command_output.split(
                 '\n') if 'finished' in status][0]
             self.results = {'status': status}
-        self.data['boot-result'] = 'failed' if self.errors else 'success'
-        return connection
-
-
-class AdbOverlayUnpack(Action):
-
-    def __init__(self):
-        super(AdbOverlayUnpack, self).__init__()
-        self.name = "adb-overlay-unpack"
-        self.summary = "unpack the overlay on the remote device"
-        self.description = "unpack the overlay over adb"
-
-    def validate(self):
-        super(AdbOverlayUnpack, self).validate()
-        if 'adb_serial_number' not in self.job.device:
-            self.errors = "device adb serial number missing"
-            if self.job.device['adb_serial_number'] == '0000000000':
-                self.errors = "device adb serial number unset"
-        if infrastructure_error('adb'):
-            self.errors = "Unable to find 'adb' command"
-
-    def run(self, connection, args=None):
-        connection = super(AdbOverlayUnpack, self).run(connection, args)
-        serial_number = self.job.device['adb_serial_number']
-        overlay_type = 'adb-overlay'
-        if 'namespace' in self.parameters:
-            overlay_file = self.get_common_data(self.parameters['namespace'],
-                                                'output')
-        else:
-            overlay_file = self.data['compress-overlay'].get('output')
-        host_dir = mkdtemp()
-        target_dir = ANDROID_TMP_DIR
-        try:
-            tar = tarfile.open(overlay_file)
-            tar.extractall(host_dir)
-            tar.close()
-        except tarfile.TarError as exc:
-            raise RuntimeError("Unable to unpack %s overlay: %s" % (
-                overlay_type, exc))
-        host_dir = os.path.join(host_dir, 'data/local/tmp')
-        adb_cmd = ['adb', '-s', serial_number, 'push', host_dir,
-                   target_dir]
-        command_output = self.run_command(adb_cmd)
-        if command_output and 'pushed' not in command_output:
-            raise JobError("Unable to push overlay files with adb: %s" %
-                           command_output)
-        adb_cmd = ['adb', '-s', serial_number, 'shell', '/system/bin/chmod',
-                   '-R', '0777', target_dir]
-        command_output = self.run_command(adb_cmd)
-        if command_output and 'pushed' not in command_output:
-            raise JobError("Unable to chmod overlay files with adb: %s" %
-                           command_output)
         self.data['boot-result'] = 'failed' if self.errors else 'success'
         return connection

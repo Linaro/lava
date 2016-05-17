@@ -66,7 +66,6 @@ class TestFastbootDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
         description_ref = pipeline_reference('fastboot.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
-    @unittest.skipIf(infrastructure_error('adb'), 'adb not installed')
     @unittest.skipIf(infrastructure_error('fastboot'), 'fastboot not installed')
     def test_validate(self):
         try:

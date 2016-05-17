@@ -30,17 +30,12 @@ from lava_dispatcher.pipeline.menus.menus import (
     MenuInterrupt,
     MenuReset
 )
-from lava_dispatcher.pipeline.connections.adb import (
-    ConnectAdb,
-    WaitForAdbDevice,
-)
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.power import ResetDevice
 from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
-from lava_dispatcher.pipeline.actions.boot.fastboot import AdbOverlayUnpack
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 
 
@@ -213,11 +208,5 @@ class UefiMenuAction(BootAction):
         self.internal_pipeline.add_action(UEFIMenuInterrupt())
         self.internal_pipeline.add_action(UefiMenuSelector())
         self.internal_pipeline.add_action(MenuReset())
-        if 'adb_serial_number' in self.job.device:
-            self.internal_pipeline.add_action(WaitForAdbDevice())
-            self.internal_pipeline.add_action(ConnectAdb())
         self.internal_pipeline.add_action(AutoLoginAction())
-        if 'adb_serial_number' in self.job.device:
-            self.internal_pipeline.add_action(ExpectShellSession())
-            self.internal_pipeline.add_action(AdbOverlayUnpack())
         self.internal_pipeline.add_action(ExportDeviceEnvironment())
