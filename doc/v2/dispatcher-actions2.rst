@@ -129,7 +129,36 @@ deploy to the requested location.
        dtb:
          url: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 
+    * **modules** - a tarball of kernel modules for the supplied kernel::
+
+       modules:
+         url: http://images.validation.linaro.org/modules.tgz
+         compression: gz
+
+      The file **must** be a tar file and the compression method **must**
+      be specified.
+
+      If the kernel requires these modules to be able to locate the rootfs,
+      e.g. when using NFS or if certain required filesystem drivers are
+      only available as modules, the ramdisk can be unpacked and the
+      modules added. Modules may also be required to run tests within
+      the ramdisk itself.
+
     * **ramdisk** - in an appropriate format to what the commands require.
+
+      The ramdisk needs to be unpacked and modified in either of the
+      following two use cases:
+
+      * the lava test shell is expected to run inside the ramdisk, or
+      * the deployment needs modules to be added to the ramdisk, for
+        example to allow the device to load the network driver to be
+        able to locate the NFS.
+
+      To unpack the ramdisk, the test writer needs to specify details
+      about how the ramdisk is prepared and used. If these details are
+      not provided, the ramdisk will not be unpacked (potentially causing
+      the test to fail in the above two use cases).
+
       If a header is already applied, the ``header`` value **must**
       specify the type of header, e.g. ``u-boot``. This header will
       be removed before unpacking, ready for the LAVA overlay files.
@@ -145,6 +174,20 @@ deploy to the requested location.
          compression: gz
          header: u-boot
          add-header: u-boot
+
+      If the ramdisk is not to be modified, the ``allow_modify`` option
+      **must** be specified as ``false`` (without quotes). This means
+      that a test shell will not be able to run inside the ramdisk. If
+      ``modules`` are specified as well, these will not be added to the
+      ramdisk. For example, if the ramdisk is signed or if modules are
+      not required for NFS::
+
+       ramdisk:
+         url: file://tmp/uInitrd
+         allow_modify: false
+
+      ``allow_modify: true`` is equivalent to not specifying ``allow_modify``
+      at all.
 
     * **nfsrootfs** - **must** be a tarball and supports one of ``gz``, ``xz`` or
       ``bz2`` compression. The NFS is unpacked into a temporary directory onto the
