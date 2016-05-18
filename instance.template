@@ -7,11 +7,6 @@ LAVA_PREFIX='/var/lib/lava-server/'
 # Instance name
 LAVA_INSTANCE='default'
 
-# The lava-server branch used by upgrade
-# Not implemented in packaging.
-LAVA_MANIFEST_BRANCH=''
-LAVA_BUILDOUT_CFG=''
-
 # System configuration (Unix-level)
 # Could be the same as LAVA_DB_NAME
 LAVA_SYS_USER='lavaserver'
