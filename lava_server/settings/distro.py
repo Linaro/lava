@@ -215,6 +215,11 @@ LOGGING = {
         }
     },
     'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'lava'
+        },
         'logfile': {
             'class': 'logging.handlers.WatchedFileHandler',
             'filename': distro_settings.get_setting("DJANGO_LOGFILE", "/var/log/lava-server/django.log"),
@@ -247,6 +252,11 @@ LOGGING = {
             'handlers': ['logfile'],
             'level': 'INFO',
             'propagate': True,
+        },
+        'publisher': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
         }
     }
 }
