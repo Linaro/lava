@@ -17,7 +17,6 @@
 # along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import xmlrpclib
 
 from twisted.application.service import Service
 from twisted.internet import defer
@@ -25,7 +24,6 @@ from twisted.internet.task import LoopingCall
 
 from lava_scheduler_app import utils
 from lava_scheduler_daemon.job import JobRunner, catchall_errback
-from lava_scheduler_daemon.worker import WorkerData
 
 
 class JobQueue(Service):

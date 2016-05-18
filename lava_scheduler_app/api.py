@@ -11,7 +11,6 @@ from lava_scheduler_app.models import (
     JSONDataError,
     DevicesUnavailableException,
     TestJob,
-    Worker,
     DeviceDictionary,
 )
 from lava_scheduler_app.views import (

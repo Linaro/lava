@@ -1,4 +1,3 @@
-import django
 from django import template
 from django.db.models import fields
 from django.utils.html import escape

@@ -1,6 +1,5 @@
 # Django settings for django_hello project used on Debian systems.
 
-import os
 from lava_server.settings.getsettings import Settings
 from lava_server.settings.production import *
 from django.db.backends.signals import connection_created

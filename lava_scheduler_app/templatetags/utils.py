@@ -7,12 +7,6 @@ from django.conf import settings
 from collections import OrderedDict
 from django.utils.safestring import mark_safe
 from lava_scheduler_app.models import TestJob
-from lava_scheduler_app.models import (
-    DeviceDictionary,
-    DeviceDictionaryTable,
-    JobPipeline,
-    PipelineStore,
-)
 from lava_scheduler_app.utils import load_devicetype_template
 
 

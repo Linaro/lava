@@ -22,7 +22,7 @@ from django.core.exceptions import ValidationError
 from django import forms
 from django.forms.formsets import BaseFormSet, formset_factory
 from django.forms.widgets import Select
-from django.template import Template, Context
+from django.template import Template
 from django.utils.safestring import mark_safe
 
 from dashboard_app.models import (

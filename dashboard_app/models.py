@@ -53,7 +53,7 @@ from django.db import models, connection, IntegrityError
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
-from django.template import Template, Context
+from django.template import Template
 from django.template.defaultfilters import filesizeformat, slugify
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
