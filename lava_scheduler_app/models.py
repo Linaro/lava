@@ -1409,7 +1409,8 @@ class TestJob(RestrictedResource):
     submit_time = models.DateTimeField(
         verbose_name=_(u"Submit time"),
         auto_now=False,
-        auto_now_add=True
+        auto_now_add=True,
+        db_index=True
     )
     start_time = models.DateTimeField(
         verbose_name=_(u"Start time"),
