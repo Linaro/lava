@@ -74,12 +74,19 @@ class cmd_boot_linaro_android_image(BaseAction):
     parameters_schema['properties']['boot_uiautomator_commands'] = {
         'type': 'array', 'items': {'type': 'string'}, 'optional': True
     }
+    parameters_schema['properties']['fastboot_command_timeout'] = {
+        'type': 'int', 'optional': True
+    }
+    parameters_schema['properties']['adb_command_timeout'] = {
+        'type': 'int', 'optional': True
+    }
 
     def run(self, options=[], boot_cmds=None, sim_options=None, adb_check=False,
             wait_for_home_screen=True, wait_for_home_screen_activity=None,
             test_image_prompt=None, interrupt_boot_prompt=None,
             enable_network_after_boot_android=None, repeat_count=0,
-            boot_uiautomator_jar=None, boot_uiautomator_commands=None):
+            boot_uiautomator_jar=None, boot_uiautomator_commands=None,
+            fastboot_command_timeout=None, adb_command_timeout=None):
         client = self.client
         if boot_cmds is not None:
             client.config.boot_cmds = boot_cmds
@@ -97,6 +104,12 @@ class cmd_boot_linaro_android_image(BaseAction):
         if enable_network_after_boot_android is not None:
             client.config.enable_network_after_boot_android = \
                 enable_network_after_boot_android
+        if fastboot_command_timeout is not None:
+            client.config.fastboot_command_timeout = \
+                fastboot_command_timeout
+        if adb_command_timeout is not None:
+            client.config.adb_command_timeout = \
+                adb_command_timeout
         client.target_device.boot_options = options
         client.config.android_wait_for_home_screen = wait_for_home_screen
         client.target_device.reset_boot(in_test_shell=False)

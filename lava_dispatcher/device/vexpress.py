@@ -36,6 +36,8 @@ from lava_dispatcher.errors import (
     OperationFailed,
 )
 
+from master import MasterCommandRunner
+
 
 class VexpressTarget(BootloaderTarget):
 
@@ -166,6 +168,12 @@ class VexpressTarget(BootloaderTarget):
         super(VexpressTarget, self).deploy_linaro_kernel(kernel, ramdisk, dtb, overlays, rootfs, nfsrootfs, image, bootloader,
                                                          firmware, bl0, bl1, bl2, bl31, rootfstype, bootloadertype,
                                                          target_type, qemu_pflash=qemu_pflash)
+
+    def boot_master_image(self):
+        super(VexpressTarget, self).boot_master_image()
+        runner = MasterCommandRunner(self)
+        runner.run("touch /forcefsck")
+        runner.run("sync")
 
     def _load_test_firmware(self):
         with self._mcc_setup() as mount_point:

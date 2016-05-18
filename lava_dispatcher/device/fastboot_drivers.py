@@ -57,10 +57,11 @@ class FastBoot(object):
         self.device = device
         self.context = device.context
 
-    def __call__(self, args, ignore_failure=False, timeout=600):
+    def __call__(self, args, ignore_failure=False):
         command = self.device.config.fastboot_command + ' ' + args
         command = "flock -o /var/lock/lava-fastboot.lck " + command
-        _call(self.context, command, ignore_failure, timeout)
+        _call(self.context, command, ignore_failure,
+              self.device.config.fastboot_command_timeout)
 
     def enter(self):
         try:
@@ -85,7 +86,10 @@ class FastBoot(object):
         try:
             logging.info("Waiting for 10 seconds for connection to settle")
             sleep(10)
-            self('getvar all', timeout=2)
+            command = self.device.config.fastboot_command + ' ' + 'getvar all'
+            command = "flock -o /var/lock/lava-fastboot.lck " + command
+            # deliberately shortened from device config
+            _call(self.context, command, False, 2)
             return True
         except subprocess.CalledProcessError:
             return False
@@ -290,12 +294,13 @@ class BaseDriver(object):
 
         self.__boot_image__ = boot
 
-    def adb(self, args, ignore_failure=False, spawn=False, timeout=120):
+    def adb(self, args, ignore_failure=False, spawn=False):
         cmd = self.config.adb_command + ' ' + args
         if spawn:
             return self.context.spawn(cmd, timeout=60)
         else:
-            _call(self.context, cmd, ignore_failure, timeout)
+            _call(self.context, cmd, ignore_failure,
+                  self.device.config.adb_command_timeout)
 
     def dummy_deploy(self, target_type, scratch_dir):
         self.target_type = target_type
