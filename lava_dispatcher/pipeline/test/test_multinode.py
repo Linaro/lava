@@ -635,7 +635,7 @@ class TestProtocol(unittest.TestCase):  # pylint: disable=too-many-public-method
         def _connect(self, delay):
             return True
 
-        def finalise_protocol(self):
+        def finalise_protocol(self, device=None):
             """
             Allow the fake coordinator to finalise the protocol
             """

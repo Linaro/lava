@@ -289,7 +289,7 @@ class Protocol(object):  # pylint: disable=abstract-class-not-used
     def configure(self, device, job):
         self.configured = True
 
-    def finalise_protocol(self):
+    def finalise_protocol(self, device=None):
         raise NotImplementedError()
 
     def check_timeout(self, duration, data):
