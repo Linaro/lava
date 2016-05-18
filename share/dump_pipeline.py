@@ -50,6 +50,6 @@ if __name__ == '__main__':
     # Load the job definition
     with open(args[1], 'r') as job_data:
         parser = JobParser()
-        job = parser.parse(job_data, device, 0, None)
+        job = parser.parse(job_data, device, 0, None, None, None)
 
     print(yaml.dump(job.pipeline.describe(False)))
