@@ -370,8 +370,33 @@ class TestOverlayCommands(unittest.TestCase):  # pylint: disable=too-many-public
         tftp_deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
         nfs = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-nfsrootfs'][0]
+        ramdisk = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-overlay-ramdisk'][0]
         modules = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-modules'][0]
         overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'apply-overlay-tftp'][0]
+        self.assertIsNotNone(ramdisk.parameters.get('ramdisk'), None)
+        self.assertIsNotNone(ramdisk.parameters['ramdisk'].get('url'), None)
+        self.assertIsNotNone(ramdisk.parameters['ramdisk'].get('compression'), None)
+        self.assertTrue(ramdisk.parameters['ramdisk'].get('install_modules', True))
+        self.assertTrue(ramdisk.parameters['ramdisk'].get('install_overlay', True))
+        self.assertIsNotNone(modules.parameters.get('ramdisk', None))
+        self.assertIsNotNone(modules.parameters.get('nfsrootfs', None))
+        self.assertIsNotNone(nfs.parameters.get('nfsrootfs', None))
+        self.assertIsNotNone(overlay.parameters.get('nfsrootfs', None))
+        self.assertIsNotNone(overlay.parameters.get('ramdisk', None))
+
+    def test_ramdisk_nfs_nomodules(self):
+        factory = Factory()
+        job = factory.create_bbb_job('sample_jobs/bbb-uinitrd-nfs.yaml')
+        tftp_deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
+        nfs = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-nfsrootfs'][0]
+        ramdisk = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-overlay-ramdisk'][0]
+        modules = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-modules'][0]
+        overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'apply-overlay-tftp'][0]
+        self.assertIsNotNone(ramdisk.parameters.get('ramdisk'), None)
+        self.assertIsNotNone(ramdisk.parameters['ramdisk'].get('url'), None)
+        self.assertIsNone(ramdisk.parameters['ramdisk'].get('compression'), None)
+        self.assertFalse(ramdisk.parameters['ramdisk'].get('install_overlay', True))
         self.assertIsNotNone(modules.parameters.get('ramdisk', None))
         self.assertIsNotNone(modules.parameters.get('nfsrootfs', None))
         self.assertIsNotNone(nfs.parameters.get('nfsrootfs', None))

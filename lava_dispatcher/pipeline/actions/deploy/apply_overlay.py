@@ -155,10 +155,16 @@ class ApplyOverlayTftp(Action):
         directory = None
         nfs_url = None
         if self.parameters.get('nfsrootfs', None) is not None:
+            if not self.parameters['nfsrootfs'].get('install_overlay', True):
+                self.logger.info("Skipping applying overlay to NFS")
+                return connection
             overlay_file = self.data['compress-overlay'].get('output')
             directory = self.get_common_data('file', 'nfsroot')
             self.logger.info("Applying overlay to NFS")
         elif self.parameters.get('nfs_url', None) is not None:
+            if not self.parameters['nfs_url'].get('install_overlay', True):
+                self.logger.info("Skipping applying overlay to persistent NFS")
+                return connection
             nfs_url = self.parameters.get('nfs_url')
             overlay_file = self.data['compress-overlay'].get('output')
             self.logger.info("Applying overlay to persistent NFS")
@@ -171,6 +177,9 @@ class ApplyOverlayTftp(Action):
             except subprocess.CalledProcessError as exc:
                 raise JobError(exc)
         elif self.parameters.get('ramdisk', None) is not None:
+            if not self.parameters['ramdisk'].get('install_overlay', True):
+                self.logger.info("Skipping applying overlay to ramdisk")
+                return connection
             overlay_file = self.data['compress-overlay'].get('output')
             directory = self.data['extract-overlay-ramdisk']['extracted_ramdisk']
             self.logger.info("Applying overlay to ramdisk")
@@ -307,10 +316,16 @@ class ExtractModules(Action):
         # as the kernel may need some modules to raise the network and
         # will need other modules to support operations within the NFS
         if self.parameters.get('nfsrootfs', None):
+            if not self.parameters['nfsrootfs'].get('install_modules', True):
+                self.logger.info("Skipping applying overlay to NFS")
+                return connection
             root = self.get_common_data('file', 'nfsroot')
             self.logger.info("extracting modules file %s to %s", modules, root)
             untar_file(modules, root)
         if self.parameters.get('ramdisk', None):
+            if not self.parameters['ramdisk'].get('install_modules', True):
+                self.logger.info("Not adding modules to the ramdisk.")
+                return
             root = self.data['extract-overlay-ramdisk']['extracted_ramdisk']
             self.logger.info("extracting modules file %s to %s", modules, root)
             untar_file(modules, root)
@@ -334,15 +349,23 @@ class ExtractRamdisk(Action):
         self.name = "extract-overlay-ramdisk"
         self.summary = "extract the ramdisk"
         self.description = "extract ramdisk to a temporary directory"
+        self.skip = False
 
     def validate(self):
         super(ExtractRamdisk, self).validate()
         if not self.parameters.get('ramdisk', None):  # idempotency
             return
+        if not self.parameters['ramdisk'].get('install_modules', True) and \
+                not self.parameters['ramdisk'].get('install_overlay', True):
+            self.skip = True
+            return
 
     def run(self, connection, args=None):
         if not self.parameters.get('ramdisk', None):  # idempotency
             return connection
+        if self.skip:
+            self.logger.info("Not extracting ramdisk.")
+            return
         connection = super(ExtractRamdisk, self).run(connection, args)
         ramdisk = self.data['download_action']['ramdisk']['file']
         ramdisk_dir = self.mkdtemp()
@@ -387,10 +410,15 @@ class CompressRamdisk(Action):
         self.description = "recreate a ramdisk with the overlay applied."
         self.mkimage_arch = None
         self.add_header = None
+        self.skip = False
 
     def validate(self):
         super(CompressRamdisk, self).validate()
         if not self.parameters.get('ramdisk', None):  # idempotency
+            return
+        if not self.parameters['ramdisk'].get('install_modules', True) and \
+                not self.parameters['ramdisk'].get('install_overlay', True):
+            self.skip = True
             return
         if 'parameters' in self.job.device['actions']['deploy']:
             self.add_header = self.job.device['actions']['deploy']['parameters'].get('add_header', None)
@@ -406,6 +434,8 @@ class CompressRamdisk(Action):
 
     def run(self, connection, args=None):
         if not self.parameters.get('ramdisk', None):  # idempotency
+            return connection
+        if self.skip:
             return connection
         connection = super(CompressRamdisk, self).run(connection, args)
         if 'extracted_ramdisk' not in self.data['extract-overlay-ramdisk']:
