@@ -70,6 +70,17 @@
 {% set base_menu_boot_message = "Loaded: LinuxImage" -%}
 {% set base_menu_dictionary = {} -%}
 
+{% block character_delays %}
+{% if boot_character_delay or test_character_delay %}
+character-delays:
+{% if boot_character_delay %}
+      boot: {{ boot_character_delay }}
+{% endif -%}
+{% if test_character_delay %}
+      test: {{ test_character_delay }}
+{% endif -%}
+{% endif -%}
+{% endblock -%}
 
 {% block commands %}
 {% if connection_command %}

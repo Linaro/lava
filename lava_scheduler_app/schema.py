@@ -233,6 +233,7 @@ def _device_schema():
     Less strict than the job_schema as this is primarily admin / template controlled.
     """
     return Schema({
+        'character_delays': dict,
         'commands': dict,
         'adb_serial_number': str,
         'fastboot_serial_number': str,
