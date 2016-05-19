@@ -27,6 +27,7 @@ import unittest
 from lava_dispatcher.pipeline.power import FinalizeAction
 from lava_dispatcher.pipeline.actions.test.shell import TestShellRetry
 from lava_dispatcher.pipeline.test.test_basic import Factory
+from lava_dispatcher.pipeline.test.test_uboot import Factory as BBBFactory
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.deploy.image import DeployImagesAction
 from lava_dispatcher.pipeline.actions.deploy.testdef import (
@@ -229,3 +230,36 @@ class TestDefinitionRepeat(unittest.TestCase):  # pylint: disable=too-many-publi
         self.assertEqual(len(boot), 2)
         self.assertEqual(len(shell), 2)
         self.assertEqual(len(finalize), 1)
+
+
+class TestSkipInstall(unittest.TestCase):  # pylint: disable=too-many-public-methods
+
+    def setUp(self):
+        super(TestSkipInstall, self).setUp()
+        factory = BBBFactory()
+        self.job = factory.create_bbb_job("sample_jobs/bbb-skip-install.yaml")
+
+    def test_skip_install_params(self):
+        self.assertIsNotNone(self.job)
+        deploy = [action for action in self.job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        prepare = [action for action in deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
+        apply = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        testoverlay = [action for action in apply.internal_pipeline.actions if action.name == 'test-definition'][0]
+        testdefs = [action for action in testoverlay.internal_pipeline.actions if action.name == 'test-install-overlay']
+        ubuntu_testdef = None
+        single_testdef = None
+        for testdef in testdefs:
+            if testdef.parameters['path'] == 'ubuntu/smoke-tests-basic.yaml':
+                ubuntu_testdef = testdef
+            elif testdef.parameters['path'] == 'lava-test-shell/single-node/singlenode03.yaml':
+                single_testdef = testdef
+            else:
+                self.fail('Unexpected test definition in sample job.')
+        self.assertNotIn('skip_install', ubuntu_testdef.parameters)
+        self.assertIn('skip_install', single_testdef.parameters)
+        self.job.validate()
+        self.assertEqual(
+            single_testdef.skip_list,
+            ['keys', 'sources', 'deps', 'steps', 'all']
+        )
+        self.assertEqual(single_testdef.skip_options, ['deps'])

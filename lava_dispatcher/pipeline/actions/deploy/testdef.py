@@ -771,6 +771,18 @@ class TestInstallAction(TestOverlayAction):
         self.name = "test-install-overlay"
         self.description = "overlay dependency installation support files onto image"
         self.summary = "applying LAVA test install scripts"
+        self.skip_list = ['keys', 'sources', 'deps', 'steps', 'all']  # keep 'all' as the last item
+        self.skip_options = []
+
+    def validate(self):
+        if 'skip_install' in self.parameters:
+            if set(self.parameters['skip_install']) - set(self.skip_list):
+                self.errors = "Unrecognised skip_install value"
+            if 'all' in self.parameters['skip_install']:
+                self.skip_options = self.skip_list[:-1]  # without last item
+            else:
+                self.skip_options = self.parameters['skip_install']
+        super(TestInstallAction, self).validate()
 
     def run(self, connection, args=None):
         connection = super(TestInstallAction, self).run(connection, args)
@@ -784,31 +796,30 @@ class TestInstallAction(TestOverlayAction):
             testdef = yaml.safe_load(test_file)
 
         if 'install' not in testdef:
-            self.results = {'skipped': self.test_uuid}
+            self.results = {'skipped %s' % self.name: self.test_uuid}
             return
-
-        testdef.setdefault('skip_install', '')
 
         # hostdir = self.data['test'][self.test_uuid]['overlay_path'][self.parameters['test_name']]
         filename = '%s/install.sh' % runner_path
         content = self.handle_parameters(testdef)
 
+        # TODO: once the migration is complete, design a better way to do skip_install support.
         with open(filename, 'w') as install_file:
             for line in content:
                 install_file.write(line)
-            if testdef['skip_install'] != 'keys':
+            if 'keys' not in self.skip_options:
                 sources = testdef['install'].get('keys', [])
                 for src in sources:
                     install_file.write('lava-add-keys %s' % src)
                     install_file.write('\n')
 
-            if testdef['skip_install'] != 'sources':
+            if 'sources' not in self.skip_options:
                 sources = testdef['install'].get('sources', [])
                 for src in sources:
                     install_file.write('lava-add-sources %s' % src)
                     install_file.write('\n')
 
-            if testdef['skip_install'] != 'deps':
+            if 'deps' not in self.skip_options:
                 # generic dependencies - must be named the same across all distros
                 # supported by the testdef
                 deps = testdef['install'].get('deps', [])
@@ -822,7 +833,7 @@ class TestInstallAction(TestOverlayAction):
                         install_file.write('%s ' % dep)
                     install_file.write('\n')
 
-            if testdef['skip_install'] != 'steps':
+            if 'steps' not in self.skip_options:
                 steps = testdef['install'].get('steps', [])
                 if steps:
                     for cmd in steps:
