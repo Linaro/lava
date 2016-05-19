@@ -517,9 +517,10 @@ def assign_jobs():
                 if 'protocols' in job_dict and 'lava-vland' in job_dict['protocols']:
                     if not match_vlan_interface(device, job_dict):
                         logger.debug("%s does not match vland tags", str(device.hostname))
-                        devices.remove(device)
+                        if device in devices:
+                            devices.remove(device)
                         continue
-            if not _validate_idle_device(job, device):
+            if not _validate_idle_device(job, device) and device in devices:
                 logger.debug("Removing %s from the list of available devices",
                              str(device.hostname))
                 devices.remove(device)
