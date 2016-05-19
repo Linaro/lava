@@ -34,6 +34,7 @@ from lava_dispatcher.pipeline.action import (
     InfrastructureError,
     JobError,
     Pipeline,
+    TestError,
 )
 from lava_dispatcher.pipeline.actions.test import TestAction
 from lava_dispatcher.pipeline.utils.strings import indices
@@ -748,7 +749,14 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
         # and install script (also calling parameter support here.)
         # this run then only does the incidental files.
 
-        self.results = {'success': self.test_uuid}
+        self.results = {
+            'success': self.test_uuid,
+            'name': testdef['metadata']['name'],
+            'path': self.parameters['path'],
+            'from': self.parameters['from'],
+        }
+        if self.parameters['from'] != 'inline':
+            self.results['repository'] = self.parameters['repository']
         return connection
 
 
@@ -846,6 +854,9 @@ class TestRunnerAction(TestOverlayAction):
 
     def __init__(self):
         super(TestRunnerAction, self).__init__()
+        # This name is used to tally the submitted definitions
+        # to the definitions which actually reported results.
+        # avoid changing the self.name of this class.
         self.name = "test-runscript-overlay"
         self.description = "overlay run script onto image"
         self.summary = "applying LAVA test run script"
@@ -863,6 +874,10 @@ class TestRunnerAction(TestOverlayAction):
 
         filename = '%s/run.sh' % runner_path
         content = self.handle_parameters(testdef)
+
+        # the 'lava' testdef name is reserved
+        if testdef['metadata']['name'] == 'lava':
+            raise TestError('The "lava" test definition name is reserved.')
 
         with open(filename, 'a') as runsh:
             for line in content:
@@ -884,5 +899,13 @@ class TestRunnerAction(TestOverlayAction):
             runsh.write('#wait for an ack from the dispatcher\n')
             runsh.write('read\n')
 
-        self.results = {'success': self.test_uuid, "filename": filename}
+        self.results = {
+            'success': self.test_uuid,
+            "filename": filename,
+            'name': testdef['metadata']['name'],
+            'path': self.parameters['path'],
+            'from': self.parameters['from'],
+        }
+        if self.parameters['from'] != 'inline':
+            self.results['repository'] = self.parameters['repository']
         return connection

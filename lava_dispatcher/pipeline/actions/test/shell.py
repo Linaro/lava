@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import time
 import logging
 import pexpect
 from collections import OrderedDict
@@ -91,6 +92,7 @@ class TestShellAction(TestAction):
         self.definition = None
         self.testset_name = None  # FIXME
         self.report = {}
+        self.start = None
 
     def validate(self):
         if "definitions" in self.parameters:
@@ -200,8 +202,29 @@ class TestShellAction(TestAction):
             if name == "STARTRUN":
                 self.signal_director.test_uuid = params[1]
                 self.definition = params[0]
+                uuid = params[1]
                 self.logger.debug("Starting test definition: %s" % self.definition)
             #    self._handle_testrun(params)
+                self.start = time.time()
+                self.logger.results({
+                    'test_definition': 'lava',
+                    self.definition: {
+                        'test_definition_start': self.definition,
+                        'success': uuid
+                    }
+                })
+            elif name == "ENDRUN":
+                self.definition = params[0]
+                uuid = params[1]
+                self.logger.debug("Ending test definition: %s" % self.definition)
+                self.logger.results({
+                    'test_definition': 'lava',
+                    self.definition: {
+                        'success': uuid,
+                        "duration": "%.02f" % (time.time() - self.start)
+                    }
+                })
+                self.start = None
             elif name == "TESTCASE":
                 data = handle_testcase(params)
                 res = self.match.match(data)  # FIXME: rename!
