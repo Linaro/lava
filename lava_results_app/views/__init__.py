@@ -93,13 +93,42 @@ def testjob(request, job):
     suite_table = ResultsTable(
         data.get_table_data().filter(job=job)
     )
-    # some duplicates can exist, so get would fail here and [0] is quicker than try except.
-    testdata = TestData.objects.filter(testjob=job)[0]
-    # FIXME get the actiondata as well, use that to map the testdata test defs to what actually got run.
+    failed_definitions = []
     yaml_dict = OrderedDict()
-    # hide internal python objects
-    for data in testdata.attributes.all().order_by('name'):
-        yaml_dict[str(data.name)] = str(data.value)
+    if TestData.objects.filter(testjob=job).exists():
+        # some duplicates can exist, so get would fail here and [0] is quicker than try except.
+        testdata = TestData.objects.filter(
+            testjob=job).prefetch_related('actionlevels__testcase', 'actionlevels__testcase__suite')[0]
+        if job.status in [TestJob.INCOMPLETE, TestJob.COMPLETE]:
+            # returns something like ['singlenode-advanced', 'smoke-tests-basic', 'smoke-tests-basic']
+            executed = [
+                {
+                    case.action_metadata['test_definition_start']:
+                        case.action_metadata.get('success', '')}
+                for case in TestCase.objects.filter(
+                    suite__in=TestSuite.objects.filter(job=job))
+                if case.action_metadata and 'test_definition_start' in
+                case.action_metadata and case.suite.name == 'lava']
+
+            submitted = [
+                actiondata.testcase.action_metadata for actiondata in
+                testdata.actionlevels.all() if actiondata.testcase and
+                'test-runscript-overlay' in actiondata.action_name]
+            # compare with a dict similar to created in executed
+            for item in submitted:
+                if executed and {item['name']: item['success']} not in executed:
+                    comparison = {}
+                    if item['from'] != 'inline':
+                        comparison['repository'] = item['repository']
+                    comparison['path'] = item['path']
+                    comparison['name'] = item['name']
+                    comparison['uuid'] = item['success']
+                    failed_definitions.append(comparison)
+
+        # hide internal python objects, like OrderedDict
+        for data in testdata.attributes.all().order_by('name'):
+            yaml_dict[str(data.name)] = str(data.value)
+
     RequestConfig(request, paginate={"per_page": suite_table.length}).configure(suite_table)
     return render_to_response(
         "lava_results_app/job.html", {
@@ -107,7 +136,8 @@ def testjob(request, job):
             'job': job,
             'job_link': pklink(job),
             'suite_table': suite_table,
-            'metadata': yaml_dict
+            'metadata': yaml_dict,
+            'failed_definitions': failed_definitions,
         }, RequestContext(request))
 
 

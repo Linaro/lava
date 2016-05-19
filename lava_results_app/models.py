@@ -60,9 +60,6 @@ from lava_scheduler_app.managers import (
 
 from lava_results_app.utils import help_max_length
 
-# TODO: this may need to be ported - clashes if redefined
-from dashboard_app.models import NamedAttribute
-
 
 class InvalidConditionsError(Exception):
     """ Raise when querying by URL has incorrect condition arguments. """
@@ -355,7 +352,7 @@ class TestCase(models.Model, Queryable):
 
     metadata = models.CharField(
         blank=True,
-        max_length=1024,
+        max_length=4096,
         help_text=_(u"Metadata collected by the pipeline action, stored as YAML."),
         null=True,
         verbose_name=_(u"Action meta data as a YAML string")
@@ -491,6 +488,7 @@ class TestCase(models.Model, Queryable):
 class MetaType(models.Model):
     """
     name will be a label, like a deployment type (NFS) or a boot type (bootz)
+    for test metadata, the MetaType is just the section_name.
     """
     DEPLOY_TYPE = 0
     BOOT_TYPE = 1
@@ -522,9 +520,10 @@ class MetaType(models.Model):
     section_names = {
         DEPLOY_TYPE: 'to',
         BOOT_TYPE: 'method',
+        TEST_TYPE: 'definitions',
     }
 
-    name = models.CharField(max_length=32)
+    name = models.CharField(max_length=256)
     metatype = models.PositiveIntegerField(
         verbose_name=_(u"Type"),
         help_text=_(u"metadata action type"),
@@ -550,7 +549,8 @@ class MetaType(models.Model):
 
     @classmethod
     def get_type_name(cls, section, definition):
-        logger = logging.getLogger('lava_results_app')
+        logger = logging.getLogger('dispatcher-master')
+        retval = None
         data = [action for action in definition['actions'] if section in action]
         if not data:
             logger.debug('get_type_name: skipping %s' % section)
@@ -558,7 +558,38 @@ class MetaType(models.Model):
         data = data[0][section]
         if section in MetaType.TYPE_MAP:
             if MetaType.TYPE_MAP[section] in MetaType.section_names:
-                return data[MetaType.section_names[MetaType.TYPE_MAP[section]]]
+                retval = data[MetaType.section_names[MetaType.TYPE_MAP[section]]]
+        if isinstance(retval, list):
+            # No simple way to collapse a long list of definitions into 255 characters
+            return MetaType.section_names[MetaType.TYPE_MAP[section]]
+        else:
+            return retval
+
+
+class NamedTestAttribute(models.Model):
+    """
+    Model for adding named test attributes to arbitrary other model instances.
+
+    Example:
+        class Foo(Model):
+            attributes = fields.GenericRelation(NamedTestAttribute)
+    """
+    name = models.TextField()
+
+    value = models.TextField()
+
+    # Content type plumbing
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = fields.GenericForeignKey('content_type', 'object_id')
+
+    def __unicode__(self):
+        return _(u"{name}: {value}").format(
+            name=self.name,
+            value=self.value)
+
+    class Meta:
+        unique_together = (('object_id', 'name', 'content_type'))
 
 
 class TestData(models.Model):
@@ -573,7 +604,7 @@ class TestData(models.Model):
 
     # Attributes
 
-    attributes = fields.GenericRelation(NamedAttribute)
+    attributes = fields.GenericRelation(NamedTestAttribute)
 
     # Attachments
 
@@ -585,6 +616,8 @@ class TestData(models.Model):
 
 class ActionData(models.Model):
     """
+    Each Action in the pipeline has Data tracked in this model.
+    One TestData object can relate to multiple ActionData objects.
     When TestData creates a new item, the level and name
     of that item are created and referenced.
     Other actions are ignored.
@@ -834,7 +867,7 @@ class Query(models.Model):
                                condition.table.model_class()))
                 raise
 
-            if condition.table.model_class() == NamedAttribute:
+            if condition.table.model_class() == NamedTestAttribute:
                 # For custom attributes, need two filters since
                 # we're comparing the key(name) and the value.
                 filter_key_name = '{0}__name'.format(relation_string)
@@ -1061,7 +1094,7 @@ class QueryCondition(models.Model):
     table = models.ForeignKey(
         ContentType,
         limit_choices_to=Q(model__in=[
-            'testsuite', 'testjob', 'namedattribute']) | (
+            'testsuite', 'testjob', 'namedtestattribute']) | (
                 Q(app_label='lava_results_app') & Q(model='testcase')),
         verbose_name='Condition model'
     )
@@ -1072,20 +1105,20 @@ class QueryCondition(models.Model):
             TestJob: None,
             TestSuite: 'testsuite',
             TestCase: 'testsuite__testcase',
-            NamedAttribute: 'testdata__attributes',
+            NamedTestAttribute: 'testdata__attributes',
         },
         TestSuite: {
             TestJob: 'job',
             TestCase: 'testcase',
             TestSuite: None,
-            NamedAttribute:
+            NamedTestAttribute:
                 'job__testdata__attributes',
         },
         TestCase: {
             TestCase: None,
             TestJob: 'suite__job',
             TestSuite: 'suite',
-            NamedAttribute:
+            NamedTestAttribute:
                 'suite__job__testdata__attributes',
         }
     }
@@ -1143,6 +1176,8 @@ class QueryCondition(models.Model):
 
 def _get_foreign_key_model(model, fieldname):
     """ Returns model if field is a foreign key, otherwise None. """
+    # FIXME: RemovedInDjango110Warning: 'get_field_by_name is an unofficial API
+    # that has been deprecated. You may be able to replace it with 'get_field()'
     field_object, model, direct, m2m = model._meta.get_field_by_name(fieldname)
     if not m2m and direct and isinstance(field_object, models.ForeignKey):
         return field_object.rel.to

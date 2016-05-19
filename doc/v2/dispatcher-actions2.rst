@@ -498,6 +498,20 @@ Additional support
 The refactoring supports some additional elements in Lava Test Shell
 which will not be supported in the current dispatcher.
 
+Result checks
+-------------
+
+LAVA collects results from internal operations as well as from the
+submitted test definitions, these form the ``lava`` test suite results.
+The full set of results for a job are available at::
+
+ results/1234
+
+LAVA records when a submitted test definition starts execution on the
+test device. If the number of test definitions which started is not the
+same as the number of test definitions submitted (allowing for the ``lava``
+test suite results), a warning will be displayed on this page.
+
 TestSets
 --------
 

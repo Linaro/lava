@@ -188,22 +188,22 @@ class SuiteTable(LavaTable):
 
     def render_result(self, record):  # pylint: disable=no-self-use
         if record.metadata:
-            # FIXME: much more can be done here.
-            if isinstance(record.action_metadata, str):
-                return record.action_metadata
-            return " ".join([key for key, _ in record.action_metadata.items() if key != 'level'])
+            if 'success' in record.action_metadata:
+                code = 'pass'
+            else:
+                code = 'fail'
         else:
             code = record.result_code
-            image = static('lava_results_app/images/icon-%s.png' % code)
-            return mark_safe(
-                '<a href="%s"><img src="%s"'
-                'alt="%s" width="16" height="16" border="0"/>%s</a>' % (
-                    record.get_absolute_url(),
-                    image,
-                    code,
-                    code,
-                )
+        image = static('lava_results_app/images/icon-%s.png' % code)
+        return mark_safe(
+            '<a href="%s"><img src="%s"'
+            'alt="%s" width="16" height="16" border="0"/>%s</a>' % (
+                record.get_absolute_url(),
+                image,
+                code,
+                code,
             )
+        )
 
     class Meta(LavaTable.Meta):  # pylint: disable=no-init,too-few-public-methods
         searches = {

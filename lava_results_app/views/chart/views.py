@@ -21,9 +21,7 @@ import simplejson
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from django.core import serializers
-from django.core.exceptions import (
-    PermissionDenied,
-)
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db import IntegrityError
 from django.http import (
@@ -64,6 +62,8 @@ from lava_results_app.views.chart.tables import (
     OtherChartTable,
     GroupChartTable,
 )
+
+from lava_scheduler_app.models import TestJob
 
 from django_tables2 import (
     RequestConfig,

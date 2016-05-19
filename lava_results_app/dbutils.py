@@ -77,12 +77,13 @@ def _test_case(name, suite, result, testset=None, testshell=False):
                     match_action.duration = result['duration']
                 if 'timeout' in result:
                     match_action.timeout = result['timeout']  # duration, positive integer
+        result_val = TestCase.RESULT_PASS if 'success' in result else TestCase.RESULT_FAIL
         case = TestCase.objects.create(
             name=name,
             suite=suite,
             test_set=testset,
             metadata=metadata,
-            result=TestCase.RESULT_UNKNOWN
+            result=result_val
         )
         with transaction.atomic():
             case.save()
@@ -207,7 +208,11 @@ def _get_job_metadata(data):  # pylint: disable=too-many-branches
                     # an inline repo without test cases will not get reported.
                     if 'lava-test-case' in [reduce(dict.get, ['repository', 'run', 'steps'], definition)][0]:
                         prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
-                        retval['%s.inline' % prefix] = definition['name']
+                    else:
+                        # store the fact that an inline exists but would not generate any testcases
+                        prefix = 'omitted.%d.%s' % (count, namespace) if namespace else 'omitted.%d' % count
+                    retval['%s.inline.name' % prefix] = definition['name']
+                    retval['%s.inline.path' % prefix] = definition['path']
                 else:
                     prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
                     # FIXME: what happens with remote definition without lava-test-case?
@@ -230,7 +235,7 @@ def _get_device_metadata(data):
 
 def build_action(action_data, testdata, submission):
     # test for a known section
-    logger = logging.getLogger('lava_results_app')
+    logger = logging.getLogger('dispatcher-master')
     if 'section' not in action_data:
         logger.warning("Invalid action data - missing section")
         return
