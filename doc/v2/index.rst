@@ -64,6 +64,7 @@ LAVA Administrator Guide
    pipeline-admin-example.rst
    devicetypes.rst
    hiddentypes.rst
+   pipeline-debug.rst
    proxy.rst
    pdudaemon.rst
    nexus-deploy.rst
