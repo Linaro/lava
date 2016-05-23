@@ -197,7 +197,7 @@ class TestGrubAction(unittest.TestCase):  # pylint: disable=too-many-public-meth
         for action in job.pipeline.actions:
             action.validate()
             if not action.valid:
-                print(action.errors)
+                raise RuntimeError(action.errors)
             self.assertTrue(action.valid)
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
