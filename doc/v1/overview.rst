@@ -295,3 +295,34 @@ which could be used in order to check the status of the job on the
 UI. In the above submission job-id returned is 82287. Visit
 ``http://validation.linaro.org/scheduler/job/<job-id>`` in order to see
 the details of the job run.
+
+.. index: test definitions
+
+.. _test_definitions:
+
+Test Definitions
+----------------
+
+In order to run a test, a test definition is required. A test
+definition is expressed in YAML format. A minimal test definition
+would look like the following ::
+
+  metadata:
+      name: passfail
+      format: "Lava-Test-Shell Test Definition 1.0"
+      description: "Pass/Fail test."
+      version: 1.0
+
+  run:
+      steps:
+          - "lava-test-case passtest --result pass"
+          - "lava-test-case failtest --result pass"
+
+In order to run the above test definition with a minimal job file, the
+following job json could be used and submitted in the same way as
+explained above ::
+
+  run:
+      steps:
+          - "lava-test-case passtest --result pass"
+          - "lava-test-case failtest --result pass"
