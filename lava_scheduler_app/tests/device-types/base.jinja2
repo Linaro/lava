@@ -1,3 +1,6 @@
+{# Base Kernel options #}
+{% set base_kernel_args = '' %}
+
 {% set base_uboot_commands = (
 "          - setenv autoload no
           - setenv initrd_high '0xffffffff'

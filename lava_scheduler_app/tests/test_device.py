@@ -223,7 +223,7 @@ class DeviceDictionaryTest(TestCaseWithFactory):
         self.assertIn('commands', ramdisk_args)
         self.assertIn('boot', ramdisk_args['commands'])
         self.assertIn(
-            "setenv bootargs 'console=ttyfake1,56 debug rw root=/dev/ram0 ip=dhcp'",
+            "setenv bootargs 'console=ttyfake1,56 debug rw root=/dev/ram0  ip=dhcp'",
             ramdisk_args['commands'])
 
         device_dictionary.update(
