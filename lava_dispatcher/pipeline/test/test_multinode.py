@@ -428,10 +428,10 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
                 'action': customise.name,
                 'request': 'lava-send',
                 'messageID': 'test',
-                'yaml_line': 47,
+                'yaml_line': 48,
                 'message': {
                     'key': 'value',
-                    'yaml_line': 49
+                    'yaml_line': 50
                 },
             }
         )
@@ -449,11 +449,11 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
                 'action': 'customise',
                 'message': {
                     'key': 'value',
-                    'yaml_line': 49
+                    'yaml_line': 50
                 },
                 'messageID': 'test',
                 'request': 'lava-send',
-                'yaml_line': 47
+                'yaml_line': 48
             }
         )
 
@@ -475,11 +475,11 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
                 'action': 'execute-qemu',
                 'message': {
                     'ipv4': '$IPV4',
-                    'yaml_line': 66
+                    'yaml_line': 67
                 },
                 'messageID': 'test',
                 'request': 'lava-wait',
-                'yaml_line': 63
+                'yaml_line': 64
             }])
         client_calls = {}
         for action in retry.internal_pipeline.actions:
@@ -525,9 +525,9 @@ class TestMultinode(unittest.TestCase):  # pylint: disable=too-many-public-metho
                 'action': 'execute-qemu',
                 'message': {
                     'ipv4': reply['message'][self.client_job.device.target]['ipv4'],
-                    'yaml_line': 66
+                    'yaml_line': 67
                 },
-                'yaml_line': 63,
+                'yaml_line': 64,
                 'request': 'lava-wait',
                 'messageID': 'test'
             }

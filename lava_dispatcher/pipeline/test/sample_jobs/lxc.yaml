@@ -7,6 +7,7 @@ timeouts:
     minutes: 5
 priority: medium
 visibility: public
+visibility: public
 
 protocols:
   lava-lxc:

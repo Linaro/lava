@@ -11,6 +11,7 @@ timeouts:
   test:
     minutes: 3
 priority: medium
+visibility: public
 
 actions:
 

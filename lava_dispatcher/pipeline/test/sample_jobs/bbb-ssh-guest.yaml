@@ -47,6 +47,7 @@ connection: ssh
 host_role: host
 job_name: bbb-guest-ssh
 priority: medium
+visibility: public
 protocols:
   lava-multinode:
     expect_role: host

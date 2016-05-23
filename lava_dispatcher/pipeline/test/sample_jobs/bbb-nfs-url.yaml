@@ -9,6 +9,7 @@ timeouts:
   action:
     minutes: 5
 priority: medium
+visibility: public
 
 actions:
   - deploy:

@@ -10,6 +10,7 @@ timeouts:
    minutes: 30         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
 logging_level: DEBUG
 priority: medium
+visibility: public
 
 actions:
 

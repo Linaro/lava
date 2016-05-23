@@ -9,6 +9,7 @@ timeouts:
   dd-image:
     minutes: 8
 priority: medium
+visibility: public
 
 actions:
   - deploy:

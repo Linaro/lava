@@ -7,6 +7,7 @@ timeouts:
   action:
     minutes: 15         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
 priority: medium
+visibility: public
 
 actions:
   - deploy:

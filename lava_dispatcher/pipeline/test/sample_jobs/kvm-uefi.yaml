@@ -9,6 +9,7 @@ timeouts:
   test:
     minutes: 3
 priority: medium
+visibility: public
 
 context:
   arch: amd64
