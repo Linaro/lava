@@ -196,6 +196,8 @@ class TestGrubAction(unittest.TestCase):  # pylint: disable=too-many-public-meth
         job = factory.create_job('sample_jobs/grub-nfs.yaml')
         for action in job.pipeline.actions:
             action.validate()
+            if not action.valid:
+                print(action.errors)
             self.assertTrue(action.valid)
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
