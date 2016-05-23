@@ -15,6 +15,8 @@ preparing packages based on your modifications.
 LAVA is complex and works to solve complex problems. This has implications
 for how LAVA is developed, tested, deployed and used.
 
+.. _Debian: https://www.debian.org/
+
 Other elements involved in LAVA development
 ===========================================
 
@@ -163,8 +165,6 @@ by yourself, and you don't run the risk of LAVA changed in a way that is
 incompatible with your changes.
 
 Upstream uses Debian_, see :ref:`lava_on_debian` for more information.
-
-.. _Debian: http://www.debian.org/
 
 Community contributions
 =======================

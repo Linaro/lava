@@ -549,9 +549,9 @@ which is specific to that one device - usually including the serial
 connection command and the power commands.
 
 The first point of reference with a new template is the ``lava-server``
-`base.jinja2 https://git.linaro.org/lava/lava-server.git/blob/HEAD:/lava_scheduler_app/tests/device-types/base.jinja2`_
+`base.jinja2 <https://git.linaro.org/lava/lava-server.git/blob/HEAD:/lava_scheduler_app/tests/device-types/base.jinja2>`_
 template and existing examples (e.g. `beaglebone-black
-https://git.linaro.org/lava/lava-server.git/blob/HEAD:/lava_scheduler_app/tests/device-types/beaglebone-black.jinja2`_)
+<https://git.linaro.org/lava/lava-server.git/blob/HEAD:/lava_scheduler_app/tests/device-types/beaglebone-black.jinja2>`_)
 - templates live on the server, are populated with data from
 the database and the resulting YAML is sent to the dispatcher.
 
@@ -667,7 +667,7 @@ Creating a device dictionary for the device
 ===========================================
 
 Examples of exported device dictionaries exist in the ``lava-server``
-`codebase https://git.linaro.org/lava/lava-server.git/blob/HEAD:/lava_scheduler_app/tests/bbb-01.yaml`_
+`codebase <https://git.linaro.org/lava/lava-server.git/blob/HEAD:/lava_scheduler_app/tests/bbb-01.yaml>`_
 for unit test support. The dictionary extends the new template and
 provides the device-specific values.
 
