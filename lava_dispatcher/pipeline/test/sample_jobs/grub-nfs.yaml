@@ -19,7 +19,7 @@ actions:
          # this rootfs has disappeared from snapshots
          # url: http://snapshots.linaro.org/openembedded/images/minimal-armv8-gcc-5.2/790/linaro-image-minimal-genericarmv8-20160222-790.rootfs.tar.gz
          # this rootfs is only for use in the unit tests, it is not expected necessarily to work at runtime.
-         url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/3/jessie-armhf-nfs.tar.gz
+         url: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv8-20140605-682.rootfs.cpio.gz 
          compression: gz
      kernel:
          url: http://images.validation.linaro.org/d02/20151209-1510/Image
