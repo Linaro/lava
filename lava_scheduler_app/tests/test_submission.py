@@ -27,6 +27,7 @@ from lava_scheduler_app.models import (
     DevicesUnavailableException,
     DeviceDictionary,
     _check_exclusivity,
+    validate_yaml,
 )
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 from lava_scheduler_app.schema import validate_submission, validate_device, SubmissionException
@@ -1208,6 +1209,24 @@ job_name: qemu-pipeline
             self.assertIn('required key not provided', str(exc))
             self.assertIn('job', str(exc))
             self.assertIn('timeouts', str(exc))
+        bad_submission += """
+notify:
+  method: email
+        """
+        self.assertRaises(SubmissionException, validate_submission,
+                          yaml.load(bad_submission))
+        bad_submission += """
+  criteria:
+    status: complete
+        """
+        self.assertTrue(validate_submission(yaml.load(bad_submission)))
+        bad_submission += """
+  compare:
+    query:
+      entity: testrunfilter
+        """
+        self.assertRaises(SubmissionException, validate_yaml,
+                          yaml.load(bad_submission))
 
     def test_compression_change(self):
 

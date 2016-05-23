@@ -95,8 +95,10 @@ def _job_actions_schema():
 
 
 def _job_notify_schema():
+    from lava_scheduler_app.models import TestJob
     return Schema({
-        Required('method'): Any('email', 'irc'),
+        Required('method'): Any(TestJob.NOTIFY_EMAIL_METHOD,
+                                TestJob.NOTIFY_IRC_METHOD),
         Required('criteria'): _notify_criteria_schema(),
         'recipients': [str],
         'verbosity': Any('verbose', 'quiet', 'status-only'),

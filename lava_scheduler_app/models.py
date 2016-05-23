@@ -96,6 +96,52 @@ def validate_job(data):
 
         # validate against the submission schema.
         validate_submission(yaml_data)  # raises SubmissionException if invalid.
+        validate_yaml(yaml_data)  # raises SubmissionException if invalid.
+
+
+def validate_yaml(yaml_data):
+    if "notify" in yaml_data:
+        if yaml_data["notify"]["method"] == TestJob.NOTIFY_IRC_METHOD:
+            if "compare" in yaml_data["notify"]:
+                raise SubmissionException("compare options must not be used "
+                                          "with IRC notifications")
+        elif yaml_data["notify"]["method"] == TestJob.NOTIFY_EMAIL_METHOD:
+            if "recipients" in yaml_data["notify"]:
+                for recipient in yaml_data["notify"]["recipients"]:
+                    try:
+                        User.objects.get(username=recipient)
+                    except User.DoesNotExist:
+                        try:
+                            validate_email(recipient)
+                        except ValidationError:
+                            raise SubmissionException("%r is not a valid user and not a valid email address." % recipient)
+            # Validate queries only if email, because whole compare section is
+            # not used in 'irc' mode.
+            if "compare" in yaml_data["notify"] and \
+               "query" in yaml_data["notify"]["compare"]:
+                from lava_results_app.models import Query
+                query_yaml_data = yaml_data["notify"]["compare"]["query"]
+                if "username" in query_yaml_data:
+                    try:
+                        Query.objects.get(
+                            username=query_yaml_data["username"],
+                            name=query_yaml_data["username"])
+                    except Query.DoesNotExist:
+                        raise SubmissionException(
+                            "Query ~%s/%s does not exist" % (
+                                query_yaml_data["username"],
+                                query_yaml_data["name"]))
+                else:  # Custom query.
+                    try:
+                        conditions = None
+                        if "conditions" in query_yaml_data:
+                            conditions = query_yaml_data["conditions"]
+                        Query.validate_custom_query(
+                            query_yaml_data["entity"],
+                            conditions
+                        )
+                    except Exception as e:
+                        raise SubmissionException(e)
 
 
 def validate_job_json(data):
@@ -1314,6 +1360,9 @@ class TestJob(RestrictedResource):
         (VISIBLE_PERSONAL, 'Personal only'),
         (VISIBLE_GROUP, 'Group only'),
     )
+
+    NOTIFY_EMAIL_METHOD = 'email'
+    NOTIFY_IRC_METHOD = 'irc'
 
     id = models.AutoField(primary_key=True)
 

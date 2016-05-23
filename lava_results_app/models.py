@@ -944,7 +944,12 @@ class Query(models.Model):
         for condition_str in conditions.split(cls.CONDITIONS_SEPARATOR):
             condition = QueryCondition()
             condition_fields = condition_str.split(cls.CONDITION_DIVIDER)
-            if len(condition_fields) == 3:
+            if len(condition_fields) == 2:
+                condition.table = content_type
+                condition.field = condition_fields[0]
+                condition.operator = QueryCondition.EXACT
+                condition.value = condition_fields[1]
+            elif len(condition_fields) == 3:
                 condition.table = content_type
                 condition.field = condition_fields[0]
                 condition.operator = condition_fields[1]
@@ -1002,6 +1007,29 @@ class Query(models.Model):
                 "Wrong table name in entity param. Please refer to query docs.")
         else:
             return ContentType.objects.filter(model=model_name)[0]
+
+    @classmethod
+    def validate_custom_query(cls, model_name, conditions):
+        """Validate custom query content type and conditions.
+
+        :param model_name: Content type name (entity).
+        :type model_name: str
+        :param conditions: Query conditions, fields and values.
+        :type conditions: dict
+        :raise InvalidContentTypeError model_name is not recognized.
+        :raise InvalidConditionsError conditions do not have correct format.
+        :return Nothing
+        """
+        content_type = cls.get_content_type(model_name)
+        if content_type.model_class() not in QueryCondition.RELATION_MAP:
+            raise InvalidContentTypeError(
+                "Wrong table name in entity param. Please refer to query doc.")
+        condition_list = []
+        for key in conditions:
+            condition_list.append("%s%s%s" % (key, cls.CONDITION_DIVIDER,
+                                              conditions[key]))
+        conditions = cls.CONDITIONS_SEPARATOR.join(condition_list)
+        cls.parse_conditions(content_type, conditions)
 
     def save(self, *args, **kwargs):
         super(Query, self).save(*args, **kwargs)
