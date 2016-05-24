@@ -65,7 +65,7 @@ See :ref:`ubuntu_install`
          Once Ubuntu makes a release, the LAVA packages in that release
          do not receive updates. Support for ``lava-server`` on Ubuntu
          Trusty 14.04LTS, Ubuntu Vivid 15.04 and Ubuntu Wily 15.10 stopped
-         at 2015.9.post1. Support for lava-dispatcher`` on Ubuntu Trusty
+         at 2015.9.post1. Support for `lava-dispatcher` on Ubuntu Trusty
          14.04LTS, Ubuntu Vivid 15.04 and Ubuntu Wily 15.10 stopped at
          2015.9. See :ref:`trusty_tahr_install` or :ref:`utopic_unicorn_install`.
 .. [#f5] To install on Ubuntu, ensure the universe_ repository is enabled.
