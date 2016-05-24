@@ -13,10 +13,10 @@ from lava_scheduler_app.views import (
     job_resubmit, job_section_log, job_status, job_submit, job_submit_wizard,
     job_toggle_favorite, lab_health, longest_jobs, multinode_job_definition,
     multinode_job_definition_plain, mydevice_list, mydevice_type_health_history_log,
-    myjobs, online_device_list, passing_health_checks, pipeline, queue, reports, running,
-    transition_detail, username_list_json, vmgroup_job_definition,
-    vmgroup_job_definition_plain, worker_detail, workers,
-    download_device_type_template,
+    myjobs, online_device_list, passing_health_checks, pipeline,
+    pipeline_device_list, queue, reports, running, transition_detail,
+    username_list_json, vmgroup_job_definition, vmgroup_job_definition_plain,
+    worker_detail, workers, download_device_type_template,
 )
 
 
@@ -127,6 +127,8 @@ urlpatterns = [
         name='lava.scheduler.device.edit_description'),
     url(r'^transition/(?P<pk>[0-9]+)$', transition_detail,
         name='lava.scheduler.transition_detail'),
+    url(r'^alldevices/pipeline$', pipeline_device_list,
+        name='lava.scheduler.pipeline_devices'),
     url(r'^alldevices/active$', active_device_list,
         name='lava.scheduler.active_devices'),
     url(r'^alldevices/online$', online_device_list,

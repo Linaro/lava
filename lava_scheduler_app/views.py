@@ -486,6 +486,27 @@ def active_device_list(request):
         RequestContext(request))
 
 
+@BreadCrumb("Pipeline Devices", parent=index)
+def pipeline_device_list(request):
+
+    data = PipelineDeviceView(request, model=Device, table_class=DeviceTable)
+    ptable = DeviceTable(data.get_table_data())
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(
+        ptable)
+    return render_to_response(
+        "lava_scheduler_app/pipelinedevices.html",
+        {
+            'pipeline_devices_table': ptable,
+            "length": ptable.length,
+            "terms_data": ptable.prepare_terms_data(data),
+            "search_data": ptable.prepare_search_data(data),
+            "discrete_data": ptable.prepare_discrete_data(data),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                pipeline_device_list),
+        },
+        RequestContext(request))
+
+
 class OnlineDeviceView(DeviceTableView):
 
     def get_queryset(self):
@@ -664,6 +685,16 @@ class ActiveDeviceView(DeviceTableView):
         visible = filter_device_types(self.request.user)
         return Device.objects.filter(device_type__in=visible)\
             .exclude(status=Device.RETIRED).order_by("hostname")
+
+
+class PipelineDeviceView(DeviceTableView):
+
+    def get_queryset(self):
+        visible = filter_device_types(self.request.user)
+        return Device.objects.filter(device_type__in=visible,
+                                     is_pipeline=True)\
+                             .exclude(status=Device.RETIRED)\
+                             .order_by("hostname")
 
 
 class DeviceTypeOverView(JobTableView):

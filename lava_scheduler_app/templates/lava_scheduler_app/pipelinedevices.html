@@ -3,18 +3,24 @@
 
 {% block content %}
 
-<h2>All Devices</h2>
+<h2>Pipeline Devices - <small>excluding retired</small></h2>
 
 <ul class="pager">
-    <li class="btn btn-sm disabled"><span class="glyphicon glyphicon-move">
+    <li class="btn btn-sm"><span class="glyphicon glyphicon-move">
         <a href="{% url 'lava.scheduler.alldevices' %}">All Devices</a></span></li>
     <li class="btn btn-sm"><span class="glyphicon glyphicon-play">
         <a href="{% url 'lava.scheduler.active_devices' %}">Active Devices</a></span></li>
-    <li class="btn btn-sm"><span class="glyphicon glyphicon-tasks">
+    <li class="btn btn-sm disabled"><span class="glyphicon glyphicon-tasks">
         <a href="{% url 'lava.scheduler.pipeline_devices' %}">Pipeline Devices</a></span></li>
 </ul>
 
-{% render_table devices_table %}
+
+{% render_table pipeline_devices_table %}
+
+<p><span class="glyphicon glyphicon-thumbs-up text-success"></span>
+indicates the device is <b>online</b>, but
+<span class="glyphicon glyphicon-thumbs-down text-danger"></span>
+indicates the device is <b>offline</b>.</p>
 
 {% endblock %}
 
