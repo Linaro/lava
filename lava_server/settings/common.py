@@ -53,6 +53,8 @@ USE_L10N = True
 
 SITE_ID = 1
 
+DISALLOWED_USER_AGENTS = []
+
 if django.VERSION < (1, 8):
     # List of callables that know how to import templates from various sources.
     TEMPLATE_LOADERS = (

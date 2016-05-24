@@ -17,6 +17,7 @@
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
 import imp
+from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls import (
     handler404, include, url)
@@ -49,6 +50,7 @@ mapper.register(SchedulerAPI, 'scheduler')
 
 # Root URL patterns
 urlpatterns = [
+    url(r'^robots\.txt$', TemplateView.as_view(template_name='robots.txt'), name='robots'),
     url(r'^{mount_point}$'.format(mount_point=settings.MOUNT_POINT),
         index,
         name='lava.home'),

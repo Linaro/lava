@@ -1,5 +1,6 @@
 # Django settings for django_hello project used on Debian systems.
 
+import re
 from lava_server.settings.getsettings import Settings
 from lava_server.settings.production import *
 from django.db.backends.signals import connection_created
@@ -181,6 +182,11 @@ if USE_DEBUG_TOOLBAR:
     default_ips = ['127.0.0.1', '::1']
     default_ips.extend(distro_settings.get_setting('INTERNAL_IPS', []))
     INTERNAL_IPS = default_ips
+
+# handling for bots which don't deal with robots.txt properly
+regexes = distro_settings.get_setting('DISALLOWED_USER_AGENTS', [])
+for regex in regexes:
+    DISALLOWED_USER_AGENTS.append(re.compile(r'%s' % regex, re.IGNORECASE))
 
 # read branding details
 BRANDING_ALT = distro_settings.get_setting("BRANDING_ALT", "Linaro logo")
