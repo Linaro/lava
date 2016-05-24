@@ -426,6 +426,72 @@ Test example
               path: ubuntu/smoke-tests-basic.yaml
               name: smoke-tests
 
+Skipping elements of test definitions
+=====================================
+
+When a single test definition is to be used across multiple deployment
+types (e.g. Debian and OpenEmbedded), it may become necessary to only
+perform certain actions within that definition in specific jobs. The
+``skip_install`` support has been migrated from V1 for compatibility.
+Other methods of optimising test definitions for specific deployments
+may be implemented in V2 later.
+
+The available steps which can be (individually) skipped are:
+
+* **deps** - skip running ``lava-install-packages`` for the ``deps:``
+  list of the ``install:`` section of the definition.
+* **keys** - skip running ``lava-add-keys`` for the ``keys:``
+  list of the ``install:`` section of the definition.
+* **sources** - skip running ``lava-add-sources`` for the ``sources:``
+  list of the ``install:`` section of the definition.
+* **steps** - skip running any of the ``steps:``of the ``install:``
+  section of the definition.
+* **all** - identical to ``['deps', 'keys', 'sources', 'steps']``
+
+Example syntax:
+
+.. code-block:: yaml
+
+ - test:
+     failure_retry: 3
+     name: kvm-basic-singlenode
+     timeout:
+       minutes: 5
+     definitions:
+       - repository: git://git.linaro.org/qa/test-definitions.git
+         from: git
+         path: ubuntu/smoke-tests-basic.yaml
+         name: smoke-tests
+       - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+         skip_install:
+         - all
+         from: git
+         path: lava-test-shell/single-node/singlenode03.yaml
+         name: singlenode-advanced
+
+The following will skip dependency installation and key addition in the
+same definition:
+
+.. code-block:: yaml
+
+ - test:
+     failure_retry: 3
+     name: kvm-basic-singlenode
+     timeout:
+       minutes: 5
+     definitions:
+       - repository: git://git.linaro.org/qa/test-definitions.git
+         from: git
+         path: ubuntu/smoke-tests-basic.yaml
+         name: smoke-tests
+       - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+         skip_install:
+         - deps
+         - keys
+         from: git
+         path: lava-test-shell/single-node/singlenode03.yaml
+         name: singlenode-advanced
+
 Additional support
 ==================
 
