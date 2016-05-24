@@ -38,7 +38,7 @@ codename is applied to the testing suite and LAVA releases after that
 point will include that codename in the table.
 
 `Ubuntu codenames`_ change with each 6 monthly release and there will
-be no further updates of LAVA in Ubuntu after 2016.9.post1.
+be no further updates of LAVA in Ubuntu after 2015.9.post1.
 See :ref:`ubuntu_install`
 
 .. _suites: http://en.wikipedia.org/wiki/Debian#Branches
@@ -353,8 +353,7 @@ Installing on Ubuntu Utopic, Vivid and Wily
    Ubuntu.
 
 Ubuntu Unicorn 14.10 includes all packages needed by LAVA
-up to the 2014.07 release. Subsequent releases of Ubuntu contain
-newer versions of LAVA and LAVA dependencies up to 2016.9.post1.
+up to the 2014.07 release.
 
 Installing on Unicorn, Vivid and Wily is the same as
 :ref:`install_debian_jessie`.
