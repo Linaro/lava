@@ -1418,7 +1418,7 @@ def job_detail(request, pk):
 
 @BreadCrumb("Definition", parent=job_detail, needs=['pk'])
 def job_definition(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
     description = description_data(job.id) if job.is_pipeline else {}
     return render_to_response(
@@ -1459,7 +1459,7 @@ def job_definition_plain(request, pk):
 
 @BreadCrumb("Expanded Definition", parent=job_detail, needs=['pk'])
 def expanded_job_definition(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
     return render_to_response(
         "lava_scheduler_app/expanded_job_definition.html",
@@ -1474,7 +1474,7 @@ def expanded_job_definition(request, pk):
 
 
 def expanded_job_definition_plain(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     response = HttpResponse(job.definition, content_type='text/plain')
     response['Content-Disposition'] = "attachment; filename=job_%d.json" % \
         job.id
@@ -1483,7 +1483,7 @@ def expanded_job_definition_plain(request, pk):
 
 @BreadCrumb("Multinode definition", parent=job_detail, needs=['pk'])
 def multinode_job_definition(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
     return render_to_response(
         "lava_scheduler_app/multinode_job_definition.html",
@@ -1508,7 +1508,7 @@ def multinode_job_definition_plain(request, pk):
 
 @BreadCrumb("VMGroup definition", parent=job_detail, needs=['pk'])
 def vmgroup_job_definition(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
     return render_to_response(
         "lava_scheduler_app/vmgroup_job_definition.html",
@@ -1523,7 +1523,7 @@ def vmgroup_job_definition(request, pk):
 
 
 def vmgroup_job_definition_plain(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     response = HttpResponse(job.vmgroup_definition, content_type='text/plain')
     response['Content-Disposition'] = \
         "attachment; filename=vmgroup_job_%d.json" % job.id
@@ -1597,7 +1597,7 @@ def favorite_jobs(request, username=None):
 
 @BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
 def job_complete_log(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     if not job.is_pipeline:
         raise Http404
     description = description_data(job.id)
@@ -1632,7 +1632,7 @@ def job_complete_log(request, pk):
 
 
 def job_section_log(request, job, log_name):
-    job = get_restricted_job(request.user, job)
+    job = get_restricted_job(request.user, job, request=request)
     if not job.is_pipeline:
         raise Http404
     path = os.path.join(job.output_dir, 'pipeline', log_name[0], log_name)
@@ -1658,7 +1658,7 @@ def job_section_log(request, job, log_name):
 
 
 def job_status(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     response_dict = {'job_status': job.get_status_display()}
     if (job.actual_device and job.actual_device.status not in [Device.RESERVED, Device.RUNNING]) or \
             job.status not in [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]:
@@ -1733,7 +1733,7 @@ def job_pipeline_incremental(request, pk):
 
 @BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
 def job_log_file(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     if job.is_pipeline:
         return redirect(job_complete_log, pk=pk)
     log_file = job.output_file()
@@ -1769,7 +1769,7 @@ def job_log_file(request, pk):
 
 
 def job_log_file_plain(request, pk):
-    job = get_restricted_job(request.user, pk)
+    job = get_restricted_job(request.user, pk, request=request)
     log_file = job.output_file()
     if not log_file:
         raise Http404

@@ -36,6 +36,7 @@ from lava_results_app.utils import StreamEcho
 from lava_results_app.dbutils import export_testcase, testcase_export_fields
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.tables import pklink
+from lava_scheduler_app.views import get_restricted_job
 from django_tables2 import RequestConfig
 from lava_results_app.utils import check_request_auth
 from lava_results_app.models import TestSuite, TestCase, TestSet, TestData
@@ -86,7 +87,7 @@ def query(request):
 
 @BreadCrumb("Test job {job}", parent=index, needs=['job'])
 def testjob(request, job):
-    job = get_object_or_404(TestJob, pk=job)
+    job = get_restricted_job(request.user, pk=job, request=request)
     data = ResultsView(request, model=TestSuite, table_class=ResultsTable)
     suite_table = ResultsTable(
         data.get_table_data().filter(job=job)
@@ -239,7 +240,7 @@ def metadata_export(request, job):
 
 @BreadCrumb("TestSet {case}", parent=testjob, needs=['job', 'pk', 'ts', 'case'])
 def testset(request, job, ts, pk, case):
-    job = get_object_or_404(TestJob, pk=job)
+    job = get_restricted_job(request.user, pk=job, request=request)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     test_set = get_object_or_404(TestSet, name=ts, suite=test_suite)
     test_cases = TestCase.objects.filter(name=case, test_set=test_set)
@@ -265,7 +266,7 @@ def testcase(request, job, pk, case):
     :param case: the name of one or more TestCase objects in the TestSuite
     """
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
-    job = get_object_or_404(TestJob, pk=job)
+    job = get_restricted_job(request.user, pk=job, request=request)
     test_cases = TestCase.objects.filter(name=case, suite=test_suite)
     return render_to_response(
         "lava_results_app/case.html", {
