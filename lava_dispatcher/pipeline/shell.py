@@ -55,19 +55,27 @@ class ShellLogger(object):
         }
         for key, value in replacements.items():
             new_line = new_line.replace(key, value)
-        line = self.line + new_line
-        if '\n' in line:  # any number of newlines
-            for item in line.split('\n'):
-                self.logger.target(item)
-            self.line = ''
+        lines = self.line + new_line
+
+        # Print one full line at a time. A partial line is kept in memory.
+        if '\n' in lines:
+            last_ret = lines.rindex('\n')
+            self.line = lines[last_ret + 1:]
+            lines = lines[:last_ret]
+            for line in lines.split('\n'):
+                self.logger.target(line)
         else:
-            # keep building until a newline is seen
-            self.line += new_line
+            self.line = lines
         return
 
     def flush(self):  # pylint: disable=no-self-use
         sys.stdout.flush()
         sys.stderr.flush()
+
+    def __del__(self):
+        # Only needed for processes that does not end output with a new line.
+        if self.line:
+            self.write('\n')
 
 
 class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
