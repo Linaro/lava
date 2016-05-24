@@ -439,11 +439,6 @@ class DeviceHealthTable(LavaTable):
             return pklink(report)
 
     hostname = tables.TemplateColumn('''
-    {% if record.status == record.RETIRED or record.status == record.OFFLINE %}
-    <span class="glyphicon glyphicon-thumbs-down text-danger"></span>
-    {% else %}
-    <span class="glyphicon glyphicon-thumbs-up text-success"></span>
-    {% endif %}
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
     ''')
     worker_host = tables.TemplateColumn('''
@@ -527,11 +522,6 @@ class DeviceTable(LavaTable):
         return pklink(record.device_type)
 
     hostname = tables.TemplateColumn('''
-    {% if record.status == record.RETIRED or record.status == record.OFFLINE %}
-    <span class="glyphicon glyphicon-thumbs-down text-danger"></span>
-    {% else %}
-    <span class="glyphicon glyphicon-thumbs-up text-success"></span>
-    {% endif %}
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
     ''')
     worker_host = tables.TemplateColumn('''
