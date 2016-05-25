@@ -1,5 +1,4 @@
 from django.core.exceptions import PermissionDenied
-from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import available_attrs
 from django.utils.functional import wraps

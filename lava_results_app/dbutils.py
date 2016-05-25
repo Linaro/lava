@@ -193,7 +193,7 @@ def build_action(action_data, testdata, submission):
     # test for a known section
     logger = logging.getLogger('lava_results_app')
     if 'section' not in action_data:
-        logger.warn("Invalid action data - missing section")
+        logger.warning("Invalid action data - missing section")
         return
 
     metatype = MetaType.get_section(action_data['section'])

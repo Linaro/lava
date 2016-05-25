@@ -57,7 +57,6 @@ specified by the --path option or system path default.
 # pylint: disable=invalid-name
 
 import os
-import sys
 import yaml
 import argparse
 from jinja2 import Environment, FileSystemLoader

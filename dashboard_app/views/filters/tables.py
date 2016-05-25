@@ -18,18 +18,14 @@
 
 import datetime
 import operator
-from collections import OrderedDict
 from django.conf import settings
 from django.template import defaultfilters
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 import django_tables2 as tables
 from lava.utils.lavatable import LavaTable
-from dashboard_app.filters import evaluate_filter
 from dashboard_app.models import (
-    Bundle,
     TestRun,
-    TestRunFilter,
     TestRunFilterSubscription,
 )
 

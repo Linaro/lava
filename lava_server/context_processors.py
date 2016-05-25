@@ -17,10 +17,8 @@
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import versiontools
 
-import lava_server
-from django.core.urlresolvers import reverse
+from lava_server.settings.config_file import ConfigFile
 from django.conf import settings
 
 
@@ -32,7 +30,6 @@ def lava(request):
             instance_name = os.path.basename(os.environ["VIRTUAL_ENV"])
         except KeyError:
             instance_name = None
-            from lava_server.settings.config_file import ConfigFile
             instance_path = "/etc/lava-server/instance.conf"
             if os.path.exists(instance_path):
                 instance_config = ConfigFile.load(instance_path)

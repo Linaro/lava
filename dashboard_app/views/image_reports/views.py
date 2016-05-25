@@ -24,12 +24,11 @@ import tempfile
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from django.core import serializers
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
-from django.utils.safestring import mark_safe
 
 from lava_server.bread_crumbs import (
     BreadCrumb,

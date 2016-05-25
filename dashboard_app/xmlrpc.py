@@ -32,7 +32,7 @@ import os
 import subprocess
 from django.contrib.auth.models import User, Group
 from django.core.urlresolvers import reverse
-from django.db import IntegrityError, DatabaseError
+from django.db import IntegrityError
 from linaro_django_xmlrpc.models import (
     ExposedAPI,
     Mapper,
@@ -45,7 +45,6 @@ from dashboard_app.models import (
     BundleStream,
     Test,
     TestRunFilter,
-    TestDefinition,
 )
 from lava_scheduler_app.models import (
     TestJob,

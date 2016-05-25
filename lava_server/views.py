@@ -19,7 +19,6 @@
 import sys
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseServerError, HttpResponseForbidden
 from django.template import Context, loader, RequestContext
 from django.utils.translation import ugettext_lazy as _

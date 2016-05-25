@@ -32,7 +32,7 @@ import logging
 import urllib
 import yaml
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes import fields

@@ -1,4 +1,3 @@
-import os
 import pytz
 import yaml
 from dateutil import parser

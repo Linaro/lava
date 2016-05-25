@@ -23,7 +23,6 @@ from django import forms
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.forms.models import inlineformset_factory
 from django.utils.html import escape
 
 from dashboard_app.models import NamedAttribute
@@ -31,7 +30,6 @@ from dashboard_app.models import NamedAttribute
 from lava_results_app.models import (
     Query,
     QueryCondition,
-    QueryGroup,
     TestCase,
     TestSuite
 )

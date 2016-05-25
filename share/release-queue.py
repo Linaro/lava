@@ -21,7 +21,6 @@
 
 import argparse
 import re
-import os
 import subprocess
 import time
 

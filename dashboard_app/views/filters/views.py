@@ -21,7 +21,7 @@ import json
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.http import HttpResponse, HttpResponseRedirect
@@ -42,7 +42,6 @@ from django_tables2 import (
 )
 
 from dashboard_app.models import (
-    Bundle,
     BundleStream,
     NamedAttribute,
     Test,

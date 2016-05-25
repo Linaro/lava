@@ -17,11 +17,9 @@
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
 import django_tables2 as tables
-from collections import OrderedDict
 from lava.utils.lavatable import LavaTable
 from lava_results_app.models import (
     Query,
-    QueryCondition,
     TestCase,
     TestSuite,
 )
@@ -30,7 +28,6 @@ from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.tables import (
     JobTable,
     DateColumn,
-    TagsColumn,
     RestrictedIDLinkColumn
 )
 from lava_results_app.tables import (
