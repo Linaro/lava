@@ -331,10 +331,9 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             if isinstance(action.logger, YAMLLogger):
                 action.logger.setMetadata(action.level, action.name)
             # Add action start timestamp to the log message
-            msg = {'msg': 'start: %s %s (max %ds)' % (action.level,
-                                                      action.name,
-                                                      action.timeout.duration),
-                   'ts': datetime.datetime.utcnow().isoformat()}
+            msg = 'start: %s %s (max %ds)' % (action.level,
+                                              action.name,
+                                              action.timeout.duration)
             if self.parent is None:
                 action.logger.info(msg)
             else:
@@ -363,9 +362,8 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     raise KeyboardInterrupt
                 action.elapsed_time = time.time() - start
                 # Add action end timestamp to the log message
-                msg = {'msg': "%s duration: %.02f" % (action.name,
-                                                      action.elapsed_time),
-                       'ts': datetime.datetime.utcnow().isoformat()}
+                msg = "%s duration: %.02f" % (action.name,
+                                              action.elapsed_time)
                 if self.parent is None:
                     action.logger.info(msg)
                 else:

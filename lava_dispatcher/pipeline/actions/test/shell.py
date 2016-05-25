@@ -203,9 +203,9 @@ class TestShellAction(TestAction):
                 self.signal_director.test_uuid = params[1]
                 self.definition = params[0]
                 uuid = params[1]
-                self.logger.debug("Starting test definition: %s" % self.definition)
             #    self._handle_testrun(params)
                 self.start = time.time()
+                self.logger.info("Starting test lava.%s (%s)", self.definition, uuid)
                 self.logger.results({
                     'test_definition': 'lava',
                     self.definition: {
@@ -216,7 +216,9 @@ class TestShellAction(TestAction):
             elif name == "ENDRUN":
                 self.definition = params[0]
                 uuid = params[1]
-                self.logger.debug("Ending test definition: %s" % self.definition)
+                self.logger.info("Ending test lava.%s (%s), duration %.02f",
+                                 self.definition, uuid,
+                                 time.time() - self.start)
                 self.logger.results({
                     'test_definition': 'lava',
                     self.definition: {
@@ -228,7 +230,6 @@ class TestShellAction(TestAction):
             elif name == "TESTCASE":
                 data = handle_testcase(params)
                 res = self.match.match(data)  # FIXME: rename!
-                self.logger.debug("res: %s data: %s" % (res, data))
                 p_res = self.data["test"][
                     self.signal_director.test_uuid
                 ].setdefault("results", OrderedDict())
@@ -243,20 +244,20 @@ class TestShellAction(TestAction):
                 # turn the result dict inside out to get the unique
                 # test_case_id/testset_name as key and result as value
                 if self.testset_name:
-                    self.logger.debug("result: %s" % res)
                     self.logger.results({
-                        'test_definition': self.definition,
-                        'test_set': self.testset_name,
-                        res["test_case_id"]: res["result"]})
+                        'definition': self.definition,
+                        'set': self.testset_name,
+                        'case': res["test_case_id"],
+                        'result': res["result"]})
                     self.report.update({
-                        'test_set': self.testset_name,
-                        res["test_case_id"]: res["result"]
-                    })
+                        'set': self.testset_name,
+                        'case': res["test_case_id"],
+                        'result': res["result"]})
                 else:
-                    self.logger.debug("result: %s" % res)
                     self.logger.results({
-                        'test_definition': self.definition,
-                        res["test_case_id"]: res["result"]})
+                        'definition': self.definition,
+                        'case': res["test_case_id"],
+                        'result': res["result"]})
                     self.report.update({
                         res["test_case_id"]: res["result"]
                     })

@@ -115,12 +115,9 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         :param send_char: send one character or entire string
         """
         if delay:
-            self.logger.debug({
-                "sending with %s millisecond delay" % delay: yaml.dump(
-                    s, default_style='"', width=1000)})
+            self.logger.debug({"sending": s, "delay": "%s millisecond" % delay})
         else:
-            self.logger.debug({
-                "sending": "%s" % yaml.dump(s, default_style='"', width=1000)})
+            self.logger.debug({"sending": s})
         self.send(s, delay, send_char)
         self.send(os.linesep, delay)
 
