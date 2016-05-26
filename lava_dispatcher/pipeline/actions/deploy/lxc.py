@@ -18,8 +18,11 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import os
+from time import sleep
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.action import (
+    Action,
     Pipeline,
     JobError,
 )
@@ -30,6 +33,7 @@ from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.protocols.lxc import LxcProtocol
 from lava_dispatcher.pipeline.utils.constants import (
     LXC_TEMPLATE_WITH_MIRROR,
+    USB_SHOW_UP_TIMEOUT,
 )
 
 
@@ -119,7 +123,7 @@ class LxcCreateAction(DeployAction):
 
     def __init__(self):
         super(LxcCreateAction, self).__init__()
-        self.name = "lxc_create_action"
+        self.name = "lxc-create-action"
         self.description = "create lxc action"
         self.summary = "create lxc"
         self.retries = 10
@@ -157,6 +161,9 @@ class LxcCreateAction(DeployAction):
             if self.lxc_data['lxc_security_mirror']:
                 lxc_cmd += ['--security-mirror',
                             self.lxc_data['lxc_security_mirror']]
+            if 'packages' in self.parameters:
+                lxc_cmd += ['--packages',
+                            ','.join(self.parameters['packages'])]
             cmd_out_str = 'Generation complete.'
         else:
             lxc_cmd = ['lxc-create', '-t', self.lxc_data['lxc_template'],
@@ -172,3 +179,40 @@ class LxcCreateAction(DeployAction):
         else:
             self.results = {'status': self.lxc_data['lxc_name']}
         return connection
+
+
+class LxcAddDeviceAction(Action):
+    """Add usb device to lxc.
+    """
+    def __init__(self):
+        super(LxcAddDeviceAction, self).__init__()
+        self.name = "lxc-add-device-action"
+        self.description = "action that adds usb devices to lxc"
+        self.summary = "device add lxc"
+        self.retries = 10
+        self.sleep = 10
+
+    def validate(self):
+        super(LxcAddDeviceAction, self).validate()
+
+    def run(self, connection, args=None):
+        connection = super(LxcAddDeviceAction, self).run(connection, args)
+        lxc_name = self.get_common_data('lxc', 'name')
+        if 'device_path' in list(self.job.device.keys()):
+            # Wait USB_SHOW_UP_TIMEOUT seconds for the usb device to show up
+            self.logger.info("Waiting %d seconds for usb device to show up" %
+                             USB_SHOW_UP_TIMEOUT)
+            sleep(USB_SHOW_UP_TIMEOUT)
+
+            device_path = os.path.realpath(self.job.device['device_path'])
+            if os.path.isdir(device_path):
+                devices = os.listdir(device_path)
+            else:
+                devices = [device_path]
+
+            for device in devices:
+                device = os.path.join(device_path, device)
+                lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
+                self.run_command(lxc_cmd)
+            self.logger.debug("%s: devices added from %s", lxc_name,
+                              device_path)

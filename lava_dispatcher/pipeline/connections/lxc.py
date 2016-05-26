@@ -61,9 +61,17 @@ class ConnectLxc(Action):
             sleep(USB_SHOW_UP_TIMEOUT)
 
             device_path = os.path.realpath(self.job.device['device_path'])
-            lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device_path]
-            self.run_command(lxc_cmd)
-            self.logger.debug("%s: device %s added", lxc_name, device_path)
+            if os.path.isdir(device_path):
+                devices = os.listdir(device_path)
+            else:
+                devices = [device_path]
+
+            for device in devices:
+                device = os.path.join(device_path, device)
+                lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
+                self.run_command(lxc_cmd)
+            self.logger.debug("%s: devices added from %s", lxc_name,
+                              device_path)
 
         cmd = "lxc-attach -n {0}".format(lxc_name)
         self.logger.info("%s Connecting to device using '%s'", self.name, cmd)

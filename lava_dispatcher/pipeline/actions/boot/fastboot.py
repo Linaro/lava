@@ -30,7 +30,7 @@ from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import BootAction
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
 from lava_dispatcher.pipeline.shell import ExpectShellSession
-from lava_dispatcher.pipeline.utils.shell import infrastructure_error
+from lava_dispatcher.pipeline.connections.lxc import ConnectLxc
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
 from lava_dispatcher.pipeline.utils.constants import ANDROID_TMP_DIR
 
@@ -70,6 +70,7 @@ class BootFastbootAction(BootAction):
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(FastbootAction())
+        self.internal_pipeline.add_action(ConnectLxc())
 
 
 class FastbootAction(Action):
@@ -86,9 +87,6 @@ class FastbootAction(Action):
 
     def validate(self):
         super(FastbootAction, self).validate()
-        self.errors = infrastructure_error('fastboot')
-        if infrastructure_error('fastboot'):
-            self.errors = "Unable to find 'fastboot' command"
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
             if self.job.device['fastboot_serial_number'] == '0000000000':
@@ -96,12 +94,13 @@ class FastbootAction(Action):
 
     def run(self, connection, args=None):
         connection = super(FastbootAction, self).run(connection, args)
+        lxc_name = self.get_common_data('lxc', 'name')
         serial_number = self.job.device['fastboot_serial_number']
-        fastboot_cmd = ['fastboot', '-s', serial_number, 'reboot']
+        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
+                        '-s', serial_number, 'reboot']
         command_output = self.run_command(fastboot_cmd)
         if command_output and 'rebooting' not in command_output:
-            raise JobError("Unable to boot with fastboot: %s" %
-                           command_output)
+            raise JobError("Unable to boot with fastboot: %s" % command_output)
         else:
             status = [status.strip() for status in command_output.split(
                 '\n') if 'finished' in status][0]

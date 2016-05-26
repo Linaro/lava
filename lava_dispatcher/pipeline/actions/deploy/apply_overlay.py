@@ -419,6 +419,9 @@ class ApplyLxcOverlay(Action):
     def run(self, connection, args=None):
         connection = super(ApplyLxcOverlay, self).run(connection, args)
         overlay_file = self.data['compress-overlay'].get('output')
+        if overlay_file is None:
+            self.logger.debug("skipped %s", self.name)
+            return connection
         lxc_path = os.path.join(LXC_PATH, self.get_common_data('lxc', 'name'),
                                 "rootfs")
         if not os.path.exists(lxc_path):

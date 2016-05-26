@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import os
 from lava_dispatcher.pipeline.logical import Deployment
 from lava_dispatcher.pipeline.connections.serial import ConnectDevice
 from lava_dispatcher.pipeline.power import ResetDevice
@@ -26,12 +27,12 @@ from lava_dispatcher.pipeline.action import (
     JobError,
 )
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
+from lava_dispatcher.pipeline.actions.deploy.lxc import LxcAddDeviceAction
 from lava_dispatcher.pipeline.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.pipeline.actions.deploy.download import (
     DownloaderAction,
 )
-from lava_dispatcher.pipeline.utils.shell import infrastructure_error
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, copy_to_lxc
 from lava_dispatcher.pipeline.utils.constants import (
     DISPATCHER_DOWNLOAD_DIR,
     FASTBOOT_REBOOT_TIMEOUT,
@@ -101,9 +102,6 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
 
     def validate(self):
         super(FastbootAction, self).validate()
-        self.errors = infrastructure_error('fastboot')
-        if infrastructure_error('fastboot'):
-            self.errors = "Unable to find 'fastboot' command"
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
         lava_test_results_dir = lava_test_results_dir % self.job.job_id
         self.data['lava_test_results_dir'] = lava_test_results_dir
@@ -124,6 +122,7 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
                 self.internal_pipeline.add_action(ConnectDevice())
                 self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(EnterFastbootAction())
+        self.internal_pipeline.add_action(LxcAddDeviceAction())
         image_keys = list(parameters['images'].keys())
         if 'image' in image_keys:
             download = DownloaderAction('image', self.fastboot_dir)
@@ -179,13 +178,15 @@ class EnterFastbootAction(DeployAction):
 
     def run(self, connection, args=None):
         connection = super(EnterFastbootAction, self).run(connection, args)
+        lxc_name = self.get_common_data('lxc', 'name')
         fastboot_serial_number = self.job.device['fastboot_serial_number']
-        fastboot_cmd = ['fastboot', '-s', fastboot_serial_number, 'devices']
+        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot', '-s',
+                        fastboot_serial_number, 'devices']
         command_output = self.run_command(fastboot_cmd)
         if command_output and fastboot_serial_number in command_output:
             self.logger.debug("Device is in fastboot: %s" % command_output)
-            fastboot_cmd = ['fastboot', '-s', fastboot_serial_number,
-                            'reboot-bootloader']
+            fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
+                            '-s', fastboot_serial_number, 'reboot-bootloader']
             command_output = self.run_command(fastboot_cmd)
             if command_output and 'OKAY' not in command_output:
                 raise JobError("Unable to enter fastboot: %s" %
@@ -223,9 +224,12 @@ class FastbootUpdateAction(DeployAction):
 
     def run(self, connection, args=None):
         connection = super(FastbootUpdateAction, self).run(connection, args)
+        lxc_name = self.get_common_data('lxc', 'name')
+        src = self.data['download_action']['image']['file']
+        dst = copy_to_lxc(lxc_name, src)
         serial_number = self.job.device['fastboot_serial_number']
-        fastboot_cmd = ['fastboot', '-s', serial_number, '-w', 'update',
-                        self.data['download_action']['image']['file']]
+        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
+                        '-s', serial_number, '-w', 'update', dst]
         command_output = self.run_command(fastboot_cmd)
         if command_output and 'error' in command_output:
             raise JobError("Unable to update image using fastboot: %s" %
@@ -255,8 +259,10 @@ class FastbootRebootAction(DeployAction):
 
     def run(self, connection, args=None):
         connection = super(FastbootRebootAction, self).run(connection, args)
+        lxc_name = self.get_common_data('lxc', 'name')
         serial_number = self.job.device['fastboot_serial_number']
-        fastboot_cmd = ['fastboot', '-s', serial_number, 'reboot']
+        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
+                        '-s', serial_number, 'reboot']
         command_output = self.run_command(fastboot_cmd)
         if command_output and 'error' in command_output:
             raise JobError("Unable to reboot using fastboot: %s" %
@@ -290,9 +296,12 @@ class ApplyPtableAction(DeployAction):
 
     def run(self, connection, args=None):
         connection = super(ApplyPtableAction, self).run(connection, args)
+        lxc_name = self.get_common_data('lxc', 'name')
+        src = self.data['download_action']['ptable']['file']
+        dst = copy_to_lxc(lxc_name, src)
         serial_number = self.job.device['fastboot_serial_number']
-        fastboot_cmd = ['fastboot', '-s', serial_number, 'flash', 'ptable',
-                        self.data['download_action']['ptable']['file']]
+        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
+                        '-s', serial_number, 'flash', 'ptable', dst]
         command_output = self.run_command(fastboot_cmd)
         if command_output and 'error' in command_output:
             raise JobError("Unable to apply ptable image using fastboot: %s" %
@@ -327,8 +336,11 @@ class ApplyBootAction(DeployAction):
     def run(self, connection, args=None):
         connection = super(ApplyBootAction, self).run(connection, args)
         serial_number = self.job.device['fastboot_serial_number']
-        fastboot_cmd = ['fastboot', '-s', serial_number, 'flash', 'boot',
-                        self.data['download_action']['boot']['file']]
+        lxc_name = self.get_common_data('lxc', 'name')
+        src = self.data['download_action']['boot']['file']
+        dst = copy_to_lxc(lxc_name, src)
+        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
+                        '-s', serial_number, 'flash', 'boot', dst]
         command_output = self.run_command(fastboot_cmd)
         if command_output and 'error' in command_output:
             raise JobError("Unable to apply boot image using fastboot: %s" %
@@ -362,9 +374,12 @@ class ApplyCacheAction(DeployAction):
 
     def run(self, connection, args=None):
         connection = super(ApplyCacheAction, self).run(connection, args)
+        lxc_name = self.get_common_data('lxc', 'name')
+        src = self.data['download_action']['cache']['file']
+        dst = copy_to_lxc(lxc_name, src)
         serial_number = self.job.device['fastboot_serial_number']
-        fastboot_cmd = ['fastboot', '-s', serial_number, 'flash', 'cache',
-                        self.data['download_action']['cache']['file']]
+        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
+                        '-s', serial_number, 'flash', 'cache', dst]
         command_output = self.run_command(fastboot_cmd)
         if command_output and 'error' in command_output:
             raise JobError("Unable to apply cache image using fastboot: %s" %
@@ -398,10 +413,12 @@ class ApplyUserdataAction(DeployAction):
 
     def run(self, connection, args=None):
         connection = super(ApplyUserdataAction, self).run(connection, args)
+        lxc_name = self.get_common_data('lxc', 'name')
+        src = self.data['download_action']['userdata']['file']
+        dst = copy_to_lxc(lxc_name, src)
         serial_number = self.job.device['fastboot_serial_number']
-        fastboot_cmd = ['fastboot', '-s', serial_number,
-                        'flash', 'userdata',
-                        self.data['download_action']['userdata']['file']]
+        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
+                        '-s', serial_number, 'flash', 'userdata', dst]
         command_output = self.run_command(fastboot_cmd)
         if command_output and 'error' in command_output:
             raise JobError("Unable to apply userdata image using fastboot: %s" %
@@ -435,10 +452,12 @@ class ApplySystemAction(DeployAction):
 
     def run(self, connection, args=None):
         connection = super(ApplySystemAction, self).run(connection, args)
+        lxc_name = self.get_common_data('lxc', 'name')
+        src = self.data['download_action']['system']['file']
+        dst = copy_to_lxc(lxc_name, src)
         serial_number = self.job.device['fastboot_serial_number']
-        fastboot_cmd = ['fastboot', '-s', serial_number,
-                        'flash', 'system',
-                        self.data['download_action']['system']['file']]
+        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
+                        '-s', serial_number, 'flash', 'system', dst]
         command_output = self.run_command(fastboot_cmd)
         if command_output and 'error' in command_output:
             raise JobError("Unable to apply system image using fastboot: %s" %

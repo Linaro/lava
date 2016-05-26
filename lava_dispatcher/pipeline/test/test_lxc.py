@@ -77,6 +77,8 @@ class TestLxcDeploy(unittest.TestCase):  # pylint: disable=too-many-public-metho
         for action in self.job.pipeline.actions:
             self.assertEqual([], action.errors)
 
+    @unittest.skipIf(infrastructure_error('lxc-create'),
+                     'lxc-create not installed')
     def test_create(self):
         for action in self.job.pipeline.actions:
             if isinstance(action, LxcCreateAction):

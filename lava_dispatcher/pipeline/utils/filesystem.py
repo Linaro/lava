@@ -25,6 +25,7 @@ import tarfile
 import tempfile
 import guestfs
 from configobj import ConfigObj
+from lava_dispatcher.pipeline.utils.constants import LXC_PATH
 
 
 def rmtree(directory):
@@ -178,3 +179,26 @@ def copy_out_files(image, filenames, destination):
     for filename in filenames:
         guest.copy_out(filename, destination)
     guest.shutdown()
+
+
+def copy_to_lxc(lxc_name, src):
+    """Copies given file in SRC to lxc filesystem '/' with the provided
+    LXC_NAME and configured LXC_PATH
+
+    For example, SRC such as '/var/lib/lava/dispatcher/tmp/tmpuuI_U0/system.img'
+    will get copied to '/var/lib/lxc/lxc-nexus4-test-None/rootfs/system.img'
+    where, '/var/lib/lxc' is the LXC_PATH and 'lxc-nexus4-test-None' is the
+    LXC_NAME
+
+    Returns the destination path within lxc. For example, '/boot.img'
+
+    Raises JobError if the copy failed.
+    """
+    filename = os.path.basename(src)
+    dst = os.path.join(LXC_PATH, lxc_name, 'rootfs', filename)
+    try:
+        shutil.copyfile(src, dst)
+    except IOError:
+        raise JobError("Unable to copy image: %s" % src)
+
+    return os.path.join('/', filename)

@@ -1,7 +1,7 @@
 - class: actions.deploy.lxc.LxcAction
   name: lxc-deploy
   pipeline:
-  - {class: actions.deploy.lxc.LxcCreateAction, name: lxc_create_action}
+  - {class: actions.deploy.lxc.LxcCreateAction, name: lxc-create-action}
   - class: actions.deploy.overlay.OverlayAction
     name: lava-overlay
     pipeline:

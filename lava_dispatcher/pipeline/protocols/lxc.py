@@ -89,9 +89,9 @@ class LxcProtocol(Protocol):
             # execute the command.
             shell.expect(pexpect.EOF)
             if shell.exitstatus:
-                raise JobError("%s command exited %d: %s" %
-                               (reboot_cmd, shell.exitstatus,
-                                shell.readlines()))
+                self.logger.debug("%s command exited %d: %s" %
+                                  (reboot_cmd, shell.exitstatus,
+                                   shell.readlines()))
 
         # ShellCommand executes the destroy command
         cmd = "lxc-destroy -n {0} -f".format(self.lxc_name)
