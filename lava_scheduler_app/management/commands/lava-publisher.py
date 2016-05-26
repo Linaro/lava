@@ -22,7 +22,8 @@ import logging
 import zmq
 
 from django.conf import settings
-from django.core.management.base import BaseCommand
+
+from lava_server.utils import OptArgBaseCommand as BaseCommand
 
 
 class Command(BaseCommand):
