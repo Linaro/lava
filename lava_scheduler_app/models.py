@@ -2451,6 +2451,9 @@ class TestJobUser(models.Model):
 
     class Meta:
         unique_together = ("test_job", "user")
+        permissions = (
+            ('cancel_resubmit_testjob', 'Can cancel or resubmit test jobs'),
+        )
 
     user = models.ForeignKey(
         User,

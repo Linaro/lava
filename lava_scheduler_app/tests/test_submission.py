@@ -35,7 +35,6 @@ from lava_scheduler_app.dbutils import(
     testjob_submission, get_job_queue,
     find_device_for_job,
     get_available_devices,
-    check_device_and_job,
 )
 import simplejson
 
@@ -206,6 +205,30 @@ class TestTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors,to
         job = TestJob.from_json_and_user(definition, self.factory.make_user())
         self.assertEqual(definition, job.definition)
         self.factory.cleanup()
+
+    def test_user_permission(self):
+        self.assertIn(
+            'cancel_resubmit_testjob',
+            [permission.codename for permission in Permission.objects.all() if
+             'lava_scheduler_app' in permission.content_type.app_label])
+        user = self.factory.make_user()
+        user.user_permissions.add(
+            Permission.objects.get(codename='add_testjob'))
+        user.save()
+        self.assertEqual(user.get_all_permissions(), {u'lava_scheduler_app.add_testjob'})
+        cancel_resubmit = Permission.objects.get(codename='cancel_resubmit_testjob')
+        self.assertEqual('lava_scheduler_app', cancel_resubmit.content_type.app_label)
+        self.assertIsNotNone(cancel_resubmit)
+        self.assertEqual(cancel_resubmit.name, 'Can cancel or resubmit test jobs')
+        user.user_permissions.add(cancel_resubmit)
+        user.save()
+        delattr(user, '_perm_cache')  # force a refresh of the user permissions as well as the user
+        user = User.objects.get(username=user.username)
+        self.assertEqual(
+            {u'lava_scheduler_app.cancel_resubmit_testjob', u'lava_scheduler_app.add_testjob'},
+            user.get_all_permissions())
+        self.assertTrue(user.has_perm('lava_scheduler_app.add_testjob'))
+        self.assertTrue(user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
 
     def test_from_json_and_user_sets_submitter(self):
         user = self.factory.make_user()
@@ -1023,7 +1046,6 @@ actions:
         Most of the time is spent setting up the database
         and submitting all the test jobs.
         """
-        import sys
         print >> sys.stderr, timezone.now(), "start"
         user = self.factory.ensure_user('test', 'e@mail.invalid', 'test')
         user.user_permissions.add(
