@@ -29,6 +29,10 @@ def device_post_handler(sender, **kwargs):
 
     # Send a signal if the status changed
     if instance.status != instance._old_status:
+        # Update the status as some objects are save many times.
+        # Even if an object is saved many time, we will send messages only when
+        # the status change.
+        instance._old_status = instance.status
         # Get back the thread local storage
         try:
             context = thread_local.context
