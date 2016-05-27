@@ -63,8 +63,6 @@ from lava_results_app.views.chart.tables import (
     GroupChartTable,
 )
 
-from lava_scheduler_app.models import TestJob
-
 from django_tables2 import (
     RequestConfig,
 )

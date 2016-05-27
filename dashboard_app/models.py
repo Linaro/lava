@@ -29,7 +29,6 @@ import logging
 import os
 import simplejson
 import traceback
-import contextlib
 import django
 from django.conf import settings
 from django.contrib.auth.models import User, Group
@@ -49,16 +48,14 @@ from django.core.validators import (
     MaxValueValidator,
     MinValueValidator
 )
-from django.db import models, connection, IntegrityError
+from django.db import models, IntegrityError
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
-from django.template import Template
 from django.template.defaultfilters import filesizeformat, slugify
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ungettext_lazy
-from django.db.utils import DatabaseError
 from django_restricted_resource.models import RestrictedResource
 from linaro_dashboard_bundle.io import DocumentIO
 

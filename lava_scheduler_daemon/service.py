@@ -19,10 +19,8 @@
 import logging
 
 from twisted.application.service import Service
-from twisted.internet import defer
 from twisted.internet.task import LoopingCall
 
-from lava_scheduler_app import utils
 from lava_scheduler_daemon.job import JobRunner, catchall_errback
 
 
