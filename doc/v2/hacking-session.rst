@@ -125,7 +125,7 @@ directory ``/lava/bin``
 Record text to the LAVA log
 ---------------------------
 
-During a hacking session, LAVA is listening to ``/dev/ttyS0`` for the
+During a hacking session using QEMU, LAVA is listening to ``/dev/ttyS0`` for the
 duration of the hacking session.  From within the target any text you
 echo to ``/dev/ttyS0`` will be recorded within LAVA.
 
@@ -136,6 +136,11 @@ echo to ``/dev/ttyS0`` will be recorded within LAVA.
  * Viewing the output in the LAVA log
 
    https://validation.linaro.org/scheduler/job/116632/log_file#L_5_12
+
+.. note:: ``/dev/ttyS0`` is just an example which is likely to work for
+   QEMU. ``/dev/console`` is not necessarily correct for most devices.
+   The actual device may need to be looked up in ``/proc/cmdline`` or
+   similar, prior to issuing the echo.
 
 .. _stop_hacking:
 
