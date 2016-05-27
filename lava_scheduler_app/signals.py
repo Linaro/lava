@@ -94,10 +94,15 @@ def testjob_post_handler(sender, **kwargs):
         data = {
             "status": instance.STATUS_CHOICES[instance.status][1],
             "job": instance.display_id,
-            "device_type": instance.requested_device_type.name,
             "priority": instance.priority,
             "submit_time": instance.submit_time.isoformat(),
         }
+        if instance.health_check:
+            data['health_check'] = True
+        if instance.requested_device:
+            data['device'] = instance.requested_device.hostname
+        elif instance.requested_device_type:
+            data['device_type'] = instance.requested_device_type.name
         if instance.start_time:
             data["start_time"] = instance.start_time.isoformat()
         if instance.end_time:
