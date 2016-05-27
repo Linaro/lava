@@ -484,9 +484,11 @@ class TestTemplates(TestCaseWithFactory):
 
     debug = False  # set to True to see the YAML device config output
 
-    def validate_data(self, hostname, data):
+    def validate_data(self, hostname, data, job_ctx=None):
+        if not job_ctx:
+            job_ctx = {}
         test_template = prepare_jinja_template(hostname, data, system_path=False)
-        rendered = test_template.render()
+        rendered = test_template.render(**job_ctx)
         if self.debug:
             print('#######')
             print(rendered)
@@ -531,7 +533,21 @@ class TestTemplates(TestCaseWithFactory):
         self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'qemu.jinja2' %}
 {% set exclusive = 'True' %}
 {% set mac_addr = 'DE:AD:BE:EF:28:01' %}
-{% set memory = 512 %}"""))
+{% set memory = 512 %}""", job_ctx={'arch': 'amd64'}))
+
+    def test_qemu_installer(self):
+        data = """{% extends 'qemu.jinja2' %}
+{% set exclusive = 'True' %}
+{% set mac_addr = 'DE:AD:BE:EF:28:01' %}
+{% set memory = 512 %}"""
+        job_ctx = {'arch': 'amd64'}
+        test_template = prepare_jinja_template('staging-qemu-01', data, system_path=False)
+        rendered = test_template.render(**job_ctx)
+        template_dict = yaml.load(rendered)
+        self.assertEqual(
+            'c',
+            template_dict['actions']['boot']['methods']['qemu']['parameters']['boot_options']['boot_order']
+        )
 
     def test_mustang_template(self):
         self.assertTrue(self.validate_data('staging-x86-01', """{% extends 'mustang.jinja2' %}
