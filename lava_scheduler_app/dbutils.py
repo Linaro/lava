@@ -802,9 +802,10 @@ def select_device(job, dispatchers):  # pylint: disable=too-many-return-statemen
             # write the pipeline description to the job output directory.
             if not os.path.exists(check_job.output_dir):
                 os.makedirs(check_job.output_dir)
+            pipeline_dump = yaml.dump(pipeline)
             with open(os.path.join(check_job.output_dir, 'description.yaml'), 'w') as describe_yaml:
-                describe_yaml.write(yaml.dump(pipeline))
-            map_metadata(yaml.dump(pipeline), job)
+                describe_yaml.write(pipeline_dump)
+            map_metadata(pipeline_dump, job)
             # add the compatibility result from the master to the definition for comparison on the slave.
             if 'compatibility' in pipeline:
                 try:
