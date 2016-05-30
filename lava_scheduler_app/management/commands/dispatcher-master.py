@@ -221,6 +221,8 @@ class Command(BaseCommand):
         self.logs[job_id].last_usage = time.time()
 
         # n.b. logging here would produce a log entry for every message in every job.
+        # The format is a list of dictionaries
+        message = "- %s" % message
 
         # Write data
         f_handler = self.logs[job_id].fd
@@ -228,10 +230,9 @@ class Command(BaseCommand):
         f_handler.write('\n')
         f_handler.flush()
 
-        # FIXME: to be removed when the web UI knows how to deal with pipeline logs
         filename = os.path.join(options['output_dir'],
                                 "job-%s" % job_id,
-                                'output.txt')
+                                'output.yaml')
         with open(filename, 'a+') as f_out:
             f_out.write(message)
             f_out.write('\n')
