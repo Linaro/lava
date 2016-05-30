@@ -67,13 +67,13 @@ def pklink(record):
     suffix = ''
     if isinstance(record, TestJob):
         if record.is_pipeline:
-            suffix = 'complete_log?debug=on#bottom'
+            suffix = '#bottom'
         elif record.sub_jobs_list:
             job_id = record.sub_id
-            suffix = 'log_file#bottom'
+            suffix = '/log_file#bottom'
         else:
-            suffix = 'log_file#bottom'
-        complete = '<a class="btn btn-xs btn-primary pull-right" title="end of complete log" href="%s/%s">' % (record.get_absolute_url(), suffix)
+            suffix = '/log_file#bottom'
+        complete = '<a class="btn btn-xs btn-primary pull-right" title="end of log" href="%s%s">' % (record.get_absolute_url(), suffix)
         button = '<span class="glyphicon glyphicon-fast-forward"></span></a>'
     return mark_safe(
         '<a href="%s" title="job summary">%s</a>&nbsp;%s%s' % (

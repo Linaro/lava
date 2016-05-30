@@ -1321,6 +1321,7 @@ def job_detail(request, pk):
                                                             test_job=job)
         is_favorite = testjob_user.is_favorite
 
+    template = "lava_scheduler_app/job.html"
     data = {
         'job': job,
         'show_cancel': job.can_cancel(request.user),
@@ -1337,6 +1338,7 @@ def job_detail(request, pk):
         job_data = description.get('job', {})
         action_list = job_data.get('actions', [])
         pipeline = description.get('pipeline', {})
+
         deploy_list = [item['deploy'] for item in action_list if 'deploy' in item]
         boot_list = [item['boot'] for item in action_list if 'boot' in item]
         test_list = [item['test'] for item in action_list if 'test' in item]
@@ -1345,13 +1347,23 @@ def job_detail(request, pk):
             if 'section' in action:
                 sections.append({action['section']: action['level']})
         default_section = 'boot'  # to come from user profile later.
-        if 'section' in request.GET:
-            log_data = utils.folded_logs(job, request.GET['section'], sections, summary=True)
-        else:
-            log_data = utils.folded_logs(job, default_section, sections, summary=True)
-            if not log_data:
-                default_section = 'deploy'
+
+        # Is it the old log format?
+        if os.path.exists(os.path.join(job.output_dir, 'output.txt')):
+            if 'section' in request.GET:
+                log_data = utils.folded_logs(job, request.GET['section'], sections, summary=True)
+            else:
                 log_data = utils.folded_logs(job, default_section, sections, summary=True)
+                if not log_data:
+                    default_section = 'deploy'
+                    log_data = utils.folded_logs(job, default_section, sections, summary=True)
+        else:
+            template = "lava_scheduler_app/job_pipeline.html"
+            try:
+                with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
+                    log_data = yaml.load(f_in)
+            except IOError:
+                log_data = []
 
         data.update({
             'device_data': description.get('device', {}),
@@ -1412,8 +1424,7 @@ def job_detail(request, pk):
         data.update({
             'expand': True,
         })
-    return render_to_response(
-        "lava_scheduler_app/job.html", data, RequestContext(request))
+    return render_to_response(template, data, RequestContext(request))
 
 
 @BreadCrumb("Definition", parent=job_detail, needs=['pk'])
@@ -1770,13 +1781,22 @@ def job_log_file(request, pk):
 
 def job_log_file_plain(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
+    # Old style jobs
     log_file = job.output_file()
-    if not log_file:
+    if log_file:
+        response = HttpResponse(log_file, content_type='text/plain; charset=utf-8')
+        response['Content-Transfer-Encoding'] = 'quoted-printable'
+        response['Content-Disposition'] = "attachment; filename=job_%d.log" % job.id
+        return response
+
+    # New pipeline jobs
+    try:
+        with open(os.path.join(job.output_dir, "output.yaml"), "r") as log_file:
+            response = HttpResponse(log_file, content_type='application/yaml')
+            response['Content-Disposition'] = "attachment; filename=job_%d.log" % job.id
+            return response
+    except IOError:
         raise Http404
-    response = HttpResponse(log_file, content_type='text/plain; charset=utf-8')
-    response['Content-Transfer-Encoding'] = 'quoted-printable'
-    response['Content-Disposition'] = "attachment; filename=job_%d.log" % job.id
-    return response
 
 
 def job_log_incremental(request, pk):
@@ -1791,6 +1811,26 @@ def job_log_incremental(request, pk):
     response['X-Current-Size'] = str(start + len(new_content))
     if job.status not in [TestJob.RUNNING, TestJob.CANCELING]:
         response['X-Is-Finished'] = '1'
+    return response
+
+
+def job_log_pipeline_incremental(request, pk):
+    job = get_restricted_job(request.user, pk)
+    # Start from this line
+    try:
+        first_line = int(request.GET.get("line", 0))
+    except ValueError:
+        first_line = 0
+
+    with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
+        data = yaml.load(f_in)[first_line:]
+
+    response = HttpResponse(
+        simplejson.dumps(data), content_type='application/json')
+
+    if job.status not in [TestJob.RUNNING, TestJob.CANCELING]:
+        response['X-Is-Finished'] = '1'
+
     return response
 
 

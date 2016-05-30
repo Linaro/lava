@@ -1,5 +1,6 @@
 import pytz
 import yaml
+import re
 from dateutil import parser
 from django import template
 from django.conf import settings
@@ -36,6 +37,18 @@ def get_settings(value):
     """This is only a filter, so use for boolean checks """
     if hasattr(settings, value):
         return getattr(settings, value)
+
+
+# Compile it only once
+action_id_regexp = re.compile(r'^start: ([\d.]+) [\w_-]+ ')
+
+
+@register.assignment_tag
+def get_action_id(string):
+    try:
+        return action_id_regexp.match(string).group(1)
+    except (TypeError, AttributeError, IndexError):
+        return ''
 
 
 @register.assignment_tag()
