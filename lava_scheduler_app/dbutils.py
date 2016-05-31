@@ -49,7 +49,9 @@ def match_vlan_interface(device, job_def):
         if 'tags' not in device_dict['parameters']:
             return False
         for interface, tags in device_dict['parameters']['tags'].iteritems():
-            if any(set(tags).intersection(tag_list)) and interface not in interfaces:
+            # tags & job tags must equal job tags
+            # device therefore must support all job tags, not all job tags available on the device need to be specified
+            if set(tags) & set(tag_list) == set(tag_list) and interface not in interfaces:
                 logger.debug("Matched vlan %s to interface %s on %s", vlan_name, interface, device)
                 interfaces.append(interface)
                 # matched, do not check any further interfaces of this device for this vlan
