@@ -69,31 +69,31 @@ class BootFastbootAction(BootAction):
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.internal_pipeline.add_action(FastbootAction())
+        self.internal_pipeline.add_action(FastbootBootAction())
         self.internal_pipeline.add_action(ConnectLxc())
 
 
-class FastbootAction(Action):
+class FastbootBootAction(Action):
     """
-    This action calls fastboot to reboot into the system.
+    This action calls fastboot to boot into the system.
     """
 
     def __init__(self):
-        super(FastbootAction, self).__init__()
+        super(FastbootBootAction, self).__init__()
         self.name = "boot-fastboot"
         self.summary = "attempt to fastboot boot"
         self.description = "fastboot boot into system"
         self.command = ''
 
     def validate(self):
-        super(FastbootAction, self).validate()
+        super(FastbootBootAction, self).validate()
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
             if self.job.device['fastboot_serial_number'] == '0000000000':
                 self.errors = "device fastboot serial number unset"
 
     def run(self, connection, args=None):
-        connection = super(FastbootAction, self).run(connection, args)
+        connection = super(FastbootBootAction, self).run(connection, args)
         lxc_name = self.get_common_data('lxc', 'name')
         serial_number = self.job.device['fastboot_serial_number']
         fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',

@@ -62,7 +62,7 @@
 - class: actions.boot.fastboot.BootFastbootAction
   name: fastboot_boot
   pipeline:
-  - {class: actions.boot.fastboot.FastbootAction, name: boot-fastboot}
+  - {class: actions.boot.fastboot.FastbootBootAction, name: boot-fastboot}
   - {class: connections.lxc.ConnectLxc, name: connect-lxc}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
