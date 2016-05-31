@@ -71,6 +71,7 @@ class BootFastbootAction(BootAction):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(FastbootBootAction())
         self.internal_pipeline.add_action(ConnectLxc())
+        self.internal_pipeline.add_action(WaitForAdbDevice())
 
 
 class FastbootBootAction(Action):
@@ -106,4 +107,34 @@ class FastbootBootAction(Action):
                 '\n') if 'finished' in status][0]
             self.results = {'status': status}
         self.data['boot-result'] = 'failed' if self.errors else 'success'
+        return connection
+
+
+class WaitForAdbDevice(Action):
+    """
+    Waits for device that gets connected using adb.
+    """
+
+    def __init__(self):
+        super(WaitForAdbDevice, self).__init__()
+        self.name = "wait-for-adb-device"
+        self.summary = "Waits for adb device"
+        self.description = "Waits for availability of adb device"
+        self.prompts = []
+
+    def validate(self):
+        super(WaitForAdbDevice, self).validate()
+        if 'adb_serial_number' not in self.job.device:
+            self.errors = "device adb serial number missing"
+            if self.job.device['adb_serial_number'] == '0000000000':
+                self.errors = "device adb serial number unset"
+
+    def run(self, connection, args=None):
+        connection = super(WaitForAdbDevice, self).run(connection, args)
+        lxc_name = self.get_common_data('lxc', 'name')
+        serial_number = self.job.device['adb_serial_number']
+        adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb',
+                   '-s', serial_number, 'wait-for-device']
+        self.logger.debug("%s: Waiting for device", serial_number)
+        self.run_command(adb_cmd)
         return connection

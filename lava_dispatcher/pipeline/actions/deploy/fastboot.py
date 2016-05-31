@@ -171,6 +171,10 @@ class EnterFastbootAction(DeployAction):
 
     def validate(self):
         super(EnterFastbootAction, self).validate()
+        if 'adb_serial_number' not in self.job.device:
+            self.errors = "device adb serial number missing"
+            if self.job.device['adb_serial_number'] == '0000000000':
+                self.errors = "device adb serial number unset"
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
             if self.job.device['fastboot_serial_number'] == '0000000000':
@@ -180,6 +184,23 @@ class EnterFastbootAction(DeployAction):
         connection = super(EnterFastbootAction, self).run(connection, args)
         lxc_name = self.get_common_data('lxc', 'name')
         fastboot_serial_number = self.job.device['fastboot_serial_number']
+
+        # Try to enter fastboot mode with adb.
+        adb_serial_number = self.job.device['adb_serial_number']
+        adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb', '-s',
+                   adb_serial_number, 'devices']
+        command_output = self.run_command(adb_cmd)
+        if command_output and adb_serial_number in command_output:
+            self.logger.debug("Device is in adb: %s" % command_output)
+            adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb',
+                       '-s', adb_serial_number, 'reboot-bootloader']
+            command_output = self.run_command(adb_cmd)
+            if command_output and 'error' in command_output:
+                raise JobError("Unable to enter fastboot: %s" %
+                               command_output)  # FIXME: JobError needs a unit test
+            return connection
+
+        # Enter fastboot mode with fastboot.
         fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot', '-s',
                         fastboot_serial_number, 'devices']
         command_output = self.run_command(fastboot_cmd)
