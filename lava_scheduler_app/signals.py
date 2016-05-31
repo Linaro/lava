@@ -106,7 +106,7 @@ def testjob_post_handler(sender, **kwargs):
         if instance.start_time:
             data["start_time"] = instance.start_time.isoformat()
         if instance.end_time:
-            data["end_time"] = instance.start_time.isoformat()
+            data["end_time"] = instance.end_time.isoformat()
         if instance.actual_device:
             data["device"] = instance.actual_device.hostname
 
