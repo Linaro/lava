@@ -238,6 +238,10 @@ kernels. The eventual templates will exist on the server and can be used
 to declare the detailed device support so that test writers know in advance
 what kind of images the device can use.
 
+.. index:: trailing comma
+
+.. _v1_trailing_commas:
+
 Actions
 -------
 
@@ -296,10 +300,17 @@ Next are the commands for the deployment method itself:
 These are retained with only formatting changes - after all, these are
 what the device needs to be able to boot.
 
-#. Remove trailing commas (remnants of the old config)
+#. Remove **trailing commas** (remnants of the old config)
 #. Remove one level of quote marks **unless** the command embeds a colon
    (e.g. NFS), in which case the **whole line** is quoted.
 #. Make each line part of a list by prefixing with a hyphen and a space.
+
+.. note:: Trailing commas are known to cause problems on devices - check
+   the config carefully and be particularly watchful for failures where
+   the device reports ``cannot find device 'net0,'`` when working V1 jobs
+   would report using ``device 'net0'``. Commas are required in V1 but
+   YAML processing for V2 will include trailing commas as part of the
+   string, not part of the formatting.
 
 Timeouts
 --------
