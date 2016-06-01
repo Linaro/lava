@@ -58,6 +58,26 @@ as the ``lava-master`` and all other machines connected to that master
 which will actually be running the jobs are termed ``lava-slave``
 machines.
 
+Dependencies and recommends
+---------------------------
+
+Debian has the concept of Dependencies which must be installed and
+Recommends which are optional but expected to be useful by most users
+of the package in question.  Opting out of installing Recommends is
+supported when installing packages, so if admins have concerns about
+extra packages being installed on the slaves (e.g. if using ARMv7
+slaves or simply to reduce the complexity of the install) then
+Recommends can be omitted for the installation of these dependencies,
+
+The 2016.6 release adds a dependency on ``python-guestfs``. The
+Recommends for GuestFS can be omitted from the installation, if admins
+desire, but this needs to be done ahead of the upgrade to 2016.6::
+
+ $ sudo apt --no-install-recommends install python-guestfs
+
+Installing lava-dispatcher
+--------------------------
+
 If this slave has no devices which will be used by the current
 dispatcher, only by the pipeline, i.e. :term:`exclusive` devices,
 only ``lava-dispatcher`` needs to be installed, not ``lava-server``::
