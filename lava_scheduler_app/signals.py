@@ -28,17 +28,22 @@ def send_event(topic, data):
         thread_local.socket = socket = context.socket(zmq.PUSH)
         thread_local.user = user = pwd.getpwuid(os.geteuid()).pw_name
         socket.connect(settings.INTERNAL_EVENT_SOCKET)
-    # The format is [topic, uuid, datetime, username, data as json]
-    msg = [
-        b(settings.EVENT_TOPIC + topic),
-        str(uuid.uuid1()),
-        datetime.datetime.utcnow().isoformat(),
-        user,
-        json.dumps(data)
-    ]
-    # Send the message in the non-blockng mode.
-    # If the consumer (lava-publisher) is not active, the message will be lost.
-    socket.send_multipart(msg, zmq.DONTWAIT)
+
+    try:
+        # The format is [topic, uuid, datetime, username, data as json]
+        msg = [
+            b(settings.EVENT_TOPIC + topic),
+            str(uuid.uuid1()),
+            datetime.datetime.utcnow().isoformat(),
+            user,
+            json.dumps(data)
+        ]
+        # Send the message in the non-blockng mode.
+        # If the consumer (lava-publisher) is not active, the message will be lost.
+        socket.send_multipart(msg, zmq.DONTWAIT)
+    except (TypeError, ValueError, zmq.ZMQError):
+        # The event can't be send, just skip it
+        pass
 
 
 def device_init_handler(sender, **kwargs):
