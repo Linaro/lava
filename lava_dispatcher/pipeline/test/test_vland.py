@@ -116,7 +116,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
         for interface in self.device['parameters']['interfaces']:
             for tag in self.device['parameters']['interfaces'][interface]['tags']:
                 tag_list.extend([interface, tag])
-        self.assertEqual(set(tag_list), {'eth1', '100M', 'eth0', '1G'})
+        self.assertEqual(set(tag_list), {'RJ45', '100M', 'eth1', '10M'})
 
     def test_configure(self):
         with open(self.filename) as yaml_data:
@@ -141,12 +141,9 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
             nodes[uid] = name
         self.assertEqual(len(nodes.keys()), len(vprotocol.names))
         self.assertIn('vlan_one', vprotocol.names)
-        self.assertIn('vlan_two', vprotocol.names)
-        # self.assertNotIn('tags', vprotocol.params['vlan_one'])
+        self.assertNotIn('vlan_two', vprotocol.names)
         self.assertIn('switch', vprotocol.params['vlan_one'])
         self.assertIn('port', vprotocol.params['vlan_one'])
-        self.assertIn('switch', vprotocol.params['vlan_two'])
-        self.assertIn('port', vprotocol.params['vlan_two'])
         self.assertIsNotNone(vprotocol.multinode_protocol)
 
         bbb2 = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
@@ -158,22 +155,20 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(
             vprotocol.params, {
                 'vlan_one': {
-                    'switch': '192.168.0.1', 'port': 5, 'tags': ['1G']
-                },
-                'vlan_two': {
-                    'switch': '192.168.0.1', 'port': 7, 'tags': ['100M']}}
+                    'switch': '192.168.0.1', 'port': 7, 'tags': ['100M', 'RJ45', '10M']
+                }
+            }
         )
         # already configured the vland protocol in the same job
         self.assertTrue(vprotocol.configure(bbb2, job))
         self.assertEqual(
             vprotocol.params, {
                 'vlan_one': {
-                    'switch': '192.168.0.1', 'port': 5, 'tags': ['1G']},
-                'vlan_two': {
-                    'switch': '192.168.0.1', 'port': 7, 'tags': ['100M']}}
+                    'switch': '192.168.0.1', 'port': 7, 'tags': ['100M', 'RJ45', '10M']}
+            }
         )
         self.assertTrue(vprotocol.valid)
-        self.assertEqual(vprotocol.names, {'vlan_one': '4212vlanone', 'vlan_two': '4212vlantwo'})
+        self.assertEqual(vprotocol.names, {'vlan_one': '4212vlanone'})
 
     def test_job(self):
         with open(self.filename) as yaml_data:
@@ -195,7 +190,7 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.assertIn(MultinodeProtocol.name, job.parameters['protocols'])
         vprotocol = [vprotocol for vprotocol in job.protocols if vprotocol.name == VlandProtocol.name][0]
         self.assertTrue(vprotocol.valid)
-        self.assertEqual(vprotocol.names, {'vlan_one': '4212vlanone', 'vlan_two': '4212vlantwo'})
+        self.assertEqual(vprotocol.names, {'vlan_one': '4212vlanone'})
         self.assertFalse(vprotocol.check_timeout(120, {'request': 'no call'}))
         self.assertRaises(JobError, vprotocol.check_timeout, 60, 'deploy_vlans')
         self.assertRaises(JobError, vprotocol.check_timeout, 60, {'request': 'deploy_vlans'})
@@ -206,6 +201,63 @@ class TestVland(unittest.TestCase):  # pylint: disable=too-many-public-methods
             self.assertIn(vlan_name, vprotocol.params)
             self.assertIn('switch', vprotocol.params[vlan_name])
             self.assertIn('port', vprotocol.params[vlan_name])
+
+    def test_job_no_tags(self):
+        with open(self.filename) as yaml_data:
+            alpha_data = yaml.load(yaml_data)
+        for vlan_key, vlan_value in alpha_data['protocols'][VlandProtocol.name].items():
+            alpha_data['protocols'][VlandProtocol.name][vlan_key] = {'tags': []}
+        # removed tags from original job to simulate job where any interface tags will be acceptable
+        self.assertEqual(
+            alpha_data['protocols'][VlandProtocol.name],
+            {'vlan_one': {'tags': []}}
+        )
+        parser = JobParser()
+        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, None, None, output_dir='/tmp/')
+        job.validate()
+        vprotocol = [vprotocol for vprotocol in job.protocols if vprotocol.name == VlandProtocol.name][0]
+        self.assertTrue(vprotocol.valid)
+        self.assertEqual(vprotocol.names, {'vlan_one': '4212vlanone'})
+        self.assertFalse(vprotocol.check_timeout(120, {'request': 'no call'}))
+        self.assertRaises(JobError, vprotocol.check_timeout, 60, 'deploy_vlans')
+        self.assertRaises(JobError, vprotocol.check_timeout, 60, {'request': 'deploy_vlans'})
+        self.assertTrue(vprotocol.check_timeout(120, {'request': 'deploy_vlans'}))
+        for vlan_name in job.parameters['protocols'][VlandProtocol.name]:
+            if vlan_name == 'yaml_line':
+                continue
+            self.assertIn(vlan_name, vprotocol.params)
+            self.assertIn('switch', vprotocol.params[vlan_name])
+            self.assertIn('port', vprotocol.params[vlan_name])
+
+    def test_job_bad_tags(self):
+        with open(self.filename) as yaml_data:
+            alpha_data = yaml.load(yaml_data)
+        for vlan_key, vlan_value in alpha_data['protocols'][VlandProtocol.name].items():
+            alpha_data['protocols'][VlandProtocol.name][vlan_key] = {'tags': ['spurious']}
+        # replaced tags from original job to simulate job where an unsupported tag is specified
+        self.assertEqual(
+            alpha_data['protocols'][VlandProtocol.name],
+            {'vlan_one': {'tags': ['spurious']}}
+        )
+        parser = JobParser()
+        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, None, None, output_dir='/tmp/')
+        self.assertRaises(JobError, job.validate)
+
+    def test_primary_interface(self):
+        with open(self.filename) as yaml_data:
+            alpha_data = yaml.load(yaml_data)
+        for interface in self.device['parameters']['interfaces']:
+            # jinja2 processing of tags: [] results in tags:
+            if self.device['parameters']['interfaces'][interface]['tags'] == []:
+                self.device['parameters']['interfaces'][interface]['tags'] = None
+        parser = JobParser()
+        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, None, None, output_dir='/tmp/')
+        deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        prepare = [action for action in deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
+        overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        vland_overlay = [action for action in overlay.internal_pipeline.actions if action.name == 'lava-vland-overlay'][0]
+        vland_overlay.validate()
+        job.validate()
 
     # pylint: disable=protected-access
     def demo(self):

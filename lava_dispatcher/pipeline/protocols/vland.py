@@ -361,7 +361,9 @@ class VlandProtocol(Protocol):
         interfaces = [interface for interface, _ in device['parameters']['interfaces'].items()]
         available = []
         for iface in interfaces:
-            available.extend(device['parameters']['interfaces'][iface]['tags'])
+            if device['parameters']['interfaces'][iface]['tags']:
+                # skip primary interfaces
+                available.extend(device['parameters']['interfaces'][iface]['tags'])
         requested = []
         for friendly_name in self.parameters['protocols'][self.name]:
             if friendly_name == 'yaml_line':
@@ -377,7 +379,7 @@ class VlandProtocol(Protocol):
                 self.errors = "%s already configured for %s" % (device['hostname'], self.name)
             else:
                 requested.extend(self.params[vlan_name]['tags'])
-        if not any(set(requested).intersection(available)):
+        if set(available) & set(requested) != set(requested):
             self.errors = "Requested link speeds %s are not available %s for %s" % (
                 requested, available, device['hostname'])
         if not self.valid:
@@ -393,7 +395,12 @@ class VlandProtocol(Protocol):
                 if ' '.join([device_info['switch'], str(device_info['port'])]) in self.nodes_seen:
                     # combination of switch & port already processed for this device
                     continue
-                if any(set(device_info['tags']).intersection(self.params[vlan_name]['tags'])):
+                if not device_info['tags']:
+                    # primary network interface, must not allow a vlan
+                    continue
+                # device interface tags & job tags must equal job tags
+                # device therefore must support all job tags, not all job tags available on the device need to be specified
+                if set(device_info['tags']) & set(self.params[vlan_name]['tags']) == set(self.params[vlan_name]['tags']):
                     self.params[vlan_name]['switch'] = device_info['switch']
                     self.params[vlan_name]['port'] = device_info['port']
                     self.nodes_seen.append(' '.join([device_info['switch'], str(device_info['port'])]))

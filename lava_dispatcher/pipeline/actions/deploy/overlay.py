@@ -298,6 +298,9 @@ class VlandOverlayAction(OverlayAction):
                 ]
             )
         for interface in device_params:
+            if not device_params[interface]['tags']:
+                # skip primary interface
+                continue
             for tag in device_params[interface]['tags']:
                 self.tags.extend([interface, tag])
 
