@@ -18,7 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import copy
+import time
 import logging
 import pexpect
 from collections import OrderedDict
@@ -75,6 +75,11 @@ class TestShellRetry(RetryAction):
 
 
 class TestShellAction(TestAction):
+    """
+    Sets up and runs the LAVA Test Shell Definition scripts.
+    Supports a pre-command-list of operations necessary on the
+    booted image before the test shell can be started.
+    """
 
     def __init__(self):
         super(TestShellAction, self).__init__()
@@ -87,6 +92,7 @@ class TestShellAction(TestAction):
         self.definition = None
         self.testset_name = None  # FIXME
         self.report = {}
+        self.start = None
 
     def validate(self):
         if "definitions" in self.parameters:
@@ -133,6 +139,11 @@ class TestShellAction(TestAction):
         connection.timeout = self.connection_timeout
         self.wait(connection)
 
+        pre_command_list = self.get_common_data(self.name, 'pre-command-list')
+        if pre_command_list:
+            for command in pre_command_list:
+                connection.sendline(command)
+
         # FIXME: a predictable UID could be calculated from existing data here.
         # instead, uuid is read from the params to set _current_handler
         # FIXME: can only be run once per TestAction, so collate all patterns for all test definitions.
@@ -150,7 +161,7 @@ class TestShellAction(TestAction):
                 "%s/bin/lava-test-runner %s" % (
                     self.data["lava_test_results_dir"],
                     self.data["lava_test_results_dir"]),
-            )
+                delay=self.character_delay)
 
             if self.timeout:
                 test_connection.timeout = self.timeout.duration
@@ -191,8 +202,29 @@ class TestShellAction(TestAction):
             if name == "STARTRUN":
                 self.signal_director.test_uuid = params[1]
                 self.definition = params[0]
+                uuid = params[1]
                 self.logger.debug("Starting test definition: %s" % self.definition)
             #    self._handle_testrun(params)
+                self.start = time.time()
+                self.logger.results({
+                    'test_definition': 'lava',
+                    self.definition: {
+                        'test_definition_start': self.definition,
+                        'success': uuid
+                    }
+                })
+            elif name == "ENDRUN":
+                self.definition = params[0]
+                uuid = params[1]
+                self.logger.debug("Ending test definition: %s" % self.definition)
+                self.logger.results({
+                    'test_definition': 'lava',
+                    self.definition: {
+                        'success': uuid,
+                        "duration": "%.02f" % (time.time() - self.start)
+                    }
+                })
+                self.start = None
             elif name == "TESTCASE":
                 data = handle_testcase(params)
                 res = self.match.match(data)  # FIXME: rename!

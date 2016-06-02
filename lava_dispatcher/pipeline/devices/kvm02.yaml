@@ -5,7 +5,8 @@ actions:
     methods:
       image:
         parameters:
-          root_part: 1
+          guest:
+            size: 512  # in Mb
   boot:
     methods:
       qemu:
@@ -24,9 +25,10 @@ actions:
             - -no-reboot
 
 timeouts:
-  apply-overlay-image:
-    minutes: 2
-  umount-retry:
-    seconds: 57
-  lava-test-shell:
-    seconds: 30
+  actions:
+    apply-overlay-image:
+      minutes: 2
+    umount-retry:
+      seconds: 57
+    lava-test-shell:
+      seconds: 30

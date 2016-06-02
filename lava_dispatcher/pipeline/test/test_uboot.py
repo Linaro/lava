@@ -55,7 +55,8 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         bbb_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(bbb_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, None, None,
+                               output_dir=output_dir)
         return job
 
 
@@ -163,7 +164,7 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
             }
         }
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
-        job = Job(4212, None, parameters)
+        job = Job(4212, None, None, None, parameters)
         job.device = device
         pipeline = Pipeline(job=job, parameters=parameters['actions']['boot'])
         job.set_pipeline(pipeline)
@@ -224,7 +225,6 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertNotIn("setenv initrd_addr_r '{RAMDISK_ADDR}'", parsed)
         self.assertNotIn("setenv fdt_addr_r '{DTB_ADDR}'", parsed)
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_download_action(self):
         factory = Factory()
         job = factory.create_bbb_job('sample_jobs/uboot.yaml')
@@ -252,7 +252,6 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         self.assertIsNotNone(extract)
         self.assertEqual(extract.timeout.duration, job.parameters['timeouts'][extract.name]['seconds'])
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_reset_actions(self):
         factory = Factory()
         job = factory.create_bbb_job('sample_jobs/uboot.yaml')
@@ -291,9 +290,11 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         sample_job_data = open(sample_job_file)
-        job = job_parser.parse(sample_job_data, cubie, 4212, None, output_dir='/tmp/')
+        job = job_parser.parse(sample_job_data, cubie, 4212, None, None, None,
+                               output_dir='/tmp/')
         job.validate()
-        u_boot_media = job.pipeline.actions[1].internal_pipeline.actions[0]
+        sample_job_data.close()
+        u_boot_media = [action for action in job.pipeline.actions if action.name == 'uboot-action'][1].internal_pipeline.actions[0]
         self.assertIsInstance(u_boot_media, UBootSecondaryMedia)
         self.assertEqual([], u_boot_media.errors)
         self.assertEqual(u_boot_media.parameters['kernel'], '/boot/vmlinuz-3.16.0-4-armmp-lpae')
@@ -334,7 +335,8 @@ class TestUbootAction(unittest.TestCase):  # pylint: disable=too-many-public-met
         boot = [item['boot'] for item in sample_job_data['actions'] if 'boot' in item][0]
         self.assertIsNotNone(boot)
         sample_job_string = yaml.dump(sample_job_data)
-        job = parser.parse(sample_job_string, device, 4212, None, output_dir='/tmp')
+        job = parser.parse(sample_job_string, device, 4212, None, None, None,
+                           output_dir='/tmp')
         job.validate()
         uboot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
         retry = [action for action in uboot.internal_pipeline.actions

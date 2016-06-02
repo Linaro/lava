@@ -4,22 +4,23 @@ job_name: kvm-repeat
 actions:
 
     - deploy:
+        namespace: test-repeat
         timeout:
           minutes: 20
         to: tmpfs
         images:
           rootfs:
             url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
-            image_arg: -hda {rootfs}
+            image_arg: -drive format=raw,file={rootfs}
             compression: gz
         os: debian
-        root_partition: 1
 
     - repeat:
         count: 6
 
         actions:
         - boot:
+            namespace: test-repeat
             method: qemu
             media: tmpfs
             prompts:
@@ -27,6 +28,7 @@ actions:
               - 'root@debian:~#'
 
         - test:
+            namespace: test-repeat
             failure_retry: 3
             name: kvm-smoke-test
             timeout:
@@ -42,6 +44,7 @@ actions:
               name: singlenode-advanced
 
         - boot:
+            namespace: test-repeat
             method: qemu
             media: tmpfs
             failure_retry: 2  # deliberately invalid action,
@@ -52,6 +55,7 @@ actions:
 
         - test:
            name: kvm-intermediate-singlenode
+           namespace: test-repeat
            timeout:
              seconds: 90
            definitions:
@@ -65,6 +69,7 @@ actions:
                name: singlenode-intermediate
 
     - boot:
+        namespace: test-repeat
         method: qemu
         media: tmpfs
         repeat: 4
@@ -73,18 +78,19 @@ actions:
           - 'root@debian:~#'
 
     - deploy:
+        namespace: test-normal
         timeout:
           minutes: 20
         to: tmpfs
-        images: 
+        images:
           rootfs:
             url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
-            image_arg: -hda {rootfs}
+            image_arg: -drive format=raw,file={rootfs}
             compression: gz
         os: debian
-        root_partition: 1
 
     - boot:
+        namespace: test-normal
         method: qemu
         media: tmpfs
         repeat: 4
@@ -95,6 +101,7 @@ actions:
     - test:
         failure_retry: 3
         name: kvm-basic-singlenode
+        namespace: test-normal
         definitions:
             - repository: http://git.linaro.org/qa/test-definitions.git
               from: git

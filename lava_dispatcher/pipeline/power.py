@@ -267,7 +267,7 @@ class FinalizeAction(Action):
         if connection:
             connection.finalise()
         for protocol in self.job.protocols:
-            protocol.finalise_protocol()
+            protocol.finalise_protocol(self.job.device)
         if self.errors:
             self.results = {'status': self.errors}
             self.logger.debug('status: %s' % self.errors)
@@ -278,7 +278,7 @@ class FinalizeAction(Action):
                 'Status': 'Incomplete',
                 'Errors': self.job.pipeline.errors})
         else:
-            self.results = {'status': "Complete"}
+            self.results = {'success': "Complete"}
             self.logger.debug("Status: Complete")
         with open("%s/results.yaml" % self.job.parameters['output_dir'], 'w') as results:
             results.write(yaml.dump(self.job.pipeline.describe()))

@@ -85,7 +85,8 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         mustang_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(mustang_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 0, socket_addr=None, output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 0, socket_addr=None,
+                               master_cert=None, slave_cert=None, output_dir=output_dir)
         return job
 
 
@@ -118,8 +119,8 @@ class TestUefi(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(selector.selector.prompt, params['bootloader_prompt'])  # initial prompt
         self.assertEqual(selector.boot_message, params['boot_message'])  # final prompt
         self.assertEqual(
-            selector.send_char_delay,
-            self.job.device['actions']['boot']['methods']['uefi-menu']['parameters']['character_delay'])
+            selector.character_delay,
+            self.job.device['character-delays']['boot'])
 
     def test_uefi_job(self):
         self.assertIsNotNone(self.job)

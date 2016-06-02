@@ -24,26 +24,15 @@ import tarfile
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,
-    Timeout,
     JobError,
 )
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.actions.boot import BootAction
-from lava_dispatcher.pipeline.actions.boot.environment import (
-    ExportDeviceEnvironment,
-)
 from lava_dispatcher.pipeline.actions.boot import AutoLoginAction
-from lava_dispatcher.pipeline.connections.adb import (
-    ConnectAdb,
-    WaitForAdbDevice,
-)
 from lava_dispatcher.pipeline.shell import ExpectShellSession
-from lava_dispatcher.pipeline.utils.shell import infrastructure_error
+from lava_dispatcher.pipeline.connections.lxc import ConnectLxc
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.utils.constants import (
-    DISPATCHER_DOWNLOAD_DIR,
-    ANDROID_TMP_DIR,
-)
+from lava_dispatcher.pipeline.utils.constants import ANDROID_TMP_DIR
 
 
 class BootFastboot(Boot):
@@ -80,92 +69,72 @@ class BootFastbootAction(BootAction):
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.internal_pipeline.add_action(FastbootAction())
+        self.internal_pipeline.add_action(FastbootBootAction())
+        self.internal_pipeline.add_action(ConnectLxc())
         self.internal_pipeline.add_action(WaitForAdbDevice())
-        self.internal_pipeline.add_action(ConnectAdb())
-        # Add AutoLoginAction unconditionally as this action does nothing if
-        # the configuration does not contain 'auto_login'
-        self.internal_pipeline.add_action(AutoLoginAction())
-        self.internal_pipeline.add_action(ExpectShellSession())
-        self.internal_pipeline.add_action(AdbOverlayUnpack())
 
 
-class FastbootAction(Action):
+class FastbootBootAction(Action):
     """
-    This action calls fastboot to reboot into the system.
+    This action calls fastboot to boot into the system.
     """
 
     def __init__(self):
-        super(FastbootAction, self).__init__()
+        super(FastbootBootAction, self).__init__()
         self.name = "boot-fastboot"
         self.summary = "attempt to fastboot boot"
         self.description = "fastboot boot into system"
         self.command = ''
 
     def validate(self):
-        super(FastbootAction, self).validate()
-        self.errors = infrastructure_error('fastboot')
-        if infrastructure_error('fastboot'):
-            self.errors = "Unable to find 'fastboot' command"
+        super(FastbootBootAction, self).validate()
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
             if self.job.device['fastboot_serial_number'] == '0000000000':
                 self.errors = "device fastboot serial number unset"
 
     def run(self, connection, args=None):
-        connection = super(FastbootAction, self).run(connection, args)
+        connection = super(FastbootBootAction, self).run(connection, args)
+        lxc_name = self.get_common_data('lxc', 'name')
         serial_number = self.job.device['fastboot_serial_number']
-        fastboot_cmd = ['fastboot', '-s', serial_number, 'reboot']
+        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
+                        '-s', serial_number, 'reboot']
         command_output = self.run_command(fastboot_cmd)
         if command_output and 'rebooting' not in command_output:
-            raise JobError("Unable to boot with fastboot: %s" %
-                           command_output)
+            raise JobError("Unable to boot with fastboot: %s" % command_output)
+        else:
+            status = [status.strip() for status in command_output.split(
+                '\n') if 'finished' in status][0]
+            self.results = {'status': status}
+        self.data['boot-result'] = 'failed' if self.errors else 'success'
         return connection
 
 
-class AdbOverlayUnpack(Action):
+class WaitForAdbDevice(Action):
+    """
+    Waits for device that gets connected using adb.
+    """
 
     def __init__(self):
-        super(AdbOverlayUnpack, self).__init__()
-        self.name = "adb-overlay-unpack"
-        self.summary = "unpack the overlay on the remote device"
-        self.description = "unpack the overlay over adb"
+        super(WaitForAdbDevice, self).__init__()
+        self.name = "wait-for-adb-device"
+        self.summary = "Waits for adb device"
+        self.description = "Waits for availability of adb device"
+        self.prompts = []
 
     def validate(self):
-        super(AdbOverlayUnpack, self).validate()
+        super(WaitForAdbDevice, self).validate()
         if 'adb_serial_number' not in self.job.device:
             self.errors = "device adb serial number missing"
             if self.job.device['adb_serial_number'] == '0000000000':
                 self.errors = "device adb serial number unset"
-        if infrastructure_error('adb'):
-            self.errors = "Unable to find 'adb' command"
 
     def run(self, connection, args=None):
-        connection = super(AdbOverlayUnpack, self).run(connection, args)
+        connection = super(WaitForAdbDevice, self).run(connection, args)
+        lxc_name = self.get_common_data('lxc', 'name')
         serial_number = self.job.device['adb_serial_number']
-        overlay_type = 'adb-overlay'
-        overlay_file = self.data['compress-overlay'].get('output')
-        host_dir = mkdtemp()
-        target_dir = ANDROID_TMP_DIR
-        try:
-            tar = tarfile.open(overlay_file)
-            tar.extractall(host_dir)
-            tar.close()
-        except tarfile.TarError as exc:
-            raise RuntimeError("Unable to unpack %s overlay: %s" % (
-                overlay_type, exc))
-        host_dir = os.path.join(host_dir, 'data/local/tmp')
-        adb_cmd = ['adb', '-s', serial_number, 'push', host_dir,
-                   target_dir]
-        command_output = self.run_command(adb_cmd)
-        if command_output and 'pushed' not in command_output:
-            raise JobError("Unable to push overlay files with adb: %s" %
-                           command_output)
-        adb_cmd = ['adb', '-s', serial_number, 'shell', '/system/bin/chmod',
-                   '0777', target_dir]
-        command_output = self.run_command(adb_cmd)
-        if command_output and 'pushed' not in command_output:
-            raise JobError("Unable to chmod overlay files with adb: %s" %
-                           command_output)
-        self.data['boot-result'] = 'failed' if self.errors else 'success'
+        adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb',
+                   '-s', serial_number, 'wait-for-device']
+        self.logger.debug("%s: Waiting for device", serial_number)
+        self.run_command(adb_cmd)
         return connection

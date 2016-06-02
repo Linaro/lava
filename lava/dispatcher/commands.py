@@ -49,7 +49,7 @@ class devices(DispatcherCommand):
     """
     def invoke(self):
         for d in list_devices():
-            print d
+            print(d)
 
 
 def run_legacy_job(job_data, oob_file, config, output_dir, validate):
@@ -66,7 +66,7 @@ def run_legacy_job(job_data, oob_file, config, output_dir, validate):
         try:
             validate_job_data(job.job_data)
         except ValidationError as e:
-            print e
+            print(e)
     else:
         job.run()
 
@@ -132,6 +132,13 @@ class dispatch(DispatcherCommand):
         parser.add_argument(
             "--socket-addr", default=None,
             help="Address of the ZMQ socket used to send the logs to the master")
+        # Don't put any default value as it has to be defined by the calling process
+        parser.add_argument(
+            "--master-cert", default=None,
+            help="Master certificate file")
+        parser.add_argument(
+            "--slave-cert", default=None,
+            help="Slave certificate file")
         parser.add_argument(
             "job_file",
             metavar="JOB",
@@ -188,7 +195,7 @@ class dispatch(DispatcherCommand):
                     with open(reporter, 'a') as f:
                         f.write("Configuration error: %s\n" % e)
                 else:
-                    print e
+                    print(e)
                 exit(1)
             # Set the logging level
             logging.root.setLevel(self.config.logging_level)
@@ -250,6 +257,8 @@ class dispatch(DispatcherCommand):
                 with open(filename) as f_in:
                     job = parser.parse(f_in, device, self.args.job_id,
                                        socket_addr=self.args.socket_addr,
+                                       master_cert=self.args.master_cert,
+                                       slave_cert=self.args.slave_cert,
                                        output_dir=self.args.output_dir,
                                        env_dut=env_dut)
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2015 Linaro Limited
+# Copyright (C) 2016 Linaro Limited
 #
 # Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
 #
@@ -18,13 +18,16 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import os
 import signal
+from time import sleep
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.action import (
     Action,
     JobError,
 )
 from lava_dispatcher.pipeline.shell import ShellCommand, ShellSession
+from lava_dispatcher.pipeline.utils.constants import USB_SHOW_UP_TIMEOUT
 
 # pylint: disable=too-many-public-methods
 
@@ -48,11 +51,29 @@ class ConnectLxc(Action):
             self.errors = "Unable to identify test image prompts from parameters."
 
     def run(self, connection, args=None):
-        if connection:
-            self.logger.debug("Already connected")
-            connection.prompt_str = self.parameters['prompts']
-            return connection
-        cmd = "lxc-attach -n {0}".format(self.get_common_data('lxc', 'name'))
+        lxc_name = self.get_common_data('lxc', 'name')
+
+        # Attach usb device to lxc
+        if 'device_path' in list(self.job.device.keys()):
+            # Wait USB_SHOW_UP_TIMEOUT seconds for the usb device to show up
+            self.logger.info("Waiting %d seconds for usb device to show up" %
+                             USB_SHOW_UP_TIMEOUT)
+            sleep(USB_SHOW_UP_TIMEOUT)
+
+            device_path = os.path.realpath(self.job.device['device_path'])
+            if os.path.isdir(device_path):
+                devices = os.listdir(device_path)
+            else:
+                devices = [device_path]
+
+            for device in devices:
+                device = os.path.join(device_path, device)
+                lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
+                self.run_command(lxc_cmd)
+            self.logger.debug("%s: devices added from %s", lxc_name,
+                              device_path)
+
+        cmd = "lxc-attach -n {0}".format(lxc_name)
         self.logger.info("%s Connecting to device using '%s'", self.name, cmd)
         signal.alarm(0)  # clear the timeouts used without connections.
         # ShellCommand executes the connection command

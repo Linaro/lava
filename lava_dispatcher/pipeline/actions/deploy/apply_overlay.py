@@ -33,7 +33,8 @@ from lava_dispatcher.pipeline.utils.constants import (
     RAMDISK_FNAME,
     DISPATCHER_DOWNLOAD_DIR,
 )
-from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
+from lava_dispatcher.pipeline.utils.installers import add_late_command
+from lava_dispatcher.pipeline.utils.filesystem import mkdtemp, prepare_guestfs
 from lava_dispatcher.pipeline.utils.shell import infrastructure_error
 from lava_dispatcher.pipeline.utils.compression import (
     compress_file,
@@ -65,6 +66,36 @@ class ApplyOverlayImage(Action):
         return connection
 
 
+class ApplyOverlayGuest(Action):
+
+    def __init__(self):
+        super(ApplyOverlayGuest, self).__init__()
+        self.name = "apply-overlay-guest"
+        self.summary = "build a guest filesystem with the overlay"
+        self.description = "prepare a qcow2 drive containing the overlay"
+        self.guest_filename = 'lava-guest.qcow2'
+
+    def validate(self):
+        super(ApplyOverlayGuest, self).validate()
+        self.set_common_data('guest', 'name', self.guest_filename)
+        lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
+        self.data['lava_test_results_dir'] = lava_test_results_dir % self.job.job_id
+        if 'guest' not in self.job.device['actions']['deploy']['methods']['image']['parameters']:
+            self.errors = "Device configuration does not specify size of guest filesystem."
+
+    def run(self, connection, args=None):
+        if not self.data['compress-overlay'].get('output'):
+            raise RuntimeError("Unable to find the overlay")
+        guest_dir = mkdtemp()
+        guest_file = os.path.join(guest_dir, self.guest_filename)
+        self.set_common_data('guest', 'filename', guest_file)
+        blkid = prepare_guestfs(
+            guest_file, self.data['compress-overlay'].get('output'),
+            self.job.device['actions']['deploy']['methods']['image']['parameters']['guest']['size'])
+        self.results = {'success': blkid}
+        return connection
+
+
 class PrepareOverlayTftp(Action):
     """
     Extracts the ramdisk or nfsrootfs in preparation for the lava overlay
@@ -83,6 +114,7 @@ class PrepareOverlayTftp(Action):
         self.internal_pipeline.add_action(ExtractModules())  # idempotent, checks for a modules parameter
         self.internal_pipeline.add_action(ApplyOverlayTftp())
         self.internal_pipeline.add_action(CompressRamdisk())  # idempotent, checks for a ramdisk parameter
+        self.internal_pipeline.add_action(ConfigurePreseedFile())  # idempotent, checks for a preseed parameter
 
     def run(self, connection, args=None):
         connection = super(PrepareOverlayTftp, self).run(connection, args)
@@ -387,6 +419,9 @@ class ApplyLxcOverlay(Action):
     def run(self, connection, args=None):
         connection = super(ApplyLxcOverlay, self).run(connection, args)
         overlay_file = self.data['compress-overlay'].get('output')
+        if overlay_file is None:
+            self.logger.debug("skipped %s", self.name)
+            return connection
         lxc_path = os.path.join(LXC_PATH, self.get_common_data('lxc', 'name'),
                                 "rootfs")
         if not os.path.exists(lxc_path):
@@ -398,3 +433,21 @@ class ApplyLxcOverlay(Action):
             raise JobError("Unable to untar overlay: %s" %
                            command_output)  # FIXME: JobError needs a unit test
         return connection
+
+
+class ConfigurePreseedFile(Action):
+    def __init__(self):
+        super(ConfigurePreseedFile, self).__init__()
+        self.name = "configure-preseed-file"
+        self.summary = "add commands to installer config"
+        self.description = "add commands to automated installers, to copy the lava test overlay to the installed system"
+
+    def validate(self):
+        super(ConfigurePreseedFile, self).validate()
+        if not self.parameters.get('preseed', None):
+            return
+
+    def run(self, connection, args=None):
+        if self.parameters["deployment_data"].get('installer_extra_cmd', None):
+            if self.parameters.get('os', None) == "debian_installer":
+                add_late_command(self.data['download_action']['preseed']['file'], self.parameters["deployment_data"]["installer_extra_cmd"])

@@ -26,6 +26,7 @@ from lava_dispatcher.pipeline.utils.constants import (
     DISTINCTIVE_PROMPT_CHARACTERS,
 )
 from lava_dispatcher.pipeline.utils.shell import wait_for_prompt
+from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
 
 
 class BootAction(RetryAction):
@@ -110,38 +111,49 @@ class AutoLoginAction(Action):
             if not any([True for c in DISTINCTIVE_PROMPT_CHARACTERS if c in prompt]):
                 self.logger.warning(self.check_prompt_characters_warning % prompt)  # pylint: disable=logging-not-lazy
 
+        connection.prompt_str = LinuxKernelMessages.get_init_prompts()
         # Skip auto login if the configuration is not found
         params = self.parameters.get('auto_login', None)
         if params is None:
             self.logger.debug("Skipping of auto login")
         else:
             self.logger.debug("Waiting for the login prompt")
-            connection.prompt_str = params['login_prompt']
-            self.wait(connection)
-            connection.sendline(params['username'])
+            connection.prompt_str.append(params['login_prompt'])
+            self.logger.debug(connection.prompt_str)
+            results = LinuxKernelMessages.parse_failures(connection)
+            if len(results) > 1:
+                self.results = {'fail': results}
+                return connection
+            else:
+                connection.sendline(params['username'], delay=self.character_delay)
 
             if 'password_prompt' in params:
                 self.logger.debug("Waiting for password prompt")
                 connection.prompt_str = params['password_prompt']
                 self.wait(connection)
-                connection.sendline(params['password'])
+                connection.sendline(params['password'], delay=self.character_delay)
         # prompt_str can be a list or str
-        connection.prompt_str = [DEFAULT_SHELL_PROMPT]
+        if isinstance(connection.prompt_str, str):
+            connection.prompt_str = [DEFAULT_SHELL_PROMPT]
+        else:
+            connection.prompt_str.extend([DEFAULT_SHELL_PROMPT])
 
         prompts = self.parameters.get('prompts', None)
         if isinstance(prompts, list):
-            connection.prompt_str.extend(prompts)
             for prompt in prompts:
                 check_prompt_characters(prompt)
             self.logger.debug("Setting shell prompt(s) to %s" % ', '.join(connection.prompt_str))  # pylint: disable=logging-not-lazy
+            connection.prompt_str.extend(prompts)
         else:
-            connection.prompt_str.extend([prompts])
             check_prompt_characters(prompts)
             self.logger.debug("Setting shell prompt(s) to %s" % connection.prompt_str)  # pylint: disable=logging-not-lazy
+            connection.prompt_str.append(prompts)
 
-        # may need to force a prompt here.
-        wait_for_prompt(connection.raw_connection, connection.prompt_str, connection.timeout.duration, '#')
-        # self.wait(connection)
-        connection.sendline('export PS1="%s"' % DEFAULT_SHELL_PROMPT)
+        if params is None:
+            self.logger.debug("Parsing kernel messages")
+            parsed = LinuxKernelMessages.parse_failures(connection)
+            if parsed:
+                self.results = parsed
+        connection.sendline('export PS1="%s"' % DEFAULT_SHELL_PROMPT, delay=self.character_delay)
 
         return connection

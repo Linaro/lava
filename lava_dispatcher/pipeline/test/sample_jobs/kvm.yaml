@@ -11,6 +11,7 @@ timeouts:
   test:
     minutes: 3
 priority: medium
+visibility: public
 
 actions:
 
@@ -19,20 +20,15 @@ actions:
           minutes: 2
         to: tmpfs
         os: debian
-        # if root_partition partition is not present:
-        # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
-        # - look into device configuration
-        root_partition: 1
         images:
           disk1:
             url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
             compression: gz
-            image_arg: -hda {disk1}
-            overlay: True
+            image_arg: -drive format=raw,file={disk1}
           disk2:
             url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
             compression: gz
-            image_arg: -hdb {disk2}
+            image_arg: -drive format=raw,file={disk2}
 
     - boot:
         method: qemu

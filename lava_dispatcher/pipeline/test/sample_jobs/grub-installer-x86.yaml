@@ -1,0 +1,64 @@
+device_type: grub-x86
+
+job_name: grub-x86-debian-preseed
+timeouts:
+  job:
+    minutes: 300
+  action:
+    minutes: 300
+priority: medium
+visibility: public
+
+actions:
+  - deploy:
+     timeout:
+       minutes: 10
+     to: tftp
+     kernel:
+        url: http://http.us.debian.org/debian/dists/jessie/main/installer-i386/current/images/netboot/debian-installer/i386/linux
+     ramdisk:
+         url: http://http.us.debian.org/debian/dists/jessie/main/installer-i386/current/images/netboot/debian-installer/i386/initrd.gz
+         compression: gz
+     preseed:
+         url: http://ironhide.bounceme.net/x86-32/preseed-lava.cfg
+     os: debian_installer
+
+  - boot:
+     method: grub
+     commands: debian-installer
+     expect_shell: False
+     timeout:
+       minutes: 50
+     boot_finished:
+     - 'reboot: Restarting system'
+     - 'reboot: System halted'
+     - 'Requesting system halt'
+
+  - boot:
+      method: grub
+      commands: debian-installed
+      auto_login:
+        login_prompt: 'login:'
+        username: root
+        password_prompt: 'Password:'
+        password: linaro123
+      timeout:
+          minutes: 5
+      prompts:
+       - 'root@debian:~#'
+       - 'root@dellpc:~#'
+
+  - test:
+     failure_retry: 3
+     name: kvm-basic-singlenode
+     timeout:
+       minutes: 5
+     definitions:
+         - repository: git://git.linaro.org/qa/test-definitions.git
+           from: git
+           path: ubuntu/smoke-tests-basic.yaml
+           name: smoke-tests
+         - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+           from: git
+           path: lava-test-shell/single-node/singlenode03.yaml
+           name: singlenode-advanced

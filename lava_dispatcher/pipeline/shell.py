@@ -55,19 +55,27 @@ class ShellLogger(object):
         }
         for key, value in replacements.items():
             new_line = new_line.replace(key, value)
-        line = self.line + new_line
-        if '\n' in line:  # any number of newlines
-            for item in line.split('\n'):
-                self.logger.target(item)
-            self.line = ''
+        lines = self.line + new_line
+
+        # Print one full line at a time. A partial line is kept in memory.
+        if '\n' in lines:
+            last_ret = lines.rindex('\n')
+            self.line = lines[last_ret + 1:]
+            lines = lines[:last_ret]
+            for line in lines.split('\n'):
+                self.logger.target(line)
         else:
-            # keep building until a newline is seen
-            self.line += new_line
+            self.line = lines
         return
 
     def flush(self):  # pylint: disable=no-self-use
         sys.stdout.flush()
         sys.stderr.flush()
+
+    def __del__(self):
+        # Only needed for processes that does not end output with a new line.
+        if self.line:
+            self.write('\n')
 
 
 class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
@@ -230,7 +238,7 @@ class ShellSession(Connection):
         if not self.prompt_str:
             self.prompt_str = self.check_char
         try:
-            self.runner.wait_for_prompt(self.timeout.duration, self.check_char)
+            return self.runner.wait_for_prompt(self.timeout.duration, self.check_char)
         except pexpect.TIMEOUT:
             raise JobError("wait for prompt timed out")
 
@@ -243,15 +251,12 @@ class SimpleSession(ShellSession):
         to advance without data which can cause blank entries and can cause
         the menu to exit to an unrecognised prompt.
         """
-        while True:
-            try:
-                self.raw_connection.expect(self.prompt_str, timeout=self.timeout.duration)
-            except pexpect.TIMEOUT:
-                raise JobError("wait for prompt timed out")
-            except KeyboardInterrupt:
-                raise KeyboardInterrupt
-            else:
-                break
+        try:
+            return self.raw_connection.expect(self.prompt_str, timeout=self.timeout.duration)
+        except pexpect.TIMEOUT:
+            raise JobError("wait for prompt timed out")
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
 
 
 class ExpectShellSession(Action):
@@ -275,6 +280,8 @@ class ExpectShellSession(Action):
 
     def run(self, connection, args=None):
         connection = super(ExpectShellSession, self).run(connection, args)
+        if not connection:
+            raise JobError("No connection available.")
         if not connection.prompt_str:
             connection.prompt_str = self.parameters['prompts']
         self.logger.debug("%s: Waiting for prompt %s", self.name, ', '.join(self.parameters['prompts']))

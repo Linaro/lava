@@ -11,6 +11,7 @@ timeouts:
   test:
     minutes: 3
 priority: medium
+visibility: public
 
 actions:
 
@@ -21,13 +22,9 @@ actions:
         images:
           rootfs:
             url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
-            image_arg: -hda {rootfs} 
+            image_arg: -drive format=raw,file={rootfs}
             compression: gz
         os: debian
-        # if root_partition partition is not present:
-        # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
-        # - look into device configuration
-        root_partition: 1
 
     - boot:
         method: qemu

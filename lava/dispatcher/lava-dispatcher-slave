@@ -45,6 +45,7 @@ import time
 import traceback
 import yaml
 import zmq
+import zmq.auth
 
 # pylint: disable=no-member
 # pylint: disable=too-few-public-methods
@@ -99,9 +100,11 @@ class Master(object):
 class Job(object):
     """Wrapper around a job process."""
     def __init__(self, job_id, definition, device_definition, env,
-                 log_socket, env_dut=None):
+                 log_socket, master_cert, slave_cert, env_dut=None):
         self.job_id = job_id
         self.log_socket = log_socket
+        self.master_cert = master_cert
+        self.slave_cert = slave_cert
         self.env = env
         self.env_dut = env_dut
         self.proc = None
@@ -168,6 +171,10 @@ class Job(object):
                 "--job-id=%s" % self.job_id,
                 "--socket-addr=%s" % self.log_socket
             ]
+            # Use certificates if defined
+            if self.master_cert is not None and self.slave_cert is not None:
+                args.extend(["--master-cert", self.master_cert,
+                             "--slave-cert", self.slave_cert])
 
             if self.env_dut and env_dut_tmp_path:
                 args.append("--env-dut-path=%s" % env_dut_tmp_path)
@@ -210,7 +217,8 @@ def get_fqdn():
         raise exc
 
 
-def create_zmq_context(master_uri, hostname, send_queue=10):
+def create_zmq_context(master_uri, hostname, send_queue, encrypt,
+                       master_cert, slave_cert):
     """Create the ZMQ context and necessary accessories.
 
     :param master_uri: The URI where the sokect should be connected.
@@ -219,6 +227,9 @@ def create_zmq_context(master_uri, hostname, send_queue=10):
     :type hostname: string
     :param send_queue: How many object should be in the send queue.
     :type send_queue: int
+    :param encrypt: encrypt (or not) the zmq messages
+    :param master_cert: the master certificate file
+    :param slave_cert: the slave certificate file
     :return A tuple with: the zmq context, the zmq socket, the zmq poller, a
     read pipe and a write pipe.
     """
@@ -228,6 +239,24 @@ def create_zmq_context(master_uri, hostname, send_queue=10):
     sock = context.socket(zmq.DEALER)
     sock.setsockopt(zmq.IDENTITY, hostname)
     sock.setsockopt(zmq.SNDHWM, send_queue)
+
+    # If needed, load certificates
+    if encrypt:
+        LOG.info("Starting encryption")
+        try:
+            LOG.debug("Opening slave certificate: %s", slave_cert)
+            (client_public, client_private) = zmq.auth.load_certificate(slave_cert)
+            sock.curve_publickey = client_public
+            sock.curve_secretkey = client_private
+            LOG.debug("Opening master certificate: %s", master_cert)
+            (server_public, _) = zmq.auth.load_certificate(master_cert)
+            sock.curve_serverkey = server_public
+        except IOError as err:
+            LOG.error(err)
+            sock.close()
+            context.term()
+            sys.exit(1)
+
     sock.connect(master_uri)
 
     # Poll on the socket and the pipe (signal).
@@ -337,13 +366,16 @@ def connect_to_master(master, poller, pipe_r, sock, timeout):
     return False
 
 
-def listen_to_master(master, jobs, poller, pipe_r, socket_addr, sock, timeout):
+def listen_to_master(master, jobs, poller, pipe_r, socket_addr, master_cert,
+                     slave_cert, sock, timeout):
     """Listen for master orders
 
     :param master: the master structure
     :param jobs: the list of jobs
     :param pipe_r: the read pipe for signals
     :param socket_addr: address of the logging socket
+    :param master_cert: the master certificate
+    :param slave_cert: the slave certificate
     :param sock: the zmq socket
     :param timeout: the poll timeout
     """
@@ -408,9 +440,9 @@ def listen_to_master(master, jobs, poller, pipe_r, socket_addr, sock, timeout):
                     LOG.warning("[%d] Job has already ended", job_id)
                     sock.send_multipart(["END", str(job_id), "0"])
             else:
-                jobs[job_id] = Job(job_id, job_definition,
-                                   device_definition, env,
-                                   socket_addr, env_dut=env_dut)
+                jobs[job_id] = Job(job_id, job_definition, device_definition,
+                                   env, socket_addr, master_cert, slave_cert,
+                                   env_dut=env_dut)
                 jobs[job_id].start()
                 sock.send_multipart(["START_OK", str(job_id)])
 
@@ -436,7 +468,7 @@ def listen_to_master(master, jobs, poller, pipe_r, socket_addr, sock, timeout):
                         "[%d] Job has already been canceled", job_id)
             else:
                 LOG.debug("[%d] Unknown job, sending END", job_id)
-                jobs[job_id] = Job(job_id, "", "", None, None)
+                jobs[job_id] = Job(job_id, "", "", None, None, None, None)
                 jobs[job_id].is_running = False
             # Send the END message anyway
             sock.send_multipart(["END", str(job_id), "0"])
@@ -477,7 +509,7 @@ def listen_to_master(master, jobs, poller, pipe_r, socket_addr, sock, timeout):
                 # Unknown job: return END anyway
                 LOG.debug(
                     "[%d] Unknown job, sending END after STATUS", job_id)
-                jobs[job_id] = Job(job_id, "", "", None, None)
+                jobs[job_id] = Job(job_id, "", "", None, None, None, None)
                 jobs[job_id].is_running = False
                 sock.send_multipart(["END", str(job_id), "0"])
 
@@ -563,6 +595,21 @@ def main():
         default=TIMEOUT,
         help="Socket connection timeout in seconds; default to %d" % TIMEOUT,
     )
+
+    parser.add_argument(
+        "--encrypt", default=False, action="store_true",
+        help="Encrypt messages"
+    )
+    parser.add_argument(
+        "--master-cert", type=str,
+        default="/etc/lava-dispatcher/certificates.d/master.key",
+        help="Master certificate file",
+    )
+    parser.add_argument(
+        "--slave-cert", type=str,
+        default="/etc/lava-dispatcher/certificates.d/slave.key_secret",
+        help="Slave certificate file",
+    )
     args = parser.parse_args()
 
     # Parse the command line
@@ -575,7 +622,8 @@ def main():
 
     # Create the zmq context
     context, sock, poller, pipe_r, pipe_w = create_zmq_context(
-        master_uri, host_name, send_queue=SEND_QUEUE)
+        master_uri, host_name, SEND_QUEUE, args.encrypt,
+        args.master_cert, args.slave_cert)
 
     # Register cleanup function to be run at exit.
     atexit.register(destroy_zmq_context, context, sock, pipe_r, pipe_w)
@@ -586,6 +634,14 @@ def main():
 
     # Connect to the master and wait for the reply
     LOG.info("Connecting to master as <%s>", host_name)
+    if args.encrypt:
+        LOG.info("Connection is encrypted using %s", args.slave_cert)
+    else:
+        # Set to None to disable encryption in the logger
+        args.slave_cert = None
+        args.master_cert = None
+        LOG.info("Connection is not encrypted")
+
     hello_msg = "HELLO"
     LOG.debug("Greeting the master => '%s'", hello_msg)
     sock.send_multipart([hello_msg])
@@ -597,7 +653,7 @@ def main():
     LOG.info("Waiting for master instructions")
     while True:
         listen_to_master(master, jobs, poller, pipe_r, args.socket_addr,
-                         sock, timeout)
+                         args.master_cert, args.slave_cert, sock, timeout)
         check_job_status(jobs, sock)
         ping_master(master, sock, timeout)
 

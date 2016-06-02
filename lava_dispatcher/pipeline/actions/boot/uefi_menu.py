@@ -30,17 +30,12 @@ from lava_dispatcher.pipeline.menus.menus import (
     MenuInterrupt,
     MenuReset
 )
-from lava_dispatcher.pipeline.connections.adb import (
-    ConnectAdb,
-    WaitForAdbDevice,
-)
 from lava_dispatcher.pipeline.logical import Boot
 from lava_dispatcher.pipeline.power import ResetDevice
 from lava_dispatcher.pipeline.shell import ExpectShellSession
 from lava_dispatcher.pipeline.utils.strings import substitute
 from lava_dispatcher.pipeline.utils.network import dispatcher_ip
 from lava_dispatcher.pipeline.actions.boot import BootAction, AutoLoginAction
-from lava_dispatcher.pipeline.actions.boot.fastboot import AdbOverlayUnpack
 from lava_dispatcher.pipeline.actions.boot.environment import ExportDeviceEnvironment
 
 
@@ -131,8 +126,6 @@ class UefiMenuSelector(SelectorMenuAction):
         self.selector.prompt = params['bootloader_prompt']  # initial prompt
         self.boot_message = params['boot_message']  # final prompt
         self.items = self.job.device['actions']['boot']['methods']['uefi-menu'][self.parameters['commands']]
-        if 'character_delay' in self.job.device['actions']['boot']['methods']['uefi-menu']['parameters']:
-            self.send_char_delay = self.job.device['actions']['boot']['methods']['uefi-menu']['parameters']['character_delay']
         super(UefiMenuSelector, self).validate()
 
     def run(self, connection, args=None):
@@ -184,7 +177,7 @@ class UefiSubstituteCommands(Action):
             substitution_dictionary['{NFSROOTFS}'] = self.get_common_data('file', 'nfsroot')
         for item in self.items:
             if 'enter' in item['select']:
-                item['select']['enter'] = substitute([item['select']['enter']], substitution_dictionary)
+                item['select']['enter'] = substitute([item['select']['enter']], substitution_dictionary)[0]
             if 'items' in item['select']:
                 # items is already a list, so pass without wrapping in []
                 item['select']['items'] = substitute(item['select']['items'], substitution_dictionary)
@@ -215,11 +208,5 @@ class UefiMenuAction(BootAction):
         self.internal_pipeline.add_action(UEFIMenuInterrupt())
         self.internal_pipeline.add_action(UefiMenuSelector())
         self.internal_pipeline.add_action(MenuReset())
-        if 'adb_serial_number' in self.job.device:
-            self.internal_pipeline.add_action(WaitForAdbDevice())
-            self.internal_pipeline.add_action(ConnectAdb())
         self.internal_pipeline.add_action(AutoLoginAction())
-        if 'adb_serial_number' in self.job.device:
-            self.internal_pipeline.add_action(ExpectShellSession())
-            self.internal_pipeline.add_action(AdbOverlayUnpack())
         self.internal_pipeline.add_action(ExportDeviceEnvironment())

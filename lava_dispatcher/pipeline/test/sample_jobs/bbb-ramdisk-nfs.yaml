@@ -20,6 +20,7 @@ actions:
       url: file:///tmp/armhf/vmlinuz
     ramdisk: 
       url: file:///tmp/armhf/initramfs.cpio.gz
+      sha256sum: 0447396e1a92b462c330ed61d14f4964281e9f663897142df713cdf6f8c2a06e
       compression: gz
       # the bootloader needs a u-boot header on the modified ramdisk
       add-header: u-boot

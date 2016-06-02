@@ -34,5 +34,6 @@ actions:
       vm:
 
 timeouts:
-  lava-test-shell:
-    seconds: 30
+  actions:
+    lava-test-shell:
+      seconds: 30

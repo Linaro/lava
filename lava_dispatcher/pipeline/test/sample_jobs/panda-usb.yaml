@@ -11,6 +11,7 @@ timeouts:
   extract-nfsrootfs:
    seconds: 60
 priority: medium
+visibility: public
 
 actions:
 

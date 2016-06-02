@@ -141,7 +141,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             )
         )
 
-    def add_action(self, action, parameters=None):
+    def add_action(self, action, parameters=None):  # pylint: disable=too-many-branches
         self._check_action(action)
         self.actions.append(action)
         action.level = "%s.%s" % (self.branch_level, len(self.actions))
@@ -235,7 +235,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
 
         # If this is the root pipeline, raise the errors
         if self.parent is None and self.errors:
-            raise JobError("Invalid job data: %s\n" % '\n'.join(self.errors))
+            raise JobError("Invalid job data: %s\n" % self.errors)
 
     def pipeline_cleanup(self):
         """
@@ -284,6 +284,18 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         # Diagnosis is not allowed to alter the connection, do not use the return value.
         return None
 
+    def _log_action_results(self, action):
+        if action.results and isinstance(action.logger, YAMLLogger):
+            action.results.update(
+                {
+                    'level': action.level,
+                    'duration': action.elapsed_time,
+                    'timeout': action.timeout.duration,
+                    'connection-timeout': action.connection_timeout.duration
+                }
+            )
+            action.logger.results({action.name: action.results})
+
     def run_actions(self, connection, args=None):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
 
         def cancelling_handler(*args):  # pylint: disable=unused-argument
@@ -327,11 +339,11 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 action.logger.info(msg)
             else:
                 action.logger.debug(msg)
+            start = time.time()
             try:
                 if not self.parent:
                     signal.signal(signal.SIGINT, cancelling_handler)
                     signal.signal(signal.SIGTERM, cancelling_handler)
-                start = time.time()
                 try:
                     with action.timeout.action_timeout():
                         new_connection = action.run(connection, args)
@@ -339,6 +351,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                 # always ensure the unit tests continue to pass with changes here.
                 except (ValueError, KeyError, NameError, SyntaxError, OSError,
                         TypeError, RuntimeError, AttributeError):
+                    action.elapsed_time = time.time() - start
                     msg = re.sub('\s+', ' ', ''.join(traceback.format_exc().split('\n')))
                     action.logger.exception(msg)
                     action.errors = msg
@@ -357,29 +370,31 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     action.logger.info(msg)
                 else:
                     action.logger.debug(msg)
-                if action.results and isinstance(action.logger, YAMLLogger):
-                    action.results.update(
-                        {
-                            'level': action.level,
-                            'duration': action.elapsed_time,
-                            'timeout': action.timeout.duration,
-                        }
-                    )
-                    action.logger.results({action.name: action.results})
+                self._log_action_results(action)
                 if new_connection:
                     connection = new_connection
             except KeyboardInterrupt:
+                action.elapsed_time = time.time() - start
                 self.cleanup_actions(connection, "Cancelled")
                 sys.exit(1)
             except (JobError, InfrastructureError) as exc:
-                action.errors = exc.message
+                if sys.version > '3':
+                    exc_message = str(exc)
+                else:
+                    exc_message = exc.message
+                action.errors = exc_message
+                action.elapsed_time = time.time() - start
                 # set results including retries
                 if "boot-result" not in action.data:
                     action.data['boot-result'] = 'failed'
-                action.results = {"fail": exc}
+                self._log_action_results(action)
+                action.logger.exception(str(exc))
                 self._diagnose(connection)
                 action.cleanup()
-                self.cleanup_actions(connection, exc.message)
+                # a RetryAction should not cleanup the pipeline until the last retry has failed
+                # but the failing action may be inside an internal pipeline of the retry
+                if not self.parent:  # top level pipeline, no retries left
+                    self.cleanup_actions(connection, exc_message)
                 raise exc
         return connection
 
@@ -421,6 +436,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         self.protocols = []  # list of protocol objects supported by this action, full list in job.protocols
         self.section = None
         self.connection_timeout = Timeout(self.name)
+        self.action_namespaces = []
+        self.character_delay = 0
 
     # public actions (i.e. those who can be referenced from a job file) must
     # declare a 'class-type' name so they can be looked up.
@@ -552,6 +569,10 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
             self.max_retries = self.parameters['failure_retry']
         if 'repeat' in self.parameters:
             self.max_retries = self.parameters['repeat']
+        if self.job:
+            if self.job.device:
+                if 'character-delays' in self.job.device:
+                    self.character_delay = self.job.device['character-delays'].get(self.section, 0)
 
     @parameters.setter
     def parameters(self, data):
@@ -626,24 +647,35 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
         If allow_silent is True, returns False, else returns the command output.
         """
         # FIXME: add option to only check stdout or stderr for failure output
-        if type(command_list) != list:
+        if not isinstance(command_list, list):
             raise RuntimeError("commands to run_command need to be a list")
         log = None
         # nice is assumed to always exist (coreutils)
         command_list.insert(0, 'nice')
         try:
             log = subprocess.check_output(command_list, stderr=subprocess.STDOUT)
+            log = log.decode('utf-8')
         except subprocess.CalledProcessError as exc:
-            if exc.output:
-                self.errors = exc.output.strip()
-            elif exc.message:
-                self.errors = exc.message
+            if sys.version > '3':
+                if exc.output:
+                    self.errors = exc.output.strip().decode('utf-8')
+                else:
+                    self.errors = str(exc)
+                self.logger.exception({
+                    'command': [i.strip() for i in exc.cmd],
+                    'message': str(exc),
+                    'output': str(exc).split('\n')})
             else:
-                self.errors = str(exc)
-            self.logger.exception({
-                'command': [i.strip() for i in exc.cmd],
-                'message': [i.strip() for i in exc.message],
-                'output': exc.output.split('\n')})
+                if exc.output:
+                    self.errors = exc.output.strip()
+                elif exc.message:
+                    self.errors = exc.message
+                else:
+                    self.errors = str(exc)
+                self.logger.exception({
+                    'command': [i.strip() for i in exc.cmd],
+                    'message': [i.strip() for i in exc.message],
+                    'output': exc.output.split('\n')})
 
         # allow for commands which return no output
         if not log and allow_silent:
@@ -791,7 +823,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes
             self.logger.debug("Already disconnected")
             return
         self.logger.debug("%s: Wait for prompt. %s seconds" % (self.name, int(self.connection_timeout.duration)))
-        connection.wait()
+        return connection.wait()
 
 
 class Timeout(object):
@@ -821,7 +853,7 @@ class Timeout(object):
         Parsed timeouts can be set in device configuration or device_type configuration
         and can therefore exceed the clamp.
         """
-        if type(data) is not dict:
+        if not isinstance(data, dict):
             raise RuntimeError("Invalid timeout data")
         days = 0
         hours = 0

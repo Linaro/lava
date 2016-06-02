@@ -293,7 +293,7 @@ class UBootCommandOverlay(Action):
             self.errors = "No boot type specified in device parameters."
         else:
             if self.parameters['type'] not in self.job.device['parameters']:
-                self.errors = "Unable to match specified boot type '%s' with device parameters" % self['type']
+                self.errors = "Unable to match specified boot type '%s' with device parameters" % self.parameters['type']
         self.commands = device_methods[self.parameters['method']][self.parameters['commands']]['commands']
 
     def run(self, connection, args=None):
@@ -374,7 +374,7 @@ class UBootCommandsAction(Action):
         self.logger.debug("Changing prompt to %s" % connection.prompt_str)
         for line in self.data['u-boot']['commands']:
             self.wait(connection)
-            connection.sendline(line)
+            connection.sendline(line, delay=self.character_delay)
         # allow for auto_login
         params = self.job.device['actions']['boot']['methods']['u-boot']['parameters']
         connection.prompt_str = params.get('boot_message', BOOT_MESSAGE)

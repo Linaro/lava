@@ -52,7 +52,8 @@ class Factory(object):  # pylint: disable=too-few-public-methods
         yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, None, None,
+                               output_dir=output_dir)
         return job
 
 
@@ -152,7 +153,7 @@ class TestGrubAction(unittest.TestCase):  # pylint: disable=too-many-public-meth
             }
         }
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/d02-01.yaml'))
-        job = Job(4212, None, parameters)
+        job = Job(4212, None, None, None, parameters)
         job.device = device
         pipeline = Pipeline(job=job, parameters=parameters['actions']['boot'])
         job.set_pipeline(pipeline)
@@ -190,12 +191,13 @@ class TestGrubAction(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertNotIn('initrd (tftp,{SERVER_IP})/{RAMDISK}', parsed)
         self.assertNotIn('devicetree (tftp,{SERVER_IP})/{DTB}', parsed)
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_download_action(self):
         factory = Factory()
         job = factory.create_job('sample_jobs/grub-nfs.yaml')
         for action in job.pipeline.actions:
             action.validate()
+            if not action.valid:
+                print(action.errors)
             self.assertTrue(action.valid)
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
@@ -218,7 +220,6 @@ class TestGrubAction(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.assertIsNotNone(extract)
         self.assertEqual(extract.timeout.duration, job.parameters['timeouts'][extract.name]['seconds'])
 
-    @unittest.skipIf(not os.path.exists('/dev/loop0'), "loopback support not found")
     def test_reset_actions(self):
         factory = Factory()
         job = factory.create_job('sample_jobs/grub-ramdisk.yaml')

@@ -18,9 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-
-import os
-import tarfile
 from lava_dispatcher.pipeline.action import (
     Pipeline,
     Action,

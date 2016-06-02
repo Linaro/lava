@@ -45,7 +45,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
     class FakeJob(Job):
 
         def __init__(self, parameters):
-            super(TestAction.FakeJob, self).__init__(4212, None, parameters)
+            super(TestAction.FakeJob, self).__init__(4212, None, None, None, parameters)
 
     class FakeDeploy(object):
         """
@@ -72,6 +72,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
         def __init__(self, parent=None, job=None):
             super(TestAction.FakePipeline, self).__init__(parent, job)
+            job.pipeline = self
 
     class FakeAction(Action):
         """
@@ -176,7 +177,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
     def lookup_deploy(self, params):  # pylint: disable=no-self-use
         actions = iter(params)
         while actions:
-            action = actions.next()
+            action = next(actions)
             if 'deploy' in action:
                 yield action['deploy']
 
@@ -203,7 +204,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(deploy.action.max_retries, 3)
         fakepipeline.add_action(deploy.action)
         self.assertIsNone(fakepipeline.validate_actions())
-        fakepipeline.run_actions(None, None)
+        self.assertRaises(JobError, fakepipeline.run_actions, None, None)
         self.assertIsNotNone(fakepipeline.errors)
         self.assertIsNotNone(deploy.action.job)
 
@@ -216,7 +217,7 @@ class TestAction(unittest.TestCase):  # pylint: disable=too-many-public-methods
         fakepipeline.add_action(deploy.action)
         self.assertIsNotNone(deploy.action.job)
         self.assertIsNone(fakepipeline.validate_actions())
-        fakepipeline.run_actions(None, None)
+        self.assertRaises(JobError, fakepipeline.run_actions, None, None)
         with self.assertRaises(JobError):
             self.assertIsNotNone(fakepipeline.validate_actions())
         self.assertIsNotNone(fakepipeline.errors)
@@ -245,7 +246,7 @@ class TestAdjuvant(unittest.TestCase):  # pylint: disable=too-many-public-method
     class FakeJob(Job):
 
         def __init__(self, parameters):
-            super(TestAdjuvant.FakeJob, self).__init__(4212, None, parameters)
+            super(TestAdjuvant.FakeJob, self).__init__(4212, None, None, None, parameters)
 
         def validate(self, simulate=False):
             self.pipeline.validate_actions()
@@ -462,7 +463,7 @@ class TestTimeout(unittest.TestCase):  # pylint: disable=too-many-public-methods
     class FakeJob(Job):
 
         def __init__(self, parameters):
-            super(TestTimeout.FakeJob, self).__init__(4212, None, parameters)
+            super(TestTimeout.FakeJob, self).__init__(4212, None, None, None, parameters)
 
         def validate(self, simulate=False):
             self.pipeline.validate_actions()

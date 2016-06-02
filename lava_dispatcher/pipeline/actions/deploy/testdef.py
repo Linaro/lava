@@ -34,6 +34,7 @@ from lava_dispatcher.pipeline.action import (
     InfrastructureError,
     JobError,
     Pipeline,
+    TestError,
 )
 from lava_dispatcher.pipeline.actions.test import TestAction
 from lava_dispatcher.pipeline.utils.strings import indices
@@ -64,13 +65,17 @@ def get_deployment_testdefs(parameters=None):
     deploy_list = []
     for action in parameters['actions']:
         yaml_line = None
+        namespace = None
         if 'deploy' in action:
             yaml_line = action['deploy']['yaml_line']
+            namespace = action['deploy'].get('namespace', None)
             test_dict[yaml_line] = []
             deploy_list = get_deployment_tests(parameters, yaml_line)
         for action in deploy_list:
             if 'test' in action:
-                test_dict[yaml_line].append(action['test']['definitions'])
+                if namespace and namespace == action['test'].get(
+                        'namespace', None):
+                    test_dict[yaml_line].append(action['test']['definitions'])
         deploy_list = []
     return test_dict
 
@@ -95,6 +100,25 @@ def get_deployment_tests(parameters, yaml_line):
         if 'test' in action and seen:
             deploy.append(action)
     return deploy
+
+
+def get_test_action_namespaces(parameters=None):
+    """Iterates through the job parameters to identify all the test action
+    namespaces."""
+    test_namespaces = []
+    for action in parameters['actions']:
+        if 'test' in action:
+            if action['test'].get('namespace', None):
+                test_namespaces.append(action['test']['namespace'])
+    repeat_list = [action['repeat']
+                   for action in parameters['actions']
+                   if 'repeat' in action]
+    if repeat_list:
+        test_namespaces.extend(
+            [action['test']['namespace']
+             for action in repeat_list[0]['actions']
+             if 'test' in action and action['test'].get('namespace', None)])
+    return test_namespaces
 
 
 # pylint:disable=too-many-public-methods,too-many-instance-attributes,too-many-locals,too-many-branches
@@ -129,9 +153,9 @@ class RepoAction(Action):
                 " '%s'." % repo_type)
 
         # higher priority first
-        prioritized = sorted(willing, lambda x, y: cmp(y.priority, x.priority))
-
-        return prioritized[0]
+        willing.sort(key=lambda x: x.priority)
+        willing.reverse()
+        return willing[0]
 
     def validate(self):
         if 'hostname' not in self.job.device:
@@ -161,9 +185,17 @@ class RepoAction(Action):
 
         if args is None or 'test_name' not in args:
             raise RuntimeError("RepoAction run called via super without parameters as arguments")
-        if 'location' not in self.data['lava-overlay']:
+        if 'namespace' in self.parameters:
+            namespace = self.parameters['namespace']
+            location = self.get_common_data(namespace, 'location')
+            lava_test_results_dir = self.get_common_data(namespace,
+                                                         'lava_test_results_dir')
+        elif 'location' not in self.data['lava-overlay']:
             raise RuntimeError("Missing lava overlay location")
-        if not os.path.exists(self.data['lava-overlay']['location']):
+        else:
+            location = self.data['lava-overlay']['location']
+            lava_test_results_dir = self.data['lava_test_results_dir']
+        if not os.path.exists(location):
             raise RuntimeError("Overlay location does not exist")
 
         # runner_path is the path to read and execute from to run the tests after boot
@@ -269,7 +301,9 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         commit_id = self.vcs.clone(runner_path, self.parameters.get('revision', None))
         if commit_id is None:
             raise RuntimeError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
-        self.results = {'success': commit_id}
+        self.results = {
+            'success': commit_id,
+            'repository': self.parameters['repository'], 'path': self.parameters['path']}
 
         # now read the YAML to create a testdef dict to retrieve metadata
         self.logger.debug(os.path.join(runner_path, self.parameters['path']))
@@ -330,7 +364,11 @@ class BzrRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         commit_id = self.vcs.clone(runner_path, self.parameters.get('revision', None))
         if commit_id is None:
             raise RuntimeError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
-        self.results = {'success': commit_id}
+        self.results = {
+            'success': commit_id,
+            'repository': self.parameters['repository'],
+            'path': self.parameters['path']
+        }
 
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters['path'])
@@ -392,7 +430,7 @@ class InlineRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
             os.makedirs(os.path.join(runner_path, yaml_dirname))
         with open(yaml_file, 'w') as test_file:
             data = yaml.safe_dump(testdef)
-            sha1.update(data)
+            sha1.update(data.encode('utf-8'))
             test_file.write(data)
 
         # set testdef metadata in base class
@@ -604,13 +642,23 @@ class TestDefinitionAction(TestAction):
         :param args: Not used.
         :return: the received Connection.
         """
-        if 'location' not in self.data['lava-overlay']:
+        if 'namespace' in self.parameters:
+            namespace = self.parameters['namespace']
+            location = self.get_common_data(namespace, 'location')
+            lava_test_results_dir = self.get_common_data(namespace,
+                                                         'lava_test_results_dir')
+        elif 'location' not in self.data['lava-overlay']:
             raise RuntimeError("Missing lava overlay location")
+        else:
+            location = self.data['lava-overlay']['location']
+            lava_test_results_dir = self.data['lava_test_results_dir']
+        if not os.path.exists(location):
+            raise RuntimeError("Unable to find overlay location")
         self.logger.info("Loading test definitions")
 
         # overlay_path is the location of the files before boot
         self.data[self.name]['overlay_dir'] = os.path.abspath(
-            "%s/%s" % (self.data['lava-overlay']['location'], self.data['lava_test_results_dir']))
+            "%s/%s" % (location, lava_test_results_dir))
 
         connection = super(TestDefinitionAction, self).run(connection, args)
 
@@ -648,7 +696,7 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
         test_list = identify_test_definitions(self.job.parameters)
         for testdef in test_list[0]:
             if 'parameters' in testdef:  # optional
-                if type(testdef['parameters']) is not dict:
+                if not isinstance(testdef['parameters'], dict):
                     self.errors = "Invalid test definition parameters"
 
     def handle_parameters(self, testdef):
@@ -701,7 +749,14 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
         # and install script (also calling parameter support here.)
         # this run then only does the incidental files.
 
-        self.results = {'success': self.test_uuid}
+        self.results = {
+            'success': self.test_uuid,
+            'name': testdef['metadata']['name'],
+            'path': self.parameters['path'],
+            'from': self.parameters['from'],
+        }
+        if self.parameters['from'] != 'inline':
+            self.results['repository'] = self.parameters['repository']
         return connection
 
 
@@ -724,6 +779,18 @@ class TestInstallAction(TestOverlayAction):
         self.name = "test-install-overlay"
         self.description = "overlay dependency installation support files onto image"
         self.summary = "applying LAVA test install scripts"
+        self.skip_list = ['keys', 'sources', 'deps', 'steps', 'all']  # keep 'all' as the last item
+        self.skip_options = []
+
+    def validate(self):
+        if 'skip_install' in self.parameters:
+            if set(self.parameters['skip_install']) - set(self.skip_list):
+                self.errors = "Unrecognised skip_install value"
+            if 'all' in self.parameters['skip_install']:
+                self.skip_options = self.skip_list[:-1]  # without last item
+            else:
+                self.skip_options = self.parameters['skip_install']
+        super(TestInstallAction, self).validate()
 
     def run(self, connection, args=None):
         connection = super(TestInstallAction, self).run(connection, args)
@@ -737,31 +804,30 @@ class TestInstallAction(TestOverlayAction):
             testdef = yaml.safe_load(test_file)
 
         if 'install' not in testdef:
-            self.results = {'skipped': self.test_uuid}
+            self.results = {'skipped %s' % self.name: self.test_uuid}
             return
-
-        testdef.setdefault('skip_install', '')
 
         # hostdir = self.data['test'][self.test_uuid]['overlay_path'][self.parameters['test_name']]
         filename = '%s/install.sh' % runner_path
         content = self.handle_parameters(testdef)
 
+        # TODO: once the migration is complete, design a better way to do skip_install support.
         with open(filename, 'w') as install_file:
             for line in content:
                 install_file.write(line)
-            if testdef['skip_install'] != 'keys':
+            if 'keys' not in self.skip_options:
                 sources = testdef['install'].get('keys', [])
                 for src in sources:
                     install_file.write('lava-add-keys %s' % src)
                     install_file.write('\n')
 
-            if testdef['skip_install'] != 'sources':
+            if 'sources' not in self.skip_options:
                 sources = testdef['install'].get('sources', [])
                 for src in sources:
                     install_file.write('lava-add-sources %s' % src)
                     install_file.write('\n')
 
-            if testdef['skip_install'] != 'deps':
+            if 'deps' not in self.skip_options:
                 # generic dependencies - must be named the same across all distros
                 # supported by the testdef
                 deps = testdef['install'].get('deps', [])
@@ -775,7 +841,7 @@ class TestInstallAction(TestOverlayAction):
                         install_file.write('%s ' % dep)
                     install_file.write('\n')
 
-            if testdef['skip_install'] != 'steps':
+            if 'steps' not in self.skip_options:
                 steps = testdef['install'].get('steps', [])
                 if steps:
                     for cmd in steps:
@@ -788,6 +854,9 @@ class TestRunnerAction(TestOverlayAction):
 
     def __init__(self):
         super(TestRunnerAction, self).__init__()
+        # This name is used to tally the submitted definitions
+        # to the definitions which actually reported results.
+        # avoid changing the self.name of this class.
         self.name = "test-runscript-overlay"
         self.description = "overlay run script onto image"
         self.summary = "applying LAVA test run script"
@@ -805,6 +874,10 @@ class TestRunnerAction(TestOverlayAction):
 
         filename = '%s/run.sh' % runner_path
         content = self.handle_parameters(testdef)
+
+        # the 'lava' testdef name is reserved
+        if testdef['metadata']['name'] == 'lava':
+            raise TestError('The "lava" test definition name is reserved.')
 
         with open(filename, 'a') as runsh:
             for line in content:
@@ -826,5 +899,13 @@ class TestRunnerAction(TestOverlayAction):
             runsh.write('#wait for an ack from the dispatcher\n')
             runsh.write('read\n')
 
-        self.results = {'success': self.test_uuid, "filename": filename}
+        self.results = {
+            'success': self.test_uuid,
+            "filename": filename,
+            'name': testdef['metadata']['name'],
+            'path': self.parameters['path'],
+            'from': self.parameters['from'],
+        }
+        if self.parameters['from'] != 'inline':
+            self.results['repository'] = self.parameters['repository']
         return connection

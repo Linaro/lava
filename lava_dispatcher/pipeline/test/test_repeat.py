@@ -38,7 +38,6 @@ class TestRepeatBootTest(unittest.TestCase):  # pylint: disable=too-many-public-
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-repeat.yaml', mkdtemp())
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_basic_structure(self):
         self.assertIsNotNone(self.job)
         self.job.validate()
@@ -51,7 +50,7 @@ class TestRepeatBootTest(unittest.TestCase):  # pylint: disable=too-many-public-
         self.assertNotIn('repeat', deploy)
 
     def test_repeat_yaml(self):
-        self.assertIn(['repeat'], [actions.keys() for actions in self.job.parameters['actions']])
+        self.assertIn(['repeat'], [list(actions.keys()) for actions in self.job.parameters['actions']])
         self.assertIn('repeat', self.job.parameters['actions'][1])
         repeat_block = self.job.parameters['actions'][1]['repeat']
         self.assertIn('count', repeat_block)
@@ -64,7 +63,7 @@ class TestRepeatBootTest(unittest.TestCase):  # pylint: disable=too-many-public-
         self.assertEqual(len(params), 5)
 
     def test_nested_structure(self):
-        self.assertIn(['repeat'], [actions.keys() for actions in self.job.parameters['actions']])
+        self.assertIn(['repeat'], [list(actions.keys()) for actions in self.job.parameters['actions']])
         # pull out the repeated actions and analyse those
         actions = [retries for retries in self.job.pipeline.actions if retries.valid]
         self.assertIsInstance(actions[1], BootQEMUImageAction)
@@ -77,16 +76,17 @@ class TestRepeatBootTest(unittest.TestCase):  # pylint: disable=too-many-public-
         self.assertGreater(actions[6].parameters['repeat-count'], actions[2].parameters['repeat-count'])
         self.assertGreater(actions[9].parameters['repeat-count'], actions[6].parameters['repeat-count'])
         self.assertGreater(actions[20].parameters['repeat-count'], actions[16].parameters['repeat-count'])
-        self.assertLess(25, [action.level for action in actions if 'repeat' in action.parameters][0])
+        self.assertLess(25, int([action.level for action in actions if 'repeat' in action.parameters][0]))
         self.assertNotIn('repeat', actions[2].parameters)
 
     def test_single_repeat(self):
-        self.assertIn(['boot'], [actions.keys() for actions in self.job.parameters['actions']])
+        self.assertIn(['boot'], [list(actions.keys()) for actions in self.job.parameters['actions']])
         repeat_actions = [action for action in self.job.pipeline.actions if isinstance(action, BootQEMUImageAction)]
         boot = repeat_actions[-1]
         self.assertIn('repeat', boot.parameters)
         self.assertNotIn('repeat-count', boot.parameters)
-        repeat_yaml = [actions for actions in self.job.parameters['actions'] if 'boot' in actions.keys()][0]['boot']
+        repeat_yaml = [
+            actions for actions in self.job.parameters['actions'] if 'boot' in actions.keys()][0]['boot']
         self.assertIn('repeat', repeat_yaml)
         self.assertEqual(repeat_yaml['repeat'], 4)
         self.assertEqual(repeat_yaml['repeat'], boot.max_retries)
@@ -99,7 +99,7 @@ class TestRepeatBootTest(unittest.TestCase):  # pylint: disable=too-many-public-
         test_dict = get_deployment_testdefs(self.job.parameters)
         names = []
         # first deployment
-        for testdefs in test_dict[test_dict.keys()[0]]:
+        for testdefs in test_dict[list(test_dict.keys())[0]]:
             for testdef in testdefs:
                 names.append(testdef['name'])
         self.assertEqual(names, [
@@ -110,7 +110,7 @@ class TestRepeatBootTest(unittest.TestCase):  # pylint: disable=too-many-public-
         ])
         # second deployment
         names = []
-        for testdefs in test_dict[test_dict.keys()[1]]:
+        for testdefs in test_dict[list(test_dict.keys())[1]]:
             for testdef in testdefs:
                 names.append(testdef['name'])
         self.assertEqual(names, [

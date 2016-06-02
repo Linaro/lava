@@ -23,14 +23,20 @@ import os
 import glob
 import unittest
 import yaml
+import pexpect
 
 from lava_dispatcher.pipeline.utils.filesystem import mkdtemp
-from lava_dispatcher.pipeline.action import Pipeline, Action, JobError, Timeout
+from lava_dispatcher.pipeline.action import Pipeline, Action, JobError
 from lava_dispatcher.pipeline.test.test_basic import Factory, pipeline_reference
-from lava_dispatcher.pipeline.shell import ShellSession
 from lava_dispatcher.pipeline.job import Job
 from lava_dispatcher.pipeline.actions.deploy import DeployAction
 from lava_dispatcher.pipeline.actions.boot.qemu import BootAction
+from lava_dispatcher.pipeline.device import NewDevice
+from lava_dispatcher.pipeline.parser import JobParser
+from lava_dispatcher.pipeline.test.test_messages import FakeConnection
+from lava_dispatcher.pipeline.utils.messages import LinuxKernelMessages
+
+# pylint: disable=invalid-name
 
 
 class TestBasicJob(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -158,7 +164,6 @@ class TestKVMBasicDeploy(unittest.TestCase):  # pylint: disable=too-many-public-
         self.assertIn('persistent-nfs-overlay', [action.name for action in overlay.internal_pipeline.actions])
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_validate(self):
         try:
             self.job.pipeline.validate_actions()
@@ -224,7 +229,6 @@ class TestKVMQcow2Deploy(unittest.TestCase):  # pylint: disable=too-many-public-
         description_ref = pipeline_reference('kvm-qcow2.yaml')
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_validate(self):
         try:
             self.job.pipeline.validate_actions()
@@ -252,6 +256,15 @@ class TestKVMDownloadLocalDeploy(unittest.TestCase):  # pylint: disable=too-many
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
 
+def prepare_test_connection():
+    logfile = os.path.join(os.path.dirname(__file__), 'kernel.txt')
+    if not os.path.exists(logfile):
+        raise OSError("Missing test support file.")
+    child = pexpect.spawn('cat', [logfile])
+    message_list = LinuxKernelMessages.get_kernel_prompts()
+    return FakeConnection(child, message_list)
+
+
 class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
@@ -265,7 +278,6 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
             if isinstance(action, DeployAction):
                 self.assertEqual(action.job, self.job)
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_validate(self):
         try:
             self.job.pipeline.validate_actions()
@@ -279,41 +291,55 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
         self.assertEqual(len(self.job.pipeline.describe()), 4)
+        inline_repo = None
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
-                overlay = action.pipeline.children[action.pipeline][3]
+                self.assertIsNotNone(action.internal_pipeline.actions[2])
+                overlay = action.pipeline.children[action.pipeline][2]
+                self.assertIsNotNone(overlay.internal_pipeline.actions[2])
                 testdef = overlay.internal_pipeline.actions[2]
+                self.assertIsNotNone(testdef.internal_pipeline.actions[0])
                 inline_repo = testdef.internal_pipeline.actions[0]
                 break
+        # Test the InlineRepoAction directly
+        self.assertIsNotNone(inline_repo)
+        location = mkdtemp()
+        # other actions have not been run, so fake up
+        inline_repo.data['lava_test_results_dir'] = location
+        inline_repo.data['lava-overlay'] = {'location': location}
+        inline_repo.data['test-definition'] = {'overlay_dir': location}
 
-            # Test the InlineRepoAction directly
-            location = mkdtemp()
-            inline_repo.data['lava-overlay'] = {'location': location}
-            inline_repo.data['test-definition'] = {'overlay_dir': location}
+        inline_repo.run(None)
+        yaml_file = os.path.join(location, 'tests/0_smoke-tests-inline/inline/smoke-tests-basic.yaml')
+        self.assertTrue(os.path.exists(yaml_file))
+        with open(yaml_file, 'r') as f_in:
+            testdef = yaml.load(f_in)
+        expected_testdef = {'metadata':
+                            {'description': 'Basic system test command for Linaro Ubuntu images',
+                             'devices': ['panda', 'panda-es', 'arndale', 'vexpress-a9', 'vexpress-tc2'],
+                             'format': 'Lava-Test Test Definition 1.0',
+                             'name': 'smoke-tests-basic',
+                             'os': ['ubuntu'],
+                             'scope': ['functional'],
+                             'yaml_line': 39},
+                            'run': {'steps': ['lava-test-case linux-INLINE-pwd --shell pwd',
+                                              'lava-test-case linux-INLINE-uname --shell uname -a',
+                                              'lava-test-case linux-INLINE-vmstat --shell vmstat',
+                                              'lava-test-case linux-INLINE-ifconfig --shell ifconfig -a',
+                                              'lava-test-case linux-INLINE-lscpu --shell lscpu',
+                                              'lava-test-case linux-INLINE-lsusb --shell lsusb',
+                                              'lava-test-case linux-INLINE-lsb_release --shell lsb_release -a'],
+                                    'yaml_line': 53},
+                            'yaml_line': 38}
+        self.assertEqual(set(testdef), set(expected_testdef))
 
-            inline_repo.run(None)
-            yaml_file = os.path.join(location, 'tests/0_smoke-tests-inline/inline/smoke-tests-basic.yaml')
-            self.assertTrue(os.path.exists(yaml_file))
-            with open(yaml_file, 'r') as f_in:
-                testdef = yaml.load(f_in)
-            expected_testdef = {'metadata':
-                                {'description': 'Basic system test command for Linaro Ubuntu images',
-                                 'devices': ['panda', 'panda-es', 'arndale', 'vexpress-a9', 'vexpress-tc2'],
-                                 'format': 'Lava-Test Test Definition 1.0',
-                                 'name': 'smoke-tests-basic',
-                                 'os': ['ubuntu'],
-                                 'scope': ['functional'],
-                                 'yaml_line': 39},
-                                'run': {'steps': ['lava-test-case linux-INLINE-pwd --shell pwd',
-                                                  'lava-test-case linux-INLINE-uname --shell uname -a',
-                                                  'lava-test-case linux-INLINE-vmstat --shell vmstat',
-                                                  'lava-test-case linux-INLINE-ifconfig --shell ifconfig -a',
-                                                  'lava-test-case linux-INLINE-lscpu --shell lscpu',
-                                                  'lava-test-case linux-INLINE-lsusb --shell lsusb',
-                                                  'lava-test-case linux-INLINE-lsb_release --shell lsb_release -a'],
-                                        'yaml_line': 53},
-                                'yaml_line': 38}
-            self.assertEqual(testdef, expected_testdef)
+
+class TestAutoLogin(unittest.TestCase):
+
+    def setUp(self):
+        super(TestAutoLogin, self).setUp()
+        factory = Factory()
+        self.job = factory.create_kvm_job('sample_jobs/kvm-inline.yaml', mkdtemp())
 
     def test_autologin_prompt_patterns(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -326,15 +352,14 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
                                            'prompts': ['root@debian:~#']})
 
         # initialise the first Connection object, a command line shell
-        shell_command = FakeCommand(autologinaction.timeout)
-        shell_connection = ShellSession(self.job, shell_command)
+        shell_connection = prepare_test_connection()
 
         # Test the AutoLoginAction directly
         conn = autologinaction.run(shell_connection)
 
-        self.assertEqual(conn.prompt_str, ['lava-test: # ', 'root@debian:~#'])
+        self.assertIn('lava-test: # ', conn.prompt_str)
+        self.assertIn('root@debian:~#', conn.prompt_str)
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_autologin_void_login_prompt(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
@@ -347,7 +372,6 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
 
         self.assertRaises(JobError, self.job.validate)
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_missing_autologin_void_prompts_list(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
@@ -358,7 +382,6 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
 
         self.assertRaises(JobError, self.job.validate)
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_missing_autologin_void_prompts_list_item(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
@@ -369,7 +392,6 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
 
         self.assertRaises(JobError, self.job.validate)
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_missing_autologin_void_prompts_list_item2(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
@@ -389,15 +411,14 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         autologinaction.parameters.update({'prompts': ['root@debian:~#']})
 
         # initialise the first Connection object, a command line shell
-        shell_command = FakeCommand(autologinaction.timeout)
-        shell_connection = ShellSession(self.job, shell_command)
+        shell_connection = prepare_test_connection()
 
         # Test the AutoLoginAction directly
         conn = autologinaction.run(shell_connection)
 
-        self.assertEqual(conn.prompt_str, ['lava-test: # ', 'root@debian:~#'])
+        self.assertIn('lava-test: # ', conn.prompt_str)
+        self.assertIn('root@debian:~#', conn.prompt_str)
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_missing_autologin_void_prompts_str(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
@@ -417,13 +438,21 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         autologinaction.parameters.update({'prompts': 'root@debian:~#'})
 
         # initialise the first Connection object, a command line shell
-        shell_command = FakeCommand(autologinaction.timeout)
-        shell_connection = ShellSession(self.job, shell_command)
+        shell_connection = prepare_test_connection()
 
         # Test the AutoLoginAction directly
         conn = autologinaction.run(shell_connection)
 
-        self.assertEqual(conn.prompt_str, ['lava-test: # ', 'root@debian:~#'])
+        self.assertIn('lava-test: # ', conn.prompt_str)
+        self.assertIn('root@debian:~#', conn.prompt_str)
+
+
+class TestChecksum(unittest.TestCase):
+
+    def setUp(self):
+        super(TestChecksum, self).setUp()
+        factory = Factory()
+        self.job = factory.create_kvm_job('sample_jobs/kvm-inline.yaml', mkdtemp())
 
     def test_download_checksum_match_success(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -483,9 +512,9 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         httpdownloadaction.url = 'http://images.validation.linaro.org/unit-tests/rootfs.gz'
         del httpdownloadaction.parameters['images']
         httpdownloadaction.parameters.update({
-            'rootfs': {'url': httpdownloadaction.url},
-            'md5sum': {'rootfs': '6ea432ac3c23210c816551782346ed1c'},
-            'sha256sum': {'rootfs': '1a76b17701b9fdf6346b88eb49b0143a9c6912701b742a6e5826d6856edccd21'}})
+            'rootfs': {'url': httpdownloadaction.url,
+                       'md5sum': '6ea432ac3c23210c816551782346ed1c',
+                       'sha256sum': '1a76b17701b9fdf6346b88eb49b0143a9c6912701b742a6e5826d6856edccd21'}})
         httpdownloadaction.validate()
         httpdownloadaction.run(None)
 
@@ -500,13 +529,12 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         httpdownloadaction.url = 'http://images.validation.linaro.org/unit-tests/rootfs.gz'
         del httpdownloadaction.parameters['images']
         httpdownloadaction.parameters.update({
-            'rootfs': {'url': httpdownloadaction.url},
-            'md5sum': {'rootfs': '6ea432ac3c232122222221782346ed1c'},
-            'sha256sum': {'rootfs': '1a76b17701b9fdf63444444444444444446912701b742a6e5826d6856edccd21'}})
+            'rootfs': {'url': httpdownloadaction.url,
+                       'md5sum': '6ea432ac3c232122222221782346ed1c',
+                       'sha256sum': '1a76b17701b9fdf63444444444444444446912701b742a6e5826d6856edccd21'}})
         httpdownloadaction.validate()
         self.assertRaises(JobError, httpdownloadaction.run, None)
 
-    @unittest.skipIf(len(glob.glob('/sys/block/loop*')) <= 0, "loopback support not found")
     def test_no_test_action_validate(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
@@ -519,17 +547,54 @@ class TestKVMInlineTestDeploy(unittest.TestCase):  # pylint: disable=too-many-pu
         for action in self.job.pipeline.actions:
             self.assertEqual([], action.errors)
 
+    def test_uboot_checksum(self):
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        bbb_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/bbb-ramdisk-nfs.yaml')
+        with open(bbb_yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, None, None, output_dir='/tmp/')
+        deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        download = [action for action in deploy.internal_pipeline.actions if action.name == 'download_retry'][0]
+        helper = [action for action in download.internal_pipeline.actions if action.name == 'file_download'][0]
+        remote = helper.parameters[helper.key]
+        md5sum = remote.get('md5sum', None)
+        self.assertIsNone(md5sum)
+        sha256sum = remote.get('sha256sum', None)
+        self.assertIsNotNone(sha256sum)
 
-class FakeCommand(object):
 
-    def __init__(self, lava_timeout):
-        if not lava_timeout or not isinstance(lava_timeout, Timeout):
-            raise RuntimeError("FakeCommand needs a timeout set by the calling Action")
-        self.name = "FakeCommand"
-        self.lava_timeout = lava_timeout
+class TestKvmGuest(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
-    def sendline(self, s='', delay=0, send_char=True):  # pylint: disable=invalid-name
-        pass
+    def setUp(self):
+        super(TestKvmGuest, self).setUp()
+        factory = Factory()
+        self.job = factory.create_kvm_job('sample_jobs/kvm-local.yaml', mkdtemp())
 
-    def expect(self, *args, **kw):
-        pass
+    def test_guest_size(self):
+        self.assertIn('guest', self.job.device['actions']['deploy']['methods']['image']['parameters'])
+        self.assertEqual(512, self.job.device['actions']['deploy']['methods']['image']['parameters']['guest']['size'])
+
+
+class TestKvmUefi(unittest.TestCase):  # pylint: disable=too-many-public-methods
+
+    def setUp(self):
+        super(TestKvmUefi, self).setUp()
+        factory = Factory()
+        self.job = factory.create_kvm_job('sample_jobs/kvm-uefi.yaml', mkdtemp())
+
+    def test_uefi_path(self):
+        deploy = [action for action in self.job.pipeline.actions if action.name == 'deployimages'][0]
+        downloaders = [action for action in deploy.internal_pipeline.actions if action.name == 'download_retry']
+        self.assertEqual(len(downloaders), 2)
+        uefi_download = downloaders[0]
+        image_download = downloaders[1]
+        self.assertEqual(image_download.key, 'disk1')
+        uefi_dir = uefi_download.get_common_data('image', 'uefi_dir')
+        self.assertTrue(os.path.exists(uefi_dir))  # no download has taken place, but the directory needs to exist
+        self.assertFalse(uefi_dir.endswith('bios-256k.bin'))
+        boot = [action for action in self.job.pipeline.actions if action.name == 'boot_image_retry'][0]
+        qemu = [action for action in boot.internal_pipeline.actions if action.name == 'boot_qemu_image'][0]
+        execute = [action for action in qemu.internal_pipeline.actions if action.name == 'execute-qemu'][0]
+        self.job.validate()
+        self.assertIn('-L', execute.sub_command)
+        self.assertIn(uefi_dir, execute.sub_command)

@@ -63,7 +63,7 @@ class OffsetAction(DeployAction):
         connection = super(OffsetAction, self).run(connection, args)
         image = self.data['download_action'][self.key]['file']
         if not os.path.exists(image):
-            raise RuntimeError("Not able to mount %s: file does not exist" % image)
+            raise JobError("Not able to mount %s: file does not exist" % image)
         part_data = self.run_command([
             '/sbin/parted',
             image,

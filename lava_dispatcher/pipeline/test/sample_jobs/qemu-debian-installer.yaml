@@ -1,0 +1,60 @@
+# Sample job for QEMU ISO installer job
+
+device_type: qemu
+
+job_name: jessie-amd64
+timeouts:
+  job:
+    minutes: 30
+  action:
+    minutes: 10
+  test:
+    minutes: 3
+  connection:
+    minutes: 25
+
+priority: medium
+visibility: public
+
+context:
+  arch: amd64
+
+actions:
+- deploy:
+    timeout:
+      minutes: 4
+    to: iso-installer
+    os: debian_installer
+    images:
+      # the iso and the preseed file can be very tightly coupled.
+      iso:
+        url: http://images.validation.linaro.org/kvm/debian-8.3.0-amd64-CD-1.iso
+        image_arg: -drive file={iso},index=2,media=cdrom,readonly
+        # specify compression if required
+      preseed:
+        url: http://images.validation.linaro.org/kvm/debian-8.3.0-cd1-preseed.cfg
+    iso:
+      iso_index: 2
+      kernel: /install.amd/vmlinuz
+      initrd: /install.amd/initrd.gz
+      console: ttyS0,38400,n8
+      # typically a maximum of 5G
+      # use megabytes for a smaller image, although ~1G is likely to be the smallest practical size
+      installation_size: 2G
+
+- boot:
+    method: qemu-iso
+    media: img
+    timeout:
+      minutes: 20
+    connection: serial
+    auto_login: {login_prompt: 'login:', username: root, password_prompt: 'Password:', password: root}
+    prompts:
+    - 'root@debian:~#'
+
+- test:
+    definitions:
+    - from: git
+      repository: git://git.linaro.org/qa/test-definitions.git
+      path: ubuntu/smoke-tests-basic.yaml
+      name: smoke-tests
