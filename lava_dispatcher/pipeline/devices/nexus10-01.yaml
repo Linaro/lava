@@ -1,11 +1,7 @@
-commands:
-    connect: None
-    soft_reboot: None
-    fastboot_command: fastboot -s R32D300FRYP
 device_type: nexus10
 adb_serial_number: R32D300FRYP
 fastboot_serial_number: R32D300FRYP
-
+device_path: /dev/bus/usb/004
 
 actions:
   deploy:
