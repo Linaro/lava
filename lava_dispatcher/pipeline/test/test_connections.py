@@ -299,10 +299,10 @@ class TestTimeouts(unittest.TestCase):
         job = self.create_custom_job(yaml.dump(data))
         for action in job.pipeline.actions:
             if action.internal_pipeline:
-                for action in action.internal_pipeline.actions:
-                    if action.connection_timeout and action.name != 'uboot-retry':
+                for check_action in action.internal_pipeline.actions:
+                    if check_action.connection_timeout and check_action.name != 'uboot-retry':
                         # uboot-retry has an override in this sample job
-                        self.assertEqual(action.connection_timeout.duration, 20)
+                        self.assertEqual(check_action.connection_timeout.duration, 20)
 
     def test_action_connection_timeout(self):
         """
@@ -321,3 +321,4 @@ class TestTimeouts(unittest.TestCase):
             Timeout.parse(job.device['timeouts']['connections'][retry.name]),
             retry.connection_timeout.duration
         )
+        self.assertEqual(90, retry.timeout.duration)

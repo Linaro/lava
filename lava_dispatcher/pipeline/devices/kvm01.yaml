@@ -27,9 +27,10 @@ actions:
             - -m 2048
 
 timeouts:
-  apply-overlay-image:
-    minutes: 2
-  umount-retry:
-    seconds: 57
-  lava-test-shell:
-    seconds: 30
+  actions:
+    apply-overlay-image:
+      minutes: 2
+    umount-retry:
+      seconds: 57
+    lava-test-shell:
+      seconds: 30
