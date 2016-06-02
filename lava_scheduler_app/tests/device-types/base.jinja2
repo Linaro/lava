@@ -104,12 +104,6 @@ commands:
 {% if power_on_command %}
     power_on: {{ power_on_command }}
 {% endif %}
-{% if adb_command %}
-    adb_command: {{ adb_command | default('adb -s {{ adb_serial_number }}') }}
-{% endif %}
-{% if fastboot_command %}
-    fastboot_command: {{ fastboot_command | default('fastboot -s {{ fastboot_serial_number }}') }}
-{% endif %}
 {% endif %}
 {% endblock -%}
 

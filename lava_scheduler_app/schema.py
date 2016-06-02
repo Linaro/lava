@@ -160,7 +160,10 @@ def _job_protocols_schema():
             'name': str,
             'distribution': str,
             'release': str,
-            'arch': str
+            'arch': str,
+            'template': str,
+            'mirror': str,
+            'security_mirror': str
         }
     })
 
